@@ -27,7 +27,7 @@ func (h *Handler) handleMigrationConfig(w http.ResponseWriter, r *http.Request) 
 	}
 
 	if h.migrationEngine == nil {
-		writeError(w, http.StatusServiceUnavailable, "migration engine not configured")
+		writeJSON(w, http.StatusOK, map[string]any{"enabled": false, "message": "migration not configured"})
 		return
 	}
 
@@ -76,7 +76,7 @@ func (h *Handler) handleMigrationStats(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if h.migrationEngine == nil {
-		writeError(w, http.StatusServiceUnavailable, "migration engine not configured")
+		writeJSON(w, http.StatusOK, map[string]any{"enabled": false, "message": "migration not configured"})
 		return
 	}
 
@@ -104,7 +104,7 @@ func (h *Handler) handleMigrationTest(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if h.migrationEngine == nil {
-		writeError(w, http.StatusServiceUnavailable, "migration engine not configured")
+		writeJSON(w, http.StatusOK, map[string]any{"enabled": false, "message": "migration not configured"})
 		return
 	}
 

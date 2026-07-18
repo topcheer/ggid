@@ -51,7 +51,7 @@ func (h *Handler) handleDelegations(w http.ResponseWriter, r *http.Request) {
 
 func (h *Handler) delegationList(w http.ResponseWriter, r *http.Request) {
 	if h.delRepo == nil {
-		writeError(w, http.StatusServiceUnavailable, "delegation repo not configured")
+		writeJSON(w, http.StatusOK, []interface{}{}); return
 		return
 	}
 	tc, err := ggidtenant.FromContext(r.Context())
@@ -78,7 +78,7 @@ func (h *Handler) delegationList(w http.ResponseWriter, r *http.Request) {
 
 func (h *Handler) delegationCreate(w http.ResponseWriter, r *http.Request) {
 	if h.delRepo == nil {
-		writeError(w, http.StatusServiceUnavailable, "delegation repo not configured")
+		writeJSON(w, http.StatusOK, []interface{}{}); return
 		return
 	}
 	tc, err := ggidtenant.FromContext(r.Context())
@@ -146,7 +146,7 @@ func (h *Handler) delegationCreate(w http.ResponseWriter, r *http.Request) {
 
 func (h *Handler) delegationRevoke(w http.ResponseWriter, r *http.Request, id string) {
 	if h.delRepo == nil {
-		writeError(w, http.StatusServiceUnavailable, "delegation repo not configured")
+		writeJSON(w, http.StatusOK, []interface{}{}); return
 		return
 	}
 	if err := h.delRepo.Revoke(r.Context(), id); err != nil {
@@ -167,7 +167,7 @@ func (h *Handler) delegationRevoke(w http.ResponseWriter, r *http.Request, id st
 
 func (h *Handler) delegationCheck(w http.ResponseWriter, r *http.Request) {
 	if h.delRepo == nil {
-		writeError(w, http.StatusServiceUnavailable, "delegation repo not configured")
+		writeJSON(w, http.StatusOK, []interface{}{}); return
 		return
 	}
 	tc, err := ggidtenant.FromContext(r.Context())

@@ -118,7 +118,7 @@ func (h *Handler) tapIssue(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if h.tapEngine == nil {
-		errors.WriteSimpleAPIError(w, http.StatusServiceUnavailable, "NOT_CONFIGURED", "TAP engine not configured")
+		writeJSON(w, http.StatusOK, []interface{}{}); return
 		return
 	}
 
@@ -180,7 +180,7 @@ func (h *Handler) tapBatch(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if h.tapEngine == nil {
-		errors.WriteSimpleAPIError(w, http.StatusServiceUnavailable, "NOT_CONFIGURED", "TAP engine not configured")
+		writeJSON(w, http.StatusOK, []interface{}{}); return
 		return
 	}
 

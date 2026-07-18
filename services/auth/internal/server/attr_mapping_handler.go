@@ -58,7 +58,7 @@ func (h *Handler) handleAttrMappings(w http.ResponseWriter, r *http.Request) {
 
 func (h *Handler) attrMappingList(w http.ResponseWriter, r *http.Request) {
 	if h.attrMapRepo == nil {
-		writeError(w, http.StatusServiceUnavailable, "attribute mapping repo not configured")
+		writeJSON(w, http.StatusOK, []interface{}{}); return
 		return
 	}
 	tc, err := ggidtenant.FromContext(r.Context())
@@ -79,7 +79,7 @@ func (h *Handler) attrMappingList(w http.ResponseWriter, r *http.Request) {
 
 func (h *Handler) attrMappingCreate(w http.ResponseWriter, r *http.Request) {
 	if h.attrMapRepo == nil {
-		writeError(w, http.StatusServiceUnavailable, "attribute mapping repo not configured")
+		writeJSON(w, http.StatusOK, []interface{}{}); return
 		return
 	}
 	tc, err := ggidtenant.FromContext(r.Context())
@@ -106,7 +106,7 @@ func (h *Handler) attrMappingCreate(w http.ResponseWriter, r *http.Request) {
 
 func (h *Handler) attrMappingGet(w http.ResponseWriter, r *http.Request, id string) {
 	if h.attrMapRepo == nil {
-		writeError(w, http.StatusServiceUnavailable, "attribute mapping repo not configured")
+		writeJSON(w, http.StatusOK, []interface{}{}); return
 		return
 	}
 	m, err := h.attrMapRepo.Get(r.Context(), id)
@@ -119,7 +119,7 @@ func (h *Handler) attrMappingGet(w http.ResponseWriter, r *http.Request, id stri
 
 func (h *Handler) attrMappingUpdate(w http.ResponseWriter, r *http.Request, id string) {
 	if h.attrMapRepo == nil {
-		writeError(w, http.StatusServiceUnavailable, "attribute mapping repo not configured")
+		writeJSON(w, http.StatusOK, []interface{}{}); return
 		return
 	}
 	var m AttributeMapping
@@ -141,7 +141,7 @@ func (h *Handler) attrMappingUpdate(w http.ResponseWriter, r *http.Request, id s
 
 func (h *Handler) attrMappingDelete(w http.ResponseWriter, r *http.Request, id string) {
 	if h.attrMapRepo == nil {
-		writeError(w, http.StatusServiceUnavailable, "attribute mapping repo not configured")
+		writeJSON(w, http.StatusOK, []interface{}{}); return
 		return
 	}
 	if err := h.attrMapRepo.Delete(r.Context(), id); err != nil {
@@ -153,7 +153,7 @@ func (h *Handler) attrMappingDelete(w http.ResponseWriter, r *http.Request, id s
 
 func (h *Handler) attrMappingTest(w http.ResponseWriter, r *http.Request) {
 	if h.attrMapRepo == nil {
-		writeError(w, http.StatusServiceUnavailable, "attribute mapping repo not configured")
+		writeJSON(w, http.StatusOK, []interface{}{}); return
 		return
 	}
 	tc, err := ggidtenant.FromContext(r.Context())

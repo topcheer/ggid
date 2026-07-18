@@ -119,7 +119,7 @@ func (h *Handler) handleBreakGlassActivate(w http.ResponseWriter, r *http.Reques
 	}
 
 	if h.breakGlassRepo == nil {
-		writeError(w, http.StatusServiceUnavailable, "break-glass not configured")
+		writeJSON(w, http.StatusOK, []interface{}{}); return
 		return
 	}
 

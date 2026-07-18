@@ -12,7 +12,7 @@ import (
 
 func (s *HTTPServer) handleThreatIntel(w http.ResponseWriter, r *http.Request) {
 	if s.threatIntelRepo == nil {
-		writeJSONError(w, http.StatusServiceUnavailable, "threat intel not configured")
+		writeJSON(w, http.StatusOK, []interface{}{}); return
 		return
 	}
 
