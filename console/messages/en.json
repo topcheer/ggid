@@ -2237,5 +2237,87 @@
       "saving": "Saving...",
       "error": "Something went wrong. Please try again."
     }
+  },
+  "dashboardEnhanced": {
+    "welcome": {
+      "title": "Welcome to GGID",
+      "subtitle": "Get started with your identity platform",
+      "quickStart": "Quick Start",
+      "createUser": "Create Your First User",
+      "createUserDesc": "Add users and assign roles",
+      "configureSso": "Configure SSO",
+      "configureSsoDesc": "Set up SAML or OIDC SSO",
+      "createOAuth": "Create OAuth Client",
+      "createOAuthDesc": "Register an application",
+      "viewDocs": "View Documentation",
+      "viewDocsDesc": "Read the getting started guide"
+    },
+    "kpi": {
+      "title": "Platform Overview",
+      "totalUsers": "Total Users",
+      "activeSessions": "Active Sessions",
+      "mfaCoverage": "MFA Coverage",
+      "auditEvents24h": "Audit Events (24h)",
+      "newUsers": "New Users (7d)",
+      "failedLogins": "Failed Logins (24h)",
+      "oauthClients": "OAuth Clients"
+    },
+    "quickLinks": {
+      "title": "Resources",
+      "apiDocs": "API Documentation",
+      "apiDocsDesc": "Swagger UI & REST reference",
+      "sdkExamples": "SDK Examples",
+      "sdkExamplesDesc": "Go, React, Python, cURL",
+      "deployGuide": "Deployment Guide",
+      "deployGuideDesc": "Docker, K3s, Helm",
+      "github": "GitHub Repository",
+      "githubDesc": "Source code & issues"
+    }
+  },
+  "docs": {
+    "title": "Documentation",
+    "description": "Guides and references for integrating with GGID",
+    "tabs": {
+      "gettingStarted": "Getting Started",
+      "api": "API Reference",
+      "sdk": "SDK Examples"
+    },
+    "gettingStarted": {
+      "title": "Getting Started with GGID",
+      "prerequisites": "Prerequisites",
+      "step1Title": "1. Start GGID",
+      "step1Body": "Run GGID using Docker:\n\ndocker run -d -p 8080:8080 -p 3000:3000 ggid/ggid-all-in-one:latest",
+      "step2Title": "2. Open Console",
+      "step2Body": "Navigate to http://localhost:3000 and login with admin@ggid.dev / Admin@123456",
+      "step3Title": "3. Create Users",
+      "step3Body": "Use the Console or API to create users and assign roles.",
+      "step4Title": "4. Configure Authentication",
+      "step4Body": "Choose your authentication strategy (passkey-first, password, or hybrid) and optionally configure SSO.",
+      "step5Title": "5. Integrate Your App",
+      "step5Body": "Use one of our SDKs to integrate GGID authentication into your application."
+    },
+    "api": {
+      "title": "API Reference",
+      "description": "Browse the full REST API via Swagger UI",
+      "openSwagger": "Open Swagger UI",
+      "swaggerDesc": "Interactive API documentation with try-it-now capability",
+      "baseUrl": "Base URL",
+      "auth": "Authentication",
+      "authDesc": "All API calls require a Bearer token obtained from POST /api/v1/auth/login",
+      "sampleRequest": "Sample Request"
+    },
+    "sdk": {
+      "title": "SDK Examples",
+      "description": "Quick integration examples for popular languages",
+      "go": "Go",
+      "react": "React",
+      "python": "Python",
+      "curl": "cURL",
+      "goDesc": "Server-side integration with the Go SDK",
+      "reactDesc": "Frontend integration with React hooks",
+      "pythonDesc": "Server-side integration with the Python SDK",
+      "curlDesc": "Raw HTTP API calls using curl",
+      "viewFullExample": "View Full Example"
+    }
   }
 }
