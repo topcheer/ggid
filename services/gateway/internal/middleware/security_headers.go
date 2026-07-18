@@ -2,130 +2,93 @@ package middleware
 
 import (
 	"net/http"
-	"strconv"
+	"strings"
 )
 
-// SecurityHeadersConfig defines per-tenant security header policies.
-type SecurityHeadersConfig struct {
-	// Enabled controls whether security headers are injected.
-	Enabled bool
-	// ContentTypeNosniff sets X-Content-Type-Options: nosniff.
-	ContentTypeNosniff bool
-	// FrameDeny sets X-Frame-Options: DENY.
-	FrameDeny bool
-	// FrameAllowFrom sets X-Frame-Options: ALLOW-FROM <origin>. Ignored if FrameDeny is true.
-	FrameAllowFrom string
-	// HSTSMaxAge sets Strict-Transport-Security max-age in seconds.
-	HSTSMaxAge int
-		// HSTSIncludeSubDomains adds includeSubDomains to HSTS.
-	HSTSIncludeSubDomains bool
-		// CSP defines the Content-Security-Policy header.
-	CSP string
-		// ReferrerPolicy sets Referrer-Policy header.
-	ReferrerPolicy string
-		// PerTenantOverrides allows per-tenant configuration keyed by tenant ID.
-	PerTenantOverrides map[string]*SecurityHeadersConfig
+// SecurityHeadersMiddleware adds security headers to every response.
+func SecurityHeadersMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("X-Content-Type-Options", "nosniff")
+		w.Header().Set("X-Frame-Options", "DENY")
+		w.Header().Set("Strict-Transport-Security", "max-age=31536000; includeSubDomains")
+		w.Header().Set("Content-Security-Policy", "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'")
+		w.Header().Set("X-XSS-Protection", "1; mode=block")
+		w.Header().Set("Referrer-Policy", "strict-origin-when-cross-origin")
+		w.Header().Set("Permissions-Policy", "geolocation=(), microphone=(), camera=()")
+		next.ServeHTTP(w, r)
+	})
 }
 
-// DefaultSecurityHeadersConfig returns a config with secure defaults.
-func DefaultSecurityHeadersConfig() *SecurityHeadersConfig {
-	return &SecurityHeadersConfig{
-		Enabled:               true,
-		ContentTypeNosniff:    true,
-		FrameDeny:             true,
-		HSTSMaxAge:            31536000, // 1 year
-		HSTSIncludeSubDomains: true,
-		CSP:                   "default-src 'self'; frame-ancestors 'none'",
-		ReferrerPolicy:        "strict-origin-when-cross-origin",
-	}
+// CORSConfig defines per-tenant CORS settings.
+type TenantCORSConfig struct {
+	AllowedOrigins   []string `json:"allowed_origins"`
+	AllowedMethods   []string `json:"allowed_methods"`
+	AllowedHeaders   []string `json:"allowed_headers"`
+	AllowCredentials bool     `json:"allow_credentials"`
+	MaxAge           int      `json:"max_age"`
 }
 
-// SecurityHeadersConfigurable returns middleware that injects security headers
-// with full configuration. Tenant-specific overrides are applied when X-Tenant-ID is present.
-func SecurityHeadersConfigurable(cfg *SecurityHeadersConfig) func(http.Handler) http.Handler {
-	if cfg == nil {
-		cfg = DefaultSecurityHeadersConfig()
+var (
+	defaultTenantCORS = TenantCORSConfig{
+		AllowedOrigins:   []string{"*"},
+		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"},
+		AllowedHeaders:   []string{"Content-Type", "Authorization", "X-Request-ID", "X-Trace-Id", "X-Session-ID"},
+		AllowCredentials: true,
+		MaxAge:           3600,
 	}
+	tenantCORSConfigs = map[string]TenantCORSConfig{}
+)
 
-	return func(next http.Handler) http.Handler {
-		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			effective := cfg
-			if tenantID := r.Header.Get("X-Tenant-ID"); tenantID != "" {
-				if override, ok := cfg.PerTenantOverrides[tenantID]; ok {
-					effective = override
-				}
-			}
-
-			if !effective.Enabled {
-				next.ServeHTTP(w, r)
-				return
-			}
-
-			h := w.Header()
-
-			if effective.ContentTypeNosniff {
-				h.Set("X-Content-Type-Options", "nosniff")
-			}
-
-			if effective.FrameDeny {
-				h.Set("X-Frame-Options", "DENY")
-			} else if effective.FrameAllowFrom != "" {
-				h.Set("X-Frame-Options", "ALLOW-FROM "+effective.FrameAllowFrom)
-			}
-
-			if effective.HSTSMaxAge > 0 {
-				value := "max-age=" + strconv.Itoa(effective.HSTSMaxAge)
-				if effective.HSTSIncludeSubDomains {
-					value += "; includeSubDomains"
-				}
-				h.Set("Strict-Transport-Security", value)
-			}
-
-			if effective.CSP != "" {
-				h.Set("Content-Security-Policy", effective.CSP)
-			}
-
-			if effective.ReferrerPolicy != "" {
-				h.Set("Referrer-Policy", effective.ReferrerPolicy)
-			}
-
-			next.ServeHTTP(w, r)
-		})
-	}
+func SetTenantCORS(tenantID string, cfg CORSConfig) {
+	tenantCORSConfigs[tenantID] = cfg
 }
 
-// mergeSecurityHeaders applies tenant overrides onto a base config.
-func mergeSecurityHeaders(base, override *SecurityHeadersConfig) *SecurityHeadersConfig {
-	if override == nil {
-		return base
+func GetTenantCORS(tenantID string) CORSConfig {
+	if cfg, ok := tenantCORSConfigs[tenantID]; ok {
+		return cfg
 	}
-	if base == nil {
-		return override
-	}
-	merged := *base
-	if override.Enabled {
-		merged.Enabled = true
-	}
-	if override.ContentTypeNosniff {
-		merged.ContentTypeNosniff = true
-	}
-	if override.FrameDeny {
-		merged.FrameDeny = true
-	}
-	if override.FrameAllowFrom != "" {
-		merged.FrameAllowFrom = override.FrameAllowFrom
-	}
-	if override.HSTSMaxAge > 0 {
-		merged.HSTSMaxAge = override.HSTSMaxAge
-	}
-	if override.HSTSIncludeSubDomains {
-		merged.HSTSIncludeSubDomains = true
-	}
-	if override.CSP != "" {
-		merged.CSP = override.CSP
-	}
-	if override.ReferrerPolicy != "" {
-		merged.ReferrerPolicy = override.ReferrerPolicy
-	}
-	return &merged
+	return defaultTenantCORS
+}
+
+func TenantCORSMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		origin := r.Header.Get("Origin")
+		tenantID := r.Header.Get("X-Tenant-ID")
+		cfg := GetCORSConfig(tenantID)
+		allowed := false
+		for _, o := range cfg.AllowedOrigins {
+			if o == "*" || o == origin {
+				allowed = true
+				break
+			}
+		}
+		if allowed && origin != "" {
+			w.Header().Set("Access-Control-Allow-Origin", origin)
+			w.Header().Set("Access-Control-Allow-Methods", strings.Join(cfg.AllowedMethods, ", "))
+			w.Header().Set("Access-Control-Allow-Headers", strings.Join(cfg.AllowedHeaders, ", "))
+			if cfg.AllowCredentials {
+				w.Header().Set("Access-Control-Allow-Credentials", "true")
+			}
+			w.Header().Set("Access-Control-Max-Age", "3600")
+		}
+		if r.Method == http.MethodOptions {
+			w.WriteHeader(http.StatusNoContent)
+			return
+		}
+		next.ServeHTTP(w, r)
+	})
+}
+
+func HardenCookie(c *http.Cookie) {
+	c.Secure = true
+	c.HttpOnly = true
+	c.SameSite = http.SameSiteStrictMode
+}
+
+func SetSecureCookie(w http.ResponseWriter, name, value, path string, maxAge int) {
+	http.SetCookie(w, &http.Cookie{
+		Name: name, Value: value, Path: path,
+		MaxAge: maxAge, Secure: true, HttpOnly: true,
+		SameSite: http.SameSiteStrictMode,
+	})
 }
