@@ -251,6 +251,59 @@ func (s *OAuthService) UpdateAgentStatus(ctx context.Context, agentID uuid.UUID,
 	return nil
 }
 
+// UpdateAgentScopes sets the allowed API scopes for an agent.
+// This restricts what the agent token can access when exchanged via
+// ExchangeAgentToken. Existing tokens are not affected until re-exchanged.
+func (s *OAuthService) UpdateAgentScopes(ctx context.Context, agentID uuid.UUID, scopes []string) error {
+	agent, ok := s.agentLoadRedis(ctx, agentID)
+	if !ok {
+		return fmt.Errorf("agent not found: %s", agentID)
+	}
+	// Validate scopes against known scope catalog
+	validScopes := ValidateAgentScopes(scopes)
+	agent.AllowedScopes = validScopes
+	agent.UpdatedAt = time.Now()
+	s.agentStoreRedis(ctx, agent)
+	return nil
+}
+
+// GetAgentScopes returns the current allowed scopes for an agent.
+func (s *OAuthService) GetAgentScopes(ctx context.Context, agentID uuid.UUID) ([]string, error) {
+	agent, ok := s.agentLoadRedis(ctx, agentID)
+	if !ok {
+		return nil, fmt.Errorf("agent not found: %s", agentID)
+	}
+	return agent.AllowedScopes, nil
+}
+
+// StandardAgentScopes is the catalog of valid scopes for AI agents.
+var StandardAgentScopes = []string{
+	"users:read", "users:write",
+	"roles:read", "roles:write",
+	"policies:read", "policies:write",
+	"audit:read",
+	"oauth:read", "oauth:admin",
+	"agents:read", "agents:write",
+	"org:read", "org:write",
+}
+
+// ValidateAgentScopes filters the given scopes to only known valid ones.
+func ValidateAgentScopes(scopes []string) []string {
+	valid := make(map[string]bool, len(StandardAgentScopes))
+	for _, s := range StandardAgentScopes {
+		valid[s] = true
+	}
+	var result []string
+	for _, sc := range scopes {
+		sc = strings.TrimSpace(sc)
+		if sc == "" || !valid[sc] {
+			continue
+		}
+		result = append(result, sc)
+	}
+	return result
+}
+
 // ExchangeAgentToken implements RFC 8693 token exchange for AI agents.
 // It validates the subject token (user's access token), checks that the
 // requested scopes are within the agent's allowed scope set, and issues

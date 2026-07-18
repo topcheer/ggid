@@ -54,6 +54,7 @@ func op(tags []string, summary string) *OpenAPIOperation {
 
 type OpenAPIComponents struct {
 	SecuritySchemes map[string]OpenAPISecurityScheme `json:"securitySchemes"`
+	Schemas         map[string]SchemaRef            `json:"schemas,omitempty"`
 }
 
 type OpenAPISecurityScheme struct {
@@ -86,6 +87,7 @@ func GenerateOpenAPISpec() *GGIDOpenAPISpec {
 				"apiKey":    {Type: "apiKey", In: "header", Name: "X-API-Key", Description: "API key auth"},
 				"mtls":      {Type: "mutualTLS", Description: "mTLS client cert"},
 			},
+			Schemas: coreSchemas(),
 		},
 		Paths: generatePaths(bearer),
 	}

@@ -1,7 +1,10 @@
 "use client";
 
 import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
-import { en, locales } from "./i18n-dicts";
+import { en } from "./i18n-en";
+
+// Dynamic locale cache — other languages loaded on demand
+const localeCache: Record<string, Record<string, string>> = { en };
 
 export type Locale =
   | "en" | "zh" | "zh-TW"
@@ -61,7 +64,9 @@ const RTL_LOCALES = ["ar"];
 
 export function I18nProvider({ children }: { children: React.ReactNode }) {
   const [locale, setLocaleState] = useState<Locale>("en");
+  const [activeDict, setActiveDict] = useState<Record<string, string>>(en);
 
+  // Load locale dict on demand
   useEffect(() => {
     const saved = localStorage.getItem("ggid_locale");
     const validLocales = Object.keys(LOCALE_INFO);
@@ -70,18 +75,40 @@ export function I18nProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
+  // When locale changes, load the dict if not cached
+  useEffect(() => {
+    if (locale === "en") {
+      setActiveDict(en);
+      return;
+    }
+    if (localeCache[locale]) {
+      setActiveDict(localeCache[locale]);
+      return;
+    }
+    // Dynamic import — only loads the requested language chunk
+    import("./i18n-dicts").then((mod) => {
+      const dict = mod.locales[locale];
+      if (dict) {
+        localeCache[locale] = dict;
+        setActiveDict(dict);
+      }
+    }).catch(() => {
+      // Fallback to English on load failure
+      setActiveDict(en);
+    });
+  }, [locale]);
+
   const setLocale = useCallback((l: Locale) => {
     setLocaleState(l);
     localStorage.setItem("ggid_locale", l);
-    // Set document direction for RTL languages
     const isRtl = RTL_LOCALES.includes(l);
     document.documentElement.dir = isRtl ? "rtl" : "ltr";
     document.documentElement.lang = l;
   }, []);
 
   const t = useCallback(
-    (key: string): string => locales[locale]?.[key] || locales.en?.[key] || en[key] || key,
-    [locale],
+    (key: string): string => activeDict[key] || en[key] || key,
+    [activeDict],
   );
 
   return <I18nContext.Provider value={{ locale, setLocale, t }}>{children}</I18nContext.Provider>;

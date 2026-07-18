@@ -1688,6 +1688,50 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 	mux.HandleFunc("/api/v1/agents/shadows", handleAgentShadows)
 	mux.HandleFunc("/api/v1/agents/drift/report", handleAgentDriftReport)
 	mux.HandleFunc("/api/v1/agents/", func(w http.ResponseWriter, r *http.Request) {
+		// Agent scope management: POST /api/v1/agents/{id}/scopes
+		if strings.HasSuffix(r.URL.Path, "/scopes") {
+			agentIDStr := strings.TrimSuffix(strings.TrimPrefix(r.URL.Path, "/api/v1/agents/"), "/scopes")
+			agentID, err := uuid.Parse(agentIDStr)
+			if err != nil {
+				writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid agent_id in path"})
+				return
+			}
+			switch r.Method {
+			case http.MethodPost, http.MethodPut:
+				var body struct {
+					Scopes []string `json:"scopes"`
+				}
+				if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+					writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid JSON body"})
+					return
+				}
+				if err := oauthSvc.UpdateAgentScopes(r.Context(), agentID, body.Scopes); err != nil {
+					writeJSON(w, http.StatusBadRequest, map[string]string{"error": err.Error()})
+					return
+				}
+				updated, _ := oauthSvc.GetAgentScopes(r.Context(), agentID)
+				writeJSON(w, http.StatusOK, map[string]any{
+					"status":    "updated",
+					"agent_id":  agentIDStr,
+					"scopes":    updated,
+					"available": service.StandardAgentScopes,
+				})
+			case http.MethodGet:
+				scopes, err := oauthSvc.GetAgentScopes(r.Context(), agentID)
+				if err != nil {
+					writeJSON(w, http.StatusNotFound, map[string]string{"error": err.Error()})
+					return
+				}
+				writeJSON(w, http.StatusOK, map[string]any{
+					"agent_id":  agentIDStr,
+					"scopes":    scopes,
+					"available": service.StandardAgentScopes,
+				})
+			default:
+				writeJSON(w, http.StatusMethodNotAllowed, map[string]string{"error": "method not allowed"})
+			}
+			return
+		}
 		// Agent status update: POST /api/v1/agents/{id}/status
 		if strings.HasSuffix(r.URL.Path, "/status") && r.Method == http.MethodPost {
 			agentIDStr := strings.TrimSuffix(strings.TrimPrefix(r.URL.Path, "/api/v1/agents/"), "/status")
