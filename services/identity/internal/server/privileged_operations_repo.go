@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"log/slog"
 	"net/http"
-	"strings"
 	"time"
 
 	ggidtenant "github.com/ggid/ggid/pkg/tenant"
