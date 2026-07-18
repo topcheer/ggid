@@ -262,6 +262,8 @@
 | KB-248 | **Hot reload + plugin marketplace** (atomic swap + install/publish) | backend | P1 | wasm-plugins | 3d |
 | KB-249 | **Conditional UI + Temporary Access Pass** (passkey autofill + recovery) | backend | P0 | webauthn-enterprise | 3d |
 | KB-250 | **AAGUID allowlist + FIDO MDS + Device Public Key** | backend | P1 | webauthn-enterprise | 5d |
+| KB-251 | **WORM storage + Merkle tree + S3 Object Lock** (append-only PG + hourly roots) | backend | P0 | audit-worm | 4d |
+| KB-252 | **Continuous tamper detection + auditor export bundle + retention** | backend | P1 | audit-worm | 3d |
 | KB-038 | **Journey definition store** (PostgreSQL) | backend | P0 | identity-orchestration | 3d |
 | KB-039 | **Journey definition parser** (YAML JDL) | backend | P0 | identity-orchestration | 4d |
 | KB-040 | **Journey engine** (state machine executor) | backend | P0 | identity-orchestration | 5d |
@@ -399,6 +401,7 @@
 | Automated Key Rotation & Cert Lifecycle | DONE | docs/research/key-rotation-cert-management.md |
 | Plugin System & WASM Enhancement | DONE | docs/research/plugin-system-wasm-enhancement.md |
 | WebAuthn/FIDO2 Enterprise Features | DONE | docs/research/webauthn-enterprise-implementation.md |
+| Audit Tamper Protection & WORM Storage | DONE | docs/research/audit-tamper-protection-worm.md |
 | OAuth Client Lifecycle Management (DCR) | NEXT | — |
 
 ---

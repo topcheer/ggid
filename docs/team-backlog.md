@@ -1,6 +1,6 @@
 # GGID Team Backlog
 
-*Last updated: 2026-07-17 (Round 84: WebAuthn Enterprise Features research complete — 2 backlog items)*
+*Last updated: 2026-07-17 (Round 85: Audit Tamper Protection & WORM Storage research complete — 2 backlog items)*
 
 ## Current Stats
 
@@ -190,6 +190,7 @@
 | 164 | **Key rotation & cert lifecycle** (P0-P2) | backend | Security operations | Rotation engine with dual-key pattern for JWT/client secrets/device certs/TLS/API keys/CMK/webhook secrets + cert-manager ACME + audit trail. See docs/research/key-rotation-cert-management.md |
 | 165 | **WASM plugin enhancement** (P0-P1) | backend | Extensibility | Hook system (6 lifecycle hooks) + plugin SDK (7 host functions) + capability-based security + lifecycle management + hot reload + marketplace. See docs/research/plugin-system-wasm-enhancement.md |
 | 166 | **WebAuthn enterprise features** (P0-P1) | backend | Authentication | Conditional UI autofill + Temporary Access Pass recovery + AAGUID allowlist + FIDO MDS + Device Public Key. See docs/research/webauthn-enterprise-implementation.md |
+| 167 | **Audit WORM + tamper protection** (P0-P1) | backend | Forensic audit | WORM storage (append-only PG + S3 Object Lock) + Merkle tree accumulation (hourly roots) + external anchoring + continuous tamper detection + auditor export bundle + retention enforcement. See docs/research/audit-tamper-protection-worm.md |
 
 ### P3 — Quality/infrastructure improvements
 
@@ -260,6 +261,7 @@
 44. Automated Key Rotation & Cert Lifecycle → DONE (docs/research/key-rotation-cert-management.md) — 3 backlog items added
 45. Plugin System & WASM Enhancement → DONE (docs/research/plugin-system-wasm-enhancement.md) — 2 backlog items added
 46. WebAuthn/FIDO2 Enterprise Features → DONE (docs/research/webauthn-enterprise-implementation.md) — 2 backlog items added
+47. Audit Tamper Protection & WORM Storage → DONE (docs/research/audit-tamper-protection-worm.md) — 2 backlog items added
 
 ## Rules
 
@@ -300,6 +302,7 @@ Active research topics:
 - Key Rotation & Cert Lifecycle → DONE (docs/research/key-rotation-cert-management.md)
 - Plugin System & WASM Enhancement → DONE (docs/research/plugin-system-wasm-enhancement.md)
 - WebAuthn Enterprise Features → DONE (docs/research/webauthn-enterprise-implementation.md)
+- Audit Tamper Protection & WORM → DONE (docs/research/audit-tamper-protection-worm.md)
 - AI Agent Identity & Delegated Access → DONE (docs/research/ai-agent-identity.md)
 - Risk-Based Adaptive Authentication Engine → DONE (docs/research/risk-adaptive-auth-engine.md)
 - Consent Management Platform → DONE (docs/research/consent-management-platform.md)
