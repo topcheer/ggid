@@ -59,7 +59,7 @@ export default function SecretsPage() {
     return interval - elapsed;
   };
 
-  const upcoming = SECRETS.map(s => ({ ...s, daysLeft: daysUntilRotation(s.last_rotated, s.interval_days) })).sort((a, b) => a.daysLeft - b.daysLeft);
+  const upcoming = SECRETS.map(s => ({ ...s, daysLeft: daysUntilRotation(s.last_rotated, s.interval_days) })).sort((a: any, b: any) => a.daysLeft - b.daysLeft);
 
   return (
     <div className="space-y-6">

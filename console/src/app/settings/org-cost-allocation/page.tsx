@@ -102,7 +102,7 @@ export default function OrgCostAllocationPage() {
           </div>
           <div className="mt-4 pt-4 border-t border-gray-800 flex items-center justify-between">
             <span className="text-sm text-gray-400">Total Monthly Cost</span>
-            <span className="text-lg font-bold">${(data?.monthly_cost_breakdown ?? []).reduce((a, d) => a + d.amount, 0).toLocaleString()}</span>
+            <span className="text-lg font-bold">${(data?.monthly_cost_breakdown ?? []).reduce((a: any, d: any) => a + d.amount, 0).toLocaleString()}</span>
           </div>
         </div>
 

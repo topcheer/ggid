@@ -33,7 +33,7 @@ export default function TokenBindingStatsPage() {
   useEffect(() => { fetchData(); }, [fetchData]);
 
   const gaugeColor = data ? (data.compliance_pct >= 80 ? "#10b981" : data.compliance_pct >= 50 ? "#f59e0b" : "#ef4444") : "#3b82f6";
-  const totalMethods = data?.binding_methods.reduce((s, m) => s + m.count, 0) || 1;
+  const totalMethods = data?.binding_methods.reduce((s: any, m: any) => s + m.count, 0) || 1;
 
   return (
     <div className="space-y-6">

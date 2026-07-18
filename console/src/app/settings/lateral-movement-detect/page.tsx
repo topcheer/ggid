@@ -38,7 +38,7 @@ export default function LateralMovementDetectPage() {
           <Activity className="w-5 h-5 text-blue-400 mb-1" />
           <p className="text-xs text-gray-400">Avg Confidence</p>
           <p className="text-xl font-bold">
-            {data?.detected_patterns?.length ? Math.round(data.detected_patterns.reduce((a, p) => a + p.confidence_score, 0) / data.detected_patterns.length * 100) : 0}%
+            {data?.detected_patterns?.length ? Math.round(data.detected_patterns.reduce((a: any, p: any) => a + p.confidence_score, 0) / data.detected_patterns.length * 100) : 0}%
           </p>
         </div>
         <div className="bg-gray-900 rounded-xl p-4">

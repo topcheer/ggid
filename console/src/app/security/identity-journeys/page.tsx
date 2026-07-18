@@ -281,7 +281,7 @@ export default function IdentityJourneysPage() {
                 <p className="text-xs font-semibold uppercase text-gray-400 mb-2">CEL Expression</p>
                 <textarea aria-label="CEL expression" value={celExpr} onChange={e => setCelExpr(e.target.value)} rows={3} className="w-full rounded border dark:border-gray-700 dark:bg-gray-900 px-2 py-1 text-xs font-mono" />
                 <p className="text-xs font-semibold uppercase text-gray-400 mt-2 mb-1">Test Variables</p>
-                <div className="space-y-1">{Object.entries(celVars).map(([k, v]) => <div key={k} className="flex items-center gap-1"><span className="text-xs font-mono flex-1">{k}</span><input aria-label={k} type="text" value={v} onChange={e => setCelVars({ ...celVars, [k]: e.target.value })} className="w-20 rounded border dark:border-gray-700 dark:bg-gray-900 px-1 py-0.5 text-xs font-mono" /></div>)}</div>
+                <div className="space-y-1">{Object.entries(celVars).map(([k, v]: any[]) => <div key={k} className="flex items-center gap-1"><span className="text-xs font-mono flex-1">{k}</span><input aria-label={k} type="text" value={v} onChange={e => setCelVars({ ...celVars, [k]: e.target.value })} className="w-20 rounded border dark:border-gray-700 dark:bg-gray-900 px-1 py-0.5 text-xs font-mono" /></div>)}</div>
                 <div className="mt-2 rounded bg-gray-900 p-2"><p className="text-xs text-green-400 font-mono">Evaluated: {evaluateCEL()}</p></div>
               </div>
             )}

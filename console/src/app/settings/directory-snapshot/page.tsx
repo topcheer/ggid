@@ -34,7 +34,7 @@ export default function DirectorySnapshotPage() {
 
   useEffect(() => { fetchData(); }, [fetchData]);
 
-  const total = snapshot?.by_status.reduce((s, d) => s + d.count, 0) || 1;
+  const total = snapshot?.by_status.reduce((s: any, d: any) => s + d.count, 0) || 1;
   const maxOrg = Math.max(...(snapshot?.by_org.map((d: any) => d.count) || [1]), 1);
 
   return (

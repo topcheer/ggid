@@ -43,7 +43,7 @@ export default function AgentBehavioralMonitorPage() {
           <Activity className="w-5 h-5 text-green-400 mb-1" />
           <p className="text-xs text-gray-400">Avg Deviation</p>
           <p className="text-xl font-bold">
-            {data?.monitored_agents?.length ? Math.round(data.monitored_agents.reduce((a, m) => a + m.deviation_score, 0) / data.monitored_agents.length * 100) : 0}%
+            {data?.monitored_agents?.length ? Math.round(data.monitored_agents.reduce((a: any, m: any) => a + m.deviation_score, 0) / data.monitored_agents.length * 100) : 0}%
           </p>
         </div>
       </div>

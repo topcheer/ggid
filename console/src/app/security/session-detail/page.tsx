@@ -156,7 +156,7 @@ export default function SessionDetailPage() {
                   {t("sessionDetail.attributes.title")}
                 </h3>
                 <span className={`px-3 py-1 text-xs font-medium rounded-full ${statusColors[session.status] || statusColors.active}`}>
-                  {t(`sessionDetail.status${session.status.replace(/^./, (m) => m.toUpperCase())}`)}
+                  {t(`sessionDetail.status${session.status.replace(/^./, (m: any) => m.toUpperCase())}`)}
                 </span>
               </div>
 

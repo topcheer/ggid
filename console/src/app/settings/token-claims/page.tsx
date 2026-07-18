@@ -43,7 +43,7 @@ function JsonNode({ label, value, depth }: { label: string; value: unknown; dept
       </button>
       {expanded && (
         <div>
-          {entries.map(([k, v]) => (
+          {entries.map(([k, v]: any[]) => (
             <JsonNode key={k} label={k} value={v} depth={depth + 1} />
           ))}
         </div>

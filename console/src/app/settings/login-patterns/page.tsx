@@ -39,7 +39,7 @@ export default function LoginPatternsPage() {
   useEffect(() => { fetchData(); }, [fetchData]);
 
   const maxHourCount = Math.max(...(data?.time_of_day.map((d: any) => d.count) || [1]), 1);
-  const totalDevices = data?.device_usage.reduce((s, d) => s + d.count, 0) || 1;
+  const totalDevices = data?.device_usage.reduce((s: any, d: any) => s + d.count, 0) || 1;
   const maxFreq = Math.max(...(data?.frequency_trend.map((d: any) => d.logins) || [1]), 1);
   const freqPoints = data?.frequency_trend.map((d: any, i: number) => `${(i / (data.frequency_trend.length - 1 || 1)) * 200},${40 - (d.logins / maxFreq) * 35}`).join(" ") || "";
 

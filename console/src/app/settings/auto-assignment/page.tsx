@@ -62,7 +62,7 @@ export default function AutoAssignmentPage() {
     finally { setReassigningId(null); }
   };
 
-  const totalUsers = assignments.reduce((sum, a) => sum + a.assigned_users, 0);
+  const totalUsers = assignments.reduce((sum: any, a: any) => sum + a.assigned_users, 0);
 
   return (
     <div className="space-y-6">

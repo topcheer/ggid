@@ -69,7 +69,7 @@ export default function DeviceRegistryPage() {
           <div className="grid grid-cols-3 gap-4">
             <div className={cardCls}><div className="text-xs font-semibold uppercase text-gray-400">{t("big1.deviceRegistry.totalDevices")}</div><p className="mt-2 text-2xl font-bold text-blue-600">{devices.length}</p></div>
             <div className={cardCls}><div className="text-xs font-semibold uppercase text-gray-400">{t("big1.deviceRegistry.trusted")}</div><p className="mt-2 text-2xl font-bold text-green-600">{devices.filter((d: any) => d.trusted).length}</p></div>
-            <div className={cardCls}><div className="text-xs font-semibold uppercase text-gray-400">{t("big1.deviceRegistry.activeSessions")}</div><p className="mt-2 text-2xl font-bold text-indigo-600">{devices.reduce((s, d) => s + d.session_count, 0)}</p></div>
+            <div className={cardCls}><div className="text-xs font-semibold uppercase text-gray-400">{t("big1.deviceRegistry.activeSessions")}</div><p className="mt-2 text-2xl font-bold text-indigo-600">{devices.reduce((s: any, d: any) => s + d.session_count, 0)}</p></div>
           </div>
 
           {devices.length === 0 ? (

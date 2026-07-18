@@ -53,9 +53,9 @@ export default function GrantFlowsPage() {
 
   const maxCount = Math.max(...stats.map((s: any) => s.count), 1);
   const maxDuration = Math.max(...stats.map((s: any) => s.avg_duration_ms), 1);
-  const totalGrants = stats.reduce((sum, s) => sum + s.count, 0);
-  const avgSuccessRate = stats.length > 0 ? stats.reduce((sum, s) => sum + s.success_rate, 0) / stats.length : 0;
-  const totalSuccess = stats.reduce((sum, s) => sum + s.success_count, 0);
+  const totalGrants = stats.reduce((sum: any, s: any) => sum + s.count, 0);
+  const avgSuccessRate = stats.length > 0 ? stats.reduce((sum: any, s: any) => sum + s.success_rate, 0) / stats.length : 0;
+  const totalSuccess = stats.reduce((sum: any, s: any) => sum + s.success_count, 0);
 
   return (
     <div className="space-y-6">

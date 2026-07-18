@@ -59,7 +59,7 @@ export default function UEBAPage() {
 
   const filteredEvents = searchUser ? events.filter(e => e.user_id.includes(searchUser)) : events;
   const highAnomaly = events.filter(e => e.score >= 0.7).length;
-  const avgScore = events.length > 0 ? (events.reduce((a, e) => a + e.score, 0) / events.length).toFixed(2) : "0";
+  const avgScore = events.length > 0 ? (events.reduce((a: any, e: any) => a + e.score, 0) / events.length).toFixed(2) : "0";
 
   // Distribution for trend chart
   const scoreBuckets = [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0].map(bucket => ({

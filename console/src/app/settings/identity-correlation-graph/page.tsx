@@ -233,7 +233,7 @@ export default function IdentityCorrelationGraphPage() {
           </svg>
 
           <div className="mt-2 flex flex-wrap gap-3 text-xs">
-            {Object.entries(NODE_COLORS).map(([type, color]) => (
+            {Object.entries(NODE_COLORS).map(([type, color]: any[]) => (
               <div key={type} className="flex items-center gap-1">
                 <div className={`h-3 w-3 rounded-full ${color}`} />
                 <span className="text-gray-600 capitalize">{type}</span>

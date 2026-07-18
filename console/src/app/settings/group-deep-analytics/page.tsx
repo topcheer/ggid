@@ -49,7 +49,7 @@ export default function GroupDeepAnalyticsPage() {
             <div className="overflow-x-auto">
               <div className="inline-grid gap-px" style={{ gridTemplateColumns: "auto repeat(24, 1fr)" }}>
                 <div />{Array.from({ length: 24 }, (_, h) => <div key={h} className="text-xs text-gray-500 text-center w-6">{h}</div>)}
-                {group.heatmap.map((row, dayIdx) => (
+                {group.heatmap.map((row: any, dayIdx: any) => (
                   <>{<div key={"d"+dayIdx} className="text-xs text-gray-500 pr-2">{["Mon","Tue","Wed","Thu","Fri","Sat","Sun"][dayIdx]}</div>}{row.map((val: any, h: number) => {
                     const intensity = Math.min(val / 10, 1);
                     const color = intensity > 0.7 ? "bg-green-600" : intensity > 0.3 ? "bg-green-800" : intensity > 0 ? "bg-green-950" : "bg-gray-800";

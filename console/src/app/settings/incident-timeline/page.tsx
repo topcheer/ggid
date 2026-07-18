@@ -57,7 +57,7 @@ export default function IncidentTimelinePage() {
                   <p className="text-xs text-gray-400 mt-0.5">Actor: {ev.actor}</p>
                   {Object.keys(ev.metadata).length > 0 && (
                     <div className="flex flex-wrap gap-1 mt-1">
-                      {Object.entries(ev.metadata).map(([k, v]) => {
+                      {Object.entries(ev.metadata).map(([k, v]: any[]) => {
                         const val: string = typeof v === "string" ? v : JSON.stringify(v);
                         return <span key={k} className="text-xs px-1 py-0.5 bg-gray-800 rounded text-gray-500">{k}: {val}</span>;
                       })}

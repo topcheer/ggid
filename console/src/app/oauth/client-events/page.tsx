@@ -101,7 +101,7 @@ export default function ClientEventsPage() {
                     </div>
                     {Object.keys(evt.metadata).length > 0 && (
                       <div className="flex flex-wrap gap-1 mt-1">
-                        {Object.entries(evt.metadata).map(([k, v]) => <span key={k} className="px-1.5 py-0.5 rounded text-xs bg-gray-100 dark:bg-gray-800 font-mono">{k}: {v}</span>)}
+                        {Object.entries(evt.metadata).map(([k, v]: any[]) => <span key={k} className="px-1.5 py-0.5 rounded text-xs bg-gray-100 dark:bg-gray-800 font-mono">{k}: {v}</span>)}
                       </div>
                     )}
                   </div>

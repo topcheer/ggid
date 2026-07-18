@@ -125,7 +125,7 @@ function SchedulesTab({ schedules, setSchedules }: { schedules: Schedule[]; setS
             </div>
             <div className="flex items-center gap-3">
               <span className={`px-2 py-0.5 text-xs rounded-full ${freqColors[s.frequency] || freqColors.monthly}`}>
-                {t(`reviewSchedules.schedules.frequency${s.frequency.replace(/^./, (m) => m.toUpperCase())}`)}
+                {t(`reviewSchedules.schedules.frequency${s.frequency.replace(/^./, (m: any) => m.toUpperCase())}`)}
               </span>
               <button onClick={() => toggle(s.id)} className={`relative w-10 h-6 rounded-full transition-colors ${s.enabled ? "bg-blue-600" : "bg-gray-300 dark:bg-gray-600"}`}>
                 <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full transition-transform ${s.enabled ? "translate-x-4" : ""}`} />
@@ -188,7 +188,7 @@ function CreateTab({ onCreated }: { onCreated: () => void }) {
             <button key={s} onClick={() => setScope(s)}
               className={`flex items-center gap-2 p-3 rounded-lg border-2 text-sm transition-all ${scope === s ? "border-blue-500 bg-blue-50 dark:bg-blue-950/30 text-blue-700 dark:text-blue-300" : "border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400"}`}>
               {scope === s && <Check className="w-3 h-3" />}
-              {t(`reviewSchedules.create.scope${s.replace(/_./g, (m) => m[1].toUpperCase()).replace(/^./, (m) => m.toUpperCase())}`)}
+              {t(`reviewSchedules.create.scope${s.replace(/_./g, (m) => m[1].toUpperCase()).replace(/^./, (m: any) => m.toUpperCase())}`)}
             </button>
           ))}
         </div>
@@ -201,7 +201,7 @@ function CreateTab({ onCreated }: { onCreated: () => void }) {
           {FREQUENCIES.map((f: any) => (
             <button key={f} onClick={() => setFrequency(f)}
               className={`px-3 py-1.5 rounded-lg text-sm font-medium border-2 transition-all ${frequency === f ? "border-blue-500 " + (freqColors[f] || "") : "border-gray-200 dark:border-gray-700 text-gray-500"}`}>
-              {t(`reviewSchedules.schedules.frequency${f.replace(/^./, (m) => m.toUpperCase())}`)}
+              {t(`reviewSchedules.schedules.frequency${f.replace(/^./, (m: any) => m.toUpperCase())}`)}
             </button>
           ))}
         </div>
@@ -272,7 +272,7 @@ function HistoryTab({ history }: { history: CampaignHistory[] }) {
                 <td className="py-3 px-4 text-right text-red-600 font-medium">{h.revoked}</td>
                 <td className="py-3 px-4">
                   <span className={`px-2 py-0.5 text-xs rounded-full ${statusColors[h.status] || statusColors.complete}`}>
-                    {t(`reviewSchedules.history.status${h.status.replace(/^./, (m) => m.toUpperCase())}`)}
+                    {t(`reviewSchedules.history.status${h.status.replace(/^./, (m: any) => m.toUpperCase())}`)}
                   </span>
                 </td>
               </tr>

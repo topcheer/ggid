@@ -390,7 +390,7 @@ export default function SecurityCenterDashboardPage() {
           </div>
           <div className="mt-4 flex items-center gap-2 text-xs text-gray-400">
             <Activity className="h-3 w-3" />
-            Total: {d.failed_login_chart.reduce((a, b) => a + b.count, 0)} {t("security.totalFailedWeek")}
+            Total: {d.failed_login_chart.reduce((a: any, b: any) => a + b.count, 0)} {t("security.totalFailedWeek")}
           </div>
         </div>
 

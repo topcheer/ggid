@@ -148,7 +148,7 @@ export default function DLPEgressPage() {
         if (found.index !== undefined) allMatches.push({ start: found.index, end: found.index + found[0].length, type: m.type });
       }
     }
-    allMatches.sort((a, b) => a.start - b.start);
+    allMatches.sort((a: any, b: any) => a.start - b.start);
     for (const m of allMatches) {
       if (m.start > lastIdx) parts.push({ text: result.slice(lastIdx, m.start) });
       parts.push({ text: result.slice(m.start, m.end), type: m.type });
@@ -159,7 +159,7 @@ export default function DLPEgressPage() {
   };
 
   const activePolicies = policies.filter(p => p.enabled);
-  const fieldTypeCounts = policies.reduce((acc, p) => { acc[p.field_type] = (acc[p.field_type] || 0) + 1; return acc; }, {} as Record<string, number>);
+  const fieldTypeCounts = policies.reduce((acc: any, p: any) => { acc[p.field_type] = (acc[p.field_type] || 0) + 1; return acc; }, {} as Record<string, number>);
 
   return (
     <div className="space-y-6">
@@ -230,7 +230,7 @@ export default function DLPEgressPage() {
           <div className={card}>
             <h3 className="mb-3 text-sm font-semibold uppercase text-gray-400">{t("dlpEgress.topRedacted")}</h3>
             <div className="space-y-2">
-              {Object.entries(fieldTypeCounts).sort(([,a],[,b]) => b - a).map(([type, count]) => (
+              {Object.entries(fieldTypeCounts).sort(([,a],[,b]) => b - a).map(([type, count]: any[]) => (
                 <div key={type} className="flex items-center gap-3">
                   <span className="w-20 text-xs font-mono text-gray-500">{type}</span>
                   <div className="flex-1 h-5 overflow-hidden rounded-full bg-gray-100 dark:bg-gray-700">

@@ -157,8 +157,8 @@ export default function DepartmentsPage() {
           {/* Summary row */}
           <div className="mb-3 grid grid-cols-3 gap-4 border-b border-gray-100 pb-3 dark:border-gray-700">
             <div><p className="text-xs font-semibold uppercase text-gray-400">Total Departments</p><p className="mt-1 text-xl font-bold text-indigo-600">{allDepts.length}</p></div>
-            <div><p className="text-xs font-semibold uppercase text-gray-400">Total Headcount</p><p className="mt-1 text-xl font-bold text-indigo-600">{allDepts.reduce((sum, d) => sum + d.headcount, 0)}</p></div>
-            <div><p className="text-xs font-semibold uppercase text-gray-400">Total Budget</p><p className="mt-1 text-xl font-bold text-indigo-600">${(allDepts.reduce((sum, d) => sum + d.budget, 0) / 1000000).toFixed(1)}M</p></div>
+            <div><p className="text-xs font-semibold uppercase text-gray-400">Total Headcount</p><p className="mt-1 text-xl font-bold text-indigo-600">{allDepts.reduce((sum: any, d: any) => sum + d.headcount, 0)}</p></div>
+            <div><p className="text-xs font-semibold uppercase text-gray-400">Total Budget</p><p className="mt-1 text-xl font-bold text-indigo-600">${(allDepts.reduce((sum: any, d: any) => sum + d.budget, 0) / 1000000).toFixed(1)}M</p></div>
           </div>
           {departments.map((d: any) => renderDept(d, 0))}
         </div>

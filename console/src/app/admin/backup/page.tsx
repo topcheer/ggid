@@ -100,7 +100,7 @@ export default function BackupPage() {
           <div className={card}>
             <h3 className="mb-3 text-sm font-semibold uppercase text-gray-400">{t("backup.drChecks")}</h3>
             <div className="space-y-2">
-              {[["Primary → Standby replication", true], ["DNS failover configured", true], ["Health check endpoints", true], ["Runbook documented", true], ["Last DR drill: 2025-01-10", true]].map(([check, ok]) => (
+              {[["Primary → Standby replication", true], ["DNS failover configured", true], ["Health check endpoints", true], ["Runbook documented", true], ["Last DR drill: 2025-01-10", true]].map(([check, ok]: any[]) => (
                 <div key={check as string} className="flex items-center gap-3 rounded-lg border p-2 dark:border-gray-700">{ok ? <CheckCircle2 className="h-4 w-4 text-green-500" /> : <XCircle className="h-4 w-4 text-red-500" />}<span className="text-sm">{check}</span></div>
               ))}
             </div>

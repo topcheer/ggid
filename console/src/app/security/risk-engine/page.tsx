@@ -102,16 +102,16 @@ export default function RiskEnginePage() {
     }
   }, [autoRefresh, tab, loadData]);
 
-  const sortedUsers = [...users].sort((a, b) => b.risk_score - a.risk_score);
+  const sortedUsers = [...users].sort((a: any, b: any) => b.risk_score - a.risk_score);
   const totalUsers = users.length;
   const highRisk = users.filter(u => u.risk_score >= 60).length;
   const criticalRisk = users.filter(u => u.risk_score >= 85).length;
-  const avgScore = totalUsers > 0 ? Math.round(users.reduce((a, u) => a + u.risk_score, 0) / totalUsers) : 0;
+  const avgScore = totalUsers > 0 ? Math.round(users.reduce((a: any, u: any) => a + u.risk_score, 0) / totalUsers) : 0;
 
   // Generate timeline events from user data
   const timelineEvents = sortedUsers.flatMap(u => [
     { id: `${u.user_id}-1`, user_id: u.user_id, username: u.username, score: u.risk_score, decision: getLevel(u.risk_score).action, signals: u.factors, time: new Date(Date.now() - Math.random() * 3600000).toISOString() },
-  ]).sort((a, b) => new Date(b.time).getTime() - new Date(a.time).getTime());
+  ]).sort((a: any, b: any) => new Date(b.time).getTime() - new Date(a.time).getTime());
 
   const filteredTimeline = timelineFilter === "all" ? timelineEvents : timelineEvents.filter(e => {
     const lvl = getLevel(e.score);
@@ -229,7 +229,7 @@ export default function RiskEnginePage() {
           <div className={card}>
             <h3 className="mb-4 flex items-center gap-2 text-sm font-semibold uppercase text-gray-400"><Sliders className="h-4 w-4" /> {t("riskEngine.weightConfig")}</h3>
             <div className="space-y-4">
-              {Object.entries(weights).map(([key, val]) => (
+              {Object.entries(weights).map(([key, val]: any[]) => (
                 <div key={key}>
                   <div className="flex items-center justify-between mb-1">
                     <code className="text-xs font-mono text-gray-500">{key}</code>
@@ -241,7 +241,7 @@ export default function RiskEnginePage() {
               ))}
             </div>
             <div className="mt-3 flex items-center justify-between">
-              <span className="text-xs text-gray-400">{t("riskEngine.totalWeight")}: {Object.values(weights).reduce((a, b) => a + b, 0)}%</span>
+              <span className="text-xs text-gray-400">{t("riskEngine.totalWeight")}: {Object.values(weights).reduce((a: any, b: any) => a + b, 0)}%</span>
               <button onClick={() => setSaving(true)} disabled={saving} className="flex items-center gap-1 rounded-lg bg-orange-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-orange-700 disabled:opacity-50">
                 {saving ? <Loader2 className="h-3 w-3 animate-spin" /> : <Save className="h-3 w-3" />} {t("riskEngine.save")}
               </button>

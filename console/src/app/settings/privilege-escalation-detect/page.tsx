@@ -33,7 +33,7 @@ export default function PrivilegeEscalationDetectPage() {
           <TrendingUp className="w-5 h-5 text-blue-400 mb-1" />
           <p className="text-xs text-gray-400">Avg Confidence</p>
           <p className="text-xl font-bold">
-            {data?.detected_events?.length ? Math.round(data.detected_events.reduce((a, e) => a + e.confidence_score, 0) / data.detected_events.length * 100) : 0}%
+            {data?.detected_events?.length ? Math.round(data.detected_events.reduce((a: any, e: any) => a + e.confidence_score, 0) / data.detected_events.length * 100) : 0}%
           </p>
         </div>
         <div className="bg-gray-900 rounded-xl p-4">

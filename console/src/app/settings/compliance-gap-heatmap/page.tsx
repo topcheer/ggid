@@ -39,7 +39,7 @@ export default function ComplianceGapHeatmapPage() {
 
       {/* Legend */}
       <div className="flex items-center gap-4 mb-4">
-        {Object.entries(statusColors).map(([status, color]) => (
+        {Object.entries(statusColors).map(([status, color]: any[]) => (
           <div key={status} className="flex items-center gap-1">
             <span className={"w-3 h-3 rounded " + color} />
             <span className="text-xs text-gray-400 capitalize">{status.replace("_", " ")}</span>

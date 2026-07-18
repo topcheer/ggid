@@ -85,11 +85,11 @@ function SuccessTab() {
 
   if (loading) return <Spinner />;
 
-  const totalSuccess = data.reduce((s, d) => s + d.success, 0);
-  const totalFailed = data.reduce((s, d) => s + d.failed, 0);
+  const totalSuccess = data.reduce((s: any, d: any) => s + d.success, 0);
+  const totalFailed = data.reduce((s: any, d: any) => s + d.failed, 0);
   const total = totalSuccess + totalFailed;
   const successRate = total > 0 ? Math.round((totalSuccess / total) * 100) : 0;
-  const peakHour = data.reduce((max, d) => d.success > max.success ? d : max, data[0]);
+  const peakHour = data.reduce((max: any, d: any) => d.success > max.success ? d : max, data[0]);
 
   // SVG stacked bar chart
   const maxVal = Math.max(...data.map((d: any) => d.success + d.failed), 1);
@@ -169,8 +169,8 @@ function FailureTab() {
 
   if (loading) return <Spinner />;
 
-  const total = reasons.reduce((s, r) => s + r.count, 0);
-  const topReason = reasons.reduce((max, r) => r.count > max.count ? r : max, reasons[0]);
+  const total = reasons.reduce((s: any, r: any) => s + r.count, 0);
+  const topReason = reasons.reduce((max: any, r: any) => r.count > max.count ? r : max, reasons[0]);
   const colors = ["#ef4444", "#f97316", "#eab308", "#8b5cf6", "#06b6d4", "#6b7280"];
   let cumulative = 0;
   const radius = 70, cx = 90, cy = 90;
@@ -261,7 +261,7 @@ function GeoTab() {
   if (loading) return <Spinner />;
 
   const totalCountries = new Set(locations.map((l: any) => l.country)).size;
-  const suspiciousIPs = locations.filter((l: any) => l.flagged).reduce((s, l) => s + l.unique_ips, 0);
+  const suspiciousIPs = locations.filter((l: any) => l.flagged).reduce((s: any, l: any) => s + l.unique_ips, 0);
 
   return (
     <div className="space-y-4">

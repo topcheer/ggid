@@ -42,7 +42,7 @@ export default function ThreatIntelligenceFeedPage() {
           <Activity className="w-5 h-5 text-yellow-400 mb-1" />
           <p className="text-xs text-gray-400">{t("threatIntel.avgConfidence")}</p>
           <p className="text-xl font-bold">
-            {data?.indicators?.length ? Math.round(data.indicators.reduce((a, i) => a + i.confidence, 0) / data.indicators.length * 100) : 0}%
+            {data?.indicators?.length ? Math.round(data.indicators.reduce((a: any, i: any) => a + i.confidence, 0) / data.indicators.length * 100) : 0}%
           </p>
         </div>
       </div>

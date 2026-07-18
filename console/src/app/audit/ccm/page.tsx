@@ -234,7 +234,7 @@ function HistoryTab() {
           ))}
         </svg>
         <div className="flex items-center justify-center gap-4 mt-2">
-          {Object.entries(colors).map(([fw, color]) => (
+          {Object.entries(colors).map(([fw, color]: any[]) => (
             <div key={fw} className="flex items-center gap-1.5"><div className="w-3 h-3 rounded" style={{ backgroundColor: color }} /><span className="text-xs text-gray-600 dark:text-gray-400">{fw}</span></div>
           ))}
         </div>

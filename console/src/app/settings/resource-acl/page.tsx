@@ -78,7 +78,7 @@ export default function ResourceACLPage() {
     }
   }
 
-  const sortTree = (node: TreeNode) => { node.children.sort((a, b) => a.is_dir === b.is_dir ? a.name.localeCompare(b.name) : a.is_dir ? -1 : 1); node.children.forEach(sortTree); };
+  const sortTree = (node: TreeNode) => { node.children.sort((a: any, b: any) => a.is_dir === b.is_dir ? a.name.localeCompare(b.name) : a.is_dir ? -1 : 1); node.children.forEach(sortTree); };
   sortTree(tree);
 
   const toggleExpand = (path: string) => setExpandedPaths((prev) => { const n = new Set(prev); n.has(path) ? n.delete(path) : n.add(path); return n; });

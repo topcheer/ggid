@@ -29,7 +29,7 @@ export default function UserLifecycleStatsPage() {
         <div className="bg-gray-900 rounded-xl p-6 flex items-center justify-center">
           <svg width="200" height="200" viewBox="0 0 200 200">
             {(() => { let offset = 0; const r = 70; const circ = 2 * Math.PI * r;
-              return stageEntries.map(([stage, count]) => {
+              return stageEntries.map(([stage, count]: any[]) => {
                 const pct = total > 0 ? count / total : 0;
                 const dash = pct * circ;
                 const elem = <circle key={stage} cx="100" cy="100" r={r} fill="none" stroke={colors[stage] ?? "#374151"} strokeWidth="20" strokeDasharray={dash + " " + (circ - dash)} strokeDashoffset={-offset} transform="rotate(-90 100 100)" />;
@@ -43,7 +43,7 @@ export default function UserLifecycleStatsPage() {
         </div>
         <div className="bg-gray-900 rounded-xl p-6">
           <h3 className="text-sm font-semibold mb-3">By Stage</h3>
-          {stageEntries.map(([stage, count]) => (
+          {stageEntries.map(([stage, count]: any[]) => (
             <div key={stage} className="flex items-center gap-2 mb-2">
               <span className="w-3 h-3 rounded-full" style={{ backgroundColor: colors[stage] }} />
               <span className="text-sm capitalize">{stage}</span>

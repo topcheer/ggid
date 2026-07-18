@@ -291,7 +291,7 @@ resource "${cfg.tf_provider}_iam_openid_connect_provider" "ggid" {
                         {testResult.error && <span className="text-xs text-red-500">{testResult.error}</span>}
                       </div>
                       {testResult.success && Object.keys(testResult.claims_received).length > 0 && (
-                        <div className="mt-2"><p className="text-xs font-semibold text-gray-400 mb-1">Claims Received:</p><div className="flex flex-wrap gap-1">{Object.entries(testResult.claims_received).map(([k, v]) => <span key={k} className="px-1.5 py-0.5 rounded bg-blue-50 dark:bg-blue-950/30 text-xs font-mono">{k}={v}</span>)}</div></div>
+                        <div className="mt-2"><p className="text-xs font-semibold text-gray-400 mb-1">Claims Received:</p><div className="flex flex-wrap gap-1">{Object.entries(testResult.claims_received).map(([k, v]: any[]) => <span key={k} className="px-1.5 py-0.5 rounded bg-blue-50 dark:bg-blue-950/30 text-xs font-mono">{k}={v}</span>)}</div></div>
                       )}
                       {testResult.roles_assigned?.length > 0 && (
                         <div className="mt-2"><p className="text-xs font-semibold text-gray-400 mb-1">Roles Assigned:</p><div className="flex flex-wrap gap-1">{testResult.roles_assigned.map(r => <span key={r} className="px-1.5 py-0.5 rounded bg-orange-50 dark:bg-orange-950/30 text-xs font-mono">{r}</span>)}</div></div>
@@ -323,7 +323,7 @@ resource "${cfg.tf_provider}_iam_openid_connect_provider" "ggid" {
             <div className="min-h-[180px]">
               {wizStep === 0 && <div className="space-y-3">
                 <div><label className="text-sm font-medium">Federation Name</label><input aria-label="Name" type="text" value={wizName} onChange={e => setWizName(e.target.value)} placeholder="Production AWS" className="mt-1 w-full rounded-lg border dark:border-gray-700 dark:bg-gray-900 px-3 py-2 text-sm" autoFocus /></div>
-                <div className="grid grid-cols-3 gap-3">{Object.entries(platformConfig).map(([key, cfg]) => (
+                <div className="grid grid-cols-3 gap-3">{Object.entries(platformConfig).map(([key, cfg]: any[]) => (
                   <button key={key} onClick={() => { setWizPlatform(key as "aws" | "azure" | "gcp"); setWizClaims(cfg.ggid_attrs.map((a: any, i: number) => ({ ggid_attr: a, cloud_claim: cfg.cloud_claims[i] }))); }} aria-pressed={wizPlatform === key} className={"rounded-xl border-2 p-4 text-center transition " + (wizPlatform === key ? "border-indigo-500 bg-indigo-50 dark:bg-indigo-950/30" : "border-gray-200 dark:border-gray-700 hover:border-gray-300")}><cfg.icon className={"h-8 w-8 mx-auto " + cfg.color} /><p className="mt-2 text-xs font-medium">{cfg.name}</p></button>
                 ))}</div>
               </div>}

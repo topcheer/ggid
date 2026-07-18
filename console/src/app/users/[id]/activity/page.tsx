@@ -170,7 +170,7 @@ export default function UserActivityPage({ params }: { params: { id: string } })
                 <div className="ml-12 mt-1 p-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg border border-gray-200 dark:border-gray-800">
                   <p className="text-xs font-semibold text-gray-500 mb-2">Additional Details</p>
                   <div className="grid grid-cols-2 gap-2">
-                    {Object.entries(event.details).map(([k, v]) => (
+                    {Object.entries(event.details).map(([k, v]: any[]) => (
                       <div key={k}>
                         <span className="text-xs text-gray-400">{k}:</span>
                         <span className="text-xs text-gray-700 dark:text-gray-300 ml-1 font-mono">{v}</span>

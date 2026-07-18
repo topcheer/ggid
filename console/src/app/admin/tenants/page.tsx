@@ -123,13 +123,13 @@ function TenantList({ tenants }: { tenants: Tenant[] }) {
                 </td>
                 <td className="py-3 px-4"><code className="text-xs text-gray-400 font-mono">{t_item.id}</code></td>
                 <td className="py-3 px-4">
-                  <span className={`px-2 py-0.5 text-xs rounded-full capitalize ${planColors[t_item.plan] || planColors.free}`}>{t(`tenants.create.plan${t_item.plan.replace(/^./, (m) => m.toUpperCase())}`)}</span>
+                  <span className={`px-2 py-0.5 text-xs rounded-full capitalize ${planColors[t_item.plan] || planColors.free}`}>{t(`tenants.create.plan${t_item.plan.replace(/^./, (m: any) => m.toUpperCase())}`)}</span>
                 </td>
                 <td className="py-3 px-4 text-right">
                   <span className="text-sm font-medium text-gray-900 dark:text-white flex items-center justify-end gap-1"><Users className="w-3 h-3 text-gray-400" />{t_item.user_count.toLocaleString()}</span>
                 </td>
                 <td className="py-3 px-4">
-                  <span className={`px-2 py-0.5 text-xs rounded-full ${statusColors[t_item.status] || statusColors.active}`}>{t(`tenants.list.status${t_item.status.replace(/^./, (m) => m.toUpperCase())}`)}</span>
+                  <span className={`px-2 py-0.5 text-xs rounded-full ${statusColors[t_item.status] || statusColors.active}`}>{t(`tenants.list.status${t_item.status.replace(/^./, (m: any) => m.toUpperCase())}`)}</span>
                 </td>
                 <td className="py-3 px-4 text-xs text-gray-500">{new Date(t_item.created).toLocaleDateString()}</td>
               </tr>
@@ -200,7 +200,7 @@ function CreateTenant({ onCreated }: { onCreated: () => void }) {
               <button key={p.id} onClick={() => setPlan(p.id)}
                 className={`flex flex-col items-start gap-1 p-4 rounded-xl border-2 text-left transition-all ${selected ? "border-blue-500 bg-blue-50 dark:bg-blue-950/20" : "border-gray-200 dark:border-gray-700 hover:border-gray-300"}`}>
                 <Icon className={`w-5 h-5 ${selected ? "text-blue-600" : "text-gray-400"}`} />
-                <span className="text-sm font-bold text-gray-900 dark:text-white">{t(`tenants.create.plan${p.id.replace(/^./, (m) => m.toUpperCase())}`)}</span>
+                <span className="text-sm font-bold text-gray-900 dark:text-white">{t(`tenants.create.plan${p.id.replace(/^./, (m: any) => m.toUpperCase())}`)}</span>
                 <span className="text-xs text-gray-400">{p.desc}</span>
               </button>
             );

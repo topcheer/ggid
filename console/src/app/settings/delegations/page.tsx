@@ -183,7 +183,7 @@ function DelegationTable({ delegations, type, onRevoke, onRespond }: {
                   <td className="py-3 px-4 text-xs text-gray-500">{new Date(d.expires).toLocaleDateString()}</td>
                   <td className="py-3 px-4">
                     <span className={`px-2 py-0.5 text-xs rounded-full ${statusColors[d.status]}`}>
-                      {t(`delegations.${type === "outgoing" ? "outgoing" : "incoming"}.status${d.status.replace(/^./, (m) => m.toUpperCase())}`)}
+                      {t(`delegations.${type === "outgoing" ? "outgoing" : "incoming"}.status${d.status.replace(/^./, (m: any) => m.toUpperCase())}`)}
                     </span>
                   </td>
                   <td className="py-3 px-4 text-right">

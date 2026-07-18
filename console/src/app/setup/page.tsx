@@ -189,7 +189,7 @@ function OrgStep({ data, setData, onBack, onNext }: { data: SetupData; setData: 
             <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">{t("setup.steps.org.industry")}</label>
             <select value={data.industry} onChange={(e) => setData({ ...data, industry: e.target.value })}
               className="w-full px-3 py-2.5 rounded-lg border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-sm text-gray-900 dark:text-white">
-              {industries.map((i: any) => <option key={i} value={i}>{t(`setup.steps.org.industry${i.replace(/^./, (m) => m.toUpperCase())}`)}</option>)}
+              {industries.map((i: any) => <option key={i} value={i}>{t(`setup.steps.org.industry${i.replace(/^./, (m: any) => m.toUpperCase())}`)}</option>)}
             </select>
           </div>
           <div>
@@ -304,7 +304,7 @@ function SSOStep({ data, setData, onBack, onNext, onSkip }: {
             {["saml", "oidc"].map((p: any) => (
               <button key={p} onClick={() => setData({ ...data, ssoProtocol: p })}
                 className={`flex-1 px-3 py-2 rounded-lg border-2 text-sm font-medium ${data.ssoProtocol === p ? "border-blue-500 bg-blue-50 dark:bg-blue-950/20 text-blue-700 dark:text-blue-300" : "border-gray-200 dark:border-gray-700 text-gray-500"}`}>
-                {t(`setup.steps.sso.protocol${p.replace(/^./, (m) => m.toUpperCase())}`)}
+                {t(`setup.steps.sso.protocol${p.replace(/^./, (m: any) => m.toUpperCase())}`)}
               </button>
             ))}
           </div>
@@ -362,7 +362,7 @@ function DoneStep({ data }: { data: SetupData }) {
     { label: t("setup.steps.org.tenantId"), value: data.tenantId },
     { label: t("setup.steps.auth.title"), value: t(`setup.steps.auth.${data.authStrategy}`) },
     { label: "MFA", value: data.enableMfa ? "Enabled" : "Disabled" },
-    { label: "SSO", value: data.ssoEnabled ? t(`setup.steps.sso.protocol${data.ssoProtocol.replace(/^./, (m) => m.toUpperCase())}`) : t("setup.steps.sso.skip") },
+    { label: "SSO", value: data.ssoEnabled ? t(`setup.steps.sso.protocol${data.ssoProtocol.replace(/^./, (m: any) => m.toUpperCase())}`) : t("setup.steps.sso.skip") },
   ];
 
   return (

@@ -908,7 +908,7 @@ function RolePermissionMatrix({
   }
 
   // Group permissions by resource_type
-  const grouped = permissions.reduce((acc, p) => {
+  const grouped = permissions.reduce((acc: any, p: any) => {
     const key = p.resource_type || "other";
     if (!acc[key]) acc[key] = [];
     acc[key].push(p);
@@ -921,7 +921,7 @@ function RolePermissionMatrix({
         <thead className="sticky top-0 border-b border-gray-200 bg-gray-50">
           <tr>
             <th scope="col" className="px-3 py-2 text-left font-medium text-gray-500">Role</th>
-            {Object.entries(grouped).map(([resource, perms]) => (
+            {Object.entries(grouped).map(([resource, perms]: any[]) => (
               <th scope="col" key={resource} className="px-3 py-2 text-center font-medium text-gray-500">
                 {resource}
                 <span className="ml-1 text-xs text-gray-400">({perms.length})</span>
@@ -936,9 +936,9 @@ function RolePermissionMatrix({
                 {role.name}
                 {role.system_role && <span className="ml-1 text-xs text-gray-400">(system)</span>}
               </td>
-              {Object.entries(grouped).map(([resource, perms]) => {
+              {Object.entries(grouped).map(([resource, perms]: any[]) => {
                 const rolePerms = matrix[role.id];
-                const hasAll = perms.every((p) => rolePerms?.has(p.id));
+                const hasAll = perms.every((p: any) => rolePerms?.has(p.id));
                 const hasSome = perms.some((p: any) => rolePerms?.has(p.id));
                 return (
                   <td key={resource} className="px-3 py-2 text-center">

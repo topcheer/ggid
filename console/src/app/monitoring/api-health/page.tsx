@@ -140,7 +140,7 @@ function EndpointsTab() {
                   <td className="py-3 px-3 text-right text-xs text-gray-600 dark:text-gray-400">{e.calls.toLocaleString()}</td>
                   <td className="py-3 px-3">
                     <span className={`px-2 py-0.5 text-xs rounded-full ${statusColors[e.status]}`}>
-                      {t(`apiHealth.endpoints.status${e.status.replace(/^./, (m) => m.toUpperCase())}`)}
+                      {t(`apiHealth.endpoints.status${e.status.replace(/^./, (m: any) => m.toUpperCase())}`)}
                     </span>
                   </td>
                 </tr>

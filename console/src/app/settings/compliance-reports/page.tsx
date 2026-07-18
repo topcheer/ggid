@@ -53,7 +53,7 @@ export default function ComplianceReportsPage() {
   }, []);
 
   const frameworks = ['SOC2', 'ISO27001', 'HIPAA', 'GDPR', 'PCI-DSS'];
-  const overallScore = Math.round(sections.reduce((s, x) => s + x.score, 0) / sections.length);
+  const overallScore = Math.round(sections.reduce((s: any, x: any) => s + x.score, 0) / sections.length);
   const statusColor = (s: string) => s === 'compliant' ? 'bg-green-100 text-green-700' : s === 'partial' ? 'bg-amber-100 text-amber-700' : 'bg-red-100 text-red-700';
   const priorityColor = (p: string) => p === 'high' ? 'bg-red-100 text-red-700' : 'bg-amber-100 text-amber-700';
   const remediationColor = (s: string) => s === 'resolved' ? 'bg-green-100 text-green-700' : s === 'in_progress' ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-600';

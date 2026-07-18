@@ -161,7 +161,7 @@ export default function ReBACPage() {
   });
 
   // Group tuples by namespace for visualization
-  const nsGroups = filteredTuples.reduce((acc, t) => {
+  const nsGroups = filteredTuples.reduce((acc: any, t: any) => {
     const key = t.namespace;
     if (!acc[key]) acc[key] = [];
     acc[key].push(t);
@@ -291,7 +291,7 @@ export default function ReBACPage() {
             <div className={card}><div className="py-12 text-center"><Database className="mx-auto h-12 w-12 text-gray-300" /><p className="mt-4 text-sm text-gray-400">No relation tuples found.</p></div></div>
           ) : (
             <div className="space-y-4">
-              {Object.entries(nsGroups).map(([ns, items]) => (
+              {Object.entries(nsGroups).map(([ns, items]: any[]) => (
                 <div key={ns} className={card}>
                   <h3 className="mb-3 flex items-center gap-2 text-sm font-semibold"><Layers className="h-4 w-4 text-cyan-500" /> {ns} <span className="text-xs text-gray-400">({items.length})</span></h3>
                   <div className="space-y-1">

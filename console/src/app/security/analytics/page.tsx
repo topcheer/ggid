@@ -104,7 +104,7 @@ function LineChart({ series, labels, height = 200 }: {
 function Donut({ segments, size = 120 }: {
   segments: { label: string; value: number; color: string }[]; size?: number;
 }) {
-  const total = segments.reduce((a, s) => a + s.value, 0) || 1;
+  const total = segments.reduce((a: any, s: any) => a + s.value, 0) || 1;
   const r = size / 2 - 8, cx = size / 2, cy = size / 2;
   let offset = 0;
   return (

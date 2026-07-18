@@ -73,7 +73,7 @@ export default function OAuthLifecyclePage() {
   const active = clients.filter((c: any) => c.status === "active").length;
   const suspended = clients.filter((c: any) => c.status === "suspended").length;
   const expired = clients.filter((c: any) => c.status === "expired").length;
-  const totalTokens = clients.reduce((s, c) => s + c.active_tokens, 0);
+  const totalTokens = clients.reduce((s: any, c: any) => s + c.active_tokens, 0);
 
   return (
     <div className="space-y-6">

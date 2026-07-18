@@ -252,7 +252,7 @@ export default function AuditReportsPage() {
   };
 
   const renderPieChart = () => {
-    const total = chartData.reduce((s, d) => s + d.count, 0) || 1;
+    const total = chartData.reduce((s: any, d: any) => s + d.count, 0) || 1;
     const cx = 150, cy = 130, r = 100;
     let cumulative = 0;
 
@@ -653,8 +653,8 @@ function groupEvents(
 
   const total = events.length;
   return Object.entries(groups)
-    .map(([name, count]) => ({ name, count, percentage: (count / total) * 100 }))
-    .sort((a, b) => b.count - a.count)
+    .map(([name, count]: any[]) => ({ name, count, percentage: (count / total) * 100 }))
+    .sort((a: any, b: any) => b.count - a.count)
     .slice(0, 15);
 }
 

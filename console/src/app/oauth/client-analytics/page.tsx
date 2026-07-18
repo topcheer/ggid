@@ -37,10 +37,10 @@ export default function ClientAnalyticsPage() {
   }, []);
 
   const cardCls = "rounded-xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-700 dark:bg-gray-800";
-  const totalTokens = stats.reduce((s, c) => s + c.total_tokens, 0);
-  const totalUsers = stats.reduce((s, c) => s + c.unique_users, 0);
-  const avgError = stats.length > 0 ? stats.reduce((s, c) => s + c.error_rate, 0) / stats.length : 0;
-  const totalReqs = stats.reduce((s, c) => s + c.total_requests, 0);
+  const totalTokens = stats.reduce((s: any, c: any) => s + c.total_tokens, 0);
+  const totalUsers = stats.reduce((s: any, c: any) => s + c.unique_users, 0);
+  const avgError = stats.length > 0 ? stats.reduce((s: any, c: any) => s + c.error_rate, 0) / stats.length : 0;
+  const totalReqs = stats.reduce((s: any, c: any) => s + c.total_requests, 0);
 
   return (
     <div className="space-y-6">

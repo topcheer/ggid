@@ -390,7 +390,7 @@ export default function DashboardPage() {
               {Object.entries(auditStats.events_by_action)
                 .sort(([, a], [, b]) => b - a)
                 .slice(0, 6)
-                .map(([action, count]) => {
+                .map(([action, count]: any[]) => {
                   const maxCount = Math.max(...Object.values(auditStats!.events_by_action!));
                   const pct = maxCount > 0 ? (count / maxCount) * 100 : 0;
                   return (

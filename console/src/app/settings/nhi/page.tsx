@@ -152,13 +152,13 @@ function ListTab({ nhis, search, setSearch }: { nhis: NHI[]; search: string; set
                     <td className="py-3 px-4">
                       <div className="flex items-center gap-2">
                         <Icon className="w-4 h-4 text-gray-400" />
-                        <span className="text-xs text-gray-600 dark:text-gray-400">{t(`nhi.list.type${n.type.replace(/_./g, (m) => m[1].toUpperCase()).replace(/^./, (m) => m.toUpperCase())}`)}</span>
+                        <span className="text-xs text-gray-600 dark:text-gray-400">{t(`nhi.list.type${n.type.replace(/_./g, (m) => m[1].toUpperCase()).replace(/^./, (m: any) => m.toUpperCase())}`)}</span>
                       </div>
                     </td>
                     <td className="py-3 px-4 font-mono text-sm text-gray-900 dark:text-white">{n.name}</td>
                     <td className="py-3 px-4">
                       <span className={`px-2 py-0.5 text-xs rounded-full ${statusColors[n.status] || statusColors.inactive}`}>
-                        {t(`nhi.list.status${n.status.replace(/^./, (m) => m.toUpperCase())}`)}
+                        {t(`nhi.list.status${n.status.replace(/^./, (m: any) => m.toUpperCase())}`)}
                       </span>
                     </td>
                     <td className="py-3 px-4 text-gray-600 dark:text-gray-400">{n.owner}</td>
@@ -216,7 +216,7 @@ function RegisterTab({ onRegistered }: { onRegistered: () => void }) {
               <button key={tp} onClick={() => setType(tp)}
                 className={`flex flex-col items-center gap-1 p-3 rounded-lg border-2 text-xs transition-all ${type === tp ? "border-blue-500 bg-blue-50 dark:bg-blue-950/30 text-blue-700 dark:text-blue-300" : "border-gray-200 dark:border-gray-700 text-gray-500"}`}>
                 <Icon className="w-5 h-5" />
-                {t(`nhi.list.type${tp.replace(/_./g, (m) => m[1].toUpperCase()).replace(/^./, (m) => m.toUpperCase())}`)}
+                {t(`nhi.list.type${tp.replace(/_./g, (m) => m[1].toUpperCase()).replace(/^./, (m: any) => m.toUpperCase())}`)}
               </button>
             );
           })}
@@ -288,13 +288,13 @@ function OrphansTab({ orphans, setOrphans }: { orphans: Orphan[]; setOrphans: (o
               {orphans.map((o: any) => (
                 <tr key={o.id} className="border-b border-gray-100 dark:border-gray-800/50">
                   <td className="py-3 px-4 font-mono text-sm text-gray-900 dark:text-white">{o.name}</td>
-                  <td className="py-3 px-4"><span className="text-xs text-gray-500">{t(`nhi.list.type${o.type.replace(/_./g, (m) => m[1].toUpperCase()).replace(/^./, (m) => m.toUpperCase())}`)}</span></td>
+                  <td className="py-3 px-4"><span className="text-xs text-gray-500">{t(`nhi.list.type${o.type.replace(/_./g, (m) => m[1].toUpperCase()).replace(/^./, (m: any) => m.toUpperCase())}`)}</span></td>
                   <td className="py-3 px-4 text-xs text-gray-500">{new Date(o.last_seen).toLocaleDateString()}</td>
                   <td className="py-3 px-4 text-right">
                     <span className={`text-xs font-medium ${o.days_inactive > 60 ? "text-red-600" : "text-orange-500"}`}>{o.days_inactive}d</span>
                   </td>
                   <td className="py-3 px-4">
-                    <span className="px-2 py-0.5 text-xs bg-orange-100 text-orange-700 dark:bg-orange-950 dark:text-orange-300 rounded">{t(`nhi.orphans.reason${o.reason.replace(/_./g, (m) => m[1].toUpperCase()).replace(/^./, (m) => m.toUpperCase())}`)}</span>
+                    <span className="px-2 py-0.5 text-xs bg-orange-100 text-orange-700 dark:bg-orange-950 dark:text-orange-300 rounded">{t(`nhi.orphans.reason${o.reason.replace(/_./g, (m) => m[1].toUpperCase()).replace(/^./, (m: any) => m.toUpperCase())}`)}</span>
                   </td>
                   <td className="py-3 px-4">
                     <div className="flex items-center gap-1 justify-end">

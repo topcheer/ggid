@@ -70,7 +70,7 @@ export default function ImportMonitorPage() {
 
   const tabs: { id: TabId; label: string; icon: typeof Activity; count?: number }[] = [
     { id: "jobs", label: t("importMonitor.tabs.jobs"), icon: Activity, count: jobs.length },
-    { id: "errors", label: t("importMonitor.tabs.errors"), icon: AlertCircle, count: jobs.reduce((s, j) => s + j.failed, 0) },
+    { id: "errors", label: t("importMonitor.tabs.errors"), icon: AlertCircle, count: jobs.reduce((s: any, j: any) => s + j.failed, 0) },
     { id: "upload", label: t("importMonitor.tabs.upload"), icon: Upload },
   ];
 
@@ -153,7 +153,7 @@ function JobsList({ jobs, onSelect }: { jobs: ImportJob[]; onSelect: (id: string
               </div>
               <span className={`flex items-center gap-1 px-2.5 py-0.5 text-xs rounded-full ${cfg.color}`}>
                 <StatusIcon className={`w-3 h-3 ${job.status === "running" ? "animate-spin" : ""}`} />
-                {t(`importMonitor.jobs.status${job.status.replace(/^./, (m) => m.toUpperCase())}`)}
+                {t(`importMonitor.jobs.status${job.status.replace(/^./, (m: any) => m.toUpperCase())}`)}
               </span>
             </div>
 

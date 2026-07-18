@@ -190,12 +190,12 @@ function LogTab() {
                 <td className="py-3 px-3 text-xs text-gray-500">{new Date(l.timestamp).toLocaleString()}</td>
                 <td className="py-3 px-3">
                   <span className={`px-2 py-0.5 text-xs rounded-full ${statusColors[l.status]}`}>
-                    {t(`migration.log.status${l.status.replace(/^./, (m) => m.toUpperCase())}`)}
+                    {t(`migration.log.status${l.status.replace(/^./, (m: any) => m.toUpperCase())}`)}
                   </span>
                 </td>
                 <td className="py-3 px-3">
                   <div className="flex flex-wrap gap-1">
-                    {Object.entries(l.attributes).map(([k, v]) => (
+                    {Object.entries(l.attributes).map(([k, v]: any[]) => (
                       <span key={k} className="text-xs text-gray-500">{k}: {v}</span>
                     ))}
                     {Object.keys(l.attributes).length === 0 && <span className="text-xs text-gray-400">—</span>}
@@ -314,7 +314,7 @@ function ConfigTab() {
         <h4 className="text-sm font-medium text-gray-900 dark:text-white mb-1">{t("migration.config.mappingTitle")}</h4>
         <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">{t("migration.config.mappingDesc")}</p>
         <div className="space-y-2">
-          {Object.entries(config.attribute_mapping).map(([legacy, ggid]) => (
+          {Object.entries(config.attribute_mapping).map(([legacy, ggid]: any[]) => (
             <div key={legacy} className="flex items-center gap-2 p-2 rounded-lg bg-gray-50 dark:bg-gray-800/50">
               <input type="text" value={legacy} readOnly className="flex-1 px-2 py-1.5 rounded border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-xs text-gray-900 dark:text-white" />
               <ArrowRight className="w-4 h-4 text-gray-400" />

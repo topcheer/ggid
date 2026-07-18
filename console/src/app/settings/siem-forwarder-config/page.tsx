@@ -91,7 +91,7 @@ const [filters, setFilters] = useState<FilterRule[]>([
     }, 800);
   };
 
-  const totalEvents = destinations.reduce((s, d) => s + d.eventsForwarded, 0);
+  const totalEvents = destinations.reduce((s: any, d: any) => s + d.eventsForwarded, 0);
 
   return (
     <div className="p-6 max-w-5xl mx-auto space-y-6">

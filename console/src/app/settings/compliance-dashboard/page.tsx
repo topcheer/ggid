@@ -46,7 +46,7 @@ export default function ComplianceDashboardPage() {
   }, []);
 
   const cardCls = "rounded-xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-700 dark:bg-gray-800";
-  const totalGaps = frameworks.reduce((s, f) => s + f.gap_count, 0);
+  const totalGaps = frameworks.reduce((s: any, f: any) => s + f.gap_count, 0);
 
   return (
     <div className="space-y-6">

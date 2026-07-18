@@ -114,7 +114,7 @@ export default function RolePermissionsMatrixPage() {
       );
       setMatrix(m);
       // deep-copy snapshot
-      setOriginalMatrix(Object.fromEntries(Object.entries(m).map(([k, v]) => [k, new Set(v)])));
+      setOriginalMatrix(Object.fromEntries(Object.entries(m).map(([k, v]: any[]) => [k, new Set(v)])));
       setError(null);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load data");
@@ -245,7 +245,7 @@ export default function RolePermissionsMatrixPage() {
         }),
       );
 
-      setOriginalMatrix(Object.fromEntries(Object.entries(matrix).map(([k, v]) => [k, new Set(v)])));
+      setOriginalMatrix(Object.fromEntries(Object.entries(matrix).map(([k, v]: any[]) => [k, new Set(v)])));
       setMsg(`Saved permissions for ${changedRoles.length} role(s)`);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to save");
@@ -410,7 +410,7 @@ export default function RolePermissionsMatrixPage() {
                   &nbsp;
                 </th>
                 {PERMISSION_GROUPS.map((group: any) =>
-                  group.permissions.map((permKey) => (
+                  group.permissions.map((permKey: any) => (
                     <th
                       key={permKey}
                       className="sticky top-[33px] border-b border-r border-gray-100 px-1 py-2 text-center font-mono text-[10px] font-normal text-gray-400 dark:border-gray-700"
@@ -452,7 +452,7 @@ export default function RolePermissionsMatrixPage() {
                     </td>
                     {/* Permission cells */}
                     {PERMISSION_GROUPS.map((group: any) =>
-                      group.permissions.map((permKey) => {
+                      group.permissions.map((permKey: any) => {
                         const permObj = permByKey.get(permKey);
                         const permId = permObj?.id || "";
                         const isAllowed = rolePerms.has(permId);

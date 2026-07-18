@@ -104,14 +104,14 @@ export default function RoleMiningPage() {
             <span className="text-sm text-gray-500">Unused Permissions</span>
             <TrendingDown className="w-5 h-5 text-gray-400" />
           </div>
-          <p className="text-2xl font-bold mt-2 text-yellow-600">{users.reduce((s, u) => s + u.unused_count, 0)}</p>
+          <p className="text-2xl font-bold mt-2 text-yellow-600">{users.reduce((s: any, u: any) => s + u.unused_count, 0)}</p>
         </div>
         <div className="rounded-lg border p-4 dark:border-gray-800">
           <div className="flex items-center justify-between">
             <span className="text-sm text-gray-500">Over-Granted</span>
             <AlertTriangle className="w-5 h-5 text-gray-400" />
           </div>
-          <p className="text-2xl font-bold mt-2 text-red-600">{users.reduce((s, u) => s + u.over_granted_count, 0)}</p>
+          <p className="text-2xl font-bold mt-2 text-red-600">{users.reduce((s: any, u: any) => s + u.over_granted_count, 0)}</p>
         </div>
       </div>
 

@@ -325,7 +325,7 @@ export default function SessionsPage() {
     }
 
     // Sort
-    result.sort((a, b) => {
+    result.sort((a: any, b: any) => {
       let valA: string | number;
       let valB: string | number;
       switch (sortField) {

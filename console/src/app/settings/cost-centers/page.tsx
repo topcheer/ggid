@@ -40,9 +40,9 @@ export default function CostCentersPage() {
 
   useEffect(() => { fetchData(); }, [fetchData]);
 
-  const totalAlloc = data?.allocation.reduce((s, a) => s + a.amount, 0) || 1;
-  const totalBudget = data?.departments.reduce((s, d) => s + d.budget, 0) || 0;
-  const totalUsed = data?.departments.reduce((s, d) => s + (d.budget * d.budget_used_pct / 100), 0) || 0;
+  const totalAlloc = data?.allocation.reduce((s: any, a: any) => s + a.amount, 0) || 1;
+  const totalBudget = data?.departments.reduce((s: any, d: any) => s + d.budget, 0) || 0;
+  const totalUsed = data?.departments.reduce((s: any, d: any) => s + (d.budget * d.budget_used_pct / 100), 0) || 0;
 
   return (
     <div className="space-y-6">

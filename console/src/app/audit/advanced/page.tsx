@@ -442,7 +442,7 @@ export default function AuditAdvancedPage() {
         onChange={(e) => updateCondition(groupId, cond.id, { field: e.target.value as FieldType })}
         className="rounded-md border border-gray-300 px-2 py-1.5 text-xs dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200"
       >
-        {Object.entries(FIELD_LABELS).map(([val, label]) => (
+        {Object.entries(FIELD_LABELS).map(([val, label]: any[]) => (
           <option key={val} value={val}>{label}</option>
         ))}
       </select>
@@ -451,7 +451,7 @@ export default function AuditAdvancedPage() {
         onChange={(e) => updateCondition(groupId, cond.id, { operator: e.target.value as Operator })}
         className="rounded-md border border-gray-300 px-2 py-1.5 text-xs dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200"
       >
-        {Object.entries(OPERATOR_LABELS).map(([val, label]) => (
+        {Object.entries(OPERATOR_LABELS).map(([val, label]: any[]) => (
           <option key={val} value={val}>{label}</option>
         ))}
       </select>

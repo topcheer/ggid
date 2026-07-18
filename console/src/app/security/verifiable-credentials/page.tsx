@@ -261,7 +261,7 @@ export default function VerifiableCredentialsPage() {
                   <div key={i} className={"flex items-center gap-2 rounded-lg p-2 " + (c.passed ? "bg-green-50 dark:bg-green-950/20" : "bg-red-50 dark:bg-red-950/20")}>{c.passed ? <CheckCircle className="h-3.5 w-3.5 text-green-500 shrink-0" /> : <XCircle className="h-3.5 w-3.5 text-red-500 shrink-0" />}<span className="font-medium text-xs">{c.name}</span>{i < (verifyResult.checks?.length || 1) - 1 && <ArrowRight className="h-3 w-3 text-gray-300 ml-auto" />}<span className="text-gray-400 text-xs ml-auto">{c.detail}</span></div>
                 ))}</div>
                 {verifyResult.claims && Object.keys(verifyResult.claims).length > 0 && (
-                  <div className="mt-4"><p className="text-xs font-semibold uppercase text-gray-400 mb-2">Extracted Claims</p><div className="space-y-1">{Object.entries(verifyResult.claims).map(([k, v]) => <div key={k} className="flex justify-between text-xs"><span className="text-gray-500">{k}</span><span className="font-mono">{v}</span></div>)}</div></div>
+                  <div className="mt-4"><p className="text-xs font-semibold uppercase text-gray-400 mb-2">Extracted Claims</p><div className="space-y-1">{Object.entries(verifyResult.claims).map(([k, v]: any[]) => <div key={k} className="flex justify-between text-xs"><span className="text-gray-500">{k}</span><span className="font-mono">{v}</span></div>)}</div></div>
                 )}
               </div>
             ) : <div className="py-12 text-center"><Eye className="mx-auto h-10 w-10 text-gray-300" /><p className="mt-3 text-sm text-gray-400">Paste a VP and click Verify.</p></div>}

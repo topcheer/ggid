@@ -192,7 +192,7 @@ export default function MonitoringPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
-              {Object.entries(gwStats.routes).map(([route, stats]) => (
+              {Object.entries(gwStats.routes).map(([route, stats]: any[]) => (
                 <tr key={route} className="hover:bg-gray-50">
                   <td className="px-4 py-3 font-mono text-xs">{route}</td>
                   <td className="px-4 py-3 text-sm">{stats.requests || 0}</td>

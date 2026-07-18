@@ -47,7 +47,7 @@ export default function RiskScoringConfigPage() {
 
   useEffect(() => { loadData(); }, [loadData]);
 
-  const totalWeight = Object.values(config.weights).reduce((a, b) => a + b, 0);
+  const totalWeight = Object.values(config.weights).reduce((a: any, b: any) => a + b, 0);
 
   const save = useCallback(async () => {
     setSaving(true);

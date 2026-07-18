@@ -195,8 +195,8 @@ export default function AuditPage() {
   // Prepare chart data
   const actionData = stats
     ? Object.entries(stats.events_by_action)
-        .map(([action, count]) => ({ name: action, value: count }))
-        .sort((a, b) => b.value - a.value)
+        .map(([action, count]: any[]) => ({ name: action, value: count }))
+        .sort((a: any, b: any) => b.value - a.value)
         .slice(0, 8)
     : [];
 
@@ -210,7 +210,7 @@ export default function AuditPage() {
   const actorData = stats
     ? stats.top_actors
         .map((a: any) => ({ name: a.actor_name || a.actor_id.slice(0, 8), count: a.count }))
-        .sort((a, b) => b.count - a.count)
+        .sort((a: any, b: any) => b.count - a.count)
     : [];
 
   // Action bar chart data (top actions as bars)

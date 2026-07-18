@@ -56,7 +56,7 @@ export default function EmergencyAccessAuditPage() {
   }, [startDate, endDate, fetchData]);
 
   const activeCount = records.filter((r: any) => r.status === "active").length;
-  const totalActions = records.reduce((s, r) => s + r.actions_taken.length, 0);
+  const totalActions = records.reduce((s: any, r: any) => s + r.actions_taken.length, 0);
 
   return (
     <div className="space-y-6">
@@ -92,7 +92,7 @@ export default function EmergencyAccessAuditPage() {
         </div>
         <div className="rounded-lg border p-4 dark:border-gray-800">
           <div className="flex items-center justify-between"><span className="text-sm text-gray-500">Avg Duration</span><Clock className="w-5 h-5 text-gray-400" /></div>
-          <p className="text-2xl font-bold mt-1">{records.length > 0 ? Math.round(records.reduce((s, r) => s + r.duration_minutes, 0) / records.length) : 0}<span className="text-base text-gray-400">m</span></p>
+          <p className="text-2xl font-bold mt-1">{records.length > 0 ? Math.round(records.reduce((s: any, r: any) => s + r.duration_minutes, 0) / records.length) : 0}<span className="text-base text-gray-400">m</span></p>
         </div>
       </div>
 

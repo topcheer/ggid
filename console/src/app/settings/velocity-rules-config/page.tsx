@@ -39,7 +39,7 @@ export default function VelocityRulesConfigPage() {
         <div className="bg-gray-900 rounded-xl p-4">
           <Activity className="w-5 h-5 text-red-400 mb-1" />
           <p className="text-xs text-gray-400">Triggered (24h)</p>
-          <p className="text-xl font-bold text-red-400">{data?.rules?.reduce((a, r) => a + r.triggered_24h, 0) ?? 0}</p>
+          <p className="text-xl font-bold text-red-400">{data?.rules?.reduce((a: any, r: any) => a + r.triggered_24h, 0) ?? 0}</p>
         </div>
         <div className="bg-gray-900 rounded-xl p-4">
           <Globe className="w-5 h-5 text-purple-400 mb-1" />

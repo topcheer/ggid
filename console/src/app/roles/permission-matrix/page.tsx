@@ -187,7 +187,7 @@ export default function PermissionMatrixPage() {
     setMatrix((prev) => {
       const next = { ...prev };
       const set = new Set(next[roleId] || []);
-      const allAssigned = group.permissions.every((p) => set.has(p.key));
+      const allAssigned = group.permissions.every((p: any) => set.has(p.key));
       if (allAssigned) {
         group.permissions.forEach((p: any) => set.delete(p.key));
       } else {
@@ -443,7 +443,7 @@ export default function PermissionMatrixPage() {
                         Toggle all {group.label}
                       </td>
                       {visibleRoles.map((role: any) => {
-                        const allOn = groupPerms.every((p) => matrix[role.id]?.has(p.key));
+                        const allOn = groupPerms.every((p: any) => matrix[role.id]?.has(p.key));
                         return (
                           <td key={role.id} className="border-b border-r border-gray-200 px-3 py-1.5 text-center dark:border-gray-700">
                             <button

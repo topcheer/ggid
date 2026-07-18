@@ -37,7 +37,7 @@ export default function GrantTypeStatsPage() {
 
   useEffect(() => { fetchData(); }, [fetchData]);
 
-  const total = data?.counts.reduce((s, d) => s + d.count, 0) || 1;
+  const total = data?.counts.reduce((s: any, d: any) => s + d.count, 0) || 1;
   const maxCount = Math.max(...(data?.counts.map((d: any) => d.count) || [1]), 1);
   const trendKeys = data ? Object.keys(data.trend[0] || {}).filter((k: any) => k !== "date") : [];
   const maxTrend = Math.max(...(data?.trend.flatMap((t) => trendKeys.map((k: any) => (t)[k] as number)) || [1]), 1);

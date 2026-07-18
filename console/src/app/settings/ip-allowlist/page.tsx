@@ -44,7 +44,7 @@ function isValidCIDR(input: string): boolean {
 function isValidIP(ip: string): boolean {
   const parts = ip.split(".");
   if (parts.length !== 4) return false;
-  return parts.every((p) => {
+  return parts.every((p: any) => {
     const n = Number(p);
     return n >= 0 && n <= 255;
   });
@@ -71,7 +71,7 @@ function isIPInCIDR(ip: string, cidr: string): boolean {
 function checkIP(ip: string, rules: IPRule[]): boolean {
   const sorted = [...rules]
     .filter((r: any) => r.enabled)
-    .sort((a, b) => a.priority - b.priority);
+    .sort((a: any, b: any) => a.priority - b.priority);
   return sorted.some((r: any) => isIPInCIDR(ip, r.cidr));
 }
 

@@ -116,7 +116,7 @@ export default function AuditExplorerPage() {
                 <select value={filterSeverity} onChange={(e) => setFilterSeverity(e.target.value)}
                   className="px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-sm text-gray-900 dark:text-white">
                   <option value="all">{t("auditExplorer.events.allSeverities")}</option>
-                  {["info", "warning", "error", "critical"].map((s: any) => <option key={s} value={s}>{t(`auditExplorer.events.severity${s.replace(/^./, (m) => m.toUpperCase())}`)}</option>)}
+                  {["info", "warning", "error", "critical"].map((s: any) => <option key={s} value={s}>{t(`auditExplorer.events.severity${s.replace(/^./, (m: any) => m.toUpperCase())}`)}</option>)}
                 </select>
                 <select value={filterRange} onChange={(e) => setFilterRange(e.target.value)}
                   className="px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-sm text-gray-900 dark:text-white">
@@ -163,7 +163,7 @@ export default function AuditExplorerPage() {
                             <td className="py-3 px-3"><code className="text-xs text-gray-900 dark:text-white">{e.type}</code></td>
                             <td className="py-3 px-3">
                               <span className={`px-2 py-0.5 text-xs rounded-full ${SEVERITY_COLORS[e.severity]}`}>
-                                {t(`auditExplorer.events.severity${e.severity.replace(/^./, (m) => m.toUpperCase())}`)}
+                                {t(`auditExplorer.events.severity${e.severity.replace(/^./, (m: any) => m.toUpperCase())}`)}
                               </span>
                             </td>
                             <td className="py-3 px-3 text-gray-900 dark:text-white">{e.user}</td>

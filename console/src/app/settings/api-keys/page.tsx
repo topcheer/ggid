@@ -384,12 +384,12 @@ export default function APIKeyLifecyclePage() {
             <div className={card + " text-center"}><KeyRound className="mx-auto h-5 w-5 text-indigo-400" /><p className="mt-2 text-2xl font-bold">{activeKeys.length}</p><p className="text-xs text-gray-400">Active Keys</p></div>
             <div className={card + " text-center"}><Clock className="mx-auto h-5 w-5 text-gray-400" /><p className="mt-2 text-2xl font-bold">{expiredKeys.length}</p><p className="text-xs text-gray-400">Expired</p></div>
             <div className={card + " text-center"}><XCircle className="mx-auto h-5 w-5 text-red-400" /><p className="mt-2 text-2xl font-bold">{revokedKeys.length}</p><p className="text-xs text-gray-400">Revoked</p></div>
-            <div className={card + " text-center"}><Gauge className="mx-auto h-5 w-5 text-blue-400" /><p className="mt-2 text-2xl font-bold">{keys.reduce((a, k) => a + (k.usage_count ?? 0), 0)}</p><p className="text-xs text-gray-400">Total API Calls</p></div>
+            <div className={card + " text-center"}><Gauge className="mx-auto h-5 w-5 text-blue-400" /><p className="mt-2 text-2xl font-bold">{keys.reduce((a: any, k: any) => a + (k.usage_count ?? 0), 0)}</p><p className="text-xs text-gray-400">Total API Calls</p></div>
           </div>
           <div className={card}>
             <h3 className="mb-4 flex items-center gap-2 text-sm font-semibold uppercase text-gray-400"><Activity className="h-4 w-4" /> Key Activity Timeline</h3>
             <div className="space-y-2">
-              {keys.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()).map(k => (
+              {keys.sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()).map(k => (
                 <div key={k.id} className="flex items-center justify-between rounded-lg border p-3 dark:border-gray-700">
                   <div className="flex items-center gap-3">
                     <div className={`flex h-8 w-8 items-center justify-center rounded-lg ${k.status === "active" ? "bg-green-100 dark:bg-green-900/30" : k.status === "revoked" ? "bg-red-100 dark:bg-red-900/30" : "bg-gray-100 dark:bg-gray-800"}`}>

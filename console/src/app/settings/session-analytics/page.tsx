@@ -23,7 +23,7 @@ export default function SessionAnalyticsPage() {
   useEffect(() => { fetchData(); }, [fetchData]);
 
   const platformColors = ["#3b82f6", "#10b981", "#f59e0b", "#8b5cf6", "#ef4444", "#06b6d4"];
-  const totalPlatform = data ? data.by_platform.reduce((s, p) => s + p.count, 0) || 1 : 1;
+  const totalPlatform = data ? data.by_platform.reduce((s: any, p: any) => s + p.count, 0) || 1 : 1;
 
   return (
     <div className="space-y-6">

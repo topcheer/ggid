@@ -43,7 +43,7 @@ export default function AbacPolicyEditorPage() {
       if (target < 0 || target >= prev.length) return prev;
       const next = [...prev];
       [next[idx].priority, next[target].priority] = [next[target].priority, next[idx].priority];
-      return next.sort((a, b) => a.priority - b.priority);
+      return next.sort((a: any, b: any) => a.priority - b.priority);
     });
   };
   const runSim = () => {

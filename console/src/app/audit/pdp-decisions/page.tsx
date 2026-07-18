@@ -58,7 +58,7 @@ export default function PDPDecisionsPage() {
   const allowCount = decisions.filter(d => d.decision === "allow").length;
   const denyCount = decisions.filter(d => d.decision === "deny").length;
   const stepUpCount = decisions.filter(d => d.decision === "step_up").length;
-  const avgLatency = decisions.length > 0 ? Math.round(decisions.reduce((a, d) => a + d.latency_ms, 0) / decisions.length) : 0;
+  const avgLatency = decisions.length > 0 ? Math.round(decisions.reduce((a: any, d: any) => a + d.latency_ms, 0) / decisions.length) : 0;
   const cacheHitRate = decisions.length > 0 ? Math.round(decisions.filter(d => d.cache_hit).length / decisions.length * 100) : 0;
   const deniedDecisions = decisions.filter(d => d.decision === "deny");
   const total = decisions.length || 1;

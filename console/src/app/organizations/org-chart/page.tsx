@@ -84,7 +84,7 @@ export default function OrgChartPage() {
   };
   const countNodes = (n: OrgNode | null): number => {
     if (!n) return 0;
-    return 1 + (n.children || []).reduce((s, c) => s + countNodes(c), 0);
+    return 1 + (n.children || []).reduce((s: any, c: any) => s + countNodes(c), 0);
   };
   if (error) {
     return (

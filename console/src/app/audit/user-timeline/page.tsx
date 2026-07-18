@@ -62,7 +62,7 @@ export default function UserTimelinePage() {
     return true;
   });
 
-  const eventTypeCounts = events.reduce((acc, e) => { const type = classifyEvent(e.action); acc[type] = (acc[type] || 0) + 1; return acc; }, {} as Record<string, number>);
+  const eventTypeCounts = events.reduce((acc: any, e: any) => { const type = classifyEvent(e.action); acc[type] = (acc[type] || 0) + 1; return acc; }, {} as Record<string, number>);
 
   return (
     <div className="space-y-6">
@@ -111,7 +111,7 @@ export default function UserTimelinePage() {
                   {isExpanded && (
                     <div className="mt-2 ml-2 rounded-lg border-l-2 border-blue-400 pl-3 dark:border-blue-500">
                       <div className="space-y-1">
-                        {Object.entries(ev.details || {}).slice(0, 8).map(([k, v]) => (
+                        {Object.entries(ev.details || {}).slice(0, 8).map(([k, v]: any[]) => (
                           <div key={k} className="flex items-center gap-2 text-xs"><span className="text-gray-400">{k}:</span><code className="font-mono text-gray-500">{typeof v === "object" ? JSON.stringify(v) : String(v)}</code></div>
                         ))}
                         {Object.keys(ev.details || {}).length === 0 && <p className="text-xs text-gray-400">{t("userTimeline.noDetails")}</p>}

@@ -33,7 +33,7 @@ export default function MFAEnrollmentStatsPage() {
 
   useEffect(() => { fetchData(); }, [fetchData]);
 
-  const total = data?.method_distribution.reduce((s, d) => s + d.count, 0) || 1;
+  const total = data?.method_distribution.reduce((s: any, d: any) => s + d.count, 0) || 1;
   const gaugeColor = data ? (data.enrollment_rate >= 80 ? "#10b981" : data.enrollment_rate >= 50 ? "#f59e0b" : "#ef4444") : "#3b82f6";
 
   return (

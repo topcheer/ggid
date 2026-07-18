@@ -50,7 +50,7 @@ export default function BulkImportWizard() {
   const [parsedRows, setParsedRows] = useState<ParsedRow[]>([]);
   const [fieldMapping, setFieldMapping] = useState<Record<string, string>>({});
   const [roleField, setRoleField] = useState("");
-  const [roleMapping, setRoleMapping] = useState<Record<string, string>>({...ROLE_PRESETS.reduce((a, r) => ({...a, [r.source_value]: r.ggid_role}), {})});
+  const [roleMapping, setRoleMapping] = useState<Record<string, string>>({...ROLE_PRESETS.reduce((a: any, r: any) => ({...a, [r.source_value]: r.ggid_role}), {})});
   const [hashAlgo, setHashAlgo] = useState("argon2id");
   const [progress, setProgress] = useState<ImportProgress>({ total: 0, processed: 0, succeeded: 0, failed: 0, status: "idle", errors: [] });
   const [error, setError] = useState<string | null>(null);
@@ -221,7 +221,7 @@ export default function BulkImportWizard() {
             {roleField && (
               <div className="space-y-2">
                 <h3 className="text-sm font-semibold uppercase text-gray-400">Role Mapping</h3>
-                {Object.entries(roleMapping).map(([src, dst]) => (
+                {Object.entries(roleMapping).map(([src, dst]: any[]) => (
                   <div key={src} className="flex items-center gap-2 rounded-lg border p-2 dark:border-gray-700">
                     <span className="flex-1 font-mono text-xs">{src}</span>
                     <ArrowRight className="h-3 w-3 text-gray-400" />

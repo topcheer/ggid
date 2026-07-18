@@ -33,7 +33,7 @@ export default function DepartmentAnalyticsPage() {
 
   useEffect(() => { fetchData(); }, [fetchData]);
 
-  const totalHeadcount = depts.reduce((s, d) => s + d.headcount, 0);
+  const totalHeadcount = depts.reduce((s: any, d: any) => s + d.headcount, 0);
 
   return (
     <div className="space-y-6">
@@ -45,7 +45,7 @@ export default function DepartmentAnalyticsPage() {
       <div className="grid grid-cols-3 gap-4">
         <div className="rounded-lg border p-4 dark:border-gray-800"><span className="text-sm text-gray-500">{t("backend3.departmentAnalytics.departments")}</span><p className="text-xl font-bold mt-1">{depts.length}</p></div>
         <div className="rounded-lg border p-4 dark:border-gray-800"><span className="text-sm text-gray-500">{t("backend3.departmentAnalytics.totalHeadcount")}</span><p className="text-xl font-bold mt-1">{totalHeadcount}</p></div>
-        <div className="rounded-lg border p-4 dark:border-gray-800"><span className="text-sm text-gray-500">{t("backend3.departmentAnalytics.openPositions")}</span><p className="text-xl font-bold text-orange-600 mt-1">{depts.reduce((s, d) => s + d.open_positions, 0)}</p></div>
+        <div className="rounded-lg border p-4 dark:border-gray-800"><span className="text-sm text-gray-500">{t("backend3.departmentAnalytics.openPositions")}</span><p className="text-xl font-bold text-orange-600 mt-1">{depts.reduce((s: any, d: any) => s + d.open_positions, 0)}</p></div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">

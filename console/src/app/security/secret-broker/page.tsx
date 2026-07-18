@@ -499,7 +499,7 @@ export default function SecretBrokerPage() {
               <div>
                 <label className="text-sm font-medium">Target Type</label>
                 <select value={tType} onChange={e => setTType(e.target.value as SecretTarget["type"])} className="mt-1 block w-full rounded-lg border dark:border-gray-700 dark:bg-gray-900 px-3 py-2 text-sm">
-                  {Object.entries(TYPE_CONFIG).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}
+                  {Object.entries(TYPE_CONFIG).map(([k, v]: any[]) => <option key={k} value={k}>{v.label}</option>)}
                 </select>
               </div>
               <div>
@@ -550,7 +550,7 @@ export default function SecretBrokerPage() {
               <div className="grid grid-cols-2 gap-3">
                 <div><label className="text-sm font-medium">Type</label>
                   <select value={fType} onChange={e => setFType(e.target.value as SecretTarget["type"])} className="mt-1 block w-full rounded-lg border dark:border-gray-700 dark:bg-gray-900 px-3 py-2 text-sm">
-                    {Object.entries(TYPE_CONFIG).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}
+                    {Object.entries(TYPE_CONFIG).map(([k, v]: any[]) => <option key={k} value={k}>{v.label}</option>)}
                   </select>
                 </div>
                 <div><label className="text-sm font-medium">TTL (seconds)</label><input type="number" value={fTTL} onChange={e => setFTTL(parseInt(e.target.value) || 3600)} className="mt-1 w-full rounded-lg border dark:border-gray-700 dark:bg-gray-900 px-3 py-2 text-sm" /></div>

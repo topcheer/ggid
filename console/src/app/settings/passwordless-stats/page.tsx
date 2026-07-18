@@ -34,7 +34,7 @@ export default function PasswordlessStatsPage() {
 
   useEffect(() => { fetchData(); }, [fetchData]);
 
-  const total = data?.method_distribution.reduce((s, m) => s + m.count, 0) || 1;
+  const total = data?.method_distribution.reduce((s: any, m: any) => s + m.count, 0) || 1;
   const gaugeColor = data ? (data.success_rate >= 80 ? "#10b981" : data.success_rate >= 50 ? "#f59e0b" : "#ef4444") : "#3b82f6";
 
   return (

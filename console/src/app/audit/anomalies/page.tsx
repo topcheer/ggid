@@ -91,7 +91,7 @@ export default function AnomaliesPage() {
           <div className="grid grid-cols-3 gap-4">
             <div className={cardCls}><div className="text-xs font-semibold uppercase text-gray-400">Active</div><p className="mt-2 text-2xl font-bold text-orange-600">{active.length}</p></div>
             <div className={cardCls}><div className="text-xs font-semibold uppercase text-gray-400">Escalated</div><p className="mt-2 text-2xl font-bold text-red-600">{escalated.length}</p></div>
-            <div className={cardCls}><div className="text-xs font-semibold uppercase text-gray-400">Avg Confidence</div><p className="mt-2 text-2xl font-bold text-indigo-600">{anomalies.length > 0 ? Math.round(anomalies.reduce((s, a) => s + a.confidence, 0) / anomalies.length) : 0}%</p></div>
+            <div className={cardCls}><div className="text-xs font-semibold uppercase text-gray-400">Avg Confidence</div><p className="mt-2 text-2xl font-bold text-indigo-600">{anomalies.length > 0 ? Math.round(anomalies.reduce((s: any, a: any) => s + a.confidence, 0) / anomalies.length) : 0}%</p></div>
           </div>
 
           {/* Anomalies list */}

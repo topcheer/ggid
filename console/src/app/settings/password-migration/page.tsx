@@ -194,7 +194,7 @@ function OverviewTab() {
             </span>
           </div>
           <span className={`inline-block px-3 py-1 rounded-full text-sm font-medium ${colorMap[levelColor]}`}>
-            {t(`passwordMigration.overview.level${stats.deprecation_level.replace(/_./g, (m) => m[1].toUpperCase()).replace(/^./, (m) => m.toUpperCase())}`)}
+            {t(`passwordMigration.overview.level${stats.deprecation_level.replace(/_./g, (m) => m[1].toUpperCase()).replace(/^./, (m: any) => m.toUpperCase())}`)}
           </span>
         </div>
 
@@ -409,7 +409,7 @@ function ConfigTab() {
                 }`}
               >
                 <div className="text-sm font-medium text-gray-900 dark:text-white capitalize">
-                  {t(`passwordMigration.overview.level${lvl.value.replace(/_./g, (m) => m[1].toUpperCase()).replace(/^./, (m) => m.toUpperCase())}`)}
+                  {t(`passwordMigration.overview.level${lvl.value.replace(/_./g, (m) => m[1].toUpperCase()).replace(/^./, (m: any) => m.toUpperCase())}`)}
                 </div>
                 <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                   {levelDescriptions[lvl.value]}
@@ -657,7 +657,7 @@ function UsersTab() {
                 filter === f ? "bg-blue-600 text-white" : "bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400"
               }`}
             >
-              {t(`passwordMigration.users.filter${f.replace(/^./, (m) => m.toUpperCase())}`)}
+              {t(`passwordMigration.users.filter${f.replace(/^./, (m: any) => m.toUpperCase())}`)}
             </button>
           ))}
         </div>
@@ -689,7 +689,7 @@ function UsersTab() {
                   <td className="py-3 px-3 text-gray-600 dark:text-gray-400">{u.email}</td>
                   <td className="py-3 px-3">
                     <span className={`px-2 py-0.5 text-xs rounded-full ${statusColor[u.status]}`}>
-                      {t(`passwordMigration.users.status${u.status.replace(/^./, (m) => m.toUpperCase())}`)}
+                      {t(`passwordMigration.users.status${u.status.replace(/^./, (m: any) => m.toUpperCase())}`)}
                     </span>
                   </td>
                   <td className="py-3 px-3">

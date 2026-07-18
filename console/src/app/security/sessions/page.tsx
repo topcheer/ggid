@@ -128,7 +128,7 @@ export default function SessionsPage() {
                   <div className="flex items-center gap-2"><span className={`px-2 py-0.5 rounded text-xs font-bold ${getRiskLevel(selected.risk_score).bg} ${getRiskLevel(selected.risk_score).color}`}>{t("sessions.riskScore")}: {selected.risk_score}</span>{selected.active && <button onClick={() => setConfirmRevoke(selected.id)} className="rounded-lg bg-red-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-red-700">{t("sessions.revoke")}</button>}</div>
                 </div>
                 <div className="grid grid-cols-2 gap-3">
-                  {([["IP Address", selected.ip], ["Location", selected.location], ["OS", selected.os], ["Browser", selected.browser], ["MFA Verified", selected.mfa_verified ? "Yes" : "No"], ["Status", selected.active ? "Active" : "Revoked"], ["Created", new Date(selected.created_at).toLocaleString()], ["Last Active", new Date(selected.last_active).toLocaleString()]] as const).map(([label, value]) => (
+                  {([["IP Address", selected.ip], ["Location", selected.location], ["OS", selected.os], ["Browser", selected.browser], ["MFA Verified", selected.mfa_verified ? "Yes" : "No"], ["Status", selected.active ? "Active" : "Revoked"], ["Created", new Date(selected.created_at).toLocaleString()], ["Last Active", new Date(selected.last_active).toLocaleString()]] as const).map(([label, value]: any[]) => (
                     <div key={label} className="rounded-lg border p-3 dark:border-gray-700"><p className="text-xs text-gray-400">{label}</p><p className="text-sm font-medium mt-0.5">{value}</p></div>
                   ))}
                 </div>

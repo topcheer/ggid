@@ -119,10 +119,10 @@ export default function RiskPolicyPage() {
   };
 
   const categories = [...new Set(signals.map(s => s.category))];
-  const totalWeight = signals.reduce((a, s) => a + s.weight, 0);
+  const totalWeight = signals.reduce((a: any, s: any) => a + s.weight, 0);
 
   // Sample score preview
-  const sampleScore = Math.round(signals.filter(s => ["geo_impossible_travel", "network_ip_reputation", "behavior_failed_attempts", "device_jailbreak"].includes(s.id)).reduce((a, s) => a + s.weight * 100, 0));
+  const sampleScore = Math.round(signals.filter(s => ["geo_impossible_travel", "network_ip_reputation", "behavior_failed_attempts", "device_jailbreak"].includes(s.id)).reduce((a: any, s: any) => a + s.weight * 100, 0));
 
   return (
     <div className="space-y-6">

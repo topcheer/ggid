@@ -231,7 +231,7 @@ function TesterTab({ rules }: { rules: MappingRule[] }) {
         </div>
         {output ? (
           <div className="space-y-1">
-            {Object.entries(output).map(([k, v]) => (
+            {Object.entries(output).map(([k, v]: any[]) => (
               <div key={k} className="flex items-center gap-2 p-2 rounded-lg bg-gray-50 dark:bg-gray-800/50">
                 <span className="text-xs font-medium text-gray-500 w-28">{k}</span>
                 <ArrowRight className="w-3 h-3 text-gray-400" />

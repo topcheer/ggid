@@ -57,7 +57,7 @@ export default function PolicyLifecycleDashboardPage() {
             <svg viewBox="0 0 100 100" className="w-40 h-40 -rotate-90">
               {(() => {
                 let offset = 0;
-                return statusEntries.map(([status, count]) => {
+                return statusEntries.map(([status, count]: any[]) => {
                   const pct = totalPolicies > 0 ? count / totalPolicies : 0;
                   const dash = pct * 251.2;
                   const circle = (
@@ -80,7 +80,7 @@ export default function PolicyLifecycleDashboardPage() {
             </svg>
           </div>
           <div className="space-y-1 mt-4">
-            {statusEntries.map(([status, count]) => (
+            {statusEntries.map(([status, count]: any[]) => (
               <div key={status} className="flex items-center justify-between text-xs">
                 <span className="flex items-center gap-2">
                   <span

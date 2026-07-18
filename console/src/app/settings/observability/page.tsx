@@ -126,12 +126,12 @@ export default function ObservabilityPage() {
             <div className={card + " text-center"}><Activity className="mx-auto h-5 w-5 text-green-400" /><p className="mt-2 text-2xl font-bold">{traces.length}</p><p className="text-xs text-gray-400">{t("observability.tracesToday")}</p></div>
             <div className={card + " text-center"}><CheckCircle2 className="mx-auto h-5 w-5 text-green-400" /><p className="mt-2 text-2xl font-bold">{traces.filter(t => t.status === "ok").length}</p><p className="text-xs text-gray-400">{t("observability.healthy")}</p></div>
             <div className={card + " text-center"}><XCircle className="mx-auto h-5 w-5 text-red-400" /><p className="mt-2 text-2xl font-bold text-red-600">{traces.filter(t => t.status === "error").length}</p><p className="text-xs text-gray-400">{t("observability.errors")}</p></div>
-            <div className={card + " text-center"}><Clock className="mx-auto h-5 w-5 text-yellow-400" /><p className="mt-2 text-2xl font-bold">{Math.round(traces.reduce((a, t) => a + t.duration_ms, 0) / (traces.length || 1))}ms</p><p className="text-xs text-gray-400">{t("observability.avgDuration")}</p></div>
+            <div className={card + " text-center"}><Clock className="mx-auto h-5 w-5 text-yellow-400" /><p className="mt-2 text-2xl font-bold">{Math.round(traces.reduce((a: any, t: any) => a + t.duration_ms, 0) / (traces.length || 1))}ms</p><p className="text-xs text-gray-400">{t("observability.avgDuration")}</p></div>
           </div>
           <div className={card}>
             <h3 className="mb-3 flex items-center gap-2 text-sm font-semibold uppercase text-gray-400"><Settings className="h-4 w-4" /> {t("observability.exporterConfig")}</h3>
             <div className="space-y-2">
-              {[["Exporter", "OTLP gRPC"], ["Endpoint", "otel-collector:4317"], ["Sampling Rate", "10%"], ["Service Name", "ggid-console"]].map(([k, v]) => <div key={k} className="flex items-center justify-between rounded-lg border p-2 dark:border-gray-700"><span className="text-sm">{k}</span><code className="text-xs font-mono text-gray-500">{v}</code></div>)}
+              {[["Exporter", "OTLP gRPC"], ["Endpoint", "otel-collector:4317"], ["Sampling Rate", "10%"], ["Service Name", "ggid-console"]].map(([k, v]: any[]) => <div key={k} className="flex items-center justify-between rounded-lg border p-2 dark:border-gray-700"><span className="text-sm">{k}</span><code className="text-xs font-mono text-gray-500">{v}</code></div>)}
             </div>
           </div>
         </div>

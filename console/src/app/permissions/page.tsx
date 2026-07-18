@@ -437,7 +437,7 @@ export default function PermissionsPage() {
           const Icon = group.icon;
           const isCollapsed = collapsedServices.has(group.service);
           const allPermKeys = group.permissions.map((p: any) => p.key);
-          const allSelected = allPermKeys.every((k) => selectedPerms.has(k));
+          const allSelected = allPermKeys.every((k: any) => selectedPerms.has(k));
 
           return (
             <div

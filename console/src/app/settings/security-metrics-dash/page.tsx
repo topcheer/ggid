@@ -61,7 +61,7 @@ export default function SecurityMetricsDashPage() {
               return <div key={i} className="flex-1 bg-blue-500 rounded-t" style={{ height: max > 0 ? (v / max) * 100 + "%" : "0" }} />;
             })}
           </div>
-          <p className="text-xs text-gray-500 mt-2">Total: {data?.incidents_30d?.reduce((a, b) => a + b, 0) ?? 0} incidents</p>
+          <p className="text-xs text-gray-500 mt-2">Total: {data?.incidents_30d?.reduce((a: any, b: any) => a + b, 0) ?? 0} incidents</p>
         </div>
         <div className="bg-gray-900 rounded-xl p-6">
           <h2 className="text-sm font-semibold mb-3">SLA Breaches</h2>

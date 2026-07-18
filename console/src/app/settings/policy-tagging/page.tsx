@@ -17,11 +17,11 @@ export default function PolicyTaggingPage() {
   const categories: string[] = Array.from(new Set((data?.tag_taxonomy ?? []).map((t: any) => t.category)));
 
   const filteredTags = (data?.tag_taxonomy ?? []).filter(
-    (t) => selectedCategory === "all" || t.category === selectedCategory
+    (t: any) => selectedCategory === "all" || t.category === selectedCategory
   );
 
   const filteredPolicies = (data?.tagged_policies ?? []).filter(
-    (p) => !selectedTag || p.tags.includes(selectedTag)
+    (p: any) => !selectedTag || p.tags.includes(selectedTag)
   );
 
   return (

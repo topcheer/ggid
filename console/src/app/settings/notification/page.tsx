@@ -185,7 +185,7 @@ export default function NotificationPage() {
 
       {/* Provider channels */}
       <div className="grid gap-4 md:grid-cols-3">
-        {settings && (Object.entries(settings.providers) as [Channel, ProviderConfig][]).map(([ch, cfg]) => {
+        {settings && (Object.entries(settings.providers) as [Channel, ProviderConfig][]).map(([ch, cfg]: any[]) => {
           const Icon = CHANNEL_ICON[ch];
           return (
             <div key={ch} className={cardCls}>

@@ -145,7 +145,7 @@ export default function AuditGdprRequestsPage() {
       <div className="bg-gray-900 rounded-xl p-6">
         <h2 className="text-lg font-semibold mb-4">Completed Requests Breakdown</h2>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          {(Object.entries(data?.completed_stats?.by_type ?? {}) as [string, number][]).map(([type, count]) => (
+          {(Object.entries(data?.completed_stats?.by_type ?? {}) as [string, number][]).map(([type, count]: any[]) => (
             <div key={type} className="bg-gray-800 rounded-lg p-3 text-center">
               <p className="text-xs text-gray-400 capitalize mb-1">{type}</p>
               <p className="text-xl font-bold text-green-400">{count}</p>

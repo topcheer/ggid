@@ -85,7 +85,7 @@ export default function NotificationsPage() {
       {tab === "channels" && (
         <div className="space-y-3">{CHANNELS.map(c => { const CIcon = CHANNEL_CFG[c.type]?.icon || Mail; return (
           <div key={c.type} className={`${card} flex items-center justify-between !p-3`}>
-            <div className="flex items-center gap-3"><div className="flex h-9 w-9 items-center justify-center rounded-lg bg-gray-100 dark:bg-gray-700"><CIcon className={`h-4 w-4 ${CHANNEL_CFG[c.type]?.color}`} /></div><div><span className="text-sm font-medium">{c.name}</span><p className="text-xs text-gray-400">{c.type} · {Object.entries(c.config).slice(0, 2).map(([k, v]) => `${k}=${v.slice(0, 15)}`).join(", ")}</p></div></div>
+            <div className="flex items-center gap-3"><div className="flex h-9 w-9 items-center justify-center rounded-lg bg-gray-100 dark:bg-gray-700"><CIcon className={`h-4 w-4 ${CHANNEL_CFG[c.type]?.color}`} /></div><div><span className="text-sm font-medium">{c.name}</span><p className="text-xs text-gray-400">{c.type} · {Object.entries(c.config).slice(0, 2).map(([k, v]: any[]) => `${k}=${v.slice(0, 15)}`).join(", ")}</p></div></div>
             {c.connected ? <span className="flex items-center gap-1 px-2 py-0.5 rounded text-xs bg-green-100 dark:bg-green-900/30 text-green-600"><CheckCircle2 className="h-3 w-3" /> {t("notif.connected")}</span> : <button className="rounded-lg border border-gray-300 px-3 py-1 text-xs dark:border-gray-700">{t("notif.connect")}</button>}
           </div>
         );})}<button className="flex items-center gap-1 rounded-lg border border-dashed border-gray-300 px-4 py-2 text-sm text-gray-400 hover:border-gray-400 dark:border-gray-700"><Plus className="h-3.5 w-3.5" /> {t("notif.addChannel")}</button></div>

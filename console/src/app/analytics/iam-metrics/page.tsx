@@ -226,7 +226,7 @@ function HygieneTab() {
 
   if (loading) return <Spinner />;
 
-  const total = issues.reduce((s, i) => s + i.count, 0);
+  const total = issues.reduce((s: any, i: any) => s + i.count, 0);
   const healthScore = Math.max(0, 100 - total * 2);
 
   const colorMap: Record<string, { bg: string; text: string; icon: string }> = {
@@ -297,9 +297,9 @@ function IncidentsTab() {
 
   if (loading) return <Spinner />;
 
-  const totalITDR = data.reduce((s, d) => s + d.itdr, 0);
-  const totalSOAR = data.reduce((s, d) => s + d.soar, 0);
-  const totalManual = data.reduce((s, d) => s + d.manual, 0);
+  const totalITDR = data.reduce((s: any, d: any) => s + d.itdr, 0);
+  const totalSOAR = data.reduce((s: any, d: any) => s + d.soar, 0);
+  const totalManual = data.reduce((s: any, d: any) => s + d.manual, 0);
   const total = totalITDR + totalSOAR + totalManual;
 
   // SVG stacked bar chart

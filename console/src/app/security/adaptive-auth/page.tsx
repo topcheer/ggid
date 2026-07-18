@@ -227,7 +227,7 @@ export default function AdaptiveAuthPage() {
               <button onClick={() => setSignals(prev => prev.map(s => s.id === sig.id ? { ...s, enabled: !s.enabled } : s))} aria-pressed={sig.enabled} className={"rounded-lg px-2 py-1 text-xs font-medium " + (sig.enabled ? "bg-green-50 text-green-700 dark:bg-green-950/20" : "bg-gray-100 dark:bg-gray-800 text-gray-400")}>{sig.enabled ? "On" : "Off"}</button>
             </div>
           ); })}</div>
-          <div className="mt-3 flex items-center justify-between"><span className="text-xs text-gray-400">Total weight: {signals.reduce((a, s) => a + (s.enabled ? s.weight : 0), 0)}%</span><button onClick={saveSignals} disabled={saving} className="flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50">{saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />} Save Weights</button></div>
+          <div className="mt-3 flex items-center justify-between"><span className="text-xs text-gray-400">Total weight: {signals.reduce((a: any, s: any) => a + (s.enabled ? s.weight : 0), 0)}%</span><button onClick={saveSignals} disabled={saving} className="flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50">{saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />} Save Weights</button></div>
         </div>
       )}
 

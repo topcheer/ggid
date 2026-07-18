@@ -116,7 +116,7 @@ function GrowthTab() {
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <StatCard icon={Users} label={t("identityAnalytics.growth.totalUsers")} value={latest.registered} color="blue" />
         <StatCard icon={Activity} label={t("identityAnalytics.growth.activeRate")} value={`${activeRate}%`} color="green" />
-        <StatCard icon={TrendingUp} label={t("identityAnalytics.growth.newThisWeek")} value={`+${data.slice(-7).reduce((s, d) => s + (d.registered - (data[data.indexOf(d) - 1]?.registered || d.registered)), 0)}`} color="blue" />
+        <StatCard icon={TrendingUp} label={t("identityAnalytics.growth.newThisWeek")} value={`+${data.slice(-7).reduce((s: any, d: any) => s + (d.registered - (data[data.indexOf(d) - 1]?.registered || d.registered)), 0)}`} color="blue" />
         <StatCard icon={Shield} label={t("identityAnalytics.growth.dormantRate")} value={latest.registered > 0 ? `${Math.round((latest.dormant / latest.registered) * 100)}%` : "0%"} color="orange" />
       </div>
 
@@ -174,8 +174,8 @@ function MethodsTab() {
 
   if (loading) return <Spinner />;
 
-  const total = methods.reduce((s, m) => s + m.count, 0);
-  const passwordless = methods.filter((m: any) => m.method !== "password").reduce((s, m) => s + m.count, 0);
+  const total = methods.reduce((s: any, m: any) => s + m.count, 0);
+  const passwordless = methods.filter((m: any) => m.method !== "password").reduce((s: any, m: any) => s + m.count, 0);
   const passwordlessRate = total > 0 ? Math.round((passwordless / total) * 100) : 0;
 
   // Pie chart
@@ -281,7 +281,7 @@ function RiskTab() {
 
   if (loading) return <Spinner />;
 
-  const avgScore = users.length > 0 ? Math.round(users.reduce((s, u) => s + u.risk_score, 0) / users.length) : 0;
+  const avgScore = users.length > 0 ? Math.round(users.reduce((s: any, u: any) => s + u.risk_score, 0) / users.length) : 0;
   const levelColors: Record<string, string> = {
     critical: "bg-red-100 text-red-700 dark:bg-red-950 dark:text-red-300",
     high: "bg-orange-100 text-orange-700 dark:bg-orange-950 dark:text-orange-300",
@@ -334,7 +334,7 @@ function RiskTab() {
                     </td>
                     <td className="py-3 px-3">
                       <span className={`px-2 py-0.5 text-xs rounded-full ${levelColors[u.risk_level] || levelColors.low}`}>
-                        {t(`identityAnalytics.risk.level${u.risk_level.replace(/^./, (m) => m.toUpperCase())}`)}
+                        {t(`identityAnalytics.risk.level${u.risk_level.replace(/^./, (m: any) => m.toUpperCase())}`)}
                       </span>
                     </td>
                     <td className="py-3 px-3">

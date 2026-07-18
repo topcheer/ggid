@@ -201,7 +201,7 @@ export default function SDJWTPage() {
                   <div className="mt-3">
                     <p className="text-xs font-semibold text-gray-400 mb-1">Disclosed ({verifyResult.hidden_claims_count || 0} hidden)</p>
                     <div className="flex flex-wrap gap-1">
-                      {Object.entries(verifyResult.disclosed_claims).map(([k, v]) => (
+                      {Object.entries(verifyResult.disclosed_claims).map(([k, v]: any[]) => (
                         <span key={k} className="px-1.5 py-0.5 rounded bg-green-50 dark:bg-green-950/30 text-xs font-mono">{k}={v}</span>
                       ))}
                     </div>

@@ -45,7 +45,7 @@ export default function IdentityGroupLifecyclePage() {
             <svg className="w-32 h-32 -rotate-90" viewBox="0 0 100 100">
               {(() => {
                 let offset = 0;
-                return statusEntries.map(([status, count]) => {
+                return statusEntries.map(([status, count]: any[]) => {
                   const pct = total > 0 ? count / total : 0;
                   const dash = pct * 251.2;
                   const el = (
@@ -69,7 +69,7 @@ export default function IdentityGroupLifecyclePage() {
             </div>
           </div>
           <div className="mt-4 space-y-1">
-            {statusEntries.map(([status, count]) => (
+            {statusEntries.map(([status, count]: any[]) => (
               <div key={status} className="flex items-center gap-2 text-xs">
                 <span className="w-2 h-2 rounded-full" style={{ backgroundColor: statusColors[status] ?? "#6b7280" }} />
                 <span className="capitalize text-gray-400">{status}</span>

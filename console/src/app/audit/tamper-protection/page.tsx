@@ -46,7 +46,7 @@ export default function TamperProtectionPage() {
   };
   useEffect(() => { loadData(); }, []);
 
-  const totalEvents = ROOTS.reduce((a, r) => a + r.events, 0);
+  const totalEvents = ROOTS.reduce((a: any, r: any) => a + r.events, 0);
 
   return (
     <div className="space-y-6">

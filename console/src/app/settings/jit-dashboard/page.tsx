@@ -312,7 +312,7 @@ export default function JITDashboardPage() {
             <div className="py-8 text-center"><TrendingUp className="mx-auto h-10 w-10 text-gray-300" /><p className="mt-3 text-sm text-gray-400">No history yet.</p></div>
           ) : (
             <div className="space-y-2">
-              {requests.filter(r => r.status !== "pending").sort((a, b) =>
+              {requests.filter(r => r.status !== "pending").sort((a: any, b: any) =>
                 new Date(b.requested_at).getTime() - new Date(a.requested_at).getTime()
               ).map(r => {
                 const cfg = STATUS_CFG[r.status] || STATUS_CFG.pending;

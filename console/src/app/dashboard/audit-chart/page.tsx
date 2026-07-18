@@ -44,7 +44,7 @@ export default function AuditChartPage() {
 
   const cardCls = "rounded-xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-700 dark:bg-gray-800";
   const maxCount = Math.max(...hourly.map((h: any) => h.count), 1);
-  const totalEvents = hourly.reduce((sum, h) => sum + h.count, 0);
+  const totalEvents = hourly.reduce((sum: any, h: any) => sum + h.count, 0);
 
   return (
     <div className="space-y-6">

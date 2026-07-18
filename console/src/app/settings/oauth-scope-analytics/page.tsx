@@ -33,7 +33,7 @@ export default function OAuthScopeAnalyticsPage() {
         <div className="bg-gray-900 rounded-xl p-4">
           <TrendingUp className="w-5 h-5 text-green-400 mb-1" />
           <p className="text-xs text-gray-400">Total Requests (30d)</p>
-          <p className="text-xl font-bold">{data?.scope_usage?.reduce((a, s) => a + s.requested_count, 0).toLocaleString() ?? 0}</p>
+          <p className="text-xl font-bold">{data?.scope_usage?.reduce((a: any, s: any) => a + s.requested_count, 0).toLocaleString() ?? 0}</p>
         </div>
         <div className="bg-gray-900 rounded-xl p-4">
           <AlertCircle className="w-5 h-5 text-red-400 mb-1" />

@@ -93,7 +93,7 @@ export default function PolicyContextualConditionsPage() {
               <button className="text-xs text-gray-400 hover:text-blue-400">+ Add OR</button>
             </div>
             <div className="space-y-2">
-              {(data?.condition_categories ?? []).slice(0, 2).flatMap((cat) =>
+              {(data?.condition_categories ?? []).slice(0, 2).flatMap((cat: any) =>
                 cat.available_attributes.slice(0, 1).map((attr: any) => (
                   <div key={cat.name + attr} className="flex items-center gap-2 bg-gray-900 rounded p-2">
                     <span className={"text-xs px-1.5 py-0.5 rounded " + (categoryIcons[cat.name] || "")}>{cat.name}</span>

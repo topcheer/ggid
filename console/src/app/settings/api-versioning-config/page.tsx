@@ -67,7 +67,7 @@ const [breakingChanges, setBreakingChanges] = useState([
     setVersions(prev => prev.map((v: any, i: number) => i === idx ? { ...v, status } : v));
   };
 
-  const totalConsumers = versions.reduce((sum, v) => sum + v.consumers, 0);
+  const totalConsumers = versions.reduce((sum: any, v: any) => sum + v.consumers, 0);
 
   return (
     <div className="p-6 max-w-4xl mx-auto space-y-6">
@@ -197,11 +197,11 @@ const [breakingChanges, setBreakingChanges] = useState([
             <div className="text-sm text-gray-500">Total Consumers</div>
           </div>
           <div className="border rounded p-4">
-            <div className="text-2xl font-bold text-amber-600">{versions.filter(v => v.status === 'deprecated').reduce((s, v) => s + v.consumers, 0)}</div>
+            <div className="text-2xl font-bold text-amber-600">{versions.filter(v => v.status === 'deprecated').reduce((s: any, v: any) => s + v.consumers, 0)}</div>
             <div className="text-sm text-gray-500">{t("backend2.apiVersioning.onDeprecated")}</div>
           </div>
           <div className="border rounded p-4">
-            <div className="text-2xl font-bold text-green-600">{versions.filter(v => v.status === 'active').reduce((s, v) => s + v.consumers, 0)}</div>
+            <div className="text-2xl font-bold text-green-600">{versions.filter(v => v.status === 'active').reduce((s: any, v: any) => s + v.consumers, 0)}</div>
             <div className="text-sm text-gray-500">{t("backend2.apiVersioning.onActive")}</div>
           </div>
         </div>

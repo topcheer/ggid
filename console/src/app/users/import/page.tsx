@@ -278,7 +278,7 @@ export default function UserImportPage() {
 
   const requiredFieldsMapped = useMemo(() => {
     const mappedValues = new Set(Object.values(mapping));
-    return GGID_FIELDS.filter((f: any) => f.required).every((f) => mappedValues.has(f.key));
+    return GGID_FIELDS.filter((f: any) => f.required).every((f: any) => mappedValues.has(f.key));
   }, [mapping]);
 
   // ── Validation ──

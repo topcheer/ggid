@@ -38,7 +38,7 @@ export default function RevokeCascadePage() {
     if (!tree) return;
     setRevoking(true);
     try {
-      const count = (node: CascadeNode): number => 1 + (node.children || []).reduce((s, c) => s + count(c), 0);
+      const count = (node: CascadeNode): number => 1 + (node.children || []).reduce((s: any, c: any) => s + count(c), 0);
       await fetch("/api/v1/oauth/revoke-cascade/execute", { method: "POST", headers: { ...authHeader(), "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" }, body: JSON.stringify({ token_id: tree.token_id }) });
       setRevokedCount(count(tree)); setShowConfirm(false); setTree(null);
     } catch { /* noop */ }
@@ -59,7 +59,7 @@ export default function RevokeCascadePage() {
     );
   }
 
-  const countNodes = (n: CascadeNode | null): number => { if (!n) return 0; return 1 + (n.children || []).reduce((s, c) => s + countNodes(c), 0); };
+  const countNodes = (n: CascadeNode | null): number => { if (!n) return 0; return 1 + (n.children || []).reduce((s: any, c: any) => s + countNodes(c), 0); };
 
   return (
     <div className="space-y-6">

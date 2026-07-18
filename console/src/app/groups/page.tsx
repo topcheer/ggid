@@ -309,7 +309,7 @@ export default function GroupsPage() {
 
   // Stats
   const totalMembers = useMemo(() => {
-    return groups.reduce((sum, g) => sum + (g.member_count ?? g.members?.length ?? 0), 0);
+    return groups.reduce((sum: any, g: any) => sum + (g.member_count ?? g.members?.length ?? 0), 0);
   }, [groups]);
   const rootGroups = groups.filter((g: any) => !g.parent_id).length;
   const maxDepth = useMemo(() => {

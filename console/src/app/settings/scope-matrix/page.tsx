@@ -107,7 +107,7 @@ export default function ScopeMatrixPage() {
         <h3 className="font-semibold mb-4">Scope Usage by Client</h3>
         <div className="space-y-3">
           {data.clients.map((c: any) => {
-            const totalUsage = data.scopes.reduce((sum, s) => sum + (data.usage[c.client_id]?.[s] || 0), 0);
+            const totalUsage = data.scopes.reduce((sum: any, s: any) => sum + (data.usage[c.client_id]?.[s] || 0), 0);
             return (
               <div key={c.client_id}>
                 <div className="flex items-center justify-between text-xs mb-1">

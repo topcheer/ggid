@@ -37,7 +37,7 @@ export default function GroupPermissionTreePage() {
     return (<div key={node.id}><div className="flex items-center gap-2 py-1" style={{ paddingLeft: depth * 20 }}>{hasChildren ? <button onClick={() => toggle(node.id)}><ChevronRight className={"w-4 h-4 text-gray-400 transition-transform " + (isExpanded ? "rotate-90" : "")} /></button> : <span className="w-4" />}<span className={"text-sm font-medium " + typeColors[node.type]}>{node.name}</span>{node.permissions.length > 0 && <div className="flex flex-wrap gap-1 ml-2">{node.permissions.slice(0, 5).map((p: any) => (<span key={p} className="px-1.5 py-0.5 rounded text-xs bg-gray-100 dark:bg-gray-800 font-mono">{p}</span>))}{node.permissions.length > 5 && <span className="text-xs text-gray-400">+{node.permissions.length - 5}</span>}</div>}{!hasChildren && <span className="text-xs text-gray-400 ml-2">({node.permissions.length}{t("big1.groupPermissionTree.perms")}</span>}</div>{isExpanded && hasChildren && <div>{node.children!.map((c: any) => renderNode(c, depth + 1))}</div>}</div>);
   };
 
-  const totalPerms = (nodes: TreeNode[]): number => nodes.reduce((s, n) => s + n.permissions.length + totalPerms(n.children || []), 0);
+  const totalPerms = (nodes: TreeNode[]): number => nodes.reduce((s: any, n: any) => s + n.permissions.length + totalPerms(n.children || []), 0);
 
   return (
     <div className="space-y-6">

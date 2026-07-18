@@ -173,7 +173,7 @@ export default function CloneTemplatePage() {
                 <div className="rounded-lg border dark:border-gray-800 p-4">
                   <h3 className="font-semibold mb-3">Attributes</h3>
                   <div className="grid grid-cols-2 gap-2">
-                    {Object.entries(template.attributes).map(([k, v]) => (
+                    {Object.entries(template.attributes).map(([k, v]: any[]) => (
                       <div key={k} className="text-xs"><span className="text-gray-400">{k}:</span> <span className="font-mono">{v}</span></div>
                     ))}
                   </div>

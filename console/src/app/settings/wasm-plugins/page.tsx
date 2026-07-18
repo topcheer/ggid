@@ -221,9 +221,9 @@ export default function WASMPluginsPage() {
         <div className="space-y-4">
           <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
             <div className={card + " text-center"}><Cpu className="h-5 w-5 mx-auto text-indigo-400" /><p className="mt-2 text-2xl font-bold">{plugins.length}</p><p className="text-xs text-gray-400">Active Plugins</p></div>
-            <div className={card + " text-center"}><Activity className="h-5 w-5 mx-auto text-blue-400" /><p className="mt-2 text-2xl font-bold">{plugins.reduce((a, p) => a + p.calls_24h, 0)}</p><p className="text-xs text-gray-400">Total Calls 24h</p></div>
-            <div className={card + " text-center"}><Zap className="h-5 w-5 mx-auto text-yellow-400" /><p className="mt-2 text-2xl font-bold">{plugins.reduce((a, p) => a + p.fuel_used, 0).toLocaleString()}</p><p className="text-xs text-gray-400">Fuel Consumed</p></div>
-            <div className={card + " text-center"}><Cpu className="h-5 w-5 mx-auto text-purple-400" /><p className="mt-2 text-2xl font-bold">{plugins.reduce((a, p) => a + p.memory_mb, 0)}MB</p><p className="text-xs text-gray-400">Total Memory</p></div>
+            <div className={card + " text-center"}><Activity className="h-5 w-5 mx-auto text-blue-400" /><p className="mt-2 text-2xl font-bold">{plugins.reduce((a: any, p: any) => a + p.calls_24h, 0)}</p><p className="text-xs text-gray-400">Total Calls 24h</p></div>
+            <div className={card + " text-center"}><Zap className="h-5 w-5 mx-auto text-yellow-400" /><p className="mt-2 text-2xl font-bold">{plugins.reduce((a: any, p: any) => a + p.fuel_used, 0).toLocaleString()}</p><p className="text-xs text-gray-400">Fuel Consumed</p></div>
+            <div className={card + " text-center"}><Cpu className="h-5 w-5 mx-auto text-purple-400" /><p className="mt-2 text-2xl font-bold">{plugins.reduce((a: any, p: any) => a + p.memory_mb, 0)}MB</p><p className="text-xs text-gray-400">Total Memory</p></div>
           </div>
           {plugins.length === 0 ? <div className={card}><div className="py-8 text-center"><Activity className="mx-auto h-10 w-10 text-gray-300" /><p className="mt-3 text-sm text-gray-400">No plugin metrics.</p></div></div> : (
             <div className={card}>

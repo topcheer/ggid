@@ -330,7 +330,7 @@ export default function NotificationPreviewPage() {
               onChange={(e) => setTemplateType(e.target.value as TemplateType)}
               className={inputCls}
             >
-              {(Object.entries(TEMPLATES) as [TemplateType, TemplateDef][]).map(([key, def]) => (
+              {(Object.entries(TEMPLATES) as [TemplateType, TemplateDef][]).map(([key, def]: any[]) => (
                 <option key={key} value={key}>{def.label}</option>
               ))}
             </select>

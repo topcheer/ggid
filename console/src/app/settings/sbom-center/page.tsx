@@ -66,7 +66,7 @@ export default function SbomCenterPage() {
     s === 'medium' ? 'bg-amber-100 text-amber-700' :
     'bg-green-100 text-green-700';
 
-  const totalVulns = components.reduce((sum, c) => sum + c.vulnerabilities, 0);
+  const totalVulns = components.reduce((sum: any, c: any) => sum + c.vulnerabilities, 0);
 
   const dependencyTree: DependencyNode = {
     name: 'ggid', version: 'v1.0.0', children: [

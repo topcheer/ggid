@@ -222,7 +222,7 @@ function RulesTab({ rules, setRules }: { rules: SoDRule[]; setRules: (r: SoDRule
             <div className="flex gap-2">
               {(["high", "medium", "low"] as const).map((s: any) => (
                 <button key={s} onClick={() => setNewSeverity(s)} className={`px-3 py-1 rounded-lg text-xs font-medium border-2 ${newSeverity === s ? "border-blue-500 " + severityColors[s] : "border-gray-200 dark:border-gray-700 text-gray-500"}`}>
-                  {t(`sodMatrix.rules.severity${s.replace(/^./, (m) => m.toUpperCase())}`)}
+                  {t(`sodMatrix.rules.severity${s.replace(/^./, (m: any) => m.toUpperCase())}`)}
                 </button>
               ))}
             </div>
@@ -256,7 +256,7 @@ function RulesTab({ rules, setRules }: { rules: SoDRule[]; setRules: (r: SoDRule
                 </div>
                 {r.description && <p className="text-xs text-gray-500 mt-0.5">{r.description}</p>}
               </div>
-              <span className={`px-2 py-0.5 text-xs rounded-full ${severityColors[r.severity]}`}>{t(`sodMatrix.rules.severity${r.severity.replace(/^./, (m) => m.toUpperCase())}`)}</span>
+              <span className={`px-2 py-0.5 text-xs rounded-full ${severityColors[r.severity]}`}>{t(`sodMatrix.rules.severity${r.severity.replace(/^./, (m: any) => m.toUpperCase())}`)}</span>
               <button onClick={() => deleteRule(r.id)} className="p-1.5 hover:bg-red-50 dark:hover:bg-red-950 rounded"><Trash2 className="w-4 h-4 text-red-500" /></button>
             </div>
           ))

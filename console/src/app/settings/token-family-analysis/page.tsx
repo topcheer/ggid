@@ -19,7 +19,7 @@ export default function TokenFamilyAnalysisPage() {
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
         <div className="bg-gray-900 rounded-xl p-4"><Layers className="w-5 h-5 text-blue-400 mb-1" /><p className="text-xs text-gray-400">Active Families</p><p className="text-xl font-bold">{data?.families?.filter((f: any) => f.status === "active").length ?? 0}</p></div>
-        <div className="bg-gray-900 rounded-xl p-4"><p className="text-xs text-gray-400">Total Child Tokens</p><p className="text-xl font-bold">{data?.families?.reduce((a, f) => a + f.child_count, 0) ?? 0}</p></div>
+        <div className="bg-gray-900 rounded-xl p-4"><p className="text-xs text-gray-400">Total Child Tokens</p><p className="text-xl font-bold">{data?.families?.reduce((a: any, f: any) => a + f.child_count, 0) ?? 0}</p></div>
         <div className="bg-gray-900 rounded-xl p-4"><AlertTriangle className="w-5 h-5 text-red-400 mb-1" /><p className="text-xs text-gray-400">Reuse Alerts</p><p className="text-xl font-bold text-red-400">{data?.reuse_alerts?.length ?? 0}</p></div>
       </div>
 

@@ -756,7 +756,7 @@ export default function PoliciesPage() {
 
                         {/* Conditions */}
                         <div className="space-y-2">
-                          {rule.conditions.map((cond, condIdx) => (
+                          {rule.conditions.map((cond: any, condIdx: any) => (
                             <div key={cond.id} className="flex items-center gap-2">
                               {condIdx === 0 ? (
                                 <span className="w-8 text-right text-xs text-gray-400"></span>

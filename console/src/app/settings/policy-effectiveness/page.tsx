@@ -35,10 +35,10 @@ export default function PolicyEffectivenessPage() {
   }, []);
 
   const cardCls = "rounded-xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-700 dark:bg-gray-800";
-  const totalTriggers = stats.reduce((s, p) => s + p.trigger_count, 0);
-  const totalAllows = stats.reduce((s, p) => s + p.allow_count, 0);
-  const totalDenies = stats.reduce((s, p) => s + p.deny_count, 0);
-  const avgEvalTime = stats.length > 0 ? stats.reduce((s, p) => s + p.avg_eval_time_ms, 0) / stats.length : 0;
+  const totalTriggers = stats.reduce((s: any, p: any) => s + p.trigger_count, 0);
+  const totalAllows = stats.reduce((s: any, p: any) => s + p.allow_count, 0);
+  const totalDenies = stats.reduce((s: any, p: any) => s + p.deny_count, 0);
+  const avgEvalTime = stats.length > 0 ? stats.reduce((s: any, p: any) => s + p.avg_eval_time_ms, 0) / stats.length : 0;
 
   return (
     <div className="space-y-6">

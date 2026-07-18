@@ -14,7 +14,7 @@ export default function AuditQueryLibraryPage() {
   if (loading) return <div className="p-8 text-gray-400">Loading audit query library...</div>;
   if (error) return <div className="p-8 text-red-400">Error: {error}</div>;
 
-  const allTags: string[] = Array.from(new Set((data?.saved_queries ?? []).flatMap((q) => q.tags)));
+  const allTags: string[] = Array.from(new Set((data?.saved_queries ?? []).flatMap((q: any) => q.tags)));
   const filteredQueries = tagFilter === "all"
     ? (data?.saved_queries ?? [])
     : (data?.saved_queries ?? []).filter((q: any) => q.tags.includes(tagFilter));

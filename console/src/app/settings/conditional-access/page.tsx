@@ -338,7 +338,7 @@ function PolicyTester({ policies }: { policies: Policy[] }) {
     setEvaluating(true);
     setTimeout(() => {
       let matched: Policy | undefined;
-      for (const p of [...policies].sort((a, b) => a.priority - b.priority)) {
+      for (const p of [...policies].sort((a: any, b: any) => a.priority - b.priority)) {
         if (!p.enabled) continue;
         const results = p.conditions.map((c: any) => {
           const inputVal = (input as Record<string, unknown>)[c.operand];
@@ -422,7 +422,7 @@ function PolicyTester({ policies }: { policies: Policy[] }) {
           <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-3">{t("conditionalAccess.tester.result")}</h3>
           <div className="flex items-center gap-4">
             <div className={`px-6 py-3 rounded-xl text-lg font-bold uppercase ${resultColors[result.action]}`}>
-              {t(`conditionalAccess.tester.result${result.action.replace(/_./g, (m) => m[1].toUpperCase()).replace(/^./, (m) => m.toUpperCase())}`)}
+              {t(`conditionalAccess.tester.result${result.action.replace(/_./g, (m) => m[1].toUpperCase()).replace(/^./, (m: any) => m.toUpperCase())}`)}
             </div>
             {result.policy ? (
               <div>

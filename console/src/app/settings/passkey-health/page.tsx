@@ -140,7 +140,7 @@ export default function PasskeyHealthPage() {
             {mfa?.method_distribution && mfa.method_distribution.length > 0 ? (
               <div className="space-y-2">
                 {mfa.method_distribution.map(m => {
-                  const total = mfa.method_distribution.reduce((a, x) => a + x.count, 0) || 1;
+                  const total = mfa.method_distribution.reduce((a: any, x: any) => a + x.count, 0) || 1;
                   const pct = Math.round((m.count / total) * 100);
                   return (
                     <div key={m.method} className="flex items-center gap-3">

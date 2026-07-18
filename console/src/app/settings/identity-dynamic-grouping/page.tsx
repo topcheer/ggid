@@ -46,7 +46,7 @@ export default function IdentityDynamicGroupingPage() {
             <Users className="w-4 h-4" />
             <span className="text-xs text-gray-400">{t("idDynamicGrouping.dynamicMembers")}</span>
           </div>
-          <p className="text-2xl font-bold">{(data?.group_rules ?? []).reduce((a, g) => a + g.member_count, 0)}</p>
+          <p className="text-2xl font-bold">{(data?.group_rules ?? []).reduce((a: any, g: any) => a + g.member_count, 0)}</p>
         </div>
         <div className="bg-gray-900 rounded-xl p-4">
           <div className="flex items-center gap-2 mb-1 text-purple-400">

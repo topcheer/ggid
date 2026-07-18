@@ -87,7 +87,7 @@ export default function BreakGlassPage() {
             <div className={cardCls}><div className="flex items-center gap-2"><Lock className="h-4 w-4 text-red-500" /><span className="text-xs font-semibold uppercase text-gray-400">Active</span></div><p className="mt-2 text-2xl font-bold text-red-600">{activeReqs.length}</p></div>
             <div className={cardCls}><div className="flex items-center gap-2"><Clock className="h-4 w-4 text-yellow-500" /><span className="text-xs font-semibold uppercase text-gray-400">Pending</span></div><p className="mt-2 text-2xl font-bold text-yellow-600">{pendingCount}</p></div>
             <div className={cardCls}><div className="flex items-center gap-2"><CheckCircle className="h-4 w-4 text-blue-500" /><span className="text-xs font-semibold uppercase text-gray-400">Total</span></div><p className="mt-2 text-2xl font-bold text-blue-600">{requests.length}</p></div>
-            <div className={cardCls}><div className="flex items-center gap-2"><Bell className="h-4 w-4 text-purple-500" /><span className="text-xs font-semibold uppercase text-gray-400">Notified</span></div><p className="mt-2 text-2xl font-bold text-purple-600">{requests.reduce((s, r) => s + r.notifications_sent, 0)}</p></div>
+            <div className={cardCls}><div className="flex items-center gap-2"><Bell className="h-4 w-4 text-purple-500" /><span className="text-xs font-semibold uppercase text-gray-400">Notified</span></div><p className="mt-2 text-2xl font-bold text-purple-600">{requests.reduce((s: any, r: any) => s + r.notifications_sent, 0)}</p></div>
           </div>
 
           {/* Active emergency access */}

@@ -2623,5 +2623,32 @@
     "presetGreen": "Forest Green",
     "presetPurple": "Royal Purple",
     "presetOrange": "Sunset Orange"
+  },
+  "settingsSearch": {
+    "searchPlaceholder": "Search settings...",
+    "searchResults": "Results",
+    "noResults": "No matching settings pages",
+    "popular": "Popular Settings",
+    "categories": {
+      "security": "Security",
+      "identity": "Identity",
+      "governance": "Governance",
+      "audit": "Audit",
+      "integration": "Integration",
+      "system": "System"
+    },
+    "keywords": {
+      "mfa": "MFA",
+      "password": "Password",
+      "passkey": "Passkey",
+      "sso": "SSO",
+      "oauth": "OAuth",
+      "audit": "Audit",
+      "policy": "Policy",
+      "role": "Role",
+      "session": "Session",
+      "risk": "Risk",
+      "compliance": "Compliance"
+    }
   }
 }

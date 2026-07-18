@@ -60,7 +60,7 @@ export default function OrgAnalyticsPage() {
         );
         setStats({
           total_orgs: orgs.length,
-          total_members: membersByOrg.reduce((sum, o) => sum + o.count, 0),
+          total_members: membersByOrg.reduce((sum: any, o: any) => sum + o.count, 0),
           total_departments: 0,
           total_teams: 0,
           members_by_org: membersByOrg,

@@ -43,7 +43,7 @@ export default function RiskEngineDashboardPage() {
       .catch(e => { setError(e.message); setLoading(false); });
   }, []);
 
-  const currentScore = factors.filter(f => f.enabled).reduce((sum, f) => sum + f.score, 0);
+  const currentScore = factors.filter(f => f.enabled).reduce((sum: any, f: any) => sum + f.score, 0);
   const gaugeColor = currentScore >= 85 ? 'text-red-600' : currentScore >= 60 ? 'text-amber-600' : currentScore >= 30 ? 'text-yellow-600' : 'text-green-600';
 
   const toggleFactor = (idx: number) => {

@@ -35,7 +35,7 @@ export default function SecurityOverviewPage() {
     { label: t("secOverview.postureCompliance"), score: 76, color: "#eab308" },
     { label: t("secOverview.mitreCoverage"), score: 82, color: "#22c55e" },
   ];
-  const overallScore = Math.round(subScores.reduce((a, s) => a + s.score, 0) / subScores.length);
+  const overallScore = Math.round(subScores.reduce((a: any, s: any) => a + s.score, 0) / subScores.length);
 
   const activeThreats = [{ sev: "critical", count: 2 }, { sev: "high", count: 5 }, { sev: "medium", count: 11 }, { sev: "low", count: 23 }];
   const riskDist = [{ label: "Low", value: 287, color: "#22c55e" }, { label: "Medium", value: 42, color: "#eab308" }, { label: "High", value: 12, color: "#f97316" }, { label: "Critical", value: 3, color: "#ef4444" }];
@@ -47,7 +47,7 @@ export default function SecurityOverviewPage() {
     { id: "INC-005", title: "Token Theft Detected", severity: "critical", status: "contained", responder: "auto-response", time: "1d ago" },
   ];
   const compliance = [{ name: "SOC2", pct: 91 }, { name: "ISO27001", pct: 85 }, { name: "NIS2", pct: 87 }, { name: "NIST", pct: 82 }];
-  const totalRisk = riskDist.reduce((a, r) => a + r.value, 0) || 1;
+  const totalRisk = riskDist.reduce((a: any, r: any) => a + r.value, 0) || 1;
 
   const sevCfg: Record<string, string> = { critical: "text-red-600 bg-red-100 dark:bg-red-900/30", high: "text-orange-600 bg-orange-100 dark:bg-orange-900/30", medium: "text-yellow-600 bg-yellow-100 dark:bg-yellow-900/30", low: "text-blue-600 bg-blue-100 dark:bg-blue-900/30" };
   const quickActions = [
@@ -93,7 +93,7 @@ export default function SecurityOverviewPage() {
                   <div key={th.sev}><p className={`text-2xl font-bold ${sevCfg[th.sev]?.split(" ")[0]}`}>{th.count}</p><p className="text-xs text-gray-400 capitalize">{th.sev}</p></div>
                 ))}
               </div>
-              <div className="mt-4 flex items-center justify-between rounded-lg bg-red-50 dark:bg-red-900/20 p-3"><div className="flex items-center gap-2"><Activity className="h-4 w-4 text-red-500" /><span className="text-sm font-medium">{activeThreats.reduce((a, t) => a + t.count, 0)} {t("secOverview.totalThreats24h")}</span></div></div>
+              <div className="mt-4 flex items-center justify-between rounded-lg bg-red-50 dark:bg-red-900/20 p-3"><div className="flex items-center gap-2"><Activity className="h-4 w-4 text-red-500" /><span className="text-sm font-medium">{activeThreats.reduce((a: any, t: any) => a + t.count, 0)} {t("secOverview.totalThreats24h")}</span></div></div>
             </div>
 
             {/* Quick actions */}

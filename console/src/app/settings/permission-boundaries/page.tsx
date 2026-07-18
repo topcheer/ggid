@@ -96,7 +96,7 @@ export default function PermissionBoundariesPage() {
     }
   };
 
-  const totalViolations = boundaries.reduce((s, b) => s + b.violation_count, 0);
+  const totalViolations = boundaries.reduce((s: any, b: any) => s + b.violation_count, 0);
 
   return (
     <div className="space-y-6">

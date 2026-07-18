@@ -33,9 +33,9 @@ export default function OrgTreeViewerPage() {
   const [selected, setSelected] = useState<OrgNode | null>(null);
   const [search, setSearch] = useState('');
 
-  const countOrgs = (n: OrgNode): number => 1 + n.children.reduce((s, c) => s + countOrgs(c), 0);
+  const countOrgs = (n: OrgNode): number => 1 + n.children.reduce((s: any, c: any) => s + countOrgs(c), 0);
   const maxDepth = (n: OrgNode): number => n.children.length === 0 ? 0 : 1 + Math.max(...n.children.map(maxDepth));
-  const totalMembers = (n: OrgNode): number => n.memberCount + n.children.reduce((s, c) => s + totalMembers(c), 0);
+  const totalMembers = (n: OrgNode): number => n.memberCount + n.children.reduce((s: any, c: any) => s + totalMembers(c), 0);
 
   const toggleCollapse = (node: OrgNode) => {
     const toggle = (n: OrgNode): OrgNode => ({

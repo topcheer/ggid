@@ -104,7 +104,7 @@ function rowsToObjects(
 function objectsToCSV(objects: Record<string, unknown>[]): string {
   if (objects.length === 0) return "";
   const keys = Array.from(
-    objects.reduce((set, obj) => {
+    objects.reduce((set: any, obj: any) => {
       Object.keys(obj).forEach((k: any) => set.add(k));
       return set;
     }, new Set<string>()),

@@ -328,9 +328,9 @@ function StatsTab({ ops, loading }: { ops: PrivilegedOp[]; loading: boolean }) {
 
   const breakGlassCount = actionCounts.get("break_glass") || 0;
   const jitCount = actionCounts.get("jit_elevate") || 0;
-  const topOperators = [...operators.entries()].sort((a, b) => b[1] - a[1]).slice(0, 5);
-  const topRoles = [...roles.entries()].sort((a, b) => b[1] - a[1]).slice(0, 5);
-  const days = [...byDay.entries()].sort((a, b) => a[0].localeCompare(b[0]));
+  const topOperators = [...operators.entries()].sort((a: any, b: any) => b[1] - a[1]).slice(0, 5);
+  const topRoles = [...roles.entries()].sort((a: any, b: any) => b[1] - a[1]).slice(0, 5);
+  const days = [...byDay.entries()].sort((a: any, b: any) => a[0].localeCompare(b[0]));
   const maxDayCount = Math.max(...days.map((d: any) => d[1]), 1);
 
   return (
@@ -347,7 +347,7 @@ function StatsTab({ ops, loading }: { ops: PrivilegedOp[]; loading: boolean }) {
       <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-6">
         <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-4">{t("privilegedActivity.stats.operationsByDay")}</h3>
         <div className="flex items-end gap-2 h-32">
-          {days.map(([day, count]) => (
+          {days.map(([day, count]: any[]) => (
             <div key={day} className="flex-1 flex flex-col items-center gap-1">
               <div className="w-full bg-blue-500 rounded-t transition-all" style={{ height: `${(count / maxDayCount) * 100}%`, minHeight: "4px" }} />
               <span className="text-xs text-gray-400">{new Date(day).getDate()}</span>
@@ -365,7 +365,7 @@ function StatsTab({ ops, loading }: { ops: PrivilegedOp[]; loading: boolean }) {
             {t("privilegedActivity.stats.topOperators")}
           </h3>
           <div className="space-y-2">
-            {topOperators.map(([name, count]) => (
+            {topOperators.map(([name, count]: any[]) => (
               <div key={name} className="flex items-center gap-3">
                 <span className="text-sm text-gray-700 dark:text-gray-300 flex-1 truncate">{name}</span>
                 <div className="w-20 h-1.5 bg-gray-200 dark:bg-gray-800 rounded-full overflow-hidden">
@@ -383,7 +383,7 @@ function StatsTab({ ops, loading }: { ops: PrivilegedOp[]; loading: boolean }) {
             {t("privilegedActivity.stats.mostElevatedRoles")}
           </h3>
           <div className="space-y-2">
-            {topRoles.map(([role, count]) => (
+            {topRoles.map(([role, count]: any[]) => (
               <div key={role} className="flex items-center gap-3">
                 <span className="text-sm text-gray-700 dark:text-gray-300 flex-1 truncate">{role}</span>
                 <div className="w-20 h-1.5 bg-gray-200 dark:bg-gray-800 rounded-full overflow-hidden">

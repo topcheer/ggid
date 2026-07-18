@@ -131,7 +131,7 @@ export default function ThreatIntelPage() {
         }
       }
       const riskScore = matches.length > 0
-        ? Math.min(Math.round(matches.reduce((a, m) => a + m.confidence, 0) / matches.length * 100), 100)
+        ? Math.min(Math.round(matches.reduce((a: any, m: any) => a + m.confidence, 0) / matches.length * 100), 100)
         : 5;
       setChkResult({ found: matches.length > 0, risk_score: riskScore, matches });
     } catch { setError("Threat check failed"); }
@@ -492,8 +492,8 @@ export default function ThreatIntelPage() {
             <h3 className="mb-4 flex items-center gap-2 text-sm font-semibold uppercase text-gray-400"><Crosshair className="h-4 w-4" /> Indicator Types</h3>
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
               {Object.entries(
-                (feed?.indicators || []).reduce((acc, ind) => { acc[ind.type] = (acc[ind.type] || 0) + 1; return acc; }, {} as Record<string, number>)
-              ).map(([type, count]) => {
+                (feed?.indicators || []).reduce((acc: any, ind: any) => { acc[ind.type] = (acc[ind.type] || 0) + 1; return acc; }, {} as Record<string, number>)
+              ).map(([type, count]: any[]) => {
                 const IIcon = INDICATOR_ICONS[type] || Globe;
                 return (
                   <div key={type} className="rounded-lg border p-3 text-center dark:border-gray-700">
@@ -510,7 +510,7 @@ export default function ThreatIntelPage() {
           <div className={card}>
             <h3 className="mb-4 flex items-center gap-2 text-sm font-semibold uppercase text-gray-400"><TrendingUp className="h-4 w-4" /> Top Threats (by Confidence)</h3>
             <div className="space-y-2">
-              {(feed?.indicators || []).sort((a, b) => b.confidence - a.confidence).slice(0, 10).map((ind: any, i: number) => {
+              {(feed?.indicators || []).sort((a: any, b: any) => b.confidence - a.confidence).slice(0, 10).map((ind: any, i: number) => {
                 const pct = Math.round(ind.confidence * 100);
                 return (
                   <div key={i} className="flex items-center gap-3">
@@ -540,7 +540,7 @@ export default function ThreatIntelPage() {
               <div><label className="text-sm font-medium">Source Name</label><input type="text" value={srcName} onChange={e => setSrcName(e.target.value)} placeholder="AlienVault OTX" className="mt-1 w-full rounded-lg border dark:border-gray-700 dark:bg-gray-900 px-3 py-2 text-sm" autoFocus /></div>
               <div><label className="text-sm font-medium">Source Type</label>
                 <select value={srcType} onChange={e => setSrcType(e.target.value)} className="mt-1 block w-full rounded-lg border dark:border-gray-700 dark:bg-gray-900 px-3 py-2 text-sm">
-                  {Object.entries(SOURCE_TYPE_LABELS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+                  {Object.entries(SOURCE_TYPE_LABELS).map(([k, v]: any[]) => <option key={k} value={k}>{v}</option>)}
                 </select>
               </div>
               <div><label className="text-sm font-medium">API Key</label><input type="password" value={srcKey} onChange={e => setSrcKey(e.target.value)} placeholder="••••••••••••" className="mt-1 w-full rounded-lg border dark:border-gray-700 dark:bg-gray-900 px-3 py-2 text-sm font-mono" /></div>

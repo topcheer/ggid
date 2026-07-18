@@ -152,7 +152,7 @@ function CampaignsList({ campaigns, onRefresh }: { campaigns: Campaign[]; onRefr
                 </div>
               </div>
               <span className={`px-2.5 py-0.5 text-xs rounded-full ${statusColors[c.status]}`}>
-                {t(`enrollmentCampaign.campaigns.status${c.status.replace(/^./, (m) => m.toUpperCase())}`)}
+                {t(`enrollmentCampaign.campaigns.status${c.status.replace(/^./, (m: any) => m.toUpperCase())}`)}
               </span>
             </div>
 
@@ -298,7 +298,7 @@ function CreateCampaign({ onLaunched }: { onLaunched: () => void }) {
                 <Icon className={`w-5 h-5 ${active ? "text-blue-600" : "text-gray-400"}`} />
                 <div>
                   <div className="text-sm font-medium text-gray-900 dark:text-white">
-                    {t(`enrollmentCampaign.create.method${m.value.replace(/^./, (c) => c.toUpperCase())}`)}
+                    {t(`enrollmentCampaign.create.method${m.value.replace(/^./, (c: any) => c.toUpperCase())}`)}
                   </div>
                 </div>
                 {active && <Check className="w-5 h-5 text-blue-600 ml-auto" />}
@@ -332,7 +332,7 @@ function CreateCampaign({ onLaunched }: { onLaunched: () => void }) {
           <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-3">{t("enrollmentCampaign.create.reviewTitle")}</h3>
           <ReviewRow label={t("enrollmentCampaign.create.campaignName")} value={name} />
           <ReviewRow label={t("enrollmentCampaign.create.targetGroup")} value={t(`enrollmentCampaign.create.${targetGroup === "no_passkey" ? "noPasskey" : targetGroup === "all" ? "allUsers" : targetGroup === "admins" ? "adminOnly" : "custom"}`)} />
-          <ReviewRow label={t("enrollmentCampaign.create.method")} value={t(`enrollmentCampaign.create.method${method.replace(/^./, (c) => c.toUpperCase())}`)} />
+          <ReviewRow label={t("enrollmentCampaign.create.method")} value={t(`enrollmentCampaign.create.method${method.replace(/^./, (c: any) => c.toUpperCase())}`)} />
           <ReviewRow label={t("enrollmentCampaign.create.deadline")} value={deadline} />
           <ReviewRow label={t("enrollmentCampaign.create.sendEmail")} value={sendEmail ? "Yes" : "No"} />
         </div>

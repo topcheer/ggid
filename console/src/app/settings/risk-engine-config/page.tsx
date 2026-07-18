@@ -47,7 +47,7 @@ export default function RiskEngineConfigPage() {
       .catch(e => { setError(e.message); setLoading(false); });
   }, []);
 
-  const totalWeight = weights.filter(w => w.enabled).reduce((sum, w) => sum + w.weight, 0);
+  const totalWeight = weights.filter(w => w.enabled).reduce((sum: any, w: any) => sum + w.weight, 0);
 
   const handleWeightChange = (idx: number, value: number) => {
     setWeights(prev => prev.map((w: any, i: number) => i === idx ? { ...w, weight: value } : w));

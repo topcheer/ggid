@@ -125,7 +125,7 @@ export default function UserTimelinePage({ params }: { params: { id: string } })
               login: "bg-blue-500", logout: "bg-gray-500", token_refresh: "bg-cyan-500",
               password_change: "bg-purple-500", mfa_verify: "bg-green-500", role_assign: "bg-indigo-500",
               itdr: "bg-red-500", cae: "bg-orange-500", policy_deny: "bg-pink-500",
-            }).map(([type, color]) => (
+            }).map(([type, color]: any[]) => (
               <div key={type} className="flex items-center gap-1">
                 <div className={`w-2.5 h-2.5 rounded-full ${color}`} />
                 <span className="text-xs text-gray-500 dark:text-gray-400">

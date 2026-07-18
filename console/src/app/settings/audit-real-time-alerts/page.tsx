@@ -69,7 +69,7 @@ export default function AuditRealTimeAlertsPage() {
             <span className="text-xs text-gray-400 auto-refresh-badge">Auto-refresh: 30s</span>
           </div>
           <div className="space-y-2 max-h-96 overflow-y-auto">
-            {alerts.map((alert: ActiveAlert, i) => {
+            {alerts.map((alert: ActiveAlert, i: any) => {
               const severity = alert.severity || "low";
               return (
                 <div key={alert.id || i} className={"rounded-lg p-3 border " + (severityColors[severity] || severityColors.low)}>

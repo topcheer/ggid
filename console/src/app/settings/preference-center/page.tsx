@@ -143,7 +143,7 @@ export default function PreferenceCenterPage() {
                 <div className="py-8 text-center"><FileText className="mx-auto h-10 w-10 text-gray-300" /><p className="mt-3 text-sm text-gray-400">{t("prefCenter.noDsr")}</p></div>
               ) : (
                 <div className="space-y-2">
-                  {dsrRequests.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()).map(d => {
+                  {dsrRequests.sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()).map(d => {
                     const cfg = STATUS_CFG[d.status] || STATUS_CFG.pending;
                     const daysLeft = Math.max(0, Math.ceil((new Date(d.due_date).getTime() - Date.now()) / 86400000));
                     const isOverdue = daysLeft === 0 && d.status !== "completed";

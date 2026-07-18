@@ -65,7 +65,7 @@ export default function OauthConsentFlowPage() {
             <div><h4 className="font-semibold">MyApp</h4><p className="text-xs text-gray-500">is requesting access to your account</p></div>
           </div>
           <div className="space-y-2 mb-4">
-            {Object.entries(config.scope_descriptions).slice(0, 3).map(([scope, desc]) => (
+            {Object.entries(config.scope_descriptions).slice(0, 3).map(([scope, desc]: any[]) => (
               <div key={scope} className="text-sm flex items-start gap-2">
                 <span className="w-2 h-2 rounded-full bg-blue-500 mt-1.5" />
                 <div><span className="font-medium">{scope}</span><p className="text-xs text-gray-500">{desc}</p></div>
@@ -98,7 +98,7 @@ export default function OauthConsentFlowPage() {
       <div className="rounded-lg border dark:border-gray-800 p-4">
         <h3 className="text-sm font-semibold mb-3">Scope Descriptions</h3>
         <div className="space-y-2">
-          {Object.entries(config.scope_descriptions).map(([scope, desc]) => (
+          {Object.entries(config.scope_descriptions).map(([scope, desc]: any[]) => (
             <div key={scope} className="flex items-center gap-2">
               <span className="font-mono text-xs w-32">{scope}</span>
               <input type="text" value={desc} onChange={(e) => { const next = { ...config.scope_descriptions }; next[scope] = e.target.value; setConfig({ ...config, scope_descriptions: next }); }} aria-label={`Description for ${scope}`} className="flex-1 px-3 py-1.5 rounded-lg border dark:border-gray-700 dark:bg-gray-900 text-sm" />
