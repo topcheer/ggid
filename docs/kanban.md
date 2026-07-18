@@ -245,6 +245,9 @@
 | KB-231 | **GeoDNS + region discovery API** (geo-routing) | devops | P1 | multi-region | 2d |
 | KB-232 | **Bidirectional logical replication + LWW conflict resolution** (active-active) | devops | P2 | multi-region | 5d |
 | KB-233 | **Per-tenant data residency** (publication filters for GDPR/PIPL) | backend | P2 | multi-region | 3d |
+| KB-234 | **swag annotations on all 786+ handlers** (per-service swag init) | backend | P0 | openapi-spec | 5d |
+| KB-235 | **Gateway aggregator + Swagger UI** (merged spec + /docs) | backend | P0 | openapi-spec | 2d |
+| KB-236 | **Contract tests + SDK auto-generation** (openapi-generator pipeline) | backend | P1 | openapi-spec | 3d |
 | KB-038 | **Journey definition store** (PostgreSQL) | backend | P0 | identity-orchestration | 3d |
 | KB-039 | **Journey definition parser** (YAML JDL) | backend | P0 | identity-orchestration | 4d |
 | KB-040 | **Journey engine** (state machine executor) | backend | P0 | identity-orchestration | 5d |
@@ -375,6 +378,7 @@
 | Disaster Recovery & Backup Automation | DONE | docs/research/disaster-recovery-backup.md |
 | Load Testing Strategy & Capacity Planning | DONE | docs/research/load-testing-capacity-planning.md |
 | Multi-Region Active-Active Deployment | DONE | docs/research/multi-region-active-active.md |
+| OpenAPI 3.1 Spec Generation & API Docs | DONE | docs/research/openapi-spec-generation.md |
 | OAuth Client Lifecycle Management (DCR) | NEXT | — |
 
 ---

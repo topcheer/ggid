@@ -1,6 +1,6 @@
 # GGID Team Backlog
 
-*Last updated: 2026-07-17 (Round 77: Multi-Region Active-Active Deployment research complete — 4 backlog items)*
+*Last updated: 2026-07-17 (Round 78: OpenAPI Spec Generation research complete — 3 backlog items)*
 
 ## Current Stats
 
@@ -183,6 +183,7 @@
 | 157 | **Disaster recovery & backup** (P0) | devops | Production ready | PG pg_dump+WAL PITR + Redis AOF/RDB + encrypted S3 off-site + automated restore testing + streaming replication + DR runbook. See docs/research/disaster-recovery-backup.md |
 | 158 | **Load testing + capacity planning** (P0) | devops | Performance | k6 5-flow suite + baseline RPS/latency + capacity model (1K-100K users) + soak/spike/DB index audit. See docs/research/load-testing-capacity-planning.md |
 | 159 | **Multi-region active-active** (P0-P2) | devops+backend | Global scale | PG streaming replication + failover + GeoDNS + bidirectional logical replication + LWW conflict resolution + per-tenant data residency. See docs/research/multi-region-active-active.md |
+| 160 | **OpenAPI 3.1 spec generation** (P0) | backend | API docs | swag annotations on 786+ handlers + gateway aggregator + Swagger UI + contract tests + SDK auto-generation. See docs/research/openapi-spec-generation.md |
 
 ### P3 — Quality/infrastructure improvements
 
@@ -246,6 +247,7 @@
 37. Disaster Recovery & Backup Automation → DONE (docs/research/disaster-recovery-backup.md) — 3 backlog items added
 38. Load Testing & Capacity Planning → DONE (docs/research/load-testing-capacity-planning.md) — 3 backlog items added
 39. Multi-Region Active-Active Deployment → DONE (docs/research/multi-region-active-active.md) — 4 backlog items added
+40. OpenAPI 3.1 Spec Generation & API Docs → DONE (docs/research/openapi-spec-generation.md) — 3 backlog items added
 
 ## Rules
 
@@ -279,6 +281,7 @@ Active research topics:
 - Disaster Recovery & Backup → DONE (docs/research/disaster-recovery-backup.md)
 - Load Testing & Capacity Planning → DONE (docs/research/load-testing-capacity-planning.md)
 - Multi-Region Active-Active → DONE (docs/research/multi-region-active-active.md)
+- OpenAPI Spec Generation → DONE (docs/research/openapi-spec-generation.md)
 - AI Agent Identity & Delegated Access → DONE (docs/research/ai-agent-identity.md)
 - Risk-Based Adaptive Authentication Engine → DONE (docs/research/risk-adaptive-auth-engine.md)
 - Consent Management Platform → DONE (docs/research/consent-management-platform.md)
