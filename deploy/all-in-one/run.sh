@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 # GGID All-in-One Docker launcher
 # Usage: bash deploy/all-in-one/run.sh
 

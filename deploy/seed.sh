@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 # Seed script: creates admin user, system roles, and permission assignments
 # Usage: bash deploy/seed.sh
 set -e
