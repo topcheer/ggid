@@ -46,6 +46,7 @@ type Handler struct {
 	breakGlassRepo  *repository.BreakGlassRepository
 	smsSender           service.SMSSender
 	memMapRepo          *authMemoryMapRepo
+	verificationRepo    *verificationRepo
 	internalSecret     string
 	internalPrevSecret string
 }
@@ -208,6 +209,12 @@ func (h *Handler) registerRoutes() {
 	h.mux.HandleFunc("/api/v1/auth/sessions/bind-device", h.handleDeviceBind)
 	h.mux.HandleFunc("/api/v1/auth/sessions/check-device", h.handleDeviceCheck)
 	h.mux.HandleFunc("/api/v1/auth/sessions/unbind-device", h.handleDeviceUnbind)
+	// Self-service registration + verification + password reset.
+	h.mux.HandleFunc("/api/v1/auth/register", h.handleRegister)
+	h.mux.HandleFunc("/api/v1/auth/verify-email", h.handleVerifyEmail)
+	h.mux.HandleFunc("/api/v1/auth/forgot-password", h.handleForgotPassword)
+	h.mux.HandleFunc("/api/v1/auth/reset-password", h.handleResetPassword)
+	h.mux.HandleFunc("/api/v1/auth/profile", h.handleProfileUpdate)
 
 	// Login attempt logging
 	h.mux.HandleFunc("/api/v1/auth/login-attempts", h.loginAttempts)
