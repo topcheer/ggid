@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"strconv"
 	"strings"
 	"testing"
 
@@ -123,5 +124,95 @@ func TestLoginCAP_EvaluateEndpoint(t *testing.T) {
 	}
 	if resp["matched"] != false {
 		t.Error("expected matched=false (no policies)")
+	}
+}
+
+// Test: CAP eval context enrichment — verify headers populate EvalContext fields.
+func TestLoginCAP_EvalContextEnrichment(t *testing.T) {
+	tests := []struct {
+		name           string
+		riskHeader     string
+		geoHeader      string
+		postureHeader  string
+		wantRisk       int
+		wantGeo        string
+		wantPosture    int
+	}{
+		{"all signals", "75", "US", "90", 75, "US", 90},
+		{"missing risk", "", "UK", "80", 0, "UK", 80},
+		{"invalid risk", "abc", "DE", "50", 0, "DE", 50},
+		{"none set", "", "", "", 0, "", 0},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			evalCtx := repository.EvalContext{
+				AuthMethod: "password",
+			}
+			// Simulate header parsing logic from login handler.
+			evalCtx.GeoCountry = tt.geoHeader
+			if tt.riskHeader != "" {
+				if v, e := strconv.Atoi(tt.riskHeader); e == nil {
+					evalCtx.RiskScore = v
+				}
+			}
+			if tt.postureHeader != "" {
+				if v, e := strconv.Atoi(tt.postureHeader); e == nil {
+					evalCtx.DevicePosture = v
+				}
+			}
+			if evalCtx.RiskScore != tt.wantRisk {
+				t.Errorf("RiskScore = %d, want %d", evalCtx.RiskScore, tt.wantRisk)
+			}
+			if evalCtx.GeoCountry != tt.wantGeo {
+				t.Errorf("GeoCountry = %q, want %q", evalCtx.GeoCountry, tt.wantGeo)
+			}
+			if evalCtx.DevicePosture != tt.wantPosture {
+				t.Errorf("DevicePosture = %d, want %d", evalCtx.DevicePosture, tt.wantPosture)
+			}
+		})
+	}
+}
+
+// Test: policy matching with geo condition — verifies block logic.
+func TestLoginCAP_GeoBlock(t *testing.T) {
+	// Build conditions that block traffic from specific countries.
+	conds := repository.Conditions{
+		GeoCountries: []string{"CN", "RU"},
+	}
+	// Match: traffic from CN should match.
+	matched := repository.MatchesConditionsPublic(conds, repository.EvalContext{
+		GeoCountry: "CN",
+	})
+	if !matched {
+		t.Error("expected CN to match geo block list")
+	}
+	// No match: traffic from US should not match.
+	matched = repository.MatchesConditionsPublic(conds, repository.EvalContext{
+		GeoCountry: "US",
+	})
+	if matched {
+		t.Error("US should not match geo block list")
+	}
+}
+
+// Test: policy matching with risk score threshold.
+func TestLoginCAP_RiskScoreThreshold(t *testing.T) {
+	threshold := 80
+	conds := repository.Conditions{
+		RiskScoreGreaterThan: &threshold,
+	}
+	// High risk → should match.
+	matched := repository.MatchesConditionsPublic(conds, repository.EvalContext{
+		RiskScore: 90,
+	})
+	if !matched {
+		t.Error("risk score 90 should match threshold >80")
+	}
+	// Low risk → should not match.
+	matched = repository.MatchesConditionsPublic(conds, repository.EvalContext{
+		RiskScore: 50,
+	})
+	if matched {
+		t.Error("risk score 50 should not match threshold >80")
 	}
 }

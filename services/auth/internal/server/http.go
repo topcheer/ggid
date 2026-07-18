@@ -10,6 +10,7 @@ import (
 	"net"
 	"net/http"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 
@@ -186,6 +187,7 @@ func (h *Handler) registerRoutes() {
 	// Password policy config endpoint
 	h.mux.HandleFunc("/api/v1/auth/password/policy", h.passwordPolicy)
 	h.mux.HandleFunc("/api/v1/auth/password-policy", h.passwordPolicy)
+	h.mux.HandleFunc("/api/v1/auth/password/strength", h.handlePasswordStrength)
 
 	// Password history summary
 	h.mux.HandleFunc("/api/v1/auth/password-history", h.passwordHistory)
@@ -659,10 +661,22 @@ func (h *Handler) login(w http.ResponseWriter, r *http.Request) {
 
 	// KB-080: Conditional Access Policy evaluation.
 	// Evaluate after auth success, before returning tokens.
+	// Enrich eval context with signals from request headers.
 	if tc, err := ggidtenant.FromContext(r.Context()); err == nil && h.capRepo != nil {
 		evalCtx := repository.EvalContext{
 			IPAddress:  ip,
 			AuthMethod: "password",
+			GeoCountry: r.Header.Get("X-Geo-Country"),
+		}
+		if rs := r.Header.Get("X-Risk-Score"); rs != "" {
+			if v, e := strconv.Atoi(rs); e == nil {
+				evalCtx.RiskScore = v
+			}
+		}
+		if dp := r.Header.Get("X-Device-Posture"); dp != "" {
+			if v, e := strconv.Atoi(dp); e == nil {
+				evalCtx.DevicePosture = v
+			}
 		}
 		action, matchedPolicy := h.capRepo.Evaluate(r.Context(), tc.TenantID, evalCtx)
 		if matchedPolicy != nil {
@@ -755,6 +769,13 @@ func (h *Handler) register(w http.ResponseWriter, r *http.Request) {
 	}
 
 	userID := uuid.New()
+
+	// KB-082: Password strength gate — reject weak passwords (score < 2).
+	if ok, _ := checkPasswordStrengthGate(req.Password); !ok {
+		writeError(w, http.StatusBadRequest, "password too weak")
+		return
+	}
+
 	// Create user in Identity Service
 	user, err := h.authSvc.IdentityClient().CreateUserFromSocial(r.Context(), tc.TenantID, req.Username, req.Email, req.Username, "local", userID.String(), nil)
 	if err != nil {
@@ -965,6 +986,12 @@ func (h *Handler) changePassword(w http.ResponseWriter, r *http.Request) {
 			writeError(w, http.StatusBadRequest, "invalid user_id in token")
 			return
 		}
+	}
+
+	// KB-082: Password strength gate — reject weak new passwords (score < 2).
+	if ok, msg := checkPasswordStrengthGate(req.NewPassword); !ok {
+		writeError(w, http.StatusBadRequest, "new password too weak: "+msg)
+		return
 	}
 
 	if err := h.authSvc.ChangePassword(r.Context(), tc.TenantID, userID, req.OldPassword, req.NewPassword); err != nil {
