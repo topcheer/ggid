@@ -36,3 +36,15 @@
 | Workload Identity Federation | ❌ 缺少 | P2 |
 | Cloud IAM 桥接 (AWS IAM/Azure AD/GCP IAM) | ⚠️ 部分(SAML) | P1 |
 | Market place listing | ❌ 不适用(开源) | — |
+
+## GAP Convergence Status $(date -u +%Y-%m-%dT%H:%M:%SZ)
+| GAP | Status | Action |
+|-----|--------|--------|
+| NHI memory map | ✅ FIXED | KB-282 PG migration committed |
+| SoD memory | ✅ FIXED | KB-283 PG migration committed |
+| OpenAPI coverage | 🔄 240/830 (29%) | KB-306 expanding to 415+ |
+| tsc implicit any | 🔄 671 errors | Frontend batch 1 in progress |
+| log.Printf | ✅ 110 (startup only) | Acceptable |
+| API security tests | 🔄 52 tests | KB-303/303b done, KB-303c in progress |
+| CI failures | ✅ FIXED | Workflow % expr + go mod tidy |
+| Productization | ✅ Core complete | docker-compose/env/swagger/SDK/guides |
