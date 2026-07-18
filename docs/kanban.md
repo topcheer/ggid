@@ -264,6 +264,8 @@
 | KB-250 | **AAGUID allowlist + FIDO MDS + Device Public Key** | backend | P1 | webauthn-enterprise | 5d |
 | KB-251 | **WORM storage + Merkle tree + S3 Object Lock** (append-only PG + hourly roots) | backend | P0 | audit-worm | 4d |
 | KB-252 | **Continuous tamper detection + auditor export bundle + retention** | backend | P1 | audit-worm | 3d |
+| KB-253 | **Notification router + 7 channel adapters** (email/SMS/Slack/Teams/PagerDuty/webhook/in-app) | backend | P0 | notifications | 5d |
+| KB-254 | **Escalation engine + user preferences + in-app WebSocket** | backend | P1 | notifications | 4d |
 | KB-038 | **Journey definition store** (PostgreSQL) | backend | P0 | identity-orchestration | 3d |
 | KB-039 | **Journey definition parser** (YAML JDL) | backend | P0 | identity-orchestration | 4d |
 | KB-040 | **Journey engine** (state machine executor) | backend | P0 | identity-orchestration | 5d |
@@ -402,6 +404,7 @@
 | Plugin System & WASM Enhancement | DONE | docs/research/plugin-system-wasm-enhancement.md |
 | WebAuthn/FIDO2 Enterprise Features | DONE | docs/research/webauthn-enterprise-implementation.md |
 | Audit Tamper Protection & WORM Storage | DONE | docs/research/audit-tamper-protection-worm.md |
+| Multi-Channel Notification & Alerting | DONE | docs/research/notification-multi-channel-alerting.md |
 | OAuth Client Lifecycle Management (DCR) | NEXT | — |
 
 ---
