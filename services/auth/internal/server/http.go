@@ -50,7 +50,9 @@ type Handler struct {
 	enrollmentNudgeRepo    *repository.EnrollmentNudgeRepository
 	aaguidAllowlistRepo    *repository.AAGUIDAllowlistRepository
 	tapEngine              *tap.Engine
+	migrationEngine        *jitMigrationEngine
 	tapPolicyRepo          *repository.TAPPolicyRepository
+	capRepo                *repository.ConditionalAccessRepository
 	smsSender           service.SMSSender
 	memMapRepo          *authMemoryMapRepo
 	verificationRepo    *verificationRepo
@@ -112,6 +114,11 @@ func (h *Handler) SetSysconfigStore(store sysconfig.Store) {
 func (h *Handler) SetMemMapRepo(repo *authMemoryMapRepo) {
 	h.memMapRepo = repo
 	globalMemMapRepo = repo
+}
+
+// SetMigrationEngine injects the JIT migration engine.
+func (h *Handler) SetMigrationEngine(e *jitMigrationEngine) {
+	h.migrationEngine = e
 }
 
 // globalMemMapRepo is a package-level reference for non-handler functions.
@@ -213,6 +220,11 @@ func (h *Handler) registerRoutes() {
 	h.mux.HandleFunc("/api/v1/auth/invalidate-sessions/", h.handleInvalidateSessions)
 	h.mux.HandleFunc("/api/v1/auth/multi-hash/verify", h.handleMultiHashVerify)
 	h.mux.HandleFunc("/api/v1/auth/multi-hash/rehash/", h.handleMultiHashRehash)
+
+	// Legacy migration admin endpoints.
+	h.mux.HandleFunc("/api/v1/admin/migration/config", h.handleMigrationConfig)
+	h.mux.HandleFunc("/api/v1/admin/migration/stats", h.handleMigrationStats)
+	h.mux.HandleFunc("/api/v1/admin/migration/test", h.handleMigrationTest)
 	h.mux.HandleFunc("/api/v1/auth/internal/revoke-user", h.handleInternalRevokeUser)
 	h.mux.HandleFunc("/api/v1/auth/password-pepper/rotate", h.handlePepperRotate)
 	h.mux.HandleFunc("/api/v1/auth/password-pepper/status", h.handlePepperStatus)
@@ -486,6 +498,7 @@ func (h *Handler) registerRoutes() {
 	h.mux.HandleFunc("/api/v1/auth/webauthn/aaguid/", h.handleAAGUIDAllowlist)
 	h.mux.HandleFunc("/api/v1/auth/tap", h.handleTAP)
 	h.mux.HandleFunc("/api/v1/auth/tap/", h.handleTAP)
+	h.mux.HandleFunc("/api/v1/auth/conditional-access/", h.handleConditionalAccess)
 
 	// Batch 3C: 14 additional auth endpoints
 	h.registerBatch3CRoutes()

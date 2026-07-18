@@ -305,6 +305,20 @@ func main() {
 	}
 	handler.SetTAPPolicyRepo(tapPolicyRepo)
 
+	// Conditional access policy engine (KB-080).
+	capRepo := repository.NewConditionalAccessRepository(pool)
+	if err := capRepo.EnsureSchema(ctx); err != nil {
+		log.Printf("Conditional access schema ensure error (non-fatal): %v", err)
+	}
+	handler.SetConditionalAccessRepo(capRepo)
+
+	// JIT migration engine.
+	migrationEng := server.NewJITMigrationEngine(pool)
+	if err := migrationEng.EnsureSchema(ctx); err != nil {
+		log.Printf("Migration schema ensure error (non-fatal): %v", err)
+	}
+	handler.SetMigrationEngine(migrationEng)
+
 	// Internal auth HMAC secrets for cross-service endpoints.
 	internalSecret := os.Getenv("INTERNAL_AUTH_SECRET")
 	internalPrevSecret := os.Getenv("INTERNAL_AUTH_PREV_SECRET")
