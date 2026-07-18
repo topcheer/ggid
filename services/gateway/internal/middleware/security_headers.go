@@ -39,7 +39,7 @@ var (
 	tenantCORSConfigs = map[string]TenantCORSConfig{}
 )
 
-func SetTenantCORS(tenantID string, cfg CORSConfig) {
+func SetTenantCORS(tenantID string, cfg TenantCORSConfig) {
 	tenantCORSConfigs[tenantID] = cfg
 }
 
