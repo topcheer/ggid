@@ -284,6 +284,103 @@ curl http://localhost:8080/healthz
 
 ---
 
-*See: [Deploy Troubleshooting](../deploy/troubleshooting.md) | [FAQ](../faq.md) | [Docker 5-Minute](../quickstart/docker-5-min.md)*
+## SAML Federation Issues
 
-*Last updated: 2025-07-11*
+### Symptom: SAML response rejected — "invalid issuer"
+
+- **Cause**: Entity ID in GGID metadata doesn't match what the SP expects
+- **Fix**: Download GGID metadata at `/api/v1/identity/saml/metadata` and compare `entityID` with SP configuration
+
+### Symptom: "Signature validation failed" on SAML assertion
+
+- **Cause**: SP has an old GGID signing certificate
+- **Fix**: Download new certificate from `/api/v1/auth/certificates?type=saml` and upload to SP
+
+### Symptom: SAML attribute mapping not working
+
+- **Cause**: GGID sends attributes with different names than SP expects
+- **Fix**: Check `/api/v1/identity/saml/attribute-mapping` and align with SP requirements (e.g., AWS expects `email`, `first_name`, `last_name`, `groups`)
+
+### Symptom: SAML redirect loop between GGID and SP
+
+- **Cause**: NameID format mismatch (SP expects `emailAddress`, GGID sends `unspecified`)
+- **Fix**: Configure GGID to use `urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress`
+
+## Conditional Access (CAE) Issues
+
+### Symptom: Login returns 403 "access_blocked_by_conditional_access_policy"
+
+- **Cause**: A CAP policy matched the login context (IP/geo/risk/device posture)
+- **Fix**: Check conditional access policies at `/api/v1/auth/conditional-access/policies`. Disable the matching policy or add the IP to the allowlist
+
+### Symptom: Login returns 200 but `mfa_required: true`
+
+- **Cause**: CAP policy action is `require_mfa` — the token is valid but MFA step-up is needed
+- **Fix**: App should redirect to MFA enrollment/verification flow when `mfa_required` is true
+
+## Docker Startup Failures
+
+### Symptom: Container exits immediately with "database connection refused"
+
+- **Cause**: PostgreSQL container isn't ready when GGID tries to connect
+- **Fix**: Ensure `depends_on` with health check in docker-compose:
+```yaml
+depends_on:
+  postgres:
+    condition: service_healthy
+```
+
+### Symptom: "AES_KEY must be 32 bytes hex"
+
+- **Cause**: `AES_KEY` environment variable is not set or wrong format
+- **Fix**: Generate with `openssl rand -hex 32` and set in `.env`
+
+### Symptom: Services keep restarting — OOMKilled
+
+- **Cause**: Container memory limit too low for the service
+- **Fix**: Increase to minimum 4GB for all-in-one, 2GB per individual service
+
+### Symptom: "port already in use"
+
+- **Cause**: Host ports 8080/3000/5432 are occupied
+- **Fix**: Change port mapping in docker-compose or stop conflicting process: `lsof -i :8080`
+
+## Console UI Issues
+
+### Symptom: Console shows white screen (blank page)
+
+- **Cause**: JavaScript bundle failed to load — often a CORS or build issue
+- **Fix**:
+  1. Open browser DevTools (F12) → Console tab for errors
+  2. Verify `CONSOLE_URL` matches the actual URL
+  3. Check Next.js is running: `docker compose logs console`
+  4. Ensure `NEXT_PUBLIC_API_URL` points to the gateway
+
+### Symptom: Console 404 on all pages
+
+- **Cause**: Console service not started or wrong port configured
+- **Fix**: Verify port 3000 is mapped and the console container is running:
+```bash
+docker compose ps
+curl -I http://localhost:3000
+```
+
+### Symptom: API calls from Console fail with CORS
+
+- **Cause**: Gateway CORS not configured for the Console origin
+- **Fix**: Set `CORS_ALLOWED_ORIGINS=https://console.yourcompany.com` in gateway config
+
+### Symptom: Login redirects to wrong URL after authentication
+
+- **Cause**: `GATEWAY_URL` or `CONSOLE_URL` misconfigured
+- **Fix**: Ensure both match your actual domain:
+```bash
+GATEWAY_URL=https://auth.yourcompany.com
+CONSOLE_URL=https://console.yourcompany.com
+```
+
+---
+
+*See: [Deploy Troubleshooting](../deploy/troubleshooting.md) | [FAQ](../faq.md) | [Docker 5-Minute](../quickstart/docker-5-min.md) | [Self-Hosting Guide](self-hosting.md)*
+
+*Last updated: 2025-07-18*
