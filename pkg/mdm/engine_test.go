@@ -143,7 +143,8 @@ func TestJamfAdapter_GetDevices_MockServer(t *testing.T) {
 	if devices[0].DeviceID != "jamf-101" {
 		t.Fatalf("expected jamf-101, got %s", devices[0].DeviceID)
 	}
-	if !devices[1].Encrypted {
-		t.Fatal("device 1 should have fileVault disabled")
+	// Device 102 (index 1) should NOT be encrypted (fileVault2Enabled: false).
+	if devices[1].Encrypted {
+		t.Fatal("device 1 should NOT be encrypted (fileVault disabled)")
 	}
 }
