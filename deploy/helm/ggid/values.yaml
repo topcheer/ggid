@@ -126,6 +126,25 @@ auth:
       cpu: 100m
       memory: 128Mi
 
+# OAuth Service
+oauth:
+  enabled: true
+  image:
+    repository: ggid/oauth
+    tag: "latest"
+    pullPolicy: IfNotPresent
+  replicaCount: 2
+  service:
+    type: ClusterIP
+    httpPort: 8084
+  resources:
+    limits:
+      cpu: 500m
+      memory: 256Mi
+    requests:
+      cpu: 100m
+      memory: 128Mi
+
 # Policy Engine
 policy:
   enabled: true

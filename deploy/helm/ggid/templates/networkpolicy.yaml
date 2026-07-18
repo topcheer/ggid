@@ -1,16 +1,17 @@
 {{- if .Values.networkPolicy.enabled }}
+{{- $root := . -}}
 # Gateway NetworkPolicy - allows ingress from anywhere
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
-  name: {{ include "ggid.fullname" $ }}-gateway-ingress
+  name: {{ include "ggid.fullname" . }}-gateway-ingress
   labels:
-    {{- include "ggid.labels" $ | nindent 4 }}
+    {{- include "ggid.labels" . | nindent 4 }}
     app.kubernetes.io/component: gateway
 spec:
   podSelector:
     matchLabels:
-      {{- include "ggid.selectorLabels" $ | nindent 6 }}
+      {{- include "ggid.selectorLabels" . | nindent 6 }}
       app.kubernetes.io/component: gateway
   policyTypes:
     - Ingress
@@ -56,7 +57,7 @@ spec:
     - to:
         - podSelector:
             matchLabels:
-              {{- include "ggid.selectorLabels" $ | nindent 12 }}
+              {{- include "ggid.selectorLabels" . | nindent 14 }}
       ports:
         - protocol: TCP
           port: 8080
@@ -66,21 +67,20 @@ spec:
           port: 8071
         - protocol: TCP
           port: 8072
----
-# Backend services NetworkPolicy - only gateway namespace can reach them
-{{- range $name, $svc := dict "identity" .Values.identity "auth" .Values.auth "oauth" .Values.oauth "policy" .Values.policy "org" .Values.org "audit" .Values.audit -}}
+{{- range $name, $svc := dict "identity" $root.Values.identity "auth" $root.Values.auth "oauth" $root.Values.oauth "policy" $root.Values.policy "org" $root.Values.org "audit" $root.Values.audit }}
 {{- if $svc.enabled }}
+---
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
-  name: {{ include "ggid.fullname" $ }}-{{ $name }}-ingress
+  name: {{ include "ggid.fullname" $root }}-{{ $name }}-ingress
   labels:
-    {{- include "ggid.labels" $ | nindent 4 }}
+    {{- include "ggid.labels" $root | nindent 4 }}
     app.kubernetes.io/component: {{ $name }}
 spec:
   podSelector:
     matchLabels:
-      {{- include "ggid.selectorLabels" $ | nindent 6 }}
+      {{- include "ggid.selectorLabels" $root | nindent 6 }}
       app.kubernetes.io/component: {{ $name }}
   policyTypes:
     - Ingress
@@ -89,7 +89,7 @@ spec:
     - from:
         - podSelector:
             matchLabels:
-              {{- include "ggid.selectorLabels" $ | nindent 12 }}
+              {{- include "ggid.selectorLabels" $root | nindent 14 }}
               app.kubernetes.io/component: gateway
       ports:
         {{- if $svc.service.httpPort }}
@@ -104,7 +104,6 @@ spec:
         - protocol: TCP
           port: {{ $svc.service.grpcPort }}
         {{- end }}
----
 {{- end }}
 {{- end }}
 {{- end }}
