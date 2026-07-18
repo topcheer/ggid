@@ -190,3 +190,107 @@ func TestImportJobStruct(t *testing.T) {
 // Ensure uuid and ggidtenant imports are used (for future DB-backed tests).
 var _ = uuid.New
 var _ = ggidtenant.IsolationShared
+
+// === Dry-Run Validation Tests ===
+
+// TestValidateRecords_AllValid verifies that valid records produce correct counts.
+func TestValidateRecords_AllValid(t *testing.T) {
+	records := []ImportUserRecord{
+		{Username: "alice", Email: "alice@example.com", Password: "password123"},
+		{Username: "bob", Email: "bob@example.com", Password: "password456"},
+	}
+	report := validateRecords(records)
+	if report.Total != 2 {
+		t.Errorf("expected total 2, got %d", report.Total)
+	}
+	if report.Valid != 2 {
+		t.Errorf("expected valid 2, got %d", report.Valid)
+	}
+	if report.Invalid != 0 {
+		t.Errorf("expected invalid 0, got %d", report.Invalid)
+	}
+	if len(report.Errors) != 0 {
+		t.Errorf("expected 0 errors, got %d", len(report.Errors))
+	}
+	if len(report.Preview.ValidRows) != 2 {
+		t.Errorf("expected 2 preview rows, got %d", len(report.Preview.ValidRows))
+	}
+}
+
+// TestValidateRecords_Mixed validates a mix of valid and invalid records.
+func TestValidateRecords_Mixed(t *testing.T) {
+	records := []ImportUserRecord{
+		{Username: "alice", Email: "alice@example.com", Password: "password123"},     // valid
+		{Username: "", Email: "bad@example.com", Password: "password123"},             // missing username
+		{Username: "charlie", Email: "invalid-email", Password: "password123"},        // bad email
+		{Username: "dave", Email: "dave@example.com", Password: "short"},              // short password
+		{Username: "eve", Email: "eve@example.com", Password: "password789"},          // valid
+	}
+	report := validateRecords(records)
+	if report.Total != 5 {
+		t.Errorf("expected total 5, got %d", report.Total)
+	}
+	if report.Valid != 2 {
+		t.Errorf("expected valid 2, got %d", report.Valid)
+	}
+	if report.Invalid != 3 {
+		t.Errorf("expected invalid 3, got %d", report.Invalid)
+	}
+	if len(report.Errors) != 3 {
+		t.Errorf("expected 3 errors, got %d", len(report.Errors))
+	}
+	// Check error details.
+	if report.Errors[0].Row != 2 || report.Errors[0].Error != "missing username" {
+		t.Errorf("error 0: row=%d msg=%s", report.Errors[0].Row, report.Errors[0].Error)
+	}
+	if report.Errors[1].Row != 3 || report.Errors[1].Username != "charlie" {
+		t.Errorf("error 1: row=%d user=%s", report.Errors[1].Row, report.Errors[1].Username)
+	}
+	if report.Errors[2].Row != 4 || report.Errors[2].Error != "password too short (min 8 chars)" {
+		t.Errorf("error 2: row=%d msg=%s", report.Errors[2].Row, report.Errors[2].Error)
+	}
+}
+
+// TestValidateRecords_DuplicateUsername catches duplicate usernames within the same batch.
+func TestValidateRecords_DuplicateUsername(t *testing.T) {
+	records := []ImportUserRecord{
+		{Username: "dup", Email: "first@example.com", Password: "password123"},
+		{Username: "dup", Email: "second@example.com", Password: "password456"},
+	}
+	report := validateRecords(records)
+	if report.Valid != 1 {
+		t.Errorf("expected 1 valid (first dup), got %d", report.Valid)
+	}
+	if report.Invalid != 1 {
+		t.Errorf("expected 1 invalid (second dup), got %d", report.Invalid)
+	}
+	if report.Errors[0].Error != "duplicate username in batch" {
+		t.Errorf("expected duplicate error, got %s", report.Errors[0].Error)
+	}
+}
+
+// TestValidateRecords_PreviewLimit verifies preview is capped at 3 rows.
+func TestValidateRecords_PreviewLimit(t *testing.T) {
+	records := make([]ImportUserRecord, 5)
+	for i := range records {
+		records[i] = ImportUserRecord{
+			Username:    "user" + string(rune('a'+i)),
+			Email:       "user" + string(rune('a'+i)) + "@test.com",
+			Password:    "password123",
+			DisplayName: "User " + string(rune('A'+i)),
+		}
+	}
+	report := validateRecords(records)
+	if len(report.Preview.ValidRows) != 3 {
+		t.Errorf("expected 3 preview rows (capped), got %d", len(report.Preview.ValidRows))
+	}
+}
+
+// TestValidateRecords_EmptyInput verifies empty batch handling.
+func TestValidateRecords_EmptyInput(t *testing.T) {
+	report := validateRecords(nil)
+	if report.Total != 0 || report.Valid != 0 || report.Invalid != 0 {
+		t.Errorf("expected all zeros for empty input, got total=%d valid=%d invalid=%d",
+			report.Total, report.Valid, report.Invalid)
+	}
+}

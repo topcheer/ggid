@@ -80,6 +80,13 @@ func (h *HTTPHandler) handleImportAsync(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
+	// Dry-run mode: validate only, no DB writes.
+	if r.URL.Query().Get("dry_run") == "true" {
+		report := validateRecords(records)
+		writeJSON(w, http.StatusOK, report)
+		return
+	}
+
 	// Create the job.
 	now := time.Now().UTC()
 	job := &ImportJob{
@@ -238,4 +245,80 @@ func parseCSVRecords(data []byte) ([]ImportUserRecord, error) {
 	}
 
 	return records, nil
+}
+
+// ValidationReport is returned for dry-run import validation.
+type ValidationReport struct {
+	Total     int               `json:"total"`
+	Valid     int               `json:"valid"`
+	Invalid   int               `json:"invalid"`
+	Errors    []ImportRowError  `json:"errors,omitempty"`
+	Preview   PreviewRows       `json:"preview"`
+}
+
+// PreviewRows contains sample valid rows for the frontend to display.
+type PreviewRows struct {
+	ValidRows []ImportUserRecord `json:"valid_rows"`
+}
+
+// validateRecords checks all records without writing to DB.
+// Returns a report with counts, per-row errors, and 3 sample valid rows.
+func validateRecords(records []ImportUserRecord) *ValidationReport {
+	report := &ValidationReport{
+		Total: len(records),
+	}
+
+	// Track seen usernames for duplicate detection.
+	seenUsernames := make(map[string]bool)
+
+	for i, rec := range records {
+		rowNum := i + 1
+
+		// Validate email format.
+		if rec.Email == "" || !isValidEmail(rec.Email) {
+			report.Invalid++
+			report.Errors = append(report.Errors, ImportRowError{
+				Row: rowNum, Username: rec.Username, Error: "invalid or missing email",
+			})
+			continue
+		}
+
+		// Validate username.
+		if rec.Username == "" {
+			report.Invalid++
+			report.Errors = append(report.Errors, ImportRowError{
+				Row: rowNum, Error: "missing username",
+			})
+			continue
+		}
+
+		// Check for duplicate username within this batch.
+		if seenUsernames[rec.Username] {
+			report.Invalid++
+			report.Errors = append(report.Errors, ImportRowError{
+				Row: rowNum, Username: rec.Username, Error: "duplicate username in batch",
+			})
+			continue
+		}
+		seenUsernames[rec.Username] = true
+
+		// Validate password strength (min 8 chars).
+		if len(rec.Password) < 8 {
+			report.Invalid++
+			report.Errors = append(report.Errors, ImportRowError{
+				Row: rowNum, Username: rec.Username, Error: "password too short (min 8 chars)",
+			})
+			continue
+		}
+
+		// Row is valid.
+		report.Valid++
+
+		// Collect up to 3 sample valid rows for preview.
+		if len(report.Preview.ValidRows) < 3 {
+			report.Preview.ValidRows = append(report.Preview.ValidRows, rec)
+		}
+	}
+
+	return report
 }
