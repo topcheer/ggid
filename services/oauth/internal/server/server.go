@@ -568,7 +568,7 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 		tenantIDStr := r.Header.Get("X-Tenant-ID")
 		tenantID, err := uuid.Parse(tenantIDStr)
 		if err != nil {
-			writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid_request", "error_description": "valid X-Tenant-ID header required"})
+			writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid_request", "error_description": "missing or invalid tenant context"})
 			return
 		}
 

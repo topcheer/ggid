@@ -102,7 +102,8 @@ fi
 
 # === Step 2: Create User ===
 echo "--- Step 2: Create User ---"
-RESP=$(tpost "$GGID/api/v1/users" '{"email":"e2e-script@test.com","password":"E2eScript@123","name":"E2E Script","username":"e2e_script"}' "$TOKEN")
+E2E_TS=$(date +%s)
+RESP=$(tpost "$GGID/api/v1/users" "{\"email\":\"e2e_${E2E_TS}@test.com\",\"password\":\"E2eScript@123\",\"name\":\"E2E Script\",\"username\":\"e2e_${E2E_TS}\"}" "$TOKEN")
 CODE=$(echo "$RESP" | cut -d'|' -f1)
 MS=$(echo "$RESP" | cut -d'|' -f2)
 BODY=$(echo "$RESP" | cut -d'|' -f3-)
@@ -187,7 +188,15 @@ echo "--- Step 7: Client Credentials Token ---"
 CLIENT_SECRET=$(echo "$BODY" | python3 -c "import sys,json;print(json.load(sys.stdin).get('ClientSecret',''))" 2>/dev/null || echo "")
 
 if [ -n "$CLIENT_ID" ] && [ -n "$CLIENT_SECRET" ]; then
-  RESP=$(tpost "$GGID/api/v1/oauth/token" "grant_type=client_credentials&client_id=$CLIENT_ID&client_secret=$CLIENT_SECRET&scope=users:read" "")
+  START=$(python3 -c 'import time;print(int(time.time()*1000))')
+  RAW=$(curl -s -o /tmp/e2e_token_resp.txt -w "%{http_code}" -X POST "$GGID/api/v1/oauth/token" \
+    -H "Content-Type: application/x-www-form-urlencoded" \
+    -H "X-Tenant-ID: $TENANT" \
+    -d "grant_type=client_credentials&client_id=$CLIENT_ID&client_secret=$CLIENT_SECRET&scope=users:read" 2>/dev/null)
+  END=$(python3 -c 'import time;print(int(time.time()*1000))')
+  CODE="$RAW"
+  MS=$((END - START))
+  BODY=$(cat /tmp/e2e_token_resp.txt 2>/dev/null)
   CODE=$(echo "$RESP" | cut -d'|' -f1)
   MS=$(echo "$RESP" | cut -d'|' -f2)
   BODY=$(echo "$RESP" | cut -d'|' -f3-)

@@ -13,6 +13,7 @@ import (
 type RateLimitConfig struct {
 	LoginLimit    int           // requests per minute for login
 	RegisterLimit int           // requests per minute for register
+	TokenLimit    int           // requests per minute for /oauth/token (brute-force protection)
 	APILimit      int           // requests per minute for general API
 	Window        time.Duration // sliding window
 }
@@ -22,6 +23,7 @@ func DefaultRateLimitConfig() RateLimitConfig {
 	return RateLimitConfig{
 		LoginLimit:    5,
 		RegisterLimit: 3,
+		TokenLimit:    10, // strict limit to prevent token brute-force
 		APILimit:      100,
 		Window:        time.Minute,
 	}
@@ -100,6 +102,8 @@ func (rl *RateLimiter) getLimit(path string) int {
 		return rl.cfg.LoginLimit
 	case path == "/api/v1/auth/register":
 		return rl.cfg.RegisterLimit
+	case path == "/oauth/token":
+		return rl.cfg.TokenLimit
 	case len(path) > 8 && path[:8] == "/api/v1/":
 		return rl.cfg.APILimit
 	default:
