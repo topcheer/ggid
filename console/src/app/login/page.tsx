@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Shield, ArrowLeft, KeyRound, Building2, AlertCircle, Loader2 } from "lucide-react";
+import { Shield, ArrowLeft, KeyRound, Building2, AlertCircle, Loader2, Fingerprint } from "lucide-react";
 import { API_BASE_URL, DEFAULT_TENANT_ID } from "@/lib/api-config";
 import { useTranslations } from "@/lib/i18n";
 import { authHeader, isAuthenticated } from "@/lib/auth-helpers";
@@ -292,14 +292,14 @@ export default function LoginPage() {
       ];
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gray-50 dark:bg-gray-950">
+    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-blue-50 via-white to-purple-50 dark:from-gray-950 dark:via-gray-900 dark:to-blue-950">
       <div className="w-full max-w-md">
         <div className="mb-8 text-center">
-          <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-brand-600 text-white text-xl font-bold">
+          <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-600 to-purple-600 text-white text-xl font-bold shadow-lg">
             G
           </div>
-          <h1 className="text-2xl font-bold dark:text-gray-100">{t("login.consoleTitle")}</h1>
-          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">{t("login.subtitle")}</p>
+          <h1 className="text-2xl font-bold dark:text-gray-100">{t("loginEnhanced.welcomeBack")}</h1>
+          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">{t("loginEnhanced.signInSubtitle")}</p>
         </div>
 
         {systemInitialized === null ? (
@@ -326,14 +326,37 @@ export default function LoginPage() {
             </a>
           </div>
         ) : step === "credentials" ? (
-          /* ===== Step 1: Credentials ===== */
-          <form onSubmit={handleCredentials} className="rounded-xl border border-gray-200 bg-white p-8 shadow-sm dark:border-gray-700 dark:bg-gray-800">
+          /* ===== Step 1: Passkey-First Credentials ===== */
+          <div className="rounded-2xl border border-gray-200 bg-white p-8 shadow-xl dark:border-gray-700 dark:bg-gray-800">
             {error && (
               <div className="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-800 dark:bg-red-950 dark:text-red-400">
                 {error}
               </div>
             )}
 
+            {/* Passkey primary button */}
+            <button
+              type="button"
+              onClick={() => {
+                /* Trigger WebAuthn conditional UI autofill */
+                const usernameInput = document.getElementById("username") as HTMLInputElement;
+                if (usernameInput) { usernameInput.focus(); }
+              }}
+              className="w-full flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 to-purple-600 px-4 py-3 text-sm font-bold text-white hover:opacity-90 shadow-md mb-4"
+            >
+              <Fingerprint className="h-5 w-5" />
+              {t("loginEnhanced.passkeyButton")}
+            </button>
+            <p className="text-center text-xs text-gray-400 mb-4">{t("loginEnhanced.passkeyDesc")}</p>
+
+            {/* Divider */}
+            <div className="flex items-center gap-3 mb-4">
+              <div className="h-px flex-1 bg-gray-200 dark:bg-gray-700" />
+              <span className="text-xs text-gray-400">{t("loginEnhanced.otherMethods")}</span>
+              <div className="h-px flex-1 bg-gray-200 dark:bg-gray-700" />
+            </div>
+
+          <form onSubmit={handleCredentials}>
             <div className="mb-4">
               <label className="mb-1 block text-sm font-medium">{t("login.tenant")}</label>
               <div className="relative">
@@ -457,6 +480,7 @@ export default function LoginPage() {
               <a href="/register" className="font-medium text-brand-600 hover:underline">{t("login.signUp")}</a>
             </p>
           </form>
+          </div>
         ) : (
           /* ===== Step 2: MFA Verification ===== */
           <form onSubmit={handleMfa} className="rounded-xl border border-gray-200 bg-white p-8 shadow-sm dark:border-gray-700 dark:bg-gray-800">
