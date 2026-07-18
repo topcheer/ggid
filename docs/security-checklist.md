@@ -178,4 +178,22 @@ The following paths skip JWT verification. All are intentionally public:
 
 ---
 
+---
+
+## Known Vulnerabilities (govulncheck)
+
+Scanned: 2025-07-18 with Go 1.26.4
+
+| ID | Package | Severity | Status |
+|----|---------|----------|--------|
+| GO-2026-5856 | crypto/tls (stdlib) | Medium | Fix: upgrade to Go 1.26.5 |
+| GO-2026-4970 | os (stdlib) | Low | Fix: upgrade to Go 1.26.5 |
+| GO-2026-5932 | golang.org/x/crypto | Info | Fixed: upgraded v0.53.0 → v0.54.0 |
+
+**Action items**:
+- [ ] Upgrade Go toolchain to 1.26.5 in Dockerfile + CI
+- [x] x/crypto upgraded to v0.54.0
+
+---
+
 *Last updated: 2025-07-18*
