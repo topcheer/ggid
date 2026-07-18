@@ -3,6 +3,7 @@ package server
 import (
 	"context"
 	"encoding/json"
+	"sync"
 	"time"
 
 	"github.com/google/uuid"
@@ -40,11 +41,17 @@ type NHIRiskScore struct {
 // NHIRiskEngine evaluates NHI behavior against baselines.
 // Uses PG-backed repo for persistence (in-memory fallback in repo when nil pool).
 type NHIRiskEngine struct {
-	pgRepo *NHIRiskPGRepo
+	mu        sync.RWMutex
+	baselines map[string][]*NHIBehaviorBaseline
+	scores    map[uuid.UUID]*NHIRiskScore
+	pgRepo    *NHIRiskPGRepo
 }
 
 func NewNHIRiskEngine() *NHIRiskEngine {
-	return &NHIRiskEngine{}
+	return &NHIRiskEngine{
+		baselines: make(map[string][]*NHIBehaviorBaseline),
+		scores:    make(map[uuid.UUID]*NHIRiskScore),
+	}
 }
 
 // SetPGRepo wires a PostgreSQL-backed repo.
