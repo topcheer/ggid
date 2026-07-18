@@ -2,6 +2,7 @@ package server
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 
 	"github.com/ggid/ggid/pkg/auth/multihash"
@@ -22,12 +23,39 @@ type MultiHashVerifyResponse struct {
 	Rehashed    string `json:"rehashed,omitempty"` // new Argon2id hash if rehashing was performed
 }
 
+// rehashPassword verifies a password against an old-format hash and generates
+// a new Argon2id hash if the old format matched. Used by both the verify
+// and rehash endpoints.
+func rehashPassword(password, oldHash string) (*MultiHashVerifyResponse, error) {
+	match, format, err := multihash.VerifyPassword(password, oldHash)
+	if err != nil && !match {
+		return &MultiHashVerifyResponse{
+			Match:       false,
+			Format:      format,
+			NeedsRehash: multihash.NeedsRehash(oldHash),
+		}, nil
+	}
+
+	resp := &MultiHashVerifyResponse{
+		Match:       match,
+		Format:      format,
+		NeedsRehash: multihash.NeedsRehash(oldHash),
+	}
+
+	// Transparent rehashing: if old format matched, generate new Argon2id hash.
+	if match && resp.NeedsRehash {
+		newHash, err := crypto.HashPassword(password)
+		if err != nil {
+			return nil, fmt.Errorf("rehash failed: %w", err)
+		}
+		resp.Rehashed = newHash
+	}
+
+	return resp, nil
+}
+
 // handleMultiHashVerify tests a password against a multi-format hash.
 // POST /api/v1/auth/multi-hash/verify
-//
-// This endpoint is primarily for testing/migration validation.
-// It auto-detects the hash format and verifies the password.
-// If the hash is in a legacy format and matches, it returns a new Argon2id hash.
 func (h *Handler) handleMultiHashVerify(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
@@ -45,30 +73,10 @@ func (h *Handler) handleMultiHashVerify(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	// Verify using multihash verifier.
-	match, format, err := multihash.VerifyPassword(req.Password, req.Hash)
-	if err != nil && !match {
-		writeJSON(w, http.StatusOK, MultiHashVerifyResponse{
-			Match:       false,
-			Format:      format,
-			NeedsRehash: multihash.NeedsRehash(req.Hash),
-		})
+	resp, err := rehashPassword(req.Password, req.Hash)
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, err.Error())
 		return
 	}
-
-	resp := MultiHashVerifyResponse{
-		Match:       match,
-		Format:      format,
-		NeedsRehash: multihash.NeedsRehash(req.Hash),
-	}
-
-	// Transparent rehashing: if old format matched, generate new Argon2id hash.
-	if match && resp.NeedsRehash {
-		newHash, err := crypto.HashPassword(req.Password)
-		if err == nil {
-			resp.Rehashed = newHash
-		}
-	}
-
 	writeJSON(w, http.StatusOK, resp)
 }

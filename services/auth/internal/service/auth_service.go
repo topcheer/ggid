@@ -622,6 +622,24 @@ func (s *AuthService) LookupUser(ctx context.Context, tenantID uuid.UUID, identi
 	return s.identityClient.GetUser(ctx, tenantID, identifier)
 }
 
+// LookupCredential retrieves a credential by user ID for rehash operations.
+func (s *AuthService) LookupCredential(ctx context.Context, tenantID, userID uuid.UUID) (*domain.Credential, error) {
+	return s.credentialRepo.FindByUserID(ctx, tenantID, userID)
+}
+
+// UpdateCredentialSecret updates a user's password hash in the database.
+// Used by transparent rehashing to replace legacy hashes with Argon2id.
+func (s *AuthService) UpdateCredentialSecret(ctx context.Context, tenantID, userID uuid.UUID, newHash string) error {
+	cred, err := s.credentialRepo.FindByUserID(ctx, tenantID, userID)
+	if err != nil {
+		return fmt.Errorf("lookup credential for rehash: %w", err)
+	}
+	if cred == nil {
+		return fmt.Errorf("credential not found for user %s", userID)
+	}
+	return s.credentialRepo.UpdateSecret(ctx, cred.ID, newHash)
+}
+
 // --- Email Verification ---
 
 // VerifyEmailToken validates an email verification token.

@@ -3,6 +3,7 @@ package authprovider
 import (
 	"context"
 	"fmt"
+	"log/slog"
 
 	"github.com/ggid/ggid/pkg/auth/multihash"
 	"github.com/ggid/ggid/pkg/crypto"
@@ -26,15 +27,28 @@ type LocalCredentialStore interface {
 	GetCredentialByUsername(ctx context.Context, tenantID uuid.UUID, username string) (*LocalCredential, error)
 }
 
+// RehashCallback is called when a legacy hash format is verified successfully
+// and needs to be re-hashed to Argon2id. The callback should update the DB
+// asynchronously (it must not block the login flow).
+type RehashCallback func(ctx context.Context, userID uuid.UUID, plainPassword, oldHash string)
+
 // LocalProvider authenticates users whose credentials are stored in the local database.
 // Passwords are hashed with Argon2id via pkg/crypto.
 type LocalProvider struct {
-	store LocalCredentialStore
+	store     LocalCredentialStore
+	rehashCb  RehashCallback
 }
 
 // NewLocalProvider creates a new LocalProvider.
 func NewLocalProvider(store LocalCredentialStore) *LocalProvider {
 	return &LocalProvider{store: store}
+}
+
+// SetRehashCallback injects a callback for transparent password re-hashing.
+// When a legacy format (bcrypt, PBKDF2, scrypt, SSHA) is verified successfully,
+// this callback is invoked asynchronously to update the DB with an Argon2id hash.
+func (p *LocalProvider) SetRehashCallback(cb RehashCallback) {
+	p.rehashCb = cb
 }
 
 // Type returns the provider type.
@@ -65,15 +79,43 @@ func (p *LocalProvider) Authenticate(ctx context.Context, creds Credentials) (*A
 			fmt.Sprintf("user account is %s", lc.Status))
 	}
 
+	// Try Argon2id first (native format).
 	ok, err := crypto.VerifyPassword(creds.Password, lc.PasswordHash)
-	if err != nil || !ok {
-		// Fallback: try multi-hash verifier for legacy hash formats (bcrypt, PBKDF2, scrypt, SSHA).
-		mhOK, _, mhErr := multihash.VerifyPassword(creds.Password, lc.PasswordHash)
+	if !ok && err != nil {
+		// Argon2id verification failed — try multi-hash for legacy formats.
+		mhOK, format, mhErr := multihash.VerifyPassword(creds.Password, lc.PasswordHash)
+
+		if format == multihash.FormatUnknown {
+			// Hash is corrupted or uses an unrecognized format — this is an
+			// infrastructure error, not an authentication failure.
+			return nil, errors.New(errors.ErrInternal,
+				fmt.Sprintf("corrupted or unrecognized password hash for user %s", lc.UserID))
+		}
+
 		if mhErr != nil || !mhOK {
 			return nil, errors.Unauthenticated("invalid credentials")
 		}
-		// Legacy format matched — transparent rehashing happens at the service layer.
+
+		// Legacy format matched — trigger transparent rehashing.
 		ok = true
+		if p.rehashCb != nil {
+			// Asynchronous rehash — must not block login.
+			go func() {
+				defer func() {
+					if r := recover(); r != nil {
+						slog.Error("rehash callback panicked",
+							"user_id", lc.UserID,
+							"old_format", format,
+							"panic", r)
+					}
+				}()
+				slog.Info("transparent password rehash triggered",
+					"user_id", lc.UserID,
+					"old_format", format,
+					"new_format", "argon2id")
+				p.rehashCb(ctx, lc.UserID, creds.Password, lc.PasswordHash)
+			}()
+		}
 	}
 	if !ok {
 		return nil, errors.Unauthenticated("invalid credentials")
@@ -85,7 +127,7 @@ func (p *LocalProvider) Authenticate(ctx context.Context, creds Credentials) (*A
 		LinkedUser: &uid,
 		Attributes: map[string]any{
 			"username": lc.Username,
-			"email":    lc.Email,
+			"email":     lc.Email,
 		},
 	}, nil
 }

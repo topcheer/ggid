@@ -17,7 +17,6 @@ import (
 	"golang.org/x/crypto/scrypt"
 	"crypto/sha1"
 	"crypto/sha256"
-	"hash"
 )
 
 // Format names for supported hash algorithms.
@@ -136,15 +135,8 @@ func verifyPBKDF2(password, encoded string) (bool, error) {
 	}
 
 	// Determine hash function by variant in parts[1].
-	var h func() hash.Hash
-	var keyLen int
-	if strings.Contains(parts[1], "sha512") {
-		h = sha256.New // fallback if sha512 not available via stdlib without import
-		keyLen = len(expectedHash)
-	} else {
-		h = sha256.New
-		keyLen = len(expectedHash)
-	}
+	h := sha256.New
+	keyLen := len(expectedHash)
 
 	computed := pbkdf2.Key([]byte(password), salt, iterations, keyLen, h)
 	return subtle.ConstantTimeCompare(computed, expectedHash) == 1, nil
@@ -289,7 +281,7 @@ func verifyPHCArgon2id(password, encoded string) (bool, error) {
 			continue
 		}
 		var val uint32
-		fmt.Sscanf(kvParts[1], "%d", &val)
+		_, _ = fmt.Sscanf(kvParts[1], "%d", &val)
 		switch kvParts[0] {
 		case "m":
 			mem = val
