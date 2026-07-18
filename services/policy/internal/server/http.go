@@ -228,6 +228,12 @@ func (s *HTTPServer) handleRoleByID(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Handle /api/v1/roles/assign — POST to assign role to user.
+	if idStr == "assign" {
+		s.handleAssignRole(w, r)
+		return
+	}
+
 	// Handle sub-paths: /api/v1/roles/{id}/permissions
 	parts := strings.SplitN(idStr, "/", 2)
 	id, err := uuid.Parse(parts[0])
@@ -424,6 +430,55 @@ func (s *HTTPServer) handleSetRoleParent(w http.ResponseWriter, r *http.Request,
 
 // POST /api/v1/roles/{id}/bulk-assign — assign a role to multiple users at once.
 // Body: {"user_ids": ["uuid1", "uuid2", ...]}
+// handleAssignRole assigns a role to a single user.
+// POST /api/v1/roles/assign
+// Body: {"role_id":"<UUID>","user_id":"<UUID>"}
+func (s *HTTPServer) handleAssignRole(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
+		return
+	}
+
+	var req struct {
+		RoleID string `json:"role_id"`
+		UserID string `json:"user_id"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		writeJSONError(w, http.StatusBadRequest, "invalid JSON body")
+		return
+	}
+
+	roleID, err := uuid.Parse(req.RoleID)
+	if err != nil {
+		writeJSONError(w, http.StatusBadRequest, "invalid role_id: must be a valid UUID")
+		return
+	}
+
+	userID, err := uuid.Parse(req.UserID)
+	if err != nil {
+		writeJSONError(w, http.StatusBadRequest, "invalid user_id: must be a valid UUID")
+		return
+	}
+
+	// Verify the role exists.
+	if _, err := s.roleSvc.GetRole(r.Context(), roleID); err != nil {
+		writeJSONError(w, http.StatusNotFound, "role not found")
+		return
+	}
+
+	// Assign the role.
+	if err := s.roleSvc.AssignRole(r.Context(), userID, roleID, "global", uuid.Nil, uuid.Nil, nil); err != nil {
+		writeServiceError(w, err)
+		return
+	}
+
+	writeJSON(w, http.StatusOK, map[string]any{
+		"status":  "assigned",
+		"role_id": req.RoleID,
+		"user_id": req.UserID,
+	})
+}
+
 func (s *HTTPServer) handleBulkAssign(w http.ResponseWriter, r *http.Request, roleID uuid.UUID) {
 	if r.Method != http.MethodPost {
 		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
