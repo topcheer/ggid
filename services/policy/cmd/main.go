@@ -157,6 +157,13 @@ func main() {
 	}
 	httpAPI.SetRiskRepo(riskRepo)
 
+	// SoD rules + violations PG repo.
+	sodRepo := httpserver.NewSodPGRepo(db)
+	if err := sodRepo.EnsureSchema(ctx); err != nil {
+		log.Printf("SoD schema ensure error (non-fatal): %v", err)
+	}
+	httpAPI.SetSodRepo(sodRepo)
+
 	httpAPI.RegisterRoutes(mux)
 
 	mwSecret, mwPrevSecret := middleware.LoadInternalSecrets()

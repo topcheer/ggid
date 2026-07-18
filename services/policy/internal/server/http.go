@@ -33,7 +33,8 @@ campaignRepo  *CampaignRepo
 jitRepo       *repository.JITRequestRepository
 policyMap     *policyMapRepo
 pdpRepo       *pdpRepo
-riskRepo      *riskRepo
+	riskRepo      *riskRepo
+	sodRepo       *sodPGRepo
 }
 
 // NewHTTPServer creates a new Policy Engine HTTP server.

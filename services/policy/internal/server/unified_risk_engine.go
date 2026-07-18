@@ -334,3 +334,8 @@ func (s *HTTPServer) handleRiskSignals(w http.ResponseWriter, r *http.Request) {
 func (s *HTTPServer) SetRiskRepo(repo *riskRepo) {
 	s.riskRepo = repo
 }
+
+// SetSodRepo injects the SoD PG repo.
+func (s *HTTPServer) SetSodRepo(r *sodPGRepo) {
+	s.sodRepo = r
+}
