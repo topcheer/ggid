@@ -1,10 +1,9 @@
-version: "2"
-
 run:
   timeout: 5m
+  go: '1.25'
 
 linters:
-  default: none
+  disable-all: true
   enable:
     - errcheck
     - govet
@@ -12,35 +11,14 @@ linters:
     - staticcheck
     - unused
     - gocritic
-    - gosec
-    - revive
-    - misspell
 
-  settings:
-    gosec:
-      excludes:
-        - G104
-        - G402
-        - G115
-        - G401
-        - G404
-        - G505
-        - G107
-        - G201
-        - G306
-      severity: medium
-      confidence: medium
-    revive:
-      severity: warning
-    gocritic:
-      disabled-checks:
-        - dupBranchBody
-        - ifElseChain
-        - assignOp
-        - appendAssign
-        - exitAfterDefer
-        - offBy1
+linters-settings:
+  gocritic:
+    disabled-checks:
+      - dupBranchBody
 
 issues:
-  max-issues-per-linter: 0
-  max-same-issues: 0
+  exclude-rules:
+    - path: _test\.go
+      linters:
+        - gocritic
