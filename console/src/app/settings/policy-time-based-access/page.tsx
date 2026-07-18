@@ -146,7 +146,7 @@ export default function PolicyTimeBasedAccessPage() {
           <div className="bg-gray-900 rounded-xl p-6">
             <h2 className="text-lg font-semibold mb-4">Holiday Calendar Integration</h2>
             <div className="space-y-2">
-              {(data?.holiday_calendar ?? []).map((h, i) => (
+              {(data?.holiday_calendar ?? []).map((h: any, i: number) => (
                 <div key={i} className="flex items-center justify-between bg-gray-800 rounded-lg p-2">
                   <span className="text-sm">{h.name}</span>
                   <span className="text-xs text-gray-400">{h.date} - {h.access}</span>

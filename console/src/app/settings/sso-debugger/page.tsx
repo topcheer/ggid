@@ -43,7 +43,7 @@ export default function SsoDebuggerPage() {
             <div className="relative pl-6">
               <div className="absolute left-2.5 top-0 bottom-0 w-px bg-gray-200 dark:bg-gray-800" />
               <div className="space-y-3">
-                {result.steps.map((s, i) => (
+                {result.steps.map((s: any, i: number) => (
                   <div key={i} className="relative">
                     <div className={"absolute -left-4 w-3 h-3 rounded-full border-2 " + (s.status === "ok" ? "bg-green-500 border-green-200" : s.status === "error" ? "bg-red-500 border-red-200" : "bg-gray-300 border-gray-100 dark:bg-gray-700 dark:border-gray-800")} />
                     <div className="flex items-center gap-2">

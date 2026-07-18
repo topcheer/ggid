@@ -34,7 +34,7 @@ export default function SamlIdpInitiatedSSOPage() {
             Security Warnings
           </h2>
           <ul className="space-y-1">
-            {(data?.security_warnings ?? []).map((w, i) => (
+            {(data?.security_warnings ?? []).map((w: any, i: number) => (
               <li key={i} className="text-xs text-yellow-200">- {w}</li>
             ))}
           </ul>

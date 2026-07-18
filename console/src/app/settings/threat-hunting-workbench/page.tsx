@@ -53,7 +53,7 @@ export default function ThreatHuntingWorkbenchPage() {
             Hunt Results
           </h2>
           <div className="space-y-2 max-h-72 overflow-y-auto">
-            {(data?.hunt_results ?? []).map((r, i) => (
+            {(data?.hunt_results ?? []).map((r: any, i: number) => (
               <div key={i} className="bg-gray-800 rounded-lg p-3">
                 <div className="flex items-start justify-between">
                   <p className="text-sm font-mono text-blue-400">{r.entity}</p>
@@ -100,7 +100,7 @@ export default function ThreatHuntingWorkbenchPage() {
             Saved Hunts
           </h2>
           <div className="space-y-1">
-            {(data?.saved_hunts ?? []).map((h, i) => (
+            {(data?.saved_hunts ?? []).map((h: any, i: number) => (
               <div key={i} className="flex items-center justify-between bg-gray-800 rounded-lg p-2">
                 <span className="text-sm">{h.name}</span>
                 <span className="text-xs text-gray-500">{h.last_run}</span>
@@ -114,7 +114,7 @@ export default function ThreatHuntingWorkbenchPage() {
             Watchlist
           </h2>
           <div className="flex flex-wrap gap-2">
-            {(data?.watchlist ?? []).map((w, i) => (
+            {(data?.watchlist ?? []).map((w: any, i: number) => (
               <span key={i} className="text-xs px-2 py-1 bg-gray-800 rounded font-mono text-gray-400">{w}</span>
             ))}
           </div>

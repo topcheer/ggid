@@ -69,7 +69,7 @@ export default function ScopeLifecyclePage() {
               <span className={`px-2 py-0.5 rounded text-xs ${statusColors[req.status]}`}>{req.status}</span>
             </div>
             <div className="flex items-center gap-3 text-xs text-gray-500 mb-2"><span>Requested by: {req.requester}</span><span>at: {req.requested_at}</span></div>
-            <div className="space-y-1 mb-2">{req.approver_chain.map((a, i) => (
+            <div className="space-y-1 mb-2">{req.approver_chain.map((a: any, i: number) => (
               <div key={i} className="flex items-center gap-2 text-xs"><span className="font-mono text-gray-400">Step {i + 1}:</span><span>{a.approver}</span><span className={`px-1.5 py-0.5 rounded ${statusColors[a.status]}`}>{a.status}</span>{a.acted_at && <span className="text-gray-400">at {a.acted_at}</span>}</div>
             ))}</div>
             {req.status === "pending" && req.days_remaining >= 0 && (

@@ -61,14 +61,14 @@ export default function AccessGraphPage() {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <div className="rounded-lg border dark:border-gray-800 p-4">
               <h3 className="text-sm font-semibold flex items-center gap-2 mb-3"><Shield className="w-4 h-4 text-green-500" /> Direct Permissions</h3>
-              <div className="space-y-1">{data.direct_permissions.map((p, i) => (
+              <div className="space-y-1">{data.direct_permissions.map((p: any, i: number) => (
                 <div key={i} className="flex items-center gap-2 text-sm"><span className="font-mono text-xs text-gray-500">{p.action}</span><span className="flex-1">{p.resource}</span><span className="text-xs text-gray-400">{p.source}</span></div>
               ))}{data.direct_permissions.length === 0 && <p className="text-xs text-gray-400">{t("backend3.accessGraph.none")}</p>}</div>
             </div>
 
             <div className="rounded-lg border dark:border-gray-800 p-4">
               <h3 className="text-sm font-semibold flex items-center gap-2 mb-3"><GitBranch className="w-4 h-4 text-purple-500" /> Inherited Permissions</h3>
-              <div className="space-y-1">{data.inherited_permissions.map((p, i) => (
+              <div className="space-y-1">{data.inherited_permissions.map((p: any, i: number) => (
                 <div key={i} className="flex items-center gap-2 text-sm"><span className="font-mono text-xs text-gray-500">{p.action}</span><span className="flex-1">{p.resource}</span><span className="text-xs text-gray-400">via {p.source}</span></div>
               ))}{data.inherited_permissions.length === 0 && <p className="text-xs text-gray-400">{t("backend3.accessGraph.none")}</p>}</div>
             </div>

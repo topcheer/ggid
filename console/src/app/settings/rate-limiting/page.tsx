@@ -158,7 +158,7 @@ export default function RateLimitingPage() {
                 </div>
                 {u.trend?.length > 0 && (
                   <div className="mt-3 flex items-end gap-0.5 h-16">
-                    {u.trend.map((v, i) => <div key={i} className="flex-1 rounded-t bg-indigo-400 opacity-70" style={{ height: `${Math.min(v, 100)}%` }} />)}
+                    {u.trend.map((v: any, i: number) => <div key={i} className="flex-1 rounded-t bg-indigo-400 opacity-70" style={{ height: `${Math.min(v, 100)}%` }} />)}
                   </div>
                 )}
               </div>

@@ -296,7 +296,7 @@ function ErrorDetails({ jobs, selectedJob, onSelect }: {
               </tr>
             </thead>
             <tbody>
-              {errors.map((e, i) => (
+              {errors.map((e: any, i: number) => (
                 <>
                   <tr key={i} className="border-b border-gray-100 dark:border-gray-800/50 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800/50" onClick={() => toggleRow(i)}>
                     <td className="py-2 px-3">

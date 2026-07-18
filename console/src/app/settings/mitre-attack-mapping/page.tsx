@@ -62,7 +62,7 @@ export default function MitreAttackMappingPage() {
           Kill Chain Flow
         </h2>
         <div className="flex items-center gap-1 overflow-x-auto pb-2">
-          {tactics.map((t, i) => (
+          {tactics.map((t: any, i: number) => (
             <div key={t} className="flex items-center gap-1 flex-shrink-0">
               <span className="text-xs px-3 py-2 bg-gray-800 rounded-lg border border-gray-700 capitalize">{t.replace("_", " ")}</span>
               {i < tactics.length - 1 && <span className="text-gray-600">{" -> "}</span>}

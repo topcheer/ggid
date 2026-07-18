@@ -144,7 +144,7 @@ export default function LoginSecurityPolicyPage() {
             </tr>
           </thead>
           <tbody>
-            {lockouts.map((l, idx) => (
+            {lockouts.map((l: any, idx: number) => (
               <tr key={idx} className="border-b">
                 <td className="p-3 font-medium">{l.user}</td>
                 <td className="p-3">{l.attempts}</td>

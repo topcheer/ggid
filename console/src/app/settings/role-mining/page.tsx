@@ -150,7 +150,7 @@ export default function RoleMiningPage() {
               <h3 className="font-semibold flex items-center gap-2"><Shield className="w-4 h-4" /> Unused Permissions ({selectedUser.permissions.filter((p) => p.usage_count === 0).length})</h3>
             </div>
             <div className="divide-y dark:divide-gray-800">
-              {selectedUser.permissions.filter((p) => p.usage_count === 0).map((p, i) => (
+              {selectedUser.permissions.filter((p) => p.usage_count === 0).map((p: any, i: number) => (
                 <div key={i} className="px-4 py-2 flex items-center justify-between text-sm">
                   <div>
                     <span className="font-mono">{p.permission}</span>
@@ -170,7 +170,7 @@ export default function RoleMiningPage() {
             <div className="rounded-lg border dark:border-gray-800 p-4">
               <h3 className="font-semibold mb-2">Over-Granted Permissions</h3>
               <div className="flex flex-wrap gap-2">
-                {[...new Set(selectedUser.recommendations.flatMap((r) => r.over_granted))].map((perm, i) => (
+                {[...new Set(selectedUser.recommendations.flatMap((r) => r.over_granted))].map((perm: any, i: number) => (
                   <span key={i} className="px-2 py-1 rounded text-xs bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400">{perm}</span>
                 ))}
               </div>
@@ -183,7 +183,7 @@ export default function RoleMiningPage() {
               <h3 className="font-semibold flex items-center gap-2"><Sparkles className="w-4 h-4 text-blue-500" /> Recommended Roles ({selectedUser.recommendations.length})</h3>
             </div>
             <div className="divide-y dark:divide-gray-800">
-              {selectedUser.recommendations.map((rec, i) => (
+              {selectedUser.recommendations.map((rec: any, i: number) => (
                 <div key={i} className="px-4 py-3">
                   <div className="flex items-start justify-between">
                     <div className="flex-1">

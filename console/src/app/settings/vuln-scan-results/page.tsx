@@ -67,7 +67,7 @@ export default function VulnScanResultsPage() {
               </tr>
             </thead>
             <tbody>
-              {(data?.scan_runs ?? []).map((r, i) => (
+              {(data?.scan_runs ?? []).map((r: any, i: number) => (
                 <tr key={i} className="border-b border-gray-800">
                   <td className="py-3 pr-3 text-xs text-gray-400">{r.date}</td>
                   <td className="py-3 pr-3 text-xs">{r.scanner}</td>
@@ -90,7 +90,7 @@ export default function VulnScanResultsPage() {
           Findings
         </h2>
         <div className="space-y-2 max-h-96 overflow-y-auto">
-          {(data?.findings ?? []).map((f, i) => (
+          {(data?.findings ?? []).map((f: any, i: number) => (
             <div key={i} className="bg-gray-800 rounded-lg p-3">
               <div className="flex items-start justify-between mb-1">
                 <div>

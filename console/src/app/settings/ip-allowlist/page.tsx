@@ -142,7 +142,7 @@ export default function IPAllowlistPage() {
 
   const handleDeleteRule = (id: string) => {
     setRules((prev) =>
-      prev.filter((r) => r.id !== id).map((r, i) => ({ ...r, priority: i + 1 })),
+      prev.filter((r) => r.id !== id).map((r: any, i: number) => ({ ...r, priority: i + 1 })),
     );
     setMsg(t("settings.ruleDeleted"));
   };
@@ -172,7 +172,7 @@ export default function IPAllowlistPage() {
     const [moved] = newRules.splice(from, 1);
     newRules.splice(index, 0, moved);
     // Reassign priorities
-    const reprioritized = newRules.map((r, i) => ({ ...r, priority: i + 1 }));
+    const reprioritized = newRules.map((r: any, i: number) => ({ ...r, priority: i + 1 }));
     setRules(reprioritized);
     dragIndex.current = null;
     setDragOverIndex(null);
@@ -361,7 +361,7 @@ export default function IPAllowlistPage() {
             </div>
           ) : (
             <div className="space-y-2">
-              {rules.map((rule, index) => (
+              {rules.map((rule: any, index: number) => (
                 <div
                   key={rule.id}
                   draggable

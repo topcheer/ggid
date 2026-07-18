@@ -69,7 +69,7 @@ export default function FrameworkCoveragePage() {
           {current.gaps.length > 0 && (
             <div className="rounded-lg border dark:border-gray-800 p-4">
               <h3 className="text-sm font-semibold flex items-center gap-2 mb-3"><AlertCircle className="w-4 h-4 text-red-500" /> Uncovered Controls ({current.gaps.length})</h3>
-              <div className="space-y-1">{current.gaps.map((g, i) => (
+              <div className="space-y-1">{current.gaps.map((g: any, i: number) => (
                 <div key={i} className="flex items-center gap-2 text-sm"><span className="w-2 h-2 rounded-full bg-red-500" /><span className="font-mono text-xs">{g}</span></div>
               ))}</div>
             </div>

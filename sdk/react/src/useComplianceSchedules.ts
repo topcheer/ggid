@@ -94,7 +94,7 @@ export function useComplianceSchedules(): UseComplianceSchedulesResult {
         });
         if (!resp.ok) throw new Error(`Failed to create schedule (${resp.status})`);
         const created = await resp.json();
-        setSchedules((prev) => [...prev, created]);
+        setSchedules((prev: any) => [...prev, created]);
         return created;
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Unknown error');
@@ -112,7 +112,7 @@ export function useComplianceSchedules(): UseComplianceSchedulesResult {
         });
         if (!resp.ok) throw new Error(`Failed to update schedule (${resp.status})`);
         const updated = await resp.json();
-        setSchedules((prev) => prev.map((s) => (s.id === id ? updated : s)));
+        setSchedules((prev: any) => prev.map((s) => (s.id === id ? updated : s)));
         return true;
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Unknown error');
@@ -129,7 +129,7 @@ export function useComplianceSchedules(): UseComplianceSchedulesResult {
           method: 'DELETE', headers: makeHeaders(),
         });
         if (!resp.ok) throw new Error(`Failed to delete schedule (${resp.status})`);
-        setSchedules((prev) => prev.filter((s) => s.id !== id));
+        setSchedules((prev: any) => prev.filter((s) => s.id !== id));
         return true;
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Unknown error');

@@ -86,7 +86,7 @@ export default function HijackTimelinePage() {
           {data.recommended_actions.length > 0 && (
             <div className="rounded-lg border border-orange-200 dark:border-orange-800 bg-orange-50 dark:bg-orange-900/20 p-4">
               <h3 className="text-sm font-semibold flex items-center gap-2 mb-3"><ShieldAlert className="w-4 h-4 text-orange-500" />{t("big1.hijackTimeline.recommendedActions")}</h3>
-              <div className="space-y-1">{data.recommended_actions.map((a, i) => (
+              <div className="space-y-1">{data.recommended_actions.map((a: any, i: number) => (
                 <div key={i} className="flex items-center gap-2 text-sm"><span className="text-xs text-gray-400">{i + 1}.</span><span>{a}</span></div>
               ))}</div>
             </div>

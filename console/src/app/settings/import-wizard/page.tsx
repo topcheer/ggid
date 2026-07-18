@@ -110,7 +110,7 @@ export default function ImportWizardPage() {
           autoMap[h] = match ? match.key : "skip";
         });
         setMapping(autoMap);
-        const parsedRows: ImportRow[] = lines.slice(1, 51).map((line, i) => {
+        const parsedRows: ImportRow[] = lines.slice(1, 51).map((line: any, i: number) => {
           const vals = line.split(",").map((v) => v.trim().replace(/^["']|["']$/g, ""));
           const email = vals[headers.indexOf("email")] || "";
           return {
@@ -222,7 +222,7 @@ export default function ImportWizardPage() {
 
         {/* Stepper */}
         <div className="flex items-center gap-2 mb-6">
-          {steps.map((s, i) => {
+          {steps.map((s: any, i: number) => {
             const isActive = step === s.id || (step === "importing" && s.id === "preview") || (step === "done" && s.id === "preview");
             const isPast = steps.findIndex((x) => x.id === step) > i || step === "done";
             return (

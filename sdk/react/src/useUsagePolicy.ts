@@ -39,7 +39,7 @@ export function useUsagePolicy(baseUrl: string = "") {
         body: JSON.stringify(policy),
       });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      setPolicies((prev) => prev.map((p) => p.client_id === clientId ? { ...p, ...policy } : p));
+      setPolicies((prev: any) => prev.map((p) => p.client_id === clientId ? { ...p, ...policy } : p));
       return true;
     } catch (e: any) {
       setError(e.message);

@@ -85,7 +85,7 @@ export default function GDPRDataPortabilityPage() {
               </tr>
             </thead>
             <tbody>
-              {(data?.export_requests ?? []).map((r, i) => (
+              {(data?.export_requests ?? []).map((r: any, i: number) => (
                 <tr key={i} className="border-b border-gray-800">
                   <td className="py-3 pr-3 text-xs">{r.user}</td>
                   <td className="py-3 pr-3 text-xs text-gray-400">{r.requested_at}</td>

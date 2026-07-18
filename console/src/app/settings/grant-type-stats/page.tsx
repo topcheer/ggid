@@ -88,7 +88,7 @@ export default function GrantTypeStatsPage() {
             <div className="rounded-lg border dark:border-gray-800 p-4">
               <h3 className="text-sm font-semibold mb-3 flex items-center gap-2"><TrendingUp className="w-4 h-4" />{t("big1.grantTypeStats.30DayTrend")}</h3>
               <svg viewBox="0 0 200 60" className="w-full h-16">
-                {trendKeys.map((key) => { const pts = data.trend.map((t, i) => `${(i / (data.trend.length - 1 || 1)) * 200},${55 - ((t)[key] as number / maxTrend) * 50}`).join(" "); return <polyline key={key} fill="none" stroke={typeColors[key] || "#ccc"} strokeWidth={1.5} points={pts} />; })}
+                {trendKeys.map((key) => { const pts = data.trend.map((t: any, i: number) => `${(i / (data.trend.length - 1 || 1)) * 200},${55 - ((t)[key] as number / maxTrend) * 50}`).join(" "); return <polyline key={key} fill="none" stroke={typeColors[key] || "#ccc"} strokeWidth={1.5} points={pts} />; })}
               </svg>
               <div className="flex flex-wrap gap-2 mt-2">{trendKeys.map((k) => <span key={k} className="flex items-center gap-1 text-xs"><span className="w-2 h-2 rounded" style={{ background: typeColors[k] || "#ccc" }} />{k}</span>)}</div>
             </div>

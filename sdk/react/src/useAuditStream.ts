@@ -73,7 +73,7 @@ export function useAuditStream(maxEvents = 100): UseAuditStreamResult {
         const event: StreamEvent = JSON.parse(msg.data);
         // Default severity to info if not provided
         if (!event.severity) event.severity = event.result === 'failure' || event.result === 'denied' ? 'warning' : 'info';
-        setEvents((prev) => [event, ...prev].slice(0, maxEvents));
+        setEvents((prev: any) => [event, ...prev].slice(0, maxEvents));
       } catch {
         // Ignore malformed messages
       }

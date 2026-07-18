@@ -79,7 +79,7 @@ export default function ImpersonationSessionPage() {
 
       <section className="bg-white rounded-lg shadow p-6 space-y-4">
         <h2 className="text-lg font-semibold">{t("big1.impersonationSession.sessionAuditLog")}</h2>
-        <div className="space-y-2">{auditLog.map((l, i) => <div key={i} className="flex items-center gap-3 text-sm border-b pb-2"><span className="text-xs text-gray-500">{l.time}</span><span className="font-mono text-xs">{l.action}</span><span className="text-xs text-gray-500">{l.target}</span></div>)}</div>
+        <div className="space-y-2">{auditLog.map((l: any, i: number) => <div key={i} className="flex items-center gap-3 text-sm border-b pb-2"><span className="text-xs text-gray-500">{l.time}</span><span className="font-mono text-xs">{l.action}</span><span className="text-xs text-gray-500">{l.target}</span></div>)}</div>
       </section>
     </div>
   );

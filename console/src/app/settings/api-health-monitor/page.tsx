@@ -86,7 +86,7 @@ export default function ApiHealthMonitorPage() {
 
       <section className="bg-white rounded-lg shadow p-6 space-y-4">
         <h2 className="text-lg font-semibold">{t("apiHealthMonitor.alertTimeline")}</h2>
-        <div className="space-y-2">{alerts.map((a, i) => <div key={i} className="flex items-center gap-3 text-sm border-b pb-2"><span className="text-xs text-gray-500">{a.time}</span><span className={`px-2 py-0.5 rounded text-xs ${a.level === 'critical' ? 'bg-red-100 text-red-700' : 'bg-amber-100 text-amber-700'}`}>{a.level}</span><span>{a.msg}</span></div>)}</div>
+        <div className="space-y-2">{alerts.map((a: any, i: number) => <div key={i} className="flex items-center gap-3 text-sm border-b pb-2"><span className="text-xs text-gray-500">{a.time}</span><span className={`px-2 py-0.5 rounded text-xs ${a.level === 'critical' ? 'bg-red-100 text-red-700' : 'bg-amber-100 text-amber-700'}`}>{a.level}</span><span>{a.msg}</span></div>)}</div>
       </section>
 
       <section className="bg-white rounded-lg shadow p-6 space-y-4">

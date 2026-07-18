@@ -55,7 +55,7 @@ function Sparkline({ data, color, height = 40 }: { data: number[]; color: string
   if (data.length === 0) return null;
   const w = 120, h = height, max = Math.max(...data, 1), min = Math.min(...data, 0);
   const range = max - min || 1;
-  const pts = data.map((v, i) => `${(i / (data.length - 1 || 1)) * w},${h - ((v - min) / range) * h}`).join(" ");
+  const pts = data.map((v: any, i: number) => `${(i / (data.length - 1 || 1)) * w},${h - ((v - min) / range) * h}`).join(" ");
   return (
     <svg width={w} height={h} className="overflow-visible">
       <polyline points={pts} fill="none" stroke={color} strokeWidth="2" strokeLinejoin="round" />
@@ -88,12 +88,12 @@ function LineChart({ series, labels, height = 200 }: {
         return <text key={p} x={pad.l - 6} y={pad.t + (h - pad.t - pad.b) * p + 4} textAnchor="end" className="fill-gray-400 text-[10px]">{val}</text>;
       })}
       {/* X labels (every 5th) */}
-      {labels.map((l, i) => i % 5 === 0 || i === labels.length - 1 ? (
+      {labels.map((l: any, i: number) => i % 5 === 0 || i === labels.length - 1 ? (
         <text key={i} x={pad.l + xStep * i} y={h - 8} textAnchor="middle" className="fill-gray-400 text-[10px]">{l}</text>
       ) : null)}
       {/* Lines */}
       {series.map(s => {
-        const pts = s.data.map((v, i) => `${pad.l + xStep * i},${pad.t + (1 - (v - min) / range) * (h - pad.t - pad.b)}`).join(" ");
+        const pts = s.data.map((v: any, i: number) => `${pad.l + xStep * i},${pad.t + (1 - (v - min) / range) * (h - pad.t - pad.b)}`).join(" ");
         return <polyline key={s.label} points={pts} fill="none" stroke={s.color} strokeWidth="2" strokeLinejoin="round" strokeLinecap="round" />;
       })}
     </svg>
@@ -325,7 +325,7 @@ export default function AnalyticsPage() {
                   <div>
                     <p className="mb-2 text-xs font-medium text-gray-400">Authentication Methods</p>
                     <div className="space-y-2">
-                      {loginData.top_methods?.map((m, i) => {
+                      {loginData.top_methods?.map((m: any, i: number) => {
                         const colors = ["bg-indigo-500", "bg-blue-500", "bg-purple-500", "bg-pink-500"];
                         return (
                           <div key={m.method} className="flex items-center gap-2">
@@ -343,7 +343,7 @@ export default function AnalyticsPage() {
                   <div>
                     <p className="mb-2 text-xs font-medium text-gray-400">Failure Reasons</p>
                     <div className="flex flex-wrap gap-2">
-                      {loginData.failure_reasons?.map((fr, i) => {
+                      {loginData.failure_reasons?.map((fr: any, i: number) => {
                         const [reason, count] = Object.entries(fr)[0];
                         return <span key={i} className="rounded-lg bg-red-50 px-2 py-1 text-xs text-red-600 dark:bg-red-900/20">{reason.replace(/_/g, " ")}: {count}</span>;
                       })}
@@ -421,8 +421,8 @@ export default function AnalyticsPage() {
             <div className={card}>
               <h3 className="mb-4 flex items-center gap-2 text-sm font-semibold uppercase text-gray-400"><ShieldCheck className="h-4 w-4" /> MFA & Passkey Adoption</h3>
               <LineChart labels={trendLabels} height={160} series={[
-                { label: "MFA Usage", color: "#8b5cf6", data: genTrend(65, 8).map((v, i) => Math.min(v + i * 0.3, 85)) },
-                { label: "Passkey Usage", color: "#06b6d4", data: genTrend(12, 4).map((v, i) => Math.min(v + i * 0.5, 35)) },
+                { label: "MFA Usage", color: "#8b5cf6", data: genTrend(65, 8).map((v: any, i: number) => Math.min(v + i * 0.3, 85)) },
+                { label: "Passkey Usage", color: "#06b6d4", data: genTrend(12, 4).map((v: any, i: number) => Math.min(v + i * 0.5, 35)) },
               ]} />
             </div>
             <div className={card}>
@@ -517,7 +517,7 @@ export default function AnalyticsPage() {
           <div className={card}>
             <h3 className="mb-3 flex items-center gap-2 text-sm font-semibold uppercase text-gray-400"><Zap className="h-4 w-4" /> Automated Response Actions</h3>
             <div className="space-y-1">
-              {anomaly?.auto_actions_taken?.map((action, i) => (
+              {anomaly?.auto_actions_taken?.map((action: any, i: number) => (
                 <div key={i} className="flex items-center gap-2 rounded-lg bg-blue-50 dark:bg-blue-900/20 px-3 py-2 text-sm">
                   <Check className="h-3.5 w-3.5 text-blue-500" />
                   <span className="font-mono text-xs">{action}</span>
@@ -697,7 +697,7 @@ export default function AnalyticsPage() {
                   <div><p className="text-xs text-gray-400">MFA Rate</p><p className="mt-1 text-2xl font-bold">{stats?.mfa_enrollment_rate ?? 0}%</p></div>
                   <ShieldCheck className="h-5 w-5 text-purple-400" />
                 </div>
-                <Sparkline data={genTrend(60, 5).map((v, i) => Math.min(v + i * 0.3, 85))} color="#8b5cf6" />
+                <Sparkline data={genTrend(60, 5).map((v: any, i: number) => Math.min(v + i * 0.3, 85))} color="#8b5cf6" />
               </div>
             )}
             {widgets.includes("kpi_failures") && (

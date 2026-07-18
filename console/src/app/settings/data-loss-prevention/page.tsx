@@ -76,7 +76,7 @@ export default function DLPPage() {
               </tr>
             </thead>
             <tbody>
-              {(data?.violation_log ?? []).map((v, i) => (
+              {(data?.violation_log ?? []).map((v: any, i: number) => (
                 <tr key={i} className="border-b border-gray-800">
                   <td className="py-3 pr-3 text-xs">{v.user}</td>
                   <td className="py-3 pr-3 text-xs text-gray-400">{v.resource}</td>

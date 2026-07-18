@@ -231,7 +231,7 @@ export default function DLPPage() {
           ) : (
             <div className="overflow-x-auto"><table className="w-full text-sm">
               <thead><tr><th scope="col" className="px-3 py-2 text-left text-xs font-medium text-gray-400">User</th><th scope="col" className="px-3 py-2 text-left text-xs font-medium text-gray-400">Data Type</th><th scope="col" className="px-3 py-2 text-center text-xs font-medium text-gray-400">Operations</th><th scope="col" className="px-3 py-2 text-center text-xs font-medium text-gray-400">Max Decision</th></tr></thead>
-              <tbody className="divide-y dark:divide-gray-800">{heatmap.map((cell, i) => {
+              <tbody className="divide-y dark:divide-gray-800">{heatmap.map((cell: any, i: number) => {
                 const aCfg = actionConfig[cell.max_decision as keyof typeof actionConfig] || actionConfig.allow;
                 return (
                   <tr key={i}>
@@ -297,7 +297,7 @@ export default function DLPPage() {
                 {tResult.path?.length > 0 && (
                   <div className="mt-2 flex items-center gap-1 flex-wrap">
                     <span className="text-xs text-gray-400">Path:</span>
-                    {tResult.path.map((step, i) => <span key={i} className="px-1 py-0.5 rounded bg-gray-100 dark:bg-gray-700 text-xs font-mono">{step}</span>)}
+                    {tResult.path.map((step: any, i: number) => <span key={i} className="px-1 py-0.5 rounded bg-gray-100 dark:bg-gray-700 text-xs font-mono">{step}</span>)}
                   </div>
                 )}
               </div>

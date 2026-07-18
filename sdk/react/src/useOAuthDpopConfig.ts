@@ -80,7 +80,7 @@ export function useOAuthDpopConfig() {
   }, []);
 
   const toggleRequireDpop = useCallback(async (enabled: boolean) => {
-    setData((prev) => (prev ? { ...prev, require_dpop: enabled } : prev));
+    setData((prev: any) => (prev ? { ...prev, require_dpop: enabled } : prev));
   }, []);
 
   useEffect(() => {

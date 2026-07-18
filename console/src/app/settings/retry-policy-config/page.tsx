@@ -49,7 +49,7 @@ export default function RetryPolicyConfigPage() {
   };
 
   const updateRoute = (index: number, patch: Partial<RouteRetry>) => {
-    setRoutes(routes.map((r, i) => (i === index ? { ...r, ...patch } : r)));
+    setRoutes(routes.map((r: any, i: number) => (i === index ? { ...r, ...patch } : r)));
   };
 
   return (
@@ -128,7 +128,7 @@ export default function RetryPolicyConfigPage() {
           </button>
         </div>
         <div className="space-y-3">
-          {routes.map((route, index) => (
+          {routes.map((route: any, index: number) => (
             <div key={index} className="border rounded p-3 grid grid-cols-4 gap-3 items-center">
               <input
                 type="text"

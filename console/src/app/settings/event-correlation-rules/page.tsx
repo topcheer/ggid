@@ -231,7 +231,7 @@ export default function EventCorrelationRulesPage() {
             <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
               <h3 className="text-sm font-medium text-gray-700">Correlation Results</h3>
               <div className="mt-3 space-y-2">
-                {testResult.correlations.map((c, i) => (
+                {testResult.correlations.map((c: any, i: number) => (
                   <div key={i} className="flex items-start gap-2 text-sm">
                     <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-blue-100 text-xs font-medium text-blue-700">{i + 1}</span>
                     <span className="text-gray-700">{c}</span>

@@ -70,7 +70,7 @@ export default function SecurityKPITrackerPage() {
         <div className="bg-gray-900 rounded-xl p-6">
           <h2 className="text-sm font-semibold mb-4">Monthly History</h2>
           <div className="flex items-end gap-2 h-32">
-            {(data?.monthly_history ?? []).map((m, i) => {
+            {(data?.monthly_history ?? []).map((m: any, i: number) => {
               const max = Math.max(...(data?.monthly_history ?? []).map((x) => x.value), 1);
               return (
                 <div key={i} className="flex-1 flex flex-col items-center">

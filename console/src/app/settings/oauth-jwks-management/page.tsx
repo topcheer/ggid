@@ -119,7 +119,7 @@ export default function OAuthJwksManagementPage() {
               Key Rotation History
             </h2>
             <div className="space-y-2 max-h-48 overflow-y-auto">
-              {(data?.key_rotation_history ?? []).map((r, i) => (
+              {(data?.key_rotation_history ?? []).map((r: any, i: number) => (
                 <div key={i} className="flex items-center gap-3 bg-gray-800 rounded-lg p-3">
                   {r.success ? (
                     <CheckCircle className="w-4 h-4 text-green-400 flex-shrink-0" />

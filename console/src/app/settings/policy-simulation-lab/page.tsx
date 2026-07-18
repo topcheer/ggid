@@ -43,7 +43,7 @@ export default function PolicySimulationLabPage() {
       {results.length > 0 && (
         <div className="overflow-x-auto rounded-lg border dark:border-gray-800">
           <table className="w-full text-sm"><thead className="bg-gray-50 dark:bg-gray-900/50"><tr><th className="px-4 py-3 text-left font-medium">Subject</th><th className="px-4 py-3 text-left font-medium">Resource</th><th className="px-4 py-3 text-left font-medium">Current</th><th className="px-4 py-3 text-left font-medium">Proposed</th><th className="px-4 py-3 text-left font-medium">Changed?</th></tr></thead>
-            <tbody className="divide-y dark:divide-gray-800">{results.map((r, i) => (
+            <tbody className="divide-y dark:divide-gray-800">{results.map((r: any, i: number) => (
               <tr key={i} className="hover:bg-gray-50 dark:hover:bg-gray-900/30">
                 <td className="px-4 py-3 font-mono text-xs">{r.subject}</td><td className="px-4 py-3 font-mono text-xs">{r.resource}</td>
                 <td className="px-4 py-3"><span className={"text-xs font-bold " + (r.current_decision === "allow" ? "text-green-600" : "text-red-600")}>{r.current_decision}</span></td>

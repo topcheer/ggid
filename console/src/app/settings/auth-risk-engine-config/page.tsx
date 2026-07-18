@@ -132,7 +132,7 @@ export default function AuthRiskEngineConfigPage() {
         <div className="bg-gray-900 rounded-xl p-6">
           <h2 className="text-sm font-semibold mb-4">Override Rules</h2>
           <div className="space-y-2">
-            {(data?.override_rules ?? []).map((r, i) => (
+            {(data?.override_rules ?? []).map((r: any, i: number) => (
               <div key={i} className="flex items-center justify-between bg-gray-800 rounded-lg p-3">
                 <div>
                   <p className="text-sm font-medium">{r.condition}</p>

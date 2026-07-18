@@ -86,7 +86,7 @@ export default function PolicyVersionDiffPage() {
       {data && (
         <>
           {data.breaking_changes.length > 0 && (
-            <div className="rounded-lg border border-red-300 dark:border-red-800 bg-red-50 dark:bg-red-900/20 p-4"><div className="flex items-center gap-2 mb-2"><AlertTriangle className="w-5 h-5 text-red-500" /><span className="font-semibold text-red-700 dark:text-red-400">Breaking Changes Detected</span></div><ul className="space-y-1">{data.breaking_changes.map((b, i) => <li key={i} className="text-sm text-red-600">- {b}</li>)}</ul></div>
+            <div className="rounded-lg border border-red-300 dark:border-red-800 bg-red-50 dark:bg-red-900/20 p-4"><div className="flex items-center gap-2 mb-2"><AlertTriangle className="w-5 h-5 text-red-500" /><span className="font-semibold text-red-700 dark:text-red-400">Breaking Changes Detected</span></div><ul className="space-y-1">{data.breaking_changes.map((b: any, i: number) => <li key={i} className="text-sm text-red-600">- {b}</li>)}</ul></div>
           )}
 
           <div className="grid grid-cols-3 gap-4">
@@ -97,7 +97,7 @@ export default function PolicyVersionDiffPage() {
 
           <div className="overflow-x-auto rounded-lg border dark:border-gray-800">
             <table className="w-full text-sm"><thead className="bg-gray-50 dark:bg-gray-900/50"><tr><th className="px-4 py-3 text-left font-medium">Type</th><th className="px-4 py-3 text-left font-medium">Field</th><th className="px-4 py-3 text-left font-medium">Old Value</th><th className="px-4 py-3 text-left font-medium">New Value</th></tr></thead>
-              <tbody className="divide-y dark:divide-gray-800">{data.field_changes.map((c, i) => { const cfg = changeConfig[c.change_type]; const Icon = cfg.icon; return (<tr key={i} className="hover:bg-gray-50 dark:hover:bg-gray-900/30"><td className="px-4 py-3"><span className={`flex items-center gap-1 text-xs ${cfg.color}`}><Icon className="w-3.5 h-3.5" /> {c.change_type}</span></td><td className="px-4 py-3 font-mono text-xs font-medium">{c.field}</td><td className="px-4 py-3 text-xs text-gray-500">{c.old_value || "-"}</td><td className="px-4 py-3 text-xs font-medium">{c.new_value || "-"}</td></tr>); })}{data.field_changes.length === 0 && <tr><td colSpan={4} className="px-4 py-8 text-center text-gray-500">No changes.</td></tr>}</tbody>
+              <tbody className="divide-y dark:divide-gray-800">{data.field_changes.map((c: any, i: number) => { const cfg = changeConfig[c.change_type]; const Icon = cfg.icon; return (<tr key={i} className="hover:bg-gray-50 dark:hover:bg-gray-900/30"><td className="px-4 py-3"><span className={`flex items-center gap-1 text-xs ${cfg.color}`}><Icon className="w-3.5 h-3.5" /> {c.change_type}</span></td><td className="px-4 py-3 font-mono text-xs font-medium">{c.field}</td><td className="px-4 py-3 text-xs text-gray-500">{c.old_value || "-"}</td><td className="px-4 py-3 text-xs font-medium">{c.new_value || "-"}</td></tr>); })}{data.field_changes.length === 0 && <tr><td colSpan={4} className="px-4 py-8 text-center text-gray-500">No changes.</td></tr>}</tbody>
             </table>
           </div>
         </>

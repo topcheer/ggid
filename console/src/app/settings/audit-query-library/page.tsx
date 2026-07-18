@@ -150,7 +150,7 @@ export default function AuditQueryLibraryPage() {
             Popular Queries
           </h2>
           <div className="space-y-2">
-            {(data?.popular_queries ?? []).map((q, i) => (
+            {(data?.popular_queries ?? []).map((q: any, i: number) => (
               <div key={i} className="bg-gray-900 rounded-lg p-3 cursor-pointer hover:bg-gray-800 transition">
                 <div className="flex items-center justify-between">
                   <p className="text-sm font-medium">{q.name}</p>

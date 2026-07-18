@@ -66,7 +66,7 @@ export default function PolicyExceptionsPage() {
           </div>
           <div className="px-4 pb-2 text-sm text-gray-500"><span>Reason: </span>{e.reason}<span className="ml-4 text-xs">Approved by: {e.approver}</span></div>
           {expanded === e.id && e.audit_trail.length > 0 && (
-            <div className="border-t dark:border-gray-800 px-4 py-3 bg-gray-50 dark:bg-gray-900/30"><h4 className="text-xs font-semibold mb-2 text-gray-500">Audit Trail</h4><div className="space-y-1">{e.audit_trail.map((t, i) => (<div key={i} className="flex items-center gap-2 text-xs"><span className="text-gray-400">{t.timestamp}</span><span className="font-mono text-gray-500">{t.action}</span><span>{t.detail}</span><span className="text-gray-400">by {t.actor}</span></div>))}</div></div>
+            <div className="border-t dark:border-gray-800 px-4 py-3 bg-gray-50 dark:bg-gray-900/30"><h4 className="text-xs font-semibold mb-2 text-gray-500">Audit Trail</h4><div className="space-y-1">{e.audit_trail.map((t: any, i: number) => (<div key={i} className="flex items-center gap-2 text-xs"><span className="text-gray-400">{t.timestamp}</span><span className="font-mono text-gray-500">{t.action}</span><span>{t.detail}</span><span className="text-gray-400">by {t.actor}</span></div>))}</div></div>
           )}
         </div>
       ))}{exceptions.length === 0 && !loading && <p className="text-sm text-gray-500 text-center py-8">No policy exceptions.</p>}</div>

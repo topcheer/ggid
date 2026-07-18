@@ -224,7 +224,7 @@ export default function IdentityJourneysPage() {
           <div className="lg:col-span-3">
             <div ref={canvasRef} className="relative h-[500px] overflow-auto rounded-xl border-2 border-dashed border-gray-300 bg-gray-50 dark:border-gray-700 dark:bg-gray-900/50" style={{ backgroundImage: "radial-gradient(circle, #d1d5db 1px, transparent 1px)", backgroundSize: "20px 20px" }}>
               {/* Nodes */}
-              {activeJourney.nodes.map((node, i) => {
+              {activeJourney.nodes.map((node: any, i: number) => {
                 const ntd = nodeTypeDef(node.type);
                 const NIcon = ntd?.icon || Zap;
                 const isHighlighted = highlightNode === node.id;
@@ -240,7 +240,7 @@ export default function IdentityJourneysPage() {
               })}
               {/* Edges as SVG */}
               <svg className="pointer-events-none absolute inset-0 h-full w-full">
-                {activeJourney.edges.map((edge, i) => {
+                {activeJourney.edges.map((edge: any, i: number) => {
                   const from = activeJourney.nodes.find(n => n.id === edge.from);
                   const to = activeJourney.nodes.find(n => n.id === edge.to);
                   if (!from || !to) return null;
@@ -350,7 +350,7 @@ steps:
             <h3 className="mb-3 flex items-center gap-2 text-sm font-semibold uppercase text-gray-400"><Eye className="h-4 w-4" /> Execution Trace</h3>
             {dryResult ? (
               <div className="space-y-2">
-                {dryResult.steps.map((step, i) => (
+                {dryResult.steps.map((step: any, i: number) => (
                   <div key={i} className={"flex items-center gap-3 rounded-lg border p-2 " + (highlightNode === step.node_id ? "border-indigo-400 bg-indigo-50 dark:bg-indigo-950/30" : "dark:border-gray-700")}>
                     <div className={"flex h-6 w-6 items-center justify-center rounded-full text-xs font-bold " + (step.result === "end" ? "bg-gray-500" : "bg-indigo-500")}>{i + 1}</div>
                     <div className="flex-1"><p className="text-xs font-medium">{step.node_label}</p><p className="text-xs text-gray-400">{step.action} → {step.result} ({step.duration_ms}ms)</p>{step.detail && <p className="text-xs text-gray-400 italic">{step.detail}</p>}</div>

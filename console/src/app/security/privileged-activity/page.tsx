@@ -231,7 +231,7 @@ function SessionsTab({ ops, loading }: { ops: PrivilegedOp[]; loading: boolean }
   const sessionList: Session[] = Object.entries(sessions).map(([sid, sOps]) => ({
     session_id: sid, operator: sOps[0].operator, call_count: sOps.length,
     first_call: sOps[sOps.length - 1].timestamp, last_call: sOps[0].timestamp,
-    ops: sOps.map((o, i) => ({ seq: i + 1, action: o.action, target: o.target, result: o.result, duration_ms: o.duration_ms })),
+    ops: sOps.map((o: any, i: number) => ({ seq: i + 1, action: o.action, target: o.target, result: o.result, duration_ms: o.duration_ms })),
   }));
 
   if (sessionList.length === 0) {

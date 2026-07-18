@@ -62,7 +62,7 @@ export default function UserSegmentsPage() {
               <div className="flex items-center justify-between">
                 <div className="flex-1">
                   <div className="flex items-center gap-2"><span className="font-semibold text-gray-900 dark:text-white">{seg.name}</span><span className="rounded bg-indigo-100 px-1.5 py-0.5 text-xs text-indigo-600 dark:bg-indigo-900/30">{seg.user_count} users</span></div>
-                  <div className="mt-2 flex flex-wrap gap-1">{seg.criteria.map((c, i) => <span key={i} className={`rounded px-1.5 py-0.5 text-xs ${criteriaColors[c.type] || "bg-gray-100 text-gray-500"}`}>{c.type}: {c.value}</span>)}</div>
+                  <div className="mt-2 flex flex-wrap gap-1">{seg.criteria.map((c: any, i: number) => <span key={i} className={`rounded px-1.5 py-0.5 text-xs ${criteriaColors[c.type] || "bg-gray-100 text-gray-500"}`}>{c.type}: {c.value}</span>)}</div>
                 </div>
                 <div className="flex gap-2">
                   <button onClick={() => setExpanded(expanded === seg.id ? null : seg.id)} className="text-xs text-indigo-600 hover:underline">{expanded === seg.id ? "Hide" : "Users"}</button>

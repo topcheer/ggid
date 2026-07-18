@@ -61,7 +61,7 @@ export default function DeprovisioningWorkflowPage() {
       <div className="bg-white rounded-lg p-6 shadow space-y-4">
         <h2 className="text-lg font-semibold">Workflow Steps</h2>
         <div className="flex items-center gap-2">
-          {stages.map((s, i) => (
+          {stages.map((s: any, i: number) => (
             <div key={s} className="flex items-center">
               <div className={`px-3 py-2 rounded text-xs font-medium ${stageColors[s]}`}>{s}</div>
               {i < stages.length - 1 && <span className="text-gray-400 mx-1">{"->"}</span>}

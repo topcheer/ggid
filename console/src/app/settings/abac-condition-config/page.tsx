@@ -70,7 +70,7 @@ export default function AbacConditionConfigPage() {
       <div className="bg-white rounded-lg p-6 shadow">
         <h2 className="text-lg font-semibold mb-4">Condition Templates</h2>
         <div className="space-y-3">
-          {form.condition_templates.map((t, i) => (
+          {form.condition_templates.map((t: any, i: number) => (
             <div key={i} className="border-b pb-2">
               <div className="font-medium">{t.name}</div>
               <div className="text-sm text-gray-600">{t.description}</div>

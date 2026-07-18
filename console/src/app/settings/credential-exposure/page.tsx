@@ -98,7 +98,7 @@ export default function CredentialExposurePage() {
             <div className="rounded-lg border dark:border-gray-800">
               <div className="px-4 py-3 border-b dark:border-gray-800"><h3 className="font-semibold flex items-center gap-2"><Link2 className="w-4 h-4" /> Linked Providers ({data.linked_providers.length})</h3></div>
               <div className="divide-y dark:divide-gray-800">
-                {data.linked_providers.map((p, i) => {
+                {data.linked_providers.map((p: any, i: number) => {
                   const Icon = providerIcons[p.provider] || Key;
                   return (
                     <div key={i} className="px-4 py-2 flex items-center justify-between text-sm">
@@ -121,7 +121,7 @@ export default function CredentialExposurePage() {
                       <span className="font-medium">{k.name}</span>
                       <span className="text-xs text-gray-400">Last used: {k.last_used}</span>
                     </div>
-                    <div className="flex flex-wrap gap-1 mt-1">{k.scopes.map((s, i) => <span key={i} className="px-1.5 py-0.5 rounded text-xs bg-gray-100 dark:bg-gray-800 font-mono">{s}</span>)}</div>
+                    <div className="flex flex-wrap gap-1 mt-1">{k.scopes.map((s: any, i: number) => <span key={i} className="px-1.5 py-0.5 rounded text-xs bg-gray-100 dark:bg-gray-800 font-mono">{s}</span>)}</div>
                   </div>
                 ))}
                 {data.api_keys.length === 0 && <p className="px-4 py-4 text-sm text-gray-500">No API keys.</p>}
@@ -134,7 +134,7 @@ export default function CredentialExposurePage() {
             <div className="rounded-lg border dark:border-gray-800 p-4 bg-blue-50 dark:bg-blue-900/20">
               <h3 className="font-semibold mb-2 flex items-center gap-2"><Lightbulb className="w-4 h-4 text-blue-500" /> Recommendations</h3>
               <ul className="space-y-1">
-                {data.recommendations.map((rec, i) => <li key={i} className="text-sm text-gray-600 dark:text-gray-400 flex items-start gap-2"><span className="text-blue-400 mt-0.5">•</span> {rec}</li>)}
+                {data.recommendations.map((rec: any, i: number) => <li key={i} className="text-sm text-gray-600 dark:text-gray-400 flex items-start gap-2"><span className="text-blue-400 mt-0.5">•</span> {rec}</li>)}
               </ul>
             </div>
           )}

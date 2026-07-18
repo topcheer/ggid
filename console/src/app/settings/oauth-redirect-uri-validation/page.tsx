@@ -78,7 +78,7 @@ export default function OAuthRedirectURIValidationPage() {
                   <span className="text-xs text-gray-400 font-mono">{client.client_id}</span>
                 </div>
                 <div className="space-y-1">
-                  {client.allowed_uris.map((uri, i) => (
+                  {client.allowed_uris.map((uri: any, i: number) => (
                     <div key={i} className="flex items-center gap-2">
                       <Link2 className="w-3 h-3 text-gray-500 flex-shrink-0" />
                       <code className="text-xs text-blue-400 truncate">{uri}</code>
@@ -126,7 +126,7 @@ export default function OAuthRedirectURIValidationPage() {
               Validation Errors
             </h2>
             <div className="space-y-2">
-              {(data?.validation_errors ?? []).map((err, i) => (
+              {(data?.validation_errors ?? []).map((err: any, i: number) => (
                 <div key={i} className="bg-gray-800 rounded-lg p-3">
                   <div className="flex items-center justify-between mb-1">
                     <span className="text-sm font-medium">{err.client_name}</span>
@@ -151,7 +151,7 @@ export default function OAuthRedirectURIValidationPage() {
             Custom Scheme Allowlist
           </h2>
           <div className="flex flex-wrap gap-2">
-            {(data?.custom_scheme_allowlist ?? []).map((scheme, i) => (
+            {(data?.custom_scheme_allowlist ?? []).map((scheme: any, i: number) => (
               <span key={i} className="text-xs px-3 py-1 rounded bg-purple-900 text-purple-300 font-mono">{scheme}</span>
             ))}
           </div>

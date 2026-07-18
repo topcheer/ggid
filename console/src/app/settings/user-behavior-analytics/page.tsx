@@ -99,7 +99,7 @@ export default function UserBehaviorAnalyticsPage() {
             Anomalies Detected (7d)
           </h2>
           <div className="space-y-2">
-            {(data?.anomalies ?? []).map((a, i) => (
+            {(data?.anomalies ?? []).map((a: any, i: number) => (
               <div key={i} className="flex items-center gap-3 bg-gray-800 rounded-lg p-3">
                 {anomalyIcons[a.type] ?? <AlertTriangle className="w-4 h-4 text-gray-400" />}
                 <div className="flex-1">
@@ -126,7 +126,7 @@ export default function UserBehaviorAnalyticsPage() {
         <div className="bg-gray-900 rounded-xl p-6">
           <h2 className="text-lg font-semibold mb-4">Deviation Trend (7d)</h2>
           <div className="flex items-end gap-2 h-40">
-            {(data?.trend_7d ?? []).map((score, i) => (
+            {(data?.trend_7d ?? []).map((score: any, i: number) => (
               <div key={i} className="flex-1 flex flex-col items-center gap-1">
                 <div
                   className={

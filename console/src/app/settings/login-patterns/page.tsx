@@ -41,7 +41,7 @@ export default function LoginPatternsPage() {
   const maxHourCount = Math.max(...(data?.time_of_day.map((d) => d.count) || [1]), 1);
   const totalDevices = data?.device_usage.reduce((s, d) => s + d.count, 0) || 1;
   const maxFreq = Math.max(...(data?.frequency_trend.map((d) => d.logins) || [1]), 1);
-  const freqPoints = data?.frequency_trend.map((d, i) => `${(i / (data.frequency_trend.length - 1 || 1)) * 200},${40 - (d.logins / maxFreq) * 35}`).join(" ") || "";
+  const freqPoints = data?.frequency_trend.map((d: any, i: number) => `${(i / (data.frequency_trend.length - 1 || 1)) * 200},${40 - (d.logins / maxFreq) * 35}`).join(" ") || "";
 
   return (
     <div className="space-y-6">
@@ -54,7 +54,7 @@ export default function LoginPatternsPage() {
         <>
           {data.anomalies.length > 0 && (
             <div className="space-y-2">
-              {data.anomalies.map((a, i) => (
+              {data.anomalies.map((a: any, i: number) => (
                 <div key={i} className="rounded-lg border border-yellow-200 dark:border-yellow-800 bg-yellow-50 dark:bg-yellow-900/20 p-3 flex items-center gap-2">
                   <AlertTriangle className="w-4 h-4 text-yellow-500" />
                   <span className="text-sm flex-1"><strong>{a.type}:</strong> {a.description}</span>
@@ -80,7 +80,7 @@ export default function LoginPatternsPage() {
             <div className="rounded-lg border dark:border-gray-800 p-4">
               <h3 className="text-sm font-semibold flex items-center gap-2 mb-3"><Smartphone className="w-4 h-4 text-gray-400" /> Device Usage</h3>
               <div className="space-y-2">
-                {data.device_usage.map((d, i) => (
+                {data.device_usage.map((d: any, i: number) => (
                   <div key={d.device} className="flex items-center gap-2">
                     <span className="w-3 h-3 rounded" style={{ background: deviceColors[i % deviceColors.length] }} />
                     <span className="text-sm flex-1">{d.device}</span>
@@ -94,7 +94,7 @@ export default function LoginPatternsPage() {
             <div className="rounded-lg border dark:border-gray-800 p-4">
               <h3 className="text-sm font-semibold flex items-center gap-2 mb-3"><Globe className="w-4 h-4 text-gray-400" /> Geographic Distribution</h3>
               <div className="space-y-1">
-                {data.geo_distribution.map((g, i) => (
+                {data.geo_distribution.map((g: any, i: number) => (
                   <div key={i} className="flex items-center gap-2 text-sm">
                     <span className="font-mono text-xs bg-gray-100 dark:bg-gray-800 px-1.5 py-0.5 rounded">{g.country}</span>
                     <span className="flex-1">{g.city}</span>

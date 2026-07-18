@@ -50,7 +50,7 @@ export default function RemediationTrackerPage() {
         <div className="bg-red-900/20 border border-red-800 rounded-xl p-4 mb-6">
           <h2 className="text-sm font-semibold text-red-300 mb-2">Overdue Alerts</h2>
           <div className="space-y-1">
-            {(data?.overdue_alerts ?? []).map((a, i) => (
+            {(data?.overdue_alerts ?? []).map((a: any, i: number) => (
               <div key={i} className="flex items-center gap-2 text-xs">
                 <span className="text-red-400 font-mono">{a.finding_id}</span>
                 <span className="text-gray-400">{a.source}</span>
@@ -79,7 +79,7 @@ export default function RemediationTrackerPage() {
               </tr>
             </thead>
             <tbody>
-              {(data?.remediation_items ?? []).map((item, i) => (
+              {(data?.remediation_items ?? []).map((item: any, i: number) => (
                 <tr key={i} className="border-b border-gray-800">
                   <td className="py-3 pr-3">
                     <span className={"text-xs px-1.5 py-0.5 rounded " + (

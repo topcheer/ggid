@@ -112,7 +112,7 @@ export default function DelegationValidatorPage() {
                 </span>
                 {result.reasons.length > 0 && (
                   <div className="mt-3 space-y-1">
-                    {result.reasons.map((reason, i) => (
+                    {result.reasons.map((reason: any, i: number) => (
                       <div key={i} className="flex items-start gap-2 text-sm">
                         <span className="text-red-500 mt-0.5">{'!'}</span>
                         <span className="text-gray-700">{reason}</span>

@@ -69,7 +69,7 @@ export default function AuditStreamProcessingPage() {
         <div className="bg-gray-900 rounded-xl p-6">
           <h2 className="text-lg font-semibold mb-4">Consumer Lag (60s)</h2>
           <div className="flex items-end gap-1 h-40">
-            {lagHistory.map((point, i) => (
+            {lagHistory.map((point: any, i: number) => (
               <div
                 key={i}
                 className="flex-1 rounded-t"

@@ -136,7 +136,7 @@ export default function IdentityProofingPage() {
       <div className="bg-gray-900 rounded-xl p-6">
         <h2 className="text-lg font-semibold mb-4">Recent Verifications</h2>
         <div className="space-y-2">
-          {(data?.recent_verifications ?? []).map((v, i) => (
+          {(data?.recent_verifications ?? []).map((v: any, i: number) => (
             <div key={i} className="flex items-center gap-3 bg-gray-800 rounded-lg p-3">
               {v.status === "approved" ? <CheckCircle className="w-4 h-4 text-green-400" /> :
                v.status === "rejected" ? <XCircle className="w-4 h-4 text-red-400" /> :

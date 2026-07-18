@@ -97,7 +97,7 @@ export default function ThreatIntelligenceFeedPage() {
               </tr>
             </thead>
             <tbody>
-              {(data?.indicators ?? []).map((ind, i) => (
+              {(data?.indicators ?? []).map((ind: any, i: number) => (
                 <tr key={i} className="border-b border-gray-800">
                   <td className="py-3 pr-3 font-mono text-xs text-blue-400">{ind.indicator}</td>
                   <td className="py-3 pr-3">

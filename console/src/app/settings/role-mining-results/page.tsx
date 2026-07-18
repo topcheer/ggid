@@ -27,7 +27,7 @@ export default function RoleMiningResultsPage() {
         <div className="bg-gray-900 rounded-xl p-6">
           <h2 className="text-sm font-semibold mb-3">Unused Permissions</h2>
           <div className="space-y-2">
-            {(data?.unused_permissions ?? []).map((u, i) => (
+            {(data?.unused_permissions ?? []).map((u: any, i: number) => (
               <div key={i} className="flex items-center gap-2 bg-gray-800 rounded p-2 text-xs">
                 <span className="font-mono text-gray-300 flex-1">{u.permission}</span>
                 <span className="text-gray-400">{u.user}</span>

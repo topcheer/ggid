@@ -177,7 +177,7 @@ export default function AccountLinkingConfigPage() {
       <section className="bg-white rounded-lg shadow p-6 space-y-4">
         <h2 className="text-lg font-semibold">Audit Log</h2>
         <div className="space-y-2">
-          {auditLog.map((entry, idx) => (
+          {auditLog.map((entry: any, idx: number) => (
             <div key={idx} className="flex items-center gap-3 text-sm border-b pb-2">
               <span className="text-xs text-gray-400 w-32">{entry.timestamp}</span>
               <span className="px-2 py-0.5 bg-gray-100 rounded text-xs">{entry.action}</span>

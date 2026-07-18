@@ -57,7 +57,7 @@ export default function PolicySoDConfigPage() {
         <div className="bg-gray-900 rounded-xl p-6">
           <h2 className="text-lg font-semibold mb-4">Conflicting Role Pairs</h2>
           <div className="space-y-2">
-            {(data?.conflicting_roles ?? []).map((pair, i) => (
+            {(data?.conflicting_roles ?? []).map((pair: any, i: number) => (
               <div key={i} className="bg-gray-800 rounded-lg p-3">
                 <div className="flex items-center justify-between mb-1">
                   <div className="flex items-center gap-2">
@@ -79,7 +79,7 @@ export default function PolicySoDConfigPage() {
             Active SoD Violations
           </h2>
           <div className="space-y-2 max-h-64 overflow-y-auto">
-            {(data?.sod_violations ?? []).map((v, i) => (
+            {(data?.sod_violations ?? []).map((v: any, i: number) => (
               <div key={i} className="bg-gray-800 rounded-lg p-3">
                 <div className="flex items-center justify-between mb-1">
                   <p className="text-sm font-medium">{v.user}</p>
@@ -117,7 +117,7 @@ export default function PolicySoDConfigPage() {
             "2. Security Officer Review",
             "3. Compliance Sign-off",
             "4. Time-limited Grant (max 30d)",
-          ].map((step, i) => (
+          ].map((step: any, i: number) => (
             <div key={i} className="flex items-center gap-2">
               <span className="text-xs px-3 py-1.5 bg-gray-800 rounded-lg border border-gray-700">{step}</span>
               {i < 3 && <span className="text-gray-600">{"->"}</span>}

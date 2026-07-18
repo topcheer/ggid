@@ -99,7 +99,7 @@ export default function PolicyLifecycleDashboardPage() {
         <div className="bg-gray-900 rounded-xl p-6">
           <h2 className="text-sm font-semibold mb-4">{t("policyLifecycle.approvalPipeline")}</h2>
           <div className="space-y-3">
-            {pipelineSteps.map((step, i) => (
+            {pipelineSteps.map((step: any, i: number) => (
               <div key={i} className="flex items-center gap-3">
                 <div className={`w-10 h-10 rounded-lg ${step.color} flex items-center justify-center text-sm font-bold`}>
                   {step.count}
@@ -151,7 +151,7 @@ export default function PolicyLifecycleDashboardPage() {
         <div className="bg-gray-900 rounded-xl p-6">
           <h2 className="text-lg font-semibold mb-4">{t("policyLifecycle.recentChanges")}</h2>
           <div className="space-y-2">
-            {(data?.recent_changes ?? []).map((change, i) => (
+            {(data?.recent_changes ?? []).map((change: any, i: number) => (
               <div key={i} className="flex items-center gap-3 bg-gray-800 rounded-lg p-3">
                 <GitCommit className="w-4 h-4 text-blue-400 flex-shrink-0" />
                 <div className="flex-1 min-w-0">
@@ -168,7 +168,7 @@ export default function PolicyLifecycleDashboardPage() {
         <div className="bg-gray-900 rounded-xl p-6">
           <h2 className="text-lg font-semibold mb-4">{t("policyLifecycle.policyAgeDistribution")}</h2>
           <div className="flex items-end gap-2 h-40">
-            {(data?.policy_age_histogram ?? []).map((bin, i) => (
+            {(data?.policy_age_histogram ?? []).map((bin: any, i: number) => (
               <div key={i} className="flex-1 flex flex-col items-center gap-1">
                 <div
                   className="w-full rounded-t bg-indigo-500 hover:bg-indigo-400 transition-all"

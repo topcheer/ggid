@@ -199,7 +199,7 @@ export default function PasswordlessMigrationPage() {
                 { label: "Users Invited", value: funnel.invited, width: 100, color: "bg-blue-500" },
                 { label: "Passkey Registered", value: funnel.registered, width: funnel.invited ? (funnel.registered / funnel.invited) * 100 : 0, color: "bg-indigo-500" },
                 { label: "First Successful Login", value: funnel.activated, width: funnel.invited ? (funnel.activated / funnel.invited) * 100 : 0, color: "bg-green-500" },
-              ].map((f, i) => (
+              ].map((f: any, i: number) => (
                 <div key={i} className="flex items-center gap-3">
                   <span className="w-40 text-xs text-gray-500 text-right">{f.label}</span>
                   <div className="flex-1"><div className={"h-8 rounded-lg flex items-center justify-end px-3 text-xs text-white font-medium transition-all " + f.color} style={{ width: `${Math.max(f.width, 10)}%` }}>{f.value}</div></div>

@@ -467,7 +467,7 @@ export default function SecretBrokerPage() {
                   ...(g.revoked ? [{ icon: Ban, color: "text-red-500", bg: "bg-red-100 dark:bg-red-900/30", label: `Revoked${g.revoked_at ? " " + new Date(g.revoked_at).toLocaleString() : ""}`, time: g.revoked_at || g.expires_at, role: "" }] : []),
                   ...(expired && !g.revoked ? [{ icon: Clock, color: "text-gray-400", bg: "bg-gray-100 dark:bg-gray-800", label: "Expired (TTL elapsed)", time: g.expires_at, role: "" }] : []),
                 ];
-                return events.map((ev, i) => {
+                return events.map((ev: any, i: number) => {
                   const EvIcon = ev.icon;
                   return (
                     <div key={g.id + i} className="relative flex items-start gap-4 pl-0">

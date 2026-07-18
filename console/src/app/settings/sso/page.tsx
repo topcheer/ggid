@@ -515,7 +515,7 @@ export default function SSOConnectionsPage() {
             {/* Step indicator */}
             {wizardType === "SAML" && (
               <div className="mb-6 flex items-center gap-2">
-                {[1, 2, 3].map((step, i) => (
+                {[1, 2, 3].map((step: any, i: number) => (
                   <div key={step} className="flex items-center gap-2">
                     <div
                       className={`flex h-8 w-8 items-center justify-center rounded-full text-xs font-bold ${

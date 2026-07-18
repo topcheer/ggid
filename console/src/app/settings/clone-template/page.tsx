@@ -154,19 +154,19 @@ export default function CloneTemplatePage() {
               <div className="rounded-lg border dark:border-gray-800 p-4">
                 <h3 className="font-semibold mb-3 flex items-center gap-2"><Shield className="w-4 h-4" /> Roles ({template.roles.length})</h3>
                 <div className="flex flex-wrap gap-1">
-                  {template.roles.map((r, i) => <span key={i} className="px-2 py-0.5 rounded text-xs bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400 font-mono">{r}</span>)}
+                  {template.roles.map((r: any, i: number) => <span key={i} className="px-2 py-0.5 rounded text-xs bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400 font-mono">{r}</span>)}
                 </div>
               </div>
               <div className="rounded-lg border dark:border-gray-800 p-4">
                 <h3 className="font-semibold mb-3 flex items-center gap-2"><UsersIcon className="w-4 h-4" /> Groups ({template.groups.length})</h3>
                 <div className="flex flex-wrap gap-1">
-                  {template.groups.map((g, i) => <span key={i} className="px-2 py-0.5 rounded text-xs bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400 font-mono">{g}</span>)}
+                  {template.groups.map((g: any, i: number) => <span key={i} className="px-2 py-0.5 rounded text-xs bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400 font-mono">{g}</span>)}
                 </div>
               </div>
               <div className="rounded-lg border dark:border-gray-800 p-4">
                 <h3 className="font-semibold mb-3 flex items-center gap-2"><Key className="w-4 h-4" /> Permissions ({template.permissions.length})</h3>
                 <div className="space-y-1 max-h-40 overflow-y-auto">
-                  {template.permissions.map((p, i) => <div key={i} className="text-xs font-mono text-gray-500">{p}</div>)}
+                  {template.permissions.map((p: any, i: number) => <div key={i} className="text-xs font-mono text-gray-500">{p}</div>)}
                 </div>
               </div>
               {Object.keys(template.attributes).length > 0 && (

@@ -99,7 +99,7 @@ export default function EmailOTPPage() {
                 </div>
                 {config.allowed_domains.length > 0 && (
                   <div className="mt-2 flex flex-wrap gap-2">
-                    {config.allowed_domains.map((d, i) => (
+                    {config.allowed_domains.map((d: any, i: number) => (
                       <span key={i} className="flex items-center gap-1 rounded-full bg-blue-100 px-2 py-1 text-xs text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">{d}<button onClick={() => removeDomain(i)}><X className="h-3 w-3" /></button></span>
                     ))}
                   </div>

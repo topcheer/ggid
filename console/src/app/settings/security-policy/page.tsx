@@ -261,7 +261,7 @@ function PasswordPolicyTab() {
               ))}
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-1">
-              {checks.map((c, i) => (
+              {checks.map((c: any, i: number) => (
                 <div key={i} className="flex items-center gap-1 text-xs">
                   {c.pass ? <Check className="w-3 h-3 text-green-500" /> : <X className="w-3 h-3 text-red-500" />}
                   <span className={c.pass ? "text-green-700 dark:text-green-400" : "text-red-700 dark:text-red-400"}>

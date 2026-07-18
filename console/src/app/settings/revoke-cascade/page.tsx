@@ -54,7 +54,7 @@ export default function RevokeCascadePage() {
           <span className="px-1.5 py-0.5 rounded text-xs bg-blue-100 dark:bg-blue-900/30 dark:text-blue-400">{node.token_type}</span>
           <span className="text-xs text-gray-400">{node.username}</span>
         </div>
-        {node.children?.map((child, i) => <TreeNode key={i} node={child} depth={depth + 1} />)}
+        {node.children?.map((child: any, i: number) => <TreeNode key={i} node={child} depth={depth + 1} />)}
       </div>
     );
   }

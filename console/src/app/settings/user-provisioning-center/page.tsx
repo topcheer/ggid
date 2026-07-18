@@ -54,7 +54,7 @@ export default function UserProvisioningCenterPage() {
       <h1 className="text-2xl font-bold">User Provisioning Center</h1>
       <p className="text-gray-600">Manage provisioning sources, SCIM sync, attribute mapping, and conflict resolution.</p>
 
-      <div className="bg-white rounded-lg p-6 shadow"><h2 className="text-lg font-semibold mb-4">Provisioning Sources</h2><div className="grid grid-cols-4 gap-4">{sources.map((s, i) => (<div key={i} className="border rounded p-3"><div className="font-medium">{s.name}</div><span className={`mt-1 inline-block px-2 py-0.5 rounded text-xs ${statusColors[s.status] || ""}`}>{s.status}</span></div>))}</div></div>
+      <div className="bg-white rounded-lg p-6 shadow"><h2 className="text-lg font-semibold mb-4">Provisioning Sources</h2><div className="grid grid-cols-4 gap-4">{sources.map((s: any, i: number) => (<div key={i} className="border rounded p-3"><div className="font-medium">{s.name}</div><span className={`mt-1 inline-block px-2 py-0.5 rounded text-xs ${statusColors[s.status] || ""}`}>{s.status}</span></div>))}</div></div>
 
       <div className="bg-white rounded-lg p-6 shadow space-y-4"><h2 className="text-lg font-semibold">Mapping Rules</h2><table className="w-full text-sm"><thead><tr className="border-b text-left"><th className="py-2">Source Attribute</th><th scope="col">GGID Field</th></tr></thead><tbody>{mappings.map((m: MappingRule, i: number) => (<tr key={i} className="border-b"><td className="py-2 font-mono text-xs">{m.source_attr}</td><td><span className="text-gray-400 mx-2">{"->"}</span><span className="font-mono text-xs">{m.ggid_field}</span></td></tr>))}</tbody></table></div>
 

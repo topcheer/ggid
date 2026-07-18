@@ -128,7 +128,7 @@ export default function ReBACPage() {
             <span className="text-sm text-gray-500">{checkResult.reason}</span>
             {checkResult.path?.length > 0 && (
               <div className="ml-auto flex items-center gap-1 text-xs text-gray-400">
-                {checkResult.path.map((p, i) => <span key={i} className="flex items-center gap-1">{i > 0 && <ChevronRight className="h-3 w-3" />}<span className="font-mono">{p}</span></span>)}
+                {checkResult.path.map((p: any, i: number) => <span key={i} className="flex items-center gap-1">{i > 0 && <ChevronRight className="h-3 w-3" />}<span className="font-mono">{p}</span></span>)}
               </div>
             )}
           </div>
@@ -166,7 +166,7 @@ export default function ReBACPage() {
                 </tr>
               </thead>
               <tbody className="divide-y dark:divide-gray-800">
-                {filtered.map((r, i) => {
+                {filtered.map((r: any, i: number) => {
                   const SubIcon = typeIcons[r.subject_type] || Users;
                   const ObjIcon = typeIcons[r.object_type] || Folder;
                   return (

@@ -63,7 +63,7 @@ export default function AuthStepUpOrchestratorPage() {
         <div className="bg-gray-900 rounded-xl p-6">
           <h2 className="text-lg font-semibold mb-4">Step-Up Flows</h2>
           <div className="space-y-2">
-            {(data?.step_up_flows ?? []).map((f, i) => (
+            {(data?.step_up_flows ?? []).map((f: any, i: number) => (
               <div key={i} className="bg-gray-800 rounded-lg p-3">
                 <div className="flex items-center justify-between mb-2">
                   <p className="text-sm font-medium capitalize">{f.trigger_action.replace(/_/g, " ")}</p>
@@ -121,7 +121,7 @@ export default function AuthStepUpOrchestratorPage() {
             "2. TOTP (if no key)",
             "3. SMS OTP (if no authenticator)",
             "4. Email Link (last resort)",
-          ].map((step, i) => (
+          ].map((step: any, i: number) => (
             <div key={i} className="flex items-center gap-2">
               <span className="text-xs px-3 py-1.5 bg-gray-800 rounded-lg border border-gray-700">{step}</span>
               {i < 3 && <ArrowRight className="w-3 h-3 text-gray-500" />}

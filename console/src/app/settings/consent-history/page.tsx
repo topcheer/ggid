@@ -107,7 +107,7 @@ export default function ConsentHistoryPage() {
                     <span className="text-xs text-gray-400">{e.timestamp}</span>
                   </div>
                   <div className="mt-2 flex flex-wrap gap-1">
-                    {e.scopes.map((s, i) => (
+                    {e.scopes.map((s: any, i: number) => (
                       <span key={i} className="px-1.5 py-0.5 rounded text-xs bg-gray-100 dark:bg-gray-800 font-mono">{s}</span>
                     ))}
                   </div>

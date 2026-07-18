@@ -93,7 +93,7 @@ export default function ApiKeysConfigPage() {
 
       <section className="bg-white rounded-lg shadow p-6 space-y-4">
         <h2 className="text-lg font-semibold">Audit Log</h2>
-        <div className="space-y-1">{auditLog.length === 0 ? <p className="text-gray-500 text-sm">No audit entries.</p> : auditLog.map((l, i) => (
+        <div className="space-y-1">{auditLog.length === 0 ? <p className="text-gray-500 text-sm">No audit entries.</p> : auditLog.map((l: any, i: number) => (
           <div key={i} className="text-sm flex items-center gap-3 border-b pb-1"><span className="text-gray-500 text-xs">{l.time}</span><span className={`px-2 py-0.5 rounded text-xs ${l.action === 'Rate limited' ? 'bg-amber-100 text-amber-700' : l.action === 'Created' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'}`}>{l.action}</span><span className="font-mono text-xs">{l.key}</span><span className="text-gray-500 text-xs">{l.endpoint}</span></div>
         ))}</div>
       </section>

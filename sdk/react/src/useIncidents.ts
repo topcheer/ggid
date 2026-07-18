@@ -81,7 +81,7 @@ export function useIncidents(): UseIncidentsResult {
       const resp = await fetch(`${apiBaseUrl}/api/v1/audit/incidents`, { method: 'POST', headers: makeHeaders(), body: JSON.stringify(input) });
       if (!resp.ok) throw new Error(`Create failed (${resp.status})`);
       const inc = await resp.json() as Incident;
-      setIncidents((prev) => [inc, ...prev]);
+      setIncidents((prev: any) => [inc, ...prev]);
       return inc;
     } catch (err) { setError(err instanceof Error ? err.message : 'Unknown'); return null; }
   }, [apiBaseUrl, makeHeaders]);
@@ -90,7 +90,7 @@ export function useIncidents(): UseIncidentsResult {
     try {
       const resp = await fetch(`${apiBaseUrl}/api/v1/audit/incidents/${id}`, { method: 'PATCH', headers: makeHeaders(), body: JSON.stringify(patch) });
       if (!resp.ok) throw new Error(`Update failed (${resp.status})`);
-      setIncidents((prev) => prev.map((i) => i.id === id ? { ...i, ...patch } : i));
+      setIncidents((prev: any) => prev.map((i) => i.id === id ? { ...i, ...patch } : i));
       return true;
     } catch (err) { setError(err instanceof Error ? err.message : 'Unknown'); return false; }
   }, [apiBaseUrl, makeHeaders]);
@@ -99,7 +99,7 @@ export function useIncidents(): UseIncidentsResult {
     try {
       const resp = await fetch(`${apiBaseUrl}/api/v1/audit/incidents/${id}/resolve`, { method: 'POST', headers: makeHeaders(), body: JSON.stringify({ resolution_notes: notes }) });
       if (!resp.ok) throw new Error(`Resolve failed (${resp.status})`);
-      setIncidents((prev) => prev.map((i) => i.id === id ? { ...i, status: 'resolved', resolution_notes: notes, resolved_at: new Date().toISOString() } : i));
+      setIncidents((prev: any) => prev.map((i) => i.id === id ? { ...i, status: 'resolved', resolution_notes: notes, resolved_at: new Date().toISOString() } : i));
       return true;
     } catch (err) { setError(err instanceof Error ? err.message : 'Unknown'); return false; }
   }, [apiBaseUrl, makeHeaders]);
@@ -108,7 +108,7 @@ export function useIncidents(): UseIncidentsResult {
     try {
       const resp = await fetch(`${apiBaseUrl}/api/v1/audit/incidents/${id}`, { method: 'DELETE', headers: makeHeaders() });
       if (!resp.ok) throw new Error(`Delete failed (${resp.status})`);
-      setIncidents((prev) => prev.filter((i) => i.id !== id));
+      setIncidents((prev: any) => prev.filter((i) => i.id !== id));
       return true;
     } catch (err) { setError(err instanceof Error ? err.message : 'Unknown'); return false; }
   }, [apiBaseUrl, makeHeaders]);

@@ -311,7 +311,7 @@ export default function ComplianceExportPage() {
           <div role="dialog" aria-modal="true" className="mx-4 max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-xl bg-white p-6 shadow-xl dark:bg-gray-800" onClick={e => e.stopPropagation()}>
             <div className="mb-6 flex items-center justify-between"><h3 className="text-lg font-semibold text-gray-900 dark:text-white">Export Evidence Package</h3>{!wizGenerating && <button onClick={() => setShowWizard(false)}><X className="h-5 w-5 text-gray-400" /></button>}</div>
             {/* Steps */}
-            <div className="mb-6 flex items-center gap-1">{EXPORT_STEPS.map((s, i) => (
+            <div className="mb-6 flex items-center gap-1">{EXPORT_STEPS.map((s: any, i: number) => (
               <div key={i} className="flex items-center gap-1 flex-1"><div className={"flex h-7 w-7 items-center justify-center rounded-full text-xs font-bold " + (i < wizStep ? "bg-green-600 text-white" : i === wizStep ? "bg-emerald-600 text-white" : "bg-gray-200 dark:bg-gray-700 text-gray-400")}>{i < wizStep ? <CheckCircle className="h-3.5 w-3.5" /> : i + 1}</div>{i < EXPORT_STEPS.length - 1 && <div className={"h-0.5 flex-1 " + (i < wizStep ? "bg-green-600" : "bg-gray-200 dark:bg-gray-700")} />}</div>
             ))}</div>
             <div className="min-h-[200px]">

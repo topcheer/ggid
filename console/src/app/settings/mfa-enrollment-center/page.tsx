@@ -80,7 +80,7 @@ export default function MfaEnrollmentCenterPage() {
       <div className="bg-white rounded-lg p-6 shadow space-y-4">
         <h2 className="text-lg font-semibold">Recovery Codes</h2>
         <button onClick={() => setShowRecovery(!showRecovery)} className="px-4 py-1 bg-blue-600 text-white rounded text-sm hover:bg-blue-700">{showRecovery ? "Hide" : "Show"} Recovery Codes</button>
-        {showRecovery && (<div className="grid grid-cols-4 gap-2 mt-3">{recoveryCodes.map((c, i) => (<div key={i} className="bg-gray-50 border rounded p-2 text-center font-mono text-sm">{c}</div>))}</div>)}
+        {showRecovery && (<div className="grid grid-cols-4 gap-2 mt-3">{recoveryCodes.map((c: any, i: number) => (<div key={i} className="bg-gray-50 border rounded p-2 text-center font-mono text-sm">{c}</div>))}</div>)}
         <button className="px-4 py-1 border rounded text-sm hover:bg-gray-50">Regenerate Codes</button>
       </div>
 

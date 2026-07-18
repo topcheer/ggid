@@ -117,7 +117,7 @@ export default function OAuthRateLimitPerClientPage() {
               </tr>
             </thead>
             <tbody>
-              {(data?.per_endpoint_override ?? []).map((o, i) => (
+              {(data?.per_endpoint_override ?? []).map((o: any, i: number) => (
                 <tr key={i} className="border-b border-gray-800">
                   <td className="py-3 pr-3 font-mono text-xs text-blue-400">{o.client_id}</td>
                   <td className="py-3 pr-3 text-gray-300 font-mono text-xs">{o.endpoint}</td>

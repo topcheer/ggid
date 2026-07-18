@@ -301,7 +301,7 @@ export default function AuditExportCenterPage() {
         <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
           <h3 className="text-sm font-medium text-gray-700">Export Audit Trail</h3>
           <div className="mt-2 space-y-2">
-            {AUDIT_TRAIL.map((entry, i) => (
+            {AUDIT_TRAIL.map((entry: any, i: number) => (
               <div key={i} className="flex gap-3 border-b border-gray-100 pb-2 text-sm">
                 <span className="text-xs text-gray-400 font-mono">{entry.timestamp}</span>
                 <span className="font-medium text-gray-700">{entry.actor}</span>

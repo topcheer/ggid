@@ -66,7 +66,7 @@ export default function TokenLifetimePage() {
           <div className="rounded-lg border dark:border-gray-800 p-4">
             <h3 className="font-semibold mb-4">Lifetime Distribution</h3>
             <div className="space-y-2">
-              {data.distribution.map((d, i) => (
+              {data.distribution.map((d: any, i: number) => (
                 <div key={i} className="flex items-center gap-3">
                   <span className="text-xs text-gray-500 w-24 text-right">{d.range}</span>
                   <div className="flex-1 h-6 rounded bg-gray-100 dark:bg-gray-800 overflow-hidden">

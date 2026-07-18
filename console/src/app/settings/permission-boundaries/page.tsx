@@ -124,7 +124,7 @@ export default function PermissionBoundariesPage() {
                 <div>
                   <label className="text-sm font-medium">Max Scopes ({editForm.max_scopes.length})</label>
                   <div className="mt-1 space-y-1">
-                    {editForm.max_scopes.map((s, i) => (
+                    {editForm.max_scopes.map((s: any, i: number) => (
                       <div key={i} className="flex items-center gap-2"><span className="flex-1 px-3 py-1.5 rounded border dark:border-gray-700 dark:bg-gray-800 text-sm font-mono">{s}</span><button onClick={() => setEditForm({ ...editForm, max_scopes: editForm.max_scopes.filter((_, idx) => idx !== i) })} aria-label="Remove scope" className="p-1 text-red-400"><Trash2 className="w-4 h-4" /></button></div>
                     ))}
                     <div className="flex items-center gap-2"><input type="text" value={newScope} onChange={(e) => setNewScope(e.target.value)} placeholder="read:users" className="flex-1 px-3 py-1.5 rounded border dark:border-gray-700 dark:bg-gray-800 text-sm font-mono" /><button onClick={() => { if (newScope.trim()) { setEditForm({ ...editForm, max_scopes: [...editForm.max_scopes, newScope.trim()] }); setNewScope(""); } }} aria-label="Add scope" className="p-1.5 rounded bg-blue-600 text-white"><Plus className="w-4 h-4" /></button></div>
@@ -133,7 +133,7 @@ export default function PermissionBoundariesPage() {
                 <div>
                   <label className="text-sm font-medium">Denied Actions ({editForm.denied_actions.length})</label>
                   <div className="mt-1 space-y-1">
-                    {editForm.denied_actions.map((a, i) => (
+                    {editForm.denied_actions.map((a: any, i: number) => (
                       <div key={i} className="flex items-center gap-2"><span className="flex-1 px-3 py-1.5 rounded border dark:border-gray-700 dark:bg-gray-800 text-sm font-mono">{a}</span><button onClick={() => setEditForm({ ...editForm, denied_actions: editForm.denied_actions.filter((_, idx) => idx !== i) })} aria-label="Remove denied action" className="p-1 text-red-400"><Trash2 className="w-4 h-4" /></button></div>
                     ))}
                     <div className="flex items-center gap-2"><input type="text" value={newDenied} onChange={(e) => setNewDenied(e.target.value)} placeholder="delete:organizations" className="flex-1 px-3 py-1.5 rounded border dark:border-gray-700 dark:bg-gray-800 text-sm font-mono" /><button onClick={() => { if (newDenied.trim()) { setEditForm({ ...editForm, denied_actions: [...editForm.denied_actions, newDenied.trim()] }); setNewDenied(""); } }} aria-label="Add denied action" className="p-1.5 rounded bg-blue-600 text-white"><Plus className="w-4 h-4" /></button></div>
@@ -161,11 +161,11 @@ export default function PermissionBoundariesPage() {
                 <div className="grid grid-cols-2 gap-4 mt-4">
                   <div>
                     <span className="text-xs text-gray-400">Max Scopes ({b.max_scopes.length})</span>
-                    <div className="flex flex-wrap gap-1 mt-1">{b.max_scopes.map((s, i) => <span key={i} className="px-2 py-0.5 rounded text-xs bg-blue-100 dark:bg-blue-900/30 dark:text-blue-400 font-mono">{s}</span>)}{b.max_scopes.length === 0 && <span className="text-xs text-gray-400">Any</span>}</div>
+                    <div className="flex flex-wrap gap-1 mt-1">{b.max_scopes.map((s: any, i: number) => <span key={i} className="px-2 py-0.5 rounded text-xs bg-blue-100 dark:bg-blue-900/30 dark:text-blue-400 font-mono">{s}</span>)}{b.max_scopes.length === 0 && <span className="text-xs text-gray-400">Any</span>}</div>
                   </div>
                   <div>
                     <span className="text-xs text-gray-400">Denied Actions ({b.denied_actions.length})</span>
-                    <div className="flex flex-wrap gap-1 mt-1">{b.denied_actions.map((a, i) => <span key={i} className="px-2 py-0.5 rounded text-xs bg-red-100 dark:bg-red-900/30 dark:text-red-400 font-mono">{a}</span>)}{b.denied_actions.length === 0 && <span className="text-xs text-gray-400">None</span>}</div>
+                    <div className="flex flex-wrap gap-1 mt-1">{b.denied_actions.map((a: any, i: number) => <span key={i} className="px-2 py-0.5 rounded text-xs bg-red-100 dark:bg-red-900/30 dark:text-red-400 font-mono">{a}</span>)}{b.denied_actions.length === 0 && <span className="text-xs text-gray-400">None</span>}</div>
                   </div>
                 </div>
                 {/* Violation preview */}
@@ -173,7 +173,7 @@ export default function PermissionBoundariesPage() {
                   <div className="mt-3 rounded-lg bg-red-50 dark:bg-red-900/20 p-3">
                     <h4 className="text-sm font-medium flex items-center gap-2 mb-2"><AlertTriangle className="w-4 h-4 text-red-500" /> Recent Violations</h4>
                     <div className="space-y-1 max-h-32 overflow-y-auto">
-                      {violations.map((v, i) => (
+                      {violations.map((v: any, i: number) => (
                         <div key={i} className="flex items-center justify-between text-xs">
                           <span><span className="font-medium">{v.user}</span> attempted <span className="font-mono">{v.action}</span> on <span className="font-mono">{v.scope}</span></span>
                           <span className="text-gray-400">{v.timestamp}</span>

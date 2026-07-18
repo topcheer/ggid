@@ -63,7 +63,7 @@ export function useComplianceMapping(): UseComplianceMappingResult {
     try {
       const resp = await fetch(`${apiBaseUrl}/api/v1/audit/compliance-mapping/${id}`, { method: 'PUT', headers: makeHeaders(), body: JSON.stringify(patch) });
       if (!resp.ok) throw new Error(`Update failed (${resp.status})`);
-      setMappings((prev) => prev.map((m) => m.id === id ? { ...m, ...patch } : m));
+      setMappings((prev: any) => prev.map((m) => m.id === id ? { ...m, ...patch } : m));
       return true;
     } catch (err) { setError(err instanceof Error ? err.message : 'Unknown'); return false; }
   }, [apiBaseUrl, makeHeaders]);

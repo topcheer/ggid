@@ -66,7 +66,7 @@ export default function EventDedupPage() {
           {stats.top_duplicates.length > 0 && (
             <div className="overflow-x-auto rounded-lg border dark:border-gray-800">
               <table className="w-full text-sm"><thead className="bg-gray-50 dark:bg-gray-900/50"><tr><th className="px-4 py-3 text-left font-medium">Fingerprint</th><th className="px-4 py-3 text-left font-medium">Occurrences</th><th className="px-4 py-3 text-left font-medium">Sample</th></tr></thead>
-                <tbody className="divide-y dark:divide-gray-800">{stats.top_duplicates.map((d, i) => (<tr key={i} className="hover:bg-gray-50 dark:hover:bg-gray-900/30"><td className="px-4 py-3 font-mono text-xs text-purple-600">{d.fingerprint}</td><td className="px-4 py-3"><span className="px-2 py-0.5 rounded text-xs bg-red-100 dark:bg-red-900/30 dark:text-red-400 font-bold">{d.count}</span></td><td className="px-4 py-3 text-xs text-gray-500 max-w-xs truncate">{d.sample}</td></tr>))}</tbody>
+                <tbody className="divide-y dark:divide-gray-800">{stats.top_duplicates.map((d: any, i: number) => (<tr key={i} className="hover:bg-gray-50 dark:hover:bg-gray-900/30"><td className="px-4 py-3 font-mono text-xs text-purple-600">{d.fingerprint}</td><td className="px-4 py-3"><span className="px-2 py-0.5 rounded text-xs bg-red-100 dark:bg-red-900/30 dark:text-red-400 font-bold">{d.count}</span></td><td className="px-4 py-3 text-xs text-gray-500 max-w-xs truncate">{d.sample}</td></tr>))}</tbody>
               </table>
             </div>
           )}

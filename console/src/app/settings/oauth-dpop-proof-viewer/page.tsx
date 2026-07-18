@@ -101,7 +101,7 @@ export default function OAuthDpopProofViewerPage() {
         <div className="bg-gray-900 rounded-xl p-6">
           <h2 className="text-lg font-semibold mb-4">{t("oauthDpopViewer.proofValidity")}</h2>
           <div className="space-y-2">
-            {(data?.validity_timeline ?? []).map((step, i) => (
+            {(data?.validity_timeline ?? []).map((step: any, i: number) => (
               <div key={i} className="flex items-center gap-3">
                 <div className={"w-7 h-7 rounded-full flex items-center justify-center text-xs " + (step.passed ? "bg-green-900 text-green-300" : "bg-red-900 text-red-300")}>
                   {step.passed ? "\u2713" : "\u2717"}
@@ -121,7 +121,7 @@ export default function OAuthDpopProofViewerPage() {
             Error Analysis
           </h2>
           <div className="space-y-2">
-            {(data?.error_analysis ?? []).map((err, i) => (
+            {(data?.error_analysis ?? []).map((err: any, i: number) => (
               <div key={i} className="bg-gray-800 rounded-lg p-3">
                 <div className="flex items-center justify-between mb-1">
                   <p className="text-sm font-medium font-mono">{err.code}</p>

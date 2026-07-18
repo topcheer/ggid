@@ -76,7 +76,7 @@ export default function PiplCompliancePage() {
             Cross-Border Transfer Applications
           </h2>
           <div className="space-y-2 max-h-80 overflow-y-auto">
-            {(data?.cross_border_transfer_applications ?? []).map((app, i) => (
+            {(data?.cross_border_transfer_applications ?? []).map((app: any, i: number) => (
               <div key={i} className="bg-gray-800 rounded-lg p-3">
                 <div className="flex items-start justify-between mb-1">
                   <p className="text-sm font-medium">{app.applicant}</p>
@@ -105,7 +105,7 @@ export default function PiplCompliancePage() {
             Chinese User Consent Log
           </h2>
           <div className="space-y-2 max-h-80 overflow-y-auto">
-            {(data?.chinese_user_consent_log ?? []).map((log, i) => (
+            {(data?.chinese_user_consent_log ?? []).map((log: any, i: number) => (
               <div key={i} className="flex items-center gap-3 bg-gray-800 rounded-lg p-3">
                 <div className="flex-1">
                   <p className="text-xs font-medium">{log.user}</p>
@@ -130,7 +130,7 @@ export default function PiplCompliancePage() {
           Data Retention Compliance
         </h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-          {(data?.data_retention_compliance ?? []).map((item, i) => (
+          {(data?.data_retention_compliance ?? []).map((item: any, i: number) => (
             <div key={i} className="bg-gray-800 rounded-lg p-3">
               <p className="text-sm font-medium">{item.data_category}</p>
               <div className="flex items-center justify-between mt-1">

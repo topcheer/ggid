@@ -47,7 +47,7 @@ export default function TokenRevocationStatsPage() {
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <div className="rounded-lg border p-4 dark:border-gray-800"><span className="text-sm text-gray-500">Total Revocations</span><p className="text-xl font-bold text-red-600 mt-1">{data.total_revocations.toLocaleString()}</p></div>
             <div className="rounded-lg border p-4 dark:border-gray-800"><span className="text-sm text-gray-500">Peak Hour</span><p className="text-xl font-bold mt-1">{String(data.peak_revocation_hour).padStart(2, "0")}:00</p></div>
-            <div className="rounded-lg border p-4 dark:border-gray-800 col-span-2"><span className="text-sm text-gray-500">30-Day Trend</span><div className="flex items-end gap-0.5 mt-2 h-12">{data.trend_30d.map((t, i) => (<div key={i} className="flex-1 bg-red-400 dark:bg-red-500 rounded-t" style={{ height: (t.count / maxTrend) * 100 + "%", minHeight: "2px" }} title={t.day + ": " + t.count} />))}</div></div>
+            <div className="rounded-lg border p-4 dark:border-gray-800 col-span-2"><span className="text-sm text-gray-500">30-Day Trend</span><div className="flex items-end gap-0.5 mt-2 h-12">{data.trend_30d.map((t: any, i: number) => (<div key={i} className="flex-1 bg-red-400 dark:bg-red-500 rounded-t" style={{ height: (t.count / maxTrend) * 100 + "%", minHeight: "2px" }} title={t.day + ": " + t.count} />))}</div></div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

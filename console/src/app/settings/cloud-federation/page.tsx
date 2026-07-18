@@ -201,7 +201,7 @@ resource "${cfg.tf_provider}_iam_openid_connect_provider" "ggid" {
       {/* Health monitoring bar */}
       {health.length > 0 && (
         <div className="flex flex-wrap gap-3">
-          {health.map((h, i) => {
+          {health.map((h: any, i: number) => {
             const cfg = platformConfig[h.platform as keyof typeof platformConfig] || platformConfig.aws;
             return (
               <div key={i} className={"flex items-center gap-3 rounded-lg border px-4 py-3 " + (h.connected ? "border-green-200 bg-green-50 dark:border-green-700 dark:bg-green-950/20" : "border-red-200 bg-red-50 dark:border-red-700 dark:bg-red-950/20")}>
@@ -249,7 +249,7 @@ resource "${cfg.tf_provider}_iam_openid_connect_provider" "ggid" {
                   {/* Claim mappings */}
                   <div>
                     <h4 className="text-xs font-semibold uppercase text-gray-400 mb-2">Claim Mapping</h4>
-                    <div className="space-y-1">{fed.claim_mappings.map((cm, i) => (
+                    <div className="space-y-1">{fed.claim_mappings.map((cm: any, i: number) => (
                       <div key={i} className="flex items-center gap-2 text-xs">
                         <span className="font-mono text-blue-600 dark:text-blue-400">{cm.ggid_attr}</span>
                         <ArrowRight className="h-3 w-3 text-gray-400" />
@@ -260,7 +260,7 @@ resource "${cfg.tf_provider}_iam_openid_connect_provider" "ggid" {
                   {/* Role mappings */}
                   <div>
                     <h4 className="text-xs font-semibold uppercase text-gray-400 mb-2">Role Mapping</h4>
-                    <div className="space-y-1">{fed.role_mappings.map((rm, i) => (
+                    <div className="space-y-1">{fed.role_mappings.map((rm: any, i: number) => (
                       <div key={i} className="flex items-center gap-2 text-xs">
                         <span className="font-mono text-purple-600 dark:text-purple-400">{rm.ggid_role}</span>
                         <ArrowRight className="h-3 w-3 text-gray-400" />
@@ -317,14 +317,14 @@ resource "${cfg.tf_provider}_iam_openid_connect_provider" "ggid" {
           <div role="dialog" aria-modal="true" className="mx-4 max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-xl bg-white p-6 shadow-xl dark:bg-gray-800" onClick={e => e.stopPropagation()}>
             <div className="mb-6 flex items-center justify-between"><h3 className="text-lg font-semibold text-gray-900 dark:text-white">Cloud Federation Setup</h3><button onClick={() => setShowWizard(false)}><X className="h-5 w-5 text-gray-400" /></button></div>
             {/* Steps */}
-            <div className="mb-6 flex items-center gap-1">{WIZARD_STEPS.map((s, i) => (
+            <div className="mb-6 flex items-center gap-1">{WIZARD_STEPS.map((s: any, i: number) => (
               <div key={i} className="flex items-center gap-1 flex-1"><div className={"flex h-7 w-7 items-center justify-center rounded-full text-xs font-bold " + (i < wizStep ? "bg-green-600 text-white" : i === wizStep ? "bg-indigo-600 text-white" : "bg-gray-200 dark:bg-gray-700 text-gray-400")}>{i < wizStep ? <Check className="h-3.5 w-3.5" /> : i + 1}</div>{i < WIZARD_STEPS.length - 1 && <div className={"h-0.5 flex-1 " + (i < wizStep ? "bg-green-600" : "bg-gray-200 dark:bg-gray-700")} />}</div>
             ))}</div>
             <div className="min-h-[180px]">
               {wizStep === 0 && <div className="space-y-3">
                 <div><label className="text-sm font-medium">Federation Name</label><input aria-label="Name" type="text" value={wizName} onChange={e => setWizName(e.target.value)} placeholder="Production AWS" className="mt-1 w-full rounded-lg border dark:border-gray-700 dark:bg-gray-900 px-3 py-2 text-sm" autoFocus /></div>
                 <div className="grid grid-cols-3 gap-3">{Object.entries(platformConfig).map(([key, cfg]) => (
-                  <button key={key} onClick={() => { setWizPlatform(key as "aws" | "azure" | "gcp"); setWizClaims(cfg.ggid_attrs.map((a, i) => ({ ggid_attr: a, cloud_claim: cfg.cloud_claims[i] }))); }} aria-pressed={wizPlatform === key} className={"rounded-xl border-2 p-4 text-center transition " + (wizPlatform === key ? "border-indigo-500 bg-indigo-50 dark:bg-indigo-950/30" : "border-gray-200 dark:border-gray-700 hover:border-gray-300")}><cfg.icon className={"h-8 w-8 mx-auto " + cfg.color} /><p className="mt-2 text-xs font-medium">{cfg.name}</p></button>
+                  <button key={key} onClick={() => { setWizPlatform(key as "aws" | "azure" | "gcp"); setWizClaims(cfg.ggid_attrs.map((a: any, i: number) => ({ ggid_attr: a, cloud_claim: cfg.cloud_claims[i] }))); }} aria-pressed={wizPlatform === key} className={"rounded-xl border-2 p-4 text-center transition " + (wizPlatform === key ? "border-indigo-500 bg-indigo-50 dark:bg-indigo-950/30" : "border-gray-200 dark:border-gray-700 hover:border-gray-300")}><cfg.icon className={"h-8 w-8 mx-auto " + cfg.color} /><p className="mt-2 text-xs font-medium">{cfg.name}</p></button>
                 ))}</div>
               </div>}
               {wizStep === 1 && <div className="space-y-3">
@@ -333,10 +333,10 @@ resource "${cfg.tf_provider}_iam_openid_connect_provider" "ggid" {
                   <button onClick={() => setWizProtocol("oidc")} aria-pressed={wizProtocol === "oidc"} className={"rounded-xl border-2 p-4 text-left " + (wizProtocol === "oidc" ? "border-indigo-500" : "border-gray-200 dark:border-gray-700")}><Cloud className="h-6 w-6 text-green-500" /><p className="mt-2 font-medium text-sm">OIDC</p><p className="text-xs text-gray-400">For GCP workload identity, modern AWS</p></button>
                 </div>
               </div>}
-              {wizStep === 2 && <div className="space-y-2">{wizClaims.map((c, i) => (
+              {wizStep === 2 && <div className="space-y-2">{wizClaims.map((c: any, i: number) => (
                 <div key={i} className="flex items-center gap-2 rounded-lg border p-2 dark:border-gray-700"><span className="font-mono text-xs text-blue-600 flex-1">{c.ggid_attr}</span><ArrowRight className="h-3 w-3 text-gray-400" /><input aria-label={`Cloud claim ${i+1}`} type="text" value={c.cloud_claim} onChange={e => { const n = [...wizClaims]; n[i] = { ...c, cloud_claim: e.target.value }; setWizClaims(n); }} className="flex-1 rounded border dark:border-gray-700 dark:bg-gray-900 px-2 py-1 text-xs font-mono" /></div>
               ))}<button onClick={() => setWizClaims([...wizClaims, { ggid_attr: "custom_attr", cloud_claim: "customClaim" }])} className="flex items-center gap-1 text-xs text-indigo-600 hover:underline"><Plus className="h-3 w-3" /> Add Mapping</button></div>}
-              {wizStep === 3 && <div className="space-y-2">{(wizRoles.length ? wizRoles : [{ ggid_role: "admin", cloud_role: "Administrator" }, { ggid_role: "user", cloud_role: "Developer" }]).map((r, i) => (
+              {wizStep === 3 && <div className="space-y-2">{(wizRoles.length ? wizRoles : [{ ggid_role: "admin", cloud_role: "Administrator" }, { ggid_role: "user", cloud_role: "Developer" }]).map((r: any, i: number) => (
                 <div key={i} className="flex items-center gap-2 rounded-lg border p-2 dark:border-gray-700"><input aria-label={`GGID role ${i+1}`} type="text" value={r.ggid_role} onChange={e => { const n = [...(wizRoles.length ? wizRoles : [{ ggid_role: "admin", cloud_role: "Administrator" }, { ggid_role: "user", cloud_role: "Developer" }])]; n[i] = { ...r, ggid_role: e.target.value }; setWizRoles(n); }} className="w-32 rounded border dark:border-gray-700 dark:bg-gray-900 px-2 py-1 text-xs font-mono" /><ArrowRight className="h-3 w-3 text-gray-400" /><input aria-label={`Cloud role ${i+1}`} type="text" value={r.cloud_role} onChange={e => { const n = [...(wizRoles.length ? wizRoles : [{ ggid_role: "admin", cloud_role: "Administrator" }, { ggid_role: "user", cloud_role: "Developer" }])]; n[i] = { ...r, cloud_role: e.target.value }; setWizRoles(n); }} className="flex-1 rounded border dark:border-gray-700 dark:bg-gray-900 px-2 py-1 text-xs font-mono" /></div>
               ))}<button onClick={() => setWizRoles([...(wizRoles.length ? wizRoles : [{ ggid_role: "admin", cloud_role: "Administrator" }, { ggid_role: "user", cloud_role: "Developer" }]), { ggid_role: "viewer", cloud_role: "Viewer" }])} className="flex items-center gap-1 text-xs text-indigo-600 hover:underline"><Plus className="h-3 w-3" /> Add Role Mapping</button></div>}
               {wizStep === 4 && <div className="space-y-3"><div className="rounded-lg bg-blue-50 p-3 dark:bg-blue-950/30"><p className="text-xs text-blue-700 dark:text-blue-400">Configure these in your cloud provider's identity console:</p></div><div className="space-y-2"><div><span className="text-xs text-gray-400">Metadata URL</span><p className="font-mono text-xs break-all">https://ggid.dev/.well-known/saml-metadata</p></div><div><span className="text-xs text-gray-400">ACS URL</span><p className="font-mono text-xs">https://ggid.dev/api/v1/auth/saml/acs</p></div><div><span className="text-xs text-gray-400">Entity ID</span><p className="font-mono text-xs">https://ggid.dev/api/v1/auth/saml</p></div></div></div>}

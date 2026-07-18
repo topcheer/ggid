@@ -216,7 +216,7 @@ export default function JITProvisioningPage() {
                 )}
                 {dryResult.warnings?.length > 0 && (
                   <div className="mt-3 rounded-lg bg-yellow-50 p-3 dark:bg-yellow-950/20">
-                    {dryResult.warnings.map((w, i) => <p key={i} className="text-xs text-yellow-700 dark:text-yellow-400">{w}</p>)}
+                    {dryResult.warnings.map((w: any, i: number) => <p key={i} className="text-xs text-yellow-700 dark:text-yellow-400">{w}</p>)}
                   </div>
                 )}
               </div>

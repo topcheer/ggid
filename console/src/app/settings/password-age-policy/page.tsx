@@ -58,7 +58,7 @@ export default function PasswordAgePolicyPage() {
           {policy.per_org_override.length > 0 && (
             <div className="overflow-x-auto rounded-lg border dark:border-gray-800">
               <table className="w-full text-sm"><thead className="bg-gray-50 dark:bg-gray-900/50"><tr><th className="px-4 py-3 text-left font-medium">Organization</th><th className="px-4 py-3 text-left font-medium">Max Age (days)</th><th className="px-4 py-3 text-left font-medium">Enabled</th></tr></thead>
-                <tbody className="divide-y dark:divide-gray-800">{policy.per_org_override.map((o, i) => (
+                <tbody className="divide-y dark:divide-gray-800">{policy.per_org_override.map((o: any, i: number) => (
                   <tr key={o.org_id} className="hover:bg-gray-50 dark:hover:bg-gray-900/30"><td className="px-4 py-3"><span className="font-medium">{o.org_name}</span><p className="text-xs text-gray-400 font-mono">{o.org_id}</p></td><td className="px-4 py-3"><input aria-label="Input field" type="number" value={o.max_age_days} onChange={(e) => { const next = [...policy.per_org_override]; next[i] = { ...o, max_age_days: parseInt(e.target.value) || 0 }; setPolicy({ ...policy, per_org_override: next }); }} className="w-20 px-2 py-1 rounded border dark:border-gray-700 dark:bg-gray-900 text-sm" /></td><td className="px-4 py-3"><button onClick={() => { const next = [...policy.per_org_override]; next[i] = { ...o, enabled: !o.enabled }; setPolicy({ ...policy, per_org_override: next }); }} className="text-sm">{o.enabled ? <ToggleRight className="w-6 h-6 text-green-500" /> : <ToggleLeft className="w-6 h-6 text-gray-400" />}</button></td></tr>
                 ))}</tbody>
               </table>

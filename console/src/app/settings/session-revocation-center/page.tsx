@@ -146,7 +146,7 @@ export default function SessionRevocationCenterPage() {
           <p className="text-sm text-gray-400">No revocations yet.</p>
         ) : (
           <div className="space-y-2">
-            {auditLog.map((log, idx) => (
+            {auditLog.map((log: any, idx: number) => (
               <div key={idx} className="text-sm border-l-2 border-red-400 pl-3 py-1">{log}</div>
             ))}
           </div>

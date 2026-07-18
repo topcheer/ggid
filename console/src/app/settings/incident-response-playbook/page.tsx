@@ -46,7 +46,7 @@ export default function IncidentResponsePlaybookPage() {
               </div>
               {/* Step Progress */}
               <div className="flex items-center gap-1 mt-2">
-                {inc.steps.map((step, i) => (
+                {inc.steps.map((step: any, i: number) => (
                   <div key={i} className="flex items-center gap-1">
                     <span className={"text-xs px-2 py-0.5 rounded " + (
                       step.status === "done" ? "bg-green-900 text-green-300" :
@@ -94,7 +94,7 @@ export default function IncidentResponsePlaybookPage() {
           {t("incidentPlaybook.postMortemTemplates")}
         </h2>
         <div className="space-y-1">
-          {(data?.post_mortem_templates ?? []).map((tmpl, i) => (
+          {(data?.post_mortem_templates ?? []).map((tmpl: any, i: number) => (
             <div key={i} className="flex items-center justify-between bg-gray-800 rounded-lg p-2">
               <span className="text-sm">{tmpl.template_name}</span>
               <span className="text-xs text-gray-500">{t("incidentPlaybook.sectionsCount").replace("{count}", String(tmpl.sections_count))}</span>

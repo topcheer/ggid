@@ -120,7 +120,7 @@ export default function OAuthCrossTenantPage() {
         <div className="bg-gray-900 rounded-xl p-6">
           <h2 className="text-sm font-semibold mb-4">Audit Trail</h2>
           <div className="space-y-2 max-h-64 overflow-y-auto">
-            {(data?.audit_trail ?? []).map((a, i) => (
+            {(data?.audit_trail ?? []).map((a: any, i: number) => (
               <div key={i} className="flex items-center gap-3 bg-gray-800 rounded-lg p-2">
                 {a.action === "trust_created" ? <Plus className="w-3 h-3 text-green-400" /> :
                  a.action === "trust_revoked" ? <AlertTriangle className="w-3 h-3 text-red-400" /> :

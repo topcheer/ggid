@@ -64,7 +64,7 @@ export default function TokenRefreshAnalyticsPage() {
       <div className="bg-gray-900 rounded-xl p-6 mb-6">
         <h2 className="text-lg font-semibold mb-4">Refresh Rate (per hour, 24h)</h2>
         <div className="flex items-end gap-1 h-40">
-          {(data?.refresh_rate_per_hour ?? []).map((rate, i) => (
+          {(data?.refresh_rate_per_hour ?? []).map((rate: any, i: number) => (
             <div key={i} className="flex-1 flex flex-col items-center gap-1">
               <div
                 className="w-full rounded-t bg-blue-500 hover:bg-blue-400 transition-all"
@@ -110,7 +110,7 @@ export default function TokenRefreshAnalyticsPage() {
             Refresh Failures (24h)
           </h2>
           <div className="space-y-3">
-            {(data?.refresh_failures ?? []).map((f, i) => (
+            {(data?.refresh_failures ?? []).map((f: any, i: number) => (
               <div key={i} className="bg-gray-800 rounded-lg p-3">
                 <div className="flex items-center justify-between mb-1">
                   <span className="text-sm font-medium font-mono">{f.error}</span>

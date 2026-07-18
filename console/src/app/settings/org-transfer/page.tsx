@@ -140,9 +140,9 @@ export default function OrgTransferPage() {
                     <div className="rounded-lg bg-red-50 dark:bg-red-900/20 p-3"><span className="text-xs text-gray-500">Sessions Revoked</span><p className="text-xl font-bold text-red-600">{impact.sessions_revoked}</p></div>
                     <div className="rounded-lg bg-blue-50 dark:bg-blue-900/20 p-3"><span className="text-xs text-gray-500">Policies Affected</span><p className="text-xl font-bold text-blue-600">{impact.policies_affected}</p></div>
                   </div>
-                  <div><span className="text-xs text-gray-400">Roles Revoked</span><div className="flex flex-wrap gap-1 mt-1">{impact.roles_revoked.map((r, i) => <span key={i} className="px-2 py-0.5 rounded text-xs bg-red-100 dark:bg-red-900/30 dark:text-red-400 font-mono">{r}</span>)}</div></div>
+                  <div><span className="text-xs text-gray-400">Roles Revoked</span><div className="flex flex-wrap gap-1 mt-1">{impact.roles_revoked.map((r: any, i: number) => <span key={i} className="px-2 py-0.5 rounded text-xs bg-red-100 dark:bg-red-900/30 dark:text-red-400 font-mono">{r}</span>)}</div></div>
                   <div><span className="text-xs text-gray-400">Default Role Assigned</span><p className="text-sm font-mono mt-0.5">{impact.default_role_assigned}</p></div>
-                  <div><span className="text-xs text-gray-400">Managers Notified</span><div className="flex flex-wrap gap-1 mt-1">{impact.managers_notified.map((m, i) => <span key={i} className="px-2 py-0.5 rounded text-xs bg-blue-100 dark:bg-blue-900/30 dark:text-blue-400">{m}</span>)}</div></div>
+                  <div><span className="text-xs text-gray-400">Managers Notified</span><div className="flex flex-wrap gap-1 mt-1">{impact.managers_notified.map((m: any, i: number) => <span key={i} className="px-2 py-0.5 rounded text-xs bg-blue-100 dark:bg-blue-900/30 dark:text-blue-400">{m}</span>)}</div></div>
                   <button onClick={() => setShowConfirm(true)} className="w-full px-4 py-2 rounded-lg bg-green-600 text-white text-sm font-medium hover:bg-green-700 flex items-center justify-center gap-2"><Play className="w-4 h-4" /> Execute Transfer</button>
                 </div>
               )}

@@ -53,7 +53,7 @@ export default function DeviceFingerprintAnalyticsPage() {
           <div>
             <p className="text-xs text-gray-400 mb-2">{t("big1.deviceFingerprintAnalytics.canvasHashDiversity")}</p>
             <div className="flex items-end gap-1 h-24">
-              {(data?.canvas_hash_distribution ?? []).map((v, i) => {
+              {(data?.canvas_hash_distribution ?? []).map((v: any, i: number) => {
                 const max = Math.max(...(data?.canvas_hash_distribution ?? [1]));
                 return <div key={i} className="flex-1 bg-blue-500 rounded-t" style={{ height: max > 0 ? (v / max) * 100 + "%" : "0" }} />;
               })}
@@ -62,7 +62,7 @@ export default function DeviceFingerprintAnalyticsPage() {
           <div>
             <p className="text-xs text-gray-400 mb-2">{t("big1.deviceFingerprintAnalytics.webglHashDiversity")}</p>
             <div className="flex items-end gap-1 h-24">
-              {(data?.webgl_hash_distribution ?? []).map((v, i) => {
+              {(data?.webgl_hash_distribution ?? []).map((v: any, i: number) => {
                 const max = Math.max(...(data?.webgl_hash_distribution ?? [1]));
                 return <div key={i} className="flex-1 bg-purple-500 rounded-t" style={{ height: max > 0 ? (v / max) * 100 + "%" : "0" }} />;
               })}
@@ -125,7 +125,7 @@ export default function DeviceFingerprintAnalyticsPage() {
         <h2 className="text-sm font-semibold flex items-center gap-2 mb-4">
           <CheckCircle className="w-4 h-4 text-green-400" />{t("big1.deviceFingerprintAnalytics.knownGoodFingerprintsSample")}</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
-          {(data?.known_good_list ?? []).map((f, i) => (
+          {(data?.known_good_list ?? []).map((f: any, i: number) => (
             <div key={i} className="flex items-center gap-2 bg-gray-800 rounded-lg p-2">
               <Fingerprint className="w-3 h-3 text-green-400" />
               <span className="text-xs font-mono text-gray-400">{f.hash.substring(0, 20)}...</span>

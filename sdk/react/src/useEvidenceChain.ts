@@ -53,7 +53,7 @@ export function useEvidenceChain(baseUrl: string = "") {
         method: "POST",
       });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      setChain((prev) => prev ? {
+      setChain((prev: any) => prev ? {
         ...prev,
         entries: prev.entries.map((e) => e.id === entryId ? { ...e, status: "verified", verified_by: "current_user", verified_at: new Date().toISOString() } : e),
       } : null);

@@ -50,15 +50,15 @@ export default function RiskEngineConfigPage() {
   const totalWeight = weights.filter(w => w.enabled).reduce((sum, w) => sum + w.weight, 0);
 
   const handleWeightChange = (idx: number, value: number) => {
-    setWeights(prev => prev.map((w, i) => i === idx ? { ...w, weight: value } : w));
+    setWeights(prev => prev.map((w: any, i: number) => i === idx ? { ...w, weight: value } : w));
   };
 
   const handleToggle = (idx: number) => {
-    setWeights(prev => prev.map((w, i) => i === idx ? { ...w, enabled: !w.enabled } : w));
+    setWeights(prev => prev.map((w: any, i: number) => i === idx ? { ...w, enabled: !w.enabled } : w));
   };
 
   const handleActionChange = (idx: number, field: 'threshold' | 'action' | 'label', value: string | number) => {
-    setActions(prev => prev.map((a, i) => i === idx ? { ...a, [field]: value } : a));
+    setActions(prev => prev.map((a: any, i: number) => i === idx ? { ...a, [field]: value } : a));
   };
 
   if (loading) return <div className="p-6"><p>Loading...</p></div>;
@@ -73,7 +73,7 @@ export default function RiskEngineConfigPage() {
         <h2 className="text-lg font-semibold">Risk Score Weights</h2>
         <div className="text-sm text-gray-500">Total Weight: {totalWeight}/100 {totalWeight !== 100 && <span className="text-amber-600">(should sum to 100)</span>}</div>
         <div className="space-y-3">
-          {weights.map((w, idx) => (
+          {weights.map((w: any, idx: number) => (
             <div key={w.factor} className="flex items-center gap-4">
               <label className="flex items-center gap-2 w-48">
                 <input aria-label="W" type="checkbox" checked={w.enabled} onChange={() => handleToggle(idx)} className="rounded" />
@@ -112,7 +112,7 @@ export default function RiskEngineConfigPage() {
       <section className="bg-white rounded-lg shadow p-6 space-y-4">
         <h2 className="text-lg font-semibold">Action Mapping</h2>
         <div className="space-y-3">
-          {actions.map((a, idx) => (
+          {actions.map((a: any, idx: number) => (
             <div key={idx} className="flex items-center gap-4">
               <span className="text-sm w-12">{'>'}=</span>
               <input

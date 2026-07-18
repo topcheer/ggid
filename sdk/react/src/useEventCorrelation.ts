@@ -113,7 +113,7 @@ export function useEventCorrelation(): UseEventCorrelationResult {
         });
         if (!resp.ok) throw new Error(`Failed to create rule (${resp.status})`);
         const created = await resp.json();
-        setRules((prev) => [...prev, created]);
+        setRules((prev: any) => [...prev, created]);
         return created;
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Unknown error');
@@ -131,7 +131,7 @@ export function useEventCorrelation(): UseEventCorrelationResult {
         });
         if (!resp.ok) throw new Error(`Failed to update rule (${resp.status})`);
         const updated = await resp.json();
-        setRules((prev) => prev.map((r) => (r.id === id ? updated : r)));
+        setRules((prev: any) => prev.map((r) => (r.id === id ? updated : r)));
         return true;
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Unknown error');
@@ -148,7 +148,7 @@ export function useEventCorrelation(): UseEventCorrelationResult {
           method: 'DELETE', headers: makeHeaders(),
         });
         if (!resp.ok) throw new Error(`Failed to delete rule (${resp.status})`);
-        setRules((prev) => prev.filter((r) => r.id !== id));
+        setRules((prev: any) => prev.filter((r) => r.id !== id));
         return true;
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Unknown error');

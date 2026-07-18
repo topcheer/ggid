@@ -25,7 +25,7 @@ export default function OAuthClientOnboardingWizardPage() {
 
       {/* Stepper */}
       <div className="flex items-center gap-1 mb-8">
-        {steps.map((s, i) => (
+        {steps.map((s: any, i: number) => (
           <div key={s} className="flex items-center gap-1">
             <button onClick={() => setStep(i + 1)} className={"flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium transition " + (step === i + 1 ? "bg-blue-600 text-white" : step > i + 1 ? "bg-green-900 text-green-300" : "bg-gray-800 text-gray-400")}>
               {step > i + 1 ? <CheckCircle className="w-3 h-3" /> : <span>{i + 1}</span>}

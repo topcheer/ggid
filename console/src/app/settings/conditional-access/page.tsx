@@ -158,7 +158,7 @@ function PoliciesList({ policies, loading, onEdit, onAdd, onToggle, onMove, onDe
         <div className="text-center py-12"><Shield className="w-12 h-12 mx-auto mb-3 text-gray-300" /><p className="text-sm text-gray-500">{t("conditionalAccess.policies.noPolicies")}</p></div>
       ) : (
         <div className="space-y-2">
-          {policies.map((p, i) => {
+          {policies.map((p: any, i: number) => {
             const actionCfg = ACTIONS.find((a) => a.value === p.action);
             return (
               <div key={p.id} className="flex items-center gap-3 p-3 rounded-lg border border-gray-200 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/30">
@@ -172,7 +172,7 @@ function PoliciesList({ policies, loading, onEdit, onAdd, onToggle, onMove, onDe
                 <div className="flex-1 min-w-0">
                   <div className="text-sm font-medium text-gray-900 dark:text-white">{p.name}</div>
                   <div className="flex flex-wrap gap-1 mt-1">
-                    {p.conditions.map((c, ci) => (
+                    {p.conditions.map((c: any, ci: number) => (
                       <span key={c.id} className="text-xs text-gray-500 dark:text-gray-400">
                         {ci > 0 && <span className="mx-1 font-medium text-blue-500">{p.logic}</span>}
                         {c.operand} {c.operator} {c.value}
@@ -256,7 +256,7 @@ function PolicyEditor({ editing, onSave, onCancel }: {
           </div>
         </div>
         <div className="space-y-2">
-          {conditions.map((c, i) => (
+          {conditions.map((c: any, i: number) => (
             <div key={c.id} className="flex items-center gap-2 p-2 rounded-lg bg-gray-50 dark:bg-gray-800/50">
               {i > 0 && <span className="px-2 py-0.5 text-xs font-bold text-blue-500 bg-blue-50 dark:bg-blue-950/30 rounded">{logic}</span>}
               <select value={c.operand} onChange={(e) => updateCondition(c.id, "operand", e.target.value)}
@@ -304,7 +304,7 @@ function PolicyEditor({ editing, onSave, onCancel }: {
       <div className="p-3 rounded-lg bg-gray-50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700">
         <span className="text-xs font-medium text-gray-500 mb-1 block">{t("conditionalAccess.editor.preview")}</span>
         <code className="text-xs text-gray-900 dark:text-white">
-          IF {conditions.map((c, i) => `${i > 0 ? ` ${logic} ` : ""}${c.operand} ${c.operator} ${c.value}`).join("")} THEN {action.toUpperCase()}
+          IF {conditions.map((c: any, i: number) => `${i > 0 ? ` ${logic} ` : ""}${c.operand} ${c.operator} ${c.value}`).join("")} THEN {action.toUpperCase()}
         </code>
       </div>
 

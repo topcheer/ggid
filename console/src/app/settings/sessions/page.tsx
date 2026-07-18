@@ -41,7 +41,7 @@ export default function SessionsSettingsPage() {
       }
       const list = Array.isArray(data) ? data : data.sessions || [];
       // Mark first session as current if no explicit flag
-      setSessions(list.map((s, i) => ({ ...s, current: s.current ?? (i === 0) })));
+      setSessions(list.map((s: any, i: number) => ({ ...s, current: s.current ?? (i === 0) })));
     } catch (err) {
       setError(err instanceof Error ? err.message : t("settings.failedLoadSessions"));
       setSessions([]);

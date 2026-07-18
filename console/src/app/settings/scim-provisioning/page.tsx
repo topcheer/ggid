@@ -119,7 +119,7 @@ export default function SCIMPage() {
       {tab === "mapping" && (
         <div className={card}>
           <h2 className="mb-4 flex items-center gap-2 text-sm font-semibold uppercase text-gray-400"><Zap className="h-4 w-4" /> {t("scim.ggidToScimMapping")}</h2>
-          <div className="space-y-2">{mapping.map((m, i) => (
+          <div className="space-y-2">{mapping.map((m: any, i: number) => (
             <div key={i} className="flex items-center gap-3 rounded-lg border p-3 dark:border-gray-700">
               <code className="text-xs font-mono text-gray-500 w-32">{m.ggid}</code>
               <ChevronRight className="h-3 w-3 text-gray-300" />

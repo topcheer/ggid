@@ -90,7 +90,7 @@ export default function ComplianceGapHeatmapPage() {
         <div className="bg-gray-900 rounded-xl p-6">
           <h2 className="text-sm font-semibold mb-4">Detail: {selectedCell}</h2>
           <div className="space-y-2">
-            {selectedDetail.map((d, i) => (
+            {selectedDetail.map((d: any, i: number) => (
               <div key={i} className="bg-gray-800 rounded-lg p-3">
                 <div className="flex items-center justify-between mb-1">
                   <p className="text-sm font-mono text-blue-400">{d.control}</p>

@@ -91,7 +91,7 @@ export default function SOARPage() {
     if (!fName) return;
     setActionLoading("create");
     try {
-      await fetch("/api/v1/audit/itdr/playbooks", { method: "POST", headers: H, body: JSON.stringify({ name: fName, trigger: fTrigger, steps: fActions.map((a, i) => ({ order: i + 1, action: a, target: "auto" })), enabled: true }) });
+      await fetch("/api/v1/audit/itdr/playbooks", { method: "POST", headers: H, body: JSON.stringify({ name: fName, trigger: fTrigger, steps: fActions.map((a: any, i: number) => ({ order: i + 1, action: a, target: "auto" })), enabled: true }) });
       setShowForm(false); setFName(""); setFTrigger("critical"); setFActions([]);
       loadData();
     } catch { setError(t("soar.createError")); }
@@ -175,7 +175,7 @@ export default function SOARPage() {
                     </div>
                   </div>
                   <div className="flex items-center gap-1">
-                    {(pb.steps || []).slice(0, 4).map((s, i) => { const AIcon = ACTION_ICONS[s.action] || Shield; return <span key={i} className="flex h-6 w-6 items-center justify-center rounded bg-gray-100 dark:bg-gray-700"><AIcon className={`h-3 w-3 ${ACTION_COLORS[s.action] || "text-gray-400"}`} /></span>; })}
+                    {(pb.steps || []).slice(0, 4).map((s: any, i: number) => { const AIcon = ACTION_ICONS[s.action] || Shield; return <span key={i} className="flex h-6 w-6 items-center justify-center rounded bg-gray-100 dark:bg-gray-700"><AIcon className={`h-3 w-3 ${ACTION_COLORS[s.action] || "text-gray-400"}`} /></span>; })}
                     <button onClick={() => deletePlaybook(pb.id)} disabled={actionLoading === `del-${pb.id}`} aria-label={"Delete " + pb.name} className="ml-2 rounded p-1 text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20">{actionLoading === `del-${pb.id}` ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Trash2 className="h-3.5 w-3.5" />}</button>
                   </div>
                 </div>
@@ -245,7 +245,7 @@ export default function SOARPage() {
               </div>
               <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">{tmpl.desc}</p>
               <div className="mt-3 flex items-center gap-1">
-                {tmpl.steps.map((s, i) => { const AIcon = ACTION_ICONS[s.action] || Shield; return (<span key={i} className="flex items-center gap-1">{i > 0 && <ChevronRight className="h-3 w-3 text-gray-300" />}<span className={`flex items-center gap-1 rounded px-1.5 py-0.5 text-xs font-mono bg-gray-100 dark:bg-gray-700`}><AIcon className={`h-3 w-3 ${ACTION_COLORS[s.action] || "text-gray-400"}`} /> {s.action}</span></span>); })}
+                {tmpl.steps.map((s: any, i: number) => { const AIcon = ACTION_ICONS[s.action] || Shield; return (<span key={i} className="flex items-center gap-1">{i > 0 && <ChevronRight className="h-3 w-3 text-gray-300" />}<span className={`flex items-center gap-1 rounded px-1.5 py-0.5 text-xs font-mono bg-gray-100 dark:bg-gray-700`}><AIcon className={`h-3 w-3 ${ACTION_COLORS[s.action] || "text-gray-400"}`} /> {s.action}</span></span>); })}
               </div>
             </div>
           ))}

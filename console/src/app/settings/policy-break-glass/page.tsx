@@ -184,7 +184,7 @@ export default function PolicyBreakGlassPage() {
       <div className="bg-gray-900 rounded-xl p-6 mt-6">
         <h2 className="text-lg font-semibold mb-4">Usage History</h2>
         <div className="space-y-2 max-h-48 overflow-y-auto">
-          {(data?.usage_history ?? []).map((h, i) => (
+          {(data?.usage_history ?? []).map((h: any, i: number) => (
             <div key={i} className="flex items-center gap-3 bg-gray-800 rounded-lg p-3">
               {h.outcome === "expired" ? <Clock className="w-4 h-4 text-gray-400" /> :
                h.outcome === "revoked" ? <XCircle className="w-4 h-4 text-red-400" /> :

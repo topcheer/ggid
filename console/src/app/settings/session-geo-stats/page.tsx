@@ -57,7 +57,7 @@ export default function SessionGeoStatsPage() {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <div className="rounded-lg border dark:border-gray-800 p-4">
               <h3 className="text-sm font-semibold mb-3">{t("sessionGeoStats.topCities")}</h3>
-              <div className="space-y-2">{data.top_cities.map((c, i) => (
+              <div className="space-y-2">{data.top_cities.map((c: any, i: number) => (
                 <div key={i} className="flex items-center gap-2"><span className="text-xs text-gray-500 w-32 truncate">{c.city}, {c.country}</span><div className="flex-1 bg-gray-100 dark:bg-gray-800 rounded-full h-5 overflow-hidden"><div className="h-full bg-cyan-500 rounded-full" style={{ width: `${(c.sessions / maxCity) * 100}%` }} /></div><span className="text-xs font-bold w-10 text-right">{c.sessions}</span></div>
               ))}{data.top_cities.length === 0 && <p className="text-xs text-gray-400">{t("sessionGeoStats.noData")}</p>}</div>
             </div>
@@ -73,7 +73,7 @@ export default function SessionGeoStatsPage() {
           {data.risk_geographies.length > 0 && (
             <div className="rounded-lg border dark:border-gray-800 p-4">
               <h3 className="text-sm font-semibold flex items-center gap-2 mb-3"><AlertTriangle className="w-4 h-4 text-red-500" /> {t("sessionGeoStats.riskGeographies")}</h3>
-              <div className="space-y-2">{data.risk_geographies.map((r, i) => (
+              <div className="space-y-2">{data.risk_geographies.map((r: any, i: number) => (
                 <div key={i} className="flex items-center gap-2 text-sm"><span className="font-mono text-xs bg-gray-100 dark:bg-gray-800 px-1.5 py-0.5 rounded">{r.country}</span><span className="flex-1 text-gray-500">{r.reason}</span><span className={`px-2 py-0.5 rounded text-xs ${riskColors[r.risk_level]}`}>{r.risk_level}</span></div>
               ))}</div>
             </div>
@@ -82,7 +82,7 @@ export default function SessionGeoStatsPage() {
           <div className="rounded-lg border dark:border-gray-800 p-4">
             <h3 className="text-sm font-semibold mb-3">{t("sessionGeoStats.heatmapGrid")}</h3>
             <div className="grid grid-cols-8 gap-1">
-              {data.heatmap.map((h, i) => (
+              {data.heatmap.map((h: any, i: number) => (
                 <div key={i} className="aspect-square rounded" style={{ background: `rgba(239, 68, 68, ${h.intensity / maxHeat})` }} title={`${h.label}: ${h.intensity}`} />
               ))}
               {data.heatmap.length === 0 && <p className="text-xs text-gray-400 col-span-8">{t("sessionGeoStats.noHeatmapData")}</p>}

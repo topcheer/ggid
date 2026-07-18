@@ -79,7 +79,7 @@ export default function ServiceDependencyGraphPage() {
       <div className="flex gap-6">
         <div className="flex-1 bg-white rounded-lg p-6 shadow">
           <svg viewBox="0 0 700 400" className="w-full h-auto">
-            {edges.map((e, i) => {
+            {edges.map((e: any, i: number) => {
               const from = nodeMap.get(e.from); const to = nodeMap.get(e.to);
               if (!from || !to) return null;
               const midX = (from.x + to.x) / 2; const midY = (from.y + to.y) / 2;
@@ -116,7 +116,7 @@ export default function ServiceDependencyGraphPage() {
         <table className="w-full text-sm">
           <thead><tr className="border-b text-left"><th className="py-2">From</th><th scope="col">To</th><th>Protocol</th><th>Calls/s</th><th>Avg Latency</th></tr></thead>
           <tbody>
-            {edges.map((e, i) => (
+            {edges.map((e: any, i: number) => (
               <tr key={i} className="border-b"><td className="py-2 font-medium">{e.from}</td><td>{e.to}</td><td><span className="px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs">{e.protocol}</span></td><td>{e.calls_per_sec}</td><td>{e.avg_latency_ms}ms</td></tr>
             ))}
           </tbody>

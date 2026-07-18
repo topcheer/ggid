@@ -73,7 +73,7 @@ export default function HijackDetectionPage() {
                 </div>
                 {/* Geo trail */}
                 {s.locations.length > 1 && (
-                  <div className="mt-3 flex items-center gap-2">{s.locations.map((loc, i) => (<React.Fragment key={i}><div className="flex items-center gap-1 rounded bg-gray-50 px-2 py-1 text-xs dark:bg-gray-900"><MapPin className="h-3 w-3 text-gray-400" /><span className="text-gray-600 dark:text-gray-300">{loc.city}, {loc.country}</span><span className="text-gray-400">{new Date(loc.timestamp).toLocaleTimeString()}</span></div>{i < s.locations.length - 1 && <span className="text-gray-300">→</span>}</React.Fragment>))}</div>
+                  <div className="mt-3 flex items-center gap-2">{s.locations.map((loc: any, i: number) => (<React.Fragment key={i}><div className="flex items-center gap-1 rounded bg-gray-50 px-2 py-1 text-xs dark:bg-gray-900"><MapPin className="h-3 w-3 text-gray-400" /><span className="text-gray-600 dark:text-gray-300">{loc.city}, {loc.country}</span><span className="text-gray-400">{new Date(loc.timestamp).toLocaleTimeString()}</span></div>{i < s.locations.length - 1 && <span className="text-gray-300">→</span>}</React.Fragment>))}</div>
                 )}
               </div>
               <button onClick={() => handleTerminate(s.session_id)} disabled={terminating === s.session_id} className="flex items-center gap-2 rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-50">{terminating === s.session_id ? <Loader2 className="h-4 w-4 animate-spin" /> : <XCircle className="h-4 w-4" />} Terminate</button>

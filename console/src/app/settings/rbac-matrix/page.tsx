@@ -32,7 +32,7 @@ export default function RbacMatrixPage() {
   }, []);
 
   const toggleCell = (roleId: string, permIdx: number) => {
-    setMatrix(prev => ({ ...prev, [roleId]: prev[roleId]?.map((v, i) => i === permIdx ? !v : v) || [] }));
+    setMatrix(prev => ({ ...prev, [roleId]: prev[roleId]?.map((v: any, i: number) => i === permIdx ? !v : v) || [] }));
   };
 
   const addRole = () => {
@@ -50,7 +50,7 @@ export default function RbacMatrixPage() {
       .catch(err => setError(err.message));
   };
 
-  const effectivePerms = matrix[selectedRole]?.map((v, i) => v ? permissions[i] : null).filter(Boolean) as string[] || [];
+  const effectivePerms = matrix[selectedRole]?.map((v: any, i: number) => v ? permissions[i] : null).filter(Boolean) as string[] || [];
 
   if (loading) return <div className="p-6"><h1 className="text-2xl font-bold">RBAC Matrix</h1><p className="text-gray-600 mt-2">Loading...</p></div>;
   if (error) return <div className="p-6"><h1 className="text-2xl font-bold">RBAC Matrix</h1><p className="text-red-600 mt-2">Error: {error}</p></div>;
@@ -81,7 +81,7 @@ export default function RbacMatrixPage() {
             {roles.map(r => (
               <tr key={r.id} className="border-b">
                 <td className="p-3"><div className="font-medium">{r.name}</div><div className="text-xs text-gray-500">{r.description}</div></td>
-                {matrix[r.id]?.map((v, i) => <td key={i} className="p-3 text-center"><input aria-label="Toggle" type="checkbox" checked={v} onChange={() => toggleCell(r.id, i)} className="rounded" /></td>)}
+                {matrix[r.id]?.map((v: any, i: number) => <td key={i} className="p-3 text-center"><input aria-label="Toggle" type="checkbox" checked={v} onChange={() => toggleCell(r.id, i)} className="rounded" /></td>)}
               </tr>
             ))}
           </tbody>

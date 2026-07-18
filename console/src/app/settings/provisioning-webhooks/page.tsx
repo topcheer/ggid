@@ -115,7 +115,7 @@ export default function ProvisioningWebhooksPage() {
                   <span className={`px-2 py-0.5 rounded text-xs ${w.enabled ? "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400" : "bg-gray-100 text-gray-500 dark:bg-gray-800"}`}>{w.enabled ? "Active" : "Disabled"}</span>
                 </div>
                 <div className="flex flex-wrap gap-1 mt-2">
-                  {w.events.map((e, i) => <span key={i} className="px-1.5 py-0.5 rounded text-xs bg-purple-100 dark:bg-purple-900/30 dark:text-purple-400 font-mono">{e}</span>)}
+                  {w.events.map((e: any, i: number) => <span key={i} className="px-1.5 py-0.5 rounded text-xs bg-purple-100 dark:bg-purple-900/30 dark:text-purple-400 font-mono">{e}</span>)}
                 </div>
                 <div className="flex items-center gap-3 mt-2 text-xs text-gray-400">
                   <span>Last triggered: {w.last_triggered || "Never"}</span>

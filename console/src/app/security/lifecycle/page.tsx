@@ -212,7 +212,7 @@ export default function JMLLifecyclePage() {
       {tab === "dashboard" && stats && (
         <>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-            {(["joiners_30d", "movers_30d", "leavers_30d"] as const).map((key, i) => {
+            {(["joiners_30d", "movers_30d", "leavers_30d"] as const).map((key: any, i: number) => {
               const trigger = ["joiner", "mover", "leaver"][i];
               const cfg = triggerConfig[trigger as keyof typeof triggerConfig];
               const Icon = cfg.icon;
@@ -259,7 +259,7 @@ export default function JMLLifecyclePage() {
                         <span>Executions: <span className="font-medium text-gray-700 dark:text-gray-300">{rule.execution_count}</span></span>
                         <span>Success: <span className={"font-medium " + (rule.success_rate >= 95 ? "text-green-600" : rule.success_rate >= 80 ? "text-yellow-600" : "text-red-600")}>{rule.success_rate}%</span></span>
                         {rule.last_executed && <span className="flex items-center gap-1"><Clock className="h-3 w-3" /> {new Date(rule.last_executed).toLocaleString()}</span>}
-                        {rule.actions?.map((a, i) => <span key={i} className="px-1.5 py-0.5 rounded font-mono bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400">{a.type}</span>)}
+                        {rule.actions?.map((a: any, i: number) => <span key={i} className="px-1.5 py-0.5 rounded font-mono bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400">{a.type}</span>)}
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
@@ -322,7 +322,7 @@ export default function JMLLifecyclePage() {
                       <td className="px-4 py-3 text-xs">{ex.username || ex.user_id}</td>
                       <td className="px-4 py-3"><span className={"flex items-center gap-1 text-xs " + cfg.color}><SIcon className="h-3 w-3" /> {ex.status}</span></td>
                       <td className="px-4 py-3 text-right text-xs font-mono">{ex.duration_ms}ms</td>
-                      <td className="px-4 py-3"><div className="flex flex-wrap gap-1">{ex.actions_taken?.map((a, i) => <span key={i} className="px-1 py-0.5 rounded bg-gray-100 dark:bg-gray-800 text-xs font-mono">{a}</span>)}</div></td>
+                      <td className="px-4 py-3"><div className="flex flex-wrap gap-1">{ex.actions_taken?.map((a: any, i: number) => <span key={i} className="px-1 py-0.5 rounded bg-gray-100 dark:bg-gray-800 text-xs font-mono">{a}</span>)}</div></td>
                       <td className="px-4 py-3 text-xs text-gray-500">{new Date(ex.executed_at).toLocaleString()}</td>
                     </tr>
                   ); })}
@@ -359,10 +359,10 @@ export default function JMLLifecyclePage() {
                 <h3 className="flex items-center gap-2 text-sm font-semibold text-indigo-700 dark:text-indigo-400"><Eye className="h-4 w-4" /> Simulation Result</h3>
                 {dryRunResult.matched_rules?.length > 0 ? (
                   <div className="mt-3 space-y-2">
-                    {dryRunResult.matched_rules.map((r, i) => (
+                    {dryRunResult.matched_rules.map((r: any, i: number) => (
                       <div key={i} className="flex items-center gap-2 rounded-lg bg-white p-3 dark:bg-gray-800">
                         <ChevronRight className="h-4 w-4 text-indigo-500" />
-                        <div className="flex-1"><span className="font-medium text-sm">{r.name}</span><div className="flex gap-1 mt-1">{r.actions?.map((a, j) => <span key={j} className="px-1.5 py-0.5 rounded bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-400 text-xs font-mono">{a.type}</span>)}</div></div>
+                        <div className="flex-1"><span className="font-medium text-sm">{r.name}</span><div className="flex gap-1 mt-1">{r.actions?.map((a: any, j: number) => <span key={j} className="px-1.5 py-0.5 rounded bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-400 text-xs font-mono">{a.type}</span>)}</div></div>
                       </div>
                     ))}
                   </div>

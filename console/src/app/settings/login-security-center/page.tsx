@@ -66,7 +66,7 @@ export default function LoginSecurityCenterPage() {
       <div className="bg-white rounded-lg p-6 shadow">
         <h2 className="text-lg font-semibold mb-4">Bot Detection Stats (24h)</h2>
         <div className="grid grid-cols-3 gap-4"><div className="text-center"><div className="text-2xl font-bold text-red-600">{botStats.total_blocked}</div><div className="text-xs text-gray-500">Total Blocked</div></div><div className="text-center"><div className="text-2xl font-bold text-yellow-600">{botStats.captcha_challenged}</div><div className="text-xs text-gray-500">CAPTCHA Challenged</div></div><div className="text-center"><div className="text-2xl font-bold text-orange-600">{botStats.rate_limited}</div><div className="text-xs text-gray-500">Rate Limited</div></div></div>
-        <div className="mt-4"><div className="text-sm font-medium mb-2">Top Attack Patterns</div><div className="space-y-1">{botStats.top_patterns.map((p, i) => (<div key={i} className="text-sm border-b py-1">{p}</div>))}</div></div>
+        <div className="mt-4"><div className="text-sm font-medium mb-2">Top Attack Patterns</div><div className="space-y-1">{botStats.top_patterns.map((p: any, i: number) => (<div key={i} className="text-sm border-b py-1">{p}</div>))}</div></div>
       </div>
     </div>
   );

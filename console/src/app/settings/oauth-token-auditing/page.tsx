@@ -77,7 +77,7 @@ export default function OAuthTokenAuditingPage() {
           Suspicious Patterns Detected
         </h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-          {(data?.suspicious_patterns ?? []).map((p, i) => (
+          {(data?.suspicious_patterns ?? []).map((p: any, i: number) => (
             <div key={i} className="bg-gray-800 rounded-lg p-3">
               <div className="flex items-center justify-between mb-1">
                 <p className="text-sm font-medium capitalize">{p.pattern_type.replace(/_/g, " ")}</p>

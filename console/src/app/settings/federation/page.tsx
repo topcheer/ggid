@@ -201,7 +201,7 @@ export default function FederationPage() {
           <div className={card + " lg:col-span-1"}>
             <h3 className="mb-4 text-sm font-semibold uppercase text-gray-400">{t("federation.steps")}</h3>
             <div className="space-y-3">
-              {wizardSteps.map((label, i) => (
+              {wizardSteps.map((label: any, i: number) => (
                 <div key={i} className="flex items-center gap-3">
                   <div className={`flex h-8 w-8 items-center justify-center rounded-full ${i < wStep ? "bg-green-500 text-white" : i === wStep ? "bg-cyan-600 text-white" : "bg-gray-200 dark:bg-gray-700 text-gray-400"}`}>
                     {i < wStep ? <Check className="h-4 w-4" /> : i + 1}

@@ -173,7 +173,7 @@ export default function ImportEnhancedPage() {
 
         {/* Stepper */}
         <div className="flex items-center gap-2 mb-6">
-          {steps.map((s, i) => {
+          {steps.map((s: any, i: number) => {
             const stepIdx = ["upload", "precheck", "precheck-result", "importing", "summary"].indexOf(phase);
             const isActive = (phase === "precheck-result" && s.id === "precheck") || phase === s.id;
             const isPast = stepIdx > ["upload", "precheck", "importing", "summary"].indexOf(s.id);
@@ -242,7 +242,7 @@ export default function ImportEnhancedPage() {
                 <div>
                   <h4 className="text-xs font-medium text-gray-500 mb-2">{t("importEnhanced.preCheck.issues")}:</h4>
                   <div className="max-h-40 overflow-y-auto rounded-lg border border-gray-200 dark:border-gray-800">
-                    {preCheck.errors.map((e, i) => (
+                    {preCheck.errors.map((e: any, i: number) => (
                       <div key={i} className="flex items-center gap-3 px-3 py-2 border-b border-gray-100 dark:border-gray-800/50 text-xs">
                         <span className="text-gray-400">Row {e.row}</span>
                         <span className="font-mono text-gray-900 dark:text-white">{e.email || "—"}</span>
@@ -314,7 +314,7 @@ export default function ImportEnhancedPage() {
                 <div>
                   <h4 className="text-xs font-medium text-gray-500 mb-2 flex items-center gap-1"><BarChart3 className="w-3 h-3" />{t("importEnhanced.summary.errorBreakdown")}</h4>
                   <div className="space-y-1">
-                    {summary.errors.map((e, i) => (
+                    {summary.errors.map((e: any, i: number) => (
                       <div key={i} className="flex items-center justify-between px-3 py-1.5 rounded-lg bg-gray-50 dark:bg-gray-800/50 text-xs">
                         <span className="text-gray-700 dark:text-gray-300">{e.type}</span>
                         <span className="font-medium text-red-500">{e.count}</span>

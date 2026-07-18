@@ -135,7 +135,7 @@ export default function EntitlementReviewPage() {
                 </tr>
               </thead>
               <tbody className="divide-y dark:divide-gray-800">
-                {crossAnalysis.map((row, i) => (
+                {crossAnalysis.map((row: any, i: number) => (
                   <tr key={`${row.resource}-${i}`} className="hover:bg-gray-50 dark:hover:bg-gray-900/30">
                     <td className="px-4 py-3 font-mono text-xs">{row.resource}</td>
                     <td className="px-4 py-3 text-right font-medium">{row.granted_count}</td>

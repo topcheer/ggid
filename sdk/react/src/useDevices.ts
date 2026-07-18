@@ -76,7 +76,7 @@ export function useDevices(): UseDevicesResult {
         method: 'DELETE', headers: makeHeaders(),
       });
       if (!resp.ok) throw new Error(`Failed to remove device (${resp.status})`);
-      setDevices((prev) => prev.filter((d) => d.id !== id));
+      setDevices((prev: any) => prev.filter((d) => d.id !== id));
       return true;
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Unknown error');
@@ -90,7 +90,7 @@ export function useDevices(): UseDevicesResult {
         method: 'PATCH', headers: makeHeaders(), body: JSON.stringify({ name }),
       });
       if (!resp.ok) throw new Error(`Failed to rename device (${resp.status})`);
-      setDevices((prev) => prev.map((d) => (d.id === id ? { ...d, name } : d)));
+      setDevices((prev: any) => prev.map((d) => (d.id === id ? { ...d, name } : d)));
       return true;
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Unknown error');

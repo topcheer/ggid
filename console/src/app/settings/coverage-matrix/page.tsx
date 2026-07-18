@@ -65,11 +65,11 @@ export default function CoverageMatrixPage() {
           )}
 
           {data.uncovered.length > 0 && (
-            <div className="rounded-lg border dark:border-gray-800 p-4"><h3 className="text-sm font-semibold flex items-center gap-2 mb-3"><AlertTriangle className="w-4 h-4 text-red-500" /> Uncovered Combinations</h3><div className="flex flex-wrap gap-2">{data.uncovered.map((u, i) => <span key={i} className="px-2 py-1 rounded text-xs bg-red-50 dark:bg-red-900/20 text-red-600 font-mono">{u.subject} x {u.resource}</span>)}</div></div>
+            <div className="rounded-lg border dark:border-gray-800 p-4"><h3 className="text-sm font-semibold flex items-center gap-2 mb-3"><AlertTriangle className="w-4 h-4 text-red-500" /> Uncovered Combinations</h3><div className="flex flex-wrap gap-2">{data.uncovered.map((u: any, i: number) => <span key={i} className="px-2 py-1 rounded text-xs bg-red-50 dark:bg-red-900/20 text-red-600 font-mono">{u.subject} x {u.resource}</span>)}</div></div>
           )}
 
           {data.redundant.length > 0 && (
-            <div className="rounded-lg border dark:border-gray-800 p-4"><h3 className="text-sm font-semibold flex items-center gap-2 mb-3"><Layers className="w-4 h-4 text-yellow-500" /> Redundant Policies</h3><div className="space-y-1">{data.redundant.map((r, i) => <div key={i} className="flex items-center gap-2 text-sm"><span className="font-mono text-xs">{r.subject} x {r.resource}</span><span className="px-2 py-0.5 rounded text-xs bg-yellow-100 dark:bg-yellow-900/30 dark:text-yellow-400">{r.count} policies</span></div>)}</div></div>
+            <div className="rounded-lg border dark:border-gray-800 p-4"><h3 className="text-sm font-semibold flex items-center gap-2 mb-3"><Layers className="w-4 h-4 text-yellow-500" /> Redundant Policies</h3><div className="space-y-1">{data.redundant.map((r: any, i: number) => <div key={i} className="flex items-center gap-2 text-sm"><span className="font-mono text-xs">{r.subject} x {r.resource}</span><span className="px-2 py-0.5 rounded text-xs bg-yellow-100 dark:bg-yellow-900/30 dark:text-yellow-400">{r.count} policies</span></div>)}</div></div>
           )}
         </>
       )}

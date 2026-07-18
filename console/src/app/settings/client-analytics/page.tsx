@@ -52,7 +52,7 @@ export default function ClientAnalyticsPage() {
             <div className="rounded-lg border p-4 dark:border-gray-800"><span className="text-sm text-gray-500">Avg Latency</span><p className="text-xl font-bold mt-1">{data.avg_latency_ms}ms</p></div>
           </div>
 
-          <div className="rounded-lg border dark:border-gray-800 p-4"><h3 className="text-sm font-semibold mb-3">Token Usage (30d)</h3><div className="flex items-end gap-0.5 h-24">{data.token_usage_30d.map((t, i) => <div key={i} className="flex-1 bg-blue-400 dark:bg-blue-500 rounded-t" style={{ height: (t.count / maxUsage) * 100 + "%", minHeight: "2px" }} title={t.day + ": " + t.count} />)}</div></div>
+          <div className="rounded-lg border dark:border-gray-800 p-4"><h3 className="text-sm font-semibold mb-3">Token Usage (30d)</h3><div className="flex items-end gap-0.5 h-24">{data.token_usage_30d.map((t: any, i: number) => <div key={i} className="flex-1 bg-blue-400 dark:bg-blue-500 rounded-t" style={{ height: (t.count / maxUsage) * 100 + "%", minHeight: "2px" }} title={t.day + ": " + t.count} />)}</div></div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="rounded-lg border dark:border-gray-800 p-4"><h3 className="text-sm font-semibold flex items-center gap-2 mb-3"><Users className="w-4 h-4 text-gray-400" /> Top Users</h3><div className="space-y-2">{data.top_users.map((u) => <div key={u.user_id} className="flex items-center gap-2"><span className="text-sm font-medium flex-1">{u.username}</span><span className="text-xs text-gray-500">{u.last_active}</span><span className="px-2 py-0.5 rounded text-xs bg-blue-100 dark:bg-blue-900/30 dark:text-blue-400 font-bold">{u.requests}</span></div>)}</div></div>

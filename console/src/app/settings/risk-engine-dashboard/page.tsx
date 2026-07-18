@@ -47,11 +47,11 @@ export default function RiskEngineDashboardPage() {
   const gaugeColor = currentScore >= 85 ? 'text-red-600' : currentScore >= 60 ? 'text-amber-600' : currentScore >= 30 ? 'text-yellow-600' : 'text-green-600';
 
   const toggleFactor = (idx: number) => {
-    setFactors(prev => prev.map((f, i) => i === idx ? { ...f, enabled: !f.enabled } : f));
+    setFactors(prev => prev.map((f: any, i: number) => i === idx ? { ...f, enabled: !f.enabled } : f));
   };
 
   const updateAction = (idx: number, action: string) => {
-    setThresholds(prev => prev.map((t, i) => i === idx ? { ...t, action } : t));
+    setThresholds(prev => prev.map((t: any, i: number) => i === idx ? { ...t, action } : t));
   };
 
   const actionColor = (a: string): string =>
@@ -80,7 +80,7 @@ export default function RiskEngineDashboardPage() {
         <section className="col-span-2 bg-white rounded-lg shadow p-6 space-y-4">
           <h2 className="text-lg font-semibold">{t("riskEngine.factorBreakdown")}</h2>
           <div className="space-y-3">
-            {factors.map((f, idx) => (
+            {factors.map((f: any, idx: number) => (
               <div key={f.name} className="flex items-center gap-4">
                 <label className="flex items-center gap-2 w-40">
                   <input aria-label="F" type="checkbox" checked={f.enabled} onChange={() => toggleFactor(idx)} className="rounded" />
@@ -100,7 +100,7 @@ export default function RiskEngineDashboardPage() {
       <section className="bg-white rounded-lg shadow p-6 space-y-4">
         <h2 className="text-lg font-semibold">{t("riskEngine.thresholdConfig")}</h2>
         <div className="space-y-2">
-          {thresholds.map((t, idx) => (
+          {thresholds.map((t: any, idx: number) => (
             <div key={t.level} className="flex items-center gap-4">
               <span className={`px-2 py-0.5 rounded text-xs capitalize ${t.level === 'critical' ? 'bg-red-100 text-red-700' : t.level === 'high' ? 'bg-amber-100 text-amber-700' : t.level === 'medium' ? 'bg-yellow-100 text-yellow-700' : 'bg-green-100 text-green-700'}`}>{t.level}</span>
               <span className="text-sm text-gray-500 w-20">{t.minScore}-{t.maxScore}</span>

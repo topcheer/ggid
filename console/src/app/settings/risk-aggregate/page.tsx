@@ -40,7 +40,7 @@ export default function RiskAggregatePage() {
 
   const scoreColor = data ? (data.avg_score >= 70 ? "#ef4444" : data.avg_score >= 40 ? "#f59e0b" : "#10b981") : "#3b82f6";
   const maxTrend = Math.max(...(data?.trends_7d || [1]), 1);
-  const points = data?.trends_7d.map((v, i) => `${(i / (data.trends_7d.length - 1 || 1)) * 200},${50 - (v / maxTrend) * 45}`).join(" ") || "";
+  const points = data?.trends_7d.map((v: any, i: number) => `${(i / (data.trends_7d.length - 1 || 1)) * 200},${50 - (v / maxTrend) * 45}`).join(" ") || "";
 
   return (
     <div className="space-y-6">
@@ -67,7 +67,7 @@ export default function RiskAggregatePage() {
 
           <div className="overflow-x-auto rounded-lg border dark:border-gray-800">
             <table className="w-full text-sm"><thead className="bg-gray-50 dark:bg-gray-900/50"><tr><th className="px-4 py-3 text-left font-medium">{view === "user" ? "User" : "Organization"}</th><th className="px-4 py-3 text-left font-medium">Score</th><th className="px-4 py-3 text-left font-medium">Org</th><th className="px-4 py-3 text-left font-medium">Risk Factors</th></tr></thead>
-              <tbody className="divide-y dark:divide-gray-800">{data.high_risk_users.map((u) => (<tr key={u.user_id} className="hover:bg-gray-50 dark:hover:bg-gray-900/30"><td className="px-4 py-3"><span className="font-medium">{u.username}</span><p className="text-xs text-gray-400 font-mono">{u.user_id}</p></td><td className="px-4 py-3"><span className={`font-bold ${u.score >= 70 ? "text-red-600" : u.score >= 40 ? "text-orange-600" : "text-yellow-600"}`}>{u.score.toFixed(1)}</span></td><td className="px-4 py-3 text-xs text-gray-500">{u.org}</td><td className="px-4 py-3"><div className="flex flex-wrap gap-1">{u.factors.map((f, i) => <span key={i} className="px-1.5 py-0.5 rounded text-xs bg-gray-100 dark:bg-gray-800">{f}</span>)}</div></td></tr>))}{data.high_risk_users.length === 0 && <tr><td colSpan={4} className="px-4 py-8 text-center text-gray-500">No high-risk entries.</td></tr>}</tbody>
+              <tbody className="divide-y dark:divide-gray-800">{data.high_risk_users.map((u) => (<tr key={u.user_id} className="hover:bg-gray-50 dark:hover:bg-gray-900/30"><td className="px-4 py-3"><span className="font-medium">{u.username}</span><p className="text-xs text-gray-400 font-mono">{u.user_id}</p></td><td className="px-4 py-3"><span className={`font-bold ${u.score >= 70 ? "text-red-600" : u.score >= 40 ? "text-orange-600" : "text-yellow-600"}`}>{u.score.toFixed(1)}</span></td><td className="px-4 py-3 text-xs text-gray-500">{u.org}</td><td className="px-4 py-3"><div className="flex flex-wrap gap-1">{u.factors.map((f: any, i: number) => <span key={i} className="px-1.5 py-0.5 rounded text-xs bg-gray-100 dark:bg-gray-800">{f}</span>)}</div></td></tr>))}{data.high_risk_users.length === 0 && <tr><td colSpan={4} className="px-4 py-8 text-center text-gray-500">No high-risk entries.</td></tr>}</tbody>
             </table>
           </div>
         </>

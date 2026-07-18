@@ -68,7 +68,7 @@ export default function IdentityGroupMembershipAnalyticsPage() {
             Membership Growth (30d)
           </h2>
           <div className="flex items-end gap-1 h-32">
-            {(data?.membership_growth_30d ?? []).map((v, i) => (
+            {(data?.membership_growth_30d ?? []).map((v: any, i: number) => (
               <div key={i} className="flex-1 flex flex-col items-center gap-1">
                 <div
                   className="w-full rounded-t bg-blue-500 hover:bg-blue-400 transition-all"
@@ -87,7 +87,7 @@ export default function IdentityGroupMembershipAnalyticsPage() {
             Cleanup Recommendations
           </h2>
           <div className="space-y-2">
-            {(data?.recommend_cleanup ?? []).map((rec, i) => (
+            {(data?.recommend_cleanup ?? []).map((rec: any, i: number) => (
               <div key={i} className="bg-gray-800 rounded-lg p-3">
                 <div className="flex items-center justify-between mb-1">
                   <p className="text-xs font-medium">{rec.action}</p>
@@ -142,7 +142,7 @@ export default function IdentityGroupMembershipAnalyticsPage() {
               {t("idGroupMembershipAnalytics.inactiveMembers")}
             </h2>
             <div className="space-y-2 max-h-40 overflow-y-auto">
-              {(data?.inactive_members ?? []).map((m, i) => (
+              {(data?.inactive_members ?? []).map((m: any, i: number) => (
                 <div key={i} className="flex items-center justify-between bg-gray-800 rounded-lg p-2">
                   <span className="text-sm text-gray-300">{m.user}</span>
                   <div className="flex items-center gap-2">
@@ -167,7 +167,7 @@ export default function IdentityGroupMembershipAnalyticsPage() {
               {t("idGroupMembershipAnalytics.orphanedGroups")}
             </h2>
             <div className="space-y-1">
-              {(data?.orphaned_groups ?? []).map((g, i) => (
+              {(data?.orphaned_groups ?? []).map((g: any, i: number) => (
                 <div key={i} className="flex items-center justify-between bg-gray-800 rounded-lg p-2">
                   <span className="text-sm text-gray-300">{g.name}</span>
                   <span className="text-xs text-gray-400">{t("idGroupMembershipAnalytics.lastUsed")} {g.last_used}</span>

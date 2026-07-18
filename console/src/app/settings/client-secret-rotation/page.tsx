@@ -179,7 +179,7 @@ const [history] = useState([
             </tr>
           </thead>
           <tbody>
-            {history.map((h, idx) => (
+            {history.map((h: any, idx: number) => (
               <tr key={idx} className="border-b">
                 <td className="p-3 font-mono text-xs">{h.clientId}</td>
                 <td className="p-3 text-gray-500">{h.rotatedAt}</td>

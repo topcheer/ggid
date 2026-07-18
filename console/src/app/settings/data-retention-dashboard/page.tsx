@@ -44,7 +44,7 @@ export default function DataRetentionDashboardPage() {
               </tr>
             </thead>
             <tbody>
-              {(data?.retention_policies ?? []).map((p, i) => (
+              {(data?.retention_policies ?? []).map((p: any, i: number) => (
                 <tr key={i} className="border-b border-gray-800">
                   <td className="py-3 pr-3 text-xs font-medium">{p.data_type}</td>
                   <td className="py-3 pr-3 text-xs text-gray-400">{p.retention_days} days</td>
@@ -64,7 +64,7 @@ export default function DataRetentionDashboardPage() {
         <div className="bg-gray-900 rounded-xl p-6">
           <h2 className="text-sm font-semibold mb-4">Storage Usage by Age</h2>
           <div className="space-y-2">
-            {(data?.storage_usage_by_age ?? []).map((s, i) => (
+            {(data?.storage_usage_by_age ?? []).map((s: any, i: number) => (
               <div key={i} className="flex items-center gap-3">
                 <span className="text-xs w-20 text-gray-400">{s.age_range}</span>
                 <div className="flex-1 h-4 bg-gray-800 rounded">
@@ -81,7 +81,7 @@ export default function DataRetentionDashboardPage() {
             Upcoming Purges
           </h2>
           <div className="space-y-2">
-            {(data?.upcoming_purges ?? []).map((p, i) => (
+            {(data?.upcoming_purges ?? []).map((p: any, i: number) => (
               <div key={i} className="bg-gray-800 rounded-lg p-3">
                 <div className="flex items-center justify-between">
                   <span className="text-sm font-medium">{p.data_type}</span>
@@ -113,7 +113,7 @@ export default function DataRetentionDashboardPage() {
             Purge History
           </h2>
           <div className="space-y-1">
-            {(data?.purge_history ?? []).map((p, i) => (
+            {(data?.purge_history ?? []).map((p: any, i: number) => (
               <div key={i} className="flex items-center justify-between text-xs">
                 <span className="text-gray-400">{p.date} - {p.data_type}</span>
                 <span className="text-gray-500">{p.records_purged.toLocaleString()} purged</span>

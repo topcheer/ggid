@@ -118,7 +118,7 @@ export default function AuditGdprRequestsPage() {
                   <div className="bg-gray-900 rounded-lg p-2 mb-3">
                     <p className="text-xs text-gray-500 mb-1">Anonymization Preview:</p>
                     <div className="flex flex-wrap gap-1">
-                      {req.anonymization_preview.map((field, i) => (
+                      {req.anonymization_preview.map((field: any, i: number) => (
                         <span key={i} className="text-xs px-2 py-0.5 rounded bg-red-900 text-red-300 font-mono">{field}</span>
                       ))}
                     </div>

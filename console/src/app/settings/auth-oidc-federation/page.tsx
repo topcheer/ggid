@@ -123,7 +123,7 @@ export default function AuthOidcFederationPage() {
         <div className="bg-gray-900 rounded-xl p-6">
           <h2 className="text-lg font-semibold mb-4">Trust Chain</h2>
           <div className="space-y-2">
-            {(data?.trust_chain ?? []).map((node, i) => (
+            {(data?.trust_chain ?? []).map((node: any, i: number) => (
               <div key={i} className="flex items-center gap-3">
                 <div className={"w-8 h-8 rounded-lg flex items-center justify-center text-xs font-bold " + (
                   node.verified ? "bg-green-900 text-green-300" : "bg-yellow-900 text-yellow-300"

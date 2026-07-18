@@ -64,7 +64,7 @@ export default function TimelineReconstructPage() {
       {data && (
         <>
           {data.anomaly_windows.length > 0 && (
-            <div className="space-y-2">{data.anomaly_windows.map((w, i) => (
+            <div className="space-y-2">{data.anomaly_windows.map((w: any, i: number) => (
               <div key={i} className="rounded-lg border border-orange-200 dark:border-orange-800 bg-orange-50 dark:bg-orange-900/20 p-3 flex items-center gap-2"><AlertTriangle className="w-4 h-4 text-orange-500" /><span className="text-sm flex-1"><strong>Anomaly ({w.type}):</strong> {w.start} to {w.end}</span></div>
             ))}</div>
           )}

@@ -245,7 +245,7 @@ resource "${prov.type}_application" "ggid_console" {
                     <td className="px-3 py-2 text-xs text-gray-500">{d.platform}</td>
                     <td className="px-3 py-2 text-center"><span className={"px-2 py-0.5 rounded text-xs font-medium " + (trustColors[d.trust_level] || "")}>{d.trust_level}</span></td>
                     <td className="px-3 py-2"><div className="flex items-center justify-center gap-1">{[["E", d.compliance.disk_encrypted], ["F", d.compliance.firewall], ["A", d.compliance.av_installed], ["U", d.compliance.os_updated]].map(([label, ok]) => <span key={label as string} className={"h-5 w-5 rounded text-xs font-bold flex items-center justify-center " + (ok ? "bg-green-100 text-green-600 dark:bg-green-900/30" : "bg-red-100 text-red-600 dark:bg-red-900/30")} title={label as string}>{ok ? <Check className="h-3 w-3" /> : <X className="h-3 w-3" />}</span>)}</div></td>
-                    <td className="px-3 py-2"><div className="flex flex-wrap gap-1">{d.issues?.map((iss, i) => <span key={i} className="px-1 py-0.5 rounded bg-red-50 text-red-600 dark:bg-red-950/20 text-xs">{iss}</span>)}</div></td>
+                    <td className="px-3 py-2"><div className="flex flex-wrap gap-1">{d.issues?.map((iss: any, i: number) => <span key={i} className="px-1 py-0.5 rounded bg-red-50 text-red-600 dark:bg-red-950/20 text-xs">{iss}</span>)}</div></td>
                   </tr>
                 ))}</tbody>
               </table></div>

@@ -133,7 +133,7 @@ export default function AgentLifecyclePage() {
           Behavioral Alerts
         </h2>
         <div className="space-y-2">
-          {(data?.behavioral_alerts ?? []).map((alert, i) => (
+          {(data?.behavioral_alerts ?? []).map((alert: any, i: number) => (
             <div key={i} className="flex items-center gap-3 bg-gray-800 rounded-lg p-3">
               <AlertTriangle className="w-3 h-3 text-yellow-400" />
               <div className="flex-1">

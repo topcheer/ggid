@@ -35,7 +35,7 @@ export default function OnboardingWizardPage() {
       <div><h1 className="text-2xl font-bold">{t("onboardingWizard.title")}</h1><p className="text-gray-600">7-step setup wizard for new GGID tenants.</p></div>
 
       <div className="flex gap-1">
-        {steps.map((s, i) => (
+        {steps.map((s: any, i: number) => (
           <div key={s} className="flex-1">
             <div className={`h-2 rounded-full ${i <= current ? 'bg-blue-600' : 'bg-gray-200'}`} />
             <div className={`text-xs mt-1 text-center ${i === current ? 'font-bold text-blue-600' : i < current ? 'text-green-600' : 'text-gray-400'}`}>{i + 1}. {s}</div>

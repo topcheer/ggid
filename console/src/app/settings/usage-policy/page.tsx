@@ -111,7 +111,7 @@ export default function UsagePolicyPage() {
                 <div>
                   <label className="text-sm font-medium">Allowed IP Ranges (CIDR)</label>
                   <div className="mt-1 space-y-1">
-                    {editForm.allowed_ip_ranges.map((range, i) => (
+                    {editForm.allowed_ip_ranges.map((range: any, i: number) => (
                       <div key={i} className="flex items-center gap-2">
                         <span className="flex-1 px-3 py-1.5 rounded-lg border dark:border-gray-700 dark:bg-gray-800 text-sm font-mono">{range}</span>
                         <button onClick={() => removeIpRange(i)} className="p-1.5 rounded-lg text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20"><Trash2 className="w-4 h-4" /></button>
@@ -163,7 +163,7 @@ export default function UsagePolicyPage() {
                 </div>
                 {p.allowed_ip_ranges.length > 0 && (
                   <div className="flex flex-wrap gap-1 mt-3">
-                    {p.allowed_ip_ranges.map((r, i) => (
+                    {p.allowed_ip_ranges.map((r: any, i: number) => (
                       <span key={i} className="px-2 py-0.5 rounded text-xs font-mono bg-gray-100 dark:bg-gray-800 text-gray-600">{r}</span>
                     ))}
                   </div>

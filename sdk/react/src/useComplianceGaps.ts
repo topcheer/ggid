@@ -46,7 +46,7 @@ export function useComplianceGaps(baseUrl: string = "") {
         body: JSON.stringify({ status }),
       });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      setGaps((prev) => prev.map((g) => g.id === gapId ? { ...g, status: status as ComplianceGap["status"] } : g));
+      setGaps((prev: any) => prev.map((g) => g.id === gapId ? { ...g, status: status as ComplianceGap["status"] } : g));
       return true;
     } catch (e: any) {
       setError(e.message);

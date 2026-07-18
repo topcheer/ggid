@@ -137,7 +137,7 @@ export default function TokenClaimsPage() {
             <div className="rounded-lg border dark:border-gray-800 p-4">
               <h3 className="font-semibold mb-2">Scopes</h3>
               <div className="flex flex-wrap gap-1">
-                {String(decoded.payload.scope).split(" ").map((s, i) => (
+                {String(decoded.payload.scope).split(" ").map((s: any, i: number) => (
                   <span key={i} className="px-2 py-0.5 rounded text-xs font-mono bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400">{s}</span>
                 ))}
               </div>

@@ -60,14 +60,14 @@ export default function PolicyQuarantinePage() {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <div className="rounded-lg border dark:border-gray-800 p-4">
               <h3 className="text-sm font-semibold mb-3">Affected Entities</h3>
-              <div className="space-y-1">{data.affected_entities.map((e, i) => (
+              <div className="space-y-1">{data.affected_entities.map((e: any, i: number) => (
                 <div key={i} className="flex items-center gap-2 text-sm"><span className="px-1.5 py-0.5 rounded text-xs bg-gray-100 dark:bg-gray-800">{e.type}</span><span className="flex-1">{e.name}</span><span className="text-xs font-mono text-gray-400">{e.id}</span></div>
               ))}{data.affected_entities.length === 0 && <p className="text-xs text-gray-400">No entities affected.</p>}</div>
             </div>
 
             <div className="rounded-lg border dark:border-gray-800 p-4">
               <h3 className="text-sm font-semibold flex items-center gap-2 mb-3"><Undo className="w-4 h-4 text-gray-400" /> Rollback Plan</h3>
-              <div className="space-y-2">{data.rollback_plan.map((s, i) => (
+              <div className="space-y-2">{data.rollback_plan.map((s: any, i: number) => (
                 <div key={i} className="flex items-center gap-2 text-sm"><span className="text-xs text-gray-400">{i + 1}.</span><span className="flex-1">{s.step}</span>{s.reversible ? <span className="text-xs text-green-600">reversible</span> : <span className="text-xs text-red-500">irreversible</span>}</div>
               ))}</div>
             </div>

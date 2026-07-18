@@ -83,7 +83,7 @@ export default function PluginManagePage() {
       {/* VERSIONS */}
       {tab === "versions" && (
         <div className="space-y-2">
-          {VERSIONS.map((v, i) => (
+          {VERSIONS.map((v: any, i: number) => (
             <div key={v.version} className={`${card} flex items-center justify-between !p-3 ${i === 0 ? "border-violet-200 dark:border-violet-800" : ""}`}>
               <div className="flex items-center gap-3"><div className="flex h-9 w-9 items-center justify-center rounded-lg bg-violet-100 dark:bg-violet-900/30"><History className="h-4 w-4 text-violet-500" /></div><div><div className="flex items-center gap-2"><code className="text-sm font-mono font-bold">v{v.version}</code>{i === 0 && <span className="px-1.5 py-0.5 rounded text-xs bg-green-100 dark:bg-green-900/30 text-green-600">{t("pluginMgr.current")}</span>}</div><p className="text-xs text-gray-400">{new Date(v.uploaded).toLocaleString()} · {v.size_kb}KB · <code className="font-mono">{v.hash.slice(0, 20)}</code></p></div></div>
               <div className="flex gap-1"><button className="rounded-lg border border-gray-300 px-2 py-1 text-xs dark:border-gray-700">{t("pluginMgr.rollback")}</button>{i !== 0 && <button aria-label="Delete version" className="rounded p-1.5 text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20"><Trash2 className="h-3.5 w-3.5" /></button>}</div>

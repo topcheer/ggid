@@ -106,7 +106,7 @@ export default function AuditComplianceSchedulerPage() {
             Audit Preparation Checklist
           </h2>
           <div className="space-y-2">
-            {(data?.audit_preparation_checklist ?? []).map((item, i) => (
+            {(data?.audit_preparation_checklist ?? []).map((item: any, i: number) => (
               <div key={i} className="flex items-center gap-2 bg-gray-800 rounded-lg p-2">
                 <span
                   className={"w-2 h-2 rounded-full " + (
@@ -127,7 +127,7 @@ export default function AuditComplianceSchedulerPage() {
           <div className="bg-gray-900 rounded-xl p-6">
             <h2 className="text-lg font-semibold mb-4">Upcoming Deadlines (30d)</h2>
             <div className="space-y-2">
-              {(data?.upcoming_deadlines_30d ?? []).map((d, i) => (
+              {(data?.upcoming_deadlines_30d ?? []).map((d: any, i: number) => (
                 <div key={i} className="flex items-center justify-between bg-gray-800 rounded-lg p-2">
                   <div>
                     <p className="text-sm font-medium">{d.framework}</p>
@@ -147,7 +147,7 @@ export default function AuditComplianceSchedulerPage() {
                 Overdue Alerts
               </h2>
               <div className="space-y-2">
-                {(data?.overdue_alerts ?? []).map((a, i) => (
+                {(data?.overdue_alerts ?? []).map((a: any, i: number) => (
                   <div key={i} className="bg-gray-800 rounded-lg p-2">
                     <p className="text-sm font-medium">{a.framework}</p>
                     <p className="text-xs text-red-400">{a.days_overdue} days overdue</p>

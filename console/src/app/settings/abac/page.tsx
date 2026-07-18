@@ -88,7 +88,7 @@ export default function ABACPage() {
 
   const updateCondition = (idx: number, field: keyof ABACCondition, val: string) => {
     if (!editing) return;
-    setEditing({ ...editing, conditions: editing.conditions.map((c, i) => i === idx ? { ...c, [field]: val } : c) });
+    setEditing({ ...editing, conditions: editing.conditions.map((c: any, i: number) => i === idx ? { ...c, [field]: val } : c) });
   };
 
   const removeCondition = (idx: number) => {
@@ -131,7 +131,7 @@ export default function ABACPage() {
                   {p.description && <p className="mt-1 text-sm text-gray-500">{p.description}</p>}
                   {p.conditions.length > 0 && (
                     <div className="mt-2 flex flex-wrap gap-2">
-                      {p.conditions.map((c, i) => (
+                      {p.conditions.map((c: any, i: number) => (
                         <span key={i} className="rounded bg-gray-100 px-2 py-1 text-xs font-mono text-gray-600 dark:bg-gray-700 dark:text-gray-300">{c.attribute} {c.operator} {c.value}</span>
                       ))}
                     </div>
@@ -173,7 +173,7 @@ export default function ABACPage() {
               <div>
                 <div className="mb-2 flex items-center justify-between"><label className="text-xs font-semibold uppercase text-gray-400">Conditions</label><button onClick={addCondition} className="flex items-center gap-1 text-xs text-indigo-600 hover:underline"><Plus className="h-3 w-3" /> Add</button></div>
                 <div className="space-y-2">
-                  {editing.conditions.map((c, idx) => (
+                  {editing.conditions.map((c: any, idx: number) => (
                     <div key={idx} className="flex items-center gap-2">
                       <input aria-label="attribute" value={c.attribute} onChange={(e) => updateCondition(idx, "attribute", e.target.value)} placeholder="attribute" className="flex-1 rounded border border-gray-300 px-2 py-1.5 text-xs dark:border-gray-600 dark:bg-gray-900 dark:text-gray-200" />
                       <select aria-label="Select option" value={c.operator} onChange={(e) => updateCondition(idx, "operator", e.target.value)} className="rounded border border-gray-300 px-2 py-1.5 text-xs dark:border-gray-600 dark:bg-gray-900 dark:text-gray-200"><option value="eq">==</option><option value="ne">!=</option><option value="in">in</option><option value="lt">&lt;</option><option value="gt">&gt;</option><option value="contains">contains</option></select>

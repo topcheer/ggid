@@ -278,7 +278,7 @@ export default function AccessBrokerPage() {
                       <span className={"text-lg font-bold " + m.color}>{typeof latest === "number" ? latest.toFixed(1) : latest}</span>
                     </div>
                     <div className="mt-3 flex items-end gap-0.5 h-20">
-                      {values.map((v, i) => (
+                      {values.map((v: any, i: number) => (
                         <div key={i} className={"flex-1 rounded-t " + m.bg} style={{ height: `${(v / max) * 100}%`, opacity: 0.3 + (i / values.length) * 0.7 }} />
                       ))}
                     </div>
@@ -371,7 +371,7 @@ export default function AccessBrokerPage() {
                   <div><p className={"text-xl font-bold capitalize " + (testResult.decision === "allow" ? "text-green-700 dark:text-green-400" : testResult.decision === "stepup" ? "text-yellow-700 dark:text-yellow-400" : "text-red-700 dark:text-red-400")}>{testResult.decision}</p><p className="text-sm text-gray-500">{testResult.reason}</p></div>
                 </div>
                 {testResult.matched_policies?.length > 0 && (
-                  <div className="mt-4"><p className="text-xs font-semibold uppercase text-gray-400 mb-2">Matched Policies</p><div className="space-y-1">{testResult.matched_policies.map((p, i) => <div key={i} className="flex items-center gap-2 text-xs"><ChevronRight className="h-3 w-3 text-gray-400" /><span className="font-mono">{p}</span></div>)}</div></div>
+                  <div className="mt-4"><p className="text-xs font-semibold uppercase text-gray-400 mb-2">Matched Policies</p><div className="space-y-1">{testResult.matched_policies.map((p: any, i: number) => <div key={i} className="flex items-center gap-2 text-xs"><ChevronRight className="h-3 w-3 text-gray-400" /><span className="font-mono">{p}</span></div>)}</div></div>
                 )}
               </div>
             ) : <div className="py-12 text-center"><Code className="mx-auto h-10 w-10 text-gray-300" /><p className="mt-3 text-sm text-gray-400">Configure a test case and click Evaluate.</p></div>}
@@ -391,7 +391,7 @@ export default function AccessBrokerPage() {
               <button onClick={() => setShowWizard(false)} aria-label="Close"><X className="h-5 w-5 text-gray-400" /></button>
             </div>
             <div className="mb-6 flex items-center gap-1">
-              {wizardSteps.map((s, i) => (
+              {wizardSteps.map((s: any, i: number) => (
                 <div key={i} className="flex items-center gap-1 flex-1">
                   <div className={"flex h-7 w-7 items-center justify-center rounded-full text-xs font-bold " + (i <= wizardStep ? "bg-indigo-600 text-white" : "bg-gray-200 dark:bg-gray-700 text-gray-400")}>{i + 1}</div>
                   {i < wizardSteps.length - 1 && <div className={"h-0.5 flex-1 " + (i < wizardStep ? "bg-indigo-600" : "bg-gray-200 dark:bg-gray-700")} />}

@@ -28,7 +28,7 @@ export default function AuditDataLineagePage() {
           Data Flow Diagram
         </h2>
         <div className="flex items-center justify-around gap-4 py-8">
-          {data?.flow_nodes?.map((node, i) => (
+          {data?.flow_nodes?.map((node: any, i: number) => (
             <div key={node.id} className="flex items-center gap-4">
               <div
                 className={"p-4 rounded-xl border-2 text-center min-w-[120px] " + (

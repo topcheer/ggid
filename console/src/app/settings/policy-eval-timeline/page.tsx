@@ -58,7 +58,7 @@ export default function PolicyEvalTimelinePage() {
             <h2 className="text-sm font-semibold mb-4">Evaluation Steps</h2>
             <div className="relative pl-6">
               <div className="absolute left-2 top-0 bottom-0 w-0.5 bg-gray-700" />
-              {evalData.steps.map((step, i) => (
+              {evalData.steps.map((step: any, i: number) => (
                 <div key={i} className="relative pb-4 last:pb-0">
                   <div className={"absolute -left-4 w-3 h-3 rounded-full " + (step.latency_ms > 50 ? "bg-yellow-500" : "bg-green-500")} />
                   <div className="ml-4">
@@ -77,7 +77,7 @@ export default function PolicyEvalTimelinePage() {
           <div className="bg-gray-900 rounded-xl p-6">
             <h2 className="text-sm font-semibold mb-3">Matched Rules</h2>
             <div className="space-y-2">
-              {evalData.matched_rules.map((r, i) => (
+              {evalData.matched_rules.map((r: any, i: number) => (
                 <div key={i} className="bg-gray-800 rounded-lg p-3">
                   <div className="flex items-center gap-2 mb-1">
                     <span className="text-xs font-mono text-blue-400">{r.rule_id}</span>

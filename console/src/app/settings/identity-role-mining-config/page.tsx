@@ -96,7 +96,7 @@ export default function IdentityRoleMiningConfigPage() {
           Suggested Roles Review Queue
         </h2>
         <div className="space-y-2">
-          {(data?.suggested_roles_review_queue ?? []).map((role, i) => (
+          {(data?.suggested_roles_review_queue ?? []).map((role: any, i: number) => (
             <div key={i} className="bg-gray-800 rounded-lg p-3">
               <div className="flex items-center justify-between mb-2">
                 <div>

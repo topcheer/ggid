@@ -315,14 +315,14 @@ export default function DLPEgressPage() {
                   {typeof highlightPII(scanInput, scanResult.matches) === "string" ? (
                     <span>{scanInput}</span>
                   ) : (
-                    (highlightPII(scanInput, scanResult.matches) as { text: string; type?: string }[]).map((part, i) =>
+                    (highlightPII(scanInput, scanResult.matches) as { text: string; type?: string }[]).map((part: any, i: number) =>
                       part.type ? <mark key={i} className="rounded bg-red-200 dark:bg-red-900/50 px-0.5 font-mono">{part.text}<span className="ml-1 text-[10px] text-red-600">[{part.type}]</span></mark> : <span key={i}>{part.text}</span>
                     )
                   )}
                 </div>
                 {/* Detected items list */}
                 <div className="space-y-1">
-                  {scanResult.matches.map((m, i) => (
+                  {scanResult.matches.map((m: any, i: number) => (
                     <div key={i} className="flex items-center gap-2 rounded-lg border p-2 dark:border-gray-700">
                       <span className="px-1.5 py-0.5 rounded bg-red-100 dark:bg-red-900/30 text-red-600 text-xs font-mono">{m.type}</span>
                       <code className="text-xs font-mono text-gray-500">{m.value}</code>

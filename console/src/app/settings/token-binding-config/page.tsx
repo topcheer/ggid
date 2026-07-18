@@ -46,7 +46,7 @@ export default function TokenBindingConfigPage() {
   };
 
   const updateOverride = (idx: number, field: keyof ClientOverride, value: string) => {
-    setOverrides(prev => prev.map((o, i) => i === idx ? { ...o, [field]: value } : o));
+    setOverrides(prev => prev.map((o: any, i: number) => i === idx ? { ...o, [field]: value } : o));
   };
 
   const removeOverride = (idx: number) => {
@@ -117,7 +117,7 @@ export default function TokenBindingConfigPage() {
           <button aria-label="action" onClick={addOverride} className="px-3 py-1 bg-blue-600 text-white rounded text-sm">{t("backend.tokenBindingConfig.addOverride")}</button>
         </div>
         <div className="space-y-3">
-          {overrides.map((o, idx) => (
+          {overrides.map((o: any, idx: number) => (
             <div key={idx} className="flex items-center gap-3">
               <input
                 type="text"

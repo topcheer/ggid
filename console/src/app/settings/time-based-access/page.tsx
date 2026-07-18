@@ -131,7 +131,7 @@ export default function TimeBasedAccessPage() {
               {/* Cron picker */}
               <div><label className="mb-1 block text-xs font-semibold uppercase text-gray-400">Cron Expression</label><input aria-label="0 9 * * 1-5" value={editing.cron} onChange={(e) => setEditing({ ...editing, cron: e.target.value })} placeholder="0 9 * * 1-5" className="w-full rounded-lg border border-gray-300 px-3 py-2 font-mono text-sm dark:border-gray-600 dark:bg-gray-900 dark:text-gray-200" />
                 <div className="mt-2 flex gap-1">
-                  {weekdays.map((d, i) => (
+                  {weekdays.map((d: any, i: number) => (
                     <button key={d} onClick={() => setEditing({ ...editing, cron: `0 ${editing.start_time.split(":")[0] || "9"} * * ${i === 0 ? 0 : i}` })} className="rounded bg-gray-100 px-2 py-1 text-xs text-gray-500 hover:bg-cyan-100 dark:bg-gray-700">{d}</button>
                   ))}
                 </div>
@@ -151,7 +151,7 @@ export default function TimeBasedAccessPage() {
                 </div>
                 {editing.allowed_roles.length > 0 && (
                   <div className="mt-2 flex flex-wrap gap-2">
-                    {editing.allowed_roles.map((role, i) => (
+                    {editing.allowed_roles.map((role: any, i: number) => (
                       <span key={i} className="flex items-center gap-1 rounded-full bg-indigo-100 px-2 py-1 text-xs text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400">{role}<button onClick={() => removeRole(i)}><X className="h-3 w-3" /></button></span>
                     ))}
                   </div>

@@ -41,7 +41,7 @@ export default function ConsentManagementPage() {
             Consent Registry
           </h2>
           <div className="space-y-2 max-h-80 overflow-y-auto">
-            {(data?.user_consent_registry ?? []).map((c, i) => (
+            {(data?.user_consent_registry ?? []).map((c: any, i: number) => (
               <div key={i} className="bg-gray-800 rounded-lg p-3">
                 <div className="flex items-start justify-between mb-1">
                   <div>
@@ -74,7 +74,7 @@ export default function ConsentManagementPage() {
             Consent Templates
           </h2>
           <div className="space-y-2">
-            {(data?.consent_templates ?? []).map((t, i) => (
+            {(data?.consent_templates ?? []).map((t: any, i: number) => (
               <div key={i} className="bg-gray-800 rounded-lg p-3">
                 <div className="flex items-center gap-2 mb-1">
                   <p className="text-sm font-medium">{t.purpose}</p>

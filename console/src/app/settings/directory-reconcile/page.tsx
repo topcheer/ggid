@@ -64,7 +64,7 @@ export default function DirectoryReconcilePage() {
             <div className="overflow-x-auto rounded-lg border dark:border-gray-800">
               <table className="w-full text-sm">
                 <thead className="bg-gray-50 dark:bg-gray-900/50"><tr><th className="px-4 py-3 text-left font-medium">{t("directoryReconcile.id")}</th><th className="px-4 py-3 text-left font-medium">{t("directoryReconcile.type")}</th><th className="px-4 py-3 text-left font-medium">{t("directoryReconcile.source")}</th><th className="px-4 py-3 text-left font-medium">{t("directoryReconcile.lastSeen")}</th></tr></thead>
-                <tbody className="divide-y dark:divide-gray-800">{data.orphaned_ids.map((o, i) => (<tr key={i} className="hover:bg-gray-50 dark:hover:bg-gray-900/30"><td className="px-4 py-3 font-mono text-xs">{o.id}</td><td className="px-4 py-3"><span className="px-2 py-0.5 rounded text-xs bg-gray-100 dark:bg-gray-800">{o.type}</span></td><td className="px-4 py-3 text-xs text-gray-500">{o.source}</td><td className="px-4 py-3 text-xs text-gray-400">{o.last_seen}</td></tr>))}</tbody>
+                <tbody className="divide-y dark:divide-gray-800">{data.orphaned_ids.map((o: any, i: number) => (<tr key={i} className="hover:bg-gray-50 dark:hover:bg-gray-900/30"><td className="px-4 py-3 font-mono text-xs">{o.id}</td><td className="px-4 py-3"><span className="px-2 py-0.5 rounded text-xs bg-gray-100 dark:bg-gray-800">{o.type}</span></td><td className="px-4 py-3 text-xs text-gray-500">{o.source}</td><td className="px-4 py-3 text-xs text-gray-400">{o.last_seen}</td></tr>))}</tbody>
               </table>
             </div>
           )}
@@ -85,7 +85,7 @@ export default function DirectoryReconcilePage() {
 
           <div className="rounded-lg border dark:border-gray-800 p-4">
             <h3 className="text-sm font-semibold flex items-center gap-2 mb-3"><FileText className="w-4 h-4 text-gray-400" /> Cleanup Plan</h3>
-            <div className="space-y-2">{data.cleanup_plan.map((p, i) => (
+            <div className="space-y-2">{data.cleanup_plan.map((p: any, i: number) => (
               <div key={i} className="flex items-center gap-3 text-sm"><CheckSquare className="w-4 h-4 text-gray-400" /><span className="flex-1">{p.action}</span><span className="font-bold">{p.count}</span><span className={`px-2 py-0.5 rounded text-xs ${riskColors[p.risk]}`}>{p.risk}</span></div>
             ))}</div>
           </div>

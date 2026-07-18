@@ -55,11 +55,11 @@ export default function CircuitBreakerConfigPage() {
   }[status] || 'bg-gray-400';
 
   const toggleRule = (idx: number) => {
-    setRules(prev => prev.map((r, i) => i === idx ? { ...r, enabled: !r.enabled } : r));
+    setRules(prev => prev.map((r: any, i: number) => i === idx ? { ...r, enabled: !r.enabled } : r));
   };
 
   const updateThreshold = (idx: number, val: string) => {
-    setRules(prev => prev.map((r, i) => i === idx ? { ...r, threshold: parseInt(val) || 0 } : r));
+    setRules(prev => prev.map((r: any, i: number) => i === idx ? { ...r, threshold: parseInt(val) || 0 } : r));
   };
 
   return (
@@ -148,7 +148,7 @@ export default function CircuitBreakerConfigPage() {
       <section className="bg-white rounded-lg shadow p-6 space-y-4">
         <h2 className="text-lg font-semibold">Per-Service Rules</h2>
         <div className="space-y-2">
-          {rules.map((rule, idx) => (
+          {rules.map((rule: any, idx: number) => (
             <div key={rule.service} className="flex items-center gap-4 p-3 border rounded">
               <input
                 type="checkbox"

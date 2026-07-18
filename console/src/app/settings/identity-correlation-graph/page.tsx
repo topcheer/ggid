@@ -189,7 +189,7 @@ export default function IdentityCorrelationGraphPage() {
             <span className="text-xs text-gray-400">{filteredNodes.length} nodes, {filteredEdges.length} edges</span>
           </div>
           <svg viewBox="0 0 800 500" className="w-full h-[500px] border border-gray-100 rounded bg-gray-50">
-            {filteredEdges.map((edge, i) => {
+            {filteredEdges.map((edge: any, i: number) => {
               const src = NODE_POSITIONS[edge.source];
               const tgt = NODE_POSITIONS[edge.target];
               if (!src || !tgt) return null;
@@ -278,7 +278,7 @@ export default function IdentityCorrelationGraphPage() {
               <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
                 <h3 className="text-sm font-medium text-gray-700">{t("idCorrelation.correlations")} ({nodeCorrelations(selectedNode.id).length})</h3>
                 <div className="mt-2 space-y-2">
-                  {nodeCorrelations(selectedNode.id).map((corr, i) => (
+                  {nodeCorrelations(selectedNode.id).map((corr: any, i: number) => (
                     <div key={i} className="flex items-center justify-between border-b border-gray-100 pb-1 text-xs">
                       <div>
                         <span className="font-medium text-gray-700">{corr.otherNode?.label}</span>

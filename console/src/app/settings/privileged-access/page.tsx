@@ -153,7 +153,7 @@ export default function PrivilegedAccessPage() {
                   </td>
                   <td className="px-4 py-3">
                     <div className="flex flex-wrap gap-1">
-                      {a.roles.map((r, i) => <span key={i} className="px-2 py-0.5 rounded text-xs bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400 font-mono">{r}</span>)}
+                      {a.roles.map((r: any, i: number) => <span key={i} className="px-2 py-0.5 rounded text-xs bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400 font-mono">{r}</span>)}
                     </div>
                   </td>
                   <td className="px-4 py-3 text-gray-500">{a.granted_at}</td>

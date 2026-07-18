@@ -202,7 +202,7 @@ export default function SoDPage() {
                       </div>
                       <div className="mt-2 flex items-center gap-2">
                         <div className="flex flex-wrap gap-1">
-                          {rule.roles.map((role, i) => (
+                          {rule.roles.map((role: any, i: number) => (
                             <span key={role} className="flex items-center gap-1">
                               <span className="rounded-lg bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-600 dark:bg-gray-700 dark:text-gray-300">{role}</span>
                               {i < rule.roles.length - 1 && <AlertTriangle className="h-3 w-3 text-orange-400" />}
@@ -252,7 +252,7 @@ export default function SoDPage() {
                       </div>
                       <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">{v.rule_description}</p>
                       <div className="mt-2 flex flex-wrap gap-1">
-                        {v.conflicting_roles.map((role, i) => (
+                        {v.conflicting_roles.map((role: any, i: number) => (
                           <span key={role} className="flex items-center gap-1">
                             <span className="rounded-lg bg-red-50 px-2 py-0.5 text-xs font-medium text-red-600 dark:bg-red-900/20 dark:text-red-400">{role}</span>
                             {i < v.conflicting_roles.length - 1 && <span className="text-xs text-gray-400">+</span>}

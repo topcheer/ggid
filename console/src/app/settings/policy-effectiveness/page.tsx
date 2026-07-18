@@ -79,7 +79,7 @@ export default function PolicyEffectivenessPage() {
                 <div className="mt-3 flex h-2 overflow-hidden rounded-full bg-gray-200 dark:bg-gray-700"><div className="h-full bg-green-500" style={{ width: `${p.allow_rate}%` }} /><div className="h-full bg-red-500" style={{ width: `${100 - p.allow_rate}%` }} /></div>
                 {/* Top rules */}
                 {p.top_rules.length > 0 && (
-                  <div className="mt-3 border-t border-gray-200 pt-3 dark:border-gray-700"><div className="mb-2 text-xs font-semibold uppercase text-gray-400">Top Rules</div><div className="flex flex-wrap gap-2">{p.top_rules.slice(0, 5).map((r, i) => (<span key={i} className={`rounded px-2 py-1 text-xs ${r.effect === "allow" ? "bg-green-100 text-green-600 dark:bg-green-900/30" : "bg-red-100 text-red-600 dark:bg-red-900/30"}`}>{r.rule} ({r.count})</span>))}</div></div>
+                  <div className="mt-3 border-t border-gray-200 pt-3 dark:border-gray-700"><div className="mb-2 text-xs font-semibold uppercase text-gray-400">Top Rules</div><div className="flex flex-wrap gap-2">{p.top_rules.slice(0, 5).map((r: any, i: number) => (<span key={i} className={`rounded px-2 py-1 text-xs ${r.effect === "allow" ? "bg-green-100 text-green-600 dark:bg-green-900/30" : "bg-red-100 text-red-600 dark:bg-red-900/30"}`}>{r.rule} ({r.count})</span>))}</div></div>
                 )}
               </div>
             ))}</div>

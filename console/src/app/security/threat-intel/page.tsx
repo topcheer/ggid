@@ -273,7 +273,7 @@ export default function ThreatIntelPage() {
                   <th scope="col" className="px-3 py-2 text-left text-xs font-medium text-gray-400">First Seen</th>
                 </tr></thead>
                 <tbody className="divide-y dark:divide-gray-800">
-                  {filteredIndicators.map((ind, i) => {
+                  {filteredIndicators.map((ind: any, i: number) => {
                     const IIcon = INDICATOR_ICONS[ind.type] || Globe;
                     const pct = Math.round(ind.confidence * 100);
                     return (
@@ -339,7 +339,7 @@ export default function ThreatIntelPage() {
                 </div>
                 {chkResult.matches.length > 0 && (
                   <div className="mt-3 space-y-2">
-                    {chkResult.matches.map((m, i) => (
+                    {chkResult.matches.map((m: any, i: number) => (
                       <div key={i} className="rounded-lg border p-3 dark:border-gray-700">
                         <div className="flex items-center justify-between">
                           <span className="text-sm font-medium">{m.source}</span>
@@ -370,7 +370,7 @@ export default function ThreatIntelPage() {
               <div className="py-6 text-center"><Activity className="mx-auto h-10 w-10 text-gray-300" /><p className="mt-3 text-sm text-gray-400">No external threat events.</p></div>
             ) : (
               <div className="space-y-2">
-                {threatEvents.map((ev, i) => {
+                {threatEvents.map((ev: any, i: number) => {
                   const cfg = SEVERITY_CFG[ev.severity] || SEVERITY_CFG.medium;
                   return (
                     <div key={i} className="flex items-center justify-between rounded-lg border p-3 dark:border-gray-700">
@@ -510,7 +510,7 @@ export default function ThreatIntelPage() {
           <div className={card}>
             <h3 className="mb-4 flex items-center gap-2 text-sm font-semibold uppercase text-gray-400"><TrendingUp className="h-4 w-4" /> Top Threats (by Confidence)</h3>
             <div className="space-y-2">
-              {(feed?.indicators || []).sort((a, b) => b.confidence - a.confidence).slice(0, 10).map((ind, i) => {
+              {(feed?.indicators || []).sort((a, b) => b.confidence - a.confidence).slice(0, 10).map((ind: any, i: number) => {
                 const pct = Math.round(ind.confidence * 100);
                 return (
                   <div key={i} className="flex items-center gap-3">

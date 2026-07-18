@@ -166,7 +166,7 @@ export default function AuditExplorerPage() {
             <div className="space-y-1">
               {blocks.length === 0 ? (
                 <div className="py-8 text-center"><Link2 className="mx-auto h-10 w-10 text-gray-300" /><p className="mt-3 text-sm text-gray-400">No chain data available.</p></div>
-              ) : blocks.map((block, i) => (
+              ) : blocks.map((block: any, i: number) => (
                 <div key={block.index} className={`flex items-center gap-3 rounded-lg border p-3 ${!block.verified ? "border-red-400 bg-red-50 dark:border-red-700 dark:bg-red-950/20" : "dark:border-gray-700"}`}>
                   <div className={`flex h-8 w-8 items-center justify-center rounded-lg text-xs font-bold ${block.verified ? "bg-green-100 dark:bg-green-900/30 text-green-600" : "bg-red-100 dark:bg-red-900/30 text-red-600"}`}>
                     {block.index}

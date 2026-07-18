@@ -320,7 +320,7 @@ export default function FeatureFlagsConfigPage() {
         <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
           <h3 className="text-sm font-medium text-gray-700">Flag Audit Log ({auditLog.length})</h3>
           <div className="mt-2 space-y-2">
-            {auditLog.map((entry, i) => (
+            {auditLog.map((entry: any, i: number) => (
               <div key={i} className="flex items-center gap-3 border-b border-gray-100 pb-2 text-sm">
                 <span className="text-xs text-gray-400 font-mono w-40">{entry.timestamp.slice(0, 19).replace('T', ' ')}</span>
                 <span className="font-medium text-gray-700 w-32">{entry.actor}</span>

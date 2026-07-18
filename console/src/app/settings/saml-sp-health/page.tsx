@@ -65,7 +65,7 @@ export default function SamlSpHealthPage() {
           </div>
 
           {data.errors.length > 0 && (
-            <div className="rounded-lg border dark:border-gray-800 p-4"><h3 className="text-sm font-semibold flex items-center gap-2 mb-3"><AlertTriangle className="w-4 h-4 text-red-500" /> Recent Errors</h3><div className="space-y-1">{data.errors.map((e, i) => (<div key={i} className="flex items-center gap-2 text-sm"><span className="text-xs text-gray-400">{e.timestamp}</span><span className="text-red-600">{e.message}</span></div>))}</div></div>
+            <div className="rounded-lg border dark:border-gray-800 p-4"><h3 className="text-sm font-semibold flex items-center gap-2 mb-3"><AlertTriangle className="w-4 h-4 text-red-500" /> Recent Errors</h3><div className="space-y-1">{data.errors.map((e: any, i: number) => (<div key={i} className="flex items-center gap-2 text-sm"><span className="text-xs text-gray-400">{e.timestamp}</span><span className="text-red-600">{e.message}</span></div>))}</div></div>
           )}
         </>
       )}

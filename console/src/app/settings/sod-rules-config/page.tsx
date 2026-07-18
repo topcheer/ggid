@@ -157,7 +157,7 @@ export default function SodRulesConfigPage() {
             {roles.map((r1, i) => (
               <tr key={r1}>
                 <td className="p-2 font-medium">{r1}</td>
-                {matrix[i].map((v, j) => (
+                {matrix[i].map((v: any, j: number) => (
                   <td key={j} className={`p-2 text-center ${cellColor(v)}`}>{v !== '-' ? v : ''}</td>
                 ))}
               </tr>

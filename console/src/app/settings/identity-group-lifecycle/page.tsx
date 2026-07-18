@@ -164,7 +164,7 @@ export default function IdentityGroupLifecyclePage() {
           Cleanup Recommendations
         </h2>
         <div className="space-y-2">
-          {(data?.cleanup_recommendations ?? []).map((r, i) => (
+          {(data?.cleanup_recommendations ?? []).map((r: any, i: number) => (
             <div key={i} className="flex items-center gap-3 bg-gray-800 rounded-lg p-3">
               <span className={"w-2 h-2 rounded-full " + (
                 r.priority === "high" ? "bg-red-500" :

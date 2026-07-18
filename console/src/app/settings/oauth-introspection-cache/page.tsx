@@ -120,7 +120,7 @@ export default function OAuthIntrospectionCachePage() {
         <div className="bg-gray-900 rounded-xl p-6">
           <h2 className="text-lg font-semibold mb-4">Cache Invalidation Rules</h2>
           <div className="space-y-2">
-            {(data?.cache_invalidation_rules ?? []).map((rule, i) => (
+            {(data?.cache_invalidation_rules ?? []).map((rule: any, i: number) => (
               <div key={i} className="bg-gray-800 rounded-lg p-3">
                 <div className="flex items-center justify-between mb-1">
                   <p className="text-sm font-medium capitalize">{rule.trigger.replace(/_/g, " ")}</p>

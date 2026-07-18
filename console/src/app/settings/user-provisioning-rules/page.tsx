@@ -167,7 +167,7 @@ export default function UserProvisioningRulesPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {r.fieldMappings.map((m, idx) => (
+                  {r.fieldMappings.map((m: any, idx: number) => (
                     <tr key={idx} className="border-t">
                       <td className="py-1 font-mono">{m.sourceField}</td>
                       <td className="py-1 font-mono">{m.targetField}</td>

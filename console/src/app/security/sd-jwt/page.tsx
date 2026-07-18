@@ -112,10 +112,10 @@ export default function SDJWTPage() {
               <KeyRound className="h-4 w-4" /> Claim Disclosure
             </h2>
             <div className="space-y-2">
-              {claims.map((c, i) => (
+              {claims.map((c: any, i: number) => (
                 <div key={c.name} className="flex items-center gap-3 rounded-lg border p-2 dark:border-gray-700">
                   <button
-                    onClick={() => setClaims(prev => prev.map((cl, j) => j === i ? { ...cl, disclosed: !cl.disclosed } : cl))}
+                    onClick={() => setClaims(prev => prev.map((cl: any, j: number) => j === i ? { ...cl, disclosed: !cl.disclosed } : cl))}
                     aria-pressed={c.disclosed}
                     className={`flex h-7 w-7 items-center justify-center rounded-lg ${c.disclosed ? "bg-green-100 dark:bg-green-900/30" : "bg-gray-100 dark:bg-gray-800"}`}
                   >
@@ -191,7 +191,7 @@ export default function SDJWTPage() {
                     <p className="text-xs text-gray-500">Issuer: {verifyResult.issuer || "—"}</p>
                   </div>
                 </div>
-                {verifyResult.checks?.map((c, i) => (
+                {verifyResult.checks?.map((c: any, i: number) => (
                   <div key={i} className="mt-2 flex items-center gap-2 text-xs">
                     {c.passed ? <CheckCircle className="h-3.5 w-3.5 text-green-500" /> : <XCircle className="h-3.5 w-3.5 text-red-500" />}
                     <span>{c.name}</span>

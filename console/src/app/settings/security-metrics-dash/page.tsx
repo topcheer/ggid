@@ -56,7 +56,7 @@ export default function SecurityMetricsDashPage() {
         <div className="bg-gray-900 rounded-xl p-6 lg:col-span-2">
           <h2 className="text-sm font-semibold mb-4">Incidents (30 days)</h2>
           <div className="flex items-end gap-1 h-32">
-            {(data?.incidents_30d ?? []).map((v, i) => {
+            {(data?.incidents_30d ?? []).map((v: any, i: number) => {
               const max = Math.max(...(data?.incidents_30d ?? [1]));
               return <div key={i} className="flex-1 bg-blue-500 rounded-t" style={{ height: max > 0 ? (v / max) * 100 + "%" : "0" }} />;
             })}
@@ -88,7 +88,7 @@ export default function SecurityMetricsDashPage() {
               </tr>
             </thead>
             <tbody>
-              {(data?.top_10_risks ?? []).map((r, i) => (
+              {(data?.top_10_risks ?? []).map((r: any, i: number) => (
                 <tr key={i} className="border-b border-gray-800">
                   <td className="py-3 pr-3 text-xs text-gray-500">{i + 1}</td>
                   <td className="py-3 pr-3 text-xs font-medium">{r.risk}</td>

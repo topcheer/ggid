@@ -74,7 +74,7 @@ export default function CanaryDeploymentConfigPage() {
       <section className="bg-white rounded-lg shadow p-6 space-y-4">
         <h2 className="text-lg font-semibold">{"Header Match"}</h2>
         <div className="space-y-2">
-          {headerMatches.map((match, index) => (
+          {headerMatches.map((match: any, index: number) => (
             <div key={index} className="flex items-center gap-2">
               <input
                 type="text"

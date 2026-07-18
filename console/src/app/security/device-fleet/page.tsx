@@ -169,7 +169,7 @@ export default function DeviceFleetPage() {
                 { rule: "Block jailbroken/rooted devices", enabled: true },
                 { rule: "Require MDM enrollment for corporate devices", enabled: false },
                 { rule: "Auto-quarantine devices below threshold", enabled: true },
-              ].map((r, i) => (
+              ].map((r: any, i: number) => (
                 <div key={i} className="flex items-center justify-between rounded-lg border p-3 dark:border-gray-700">
                   <span className="text-sm">{r.rule}</span>
                   <span className={`px-1.5 py-0.5 rounded text-xs font-medium ${r.enabled ? "bg-green-100 dark:bg-green-900/30 text-green-600" : "bg-gray-100 dark:bg-gray-800 text-gray-400"}`}>{r.enabled ? "on" : "off"}</span>

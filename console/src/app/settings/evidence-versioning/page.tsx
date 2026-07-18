@@ -100,7 +100,7 @@ export default function EvidenceVersioningPage() {
           <div className="rounded-lg border dark:border-gray-800">
             <div className="px-4 py-3 border-b dark:border-gray-800"><h3 className="font-semibold flex items-center gap-2"><History className="w-4 h-4" /> Version History ({selectedItem.versions.length})</h3></div>
             <div className="relative max-h-96 overflow-y-auto">
-              {selectedItem.versions.map((v, i) => (
+              {selectedItem.versions.map((v: any, i: number) => (
                 <div key={v.version} className="relative flex gap-3 px-4 py-3">
                   {i < selectedItem.versions.length - 1 && <div className="absolute left-[27px] top-14 bottom-0 w-0.5 bg-gray-200 dark:bg-gray-800" />}
                   <div className="relative z-10 w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 bg-blue-50 dark:bg-blue-900/20 text-blue-600 font-bold text-xs">v{v.version}</div>

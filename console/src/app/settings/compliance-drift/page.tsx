@@ -72,7 +72,7 @@ export default function ComplianceDriftPage() {
             <table className="w-full text-sm">
               <thead className="bg-gray-50 dark:bg-gray-900/50"><tr><th className="px-4 py-3 text-left font-medium">Control</th><th className="px-4 py-3 text-left font-medium">Was</th><th className="px-4 py-3 text-left font-medium">Now</th><th className="px-4 py-3 text-left font-medium">Drift</th><th className="px-4 py-3 text-left font-medium">Risk</th></tr></thead>
               <tbody className="divide-y dark:divide-gray-800">
-                {data.changed_controls.map((c, i) => (
+                {data.changed_controls.map((c: any, i: number) => (
                   <tr key={i} className="hover:bg-gray-50 dark:hover:bg-gray-900/30">
                     <td className="px-4 py-3"><span className="font-mono text-xs">{c.control_id}</span><p className="text-xs text-gray-400">{c.name}</p></td>
                     <td className="px-4 py-3 text-xs text-gray-500">{c.was_status}</td>

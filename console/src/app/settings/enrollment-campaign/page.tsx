@@ -237,7 +237,7 @@ function CreateCampaign({ onLaunched }: { onLaunched: () => void }) {
     <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-6">
       {/* Stepper */}
       <div className="flex items-center gap-2 mb-8">
-        {steps.map((s, i) => {
+        {steps.map((s: any, i: number) => {
           const Icon = s.icon;
           const isActive = step === i;
           const isPast = step > i;

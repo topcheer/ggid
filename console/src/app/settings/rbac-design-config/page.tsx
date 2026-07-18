@@ -76,7 +76,7 @@ export default function RbacDesignConfigPage() {
       <div className="bg-white rounded-lg p-6 shadow">
         <h2 className="text-lg font-semibold mb-4">Role Hierarchy</h2>
         <div className="space-y-1">
-          {form.role_hierarchy.map((r, i) => (
+          {form.role_hierarchy.map((r: any, i: number) => (
             <div key={i} className="flex items-center py-1" style={{ paddingLeft: `${r.level * 24}px` }}>
               <span className="text-gray-400 mr-2">{r.level > 0 ? "|-" : ""}</span>
               <span className="font-medium">{r.name}</span>
@@ -89,7 +89,7 @@ export default function RbacDesignConfigPage() {
       <div className="bg-white rounded-lg p-6 shadow">
         <h2 className="text-lg font-semibold mb-4">Role Templates</h2>
         <div className="space-y-3">
-          {form.role_templates.map((t, i) => (
+          {form.role_templates.map((t: any, i: number) => (
             <div key={i} className="border-b pb-2">
               <div className="font-medium">{t.name}</div>
               <div className="text-sm text-gray-600">{t.description}</div>
@@ -110,7 +110,7 @@ export default function RbacDesignConfigPage() {
             </tr>
           </thead>
           <tbody>
-            {form.sod_pairs.map((p, i) => (
+            {form.sod_pairs.map((p: any, i: number) => (
               <tr key={i} className="border-b">
                 <td className="py-2">{p.role_a}</td>
                 <td>{p.role_b}</td>

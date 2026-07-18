@@ -99,11 +99,11 @@ export default function QuotasPage() {
         <div className="space-y-6">
           <div className={card}>
             <h3 className="mb-4 flex items-center gap-2 text-sm font-semibold uppercase text-gray-400"><Zap className="h-4 w-4" /> {t("quotas.apiCallsChart")}</h3>
-            <svg width="100%" viewBox="0 0 420 100" className="overflow-visible"><polyline points={apiTrend.map((v, i) => `${i * 30},${90 - (v / maxApi) * 70}`).join(" ")} fill="none" stroke="#3b82f6" strokeWidth="2" strokeLinejoin="round" />{apiTrend.map((v, i) => <circle key={i} cx={i * 30} cy={90 - (v / maxApi) * 70} r="2" fill="#3b82f6" />)}</svg>
+            <svg width="100%" viewBox="0 0 420 100" className="overflow-visible"><polyline points={apiTrend.map((v: any, i: number) => `${i * 30},${90 - (v / maxApi) * 70}`).join(" ")} fill="none" stroke="#3b82f6" strokeWidth="2" strokeLinejoin="round" />{apiTrend.map((v: any, i: number) => <circle key={i} cx={i * 30} cy={90 - (v / maxApi) * 70} r="2" fill="#3b82f6" />)}</svg>
           </div>
           <div className={card}>
             <h3 className="mb-4 flex items-center gap-2 text-sm font-semibold uppercase text-gray-400"><Users className="h-4 w-4" /> {t("quotas.userGrowth")}</h3>
-            <div className="flex items-end gap-1 h-24">{userTrend.map((v, i) => { const maxU = Math.max(...userTrend); return <div key={i} className="flex-1 rounded-t bg-blue-300 dark:bg-blue-800" style={{ height: `${(v / maxU) * 100}%` }} />; })}</div>
+            <div className="flex items-end gap-1 h-24">{userTrend.map((v: any, i: number) => { const maxU = Math.max(...userTrend); return <div key={i} className="flex-1 rounded-t bg-blue-300 dark:bg-blue-800" style={{ height: `${(v / maxU) * 100}%` }} />; })}</div>
           </div>
         </div>
       )}
@@ -114,7 +114,7 @@ export default function QuotasPage() {
           <div key={p.name} className={`${card} ${p.current ? "border-blue-500 dark:border-blue-400" : ""} ${p.popular ? "ring-2 ring-blue-500" : ""}`}>
             <div className="flex items-center justify-between mb-2"><h3 className="text-lg font-bold">{p.name}</h3>{p.current && <span className="px-2 py-0.5 rounded text-xs bg-blue-100 dark:bg-blue-900/30 text-blue-600 font-medium">{t("quotas.current")}</span>}</div>
             <p className="text-2xl font-bold mb-3">{p.price}</p>
-            <ul className="space-y-1 mb-4">{p.features.map((f, i) => <li key={i} className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400"><Check className="h-3 w-3 text-green-500 shrink-0" /> {f}</li>)}</ul>
+            <ul className="space-y-1 mb-4">{p.features.map((f: any, i: number) => <li key={i} className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400"><Check className="h-3 w-3 text-green-500 shrink-0" /> {f}</li>)}</ul>
             <button onClick={() => setPlan(p.name.toLowerCase())} disabled={p.current} className={`w-full rounded-lg px-4 py-2 text-sm font-medium ${p.current ? "bg-gray-100 dark:bg-gray-700 text-gray-400" : "bg-blue-600 text-white hover:bg-blue-700"}`}>{p.current ? t("quotas.currentPlan") : t("quotas.switchTo")}</button>
           </div>
         ))}</div>

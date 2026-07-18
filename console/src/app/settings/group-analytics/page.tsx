@@ -55,7 +55,7 @@ export default function GroupAnalyticsPage() {
               <div className="flex items-center gap-1"><span className="text-gray-500">Sub-groups</span><span className="font-bold ml-auto">{g.sub_groups}</span></div>
               <div className="flex items-center gap-1"><ShieldCheck className="w-3.5 h-3.5 text-gray-400" /><span className="text-gray-500">Roles</span><span className="font-bold ml-auto">{g.role_assignments}</span></div>
             </div>
-            <div><span className="text-xs text-gray-500">Trend (30d)</span><div className="flex items-end gap-0.5 h-8 mt-1">{g.membership_trend_30d.map((t, i) => <div key={i} className="flex-1 bg-purple-400 dark:bg-purple-500 rounded-t" style={{ height: (t.count / maxTrend) * 100 + "%", minHeight: "1px" }} />)}</div></div>
+            <div><span className="text-xs text-gray-500">Trend (30d)</span><div className="flex items-end gap-0.5 h-8 mt-1">{g.membership_trend_30d.map((t: any, i: number) => <div key={i} className="flex-1 bg-purple-400 dark:bg-purple-500 rounded-t" style={{ height: (t.count / maxTrend) * 100 + "%", minHeight: "1px" }} />)}</div></div>
             {g.inactive_members.length > 0 && <div className="border-t dark:border-gray-800 pt-2"><span className="text-xs text-orange-600 flex items-center gap-1"><Clock className="w-3 h-3" /> {g.inactive_members.length} inactive members</span><div className="mt-1 space-y-0.5">{g.inactive_members.slice(0, 3).map((m) => <div key={m.user_id} className="text-xs text-gray-400">{m.username} - last active {m.last_active}</div>)}{g.inactive_members.length > 3 && <span className="text-xs text-gray-400">+{g.inactive_members.length - 3} more</span>}</div></div>}
           </div>
         ))}

@@ -89,7 +89,7 @@ export default function BackupCodesPage() {
 
   const copyAll = async () => {
     try {
-      const text = codes.map((c, i) => `${String(i + 1).padStart(2, "0")}. ${c}`).join("\n");
+      const text = codes.map((c: any, i: number) => `${String(i + 1).padStart(2, "0")}. ${c}`).join("\n");
       await navigator.clipboard.writeText(text);
       setCopiedAll(true);
       setTimeout(() => setCopiedAll(false), 3000);
@@ -97,7 +97,7 @@ export default function BackupCodesPage() {
   };
 
   const downloadCodes = () => {
-    const text = `GGID Backup Codes\nGenerated: ${new Date(generatedAt || Date.now()).toLocaleString()}\n\n${codes.map((c, i) => `${String(i + 1).padStart(2, "0")}. ${c}`).join("\n")}\n\nStore these codes in a safe place. Each code can only be used once.\n`;
+    const text = `GGID Backup Codes\nGenerated: ${new Date(generatedAt || Date.now()).toLocaleString()}\n\n${codes.map((c: any, i: number) => `${String(i + 1).padStart(2, "0")}. ${c}`).join("\n")}\n\nStore these codes in a safe place. Each code can only be used once.\n`;
     const blob = new Blob([text], { type: "text/plain" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
@@ -200,7 +200,7 @@ export default function BackupCodesPage() {
             )}
 
             <div className="grid gap-2 sm:grid-cols-2">
-              {codes.map((code, idx) => (
+              {codes.map((code: any, idx: number) => (
                 <div
                   key={idx}
                   className="flex items-center justify-between rounded-lg border border-gray-200 px-3 py-2 dark:border-gray-700"

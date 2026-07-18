@@ -35,7 +35,7 @@ export default function PolicyGovernanceWorkflowPage() {
           Policy Change Pipeline
         </h2>
         <div className="flex items-center gap-2 overflow-x-auto pb-2">
-          {pipelineSteps.map((step, i) => (
+          {pipelineSteps.map((step: any, i: number) => (
             <div key={i} className="flex items-center gap-2 flex-shrink-0">
               <div className={"flex flex-col items-center gap-1 px-4 py-3 rounded-lg min-w-[120px] " + (
                 step.status === "active" ? "bg-blue-600" :
@@ -103,7 +103,7 @@ export default function PolicyGovernanceWorkflowPage() {
               Change Freeze Windows
             </h2>
             <div className="space-y-2">
-              {(data?.change_freeze_windows ?? []).map((fw, i) => (
+              {(data?.change_freeze_windows ?? []).map((fw: any, i: number) => (
                 <div key={i} className="bg-gray-800 rounded-lg p-3">
                   <div className="flex items-center justify-between mb-1">
                     <p className="text-sm font-medium">{fw.name}</p>
@@ -162,7 +162,7 @@ export default function PolicyGovernanceWorkflowPage() {
           Governance Audit Trail
         </h2>
         <div className="space-y-2 max-h-64 overflow-y-auto">
-          {(data?.governance_audit_trail ?? []).map((entry, i) => (
+          {(data?.governance_audit_trail ?? []).map((entry: any, i: number) => (
             <div key={i} className="flex items-center gap-3 bg-gray-800 rounded-lg p-3">
               {entry.action === "approved" ? <CheckCircle className="w-4 h-4 text-green-400 flex-shrink-0" /> :
                entry.action === "rejected" ? <AlertTriangle className="w-4 h-4 text-red-400 flex-shrink-0" /> :

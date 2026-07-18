@@ -203,11 +203,11 @@ export default function AdaptiveAuthPage() {
                 </div>
                 <div className="flex items-center justify-center gap-2"><span className="text-sm font-medium capitalize">{simResult.risk_level}</span><ArrowRight className="h-4 w-4 text-gray-400" /><span className={"px-3 py-1 rounded-lg font-bold text-sm " + (simResult.aal_required === "AAL1" ? "bg-green-100 text-green-700 dark:bg-green-900/30" : simResult.aal_required === "AAL2" ? "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30" : "bg-red-100 text-red-700 dark:bg-red-900/30")}>{simResult.aal_required}</span></div>
                 {/* Signal breakdown */}
-                <div className="space-y-1">{simResult.signal_breakdown.map((s, i) => (
+                <div className="space-y-1">{simResult.signal_breakdown.map((s: any, i: number) => (
                   <div key={i} className="flex items-center gap-2"><span className="text-xs text-gray-500 flex-1">{s.signal}</span><div className="w-24 h-2 overflow-hidden rounded-full bg-gray-200 dark:bg-gray-700"><div className="h-full rounded-full bg-indigo-500" style={{ width: `${s.contribution * 3}%` }} /></div><span className="text-xs font-mono w-8 text-right">{s.contribution}</span></div>
                 ))}</div>
                 {/* Actions */}
-                <div className="rounded-lg border p-3 dark:border-gray-700"><p className="text-xs font-semibold uppercase text-gray-400 mb-1">Actions Executed</p>{simResult.actions.map((a, i) => <div key={i} className="flex items-center gap-2 text-sm"><ChevronRight className="h-3 w-3 text-indigo-400" /><span>{a}</span></div>)}</div>
+                <div className="rounded-lg border p-3 dark:border-gray-700"><p className="text-xs font-semibold uppercase text-gray-400 mb-1">Actions Executed</p>{simResult.actions.map((a: any, i: number) => <div key={i} className="flex items-center gap-2 text-sm"><ChevronRight className="h-3 w-3 text-indigo-400" /><span>{a}</span></div>)}</div>
               </div>
             ) : <div className="py-8 text-center"><TestTube className="mx-auto h-10 w-10 text-gray-300" /><p className="mt-3 text-sm text-gray-400">Configure context and evaluate risk.</p></div>}
           </div>

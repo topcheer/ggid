@@ -75,7 +75,7 @@ export function useNotificationTemplates(): UseNotificationTemplatesResult {
     try {
       const resp = await fetch(`${apiBaseUrl}/api/v1/settings/notification-templates`, { method: 'POST', headers: makeHeaders(), body: JSON.stringify(input) });
       if (!resp.ok) throw new Error(`Create failed (${resp.status})`);
-      const created = await resp.json(); setTemplates((prev) => [...prev, created]); return created;
+      const created = await resp.json(); setTemplates((prev: any) => [...prev, created]); return created;
     } catch (err) { setError(err instanceof Error ? err.message : 'Unknown'); return null; }
   }, [apiBaseUrl, makeHeaders]);
 
@@ -83,7 +83,7 @@ export function useNotificationTemplates(): UseNotificationTemplatesResult {
     try {
       const resp = await fetch(`${apiBaseUrl}/api/v1/settings/notification-templates/${id}`, { method: 'PATCH', headers: makeHeaders(), body: JSON.stringify(input) });
       if (!resp.ok) throw new Error(`Update failed (${resp.status})`);
-      const updated = await resp.json(); setTemplates((prev) => prev.map((t) => t.id === id ? updated : t)); return true;
+      const updated = await resp.json(); setTemplates((prev: any) => prev.map((t) => t.id === id ? updated : t)); return true;
     } catch (err) { setError(err instanceof Error ? err.message : 'Unknown'); return false; }
   }, [apiBaseUrl, makeHeaders]);
 
@@ -91,7 +91,7 @@ export function useNotificationTemplates(): UseNotificationTemplatesResult {
     try {
       const resp = await fetch(`${apiBaseUrl}/api/v1/settings/notification-templates/${id}`, { method: 'DELETE', headers: makeHeaders() });
       if (!resp.ok) throw new Error(`Delete failed (${resp.status})`);
-      setTemplates((prev) => prev.filter((t) => t.id !== id)); return true;
+      setTemplates((prev: any) => prev.filter((t) => t.id !== id)); return true;
     } catch (err) { setError(err instanceof Error ? err.message : 'Unknown'); return false; }
   }, [apiBaseUrl, makeHeaders]);
 

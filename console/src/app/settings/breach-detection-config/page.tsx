@@ -238,7 +238,7 @@ export default function BreachDetectionConfigPage() {
               </tr>
             </thead>
             <tbody>
-              {compromisedPasswords.map((p, i) => (
+              {compromisedPasswords.map((p: any, i: number) => (
                 <tr key={i} className="border-b border-gray-100">
                   <td className="py-2 font-mono text-xs">{p.hash}</td>
                   <td className="py-2">{p.count.toLocaleString()}</td>

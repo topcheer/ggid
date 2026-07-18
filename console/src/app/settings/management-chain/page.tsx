@@ -89,7 +89,7 @@ export default function ManagementChainPage() {
             <div className="rounded-lg border dark:border-gray-800 p-4">
               <h3 className="font-semibold mb-4">Reporting Chain ({data.chain.length} levels up)</h3>
               <div className="space-y-0">
-                {data.chain.map((member, i) => (
+                {data.chain.map((member: any, i: number) => (
                   <div key={member.id} className="flex items-start gap-3">
                     {/* Connector line */}
                     <div className="flex flex-col items-center">

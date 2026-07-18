@@ -125,7 +125,7 @@ export default function OrgCostAllocationPage() {
               Over Budget Alerts
             </h2>
             <div className="space-y-2">
-              {(data?.over_budget_alerts ?? []).map((alert, i) => (
+              {(data?.over_budget_alerts ?? []).map((alert: any, i: number) => (
                 <div key={i} className="bg-gray-800 rounded-lg p-3">
                   <div className="flex items-center justify-between mb-1">
                     <p className="text-sm font-medium">{alert.department}</p>

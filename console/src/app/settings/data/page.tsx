@@ -245,7 +245,7 @@ export default function DataPage() {
       const errors: string[] = [];
       const warnings: string[] = [];
       const requiredFields = activeTab === "users" ? ["username", "email"] : ["name"];
-      records.forEach((rec, idx) => {
+      records.forEach((rec: any, idx: number) => {
         requiredFields.forEach((f) => {
           if (!rec[f]) {
             errors.push(`Row ${idx + 1}: missing required field "${f}"`);
@@ -464,7 +464,7 @@ export default function DataPage() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
-                    {previewRecords.map((row, i) => (
+                    {previewRecords.map((row: any, i: number) => (
                       <tr key={i}>
                         {previewKeys.map((k) => (
                           <td
@@ -505,7 +505,7 @@ export default function DataPage() {
               </div>
               {dryRunResult.errors.length > 0 && (
                 <ul className="mt-2 space-y-1">
-                  {dryRunResult.errors.slice(0, 10).map((err, i) => (
+                  {dryRunResult.errors.slice(0, 10).map((err: any, i: number) => (
                     <li key={i} className="flex items-start gap-1 text-xs text-red-600 dark:text-red-400">
                       <XCircle className="mt-0.5 h-3 w-3 shrink-0" /> {err}
                     </li>

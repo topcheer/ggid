@@ -50,7 +50,7 @@ export default function ParConfigManagementPage() {
   if (error) return <div className="p-8 text-red-500">Error: {error}</div>;
   
   const toggleClient = (idx: number) => {
-    setClients(prev => prev.map((c, i) => i === idx ? { ...c, requirePar: !c.requirePar } : c));
+    setClients(prev => prev.map((c: any, i: number) => i === idx ? { ...c, requirePar: !c.requirePar } : c));
   };
 
   const parEndpointHealth = 'healthy';
@@ -98,7 +98,7 @@ export default function ParConfigManagementPage() {
       <section className="bg-white rounded-lg shadow p-6 space-y-4">
         <h2 className="text-lg font-semibold">Per-Client PAR Enforcement</h2>
         <div className="space-y-2">
-          {clients.map((c, idx) => (
+          {clients.map((c: any, idx: number) => (
             <label key={c.clientId} className="flex items-center justify-between border-b pb-2">
               <span className="font-mono text-sm">{c.clientId}</span>
               <input aria-label="C" type="checkbox" checked={c.requirePar} onChange={() => toggleClient(idx)} className="rounded" />

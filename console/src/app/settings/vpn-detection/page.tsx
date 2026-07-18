@@ -82,7 +82,7 @@ export default function VPNDetectionPage() {
               </tr>
             </thead>
             <tbody className="divide-y dark:divide-gray-800">
-              {results.map((r, i) => (
+              {results.map((r: any, i: number) => (
                 <tr key={i} className="hover:bg-gray-50 dark:hover:bg-gray-900/30">
                   <td className="px-4 py-3 font-mono text-xs">{r.ip}</td>
                   <td className="px-4 py-3">

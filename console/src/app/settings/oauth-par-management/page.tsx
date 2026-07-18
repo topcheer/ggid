@@ -127,7 +127,7 @@ export default function OAuthParManagementPage() {
               Error Responses (24h)
             </h2>
             <div className="space-y-2">
-              {(data?.error_responses ?? []).map((err, i) => (
+              {(data?.error_responses ?? []).map((err: any, i: number) => (
                 <div key={i} className="flex items-center gap-3 bg-gray-800 rounded-lg p-3">
                   <CheckCircle className="w-4 h-4 text-red-400 flex-shrink-0" />
                   <div className="flex-1">

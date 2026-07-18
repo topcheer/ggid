@@ -315,7 +315,7 @@ export default function B2BCIAMPage() {
                 { scenario: "User logs in from office IP at 2pm on trusted laptop", risk: 15, action: "No MFA — seamless login" },
                 { scenario: "User logs in from new phone at 3am", risk: 55, action: "Require MFA (TOTP)" },
                 { scenario: "User logs in from TOR exit node in different country", risk: 92, action: "Block + alert SOC" },
-              ].map((s, i) => (
+              ].map((s: any, i: number) => (
                 <div key={i} className="rounded-lg border p-3 dark:border-gray-700">
                   <p className="text-sm text-gray-700 dark:text-gray-300">{s.scenario}</p>
                   <div className="mt-2 flex items-center gap-3">
@@ -368,7 +368,7 @@ export default function B2BCIAMPage() {
               <button onClick={() => setShowWizard(false)} aria-label="Close"><X className="h-5 w-5 text-gray-400" /></button>
             </div>
             <div className="mb-6 flex items-center gap-1">
-              {wizardSteps.map((s, i) => (
+              {wizardSteps.map((s: any, i: number) => (
                 <div key={i} className="flex items-center gap-1 flex-1">
                   <div className={"flex h-7 w-7 items-center justify-center rounded-full text-xs font-bold " + (i <= wizardStep ? "bg-indigo-600 text-white" : "bg-gray-200 dark:bg-gray-700 text-gray-400")}>{i < wizardStep ? <Check className="h-3.5 w-3.5" /> : i + 1}</div>
                   {i < wizardSteps.length - 1 && <div className={"h-0.5 flex-1 " + (i < wizardStep ? "bg-indigo-600" : "bg-gray-200 dark:bg-gray-700")} />}

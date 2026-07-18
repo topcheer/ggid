@@ -92,7 +92,7 @@ const [changeRules, setChangeRules] = useState<BreakingChangeRule[]>([
   };
 
   const toggleMigrationStep = (idx: number) => {
-    setMigrationSteps(prev => prev.map((s, i) => i === idx ? { ...s, done: !s.done } : s));
+    setMigrationSteps(prev => prev.map((s: any, i: number) => i === idx ? { ...s, done: !s.done } : s));
   };
 
   const renderedNotice = noticeTemplate
@@ -172,7 +172,7 @@ const [changeRules, setChangeRules] = useState<BreakingChangeRule[]>([
               </div>
             </div>
             <div className="space-y-2">
-              {migrationSteps.map((s, idx) => (
+              {migrationSteps.map((s: any, idx: number) => (
                 <label key={idx} className="flex items-center gap-2 text-sm">
                   <input aria-label="S" type="checkbox" checked={s.done} onChange={() => toggleMigrationStep(idx)} className="rounded" />
                   <span className={s.done ? 'line-through text-gray-400' : ''}>{s.step}</span>

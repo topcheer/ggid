@@ -74,7 +74,7 @@ export function useReportGenerator(): UseReportGeneratorResult {
       const resp = await fetch(`${apiBaseUrl}/api/v1/audit/reports`, { method: 'POST', headers: makeHeaders(), body: JSON.stringify(input) });
       if (!resp.ok) throw new Error(`Generate failed (${resp.status})`);
       const report = await resp.json() as GeneratedReport;
-      setReports((prev) => [report, ...prev]);
+      setReports((prev: any) => [report, ...prev]);
       return report;
     } catch (err) { setError(err instanceof Error ? err.message : 'Unknown'); return null; }
   }, [apiBaseUrl, makeHeaders]);
@@ -98,7 +98,7 @@ export function useReportGenerator(): UseReportGeneratorResult {
     try {
       const resp = await fetch(`${apiBaseUrl}/api/v1/audit/reports/${id}`, { method: 'DELETE', headers: makeHeaders() });
       if (!resp.ok) throw new Error(`Delete failed (${resp.status})`);
-      setReports((prev) => prev.filter((r) => r.id !== id));
+      setReports((prev: any) => prev.filter((r) => r.id !== id));
       return true;
     } catch (err) { setError(err instanceof Error ? err.message : 'Unknown'); return false; }
   }, [apiBaseUrl, makeHeaders]);

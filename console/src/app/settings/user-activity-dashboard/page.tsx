@@ -52,7 +52,7 @@ export default function UserActivityDashboardPage() {
       <section className="bg-white rounded-lg shadow p-6 space-y-4">
         <h2 className="text-lg font-semibold">Login Trends</h2>
         <div className="flex items-end gap-2 h-32">
-          {[45, 52, 38, 61, 73, 48, 89, 67, 54, 72, 81, 63].map((v, i) => (
+          {[45, 52, 38, 61, 73, 48, 89, 67, 54, 72, 81, 63].map((v: any, i: number) => (
             <div key={i} className="flex-1 flex flex-col items-center"><div className="w-full bg-blue-500 rounded-t" style={{ height: `${v}px` }} /><div className="text-xs text-gray-400 mt-1">{i * 2}h</div></div>
           ))}
         </div>
@@ -82,7 +82,7 @@ export default function UserActivityDashboardPage() {
         <section className="bg-white rounded-lg shadow p-6 space-y-4">
           <h2 className="text-lg font-semibold">Failed Attempts</h2>
           <div className="flex items-end gap-2 h-32">
-            {[3, 1, 5, 2, 8, 4, 1, 0, 2, 6, 3, 1].map((v, i) => (
+            {[3, 1, 5, 2, 8, 4, 1, 0, 2, 6, 3, 1].map((v: any, i: number) => (
               <div key={i} className="flex-1 flex flex-col items-center"><div className={`w-full rounded-t ${v > 5 ? 'bg-red-500' : v > 2 ? 'bg-amber-500' : 'bg-green-500'}`} style={{ height: `${v * 8}px` }} /></div>
             ))}
           </div>
@@ -92,7 +92,7 @@ export default function UserActivityDashboardPage() {
       <section className="bg-white rounded-lg shadow p-6 space-y-4">
         <h2 className="text-lg font-semibold">Risk Score Distribution</h2>
         <div className="flex items-end gap-2 h-24">
-          {[85, 60, 35, 20, 12, 8, 5, 3, 2, 1].map((v, i) => (
+          {[85, 60, 35, 20, 12, 8, 5, 3, 2, 1].map((v: any, i: number) => (
             <div key={i} className="flex-1 flex flex-col items-center"><div className={`w-full rounded-t ${i < 2 ? 'bg-red-500' : i < 4 ? 'bg-amber-500' : 'bg-green-500'}`} style={{ height: `${v}px` }} /><div className="text-xs text-gray-400">{i * 10}</div></div>
           ))}
         </div>

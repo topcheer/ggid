@@ -24,7 +24,7 @@ const FLEET = [
   { id: "d5", user: "eve@company.com", device: "iPad Pro", os: "iPadOS 17", connector: "Jamf Pro", compliant: true, last_check: new Date(Date.now() - 1800000).toISOString() },
 ];
 
-const ALERTS = FLEET.filter(d => !d.compliant).map((d, i) => ({ ...d, reason: i === 0 ? "OS update required" : "MDM profile missing", severity: i === 0 ? "medium" : "high" }));
+const ALERTS = FLEET.filter(d => !d.compliant).map((d: any, i: number) => ({ ...d, reason: i === 0 ? "OS update required" : "MDM profile missing", severity: i === 0 ? "medium" : "high" }));
 
 export default function MDMPage() {
   const t = useTranslations();

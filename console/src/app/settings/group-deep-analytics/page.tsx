@@ -50,7 +50,7 @@ export default function GroupDeepAnalyticsPage() {
               <div className="inline-grid gap-px" style={{ gridTemplateColumns: "auto repeat(24, 1fr)" }}>
                 <div />{Array.from({ length: 24 }, (_, h) => <div key={h} className="text-xs text-gray-500 text-center w-6">{h}</div>)}
                 {group.heatmap.map((row, dayIdx) => (
-                  <>{<div key={"d"+dayIdx} className="text-xs text-gray-500 pr-2">{["Mon","Tue","Wed","Thu","Fri","Sat","Sun"][dayIdx]}</div>}{row.map((val, h) => {
+                  <>{<div key={"d"+dayIdx} className="text-xs text-gray-500 pr-2">{["Mon","Tue","Wed","Thu","Fri","Sat","Sun"][dayIdx]}</div>}{row.map((val: any, h: number) => {
                     const intensity = Math.min(val / 10, 1);
                     const color = intensity > 0.7 ? "bg-green-600" : intensity > 0.3 ? "bg-green-800" : intensity > 0 ? "bg-green-950" : "bg-gray-800";
                     return <div key={dayIdx+"-"+h} className={"w-6 h-5 rounded-sm " + color} title={val + " events"} />;
@@ -77,7 +77,7 @@ export default function GroupDeepAnalyticsPage() {
             <div className="bg-gray-900 rounded-xl p-6">
               <h2 className="text-sm font-semibold mb-3 flex items-center gap-2"><AlertTriangle className="w-4 h-4 text-yellow-400" /> Access Pattern Anomalies</h2>
               <div className="space-y-2">
-                {group.anomalies.map((a, i) => (
+                {group.anomalies.map((a: any, i: number) => (
                   <div key={i} className="bg-gray-800 rounded p-2 text-xs"><span className="text-yellow-400">{a}</span></div>
                 ))}
               </div>

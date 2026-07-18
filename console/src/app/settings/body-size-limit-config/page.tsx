@@ -26,7 +26,7 @@ export default function BodySizeLimitConfigPage() {
   };
 
   const updateRoute = (index: number, patch: Partial<RouteLimit>) => {
-    setRoutes(routes.map((r, i) => (i === index ? { ...r, ...patch } : r)));
+    setRoutes(routes.map((r: any, i: number) => (i === index ? { ...r, ...patch } : r)));
   };
 
   return (
@@ -88,7 +88,7 @@ export default function BodySizeLimitConfigPage() {
           <button aria-label="action" onClick={addRoute} className="px-3 py-1 bg-blue-600 text-white rounded text-sm">{"Add Route"}</button>
         </div>
         <div className="space-y-3">
-          {routes.map((route, index) => (
+          {routes.map((route: any, index: number) => (
             <div key={index} className="border rounded p-3 grid grid-cols-3 gap-3 items-center">
               <input
                 type="text"

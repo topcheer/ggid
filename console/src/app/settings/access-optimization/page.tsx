@@ -79,7 +79,7 @@ export default function AccessOptimizationPage() {
             <div className="rounded-lg border dark:border-gray-800">
               <div className="px-4 py-3 border-b dark:border-gray-800"><h3 className="font-semibold flex items-center gap-2"><TrendingDown className="w-4 h-4 text-orange-500" /> Redundant Roles ({data.redundant_roles.length})</h3></div>
               <div className="divide-y dark:divide-gray-800 max-h-64 overflow-y-auto">
-                {data.redundant_roles.map((r, i) => (
+                {data.redundant_roles.map((r: any, i: number) => (
                   <div key={i} className="px-4 py-2 text-sm">
                     <div className="flex items-center justify-between">
                       <span className="font-mono text-xs">{r.role}</span>
@@ -96,7 +96,7 @@ export default function AccessOptimizationPage() {
             <div className="rounded-lg border dark:border-gray-800">
               <div className="px-4 py-3 border-b dark:border-gray-800"><h3 className="font-semibold flex items-center gap-2"><Shield className="w-4 h-4 text-gray-500" /> Unused Access Paths ({data.unused_paths.length})</h3></div>
               <div className="divide-y dark:divide-gray-800 max-h-64 overflow-y-auto">
-                {data.unused_paths.map((p, i) => (
+                {data.unused_paths.map((p: any, i: number) => (
                   <div key={i} className="px-4 py-2 flex items-center justify-between text-sm">
                     <span className="font-mono text-xs truncate">{p.path}</span>
                     <span className="text-xs text-gray-400 ml-2">{p.last_accessed}</span>
@@ -112,14 +112,14 @@ export default function AccessOptimizationPage() {
             <div className="rounded-lg border dark:border-gray-800 p-4 bg-blue-50 dark:bg-blue-900/20">
               <h3 className="font-semibold mb-3 flex items-center gap-2"><Lightbulb className="w-4 h-4 text-blue-500" /> Consolidation Suggestions ({data.suggestions.length})</h3>
               <div className="space-y-2">
-                {data.suggestions.map((s, i) => (
+                {data.suggestions.map((s: any, i: number) => (
                   <div key={i} className="text-sm">
                     <div className="flex items-start gap-2">
                       <span className="text-blue-400 mt-0.5">•</span>
                       <div className="flex-1">
                         <span className="font-medium">{s.action}</span>
                         <span className="text-xs text-gray-500 ml-2">({s.impact})</span>
-                        <div className="flex flex-wrap gap-1 mt-1">{s.roles_affected.map((r, ri) => <span key={ri} className="px-1.5 py-0.5 rounded text-xs bg-gray-100 dark:bg-gray-800 font-mono">{r}</span>)}</div>
+                        <div className="flex flex-wrap gap-1 mt-1">{s.roles_affected.map((r: any, ri: number) => <span key={ri} className="px-1.5 py-0.5 rounded text-xs bg-gray-100 dark:bg-gray-800 font-mono">{r}</span>)}</div>
                       </div>
                     </div>
                   </div>

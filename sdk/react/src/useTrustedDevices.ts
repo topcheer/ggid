@@ -53,13 +53,13 @@ export function useTrustedDevices(): UseTrustedDevicesResult {
   }, [apiBaseUrl, makeHeaders]);
 
   const removeTrust = useCallback(async (id: string): Promise<boolean> => {
-    try { const resp = await fetch(`${apiBaseUrl}/api/v1/auth/trusted-devices/${id}`, { method: 'DELETE', headers: makeHeaders() }); if (!resp.ok) throw new Error(`Remove failed (${resp.status})`); setDevices((prev) => prev.filter((d) => d.id !== id)); return true; }
+    try { const resp = await fetch(`${apiBaseUrl}/api/v1/auth/trusted-devices/${id}`, { method: 'DELETE', headers: makeHeaders() }); if (!resp.ok) throw new Error(`Remove failed (${resp.status})`); setDevices((prev: any) => prev.filter((d) => d.id !== id)); return true; }
     catch (err) { setError(err instanceof Error ? err.message : 'Unknown'); return false; }
   }, [apiBaseUrl, makeHeaders]);
 
   const toggleMfaBypass = useCallback(async (id: string): Promise<boolean> => {
     const dev = devices.find((d) => d.id === id); if (!dev) return false;
-    try { const resp = await fetch(`${apiBaseUrl}/api/v1/auth/trusted-devices/${id}`, { method: 'PATCH', headers: makeHeaders(), body: JSON.stringify({ mfa_bypass_enabled: !dev.mfa_bypass_enabled }) }); if (!resp.ok) throw new Error(`Toggle failed (${resp.status})`); setDevices((prev) => prev.map((d) => d.id === id ? { ...d, mfa_bypass_enabled: !d.mfa_bypass_enabled } : d)); return true; }
+    try { const resp = await fetch(`${apiBaseUrl}/api/v1/auth/trusted-devices/${id}`, { method: 'PATCH', headers: makeHeaders(), body: JSON.stringify({ mfa_bypass_enabled: !dev.mfa_bypass_enabled }) }); if (!resp.ok) throw new Error(`Toggle failed (${resp.status})`); setDevices((prev: any) => prev.map((d) => d.id === id ? { ...d, mfa_bypass_enabled: !d.mfa_bypass_enabled } : d)); return true; }
     catch (err) { setError(err instanceof Error ? err.message : 'Unknown'); return false; }
   }, [apiBaseUrl, makeHeaders, devices]);
 

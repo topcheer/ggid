@@ -97,7 +97,7 @@ export default function OAuth21AuditPage() {
               </tr>
             </thead>
             <tbody>
-              {(data?.non_compliant_clients ?? []).map((c, i) => (
+              {(data?.non_compliant_clients ?? []).map((c: any, i: number) => (
                 <tr key={i} className="border-b border-gray-800">
                   <td className="py-3 pr-3 font-mono text-xs text-blue-400">{c.client_id}</td>
                   <td className="py-3 pr-3 text-xs">{c.issue}</td>
@@ -128,7 +128,7 @@ export default function OAuth21AuditPage() {
           Recommended Remediation Actions
         </h2>
         <div className="space-y-2">
-          {(data?.remediation_actions ?? []).map((a, i) => (
+          {(data?.remediation_actions ?? []).map((a: any, i: number) => (
             <div key={i} className="flex items-start gap-3 bg-gray-800 rounded-lg p-3">
               <span className="text-xs font-bold text-blue-400 mt-0.5">{i + 1}.</span>
               <div className="flex-1">

@@ -295,7 +295,7 @@ export default function ReBACPage() {
                 <div key={ns} className={card}>
                   <h3 className="mb-3 flex items-center gap-2 text-sm font-semibold"><Layers className="h-4 w-4 text-cyan-500" /> {ns} <span className="text-xs text-gray-400">({items.length})</span></h3>
                   <div className="space-y-1">
-                    {items.map((t, i) => (
+                    {items.map((t: any, i: number) => (
                       <div key={i} className="flex items-center justify-between rounded-lg border p-2 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-900/30">
                         <div className="flex items-center gap-2 flex-wrap">
                           <code className="text-xs font-mono text-gray-500">{t.object}</code>
@@ -403,7 +403,7 @@ export default function ReBACPage() {
             <h2 className="mb-4 flex items-center gap-2 text-sm font-semibold uppercase text-gray-400"><Database className="h-4 w-4" /> Results ({exResults.length})</h2>
             {exResults.length > 0 ? (
               <div className="space-y-1">
-                {exResults.map((r, i) => (
+                {exResults.map((r: any, i: number) => (
                   <div key={i} className="flex items-center gap-2 rounded-lg border p-2 dark:border-gray-700">
                     <ChevronRight className="h-3 w-3 text-cyan-400" />
                     <code className="text-xs font-mono">{r}</code>

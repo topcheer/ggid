@@ -52,7 +52,7 @@ export default function FraudDetectionPage() {
           {t("fraudDetect.fraudScoreDistribution")}
         </h2>
         <div className="flex items-end gap-1 h-32">
-          {(data?.score_distribution ?? []).map((bucket, i) => {
+          {(data?.score_distribution ?? []).map((bucket: any, i: number) => {
             const max = Math.max(...(data?.score_distribution ?? [1]));
             const h = max > 0 ? (bucket / max) * 100 : 0;
             const color = i >= 7 ? "bg-red-500" : i >= 4 ? "bg-yellow-500" : "bg-green-500";

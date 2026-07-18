@@ -76,7 +76,7 @@ export function useDelegatedAdmin(): UseDelegatedAdminResult {
       const resp = await fetch(`${apiBaseUrl}/api/v1/policy/delegated-admin`, { method: 'POST', headers: makeHeaders(), body: JSON.stringify(input) });
       if (!resp.ok) throw new Error(`Grant failed (${resp.status})`);
       const created = await resp.json() as Delegation;
-      setDelegations((prev) => [created, ...prev]);
+      setDelegations((prev: any) => [created, ...prev]);
       return true;
     } catch (err) { setError(err instanceof Error ? err.message : 'Unknown'); return false; }
   }, [apiBaseUrl, makeHeaders]);
@@ -85,7 +85,7 @@ export function useDelegatedAdmin(): UseDelegatedAdminResult {
     try {
       const resp = await fetch(`${apiBaseUrl}/api/v1/policy/delegated-admin/${id}/revoke`, { method: 'POST', headers: makeHeaders() });
       if (!resp.ok) throw new Error(`Revoke failed (${resp.status})`);
-      setDelegations((prev) => prev.map((d) => d.id === id ? { ...d, revoked: true } : d));
+      setDelegations((prev: any) => prev.map((d) => d.id === id ? { ...d, revoked: true } : d));
       return true;
     } catch (err) { setError(err instanceof Error ? err.message : 'Unknown'); return false; }
   }, [apiBaseUrl, makeHeaders]);

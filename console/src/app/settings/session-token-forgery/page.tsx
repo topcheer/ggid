@@ -67,7 +67,7 @@ export default function SessionTokenForgeryPage() {
               </tr>
             </thead>
             <tbody>
-              {(data?.forged_tokens ?? []).map((t, i) => (
+              {(data?.forged_tokens ?? []).map((t: any, i: number) => (
                 <tr key={i} className="border-b border-gray-800">
                   <td className="py-3 pr-3 font-mono text-xs text-blue-400">{t.token.substring(0, 32)}...</td>
                   <td className="py-3 pr-3">

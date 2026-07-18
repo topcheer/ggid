@@ -80,7 +80,7 @@ export default function ConsentRegistryPage() {
           <div className="rounded-lg border dark:border-gray-800">
             <div className="px-4 py-3 border-b dark:border-gray-800"><h3 className="font-semibold flex items-center gap-2"><History className="w-4 h-4" /> Version History</h3></div>
             <div className="divide-y dark:divide-gray-800 max-h-64 overflow-y-auto">
-              {data.history.map((h, i) => (
+              {data.history.map((h: any, i: number) => (
                 <div key={i} className="px-4 py-2 text-sm"><div className="flex items-center justify-between"><span className="font-medium">v{h.version}</span><span className="text-xs text-gray-400">{h.changed_at}</span></div><p className="text-xs text-gray-500 mt-0.5">{h.changes}</p><p className="text-xs text-gray-400">By: {h.changed_by}</p></div>
               ))}
               {data.history.length === 0 && <p className="px-4 py-4 text-sm text-gray-500">No changes recorded.</p>}

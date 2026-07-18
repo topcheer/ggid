@@ -136,7 +136,7 @@ export default function AuditRealTimeAlertsPage() {
               Suppression Rules
             </h2>
             <div className="space-y-1">
-              {(data?.alert_suppression_rules ?? []).map((s, i) => (
+              {(data?.alert_suppression_rules ?? []).map((s: any, i: number) => (
                 <div key={i} className="flex items-center justify-between bg-gray-800 rounded p-2">
                   <span className="text-xs font-mono text-gray-300">{s.dedup_key}</span>
                   <span className="text-xs text-gray-400">{s.suppress_minutes}m</span>
@@ -152,7 +152,7 @@ export default function AuditRealTimeAlertsPage() {
               Escalation Policy
             </h2>
             <div className="space-y-2">
-              {(data?.escalation_policy ?? []).map((e, i) => (
+              {(data?.escalation_policy ?? []).map((e: any, i: number) => (
                 <div key={i} className="bg-gray-800 rounded p-2">
                   <div className="flex items-center justify-between">
                     <span className="text-xs text-gray-300">Notify after {e.notify_after_minutes}m</span>

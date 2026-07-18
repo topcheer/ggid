@@ -120,7 +120,7 @@ export default function DelegationPage() {
         <div className={card}>
           <h2 className="mb-6 flex items-center gap-2 text-sm font-semibold uppercase text-gray-400"><Network className="h-4 w-4" /> Active Delegation Chains</h2>
           <div className="flex items-center justify-center gap-2 flex-wrap">
-            {chainNodes.map((node, i) => (
+            {chainNodes.map((node: any, i: number) => (
               <div key={i} className="flex items-center gap-2">
                 <div className="flex flex-col items-center rounded-xl border-2 border-indigo-300 dark:border-indigo-700 bg-indigo-50 dark:bg-indigo-950/30 p-3 min-w-[120px]">
                   <Users className="h-6 w-6 text-indigo-500" />
@@ -287,7 +287,7 @@ export default function DelegationPage() {
                   <div className="mt-3">
                     <p className="text-xs font-semibold text-gray-400 mb-1">Delegation Chain</p>
                     <div className="flex items-center gap-1 flex-wrap">
-                      {simResult.chain.map((node, i) => (
+                      {simResult.chain.map((node: any, i: number) => (
                         <span key={i} className="flex items-center gap-1">
                           {i > 0 && <ArrowRight className="h-3 w-3 text-gray-400" />}
                           <span className="px-1.5 py-0.5 rounded bg-indigo-100 dark:bg-indigo-900/30 text-xs font-mono">{node}</span>
@@ -304,7 +304,7 @@ export default function DelegationPage() {
                 )}
                 {simResult.warnings?.length > 0 && (
                   <div className="mt-3 rounded-lg bg-yellow-50 p-3 dark:bg-yellow-950/20">
-                    {simResult.warnings.map((w, i) => <p key={i} className="text-xs text-yellow-700 dark:text-yellow-400">{w}</p>)}
+                    {simResult.warnings.map((w: any, i: number) => <p key={i} className="text-xs text-yellow-700 dark:text-yellow-400">{w}</p>)}
                   </div>
                 )}
               </div>

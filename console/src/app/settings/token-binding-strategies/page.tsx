@@ -55,7 +55,7 @@ export default function TokenBindingStrategiesPage() {
   ];
 
   const updateConfig = (idx: number, field: keyof BindingConfig, value: string) => {
-    setConfigs(prev => prev.map((c, i) => i === idx ? { ...c, [field]: value } : c));
+    setConfigs(prev => prev.map((c: any, i: number) => i === idx ? { ...c, [field]: value } : c));
   };
 
   const addThumbprint = () => {
@@ -115,7 +115,7 @@ export default function TokenBindingStrategiesPage() {
             </tr>
           </thead>
           <tbody>
-            {configs.map((c, idx) => (
+            {configs.map((c: any, idx: number) => (
               <tr key={c.clientId} className="border-b">
                 <td className="p-3 font-mono text-xs">{c.clientId}</td>
                 {(['dpop', 'mtls', 'senderConstrained'] as const).map(field => (

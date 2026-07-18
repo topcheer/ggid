@@ -70,7 +70,7 @@ export default function DeprovisioningWorkflowConfigPage() {
       <section className="bg-white rounded-lg shadow p-6 space-y-4">
         <h2 className="text-lg font-semibold">Workflow Steps (drag to reorder)</h2>
         <div className="space-y-2">
-          {steps.map((s, idx) => (
+          {steps.map((s: any, idx: number) => (
             <div key={s.id} className="flex items-center gap-3 border rounded p-3">
               <div className="flex flex-col">
                 <button onClick={() => moveStep(idx, 'up')} disabled={idx === 0} className="text-xs text-gray-400 disabled:opacity-30">â</button>

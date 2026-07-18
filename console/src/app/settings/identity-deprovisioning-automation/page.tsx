@@ -73,7 +73,7 @@ export default function IdentityDeprovisioningAutomationPage() {
         <div className="bg-gray-900 rounded-xl p-6">
           <h2 className="text-lg font-semibold mb-4">{t("idDeprovisionAuto.automationRules")}</h2>
           <div className="space-y-2">
-            {(data?.automation_rules ?? []).map((rule, i) => (
+            {(data?.automation_rules ?? []).map((rule: any, i: number) => (
               <div key={i} className="bg-gray-800 rounded-lg p-3">
                 <div className="flex items-center justify-between mb-2">
                   <div>
@@ -100,7 +100,7 @@ export default function IdentityDeprovisioningAutomationPage() {
             {t("idDeprovisionAuto.pendingActions")}
           </h2>
           <div className="space-y-2 max-h-64 overflow-y-auto">
-            {(data?.pending_actions ?? []).map((action, i) => (
+            {(data?.pending_actions ?? []).map((action: any, i: number) => (
               <div key={i} className="bg-gray-800 rounded-lg p-3">
                 <div className="flex items-center justify-between mb-1">
                   <p className="text-sm font-medium">{action.user}</p>
@@ -126,7 +126,7 @@ export default function IdentityDeprovisioningAutomationPage() {
             "2. Approval (Manager)",
             "3. Execute (Disable + Revoke)",
             "4. Verify (Access Check)",
-          ].map((step, i) => (
+          ].map((step: any, i: number) => (
             <div key={i} className="flex items-center gap-2">
               <span className="text-xs px-3 py-1.5 bg-gray-800 rounded-lg border border-gray-700">{step}</span>
               {i < 3 && <ArrowRight className="w-3 h-3 text-gray-500" />}

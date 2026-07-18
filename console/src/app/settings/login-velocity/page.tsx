@@ -163,7 +163,7 @@ export default function LoginVelocityPage() {
               <h3 className="font-semibold flex items-center gap-2"><Globe className="w-4 h-4" /> Geographic Spread</h3>
             </div>
             <div className="p-4 space-y-2">
-              {data.geo_spread.map((geo, i) => (
+              {data.geo_spread.map((geo: any, i: number) => (
                 <div key={i} className="flex items-center justify-between text-sm">
                   <div className="flex items-center gap-2">
                     <span className="text-lg">{geo.country_code === "US" ? "\ud83c\uddfa\ud83c\uddf8" : geo.country_code === "CN" ? "\ud83c\udde8\ud83c\uddf3" : geo.country_code === "GB" ? "\ud83c\uddec\ud83c\udde7" : geo.country_code === "DE" ? "\ud83c\udde9\ud83c\uddea" : geo.country_code === "JP" ? "\ud83c\uddef\ud83c\uddf5" : "\ud83c\udfdf"}</span>
@@ -187,7 +187,7 @@ export default function LoginVelocityPage() {
               <h3 className="font-semibold flex items-center gap-2"><Activity className="w-4 h-4" /> Recent Events</h3>
             </div>
             <div className="divide-y dark:divide-gray-800 max-h-64 overflow-y-auto">
-              {data.recent_events.map((evt, i) => (
+              {data.recent_events.map((evt: any, i: number) => (
                 <div key={i} className="px-4 py-2 flex items-center justify-between text-sm">
                   <div className="flex items-center gap-3">
                     <span className={`w-2 h-2 rounded-full ${evt.success ? "bg-green-500" : "bg-red-500"}`} />

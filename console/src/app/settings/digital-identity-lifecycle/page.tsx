@@ -73,7 +73,7 @@ export default function DigitalIdentityLifecyclePage() {
   const [bulkTarget, setBulkTarget] = useState('suspend');
 
   const toggleChecklist = (idx: number) => {
-    setChecklist(prev => prev.map((c, i) => i === idx ? { ...c, done: !c.done } : c));
+    setChecklist(prev => prev.map((c: any, i: number) => i === idx ? { ...c, done: !c.done } : c));
   };
 
   const toggleRule = (id: string) => {
@@ -99,7 +99,7 @@ export default function DigitalIdentityLifecyclePage() {
       <section className="bg-white rounded-lg shadow p-6 space-y-4">
         <h2 className="text-lg font-semibold">{t("digitalIdLifecycle.lifecycleStages")}</h2>
         <div className="flex items-center gap-2">
-          {stages.map((s, idx) => (
+          {stages.map((s: any, idx: number) => (
             <div key={s.key} className="flex items-center gap-2">
               <div className={`px-4 py-2 rounded-lg text-white text-sm font-medium ${s.color}`}>{s.label}</div>
               {idx < stages.length - 1 && <span className="text-gray-300 text-xl">{'->'}</span>}
@@ -168,7 +168,7 @@ export default function DigitalIdentityLifecyclePage() {
             <div className="bg-blue-600 h-2 rounded-full" style={{ width: `${checklistProgress}%` }} />
           </div>
           <div className="space-y-2">
-            {checklist.map((c, idx) => (
+            {checklist.map((c: any, idx: number) => (
               <label key={idx} className="flex items-center gap-2 text-sm">
                 <input aria-label="C" type="checkbox" checked={c.done} onChange={() => toggleChecklist(idx)} className="rounded" />
                 <span className={c.done ? 'line-through text-gray-400' : ''}>{c.item}</span>

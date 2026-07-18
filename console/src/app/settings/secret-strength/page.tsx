@@ -138,7 +138,7 @@ export default function SecretStrengthPage() {
                 <div className="rounded-lg bg-blue-50 dark:bg-blue-900/20 p-3">
                   <h4 className="text-sm font-medium flex items-center gap-2 mb-2"><Lightbulb className="w-4 h-4 text-blue-500" /> Suggestions</h4>
                   <ul className="space-y-1">
-                    {r.suggestions.map((s, i) => <li key={i} className="text-xs text-gray-600 dark:text-gray-400 flex items-start gap-2"><span className="text-blue-400 mt-0.5">•</span> {s}</li>)}
+                    {r.suggestions.map((s: any, i: number) => <li key={i} className="text-xs text-gray-600 dark:text-gray-400 flex items-start gap-2"><span className="text-blue-400 mt-0.5">•</span> {s}</li>)}
                   </ul>
                 </div>
               )}

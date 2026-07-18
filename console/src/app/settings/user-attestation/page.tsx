@@ -115,7 +115,7 @@ export default function UserAttestationPage() {
                 </div>
                 {config.required_fields.length > 0 && (
                   <div className="mt-2 flex flex-wrap gap-2">
-                    {config.required_fields.map((f, i) => (
+                    {config.required_fields.map((f: any, i: number) => (
                       <span key={i} className="flex items-center gap-1 rounded-full bg-teal-100 px-2 py-1 text-xs text-teal-700 dark:bg-teal-900/30 dark:text-teal-400">{f}<button onClick={() => removeField(i)}><X className="h-3 w-3" /></button></span>
                     ))}
                   </div>

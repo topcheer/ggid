@@ -70,7 +70,7 @@ export default function AccessRequestApprovalWorkflowPage() {
 
                 {/* Approval Chain Visual */}
                 <div className="flex items-center gap-1 mb-4 overflow-x-auto pb-2">
-                  {req.approval_chain.map((step, idx) => (
+                  {req.approval_chain.map((step: any, idx: number) => (
                     <div key={idx} className="flex items-center gap-1 flex-shrink-0">
                       <div
                         className={`flex items-center gap-1.5 px-2 py-1 rounded-md text-xs ${

@@ -24,7 +24,7 @@ export default function AuditPipelineHealthPage() {
       {/* Pipeline Visual */}
       <div className="bg-gray-900 rounded-xl p-6 mb-6">
         <div className="flex items-center justify-around gap-2 py-4">
-          {(data?.pipeline_stages ?? []).map((stage, i) => (
+          {(data?.pipeline_stages ?? []).map((stage: any, i: number) => (
             <div key={stage.name} className="flex items-center gap-2">
               <div
                 className={"p-3 rounded-xl border-2 text-center min-w-[100px] " + (
@@ -93,7 +93,7 @@ export default function AuditPipelineHealthPage() {
             Bottleneck Detection
           </h2>
           <div className="space-y-2">
-            {(data?.bottlenecks ?? []).map((b, i) => (
+            {(data?.bottlenecks ?? []).map((b: any, i: number) => (
               <div key={i} className="bg-gray-800 rounded-lg p-3">
                 <div className="flex items-center gap-2 mb-1">
                   <span className={"w-2 h-2 rounded-full " + (b.severity === "critical" ? "bg-red-500" : "bg-yellow-500")} />

@@ -39,7 +39,7 @@ export function usePermissionBoundaries(baseUrl: string = "") {
         body: JSON.stringify(boundary),
       });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      setBoundaries((prev) => prev.map((b) => b.id === id ? { ...b, ...boundary } : b));
+      setBoundaries((prev: any) => prev.map((b) => b.id === id ? { ...b, ...boundary } : b));
       return true;
     } catch (e: any) {
       setError(e.message);
@@ -75,7 +75,7 @@ export function usePermissionBoundaries(baseUrl: string = "") {
     try {
       const res = await fetch(`${baseUrl}/api/v1/policy/permission-boundaries/${id}`, { method: "DELETE" });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      setBoundaries((prev) => prev.filter((b) => b.id !== id));
+      setBoundaries((prev: any) => prev.filter((b) => b.id !== id));
       return true;
     } catch (e: any) {
       setError(e.message);

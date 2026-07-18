@@ -46,7 +46,7 @@ export default function AuditEventCorrelationPage() {
               </div>
               {/* Event chain */}
               <div className="flex items-center gap-1 mt-2 flex-wrap">
-                {inc.events.map((ev, i) => (
+                {inc.events.map((ev: any, i: number) => (
                   <span key={i} className="text-xs px-1.5 py-0.5 bg-gray-700 rounded font-mono text-gray-400">{ev}</span>
                 ))}
               </div>

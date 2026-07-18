@@ -270,7 +270,7 @@ export default function SecuritySettingsPage() {
   };
 
   const handleDownloadRecovery = () => {
-    const content = `GGID Recovery Codes\n\n${recoveryCodes.map((c, i) => `${i + 1}. ${c}`).join("\n")}\n\nKeep these codes safe. Each can only be used once.`;
+    const content = `GGID Recovery Codes\n\n${recoveryCodes.map((c: any, i: number) => `${i + 1}. ${c}`).join("\n")}\n\nKeep these codes safe. Each can only be used once.`;
     const blob = new Blob([content], { type: "text/plain" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
@@ -576,7 +576,7 @@ export default function SecuritySettingsPage() {
           {recoveryCodes.length > 0 ? (
             <>
               <div className="mb-4 grid grid-cols-2 gap-2 sm:grid-cols-5">
-                {recoveryCodes.map((code, i) => (
+                {recoveryCodes.map((code: any, i: number) => (
                   <div
                     key={i}
                     onClick={() => setRecoveryRevealed(!recoveryRevealed)}

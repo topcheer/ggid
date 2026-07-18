@@ -56,7 +56,7 @@ export default function AuditSiemMappingPage() {
         <div className="bg-gray-900 rounded-xl p-6">
           <h2 className="text-lg font-semibold mb-4">Field Mapping (Splunk)</h2>
           <div className="space-y-2">
-            {(data?.per_destination ?? []).flatMap((d) => d.field_mappings).map((fm, i) => (
+            {(data?.per_destination ?? []).flatMap((d) => d.field_mappings).map((fm: any, i: number) => (
               <div key={i} className="flex items-center gap-3 bg-gray-800 rounded-lg p-3">
                 <code className="text-xs text-blue-400 font-mono flex-1">{fm.local_field}</code>
                 <ArrowRight className="w-4 h-4 text-gray-500 flex-shrink-0" />
@@ -86,7 +86,7 @@ export default function AuditSiemMappingPage() {
               Severity Mapping
             </h2>
             <div className="space-y-2">
-              {(data?.severity_mapping ?? []).map((sm, i) => (
+              {(data?.severity_mapping ?? []).map((sm: any, i: number) => (
                 <div key={i} className="flex items-center gap-3 bg-gray-800 rounded-lg p-3">
                   <span className={"text-xs px-2 py-0.5 rounded " + (
                     sm.our_severity === "critical" ? "bg-red-900 text-red-300" :
@@ -110,7 +110,7 @@ export default function AuditSiemMappingPage() {
               Custom Fields
             </h2>
             <div className="space-y-1 mb-4">
-              {(data?.custom_fields ?? []).map((cf, i) => (
+              {(data?.custom_fields ?? []).map((cf: any, i: number) => (
                 <div key={i} className="flex items-center justify-between bg-gray-800 rounded px-3 py-1.5">
                   <code className="text-xs text-gray-400">{cf.key}</code>
                   <code className="text-xs text-blue-400">{cf.value}</code>

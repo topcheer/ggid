@@ -75,7 +75,7 @@ export default function LateralMovementDetectPage() {
               </div>
               {/* Resource Chain Visual */}
               <div className="flex items-center gap-1 mb-3 overflow-x-auto pb-1">
-                {p.resource_chain.map((r, i) => (
+                {p.resource_chain.map((r: any, i: number) => (
                   <div key={i} className="flex items-center gap-1 flex-shrink-0">
                     <span className="text-xs px-2 py-1 bg-gray-700 rounded font-mono text-gray-300">{r}</span>
                     {i < p.resource_chain.length - 1 && <span className="text-gray-600">{" -> "}</span>}

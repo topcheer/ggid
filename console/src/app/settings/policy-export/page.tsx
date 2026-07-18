@@ -82,9 +82,9 @@ export default function PolicyExportPage() {
       {diff && (
         <div className="rounded-lg border dark:border-gray-800 p-4 space-y-3">
           <h3 className="font-semibold flex items-center gap-2"><GitCompare className="w-4 h-4" /> Import Diff Preview</h3>
-          {diff.added.length > 0 && <div><h4 className="text-sm font-medium text-green-600 mb-1">Added ({diff.added.length})</h4>{diff.added.map((s, i) => <div key={i} className="text-xs font-mono text-green-600">+ {s}</div>)}</div>}
-          {diff.removed.length > 0 && <div><h4 className="text-sm font-medium text-red-600 mb-1">Removed ({diff.removed.length})</h4>{diff.removed.map((s, i) => <div key={i} className="text-xs font-mono text-red-600 line-through">- {s}</div>)}</div>}
-          {diff.modified.length > 0 && <div><h4 className="text-sm font-medium text-yellow-600 mb-1">Modified ({diff.modified.length})</h4>{diff.modified.map((s, i) => <div key={i} className="text-xs font-mono text-yellow-600">~ {s}</div>)}</div>}
+          {diff.added.length > 0 && <div><h4 className="text-sm font-medium text-green-600 mb-1">Added ({diff.added.length})</h4>{diff.added.map((s: any, i: number) => <div key={i} className="text-xs font-mono text-green-600">+ {s}</div>)}</div>}
+          {diff.removed.length > 0 && <div><h4 className="text-sm font-medium text-red-600 mb-1">Removed ({diff.removed.length})</h4>{diff.removed.map((s: any, i: number) => <div key={i} className="text-xs font-mono text-red-600 line-through">- {s}</div>)}</div>}
+          {diff.modified.length > 0 && <div><h4 className="text-sm font-medium text-yellow-600 mb-1">Modified ({diff.modified.length})</h4>{diff.modified.map((s: any, i: number) => <div key={i} className="text-xs font-mono text-yellow-600">~ {s}</div>)}</div>}
           {diff.added.length === 0 && diff.removed.length === 0 && diff.modified.length === 0 && <p className="text-sm text-gray-500">No changes detected.</p>}
         </div>
       )}

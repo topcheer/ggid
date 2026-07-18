@@ -62,7 +62,7 @@ export default function AccountRecoveryPage() {
         </div>
         <div className="rounded-lg border dark:border-gray-800 p-4">
           <h3 className="text-sm font-semibold mb-3 flex items-center gap-2"><ShieldCheck className="w-4 h-4 text-gray-400" /> Identity Verification Steps</h3>
-          <div className="space-y-2">{config.verification_steps.map((s, i) => (<div key={i} className="flex items-center gap-2 text-sm">
+          <div className="space-y-2">{config.verification_steps.map((s: any, i: number) => (<div key={i} className="flex items-center gap-2 text-sm">
               <span className="w-5 h-5 rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-600 text-xs flex items-center justify-center font-bold">{i + 1}</span>{s}
             </div>
           ))}</div>

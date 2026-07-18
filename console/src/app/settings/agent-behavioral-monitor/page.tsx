@@ -83,7 +83,7 @@ export default function AgentBehavioralMonitorPage() {
           Anomaly Alerts
         </h2>
         <div className="space-y-2">
-          {(data?.anomaly_alerts ?? []).map((alert, i) => (
+          {(data?.anomaly_alerts ?? []).map((alert: any, i: number) => (
             <div key={i} className="flex items-start gap-3 bg-gray-800 rounded-lg p-3">
               <AlertTriangle className="w-4 h-4 text-yellow-400 flex-shrink-0 mt-0.5" />
               <div className="flex-1">

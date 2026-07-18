@@ -49,7 +49,7 @@ export default function SyntheticIdentityPage() {
       <div className="bg-gray-900 rounded-xl p-6 mb-6">
         <h2 className="text-lg font-semibold mb-4">Flagged Accounts</h2>
         <div className="space-y-2">
-          {(data?.flagged_accounts ?? []).map((a, i) => (
+          {(data?.flagged_accounts ?? []).map((a: any, i: number) => (
             <div key={i} className="flex items-center gap-4 bg-gray-800 rounded-lg p-3">
               <AlertTriangle className="w-4 h-4 text-red-400 flex-shrink-0" />
               <div className="flex-1 min-w-0">

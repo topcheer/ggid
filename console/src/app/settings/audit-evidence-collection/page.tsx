@@ -86,7 +86,7 @@ export default function AuditEvidenceCollectionPage() {
               </tr>
             </thead>
             <tbody>
-              {(data?.evidence_requests ?? []).map((r, i) => (
+              {(data?.evidence_requests ?? []).map((r: any, i: number) => (
                 <tr key={i} className="border-b border-gray-800">
                   <td className="py-3 pr-3 text-xs">{r.framework}</td>
                   <td className="py-3 pr-3 font-mono text-xs text-blue-400">{r.control_id}</td>
@@ -115,7 +115,7 @@ export default function AuditEvidenceCollectionPage() {
           Evidence Repository
         </h2>
         <div className="space-y-2">
-          {(data?.evidence_repository ?? []).map((f, i) => (
+          {(data?.evidence_repository ?? []).map((f: any, i: number) => (
             <div key={i} className="flex items-center gap-3 bg-gray-800 rounded-lg p-3">
               {f.verified ? <CheckCircle className="w-4 h-4 text-green-400" /> : <Clock className="w-4 h-4 text-yellow-400" />}
               <div className="flex-1">

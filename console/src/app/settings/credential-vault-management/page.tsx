@@ -198,7 +198,7 @@ export default function CredentialVaultManagementPage() {
         <div className="space-y-2">
           {auditLog.length === 0 ? (
             <p className="text-sm text-gray-400">No data available</p>
-          ) : auditLog.map((entry, idx) => (
+          ) : auditLog.map((entry: any, idx: number) => (
             <div key={idx} className="flex items-center gap-3 text-sm border-b pb-2">
               <span className="text-xs text-gray-400 w-32">{entry.timestamp}</span>
               <span className={`px-2 py-0.5 rounded text-xs ${

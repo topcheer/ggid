@@ -102,7 +102,7 @@ export default function IdentityJitProvisioningConfigPage() {
               </tr>
             </thead>
             <tbody>
-              {(data?.attribute_mapping ?? []).map((m, i) => (
+              {(data?.attribute_mapping ?? []).map((m: any, i: number) => (
                 <tr key={i} className="border-b border-gray-800">
                   <td className="py-3 pr-3 font-mono text-xs text-blue-400">{m.idp_claim}</td>
                   <td className="py-3 pr-3"><ArrowRight className="w-3 h-3 text-gray-500" /></td>
@@ -126,7 +126,7 @@ export default function IdentityJitProvisioningConfigPage() {
           Provisioning Log (24h)
         </h2>
         <div className="space-y-2 max-h-48 overflow-y-auto">
-          {(data?.provisioning_log_24h ?? []).map((entry, i) => (
+          {(data?.provisioning_log_24h ?? []).map((entry: any, i: number) => (
             <div key={i} className="flex items-center gap-3 bg-gray-800 rounded-lg p-2">
               <span
                 className={"w-2 h-2 rounded-full " + (

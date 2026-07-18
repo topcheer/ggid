@@ -59,7 +59,7 @@ export function useThreatFeed(maxEvents = 100): UseThreatFeedResult {
       if (pausedRef.current) return;
       try {
         const threat: ThreatEvent = JSON.parse(msg.data);
-        setThreats((prev) => [threat, ...prev].slice(0, maxEvents));
+        setThreats((prev: any) => [threat, ...prev].slice(0, maxEvents));
       } catch { /* ignore */ }
     };
     es.onerror = () => {

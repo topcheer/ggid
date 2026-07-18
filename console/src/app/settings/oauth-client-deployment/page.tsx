@@ -93,7 +93,7 @@ export default function OAuthClientDeploymentPage() {
             Config Diff (Staging → Prod)
           </h2>
           <div className="space-y-2">
-            {(data?.config_diff ?? []).map((d, i) => (
+            {(data?.config_diff ?? []).map((d: any, i: number) => (
               <div key={i} className="bg-gray-800 rounded-lg p-3">
                 <div className="flex items-center gap-2 mb-1">
                   <span className="text-xs font-mono text-blue-400">{d.field}</span>
@@ -130,7 +130,7 @@ export default function OAuthClientDeploymentPage() {
           <div className="bg-gray-900 rounded-xl p-6">
             <h2 className="text-lg font-semibold mb-4">{t("oauthClientDeploy.deploymentHistory")}</h2>
             <div className="space-y-2 max-h-64 overflow-y-auto">
-              {(data?.deployment_history ?? []).map((dep, i) => (
+              {(data?.deployment_history ?? []).map((dep: any, i: number) => (
                 <div key={i} className="flex items-center gap-3 bg-gray-800 rounded-lg p-3">
                   <div className={"w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 " + (
                     dep.status === "success" ? "bg-green-900 text-green-300" :
@@ -165,7 +165,7 @@ export default function OAuthClientDeploymentPage() {
               Health Check
             </h2>
             <div className="space-y-2">
-              {(data?.health_checks ?? []).map((hc, i) => (
+              {(data?.health_checks ?? []).map((hc: any, i: number) => (
                 <div key={i} className="flex items-center justify-between bg-gray-800 rounded-lg p-3">
                   <span className="text-sm text-gray-300">{hc.check}</span>
                   <div className="flex items-center gap-2">

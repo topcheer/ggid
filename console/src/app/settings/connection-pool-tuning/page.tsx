@@ -31,7 +31,7 @@ export default function ConnectionPoolTuningPage() {
   };
 
   const updatePool = (index: number, patch: Partial<PoolConfig>) => {
-    setPools(pools.map((p, i) => (i === index ? { ...p, ...patch } : p)));
+    setPools(pools.map((p: any, i: number) => (i === index ? { ...p, ...patch } : p)));
   };
 
   return (
@@ -45,7 +45,7 @@ export default function ConnectionPoolTuningPage() {
           <button aria-label="action" onClick={addService} className="px-3 py-1 bg-blue-600 text-white rounded text-sm">{"Add Service"}</button>
         </div>
         <div className="space-y-4">
-          {pools.map((pool, index) => (
+          {pools.map((pool: any, index: number) => (
             <div key={index} className="border rounded p-4 grid grid-cols-5 gap-3 items-end">
               <div className="space-y-1">
                 <label className="text-xs text-gray-500">{t("backend2.connPoolTuning.service")}</label>

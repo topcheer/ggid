@@ -73,7 +73,7 @@ export default function SecurityPostureScoringPage() {
             {t("securityPosture.trend30d")}
           </h2>
           <div className="flex items-end gap-1 h-24">
-            {(data?.trend_30d ?? []).map((v, i) => {
+            {(data?.trend_30d ?? []).map((v: any, i: number) => {
               const max = Math.max(...(data?.trend_30d ?? [1]));
               return <div key={i} className="flex-1 bg-blue-500 rounded-t" style={{ height: max > 0 ? (v / max) * 100 + "%" : "0" }} />;
             })}
@@ -108,7 +108,7 @@ export default function SecurityPostureScoringPage() {
           {t("securityPosture.improvementRecommendations")}
         </h2>
         <div className="space-y-2">
-          {(data?.improvement_recommendations ?? []).map((r, i) => (
+          {(data?.improvement_recommendations ?? []).map((r: any, i: number) => (
             <div key={i} className="flex items-start gap-3 bg-gray-800 rounded-lg p-3">
               <span className="text-xs font-bold text-blue-400 mt-0.5">{i + 1}.</span>
               <div className="flex-1">

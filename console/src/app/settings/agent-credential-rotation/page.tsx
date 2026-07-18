@@ -120,7 +120,7 @@ export default function AgentCredentialRotationPage() {
           Rotation History
         </h2>
         <div className="space-y-2">
-          {(data?.rotation_history ?? []).map((h, i) => (
+          {(data?.rotation_history ?? []).map((h: any, i: number) => (
             <div key={i} className="flex items-center gap-3 bg-gray-800 rounded-lg p-3">
               <KeyRound className="w-3 h-3 text-blue-400" />
               <div className="flex-1">

@@ -20,7 +20,7 @@ export default function PolicyApprovalWorkflowConfigPage() {
 
       <div className="bg-gray-900 rounded-xl p-6 mb-6">
         <h2 className="text-sm font-semibold mb-4 flex items-center gap-2"><GitBranch className="w-4 h-4 text-blue-400" /> Pipeline</h2>
-        <div className="flex items-center gap-2">{(data?.pipeline ?? []).map((stage, i) => (
+        <div className="flex items-center gap-2">{(data?.pipeline ?? []).map((stage: any, i: number) => (
           <div key={stage.name} className="flex items-center gap-2">
             <div className={"px-3 py-2 rounded-lg text-sm " + (stage.enabled ? "bg-blue-900 text-blue-300" : "bg-gray-800 text-gray-500")}><p className="font-medium">{stage.name}</p><p className="text-xs text-gray-400">{stage.assignee}</p></div>
             {i < (data?.pipeline?.length ?? 0) - 1 && <span className="text-gray-600">{" -> "}</span>}

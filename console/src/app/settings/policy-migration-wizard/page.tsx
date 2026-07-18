@@ -28,7 +28,7 @@ export default function PolicyMigrationWizardPage() {
 
       {/* Stepper */}
       <div className="flex items-center gap-2 mb-8">
-        {steps.map((s, i) => (
+        {steps.map((s: any, i: number) => (
           <div key={s} className="flex items-center gap-2">
             <div
               className={"w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold " + (
@@ -92,7 +92,7 @@ export default function PolicyMigrationWizardPage() {
                 </tr>
               </thead>
               <tbody>
-                {(data?.mapping_preview ?? []).map((m, i) => (
+                {(data?.mapping_preview ?? []).map((m: any, i: number) => (
                   <tr key={i} className="border-b border-gray-800">
                     <td className="py-3 pr-3 font-mono text-xs text-gray-400">{m.source_rule}</td>
                     <td className="py-3 pr-3"><ArrowRight className="w-3 h-3 text-gray-500" /></td>

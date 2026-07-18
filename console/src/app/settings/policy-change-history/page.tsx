@@ -57,7 +57,7 @@ export default function PolicyChangeHistoryPage() {
       <div className="relative pl-8">
         <div className="absolute left-3 top-0 bottom-0 w-px bg-gray-200 dark:bg-gray-800" />
         <div className="space-y-4">
-          {history.map((h, i) => (
+          {history.map((h: any, i: number) => (
             <div key={i} className="relative">
               <div className={"absolute -left-5 w-4 h-4 rounded-full border-2 " + (h.change_type === "create" ? "bg-green-500 border-green-200" : h.change_type === "modify" ? "bg-yellow-500 border-yellow-200" : "bg-red-500 border-red-200")} />
               <div className="rounded-lg border dark:border-gray-800 p-3 ml-2">

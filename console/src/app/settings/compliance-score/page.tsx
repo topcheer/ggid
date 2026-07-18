@@ -54,7 +54,7 @@ export default function ComplianceScorePage() {
   const getY = (score: number) => chartHeight - padding - ((score - minScore) / (maxScore - minScore || 1)) * (chartHeight - padding * 2);
   const getX = (i: number) => padding + i * xStep;
 
-  const linePath = data ? data.history.map((h, i) => `${i === 0 ? "M" : "L"}${getX(i)},${getY(h.score)}`).join(" ") : "";
+  const linePath = data ? data.history.map((h: any, i: number) => `${i === 0 ? "M" : "L"}${getX(i)},${getY(h.score)}`).join(" ") : "";
   const areaPath = data ? `${linePath} L${getX(data.history.length - 1)},${chartHeight - padding} L${getX(0)},${chartHeight - padding} Z` : "";
 
   return (
@@ -96,7 +96,7 @@ export default function ComplianceScorePage() {
               {/* Line */}
               <path d={linePath} fill="none" stroke="currentColor" strokeWidth={2} className="text-blue-500" />
               {/* Points + gap count badges */}
-              {data.history.map((h, i) => (
+              {data.history.map((h: any, i: number) => (
                 <g key={i}>
                   <circle cx={getX(i)} cy={getY(h.score)} r={4} fill="currentColor" className="text-blue-500" />
                   <text x={getX(i)} y={getY(h.score) - 10} textAnchor="middle" className="text-[10px] fill-gray-500 font-medium">{h.score}</text>
@@ -106,7 +106,7 @@ export default function ComplianceScorePage() {
                 </g>
               ))}
               {/* X-axis labels */}
-              {data.history.map((h, i) => (
+              {data.history.map((h: any, i: number) => (
                 <text key={i} x={getX(i)} y={chartHeight - padding + 16} textAnchor="middle" className="text-[10px] fill-gray-400">{h.month}</text>
               ))}
             </svg>
@@ -128,7 +128,7 @@ export default function ComplianceScorePage() {
                 </tr>
               </thead>
               <tbody className="divide-y dark:divide-gray-800">
-                {data.history.slice().reverse().map((h, i) => (
+                {data.history.slice().reverse().map((h: any, i: number) => (
                   <tr key={i} className="hover:bg-gray-50 dark:hover:bg-gray-900/30">
                     <td className="px-4 py-3 flex items-center gap-1"><Calendar className="w-3 h-3 text-gray-400" /> {h.month}</td>
                     <td className="px-4 py-3"><span className={`font-bold ${h.score >= 80 ? "text-green-600" : h.score >= 60 ? "text-yellow-600" : "text-red-600"}`}>{h.score}</span></td>

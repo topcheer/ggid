@@ -155,7 +155,7 @@ export default function FederationHubPage() {
           <h2 className="mb-4 flex items-center gap-2 text-sm font-semibold uppercase text-gray-400"><Network className="h-4 w-4" /> Trust Topology</h2>
           <div className="overflow-x-auto"><svg width="600" height="400" viewBox="0 0 600 400" className="mx-auto" aria-label="Federation trust topology">
             {/* Edges */}
-            {trustRels.map((tr, i) => {
+            {trustRels.map((tr: any, i: number) => {
               const pos = positions[i]; if (!pos) return null;
               const color = tr.connected ? "#10b981" : "#ef4444";
               return <line key={i} x1={centerX} y1={centerY} x2={pos.x} y2={pos.y} stroke={color} strokeWidth={tr.connected ? 2 : 1} strokeDasharray={tr.connected ? "0" : "5"} opacity={0.7} />;
@@ -164,7 +164,7 @@ export default function FederationHubPage() {
             <circle cx={centerX} cy={centerY} r={35} fill="#6366f1" />
             <text x={centerX} y={centerY + 4} textAnchor="middle" fontSize={11} fontWeight="bold" fill="white">GGID</text>
             {/* IdP nodes */}
-            {trustRels.map((tr, i) => {
+            {trustRels.map((tr: any, i: number) => {
               const pos = positions[i]; if (!pos) return null;
               const cfg = protoConfig[tr.protocol] || protoConfig.saml;
               return (

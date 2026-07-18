@@ -63,7 +63,7 @@ export function useDSR(baseUrl: string = "") {
         body: JSON.stringify({ status }),
       });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      setRequests((prev) => prev.map((r) => r.id === id ? { ...r, status } : r));
+      setRequests((prev: any) => prev.map((r) => r.id === id ? { ...r, status } : r));
       return true;
     } catch (e: any) {
       setError(e.message);

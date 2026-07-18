@@ -95,9 +95,9 @@ export default function OAuthScopeAnalyticsPage() {
           <h2 className="text-sm font-semibold mb-4">Scope Correlation Heatmap</h2>
           <div className="overflow-x-auto">
             <div className="inline-block">
-              {(data?.scope_correlation ?? []).map((row, i) => (
+              {(data?.scope_correlation ?? []).map((row: any, i: number) => (
                 <div key={i} className="flex">
-                  {row.map((val, j) => (
+                  {row.map((val: any, j: number) => (
                     <div
                       key={j}
                       className={"w-12 h-12 flex items-center justify-center text-xs font-medium border border-gray-800 " + heatColors[Math.min(Math.floor(val * 5), 4)]}

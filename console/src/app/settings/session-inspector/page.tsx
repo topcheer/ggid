@@ -82,7 +82,7 @@ export default function SessionInspectorPage() {
               <div><span className="text-gray-500">Expires:</span> {selected.expires_at}</div>
               <div><span className="text-gray-500">MFA:</span> {selected.mfa_verified ? "Verified" : "Not verified"}</div>
             </div>
-            <div><span className="text-xs text-gray-500">Scopes:</span><div className="flex flex-wrap gap-1 mt-1">{selected.scopes.map((sc, i) => <span key={i} className="px-1.5 py-0.5 rounded text-xs bg-gray-100 dark:bg-gray-800 font-mono">{sc}</span>)}</div></div>
+            <div><span className="text-xs text-gray-500">Scopes:</span><div className="flex flex-wrap gap-1 mt-1">{selected.scopes.map((sc: any, i: number) => <span key={i} className="px-1.5 py-0.5 rounded text-xs bg-gray-100 dark:bg-gray-800 font-mono">{sc}</span>)}</div></div>
             <button onClick={() => revoke(selected.id)} aria-label="Revoke selected session" className="w-full px-3 py-1.5 rounded-lg bg-red-600 text-white text-xs font-medium">Revoke Session</button>
           </div>
         )}

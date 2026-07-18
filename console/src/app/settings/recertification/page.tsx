@@ -121,7 +121,7 @@ export default function RecertificationPage() {
                     <span className="text-xs text-gray-400">· Last login: {u.last_login}</span>
                   </div>
                   <div className="flex flex-wrap gap-1 mt-1">
-                    {u.current_roles.map((r, i) => <span key={i} className="px-2 py-0.5 rounded text-xs bg-blue-100 dark:bg-blue-900/30 dark:text-blue-400 font-mono">{r}</span>)}
+                    {u.current_roles.map((r: any, i: number) => <span key={i} className="px-2 py-0.5 rounded text-xs bg-blue-100 dark:bg-blue-900/30 dark:text-blue-400 font-mono">{r}</span>)}
                   </div>
                   {u.comment && <p className="text-xs text-gray-400 mt-1 italic">"{u.comment}"</p>}
                   {commentUser === u.user_id && (

@@ -49,7 +49,7 @@ export default function PasswordResetAnalyticsPage() {
 
   // Pie chart segments
   let cumulativePct = 0;
-  const segments = data?.method_breakdown.map((m, i) => {
+  const segments = data?.method_breakdown.map((m: any, i: number) => {
     const startAngle = (cumulativePct / 100) * 360;
     cumulativePct += m.percentage;
     const endAngle = (cumulativePct / 100) * 360;
@@ -113,7 +113,7 @@ export default function PasswordResetAnalyticsPage() {
               <div className="flex items-center gap-6">
                 <div className="relative w-36 h-36">
                   <svg viewBox="0 0 100 100" className="w-full h-full -rotate-90">
-                    {segments.map((seg, i) => {
+                    {segments.map((seg: any, i: number) => {
                       if (seg.count === 0) return null;
                       const r = 40, cx = 50, cy = 50;
                       const startRad = (seg.startAngle - 90) * Math.PI / 180;
@@ -126,7 +126,7 @@ export default function PasswordResetAnalyticsPage() {
                   </svg>
                 </div>
                 <div className="flex-1 space-y-1">
-                  {segments.map((seg, i) => (
+                  {segments.map((seg: any, i: number) => (
                     <div key={i} className="flex items-center gap-2 text-sm">
                       <span className="w-3 h-3 rounded" style={{ backgroundColor: seg.color }} />
                       <span className="flex-1">{seg.method}</span>
@@ -141,7 +141,7 @@ export default function PasswordResetAnalyticsPage() {
             <div className="rounded-lg border dark:border-gray-800 p-4">
               <h3 className="font-semibold mb-4">Daily Reset Trend</h3>
               <div className="flex items-end gap-0.5 h-32">
-                {data.daily_trend.slice(-30).map((d, i) => (
+                {data.daily_trend.slice(-30).map((d: any, i: number) => (
                   <div key={i} className="flex-1 bg-blue-500 rounded-t" style={{ height: `${(d.count / maxDaily) * 100}%`, minHeight: d.count > 0 ? "3px" : "0" }} title={`${d.date}: ${d.count} resets`} />
                 ))}
               </div>

@@ -112,7 +112,7 @@ export default function AuthSessionResiliencePage() {
               Degraded Mode Indicators
             </h2>
             <div className="space-y-2">
-              {(data?.degraded_mode_indicators ?? []).map((ind, i) => (
+              {(data?.degraded_mode_indicators ?? []).map((ind: any, i: number) => (
                 <div key={i} className="flex items-center justify-between bg-gray-800 rounded-lg p-3">
                   <div className="flex items-center gap-2">
                     {ind.active ? (

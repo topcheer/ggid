@@ -94,7 +94,7 @@ export default function SecurityDashboardPage() {
         </section>
         <section className="bg-white rounded-lg shadow p-6 space-y-2">
           <h2 className="text-sm font-semibold">{t("secDashboard.recommendations")}</h2>
-          {recommendations.map((r, i) => <div key={i} className="text-xs text-gray-600 flex items-start gap-2"><span className="text-blue-600">-</span>{r}</div>)}
+          {recommendations.map((r: any, i: number) => <div key={i} className="text-xs text-gray-600 flex items-start gap-2"><span className="text-blue-600">-</span>{r}</div>)}
         </section>
       </div>
 

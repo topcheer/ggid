@@ -40,7 +40,7 @@ export default function UserProvisioningPipelineConfigPage() {
       <div className="bg-white rounded-lg p-6 shadow">
         <h2 className="text-lg font-semibold mb-4">Pipeline Stages</h2>
         <div className="space-y-2">
-          {form.pipeline_stages.map((s, i) => (
+          {form.pipeline_stages.map((s: any, i: number) => (
             <div key={i} className="flex items-center gap-3 border-b py-2">
               <span className="w-8 h-8 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center text-sm font-bold">{i + 1}</span>
               <div className="flex-1">

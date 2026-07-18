@@ -83,7 +83,7 @@ export default function K8sDeploymentPage() {
             </tr>
           </thead>
           <tbody className="divide-y">
-            {deployments.map((d, idx) => (
+            {deployments.map((d: any, idx: number) => (
               <tr key={idx} className="hover:bg-gray-50">
                 <td className="px-4 py-3 font-mono">{d.serviceName}</td>
                 <td className="px-4 py-3 font-mono text-xs">{d.image}</td>

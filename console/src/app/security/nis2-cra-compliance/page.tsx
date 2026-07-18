@@ -308,7 +308,7 @@ export default function NIS2CRACompliancePage() {
             {reportResult ? (
               <div className="space-y-2">
                 <p className="text-sm font-medium">{reportResult.regulation} {t("compliance.findings")}</p>
-                {reportResult.findings?.map((f, i) => (
+                {reportResult.findings?.map((f: any, i: number) => (
                   <div key={i} className={`rounded-lg border p-3 dark:border-gray-700 ${f.severity === "pass" ? "border-green-200 dark:border-green-800" : f.severity === "warning" ? "border-yellow-200 dark:border-yellow-800" : "border-red-200 dark:border-red-800"}`}>
                     <div className="flex items-center gap-2">
                       <span className={`px-1.5 py-0.5 rounded text-xs font-medium ${f.severity === "pass" ? "bg-green-100 dark:bg-green-900/30 text-green-600" : f.severity === "warning" ? "bg-yellow-100 dark:bg-yellow-900/30 text-yellow-600" : "bg-blue-100 dark:bg-blue-900/30 text-blue-600"}`}>{f.severity}</span>

@@ -98,7 +98,7 @@ export default function AccessFrequencyPage() {
               </div>
             </div>
             <div className="flex items-end gap-0.5 h-48 relative">
-              {data.buckets.map((b, i) => {
+              {data.buckets.map((b: any, i: number) => {
                 const accessPct = (b.access_count / maxAccess) * 100;
                 const userPct = (b.unique_users / maxUsers) * 100;
                 return (
@@ -126,7 +126,7 @@ export default function AccessFrequencyPage() {
                 <h3 className="font-semibold flex items-center gap-2"><AlertTriangle className="w-4 h-4 text-orange-500" /> Anomaly Hours ({data.anomaly_count})</h3>
               </div>
               <div className="divide-y dark:divide-gray-800 max-h-48 overflow-y-auto">
-                {data.buckets.filter((b) => b.is_anomaly).map((b, i) => (
+                {data.buckets.filter((b) => b.is_anomaly).map((b: any, i: number) => (
                   <div key={i} className="px-4 py-2 flex items-center justify-between text-sm">
                     <span className="flex items-center gap-2"><AlertTriangle className="w-3 h-3 text-orange-500" /> {b.hour}</span>
                     <div className="flex items-center gap-3 text-xs text-gray-500">

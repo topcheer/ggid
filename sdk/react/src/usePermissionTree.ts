@@ -75,7 +75,7 @@ export function usePermissionTree(): UsePermissionTreeResult {
   }, [isAuthenticated, fetchTree]);
 
   const toggleExpand = useCallback((id: string) => {
-    setExpanded((prev) => {
+    setExpanded((prev: any) => {
       const next = new Set(prev);
       if (next.has(id)) next.delete(id);
       else next.add(id);

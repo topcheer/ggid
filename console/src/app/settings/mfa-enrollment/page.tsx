@@ -81,7 +81,7 @@ export default function MfaEnrollmentPage() {
         <section className="bg-white rounded-lg shadow p-6 space-y-4">
           <h2 className="text-lg font-semibold">Enrollment Wizard — Step {wizardStep + 1}/4</h2>
           <div className="flex gap-2">
-            {['Select', 'Configure', 'Verify', 'Backup'].map((s, i) => (
+            {['Select', 'Configure', 'Verify', 'Backup'].map((s: any, i: number) => (
               <div key={s} className={`flex-1 text-center text-xs py-1 rounded ${i <= wizardStep ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-400'}`}>{i + 1}. {s}</div>
             ))}
           </div>

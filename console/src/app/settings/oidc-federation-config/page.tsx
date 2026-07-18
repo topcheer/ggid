@@ -89,7 +89,7 @@ export default function OidcFederationConfigPage() {
             </tr>
           </thead>
           <tbody>
-            {form.trust_anchors.map((a, i) => (
+            {form.trust_anchors.map((a: any, i: number) => (
               <tr key={i} className="border-b">
                 <td className="py-2">{a.issuer}</td>
                 <td className="break-all">{a.jwks_uri}</td>
@@ -104,7 +104,7 @@ export default function OidcFederationConfigPage() {
       <div className="bg-white rounded-lg p-6 shadow">
         <h2 className="text-lg font-semibold mb-4">{t("oidcFederation.federatedProviders")}</h2>
         <div className="space-y-2">
-          {form.federated_providers.map((p, i) => (
+          {form.federated_providers.map((p: any, i: number) => (
             <div key={i} className="flex items-center justify-between border-b py-2">
               <div>
                 <span className="font-medium">{p.name}</span>
@@ -122,7 +122,7 @@ export default function OidcFederationConfigPage() {
       <div className="bg-white rounded-lg p-6 shadow">
         <h2 className="text-lg font-semibold mb-4">{t("oidcFederation.entityCategory")}</h2>
         <div className="space-y-3">
-          {form.entity_category_requirements.map((ecr, i) => (
+          {form.entity_category_requirements.map((ecr: any, i: number) => (
             <div key={i} className="border-b pb-2">
               <div className="font-medium">{ecr.category}</div>
               <div className="text-sm text-gray-500">Required Claims: {ecr.required_claims.join(", ")}</div>

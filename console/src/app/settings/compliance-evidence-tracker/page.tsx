@@ -34,7 +34,7 @@ export default function ComplianceEvidenceTrackerPage() {
             Overdue Alerts ({data?.overdue_alerts?.length ?? 0})
           </h2>
           <div className="space-y-1">
-            {(data?.overdue_alerts ?? []).map((a, i) => (
+            {(data?.overdue_alerts ?? []).map((a: any, i: number) => (
               <div key={i} className="flex items-center gap-2 text-xs">
                 <span className="text-red-400 font-mono">{a.control_id}</span>
                 <span className="text-gray-400">{a.framework}</span>
@@ -76,7 +76,7 @@ export default function ComplianceEvidenceTrackerPage() {
               </tr>
             </thead>
             <tbody>
-              {activeMatrix.map((row, i) => (
+              {activeMatrix.map((row: any, i: number) => (
                 <tr key={i} className="border-b border-gray-800">
                   <td className="py-3 pr-3 font-mono text-xs text-blue-400">{row.control}</td>
                   <td className="py-3 pr-3 text-xs text-gray-400">{row.evidence_type}</td>

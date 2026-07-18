@@ -64,7 +64,7 @@ const [breakingChanges, setBreakingChanges] = useState([
   };
 
   const updateVersionStatus = (idx: number, status: string) => {
-    setVersions(prev => prev.map((v, i) => i === idx ? { ...v, status } : v));
+    setVersions(prev => prev.map((v: any, i: number) => i === idx ? { ...v, status } : v));
   };
 
   const totalConsumers = versions.reduce((sum, v) => sum + v.consumers, 0);
@@ -139,7 +139,7 @@ const [breakingChanges, setBreakingChanges] = useState([
             </tr>
           </thead>
           <tbody>
-            {versions.map((v, idx) => (
+            {versions.map((v: any, idx: number) => (
               <tr key={v.version} className="border-b">
                 <td className="py-2 font-mono">{v.version}</td>
                 <td className="py-2">
@@ -174,7 +174,7 @@ const [breakingChanges, setBreakingChanges] = useState([
       <section className="bg-white rounded-lg shadow p-6 space-y-4">
         <h2 className="text-lg font-semibold">{t("backend2.apiVersioning.breakingChangeLog")}</h2>
         <div className="space-y-2">
-          {breakingChanges.map((bc, idx) => (
+          {breakingChanges.map((bc: any, idx: number) => (
             <div key={idx} className="flex items-center gap-3 text-sm border-b pb-2">
               <span className="font-mono text-blue-600">{bc.version}</span>
               <span className="flex-1">{bc.change}</span>

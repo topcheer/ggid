@@ -72,7 +72,7 @@ export default function DataClassificationPolicyPage() {
                     <span className="text-sm font-medium uppercase">{level.name}</span>
                   </div>
                   <div className="space-y-1 ml-6">
-                    {level.handling_rules.map((rule, i) => (
+                    {level.handling_rules.map((rule: any, i: number) => (
                       <div key={i} className="flex items-center gap-2 text-xs text-gray-300">
                         <span className="w-1 h-1 rounded-full bg-gray-500" />
                         {rule}
@@ -87,7 +87,7 @@ export default function DataClassificationPolicyPage() {
           <div className="mt-6 pt-4 border-t border-gray-800">
             <h3 className="text-sm font-semibold mb-2">Attribute Mapping</h3>
             <div className="space-y-1">
-              {(data?.attribute_mapping ?? []).map((m, i) => (
+              {(data?.attribute_mapping ?? []).map((m: any, i: number) => (
                 <div key={i} className="flex items-center justify-between bg-gray-800 rounded px-3 py-1.5">
                   <span className="text-xs text-gray-300">{m.attribute}</span>
                   <span
@@ -111,7 +111,7 @@ export default function DataClassificationPolicyPage() {
               PII Inventory
             </h2>
             <div className="space-y-2">
-              {(data?.pii_inventory ?? []).map((item, i) => (
+              {(data?.pii_inventory ?? []).map((item: any, i: number) => (
                 <div key={i} className="bg-gray-800 rounded-lg p-3">
                   <div className="flex items-center justify-between mb-1">
                     <span className="text-sm font-medium">{item.field}</span>

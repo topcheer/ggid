@@ -37,7 +37,7 @@ function PathNode({ node, depth }: { node: AccessPathNode; depth: number }) {
         <span className="text-xs text-gray-400">via {node.source}</span>
         {node.over_privileged && <AlertOctagon className="h-3 w-3 text-red-500" />}
       </div>
-      {expanded && hasChildren && node.children.map((c, i) => <PathNode key={i} node={c} depth={depth + 1} />)}
+      {expanded && hasChildren && node.children.map((c: any, i: number) => <PathNode key={i} node={c} depth={depth + 1} />)}
     </div>
   );
 }
@@ -94,7 +94,7 @@ export default function AccessPathsPage() {
           {/* Path tree */}
           <div className={cardCls}>
             <h3 className="mb-3 text-sm font-semibold text-gray-700 dark:text-gray-300">Privilege Path Tree</h3>
-            <div className="space-y-0.5">{result.paths.map((node, i) => <PathNode key={i} node={node} depth={0} />)}</div>
+            <div className="space-y-0.5">{result.paths.map((node: any, i: number) => <PathNode key={i} node={node} depth={0} />)}</div>
           </div>
         </>
       )}

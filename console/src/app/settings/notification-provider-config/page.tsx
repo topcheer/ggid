@@ -134,7 +134,7 @@ export default function NotificationProviderConfigPage() {
         <h2 className="text-lg font-semibold">Fallback Chain</h2>
         <p className="text-sm text-gray-500">If the primary provider fails, notifications fall through to the next in chain.</p>
         <div className="flex items-center gap-2 flex-wrap">
-          {fallbackChain.map((t, idx) => (
+          {fallbackChain.map((t: any, idx: number) => (
             <div key={idx} className="flex items-center gap-2">
               <span className="px-3 py-1 bg-blue-100 text-blue-700 rounded text-sm capitalize">{t}</span>
               {idx < fallbackChain.length - 1 && <span className="text-gray-300">{'->'}</span>}

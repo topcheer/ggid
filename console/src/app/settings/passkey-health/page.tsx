@@ -129,8 +129,8 @@ export default function PasskeyHealthPage() {
           <div className={card}>
             <h3 className="mb-4 flex items-center gap-2 text-sm font-semibold uppercase text-gray-400"><TrendingUp className="h-4 w-4" /> Passkey Authentication Trend (14 days)</h3>
             <svg width="100%" viewBox="0 0 420 80" className="overflow-visible">
-              <polyline points={authSpark.map((v, i) => `${i * 30},${70 - (v / maxSpark) * 60}`).join(" ")} fill="none" stroke="#22c55e" strokeWidth="2" strokeLinejoin="round" />
-              {authSpark.map((v, i) => <circle key={i} cx={i * 30} cy={70 - (v / maxSpark) * 60} r="2" fill="#22c55e" />)}
+              <polyline points={authSpark.map((v: any, i: number) => `${i * 30},${70 - (v / maxSpark) * 60}`).join(" ")} fill="none" stroke="#22c55e" strokeWidth="2" strokeLinejoin="round" />
+              {authSpark.map((v: any, i: number) => <circle key={i} cx={i * 30} cy={70 - (v / maxSpark) * 60} r="2" fill="#22c55e" />)}
             </svg>
           </div>
 
@@ -198,7 +198,7 @@ export default function PasskeyHealthPage() {
                 { label: "MFA enforcement enabled for admins", ok: mfa?.enforcement?.required_for_admin ?? false },
                 { label: "Grace period configured", ok: (mfa?.enforcement?.grace_period_days ?? 0) > 0 },
                 { label: "No pending auth sessions stuck > 5 min", ok: (status?.auth_sessions ?? 0) < 10 },
-              ].map((check, i) => (
+              ].map((check: any, i: number) => (
                 <div key={i} className="flex items-center gap-3 rounded-lg border p-3 dark:border-gray-700">
                   {check.ok ? <CheckCircle2 className="h-4 w-4 text-green-500" /> : <XCircle className="h-4 w-4 text-red-500" />}
                   <span className="text-sm">{check.label}</span>

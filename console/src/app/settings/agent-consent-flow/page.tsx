@@ -113,7 +113,7 @@ export default function AgentConsentFlowPage() {
               </tr>
             </thead>
             <tbody>
-              {(data?.consent_history ?? []).map((h, i) => (
+              {(data?.consent_history ?? []).map((h: any, i: number) => (
                 <tr key={i} className="border-b border-gray-800">
                   <td className="py-3 pr-3 text-sm">{h.agent}</td>
                   <td className="py-3 pr-3 text-xs text-gray-400">{h.user}</td>

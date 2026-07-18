@@ -74,3 +74,5 @@ service.test
 transform_pages.py
 transform_pages_v2.py
 wire_pages.py
+# Added by ggshield
+.cache_ggshield

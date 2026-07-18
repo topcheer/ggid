@@ -216,7 +216,7 @@ export default function ConsentManagementPage() {
           <div className={cardCls}>
             <h2 className="mb-4 flex items-center gap-2 text-sm font-semibold uppercase text-gray-400"><Eye className="h-4 w-4" /> Human-Readable Preview</h2>
             <div className="space-y-3">
-              {parseRAR().map((detail, i) => (
+              {parseRAR().map((detail: any, i: number) => (
                 <div key={i} className="rounded-lg border p-3 dark:border-gray-700">
                   <p className="font-semibold text-sm text-gray-900 dark:text-white">{detail.type.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase())}</p>
                   <div className="mt-2 space-y-1">

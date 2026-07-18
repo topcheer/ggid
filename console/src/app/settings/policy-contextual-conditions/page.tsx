@@ -141,7 +141,7 @@ export default function PolicyContextualConditionsPage() {
             Saved Condition Templates
           </h2>
           <div className="space-y-2">
-            {(data?.saved_condition_templates ?? []).map((tmpl, i) => (
+            {(data?.saved_condition_templates ?? []).map((tmpl: any, i: number) => (
               <div key={i} className="bg-gray-800 rounded-lg p-3">
                 <div className="flex items-center justify-between mb-1">
                   <p className="text-sm font-medium">{tmpl.name}</p>

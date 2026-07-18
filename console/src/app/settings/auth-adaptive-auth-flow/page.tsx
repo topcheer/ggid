@@ -47,7 +47,7 @@ export default function AuthAdaptiveAuthFlowPage() {
                 {entry.risk_level}
               </span>
               <div className="flex items-center gap-2">
-                {entry.required_factors.map((factor, i) => (
+                {entry.required_factors.map((factor: any, i: number) => (
                   <span key={i} className="flex items-center gap-1">
                     <span className="text-xs px-2 py-1 bg-gray-700 rounded">{factor}</span>
                     {i < entry.required_factors.length - 1 && <span className="text-gray-500 text-xs">+</span>}
@@ -91,7 +91,7 @@ export default function AuthAdaptiveAuthFlowPage() {
             Step-Up Triggers
           </h2>
           <div className="space-y-2">
-            {(data?.step_up_triggers ?? []).map((t, i) => (
+            {(data?.step_up_triggers ?? []).map((t: any, i: number) => (
               <div key={i} className="flex items-center justify-between bg-gray-800 rounded-lg p-3">
                 <div className="flex items-center gap-2">
                   <Lock className="w-3 h-3 text-yellow-400" />

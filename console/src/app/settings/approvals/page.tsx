@@ -93,7 +93,7 @@ export default function ApprovalsPage() {
                   {req.description && <p className="mt-1 text-sm text-gray-500">{req.description}</p>}
                   {/* Approver chain */}
                   <div className="mt-2 flex items-center gap-1">
-                    {req.approver_chain.map((s, i) => (
+                    {req.approver_chain.map((s: any, i: number) => (
                       <React.Fragment key={i}>
                         <div className="flex items-center gap-1 rounded px-2 py-0.5 text-xs">
                           {statusIcons[s.status]}

@@ -63,7 +63,7 @@ export default function OAuthResourceIndicatorsPage() {
               <div key={client.client_id} className="bg-gray-800 rounded-lg p-3">
                 <p className="text-sm font-mono text-blue-400 mb-2">{client.client_id}</p>
                 <div className="space-y-1">
-                  {client.patterns.map((p, i) => (
+                  {client.patterns.map((p: any, i: number) => (
                     <div key={i} className="flex items-center gap-2">
                       <span
                         className={"text-xs px-2 py-0.5 rounded " + (
@@ -153,7 +153,7 @@ export default function OAuthResourceIndicatorsPage() {
             Rejected Requests Log
           </h2>
           <div className="space-y-2 max-h-48 overflow-y-auto">
-            {(data?.rejected_requests_log ?? []).map((r, i) => (
+            {(data?.rejected_requests_log ?? []).map((r: any, i: number) => (
               <div key={i} className="flex items-center gap-3 bg-gray-800 rounded-lg p-2">
                 <AlertTriangle className="w-3 h-3 text-red-400 flex-shrink-0" />
                 <div className="flex-1">

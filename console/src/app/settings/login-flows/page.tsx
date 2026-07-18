@@ -77,7 +77,7 @@ export default function LoginFlowsPage() {
               <div className="flex items-center gap-3"><div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-100 dark:bg-blue-900/30"><Workflow className="h-5 w-5 text-blue-500" /></div><div><div className="flex items-center gap-2"><h3 className="font-semibold text-sm">{f.name}</h3>{f.default && <span className="px-1.5 py-0.5 rounded text-xs bg-green-100 dark:bg-green-900/30 text-green-600">{t("loginFlows.default")}</span>}{!f.enabled && <span className="px-1.5 py-0.5 rounded text-xs bg-gray-100 dark:bg-gray-800 text-gray-400">{t("loginFlows.disabled")}</span>}</div><p className="text-xs text-gray-400">{f.desc}</p></div></div>
               <div className="flex gap-1"><button onClick={() => { setEditingFlow(f); setTab("editor"); }} aria-label={"Edit " + f.name} className="rounded p-1.5 text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700"><Workflow className="h-3.5 w-3.5" /></button><button onClick={() => { setEditingFlow(f); setShowPreview(true); setPreviewStep(0); setTab("preview"); }} aria-label={"Preview " + f.name} className="rounded p-1.5 text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700"><Eye className="h-3.5 w-3.5" /></button></div>
             </div>
-            <div className="flex items-center gap-1 flex-wrap">{f.steps.map((s, i) => { const st = STEP_TYPES.find(t => t.type === s.type); const SIcon = st?.icon || Lock; return (
+            <div className="flex items-center gap-1 flex-wrap">{f.steps.map((s: any, i: number) => { const st = STEP_TYPES.find(t => t.type === s.type); const SIcon = st?.icon || Lock; return (
               <div key={s.id} className="flex items-center gap-1">{i > 0 && <ArrowRight className="h-3 w-3 text-gray-300" />}<span className={`flex items-center gap-1 rounded-lg px-2 py-1 text-xs ${st?.color || "bg-gray-100 dark:bg-gray-700"}`}><SIcon className="h-3 w-3" /> {s.label}</span></div>
             );})}</div>
           </div>
@@ -101,7 +101,7 @@ export default function LoginFlowsPage() {
               <div className="mb-4 space-y-3"><div><label className="text-sm font-medium">{t("loginFlows.flowName")}</label><input type="text" value={editingFlow.name} onChange={e => setEditingFlow({ ...editingFlow, name: e.target.value })} placeholder="Custom Login Flow" className="mt-1 w-full rounded-lg border dark:border-gray-700 dark:bg-gray-900 px-3 py-2 text-sm" /></div><div><label className="text-sm font-medium">{t("loginFlows.description")}</label><input type="text" value={editingFlow.desc} onChange={e => setEditingFlow({ ...editingFlow, desc: e.target.value })} placeholder="Password + risk-based MFA" className="mt-1 w-full rounded-lg border dark:border-gray-700 dark:bg-gray-900 px-3 py-2 text-sm" /></div></div>
               <div className="space-y-2">
                 {editingFlow.steps.length === 0 && <div className="py-8 text-center text-sm text-gray-400">{t("loginFlows.noSteps")}</div>}
-                {editingFlow.steps.map((s, i) => { const st = STEP_TYPES.find(t => t.type === s.type); const SIcon = st?.icon || Lock; return (
+                {editingFlow.steps.map((s: any, i: number) => { const st = STEP_TYPES.find(t => t.type === s.type); const SIcon = st?.icon || Lock; return (
                   <div key={s.id} className="flex items-center gap-3 rounded-lg border p-3 dark:border-gray-700">
                     <span className="text-xs font-mono text-gray-400 w-6">{i + 1}</span>
                     <span className={`flex h-8 w-8 items-center justify-center rounded-lg ${st?.color || "bg-gray-100 dark:bg-gray-700"}`}><SIcon className="h-4 w-4" /></span>
@@ -125,7 +125,7 @@ export default function LoginFlowsPage() {
             <div className="mx-auto max-w-sm">
               <div className="rounded-xl border-2 border-gray-200 dark:border-gray-700 p-6">
                 <div className="text-center mb-6"><User className="mx-auto h-12 w-12 text-gray-300" /><h2 className="mt-2 text-lg font-bold">{t("loginFlows.signIn")}</h2><p className="text-xs text-gray-400">{editingFlow.name || t("loginFlows.untitled")}</p></div>
-                {editingFlow.steps.slice(0, previewStep + 1).map((s, i) => { const st = STEP_TYPES.find(t => t.type === s.type); const SIcon = st?.icon || Lock; return (
+                {editingFlow.steps.slice(0, previewStep + 1).map((s: any, i: number) => { const st = STEP_TYPES.find(t => t.type === s.type); const SIcon = st?.icon || Lock; return (
                   <div key={s.id} className={`mb-3 ${i < previewStep ? "opacity-50" : ""}`}>
                     <label className="text-xs font-medium">{s.label}</label>
                     <div className="mt-1 flex items-center gap-2 rounded-lg border p-3 dark:border-gray-700"><SIcon className="h-4 w-4 text-gray-400" /><div className="flex-1 h-4 rounded bg-gray-100 dark:bg-gray-700" />{i < previewStep && <Check className="h-4 w-4 text-green-500" />}</div>

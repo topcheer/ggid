@@ -62,7 +62,7 @@ export default function DataSovereigntyConfigPage() {
       <div className="bg-white rounded-lg p-6 shadow">
         <h2 className="text-lg font-semibold mb-4">Sovereignty Violations</h2>
         <div className="space-y-2">
-          {form.sovereignty_violations.map((v, i) => (
+          {form.sovereignty_violations.map((v: any, i: number) => (
             <div key={i} className="flex items-center justify-between border-b py-2">
               <div><span className="font-medium">{v.region}</span><span className="ml-2 text-sm text-gray-500">{v.description}</span></div>
               <div className="flex items-center gap-3">

@@ -152,7 +152,7 @@ export default function IdentityAccessRevokePage() {
               Execution Log
             </h2>
             <div className="space-y-2 max-h-64 overflow-y-auto">
-              {(data?.execution_log ?? []).map((entry, i) => (
+              {(data?.execution_log ?? []).map((entry: any, i: number) => (
                 <div key={i} className="flex items-center gap-2 bg-gray-800 rounded-lg p-2">
                   {entry.success ? <CheckCircle className="w-3 h-3 text-green-400" /> : <AlertTriangle className="w-3 h-3 text-red-400" />}
                   <div className="flex-1">

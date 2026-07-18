@@ -99,7 +99,7 @@ export default function PolicyImpactAnalysisPage() {
                     </tr>
                   </thead>
                   <tbody>
-                    {analysis.permission_delta.slice(0, 10).map((d, i) => (
+                    {analysis.permission_delta.slice(0, 10).map((d: any, i: number) => (
                       <tr key={i} className="border-b border-gray-800">
                         <td className="py-2 pr-4 text-gray-300">{d.user}</td>
                         <td className="text-right py-2 px-2 text-green-400">{d.added_perms}</td>
@@ -121,7 +121,7 @@ export default function PolicyImpactAnalysisPage() {
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <p className="text-xs text-gray-400 mb-2">Current State</p>
-                    {analysis.before.map((item, i) => (
+                    {analysis.before.map((item: any, i: number) => (
                       <div key={i} className="bg-gray-800 rounded px-3 py-1.5 mb-1 text-xs">
                         <span className="text-gray-400">{item.metric}: </span>
                         <span className="font-medium">{item.value}</span>
@@ -130,7 +130,7 @@ export default function PolicyImpactAnalysisPage() {
                   </div>
                   <div>
                     <p className="text-xs text-blue-400 mb-2">After Change</p>
-                    {analysis.after.map((item, i) => (
+                    {analysis.after.map((item: any, i: number) => (
                       <div key={i} className="bg-gray-800 rounded px-3 py-1.5 mb-1 text-xs">
                         <span className="text-gray-400">{item.metric}: </span>
                         <span className={"font-medium " + (item.value !== analysis.before[i]?.value ? "text-yellow-400" : "")}>
@@ -149,7 +149,7 @@ export default function PolicyImpactAnalysisPage() {
                   Risk Score Projection (14d)
                 </h2>
                 <div className="flex items-end gap-1 h-32">
-                  {analysis.timeline_projection.map((score, i) => (
+                  {analysis.timeline_projection.map((score: any, i: number) => (
                     <div key={i} className="flex-1 flex flex-col items-center gap-1">
                       <div
                         className={"w-full rounded-t " + (score >= 70 ? "bg-red-500" : score >= 40 ? "bg-yellow-500" : "bg-green-500")}

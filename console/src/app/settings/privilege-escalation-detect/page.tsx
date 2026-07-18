@@ -117,7 +117,7 @@ export default function PrivilegeEscalationDetectPage() {
           Recommended Actions
         </h2>
         <div className="space-y-2">
-          {(data?.recommended_actions ?? []).map((a, i) => (
+          {(data?.recommended_actions ?? []).map((a: any, i: number) => (
             <div key={i} className="flex items-start gap-3 bg-gray-800 rounded-lg p-3">
               <span className="text-xs font-bold text-blue-400 mt-0.5">{i + 1}.</span>
               <div className="flex-1">

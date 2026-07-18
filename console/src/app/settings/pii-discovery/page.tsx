@@ -62,7 +62,7 @@ export default function PIIDiscoveryPage() {
               </tr>
             </thead>
             <tbody>
-              {(data?.data_sources ?? []).map((s, i) => (
+              {(data?.data_sources ?? []).map((s: any, i: number) => (
                 <tr key={i} className="border-b border-gray-800">
                   <td className="py-3 pr-3 text-xs font-mono text-blue-400">{s.table}.{s.column}</td>
                   <td className="py-3 pr-3">
@@ -92,7 +92,7 @@ export default function PIIDiscoveryPage() {
         <div className="bg-gray-900 rounded-xl p-6">
           <h2 className="text-sm font-semibold text-red-400 mb-3">Unencrypted PII Alerts</h2>
           <div className="space-y-2">
-            {(data?.unencrypted_pii_alerts ?? []).map((a, i) => (
+            {(data?.unencrypted_pii_alerts ?? []).map((a: any, i: number) => (
               <div key={i} className="flex items-center gap-2 bg-red-900/20 border border-red-800 rounded-lg p-2">
                 <AlertTriangle className="w-4 h-4 text-red-400 flex-shrink-0" />
                 <span className="text-xs text-gray-300 font-mono">{a.location}</span>

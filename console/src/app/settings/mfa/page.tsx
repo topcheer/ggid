@@ -105,7 +105,7 @@ export default function MFAPage() {
   };
 
   const downloadCodes = () => {
-    const text = "GGID Recovery Codes\n\n" + recoveryCodes.map((c, i) => `${i + 1}. ${c}`).join("\n") + "\n\nStore these in a safe place.";
+    const text = "GGID Recovery Codes\n\n" + recoveryCodes.map((c: any, i: number) => `${i + 1}. ${c}`).join("\n") + "\n\nStore these in a safe place.";
     const blob = new Blob([text], { type: "text/plain" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
@@ -330,7 +330,7 @@ export default function MFAPage() {
               </p>
             </div>
             <div className="grid grid-cols-2 gap-2 sm:grid-cols-5">
-              {recoveryCodes.map((code, i) => (
+              {recoveryCodes.map((code: any, i: number) => (
                 <div key={i} className="rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-center font-mono text-sm dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300">
                   {code}
                 </div>

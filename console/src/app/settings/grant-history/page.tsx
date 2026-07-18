@@ -61,7 +61,7 @@ export default function GrantHistoryPage() {
                   <span className="text-xs text-gray-400">{e.granted_at}</span>
                 </div>
                 <div className="mt-1 text-sm"><span className="text-gray-500">{t("big1.grantHistory.user")}</span><span className="font-medium">{e.username}</span></div>
-                <div className="mt-1 flex flex-wrap gap-1">{e.scopes.map((s, i) => <span key={i} className="px-1.5 py-0.5 rounded text-xs bg-gray-100 dark:bg-gray-800 font-mono">{s}</span>)}</div>
+                <div className="mt-1 flex flex-wrap gap-1">{e.scopes.map((s: any, i: number) => <span key={i} className="px-1.5 py-0.5 rounded text-xs bg-gray-100 dark:bg-gray-800 font-mono">{s}</span>)}</div>
                 <div className="mt-1 text-xs text-gray-400">{t("big1.grantHistory.expires")}{e.expires_at}{e.revoked_at && <span className="text-red-500 ml-2">{t("big1.grantHistory.revoked")}{e.revoked_at}</span>}</div>
                 {showEvidence && <div className="mt-2 border-t dark:border-gray-800 pt-1 text-xs text-gray-400">{t("big1.grantHistory.consentIP1921681100EvidenceHash0xabc123")}</div>}
               </div>

@@ -60,7 +60,7 @@ export default function LoginOrchestratorPage() {
     if (newIdx < 0 || newIdx >= methods.length) return;
     const updated = [...methods];
     [updated[idx], updated[newIdx]] = [updated[newIdx], updated[idx]];
-    setMethods(updated.map((m, i) => ({ ...m, priority: i + 1 })));
+    setMethods(updated.map((m: any, i: number) => ({ ...m, priority: i + 1 })));
   };
 
   const toggleMethod = (id: string) => setMethods((p) => p.map((m) => m.id === id ? { ...m, enabled: !m.enabled } : m));
@@ -101,7 +101,7 @@ export default function LoginOrchestratorPage() {
           <div className={cardCls}>
             <h3 className="mb-4 text-sm font-semibold text-gray-700 dark:text-gray-300">Auth Method Priority</h3>
             <div className="space-y-2">
-              {methods.map((m, idx) => (
+              {methods.map((m: any, idx: number) => (
                 <div key={m.id} className={`flex items-center justify-between rounded-lg border px-4 py-3 ${m.enabled ? "border-gray-200 dark:border-gray-700" : "border-gray-200 opacity-60 dark:border-gray-700"}`}>
                   <div className="flex items-center gap-3">
                     <div className="flex flex-col">

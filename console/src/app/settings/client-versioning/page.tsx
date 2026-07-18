@@ -105,7 +105,7 @@ export default function ClientVersioningPage() {
           <div className="rounded-lg border dark:border-gray-800">
             <div className="px-4 py-3 border-b dark:border-gray-800"><h3 className="font-semibold flex items-center gap-2"><History className="w-4 h-4" /> Version History ({versions.length})</h3></div>
             <div className="relative max-h-96 overflow-y-auto">
-              {versions.map((v, i) => (
+              {versions.map((v: any, i: number) => (
                 <div key={v.version} className="relative flex gap-3 px-4 py-3">
                   {i < versions.length - 1 && <div className="absolute left-[27px] top-14 bottom-0 w-0.5 bg-gray-200 dark:bg-gray-800" />}
                   <div className="relative z-10 w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 bg-blue-50 dark:bg-blue-900/20 text-blue-600 font-bold text-xs">v{v.version}</div>
@@ -133,13 +133,13 @@ export default function ClientVersioningPage() {
             {diff && hasChanges ? (
               <div className="space-y-3">
                 {(diff.urisAdded.length > 0 || diff.urisRemoved.length > 0) && (
-                  <div><h4 className="text-sm font-medium mb-1">Redirect URIs</h4>{diff.urisAdded.map((v, i) => <div key={`ua${i}`} className="text-xs text-green-600 font-mono">+ {v}</div>)}{diff.urisRemoved.map((v, i) => <div key={`ur${i}`} className="text-xs text-red-600 font-mono line-through">- {v}</div>)}</div>
+                  <div><h4 className="text-sm font-medium mb-1">Redirect URIs</h4>{diff.urisAdded.map((v: any, i: number) => <div key={`ua${i}`} className="text-xs text-green-600 font-mono">+ {v}</div>)}{diff.urisRemoved.map((v: any, i: number) => <div key={`ur${i}`} className="text-xs text-red-600 font-mono line-through">- {v}</div>)}</div>
                 )}
                 {(diff.scopesAdded.length > 0 || diff.scopesRemoved.length > 0) && (
-                  <div><h4 className="text-sm font-medium mb-1">Scopes</h4>{diff.scopesAdded.map((v, i) => <div key={`sa${i}`} className="text-xs text-green-600 font-mono">+ {v}</div>)}{diff.scopesRemoved.map((v, i) => <div key={`sr${i}`} className="text-xs text-red-600 font-mono line-through">- {v}</div>)}</div>
+                  <div><h4 className="text-sm font-medium mb-1">Scopes</h4>{diff.scopesAdded.map((v: any, i: number) => <div key={`sa${i}`} className="text-xs text-green-600 font-mono">+ {v}</div>)}{diff.scopesRemoved.map((v: any, i: number) => <div key={`sr${i}`} className="text-xs text-red-600 font-mono line-through">- {v}</div>)}</div>
                 )}
                 {(diff.grantsAdded.length > 0 || diff.grantsRemoved.length > 0) && (
-                  <div><h4 className="text-sm font-medium mb-1">Grant Types</h4>{diff.grantsAdded.map((v, i) => <div key={`ga${i}`} className="text-xs text-green-600 font-mono">+ {v}</div>)}{diff.grantsRemoved.map((v, i) => <div key={`gr${i}`} className="text-xs text-red-600 font-mono line-through">- {v}</div>)}</div>
+                  <div><h4 className="text-sm font-medium mb-1">Grant Types</h4>{diff.grantsAdded.map((v: any, i: number) => <div key={`ga${i}`} className="text-xs text-green-600 font-mono">+ {v}</div>)}{diff.grantsRemoved.map((v: any, i: number) => <div key={`gr${i}`} className="text-xs text-red-600 font-mono line-through">- {v}</div>)}</div>
                 )}
               </div>
             ) : diff ? (

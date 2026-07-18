@@ -30,7 +30,7 @@ export function useIdpMetadataImportConfig() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const importMetadata = useCallback(async (_input: string) => {
-    setData((prev) => prev ? { ...prev, preview: { entity_id: "https://idp.example.com", sso_url: "https://idp.example.com/sso", name_id_format: "urn:oasis:names:tc:SAML:2.0:nameid-format:transient", cert_count: 2, valid: true } } : prev);
+    setData((prev: any) => prev ? { ...prev, preview: { entity_id: "https://idp.example.com", sso_url: "https://idp.example.com/sso", name_id_format: "urn:oasis:names:tc:SAML:2.0:nameid-format:transient", cert_count: 2, valid: true } } : prev);
   }, []);
   const fetchData = useCallback(async () => {
     setLoading(true); setError(null);

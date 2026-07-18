@@ -109,7 +109,7 @@ export default function IdentityDynamicGroupingPage() {
               <div className="bg-gray-800 rounded-lg p-3">
                 <p className="text-xs text-gray-400 mb-2">{t("idDynamicGrouping.matchedMembers")} ({group.member_count}):</p>
                 <div className="space-y-1 max-h-48 overflow-y-auto">
-                  {(group.preview_members ?? []).map((m, i) => (
+                  {(group.preview_members ?? []).map((m: any, i: number) => (
                     <div key={i} className="flex items-center gap-2 bg-gray-900 rounded p-2">
                       <Users className="w-3 h-3 text-gray-400" />
                       <span className="text-xs font-medium">{m.username}</span>

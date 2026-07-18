@@ -126,7 +126,7 @@ export default function AccountLockoutConfigPage() {
           <tbody>
             {lockouts.length === 0 ? (
               <tr><td colSpan={6} className="p-3 text-center text-gray-400">No data available</td></tr>
-            ) : lockouts.map((l, idx) => (
+            ) : lockouts.map((l: any, idx: number) => (
               <tr key={idx} className="border-b">
                 <td className="p-3 font-medium">{l.user}</td>
                 <td className="p-3">{l.attempts}</td>

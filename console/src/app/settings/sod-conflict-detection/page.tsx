@@ -182,10 +182,10 @@ export default function SodConflictDetectionPage() {
             </tr>
           </thead>
           <tbody>
-            {roles.map((role, i) => (
+            {roles.map((role: any, i: number) => (
               <tr key={role}>
                 <td className="p-2 font-medium capitalize text-gray-500">{role}</td>
-                {matrix[i].map((v, j) => (
+                {matrix[i].map((v: any, j: number) => (
                   <td key={j} className={`p-2 text-center ${cellColor(v)}`}>
                     {v > 0 ? v : '-'}
                   </td>

@@ -88,7 +88,7 @@ export default function AuditDataSovereigntyPage() {
         <div className="bg-gray-900 rounded-xl p-6">
           <h2 className="text-lg font-semibold mb-4">Cross-Border Transfer Rules</h2>
           <div className="space-y-2">
-            {(data?.cross_border_transfer_rules ?? []).map((rule, i) => (
+            {(data?.cross_border_transfer_rules ?? []).map((rule: any, i: number) => (
               <div key={i} className="bg-gray-800 rounded-lg p-3">
                 <div className="flex items-center gap-2 mb-1">
                   <span className="text-sm font-medium text-blue-400">{rule.source_region}</span>
@@ -133,7 +133,7 @@ export default function AuditDataSovereigntyPage() {
             Sovereignty Violations
           </h2>
           <div className="space-y-2">
-            {(data?.sovereignty_violations ?? []).map((v, i) => (
+            {(data?.sovereignty_violations ?? []).map((v: any, i: number) => (
               <div key={i} className="bg-gray-800 rounded-lg p-3">
                 <div className="flex items-center justify-between mb-1">
                   <p className="text-sm font-medium">{v.violation_type}</p>

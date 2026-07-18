@@ -113,7 +113,7 @@ export default function PolicyAbacEvaluatorPage() {
               <div>
                 <p className="text-xs text-gray-400">Obligations</p>
                 <div className="flex gap-1">
-                  {result.obligations.map((ob, i) => (
+                  {result.obligations.map((ob: any, i: number) => (
                     <span key={i} className="text-xs px-2 py-0.5 rounded bg-yellow-900 text-yellow-300">{ob}</span>
                   ))}
                 </div>
@@ -131,7 +131,7 @@ export default function PolicyAbacEvaluatorPage() {
             Matched Rules
           </h2>
           <div className="space-y-2">
-            {(data?.matched_rules ?? []).map((rule, i) => (
+            {(data?.matched_rules ?? []).map((rule: any, i: number) => (
               <div key={i} className="bg-gray-800 rounded-lg p-3">
                 <div className="flex items-center justify-between mb-1">
                   <p className="text-sm font-medium">{rule.policy_name}</p>
@@ -161,7 +161,7 @@ export default function PolicyAbacEvaluatorPage() {
             Attribute Resolution Trace
           </h2>
           <div className="space-y-2">
-            {(data?.attribute_resolution_trace ?? []).map((step, i) => (
+            {(data?.attribute_resolution_trace ?? []).map((step: any, i: number) => (
               <div key={i} className="flex items-start gap-3">
                 <div className={"w-6 h-6 rounded flex items-center justify-center text-xs font-bold flex-shrink-0 " + (
                   step.resolved ? "bg-green-900 text-green-300" : "bg-red-900 text-red-300"

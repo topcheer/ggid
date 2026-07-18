@@ -103,7 +103,7 @@ export default function PolicySimulationPage() {
               </div>
               <div className="rounded-lg border dark:border-gray-800 max-h-80 overflow-y-auto">
                 <div className="divide-y dark:divide-gray-800">
-                  {results.map((r, i) => (
+                  {results.map((r: any, i: number) => (
                     <div key={i} className="px-3 py-2 text-xs">
                       <div className="flex items-center gap-2">
                         {r.status === "would_allow" ? <Check className="w-3 h-3 text-green-500" /> : r.status === "would_deny" ? <X className="w-3 h-3 text-red-500" /> : <Minus className="w-3 h-3 text-gray-400" />}

@@ -121,7 +121,7 @@ export default function ZeroTrustPosturePage() {
           </div>
           {data?.recent_violations && data.recent_violations.length > 0 ? (
             <div className="space-y-2">
-              {data.recent_violations.slice(0, 5).map((v, i) => (
+              {data.recent_violations.slice(0, 5).map((v: any, i: number) => (
                 <div key={i} className="flex items-center gap-3 bg-gray-800 rounded-lg p-3">
                   <ShieldAlert className="w-4 h-4 text-red-400 flex-shrink-0" />
                   <div className="flex-1 min-w-0">
@@ -144,7 +144,7 @@ export default function ZeroTrustPosturePage() {
         <div className="bg-gray-900 rounded-xl p-6">
           <h2 className="text-lg font-semibold mb-4">Posture Trend (30d)</h2>
           <div className="flex items-end gap-1 h-40">
-            {(data?.posture_trend_30d ?? []).map((t, i) => (
+            {(data?.posture_trend_30d ?? []).map((t: any, i: number) => (
               <div key={i} className="flex-1 flex flex-col items-center gap-1">
                 <div
                   className="w-full rounded-t bg-blue-500 hover:bg-blue-400 transition-all"

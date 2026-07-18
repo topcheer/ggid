@@ -135,8 +135,8 @@ export default function ClientMigrationPage() {
       <div>
         <h4 className="text-sm font-medium mb-1">{title}</h4>
         <div className="space-y-1">
-          {d.added.map((v, i) => (<div key={`a${i}`} className="flex items-center gap-2 text-xs"><span className="text-green-600 font-mono">+ {v}</span></div>))}
-          {d.removed.map((v, i) => (<div key={`r${i}`} className="flex items-center gap-2 text-xs"><span className="text-red-600 line-through font-mono">- {v}</span></div>))}
+          {d.added.map((v: any, i: number) => (<div key={`a${i}`} className="flex items-center gap-2 text-xs"><span className="text-green-600 font-mono">+ {v}</span></div>))}
+          {d.removed.map((v: any, i: number) => (<div key={`r${i}`} className="flex items-center gap-2 text-xs"><span className="text-red-600 line-through font-mono">- {v}</span></div>))}
         </div>
       </div>
     );
@@ -163,7 +163,7 @@ export default function ClientMigrationPage() {
               <div key={field} className="rounded-lg border dark:border-gray-800 p-4">
                 <h3 className="font-semibold text-sm mb-2 capitalize">{field.replace("_", " ")}</h3>
                 <div className="space-y-1">
-                  {draft[field].map((val, i) => (
+                  {draft[field].map((val: any, i: number) => (
                     <div key={i} className="flex items-center gap-2">
                       <span className="flex-1 px-2 py-1 rounded text-xs font-mono bg-gray-100 dark:bg-gray-800 truncate">{val}</span>
                       <button onClick={() => removeField(field, i)} className="p-1 text-red-400 hover:text-red-600"><Trash2 className="w-3 h-3" /></button>

@@ -110,8 +110,8 @@ export default function PolicySimulationCenterPage() {
             <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
               <h3 className="text-sm font-medium text-gray-700">Result</h3>
               <div className="mt-2"><span className={`text-2xl font-bold ${decisionColor(result.decision)}`}>{result.decision.toUpperCase()}</span><span className="ml-3 text-sm text-gray-500">{result.durationMs}ms</span></div>
-              {result.matchedRules && result.matchedRules.length > 0 && (<div className="mt-3 space-y-1">{result.matchedRules.map((r, i) => <div key={i} className="text-sm"><span className={`px-2 py-0.5 rounded text-xs ${r.effect === 'deny' ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}`}>{r.effect}</span> {r.name}</div>)}</div>)}
-              {result.trace && result.trace.length > 0 && (<div className="mt-3 space-y-1">{result.trace.map((t, i) => <div key={i} className="text-xs text-gray-600 font-mono">{t}</div>)}</div>)}
+              {result.matchedRules && result.matchedRules.length > 0 && (<div className="mt-3 space-y-1">{result.matchedRules.map((r: any, i: number) => <div key={i} className="text-sm"><span className={`px-2 py-0.5 rounded text-xs ${r.effect === 'deny' ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}`}>{r.effect}</span> {r.name}</div>)}</div>)}
+              {result.trace && result.trace.length > 0 && (<div className="mt-3 space-y-1">{result.trace.map((t: any, i: number) => <div key={i} className="text-xs text-gray-600 font-mono">{t}</div>)}</div>)}
             </div>
           )}
         </div>

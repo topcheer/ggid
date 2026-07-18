@@ -122,7 +122,7 @@ export function useScimGroups(): UseScimGroupsResult {
           method: 'DELETE', headers: makeHeaders(),
         });
         if (!resp.ok) throw new Error(`Failed to delete group (${resp.status})`);
-        setGroups((prev) => prev.filter((g) => g.id !== id));
+        setGroups((prev: any) => prev.filter((g) => g.id !== id));
         return true;
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Unknown error');

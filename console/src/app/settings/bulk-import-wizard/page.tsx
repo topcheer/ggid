@@ -71,7 +71,7 @@ export default function BulkImportWizard() {
       const rows = lines.slice(1, 11).map(line => {
         const vals = line.split(",").map(v => v.trim().replace(/"/g, ""));
         const row: ParsedRow = {};
-        headers.forEach((h, i) => { row[h] = vals[i] || ""; });
+        headers.forEach((h: any, i: number) => { row[h] = vals[i] || ""; });
         return row;
       });
       setParsedRows(rows);
@@ -154,7 +154,7 @@ export default function BulkImportWizard() {
 
       {/* Step indicator */}
       <div className="flex items-center gap-1">
-        {STEPS.map((s, i) => (
+        {STEPS.map((s: any, i: number) => (
           <div key={i} className="flex items-center gap-1 flex-1">
             <div className={"flex h-8 w-8 items-center justify-center rounded-full text-xs font-bold transition " + (i < step ? "bg-green-600 text-white" : i === step ? "bg-indigo-600 text-white" : "bg-gray-200 dark:bg-gray-700 text-gray-400")}>
               {i < step ? <Check className="h-4 w-4" /> : i + 1}
@@ -258,7 +258,7 @@ export default function BulkImportWizard() {
               <table className="w-full text-sm">
                 <thead className="bg-gray-50 dark:bg-gray-900/50"><tr>{GGID_FIELDS.filter(f => Object.values(fieldMapping).includes(f)).map(f => <th key={f} scope="col" className="px-3 py-2 text-left font-medium text-xs">{f}</th>)}</tr></thead>
                 <tbody className="divide-y dark:divide-gray-800">
-                  {parsedRows.slice(0, 5).map((row, i) => (
+                  {parsedRows.slice(0, 5).map((row: any, i: number) => (
                     <tr key={i}>{GGID_FIELDS.filter(f => Object.values(fieldMapping).includes(f)).map(f => {
                       const srcHeader = Object.entries(fieldMapping).find(([, v]) => v === f)?.[0] || "";
                       return <td key={f} className="px-3 py-2 text-xs font-mono">{row[srcHeader] || "—"}</td>;
@@ -277,7 +277,7 @@ export default function BulkImportWizard() {
                 <div className="h-3 overflow-hidden rounded-full bg-gray-200 dark:bg-gray-700"><div className={"h-full rounded-full transition-all " + (progress.failed > 0 ? "bg-yellow-500" : "bg-green-500")} style={{ width: `${progress.total ? (progress.processed / progress.total) * 100 : 0}%` }} /></div>
                 {progress.errors.length > 0 && (
                   <div className="mt-3"><div className="flex items-center justify-between"><span className="text-xs font-semibold uppercase text-gray-400">Errors</span><button onClick={downloadErrors} className="flex items-center gap-1 text-xs text-indigo-600 hover:underline"><Download className="h-3 w-3" /> Download CSV</button></div>
-                    <div className="mt-2 max-h-32 overflow-y-auto space-y-1">{progress.errors.map((e, i) => <div key={i} className="flex items-center gap-2 text-xs"><XCircle className="h-3 w-3 text-red-500" /><span>Row {e.row}: <span className="text-red-600">{e.error}</span> — <span className="text-gray-400">{e.suggestion}</span></span></div>)}</div>
+                    <div className="mt-2 max-h-32 overflow-y-auto space-y-1">{progress.errors.map((e: any, i: number) => <div key={i} className="flex items-center gap-2 text-xs"><XCircle className="h-3 w-3 text-red-500" /><span>Row {e.row}: <span className="text-red-600">{e.error}</span> — <span className="text-gray-400">{e.suggestion}</span></span></div>)}</div>
                   </div>
                 )}
               </div>

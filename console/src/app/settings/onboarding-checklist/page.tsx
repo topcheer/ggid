@@ -115,7 +115,7 @@ export default function OnboardingChecklistPage() {
 
           {/* Steps */}
           <div className="space-y-2">
-            {checklist.steps.map((step, i) => (
+            {checklist.steps.map((step: any, i: number) => (
               <div key={step.key} className="rounded-lg border dark:border-gray-800 p-4">
                 <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">

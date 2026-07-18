@@ -121,7 +121,7 @@ export default function OAuthClientSecretScannerPage() {
           Secrets Found in Source
         </h2>
         <div className="space-y-2">
-          {(data?.secrets_found ?? []).map((s, i) => (
+          {(data?.secrets_found ?? []).map((s: any, i: number) => (
             <div key={i} className="bg-gray-800 rounded-lg p-3">
               <div className="flex items-center justify-between mb-1">
                 <code className="text-xs text-blue-400 font-mono">{s.file}:{s.line}</code>
