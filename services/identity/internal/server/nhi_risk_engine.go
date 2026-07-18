@@ -3,7 +3,6 @@ package server
 import (
 	"context"
 	"encoding/json"
-	"sync"
 	"time"
 
 	"github.com/google/uuid"
@@ -39,19 +38,13 @@ type NHIRiskScore struct {
 }
 
 // NHIRiskEngine evaluates NHI behavior against baselines.
-// Uses PG-backed repo for persistence (in-memory fallback in repo when nil pool).
+// All persistence via NHIRiskPGRepo (in-memory maps inside repo when nil pool).
 type NHIRiskEngine struct {
-	mu        sync.RWMutex
-	baselines map[string][]*NHIBehaviorBaseline
-	scores    map[uuid.UUID]*NHIRiskScore
-	pgRepo    *NHIRiskPGRepo
+	pgRepo *NHIRiskPGRepo
 }
 
 func NewNHIRiskEngine() *NHIRiskEngine {
-	return &NHIRiskEngine{
-		baselines: make(map[string][]*NHIBehaviorBaseline),
-		scores:    make(map[uuid.UUID]*NHIRiskScore),
-	}
+	return &NHIRiskEngine{}
 }
 
 // SetPGRepo wires a PostgreSQL-backed repo.
@@ -111,12 +104,6 @@ func (e *NHIRiskEngine) EvaluateRisk(nhiID uuid.UUID, currentActivity CurrentAct
 	var baselines []*NHIBehaviorBaseline
 	if e.pgRepo != nil {
 		baselines, _ = e.pgRepo.GetBaselines(context.Background(), currentActivity.NHIID)
-	}
-	// Fall back to in-memory if PG returned nothing (nil pool, error, etc.).
-	if len(baselines) == 0 {
-		e.mu.RLock()
-		baselines = e.baselines[currentActivity.NHIID]
-		e.mu.RUnlock()
 	}
 
 	signals := RiskSignals{}
