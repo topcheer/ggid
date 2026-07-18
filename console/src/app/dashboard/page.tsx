@@ -79,7 +79,7 @@ export default function DashboardPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <QuickStartCard icon={UserPlus} title={t("dashboardEnhanced.welcome.createUser")} desc={t("dashboardEnhanced.welcome.createUserDesc")} href="/users" color="blue" />
               <QuickStartCard icon={Globe} title={t("dashboardEnhanced.welcome.configureSso")} desc={t("dashboardEnhanced.welcome.configureSsoDesc")} href="/settings/saml-config" color="purple" />
-              <QuickStartCard icon={KeyRound} title={t("dashboardEnhanced.welcome.createOAuth")} desc={t("dashboardEnhanced.welcome.createOAuthDesc")} href="/oauth" color="green" />
+              <QuickStartCard icon={KeyRound} title={t("dashboardEnhanced.welcome.createOAuth")} desc={t("dashboardEnhanced.welcome.createOAuthDesc")} href="/oauth-clients" color="green" />
               <QuickStartCard icon={BookOpen} title={t("dashboardEnhanced.welcome.viewDocs")} desc={t("dashboardEnhanced.welcome.viewDocsDesc")} href="/docs" color="orange" />
             </div>
           </div>
