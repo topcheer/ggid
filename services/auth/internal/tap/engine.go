@@ -7,7 +7,6 @@ import (
 	"encoding/hex"
 	"fmt"
 	"log/slog"
-	"sync"
 	"time"
 
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -28,7 +27,6 @@ type TAPRecord struct {
 // Engine manages Temporary Access Pass lifecycle.
 type Engine struct {
 	pool *pgxpool.Pool
-	mu   sync.Mutex
 }
 
 // NewEngine creates a TAP engine.

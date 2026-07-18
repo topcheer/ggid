@@ -41,7 +41,7 @@ type WasmPluginRecord struct {
 // PluginStore manages WASM plugin persistence in PostgreSQL.
 type PluginStore struct {
 	pool *pgxpool.Pool
-	mu   sync.RWMutex
+	mu   sync.RWMutex //nolint:unused // used by Lock/Unlock methods
 }
 
 // NewPluginStore creates a PG-backed plugin store.
