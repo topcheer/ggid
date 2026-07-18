@@ -43,7 +43,7 @@ func (s *HTTPServer) handleAlertEvaluationConfig(w http.ResponseWriter, r *http.
 	case http.MethodPut:
 		var cfg AlertEvaluationConfig
 		if err := json.NewDecoder(r.Body).Decode(&cfg); err != nil {
-			http.Error(w, `{"error":"invalid request body"}`, http.StatusBadRequest)
+			writeJSONError(w, http.StatusBadRequest, "invalid request body")
 			return
 		}
 		globalAlertEvaluationConfig = &cfg
@@ -51,6 +51,6 @@ func (s *HTTPServer) handleAlertEvaluationConfig(w http.ResponseWriter, r *http.
 		w.WriteHeader(http.StatusOK)
 		json.NewEncoder(w).Encode(cfg)
 	default:
-		http.Error(w, `{"error":"method not allowed"}`, http.StatusMethodNotAllowed)
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 	}
 }
