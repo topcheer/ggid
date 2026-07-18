@@ -3,7 +3,6 @@ package service
 import (
 	"context"
 	"fmt"
-	"sync"
 	"time"
 
 	"github.com/google/uuid"
@@ -128,47 +127,4 @@ type RevocationStore interface {
 // --- In-memory RevocationStore (wraps sync.Map for interface compat) ---
 // Note: This is acceptable for revocation since revoked tokens are short-lived
 // (they expire when the original token would have expired). PG-backed
-// revocation is handled by SessionRevocationManager in the auth service.
 
-
-
-// memRevocationStore is an in-memory token revocation store.
-type memRevocationStore struct {
-	mu       sync.RWMutex
-	revoked  map[string]time.Time
-}
-
-func newMemRevocationStore() *memRevocationStore {
-	return &memRevocationStore{revoked: make(map[string]time.Time)}
-}
-
-func (s *memRevocationStore) Revoke(ctx context.Context, tokenID string, expiresAt time.Time) error {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-	s.revoked[tokenID] = expiresAt
-	return nil
-}
-
-func (s *memRevocationStore) IsRevoked(ctx context.Context, tokenID string) bool {
-	s.mu.RLock()
-	defer s.mu.RUnlock()
-	exp, ok := s.revoked[tokenID]
-	if !ok {
-		return false
-	}
-	if time.Now().After(exp) {
-		return false
-	}
-	return true
-}
-
-func (s *memRevocationStore) CleanupExpired() {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-	now := time.Now()
-	for tokenID, exp := range s.revoked {
-		if now.After(exp) {
-			delete(s.revoked, tokenID)
-		}
-	}
-}
