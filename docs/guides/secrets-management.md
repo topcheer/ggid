@@ -1,157 +1,135 @@
-# Secrets Management Guide
+# Secrets Management — Technical Guide
 
-This guide covers managing secrets in GGID — rotation policies, storage options, zero-downtime rotation, audit trails, and emergency procedures.
+> Feature: Multi-Provider Secrets Management with Rotation
+> Console: `/admin/secrets`
 
-## Secret Types
+## What It Does
 
-| Secret | Purpose | Rotation |
-|--------|---------|----------|
-| JWT signing key | Sign access/refresh tokens | 90 days |
-| Password pepper | Append before password hash | 365 days |
-| DB password | PostgreSQL connection | 90 days |
-| Redis password | Redis AUTH | 90 days |
-| NATS credentials | NATS authentication | 90 days |
-| OAuth client secrets | Client authentication | 90 days |
-| API keys | Service-to-service | 90 days |
-| TLS private keys | HTTPS/gRPC | 90 days (Let's Encrypt: auto) |
-| LDAP bind password | LDAP authentication | 180 days |
-| SIEM API key | Forward audit events | 365 days |
+GGID's secrets management system centralizes cryptographic key and secret lifecycle across multiple providers (Vault, AWS KMS, environment variables). Secrets are referenced by URI scheme, enabling provider-agnostic access with automatic rotation and health monitoring.
 
-## Storage Options
+## Secret URI Schemes
 
-### Environment Variables (Development)
+| Scheme | Provider | Example |
+|--------|----------|---------|
+| `vault://` | HashiCorp Vault | `vault://secret/data/ggid#encryption-key` |
+| `aws-kms://` | AWS KMS | `aws-kms://alias/ggid-encryption-key` |
+| `env://` | Environment variable | `env://GGID_ENCRYPTION_KEY` |
+| `gcp-kms://` | Google Cloud KMS | `gcp-kms://projects/ggid/keyRings/global/cryptoKeys/enc` |
+| `azure-kv://` | Azure Key Vault | `azure-kv://ggid-keyvault/encryption-key` |
+| `file://` | Local file (dev only) | `file:///etc/ggid/secrets/enc-key` |
+
+## SecretsProvider Interface
+
+```go
+type SecretsProvider interface {
+    // Resolve retrieves a secret value by URI
+    Resolve(ctx context.Context, uri string) ([]byte, error)
+
+    // Health checks provider connectivity
+    Health(ctx context.Context) error
+
+    // Rotate generates a new secret value
+    Rotate(ctx context.Context, uri string) ([]byte, error)
+}
+```
+
+## Secret Categories
+
+| Category | Example Secrets | Rotation Frequency |
+|----------|----------------|-------------------|
+| **Encryption keys** | KEK, DEK wrapping key | Annual |
+| **Auth secrets** | JWT signing key, internal auth secret | 90 days |
+| **Database** | PostgreSQL connection password | 90 days |
+| **API keys** | External service keys (OTX, AbuseIPDB) | Per provider policy |
+| **Certificates** | TLS certs, SAML signing cert | Per cert expiry |
+| **OAuth** | Client secrets | On compromise |
+
+## Rotation Schedule
+
+Each secret has a configurable rotation schedule:
+
+```json
+{
+  "uri": "vault://secret/data/ggid#jwt-signing-key",
+  "rotation_days": 90,
+  "last_rotated": "2026-04-18T00:00:00Z",
+  "next_rotation": "2026-07-17T00:00:00Z",
+  "status": "healthy"
+}
+```
+
+When rotation triggers:
+1. Generate new secret value.
+2. Store in provider (new version).
+3. Update application reference (hot reload).
+4. Verify new secret works.
+5. Mark old version for cleanup.
+
+## Provider Health Monitoring
+
+| Metric | Description |
+|--------|-------------|
+| `provider.available` | Can reach provider (1/0) |
+| `provider.latency_ms` | Resolve latency |
+| `secret.rotation_due` | Secrets past rotation date |
+| `secret.resolve_errors` | Failed resolve attempts |
+
+Health checked every 60 seconds. Failures trigger alerts.
+
+## Fallback Chain
+
+If primary provider is unavailable, GGID falls back:
+
+```
+vault://  →  env://  →  file://
+```
+
+The fallback ensures service continuity during Vault outages.
+
+## API Endpoints
+
+| Endpoint | Method | Purpose |
+|----------|--------|--------|
+| `/api/v1/admin/secrets` | GET | List secrets (metadata only, no values) |
+| `/api/v1/admin/secrets/:id/rotate` | POST | Trigger manual rotation |
+| `/api/v1/admin/secrets/health` | GET | Provider health status |
+
+### curl Examples
 
 ```bash
-# .env file (NEVER commit)
-DB_PASSWORD=str0ng_pass
-JWT_SIGNING_KEY=path/to/key
-PASSWORD_PEPPER=random_32_bytes
+TOKEN="your-jwt-token"
+TENANT="00000000-0000-0000-0000-000000000001"
+
+# List secrets (metadata only)
+curl -k -H 'Accept-Encoding: identity' \
+  "https://ggid.iot2.win/api/v1/admin/secrets" \
+  -H "Authorization: Bearer $TOKEN" -H "X-Tenant-ID: $TENANT"
+
+# Check provider health
+curl -k -H 'Accept-Encoding: identity' \
+  "https://ggid.iot2.win/api/v1/admin/secrets/health" \
+  -H "Authorization: Bearer $TOKEN" -H "X-Tenant-ID: $TENANT"
+
+# Trigger manual rotation
+curl -k -H 'Accept-Encoding: identity' \
+  -X POST "https://ggid.iot2.win/api/v1/admin/secrets/jwt-signing-key/rotate" \
+  -H "Authorization: Bearer $TOKEN" -H "X-Tenant-ID: $TENANT"
 ```
 
-**Pros**: Simple, fast
-**Cons**: Visible in process listing, no rotation, no audit
+## Troubleshooting
 
-### Kubernetes Secrets
+| Problem | Cause | Solution |
+|---------|-------|--------|
+| Secret resolve fails | Provider down or secret deleted | Check provider health; verify secret exists |
+| Rotation overdue | Rotation not triggered or failed | Manually trigger rotation; check provider logs |
+| Fallback to env:// | Vault unreachable | Investigate Vault connectivity; check network policies |
+| Latency spike on resolve | Provider overloaded or network issue | Check provider metrics; consider caching |
 
-```bash
-kubectl create secret generic ggid-secrets \
-  --namespace ggid \
-  --from-literal=db_password=xxx \
-  --from-literal=password_pepper=xxx
-```
+## Best Practices
 
-**Pros**: Encrypted at rest (etcd encryption), native K8s
-**Cons**: Cluster-admin can read, no auto-rotation
-
-### HashiCorp Vault (Production)
-
-```bash
-vault kv put secret/ggid/db password=$(openssl rand -base64 32)
-vault kv put secret/ggid/pepper pepper=$(openssl rand -base64 32)
-```
-
-```yaml
-vault:
-  address: https://vault.internal:8200
-  auth: kubernetes  # Auto-auth via K8s service account
-  secret_path: secret/data/ggid
-```
-
-**Pros**: Auto-rotation, dynamic secrets, full audit trail, leasing
-**Cons**: Infrastructure overhead
-
-### Cloud Secrets Manager
-
-| Provider | Service | Auto-Rotation |
-|----------|---------|---------------|
-| AWS | Secrets Manager | Yes (Lambda) |
-| Azure | Key Vault | Yes (Function) |
-| GCP | Secret Manager | Manual |
-
-## Zero-Downtime Rotation
-
-### JWT Signing Key Rotation
-
-```
-1. Generate new key pair
-2. Add new public key to JWKS (alongside old)
-3. Switch signing to new key
-4. Wait for old tokens to expire (TTL: 15min)
-5. After 24h grace period: remove old key from JWKS
-6. Destroy old private key
-```
-
-### DB Password Rotation
-
-```
-1. Create new DB user with new password
-2. Grant same permissions
-3. Deploy new password to GGID services
-4. Verify new connections work
-5. Revoke old user
-6. Drop old user
-```
-### Password Pepper Rotation
-
-See [Password Pepper Deploy](password-pepper-deploy.md) for detailed rotation procedure.
-
-```
-1. Set PASSWORD_PEPPER_NEW alongside PASSWORD_PEPPER_OLD
-2. Verify: try NEW first, fall back to OLD
-3. On login with OLD: re-hash with NEW
-4. After all users migrated: remove OLD
-```
-
-## Audit Trail
-
-Every secret access should be logged:
-
-```
-Timestamp | Secret Path | Operation | Identity | Source IP
-2025-01-24T14:30Z | secret/ggid/db | read | ggid-auth-svc | 10.0.1.5
-2025-01-24T14:31Z | secret/ggid/jwt | read | ggid-oauth-svc | 10.0.1.6
-```
-
-Vault provides native audit logging:
-```bash
-vault audit enable file file_path=/var/log/vault/audit.log
-```
-
-## Emergency Procedures
-
-### Compromised Secret
-
-```
-1. IDENTIFY: Which secret? When was it compromised?
-2. ROTATE: Generate new secret immediately
-3. DEPLOY: Update all services with new secret
-4. REVOKE: Invalidate old secret
-5. AUDIT: Check for unauthorized access during exposure window
-6. DOCUMENT: Post-incident report
-```
-### Lost Secret (Unrecoverable)
-
-| Secret Lost | Impact | Recovery |
-|------------|--------|----------|
-| JWT key | Can't verify tokens | Generate new key, force re-login |
-| Pepper | Can't verify passwords | Force password reset for all |
-| DB password | Can't connect to DB | Reset via console, update services |
-| TLS key | Can't serve TLS | Re-issue via ACME |
-
-## Security Checklist
-
-- [ ] No secrets in source code or Docker images
-- [ ] `.gitignore` includes `.env*`, `*.key`, `*.pem`
-- [ ] Secrets manager deployed (Vault/KMS/SM)
-- [ ] Rotation policy documented and automated
-- [ ] Audit logging on all secret access
-- [ ] Emergency rotation tested quarterly
-- [ ] Secret scanning on CI (git-secrets, truffleHog)
-- [ ] Separate secrets per environment (dev/staging/prod)
-
-## See Also
-
-- [HSM Integration](hsm-integration.md)
-- [Key Management Lifecycle](../research/key-management-lifecycle.md)
-- [Password Pepper Deploy](password-pepper-deploy.md)
-- [Production Checklist](production-checklist.md)
+- **Never log secret values**: Secrets metadata is safe to log, values are not.
+- **Use Vault for production**: env:// and file:// are for development only.
+- **Monitor rotation dates**: Alert when secrets are within 7 days of rotation due.
+- **Test fallback**: Regularly verify env:// fallback works for critical secrets.
+- **Rotate on compromise**: If any secret is suspected leaked, rotate immediately.
+- **Separate secrets per tenant**: Use Vault paths with tenant IDs for isolation.
