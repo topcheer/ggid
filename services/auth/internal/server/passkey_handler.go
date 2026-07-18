@@ -7,6 +7,8 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/google/uuid"
 )
 
 type PasskeyRegistrationSession struct {
@@ -131,6 +133,17 @@ func (h *Handler) handlePasskeyRegisterFinish(w http.ResponseWriter, r *http.Req
 	// KB-078: AAGUID allowlist enforcement — check if the authenticator is approved.
 	if req.AAGUID != "" && h.aaguidAllowlistRepo != nil {
 		if !h.aaguidAllowlistRepo.IsApproved(r.Context(), req.AAGUID) {
+			// Audit: registration denied due to unapproved authenticator.
+			h.publishAuditEventWithMeta(r,
+				"webauthn.aaguid.registration_denied", "denied",
+				"passkey_registration", req.AAGUID, uuid.Nil,
+				map[string]any{
+					"aaguid":       req.AAGUID,
+					"user_id":      sess.UserID,
+					"credential_id": req.Credential.ID,
+					"reason":       "authenticator_not_approved",
+				},
+			)
 			http.Error(w, `{"error":"authenticator_not_approved","message":"This authenticator is not in the approved device list"}`, http.StatusForbidden)
 			return
 		}

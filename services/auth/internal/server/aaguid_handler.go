@@ -6,7 +6,8 @@ import (
 	"strings"
 
 	"github.com/ggid/ggid/pkg/errors"
-		"github.com/ggid/ggid/services/auth/internal/repository"
+	"github.com/ggid/ggid/services/auth/internal/repository"
+	"github.com/google/uuid"
 )
 
 // aaguidRequest is the DTO for adding an AAGUID.
@@ -80,6 +81,14 @@ func (h *Handler) addAAGUID(w http.ResponseWriter, r *http.Request) {
 		errors.WriteSimpleAPIError(w, http.StatusInternalServerError, "INTERNAL", "failed to add AAGUID")
 		return
 	}
+
+	// Audit: AAGUID added to allowlist.
+	h.publishAuditEventWithMeta(r,
+		"webauthn.aaguid.add", "success",
+		"aaguid_allowlist", rec.Name, uuid.Nil,
+		map[string]any{"aaguid": rec.AAGUID, "status": rec.Status, "description": rec.Description},
+	)
+
 	writeJSON(w, http.StatusCreated, rec)
 }
 
@@ -92,6 +101,14 @@ func (h *Handler) removeAAGUID(w http.ResponseWriter, r *http.Request, aaguid st
 		errors.WriteSimpleAPIError(w, http.StatusInternalServerError, "INTERNAL", "failed to remove AAGUID")
 		return
 	}
+
+	// Audit: AAGUID removed from allowlist.
+	h.publishAuditEventWithMeta(r,
+		"webauthn.aaguid.remove", "success",
+		"aaguid_allowlist", aaguid, uuid.Nil,
+		map[string]any{"aaguid": aaguid},
+	)
+
 	writeJSON(w, http.StatusOK, map[string]string{"status": "removed"})
 }
 
