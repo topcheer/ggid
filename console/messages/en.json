@@ -2650,5 +2650,54 @@
       "risk": "Risk",
       "compliance": "Compliance"
     }
+  },
+  "notificationPreferences": {
+    "title": "Notification Preferences",
+    "description": "Choose what notifications you receive and how",
+    "channels": {
+      "email": "Email",
+      "slack": "Slack",
+      "teams": "Teams",
+      "webhook": "Webhook",
+      "inApp": "In-App"
+    },
+    "types": {
+      "securityAlert": "Security Alerts",
+      "securityAlertDesc": "Threats, suspicious logins, policy violations",
+      "auditReport": "Audit Reports",
+      "auditReportDesc": "Scheduled audit summaries",
+      "complianceExpiry": "Compliance Expiry",
+      "complianceExpiryDesc": "Certificates and certifications nearing expiration",
+      "userActivity": "User Activity",
+      "userActivityDesc": "New user registration, role changes",
+      "systemMaintenance": "System Maintenance",
+      "systemMaintenanceDesc": "Scheduled downtime, updates"
+    },
+    "dnd": {
+      "title": "Do Not Disturb",
+      "desc": "Pause non-critical notifications during these hours",
+      "enable": "Enable DND",
+      "startTime": "Start",
+      "endTime": "End"
+    },
+    "save": "Save Preferences",
+    "saved": "Notification preferences saved"
+  },
+  "emailTemplates": {
+    "title": "Email Template Preview",
+    "description": "Preview and customize system email templates",
+    "templates": {
+      "verifyEmail": "Email Verification",
+      "passwordReset": "Password Reset",
+      "mfaSetup": "MFA Setup",
+      "securityAlert": "Security Alert",
+      "invitation": "Invitation",
+      "welcome": "Welcome"
+    },
+    "preview": "Preview",
+    "variables": "Available Variables",
+    "sendTest": "Send Test Email",
+    "sent": "Test email sent",
+    "noTemplate": "Select a template to preview"
   }
 }
