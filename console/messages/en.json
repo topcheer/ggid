@@ -2029,5 +2029,122 @@
       "selectRoleA": "Select Role A",
       "selectRoleB": "Select Role B"
     }
+  },
+  "reviewSchedules": {
+    "title": "Access Review Schedules",
+    "description": "Automate periodic access certification campaigns",
+    "tabs": {
+      "schedules": "Schedules",
+      "create": "Create Schedule",
+      "history": "History"
+    },
+    "schedules": {
+      "title": "Active Schedules",
+      "name": "Campaign Name",
+      "scope": "Scope",
+      "frequency": "Frequency",
+      "nextRun": "Next Run",
+      "reviewer": "Reviewer",
+      "enabled": "Enabled",
+      "noSchedules": "No review schedules configured",
+      "frequencyDaily": "Daily",
+      "frequencyWeekly": "Weekly",
+      "frequencyMonthly": "Monthly",
+      "frequencyQuarterly": "Quarterly",
+      "frequencyAnnual": "Annual"
+    },
+    "create": {
+      "title": "Create Review Schedule",
+      "name": "Campaign Name",
+      "namePlaceholder": "e.g. Q3 Engineering Access Review",
+      "scope": "Review Scope",
+      "scopeDesc": "What to review",
+      "scopeAllUsers": "All Users",
+      "scopeByDept": "By Department",
+      "scopeByRole": "By Role",
+      "scopeServiceAccounts": "Service Accounts",
+      "frequency": "Frequency",
+      "frequencyDesc": "How often to run",
+      "reviewer": "Reviewer",
+      "reviewerPlaceholder": "Assign reviewer by email",
+      "reviewerDesc": "Who certifies the access",
+      "startDate": "Start Date",
+      "submit": "Create Schedule",
+      "created": "Schedule created successfully",
+      "selectScope": "Please select a scope",
+      "selectFrequency": "Please select a frequency"
+    },
+    "history": {
+      "title": "Completed Campaigns",
+      "campaign": "Campaign",
+      "period": "Period",
+      "reviewer": "Reviewer",
+      "reviewed": "Reviewed",
+      "certified": "Certified",
+      "revoked": "Revoked",
+      "status": "Status",
+      "completed": "Completed",
+      "noHistory": "No completed campaigns",
+      "statusComplete": "Complete",
+      "statusPartial": "Partial",
+      "statusOverdue": "Overdue"
+    }
+  },
+  "nhi": {
+    "title": "Non-Human Identity Inventory",
+    "description": "Manage service accounts, API keys, and machine identities",
+    "tabs": {
+      "list": "NHI List",
+      "register": "Register NHI",
+      "orphans": "Orphans"
+    },
+    "list": {
+      "title": "Registered NHIs",
+      "type": "Type",
+      "name": "Name",
+      "status": "Status",
+      "owner": "Owner",
+      "lastSeen": "Last Seen",
+      "noNHIs": "No non-human identities found",
+      "searchPlaceholder": "Search by name or owner...",
+      "typeServiceAccount": "Service Account",
+      "typeApiKey": "API Key",
+      "typeOAuth": "OAuth Client",
+      "typeMachine": "Machine Identity",
+      "typeWebhook": "Webhook",
+      "statusActive": "Active",
+      "statusInactive": "Inactive",
+      "statusExpired": "Expired",
+      "statusRotating": "Rotating"
+    },
+    "register": {
+      "title": "Register New NHI",
+      "type": "NHI Type",
+      "name": "Identity Name",
+      "namePlaceholder": "e.g. payment-service-prod",
+      "owner": "Owner",
+      "ownerPlaceholder": "Team or individual responsible",
+      "metadata": "Metadata (JSON)",
+      "metadataPlaceholder": "{\"environment\": \"prod\", \"team\": \"payments\"}",
+      "submit": "Register",
+      "registered": "NHI registered successfully",
+      "selectType": "Please select a type"
+    },
+    "orphans": {
+      "title": "Orphaned Service Accounts",
+      "description": "NHI accounts with no owner or inactive for 30+ days",
+      "name": "Name",
+      "type": "Type",
+      "lastSeen": "Last Seen",
+      "daysInactive": "Days Inactive",
+      "reason": "Reason",
+      "actions": "Actions",
+      "noOrphans": "No orphaned accounts detected",
+      "claim": "Claim",
+      "disable": "Disable",
+      "reasonNoOwner": "No owner",
+      "reasonInactive": "Inactive 30+ days",
+      "reasonStaleCreds": "Stale credentials"
+    }
   }
 }
