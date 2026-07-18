@@ -44,6 +44,7 @@ type HTTPServer struct {
 	compositeRepo  *compositeRuleRepo
 	memMapRepo2    *auditMemoryMapRepo2
 	threatIntelRepo *repository.ThreatIntelRepository
+	ccmEngine       *CCMEngine
 }
 
 // SetITDRRepository injects the ITDR repository for detection API queries.
@@ -62,6 +63,11 @@ func (s *HTTPServer) SetMemMapRepo2(repo *auditMemoryMapRepo2) {
 
 func (s *HTTPServer) SetThreatIntelRepo(repo *repository.ThreatIntelRepository) {
 	s.threatIntelRepo = repo
+}
+
+// SetCCMEngine injects the Continuous Compliance Monitoring engine.
+func (s *HTTPServer) SetCCMEngine(engine *CCMEngine) {
+	s.ccmEngine = engine
 }
 
 // NewHTTPServer creates a new Audit Service HTTP server.
@@ -262,6 +268,10 @@ func (s *HTTPServer) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("/api/v1/soar/playbooks/", s.handleSOARRoute)
 	mux.HandleFunc("/api/v1/soar/executions", s.handleSOARRoute)
 	mux.HandleFunc("/api/v1/audit/itdr/threat-heatmap", s.handleITDRThreatHeatmap)
+	mux.HandleFunc("/api/v1/audit/ccm/results", s.handleCCM)
+	mux.HandleFunc("/api/v1/audit/ccm/history", s.handleCCM)
+	mux.HandleFunc("/api/v1/audit/ccm/run", s.handleCCM)
+	mux.HandleFunc("/api/v1/audit/ccm/summary", s.handleCCM)
 }
 
 // GET /api/v1/audit/events?tenant_id=X&action=Y&result=Z&page_size=N
