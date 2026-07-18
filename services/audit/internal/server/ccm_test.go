@@ -2,10 +2,14 @@ package httpserver
 
 import (
 	"encoding/json"
+	"context"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
+
+	"github.com/ggid/ggid/services/audit/internal/repository"
+	"github.com/google/uuid"
 )
 
 // Test 1: RunAll produces 15+ control results.
@@ -214,5 +218,59 @@ func TestCCM_HistoryEndpoint(t *testing.T) {
 
 	if w.Code != http.StatusOK {
 		t.Fatalf("expected 200, got %d", w.Code)
+	}
+}
+
+// Test 13: CCM engine with PG repo persists results (nil pool = no-op, no panic).
+func TestCCM_PersistenceWithRepo(t *testing.T) {
+	engine := NewCCMEngine()
+	repo := repository.NewCCMRepository(nil) // nil pool = in-memory no-op
+	engine.SetRepository(repo)
+
+	// RunAll should persist to repo (no-op with nil pool) without panic.
+	results := engine.RunAll()
+	if len(results) < 15 {
+		t.Errorf("expected 15+ results, got %d", len(results))
+	}
+}
+
+// Test 14: CCM repo Store with nil pool returns nil (no-op).
+func TestCCM_RepoNilPool(t *testing.T) {
+	repo := repository.NewCCMRepository(nil)
+
+	rec := &repository.CCMResultRecord{
+		ID:        uuid.New(),
+		TenantID:  uuid.New(),
+		ControlID: "test_control",
+		Status:    "pass",
+	}
+	err := repo.Store(context.TODO(), rec)
+	if err != nil {
+		t.Errorf("expected nil error with nil pool, got %v", err)
+	}
+}
+
+// Test 15: CCM repo ListLatest with nil pool returns empty.
+func TestCCM_RepoListNilPool(t *testing.T) {
+	repo := repository.NewCCMRepository(nil)
+
+	records, err := repo.ListLatest(context.TODO(), uuid.New())
+	if err != nil {
+		t.Errorf("expected nil error, got %v", err)
+	}
+	if len(records) != 0 {
+		t.Errorf("expected 0 records with nil pool, got %d", len(records))
+	}
+}
+
+// Test 16: SetCCMRepository wires repo into engine.
+func TestCCM_SetCCMRepository(t *testing.T) {
+	s := &HTTPServer{}
+	repo := repository.NewCCMRepository(nil)
+
+	s.SetCCMRepository(repo)
+
+	if s.ccmEngine == nil {
+		t.Fatal("expected ccmEngine to be initialized")
 	}
 }

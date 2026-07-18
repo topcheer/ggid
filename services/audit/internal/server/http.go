@@ -70,6 +70,15 @@ func (s *HTTPServer) SetCCMEngine(engine *CCMEngine) {
 	s.ccmEngine = engine
 }
 
+// SetCCMRepository injects a PG-backed CCM repository and wires it
+// into the CCM engine for persistence.
+func (s *HTTPServer) SetCCMRepository(repo *repository.CCMRepository) {
+	if s.ccmEngine == nil {
+		s.ccmEngine = NewCCMEngine()
+	}
+	s.ccmEngine.SetRepository(repo)
+}
+
 // NewHTTPServer creates a new Audit Service HTTP server.
 func NewHTTPServer(svc *service.AuditService) *HTTPServer {
 	h := &HTTPServer{svc: svc, hub: NewStreamHub()}

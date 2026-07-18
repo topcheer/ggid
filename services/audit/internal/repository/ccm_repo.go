@@ -87,7 +87,7 @@ func (r *CCMRepository) StoreBatch(ctx context.Context, records []*CCMResultReco
 	if err != nil {
 		return err
 	}
-	defer tx.Rollback(ctx)
+	defer func() { _ = tx.Rollback(ctx) }()
 
 	for _, rec := range records {
 		if rec.ID == uuid.Nil {

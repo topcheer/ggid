@@ -188,6 +188,13 @@ func main() {
 		}
 		httpAPI.SetThreatIntelRepo(threatRepo)
 
+		// CCM (Continuous Compliance Monitoring) repository (KB-280).
+		ccmRepo := repository.NewCCMRepository(db)
+		if err := ccmRepo.EnsureSchema(ctx); err != nil {
+			log.Printf("Warning: CCM EnsureSchema failed: %v", err)
+		}
+		httpAPI.SetCCMRepository(ccmRepo)
+
 		// Start async collector goroutine.
 		collector := httpserver.NewIntelCollector(threatRepo)
 		go collector.Run(ctx, 10*time.Minute)

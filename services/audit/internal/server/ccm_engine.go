@@ -1,9 +1,13 @@
 package httpserver
 
 import (
+	"context"
 	"encoding/json"
 	"sync"
 	"time"
+
+	"github.com/ggid/ggid/services/audit/internal/repository"
+	"github.com/google/uuid"
 )
 
 // ControlStatus represents the compliance state of a single control.
@@ -31,12 +35,18 @@ type CCMEngine struct {
 	mu       sync.RWMutex
 	results  map[string]*CCMResult  // control_id → latest result
 	history  []CCMResult             // all results chronologically
+	repo     *repository.CCMRepository // PG persistence (nil = in-memory only)
 }
 
 func NewCCMEngine() *CCMEngine {
 	return &CCMEngine{
 		results: make(map[string]*CCMResult),
 	}
+}
+
+// SetRepository injects a PostgreSQL-backed CCM repository for persistence.
+func (e *CCMEngine) SetRepository(repo *repository.CCMRepository) {
+	e.repo = repo
 }
 
 // RunAll evaluates all 15 compliance controls and stores results.
@@ -81,6 +91,28 @@ func (e *CCMEngine) RunAll() []*CCMResult {
 		e.results[r.ControlID] = r
 		e.history = append(e.history, *r)
 	}
+
+	// Persist to PostgreSQL if repo is configured.
+	if e.repo != nil {
+		records := make([]*repository.CCMResultRecord, 0, len(results))
+		for _, r := range results {
+			detailsJSON, _ := json.Marshal(r.Details)
+			records = append(records, &repository.CCMResultRecord{
+				ID:           uuid.Nil, // let DB generate
+				ControlID:    r.ControlID,
+				ControlName:  r.ControlName,
+				Category:     r.Category,
+				Status:       r.Status,
+				MetricValue:  r.MetricValue,
+				Threshold:    r.Threshold,
+				ThresholdDir: r.ThresholdDir,
+				Details:      detailsJSON,
+				CheckedAt:    now,
+			})
+		}
+		_ = e.repo.StoreBatch(context.Background(), records)
+	}
+
 	return results
 }
 
