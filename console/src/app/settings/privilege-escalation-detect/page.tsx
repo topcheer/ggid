@@ -39,12 +39,12 @@ export default function PrivilegeEscalationDetectPage() {
         <div className="bg-gray-900 rounded-xl p-4">
           <AlertTriangle className="w-5 h-5 text-yellow-400 mb-1" />
           <p className="text-xs text-gray-400">High Confidence</p>
-          <p className="text-xl font-bold text-yellow-400">{data?.detected_events?.filter((e) => e.confidence_score > 0.8).length ?? 0}</p>
+          <p className="text-xl font-bold text-yellow-400">{data?.detected_events?.filter((e: any) => e.confidence_score > 0.8).length ?? 0}</p>
         </div>
         <div className="bg-gray-900 rounded-xl p-4">
           <Zap className="w-5 h-5 text-green-400 mb-1" />
           <p className="text-xs text-gray-400">Actions Taken</p>
-          <p className="text-xl font-bold">{data?.detected_events?.filter((e) => e.action_taken !== "none").length ?? 0}</p>
+          <p className="text-xl font-bold">{data?.detected_events?.filter((e: any) => e.action_taken !== "none").length ?? 0}</p>
         </div>
       </div>
 
@@ -65,7 +65,7 @@ export default function PrivilegeEscalationDetectPage() {
               </tr>
             </thead>
             <tbody>
-              {(data?.detected_events ?? []).map((e) => (
+              {(data?.detected_events ?? []).map((e: any) => (
                 <tr key={e.id} className="border-b border-gray-800">
                   <td className="py-3 pr-3 text-sm font-medium">{e.user}</td>
                   <td className="py-3 pr-3">
@@ -76,7 +76,7 @@ export default function PrivilegeEscalationDetectPage() {
                   <td className="py-3 pr-3 text-xs text-gray-400">{e.method}</td>
                   <td className="py-3 pr-3">
                     <div className="flex flex-wrap gap-1">
-                      {e.patterns.map((p) => (
+                      {e.patterns.map((p: any) => (
                         <span key={p} className={"text-xs px-1.5 py-0.5 rounded " + (
                           p === "mass_grant" ? "bg-red-900 text-red-300" :
                           p === "unusual_time" ? "bg-yellow-900 text-yellow-300" :

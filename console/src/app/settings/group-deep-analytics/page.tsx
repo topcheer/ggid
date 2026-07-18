@@ -14,7 +14,7 @@ export default function GroupDeepAnalyticsPage() {
   if (loading) return <div className="p-8 text-gray-400">Loading group analytics...</div>;
   if (error) return <div className="p-8 text-red-400">Error: {error}</div>;
 
-  const group = data?.groups?.find((g) => g.name === selectedGroup) ?? data?.groups?.[0];
+  const group = data?.groups?.find((g: any) => g.name === selectedGroup) ?? data?.groups?.[0];
 
   return (
     <div className="min-h-screen bg-gray-950 text-white p-8">
@@ -29,7 +29,7 @@ export default function GroupDeepAnalyticsPage() {
       {/* Group Selector */}
       <div className="mb-6">
         <select aria-label="Selected group" value={selectedGroup} onChange={(e) => setSelectedGroup(e.target.value)} className="px-3 py-2 bg-gray-800 rounded-lg text-sm">
-          {(data?.groups ?? []).map((g) => <option key={g.name} value={g.name}>{g.name} ({g.member_count} members)</option>)}
+          {(data?.groups ?? []).map((g: any) => <option key={g.name} value={g.name}>{g.name} ({g.member_count} members)</option>)}
         </select>
       </div>
 
@@ -65,7 +65,7 @@ export default function GroupDeepAnalyticsPage() {
             <div className="bg-gray-900 rounded-xl p-6">
               <h2 className="text-sm font-semibold mb-3">Role Distribution</h2>
               <div className="space-y-2">
-                {group.role_distribution.map((r) => (
+                {group.role_distribution.map((r: any) => (
                   <div key={r.role} className="flex items-center gap-2">
                     <span className="text-xs w-24">{r.role}</span>
                     <div className="flex-1 bg-gray-800 rounded-full h-3"><div className="bg-blue-600 h-3 rounded-full" style={{ width: r.pct + "%" }} /></div>

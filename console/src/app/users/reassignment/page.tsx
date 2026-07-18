@@ -101,7 +101,7 @@ export default function UserReassignmentPage() {
     finally { setExecuting(false); }
   };
 
-  const filtered = users.filter((u) => !search || u.username.toLowerCase().includes(search.toLowerCase()) || u.email.toLowerCase().includes(search.toLowerCase()));
+  const filtered = users.filter((u: any) => !search || u.username.toLowerCase().includes(search.toLowerCase()) || u.email.toLowerCase().includes(search.toLowerCase()));
   const hasChanges = selectedUser && (newOrg !== selectedUser.org_id || newRole !== selectedUser.role || newManager !== selectedUser.manager);
 
   return (
@@ -128,7 +128,7 @@ export default function UserReassignmentPage() {
         {/* User list */}
         <div className="rounded-lg border dark:border-gray-800 max-h-96 overflow-y-auto">
           <div className="divide-y dark:divide-gray-800">
-            {filtered.slice(0, 50).map((u) => (
+            {filtered.slice(0, 50).map((u: any) => (
               <button key={u.user_id} onClick={() => selectUser(u)} className={`w-full text-left px-4 py-2 hover:bg-gray-50 dark:hover:bg-gray-900/30 ${selectedUser?.user_id === u.user_id ? "bg-blue-50 dark:bg-blue-900/20" : ""}`}>
                 <div className="text-sm font-medium">{u.username}</div>
                 <div className="text-xs text-gray-400">{u.role} · {u.org_name}</div>
@@ -187,7 +187,7 @@ export default function UserReassignmentPage() {
                   </div>
                   {impact.warnings.length > 0 && (
                     <div className="space-y-1">
-                      {impact.warnings.map((w, i) => (<p key={i} className="text-xs text-orange-600 flex items-center gap-1"><AlertTriangle className="w-3 h-3" /> {w}</p>))}
+                      {impact.warnings.map((w: any, i: any) => (<p key={i} className="text-xs text-orange-600 flex items-center gap-1"><AlertTriangle className="w-3 h-3" /> {w}</p>))}
                     </div>
                   )}
                 </div>

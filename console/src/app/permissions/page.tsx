@@ -143,7 +143,7 @@ const SERVICE_GROUPS: ServiceGroup[] = [
 
 // Flatten all permissions with their service context
 const ALL_PERMS = SERVICE_GROUPS.flatMap((g) =>
-  g.permissions.map((p) => ({ ...p, service: g.service, color: g.color, bgColor: g.bgColor, textColor: g.textColor })),
+  g.permissions.map((p: any) => ({ ...p, service: g.service, color: g.color, bgColor: g.bgColor, textColor: g.textColor })),
 );
 
 // ===== Default Roles =====
@@ -179,7 +179,7 @@ export default function PermissionsPage() {
   const [permRoles, setPermRoles] = useState<Record<string, Set<string>>>(() => {
     // Default: admin has all, manager/edirot/viewer have read perms
     const m: Record<string, Set<string>> = {};
-    ALL_PERMS.forEach((p) => {
+    ALL_PERMS.forEach((p: any) => {
       m[p.key] = new Set<string>(["admin"]);
     });
     // Give manager some defaults
@@ -187,14 +187,14 @@ export default function PermissionsPage() {
      "users.create", "users.read", "users.update", "users.export",
      "policies.read", "policies.evaluate", "roles.assign",
      "orgs.create", "orgs.read", "orgs.update", "orgs.manage_members",
-     "audit.read"].forEach((k) => m[k]?.add("manager"));
+     "audit.read"].forEach((k: any) => m[k]?.add("manager"));
     ["login", "logout", "password.reset", "token.refresh",
      "users.read", "users.update",
      "policies.read", "policies.evaluate",
-     "orgs.read", "audit.read"].forEach((k) => m[k]?.add("editor"));
+     "orgs.read", "audit.read"].forEach((k: any) => m[k]?.add("editor"));
     ["login", "logout", "password.reset", "token.refresh",
-     "users.read", "policies.read", "orgs.read", "audit.read"].forEach((k) => m[k]?.add("viewer"));
-    ["login", "logout"].forEach((k) => m[k]?.add("guest"));
+     "users.read", "policies.read", "orgs.read", "audit.read"].forEach((k: any) => m[k]?.add("viewer"));
+    ["login", "logout"].forEach((k: any) => m[k]?.add("guest"));
     return m;
   });
 
@@ -244,14 +244,14 @@ export default function PermissionsPage() {
     );
   }, [search]);
 
-  const filteredPermKeys = useMemo(() => new Set(filteredPerms.map((p) => p.key)), [filteredPerms]);
+  const filteredPermKeys = useMemo(() => new Set(filteredPerms.map((p: any) => p.key)), [filteredPerms]);
 
   // Per-service filtered groups
   const visibleGroups = useMemo(() => {
-    return SERVICE_GROUPS.map((group) => ({
+    return SERVICE_GROUPS.map((group: any) => ({
       ...group,
-      permissions: group.permissions.filter((p) => filteredPermKeys.has(p.key)),
-    })).filter((g) => g.permissions.length > 0);
+      permissions: group.permissions.filter((p: any) => filteredPermKeys.has(p.key)),
+    })).filter((g: any) => g.permissions.length > 0);
   }, [filteredPermKeys]);
 
   // ---- Toggle handlers ----
@@ -341,7 +341,7 @@ export default function PermissionsPage() {
     } catch {
       // API may not exist yet — local state is updated
     }
-    const roleName = roles.find((r) => r.key === batchRole)?.name || batchRole;
+    const roleName = roles.find((r: any) => r.key === batchRole)?.name || batchRole;
     setMsg(`Granted ${selectedPerms.size} permission(s) to ${roleName}`);
     setSelectedPerms(new Set());
     setBatchRole("");
@@ -407,7 +407,7 @@ export default function PermissionsPage() {
             className="rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200"
           >
             <option value="">{t("permissions.selectRole")}</option>
-            {roles.map((r) => (
+            {roles.map((r: any) => (
               <option key={r.id} value={r.key}>
                 {r.name}
               </option>
@@ -433,10 +433,10 @@ export default function PermissionsPage() {
 
       {/* Permission groups */}
       <div className="space-y-3">
-        {visibleGroups.map((group) => {
+        {visibleGroups.map((group: any) => {
           const Icon = group.icon;
           const isCollapsed = collapsedServices.has(group.service);
-          const allPermKeys = group.permissions.map((p) => p.key);
+          const allPermKeys = group.permissions.map((p: any) => p.key);
           const allSelected = allPermKeys.every((k) => selectedPerms.has(k));
 
           return (
@@ -468,13 +468,13 @@ export default function PermissionsPage() {
                     if (allSelected) {
                       setSelectedPerms((prev) => {
                         const next = new Set(prev);
-                        allPermKeys.forEach((k) => next.delete(k));
+                        allPermKeys.forEach((k: any) => next.delete(k));
                         return next;
                       });
                     } else {
                       setSelectedPerms((prev) => {
                         const next = new Set(prev);
-                        allPermKeys.forEach((k) => next.add(k));
+                        allPermKeys.forEach((k: any) => next.add(k));
                         return next;
                       });
                     }
@@ -493,9 +493,9 @@ export default function PermissionsPage() {
               {/* Permission rows */}
               {!isCollapsed && (
                 <div className="divide-y divide-gray-100 dark:divide-gray-700/50">
-                  {group.permissions.map((perm) => {
-                    const fullPerm = ALL_PERMS.find((p) => p.key === perm.key)!;
-                    const rolesWithPerm = roles.filter((r) => (permRoles[perm.key] || new Set()).has(r.key));
+                  {group.permissions.map((perm: any) => {
+                    const fullPerm = ALL_PERMS.find((p: any) => p.key === perm.key)!;
+                    const rolesWithPerm = roles.filter((r: any) => (permRoles[perm.key] || new Set()).has(r.key));
                     const isExpanded = expandedPerms.has(perm.key);
                     const isSelected = selectedPerms.has(perm.key);
                     const rolesSet = permRoles[perm.key] || new Set<string>();
@@ -543,7 +543,7 @@ export default function PermissionsPage() {
                               {rolesWithPerm.length === 0 ? (
                                 <span className="text-xs italic text-gray-400">No roles assigned</span>
                               ) : (
-                                rolesWithPerm.map((r) => (
+                                rolesWithPerm.map((r: any) => (
                                   <span
                                     key={r.id}
                                     className={`flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium ${getRoleBadgeClass(r.key)}`}
@@ -576,7 +576,7 @@ export default function PermissionsPage() {
                               Manage roles for "{perm.key}"
                             </p>
                             <div className="flex flex-wrap gap-2">
-                              {roles.map((r) => {
+                              {roles.map((r: any) => {
                                 const has = rolesSet.has(r.key);
                                 return (
                                   <button

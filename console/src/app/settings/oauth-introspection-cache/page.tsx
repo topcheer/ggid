@@ -103,7 +103,7 @@ export default function OAuthIntrospectionCachePage() {
                 </tr>
               </thead>
               <tbody>
-                {(data?.cached_tokens ?? []).slice(0, 12).map((t) => (
+                {(data?.cached_tokens ?? []).slice(0, 12).map((t: any) => (
                   <tr key={t.token_hash} className="border-b border-gray-800">
                     <td className="py-2 pr-3 font-mono text-xs text-blue-400">{t.token_hash.slice(0, 16)}</td>
                     <td className="py-2 pr-3 text-gray-300">{t.client}</td>

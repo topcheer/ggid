@@ -36,7 +36,7 @@ export default function ConsentHistoryPage() {
 
   useEffect(() => { fetchData(); }, [fetchData]);
 
-  const filtered = entries.filter((e) => {
+  const filtered = entries.filter((e: any) => {
     if (filter && e.action !== filter) return false;
     if (search) {
       const q = search.toLowerCase();
@@ -45,8 +45,8 @@ export default function ConsentHistoryPage() {
     return true;
   });
 
-  const granted = entries.filter((e) => e.action === "granted").length;
-  const revoked = entries.filter((e) => e.action === "revoked").length;
+  const granted = entries.filter((e: any) => e.action === "granted").length;
+  const revoked = entries.filter((e: any) => e.action === "revoked").length;
 
   return (
     <div className="space-y-6">
@@ -87,7 +87,7 @@ export default function ConsentHistoryPage() {
       <div className="relative pl-8">
         <div className="absolute left-3 top-0 bottom-0 w-px bg-gray-200 dark:bg-gray-800" />
         <div className="space-y-3">
-          {filtered.map((e) => {
+          {filtered.map((e: any) => {
             const dotClass = e.action === "granted" ? "bg-green-500 border-green-200" : "bg-red-500 border-red-200";
             return (
               <div key={e.id} className="relative">

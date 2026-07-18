@@ -34,7 +34,7 @@ export default function DLPPage() {
           DLP Policies
         </h2>
         <div className="space-y-2">
-          {(data?.dlp_policies ?? []).map((p) => (
+          {(data?.dlp_policies ?? []).map((p: any) => (
             <div key={p.policy_name} className="bg-gray-800 rounded-lg p-3">
               <div className="flex items-center justify-between mb-2">
                 <div>
@@ -44,7 +44,7 @@ export default function DLPPage() {
                 <span className={"text-xs px-2 py-0.5 rounded " + (actionColors[p.action] ?? "bg-gray-700")}>{p.action}</span>
               </div>
               <div className="flex gap-1">
-                {p.channels.map((ch) => (
+                {p.channels.map((ch: any) => (
                   <span key={ch} className="text-xs px-1.5 py-0.5 bg-gray-700 rounded text-gray-400">{ch}</span>
                 ))}
               </div>

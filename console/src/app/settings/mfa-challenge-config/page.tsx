@@ -35,7 +35,7 @@ export default function MfaChallengeConfigPage() {
   }, []);
 
   const move = (idx: number, dir: -1 | 1) => { const n = [...priority]; const t = idx + dir; if (t < 0 || t >= n.length) return; [n[idx], n[t]] = [n[t], n[idx]]; setPriority(n); };
-  const toggleAction = (a: string) => setStepUpActions(stepUpActions.includes(a) ? stepUpActions.filter((x) => x !== a) : [...stepUpActions, a]);
+  const toggleAction = (a: string) => setStepUpActions(stepUpActions.includes(a) ? stepUpActions.filter((x: any) => x !== a) : [...stepUpActions, a]);
   if (loading) return <div className="space-y-6"><p className="text-gray-500">Loading...</p></div>;
   if (error) return <div className="space-y-6 text-red-600">Error: {error}</div>;
 
@@ -48,7 +48,7 @@ export default function MfaChallengeConfigPage() {
           <div className="rounded-lg border dark:border-gray-800 p-4"><label className="flex items-center gap-2 cursor-pointer"><input aria-label="Fallback" type="checkbox" checked={fallback} onChange={(e) => setFallback(e.target.checked)} className="rounded" /><span className="text-sm">Allow fallback method</span></label></div>
         </div>
       </div>
-      <div className="rounded-lg border dark:border-gray-800 p-4"><h3 className="text-sm font-semibold mb-3">Require Step-Up For</h3><div className="grid grid-cols-2 md:grid-cols-3 gap-2">{sensitiveActions.map((a) => (<label key={a} className="flex items-center gap-2 cursor-pointer"><input aria-label="Step up actions" type="checkbox" checked={stepUpActions.includes(a)} onChange={() => toggleAction(a)} className="rounded" /><span className="text-sm font-mono">{a}</span></label>))}</div></div>
+      <div className="rounded-lg border dark:border-gray-800 p-4"><h3 className="text-sm font-semibold mb-3">Require Step-Up For</h3><div className="grid grid-cols-2 md:grid-cols-3 gap-2">{sensitiveActions.map((a: any) => (<label key={a} className="flex items-center gap-2 cursor-pointer"><input aria-label="Step up actions" type="checkbox" checked={stepUpActions.includes(a)} onChange={() => toggleAction(a)} className="rounded" /><span className="text-sm font-mono">{a}</span></label>))}</div></div>
     </div>
   );
 }

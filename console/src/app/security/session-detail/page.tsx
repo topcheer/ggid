@@ -212,7 +212,7 @@ export default function SessionDetailPage() {
                 <p className="text-sm text-gray-500 py-4 text-center">{t("sessionDetail.caeHistory.noHistory")}</p>
               ) : (
                 <div className="space-y-2">
-                  {caeHistory.map((e) => (
+                  {caeHistory.map((e: any) => (
                     <div key={e.id} className="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800/30">
                       <div className="w-1.5 h-1.5 rounded-full bg-blue-500" />
                       <span className="text-xs text-gray-500 w-32">{new Date(e.timestamp).toLocaleTimeString()}</span>

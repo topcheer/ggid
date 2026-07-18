@@ -74,7 +74,7 @@ export default function TokenEventsPage() {
   const togglePause = () => { const np = !paused; setPaused(np); pausedRef.current = np; };
   const clearEvents = () => setEvents([]);
 
-  const filtered = filter === "all" ? events : events.filter((e) => e.event_type === filter);
+  const filtered = filter === "all" ? events : events.filter((e: any) => e.event_type === filter);
   const cardCls = "rounded-xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-700 dark:bg-gray-800";
 
   return (
@@ -98,7 +98,7 @@ export default function TokenEventsPage() {
 
       {/* Filter tabs */}
       <div className="flex gap-2">
-        {["all", "issued", "refreshed", "revoked", "expired", "introspected", "exchanged"].map((f) => (
+        {["all", "issued", "refreshed", "revoked", "expired", "introspected", "exchanged"].map((f: any) => (
           <button key={f} onClick={() => setFilter(f)} aria-label={`Filter by ${f}`} aria-pressed={filter === f} className={`rounded-lg px-3 py-1.5 text-xs font-medium ${filter === f ? "bg-indigo-600 text-white" : "bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400"}`}>{f}</button>
         ))}
       </div>
@@ -108,7 +108,7 @@ export default function TokenEventsPage() {
         {filtered.length === 0 ? (
           <div className={cardCls}><div className="py-12 text-center"><KeyRound className="mx-auto h-12 w-12 text-gray-300" /><p className="mt-4 text-sm text-gray-400">{paused ? "Stream paused." : "No token events yet."}</p></div></div>
         ) : (
-          filtered.map((ev) => (
+          filtered.map((ev: any) => (
             <div key={ev.id} className={`${cardCls} flex items-center justify-between py-3`}>
               <div className="flex items-center gap-3">
                 <span className={`inline-flex rounded-full px-2 py-1 text-xs font-medium ${eventColors[ev.event_type] || ""}`}>{ev.event_type}</span>

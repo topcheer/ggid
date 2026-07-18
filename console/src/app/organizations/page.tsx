@@ -197,10 +197,10 @@ export default function OrganizationsPage() {
   // Auto-expand root orgs on load
   useEffect(() => {
     if (orgs.length > 0 && expandedOrgs.size === 0) {
-      const roots = orgs.filter((o) => !o.parent_id);
-      setExpandedOrgs(new Set(roots.map((r) => r.id)));
+      const roots = orgs.filter((o: any) => !o.parent_id);
+      setExpandedOrgs(new Set(roots.map((r: any) => r.id)));
       // Fetch children for each root automatically
-      roots.forEach((r) => {
+      roots.forEach((r: any) => {
         const childData = treeChildren[r.id];
         if (!childData) {
           fetchChildren(r.id);
@@ -361,10 +361,10 @@ export default function OrganizationsPage() {
     ...Object.values(treeChildren).flat(),
   ];
   const uniqueOrgs = Array.from(
-    new Map(allOrgs.map((o) => [o.id, o])).values(),
+    new Map(allOrgs.map((o: any) => [o.id, o])).values(),
   );
   const tree = buildTree(uniqueOrgs);
-  const orgMap = new Map(uniqueOrgs.map((o) => [o.id, o]));
+  const orgMap = new Map(uniqueOrgs.map((o: any) => [o.id, o]));
 
   // Auto-dismiss messages
   useEffect(() => {
@@ -417,7 +417,7 @@ export default function OrganizationsPage() {
             name="parent_id"
             type="select"
             placeholder={t("orgs.noneRoot")}
-            options={orgs.map((o) => ({ value: o.id, label: o.name }))}
+            options={orgs.map((o: any) => ({ value: o.id, label: o.name }))}
           />
         </CreateForm>
       )}
@@ -434,7 +434,7 @@ export default function OrganizationsPage() {
             type="select"
             placeholder={t("orgs.selectOrg")}
             required
-            options={orgs.map((o) => ({ value: o.id, label: o.name }))}
+            options={orgs.map((o: any) => ({ value: o.id, label: o.name }))}
             value={selectedOrgId || undefined}
           />
           <FormField label={t("common.name")} name="name" placeholder="e.g. Frontend" required />
@@ -443,7 +443,7 @@ export default function OrganizationsPage() {
             name="parent_id"
             type="select"
             placeholder={t("orgs.noneRoot")}
-            options={depts.map((d) => ({ value: d.id, label: d.name }))}
+            options={depts.map((d: any) => ({ value: d.id, label: d.name }))}
           />
         </CreateForm>
       )}
@@ -460,7 +460,7 @@ export default function OrganizationsPage() {
             type="select"
             placeholder={t("orgs.selectOrg")}
             required
-            options={orgs.map((o) => ({ value: o.id, label: o.name }))}
+            options={orgs.map((o: any) => ({ value: o.id, label: o.name }))}
             value={selectedOrgId || undefined}
           />
           <FormField label={t("common.name")} name="name" placeholder="e.g. Platform Team" required />
@@ -484,7 +484,7 @@ export default function OrganizationsPage() {
             className="rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 focus:border-brand-500 focus:outline-none"
           >
             <option value="">{t("orgs.selectOrg")}</option>
-            {orgs.map((o) => (
+            {orgs.map((o: any) => (
               <option key={o.id} value={o.id}>
                 {o.name}
               </option>
@@ -503,7 +503,7 @@ export default function OrganizationsPage() {
             className="rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 focus:border-brand-500 focus:outline-none"
           >
             <option value="">{t("orgs.selectOrg")}</option>
-            {orgs.map((o) => (
+            {orgs.map((o: any) => (
               <option key={o.id} value={o.id}>
                 {o.name}
               </option>
@@ -530,7 +530,7 @@ export default function OrganizationsPage() {
           <EmptyState icon={Building2} title={t("orgs.noOrgsYet")} subtitle={t("orgs.createOrgHint")} />
         ) : (
           <div className="space-y-1">
-            {tree.map((org) => (
+            {tree.map((org: any) => (
               <OrgTreeNode
                 key={org.id}
                 org={org}
@@ -561,7 +561,7 @@ export default function OrganizationsPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
-                {depts.map((d) => (
+                {depts.map((d: any) => (
                   <tr key={d.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-2">
@@ -569,7 +569,7 @@ export default function OrganizationsPage() {
                         <span className="text-sm font-medium">{d.name}</span>
                         {d.parent_id && d.parent_id !== d.id && (
                           <span className="text-xs text-gray-400">
-                            (under {depts.find((p) => p.id === d.parent_id)?.name || "parent"})
+                            (under {depts.find((p: any) => p.id === d.parent_id)?.name || "parent"})
                           </span>
                         )}
                       </div>
@@ -597,7 +597,7 @@ export default function OrganizationsPage() {
           <EmptyState icon={Users} title={t("orgs.noTeams")} subtitle={t("orgs.createTeamHint")} />
         ) : (
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {teams.map((t) => (
+            {teams.map((t: any) => (
               <div key={t.id} className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-700 dark:bg-gray-800">
                 <div className="mb-3 flex items-start justify-between">
                   <div className="flex items-center gap-3">
@@ -643,7 +643,7 @@ export default function OrganizationsPage() {
         ) : (
           <MembersDetail
             orgId={selectedOrgId}
-            orgName={orgs.find((o) => o.id === selectedOrgId)?.name || ""}
+            orgName={orgs.find((o: any) => o.id === selectedOrgId)?.name || ""}
             apiFetch={apiFetch}
           />
         )
@@ -714,7 +714,7 @@ function MembersDetail({
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100">
-            {members.map((m) => (
+            {members.map((m: any) => (
               <tr key={m.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
                 <td className="px-4 py-2">
                   <Link href={`/users/${m.user_id}`} className="font-mono text-xs text-brand-600 hover:underline">
@@ -774,7 +774,7 @@ function UnifiedTreeView({
   // Auto-expand root nodes
   useEffect(() => {
     if (expandedNodes.size === 0 && orgTree.length > 0) {
-      setExpandedNodes(new Set(orgTree.map((o) => o.id)));
+      setExpandedNodes(new Set(orgTree.map((o: any) => o.id)));
     }
   }, [orgTree, expandedNodes.size]);
 
@@ -788,7 +788,7 @@ function UnifiedTreeView({
         </span>
       </h3>
       <div className="space-y-0.5">
-        {orgTree.map((org) => (
+        {orgTree.map((org: any) => (
           <UnifiedOrgNode
             key={org.id}
             org={org}
@@ -870,7 +870,7 @@ function UnifiedOrgNode({
       {isExpanded && (
         <>
           {/* Render departments under this org */}
-          {orgDepts.map((dept) => (
+          {orgDepts.map((dept: any) => (
             <div
               key={dept.id}
               className="flex items-center gap-2 rounded-lg px-2 py-1 hover:bg-blue-50/30"
@@ -884,7 +884,7 @@ function UnifiedOrgNode({
             </div>
           ))}
           {/* Render child organizations */}
-          {org.children.map((child) => (
+          {org.children.map((child: any) => (
             <UnifiedOrgNode
               key={child.id}
               org={child}
@@ -1010,7 +1010,7 @@ function OrgTreeNode({
         </div>
       )}
       {isExpanded &&
-        org.children.map((child) => (
+        org.children.map((child: any) => (
           <OrgTreeNode
             key={child.id}
             org={child}
@@ -1091,7 +1091,7 @@ function FormField({
           className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 focus:border-brand-500 focus:outline-none"
         >
           <option value="">{placeholder || "-- Select --"}</option>
-          {options?.map((opt) => (
+          {options?.map((opt: any) => (
             <option key={opt.value} value={opt.value}>
               {opt.label}
             </option>

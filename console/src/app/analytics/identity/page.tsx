@@ -92,19 +92,19 @@ function GrowthTab() {
   const activeRate = latest.registered > 0 ? Math.round((latest.active / latest.registered) * 100) : 0;
 
   // SVG line chart
-  const maxVal = Math.max(...data.map((d) => d.registered), 1);
+  const maxVal = Math.max(...data.map((d: any) => d.registered), 1);
   const chartW = 700, chartH = 200, pad = 30;
   const xStep = data.length > 1 ? (chartW - pad * 2) / (data.length - 1) : 0;
   const yScale = (v: number) => chartH - pad - (v / maxVal) * (chartH - pad * 2);
 
   const linePath = (key: "registered" | "active" | "dormant") =>
-    data.map((d, i) => `${i === 0 ? "M" : "L"} ${pad + i * xStep} ${yScale(d[key])}`).join(" ");
+    data.map((d: any, i: any) => `${i === 0 ? "M" : "L"} ${pad + i * xStep} ${yScale(d[key])}`).join(" ");
 
   return (
     <div className="space-y-4">
       {/* Range selector */}
       <div className="flex gap-2">
-        {(["7d", "30d"] as const).map((r) => (
+        {(["7d", "30d"] as const).map((r: any) => (
           <button key={r} onClick={() => setRange(r)}
             className={`px-3 py-1.5 rounded-lg text-xs font-medium ${range === r ? "bg-blue-600 text-white" : "bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-gray-700"}`}>
             {r === "7d" ? t("identityAnalytics.growth.last7Days") : t("identityAnalytics.growth.last30Days")}
@@ -125,7 +125,7 @@ function GrowthTab() {
         <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-4">{t("identityAnalytics.growth.title")}</h3>
         <svg viewBox={`0 0 ${chartW} ${chartH}`} className="w-full h-48">
           {/* Grid */}
-          {[0, 0.25, 0.5, 0.75, 1].map((p) => (
+          {[0, 0.25, 0.5, 0.75, 1].map((p: any) => (
             <line key={p} x1={pad} y1={pad + p * (chartH - pad * 2)} x2={chartW - pad} y2={pad + p * (chartH - pad * 2)}
               stroke="currentColor" className="text-gray-100 dark:text-gray-800" strokeWidth={1} />
           ))}
@@ -175,7 +175,7 @@ function MethodsTab() {
   if (loading) return <Spinner />;
 
   const total = methods.reduce((s, m) => s + m.count, 0);
-  const passwordless = methods.filter((m) => m.method !== "password").reduce((s, m) => s + m.count, 0);
+  const passwordless = methods.filter((m: any) => m.method !== "password").reduce((s, m) => s + m.count, 0);
   const passwordlessRate = total > 0 ? Math.round((passwordless / total) * 100) : 0;
 
   // Pie chart
@@ -200,7 +200,7 @@ function MethodsTab() {
         <div className="flex flex-col md:flex-row items-center gap-8">
           {/* Pie */}
           <svg width="180" height="180" viewBox="0 0 180 180" className="flex-shrink-0">
-            {methods.map((m, i) => {
+            {methods.map((m: any, i: any) => {
               const pct = total > 0 ? m.count / total : 0;
               const startAngle = (cumulative / total) * 2 * Math.PI - Math.PI / 2;
               cumulative += m.count;
@@ -223,7 +223,7 @@ function MethodsTab() {
 
           {/* Legend + bars */}
           <div className="flex-1 space-y-2 w-full">
-            {methods.map((m, i) => {
+            {methods.map((m: any, i: any) => {
               const pct = total > 0 ? Math.round((m.count / total) * 100) : 0;
               const Icon = methodIcons[m.method] || KeyRound;
               return (
@@ -292,7 +292,7 @@ function RiskTab() {
   return (
     <div className="space-y-4">
       <div className="grid grid-cols-2 gap-4">
-        <StatCard icon={AlertTriangle} label={t("identityAnalytics.risk.totalHighRisk")} value={users.filter((u) => u.risk_level === "high" || u.risk_level === "critical").length} color="red" />
+        <StatCard icon={AlertTriangle} label={t("identityAnalytics.risk.totalHighRisk")} value={users.filter((u: any) => u.risk_level === "high" || u.risk_level === "critical").length} color="red" />
         <StatCard icon={Shield} label={t("identityAnalytics.risk.avgRiskScore")} value={avgScore} color="orange" />
       </div>
 
@@ -318,7 +318,7 @@ function RiskTab() {
                 </tr>
               </thead>
               <tbody>
-                {users.map((u) => (
+                {users.map((u: any) => (
                   <tr key={u.user_id} className="border-b border-gray-100 dark:border-gray-800/50">
                     <td className="py-3 px-3">
                       <div className="font-medium text-gray-900 dark:text-white">{u.display_name}</div>
@@ -339,7 +339,7 @@ function RiskTab() {
                     </td>
                     <td className="py-3 px-3">
                       <div className="flex flex-wrap gap-1">
-                        {u.factors.map((f) => (
+                        {u.factors.map((f: any) => (
                           <span key={f} className="px-1.5 py-0.5 text-xs bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 rounded">{f.replace(/_/g, " ")}</span>
                         ))}
                       </div>

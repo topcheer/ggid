@@ -49,7 +49,7 @@ export default function SamlIdpInitiatedSSOPage() {
             Allowed Identity Providers
           </h2>
           <div className="space-y-2">
-            {(data?.allowed_idps ?? []).map((idp) => (
+            {(data?.allowed_idps ?? []).map((idp: any) => (
               <div key={idp.entity_id} className="bg-gray-800 rounded-lg p-3">
                 <div className="flex items-center justify-between mb-1">
                   <div>
@@ -116,7 +116,7 @@ export default function SamlIdpInitiatedSSOPage() {
               <div className="bg-gray-800 rounded-lg p-3">
                 <p className="text-xs text-gray-400 mb-2">Mapped Attributes</p>
                 <div className="flex flex-wrap gap-1">
-                  {(data?.session_bridge?.map_attributes ?? []).map((attr) => (
+                  {(data?.session_bridge?.map_attributes ?? []).map((attr: any) => (
                     <span key={attr} className="text-xs px-2 py-0.5 rounded bg-blue-900 text-blue-300">{attr}</span>
                   ))}
                 </div>

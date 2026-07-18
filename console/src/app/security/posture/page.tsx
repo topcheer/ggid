@@ -283,7 +283,7 @@ export default function SecurityPosturePage() {
               </div>
             ) : (
               <div className="space-y-2">
-                {recommendations.map((r) => (
+                {recommendations.map((r: any) => (
                   <div key={r.id} className={`${cardCls} flex items-center justify-between py-3`}>
                     <div className="flex items-center gap-3">
                       <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${sevColors[r.severity] || ""}`}>{r.severity}</span>

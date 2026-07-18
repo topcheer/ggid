@@ -34,7 +34,7 @@ export default function ITDRDashboardPage() {
         <div className="bg-gray-900 rounded-xl p-4">
           <ShieldAlert className="w-5 h-5 text-red-400 mb-1" />
           <p className="text-xs text-gray-400">{t("big1.itdrDashboard.activeThreats")}</p>
-          <p className="text-xl font-bold text-red-400">{data?.threat_detections?.filter((threat) => threat.status === t("big1.itdrDashboard.active")).length ?? 0}</p>
+          <p className="text-xl font-bold text-red-400">{data?.threat_detections?.filter((threat: any) => threat.status === t("big1.itdrDashboard.active")).length ?? 0}</p>
         </div>
         <div className="bg-gray-900 rounded-xl p-4">
           <Shield className="w-5 h-5 text-green-400 mb-1" />
@@ -59,7 +59,7 @@ export default function ITDRDashboardPage() {
           <h2 className="text-lg font-semibold flex items-center gap-2 mb-4">
             <ShieldAlert className="w-5 h-5 text-red-400" />{t("big1.itdrDashboard.threatDetections")}</h2>
           <div className="space-y-2 max-h-96 overflow-y-auto">
-            {(data?.threat_detections ?? []).map((threat) => (
+            {(data?.threat_detections ?? []).map((threat: any) => (
               <div key={threat.id} className="bg-gray-800 rounded-lg p-3">
                 <div className="flex items-start justify-between mb-2">
                   <div>
@@ -71,7 +71,7 @@ export default function ITDRDashboardPage() {
                   </span>
                 </div>
                 <div className="flex flex-wrap gap-1 mb-2">
-                  {threat.mitre_techniques.map((tech) => (
+                  {threat.mitre_techniques.map((tech: any) => (
                     <span key={tech} className="text-xs px-1.5 py-0.5 bg-purple-900/50 text-purple-300 rounded font-mono">{tech}</span>
                   ))}
                 </div>
@@ -94,7 +94,7 @@ export default function ITDRDashboardPage() {
           <div className="bg-gray-900 rounded-xl p-6">
             <h2 className="text-sm font-semibold mb-4">{t("big1.itdrDashboard.detectionRules")}</h2>
             <div className="space-y-2">
-              {(data?.detection_rules ?? []).map((r) => (
+              {(data?.detection_rules ?? []).map((r: any) => (
                 <div key={r.rule_name} className="flex items-center justify-between bg-gray-800 rounded-lg p-3">
                   <div>
                     <p className="text-sm font-medium">{r.rule_name}</p>
@@ -116,7 +116,7 @@ export default function ITDRDashboardPage() {
             <h2 className="text-sm font-semibold flex items-center gap-2 mb-4">
               <BookOpen className="w-4 h-4 text-blue-400" />{t("big1.itdrDashboard.responsePlaybooks")}</h2>
             <div className="space-y-2">
-              {(data?.response_playbooks ?? []).map((p) => (
+              {(data?.response_playbooks ?? []).map((p: any) => (
                 <div key={p.threat_type} className="flex items-center gap-3 bg-gray-800 rounded-lg p-3">
                   <div className="flex-1">
                     <p className="text-sm font-medium">{p.threat_type}</p>

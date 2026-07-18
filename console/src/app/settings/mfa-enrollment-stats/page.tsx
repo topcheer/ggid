@@ -58,7 +58,7 @@ export default function MFAEnrollmentStatsPage() {
 
           <div className="rounded-lg border dark:border-gray-800 p-4">
             <h3 className="text-sm font-semibold mb-3">Method Distribution</h3>
-            <div className="space-y-2">{data.method_distribution.map((d) => (
+            <div className="space-y-2">{data.method_distribution.map((d: any) => (
               <div key={d.method} className="flex items-center gap-2"><span className="text-xs font-mono w-24">{d.method}</span><div className="flex-1 bg-gray-100 dark:bg-gray-800 rounded-full h-6 overflow-hidden"><div className="h-full rounded-full" style={{ width: `${(d.count / total) * 100}%`, background: methodColors[d.method] || "#ccc" }} /></div><span className="text-sm font-bold w-12 text-right">{d.count}</span><span className="text-xs text-gray-400 w-10">{((d.count / total) * 100).toFixed(0)}%</span></div>
             ))}</div>
           </div>
@@ -66,7 +66,7 @@ export default function MFAEnrollmentStatsPage() {
           {data.pending_enrollments.length > 0 && (
             <div className="overflow-x-auto rounded-lg border dark:border-gray-800">
               <table className="w-full text-sm"><thead className="bg-gray-50 dark:bg-gray-900/50"><tr><th className="px-4 py-3 text-left font-medium">User</th><th className="px-4 py-3 text-left font-medium">Method</th><th className="px-4 py-3 text-left font-medium">Initiated</th></tr></thead>
-                <tbody className="divide-y dark:divide-gray-800">{data.pending_enrollments.map((p) => (<tr key={p.user_id + p.method} className="hover:bg-gray-50 dark:hover:bg-gray-900/30"><td className="px-4 py-3"><span className="font-medium">{p.username}</span><p className="text-xs text-gray-400 font-mono">{p.user_id}</p></td><td className="px-4 py-3"><span className="px-2 py-0.5 rounded text-xs" style={{ background: (methodColors[p.method] || "#ccc") + "20", color: methodColors[p.method] || "#ccc" }}>{p.method}</span></td><td className="px-4 py-3 text-xs text-gray-500">{p.initiated_at}</td></tr>))}</tbody>
+                <tbody className="divide-y dark:divide-gray-800">{data.pending_enrollments.map((p: any) => (<tr key={p.user_id + p.method} className="hover:bg-gray-50 dark:hover:bg-gray-900/30"><td className="px-4 py-3"><span className="font-medium">{p.username}</span><p className="text-xs text-gray-400 font-mono">{p.user_id}</p></td><td className="px-4 py-3"><span className="px-2 py-0.5 rounded text-xs" style={{ background: (methodColors[p.method] || "#ccc") + "20", color: methodColors[p.method] || "#ccc" }}>{p.method}</span></td><td className="px-4 py-3 text-xs text-gray-500">{p.initiated_at}</td></tr>))}</tbody>
               </table>
             </div>
           )}

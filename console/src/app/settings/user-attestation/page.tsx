@@ -82,7 +82,7 @@ export default function UserAttestationPage() {
   };
 
   const cardCls = "rounded-xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-700 dark:bg-gray-800";
-  const pending = records.filter((r) => r.status === "pending");
+  const pending = records.filter((r: any) => r.status === "pending");
 
   return (
     <div className="space-y-6">
@@ -128,8 +128,8 @@ export default function UserAttestationPage() {
           {/* Stats */}
           <div className="grid grid-cols-3 gap-4">
             <div className={cardCls}><div className="text-xs font-semibold uppercase text-gray-400">Pending</div><p className="mt-2 text-2xl font-bold text-yellow-600">{pending.length}</p></div>
-            <div className={cardCls}><div className="text-xs font-semibold uppercase text-gray-400">Completed</div><p className="mt-2 text-2xl font-bold text-green-600">{records.filter((r) => r.status === "completed").length}</p></div>
-            <div className={cardCls}><div className="text-xs font-semibold uppercase text-gray-400">Expired</div><p className="mt-2 text-2xl font-bold text-red-600">{records.filter((r) => r.status === "expired").length}</p></div>
+            <div className={cardCls}><div className="text-xs font-semibold uppercase text-gray-400">Completed</div><p className="mt-2 text-2xl font-bold text-green-600">{records.filter((r: any) => r.status === "completed").length}</p></div>
+            <div className={cardCls}><div className="text-xs font-semibold uppercase text-gray-400">Expired</div><p className="mt-2 text-2xl font-bold text-red-600">{records.filter((r: any) => r.status === "expired").length}</p></div>
           </div>
 
           {/* Pending table */}
@@ -149,10 +149,10 @@ export default function UserAttestationPage() {
                     <th scope="col" className="px-4 py-3 text-right font-semibold text-gray-600 dark:text-gray-300">Actions</th>
                   </tr></thead>
                   <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-                    {records.map((r) => (
+                    {records.map((r: any) => (
                       <tr key={r.id} className="bg-white dark:bg-gray-900">
                         <td className="px-4 py-3"><div className="font-medium text-gray-900 dark:text-white">{r.username}</div><div className="text-xs text-gray-400 font-mono">{r.user_id.slice(0, 16)}</div></td>
-                        <td className="px-4 py-3"><div className="flex flex-wrap gap-1">{r.pending_fields.map((f) => <span key={f} className="rounded bg-gray-100 px-1.5 py-0.5 text-xs text-gray-600 dark:bg-gray-700 dark:text-gray-300">{f}</span>)}</div></td>
+                        <td className="px-4 py-3"><div className="flex flex-wrap gap-1">{r.pending_fields.map((f: any) => <span key={f} className="rounded bg-gray-100 px-1.5 py-0.5 text-xs text-gray-600 dark:bg-gray-700 dark:text-gray-300">{f}</span>)}</div></td>
                         <td className="px-4 py-3 text-gray-400">{new Date(r.sent_at).toLocaleDateString()}</td>
                         <td className="px-4 py-3 text-gray-400">{r.expires_at ? new Date(r.expires_at).toLocaleDateString() : "—"}</td>
                         <td className="px-4 py-3"><span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${statusColors[r.status] || ""}`}>{r.status}</span></td>

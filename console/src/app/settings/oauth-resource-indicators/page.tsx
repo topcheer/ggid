@@ -59,7 +59,7 @@ export default function OAuthResourceIndicatorsPage() {
         <div className="bg-gray-900 rounded-xl p-6">
           <h2 className="text-lg font-semibold mb-4">Allowed Resource Patterns</h2>
           <div className="space-y-3">
-            {(data?.per_client_patterns ?? []).map((client) => (
+            {(data?.per_client_patterns ?? []).map((client: any) => (
               <div key={client.client_id} className="bg-gray-800 rounded-lg p-3">
                 <p className="text-sm font-mono text-blue-400 mb-2">{client.client_id}</p>
                 <div className="space-y-1">
@@ -96,7 +96,7 @@ export default function OAuthResourceIndicatorsPage() {
                 </tr>
               </thead>
               <tbody>
-                {(data?.per_scope_restriction ?? []).map((s) => (
+                {(data?.per_scope_restriction ?? []).map((s: any) => (
                   <tr key={s.scope} className="border-b border-gray-800">
                     <td className="py-2 pr-3 font-mono text-xs text-blue-400">{s.scope}</td>
                     <td className="py-2 pr-3 text-gray-300 text-xs">{s.allowed_resources.join(", ")}</td>

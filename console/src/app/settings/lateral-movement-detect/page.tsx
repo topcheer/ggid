@@ -44,7 +44,7 @@ export default function LateralMovementDetectPage() {
         <div className="bg-gray-900 rounded-xl p-4">
           <ShieldAlert className="w-5 h-5 text-purple-400 mb-1" />
           <p className="text-xs text-gray-400">Active Investigations</p>
-          <p className="text-xl font-bold">{data?.detected_patterns?.filter((p) => p.status === "investigating").length ?? 0}</p>
+          <p className="text-xl font-bold">{data?.detected_patterns?.filter((p: any) => p.status === "investigating").length ?? 0}</p>
         </div>
       </div>
 
@@ -52,7 +52,7 @@ export default function LateralMovementDetectPage() {
       <div className="bg-gray-900 rounded-xl p-6">
         <h2 className="text-lg font-semibold mb-4">Detected Lateral Movement Patterns</h2>
         <div className="space-y-3">
-          {(data?.detected_patterns ?? []).map((p) => (
+          {(data?.detected_patterns ?? []).map((p: any) => (
             <div key={p.id} className="bg-gray-800 rounded-lg p-4">
               <div className="flex items-start justify-between mb-3">
                 <div>
@@ -84,7 +84,7 @@ export default function LateralMovementDetectPage() {
               </div>
               <div className="flex items-center justify-between">
                 <div className="flex flex-wrap gap-1">
-                  {p.mitre_techniques.map((t) => (
+                  {p.mitre_techniques.map((t: any) => (
                     <span key={t} className="text-xs px-1.5 py-0.5 bg-purple-900/50 text-purple-300 rounded font-mono">{t}</span>
                   ))}
                 </div>

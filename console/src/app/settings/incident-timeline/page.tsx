@@ -43,7 +43,7 @@ export default function IncidentTimelinePage() {
             {/* Timeline line */}
             <div className="absolute left-2 top-0 bottom-0 w-0.5 bg-gray-700" />
 
-            {events.map((ev) => (
+            {events.map((ev: any) => (
               <div key={ev.id} className="relative pb-6 last:pb-0">
                 {/* Dot */}
                 <div className={"absolute -left-4 w-3 h-3 rounded-full ring-2 ring-gray-900 " + (phaseColors[ev.phase]?.replace("text-", "bg-").split(" ")[0] ?? "bg-gray-500")} />

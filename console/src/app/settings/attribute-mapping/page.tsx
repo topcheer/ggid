@@ -83,9 +83,9 @@ function RulesTab({ rules, setRules }: { rules: MappingRule[]; setRules: (r: Map
   const [msg, setMsg] = useState<string | null>(null);
 
   const addRule = () => setRules([...rules, { id: `r${ruleId++}`, source_attr: "", target_field: "email", transform: "none", transform_param: "" }]);
-  const removeRule = (id: string) => setRules(rules.filter((r) => r.id !== id));
+  const removeRule = (id: string) => setRules(rules.filter((r: any) => r.id !== id));
   const updateRule = (id: string, field: keyof MappingRule, value: string) =>
-    setRules(rules.map((r) => r.id === id ? { ...r, [field]: value } : r));
+    setRules(rules.map((r: any) => r.id === id ? { ...r, [field]: value } : r));
 
   const save = async () => {
     setSaving(true);
@@ -110,7 +110,7 @@ function RulesTab({ rules, setRules }: { rules: MappingRule[]; setRules: (r: Map
       </div>
 
       <div className="space-y-2">
-        {rules.map((r) => (
+        {rules.map((r: any) => (
           <div key={r.id} className="flex items-center gap-2 p-2 rounded-lg bg-gray-50 dark:bg-gray-800/50">
             {/* Source */}
             <input type="text" value={r.source_attr} onChange={(e) => updateRule(r.id, "source_attr", e.target.value)}
@@ -120,12 +120,12 @@ function RulesTab({ rules, setRules }: { rules: MappingRule[]; setRules: (r: Map
             {/* Target */}
             <select value={r.target_field} onChange={(e) => updateRule(r.id, "target_field", e.target.value)}
               className="px-2 py-1.5 rounded border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-xs text-gray-900 dark:text-white">
-              {TARGET_FIELDS.map((f) => <option key={f} value={f}>{f}</option>)}
+              {TARGET_FIELDS.map((f: any) => <option key={f} value={f}>{f}</option>)}
             </select>
             {/* Transform */}
             <select value={r.transform} onChange={(e) => updateRule(r.id, "transform", e.target.value)}
               className="px-2 py-1.5 rounded border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-xs text-gray-900 dark:text-white">
-              {TRANSFORMS.map((tr) => <option key={tr.value} value={tr.value}>{tr.label}</option>)}
+              {TRANSFORMS.map((tr: any) => <option key={tr.value} value={tr.value}>{tr.label}</option>)}
             </select>
             {/* Transform param */}
             {["prefix", "suffix", "regex", "split"].includes(r.transform) && (

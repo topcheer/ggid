@@ -57,7 +57,7 @@ export default function TenantQuotasPage() {
       <div className="bg-gray-900 rounded-xl p-6 mb-6">
         <h2 className="text-lg font-semibold mb-4">{t("tenantQuotas.resourceUsage")}</h2>
         <div className="space-y-4">
-          {(data?.usage ?? []).map((u) => {
+          {(data?.usage ?? []).map((u: any) => {
             const pct = u.limit > 0 ? (u.used / u.limit) * 100 : 0;
             const barColor = pct >= 90 ? "bg-red-500" : pct >= 70 ? "bg-yellow-500" : "bg-green-500";
             return (
@@ -92,16 +92,16 @@ export default function TenantQuotasPage() {
               <thead>
                 <tr className="border-b border-gray-800 text-gray-400">
                   <th scope="col" className="text-left py-2 pr-4">{t("tenantQuotas.resource")}</th>
-                  {(data?.per_plan_limits ?? []).map((p) => (
+                  {(data?.per_plan_limits ?? []).map((p: any) => (
                     <th scope="col" key={p.plan} className="text-right py-2 px-2 capitalize">{p.plan}</th>
                   ))}
                 </tr>
               </thead>
               <tbody>
-                {(["users", "api_calls", "storage_mb", "sessions", "tokens_issued"] as const).map((res) => (
+                {(["users", "api_calls", "storage_mb", "sessions", "tokens_issued"] as const).map((res: any) => (
                   <tr key={res} className="border-b border-gray-800">
                     <td className="py-2 pr-4 text-gray-300 capitalize">{res.replace(/_/g, " ")}</td>
-                    {(data?.per_plan_limits ?? []).map((p) => (
+                    {(data?.per_plan_limits ?? []).map((p: any) => (
                       <td key={p.plan} className="text-right py-2 px-2 text-gray-300">
                         {p.limits[res] === -1 ? "∞" : (p.limits[res] ?? 0).toLocaleString()}
                       </td>

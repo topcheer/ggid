@@ -63,8 +63,8 @@ export default function LoginOrchestratorPage() {
     setMethods(updated.map((m: any, i: number) => ({ ...m, priority: i + 1 })));
   };
 
-  const toggleMethod = (id: string) => setMethods((p) => p.map((m) => m.id === id ? { ...m, enabled: !m.enabled } : m));
-  const toggleProvider = (id: string) => setProviders((p) => p.map((pr) => pr.id === id ? { ...pr, enabled: !pr.enabled } : pr));
+  const toggleMethod = (id: string) => setMethods((p) => p.map((m: any) => m.id === id ? { ...m, enabled: !m.enabled } : m));
+  const toggleProvider = (id: string) => setProviders((p) => p.map((pr: any) => pr.id === id ? { ...pr, enabled: !pr.enabled } : pr));
 
   const handleSave = async () => {
     setSaving(true);
@@ -123,7 +123,7 @@ export default function LoginOrchestratorPage() {
             <div className={cardCls}>
               <h3 className="mb-4 text-sm font-semibold text-gray-700 dark:text-gray-300">Identity Providers</h3>
               <div className="space-y-2">
-                {providers.map((p) => (
+                {providers.map((p: any) => (
                   <div key={p.id} className="flex items-center justify-between rounded-lg border border-gray-200 px-4 py-3 dark:border-gray-700">
                     <div><span className="text-sm font-medium text-gray-900 dark:text-white">{p.name}</span><span className="ml-2 rounded bg-gray-100 px-1.5 py-0.5 text-xs text-gray-500 dark:bg-gray-700">{p.type}</span>{p.domains.length > 0 && <span className="ml-2 text-xs text-gray-400">{p.domains.join(", ")}</span>}</div>
                     <button onClick={() => toggleProvider(p.id)}>{p.enabled ? <ToggleRight className="h-6 w-6 text-green-600" /> : <ToggleLeft className="h-6 w-6 text-gray-300" />}</button>

@@ -14,7 +14,7 @@ export default function PolicyImpactAnalysisPage() {
   if (error) return <div className="p-8 text-red-400">Error: {error}</div>;
 
   const analysis = selectedPolicy
-    ? (data?.analyses ?? []).find((a) => a.policy_id === selectedPolicy)
+    ? (data?.analyses ?? []).find((a: any) => a.policy_id === selectedPolicy)
     : (data?.analyses ?? [])[0];
 
   return (
@@ -41,7 +41,7 @@ export default function PolicyImpactAnalysisPage() {
             onChange={(e) => setSelectedPolicy(e.target.value)}
             className="flex-1 bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-500"
           >
-            {(data?.analyses ?? []).map((a) => (
+            {(data?.analyses ?? []).map((a: any) => (
               <option key={a.policy_id} value={a.policy_id}>{a.policy_name}</option>
             ))}
           </select>

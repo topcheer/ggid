@@ -73,7 +73,7 @@ export default function UserTimelinePage({ params }: { params: { id: string } })
     setExpanded(next);
   };
 
-  const filtered = events.filter((e) => {
+  const filtered = events.filter((e: any) => {
     if (showRiskOnly && !e.is_risk) return false;
     if (!showRiskOverlay && e.is_risk && !riskEventTypes.includes(e.type)) return false;
     return true;
@@ -148,7 +148,7 @@ export default function UserTimelinePage({ params }: { params: { id: string } })
             <div className="absolute left-4 top-0 bottom-0 w-0.5 bg-gray-200 dark:bg-gray-800" />
 
             <div className="space-y-3">
-              {filtered.map((e) => {
+              {filtered.map((e: any) => {
                 const Icon = eventIcons[e.type] || Clock;
                 const isRisk = e.is_risk && riskEventTypes.includes(e.type);
                 return (

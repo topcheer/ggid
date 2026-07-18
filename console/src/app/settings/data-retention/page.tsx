@@ -73,11 +73,11 @@ export default function DataRetentionPage() {
   };
 
   const removePolicy = (id: string) => {
-    setPolicies(policies.filter((p) => p.id !== id));
+    setPolicies(policies.filter((p: any) => p.id !== id));
   };
 
   const updatePolicy = (id: string, updates: Partial<RetentionPolicy>) => {
-    setPolicies(policies.map((p) => (p.id === id ? { ...p, ...updates } : p)));
+    setPolicies(policies.map((p: any) => (p.id === id ? { ...p, ...updates } : p)));
   };
 
   const inputCls = "w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200";
@@ -119,20 +119,20 @@ export default function DataRetentionPage() {
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
         <div className={cardCls}>
           <p className="text-xs font-medium uppercase text-gray-500">GDPR Retention</p>
-          <p className="mt-2 text-2xl font-bold dark:text-gray-100">{policies.filter((p) => p.enabled).length}</p>
+          <p className="mt-2 text-2xl font-bold dark:text-gray-100">{policies.filter((p: any) => p.enabled).length}</p>
           <p className="text-xs text-gray-400">active policies</p>
         </div>
         <div className={cardCls}>
           <p className="text-xs font-medium uppercase text-gray-500">Longest Retention</p>
           <p className="mt-2 text-2xl font-bold dark:text-gray-100">
-            {Math.max(0, ...policies.filter((p) => p.enabled).map((p) => p.retentionDays))}
+            {Math.max(0, ...policies.filter((p: any) => p.enabled).map((p: any) => p.retentionDays))}
           </p>
           <p className="text-xs text-gray-400">days</p>
         </div>
         <div className={cardCls}>
           <p className="text-xs font-medium uppercase text-gray-500">Auto-Delete</p>
           <p className="mt-2 text-2xl font-bold dark:text-gray-100">
-            {policies.filter((p) => p.enabled && p.action === "delete").length}
+            {policies.filter((p: any) => p.enabled && p.action === "delete").length}
           </p>
           <p className="text-xs text-gray-400">policies</p>
         </div>
@@ -152,7 +152,7 @@ export default function DataRetentionPage() {
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-            {policies.map((policy) => (
+            {policies.map((policy: any) => (
               <tr key={policy.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/50">
                 <td className="px-4 py-3">
                   <input
@@ -169,7 +169,7 @@ export default function DataRetentionPage() {
                     onChange={(e) => updatePolicy(policy.id, { dataType: e.target.value })}
                     className={inputCls}
                   >
-                    {DATA_TYPES.map((dt) => (
+                    {DATA_TYPES.map((dt: any) => (
                       <option key={dt.value} value={dt.value}>{dt.label}</option>
                     ))}
                   </select>
@@ -195,7 +195,7 @@ export default function DataRetentionPage() {
                     onChange={(e) => updatePolicy(policy.id, { action: e.target.value })}
                     className={inputCls}
                   >
-                    {ACTIONS.map((a) => (
+                    {ACTIONS.map((a: any) => (
                       <option key={a.value} value={a.value}>{a.label}</option>
                     ))}
                   </select>

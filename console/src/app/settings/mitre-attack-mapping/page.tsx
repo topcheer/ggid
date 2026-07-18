@@ -36,9 +36,9 @@ export default function MitreAttackMappingPage() {
 
       {/* Coverage per Tactic */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-        {tactics.map((tactic) => {
-          const techniques = data?.techniques?.filter((t) => t.tactic === tactic) ?? [];
-          const detected = techniques.filter((t) => t.detection_status === "detected").length;
+        {tactics.map((tactic: any) => {
+          const techniques = data?.techniques?.filter((t: any) => t.tactic === tactic) ?? [];
+          const detected = techniques.filter((t: any) => t.detection_status === "detected").length;
           const pct = techniques.length > 0 ? Math.round((detected / techniques.length) * 100) : 0;
           return (
             <div key={tactic} className="bg-gray-900 rounded-xl p-4">
@@ -88,7 +88,7 @@ export default function MitreAttackMappingPage() {
               </tr>
             </thead>
             <tbody>
-              {(data?.techniques ?? []).map((t) => (
+              {(data?.techniques ?? []).map((t: any) => (
                 <tr key={t.t_id} className="border-b border-gray-800">
                   <td className="py-3 pr-3 font-mono text-xs text-purple-400">{t.t_id}</td>
                   <td className="py-3 pr-3 text-xs">{t.name}</td>

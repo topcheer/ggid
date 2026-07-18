@@ -158,7 +158,7 @@ export default function CertificatesPage() {
       const newKid = `${new Date().toISOString().slice(0, 10)}-key-${Date.now().toString(36)}`;
       setSigningKeys((prev) => [
         { kid: newKid, alg: "RS256", status: "active", created: new Date().toISOString() },
-        ...prev.map((k) => (k.status === "active" ? { ...k, status: "rotated" as const } : k)),
+        ...prev.map((k: any) => (k.status === "active" ? { ...k, status: "rotated" as const } : k)),
       ]);
       setMsgType("success");
       setMsg(t("certs.keyRotated"));
@@ -216,7 +216,7 @@ export default function CertificatesPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-50 dark:divide-gray-700/50">
-                {certs.map((cert) => {
+                {certs.map((cert: any) => {
                   const status = getCertStatus(cert.expiry);
                   const statusCfg = STATUS_CONFIG[status];
                   return (
@@ -342,7 +342,7 @@ export default function CertificatesPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-50 dark:divide-gray-700/50">
-                {signingKeys.map((key) => (
+                {signingKeys.map((key: any) => (
                   <tr key={key.kid} className="hover:bg-gray-50 dark:hover:bg-gray-700/50">
                     <td className="px-3 py-3 text-sm font-mono text-gray-900 dark:text-gray-100">{key.kid}</td>
                     <td className="px-3 py-3">

@@ -42,7 +42,7 @@ export default function BlastRadiusPage() {
 
       <div className="rounded-lg border dark:border-gray-800 p-4 space-y-3">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-          <div><label className="text-sm font-medium">Policy</label><select aria-label="Policy id" value={policyId} onChange={(e) => setPolicyId(e.target.value)} className="w-full mt-1 px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-900 text-sm"><option value="">Select Policy</option>{policies.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}</select></div>
+          <div><label className="text-sm font-medium">Policy</label><select aria-label="Policy id" value={policyId} onChange={(e) => setPolicyId(e.target.value)} className="w-full mt-1 px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-900 text-sm"><option value="">Select Policy</option>{policies.map((p: any) => <option key={p.id} value={p.id}>{p.name}</option>)}</select></div>
           <div className="flex items-end"><label className="flex items-center gap-2 text-sm font-medium pb-2"><input aria-label="Preview mode" type="checkbox" checked={previewMode} onChange={(e) => setPreviewMode(e.target.checked)} className="rounded" /> Preview Mode (read-only)</label></div>
         </div>
         <button aria-label="Eye" onClick={analyze} disabled={loading || !policyId} className="px-4 py-2 rounded-lg bg-red-600 text-white text-sm font-medium hover:bg-red-700 disabled:opacity-50 flex items-center gap-2"><Eye className="w-4 h-4" /> {loading ? "Analyzing..." : "Analyze Blast Radius"}</button>
@@ -60,19 +60,19 @@ export default function BlastRadiusPage() {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <div className="rounded-lg border dark:border-gray-800 p-4">
               <h3 className="text-sm font-semibold mb-3">Affected Roles</h3>
-              <div className="flex flex-wrap gap-2">{data.affected_roles.map((r) => <span key={r} className="px-2 py-1 rounded text-xs bg-orange-100 dark:bg-orange-900/30 dark:text-orange-400 font-mono">{r}</span>)}{data.affected_roles.length === 0 && <span className="text-xs text-gray-400">None</span>}</div>
+              <div className="flex flex-wrap gap-2">{data.affected_roles.map((r: any) => <span key={r} className="px-2 py-1 rounded text-xs bg-orange-100 dark:bg-orange-900/30 dark:text-orange-400 font-mono">{r}</span>)}{data.affected_roles.length === 0 && <span className="text-xs text-gray-400">None</span>}</div>
             </div>
 
             <div className="rounded-lg border dark:border-gray-800 p-4">
               <h3 className="text-sm font-semibold mb-3">Cascading Policies</h3>
-              <div className="space-y-1">{data.cascading_policies.map((p) => <div key={p} className="text-sm font-mono text-purple-600">{p}</div>)}{data.cascading_policies.length === 0 && <span className="text-xs text-gray-400">None</span>}</div>
+              <div className="space-y-1">{data.cascading_policies.map((p: any) => <div key={p} className="text-sm font-mono text-purple-600">{p}</div>)}{data.cascading_policies.length === 0 && <span className="text-xs text-gray-400">None</span>}</div>
             </div>
           </div>
 
           <div className="rounded-lg border dark:border-gray-800 p-4">
             <h3 className="text-sm font-semibold mb-3">Affected Resources Tree</h3>
             <div className="space-y-1">
-              {data.affected_resources.map((r) => (
+              {data.affected_resources.map((r: any) => (
                 <div key={r.name}>
                   <button onClick={() => setExpanded(expanded === r.name ? null : r.name)} aria-label={`Toggle ${r.name}`} className="flex items-center gap-2 text-sm hover:bg-gray-50 dark:hover:bg-gray-900/30 w-full px-2 py-1 rounded">
                     <ChevronRight className={`w-3 h-3 text-gray-400 transition-transform ${expanded === r.name ? "rotate-90" : ""}`} />
@@ -81,7 +81,7 @@ export default function BlastRadiusPage() {
                   </button>
                   {expanded === r.name && r.children && (
                     <div className="ml-6 space-y-1">
-                      {r.children.map((c) => (
+                      {r.children.map((c: any) => (
                         <div key={c.name} className="flex items-center gap-2 text-sm pl-2 py-0.5 border-l dark:border-gray-800"><span className="font-mono text-xs text-gray-500">{c.name}</span><span className="text-xs text-gray-400">({c.type})</span></div>
                       ))}
                     </div>

@@ -79,12 +79,12 @@ export default function DSRTrackerPage() {
         headers: { ...authHeader(), "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" },
         body: JSON.stringify({ status }),
       });
-      setRequests((prev) => prev.map((r) => r.id === id ? { ...r, status } : r));
+      setRequests((prev) => prev.map((r: any) => r.id === id ? { ...r, status } : r));
     } catch { /* noop */ }
     finally { setProcessingId(null); }
   };
 
-  const overdue = requests.filter((r) => r.status === "overdue" || (r.status !== "completed" && r.days_remaining <= 0));
+  const overdue = requests.filter((r: any) => r.status === "overdue" || (r.status !== "completed" && r.days_remaining <= 0));
 
   return (
     <div className="space-y-6">
@@ -107,8 +107,8 @@ export default function DSRTrackerPage() {
       {/* Stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <div className="rounded-lg border p-4 dark:border-gray-800"><span className="text-sm text-gray-500">Total</span><p className="text-2xl font-bold mt-1">{requests.length}</p></div>
-        <div className="rounded-lg border p-4 dark:border-gray-800"><span className="text-sm text-gray-500">Pending</span><p className="text-2xl font-bold mt-1 text-yellow-600">{requests.filter((r) => r.status === "pending").length}</p></div>
-        <div className="rounded-lg border p-4 dark:border-gray-800"><span className="text-sm text-gray-500">Completed</span><p className="text-2xl font-bold mt-1 text-green-600">{requests.filter((r) => r.status === "completed").length}</p></div>
+        <div className="rounded-lg border p-4 dark:border-gray-800"><span className="text-sm text-gray-500">Pending</span><p className="text-2xl font-bold mt-1 text-yellow-600">{requests.filter((r: any) => r.status === "pending").length}</p></div>
+        <div className="rounded-lg border p-4 dark:border-gray-800"><span className="text-sm text-gray-500">Completed</span><p className="text-2xl font-bold mt-1 text-green-600">{requests.filter((r: any) => r.status === "completed").length}</p></div>
         <div className="rounded-lg border p-4 dark:border-gray-800"><span className="text-sm text-gray-500">Overdue</span><p className="text-2xl font-bold mt-1 text-red-600">{overdue.length}</p></div>
       </div>
 
@@ -127,7 +127,7 @@ export default function DSRTrackerPage() {
             </tr>
           </thead>
           <tbody className="divide-y dark:divide-gray-800">
-            {requests.map((r) => (
+            {requests.map((r: any) => (
               <tr key={r.id} className="hover:bg-gray-50 dark:hover:bg-gray-900/30">
                 <td className="px-4 py-3"><span className={`px-2 py-0.5 rounded text-xs ${typeColors[r.type]}`}>{r.type}</span></td>
                 <td className="px-4 py-3"><span className="font-medium">{r.username}</span><p className="text-xs text-gray-400">{r.email}</p></td>

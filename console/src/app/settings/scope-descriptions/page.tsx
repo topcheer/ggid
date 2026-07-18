@@ -44,7 +44,7 @@ export default function ScopeDescriptionsPage() {
   const startEdit = (scope: ScopeDescription) => {
     setEditScope(scope.scope);
     const vals: Record<string, string> = {};
-    languages.forEach((l) => { vals[l.code] = scope.descriptions[l.code] || ""; });
+    languages.forEach((l: any) => { vals[l.code] = scope.descriptions[l.code] || ""; });
     setEditValues(vals);
   };
 
@@ -57,14 +57,14 @@ export default function ScopeDescriptionsPage() {
         headers: { ...authHeader(), "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" },
         body: JSON.stringify({ descriptions: editValues }),
       });
-      setScopes((prev) => prev.map((s) => s.scope === editScope ? { ...s, descriptions: { ...editValues } } : s));
+      setScopes((prev) => prev.map((s: any) => s.scope === editScope ? { ...s, descriptions: { ...editValues } } : s));
       setEditScope(null);
     } catch { /* noop */ }
     finally { setSaving(false); }
   };
 
-  const filtered = scopes.filter((s) => !search || s.scope.toLowerCase().includes(search.toLowerCase()));
-  const completionForLang = (code: string) => scopes.filter((s) => s.descriptions[code]).length;
+  const filtered = scopes.filter((s: any) => !search || s.scope.toLowerCase().includes(search.toLowerCase()));
+  const completionForLang = (code: string) => scopes.filter((s: any) => s.descriptions[code]).length;
 
   return (
     <div className="space-y-6">
@@ -75,7 +75,7 @@ export default function ScopeDescriptionsPage() {
 
       {/* Language completion stats */}
       <div className="grid grid-cols-5 gap-3">
-        {languages.map((l) => (
+        {languages.map((l: any) => (
           <div key={l.code} className="rounded-lg border p-3 dark:border-gray-800 text-center">
             <span className="text-xs font-bold" style={{ color: completionForLang(l.code) === scopes.length && scopes.length > 0 ? "#10b981" : "#f59e0b" }}>{l.flag}</span>
             <p className="text-lg font-bold mt-1">{completionForLang(l.code)}/{scopes.length}</p>
@@ -92,7 +92,7 @@ export default function ScopeDescriptionsPage() {
 
       {/* Scope list */}
       <div className="space-y-2">
-        {filtered.map((s) => (
+        {filtered.map((s: any) => (
           <div key={s.scope} className="rounded-lg border dark:border-gray-800 overflow-hidden">
             {editScope === s.scope ? (
               <div className="p-4 space-y-3">
@@ -104,7 +104,7 @@ export default function ScopeDescriptionsPage() {
                   </div>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  {languages.map((l) => (
+                  {languages.map((l: any) => (
                     <div key={l.code}>
                       <label className="text-xs font-medium flex items-center gap-1"><Globe className="w-3 h-3" /> {l.flag} - {l.label}</label>
                       <textarea aria-label="Text input" value={editValues[l.code] || ""} onChange={(e) => setEditValues({ ...editValues, [l.code]: e.target.value })} rows={2} placeholder={`${s.scope} description in ${l.label}`} className="w-full mt-1 px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-800 text-sm" />
@@ -119,7 +119,7 @@ export default function ScopeDescriptionsPage() {
                   <button onClick={() => startEdit(s)} className="text-blue-600 hover:underline text-sm font-medium">Edit</button>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-5 gap-2 mt-3">
-                  {languages.map((l) => (
+                  {languages.map((l: any) => (
                     <div key={l.code} className="text-xs">
                       <span className="text-gray-400 font-bold">{l.flag}</span>
                       <p className={`mt-0.5 ${s.descriptions[l.code] ? "text-gray-600 dark:text-gray-400" : "text-gray-300 dark:text-gray-700 italic"}`}>{s.descriptions[l.code] || "Not set"}</p>

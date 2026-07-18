@@ -107,7 +107,7 @@ export default function SIEMPage() {
             <Server className="h-5 w-5 text-brand-600" /> Provider
           </h2>
           <div className="grid grid-cols-2 gap-3">
-            {PROVIDERS.map((p) => (
+            {PROVIDERS.map((p: any) => (
               <button
                 key={p.value}
                 onClick={() => setConfig({ ...config, provider: p.value })}

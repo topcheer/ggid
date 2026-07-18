@@ -89,7 +89,7 @@ export default function AccessReviewsPage() {
 
   const handleDecision = async (itemId: string, decision: ReviewItem["decision"]) => {
     setDecisionLoading(itemId);
-    setItems(items.map((it) => (it.id === itemId ? { ...it, decision, decided_at: new Date().toISOString() } : it)));
+    setItems(items.map((it: any) => (it.id === itemId ? { ...it, decision, decided_at: new Date().toISOString() } : it)));
     try {
       await apiFetch(`/api/v1/access-reviews/items/${itemId}/decision`, {
         method: "POST",
@@ -119,7 +119,7 @@ export default function AccessReviewsPage() {
   };
 
   const handleDelete = async (id: string) => {
-    setReviews(reviews.filter((r) => r.id !== id));
+    setReviews(reviews.filter((r: any) => r.id !== id));
     try { await apiFetch(`/api/v1/access-reviews/${id}`, { method: "DELETE" }); } catch { /* optimistic */ }
   };
 
@@ -166,7 +166,7 @@ export default function AccessReviewsPage() {
         </div>
       ) : (
         <div className="space-y-4">
-          {reviews.map((review) => (
+          {reviews.map((review: any) => (
             <div key={review.id} className={cardCls}>
               <div className="flex items-start justify-between">
                 <div className="flex-1">
@@ -222,7 +222,7 @@ export default function AccessReviewsPage() {
                     <p className="text-sm text-gray-400">No items to review.</p>
                   ) : (
                     <div className="space-y-2">
-                      {items.map((item) => (
+                      {items.map((item: any) => (
                         <div key={item.id} className="flex items-center justify-between rounded-lg border border-gray-100 p-3 dark:border-gray-700/50">
                           <div className="flex items-center gap-3">
                             <div>

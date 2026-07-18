@@ -104,7 +104,7 @@ export default function PasswordBreachPage() {
           {/* Breach list */}
           {status.breaches.length > 0 && (
             <div className="space-y-3">
-              {status.breaches.map((b) => (
+              {status.breaches.map((b: any) => (
                 <div key={b.name} className={cardCls}>
                   <div className="flex items-start justify-between">
                     <div>

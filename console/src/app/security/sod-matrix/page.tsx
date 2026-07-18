@@ -40,7 +40,7 @@ export default function SoDMatrixPage() {
     if (i === j) return;
     const key = `${i}-${j}`;
     setToggling(key);
-    try { await apiFetch("/api/v1/policy/sod-matrix/toggle", { method: "POST", body: JSON.stringify({ role_a: roles[i], role_b: roles[j] }) }); setMatrix((prev) => { const n = prev.map((r) => [...r]); n[i][j] = !n[i][j]; n[j][i] = !n[j][i]; return n; }); }
+    try { await apiFetch("/api/v1/policy/sod-matrix/toggle", { method: "POST", body: JSON.stringify({ role_a: roles[i], role_b: roles[j] }) }); setMatrix((prev) => { const n = prev.map((r: any) => [...r]); n[i][j] = !n[i][j]; n[j][i] = !n[j][i]; return n; }); }
     catch { setError("Toggle failed"); }
     finally { setToggling(null); }
   };
@@ -71,7 +71,7 @@ export default function SoDMatrixPage() {
           <table className="w-full text-sm">
             <thead><tr>
               <th scope="col" className="sticky left-0 z-10 border-b border-r border-gray-200 bg-gray-50 px-3 py-2 text-xs font-semibold text-gray-500 dark:border-gray-700 dark:bg-gray-800">Role</th>
-              {roles.map((r) => <th scope="col" key={r} className="border-b border-r border-gray-200 bg-gray-50 px-2 py-2 text-xs font-semibold text-gray-500 dark:border-gray-700 dark:bg-gray-800"><div className="max-w-[80px] truncate" title={r}>{r}</div></th>)}
+              {roles.map((r: any) => <th scope="col" key={r} className="border-b border-r border-gray-200 bg-gray-50 px-2 py-2 text-xs font-semibold text-gray-500 dark:border-gray-700 dark:bg-gray-800"><div className="max-w-[80px] truncate" title={r}>{r}</div></th>)}
             </tr></thead>
             <tbody>
               {roles.map((roleA, i) => (
@@ -97,7 +97,7 @@ export default function SoDMatrixPage() {
         <div>
           <h2 className="mb-3 text-sm font-semibold uppercase text-gray-500">Active Rules</h2>
           <div className="flex flex-wrap gap-2">
-            {rules.map((r) => (
+            {rules.map((r: any) => (
               <div key={r.id} className="flex items-center gap-2 rounded-lg border border-gray-200 px-3 py-1.5 text-xs dark:border-gray-700">
                 <span className="font-medium text-gray-700 dark:text-gray-300">{r.role_a}</span>
                 <XCircle className="h-3 w-3 text-red-400" />

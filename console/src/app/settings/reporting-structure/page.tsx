@@ -56,7 +56,7 @@ export default function ReportingStructurePage() {
         </div>
       </div>
       {expanded.has(node.id) && node.reports.length > 0 && (
-        <div className="border-l dark:border-gray-800 ml-3">{node.reports.map((r) => renderNode(r, depth + 1))}</div>
+        <div className="border-l dark:border-gray-800 ml-3">{node.reports.map((r: any) => renderNode(r, depth + 1))}</div>
       )}
     </div>
   );

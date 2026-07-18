@@ -41,7 +41,7 @@ export default function SyntheticIdentityPage() {
         <div className="bg-gray-900 rounded-xl p-4">
           <Shield className="w-5 h-5 text-blue-400 mb-1" />
           <p className="text-xs text-gray-400">Detection Rules</p>
-          <p className="text-xl font-bold">{data?.detection_rules?.filter((r) => r.enabled).length ?? 0}</p>
+          <p className="text-xl font-bold">{data?.detection_rules?.filter((r: any) => r.enabled).length ?? 0}</p>
         </div>
       </div>
 
@@ -76,7 +76,7 @@ export default function SyntheticIdentityPage() {
         <div className="bg-gray-900 rounded-xl p-6">
           <h2 className="text-sm font-semibold mb-4">Detection Rules</h2>
           <div className="space-y-2">
-            {(data?.detection_rules ?? []).map((r) => (
+            {(data?.detection_rules ?? []).map((r: any) => (
               <div key={r.rule_name} className="flex items-center justify-between bg-gray-800 rounded-lg p-3">
                 <div>
                   <p className="text-sm font-medium">{r.rule_name}</p>
@@ -97,7 +97,7 @@ export default function SyntheticIdentityPage() {
             Disposable Domains Blocklist
           </h2>
           <div className="flex flex-wrap gap-2">
-            {(data?.disposable_domains_blocklist ?? []).map((d) => (
+            {(data?.disposable_domains_blocklist ?? []).map((d: any) => (
               <span key={d} className="text-xs px-2 py-1 bg-gray-800 rounded font-mono text-gray-400">{d}</span>
             ))}
           </div>

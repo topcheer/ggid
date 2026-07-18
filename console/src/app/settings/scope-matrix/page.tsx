@@ -55,7 +55,7 @@ export default function ScopeMatrixPage() {
 
   if (!data || loading) return <p className="text-sm text-gray-500 text-center py-8">Loading...</p>;
 
-  const maxUsage = Math.max(...data.clients.flatMap((c) => data.scopes.map((s) => data.usage[c.client_id]?.[s] || 0)), 1);
+  const maxUsage = Math.max(...data.clients.flatMap((c) => data.scopes.map((s: any) => data.usage[c.client_id]?.[s] || 0)), 1);
 
   return (
     <div className="space-y-6">
@@ -73,16 +73,16 @@ export default function ScopeMatrixPage() {
           <thead className="bg-gray-50 dark:bg-gray-900/50 sticky top-0">
             <tr>
               <th scope="col" className="px-4 py-3 text-left font-medium sticky left-0 bg-gray-50 dark:bg-gray-900/50">Client</th>
-              {data.scopes.map((s) => (
+              {data.scopes.map((s: any) => (
                 <th scope="col" key={s} className="px-3 py-3 text-center font-medium font-mono text-xs whitespace-nowrap">{s}</th>
               ))}
             </tr>
           </thead>
           <tbody className="divide-y dark:divide-gray-800">
-            {data.clients.map((c) => (
+            {data.clients.map((c: any) => (
               <tr key={c.client_id} className="hover:bg-gray-50 dark:hover:bg-gray-900/30">
                 <td className="px-4 py-3 font-medium sticky left-0 bg-white dark:bg-gray-900 whitespace-nowrap">{c.client_name}</td>
-                {data.scopes.map((s) => (
+                {data.scopes.map((s: any) => (
                   <td key={s} className="px-3 py-3 text-center">
                     <button onClick={() => toggleGrant(c.client_id, s)} className="w-6 h-6 rounded flex items-center justify-center mx-auto">
                       {grants[c.client_id]?.[s] ? (
@@ -106,7 +106,7 @@ export default function ScopeMatrixPage() {
       <div className="rounded-lg border dark:border-gray-800 p-4">
         <h3 className="font-semibold mb-4">Scope Usage by Client</h3>
         <div className="space-y-3">
-          {data.clients.map((c) => {
+          {data.clients.map((c: any) => {
             const totalUsage = data.scopes.reduce((sum, s) => sum + (data.usage[c.client_id]?.[s] || 0), 0);
             return (
               <div key={c.client_id}>
@@ -115,7 +115,7 @@ export default function ScopeMatrixPage() {
                   <span className="text-gray-400">{totalUsage} total calls</span>
                 </div>
                 <div className="flex items-end gap-0.5 h-8">
-                  {data.scopes.map((s) => {
+                  {data.scopes.map((s: any) => {
                     const usage = data.usage[c.client_id]?.[s] || 0;
                     return <div key={s} className="flex-1 bg-blue-500 rounded-t" style={{ height: `${(usage / maxUsage) * 100}%`, minHeight: usage > 0 ? "3px" : "0" }} title={`${s}: ${usage}`} />;
                   })}

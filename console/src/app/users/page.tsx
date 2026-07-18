@@ -94,7 +94,7 @@ export default function UsersPage() {
     if (selected.size === paginated.length) {
       setSelected(new Set());
     } else {
-      setSelected(new Set(paginated.map((u) => u.id)));
+      setSelected(new Set(paginated.map((u: any) => u.id)));
     }
   };
 
@@ -141,7 +141,7 @@ export default function UsersPage() {
     if (selected.size === 0) return;
     if (!confirm(`Delete ${selected.size} selected users?`)) return;
     try {
-      await Promise.all([...selected].map((id) => apiFetch(`/api/v1/users/${id}`, { method: "DELETE" })));
+      await Promise.all([...selected].map((id: any) => apiFetch(`/api/v1/users/${id}`, { method: "DELETE" })));
       setSelected(new Set());
       setMsg(`Deleted ${selected.size} users`);
       refresh();
@@ -154,7 +154,7 @@ export default function UsersPage() {
     if (selected.size === 0 || !batchRole) return;
     try {
       await Promise.all(
-        [...selected].map((id) =>
+        [...selected].map((id: any) =>
           apiFetch(`/api/v1/users/${id}/roles`, { method: "POST", body: JSON.stringify({ role_id: batchRole }) }),
         ),
       );
@@ -170,7 +170,7 @@ export default function UsersPage() {
   const handleExportCSV = () => {
     const header = "username,email,displayName,phone,status,created_at\n";
     const rows = filtered
-      .map((u) =>
+      .map((u: any) =>
         [
           u.username || "",
           u.email || "",
@@ -179,7 +179,7 @@ export default function UsersPage() {
           u.status || "active",
           u.created_at || "",
         ]
-          .map((v) => `"${String(v).replace(/"/g, '""')}"`)
+          .map((v: any) => `"${String(v).replace(/"/g, '""')}"`)
           .join(","),
       )
       .join("\n");
@@ -206,11 +206,11 @@ export default function UsersPage() {
 
   // --- Legacy text import (keep existing) ---
   const handleImportCSV = async () => {
-    const lines = importText.trim().split("\n").filter((l) => l.trim() && !l.startsWith("username,"));
+    const lines = importText.trim().split("\n").filter((l: any) => l.trim() && !l.startsWith("username,"));
     let created = 0;
     const errors: string[] = [];
     for (let i = 0; i < lines.length; i++) {
-      const [username, email, password] = lines[i].split(",").map((s) => s.trim());
+      const [username, email, password] = lines[i].split(",").map((s: any) => s.trim());
       if (!username || !email) { errors.push(`Row ${i + 1}: missing username or email`); continue; }
       try {
         await apiFetch("/api/v1/users", {
@@ -241,7 +241,7 @@ export default function UsersPage() {
   };
 
   const parseCsv = (text: string) => {
-    const lines = text.trim().split(/\r?\n/).filter((l) => l.trim());
+    const lines = text.trim().split(/\r?\n/).filter((l: any) => l.trim());
     if (lines.length === 0) return;
 
     // Parse CSV (basic: handle quoted fields)
@@ -275,7 +275,7 @@ export default function UsersPage() {
 
     // Auto-detect column mapping
     const mapping: Record<string, GgidFieldKey> = {};
-    headers.forEach((header) => {
+    headers.forEach((header: any) => {
       const lower = header.toLowerCase().trim();
       if (lower === "username" || lower === "user_name" || lower === "login") {
         mapping[header] = "username";
@@ -323,7 +323,7 @@ export default function UsersPage() {
     for (let i = 0; i < csvData.length; i++) {
       const row = csvData[i];
       const payload: Record<string, string> = {};
-      csvHeaders.forEach((header, idx) => {
+      csvHeaders.forEach((header: any, idx: any) => {
         const field = columnMapping[header];
         if (field) {
           payload[field] = row[idx] || "";
@@ -495,7 +495,7 @@ export default function UsersPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
-                {csvHeaders.map((header) => (
+                {csvHeaders.map((header: any) => (
                   <tr key={header}>
                     <td className="px-3 py-2 text-sm font-medium text-gray-900 dark:text-gray-200">{header}</td>
                     <td className="px-3 py-2">
@@ -505,7 +505,7 @@ export default function UsersPage() {
                         className="rounded border border-gray-300 px-2 py-1 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200"
                       >
                         <option value="">{t("users.skip")}</option>
-                        {GGID_FIELDS.map((field) => (
+                        {GGID_FIELDS.map((field: any) => (
                           <option key={field.key} value={field.key}>
                             {field.label}
                             {field.required ? " (required)" : ""}
@@ -528,7 +528,7 @@ export default function UsersPage() {
               <table className="w-full">
                 <thead className="bg-gray-50 dark:bg-gray-700/50">
                   <tr>
-                    {csvHeaders.map((header) => (
+                    {csvHeaders.map((header: any) => (
                       <th scope="col" key={header} className="px-3 py-2 text-left text-xs font-medium text-gray-500">
                         {header}
                         {columnMapping[header] && (
@@ -539,9 +539,9 @@ export default function UsersPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
-                  {csvData.slice(0, 5).map((row, i) => (
+                  {csvData.slice(0, 5).map((row: any, i: any) => (
                     <tr key={i}>
-                      {csvHeaders.map((header, j) => (
+                      {csvHeaders.map((header: any, j: any) => (
                         <td key={header} className="px-3 py-2 text-sm text-gray-700 dark:text-gray-300">
                           {row[j] || "—"}
                         </td>
@@ -660,7 +660,7 @@ export default function UsersPage() {
               className="rounded border border-gray-300 px-2 py-1 text-xs"
             >
               <option value="">{t("users.assignRole")}</option>
-              {roles.map((r) => (
+              {roles.map((r: any) => (
                 <option key={r.id} value={r.id}>{r.name || r.key}</option>
               ))}
             </select>
@@ -705,7 +705,7 @@ export default function UsersPage() {
                 </div>
               </td></tr>
             ) : (
-              paginated.map((user) => {
+              paginated.map((user: any) => {
                 const scimBadge = getScimBadge(user);
                 return (
                   <tr key={user.id} className={`hover:bg-gray-50 ${selected.has(user.id) ? "bg-blue-50/40" : ""}`}>

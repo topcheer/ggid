@@ -39,12 +39,12 @@ export default function SecurityAlertsPage() {
   useEffect(() => { fetchData(); }, [fetchData]);
 
   const updateStatus = async (id: string, status: "acknowledged" | "resolved") => {
-    setAlerts(alerts.map((a) => a.id === id ? { ...a, status } : a));
+    setAlerts(alerts.map((a: any) => a.id === id ? { ...a, status } : a));
     try { await fetch("/api/v1/audit/security-alerts/" + id, { method: "PATCH", headers: { ...authHeader(), "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" }, body: JSON.stringify({ status }) }); } catch { /* noop */ }
   };
 
-  const filtered = filterStatus ? alerts.filter((a) => a.status === filterStatus) : alerts;
-  const activeCount = alerts.filter((a) => a.status === "active").length;
+  const filtered = filterStatus ? alerts.filter((a: any) => a.status === filterStatus) : alerts;
+  const activeCount = alerts.filter((a: any) => a.status === "active").length;
 
   return (
     <div className="space-y-6">
@@ -65,7 +65,7 @@ export default function SecurityAlertsPage() {
       </div>
 
       <div className="space-y-2">
-        {filtered.map((a) => (
+        {filtered.map((a: any) => (
           <div key={a.id} className={"rounded-lg border-l-4 dark:border-gray-800 bg-white dark:bg-gray-900 p-3 " + sevColors[a.severity]}>
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">

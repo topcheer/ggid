@@ -42,7 +42,7 @@ export default function PolicyContextualConditionsPage() {
       <div className="bg-gray-900 rounded-xl p-6 mb-6">
         <h2 className="text-lg font-semibold mb-4">Condition Categories</h2>
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
-          {(data?.condition_categories ?? []).map((cat) => (
+          {(data?.condition_categories ?? []).map((cat: any) => (
             <button
               key={cat.name}
               onClick={() => setSelectedCategory(cat.name)}
@@ -67,8 +67,8 @@ export default function PolicyContextualConditionsPage() {
           </h2>
           <div className="flex flex-wrap gap-2">
             {(data?.condition_categories ?? [])
-              .find((c) => c.name === selectedCategory)
-              ?.available_attributes.map((attr) => (
+              .find((c: any) => c.name === selectedCategory)
+              ?.available_attributes.map((attr: any) => (
                 <span
                   key={attr}
                   className="text-xs px-3 py-1.5 bg-gray-800 rounded-lg border border-gray-700 hover:border-blue-500 cursor-pointer"
@@ -94,7 +94,7 @@ export default function PolicyContextualConditionsPage() {
             </div>
             <div className="space-y-2">
               {(data?.condition_categories ?? []).slice(0, 2).flatMap((cat) =>
-                cat.available_attributes.slice(0, 1).map((attr) => (
+                cat.available_attributes.slice(0, 1).map((attr: any) => (
                   <div key={cat.name + attr} className="flex items-center gap-2 bg-gray-900 rounded p-2">
                     <span className={"text-xs px-1.5 py-0.5 rounded " + (categoryIcons[cat.name] || "")}>{cat.name}</span>
                     <span className="text-xs font-mono text-gray-300">{attr}</span>

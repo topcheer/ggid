@@ -57,7 +57,7 @@ export default function SessionTokenBindingCoveragePage() {
             <th scope="col" className="text-left py-2 pr-3">Client</th><th className="text-left py-2 pr-3">Bound %</th><th className="text-left py-2 pr-3">Method</th><th className="text-left py-2 pr-3">Last Checked</th>
           </tr></thead>
           <tbody>
-            {(data?.per_client ?? []).map((c) => (
+            {(data?.per_client ?? []).map((c: any) => (
               <tr key={c.client} className="border-b border-gray-800">
                 <td className="py-3 pr-3 text-sm">{c.client}</td>
                 <td className="py-3 pr-3">
@@ -76,7 +76,7 @@ export default function SessionTokenBindingCoveragePage() {
         <div className="bg-gray-900 rounded-xl p-6">
           <h2 className="text-sm font-semibold mb-3 flex items-center gap-2"><AlertTriangle className="w-4 h-4 text-red-400" /> Unbound Active Tokens</h2>
           <div className="space-y-1">
-            {data.unbound_list.map((t) => (
+            {data.unbound_list.map((t: any) => (
               <div key={t.token_id} className="flex items-center gap-2 bg-gray-800 rounded p-2 text-xs">
                 <span className="font-mono text-red-400">{t.token_id}</span>
                 <span className="text-gray-400">Client: {t.client}</span>

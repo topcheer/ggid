@@ -25,7 +25,7 @@ export default function DistributedTracingConfigPage() {
   };
 
   const removeBaggage = (key: string) => {
-    setBaggageKeys(baggageKeys.filter((k) => k !== key));
+    setBaggageKeys(baggageKeys.filter((k: any) => k !== key));
   };
 
   return (
@@ -88,7 +88,7 @@ export default function DistributedTracingConfigPage() {
       <section className="bg-white rounded-lg shadow p-6 space-y-4">
         <h2 className="text-lg font-semibold">{"Baggage Keys"}</h2>
         <div className="flex flex-wrap gap-2">
-          {baggageKeys.map((key) => (
+          {baggageKeys.map((key: any) => (
             <span
               key={key}
               className="inline-flex items-center gap-1 px-3 py-1 bg-gray-100 rounded text-sm font-mono"

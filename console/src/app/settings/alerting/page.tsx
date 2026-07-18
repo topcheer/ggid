@@ -119,18 +119,18 @@ export default function AlertingRulesPage() {
   };
 
   const handleDeleteRule = (id: string) => {
-    persistRules(rules.filter((r) => r.id !== id));
+    persistRules(rules.filter((r: any) => r.id !== id));
   };
 
   const handleToggleRule = (id: string) => {
     persistRules(
-      rules.map((r) => (r.id === id ? { ...r, enabled: !r.enabled } : r))
+      rules.map((r: any) => (r.id === id ? { ...r, enabled: !r.enabled } : r))
     );
   };
 
   const handleUpdateRule = (id: string, field: keyof AlertRule, value: string | number | boolean) => {
     setRules(
-      rules.map((r) =>
+      rules.map((r: any) =>
         r.id === id ? { ...r, [field]: value } : r
       )
     );
@@ -200,12 +200,12 @@ export default function AlertingRulesPage() {
               onChange={(e) => (defaultRule.name = e.target.value)}
             />
             <select aria-label="Select option" className={inputCls} defaultValue={defaultRule.metric}>
-              {METRICS.map((m) => (
+              {METRICS.map((m: any) => (
                 <option key={m.value} value={m.value}>{m.label}</option>
               ))}
             </select>
             <select aria-label="Select option" className={inputCls} defaultValue={defaultRule.action}>
-              {ACTIONS.map((a) => (
+              {ACTIONS.map((a: any) => (
                 <option key={a.value} value={a.value}>{a.label}</option>
               ))}
             </select>
@@ -244,7 +244,7 @@ export default function AlertingRulesPage() {
         </div>
       ) : (
         <div className="space-y-4">
-          {rules.map((rule) => (
+          {rules.map((rule: any) => (
             <div key={rule.id} className={cardCls}>
               <div className="flex items-start justify-between gap-4">
                 {/* Left: name + description */}
@@ -293,7 +293,7 @@ export default function AlertingRulesPage() {
                   value={rule.metric}
                   onChange={(e) => handleUpdateRule(rule.id, "metric", e.target.value)}
                 >
-                  {METRICS.map((m) => (
+                  {METRICS.map((m: any) => (
                     <option key={m.value} value={m.value}>{m.label}</option>
                   ))}
                 </select>
@@ -302,7 +302,7 @@ export default function AlertingRulesPage() {
                   value={rule.condition}
                   onChange={(e) => handleUpdateRule(rule.id, "condition", e.target.value)}
                 >
-                  {CONDITIONS.map((c) => (
+                  {CONDITIONS.map((c: any) => (
                     <option key={c} value={c}>{c}</option>
                   ))}
                 </select>
@@ -330,7 +330,7 @@ export default function AlertingRulesPage() {
                   value={rule.action}
                   onChange={(e) => handleUpdateRule(rule.id, "action", e.target.value)}
                 >
-                  {ACTIONS.map((a) => (
+                  {ACTIONS.map((a: any) => (
                     <option key={a.value} value={a.value}>{a.label}</option>
                   ))}
                 </select>

@@ -38,9 +38,9 @@ export default function GrantTypeStatsPage() {
   useEffect(() => { fetchData(); }, [fetchData]);
 
   const total = data?.counts.reduce((s, d) => s + d.count, 0) || 1;
-  const maxCount = Math.max(...(data?.counts.map((d) => d.count) || [1]), 1);
-  const trendKeys = data ? Object.keys(data.trend[0] || {}).filter((k) => k !== "date") : [];
-  const maxTrend = Math.max(...(data?.trend.flatMap((t) => trendKeys.map((k) => (t)[k] as number)) || [1]), 1);
+  const maxCount = Math.max(...(data?.counts.map((d: any) => d.count) || [1]), 1);
+  const trendKeys = data ? Object.keys(data.trend[0] || {}).filter((k: any) => k !== "date") : [];
+  const maxTrend = Math.max(...(data?.trend.flatMap((t) => trendKeys.map((k: any) => (t)[k] as number)) || [1]), 1);
 
   return (
     <div className="space-y-6">
@@ -59,7 +59,7 @@ export default function GrantTypeStatsPage() {
             <div className="rounded-lg border dark:border-gray-800 p-4">
               <h3 className="text-sm font-semibold mb-3">{t("big1.grantTypeStats.barChart")}</h3>
               <div className="space-y-2">
-                {data.counts.map((d) => (
+                {data.counts.map((d: any) => (
                   <div key={d.grant_type} className="flex items-center gap-2">
                     <span className="text-xs font-mono w-32 truncate">{d.grant_type}</span>
                     <div className="flex-1 bg-gray-100 dark:bg-gray-800 rounded-full h-6 overflow-hidden"><div className="h-full rounded-full" style={{ width: `${(d.count / maxCount) * 100}%`, background: typeColors[d.grant_type] || "#ccc" }} /></div>
@@ -74,10 +74,10 @@ export default function GrantTypeStatsPage() {
               <div className="flex items-center gap-4">
                 <div className="relative w-24 h-24">
                   <svg viewBox="0 0 64 64" className="w-full h-full -rotate-90">
-                    {(() => { let off = 0; return data.counts.map((d) => { const pct = d.count / total; const dash = pct * 176; const c = <circle key={d.grant_type} cx={32} cy={32} r={28} fill="none" stroke={typeColors[d.grant_type] || "#ccc"} strokeWidth={8} strokeDasharray={`${dash} 176`} strokeDashoffset={-off * 176} />; off += pct; return c; }); })()}
+                    {(() => { let off = 0; return data.counts.map((d: any) => { const pct = d.count / total; const dash = pct * 176; const c = <circle key={d.grant_type} cx={32} cy={32} r={28} fill="none" stroke={typeColors[d.grant_type] || "#ccc"} strokeWidth={8} strokeDasharray={`${dash} 176`} strokeDashoffset={-off * 176} />; off += pct; return c; }); })()}
                   </svg>
                 </div>
-                <div className="space-y-1">{data.counts.map((d) => (<div key={d.grant_type} className="flex items-center gap-2 text-xs">
+                <div className="space-y-1">{data.counts.map((d: any) => (<div key={d.grant_type} className="flex items-center gap-2 text-xs">
                   <span className="w-3 h-3 rounded" style={{ background: typeColors[d.grant_type] || "#ccc" }} />
                   <span className="flex-1 truncate">{d.grant_type}</span>
                   <span className="font-bold">{((d.count / total) * 100).toFixed(1)}%</span>
@@ -88,16 +88,16 @@ export default function GrantTypeStatsPage() {
             <div className="rounded-lg border dark:border-gray-800 p-4">
               <h3 className="text-sm font-semibold mb-3 flex items-center gap-2"><TrendingUp className="w-4 h-4" />{t("big1.grantTypeStats.30DayTrend")}</h3>
               <svg viewBox="0 0 200 60" className="w-full h-16">
-                {trendKeys.map((key) => { const pts = data.trend.map((t: any, i: number) => `${(i / (data.trend.length - 1 || 1)) * 200},${55 - ((t)[key] as number / maxTrend) * 50}`).join(" "); return <polyline key={key} fill="none" stroke={typeColors[key] || "#ccc"} strokeWidth={1.5} points={pts} />; })}
+                {trendKeys.map((key: any) => { const pts = data.trend.map((t: any, i: number) => `${(i / (data.trend.length - 1 || 1)) * 200},${55 - ((t)[key] as number / maxTrend) * 50}`).join(" "); return <polyline key={key} fill="none" stroke={typeColors[key] || "#ccc"} strokeWidth={1.5} points={pts} />; })}
               </svg>
-              <div className="flex flex-wrap gap-2 mt-2">{trendKeys.map((k) => <span key={k} className="flex items-center gap-1 text-xs"><span className="w-2 h-2 rounded" style={{ background: typeColors[k] || "#ccc" }} />{k}</span>)}</div>
+              <div className="flex flex-wrap gap-2 mt-2">{trendKeys.map((k: any) => <span key={k} className="flex items-center gap-1 text-xs"><span className="w-2 h-2 rounded" style={{ background: typeColors[k] || "#ccc" }} />{k}</span>)}</div>
             </div>
           </div>
 
           <div className="overflow-x-auto rounded-lg border dark:border-gray-800">
             <table className="w-full text-sm">
               <thead className="bg-gray-50 dark:bg-gray-900/50"><tr><th className="px-4 py-3 text-left font-medium">{t("big1.grantTypeStats.grantType")}</th><th className="px-4 py-3 text-left font-medium">{t("big1.grantTypeStats.count")}</th><th className="px-4 py-3 text-left font-medium">{t("big1.grantTypeStats.share")}</th></tr></thead>
-              <tbody className="divide-y dark:divide-gray-800">{data.counts.map((d) => (<tr key={d.grant_type} className="hover:bg-gray-50 dark:hover:bg-gray-900/30">
+              <tbody className="divide-y dark:divide-gray-800">{data.counts.map((d: any) => (<tr key={d.grant_type} className="hover:bg-gray-50 dark:hover:bg-gray-900/30">
                 <td className="px-4 py-3 font-mono text-xs">{d.grant_type}</td><td className="px-4 py-3 font-bold">{d.count}</td><td className="px-4 py-3 text-gray-500">{((d.count / total) * 100).toFixed(1)}%</td>
               </tr>))}</tbody>
             </table>

@@ -105,12 +105,12 @@ export default function AccessCertificationPage() {
         headers: { ...authHeader(), "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" },
         body: JSON.stringify({ decision, comment }),
       });
-      setUsers((prev) => prev.map((u) => u.user_id === userId ? { ...u, status: decision, comment: comment || u.comment } : u));
+      setUsers((prev) => prev.map((u: any) => u.user_id === userId ? { ...u, status: decision, comment: comment || u.comment } : u));
     } catch { /* noop */ }
   };
 
-  const filteredUsers = users.filter((u) => !search || u.username.toLowerCase().includes(search.toLowerCase()) || u.email.toLowerCase().includes(search.toLowerCase()));
-  const selectedCampaignObj = campaigns.find((c) => c.id === selectedCampaign);
+  const filteredUsers = users.filter((u: any) => !search || u.username.toLowerCase().includes(search.toLowerCase()) || u.email.toLowerCase().includes(search.toLowerCase()));
+  const selectedCampaignObj = campaigns.find((c: any) => c.id === selectedCampaign);
 
   return (
     <div className="space-y-6">
@@ -123,7 +123,7 @@ export default function AccessCertificationPage() {
       <div className="flex items-center gap-3 flex-wrap">
         <select aria-label="Selected campaign" value={selectedCampaign} onChange={(e) => setSelectedCampaign(e.target.value)} className="px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-900 text-sm">
           <option value="">{t("accessCertification.selectCampaign")}</option>
-          {campaigns.map((c) => (
+          {campaigns.map((c: any) => (
             <option key={c.id} value={c.id}>{c.name} ({c.completed}/{c.total_users} done)</option>
           ))}
         </select>
@@ -152,7 +152,7 @@ export default function AccessCertificationPage() {
       {/* User list */}
       <div className="rounded-lg border dark:border-gray-800">
         <div className="divide-y dark:divide-gray-800">
-          {filteredUsers.map((u) => (
+          {filteredUsers.map((u: any) => (
             <div key={u.user_id} className="px-4 py-3">
               <div className="flex items-center justify-between">
                 <div className="flex-1">

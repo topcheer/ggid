@@ -32,7 +32,7 @@ export default function AgentCredentialRotationPage() {
         <div className="bg-gray-900 rounded-xl p-4">
           <Clock className="w-5 h-5 text-yellow-400 mb-1" />
           <p className="text-xs text-gray-400">Rotation Due</p>
-          <p className="text-xl font-bold text-yellow-400">{data?.rotation_schedule?.filter((r) => r.rotation_due_days <= 0).length ?? 0}</p>
+          <p className="text-xl font-bold text-yellow-400">{data?.rotation_schedule?.filter((r: any) => r.rotation_due_days <= 0).length ?? 0}</p>
         </div>
         <div className="bg-gray-900 rounded-xl p-4">
           <CheckCircle className="w-5 h-5 text-green-400 mb-1" />
@@ -42,7 +42,7 @@ export default function AgentCredentialRotationPage() {
         <div className="bg-gray-900 rounded-xl p-4">
           <Shield className="w-5 h-5 text-purple-400 mb-1" />
           <p className="text-xs text-gray-400">Auto-Rotate</p>
-          <p className="text-sm font-bold">{data?.rotation_schedule?.filter((r) => r.auto_rotate).length ?? 0} agents</p>
+          <p className="text-sm font-bold">{data?.rotation_schedule?.filter((r: any) => r.auto_rotate).length ?? 0} agents</p>
         </div>
       </div>
 
@@ -60,7 +60,7 @@ export default function AgentCredentialRotationPage() {
           </div>
           <div>
             <h2 className="text-sm font-semibold">Rotation Compliance Score</h2>
-            <p className="text-xs text-gray-400">{data?.rotation_schedule?.filter((r) => r.rotation_due_days > 0).length ?? 0} of {data?.rotation_schedule?.length ?? 0} agents within rotation window</p>
+            <p className="text-xs text-gray-400">{data?.rotation_schedule?.filter((r: any) => r.rotation_due_days > 0).length ?? 0} of {data?.rotation_schedule?.length ?? 0} agents within rotation window</p>
           </div>
         </div>
       </div>
@@ -80,7 +80,7 @@ export default function AgentCredentialRotationPage() {
               </tr>
             </thead>
             <tbody>
-              {(data?.rotation_schedule ?? []).map((r) => (
+              {(data?.rotation_schedule ?? []).map((r: any) => (
                 <tr key={r.agent_id} className="border-b border-gray-800">
                   <td className="py-3 pr-3 text-sm font-medium">{r.agent_name}</td>
                   <td className="py-3 pr-3 text-xs">{r.current_key_age_days}</td>

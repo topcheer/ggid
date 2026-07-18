@@ -14,7 +14,7 @@ export default function TenantMigrationToolPage() {
   if (error) return <div className="p-8 text-red-400">Error: {error}</div>;
 
   const toggleScope = (s: string) => {
-    setSelectedScope((prev) => prev.includes(s) ? prev.filter((x) => x !== s) : [...prev, s]);
+    setSelectedScope((prev) => prev.includes(s) ? prev.filter((x: any) => x !== s) : [...prev, s]);
   };
 
   return (
@@ -42,7 +42,7 @@ export default function TenantMigrationToolPage() {
       <div className="bg-gray-900 rounded-xl p-6 mb-6">
         <h2 className="text-sm font-semibold mb-3">{t("tenantMigration.scope")}</h2>
         <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-          {(data?.migration_scope ?? []).map((s) => (
+          {(data?.migration_scope ?? []).map((s: any) => (
             <button key={s.name} onClick={() => toggleScope(s.name)} className={"flex items-center gap-2 p-3 rounded-lg border transition " + (selectedScope.includes(s.name) ? "bg-blue-900 border-blue-700" : "bg-gray-800 border-gray-700")}>
               <Database className="w-4 h-4 text-gray-400" />
               <div className="text-left">
@@ -81,7 +81,7 @@ export default function TenantMigrationToolPage() {
       <div className="bg-gray-900 rounded-xl p-6">
         <h2 className="text-sm font-semibold mb-3">{t("tenantMigration.history")}</h2>
         <div className="space-y-2">
-          {(data?.migration_history ?? []).map((h) => (
+          {(data?.migration_history ?? []).map((h: any) => (
             <div key={h.id} className="flex items-center gap-3 bg-gray-800 rounded-lg p-3">
               <span className="text-xs text-gray-500">{h.timestamp}</span>
               <span className="text-sm">{h.scope}</span>

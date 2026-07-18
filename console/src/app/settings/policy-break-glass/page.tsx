@@ -86,7 +86,7 @@ export default function PolicyBreakGlassPage() {
                   className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-500"
                 >
                   <option value="">-- Select --</option>
-                  {(data?.break_glass_roles ?? []).map((r) => (
+                  {(data?.break_glass_roles ?? []).map((r: any) => (
                     <option key={r.role} value={r.role}>{r.role}</option>
                   ))}
                 </select>
@@ -137,7 +137,7 @@ export default function PolicyBreakGlassPage() {
         <div className="bg-gray-900 rounded-xl p-6">
           <h2 className="text-lg font-semibold mb-4">Break Glass Roles</h2>
           <div className="space-y-2">
-            {(data?.break_glass_roles ?? []).map((r) => (
+            {(data?.break_glass_roles ?? []).map((r: any) => (
               <div key={r.role} className="bg-gray-800 rounded-lg p-3">
                 <div className="flex items-center justify-between mb-1">
                   <p className="text-sm font-medium">{r.role}</p>
@@ -163,7 +163,7 @@ export default function PolicyBreakGlassPage() {
             Active Break Glass Sessions
           </h2>
           <div className="space-y-2">
-            {(data?.active_sessions ?? []).map((s) => (
+            {(data?.active_sessions ?? []).map((s: any) => (
               <div key={s.id} className="bg-gray-800 rounded-lg p-3">
                 <div className="flex items-center justify-between mb-1">
                   <p className="text-sm font-medium">{s.user}</p>

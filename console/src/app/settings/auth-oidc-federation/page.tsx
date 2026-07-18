@@ -64,7 +64,7 @@ export default function AuthOidcFederationPage() {
             Trust Anchors
           </h2>
           <div className="space-y-2">
-            {(data?.trust_anchors ?? []).map((anchor) => (
+            {(data?.trust_anchors ?? []).map((anchor: any) => (
               <div key={anchor.issuer} className="bg-gray-800 rounded-lg p-3">
                 <div className="flex items-center justify-between mb-1">
                   <p className="text-sm font-medium">{anchor.issuer}</p>
@@ -91,7 +91,7 @@ export default function AuthOidcFederationPage() {
             Federated Providers
           </h2>
           <div className="space-y-2">
-            {(data?.federated_providers ?? []).map((p) => (
+            {(data?.federated_providers ?? []).map((p: any) => (
               <div key={p.entity_id} className="bg-gray-800 rounded-lg p-3">
                 <div className="flex items-center justify-between mb-1">
                   <div>

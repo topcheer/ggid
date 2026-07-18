@@ -57,7 +57,7 @@ export default function AuditDataLineagePage() {
       <div className="bg-gray-900 rounded-xl p-6 mb-6">
         <h2 className="text-lg font-semibold mb-4">Dataset Lineage</h2>
         <div className="space-y-3">
-          {(data?.datasets ?? []).map((ds) => (
+          {(data?.datasets ?? []).map((ds: any) => (
             <div key={ds.dataset_name} className="bg-gray-800 rounded-lg p-4">
               <div className="flex items-center gap-2 mb-3">
                 <Database className="w-4 h-4 text-gray-400" />
@@ -80,7 +80,7 @@ export default function AuditDataLineagePage() {
                 <div>
                   <p className="text-xs text-gray-500 mb-1">Transformations</p>
                   <div className="flex flex-wrap gap-1">
-                    {ds.transformations.map((t) => (
+                    {ds.transformations.map((t: any) => (
                       <span key={t} className="text-xs px-1.5 py-0.5 bg-gray-700 rounded">{t}</span>
                     ))}
                   </div>
@@ -88,7 +88,7 @@ export default function AuditDataLineagePage() {
                 <div>
                   <p className="text-xs text-gray-500 mb-1">Downstream Consumers</p>
                   <div className="flex flex-wrap gap-1">
-                    {ds.downstream_consumers.map((c) => (
+                    {ds.downstream_consumers.map((c: any) => (
                       <span key={c} className="text-xs px-1.5 py-0.5 bg-gray-700 rounded">{c}</span>
                     ))}
                   </div>

@@ -52,7 +52,7 @@ export default function SIEMMetricsPage() {
     if (startDate && endDate) fetchData();
   }, [startDate, endDate, fetchData]);
 
-  const maxErrorCount = data ? Math.max(...data.error_breakdown.map((e) => e.count), 1) : 1;
+  const maxErrorCount = data ? Math.max(...data.error_breakdown.map((e: any) => e.count), 1) : 1;
 
   return (
     <div className="space-y-6">
@@ -99,7 +99,7 @@ export default function SIEMMetricsPage() {
             <div className="rounded-lg border dark:border-gray-800 p-4">
               <h3 className="font-semibold mb-3">Error Breakdown</h3>
               <div className="space-y-2">
-                {data.error_breakdown.map((e, i) => (
+                {data.error_breakdown.map((e: any, i: any) => (
                   <div key={i} className="flex items-center gap-3">
                     <span className="text-xs text-gray-500 w-48 truncate">{e.error_type}</span>
                     <div className="flex-1 h-6 rounded bg-gray-100 dark:bg-gray-800 overflow-hidden">
@@ -127,7 +127,7 @@ export default function SIEMMetricsPage() {
                 </tr>
               </thead>
               <tbody className="divide-y dark:divide-gray-800">
-                {data.destinations.map((d) => (
+                {data.destinations.map((d: any) => (
                   <tr key={d.id} className="hover:bg-gray-50 dark:hover:bg-gray-900/30">
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-2">

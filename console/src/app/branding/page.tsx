@@ -156,7 +156,7 @@ export default function BrandingPage() {
             <div className="mt-4">
               <p className="text-xs text-gray-400 mb-2">{t("branding2.presets")}</p>
               <div className="flex flex-wrap gap-2">
-                {PRESET_COLORS.map((preset) => (
+                {PRESET_COLORS.map((preset: any) => (
                   <button aria-label={`Apply ${preset.name} color preset`} key={preset.name} onClick={() => { setPrimaryColor(preset.primary); setSecondaryColor(preset.secondary); setAccentColor(preset.accent); }}
                     className="flex items-center gap-1.5 px-2 py-1 rounded-lg border border-gray-200 dark:border-gray-800 hover:border-gray-400 transition">
                     <div className="flex -space-x-1">

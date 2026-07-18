@@ -32,11 +32,11 @@ export default function ClientDeprecationPage() {
   useEffect(() => { (async () => { try { setClients(await apiFetch<DeprecationStatus[]>("/api/v1/oauth/client-deprecation").catch(() => [])); } catch { setError("Failed to load deprecation data"); } finally { setLoading(false); } })(); });
 
   const handleUpdateStatus = async (id: string, status: DeprecationStatus["status"]) => {
-    try { await apiFetch(`/api/v1/oauth/client-deprecation/${id}`, { method: "PATCH", body: JSON.stringify({ status }) }); setClients((p) => p.map((c) => c.id === id ? { ...c, status } : c)); } catch { setError("Update failed"); }
+    try { await apiFetch(`/api/v1/oauth/client-deprecation/${id}`, { method: "PATCH", body: JSON.stringify({ status }) }); setClients((p) => p.map((c: any) => c.id === id ? { ...c, status } : c)); } catch { setError("Update failed"); }
   };
 
   const cardCls = "rounded-xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-700 dark:bg-gray-800";
-  const deprecated = clients.filter((c) => c.status !== "active");
+  const deprecated = clients.filter((c: any) => c.status !== "active");
 
   return (
     <div className="space-y-6">
@@ -44,7 +44,7 @@ export default function ClientDeprecationPage() {
       {deprecated.length > 0 && <div className="flex items-center gap-3 rounded-xl border border-yellow-200 bg-yellow-50 px-4 py-3 dark:border-yellow-800 dark:bg-yellow-900/20"><AlertTriangle className="h-5 w-5 text-yellow-600 shrink-0" /><span className="text-sm text-yellow-700 dark:text-yellow-400">{deprecated.length} client{deprecated.length > 1 ? "s" : ""} in deprecation cycle.</span></div>}
       {error && <div role="alert" className="flex items-center gap-2 rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700 dark:bg-red-900/20 dark:text-red-400"><AlertCircle className="h-4 w-4 shrink-0" />{error}<button onClick={() => setError(null)} aria-label="Dismiss error" className="ml-auto"><X className="h-4 w-4" /></button></div>}
       {loading ? <div className="flex justify-center py-12"><Loader2 className="h-8 w-8 animate-spin text-yellow-600" /></div> : clients.length === 0 ? <div className={cardCls}><div className="py-12 text-center"><AlertTriangle className="mx-auto h-12 w-12 text-gray-300" /><p className="mt-4 text-sm text-gray-400">No clients to manage.</p></div></div> : (
-        <div className="space-y-3">{clients.map((c) => (
+        <div className="space-y-3">{clients.map((c: any) => (
           <div key={c.id} className={`${cardCls} ${c.status !== "active" ? "border-l-4 border-l-yellow-400" : ""}`}>
             <div className="flex items-start justify-between">
               <div className="flex-1"><div className="flex items-center gap-2"><span className="font-semibold text-gray-900 dark:text-white">{c.client_name}</span><span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${statusColors[c.status]}`}>{c.status}</span></div>

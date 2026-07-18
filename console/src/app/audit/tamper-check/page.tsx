@@ -119,7 +119,7 @@ export default function TamperCheckPage() {
                     <th scope="col" className="px-4 py-3 text-left font-semibold text-gray-600 dark:text-gray-300">Detected</th>
                   </tr></thead>
                   <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-                    {issues.map((iss) => (
+                    {issues.map((iss: any) => (
                       <tr key={iss.id} className="bg-white dark:bg-gray-900">
                         <td className="px-4 py-3"><span className="font-mono text-xs text-gray-700 dark:text-gray-300">{iss.type.replace(/_/g, " ")}</span></td>
                         <td className="px-4 py-3"><span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${sevColors[iss.severity] || ""}`}>{iss.severity}</span></td>

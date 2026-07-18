@@ -72,7 +72,7 @@ function GettingStartedTab() {
       <div className="relative">
         <div className="absolute left-5 top-0 bottom-0 w-0.5 bg-gray-200 dark:bg-gray-800" />
         <div className="space-y-6">
-          {steps.map((step, i) => {
+          {steps.map((step: any, i: any) => {
             const Icon = step.icon;
             return (
               <div key={i} className="relative pl-14">
@@ -220,7 +220,7 @@ curl -s http://localhost:8080/api/v1/users \\
 
         {/* SDK selector */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mb-4">
-          {sdks.map((s) => {
+          {sdks.map((s: any) => {
             const Icon = s.icon;
             const isActive = active === s.id;
             return (

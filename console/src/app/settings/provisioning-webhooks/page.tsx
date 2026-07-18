@@ -73,7 +73,7 @@ export default function ProvisioningWebhooksPage() {
   const toggleEvent = (event: string) => {
     setForm((prev) => ({
       ...prev,
-      events: prev.events.includes(event) ? prev.events.filter((e) => e !== event) : [...prev.events, event],
+      events: prev.events.includes(event) ? prev.events.filter((e: any) => e !== event) : [...prev.events, event],
     }));
   };
 
@@ -89,7 +89,7 @@ export default function ProvisioningWebhooksPage() {
     if (!deleteId) return;
     try {
       await fetch(`/api/v1/identity/provisioning-webhooks/${deleteId}`, { method: "DELETE", headers: { ...authHeader(), "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
-      setWebhooks((prev) => prev.filter((w) => w.id !== deleteId));
+      setWebhooks((prev) => prev.filter((w: any) => w.id !== deleteId));
       setDeleteId(null);
     } catch { /* noop */ }
   };
@@ -106,7 +106,7 @@ export default function ProvisioningWebhooksPage() {
 
       {/* Webhook list */}
       <div className="space-y-3">
-        {webhooks.map((w) => (
+        {webhooks.map((w: any) => (
           <div key={w.id} className="rounded-lg border dark:border-gray-800 p-4">
             <div className="flex items-center justify-between">
               <div className="flex-1">
@@ -147,7 +147,7 @@ export default function ProvisioningWebhooksPage() {
               <div>
                 <label className="text-sm font-medium">Events</label>
                 <div className="grid grid-cols-2 gap-1 mt-1">
-                  {eventTypes.map((e) => (
+                  {eventTypes.map((e: any) => (
                     <label key={e} className="flex items-center gap-2 text-xs cursor-pointer">
                       <input aria-label="Form" type="checkbox" checked={form.events.includes(e)} onChange={() => toggleEvent(e)} className="rounded" />
                       <span className="font-mono">{e}</span>

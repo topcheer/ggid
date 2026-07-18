@@ -52,7 +52,7 @@ export default function ForensicsTimelinePage() {
           </div>
 
           {data.tamper_evidence.length > 0 && (
-            <div className="rounded-lg border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/20 p-4"><h3 className="text-sm font-semibold flex items-center gap-2 mb-3"><AlertTriangle className="w-4 h-4 text-red-500" /> Tamper Evidence Detected</h3><div className="space-y-1">{data.tamper_evidence.map((t) => (<div key={t.event_id} className="flex items-center gap-2 text-sm"><span className="text-xs text-gray-400">{t.timestamp}</span><span className="font-mono text-xs text-red-600">{t.event_id}</span><span>{t.description}</span></div>))}</div></div>
+            <div className="rounded-lg border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/20 p-4"><h3 className="text-sm font-semibold flex items-center gap-2 mb-3"><AlertTriangle className="w-4 h-4 text-red-500" /> Tamper Evidence Detected</h3><div className="space-y-1">{data.tamper_evidence.map((t: any) => (<div key={t.event_id} className="flex items-center gap-2 text-sm"><span className="text-xs text-gray-400">{t.timestamp}</span><span className="font-mono text-xs text-red-600">{t.event_id}</span><span>{t.description}</span></div>))}</div></div>
           )}
 
           {data.insertion_gaps.length > 0 && (

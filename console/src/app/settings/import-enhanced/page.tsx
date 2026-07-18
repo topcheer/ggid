@@ -147,7 +147,7 @@ export default function ImportEnhancedPage() {
 
   const downloadReport = () => {
     if (!summary) return;
-    const report = `Import Report\n${"=".repeat(40)}\nDate: ${new Date().toISOString()}\nFile: ${fileName}\n\nTotal: ${progressTotal}\nImported: ${summary.imported}\nFailed: ${summary.failed}\nSkipped: ${summary.skipped}\nDuration: ${(summary.duration_ms / 1000).toFixed(1)}s\nRate: ${summary.rate} rows/sec\n\nError Breakdown:\n${summary.errors.map((e) => `  ${e.type}: ${e.count}`).join("\n")}\n`;
+    const report = `Import Report\n${"=".repeat(40)}\nDate: ${new Date().toISOString()}\nFile: ${fileName}\n\nTotal: ${progressTotal}\nImported: ${summary.imported}\nFailed: ${summary.failed}\nSkipped: ${summary.skipped}\nDuration: ${(summary.duration_ms / 1000).toFixed(1)}s\nRate: ${summary.rate} rows/sec\n\nError Breakdown:\n${summary.errors.map((e: any) => `  ${e.type}: ${e.count}`).join("\n")}\n`;
     const blob = new Blob([report], { type: "text/plain" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a"); a.href = url; a.download = `import-report-${Date.now()}.txt`; a.click();

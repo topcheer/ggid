@@ -82,7 +82,7 @@ export default function TokenRefreshAnalyticsPage() {
         <div className="bg-gray-900 rounded-xl p-6">
           <h2 className="text-lg font-semibold mb-4">Refresh by Client</h2>
           <div className="space-y-2">
-            {(data?.refresh_by_client ?? []).map((c) => (
+            {(data?.refresh_by_client ?? []).map((c: any) => (
               <div key={c.client_id} className="bg-gray-800 rounded-lg p-3">
                 <div className="flex items-center justify-between mb-1">
                   <span className="text-sm font-medium">{c.client_name}</span>
@@ -93,7 +93,7 @@ export default function TokenRefreshAnalyticsPage() {
                     className="bg-blue-500 rounded-full h-1.5"
                     style={{
                       width: `${
-                        (c.refresh_count / Math.max(...(data?.refresh_by_client ?? [{ refresh_count: 1 }]).map((x) => x.refresh_count), 1)) * 100
+                        (c.refresh_count / Math.max(...(data?.refresh_by_client ?? [{ refresh_count: 1 }]).map((x: any) => x.refresh_count), 1)) * 100
                       }%`,
                     }}
                   />

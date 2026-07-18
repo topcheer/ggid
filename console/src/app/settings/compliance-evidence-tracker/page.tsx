@@ -47,7 +47,7 @@ export default function ComplianceEvidenceTrackerPage() {
 
       {/* Framework Tabs */}
       <div className="flex gap-1 mb-4 overflow-x-auto pb-1">
-        {frameworks.map((fw) => (
+        {frameworks.map((fw: any) => (
           <button
             key={fw}
             onClick={() => setActiveTab(fw)}
@@ -106,7 +106,7 @@ export default function ComplianceEvidenceTrackerPage() {
           Auto Collection Rules
         </h2>
         <div className="space-y-2">
-          {(data?.auto_collection_rules ?? []).map((r) => (
+          {(data?.auto_collection_rules ?? []).map((r: any) => (
             <div key={r.rule_name} className="flex items-center justify-between bg-gray-800 rounded-lg p-3">
               <div>
                 <p className="text-sm font-medium">{r.rule_name}</p>

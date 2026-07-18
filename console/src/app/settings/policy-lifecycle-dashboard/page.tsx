@@ -29,7 +29,7 @@ export default function PolicyLifecycleDashboardPage() {
     { label: t("policyLifecycle.active"), count: data?.approval_pipeline?.active ?? 0, color: "bg-emerald-600" },
   ];
 
-  const maxAge = Math.max(...(data?.policy_age_histogram ?? [{ count: 1 }]).map((h) => h.count), 1);
+  const maxAge = Math.max(...(data?.policy_age_histogram ?? [{ count: 1 }]).map((h: any) => h.count), 1);
 
   return (
     <div className="min-h-screen bg-gray-950 text-white p-8">

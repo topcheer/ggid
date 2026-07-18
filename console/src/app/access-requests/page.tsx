@@ -140,7 +140,7 @@ export default function AccessRequestsPage() {
     }
   };
 
-  const pendingCount = requests.filter((r) => r.status === "pending").length;
+  const pendingCount = requests.filter((r: any) => r.status === "pending").length;
 
   return (
     <div className="space-y-6">
@@ -165,7 +165,7 @@ export default function AccessRequestsPage() {
 
       {/* Status filter tabs */}
       <div className="flex flex-wrap gap-2">
-        {STATUS_TABS.map((tab) => (
+        {STATUS_TABS.map((tab: any) => (
           <button
             key={tab}
             onClick={() => setStatusFilter(tab)}
@@ -211,7 +211,7 @@ export default function AccessRequestsPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-              {requests.map((req) => (
+              {requests.map((req: any) => (
                 <tr key={req.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/50">
                   <td className="px-4 py-3">
                     <span className="font-mono text-xs text-gray-700 dark:text-gray-300">{req.requester_id.slice(0, 8)}...</span>
@@ -277,7 +277,7 @@ export default function AccessRequestsPage() {
               <div>
                 <label className="mb-1 block text-sm font-medium dark:text-gray-300">Resource Type</label>
                 <select aria-label="create Form" value={createForm.resource_type} onChange={(e) => setCreateForm({ ...createForm, resource_type: e.target.value })} className={inputCls}>
-                  {RESOURCE_TYPES.map((t) => <option key={t} value={t}>{t}</option>)}
+                  {RESOURCE_TYPES.map((t: any) => <option key={t} value={t}>{t}</option>)}
                 </select>
               </div>
               <div>

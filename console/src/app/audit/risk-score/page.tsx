@@ -74,7 +74,7 @@ export default function RiskScorePage() {
   const w = 400, h = 80, pad = 8;
   const pts = data.history.length > 0 ? data.history : [{ timestamp: "", score: data.current_score }];
   const stepX = (w - pad * 2) / Math.max(pts.length - 1, 1);
-  const sparkPath = pts.map((p, i) => {
+  const sparkPath = pts.map((p: any, i: any) => {
     const x = pad + i * stepX;
     const y = h - pad - (p.score / maxScore) * (h - pad * 2);
     return `${i === 0 ? "M" : "L"} ${x.toFixed(1)} ${y.toFixed(1)}`;
@@ -150,7 +150,7 @@ export default function RiskScorePage() {
             <p className="py-6 text-center text-sm text-gray-400">No significant risk factors detected.</p>
           ) : (
             <div className="space-y-3">
-              {data.factors.map((f, i) => {
+              {data.factors.map((f: any, i: any) => {
                 const colors = SEVERITY_COLOR[f.severity];
                 return (
                   <div key={i} className="space-y-1">
@@ -181,7 +181,7 @@ export default function RiskScorePage() {
             <p className="py-6 text-center text-sm text-gray-400">No recommendations at this time.</p>
           ) : (
             <div className="space-y-3">
-              {data.recommendations.map((r, i) => (
+              {data.recommendations.map((r: any, i: any) => (
                 <div key={i} className="rounded-lg border border-gray-200 p-3 dark:border-gray-700">
                   <div className="flex items-center justify-between">
                     <span className="text-sm font-medium text-gray-700 dark:text-gray-300">{r.title}</span>

@@ -106,7 +106,7 @@ export default function RolePermissionsMatrixPage() {
         roleList.map(async (role) => {
           try {
             const data = await apiFetch<{ permissions?: Permission[] }>(`/api/v1/roles/${role.id}/permissions`);
-            m[role.id] = new Set((data.permissions || []).map((p) => p.id));
+            m[role.id] = new Set((data.permissions || []).map((p: any) => p.id));
           } catch {
             m[role.id] = new Set();
           }
@@ -139,7 +139,7 @@ export default function RolePermissionsMatrixPage() {
   // Build inheritance chain: ordered list of role IDs from root to leaf
   // We compute the topological order so parent comes before child
   const inheritanceChain = useMemo(() => {
-    const roleMap = new Map(roles.map((r) => [r.id, r]));
+    const roleMap = new Map(roles.map((r: any) => [r.id, r]));
     const visited = new Set<string>();
     const chain: string[] = [];
 
@@ -150,21 +150,21 @@ export default function RolePermissionsMatrixPage() {
       if (role?.parent_role_id) visit(role.parent_role_id);
       chain.push(id);
     };
-    roles.forEach((r) => visit(r.id));
+    roles.forEach((r: any) => visit(r.id));
     return chain;
   }, [roles]);
 
   // Roles sorted by inheritance order for display
   const orderedRoles = useMemo(() => {
-    const map = new Map(roles.map((r) => [r.id, r]));
-    return inheritanceChain.map((id) => map.get(id)).filter(Boolean) as Role[];
+    const map = new Map(roles.map((r: any) => [r.id, r]));
+    return inheritanceChain.map((id: any) => map.get(id)).filter(Boolean) as Role[];
   }, [roles, inheritanceChain]);
 
   // For each role, compute inherited permissions from parent chain
   // A permission is "inherited" if it belongs to any ancestor role and the role itself doesn't directly have it
   const inheritedPerms = useMemo(() => {
     const result: Record<string, Set<string>> = {};
-    const roleMap = new Map(roles.map((r) => [r.id, r]));
+    const roleMap = new Map(roles.map((r: any) => [r.id, r]));
 
     for (const role of roles) {
       const inherited = new Set<string>();
@@ -172,7 +172,7 @@ export default function RolePermissionsMatrixPage() {
       while (parentId) {
         const parentPerms = matrix[parentId];
         if (parentPerms) {
-          parentPerms.forEach((p) => {
+          parentPerms.forEach((p: any) => {
             // Only mark as inherited if the role itself doesn't directly have it
             const rolePerms = matrix[role.id];
             if (!rolePerms?.has(p)) {
@@ -226,7 +226,7 @@ export default function RolePermissionsMatrixPage() {
     setError(null);
     try {
       // For each role that changed, PUT the full permission set
-      const changedRoles = orderedRoles.filter((role) => {
+      const changedRoles = orderedRoles.filter((role: any) => {
         const orig = originalMatrix[role.id] || new Set();
         const curr = matrix[role.id] || new Set();
         if (orig.size !== curr.size) return true;
@@ -257,21 +257,21 @@ export default function RolePermissionsMatrixPage() {
   // ---- Bulk apply ----
   const handleBulkApply = () => {
     if (!bulkRole || !bulkGroup) return;
-    const groupDef = PERMISSION_GROUPS.find((g) => g.label === bulkGroup);
+    const groupDef = PERMISSION_GROUPS.find((g: any) => g.label === bulkGroup);
     if (!groupDef) return;
 
     const permIds = groupDef.permissions
-      .map((key) => permByKey.get(key)?.id)
+      .map((key: any) => permByKey.get(key)?.id)
       .filter(Boolean) as string[];
 
     setMatrix((prev) => {
       const next = { ...prev };
       const current = new Set(next[bulkRole] || []);
-      permIds.forEach((id) => current.add(id));
+      permIds.forEach((id: any) => current.add(id));
       next[bulkRole] = current;
       return next;
     });
-    setMsg(`Applied all ${bulkGroup} permissions to ${roles.find((r) => r.id === bulkRole)?.name || bulkRole}`);
+    setMsg(`Applied all ${bulkGroup} permissions to ${roles.find((r: any) => r.id === bulkRole)?.name || bulkRole}`);
   };
 
   // Auto-dismiss messages
@@ -316,7 +316,7 @@ export default function RolePermissionsMatrixPage() {
         <GitBranch className="h-4 w-4 text-blue-500" />
         <span className="text-sm font-medium text-blue-700">Inheritance:</span>
         <div className="flex items-center gap-1 text-sm text-blue-600">
-          {orderedRoles.map((role, idx) => (
+          {orderedRoles.map((role: any, idx: any) => (
             <span key={role.id} className="flex items-center gap-1">
               <span className="font-medium">{role.name || role.key}</span>
               {idx < orderedRoles.length - 1 && <ArrowRight className="h-3 w-3 text-blue-400" />}
@@ -349,7 +349,7 @@ export default function RolePermissionsMatrixPage() {
           className="rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 focus:border-brand-500 focus:outline-none"
         >
           <option value="">-- Select role --</option>
-          {orderedRoles.map((r) => (
+          {orderedRoles.map((r: any) => (
             <option key={r.id} value={r.id}>
               {r.name || r.key}
               {r.system_role ? " (system)" : ""}
@@ -362,7 +362,7 @@ export default function RolePermissionsMatrixPage() {
           className="rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 focus:border-brand-500 focus:outline-none"
         >
           <option value="">-- Select group --</option>
-          {PERMISSION_GROUPS.map((g) => (
+          {PERMISSION_GROUPS.map((g: any) => (
             <option key={g.label} value={g.label}>
               {g.label} ({g.permissions.length})
             </option>
@@ -392,7 +392,7 @@ export default function RolePermissionsMatrixPage() {
                 <th scope="col" className="sticky left-0 z-30 border-b border-r border-gray-200 bg-gray-50 px-4 py-2 text-left dark:border-gray-700 dark:bg-gray-900">
                   <span className="text-xs font-bold uppercase tracking-wide text-gray-500">Role</span>
                 </th>
-                {PERMISSION_GROUPS.map((group) => (
+                {PERMISSION_GROUPS.map((group: any) => (
                   <th
                     key={group.label}
                     className="border-b border-r border-gray-200 bg-gray-50 px-2 py-2 text-center dark:border-gray-700 dark:bg-gray-900"
@@ -409,7 +409,7 @@ export default function RolePermissionsMatrixPage() {
                 <th scope="col" className="sticky left-0 z-30 border-b border-r border-gray-200 bg-gray-50 px-4 py-2 text-left dark:border-gray-700 dark:bg-gray-900">
                   &nbsp;
                 </th>
-                {PERMISSION_GROUPS.map((group) =>
+                {PERMISSION_GROUPS.map((group: any) =>
                   group.permissions.map((permKey) => (
                     <th
                       key={permKey}
@@ -451,7 +451,7 @@ export default function RolePermissionsMatrixPage() {
                       </div>
                     </td>
                     {/* Permission cells */}
-                    {PERMISSION_GROUPS.map((group) =>
+                    {PERMISSION_GROUPS.map((group: any) =>
                       group.permissions.map((permKey) => {
                         const permObj = permByKey.get(permKey);
                         const permId = permObj?.id || "";

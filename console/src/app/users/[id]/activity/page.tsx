@@ -65,7 +65,7 @@ export default function UserActivityPage({ params }: { params: { id: string } })
 
   const exportCsv = () => {
     const header = "timestamp,eventType,description,ip,device,result\n";
-    const rows = filtered.map((e) => `${e.timestamp},${e.eventType},${e.description},${e.ip},${e.device},${e.result}`).join("\n");
+    const rows = filtered.map((e: any) => `${e.timestamp},${e.eventType},${e.description},${e.ip},${e.device},${e.result}`).join("\n");
     const blob = new Blob([header + rows], { type: "text/csv" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
@@ -73,7 +73,7 @@ export default function UserActivityPage({ params }: { params: { id: string } })
     a.click(); URL.revokeObjectURL(url);
   };
 
-  const filtered = events.filter((e) => {
+  const filtered = events.filter((e: any) => {
     if (filter !== "all" && e.eventType !== filter) return false;
     if (!search) return true;
     const q = search.toLowerCase();
@@ -137,7 +137,7 @@ export default function UserActivityPage({ params }: { params: { id: string } })
 
       {/* Timeline */}
       <div className="space-y-2">
-        {filtered.map((event, idx) => {
+        {filtered.map((event: any, idx: any) => {
           const Icon = getEventIcon(event.eventType);
           const isExpanded = expandedId === event.id;
           return (

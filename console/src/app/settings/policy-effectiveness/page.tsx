@@ -63,7 +63,7 @@ export default function PolicyEffectivenessPage() {
           {/* Per-policy table */}
           {stats.length === 0 ? <div className={cardCls}><div className="py-12 text-center"><BarChart3 className="mx-auto h-12 w-12 text-gray-300" /><p className="mt-4 text-sm text-gray-400">No policy data available.</p></div></div>
           : (
-            <div className="space-y-3">{stats.map((p) => (
+            <div className="space-y-3">{stats.map((p: any) => (
               <div key={p.policy_id} className={cardCls}>
                 <div className="flex items-start justify-between">
                   <div className="flex-1"><div className="flex items-center gap-2"><span className="font-semibold text-gray-900 dark:text-white">{p.policy_name}</span><span className="font-mono text-xs text-gray-400">{p.policy_id.slice(0, 16)}</span></div>

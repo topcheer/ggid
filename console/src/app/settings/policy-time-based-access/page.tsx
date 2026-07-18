@@ -76,12 +76,12 @@ export default function PolicyTimeBasedAccessPage() {
               </tr>
             </thead>
             <tbody>
-              {(data?.time_window_rules ?? []).map((r) => (
+              {(data?.time_window_rules ?? []).map((r: any) => (
                 <tr key={r.policy} className="border-b border-gray-800">
                   <td className="py-3 pr-3 font-medium">{r.policy}</td>
                   <td className="py-3 pr-3">
                     <div className="flex gap-1">
-                      {days.map((d) => (
+                      {days.map((d: any) => (
                         <span
                           key={d}
                           className={"text-xs px-1.5 py-0.5 rounded " + (
@@ -111,7 +111,7 @@ export default function PolicyTimeBasedAccessPage() {
             UTC Timeline (24h)
           </h2>
           <div className="space-y-2">
-            {(data?.time_window_rules ?? []).slice(0, 4).map((r) => {
+            {(data?.time_window_rules ?? []).slice(0, 4).map((r: any) => {
               const startHour = parseInt(r.start_time.split(":")[0]);
               const endHour = parseInt(r.end_time.split(":")[0]);
               return (
@@ -158,7 +158,7 @@ export default function PolicyTimeBasedAccessPage() {
           <div className="bg-gray-900 rounded-xl p-6">
             <h2 className="text-lg font-semibold mb-4">Per-Role Restrictions</h2>
             <div className="space-y-2">
-              {(data?.per_role_restrictions ?? []).map((r) => (
+              {(data?.per_role_restrictions ?? []).map((r: any) => (
                 <div key={r.role} className="flex items-center justify-between bg-gray-800 rounded-lg p-2">
                   <span className="text-sm font-medium">{r.role}</span>
                   <span className="text-xs text-gray-400">

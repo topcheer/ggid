@@ -17,8 +17,8 @@ export default function OAuthDynamicClientRegPage() {
   const handleRegister = async () => {
     await registerClient({
       client_name: newClient.client_name,
-      grant_types: newClient.grant_types.split(",").map((s) => s.trim()),
-      redirect_uris: newClient.redirect_uris.split(",").map((s) => s.trim()),
+      grant_types: newClient.grant_types.split(",").map((s: any) => s.trim()),
+      redirect_uris: newClient.redirect_uris.split(",").map((s: any) => s.trim()),
     } as Partial<RegisteredClient>);
     setShowModal(false);
     setNewClient({ client_name: "", grant_types: "authorization_code", redirect_uris: "" });

@@ -72,8 +72,8 @@ export default function ImpossibleTravelPage() {
 
       <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
         <div className="rounded-lg border p-4 dark:border-gray-800"><span className="text-sm text-gray-500">{t("big1.impossibleTravel.totalAlerts")}</span><p className="text-2xl font-bold mt-1">{alerts.length}</p></div>
-        <div className="rounded-lg border p-4 dark:border-gray-800"><span className="text-sm text-gray-500">{t("big1.impossibleTravel.critical")}</span><p className="text-2xl font-bold mt-1 text-red-600">{alerts.filter((a) => a.risk_level === "critical").length}</p></div>
-        <div className="rounded-lg border p-4 dark:border-gray-800"><span className="text-sm text-gray-500">{t("big1.impossibleTravel.uniqueUsers")}</span><p className="text-2xl font-bold mt-1">{new Set(alerts.map((a) => a.user_id)).size}</p></div>
+        <div className="rounded-lg border p-4 dark:border-gray-800"><span className="text-sm text-gray-500">{t("big1.impossibleTravel.critical")}</span><p className="text-2xl font-bold mt-1 text-red-600">{alerts.filter((a: any) => a.risk_level === "critical").length}</p></div>
+        <div className="rounded-lg border p-4 dark:border-gray-800"><span className="text-sm text-gray-500">{t("big1.impossibleTravel.uniqueUsers")}</span><p className="text-2xl font-bold mt-1">{new Set(alerts.map((a: any) => a.user_id)).size}</p></div>
       </div>
 
       <div className="overflow-x-auto rounded-lg border dark:border-gray-800">
@@ -90,7 +90,7 @@ export default function ImpossibleTravelPage() {
             </tr>
           </thead>
           <tbody className="divide-y dark:divide-gray-800">
-            {alerts.map((a) => (
+            {alerts.map((a: any) => (
               <tr key={a.id} className="hover:bg-gray-50 dark:hover:bg-gray-900/30">
                 <td className="px-4 py-3 font-medium">{a.username}</td>
                 <td className="px-4 py-3"><div className="flex items-center gap-1 text-xs"><MapPin className="w-3 h-3 text-gray-400" /><span>{a.from_city}, {a.from_country}</span><span className="text-gray-300">→</span><span>{a.to_city}, {a.to_country}</span></div><div className="flex items-center gap-2 text-xs text-gray-400 mt-0.5"><span className="font-mono">{a.from_ip}</span><span>→</span><span className="font-mono">{a.to_ip}</span></div></td>

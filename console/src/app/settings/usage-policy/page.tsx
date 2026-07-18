@@ -57,7 +57,7 @@ export default function UsagePolicyPage() {
         headers: { ...authHeader(), "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" },
         body: JSON.stringify(editForm),
       });
-      setPolicies((prev) => prev.map((p) => p.client_id === editForm.client_id ? editForm : p));
+      setPolicies((prev) => prev.map((p: any) => p.client_id === editForm.client_id ? editForm : p));
       setEditingId(null);
       setEditForm(null);
     } catch {
@@ -87,7 +87,7 @@ export default function UsagePolicyPage() {
 
       {/* Policy cards */}
       <div className="space-y-4">
-        {policies.map((p) => (
+        {policies.map((p: any) => (
           <div key={p.client_id} className="rounded-lg border dark:border-gray-800 overflow-hidden">
             {editingId === p.client_id && editForm ? (
               /* Edit mode */

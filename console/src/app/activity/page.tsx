@@ -101,7 +101,7 @@ export default function ActivityLogPage() {
 
   // Client-side filtering (in case server doesn't support all filters)
   const filteredEvents = useMemo(() => {
-    return events.filter((e) => {
+    return events.filter((e: any) => {
       if (dateFrom) {
         const eventDate = new Date(e.timestamp);
         const fromDate = new Date(dateFrom);
@@ -129,7 +129,7 @@ export default function ActivityLogPage() {
   // CSV Export
   const handleExportCSV = () => {
     const headers = ["Timestamp", "Event Type", "IP Address", "User Agent", "Result"];
-    const rows = filteredEvents.map((e) => [
+    const rows = filteredEvents.map((e: any) => [
       new Date(e.timestamp).toISOString(),
       e.event_type,
       e.ip_address || "",
@@ -137,7 +137,7 @@ export default function ActivityLogPage() {
       e.result,
     ]);
     const csv = [headers, ...rows]
-      .map((row) => row.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(","))
+      .map((row: any) => row.map((cell: any) => `"${String(cell).replace(/"/g, '""')}"`).join(","))
       .join("\n");
     const blob = new Blob([csv], { type: "text/csv" });
     const url = URL.createObjectURL(blob);
@@ -149,7 +149,7 @@ export default function ActivityLogPage() {
   };
 
   const eventTypeLabel = (type: string): string => {
-    const found = EVENT_TYPES.find((t) => t.value === type);
+    const found = EVENT_TYPES.find((t: any) => t.value === type);
     return found ? found.label : type;
   };
 
@@ -223,7 +223,7 @@ export default function ActivityLogPage() {
               className="w-full rounded-lg border border-gray-300 px-3 py-1.5 text-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
             >
               <option value="">{t("activity.allEvents")}</option>
-              {EVENT_TYPES.map((t) => (
+              {EVENT_TYPES.map((t: any) => (
                 <option key={t.value} value={t.value}>
                   {t.label}
                 </option>
@@ -288,7 +288,7 @@ export default function ActivityLogPage() {
               </tr>
             )}
             {!loading &&
-              paginatedEvents.map((event) => (
+              paginatedEvents.map((event: any) => (
                 <tr key={event.id} className="hover:bg-gray-50">
                   <td className="whitespace-nowrap px-4 py-3 text-sm text-gray-600">
                     {new Date(event.timestamp).toLocaleString()}

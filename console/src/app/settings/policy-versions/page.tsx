@@ -57,7 +57,7 @@ export default function PolicyVersionsPage() {
     }
   };
 
-  const activeVersion = versions.find((v) => v.is_active);
+  const activeVersion = versions.find((v: any) => v.is_active);
   const cardCls = "rounded-xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-700 dark:bg-gray-800";
 
   return (
@@ -101,7 +101,7 @@ export default function PolicyVersionsPage() {
         <div className="relative space-y-3">
           {/* Vertical line */}
           <div className="absolute bottom-0 left-4 top-2 w-0.5 bg-gray-200 dark:bg-gray-700" />
-          {versions.map((v) => (
+          {versions.map((v: any) => (
             <div key={v.id} className="relative flex items-start gap-4 pl-0">
               {/* Dot */}
               <div className={`relative z-10 mt-3 h-8 w-8 shrink-0 rounded-full border-2 ${v.is_active ? "border-green-500 bg-green-100 dark:bg-green-900/30" : "border-gray-300 bg-white dark:border-gray-600 dark:bg-gray-800"}`}>

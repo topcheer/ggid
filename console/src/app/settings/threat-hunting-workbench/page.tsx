@@ -74,7 +74,7 @@ export default function ThreatHuntingWorkbenchPage() {
             Hypothesis Tracker
           </h2>
           <div className="space-y-2">
-            {(data?.hypotheses ?? []).map((h) => (
+            {(data?.hypotheses ?? []).map((h: any) => (
               <div key={h.id} className="bg-gray-800 rounded-lg p-3">
                 <div className="flex items-start justify-between mb-1">
                   <p className="text-sm font-medium">{h.hypothesis}</p>

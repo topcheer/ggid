@@ -154,14 +154,14 @@ export default function RateLimitsPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
-              {limits.map((l) => (
+              {limits.map((l: any) => (
                 <tr key={l.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/50">
                   {editing === l.id ? (
                     <>
                       <td className="px-4 py-2"><input aria-label="Input field" value={draft.path_pattern ?? ""} onChange={(e) => setDraft((p) => ({ ...p, path_pattern: e.target.value }))} className={inputCls} /></td>
                       <td className="px-4 py-2">
                         <select aria-label="Select option" value={draft.method ?? "GET"} onChange={(e) => setDraft((p) => ({ ...p, method: e.target.value }))} className={inputCls}>
-                          {["GET", "POST", "PUT", "PATCH", "DELETE", "*"].map((m) => <option key={m} value={m}>{m}</option>)}
+                          {["GET", "POST", "PUT", "PATCH", "DELETE", "*"].map((m: any) => <option key={m} value={m}>{m}</option>)}
                         </select>
                       </td>
                       <td className="px-4 py-2"><input aria-label="Input field" type="number" value={draft.requests_per_minute ?? 60} onChange={(e) => setDraft((p) => ({ ...p, requests_per_minute: Number(e.target.value) }))} className={inputCls} /></td>
@@ -202,7 +202,7 @@ export default function RateLimitsPage() {
                   <td className="px-4 py-2"><input aria-label="/api/v1/*" value={draft.path_pattern ?? ""} onChange={(e) => setDraft((p) => ({ ...p, path_pattern: e.target.value }))} placeholder="/api/v1/*" className={inputCls} /></td>
                   <td className="px-4 py-2">
                     <select aria-label="Select option" value={draft.method ?? "GET"} onChange={(e) => setDraft((p) => ({ ...p, method: e.target.value }))} className={inputCls}>
-                      {["GET", "POST", "PUT", "PATCH", "DELETE", "*"].map((m) => <option key={m} value={m}>{m}</option>)}
+                      {["GET", "POST", "PUT", "PATCH", "DELETE", "*"].map((m: any) => <option key={m} value={m}>{m}</option>)}
                     </select>
                   </td>
                   <td className="px-4 py-2"><input aria-label="Input field" type="number" value={draft.requests_per_minute ?? 60} onChange={(e) => setDraft((p) => ({ ...p, requests_per_minute: Number(e.target.value) }))} className={inputCls} /></td>
@@ -225,7 +225,7 @@ export default function RateLimitsPage() {
       {/* Mobile cards */}
       {!loading && limits.length > 0 && (
         <div className="space-y-3 md:hidden">
-          {limits.map((l) => (
+          {limits.map((l: any) => (
             <div key={l.id} className={cardCls}>
               <div className="flex items-center justify-between">
                 <span className="font-mono text-xs text-gray-700 dark:text-gray-300">{l.path_pattern}</span>

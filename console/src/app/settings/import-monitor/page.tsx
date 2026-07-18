@@ -92,7 +92,7 @@ export default function ImportMonitorPage() {
         </div>
 
         <div className="flex gap-1 mb-6 bg-gray-200 dark:bg-gray-800 rounded-lg p-1">
-          {tabs.map((tab) => {
+          {tabs.map((tab: any) => {
             const Icon = tab.icon;
             return (
               <button key={tab.id} onClick={() => setActiveTab(tab.id)}
@@ -139,7 +139,7 @@ function JobsList({ jobs, onSelect }: { jobs: ImportJob[]; onSelect: (id: string
 
   return (
     <div className="space-y-3">
-      {jobs.map((job) => {
+      {jobs.map((job: any) => {
         const cfg = statusConfig[job.status];
         const StatusIcon = cfg.icon;
         const pct = job.total > 0 ? Math.round(((job.imported + job.failed) / job.total) * 100) : 0;
@@ -211,7 +211,7 @@ function ErrorDetails({ jobs, selectedJob, onSelect }: {
   const [loading, setLoading] = useState(false);
   const [expandedRows, setExpandedRows] = useState<Set<number>>(new Set());
 
-  const job = jobs.find((j) => j.job_id === selectedJob);
+  const job = jobs.find((j: any) => j.job_id === selectedJob);
 
   const loadErrors = useCallback(async (jobId: string) => {
     setLoading(true);
@@ -249,7 +249,7 @@ function ErrorDetails({ jobs, selectedJob, onSelect }: {
       <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-6">
         <p className="text-sm text-gray-500 mb-3">{t("importMonitor.errors.selectJob")}</p>
         <div className="space-y-1">
-          {jobs.filter((j) => j.failed > 0).map((j) => (
+          {jobs.filter((j: any) => j.failed > 0).map((j: any) => (
             <button key={j.job_id} onClick={() => onSelect(j.job_id)}
               className="w-full flex items-center justify-between p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 text-left">
               <div className="flex items-center gap-2">
@@ -259,7 +259,7 @@ function ErrorDetails({ jobs, selectedJob, onSelect }: {
               <span className="px-2 py-0.5 text-xs bg-red-100 text-red-700 dark:bg-red-950 dark:text-red-300 rounded-full">{j.failed} errors</span>
             </button>
           ))}
-          {jobs.filter((j) => j.failed > 0).length === 0 && (
+          {jobs.filter((j: any) => j.failed > 0).length === 0 && (
             <p className="text-sm text-gray-400 py-4">{t("importMonitor.errors.noErrors")}</p>
           )}
         </div>
@@ -272,7 +272,7 @@ function ErrorDetails({ jobs, selectedJob, onSelect }: {
       {/* Job selector */}
       <select value={selectedJob} onChange={(e) => onSelect(e.target.value)}
         className="w-full mb-4 px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-sm text-gray-900 dark:text-white">
-        {jobs.map((j) => (
+        {jobs.map((j: any) => (
           <option key={j.job_id} value={j.job_id}>{j.file_name} — {j.failed} errors</option>
         ))}
       </select>

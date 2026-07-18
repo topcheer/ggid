@@ -56,7 +56,7 @@ export default function PasswordResetAnalyticsPage() {
     return { ...m, color: pieColors[i % pieColors.length], startAngle, endAngle };
   }) || [];
 
-  const maxDaily = data ? Math.max(...data.daily_trend.map((d) => d.count), 1) : 1;
+  const maxDaily = data ? Math.max(...data.daily_trend.map((d: any) => d.count), 1) : 1;
 
   return (
     <div className="space-y-6">

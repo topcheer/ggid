@@ -57,7 +57,7 @@ export default function SiemIntegrationStatusPage() {
       <div className="bg-gray-900 rounded-xl p-6">
         <h2 className="text-lg font-semibold mb-4">Configured Destinations</h2>
         <div className="space-y-3">
-          {(data?.destinations ?? []).map((dest) => (
+          {(data?.destinations ?? []).map((dest: any) => (
             <div
               key={dest.id}
               className="bg-gray-800 rounded-lg p-4 border border-gray-700"

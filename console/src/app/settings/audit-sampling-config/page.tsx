@@ -72,7 +72,7 @@ export default function AuditSamplingConfigPage() {
               </tr>
             </thead>
             <tbody>
-              {(data?.sampling_strategies ?? []).map((s) => (
+              {(data?.sampling_strategies ?? []).map((s: any) => (
                 <tr key={s.strategy} className="border-b border-gray-800">
                   <td className="py-3 pr-3">
                     <span className={"text-xs px-2 py-1 rounded capitalize " + (
@@ -105,7 +105,7 @@ export default function AuditSamplingConfigPage() {
       <div className="bg-gray-900 rounded-xl p-6">
         <h2 className="text-lg font-semibold mb-4">Per-Event Type Sampling Rate</h2>
         <div className="space-y-2">
-          {(data?.per_event_type_rate ?? []).map((e) => (
+          {(data?.per_event_type_rate ?? []).map((e: any) => (
             <div key={e.event_type} className="flex items-center gap-3 bg-gray-800 rounded-lg p-2">
               <span className="text-sm font-mono text-blue-400 w-32">{e.event_type}</span>
               <div className="flex-1 bg-gray-700 rounded-full h-2">

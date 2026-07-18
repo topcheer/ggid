@@ -74,7 +74,7 @@ export default function AuditSiemMappingPage() {
               Event Type Filter
             </h2>
             <div className="flex flex-wrap gap-2">
-              {(data?.event_type_filter ?? []).map((et) => (
+              {(data?.event_type_filter ?? []).map((et: any) => (
                 <span key={et} className="text-xs px-2 py-1 rounded bg-blue-900 text-blue-300 font-mono">{et}</span>
               ))}
             </div>

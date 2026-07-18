@@ -32,11 +32,11 @@ export default function ScimErrorRecoveryPage() {
 
       {/* Summary */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-        {(["pending", "retrying", "resolved", "failed"] as const).map((s) => (
+        {(["pending", "retrying", "resolved", "failed"] as const).map((s: any) => (
           <div key={s} className="bg-gray-900 rounded-xl p-4">
             <p className="text-xs text-gray-400 capitalize">{s}</p>
             <p className={"text-xl font-bold " + (s === "failed" ? "text-red-400" : s === "resolved" ? "text-green-400" : s === "pending" ? "text-yellow-400" : "text-blue-400")}>
-              {data?.error_queue?.filter((e) => e.status === s).length ?? 0}
+              {data?.error_queue?.filter((e: any) => e.status === s).length ?? 0}
             </p>
           </div>
         ))}
@@ -46,7 +46,7 @@ export default function ScimErrorRecoveryPage() {
       <div className="bg-gray-900 rounded-xl p-6 mb-6">
         <h2 className="text-sm font-semibold mb-4">Error Queue</h2>
         <div className="space-y-2">
-          {(data?.error_queue ?? []).map((e) => (
+          {(data?.error_queue ?? []).map((e: any) => (
             <div key={e.id} className="flex items-center gap-3 bg-gray-800 rounded-lg p-3">
               <div className="flex-1">
                 <div className="flex items-center gap-2">
@@ -71,7 +71,7 @@ export default function ScimErrorRecoveryPage() {
         <div className="bg-gray-900 rounded-xl p-6">
           <h2 className="text-sm font-semibold mb-3">Most Common Errors</h2>
           <div className="space-y-2">
-            {(data?.error_patterns ?? []).map((p) => (
+            {(data?.error_patterns ?? []).map((p: any) => (
               <div key={p.error_type} className="flex items-center justify-between bg-gray-800 rounded p-2">
                 <span className="text-xs font-mono text-red-400">{p.error_type}</span>
                 <span className="text-xs text-gray-400">{p.count} occurrences</span>

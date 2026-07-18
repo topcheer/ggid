@@ -49,7 +49,7 @@ export default function EventDedupPage() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
           <div><label className="text-sm font-medium">Start Date</label><input aria-label="start Date" type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} className="w-full mt-1 px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-900 text-sm" /></div>
           <div><label className="text-sm font-medium">End Date</label><input aria-label="end Date" type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} className="w-full mt-1 px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-900 text-sm" /></div>
-          <div><label className="text-sm font-medium">Method</label><select aria-label="method" value={method} onChange={(e) => setMethod(e.target.value)} className="w-full mt-1 px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-900 text-sm">{methods.map((m) => <option key={m.value} value={m.value}>{m.label}</option>)}</select></div>
+          <div><label className="text-sm font-medium">Method</label><select aria-label="method" value={method} onChange={(e) => setMethod(e.target.value)} className="w-full mt-1 px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-900 text-sm">{methods.map((m: any) => <option key={m.value} value={m.value}>{m.label}</option>)}</select></div>
         </div>
         <button aria-label="Play" onClick={runDedup} disabled={loading || !startDate || !endDate} className="px-4 py-2 rounded-lg bg-purple-600 text-white text-sm font-medium hover:bg-purple-700 disabled:opacity-50 flex items-center gap-2"><Play className="w-4 h-4" /> {loading ? "Processing..." : "Run Dedup"}</button>
       </div>

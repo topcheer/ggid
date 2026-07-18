@@ -113,7 +113,7 @@ export default function IdentityGroupMembershipAnalyticsPage() {
         <div className="bg-gray-900 rounded-xl p-6">
           <h2 className="text-lg font-semibold mb-4">{t("idGroupMembershipAnalytics.groupOverview")}</h2>
           <div className="space-y-2 max-h-80 overflow-y-auto">
-            {(data?.group_cards ?? []).map((g) => (
+            {(data?.group_cards ?? []).map((g: any) => (
               <div key={g.name} className="bg-gray-800 rounded-lg p-3">
                 <div className="flex items-center justify-between mb-2">
                   <div className="flex items-center gap-2">

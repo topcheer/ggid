@@ -25,7 +25,7 @@ export default function CompressionConfigPage() {
   };
 
   const removeMimeType = (type: string) => {
-    setMimeTypes(mimeTypes.filter((t) => t !== type));
+    setMimeTypes(mimeTypes.filter((t: any) => t !== type));
   };
 
   return (
@@ -76,7 +76,7 @@ export default function CompressionConfigPage() {
       <section className="bg-white rounded-lg shadow p-6 space-y-4">
         <h2 className="text-lg font-semibold">{"Mime Types"}</h2>
         <div className="flex flex-wrap gap-2">
-          {mimeTypes.map((type) => (
+          {mimeTypes.map((type: any) => (
             <span
               key={type}
               className="inline-flex items-center gap-1 px-3 py-1 bg-gray-100 rounded text-sm font-mono"

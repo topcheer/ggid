@@ -50,7 +50,7 @@ export default function SecretHistoryPage() {
 
       <select aria-label="Client id" value={clientId} onChange={(e) => setClientId(e.target.value)} className="px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-900 text-sm">
         <option value="">Select Client</option>
-        {clients.map((c) => <option key={c.client_id} value={c.client_id}>{c.client_name}</option>)}
+        {clients.map((c: any) => <option key={c.client_id} value={c.client_id}>{c.client_name}</option>)}
       </select>
 
       {data && (
@@ -70,7 +70,7 @@ export default function SecretHistoryPage() {
             <h3 className="text-sm font-semibold flex items-center gap-2 mb-3"><GitCompare className="w-4 h-4 text-gray-400" /> Rotation Timeline</h3>
             <div className="relative pl-6">
               <div className="absolute left-2 top-0 bottom-0 w-px bg-gray-200 dark:bg-gray-800" />
-              <div className="space-y-3">{data.rotation_log.map((r) => (
+              <div className="space-y-3">{data.rotation_log.map((r: any) => (
                 <div key={r.id} className="relative">
                   <div className="absolute -left-4 w-3 h-3 rounded-full bg-yellow-500 border-2 border-yellow-200" />
                   <div className="ml-2 text-sm"><div className="flex items-center justify-between"><span className="font-medium">{r.rotated_at}</span><span className="text-xs text-gray-400">{r.age_days}d ago</span></div><div className="text-xs text-gray-500 mt-0.5">By {r.rotated_by} - <span className="font-mono">{r.thumbprint}</span></div></div>

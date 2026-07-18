@@ -82,7 +82,7 @@ export default function ApiGatewayRoutesPage() {
             {routes.map((r: RouteEntry, i: number) => (
               <tr key={i} className="border-b hover:bg-gray-50">
                 <td className="py-2 font-mono text-xs">{r.path}</td>
-                <td><div className="flex gap-1">{r.methods.map((m) => <span key={m} className="px-1.5 py-0.5 bg-blue-100 text-blue-700 rounded text-xs font-mono">{m}</span>)}</div></td>
+                <td><div className="flex gap-1">{r.methods.map((m: any) => <span key={m} className="px-1.5 py-0.5 bg-blue-100 text-blue-700 rounded text-xs font-mono">{m}</span>)}</div></td>
                 <td className="font-mono text-xs">{r.upstream}</td>
                 <td>{r.strip_prefix ? "Yes" : "No"}</td>
                 <td>{r.rate_limit}/s</td>

@@ -331,13 +331,13 @@ export default function CertificatesPage() {
     try {
       const data = await apiFetch<Certificate>(`/api/v1/certificates/${targetId}/rotate`, { method: "POST" }).catch(() => null);
       if (data) {
-        setCerts((prev) => prev.map((c) => (c.id === targetId ? { ...data } : c)));
+        setCerts((prev) => prev.map((c: any) => (c.id === targetId ? { ...data } : c)));
       }
       setMsgType("success");
       setMsg(`Certificate rotated: ${oldName}`);
     } catch {
       // Demo: mark current as rotated, add new
-      setCerts((prev) => prev.map((c) => (c.id === targetId ? { ...c, status: "rotated" as const } : c)));
+      setCerts((prev) => prev.map((c: any) => (c.id === targetId ? { ...c, status: "rotated" as const } : c)));
       const newCert: Certificate = {
         ...rotateTarget,
         id: `cert-${Date.now()}`,
@@ -390,7 +390,7 @@ export default function CertificatesPage() {
   };
 
   // Filtered certs
-  const filteredCerts = certs.filter((c) => {
+  const filteredCerts = certs.filter((c: any) => {
     if (filterType !== "all" && c.type !== filterType) return false;
     if (filterStatus !== "all") {
       const status = c.status || getCertStatus(c.expiry);
@@ -486,7 +486,7 @@ export default function CertificatesPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
-                {filteredCerts.map((cert) => {
+                {filteredCerts.map((cert: any) => {
                   const rawStatus = cert.status || getCertStatus(cert.expiry);
                   const statusCfg = STATUS_CONFIG[rawStatus] || STATUS_CONFIG.valid;
                   const isExpanded = expandedId === cert.id;
@@ -665,7 +665,7 @@ export default function CertificatesPage() {
                 <div className="border-t border-gray-100 pt-3 dark:border-gray-700">
                   <label className="block text-xs font-medium text-gray-500">Subject Alternative Names (SANs)</label>
                   <div className="mt-1 flex flex-wrap gap-1">
-                    {detailCert.sans.map((san, i) => (
+                    {detailCert.sans.map((san: any, i: any) => (
                       <span key={i} className="rounded-full bg-blue-100 px-2 py-0.5 text-xs text-blue-700 dark:bg-blue-900 dark:text-blue-400">{san}</span>
                     ))}
                   </div>
@@ -675,7 +675,7 @@ export default function CertificatesPage() {
                 <div className="border-t border-gray-100 pt-3 dark:border-gray-700">
                   <label className="block text-xs font-medium text-gray-500">Certificate Chain</label>
                   <div className="mt-1 space-y-1">
-                    {detailCert.chain.map((c, i) => (
+                    {detailCert.chain.map((c: any, i: any) => (
                       <div key={i} className="flex items-center gap-2 text-xs">
                         <Lock className="h-3 w-3 text-gray-400" />
                         <span className="font-mono text-gray-600 dark:text-gray-400">{c.subject}</span>

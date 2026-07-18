@@ -82,7 +82,7 @@ export default function AuthWebauthnConfigPage() {
             Supported Algorithms
           </h2>
           <div className="space-y-2">
-            {(data?.supported_algs ?? []).map((alg) => (
+            {(data?.supported_algs ?? []).map((alg: any) => (
               <div key={alg.name} className="flex items-center justify-between bg-gray-800 rounded-lg p-3">
                 <div className="flex items-center gap-2">
                   <CheckCircle className="w-4 h-4 text-green-400" />
@@ -109,7 +109,7 @@ export default function AuthWebauthnConfigPage() {
               </tr>
             </thead>
             <tbody>
-              {(data?.per_platform_config ?? []).map((p) => (
+              {(data?.per_platform_config ?? []).map((p: any) => (
                 <tr key={p.platform} className="border-b border-gray-800">
                   <td className="py-3 pr-4 font-medium capitalize">{p.platform}</td>
                   <td className="py-3 pr-4 text-gray-300 capitalize">{p.authenticator_type.replace(/_/g, " ")}</td>

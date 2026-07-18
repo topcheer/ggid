@@ -84,7 +84,7 @@ export default function OAuthClientSecretScannerPage() {
               </tr>
             </thead>
             <tbody>
-              {(data?.scan_results ?? []).map((r) => (
+              {(data?.scan_results ?? []).map((r: any) => (
                 <tr key={r.client_id} className="border-b border-gray-800">
                   <td className="py-3 pr-4 font-mono text-blue-400">{r.client_id}</td>
                   <td className="py-3 pr-4">

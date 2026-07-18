@@ -67,9 +67,9 @@ export default function AuditAlertsPage() {
   useEffect(() => { load(); }, [load]);
 
   const handleToggle = async (id: string) => {
-    const rule = rules.find((r) => r.id === id);
+    const rule = rules.find((r: any) => r.id === id);
     if (!rule) return;
-    setRules(rules.map((r) => (r.id === id ? { ...r, enabled: !r.enabled } : r)));
+    setRules(rules.map((r: any) => (r.id === id ? { ...r, enabled: !r.enabled } : r)));
     try {
       await apiFetch(`/api/v1/settings/alerting/rules/${id}`, {
         method: "PATCH",
@@ -79,14 +79,14 @@ export default function AuditAlertsPage() {
   };
 
   const handleDelete = async (id: string) => {
-    setRules(rules.filter((r) => r.id !== id));
+    setRules(rules.filter((r: any) => r.id !== id));
     try {
       await apiFetch(`/api/v1/settings/alerting/rules/${id}`, { method: "DELETE" });
     } catch { /* optimistic */ }
   };
 
   const cardCls = "rounded-xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800";
-  const filteredHistory = statusFilter ? history.filter((h) => h.status === statusFilter) : history;
+  const filteredHistory = statusFilter ? history.filter((h: any) => h.status === statusFilter) : history;
 
   return (
     <div className="space-y-6">
@@ -102,7 +102,7 @@ export default function AuditAlertsPage() {
 
       {/* Tabs */}
       <div className="flex gap-2 border-b border-gray-200 dark:border-gray-700">
-        {(["rules", "history"] as const).map((t) => (
+        {(["rules", "history"] as const).map((t: any) => (
           <button
             key={t}
             onClick={() => setTab(t)}
@@ -129,7 +129,7 @@ export default function AuditAlertsPage() {
               <p className="text-gray-500 dark:text-gray-400">No alert rules configured.</p>
             </div>
           ) : (
-            rules.map((rule) => (
+            rules.map((rule: any) => (
               <div key={rule.id} className={cardCls}>
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
@@ -203,7 +203,7 @@ export default function AuditAlertsPage() {
                     </tr>
                   </thead>
                   <tbody>
-                    {filteredHistory.map((entry) => (
+                    {filteredHistory.map((entry: any) => (
                       <tr key={entry.id} className="border-b border-gray-100 dark:border-gray-700/50">
                         <td className="px-4 py-3 font-medium text-gray-800 dark:text-gray-200">{entry.rule_name}</td>
                         <td className="px-4 py-3"><code className="rounded bg-gray-100 px-1.5 py-0.5 text-xs dark:bg-gray-700">{entry.metric}</code></td>

@@ -46,8 +46,8 @@ export default function ReactivationHistoryPage() {
   useEffect(() => { fetchUsers(); }, [fetchUsers]);
   useEffect(() => { if (selectedId) fetchTimeline(selectedId); }, [selectedId, fetchTimeline]);
 
-  const totalInactive = timeline.filter((t) => t.action === "deactivated").length;
-  const totalReactivated = timeline.filter((t) => t.action === "reactivated").length;
+  const totalInactive = timeline.filter((t: any) => t.action === "deactivated").length;
+  const totalReactivated = timeline.filter((t: any) => t.action === "reactivated").length;
 
   return (
     <div className="space-y-6">
@@ -58,7 +58,7 @@ export default function ReactivationHistoryPage() {
 
       <select aria-label="Selected id" value={selectedId} onChange={(e) => setSelectedId(e.target.value)} className="px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-900 text-sm">
         <option value="">Select User</option>
-        {users.map((u) => <option key={u.user_id} value={u.user_id}>{u.username}</option>)}
+        {users.map((u: any) => <option key={u.user_id} value={u.user_id}>{u.username}</option>)}
       </select>
 
       {selectedId && timeline.length > 0 && (
@@ -73,7 +73,7 @@ export default function ReactivationHistoryPage() {
         <div className="relative pl-8">
           <div className="absolute left-3 top-0 bottom-0 w-px bg-gray-200 dark:bg-gray-800" />
           <div className="space-y-4">
-            {timeline.map((evt) => (
+            {timeline.map((evt: any) => (
               <div key={evt.id} className="relative">
                 <div className={`absolute -left-5 w-4 h-4 rounded-full border-2 ${evt.action === "deactivated" ? "bg-red-500 border-red-200" : "bg-green-500 border-green-200"}`} />
                 <div className="rounded-lg border dark:border-gray-800 p-3 ml-2">

@@ -219,7 +219,7 @@ export default function TenantConfigPage() {
               <input aria-label="pw Policy" type="range" min={8} max={128} value={pwPolicy.minLength} onChange={e => setPwPolicy({ ...pwPolicy, minLength: Number(e.target.value) })} className="w-full accent-brand-600" />
             </div>
             <div className="grid gap-3 sm:grid-cols-2">
-              {(["requireUpper", "requireLower", "requireDigit", "requireSpecial"] as const).map((key) => (
+              {(["requireUpper", "requireLower", "requireDigit", "requireSpecial"] as const).map((key: any) => (
                 <div key={key} className="flex items-center justify-between rounded-lg border border-gray-200 p-3 dark:border-gray-700">
                   <span className="text-sm font-medium text-gray-700 dark:text-gray-300">{t(`tenant.${key}`)}</span>
                   <Toggle on={pwPolicy[key]} onClick={() => setPwPolicy({ ...pwPolicy, [key]: !pwPolicy[key] })} />

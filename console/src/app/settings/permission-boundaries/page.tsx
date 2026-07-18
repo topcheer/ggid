@@ -73,7 +73,7 @@ export default function PermissionBoundariesPage() {
       if (!res.ok) {
         setError(`Save failed: ${res.status} ${res.statusText}`);
       } else {
-        setBoundaries((prev) => prev.map((b) => b.id === editForm.id ? editForm : b));
+        setBoundaries((prev) => prev.map((b: any) => b.id === editForm.id ? editForm : b));
         setEditingId(null);
         setEditForm(null);
       }
@@ -109,11 +109,11 @@ export default function PermissionBoundariesPage() {
       <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
         <div className="rounded-lg border p-4 dark:border-gray-800"><span className="text-sm text-gray-500">Roles with Boundaries</span><p className="text-2xl font-bold mt-1">{boundaries.length}</p></div>
         <div className="rounded-lg border p-4 dark:border-gray-800"><span className="text-sm text-gray-500">Total Violations</span><p className="text-2xl font-bold mt-1 text-red-600">{totalViolations}</p></div>
-        <div className="rounded-lg border p-4 dark:border-gray-800"><span className="text-sm text-gray-500">Clean Roles</span><p className="text-2xl font-bold mt-1 text-green-600">{boundaries.filter((b) => b.violation_count === 0).length}</p></div>
+        <div className="rounded-lg border p-4 dark:border-gray-800"><span className="text-sm text-gray-500">Clean Roles</span><p className="text-2xl font-bold mt-1 text-green-600">{boundaries.filter((b: any) => b.violation_count === 0).length}</p></div>
       </div>
 
       <div className="space-y-4">
-        {boundaries.map((b) => (
+        {boundaries.map((b: any) => (
           <div key={b.id} className="rounded-lg border dark:border-gray-800 overflow-hidden">
             {editingId === b.id && editForm ? (
               <div className="p-4 space-y-4">

@@ -51,8 +51,8 @@ export default function GrantFlowsPage() {
 
   useEffect(() => { fetchData(); }, [fetchData]);
 
-  const maxCount = Math.max(...stats.map((s) => s.count), 1);
-  const maxDuration = Math.max(...stats.map((s) => s.avg_duration_ms), 1);
+  const maxCount = Math.max(...stats.map((s: any) => s.count), 1);
+  const maxDuration = Math.max(...stats.map((s: any) => s.avg_duration_ms), 1);
   const totalGrants = stats.reduce((sum, s) => sum + s.count, 0);
   const avgSuccessRate = stats.length > 0 ? stats.reduce((sum, s) => sum + s.success_rate, 0) / stats.length : 0;
   const totalSuccess = stats.reduce((sum, s) => sum + s.success_count, 0);
@@ -96,7 +96,7 @@ export default function GrantFlowsPage() {
         <div className="rounded-lg border dark:border-gray-800 p-4">
           <h3 className="font-semibold mb-4">{t("big1.grantFlows.grantCountByFlow")}</h3>
           <div className="space-y-3">
-            {stats.map((s) => (
+            {stats.map((s: any) => (
               <div key={s.flow} className="flex items-center gap-3">
                 <span className="text-xs text-gray-500 w-28 truncate">{flowLabels[s.flow] || s.flow}</span>
                 <div className="flex-1 h-7 rounded bg-gray-100 dark:bg-gray-800 overflow-hidden">
@@ -114,7 +114,7 @@ export default function GrantFlowsPage() {
         <div className="rounded-lg border dark:border-gray-800 p-4">
           <h3 className="font-semibold mb-4">{t("big1.grantFlows.avgDurationByFlow")}</h3>
           <div className="space-y-3">
-            {stats.map((s) => (
+            {stats.map((s: any) => (
               <div key={s.flow} className="flex items-center gap-3">
                 <span className="text-xs text-gray-500 w-28 truncate">{flowLabels[s.flow] || s.flow}</span>
                 <div className="flex-1 h-7 rounded bg-gray-100 dark:bg-gray-800 overflow-hidden">
@@ -142,7 +142,7 @@ export default function GrantFlowsPage() {
             </tr>
           </thead>
           <tbody className="divide-y dark:divide-gray-800">
-            {stats.map((s) => (
+            {stats.map((s: any) => (
               <tr key={s.flow} className="hover:bg-gray-50 dark:hover:bg-gray-900/30">
                 <td className="px-4 py-3">
                   <div className="flex items-center gap-2">

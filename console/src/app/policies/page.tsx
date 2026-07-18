@@ -229,7 +229,7 @@ export default function PoliciesPage() {
   };
 
   const updateRule = (index: number, field: keyof PolicyRule, value: string) => {
-    setRules(rules.map((r, i) => (i === index ? { ...r, [field]: value } : r)));
+    setRules(rules.map((r: any, i: any) => (i === index ? { ...r, [field]: value } : r)));
   };
 
   const syncJsonToRules = () => {
@@ -334,7 +334,7 @@ export default function PoliciesPage() {
 
   const toggleRbacPermission = (roleIndex: number, perm: PermissionKey) => {
     setRbacEntries(
-      rbacEntries.map((entry, i) =>
+      rbacEntries.map((entry: any, i: any) =>
         i === roleIndex
           ? { ...entry, permissions: { ...entry.permissions, [perm]: !entry.permissions[perm] } }
           : entry,
@@ -343,7 +343,7 @@ export default function PoliciesPage() {
   };
 
   const renameRbacRole = (index: number, name: string) => {
-    setRbacEntries(rbacEntries.map((entry, i) => (i === index ? { ...entry, role: name } : entry)));
+    setRbacEntries(rbacEntries.map((entry: any, i: any) => (i === index ? { ...entry, role: name } : entry)));
   };
 
   // --- ABAC visual builder handlers ---
@@ -352,12 +352,12 @@ export default function PoliciesPage() {
   };
 
   const removeAbacRule = (ruleId: string) => {
-    setAbacRules(abacRules.filter((r) => r.id !== ruleId));
+    setAbacRules(abacRules.filter((r: any) => r.id !== ruleId));
   };
 
   const addAbacCondition = (ruleId: string) => {
     setAbacRules(
-      abacRules.map((r) =>
+      abacRules.map((r: any) =>
         r.id === ruleId ? { ...r, conditions: [...r.conditions, makeCondition()] } : r,
       ),
     );
@@ -365,9 +365,9 @@ export default function PoliciesPage() {
 
   const removeAbacCondition = (ruleId: string, condId: string) => {
     setAbacRules(
-      abacRules.map((r) =>
+      abacRules.map((r: any) =>
         r.id === ruleId
-          ? { ...r, conditions: r.conditions.filter((c) => c.id !== condId) }
+          ? { ...r, conditions: r.conditions.filter((c: any) => c.id !== condId) }
           : r,
       ),
     );
@@ -375,11 +375,11 @@ export default function PoliciesPage() {
 
   const updateAbacCondition = (ruleId: string, condId: string, field: keyof AbacCondition, value: string) => {
     setAbacRules(
-      abacRules.map((r) =>
+      abacRules.map((r: any) =>
         r.id === ruleId
           ? {
               ...r,
-              conditions: r.conditions.map((c) =>
+              conditions: r.conditions.map((c: any) =>
                 c.id === condId ? { ...c, [field]: value } : c,
               ),
             }
@@ -389,7 +389,7 @@ export default function PoliciesPage() {
   };
 
   const updateAbacEffect = (ruleId: string, effect: "allow" | "deny") => {
-    setAbacRules(abacRules.map((r) => (r.id === ruleId ? { ...r, effect } : r)));
+    setAbacRules(abacRules.map((r: any) => (r.id === ruleId ? { ...r, effect } : r)));
   };
 
   return (
@@ -464,7 +464,7 @@ export default function PoliciesPage() {
                 <p className="p-8 text-center text-sm text-gray-500">{t("policies.nopoliciesyet")}</p>
               ) : (
                 <ul className="divide-y divide-gray-100 dark:divide-gray-700">
-                  {policies.map((p) => (
+                  {policies.map((p: any) => (
                     <li key={p.id || p.name} className="group flex items-center justify-between p-3 hover:bg-gray-50 dark:hover:bg-gray-700">
                       <button onClick={() => selectPolicy(p)} className="flex-1 text-left">
                         <div className="flex items-center gap-2">
@@ -583,7 +583,7 @@ export default function PoliciesPage() {
               <p className="py-4 text-center text-sm text-gray-400">{t("policies.noRules")}</p>
             ) : (
               <div className="space-y-2">
-                {rules.map((rule, i) => (
+                {rules.map((rule: any, i: any) => (
                   <div key={i} className="flex items-center gap-2">
                     <input
                       value={rule.subject}
@@ -659,7 +659,7 @@ export default function PoliciesPage() {
                     <thead>
                       <tr className="border-b border-gray-200 dark:border-gray-700">
                         <th scope="col" className="px-3 py-2 text-left text-xs font-medium uppercase text-gray-500">Role</th>
-                        {PERMISSION_COLUMNS.map((col) => (
+                        {PERMISSION_COLUMNS.map((col: any) => (
                           <th scope="col" key={col} className="px-3 py-2 text-center text-xs font-medium uppercase text-gray-500">
                             {col}
                           </th>
@@ -677,7 +677,7 @@ export default function PoliciesPage() {
                               className="w-full rounded border border-transparent px-2 py-1 text-sm font-medium text-gray-900 hover:border-gray-300 focus:border-brand-500 focus:outline-none dark:bg-gray-700 dark:text-gray-200"
                             />
                           </td>
-                          {PERMISSION_COLUMNS.map((perm) => (
+                          {PERMISSION_COLUMNS.map((perm: any) => (
                             <td key={perm} className="px-3 py-2 text-center">
                               <input
                                 type="checkbox"
@@ -737,7 +737,7 @@ export default function PoliciesPage() {
                   </p>
                 ) : (
                   <div className="space-y-4">
-                    {abacRules.map((rule) => (
+                    {abacRules.map((rule: any) => (
                       <div
                         key={rule.id}
                         className="rounded-lg border border-gray-200 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-900/50"
@@ -783,7 +783,7 @@ export default function PoliciesPage() {
                                 onChange={(e) => updateAbacCondition(rule.id, cond.id, "operator", e.target.value)}
                                 className="rounded border border-gray-300 px-2 py-1.5 text-xs dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200"
                               >
-                                {OPERATORS.map((op) => (
+                                {OPERATORS.map((op: any) => (
                                   <option key={op.value} value={op.value}>{op.label}</option>
                                 ))}
                               </select>

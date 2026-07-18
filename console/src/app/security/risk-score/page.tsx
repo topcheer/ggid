@@ -92,7 +92,7 @@ export default function RiskScorePage() {
   };
 
   const cardCls = "rounded-xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-700 dark:bg-gray-800";
-  const highRiskUsers = users.filter((u) => u.level === "high" || u.level === "critical");
+  const highRiskUsers = users.filter((u: any) => u.level === "high" || u.level === "critical");
 
   return (
     <div className="space-y-6">
@@ -121,7 +121,7 @@ export default function RiskScorePage() {
             <div className={cardCls}>
               <h3 className="mb-4 text-sm font-semibold text-gray-700 dark:text-gray-300">Top Risk Factors</h3>
               <div className="space-y-3">
-                {summary.top_factors.map((f) => (
+                {summary.top_factors.map((f: any) => (
                   <div key={f.name}>
                     <div className="flex items-center justify-between text-sm"><span className="text-gray-600 dark:text-gray-300">{f.name}</span><span className="font-bold text-gray-800 dark:text-gray-200">{(f.weight * 100).toFixed(0)}% weight</span></div>
                     <div className="mt-1 h-2 overflow-hidden rounded-full bg-gray-200 dark:bg-gray-700"><div className="h-full rounded-full bg-orange-400" style={{ width: `${Math.min(100, f.value * 100)}%` }} /></div>
@@ -135,7 +135,7 @@ export default function RiskScorePage() {
           {/* Distribution */}
           {summary && (summary.distribution?.length ?? 0) > 0 && (
             <div className="grid grid-cols-4 gap-3">
-              {summary.distribution.map((d) => (
+              {summary.distribution.map((d: any) => (
                 <div key={d.level} className={`${cardCls} text-center`}>
                   <div className={`inline-flex rounded-full px-3 py-1 text-xs font-medium ${levelColors[d.level] || ""}`}>{d.level}</div>
                   <p className="mt-2 text-2xl font-bold text-gray-900 dark:text-white">{d.count}</p>
@@ -161,7 +161,7 @@ export default function RiskScorePage() {
                     <th scope="col" className="px-4 py-3 text-right font-semibold text-gray-600 dark:text-gray-300">Actions</th>
                   </tr></thead>
                   <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-                    {highRiskUsers.map((u) => (
+                    {highRiskUsers.map((u: any) => (
                       <tr key={u.user_id} className="bg-white dark:bg-gray-900">
                         <td className="px-4 py-3"><div className="font-medium text-gray-900 dark:text-white">{u.username}</div><div className="text-xs text-gray-400">{u.email}</div></td>
                         <td className="px-4 py-3"><span className={`text-lg font-bold ${u.score >= 75 ? "text-red-600" : "text-orange-600"}`}>{u.score}</span></td>
@@ -190,7 +190,7 @@ export default function RiskScorePage() {
                 </div>
                 <div className="mb-4 flex items-center justify-center"><RiskGauge score={selectedUser.score} /></div>
                 <div className="space-y-3">
-                  {selectedUser.factors.map((f) => (
+                  {selectedUser.factors.map((f: any) => (
                     <div key={f.name} className="rounded-lg border border-gray-200 p-3 dark:border-gray-700">
                       <div className="flex items-center justify-between"><span className="text-sm font-medium text-gray-700 dark:text-gray-300">{f.name}</span><span className="text-sm font-bold text-gray-600">{(f.weight * 100).toFixed(0)}%</span></div>
                       <p className="mt-1 text-xs text-gray-400">{f.description}</p>

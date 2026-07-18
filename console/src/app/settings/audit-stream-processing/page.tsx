@@ -12,7 +12,7 @@ export default function AuditStreamProcessingPage() {
   if (error) return <div className="p-8 text-red-400">Error: {error}</div>;
 
   const lagHistory = data?.consumer_lag_history ?? [];
-  const maxLag = Math.max(...lagHistory.map((l) => l.lag_seconds), 1);
+  const maxLag = Math.max(...lagHistory.map((l: any) => l.lag_seconds), 1);
 
   return (
     <div className="min-h-screen bg-gray-950 text-white p-8">

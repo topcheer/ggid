@@ -63,7 +63,7 @@ export default function AuditGdprRequestsPage() {
       <div className="bg-gray-900 rounded-xl p-6 mb-6">
         <h2 className="text-lg font-semibold mb-4">Request Queue</h2>
         <div className="space-y-3">
-          {(data?.request_queue ?? []).map((req) => {
+          {(data?.request_queue ?? []).map((req: any) => {
             const daysLeft = req.deadline_days;
             const overdue = daysLeft < 0;
             const urgent = daysLeft >= 0 && daysLeft <= 3;

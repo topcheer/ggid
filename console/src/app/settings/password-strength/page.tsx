@@ -164,7 +164,7 @@ function TesterTab() {
               </span>
             </div>
             <div className="flex gap-1">
-              {[0, 1, 2, 3, 4].map((i) => (
+              {[0, 1, 2, 3, 4].map((i: any) => (
                 <div key={i} className={`h-2 flex-1 rounded-full transition-all ${i <= result.score ? scoreColors[result.score] : "bg-gray-200 dark:bg-gray-700"}`} />
               ))}
             </div>
@@ -260,7 +260,7 @@ function ConfigTab() {
         <label className="block text-sm font-medium text-gray-900 dark:text-white mb-1">{t("passwordStrength.config.minScore")}</label>
         <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">{t("passwordStrength.config.minScoreDesc")}</p>
         <div className="flex gap-2">
-          {[0, 1, 2, 3, 4].map((s) => {
+          {[0, 1, 2, 3, 4].map((s: any) => {
             const colors = ["bg-red-500", "bg-orange-500", "bg-yellow-500", "bg-lime-500", "bg-green-500"];
             return (
               <button key={s} onClick={() => setMinScore(s)}

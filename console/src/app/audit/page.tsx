@@ -131,7 +131,7 @@ export default function AuditPage() {
         let filtered = data.events || [];
         // Client-side IP filter fallback if API doesn't support it
         if (ipFilter && filtered.length > 0) {
-          filtered = filtered.filter((e) => e.ip_address?.includes(ipFilter));
+          filtered = filtered.filter((e: any) => e.ip_address?.includes(ipFilter));
         }
         setEvents(filtered);
       }
@@ -201,7 +201,7 @@ export default function AuditPage() {
     : [];
 
   const hourlyData = stats
-    ? stats.hourly_distribution.map((h) => ({
+    ? stats.hourly_distribution.map((h: any) => ({
         time: new Date(h.hour).toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" }),
         events: h.count,
       }))
@@ -209,7 +209,7 @@ export default function AuditPage() {
 
   const actorData = stats
     ? stats.top_actors
-        .map((a) => ({ name: a.actor_name || a.actor_id.slice(0, 8), count: a.count }))
+        .map((a: any) => ({ name: a.actor_name || a.actor_id.slice(0, 8), count: a.count }))
         .sort((a, b) => b.count - a.count)
     : [];
 
@@ -221,7 +221,7 @@ export default function AuditPage() {
     ? [
         { name: "Success", count: stats.total_events_24h - stats.failed_logins_24h, fill: "#10b981" },
         { name: "Failed Logins", count: stats.failed_logins_24h, fill: "#ef4444" },
-      ].filter((d) => d.count > 0)
+      ].filter((d: any) => d.count > 0)
     : [];
 
   return (
@@ -425,7 +425,7 @@ export default function AuditPage() {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-50">
-                      {stats.top_actors.slice(0, 10).map((actor, i) => (
+                      {stats.top_actors.slice(0, 10).map((actor: any, i: any) => (
                         <tr key={actor.actor_id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
                           <td className="px-3 py-2 text-sm text-gray-400">{i + 1}</td>
                           <td className="px-3 py-2 text-sm font-medium">
@@ -473,7 +473,7 @@ export default function AuditPage() {
                       <YAxis tick={{ fontSize: 11 }} allowDecimals={false} />
                       <Tooltip contentStyle={{ fontSize: 12, borderRadius: 8 }} />
                       <Bar dataKey="count" radius={[4, 4, 0, 0]}>
-                        {failedVsSuccess.map((entry, i) => (
+                        {failedVsSuccess.map((entry: any, i: any) => (
                           <Cell key={i} fill={entry.fill} />
                         ))}
                       </Bar>
@@ -564,7 +564,7 @@ export default function AuditPage() {
             {/* Anomaly Alerts */}
             {anomalyAlerts.length > 0 && (
               <div className="mb-4 space-y-2">
-                {anomalyAlerts.map((alert, i) => (
+                {anomalyAlerts.map((alert: any, i: any) => (
                   <div
                     key={i}
                     className={`flex items-center gap-3 rounded-lg border px-4 py-3 ${
@@ -608,7 +608,7 @@ export default function AuditPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100">
-                  {events.map((event) => {
+                  {events.map((event: any) => {
                     const anomaly = isAnomalousEvent(event);
                     const isExpanded = expandedRow === event.id;
                     return (
@@ -749,7 +749,7 @@ function detectAnomalies(events: AuditEvent[]): AnomalyAlert[] {
 
   // 1. Brute force: same actor with >= 5 failed logins
   const failedLoginsByActor: Record<string, AuditEvent[]> = {};
-  events.forEach((e) => {
+  events.forEach((e: any) => {
     if (e.action === "user.login" && e.result !== "success") {
       const key = e.actor_id || e.actor_name || "unknown";
       if (!failedLoginsByActor[key]) failedLoginsByActor[key] = [];
@@ -774,7 +774,7 @@ function detectAnomalies(events: AuditEvent[]): AnomalyAlert[] {
 
   // 2. Unusual IP: same actor from > 3 unique IPs
   const ipsByActor: Record<string, Set<string>> = {};
-  events.forEach((e) => {
+  events.forEach((e: any) => {
     if (e.ip_address) {
       const key = e.actor_id || e.actor_name || "unknown";
       if (!ipsByActor[key]) ipsByActor[key] = new Set();
@@ -785,14 +785,14 @@ function detectAnomalies(events: AuditEvent[]): AnomalyAlert[] {
     if (ips.size > 3) {
       alerts.push({
         severity: "warning",
-        title: `Multiple IP Addresses: ${events.find((e) => e.actor_id === actor)?.actor_name || actor.substring(0, 8)}`,
+        title: `Multiple IP Addresses: ${events.find((e: any) => e.actor_id === actor)?.actor_name || actor.substring(0, 8)}`,
         description: `Activity from ${ips.size} unique IP addresses: ${[...ips].join(", ")}.`,
       });
     }
   });
 
   // 3. Access denied spike
-  const deniedCount = events.filter((e) => e.result === "denied").length;
+  const deniedCount = events.filter((e: any) => e.result === "denied").length;
   if (deniedCount >= 5) {
     alerts.push({
       severity: "warning",
@@ -802,7 +802,7 @@ function detectAnomalies(events: AuditEvent[]): AnomalyAlert[] {
   }
 
   // 4. Off-hours activity (2am-5am UTC)
-  const offHours = events.filter((e) => {
+  const offHours = events.filter((e: any) => {
     const h = new Date(e.created_at).getUTCHours();
     return h >= 2 && h < 5 && e.result !== "success";
   });

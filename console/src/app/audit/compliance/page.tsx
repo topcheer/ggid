@@ -141,7 +141,7 @@ export default function ComplianceReportPage() {
     } catch {
       // Generate a CSV locally as fallback
       if (format === "csv") {
-        const rpt = reports.find((r) => r.id === reportId);
+        const rpt = reports.find((r: any) => r.id === reportId);
         if (rpt) {
           const csv = [
             "Framework,Status,Score,Controls Total,Controls Passed,Controls Failed,Last Assessed",
@@ -222,7 +222,7 @@ export default function ComplianceReportPage() {
             onChange={(e) => setSelectedFramework(e.target.value)}
           >
             <option value="all">All Frameworks</option>
-            {FRAMEWORKS.map((f) => (
+            {FRAMEWORKS.map((f: any) => (
               <option key={f.value} value={f.label}>
                 {f.label}
               </option>
@@ -260,7 +260,7 @@ export default function ComplianceReportPage() {
         </div>
       ) : (
         <div className="space-y-4">
-          {filtered.map((report) => (
+          {filtered.map((report: any) => (
             <div key={report.id} className={cardCls}>
               {/* Report header */}
               <div className="flex items-start justify-between">
@@ -354,7 +354,7 @@ export default function ComplianceReportPage() {
                         </tr>
                       </thead>
                       <tbody>
-                        {controls.map((ctrl) => (
+                        {controls.map((ctrl: any) => (
                           <tr
                             key={ctrl.id}
                             className="border-b border-gray-100 dark:border-gray-700/50"

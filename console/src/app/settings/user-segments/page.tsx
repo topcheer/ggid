@@ -33,8 +33,8 @@ export default function UserSegmentsPage() {
   }, []);
 
   const handleExport = (seg: UserSegment) => {
-    const rows = [["user_id", "username", "email"], ...seg.users.map((u) => [u.user_id, u.username, u.email])];
-    const csv = rows.map((r) => r.map((c) => `"${c}"`).join(",")).join("\n");
+    const rows = [["user_id", "username", "email"], ...seg.users.map((u: any) => [u.user_id, u.username, u.email])];
+    const csv = rows.map((r: any) => r.map((c: any) => `"${c}"`).join(",")).join("\n");
     const blob = new Blob([csv], { type: "text/csv" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a"); a.href = url; a.download = `segment-${seg.name}.csv`; a.click(); URL.revokeObjectURL(url);
@@ -57,7 +57,7 @@ export default function UserSegmentsPage() {
         <div className={cardCls}><div className="py-12 text-center"><Layers className="mx-auto h-12 w-12 text-gray-300" /><p className="mt-4 text-sm text-gray-400">No segments defined.</p></div></div>
       ) : (
         <div className="space-y-3">
-          {segments.map((seg) => (
+          {segments.map((seg: any) => (
             <div key={seg.id} className={cardCls}>
               <div className="flex items-center justify-between">
                 <div className="flex-1">
@@ -73,7 +73,7 @@ export default function UserSegmentsPage() {
                 <div className="mt-3 overflow-x-auto rounded-lg border border-gray-200 dark:border-gray-700">
                   <table className="w-full text-sm">
                     <thead className="bg-gray-50 dark:bg-gray-800"><tr><th className="px-3 py-2 text-left text-xs font-semibold text-gray-500">User</th><th className="px-3 py-2 text-left text-xs font-semibold text-gray-500">Email</th></tr></thead>
-                    <tbody className="divide-y divide-gray-200 dark:divide-gray-700">{seg.users.slice(0, 20).map((u) => (<tr key={u.user_id} className="bg-white dark:bg-gray-900"><td className="px-3 py-2 font-medium text-gray-900 dark:text-white">{u.username}</td><td className="px-3 py-2 text-gray-400">{u.email}</td></tr>))}{seg.users.length > 20 && <tr><td colSpan={2} className="px-3 py-2 text-center text-xs text-gray-400">+{seg.users.length - 20} more</td></tr>}</tbody>
+                    <tbody className="divide-y divide-gray-200 dark:divide-gray-700">{seg.users.slice(0, 20).map((u: any) => (<tr key={u.user_id} className="bg-white dark:bg-gray-900"><td className="px-3 py-2 font-medium text-gray-900 dark:text-white">{u.username}</td><td className="px-3 py-2 text-gray-400">{u.email}</td></tr>))}{seg.users.length > 20 && <tr><td colSpan={2} className="px-3 py-2 text-center text-xs text-gray-400">+{seg.users.length - 20} more</td></tr>}</tbody>
                   </table>
                 </div>
               )}

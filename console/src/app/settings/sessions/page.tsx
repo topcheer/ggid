@@ -60,10 +60,10 @@ export default function SessionsSettingsPage() {
   const handleRevoke = async (sessionId: string) => {
     try {
       await apiFetch(`/api/v1/sessions/${sessionId}`, { method: "DELETE" });
-      setSessions((prev) => prev.filter((s) => s.id !== sessionId));
+      setSessions((prev) => prev.filter((s: any) => s.id !== sessionId));
       showMessage(t("settings.sessionRevoked"));
     } catch {
-      setSessions((prev) => prev.filter((s) => s.id !== sessionId));
+      setSessions((prev) => prev.filter((s: any) => s.id !== sessionId));
       showMessage(t("settings.sessionRevoked"));
     }
   };
@@ -73,10 +73,10 @@ export default function SessionsSettingsPage() {
     try {
       await apiFetch("/api/v1/sessions", { method: "DELETE" });
       // Keep only the current session
-      setSessions((prev) => prev.filter((s) => s.current));
+      setSessions((prev) => prev.filter((s: any) => s.current));
       showMessage(t("settings.allSessionsRevoked"));
     } catch {
-      setSessions((prev) => prev.filter((s) => s.current));
+      setSessions((prev) => prev.filter((s: any) => s.current));
       showMessage(t("settings.allSessionsRevoked"));
     } finally {
       setRevokingAll(false);
@@ -174,7 +174,7 @@ export default function SessionsSettingsPage() {
         </div>
       ) : (
         <div className="grid gap-4 sm:grid-cols-2">
-          {sessions.map((session) => (
+          {sessions.map((session: any) => (
             <div
               key={session.id}
               className={`${cardCls} ${session.current ? "border-brand-300 ring-1 ring-brand-200 dark:border-brand-700 dark:ring-brand-800" : ""}`}

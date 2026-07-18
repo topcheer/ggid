@@ -108,8 +108,8 @@ export default function AgentsPage() {
     setRegistering(true);
     setError("");
     try {
-      const scopes = regForm.allowed_scopes.split(",").map((s) => s.trim()).filter(Boolean);
-      const mcpServers = regForm.allowed_mcp_servers.split(",").map((s) => s.trim()).filter(Boolean);
+      const scopes = regForm.allowed_scopes.split(",").map((s: any) => s.trim()).filter(Boolean);
+      const mcpServers = regForm.allowed_mcp_servers.split(",").map((s: any) => s.trim()).filter(Boolean);
       const data = await apiFetch<{ id: string; client_id: string; client_secret?: string }>("/api/v1/agents/register", {
         method: "POST",
         body: JSON.stringify({
@@ -174,7 +174,7 @@ export default function AgentsPage() {
     setError("");
     setExchangedToken("");
     try {
-      const mcpServers = tokenForm.mcp_servers.split(",").map((s) => s.trim()).filter(Boolean);
+      const mcpServers = tokenForm.mcp_servers.split(",").map((s: any) => s.trim()).filter(Boolean);
       const data = await apiFetch<{ access_token?: string; agent_token?: string; token?: string }>("/api/v1/agents/token", {
         method: "POST",
         body: JSON.stringify({
@@ -301,7 +301,7 @@ export default function AgentsPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-              {agents.map((agent) => (
+              {agents.map((agent: any) => (
                 <>
                   <tr key={agent.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/50">
                     <td className="px-4 py-3">
@@ -341,7 +341,7 @@ export default function AgentsPage() {
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex flex-wrap gap-1">
-                        {(agent.allowed_scopes || []).slice(0, 3).map((s) => (
+                        {(agent.allowed_scopes || []).slice(0, 3).map((s: any) => (
                           <span key={s} className="rounded bg-gray-100 px-1.5 py-0.5 text-xs text-gray-600 dark:bg-gray-700 dark:text-gray-400">
                             {s}
                           </span>
@@ -395,7 +395,7 @@ export default function AgentsPage() {
                           <div>
                             <p className="text-xs font-medium uppercase text-gray-400">Allowed MCP Servers</p>
                             <div className="flex flex-wrap gap-1">
-                              {(agent.allowed_mcp_servers || []).length > 0 ? agent.allowed_mcp_servers.map((s) => (
+                              {(agent.allowed_mcp_servers || []).length > 0 ? agent.allowed_mcp_servers.map((s: any) => (
                                 <span key={s} className="rounded bg-blue-100 px-1.5 py-0.5 text-xs text-blue-700 dark:bg-blue-900 dark:text-blue-400">
                                   {s}
                                 </span>
@@ -405,7 +405,7 @@ export default function AgentsPage() {
                           <div>
                             <p className="text-xs font-medium uppercase text-gray-400">All Scopes</p>
                             <div className="flex flex-wrap gap-1">
-                              {(agent.allowed_scopes || []).map((s) => (
+                              {(agent.allowed_scopes || []).map((s: any) => (
                                 <span key={s} className="rounded bg-gray-200 px-1.5 py-0.5 text-xs text-gray-700 dark:bg-gray-600 dark:text-gray-300">
                                   {s}
                                 </span>
@@ -454,7 +454,7 @@ export default function AgentsPage() {
               <div>
                 <label className="mb-1 block text-sm font-medium dark:text-gray-300">Agent Type</label>
                 <select aria-label="reg Form" value={regForm.type} onChange={(e) => setRegForm({ ...regForm, type: e.target.value })} className={inputCls}>
-                  {AGENT_TYPES.map((t) => <option key={t} value={t}>{t}</option>)}
+                  {AGENT_TYPES.map((t: any) => <option key={t} value={t}>{t}</option>)}
                 </select>
               </div>
               <div>

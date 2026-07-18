@@ -75,12 +75,12 @@ export default function ClientVersioningPage() {
   };
 
   const computeDiff = (a: ClientVersion, b: ClientVersion) => {
-    const urisAdded = b.redirect_uris.filter((x) => !a.redirect_uris.includes(x));
-    const urisRemoved = a.redirect_uris.filter((x) => !b.redirect_uris.includes(x));
-    const scopesAdded = b.scopes.filter((x) => !a.scopes.includes(x));
-    const scopesRemoved = a.scopes.filter((x) => !b.scopes.includes(x));
-    const grantsAdded = b.grant_types.filter((x) => !a.grant_types.includes(x));
-    const grantsRemoved = a.grant_types.filter((x) => !b.grant_types.includes(x));
+    const urisAdded = b.redirect_uris.filter((x: any) => !a.redirect_uris.includes(x));
+    const urisRemoved = a.redirect_uris.filter((x: any) => !b.redirect_uris.includes(x));
+    const scopesAdded = b.scopes.filter((x: any) => !a.scopes.includes(x));
+    const scopesRemoved = a.scopes.filter((x: any) => !b.scopes.includes(x));
+    const grantsAdded = b.grant_types.filter((x: any) => !a.grant_types.includes(x));
+    const grantsRemoved = a.grant_types.filter((x: any) => !b.grant_types.includes(x));
     return { urisAdded, urisRemoved, scopesAdded, scopesRemoved, grantsAdded, grantsRemoved };
   };
 
@@ -96,7 +96,7 @@ export default function ClientVersioningPage() {
 
       <select aria-label="Selected id" value={selectedId} onChange={(e) => setSelectedId(e.target.value)} className="px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-900 text-sm">
         <option value="">Select a client...</option>
-        {clients.map((c) => <option key={c.client_id} value={c.client_id}>{c.client_name} (v{c.current_version})</option>)}
+        {clients.map((c: any) => <option key={c.client_id} value={c.client_id}>{c.client_name} (v{c.current_version})</option>)}
       </select>
 
       {versions.length > 0 && !loading && (

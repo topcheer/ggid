@@ -51,7 +51,7 @@ export default function PolicyApprovalWorkflowPage() {
       <div><h1 className="text-2xl font-bold flex items-center gap-2"><CheckCircle className="w-6 h-6 text-green-500" />{t("policyApprovalWorkflow.title")}</h1><p className="text-sm text-gray-500 mt-1">Review and approve pending policy changes with approval chains.</p></div>
 
       <div className="space-y-3">
-        {approvals.map((a) => (
+        {approvals.map((a: any) => (
           <div key={a.id} className="rounded-lg border dark:border-gray-800">
             <div className="flex items-center justify-between p-3 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-900/30" onClick={() => setExpanded(expanded === a.id ? null : a.id)}>
               <div className="flex items-center gap-2"><ChevronRight className={"w-4 h-4 text-gray-400 transition-transform " + (expanded === a.id ? "rotate-90" : "")} /><div><span className="font-medium text-sm">{a.policy_name}</span><p className="text-xs text-gray-400">by {a.requested_by} - {a.submitted_at}</p></div></div>

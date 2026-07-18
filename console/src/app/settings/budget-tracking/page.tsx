@@ -55,7 +55,7 @@ export default function BudgetTrackingPage() {
             <div className="rounded-lg border p-4 dark:border-gray-800"><span className="text-sm text-gray-500">{t("backend3.budgetTracking.remaining")}</span><p className={`text-xl font-bold mt-1 ${data.total_budget - data.total_spent < 0 ? "text-red-600" : "text-green-600"}`}>{fmt(data.total_budget - data.total_spent)}</p></div>
           </div>
 
-          <div className="space-y-3">{data.departments.map((d) => {
+          <div className="space-y-3">{data.departments.map((d: any) => {
             const pct = d.budget > 0 ? (d.spent / d.budget) * 100 : 0;
             const isOver = pct >= 100;
             const isWarning = pct >= 80;

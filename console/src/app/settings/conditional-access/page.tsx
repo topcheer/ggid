@@ -107,20 +107,20 @@ export default function ConditionalAccessPage() {
           <PoliciesList policies={policies} loading={loading}
             onEdit={(p) => { setEditing(p); setTab("editor"); }}
             onAdd={() => { setEditing(null); setTab("editor"); }}
-            onToggle={(id) => setPolicies(policies.map((p) => p.id === id ? { ...p, enabled: !p.enabled } : p))}
+            onToggle={(id) => setPolicies(policies.map((p: any) => p.id === id ? { ...p, enabled: !p.enabled } : p))}
             onMove={(id, dir) => {
               const idx = policies.findIndex((p) => p.id === id);
               const next = [...policies];
               const target = dir === "up" ? idx - 1 : idx + 1;
               if (target >= 0 && target < next.length) { [next[idx], next[target]] = [next[target], next[idx]]; setPolicies(next); }
             }}
-            onDelete={(id) => { setPolicies(policies.filter((p) => p.id !== id)); }}
+            onDelete={(id) => { setPolicies(policies.filter((p: any) => p.id !== id)); }}
           />
         )}
         {tab === "editor" && (
           <PolicyEditor editing={editing}
             onSave={(p) => {
-              if (editing) { setPolicies(policies.map((x) => x.id === p.id ? p : x)); }
+              if (editing) { setPolicies(policies.map((x: any) => x.id === p.id ? p : x)); }
               else { setPolicies([...policies, { ...p, id: `p${Date.now()}` }]); }
               setTab("policies");
             }}
@@ -159,7 +159,7 @@ function PoliciesList({ policies, loading, onEdit, onAdd, onToggle, onMove, onDe
       ) : (
         <div className="space-y-2">
           {policies.map((p: any, i: number) => {
-            const actionCfg = ACTIONS.find((a) => a.value === p.action);
+            const actionCfg = ACTIONS.find((a: any) => a.value === p.action);
             return (
               <div key={p.id} className="flex items-center gap-3 p-3 rounded-lg border border-gray-200 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/30">
                 {/* Priority + arrows */}
@@ -212,9 +212,9 @@ function PolicyEditor({ editing, onSave, onCancel }: {
   const [conditions, setConditions] = useState<Condition[]>(editing?.conditions || [{ id: newCondId(), operand: "device_posture", operator: "<", value: "70" }]);
 
   const addCondition = () => setConditions([...conditions, { id: newCondId(), operand: "risk_score", operator: ">", value: "50" }]);
-  const removeCondition = (id: string) => setConditions(conditions.filter((c) => c.id !== id));
+  const removeCondition = (id: string) => setConditions(conditions.filter((c: any) => c.id !== id));
   const updateCondition = (id: string, field: keyof Condition, value: string) =>
-    setConditions(conditions.map((c) => c.id === id ? { ...c, [field]: value } : c));
+    setConditions(conditions.map((c: any) => c.id === id ? { ...c, [field]: value } : c));
 
   const save = () => {
     if (!name) return;
@@ -245,7 +245,7 @@ function PolicyEditor({ editing, onSave, onCancel }: {
           <label className="text-sm font-semibold text-gray-900 dark:text-white">{t("conditionalAccess.editor.conditions")}</label>
           <div className="flex items-center gap-2">
             <div className="flex gap-1">
-              {(["AND", "OR"] as const).map((l) => (
+              {(["AND", "OR"] as const).map((l: any) => (
                 <button key={l} onClick={() => setLogic(l)}
                   className={`px-2 py-0.5 text-xs font-medium rounded ${logic === l ? "bg-blue-600 text-white" : "bg-gray-100 dark:bg-gray-800 text-gray-500"}`}>{l}</button>
               ))}
@@ -261,7 +261,7 @@ function PolicyEditor({ editing, onSave, onCancel }: {
               {i > 0 && <span className="px-2 py-0.5 text-xs font-bold text-blue-500 bg-blue-50 dark:bg-blue-950/30 rounded">{logic}</span>}
               <select value={c.operand} onChange={(e) => updateCondition(c.id, "operand", e.target.value)}
                 className="px-2 py-1.5 rounded border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-xs text-gray-900 dark:text-white">
-                {OPERANDS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+                {OPERANDS.map((o: any) => <option key={o.value} value={o.value}>{o.label}</option>)}
               </select>
               <select value={c.operator} onChange={(e) => updateCondition(c.id, "operator", e.target.value)}
                 className="px-2 py-1.5 rounded border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-xs text-gray-900 dark:text-white">
@@ -269,14 +269,14 @@ function PolicyEditor({ editing, onSave, onCancel }: {
                 <option value="=">=</option><option value="≠">≠</option>
                 <option value="in">in</option><option value="contains">contains</option>
               </select>
-              {OPERANDS.find((o) => o.value === c.operand)?.type === "number" ? (
+              {OPERANDS.find((o: any) => o.value === c.operand)?.type === "number" ? (
                 <input type="range" min={0} max={100} value={parseInt(c.value) || 0} onChange={(e) => updateCondition(c.id, "value", e.target.value)}
                   className="flex-1 max-w-[200px]" />
               ) : (
                 <input type="text" value={c.value} onChange={(e) => updateCondition(c.id, "value", e.target.value)} placeholder="value"
                   className="flex-1 px-2 py-1.5 rounded border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-xs text-gray-900 dark:text-white" />
               )}
-              {OPERANDS.find((o) => o.value === c.operand)?.type === "number" && (
+              {OPERANDS.find((o: any) => o.value === c.operand)?.type === "number" && (
                 <span className="text-xs font-medium text-gray-700 dark:text-gray-300 w-8 text-right">{c.value}</span>
               )}
               <button onClick={() => removeCondition(c.id)} className="p-1 text-red-500 hover:bg-red-50 dark:hover:bg-red-950 rounded"><X className="w-3 h-3" /></button>
@@ -289,7 +289,7 @@ function PolicyEditor({ editing, onSave, onCancel }: {
       <div>
         <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-2">{t("conditionalAccess.editor.action")}</label>
         <div className="flex flex-wrap gap-2">
-          {ACTIONS.map((a) => (
+          {ACTIONS.map((a: any) => (
             <button key={a.value} onClick={() => setAction(a.value)}
               className={`px-3 py-1.5 rounded-lg border-2 text-sm font-medium transition-all ${
                 action === a.value ? "border-blue-500 " + a.color : "border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400"
@@ -340,7 +340,7 @@ function PolicyTester({ policies }: { policies: Policy[] }) {
       let matched: Policy | undefined;
       for (const p of [...policies].sort((a, b) => a.priority - b.priority)) {
         if (!p.enabled) continue;
-        const results = p.conditions.map((c) => {
+        const results = p.conditions.map((c: any) => {
           const inputVal = (input as Record<string, unknown>)[c.operand];
           const numVal = typeof inputVal === "number" ? inputVal : parseFloat(String(inputVal)) || 0;
           const condVal = parseFloat(c.value) || 0;
@@ -349,7 +349,7 @@ function PolicyTester({ policies }: { policies: Policy[] }) {
             case ">": return numVal > condVal;
             case "=": return String(inputVal) === c.value;
             case "≠": return String(inputVal) !== c.value;
-            case "in": return c.value.split(",").map((v) => v.trim()).includes(String(inputVal));
+            case "in": return c.value.split(",").map((v: any) => v.trim()).includes(String(inputVal));
             case "contains": return String(inputVal).includes(c.value);
             default: return false;
           }
@@ -388,7 +388,7 @@ function PolicyTester({ policies }: { policies: Policy[] }) {
         <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">{t("conditionalAccess.tester.description")}</p>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-          {inputFields.map((f) => (
+          {inputFields.map((f: any) => (
             <div key={f.key}>
               <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">{f.label}</label>
               {f.type === "number" ? (

@@ -118,7 +118,7 @@ export default function IdentityGroupLifecyclePage() {
               </tr>
             </thead>
             <tbody>
-              {(data?.group_health_metrics ?? []).map((g) => (
+              {(data?.group_health_metrics ?? []).map((g: any) => (
                 <tr key={g.group_name} className="border-b border-gray-800">
                   <td className="py-3 pr-3">
                     <div className="flex items-center gap-2">

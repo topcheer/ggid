@@ -26,14 +26,14 @@ export default function PolicyRecommendationPage() {
     try {
       const res = await fetch("/api/v1/policy/recommendations/" + id + "/apply", { method: "POST", headers: { ...authHeader(), "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
       if (!res.ok) return null;
-      setRecs(recs.filter((r) => r.id !== id));
+      setRecs(recs.filter((r: any) => r.id !== id));
     } catch (e) { setError(e instanceof Error ? e.message : "Failed to apply recommendation"); }
   };
   const dismiss = async (id: string) => {
     try {
       const res = await fetch("/api/v1/policy/recommendations/" + id + "/dismiss", { method: "POST", headers: { ...authHeader(), "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
       if (!res.ok) return null;
-      setRecs(recs.filter((r) => r.id !== id));
+      setRecs(recs.filter((r: any) => r.id !== id));
     } catch (e) { setError(e instanceof Error ? e.message : "Failed to dismiss recommendation"); }
   };
   return (
@@ -42,7 +42,7 @@ export default function PolicyRecommendationPage() {
       {error && <div className="rounded-lg border border-red-200 dark:border-red-900 bg-red-50 dark:bg-red-900/20 p-3 text-sm text-red-600 flex items-center justify-between"><span className="flex items-center gap-2"><AlertTriangle className="w-4 h-4" /> {error}</span><button onClick={fetchData} className="text-xs underline hover:text-red-700">Retry</button></div>}
       {loading && <div className="rounded-lg border dark:border-gray-800 p-8 text-center"><div className="inline-block w-5 h-5 border-2 border-current border-t-transparent rounded-full animate-spin text-blue-600 mb-2" /><div className="text-sm text-gray-500">Loading recommendations...</div></div>}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {recs.map((r) => (
+        {recs.map((r: any) => (
           <div key={r.id} className="rounded-lg border dark:border-gray-800 p-4 space-y-3">
             <div className="flex items-center justify-between">
               <span className={"px-2 py-1 rounded text-xs font-medium " + typeColors[r.type]}>{r.type}</span>

@@ -98,7 +98,7 @@ export default function SiemIntegrationPage() {
       <div className="bg-white rounded-lg p-6 shadow space-y-4">
         <h2 className="text-lg font-semibold">{t("siem.eventFilters")}</h2>
         <div className="grid grid-cols-2 gap-4">
-          <div><label className="block text-sm font-medium mb-1">{t("siem.includeEventTypes")}</label><input aria-label="filters" type="text" value={filters.include_types.join(", ")} onChange={(e) => setFilters({ ...filters, include_types: e.target.value.split(",").map((s) => s.trim()) })} className="border rounded px-3 py-2 w-full text-sm" /></div>
+          <div><label className="block text-sm font-medium mb-1">{t("siem.includeEventTypes")}</label><input aria-label="filters" type="text" value={filters.include_types.join(", ")} onChange={(e) => setFilters({ ...filters, include_types: e.target.value.split(",").map((s: any) => s.trim()) })} className="border rounded px-3 py-2 w-full text-sm" /></div>
           <div><label className="block text-sm font-medium mb-1">{t("siem.minSeverity")}</label><select aria-label="filters" value={filters.min_severity} onChange={(e) => setFilters({ ...filters, min_severity: e.target.value })} className="border rounded px-3 py-2 w-full"><option value="info">{t("siem.info")}</option><option value="warn">{t("siem.warn")}</option><option value="error">{t("siem.error")}</option><option value="critical">{t("siem.critical")}</option></select></div>
         </div>
       </div>

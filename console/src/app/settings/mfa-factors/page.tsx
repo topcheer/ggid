@@ -64,7 +64,7 @@ export default function MFAFactorsPage() {
         method: "DELETE",
         headers: { ...authHeader(), "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" },
       });
-      setFactors((prev) => prev.filter((f) => f.id !== id));
+      setFactors((prev) => prev.filter((f: any) => f.id !== id));
     } catch {
       /* noop */
     } finally {
@@ -96,22 +96,22 @@ export default function MFAFactorsPage() {
           </div>
           <div className="rounded-lg border p-4 dark:border-gray-800">
             <span className="text-sm text-gray-500">Enabled</span>
-            <p className="text-2xl font-bold mt-1 text-green-600">{factors.filter((f) => f.enabled).length}</p>
+            <p className="text-2xl font-bold mt-1 text-green-600">{factors.filter((f: any) => f.enabled).length}</p>
           </div>
           <div className="rounded-lg border p-4 dark:border-gray-800">
             <span className="text-sm text-gray-500">Never Used</span>
-            <p className="text-2xl font-bold mt-1 text-yellow-600">{factors.filter((f) => !f.last_used).length}</p>
+            <p className="text-2xl font-bold mt-1 text-yellow-600">{factors.filter((f: any) => !f.last_used).length}</p>
           </div>
           <div className="rounded-lg border p-4 dark:border-gray-800">
             <span className="text-sm text-gray-500">Types</span>
-            <p className="text-2xl font-bold mt-1">{new Set(factors.map((f) => f.type)).size}</p>
+            <p className="text-2xl font-bold mt-1">{new Set(factors.map((f: any) => f.type)).size}</p>
           </div>
         </div>
       )}
 
       <div className="rounded-lg border dark:border-gray-800">
         <div className="divide-y dark:divide-gray-800">
-          {factors.map((f) => {
+          {factors.map((f: any) => {
             const Icon = typeIcons[f.type] || KeyRound;
             return (
               <div key={f.id} className="px-4 py-3 flex items-center justify-between">

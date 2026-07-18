@@ -52,7 +52,7 @@ export default function LoginAnalyticsPage() {
     fetchAnalytics();
   }, [fetchAnalytics]);
 
-  const maxFailureCount = data ? Math.max(...data.failure_reasons.map((f) => f.count), 1) : 1;
+  const maxFailureCount = data ? Math.max(...data.failure_reasons.map((f: any) => f.count), 1) : 1;
 
   // Build pie chart segments
   let cumulativePct = 0;
@@ -158,7 +158,7 @@ export default function LoginAnalyticsPage() {
             <div className="flex items-end gap-1 h-40">
               {data.daily_trend.slice(-30).map((d: any, i: number) => {
                 const total = d.success + d.failure;
-                const maxTotal = Math.max(...data.daily_trend.map((t) => t.success + t.failure), 1);
+                const maxTotal = Math.max(...data.daily_trend.map((t: any) => t.success + t.failure), 1);
                 const heightPct = (total / maxTotal) * 100;
                 const successPct = total > 0 ? (d.success / total) * 100 : 0;
                 return (

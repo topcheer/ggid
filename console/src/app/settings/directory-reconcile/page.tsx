@@ -72,10 +72,10 @@ export default function DirectoryReconcilePage() {
           {data.duplicate_groups.length > 0 && (
             <div className="space-y-3">
               <h3 className="text-sm font-semibold">{t("directoryReconcile.duplicateGroups")}</h3>
-              {data.duplicate_groups.map((g) => (
+              {data.duplicate_groups.map((g: any) => (
                 <div key={g.group_id} className="rounded-lg border dark:border-gray-800 p-4">
                   <div className="flex items-center justify-between mb-2"><span className="text-xs font-mono text-gray-400">Group: {g.group_id}</span><span className="text-xs text-green-600">{t("directoryReconcile.mergeTarget")} {g.suggested_merge_target}</span></div>
-                  <div className="space-y-1">{g.entries.map((e) => (
+                  <div className="space-y-1">{g.entries.map((e: any) => (
                     <div key={e.id} className="flex items-center gap-2 text-sm"><Copy className="w-3 h-3 text-gray-400" /><span className="font-mono text-xs">{e.id}</span><span className="text-gray-500">{e.email}</span><span className="text-xs text-gray-400">({e.source})</span></div>
                   ))}</div>
                 </div>

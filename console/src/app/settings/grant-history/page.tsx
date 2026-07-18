@@ -25,7 +25,7 @@ export default function GrantHistoryPage() {
     finally { setLoading(false); }
   }, []);
   useEffect(() => { fetchData(); }, [fetchData]);
-  const filtered = events.filter((e) => { if (filterType && e.grant_type !== filterType) return false; if (search) { const q = search.toLowerCase(); return e.username.toLowerCase().includes(q) || e.client_name.toLowerCase().includes(q); } return true; });
+  const filtered = events.filter((e: any) => { if (filterType && e.grant_type !== filterType) return false; if (search) { const q = search.toLowerCase(); return e.username.toLowerCase().includes(q) || e.client_name.toLowerCase().includes(q); } return true; });
   return (
     <div className="space-y-6">
       <div><h1 className="text-2xl font-bold flex items-center gap-2"><KeyRound className="w-6 h-6 text-blue-500" /> {t("big1.grantHistory.title")}</h1><p className="text-sm text-gray-500 mt-1">{t("big1.grantHistory.trackOAuthGrantEventsOverTime")}</p></div>
@@ -49,7 +49,7 @@ export default function GrantHistoryPage() {
       <div className="relative pl-8">
         <div className="absolute left-3 top-0 bottom-0 w-px bg-gray-200 dark:bg-gray-800" />
         <div className="space-y-3">
-          {filtered.map((e) => (
+          {filtered.map((e: any) => (
             <div key={e.id} className="relative">
               <div className={"absolute -left-5 w-4 h-4 rounded-full border-2 " + (e.revoked_at ? "bg-red-500 border-red-200" : "bg-green-500 border-green-200")} />
               <div className="rounded-lg border dark:border-gray-800 p-3 ml-2">

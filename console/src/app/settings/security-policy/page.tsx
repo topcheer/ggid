@@ -93,7 +93,7 @@ export default function SecurityPolicyPage() {
 
         {/* Tabs */}
         <div className="flex gap-1 mb-6 bg-gray-200 dark:bg-gray-800 rounded-lg p-1">
-          {tabs.map((tab) => {
+          {tabs.map((tab: any) => {
             const Icon = tab.icon;
             return (
               <button
@@ -179,7 +179,7 @@ function PasswordPolicyTab() {
       { label: t("securityPolicy.passwordPolicy.requireDigit"), pass: !config.require_digit || /\d/.test(testPw) },
       { label: t("securityPolicy.passwordPolicy.requireSpecial"), pass: !config.require_special || /[!@#$%^&*(),.?":{}|<>]/.test(testPw) },
     ];
-    const score = checks.filter((c) => c.pass).length;
+    const score = checks.filter((c: any) => c.pass).length;
     return { score, checks };
   };
 
@@ -249,7 +249,7 @@ function PasswordPolicyTab() {
         {testPw && (
           <div className="space-y-1">
             <div className="flex gap-1">
-              {[0, 1, 2, 3, 4].map((i) => (
+              {[0, 1, 2, 3, 4].map((i: any) => (
                 <div
                   key={i}
                   className={`h-1.5 flex-1 rounded-full ${
@@ -463,7 +463,7 @@ function MethodPoliciesTab() {
         method: "DELETE",
         headers: { ...authHeader() },
       });
-      setPolicies(policies.filter((p) => p.id !== id));
+      setPolicies(policies.filter((p: any) => p.id !== id));
       setMsg({ type: "success", text: t("securityPolicy.methodPolicies.policyDeleted") });
     } catch {
       setMsg({ type: "error", text: t("settings.endpointUnavailable") });
@@ -550,12 +550,12 @@ function MethodPoliciesTab() {
               </tr>
             </thead>
             <tbody>
-              {policies.map((p) => (
+              {policies.map((p: any) => (
                 <tr key={p.id} className="border-b border-gray-100 dark:border-gray-800/50">
                   <td className="py-3 px-3 font-medium text-gray-900 dark:text-white">{p.group}</td>
                   <td className="py-3 px-3">
                     <div className="flex flex-wrap gap-1">
-                      {p.required_methods.map((m) => (
+                      {p.required_methods.map((m: any) => (
                         <span key={m} className="px-2 py-0.5 text-xs bg-green-100 text-green-700 dark:bg-green-950 dark:text-green-300 rounded">
                           {t(`securityPolicy.methodPolicies.${m}`)}
                         </span>
@@ -564,7 +564,7 @@ function MethodPoliciesTab() {
                   </td>
                   <td className="py-3 px-3">
                     <div className="flex flex-wrap gap-1">
-                      {p.forbidden_methods.map((m) => (
+                      {p.forbidden_methods.map((m: any) => (
                         <span key={m} className="px-2 py-0.5 text-xs bg-red-100 text-red-700 dark:bg-red-950 dark:text-red-300 rounded">
                           {t(`securityPolicy.methodPolicies.${m}`)}
                         </span>
@@ -658,7 +658,7 @@ function MethodPolicyForm({ editing, onSaved, onCancel }: {
             {t("securityPolicy.methodPolicies.requiredMethods")}
           </label>
           <div className="space-y-1">
-            {AUTH_METHODS.map((m) => (
+            {AUTH_METHODS.map((m: any) => (
               <label key={m} className="flex items-center gap-2 text-sm">
                 <input
                   type="checkbox"
@@ -676,7 +676,7 @@ function MethodPolicyForm({ editing, onSaved, onCancel }: {
             {t("securityPolicy.methodPolicies.forbiddenMethods")}
           </label>
           <div className="space-y-1">
-            {AUTH_METHODS.map((m) => (
+            {AUTH_METHODS.map((m: any) => (
               <label key={m} className="flex items-center gap-2 text-sm">
                 <input
                   type="checkbox"

@@ -183,7 +183,7 @@ func TestNHIRisk_ListHighRisk(t *testing.T) {
 // Test 8: POST /risk/scan — endpoint returns risk score.
 func TestNHIRisk_ScanEndpoint(t *testing.T) {
 	h := &HTTPHandler{
-		nhiRiskEngine: NewNHIRiskEngine(),
+		nhiRiskEngine: func() *NHIRiskEngine { e := NewNHIRiskEngine(); e.SetPGRepo(NewNHIRiskPGRepo(nil)); return e }(),
 	}
 	nhiID := uuid.New()
 
@@ -208,7 +208,7 @@ func TestNHIRisk_ScanEndpoint(t *testing.T) {
 // Test 9: GET /risk-alerts — returns empty list initially.
 func TestNHIRisk_AlertsEndpoint(t *testing.T) {
 	h := &HTTPHandler{
-		nhiRiskEngine: NewNHIRiskEngine(),
+		nhiRiskEngine: func() *NHIRiskEngine { e := NewNHIRiskEngine(); e.SetPGRepo(NewNHIRiskPGRepo(nil)); return e }(),
 	}
 
 	req := httptest.NewRequest("GET", "/api/v1/identity/nhi/risk-alerts", nil)
@@ -224,7 +224,7 @@ func TestNHIRisk_AlertsEndpoint(t *testing.T) {
 // Test 10: POST /risk/scan with invalid NHI ID → 400.
 func TestNHIRisk_ScanInvalidID(t *testing.T) {
 	h := &HTTPHandler{
-		nhiRiskEngine: NewNHIRiskEngine(),
+		nhiRiskEngine: func() *NHIRiskEngine { e := NewNHIRiskEngine(); e.SetPGRepo(NewNHIRiskPGRepo(nil)); return e }(),
 	}
 
 	body := `{"nhi_id":"not-a-uuid"}`
@@ -241,7 +241,7 @@ func TestNHIRisk_ScanInvalidID(t *testing.T) {
 // Test 11: GET /:id/risk — returns score after evaluation.
 func TestNHIRisk_GetRiskEndpoint(t *testing.T) {
 	h := &HTTPHandler{
-		nhiRiskEngine: NewNHIRiskEngine(),
+		nhiRiskEngine: func() *NHIRiskEngine { e := NewNHIRiskEngine(); e.SetPGRepo(NewNHIRiskPGRepo(nil)); return e }(),
 	}
 	nhiID := uuid.New()
 
@@ -263,7 +263,7 @@ func TestNHIRisk_GetRiskEndpoint(t *testing.T) {
 // Test 12: Critical risk triggers SOAR signal.
 func TestNHIRisk_SOARTrigger(t *testing.T) {
 	h := &HTTPHandler{
-		nhiRiskEngine: NewNHIRiskEngine(),
+		nhiRiskEngine: func() *NHIRiskEngine { e := NewNHIRiskEngine(); e.SetPGRepo(NewNHIRiskPGRepo(nil)); return e }(),
 	}
 	nhiID := uuid.New()
 	nhiStr := nhiID.String()

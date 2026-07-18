@@ -103,9 +103,9 @@ export default function InactiveCleanupPage() {
       {/* Stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <div className="rounded-lg border p-4 dark:border-gray-800"><span className="text-sm text-gray-500">{t("big1.inactiveCleanup.inactiveUsers")}</span><p className="text-2xl font-bold mt-1">{users.length}</p></div>
-        <div className="rounded-lg border p-4 dark:border-gray-800"><span className="text-sm text-gray-500">{t("big1.inactiveCleanup.90Days")}</span><p className="text-2xl font-bold mt-1 text-yellow-600">{users.filter((u) => u.days_inactive >= 90).length}</p></div>
-        <div className="rounded-lg border p-4 dark:border-gray-800"><span className="text-sm text-gray-500">{t("big1.inactiveCleanup.180Days")}</span><p className="text-2xl font-bold mt-1 text-orange-600">{users.filter((u) => u.days_inactive >= 180).length}</p></div>
-        <div className="rounded-lg border p-4 dark:border-gray-800"><span className="text-sm text-gray-500">{t("big1.inactiveCleanup.neverLoggedIn")}</span><p className="text-2xl font-bold mt-1 text-red-600">{users.filter((u) => !u.last_login).length}</p></div>
+        <div className="rounded-lg border p-4 dark:border-gray-800"><span className="text-sm text-gray-500">{t("big1.inactiveCleanup.90Days")}</span><p className="text-2xl font-bold mt-1 text-yellow-600">{users.filter((u: any) => u.days_inactive >= 90).length}</p></div>
+        <div className="rounded-lg border p-4 dark:border-gray-800"><span className="text-sm text-gray-500">{t("big1.inactiveCleanup.180Days")}</span><p className="text-2xl font-bold mt-1 text-orange-600">{users.filter((u: any) => u.days_inactive >= 180).length}</p></div>
+        <div className="rounded-lg border p-4 dark:border-gray-800"><span className="text-sm text-gray-500">{t("big1.inactiveCleanup.neverLoggedIn")}</span><p className="text-2xl font-bold mt-1 text-red-600">{users.filter((u: any) => !u.last_login).length}</p></div>
       </div>
 
       {/* Table */}
@@ -113,7 +113,7 @@ export default function InactiveCleanupPage() {
         <table className="w-full text-sm">
           <thead className="bg-gray-50 dark:bg-gray-900/50">
             <tr>
-              <th scope="col" className="px-4 py-3 text-left font-medium w-8"><input aria-label="Selected ids" type="checkbox" checked={selectedIds.size === users.length && users.length > 0} onChange={(e) => setSelectedIds(e.target.checked ? new Set(users.map((u) => u.user_id)) : new Set())} className="rounded" /></th>
+              <th scope="col" className="px-4 py-3 text-left font-medium w-8"><input aria-label="Selected ids" type="checkbox" checked={selectedIds.size === users.length && users.length > 0} onChange={(e) => setSelectedIds(e.target.checked ? new Set(users.map((u: any) => u.user_id)) : new Set())} className="rounded" /></th>
               <th scope="col" className="px-4 py-3 text-left font-medium">{t("big1.inactiveCleanup.user")}</th>
               <th scope="col" className="px-4 py-3 text-left font-medium">{t("big1.inactiveCleanup.lastLogin")}</th>
               <th scope="col" className="px-4 py-3 text-left font-medium">{t("big1.inactiveCleanup.daysInactive")}</th>
@@ -121,7 +121,7 @@ export default function InactiveCleanupPage() {
             </tr>
           </thead>
           <tbody className="divide-y dark:divide-gray-800">
-            {users.map((u) => {
+            {users.map((u: any) => {
               const ActionIcon = u.days_inactive >= 180 ? actionConfig.delete.icon : u.days_inactive >= 90 ? actionConfig.archive.icon : actionConfig.disable.icon;
               return (
                 <tr key={u.user_id} className="hover:bg-gray-50 dark:hover:bg-gray-900/30">
@@ -150,7 +150,7 @@ export default function InactiveCleanupPage() {
               <div>
                 <label className="font-medium">{t("big1.inactiveCleanup.action")}</label>
                 <div className="flex gap-2 mt-1">
-                  {(["disable", "archive", "delete"] as const).map((a) => {
+                  {(["disable", "archive", "delete"] as const).map((a: any) => {
                     const cfg = actionConfig[a];
                     const Icon = cfg.icon;
                     return (

@@ -71,7 +71,7 @@ export default function AuthStepUpOrchestratorPage() {
                 </div>
                 <div className="flex items-center gap-2 mb-1">
                   <span className="text-xs text-gray-400">Factors:</span>
-                  {f.required_factors.map((fac) => (
+                  {f.required_factors.map((fac: any) => (
                     <span key={fac} className="text-xs px-1.5 py-0.5 bg-gray-700 rounded">{fac}</span>
                   ))}
                 </div>
@@ -91,7 +91,7 @@ export default function AuthStepUpOrchestratorPage() {
             Active Challenges
           </h2>
           <div className="space-y-2 max-h-64 overflow-y-auto">
-            {(data?.active_challenges ?? []).map((c) => (
+            {(data?.active_challenges ?? []).map((c: any) => (
               <div key={c.id} className="bg-gray-800 rounded-lg p-3">
                 <div className="flex items-center justify-between mb-1">
                   <p className="text-sm font-medium">{c.user}</p>

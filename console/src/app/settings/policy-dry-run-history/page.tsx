@@ -15,17 +15,17 @@ export default function PolicyDryRunHistoryPage() {
   if (loading) return <div className="p-8 text-gray-400">Loading dry-run history...</div>;
   if (error) return <div className="p-8 text-red-400">Error: {error}</div>;
 
-  const filtered = (data?.history ?? []).filter((h) => {
+  const filtered = (data?.history ?? []).filter((h: any) => {
     if (filterDecision !== "all" && h.decision !== filterDecision) return false;
     return true;
   });
 
   const toggleCompare = (id: string) => {
-    setCompareRuns((prev) => prev.includes(id) ? prev.filter((r) => r !== id) : prev.length < 2 ? [...prev, id] : prev);
+    setCompareRuns((prev) => prev.includes(id) ? prev.filter((r: any) => r !== id) : prev.length < 2 ? [...prev, id] : prev);
   };
 
-  const run1 = (data?.history ?? []).find((h) => h.run_id === compareRuns[0]);
-  const run2 = (data?.history ?? []).find((h) => h.run_id === compareRuns[1]);
+  const run1 = (data?.history ?? []).find((h: any) => h.run_id === compareRuns[0]);
+  const run2 = (data?.history ?? []).find((h: any) => h.run_id === compareRuns[1]);
 
   return (
     <div className="min-h-screen bg-gray-950 text-white p-8">
@@ -79,7 +79,7 @@ export default function PolicyDryRunHistoryPage() {
               </tr>
             </thead>
             <tbody>
-              {filtered.map((h) => (
+              {filtered.map((h: any) => (
                 <tr key={h.run_id} className="border-b border-gray-800">
                   <td className="py-2 pr-3">
                     <input
@@ -126,7 +126,7 @@ export default function PolicyDryRunHistoryPage() {
             Compare Runs
           </h2>
           <div className="grid grid-cols-2 gap-4">
-            {[run1, run2].map((run) => (
+            {[run1, run2].map((run: any) => (
               <div key={run.run_id} className="bg-gray-800 rounded-lg p-4">
                 <p className="text-xs font-mono text-blue-400 mb-2">{run.run_id}</p>
                 <div className="space-y-1">
@@ -151,7 +151,7 @@ export default function PolicyDryRunHistoryPage() {
           Saved Run Templates
         </h2>
         <div className="flex flex-wrap gap-2">
-          {(data?.saved_run_templates ?? []).map((t) => (
+          {(data?.saved_run_templates ?? []).map((t: any) => (
             <span key={t} className="text-xs px-3 py-1.5 bg-gray-800 rounded-lg border border-gray-700 hover:border-blue-500 cursor-pointer">
               {t}
             </span>

@@ -44,7 +44,7 @@ export default function TimelineReconstructPage() {
 
   const gapColors: Record<string, string> = { low: "text-gray-500", medium: "text-yellow-600", high: "text-red-600" };
   const correlatedIds = new Set(data?.correlation_chains.flatMap((c) => c.event_ids) || []);
-  const gapAfterMap = new Map(data?.gaps.map((g) => [g.after_event, g]) || []);
+  const gapAfterMap = new Map(data?.gaps.map((g: any) => [g.after_event, g]) || []);
 
   return (
     <div className="space-y-6">
@@ -72,7 +72,7 @@ export default function TimelineReconstructPage() {
           <div className="relative pl-8">
             <div className="absolute left-3 top-0 bottom-0 w-px bg-gray-200 dark:bg-gray-800" />
             <div className="space-y-2">
-              {data.events.map((evt) => {
+              {data.events.map((evt: any) => {
                 const isCorrelated = correlatedIds.has(evt.id);
                 const gap = gapAfterMap.get(evt.id);
                 return (
@@ -99,7 +99,7 @@ export default function TimelineReconstructPage() {
           {data.correlation_chains.length > 0 && (
             <div className="rounded-lg border dark:border-gray-800 p-4">
               <h3 className="text-sm font-semibold flex items-center gap-2 mb-3"><Link2 className="w-4 h-4 text-purple-500" /> Correlation Chains</h3>
-              <div className="space-y-2">{data.correlation_chains.map((c) => (
+              <div className="space-y-2">{data.correlation_chains.map((c: any) => (
                 <div key={c.chain_id} className="flex items-center gap-2 text-sm"><span className="font-mono text-xs text-purple-600">{c.chain_id}</span><span className="flex-1">{c.pattern}</span><span className="text-xs text-gray-400">{c.event_ids.length} events</span></div>
               ))}</div>
             </div>

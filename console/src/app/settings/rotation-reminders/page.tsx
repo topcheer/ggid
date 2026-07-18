@@ -48,7 +48,7 @@ export default function RotationRemindersPage() {
     finally { setSendingId(null); }
   };
 
-  const critical = items.filter((i) => i.severity === "critical").length;
+  const critical = items.filter((i: any) => i.severity === "critical").length;
 
   return (
     <div className="space-y-6">
@@ -60,7 +60,7 @@ export default function RotationRemindersPage() {
       <div className="grid grid-cols-3 gap-4">
         <div className="rounded-lg border p-4 dark:border-gray-800"><span className="text-sm text-gray-500">Overdue</span><p className="text-2xl font-bold mt-1">{items.length}</p></div>
         <div className="rounded-lg border p-4 dark:border-gray-800"><span className="text-sm text-gray-500">Critical</span><p className="text-2xl font-bold mt-1 text-red-600">{critical}</p></div>
-        <div className="rounded-lg border p-4 dark:border-gray-800"><span className="text-sm text-gray-500">Unique Users</span><p className="text-2xl font-bold mt-1">{new Set(items.map((i) => i.user_id)).size}</p></div>
+        <div className="rounded-lg border p-4 dark:border-gray-800"><span className="text-sm text-gray-500">Unique Users</span><p className="text-2xl font-bold mt-1">{new Set(items.map((i: any) => i.user_id)).size}</p></div>
       </div>
 
       {critical > 0 && <div className="rounded-lg border border-red-200 dark:border-red-900 bg-red-50 dark:bg-red-900/20 p-4 flex items-center gap-2"><AlertTriangle className="w-5 h-5 text-red-500" /><span className="font-semibold text-red-700 dark:text-red-400">{critical} credentials critically overdue for rotation</span></div>}
@@ -69,7 +69,7 @@ export default function RotationRemindersPage() {
         <table className="w-full text-sm">
           <thead className="bg-gray-50 dark:bg-gray-900/50"><tr><th className="px-4 py-3 text-left font-medium">Type</th><th className="px-4 py-3 text-left font-medium">User</th><th className="px-4 py-3 text-left font-medium">Last Rotated</th><th className="px-4 py-3 text-left font-medium">Period</th><th className="px-4 py-3 text-left font-medium">Overdue</th><th className="px-4 py-3 text-left font-medium">Severity</th><th className="px-4 py-3 text-left font-medium">Action</th></tr></thead>
           <tbody className="divide-y dark:divide-gray-800">
-            {items.map((item) => (
+            {items.map((item: any) => (
               <tr key={item.id} className="hover:bg-gray-50 dark:hover:bg-gray-900/30">
                 <td className="px-4 py-3"><span className="flex items-center gap-1 text-xs font-medium"><KeyRound className="w-3 h-3 text-gray-400" />{item.credential_type}</span></td>
                 <td className="px-4 py-3 font-medium">{item.username}</td>

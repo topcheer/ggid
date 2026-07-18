@@ -109,8 +109,8 @@ export default function OrgChartPage() {
       setMemberCounts(counts);
 
       // Default: expand root orgs
-      const roots = list.filter((o) => !o.parent_id);
-      setExpanded(new Set(roots.map((r) => r.id)));
+      const roots = list.filter((o: any) => !o.parent_id);
+      setExpanded(new Set(roots.map((r: any) => r.id)));
 
       setError(null);
     } catch (err) {
@@ -133,7 +133,7 @@ export default function OrgChartPage() {
   }, [msg]);
 
   const tree = buildTree(orgs);
-  const orgMap = new Map(orgs.map((o) => [o.id, o]));
+  const orgMap = new Map(orgs.map((o: any) => [o.id, o]));
 
   // ---- Expand/collapse toggle ----
   const toggleExpand = (id: string) => {
@@ -176,11 +176,11 @@ export default function OrgChartPage() {
     if (!sourceOrgId || sourceOrgId === targetOrgId) return;
 
     // Prevent dropping onto own descendant
-    const sourceNode = tree.find((n) => n.id === sourceOrgId);
+    const sourceNode = tree.find((n: any) => n.id === sourceOrgId);
     const isDescendant = (node: OrgNode | undefined, targetId: string): boolean => {
       if (!node) return false;
       if (node.id === targetId) return true;
-      return node.children.some((c) => isDescendant(c, targetId));
+      return node.children.some((c: any) => isDescendant(c, targetId));
     };
     if (isDescendant(sourceNode, targetOrgId)) {
       setError("Cannot reassign an org to its own descendant");
@@ -189,7 +189,7 @@ export default function OrgChartPage() {
 
     // Optimistically update parent_id in local state
     setOrgs((prev) =>
-      prev.map((o) => (o.id === sourceOrgId ? { ...o, parent_id: targetOrgId } : o)),
+      prev.map((o: any) => (o.id === sourceOrgId ? { ...o, parent_id: targetOrgId } : o)),
     );
 
     try {
@@ -325,7 +325,7 @@ export default function OrgChartPage() {
         {/* Render children */}
         {isExpanded && node.children.length > 0 && (
           <div className="mt-1 space-y-1">
-            {node.children.map((child) => renderNode(child, depth + 1))}
+            {node.children.map((child: any) => renderNode(child, depth + 1))}
           </div>
         )}
       </div>
@@ -373,7 +373,7 @@ export default function OrgChartPage() {
         </div>
       ) : (
         <div className="space-y-1">
-          {tree.map((root) => renderNode(root, 0))}
+          {tree.map((root: any) => renderNode(root, 0))}
         </div>
       )}
 
@@ -478,7 +478,7 @@ function SettingsDrawer({
       await apiFetch(`/api/v1/orgs/${org.id}/members/${memberId}`, {
         method: "DELETE",
       });
-      setMembers((prev) => prev.filter((m) => m.id !== memberId));
+      setMembers((prev) => prev.filter((m: any) => m.id !== memberId));
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to remove member");
     }
@@ -548,7 +548,7 @@ function SettingsDrawer({
               className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 focus:border-brand-500 focus:outline-none"
             >
               <option value="">-- None --</option>
-              {roles.map((r) => (
+              {roles.map((r: any) => (
                 <option key={r.id} value={r.id}>
                   {r.name || r.key}
                 </option>
@@ -601,7 +601,7 @@ function SettingsDrawer({
               <p className="text-xs text-gray-400">No members yet</p>
             ) : (
               <div className="space-y-1">
-                {members.map((m) => (
+                {members.map((m: any) => (
                   <div
                     key={m.id}
                     className="flex items-center justify-between rounded-lg border border-gray-100 px-3 py-2 dark:border-gray-700"

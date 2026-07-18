@@ -95,7 +95,7 @@ export default function OAuthDpopConfigPage() {
         <div className="bg-gray-900 rounded-xl p-6">
           <h2 className="text-lg font-semibold mb-4">Per-Client Overrides</h2>
           <div className="space-y-2 mb-6">
-            {(data?.per_client_overrides ?? []).map((client) => (
+            {(data?.per_client_overrides ?? []).map((client: any) => (
               <div key={client.client_id} className="bg-gray-800 rounded-lg p-3">
                 <div className="flex items-center justify-between mb-1">
                   <span className="text-sm font-medium">{client.client_name}</span>
@@ -123,7 +123,7 @@ export default function OAuthDpopConfigPage() {
               Exempted Clients
             </h3>
             <div className="space-y-1">
-              {(data?.exempted_clients ?? []).map((client) => (
+              {(data?.exempted_clients ?? []).map((client: any) => (
                 <div key={client.client_id} className="flex items-center justify-between bg-gray-800 rounded px-3 py-1.5">
                   <span className="text-xs text-gray-300">{client.client_name}</span>
                   <span className="text-xs text-gray-500 font-mono">{client.client_id}</span>

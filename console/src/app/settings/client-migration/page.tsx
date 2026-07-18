@@ -47,7 +47,7 @@ export default function ClientMigrationPage() {
 
   const selectClient = (id: string) => {
     setSelectedId(id);
-    const c = clients.find((cl) => cl.client_id === id);
+    const c = clients.find((cl: any) => cl.client_id === id);
     if (c) {
       setOriginal({ ...c, redirect_uris: [...c.redirect_uris], scopes: [...c.scopes], grant_types: [...c.grant_types] });
       setDraft({ ...c, redirect_uris: [...c.redirect_uris], scopes: [...c.scopes], grant_types: [...c.grant_types] });
@@ -69,32 +69,32 @@ export default function ClientMigrationPage() {
         // local diff fallback
         setDiff({
           redirect_uris: {
-            added: draft.redirect_uris.filter((x) => !original.redirect_uris.includes(x)),
-            removed: original.redirect_uris.filter((x) => !draft.redirect_uris.includes(x)),
+            added: draft.redirect_uris.filter((x: any) => !original.redirect_uris.includes(x)),
+            removed: original.redirect_uris.filter((x: any) => !draft.redirect_uris.includes(x)),
           },
           scopes: {
-            added: draft.scopes.filter((x) => !original.scopes.includes(x)),
-            removed: original.scopes.filter((x) => !draft.scopes.includes(x)),
+            added: draft.scopes.filter((x: any) => !original.scopes.includes(x)),
+            removed: original.scopes.filter((x: any) => !draft.scopes.includes(x)),
           },
           grant_types: {
-            added: draft.grant_types.filter((x) => !original.grant_types.includes(x)),
-            removed: original.grant_types.filter((x) => !draft.grant_types.includes(x)),
+            added: draft.grant_types.filter((x: any) => !original.grant_types.includes(x)),
+            removed: original.grant_types.filter((x: any) => !draft.grant_types.includes(x)),
           },
         });
       }
     } catch {
       setDiff({
         redirect_uris: {
-          added: draft.redirect_uris.filter((x) => !original.redirect_uris.includes(x)),
-          removed: original.redirect_uris.filter((x) => !draft.redirect_uris.includes(x)),
+          added: draft.redirect_uris.filter((x: any) => !original.redirect_uris.includes(x)),
+          removed: original.redirect_uris.filter((x: any) => !draft.redirect_uris.includes(x)),
         },
         scopes: {
-          added: draft.scopes.filter((x) => !original.scopes.includes(x)),
-          removed: original.scopes.filter((x) => !draft.scopes.includes(x)),
+          added: draft.scopes.filter((x: any) => !original.scopes.includes(x)),
+          removed: original.scopes.filter((x: any) => !draft.scopes.includes(x)),
         },
         grant_types: {
-          added: draft.grant_types.filter((x) => !original.grant_types.includes(x)),
-          removed: original.grant_types.filter((x) => !draft.grant_types.includes(x)),
+          added: draft.grant_types.filter((x: any) => !original.grant_types.includes(x)),
+          removed: original.grant_types.filter((x: any) => !draft.grant_types.includes(x)),
         },
       });
     }
@@ -152,14 +152,14 @@ export default function ClientMigrationPage() {
       {/* Client selector */}
       <select aria-label="Selected id" value={selectedId} onChange={(e) => selectClient(e.target.value)} className="px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-900 text-sm">
         <option value="">Select a client...</option>
-        {clients.map((c) => (<option key={c.client_id} value={c.client_id}>{c.client_name} ({c.client_id})</option>))}
+        {clients.map((c: any) => (<option key={c.client_id} value={c.client_id}>{c.client_name} ({c.client_id})</option>))}
       </select>
 
       {draft && (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           {/* Edit form */}
           <div className="space-y-4">
-            {(["redirect_uris", "scopes", "grant_types"] as const).map((field) => (
+            {(["redirect_uris", "scopes", "grant_types"] as const).map((field: any) => (
               <div key={field} className="rounded-lg border dark:border-gray-800 p-4">
                 <h3 className="font-semibold text-sm mb-2 capitalize">{field.replace("_", " ")}</h3>
                 <div className="space-y-1">

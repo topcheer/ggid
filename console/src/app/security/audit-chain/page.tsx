@@ -88,7 +88,7 @@ export default function AuditChainPage() {
               </tr>
             </thead>
             <tbody className="divide-y dark:divide-gray-700">
-              {(data?.verification_log ?? []).map((v) => (
+              {(data?.verification_log ?? []).map((v: any) => (
                 <tr key={v.run_id} className="hover:bg-gray-50 dark:hover:bg-gray-900/30">
                   <td className="px-3 py-3 font-mono text-xs text-indigo-500">{v.run_id}</td>
                   <td className="px-3 py-3 text-gray-400 text-xs">{v.timestamp}</td>

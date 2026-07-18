@@ -53,8 +53,8 @@ export default function AccessGraphPage() {
         <>
           {(data.via_groups.length > 0 || data.via_roles.length > 0) && (
             <div className="flex flex-wrap gap-2">
-              {data.via_groups.map((g) => <span key={g} className="px-2 py-1 rounded text-xs bg-blue-100 dark:bg-blue-900/30 dark:text-blue-400 font-mono">via: {g}</span>)}
-              {data.via_roles.map((r) => <span key={r} className="px-2 py-1 rounded text-xs bg-purple-100 dark:bg-purple-900/30 dark:text-purple-400 font-mono">via: {r}</span>)}
+              {data.via_groups.map((g: any) => <span key={g} className="px-2 py-1 rounded text-xs bg-blue-100 dark:bg-blue-900/30 dark:text-blue-400 font-mono">via: {g}</span>)}
+              {data.via_roles.map((r: any) => <span key={r} className="px-2 py-1 rounded text-xs bg-purple-100 dark:bg-purple-900/30 dark:text-purple-400 font-mono">via: {r}</span>)}
             </div>
           )}
 
@@ -76,8 +76,8 @@ export default function AccessGraphPage() {
 
           <div className="rounded-lg border dark:border-gray-800 p-4">
             <h3 className="text-sm font-semibold mb-3">{t("backend3.accessGraph.effectivePermissionsSummary")}</h3>
-            <div className="space-y-2">{data.effective_permissions.map((p) => (
-              <div key={p.resource} className="flex items-center gap-2"><span className="font-mono text-sm flex-1">{p.resource}</span><div className="flex gap-1">{p.actions.map((a) => <span key={a} className="px-1.5 py-0.5 rounded text-xs bg-gray-100 dark:bg-gray-800 font-mono">{a}</span>)}</div></div>
+            <div className="space-y-2">{data.effective_permissions.map((p: any) => (
+              <div key={p.resource} className="flex items-center gap-2"><span className="font-mono text-sm flex-1">{p.resource}</span><div className="flex gap-1">{p.actions.map((a: any) => <span key={a} className="px-1.5 py-0.5 rounded text-xs bg-gray-100 dark:bg-gray-800 font-mono">{a}</span>)}</div></div>
             ))}{data.effective_permissions.length === 0 && <p className="text-xs text-gray-400">{t("backend3.accessGraph.none")}</p>}</div>
           </div>
         </>

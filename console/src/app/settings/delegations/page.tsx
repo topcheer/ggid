@@ -62,20 +62,20 @@ export default function DelegationsPage() {
 
   const revoke = async (id: string) => {
     if (!confirm(t("delegations.outgoing.confirmRevoke"))) return;
-    setOutgoing(outgoing.map((d) => d.id === id ? { ...d, status: "revoked" } : d));
+    setOutgoing(outgoing.map((d: any) => d.id === id ? { ...d, status: "revoked" } : d));
     setMsg({ type: "success", text: t("delegations.outgoing.revoked") });
     setTimeout(() => setMsg(null), 3000);
   };
 
   const respond = async (id: string, action: "accept" | "reject") => {
-    setIncoming(incoming.map((d) => d.id === id ? { ...d, status: action === "accept" ? "active" : "revoked" } : d));
+    setIncoming(incoming.map((d: any) => d.id === id ? { ...d, status: action === "accept" ? "active" : "revoked" } : d));
     setMsg({ type: "success", text: action === "accept" ? t("delegations.incoming.accepted") : t("delegations.incoming.rejected") });
     setTimeout(() => setMsg(null), 3000);
   };
 
   const tabs: { id: TabId; label: string; icon: typeof UserCheck; count?: number }[] = [
-    { id: "outgoing", label: t("delegations.tabs.outgoing"), icon: ArrowRightLeft, count: outgoing.filter((d) => d.status === "active").length },
-    { id: "incoming", label: t("delegations.tabs.incoming"), icon: UserCheck, count: incoming.filter((d) => d.status === "pending").length },
+    { id: "outgoing", label: t("delegations.tabs.outgoing"), icon: ArrowRightLeft, count: outgoing.filter((d: any) => d.status === "active").length },
+    { id: "incoming", label: t("delegations.tabs.incoming"), icon: UserCheck, count: incoming.filter((d: any) => d.status === "pending").length },
     { id: "create", label: t("delegations.tabs.create"), icon: Plus },
   ];
 
@@ -161,7 +161,7 @@ function DelegationTable({ delegations, type, onRevoke, onRespond }: {
             </tr>
           </thead>
           <tbody>
-            {delegations.map((d) => {
+            {delegations.map((d: any) => {
               const user = type === "outgoing" ? d.delegate : d.delegator;
               return (
                 <tr key={d.id} className="border-b border-gray-100 dark:border-gray-800/50">
@@ -175,7 +175,7 @@ function DelegationTable({ delegations, type, onRevoke, onRespond }: {
                   </td>
                   <td className="py-3 px-4">
                     <div className="flex flex-wrap gap-1">
-                      {d.scopes.map((s) => (
+                      {d.scopes.map((s: any) => (
                         <span key={s} className="px-1.5 py-0.5 text-xs bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 rounded">{s}</span>
                       ))}
                     </div>
@@ -268,7 +268,7 @@ function CreateDelegation({ onCreated }: { onCreated: () => void }) {
         <label className="block text-sm font-medium text-gray-900 dark:text-white mb-1">{t("delegations.create.scopes")}</label>
         <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">{t("delegations.create.scopesDesc")}</p>
         <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-          {SCOPES.map((s) => {
+          {SCOPES.map((s: any) => {
             const checked = selectedScopes.has(s.value);
             return (
               <button key={s.value} onClick={() => toggleScope(s.value)}
@@ -289,7 +289,7 @@ function CreateDelegation({ onCreated }: { onCreated: () => void }) {
         <label className="block text-sm font-medium text-gray-900 dark:text-white mb-1">{t("delegations.create.expiry")}</label>
         <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">{t("delegations.create.expiryDesc")}</p>
         <div className="flex flex-wrap gap-2">
-          {(["7d", "30d", "90d", "custom"] as const).map((dur) => (
+          {(["7d", "30d", "90d", "custom"] as const).map((dur: any) => (
             <button key={dur} onClick={() => setDuration(dur)}
               className={`px-3 py-1.5 rounded-lg text-sm font-medium border-2 transition-all ${
                 duration === dur ? "border-blue-500 bg-blue-50 dark:bg-blue-950/30 text-blue-700 dark:text-blue-300" : "border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400"

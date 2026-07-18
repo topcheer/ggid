@@ -111,7 +111,7 @@ export default function ApiKeysPage() {
     setCreating(true);
     setError(null);
     try {
-      const expiryDays = EXPIRY_OPTIONS.find((e) => e.value === keyExpiry)?.days ?? 30;
+      const expiryDays = EXPIRY_OPTIONS.find((e: any) => e.value === keyExpiry)?.days ?? 30;
       const body: Record<string, unknown> = {
         name: keyName,
         scopes: [...keyScopes],
@@ -167,10 +167,10 @@ export default function ApiKeysPage() {
     if (!confirm(t("apiKeys.confirmRevoke"))) return;
     try {
       await apiFetch(`/api/v1/api-keys/${keyId}`, { method: "DELETE" });
-      setKeys((prev) => prev.filter((k) => k.id !== keyId));
+      setKeys((prev) => prev.filter((k: any) => k.id !== keyId));
       showMessage(t("apiKeys.keyRevoked"));
     } catch {
-      setKeys((prev) => prev.filter((k) => k.id !== keyId));
+      setKeys((prev) => prev.filter((k: any) => k.id !== keyId));
       showMessage(t("apiKeys.keyRevoked"));
     }
   };
@@ -260,7 +260,7 @@ export default function ApiKeysPage() {
             <div>
               <label className="mb-2 block text-xs font-medium text-gray-500">{t("common.scopes")}</label>
               <div className="flex flex-wrap gap-2">
-                {SCOPE_OPTIONS.map((scope) => (
+                {SCOPE_OPTIONS.map((scope: any) => (
                   <button
                     key={scope.value}
                     onClick={() => toggleScope(scope.value)}
@@ -279,7 +279,7 @@ export default function ApiKeysPage() {
             <div>
               <label className="mb-2 block text-xs font-medium text-gray-500">{t("apiKeys.expiration")}</label>
               <div className="flex flex-wrap gap-2">
-                {EXPIRY_OPTIONS.map((opt) => (
+                {EXPIRY_OPTIONS.map((opt: any) => (
                   <button
                     key={opt.value}
                     onClick={() => setKeyExpiry(opt.value)}
@@ -344,7 +344,7 @@ export default function ApiKeysPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
-              {keys.map((key) => {
+              {keys.map((key: any) => {
                 const expired = isExpired(key.expires_at);
                 return (
                   <tr key={key.id} className="hover:bg-gray-50 dark:hover:bg-gray-900">
@@ -363,7 +363,7 @@ export default function ApiKeysPage() {
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex flex-wrap gap-1">
-                        {(key.scopes || []).map((scope) => (
+                        {(key.scopes || []).map((scope: any) => (
                           <span
                             key={scope}
                             className="rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-600 dark:bg-gray-700 dark:text-gray-300"

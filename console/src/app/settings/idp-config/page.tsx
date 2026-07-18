@@ -122,15 +122,15 @@ export default function IdPConfigPage() {
   };
 
   const handleDelete = (id: string) => {
-    persist(configs.filter((c) => c.id !== id));
+    persist(configs.filter((c: any) => c.id !== id));
   };
 
   const handleToggle = (id: string) => {
-    persist(configs.map((c) => (c.id === id ? { ...c, enabled: !c.enabled } : c)));
+    persist(configs.map((c: any) => (c.id === id ? { ...c, enabled: !c.enabled } : c)));
   };
 
   const handleUpdate = (id: string, field: keyof IdPConfig, value: string | boolean) => {
-    setConfigs(configs.map((c) => (c.id === id ? { ...c, [field]: value } : c)));
+    setConfigs(configs.map((c: any) => (c.id === id ? { ...c, [field]: value } : c)));
   };
 
   const handleSaveAll = () => persist(configs);
@@ -199,7 +199,7 @@ export default function IdPConfigPage() {
         </div>
       ) : (
         <div className="space-y-4">
-          {configs.map((cfg) => (
+          {configs.map((cfg: any) => (
             <div key={cfg.id} className={cardCls}>
               {/* Header row */}
               <div className="flex items-center justify-between">

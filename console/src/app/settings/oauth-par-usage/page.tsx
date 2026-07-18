@@ -28,7 +28,7 @@ export default function OAuthParUsagePage() {
       <div className="bg-gray-900 rounded-xl p-6 mb-6">
         <h2 className="text-sm font-semibold mb-3">{t("oauthParUsage.activeRequests")}</h2>
         <div className="space-y-2">
-          {(data?.active_requests ?? []).map((r) => (
+          {(data?.active_requests ?? []).map((r: any) => (
             <div key={r.request_uri} className="flex items-center gap-3 bg-gray-800 rounded p-3">
               <span className="text-xs font-mono text-blue-400 flex-1">{r.request_uri}</span>
               <span className="text-xs text-gray-400">{r.client}</span>
@@ -43,7 +43,7 @@ export default function OAuthParUsagePage() {
         <div className="bg-gray-900 rounded-xl p-6">
           <h2 className="text-sm font-semibold mb-3">{t("oauthParUsage.perClient")}</h2>
           <div className="space-y-2">
-            {(data?.per_client ?? []).map((c) => (
+            {(data?.per_client ?? []).map((c: any) => (
               <div key={c.client} className="flex items-center gap-2">
                 <span className="text-xs w-32">{c.client}</span>
                 <div className="flex-1 bg-gray-800 rounded-full h-2"><div className="bg-blue-600 h-2 rounded-full" style={{ width: c.pct + "%" }} /></div>
@@ -55,7 +55,7 @@ export default function OAuthParUsagePage() {
         <div className="bg-gray-900 rounded-xl p-6">
           <h2 className="text-sm font-semibold mb-3">{t("oauthParUsage.errorResponses")}</h2>
           <div className="space-y-1">
-            {(data?.errors ?? []).map((e) => (
+            {(data?.errors ?? []).map((e: any) => (
               <div key={e.error} className="flex items-center gap-2 bg-gray-800 rounded p-2 text-xs"><span className="font-mono text-red-400 flex-1">{e.error}</span><span className="text-gray-400">{e.count}</span></div>
             ))}
           </div>

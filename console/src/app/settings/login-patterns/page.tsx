@@ -38,9 +38,9 @@ export default function LoginPatternsPage() {
 
   useEffect(() => { fetchData(); }, [fetchData]);
 
-  const maxHourCount = Math.max(...(data?.time_of_day.map((d) => d.count) || [1]), 1);
+  const maxHourCount = Math.max(...(data?.time_of_day.map((d: any) => d.count) || [1]), 1);
   const totalDevices = data?.device_usage.reduce((s, d) => s + d.count, 0) || 1;
-  const maxFreq = Math.max(...(data?.frequency_trend.map((d) => d.logins) || [1]), 1);
+  const maxFreq = Math.max(...(data?.frequency_trend.map((d: any) => d.logins) || [1]), 1);
   const freqPoints = data?.frequency_trend.map((d: any, i: number) => `${(i / (data.frequency_trend.length - 1 || 1)) * 200},${40 - (d.logins / maxFreq) * 35}`).join(" ") || "";
 
   return (
@@ -68,7 +68,7 @@ export default function LoginPatternsPage() {
             <div className="rounded-lg border dark:border-gray-800 p-4">
               <h3 className="text-sm font-semibold flex items-center gap-2 mb-3"><Clock className="w-4 h-4 text-gray-400" /> Time of Day Distribution</h3>
               <div className="flex items-end gap-1 h-32">
-                {data.time_of_day.map((d) => (
+                {data.time_of_day.map((d: any) => (
                   <div key={d.hour} className="flex-1 flex flex-col items-center gap-1">
                     <div className="w-full bg-blue-500 rounded-t" style={{ height: `${(d.count / maxHourCount) * 100}%` }} title={`${d.count} logins`} />
                     <span className="text-[8px] text-gray-400">{d.hour}</span>

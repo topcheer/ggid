@@ -32,7 +32,7 @@ function TreeNode({ node, depth }: { node: RoleNode; depth: number }) {
         <span className="hidden text-xs text-gray-400 sm:block">{node.permissions.length} perms</span>
       </div>
       {node.description && <p className="text-xs text-gray-400" style={{ paddingLeft: depth * 24 + 48 }}>{node.description}</p>}
-      {open && hasChildren && node.children.map((child) => <TreeNode key={child.id} node={child} depth={depth + 1} />)}
+      {open && hasChildren && node.children.map((child: any) => <TreeNode key={child.id} node={child} depth={depth + 1} />)}
     </div>
   );
 }
@@ -80,7 +80,7 @@ export default function RoleHierarchyPage() {
         <div className={cardCls}><div className="py-12 text-center"><GitBranch className="mx-auto h-12 w-12 text-gray-300" /><p className="mt-4 text-sm text-gray-400">No role hierarchy defined.</p></div></div>
       ) : (
         <div className={cardCls}>
-          {tree.map((node) => <TreeNode key={node.id} node={node} depth={0} />)}
+          {tree.map((node: any) => <TreeNode key={node.id} node={node} depth={0} />)}
         </div>
       )}
     </div>

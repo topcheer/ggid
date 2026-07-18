@@ -27,7 +27,7 @@ export default function TenantIsolationCheckPage() {
           {data?.compliance_status === "passing" ? <ShieldCheck className="w-8 h-8 text-green-400" /> : <AlertTriangle className="w-8 h-8 text-red-400" />}
           <div>
             <h2 className="text-lg font-semibold">{data?.compliance_status === "passing" ? t("tenantIsolationCheck.allPassing") : t("tenantIsolationCheck.issuesDetected")}</h2>
-            <p className="text-sm text-gray-400">{data?.tests?.filter((t) => t.status === "pass").length ?? 0}/{data?.tests?.length ?? 0} tests passed</p>
+            <p className="text-sm text-gray-400">{data?.tests?.filter((t: any) => t.status === "pass").length ?? 0}/{data?.tests?.length ?? 0} tests passed</p>
           </div>
         </div>
       </div>
@@ -36,7 +36,7 @@ export default function TenantIsolationCheckPage() {
       <div className="bg-gray-900 rounded-xl p-6 mb-6">
         <h2 className="text-sm font-semibold mb-4">{t("tenantIsolationCheck.tests")}</h2>
         <div className="space-y-3">
-          {(data?.tests ?? []).map((test) => (
+          {(data?.tests ?? []).map((test: any) => (
             <div key={test.test_name} className="bg-gray-800 rounded-lg p-4">
               <div className="flex items-center gap-3 mb-2">
                 {test.status === "pass" ? <ShieldCheck className="w-4 h-4 text-green-400" /> : <AlertTriangle className="w-4 h-4 text-red-400" />}
@@ -59,7 +59,7 @@ export default function TenantIsolationCheckPage() {
         <div className="bg-gray-900 rounded-xl p-6 mb-6">
           <h2 className="text-sm font-semibold mb-3 flex items-center gap-2"><Bug className="w-4 h-4 text-red-400" /> Cross-Tenant Access Attempts</h2>
           <div className="space-y-1">
-            {data.cross_tenant_access_log.map((log) => (
+            {data.cross_tenant_access_log.map((log: any) => (
               <div key={log.id} className="flex items-center gap-2 bg-gray-800 rounded p-2 text-xs">
                 <span className="text-gray-500">{log.timestamp}</span>
                 <span className="text-gray-300">User {log.user_id}</span>
@@ -77,7 +77,7 @@ export default function TenantIsolationCheckPage() {
         <div className="bg-gray-900 rounded-xl p-6">
           <h2 className="text-sm font-semibold mb-3">{t("tenantIsolationCheck.rlsValidation")}</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            {data.rls_validation.map((r) => (
+            {data.rls_validation.map((r: any) => (
               <div key={r.table} className="bg-gray-800 rounded-lg p-3 flex items-center justify-between">
                 <span className="text-sm font-mono">{r.table}</span>
                 <span className={"text-xs px-2 py-0.5 rounded " + (r.enabled ? "bg-green-900 text-green-300" : "bg-red-900 text-red-300")}>

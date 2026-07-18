@@ -193,7 +193,7 @@ function CreateTenant({ onCreated }: { onCreated: () => void }) {
         <label className="block text-sm font-medium text-gray-900 dark:text-white mb-1">{t("tenants.create.plan")}</label>
         <p className="text-xs text-gray-500 mb-3">{t("tenants.create.planDesc")}</p>
         <div className="grid grid-cols-3 gap-2">
-          {plans.map((p) => {
+          {plans.map((p: any) => {
             const Icon = p.icon;
             const selected = plan === p.id;
             return (

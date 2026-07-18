@@ -104,13 +104,13 @@ export default function UserPreferencesPage() {
               <div>
                 <label className="text-sm font-medium">Locale</label>
                 <select aria-label="prefs" value={prefs.locale} onChange={(e) => setPrefs({ ...prefs, locale: e.target.value })} className="w-full mt-1 px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-800 text-sm">
-                  {locales.map((l) => <option key={l} value={l}>{l}</option>)}
+                  {locales.map((l: any) => <option key={l} value={l}>{l}</option>)}
                 </select>
               </div>
               <div>
                 <label className="text-sm font-medium">Timezone</label>
                 <select aria-label="prefs" value={prefs.timezone} onChange={(e) => setPrefs({ ...prefs, timezone: e.target.value })} className="w-full mt-1 px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-800 text-sm">
-                  {timezones.map((tz) => <option key={tz} value={tz}>{tz}</option>)}
+                  {timezones.map((tz: any) => <option key={tz} value={tz}>{tz}</option>)}
                 </select>
               </div>
               <div>
@@ -128,7 +128,7 @@ export default function UserPreferencesPage() {
           <div className="rounded-lg border dark:border-gray-800 p-4">
             <h3 className="font-semibold mb-3 flex items-center gap-2"><Bell className="w-4 h-4" /> Notification Channels</h3>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-              {(["email", "push", "sms", "webhook"] as const).map((ch) => (
+              {(["email", "push", "sms", "webhook"] as const).map((ch: any) => (
                 <label key={ch} className="flex items-center gap-2 text-sm cursor-pointer">
                   <input aria-label="Prefs" type="checkbox" checked={prefs.notification_channels[ch]} onChange={(e) => setPrefs({ ...prefs, notification_channels: { ...prefs.notification_channels, [ch]: e.target.checked } })} className="rounded" />
                   <span className="capitalize">{ch}</span>

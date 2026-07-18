@@ -9,6 +9,13 @@ import (
 	"github.com/google/uuid"
 )
 
+// ControlStatus represents the compliance state of a single control.
+const (
+	StatusPass = "pass"
+	StatusWarn = "warn"
+	StatusFail = "fail"
+)
+
 // NHIBehaviorBaseline records the normal usage pattern for an NHI per endpoint.
 type NHIBehaviorBaseline struct {
 	NHIID           string    `json:"nhi_id"`
@@ -16,7 +23,7 @@ type NHIBehaviorBaseline struct {
 	AvgCallsPerHour float64   `json:"avg_calls_per_hour"`
 	StdCallsPerHour float64   `json:"std_calls_per_hour"`
 	KnownIPs        []string  `json:"known_ips"`
-	KnownHours      []int     `json:"known_hours"` // 0-23 hours seen before
+	KnownHours      []int     `json:"known_hours"`
 	FirstSeen       time.Time `json:"first_seen"`
 	LastSeen        time.Time `json:"last_seen"`
 	TotalCalls      int64     `json:"total_calls"`
@@ -25,37 +32,29 @@ type NHIBehaviorBaseline struct {
 // NHIRiskScore represents the evaluated risk for an NHI.
 type NHIRiskScore struct {
 	NHIID       uuid.UUID      `json:"nhi_id"`
-	Score       int            `json:"score"`        // 0-100
-	Level       string         `json:"level"`         // low/medium/high/critical
-	Signals     map[string]any `json:"signals"`       // detected anomaly signals
+	Score       int            `json:"score"`
+	Level       string         `json:"level"`
+	Signals     map[string]any `json:"signals"`
 	EvaluatedAt time.Time      `json:"evaluated_at"`
 }
 
 // NHIRiskEngine evaluates NHI behavior against baselines.
-// Uses PG-backed repo when configured (pool != nil), falls back to
-// in-memory maps when no DB is available (tests/dev).
+// Uses PG-backed repos for persistence. Falls back to in-memory when PG unavailable.
 type NHIRiskEngine struct {
 	mu        sync.RWMutex
-	baselines map[string][]*NHIBehaviorBaseline // nhi_id → baselines
-	scores    map[uuid.UUID]*NHIRiskScore       // nhi_id → latest score
-	pgRepo    *NHIRiskPGRepo                     // PG persistence (nil = in-memory)
+	baselines map[string][]*NHIBehaviorBaseline
+	scores    map[uuid.UUID]*NHIRiskScore
+	pgRepo    *NHIRiskPGRepo
 }
 
 func NewNHIRiskEngine() *NHIRiskEngine {
-	return &NHIRiskEngine{}
-}
-
-// ensureMaps lazily initializes in-memory maps on first use.
-func (e *NHIRiskEngine) ensureMaps() {
-	if e.baselines == nil {
-		e.baselines = make(map[string][]*NHIBehaviorBaseline)
-	}
-	if e.scores == nil {
-		e.scores = make(map[uuid.UUID]*NHIRiskScore)
+	return &NHIRiskEngine{
+		baselines: make(map[string][]*NHIBehaviorBaseline),
+		scores:    make(map[uuid.UUID]*NHIRiskScore),
 	}
 }
 
-// SetPGRepo wires a PostgreSQL-backed repo for persistent storage.
+// SetPGRepo wires a PostgreSQL-backed repo.
 func (e *NHIRiskEngine) SetPGRepo(repo *NHIRiskPGRepo) {
 	e.pgRepo = repo
 }
@@ -69,34 +68,9 @@ func (e *NHIRiskEngine) EnsureSchema(ctx context.Context) error {
 }
 
 // RecordBaseline adds or updates a behavior baseline entry for an NHI.
+// Persists via PG repo (in-memory fallback when pool is nil).
 func (e *NHIRiskEngine) RecordBaseline(nhiID, endpoint string, callsPerHour float64, ip string, hour int) {
-	e.mu.Lock()
-	e.ensureMaps()
-	defer e.mu.Unlock()
-
-	// Find or create baseline for this endpoint.
-	for _, b := range e.baselines[nhiID] {
-		if b.Endpoint == endpoint {
-			b.TotalCalls++
-			b.AvgCallsPerHour = (b.AvgCallsPerHour*float64(b.TotalCalls-1) + callsPerHour) / float64(b.TotalCalls)
-			b.LastSeen = time.Now()
-			// Add IP if new.
-			if !containsStrSlice(b.KnownIPs, ip) {
-				b.KnownIPs = append(b.KnownIPs, ip)
-			}
-			// Add hour if new.
-			if !containsIntSlice(b.KnownHours, hour) {
-				b.KnownHours = append(b.KnownHours, hour)
-			}
-			return
-		}
-	}
-
-	// New baseline.
-	if e.baselines[nhiID] == nil {
-		e.baselines[nhiID] = []*NHIBehaviorBaseline{}
-	}
-	e.baselines[nhiID] = append(e.baselines[nhiID], &NHIBehaviorBaseline{
+	b := &NHIBehaviorBaseline{
 		NHIID:           nhiID,
 		Endpoint:        endpoint,
 		AvgCallsPerHour: callsPerHour,
@@ -105,64 +79,76 @@ func (e *NHIRiskEngine) RecordBaseline(nhiID, endpoint string, callsPerHour floa
 		FirstSeen:       time.Now(),
 		LastSeen:        time.Now(),
 		TotalCalls:      1,
-	})
-
-	// Persist new baseline to PG.
+	}
 	if e.pgRepo != nil {
-		rec := e.baselines[nhiID][len(e.baselines[nhiID])-1]
-		_ = e.pgRepo.SaveBaseline(context.Background(), rec)
+		_ = e.pgRepo.SaveBaseline(context.Background(), b)
 	}
 }
 
 // RiskSignals represents detected anomalies for an evaluation.
 type RiskSignals struct {
-	FrequencySpike   bool    `json:"frequency_spike"`
-	NewEndpoint      bool    `json:"new_endpoint"`
-	OffHoursAccess   bool    `json:"off_hours_access"`
-	NewIP            bool    `json:"new_ip"`
-	SpikeRatio       float64 `json:"spike_ratio,omitempty"`
+	FrequencySpike     bool    `json:"frequency_spike"`
+	NewEndpoint        bool    `json:"new_endpoint"`
+	OffHoursAccess     bool    `json:"off_hours_access"`
+	NewIP              bool    `json:"new_ip"`
+	SpikeRatio         float64 `json:"spike_ratio,omitempty"`
 	UnexpectedEndpoint string  `json:"unexpected_endpoint,omitempty"`
-	OffHour          int     `json:"off_hour,omitempty"`
-	UnexpectedIP     string  `json:"unexpected_ip,omitempty"`
+	OffHour            int     `json:"off_hour,omitempty"`
+	UnexpectedIP       string  `json:"unexpected_ip,omitempty"`
 }
 
-// EvaluateRisk computes a risk score (0-100) for an NHI based on current
-// activity compared to established baselines.
+// CurrentActivity represents the current activity being evaluated.
+type CurrentActivity struct {
+	NHIID        string  `json:"nhi_id"`
+	Endpoint     string  `json:"endpoint"`
+	CallsPerHour float64 `json:"calls_per_hour"`
+	IP           string  `json:"ip"`
+	Hour         int     `json:"hour"`
+}
+
+// EvaluateRisk computes a risk score (0-100) for an NHI.
 func (e *NHIRiskEngine) EvaluateRisk(nhiID uuid.UUID, currentActivity CurrentActivity) *NHIRiskScore {
-	e.mu.RLock()
-	baselines := e.baselines[currentActivity.NHIID]
-	e.mu.RUnlock()
+	var baselines []*NHIBehaviorBaseline
+	if e.pgRepo != nil {
+		baselines, _ = e.pgRepo.GetBaselines(context.Background(), currentActivity.NHIID)
+	}
+	// Fall back to in-memory if PG returned nothing (nil pool, error, etc.).
+	if len(baselines) == 0 {
+		e.mu.RLock()
+		baselines = e.baselines[currentActivity.NHIID]
+		e.mu.RUnlock()
+	}
 
 	signals := RiskSignals{}
 	score := 0
 
-	// If no baseline exists, this is a new NHI — moderate risk.
+	// No baseline → moderate risk.
 	if len(baselines) == 0 {
-		return &NHIRiskScore{
+		result := &NHIRiskScore{
 			NHIID:       nhiID,
 			Score:       20,
 			Level:       riskLevel(20),
 			Signals:     map[string]any{"no_baseline": true, "message": "new NHI with no behavior baseline"},
 			EvaluatedAt: time.Now(),
 		}
+		e.persistScore(result)
+		return result
 	}
 
-	// 1. Frequency spike detection.
+	// 1. Frequency spike.
 	for _, b := range baselines {
-		if b.Endpoint == currentActivity.Endpoint {
-			if b.AvgCallsPerHour > 0 {
-				ratio := currentActivity.CallsPerHour / b.AvgCallsPerHour
-				if ratio > 5 {
-					signals.FrequencySpike = true
+		if b.Endpoint == currentActivity.Endpoint && b.AvgCallsPerHour > 0 {
+			ratio := currentActivity.CallsPerHour / b.AvgCallsPerHour
+			if ratio > 5 {
+				signals.FrequencySpike = true
 				signals.SpikeRatio = ratio
-					score += 30
-				}
+				score += 30
 			}
 			break
 		}
 	}
 
-	// 2. New endpoint detection.
+	// 2. New endpoint.
 	endpointKnown := false
 	for _, b := range baselines {
 		if b.Endpoint == currentActivity.Endpoint {
@@ -176,7 +162,7 @@ func (e *NHIRiskEngine) EvaluateRisk(nhiID uuid.UUID, currentActivity CurrentAct
 		score += 25
 	}
 
-	// 3. Off-hours access detection.
+	// 3. Off-hours.
 	hourKnown := false
 	for _, b := range baselines {
 		for _, h := range b.KnownHours {
@@ -195,7 +181,7 @@ func (e *NHIRiskEngine) EvaluateRisk(nhiID uuid.UUID, currentActivity CurrentAct
 		score += 20
 	}
 
-	// 4. New IP detection.
+	// 4. New IP.
 	ipKnown := false
 	for _, b := range baselines {
 		for _, ip := range b.KnownIPs {
@@ -230,44 +216,44 @@ func (e *NHIRiskEngine) EvaluateRisk(nhiID uuid.UUID, currentActivity CurrentAct
 		EvaluatedAt: time.Now(),
 	}
 
-	e.mu.Lock()
-	e.ensureMaps()
-	e.scores[nhiID] = result
-	e.mu.Unlock()
-
-	// Persist to PG if configured.
-	if e.pgRepo != nil {
-		_ = e.pgRepo.SaveRiskScore(context.Background(), result)
-	}
-
+	e.persistScore(result)
 	return result
 }
 
-// GetRiskScore returns the latest risk score for an NHI.
-// Tries PG first, falls back to in-memory.
+func (e *NHIRiskEngine) persistScore(result *NHIRiskScore) {
+	// Always save to in-memory.
+	e.mu.Lock()
+	e.scores[result.NHIID] = result
+	e.mu.Unlock()
+	// Also persist to PG if configured.
+	if e.pgRepo != nil {
+		_ = e.pgRepo.SaveRiskScore(context.Background(), result)
+	}
+}
+
+// GetRiskScore returns the latest risk score from PG.
 func (e *NHIRiskEngine) GetRiskScore(nhiID uuid.UUID) *NHIRiskScore {
 	if e.pgRepo != nil {
 		if score, err := e.pgRepo.GetRiskScore(context.Background(), nhiID); err == nil && score != nil {
 			return score
 		}
 	}
+	// Fall back to in-memory.
 	e.mu.RLock()
 	defer e.mu.RUnlock()
 	return e.scores[nhiID]
 }
 
-// ListHighRisk returns all NHIs with score >= threshold.
-// Queries PG if configured, otherwise scans in-memory.
+// ListHighRisk returns all NHIs with score >= threshold from PG or in-memory.
 func (e *NHIRiskEngine) ListHighRisk(threshold int) []*NHIRiskScore {
 	if e.pgRepo != nil {
 		if high, err := e.pgRepo.ListHighRisk(context.Background(), threshold); err == nil && high != nil {
 			return high
 		}
-		// PG returned nil/error — fall through to in-memory.
 	}
+	// Fall back to in-memory.
 	e.mu.RLock()
 	defer e.mu.RUnlock()
-
 	var high []*NHIRiskScore
 	for _, s := range e.scores {
 		if s.Score >= threshold {
@@ -277,16 +263,6 @@ func (e *NHIRiskEngine) ListHighRisk(threshold int) []*NHIRiskScore {
 	return high
 }
 
-// CurrentActivity represents the current activity being evaluated.
-type CurrentActivity struct {
-	NHIID         string  `json:"nhi_id"`
-	Endpoint      string  `json:"endpoint"`
-	CallsPerHour  float64 `json:"calls_per_hour"`
-	IP            string  `json:"ip"`
-	Hour          int     `json:"hour"` // 0-23
-}
-
-// riskLevel converts a numeric score to a risk level.
 func riskLevel(score int) string {
 	switch {
 	case score >= 70:

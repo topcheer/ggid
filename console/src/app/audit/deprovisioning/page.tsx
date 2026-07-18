@@ -47,7 +47,7 @@ export default function DeprovisioningPage() {
   const [searchResults, setSearchResults] = useState<{ id: string; name: string; email: string }[]>([]);
   const [selectedUser, setSelectedUser] = useState<{ id: string; name: string; email: string } | null>(null);
   const [checklist, setChecklist] = useState<Record<string, boolean>>(
-    Object.fromEntries(CHECKLIST.map((c) => [c.key, c.default]))
+    Object.fromEntries(CHECKLIST.map((c: any) => [c.key, c.default]))
   );
   const [reason, setReason] = useState("");
   const [transferTarget, setTransferTarget] = useState("");
@@ -136,7 +136,7 @@ export default function DeprovisioningPage() {
           { key: "search", label: "Find User", icon: Search },
           { key: "confirm", label: "Confirm Actions", icon: ClipboardList },
           { key: "result", label: "Result", icon: Check },
-        ].map((s, i) => {
+        ].map((s: any, i: any) => {
           const Icon = s.icon;
           const active = step === s.key;
           const done = ["search", "confirm", "result"].indexOf(step) > i;
@@ -160,7 +160,7 @@ export default function DeprovisioningPage() {
           </div>
           {searchResults.length > 0 && (
             <div className="mt-4 space-y-2">
-              {searchResults.map((u) => (
+              {searchResults.map((u: any) => (
                 <button key={u.id} onClick={() => { setSelectedUser(u); setStep("confirm"); }} className="flex w-full items-center justify-between rounded-lg border border-gray-200 p-3 text-left hover:border-indigo-300 hover:bg-indigo-50/50 dark:border-gray-700 dark:hover:bg-indigo-900/10">
                   <div>
                     <p className="font-medium text-gray-800 dark:text-gray-200">{u.name}</p>
@@ -186,7 +186,7 @@ export default function DeprovisioningPage() {
           </div>
           <h3 className="mb-3 text-sm font-semibold uppercase text-gray-500">Actions Checklist</h3>
           <div className="space-y-2">
-            {CHECKLIST.map((c) => (
+            {CHECKLIST.map((c: any) => (
               <label key={c.key} className="flex items-center gap-3 rounded-lg border border-gray-200 p-3 dark:border-gray-700">
                 <input aria-label="Checklist" type="checkbox" checked={checklist[c.key]} onChange={(e) => setChecklist((p) => ({ ...p, [c.key]: e.target.checked }))} className="h-4 w-4 rounded border-gray-300 text-indigo-600" />
                 <span className="text-sm text-gray-700 dark:text-gray-300">{c.label}</span>
@@ -226,7 +226,7 @@ export default function DeprovisioningPage() {
           <div className={cardCls}>
             <h3 className="mb-3 text-sm font-semibold uppercase text-gray-500">Action Results</h3>
             <div className="space-y-2">
-              {result.actions.map((a, i) => (
+              {result.actions.map((a: any, i: any) => (
                 <div key={i} className="flex items-center justify-between rounded-lg border border-gray-200 p-3 dark:border-gray-700">
                   <span className="text-sm text-gray-700 dark:text-gray-300">{a.name}</span>
                   <div className="flex items-center gap-2">
@@ -247,7 +247,7 @@ export default function DeprovisioningPage() {
         <button onClick={loadHistory} className="mb-3 text-xs text-indigo-600 hover:underline">Load history</button>
         {history.length > 0 && (
           <div className="space-y-2">
-            {history.map((h) => (
+            {history.map((h: any) => (
               <div key={h.id} className={`${cardCls} flex items-center justify-between py-3`}>
                 <div>
                   <span className="font-medium text-gray-800 dark:text-gray-200">{h.user_name}</span>

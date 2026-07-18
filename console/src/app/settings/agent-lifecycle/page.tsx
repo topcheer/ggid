@@ -38,7 +38,7 @@ export default function AgentLifecyclePage() {
         <div className="bg-gray-900 rounded-xl p-4">
           <Activity className="w-5 h-5 text-green-400 mb-1" />
           <p className="text-xs text-gray-400">Active Agents</p>
-          <p className="text-xl font-bold text-green-400">{data?.registered_agents?.filter((a) => a.status === "active").length ?? 0}</p>
+          <p className="text-xl font-bold text-green-400">{data?.registered_agents?.filter((a: any) => a.status === "active").length ?? 0}</p>
         </div>
         <div className="bg-gray-900 rounded-xl p-4">
           <AlertTriangle className="w-5 h-5 text-red-400 mb-1" />
@@ -48,7 +48,7 @@ export default function AgentLifecyclePage() {
         <div className="bg-gray-900 rounded-xl p-4">
           <RotateCw className="w-5 h-5 text-yellow-400 mb-1" />
           <p className="text-xs text-gray-400">Rotation Due</p>
-          <p className="text-xl font-bold text-yellow-400">{data?.registered_agents?.filter((a) => a.rotation_due).length ?? 0}</p>
+          <p className="text-xl font-bold text-yellow-400">{data?.registered_agents?.filter((a: any) => a.rotation_due).length ?? 0}</p>
         </div>
       </div>
 
@@ -69,7 +69,7 @@ export default function AgentLifecyclePage() {
               </tr>
             </thead>
             <tbody>
-              {(data?.registered_agents ?? []).map((a) => (
+              {(data?.registered_agents ?? []).map((a: any) => (
                 <tr key={a.agent_id} className="border-b border-gray-800">
                   <td className="py-3 pr-3">
                     <div className="flex items-center gap-2">
@@ -98,7 +98,7 @@ export default function AgentLifecyclePage() {
                   </td>
                   <td className="py-3 pr-3">
                     <div className="flex flex-wrap gap-0.5">
-                      {a.permissions.slice(0, 3).map((p) => (
+                      {a.permissions.slice(0, 3).map((p: any) => (
                         <span key={p} className="text-xs px-1 py-0.5 bg-gray-800 rounded">{p}</span>
                       ))}
                       {a.permissions.length > 3 && <span className="text-xs text-gray-500">+{a.permissions.length - 3}</span>}

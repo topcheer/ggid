@@ -2591,5 +2591,37 @@
       "downloadReport": "Download Report",
       "newImport": "Start New Import"
     }
+  },
+  "brandingConfig": {
+    "title": "Branding & Customization",
+    "description": "Customize the Console appearance for your organization",
+    "appName": "Application Name",
+    "appNameDesc": "Displayed in sidebar and browser title",
+    "appNamePlaceholder": "GGID",
+    "logo": "Logo",
+    "logoDesc": "Upload SVG or PNG (max 200KB)",
+    "logoUpload": "Click to upload or drag & drop",
+    "logoPreview": "Preview",
+    "colors": "Color Theme",
+    "colorsDesc": "Primary brand colors used throughout the Console",
+    "primaryColor": "Primary Color",
+    "secondaryColor": "Secondary Color",
+    "accentColor": "Accent Color",
+    "loginSubtitle": "Login Page Subtitle",
+    "loginSubtitleDesc": "Shown below the app name on login page",
+    "loginSubtitlePlaceholder": "Sign in to your account",
+    "footerText": "Footer Text",
+    "footerTextDesc": "Displayed at the bottom of the Console",
+    "footerPlaceholder": "Powered by GGID",
+    "reset": "Reset to Defaults",
+    "save": "Save Branding",
+    "saved": "Branding saved successfully",
+    "preview": "Live Preview",
+    "demo": "DEMO",
+    "presets": "Color Presets",
+    "presetBlue": "Ocean Blue",
+    "presetGreen": "Forest Green",
+    "presetPurple": "Royal Purple",
+    "presetOrange": "Sunset Orange"
   }
 }

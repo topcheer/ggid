@@ -38,7 +38,7 @@ export default function AuthPasswordlessConfigPage() {
       <div className="bg-gray-900 rounded-xl p-6 mb-6">
         <h2 className="text-lg font-semibold mb-4">Enabled Methods</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-          {(data?.enabled_methods ?? []).map((m) => (
+          {(data?.enabled_methods ?? []).map((m: any) => (
             <div key={m.method} className="bg-gray-800 rounded-lg p-4 flex items-center gap-3">
               <div className={"w-10 h-10 rounded-lg flex items-center justify-center " + (
                 m.enabled ? "bg-green-900 text-green-300" : "bg-gray-700 text-gray-500"
@@ -107,7 +107,7 @@ export default function AuthPasswordlessConfigPage() {
               </tr>
             </thead>
             <tbody>
-              {(data?.per_role_requirement ?? []).map((req) => (
+              {(data?.per_role_requirement ?? []).map((req: any) => (
                 <tr key={req.role} className="border-b border-gray-800">
                   <td className="py-3 pr-4 font-medium">{req.role}</td>
                   <td className="py-3 pr-4">

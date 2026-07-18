@@ -48,11 +48,11 @@ export default function SoDViolationsPage() {
 
   useEffect(() => { load(); }, [load]);
 
-  const filtered = severityFilter === "all" ? violations : violations.filter((v) => v.severity === severityFilter);
+  const filtered = severityFilter === "all" ? violations : violations.filter((v: any) => v.severity === severityFilter);
   const counts = {
-    critical: violations.filter((v) => v.severity === "critical").length,
-    high: violations.filter((v) => v.severity === "high").length,
-    medium: violations.filter((v) => v.severity === "medium").length,
+    critical: violations.filter((v: any) => v.severity === "critical").length,
+    high: violations.filter((v: any) => v.severity === "high").length,
+    medium: violations.filter((v: any) => v.severity === "medium").length,
   };
 
   const handleExport = async () => {
@@ -99,7 +99,7 @@ export default function SoDViolationsPage() {
 
       {/* Severity summary */}
       <div className="grid grid-cols-3 gap-4">
-        {(["critical", "high", "medium"] as const).map((sev) => {
+        {(["critical", "high", "medium"] as const).map((sev: any) => {
           const cfg = SEV_CONFIG[sev];
           const Icon = cfg.icon;
           return (
@@ -126,13 +126,13 @@ export default function SoDViolationsPage() {
               <th scope="col" className="px-4 py-3">User</th><th className="px-4 py-3">Conflicting Roles</th><th className="px-4 py-3">Rule</th><th className="px-4 py-3">Severity</th><th className="px-4 py-3">Detected</th>
             </tr></thead>
             <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
-              {filtered.map((v) => {
+              {filtered.map((v: any) => {
                 const cfg = SEV_CONFIG[v.severity];
                 const SevIcon = cfg.icon;
                 return (
                   <tr key={v.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/50">
                     <td className="px-4 py-3 font-medium text-gray-800 dark:text-gray-200">{v.user_name}</td>
-                    <td className="px-4 py-3"><div className="flex flex-wrap gap-1">{v.conflicting_roles.map((r) => <span key={r} className="rounded bg-red-100 px-1.5 py-0.5 text-xs text-red-700 dark:bg-red-900/30 dark:text-red-400">{r}</span>)}</div></td>
+                    <td className="px-4 py-3"><div className="flex flex-wrap gap-1">{v.conflicting_roles.map((r: any) => <span key={r} className="rounded bg-red-100 px-1.5 py-0.5 text-xs text-red-700 dark:bg-red-900/30 dark:text-red-400">{r}</span>)}</div></td>
                     <td className="px-4 py-3 text-gray-500">{v.rule_description}</td>
                     <td className="px-4 py-3"><span className={`flex items-center gap-1 rounded-full ${cfg.bg} px-2 py-0.5 text-xs font-medium ${cfg.color}`}><SevIcon className="h-3 w-3" />{v.severity}</span></td>
                     <td className="px-4 py-3 text-gray-400">{new Date(v.detected_at).toLocaleString()}</td>
@@ -147,7 +147,7 @@ export default function SoDViolationsPage() {
       {/* Mobile cards */}
       {!loading && filtered.length > 0 && (
         <div className="space-y-3 md:hidden">
-          {filtered.map((v) => {
+          {filtered.map((v: any) => {
             const cfg = SEV_CONFIG[v.severity];
             return (
               <div key={v.id} className={cardCls}>
@@ -155,7 +155,7 @@ export default function SoDViolationsPage() {
                   <span className="font-medium text-gray-800 dark:text-gray-200">{v.user_name}</span>
                   <span className={`rounded-full ${cfg.bg} px-2 py-0.5 text-xs font-medium ${cfg.color}`}>{v.severity}</span>
                 </div>
-                <div className="mt-1 flex flex-wrap gap-1">{v.conflicting_roles.map((r) => <span key={r} className="rounded bg-red-100 px-1.5 py-0.5 text-xs text-red-700 dark:bg-red-900/30 dark:text-red-400">{r}</span>)}</div>
+                <div className="mt-1 flex flex-wrap gap-1">{v.conflicting_roles.map((r: any) => <span key={r} className="rounded bg-red-100 px-1.5 py-0.5 text-xs text-red-700 dark:bg-red-900/30 dark:text-red-400">{r}</span>)}</div>
                 <p className="mt-1 text-xs text-gray-400">{v.rule_description}</p>
                 <p className="mt-1 text-xs text-gray-400">Detected: {new Date(v.detected_at).toLocaleString()}</p>
               </div>

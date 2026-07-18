@@ -13,7 +13,7 @@ export default function PolicyEvalTimelinePage() {
   if (loading) return <div className="p-8 text-gray-400">Loading policy eval timeline...</div>;
   if (error) return <div className="p-8 text-red-400">Error: {error}</div>;
 
-  const evalData = data?.evaluations?.find((e) => e.policy === selectedPolicy) ?? data?.evaluations?.[0];
+  const evalData = data?.evaluations?.find((e: any) => e.policy === selectedPolicy) ?? data?.evaluations?.[0];
 
   return (
     <div className="min-h-screen bg-gray-950 text-white p-8">
@@ -28,7 +28,7 @@ export default function PolicyEvalTimelinePage() {
       {/* Policy Selector */}
       <div className="mb-6">
         <select aria-label="Selected policy" value={selectedPolicy} onChange={(e) => setSelectedPolicy(e.target.value)} className="px-3 py-2 bg-gray-800 rounded-lg text-sm">
-          {(data?.evaluations ?? []).map((e) => <option key={e.policy} value={e.policy}>{e.policy}</option>)}
+          {(data?.evaluations ?? []).map((e: any) => <option key={e.policy} value={e.policy}>{e.policy}</option>)}
         </select>
       </div>
 

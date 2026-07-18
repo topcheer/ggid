@@ -89,8 +89,8 @@ export default function TokenClaimsPage() {
     }
   }, [token]);
 
-  const standardClaims = decoded ? ["iss", "sub", "aud", "exp", "iat", "scope"].filter((k) => k in decoded.payload) : [];
-  const customClaims = decoded ? Object.keys(decoded.payload).filter((k) => !["iss", "sub", "aud", "exp", "iat", "scope"].includes(k)) : [];
+  const standardClaims = decoded ? ["iss", "sub", "aud", "exp", "iat", "scope"].filter((k: any) => k in decoded.payload) : [];
+  const customClaims = decoded ? Object.keys(decoded.payload).filter((k: any) => !["iss", "sub", "aud", "exp", "iat", "scope"].includes(k)) : [];
   const expDate = decoded?.payload.exp ? new Date(decoded.payload.exp * 1000).toLocaleString() : "";
 
   return (
@@ -121,7 +121,7 @@ export default function TokenClaimsPage() {
           <div className="rounded-lg border dark:border-gray-800 p-4">
             <h3 className="font-semibold mb-3">Standard Claims</h3>
             <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-              {standardClaims.map((key) => (
+              {standardClaims.map((key: any) => (
                 <div key={key} className="rounded-lg bg-gray-50 dark:bg-gray-900/50 p-3">
                   <span className="text-xs text-gray-400 font-mono">{key}</span>
                   <p className="text-sm font-medium mt-0.5 break-all">
@@ -159,7 +159,7 @@ export default function TokenClaimsPage() {
             <div className="rounded-lg border dark:border-gray-800 p-4">
               <h3 className="font-semibold mb-3">Custom Claims ({customClaims.length})</h3>
               <div className="space-y-1">
-                {customClaims.map((key) => (
+                {customClaims.map((key: any) => (
                   <div key={key} className="flex items-start gap-2 text-sm">
                     <span className="font-mono text-gray-400">{key}:</span>
                     <span className="font-mono text-green-600">{JSON.stringify(decoded.payload[key])}</span>

@@ -35,7 +35,7 @@ export default function AccessRequestApprovalWorkflowPage() {
             Pending Requests ({data?.pending_requests?.length ?? 0})
           </h2>
 
-          {(data?.pending_requests ?? []).map((req) => {
+          {(data?.pending_requests ?? []).map((req: any) => {
             const slaExpired = req.sla_remaining_hours <= 0;
             const slaWarning = req.sla_remaining_hours <= 4 && !slaExpired;
             return (

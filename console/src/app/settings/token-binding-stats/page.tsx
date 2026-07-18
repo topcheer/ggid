@@ -60,7 +60,7 @@ export default function TokenBindingStatsPage() {
 
             <div className="rounded-lg border dark:border-gray-800 p-4">
               <h3 className="text-sm font-semibold mb-3">{t("tokenBindingStats.bindingMethods")}</h3>
-              <div className="space-y-2">{data.binding_methods.map((m) => (
+              <div className="space-y-2">{data.binding_methods.map((m: any) => (
                 <div key={m.method} className="flex items-center gap-2"><span className="w-3 h-3 rounded" style={{ background: methodColors[m.method] || "#ccc" }} /><span className="text-sm flex-1 font-mono">{m.method}</span><span className="font-bold text-sm">{m.count}</span><span className="text-xs text-gray-400">({((m.count / totalMethods) * 100).toFixed(0)}%)</span></div>
               ))}</div>
             </div>
@@ -68,7 +68,7 @@ export default function TokenBindingStatsPage() {
 
           <div className="overflow-x-auto rounded-lg border dark:border-gray-800">
             <table className="w-full text-sm"><thead className="bg-gray-50 dark:bg-gray-900/50"><tr><th className="px-4 py-3 text-left font-medium">{t("tokenBindingStats.client")}</th><th className="px-4 py-3 text-left font-medium">{t("tokenBindingStats.bound")}</th><th className="px-4 py-3 text-left font-medium">{t("tokenBindingStats.unbound")}</th><th className="px-4 py-3 text-left font-medium">{t("tokenBindingStats.method")}</th></tr></thead>
-              <tbody className="divide-y dark:divide-gray-800">{data.by_client.map((c) => (<tr key={c.client_id} className="hover:bg-gray-50 dark:hover:bg-gray-900/30"><td className="px-4 py-3"><span className="font-medium">{c.client_name}</span><p className="text-xs text-gray-400 font-mono">{c.client_id}</p></td><td className="px-4 py-3 font-bold text-green-600">{c.bound}</td><td className="px-4 py-3 font-bold text-red-600">{c.unbound}</td><td className="px-4 py-3"><span className="px-2 py-0.5 rounded text-xs font-mono" style={{ background: (methodColors[c.method] || "#ccc") + "20", color: methodColors[c.method] || "#ccc" }}>{c.method}</span></td></tr>))}</tbody>
+              <tbody className="divide-y dark:divide-gray-800">{data.by_client.map((c: any) => (<tr key={c.client_id} className="hover:bg-gray-50 dark:hover:bg-gray-900/30"><td className="px-4 py-3"><span className="font-medium">{c.client_name}</span><p className="text-xs text-gray-400 font-mono">{c.client_id}</p></td><td className="px-4 py-3 font-bold text-green-600">{c.bound}</td><td className="px-4 py-3 font-bold text-red-600">{c.unbound}</td><td className="px-4 py-3"><span className="px-2 py-0.5 rounded text-xs font-mono" style={{ background: (methodColors[c.method] || "#ccc") + "20", color: methodColors[c.method] || "#ccc" }}>{c.method}</span></td></tr>))}</tbody>
             </table>
           </div>
         </>

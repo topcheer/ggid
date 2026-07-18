@@ -197,10 +197,10 @@ export default function ConsentPage() {
   const handleRevokeGrant = async (grant: ConsentGrant) => {
     try {
       await apiFetch(`/api/v1/oauth/consent/grants/${grant.id}`, { method: "DELETE" }).catch(() => {});
-      setGrants((prev) => prev.map((g) => (g.id === grant.id ? { ...g, status: "revoked" } : g)));
+      setGrants((prev) => prev.map((g: any) => (g.id === grant.id ? { ...g, status: "revoked" } : g)));
       setRevokeTarget(null);
     } catch {
-      setGrants((prev) => prev.map((g) => (g.id === grant.id ? { ...g, status: "revoked" } : g)));
+      setGrants((prev) => prev.map((g: any) => (g.id === grant.id ? { ...g, status: "revoked" } : g)));
       setRevokeTarget(null);
     }
   };
@@ -254,7 +254,7 @@ export default function ConsentPage() {
           </div>
           {/* Tabs */}
           <div className="mt-4 flex gap-1">
-            {tabs.map((tab) => (
+            {tabs.map((tab: any) => (
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
@@ -333,7 +333,7 @@ export default function ConsentPage() {
                 <p className="py-4 text-center text-sm text-gray-400">No specific scopes requested.</p>
               ) : (
                 <div className="space-y-2">
-                  {scopeList.map((scope) => {
+                  {scopeList.map((scope: any) => {
                     const info = getScopeInfo(scope);
                     const checked = selectedScopes.has(scope);
                     return (
@@ -446,7 +446,7 @@ export default function ConsentPage() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
-                    {grants.map((grant) => (
+                    {grants.map((grant: any) => (
                       <tr key={grant.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50">
                         <td className="px-4 py-3">
                           <div className="flex items-center gap-2">
@@ -458,7 +458,7 @@ export default function ConsentPage() {
                         </td>
                         <td className="px-4 py-3">
                           <div className="flex flex-wrap gap-1">
-                            {grant.scopes.map((s) => (
+                            {grant.scopes.map((s: any) => (
                               <span key={s} className="rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-600 dark:bg-gray-700 dark:text-gray-400">
                                 {s}
                               </span>
@@ -514,7 +514,7 @@ export default function ConsentPage() {
               {[
                 { var: "{{.ClientName}}", desc: "OAuth client name" },
                 { var: "{{.Scopes}}", desc: "Requested scopes" },
-              ].map((v) => (
+              ].map((v: any) => (
                 <button
                   key={v.var}
                   onClick={() => setCustomText(customText + " " + v.var)}

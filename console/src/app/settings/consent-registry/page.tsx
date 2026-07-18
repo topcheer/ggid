@@ -40,7 +40,7 @@ export default function ConsentRegistryPage() {
   }, []);
 
   const toggle = (key: string) => {
-    setConsents((prev) => prev.map((c) => c.key === key ? { ...c, granted: !c.granted, granted_at: !c.granted ? new Date().toISOString() : null } : c));
+    setConsents((prev) => prev.map((c: any) => c.key === key ? { ...c, granted: !c.granted, granted_at: !c.granted ? new Date().toISOString() : null } : c));
   };
 
   const save = async () => {
@@ -67,7 +67,7 @@ export default function ConsentRegistryPage() {
           <div className="rounded-lg border dark:border-gray-800 p-4">
             <h3 className="font-semibold mb-3">{data.username} - Consent Preferences</h3>
             <div className="space-y-3">
-              {consents.map((c) => (
+              {consents.map((c: any) => (
                 <div key={c.key} className="flex items-center justify-between p-3 rounded-lg border dark:border-gray-700">
                   <div><span className="font-medium text-sm">{c.label}</span><p className="text-xs text-gray-400 mt-0.5">{c.granted ? `Granted: ${c.granted_at}` : "Not granted"} · v{c.version}</p></div>
                   <button onClick={() => toggle(c.key)} className={`relative w-12 h-6 rounded-full transition-colors ${c.granted ? "bg-green-500" : "bg-gray-300 dark:bg-gray-700"}`}><span className={`absolute top-0.5 w-5 h-5 rounded-full bg-white transition-transform ${c.granted ? "translate-x-6" : "translate-x-0.5"}`} /></button>

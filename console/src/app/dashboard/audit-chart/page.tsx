@@ -43,7 +43,7 @@ export default function AuditChartPage() {
   }, []);
 
   const cardCls = "rounded-xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-700 dark:bg-gray-800";
-  const maxCount = Math.max(...hourly.map((h) => h.count), 1);
+  const maxCount = Math.max(...hourly.map((h: any) => h.count), 1);
   const totalEvents = hourly.reduce((sum, h) => sum + h.count, 0);
 
   return (
@@ -76,7 +76,7 @@ export default function AuditChartPage() {
           <div className={cardCls}>
             <h3 className="mb-4 text-sm font-semibold text-gray-700 dark:text-gray-300">Events Per Hour (24h)</h3>
             <div className="flex items-end gap-1 overflow-x-auto" style={{ height: 160 }}>
-              {hourly.map((h, i) => (
+              {hourly.map((h: any, i: any) => (
                 <div key={i} className="group relative flex flex-1 flex-col items-center" style={{ minWidth: 20 }}>
                   <div className="w-full rounded-t bg-indigo-500 transition-all hover:bg-indigo-600" style={{ height: `${(h.count / maxCount) * 120}px`, minHeight: 2 }}>
                     <div className="absolute -top-6 left-1/2 -translate-x-1/2 whitespace-nowrap rounded bg-gray-800 px-1.5 py-0.5 text-xs text-white opacity-0 group-hover:opacity-100">{h.count}</div>
@@ -93,7 +93,7 @@ export default function AuditChartPage() {
               <h3 className="mb-3 text-sm font-semibold text-gray-700 dark:text-gray-300">Top Event Types</h3>
               {topTypes.length === 0 ? <p className="py-4 text-center text-sm text-gray-400">No data</p> : (
                 <div className="space-y-2">
-                  {topTypes.slice(0, 8).map((t, i) => {
+                  {topTypes.slice(0, 8).map((t: any, i: any) => {
                     const maxT = topTypes[0]?.count ?? 1;
                     return (
                       <div key={i}>
@@ -111,7 +111,7 @@ export default function AuditChartPage() {
               <h3 className="mb-3 text-sm font-semibold text-gray-700 dark:text-gray-300">Most Active Users</h3>
               {topUsers.length === 0 ? <p className="py-4 text-center text-sm text-gray-400">No data</p> : (
                 <div className="space-y-2">
-                  {topUsers.slice(0, 8).map((u, i) => {
+                  {topUsers.slice(0, 8).map((u: any, i: any) => {
                     const maxU = topUsers[0]?.count ?? 1;
                     return (
                       <div key={i}>

@@ -72,7 +72,7 @@ export default function AuditAnomalyScoringConfigPage() {
         <div className="bg-gray-900 rounded-xl p-6">
           <h2 className="text-lg font-semibold mb-4">Scoring Signals</h2>
           <div className="space-y-3">
-            {(data?.scoring_signals ?? []).map((sig) => (
+            {(data?.scoring_signals ?? []).map((sig: any) => (
               <div key={sig.signal_name} className="bg-gray-800 rounded-lg p-3">
                 <div className="flex items-center justify-between mb-2">
                   <p className="text-sm font-medium capitalize">{sig.signal_name.replace(/_/g, " ")}</p>
@@ -98,7 +98,7 @@ export default function AuditAnomalyScoringConfigPage() {
           <div className="bg-gray-900 rounded-xl p-6">
             <h2 className="text-lg font-semibold mb-4">Composite Threshold</h2>
             <div className="space-y-2">
-              {(["low", "medium", "high", "critical"] as const).map((level) => {
+              {(["low", "medium", "high", "critical"] as const).map((level: any) => {
                 const thresh = data?.composite_threshold?.[level] ?? 0;
                 return (
                   <div key={level} className="flex items-center gap-3">

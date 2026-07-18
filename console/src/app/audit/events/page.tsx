@@ -128,7 +128,7 @@ export default function AuditEventsPage() {
   const handleExport = () => {
     const csv = [
       "ID,Action,Actor,Resource,Result,Timestamp,IP",
-      ...events.map((e) =>
+      ...events.map((e: any) =>
         `${e.id},${e.action},${e.actor_name || ""},${e.resource_type}/${e.resource_id},${e.result},${e.created_at},${e.ip_address || ""}`
       ),
     ].join("\n");
@@ -199,7 +199,7 @@ export default function AuditEventsPage() {
             onChange={(e) => { setActionFilter(e.target.value); setPage(1); }}
           >
             <option value="">All Actions</option>
-            {EVENT_TYPES.map((t) => (
+            {EVENT_TYPES.map((t: any) => (
               <option key={t} value={t}>{t}</option>
             ))}
           </select>
@@ -209,7 +209,7 @@ export default function AuditEventsPage() {
             onChange={(e) => { setResourceFilter(e.target.value); setPage(1); }}
           >
             <option value="">All Resources</option>
-            {RESOURCE_TYPES.map((r) => (
+            {RESOURCE_TYPES.map((r: any) => (
               <option key={r} value={r}>{r}</option>
             ))}
           </select>
@@ -278,7 +278,7 @@ export default function AuditEventsPage() {
                 </tr>
               </thead>
               <tbody>
-                {events.map((event) => (
+                {events.map((event: any) => (
                   <>
                     <tr
                       key={event.id}

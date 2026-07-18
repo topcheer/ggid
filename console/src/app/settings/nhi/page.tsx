@@ -72,7 +72,7 @@ export default function NHIPage() {
 
   useEffect(() => { load(); }, [load]);
 
-  const filtered = nhis.filter((n) => !search || n.name.toLowerCase().includes(search.toLowerCase()) || n.owner.toLowerCase().includes(search.toLowerCase()));
+  const filtered = nhis.filter((n: any) => !search || n.name.toLowerCase().includes(search.toLowerCase()) || n.owner.toLowerCase().includes(search.toLowerCase()));
 
   const tabs: { id: TabId; label: string; icon: typeof Bot; count?: number }[] = [
     { id: "list", label: t("nhi.tabs.list"), icon: Bot },
@@ -145,7 +145,7 @@ function ListTab({ nhis, search, setSearch }: { nhis: NHI[]; search: string; set
               <th className="py-2 px-4 font-medium text-gray-600 dark:text-gray-400">{t("nhi.list.lastSeen")}</th>
             </tr></thead>
             <tbody>
-              {nhis.map((n) => {
+              {nhis.map((n: any) => {
                 const Icon = typeIcons[n.type] || Bot;
                 return (
                   <tr key={n.id} className="border-b border-gray-100 dark:border-gray-800/50 hover:bg-gray-50 dark:hover:bg-gray-800/30">
@@ -210,7 +210,7 @@ function RegisterTab({ onRegistered }: { onRegistered: () => void }) {
       <div>
         <label className="block text-sm font-medium text-gray-900 dark:text-white mb-2">{t("nhi.register.type")}</label>
         <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
-          {NHI_TYPES.map((tp) => {
+          {NHI_TYPES.map((tp: any) => {
             const Icon = typeIcons[tp] || Bot;
             return (
               <button key={tp} onClick={() => setType(tp)}
@@ -259,8 +259,8 @@ function RegisterTab({ onRegistered }: { onRegistered: () => void }) {
 function OrphansTab({ orphans, setOrphans }: { orphans: Orphan[]; setOrphans: (o: Orphan[]) => void }) {
   const t = useTranslations();
 
-  const claim = (id: string) => setOrphans(orphans.filter((o) => o.id !== id));
-  const disable = (id: string) => setOrphans(orphans.filter((o) => o.id !== id));
+  const claim = (id: string) => setOrphans(orphans.filter((o: any) => o.id !== id));
+  const disable = (id: string) => setOrphans(orphans.filter((o: any) => o.id !== id));
 
   if (orphans.length === 0) {
     return <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-12 text-center"><Check className="w-12 h-12 mx-auto mb-3 text-green-500" /><p className="text-sm text-gray-500">{t("nhi.orphans.noOrphans")}</p></div>;
@@ -285,7 +285,7 @@ function OrphansTab({ orphans, setOrphans }: { orphans: Orphan[]; setOrphans: (o
               <th className="py-2 px-4 font-medium text-gray-600 dark:text-gray-400 text-right">{t("nhi.orphans.actions")}</th>
             </tr></thead>
             <tbody>
-              {orphans.map((o) => (
+              {orphans.map((o: any) => (
                 <tr key={o.id} className="border-b border-gray-100 dark:border-gray-800/50">
                   <td className="py-3 px-4 font-mono text-sm text-gray-900 dark:text-white">{o.name}</td>
                   <td className="py-3 px-4"><span className="text-xs text-gray-500">{t(`nhi.list.type${o.type.replace(/_./g, (m) => m[1].toUpperCase()).replace(/^./, (m) => m.toUpperCase())}`)}</span></td>

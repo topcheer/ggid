@@ -150,7 +150,7 @@ export default function HashChainPage() {
           {blocks.length <= 20 ? (
             <div className="overflow-x-auto">
               <svg width={Math.max(svgW, 300)} height={svgH} className="min-w-full">
-                {blocks.map((b, i) => {
+                {blocks.map((b: any, i: any) => {
                   const x = gap + i * (nodeW + gap);
                   const y = 20;
                   const color = b.verified ? "rgb(34 197 94)" : "rgb(239 68 68)";
@@ -205,7 +205,7 @@ export default function HashChainPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
-                {blocks.map((b) => (
+                {blocks.map((b: any) => (
                   <tr key={b.index} className="hover:bg-gray-50 dark:hover:bg-gray-800/50">
                     <td className="px-4 py-3 font-medium text-gray-700 dark:text-gray-300">{b.index}</td>
                     <td className="px-4 py-3 font-mono text-xs text-gray-500">{b.hash.substring(0, 20)}...</td>
@@ -226,7 +226,7 @@ export default function HashChainPage() {
 
           {/* Mobile cards */}
           <div className="space-y-3 md:hidden">
-            {blocks.map((b) => (
+            {blocks.map((b: any) => (
               <div key={b.index} className={cardCls}>
                 <div className="flex items-center justify-between">
                   <span className="font-medium text-gray-700 dark:text-gray-300">Block #{b.index}</span>

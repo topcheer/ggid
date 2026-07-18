@@ -78,7 +78,7 @@ export default function OrgTransferPage() {
     } finally { setExecuting(false); }
   };
 
-  const filtered = users.filter((u) => !search || u.username.toLowerCase().includes(search.toLowerCase()));
+  const filtered = users.filter((u: any) => !search || u.username.toLowerCase().includes(search.toLowerCase()));
 
   return (
     <div className="space-y-6">
@@ -105,7 +105,7 @@ export default function OrgTransferPage() {
             <div className="divide-y dark:divide-gray-800">
               {filtered.length === 0 ? (
                 <div className="px-3 py-4 text-center text-sm text-gray-500">No users found.</div>
-              ) : filtered.slice(0, 30).map((u) => (
+              ) : filtered.slice(0, 30).map((u: any) => (
                 <button key={u.user_id} onClick={() => { setSelectedUser(u); setNewOrgId(""); setImpact(null); }} className={`w-full text-left px-3 py-2 hover:bg-gray-50 dark:hover:bg-gray-900/30 ${selectedUser?.user_id === u.user_id ? "bg-blue-50 dark:bg-blue-900/20" : ""}`}>
                   <div className="text-sm font-medium">{u.username}</div>
                   <div className="text-xs text-gray-400">{u.role} · {u.org_name}</div>

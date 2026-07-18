@@ -58,7 +58,7 @@ export default function IdpFederationPage() {
     finally { setTestingId(null); }
   };
 
-  const filtered = idps.filter((i) => i.provider_type === tab);
+  const filtered = idps.filter((i: any) => i.provider_type === tab);
 
   return (
     <div className="space-y-6">
@@ -74,7 +74,7 @@ export default function IdpFederationPage() {
 
       <div className="overflow-x-auto rounded-lg border dark:border-gray-800">
         <table className="w-full text-sm"><thead className="bg-gray-50 dark:bg-gray-900/50"><tr><th className="px-4 py-3 text-left font-medium">{t("big1.idpFederation.name")}</th><th className="px-4 py-3 text-left font-medium">{t("big1.idpFederation.entityId")}</th><th className="px-4 py-3 text-left font-medium">{t("big1.idpFederation.status")}</th><th className="px-4 py-3 text-left font-medium">{t("big1.idpFederation.trustLevel")}</th><th className="px-4 py-3 text-left font-medium">{t("big1.idpFederation.lastSync")}</th><th className="px-4 py-3 text-left font-medium">{t("big1.idpFederation.action")}</th></tr></thead>
-          <tbody className="divide-y dark:divide-gray-800">{filtered.map((idp) => (<tr key={idp.id} className="hover:bg-gray-50 dark:hover:bg-gray-900/30"><td className="px-4 py-3 font-medium">{idp.name}</td><td className="px-4 py-3 font-mono text-xs text-gray-500">{idp.entity_id}</td><td className="px-4 py-3"><span className={"flex items-center gap-1 text-xs " + statusColors[idp.status]}>{idp.status === "active" ? <CheckCircle className="w-3.5 h-3.5" /> : <XCircle className="w-3.5 h-3.5" />}{idp.status}</span></td><td className="px-4 py-3"><span className={"px-2 py-0.5 rounded text-xs " + trustColors[idp.trust_level]}>{idp.trust_level}</span></td><td className="px-4 py-3 text-xs text-gray-400">{idp.last_sync}</td><td className="px-4 py-3"><button onClick={() => testConnection(idp.id)} disabled={testingId === idp.id} className="text-xs font-medium text-blue-600 hover:underline disabled:opacity-50 flex items-center gap-1"><Plug className="w-3 h-3" /> {testingId === idp.id ? "Testing..." : "Test"}</button></td></tr>))}{filtered.length === 0 && !loading && <tr><td colSpan={6} className="px-4 py-8 text-center text-gray-500">{t("big1.idpFederation.noFederatedIdPs")}</td></tr>}</tbody>
+          <tbody className="divide-y dark:divide-gray-800">{filtered.map((idp: any) => (<tr key={idp.id} className="hover:bg-gray-50 dark:hover:bg-gray-900/30"><td className="px-4 py-3 font-medium">{idp.name}</td><td className="px-4 py-3 font-mono text-xs text-gray-500">{idp.entity_id}</td><td className="px-4 py-3"><span className={"flex items-center gap-1 text-xs " + statusColors[idp.status]}>{idp.status === "active" ? <CheckCircle className="w-3.5 h-3.5" /> : <XCircle className="w-3.5 h-3.5" />}{idp.status}</span></td><td className="px-4 py-3"><span className={"px-2 py-0.5 rounded text-xs " + trustColors[idp.trust_level]}>{idp.trust_level}</span></td><td className="px-4 py-3 text-xs text-gray-400">{idp.last_sync}</td><td className="px-4 py-3"><button onClick={() => testConnection(idp.id)} disabled={testingId === idp.id} className="text-xs font-medium text-blue-600 hover:underline disabled:opacity-50 flex items-center gap-1"><Plug className="w-3 h-3" /> {testingId === idp.id ? "Testing..." : "Test"}</button></td></tr>))}{filtered.length === 0 && !loading && <tr><td colSpan={6} className="px-4 py-8 text-center text-gray-500">{t("big1.idpFederation.noFederatedIdPs")}</td></tr>}</tbody>
         </table>
       </div>
 

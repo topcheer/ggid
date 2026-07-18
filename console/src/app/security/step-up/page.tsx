@@ -52,7 +52,7 @@ export default function StepUpAuthPage() {
   };
 
   const cardCls = "rounded-xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-700 dark:bg-gray-800";
-  const pending = challenges.filter((c) => c.status === "pending");
+  const pending = challenges.filter((c: any) => c.status === "pending");
 
   return (
     <div className="space-y-6">
@@ -69,15 +69,15 @@ export default function StepUpAuthPage() {
       {/* Summary */}
       <div className="grid grid-cols-3 gap-4">
         <div className={cardCls}><p className="text-xs font-semibold uppercase text-gray-400">Pending</p><p className="mt-1 text-2xl font-bold text-orange-600">{pending.length}</p></div>
-        <div className={cardCls}><p className="text-xs font-semibold uppercase text-gray-400">Completed</p><p className="mt-1 text-2xl font-bold text-green-600">{challenges.filter((c) => c.status === "completed").length}</p></div>
-        <div className={cardCls}><p className="text-xs font-semibold uppercase text-gray-400">Expired</p><p className="mt-1 text-2xl font-bold text-gray-500">{challenges.filter((c) => c.status === "expired").length}</p></div>
+        <div className={cardCls}><p className="text-xs font-semibold uppercase text-gray-400">Completed</p><p className="mt-1 text-2xl font-bold text-green-600">{challenges.filter((c: any) => c.status === "completed").length}</p></div>
+        <div className={cardCls}><p className="text-xs font-semibold uppercase text-gray-400">Expired</p><p className="mt-1 text-2xl font-bold text-gray-500">{challenges.filter((c: any) => c.status === "expired").length}</p></div>
       </div>
 
       {loading ? <div className="flex justify-center py-12"><Loader2 className="h-8 w-8 animate-spin text-indigo-600" /></div>
       : challenges.length === 0 ? <div className={cardCls}><div className="py-12 text-center"><ShieldCheck className="mx-auto h-12 w-12 text-gray-300" /><p className="mt-4 text-sm text-gray-400">No step-up challenges.</p></div></div>
       : (
         <div className="space-y-3">
-          {challenges.map((c) => (
+          {challenges.map((c: any) => (
             <div key={c.id} className={cardCls}>
               <div className="flex items-center justify-between">
                 <div>

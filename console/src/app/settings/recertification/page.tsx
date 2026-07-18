@@ -58,29 +58,29 @@ export default function RecertificationPage() {
   useEffect(() => { if (selectedTeam) fetchUsers(); }, [selectedTeam, fetchUsers]);
 
   const setDecision = (userId: string, decision: RecertUser["decision"]) => {
-    setUsers((prev) => prev.map((u) => u.user_id === userId ? { ...u, decision } : u));
+    setUsers((prev) => prev.map((u: any) => u.user_id === userId ? { ...u, decision } : u));
   };
 
   const setCommentForUser = (userId: string, comment: string) => {
-    setUsers((prev) => prev.map((u) => u.user_id === userId ? { ...u, comment } : u));
+    setUsers((prev) => prev.map((u: any) => u.user_id === userId ? { ...u, comment } : u));
   };
 
   const submitAll = async () => {
-    const decided = users.filter((u) => u.decision !== "pending");
+    const decided = users.filter((u: any) => u.decision !== "pending");
     if (decided.length === 0) return;
     setSubmitting(true);
     try {
       await fetch(`/api/v1/policy/recertification/teams/${selectedTeam}/submit`, {
         method: "POST",
         headers: { ...authHeader(), "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" },
-        body: JSON.stringify({ decisions: decided.map((u) => ({ user_id: u.user_id, decision: u.decision, comment: u.comment })) }),
+        body: JSON.stringify({ decisions: decided.map((u: any) => ({ user_id: u.user_id, decision: u.decision, comment: u.comment })) }),
       });
-      setUsers((prev) => prev.map((u) => u.decision !== "pending" ? { ...u, decision: "pending", comment: "" } : u));
+      setUsers((prev) => prev.map((u: any) => u.decision !== "pending" ? { ...u, decision: "pending", comment: "" } : u));
     } catch { /* noop */ }
     finally { setSubmitting(false); }
   };
 
-  const pending = users.filter((u) => u.decision === "pending").length;
+  const pending = users.filter((u: any) => u.decision === "pending").length;
   const decided = users.length - pending;
 
   return (
@@ -94,7 +94,7 @@ export default function RecertificationPage() {
       <div className="flex items-center gap-3 flex-wrap">
         <select aria-label="Selected team" value={selectedTeam} onChange={(e) => setSelectedTeam(e.target.value)} className="px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-900 text-sm">
           <option value="">Select a team...</option>
-          {teams.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}
+          {teams.map((t: any) => <option key={t.id} value={t.id}>{t.name}</option>)}
         </select>
         {selectedTeam && (
           <>
@@ -110,7 +110,7 @@ export default function RecertificationPage() {
       {/* User list */}
       <div className="rounded-lg border dark:border-gray-800">
         <div className="divide-y dark:divide-gray-800">
-          {users.map((u) => (
+          {users.map((u: any) => (
             <div key={u.user_id} className="px-4 py-3">
               <div className="flex items-center justify-between">
                 <div className="flex-1">

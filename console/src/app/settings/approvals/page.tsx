@@ -59,7 +59,7 @@ export default function ApprovalsPage() {
     setActioning(req.id);
     try {
       await apiFetch(`/api/v1/policy/approvals/${req.id}/${action}`, { method: "POST", body: JSON.stringify({ comment }) });
-      setPending((p) => p.filter((r) => r.id !== req.id));
+      setPending((p) => p.filter((r: any) => r.id !== req.id));
       setSelectedReq(null); setComment("");
     } catch { setError(`${action === "approve" ? "Approve" : "Reject"} failed`); }
     finally { setActioning(null); }
@@ -81,7 +81,7 @@ export default function ApprovalsPage() {
         <div className={cardCls}><div className="py-12 text-center"><ClipboardCheck className="mx-auto h-12 w-12 text-gray-300" /><p className="mt-4 text-sm text-gray-400">{t("approvals.noPending")}</p></div></div>
       ) : (
         <div className="space-y-3">
-          {pending.map((req) => (
+          {pending.map((req: any) => (
             <div key={req.id} className={cardCls}>
               <div className="flex items-start justify-between">
                 <div className="flex-1">

@@ -32,8 +32,8 @@ export default function PolicySimulationPage() {
   const retry = () => { setError(""); runSim(); };
 
   const addRule = () => setRules([...rules, { id: Date.now().toString(), effect: "allow", resource: "", action: "", condition: "" }]);
-  const removeRule = (id: string) => setRules(rules.filter((r) => r.id !== id));
-  const updateRule = (id: string, field: keyof SimRule, val: string) => setRules(rules.map((r) => r.id === id ? { ...r, [field]: val } : r));
+  const removeRule = (id: string) => setRules(rules.filter((r: any) => r.id !== id));
+  const updateRule = (id: string, field: keyof SimRule, val: string) => setRules(rules.map((r: any) => r.id === id ? { ...r, [field]: val } : r));
 
   const runSim = async () => {
     setRunning(true); setError("");
@@ -46,9 +46,9 @@ export default function PolicySimulationPage() {
     } finally { setRunning(false); }
   };
 
-  const wouldAllow = results?.filter((r) => r.status === "would_allow") || [];
-  const wouldDeny = results?.filter((r) => r.status === "would_deny") || [];
-  const unchanged = results?.filter((r) => r.status === "unchanged") || [];
+  const wouldAllow = results?.filter((r: any) => r.status === "would_allow") || [];
+  const wouldDeny = results?.filter((r: any) => r.status === "would_deny") || [];
+  const unchanged = results?.filter((r: any) => r.status === "unchanged") || [];
 
   return (
     <div className="space-y-6">
@@ -65,7 +65,7 @@ export default function PolicySimulationPage() {
             <button aria-label="Plus" onClick={addRule} className="p-1 rounded bg-blue-600 text-white"><Plus className="w-4 h-4" /></button>
           </div>
           <div className="space-y-2">
-            {rules.map((r) => (
+            {rules.map((r: any) => (
               <div key={r.id} className="rounded-lg border dark:border-gray-700 p-3 space-y-2">
                 <div className="flex items-center gap-2">
                   <select aria-label="Select option" value={r.effect} onChange={(e) => updateRule(r.id, "effect", e.target.value)} className="px-2 py-1 rounded border dark:border-gray-700 dark:bg-gray-800 text-xs">

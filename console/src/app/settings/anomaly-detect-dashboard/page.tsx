@@ -23,8 +23,8 @@ export default function AnomalyDetectDashboardPage() {
 
       {/* Summary */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-        {(["critical", "high", "medium", "low"] as const).map((s) => {
-          const count = data?.events?.filter((e) => e.severity === s).length ?? 0;
+        {(["critical", "high", "medium", "low"] as const).map((s: any) => {
+          const count = data?.events?.filter((e: any) => e.severity === s).length ?? 0;
           return <div key={s} className="bg-gray-900 rounded-xl p-4"><p className="text-xs text-gray-400 capitalize">{s}</p><p className={"text-xl font-bold " + (s === "critical" ? "text-red-400" : s === "high" ? "text-orange-400" : s === "medium" ? "text-yellow-400" : "text-blue-400")}>{count}</p></div>;
         })}
       </div>
@@ -34,7 +34,7 @@ export default function AnomalyDetectDashboardPage() {
         <div className="md:col-span-2 bg-gray-900 rounded-xl p-6">
           <h2 className="text-sm font-semibold mb-4 flex items-center gap-2"><Activity className="w-4 h-4 text-green-400" /> Anomaly Events</h2>
           <div className="space-y-2">
-            {(data?.events ?? []).map((e) => (
+            {(data?.events ?? []).map((e: any) => (
               <div key={e.id} className="flex items-start gap-3 bg-gray-800 rounded-lg p-3">
                 <AlertTriangle className={"w-4 h-4 mt-0.5 " + (e.severity === "critical" ? "text-red-400" : "text-yellow-400")} />
                 <div className="flex-1">
@@ -53,7 +53,7 @@ export default function AnomalyDetectDashboardPage() {
         <div className="bg-gray-900 rounded-xl p-6">
           <h2 className="text-sm font-semibold mb-3">Detected Patterns</h2>
           <div className="space-y-2">
-            {(data?.patterns ?? []).map((p) => (
+            {(data?.patterns ?? []).map((p: any) => (
               <div key={p.pattern} className="bg-gray-800 rounded p-2">
                 <div className="flex items-center justify-between"><span className="text-xs font-medium">{p.pattern}</span><span className="text-xs text-gray-400">{p.count}</span></div>
                 {p.auto_action && <span className="text-xs text-green-400">Auto: {p.auto_action}</span>}

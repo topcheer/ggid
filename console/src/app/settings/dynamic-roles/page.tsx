@@ -47,7 +47,7 @@ export default function DynamicRolesPage() {
   };
 
   const handleDelete = async (id: string) => {
-    try { await apiFetch(`/api/v1/policy/dynamic-roles/${id}`, { method: "DELETE" }); setRoles((p) => p.filter((r) => r.id !== id)); }
+    try { await apiFetch(`/api/v1/policy/dynamic-roles/${id}`, { method: "DELETE" }); setRoles((p) => p.filter((r: any) => r.id !== id)); }
     catch { setError("Delete failed"); }
   };
 
@@ -82,7 +82,7 @@ export default function DynamicRolesPage() {
         <div className={cardCls}><div className="py-12 text-center"><Users2 className="mx-auto h-12 w-12 text-gray-300" /><p className="mt-4 text-sm text-gray-400">{t("big1.dynamicRoles.noDynamicRolesDefined")}</p></div></div>
       ) : (
         <div className="space-y-3">
-          {roles.map((r) => (
+          {roles.map((r: any) => (
             <div key={r.id} className={cardCls}>
               <div className="flex items-start justify-between">
                 <div className="flex-1">
@@ -102,7 +102,7 @@ export default function DynamicRolesPage() {
         <h3 className="mb-3 text-sm font-semibold text-gray-700 dark:text-gray-300">{t("big1.dynamicRoles.testAssignment")}</h3>
         <div className="flex items-center gap-2">
           <input aria-label="User ID or email" value={testUser} onChange={(e) => setTestUser(e.target.value)} placeholder="User ID or email" className="flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-900 dark:text-gray-200" />
-          {roles.length > 0 && <select aria-label="Select option" onChange={(e) => { if (e.target.value) handleTest(e.target.value); }} className="rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-900 dark:text-gray-200"><option value="">{t("big1.dynamicRoles.testRole")}</option>{roles.map((r) => <option key={r.id} value={r.id}>{r.name}</option>)}</select>}
+          {roles.length > 0 && <select aria-label="Select option" onChange={(e) => { if (e.target.value) handleTest(e.target.value); }} className="rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-900 dark:text-gray-200"><option value="">{t("big1.dynamicRoles.testRole")}</option>{roles.map((r: any) => <option key={r.id} value={r.id}>{r.name}</option>)}</select>}
         </div>
         {testResult && <div className={`mt-2 flex items-center gap-2 text-sm ${testResult.matched ? "text-green-600" : "text-red-600"}`}>{testResult.matched ? <CheckCircle className="h-4 w-4" /> : <XCircle className="h-4 w-4" />}{testResult.reason}</div>}
       </div>
@@ -116,7 +116,7 @@ export default function DynamicRolesPage() {
               <div><label className="mb-1 block text-xs font-semibold uppercase text-gray-400">{t("big1.dynamicRoles.name")}</label><input aria-label="editing" value={editing.name} onChange={(e) => setEditing({ ...editing, name: e.target.value })} className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-900 dark:text-gray-200" /></div>
               <div><label className="mb-1 block text-xs font-semibold uppercase text-gray-400">{t("big1.dynamicRoles.description")}</label><input aria-label="editing" value={editing.description} onChange={(e) => setEditing({ ...editing, description: e.target.value })} className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-900 dark:text-gray-200" /></div>
               <div><label className="mb-1 block text-xs font-semibold uppercase text-gray-400">{t("big1.dynamicRoles.conditions")}</label><div className="space-y-2">{editing.conditions.map((c: any, idx: number) => (<div key={idx} className="flex items-center gap-2"><input aria-label="attribute" value={c.attribute} onChange={(e) => updateCondition(idx, "attribute", e.target.value)} placeholder="attribute" className="flex-1 rounded border border-gray-300 px-2 py-1.5 text-xs dark:border-gray-600 dark:bg-gray-900 dark:text-gray-200" /><select value={c.operator} onChange={(e) => updateCondition(idx, "operator", e.target.value)} className="rounded border border-gray-300 px-2 py-1.5 text-xs dark:border-gray-600 dark:bg-gray-900 dark:text-gray-200"><option value="eq">==</option><option value="ne">!=</option><option value="in">{t("big1.dynamicRoles.in")}</option><option value="contains">{t("big1.dynamicRoles.contains")}</option></select><input value={c.value} onChange={(e) => updateCondition(idx, "value", e.target.value)} placeholder="value" className="flex-1 rounded border border-gray-300 px-2 py-1.5 text-xs dark:border-gray-600 dark:bg-gray-900 dark:text-gray-200" /><button onClick={() => removeCondition(idx)} className="text-red-400"><Trash2 className="h-3 w-3" /></button></div>))}</div><button onClick={addCondition} className="mt-2 flex items-center gap-1 text-xs text-purple-600 hover:underline" aria-label="Plus"><Plus className="h-3 w-3" />{t("big1.dynamicRoles.addCondition")}</button></div>
-              <div><label className="mb-1 block text-xs font-semibold uppercase text-gray-400">{t("big1.dynamicRoles.assignedRolesCommaSeparated")}</label><input aria-label="admin, editor" value={editing.assigned_roles.join(", ")} onChange={(e) => setEditing({ ...editing, assigned_roles: e.target.value.split(",").map((s) => s.trim()).filter(Boolean) })} placeholder="admin, editor" className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-900 dark:text-gray-200" /></div>
+              <div><label className="mb-1 block text-xs font-semibold uppercase text-gray-400">{t("big1.dynamicRoles.assignedRolesCommaSeparated")}</label><input aria-label="admin, editor" value={editing.assigned_roles.join(", ")} onChange={(e) => setEditing({ ...editing, assigned_roles: e.target.value.split(",").map((s: any) => s.trim()).filter(Boolean) })} placeholder="admin, editor" className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-900 dark:text-gray-200" /></div>
               <button aria-label="action" onClick={handleSave} className="flex w-full items-center justify-center gap-2 rounded-lg bg-purple-600 py-2 text-sm font-medium text-white hover:bg-purple-700">{editing.id ? t("big1.dynamicRoles.update") : t("big1.dynamicRoles.create")}{t("big1.dynamicRoles.dynamicRole")}</button>
             </div>
           </div>

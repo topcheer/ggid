@@ -14,8 +14,8 @@ export default function OAuthTokenAuditingPage() {
   if (loading) return <div className="p-8 text-gray-400">Loading token audit...</div>;
   if (error) return <div className="p-8 text-red-400">Error: {error}</div>;
 
-  const clients: string[] = Array.from(new Set((data?.audit_trail ?? []).map((t) => t.client)));
-  const filtered = (data?.audit_trail ?? []).filter((t) => {
+  const clients: string[] = Array.from(new Set((data?.audit_trail ?? []).map((t: any) => t.client)));
+  const filtered = (data?.audit_trail ?? []).filter((t: any) => {
     if (filterClient !== "all" && t.client !== filterClient) return false;
     if (filterUser && !t.user.toLowerCase().includes(filterUser.toLowerCase())) return false;
     return true;
@@ -52,7 +52,7 @@ export default function OAuthTokenAuditingPage() {
             className="bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-500"
           >
             <option value="all">All Clients</option>
-            {clients.map((c) => (
+            {clients.map((c: any) => (
               <option key={c} value={c}>{c}</option>
             ))}
           </select>
@@ -119,7 +119,7 @@ export default function OAuthTokenAuditingPage() {
               </tr>
             </thead>
             <tbody>
-              {filtered.slice(0, 20).map((t) => (
+              {filtered.slice(0, 20).map((t: any) => (
                 <tr key={t.token_id} className="border-b border-gray-800">
                   <td className="py-2 pr-3 font-mono text-xs text-blue-400">{t.token_id.slice(0, 12)}</td>
                   <td className="py-2 pr-3 text-gray-300">{t.client}</td>
@@ -127,7 +127,7 @@ export default function OAuthTokenAuditingPage() {
                   <td className="py-2 pr-3 text-gray-400 text-xs">{t.issued_at}</td>
                   <td className="py-2 pr-3">
                     <div className="flex flex-wrap gap-1">
-                      {t.scopes.slice(0, 3).map((s) => (
+                      {t.scopes.slice(0, 3).map((s: any) => (
                         <span key={s} className="text-xs px-1.5 py-0.5 bg-gray-700 rounded text-gray-300">{s}</span>
                       ))}
                     </div>

@@ -67,7 +67,7 @@ export default function OAuthCrossTenantPage() {
               </tr>
             </thead>
             <tbody>
-              {(data?.trusted_tenants ?? []).map((t) => (
+              {(data?.trusted_tenants ?? []).map((t: any) => (
                 <tr key={t.tenant_id} className="border-b border-gray-800">
                   <td className="py-3 pr-3 font-mono text-xs text-blue-400">{t.tenant_id}</td>
                   <td className="py-3 pr-3">
@@ -81,7 +81,7 @@ export default function OAuthCrossTenantPage() {
                   </td>
                   <td className="py-3 pr-3">
                     <div className="flex flex-wrap gap-1">
-                      {t.scopes_allowed.map((s) => (
+                      {t.scopes_allowed.map((s: any) => (
                         <span key={s} className="text-xs px-1.5 py-0.5 bg-gray-800 rounded">{s}</span>
                       ))}
                     </div>
@@ -102,7 +102,7 @@ export default function OAuthCrossTenantPage() {
         <div className="bg-gray-900 rounded-xl p-6">
           <h2 className="text-sm font-semibold mb-4">Per-App Sharing</h2>
           <div className="space-y-2">
-            {(data?.per_app_sharing ?? []).map((app) => (
+            {(data?.per_app_sharing ?? []).map((app: any) => (
               <div key={app.app_id} className="flex items-center justify-between bg-gray-800 rounded-lg p-3">
                 <div>
                   <p className="text-sm font-medium">{app.app_name}</p>

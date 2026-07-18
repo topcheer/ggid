@@ -65,15 +65,15 @@ export default function AnomaliesPage() {
     setActioning(actionModal.anomaly.id);
     try {
       await apiFetch(`/api/v1/audit/anomalies/${actionModal.anomaly.id}/${actionModal.type}`, { method: "POST", body: JSON.stringify(actionModal.type === "dismiss" ? { reason: note } : { note }) });
-      setAnomalies((p) => p.map((a) => a.id === actionModal.anomaly.id ? { ...a, status: actionModal.type === "dismiss" ? "dismissed" : "escalated" } : a));
+      setAnomalies((p) => p.map((a: any) => a.id === actionModal.anomaly.id ? { ...a, status: actionModal.type === "dismiss" ? "dismissed" : "escalated" } : a));
       setActionModal(null); setNote("");
     } catch { setError("Action failed"); }
     finally { setActioning(null); }
   };
 
   const cardCls = "rounded-xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-700 dark:bg-gray-800";
-  const active = anomalies.filter((a) => a.status === "active");
-  const escalated = anomalies.filter((a) => a.status === "escalated");
+  const active = anomalies.filter((a: any) => a.status === "active");
+  const escalated = anomalies.filter((a: any) => a.status === "escalated");
 
   return (
     <div className="space-y-6">
@@ -99,7 +99,7 @@ export default function AnomaliesPage() {
             <div className={cardCls}><div className="py-12 text-center"><CheckCircle className="mx-auto h-12 w-12 text-green-300" /><p className="mt-4 text-sm text-gray-400">No anomalies detected.</p></div></div>
           ) : (
             <div className="space-y-2">
-              {anomalies.map((a) => (
+              {anomalies.map((a: any) => (
                 <div key={a.id} className={cardCls}>
                   <div className="flex items-start justify-between">
                     <div className="flex flex-1 items-start gap-3">
@@ -110,7 +110,7 @@ export default function AnomaliesPage() {
                         <div className="mt-1 flex items-center gap-3 text-xs text-gray-400"><span className="flex items-center gap-0.5"><TrendingUp className="h-3 w-3" />{a.confidence}% confidence</span><span>User: {a.user_id.slice(0, 12)}</span><span>{a.related_events.length} related events</span><span>{new Date(a.detected_at).toLocaleString()}</span></div>
                         {/* Expanded related events */}
                         {expanded === a.id && a.related_events.length > 0 && (
-                          <div className="mt-3 space-y-1 rounded-lg bg-gray-50 p-3 dark:bg-gray-900">{a.related_events.map((e) => (<div key={e.event_id} className="flex items-center justify-between text-xs"><span className="font-mono text-gray-500">{e.event_id.slice(0, 16)}</span><span className="text-gray-400">{e.action}</span><span className="text-gray-400">{new Date(e.timestamp).toLocaleTimeString()}</span></div>))}</div>
+                          <div className="mt-3 space-y-1 rounded-lg bg-gray-50 p-3 dark:bg-gray-900">{a.related_events.map((e: any) => (<div key={e.event_id} className="flex items-center justify-between text-xs"><span className="font-mono text-gray-500">{e.event_id.slice(0, 16)}</span><span className="text-gray-400">{e.action}</span><span className="text-gray-400">{new Date(e.timestamp).toLocaleTimeString()}</span></div>))}</div>
                         )}
                       </div>
                     </div>

@@ -102,7 +102,7 @@ export default function TenantSettingsPage() {
     setConfig((prev) => ({
       ...prev,
       allowedAuthMethods: prev.allowedAuthMethods.includes(key)
-        ? prev.allowedAuthMethods.filter((m) => m !== key)
+        ? prev.allowedAuthMethods.filter((m: any) => m !== key)
         : [...prev.allowedAuthMethods, key],
     }));
   };
@@ -262,7 +262,7 @@ export default function TenantSettingsPage() {
             Select which authentication methods are available to users in this tenant.
           </p>
           <div className="grid gap-3 sm:grid-cols-2">
-            {AUTH_METHODS.map((method) => {
+            {AUTH_METHODS.map((method: any) => {
               const checked = config.allowedAuthMethods.includes(method.key);
               return (
                 <label

@@ -122,7 +122,7 @@ export default function ManagementChainPage() {
             <div className="grid grid-cols-3 gap-4 text-sm">
               <div><span className="text-xs text-gray-400">Chain Depth</span><p className="text-xl font-bold mt-0.5">{data.chain.length}</p></div>
               <div><span className="text-xs text-gray-400">Highest Level</span><p className="text-xl font-bold mt-0.5">{data.chain[data.chain.length - 1]?.level || "-"}</p></div>
-              <div><span className="text-xs text-gray-400">Departments</span><p className="text-xl font-bold mt-0.5">{new Set([data.user.department, ...data.chain.map((c) => c.department)]).size}</p></div>
+              <div><span className="text-xs text-gray-400">Departments</span><p className="text-xl font-bold mt-0.5">{new Set([data.user.department, ...data.chain.map((c: any) => c.department)]).size}</p></div>
             </div>
           </div>
         </div>

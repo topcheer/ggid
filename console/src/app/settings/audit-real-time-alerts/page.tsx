@@ -110,7 +110,7 @@ export default function AuditRealTimeAlertsPage() {
           <div className="bg-gray-900 rounded-xl p-6">
             <h2 className="text-sm font-semibold mb-3">Alert Rules</h2>
             <div className="space-y-2">
-              {(data?.alert_rules ?? []).map((r) => (
+              {(data?.alert_rules ?? []).map((r: any) => (
                 <div key={r.rule_name} className="bg-gray-800 rounded-lg p-2">
                   <div className="flex items-center justify-between mb-1">
                     <p className="text-xs font-medium">{r.rule_name}</p>

@@ -65,7 +65,7 @@ export default function ServiceDependencyGraphPage() {
   if (loading) return <div className="flex items-center justify-center py-12"><Loader2 className="h-8 w-8 animate-spin text-blue-500" /></div>;
   if (error) return <div className="p-8 text-red-500">Error: {error}</div>;
   const healthColors: Record<string, string> = { healthy: "#10b981", degraded: "#f59e0b", down: "#ef4444" };
-  const nodeMap = new Map(nodes.map((n) => [n.id, n]));
+  const nodeMap = new Map(nodes.map((n: any) => [n.id, n]));
 
   return (
     <div className="p-8 space-y-6 max-w-5xl">
@@ -90,7 +90,7 @@ export default function ServiceDependencyGraphPage() {
                 </g>
               );
             })}
-            {nodes.map((n) => (
+            {nodes.map((n: any) => (
               <g key={n.id} onClick={() => setSelected(n)} className="cursor-pointer">
                 <circle cx={n.x} cy={n.y} r="28" fill={healthColors[n.health]} fillOpacity="0.15" stroke={healthColors[n.health]} strokeWidth="2" />
                 <text x={n.x} y={n.y + 4} textAnchor="middle" className="text-[10px] font-medium fill-gray-700">{n.label}</text>

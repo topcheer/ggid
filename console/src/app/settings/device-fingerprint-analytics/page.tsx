@@ -76,7 +76,7 @@ export default function DeviceFingerprintAnalyticsPage() {
         <div className="bg-gray-900 rounded-xl p-6">
           <h2 className="text-sm font-semibold mb-4">{t("big1.deviceFingerprintAnalytics.fingerprintClusters")}</h2>
           <div className="space-y-2">
-            {(data?.fingerprint_clusters ?? []).map((c) => (
+            {(data?.fingerprint_clusters ?? []).map((c: any) => (
               <div key={c.browser} className="flex items-center justify-between bg-gray-800 rounded-lg p-3">
                 <div>
                   <p className="text-sm font-medium">{c.browser} / {c.os}</p>
@@ -98,7 +98,7 @@ export default function DeviceFingerprintAnalyticsPage() {
           <h2 className="text-sm font-semibold flex items-center gap-2 mb-4">
             <AlertTriangle className="w-4 h-4 text-red-400" />{t("big1.deviceFingerprintAnalytics.suspiciousFingerprints")}</h2>
           <div className="space-y-2 max-h-72 overflow-y-auto">
-            {(data?.suspicious_fingerprints ?? []).map((s) => (
+            {(data?.suspicious_fingerprints ?? []).map((s: any) => (
               <div key={s.fingerprint_hash} className="bg-gray-800 rounded-lg p-3">
                 <div className="flex items-start justify-between mb-1">
                   <p className="text-xs font-mono text-gray-400">{s.fingerprint_hash.substring(0, 24)}...</p>

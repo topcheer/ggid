@@ -132,7 +132,7 @@ export default function WebhooksPage() {
   }, [msg]);
 
   const toggleEvent = (webhookId: string, event: string) => {
-    setWebhooks((prev) => prev.map((wh) => {
+    setWebhooks((prev) => prev.map((wh: any) => {
       if (wh.id !== webhookId) return wh;
       const events = new Set(wh.events);
       if (events.has(event)) events.delete(event);
@@ -186,10 +186,10 @@ export default function WebhooksPage() {
     try {
       await apiFetch(`/api/v1/webhooks/${deleteTarget.id}`, { method: "DELETE" });
       setMsg({ type: "success", text: "Webhook deleted" });
-      setWebhooks((prev) => prev.filter((w) => w.id !== deleteTarget.id));
+      setWebhooks((prev) => prev.filter((w: any) => w.id !== deleteTarget.id));
     } catch {
       setMsg({ type: "error", text: "Failed to delete webhook" });
-      setWebhooks((prev) => prev.filter((w) => w.id !== deleteTarget.id));
+      setWebhooks((prev) => prev.filter((w: any) => w.id !== deleteTarget.id));
     } finally {
       setDeleteTarget(null);
     }
@@ -197,7 +197,7 @@ export default function WebhooksPage() {
 
   const handleToggleEnabled = async (wh: WebhookEndpoint) => {
     const updated = { ...wh, enabled: !wh.enabled };
-    setWebhooks((prev) => prev.map((w) => (w.id === wh.id ? updated : w)));
+    setWebhooks((prev) => prev.map((w: any) => (w.id === wh.id ? updated : w)));
     try {
       await apiFetch(`/api/v1/webhooks/${wh.id}`, {
         method: "PUT",
@@ -205,7 +205,7 @@ export default function WebhooksPage() {
       });
     } catch {
       // Revert on failure
-      setWebhooks((prev) => prev.map((w) => (w.id === wh.id ? wh : w)));
+      setWebhooks((prev) => prev.map((w: any) => (w.id === wh.id ? wh : w)));
     }
   };
 
@@ -277,7 +277,7 @@ export default function WebhooksPage() {
   };
 
   const handleRetryAll = async (webhookId: string) => {
-    const failed = (deliveries[webhookId] || []).filter((d) => d.status_code >= 400 || d.status_code === 0);
+    const failed = (deliveries[webhookId] || []).filter((d: any) => d.status_code >= 400 || d.status_code === 0);
     for (const d of failed) {
       await apiFetch(`/api/v1/webhooks/${webhookId}/deliveries/${d.id}/retry`, { method: "POST" }).catch(() => {});
     }
@@ -312,7 +312,7 @@ export default function WebhooksPage() {
   const inputCls = "w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200";
 
   const hasFailedDeliveries = (webhookId: string) =>
-    (deliveries[webhookId] || []).some((d) => d.status_code >= 400 || d.status_code === 0);
+    (deliveries[webhookId] || []).some((d: any) => d.status_code >= 400 || d.status_code === 0);
 
   return (
     <div>
@@ -357,7 +357,7 @@ export default function WebhooksPage() {
             <div>
               <label className="mb-2 block text-xs font-medium text-gray-500">Event Subscriptions</label>
               <div className="flex flex-wrap gap-2">
-                {WEBHOOK_EVENTS.map((event) => {
+                {WEBHOOK_EVENTS.map((event: any) => {
                   const active = selectedEvents.has(event);
                   return (
                     <button key={event} type="button" onClick={() => {
@@ -394,7 +394,7 @@ export default function WebhooksPage() {
         </div>
       ) : (
         <div className="space-y-4">
-          {webhooks.map((wh) => (
+          {webhooks.map((wh: any) => (
             <div key={wh.id} className="rounded-xl border border-gray-200 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-800">
               {/* Webhook header */}
               <div className="flex items-center justify-between border-b border-gray-100 p-4 dark:border-gray-700">
@@ -405,7 +405,7 @@ export default function WebhooksPage() {
                   </div>
                   {wh.description && <p className="mt-1 ml-6 text-xs text-gray-500 dark:text-gray-400">{wh.description}</p>}
                   <div className="mt-1 ml-6 flex flex-wrap gap-1">
-                    {(wh.events || []).map((e) => (
+                    {(wh.events || []).map((e: any) => (
                       <span key={e} className="rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-600 dark:bg-gray-700 dark:text-gray-300">{e}</span>
                     ))}
                   </div>
@@ -440,7 +440,7 @@ export default function WebhooksPage() {
                 <div className="border-b border-gray-100 p-4 dark:border-gray-700">
                   <div className="mb-2 text-xs font-semibold text-gray-600 dark:text-gray-400">Event Subscriptions</div>
                   <div className="flex flex-wrap gap-2">
-                    {WEBHOOK_EVENTS.map((event) => {
+                    {WEBHOOK_EVENTS.map((event: any) => {
                       const active = (wh.events || []).includes(event);
                       return (
                         <button key={event} type="button" onClick={() => toggleEvent(wh.id, event)}
@@ -484,7 +484,7 @@ export default function WebhooksPage() {
                           <th scope="col" className="px-2 py-2 text-right text-xs font-medium text-gray-500">Actions</th>
                         </tr></thead>
                         <tbody className="divide-y divide-gray-50 dark:divide-gray-700">
-                          {(deliveries[wh.id] || []).map((d) => (
+                          {(deliveries[wh.id] || []).map((d: any) => (
                             <tr key={d.id} className="hover:bg-gray-50 dark:hover:bg-gray-900">
                               <td className="px-2 py-2 text-xs text-gray-500">{new Date(d.delivered_at).toLocaleString()}</td>
                               <td className="px-2 py-2 text-xs text-gray-700 dark:text-gray-300">{d.event_type}</td>

@@ -61,7 +61,7 @@ export default function TorVpnDetectPage() {
               </tr>
             </thead>
             <tbody>
-              {(data?.detected_connections ?? []).map((c) => (
+              {(data?.detected_connections ?? []).map((c: any) => (
                 <tr key={c.ip} className="border-b border-gray-800">
                   <td className="py-3 pr-3 font-mono text-xs text-blue-400">{c.ip}</td>
                   <td className="py-3 pr-3">
@@ -101,11 +101,11 @@ export default function TorVpnDetectPage() {
             Connections by Country
           </h2>
           <div className="space-y-2">
-            {(data?.per_country_stats ?? []).map((s) => (
+            {(data?.per_country_stats ?? []).map((s: any) => (
               <div key={s.country} className="flex items-center gap-3">
                 <span className="text-sm w-24">{s.country}</span>
                 <div className="flex-1 h-2 bg-gray-800 rounded-full">
-                  <div className="h-full bg-red-500 rounded-full" style={{ width: (s.connections / Math.max(...(data?.per_country_stats?.map((x) => x.connections) ?? [1]))) * 100 + "%" }} />
+                  <div className="h-full bg-red-500 rounded-full" style={{ width: (s.connections / Math.max(...(data?.per_country_stats?.map((x: any) => x.connections) ?? [1]))) * 100 + "%" }} />
                 </div>
                 <span className="text-xs text-gray-400 w-8 text-right">{s.connections}</span>
               </div>
@@ -121,7 +121,7 @@ export default function TorVpnDetectPage() {
               Blocklist Rules
             </h2>
             <div className="space-y-2">
-              {(data?.blocklist_rules ?? []).map((r) => (
+              {(data?.blocklist_rules ?? []).map((r: any) => (
                 <div key={r.rule_name} className="flex items-center justify-between bg-gray-800 rounded-lg p-3">
                   <span className="text-sm">{r.rule_name}</span>
                   <span className={"text-xs px-2 py-0.5 rounded " + (r.enabled ? "bg-green-900 text-green-300" : "bg-gray-700 text-gray-400")}>
@@ -138,7 +138,7 @@ export default function TorVpnDetectPage() {
               Active Exit Nodes (sample)
             </h2>
             <div className="flex flex-wrap gap-1">
-              {(data?.exit_node_list ?? []).slice(0, 8).map((node) => (
+              {(data?.exit_node_list ?? []).slice(0, 8).map((node: any) => (
                 <span key={node} className="text-xs font-mono px-1.5 py-0.5 bg-gray-800 rounded text-gray-400">{node}</span>
               ))}
             </div>

@@ -57,7 +57,7 @@ export default function PasskeysPage() {
         method: "DELETE",
         headers: { ...authHeader(), "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" },
       });
-      setPasskeys((prev) => prev.filter((p) => p.id !== id));
+      setPasskeys((prev) => prev.filter((p: any) => p.id !== id));
       // Signal API: notify browser to remove deleted credential from autofill
       signalCredentialRemoved(id).catch(() => {});
     } catch {
@@ -82,11 +82,11 @@ export default function PasskeysPage() {
         </div>
         <div className="rounded-lg border p-4 dark:border-gray-800">
           <span className="text-sm text-gray-500">{t("passkeys.synced")}</span>
-          <p className="text-2xl font-bold mt-1 text-blue-600">{passkeys.filter((p) => p.synced).length}</p>
+          <p className="text-2xl font-bold mt-1 text-blue-600">{passkeys.filter((p: any) => p.synced).length}</p>
         </div>
         <div className="rounded-lg border p-4 dark:border-gray-800">
           <span className="text-sm text-gray-500">{t("passkeys.neverUsed")}</span>
-          <p className="text-2xl font-bold mt-1 text-yellow-600">{passkeys.filter((p) => !p.last_used).length}</p>
+          <p className="text-2xl font-bold mt-1 text-yellow-600">{passkeys.filter((p: any) => !p.last_used).length}</p>
         </div>
       </div>
 
@@ -96,7 +96,7 @@ export default function PasskeysPage() {
           <h3 className="font-semibold">{t("passkeys.registered")}</h3>
         </div>
         <div className="divide-y dark:divide-gray-800">
-          {passkeys.map((pk) => {
+          {passkeys.map((pk: any) => {
             const Icon = platformIcons[pk.platform?.toLowerCase()] || Fingerprint;
             return (
               <div key={pk.id} className="px-4 py-3 flex items-center justify-between">

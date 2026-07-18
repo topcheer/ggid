@@ -34,8 +34,8 @@ export default function PasswordPolicyAuditPage() {
 
   useEffect(() => { fetchData(); }, [fetchData]);
 
-  const filtered = filterRule ? violations.filter((v) => v.rule_type === filterRule) : violations;
-  const totalUsers = new Set(violations.map((v) => v.user_id)).size;
+  const filtered = filterRule ? violations.filter((v: any) => v.rule_type === filterRule) : violations;
+  const totalUsers = new Set(violations.map((v: any) => v.user_id)).size;
   const complianceRate = violations.length === 0 ? 100 : Math.max(0, Math.round(100 - (violations.length / Math.max(totalUsers * 3, 1)) * 100));
   const gaugeColor = complianceRate >= 90 ? "#10b981" : complianceRate >= 70 ? "#f59e0b" : "#ef4444";
 
@@ -62,7 +62,7 @@ export default function PasswordPolicyAuditPage() {
         <Filter className="w-4 h-4 text-gray-400" />
         <select aria-label="Filter" value={filterRule} onChange={(e) => setFilterRule(e.target.value)} className="px-3 py-1.5 rounded-lg border dark:border-gray-700 dark:bg-gray-900 text-sm">
           <option value="">All Rules</option>
-          {ruleTypes.map((r) => <option key={r} value={r}>{r}</option>)}
+          {ruleTypes.map((r: any) => <option key={r} value={r}>{r}</option>)}
         </select>
         <span className="text-sm text-gray-500">{filtered.length} violations</span>
       </div>
@@ -71,7 +71,7 @@ export default function PasswordPolicyAuditPage() {
         <table className="w-full text-sm">
           <thead className="bg-gray-50 dark:bg-gray-900/50"><tr><th className="px-4 py-3 text-left font-medium">User</th><th className="px-4 py-3 text-left font-medium">Rule</th><th className="px-4 py-3 text-left font-medium">Detail</th><th className="px-4 py-3 text-left font-medium">Detected</th></tr></thead>
           <tbody className="divide-y dark:divide-gray-800">
-            {filtered.map((v) => (
+            {filtered.map((v: any) => (
               <tr key={v.id} className="hover:bg-gray-50 dark:hover:bg-gray-900/30">
                 <td className="px-4 py-3"><span className="font-medium">{v.username}</span><p className="text-xs text-gray-400 font-mono">{v.user_id}</p></td>
                 <td className="px-4 py-3"><span className="px-2 py-0.5 rounded text-xs bg-gray-100 dark:bg-gray-800 font-mono">{v.rule_type}</span></td>

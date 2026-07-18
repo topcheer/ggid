@@ -28,7 +28,7 @@ export default function SessionInspectorPage() {
     try {
       const res = await fetch("/api/v1/auth/session-inspector/" + id, { method: "DELETE", headers: { ...authHeader(), "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
       if (!res.ok) return null;
-      setSessions(sessions.filter((s) => s.id !== id));
+      setSessions(sessions.filter((s: any) => s.id !== id));
       if (selected?.id === id) setSelected(null);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Failed to revoke session");
@@ -51,7 +51,7 @@ export default function SessionInspectorPage() {
       {loading && <div className="rounded-lg border dark:border-gray-800 p-8 text-center"><div className="inline-block w-5 h-5 border-2 border-current border-t-transparent rounded-full animate-spin text-blue-600 mb-2" /><div className="text-sm text-gray-500">{t("sessionInspector.searchingSessions")}</div></div>}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 space-y-2">
-          {sessions.map((s) => (
+          {sessions.map((s: any) => (
             <div key={s.id} className={"rounded-lg border p-3 cursor-pointer " + (selected?.id === s.id ? "border-blue-500" : "dark:border-gray-800")} onClick={() => setSelected(s)}>
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">

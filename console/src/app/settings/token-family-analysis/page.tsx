@@ -18,7 +18,7 @@ export default function TokenFamilyAnalysisPage() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-        <div className="bg-gray-900 rounded-xl p-4"><Layers className="w-5 h-5 text-blue-400 mb-1" /><p className="text-xs text-gray-400">Active Families</p><p className="text-xl font-bold">{data?.families?.filter((f) => f.status === "active").length ?? 0}</p></div>
+        <div className="bg-gray-900 rounded-xl p-4"><Layers className="w-5 h-5 text-blue-400 mb-1" /><p className="text-xs text-gray-400">Active Families</p><p className="text-xl font-bold">{data?.families?.filter((f: any) => f.status === "active").length ?? 0}</p></div>
         <div className="bg-gray-900 rounded-xl p-4"><p className="text-xs text-gray-400">Total Child Tokens</p><p className="text-xl font-bold">{data?.families?.reduce((a, f) => a + f.child_count, 0) ?? 0}</p></div>
         <div className="bg-gray-900 rounded-xl p-4"><AlertTriangle className="w-5 h-5 text-red-400 mb-1" /><p className="text-xs text-gray-400">Reuse Alerts</p><p className="text-xl font-bold text-red-400">{data?.reuse_alerts?.length ?? 0}</p></div>
       </div>
@@ -26,7 +26,7 @@ export default function TokenFamilyAnalysisPage() {
       <div className="bg-gray-900 rounded-xl p-6 mb-6">
         <h2 className="text-sm font-semibold mb-4 flex items-center gap-2"><GitBranch className="w-4 h-4 text-blue-400" /> Token Families</h2>
         <div className="space-y-3">
-          {(data?.families ?? []).map((f) => (
+          {(data?.families ?? []).map((f: any) => (
             <div key={f.family_id} className="bg-gray-800 rounded-lg p-4">
               <div className="flex items-center gap-3 mb-2">
                 <span className="text-xs font-mono text-blue-400">{f.family_id}</span>
@@ -49,7 +49,7 @@ export default function TokenFamilyAnalysisPage() {
         <div className="bg-gray-900 rounded-xl p-6">
           <h2 className="text-sm font-semibold mb-3 flex items-center gap-2"><AlertTriangle className="w-4 h-4 text-red-400" /> Reuse Detection Alerts</h2>
           <div className="space-y-2">
-            {data.reuse_alerts.map((a) => (
+            {data.reuse_alerts.map((a: any) => (
               <div key={a.id} className="flex items-center gap-3 bg-red-950 border border-red-800 rounded-lg p-3">
                 <AlertTriangle className="w-4 h-4 text-red-400" />
                 <div className="flex-1"><p className="text-sm">{a.description}</p><p className="text-xs text-gray-400">Family: {a.family_id} - Detected: {a.detected_at}</p></div>

@@ -28,7 +28,7 @@ export default function IncidentResponsePlaybookPage() {
           {t("incidentPlaybook.activeIncidents")}
         </h2>
         <div className="space-y-2">
-          {(data?.active_incidents ?? []).map((inc) => (
+          {(data?.active_incidents ?? []).map((inc: any) => (
             <div key={inc.incident_id} className="bg-gray-800 rounded-lg p-4">
               <div className="flex items-start justify-between mb-2">
                 <div>
@@ -72,7 +72,7 @@ export default function IncidentResponsePlaybookPage() {
           {t("incidentPlaybook.playbookLibrary")}
         </h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-          {(data?.playbook_library ?? []).map((pb) => (
+          {(data?.playbook_library ?? []).map((pb: any) => (
             <div key={pb.incident_type} className="bg-gray-800 rounded-lg p-3">
               <div className="flex items-center justify-between mb-2">
                 <p className="text-sm font-semibold">{pb.incident_type}</p>

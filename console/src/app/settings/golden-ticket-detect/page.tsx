@@ -44,7 +44,7 @@ export default function GoldenTicketDetectPage() {
         <div className="bg-gray-900 rounded-xl p-4">
           <ShieldAlert className="w-5 h-5 text-orange-400 mb-1" />
           <p className="text-xs text-gray-400">Detection Rules</p>
-          <p className="text-xl font-bold">{data?.detection_rules?.filter((r) => r.enabled).length ?? 0}</p>
+          <p className="text-xl font-bold">{data?.detection_rules?.filter((r: any) => r.enabled).length ?? 0}</p>
         </div>
         <div className="bg-gray-900 rounded-xl p-4">
           <Zap className="w-5 h-5 text-green-400 mb-1" />
@@ -87,7 +87,7 @@ export default function GoldenTicketDetectPage() {
               </tr>
             </thead>
             <tbody>
-              {(data?.detected_forgeries ?? []).map((f) => (
+              {(data?.detected_forgeries ?? []).map((f: any) => (
                 <tr key={f.token_hash} className="border-b border-gray-800">
                   <td className="py-3 pr-3 font-mono text-xs text-blue-400">{f.token_hash.substring(0, 24)}...</td>
                   <td className="py-3 pr-3">
@@ -115,7 +115,7 @@ export default function GoldenTicketDetectPage() {
           Detection Rules
         </h2>
         <div className="space-y-2">
-          {(data?.detection_rules ?? []).map((r) => (
+          {(data?.detection_rules ?? []).map((r: any) => (
             <div key={r.rule_name} className="flex items-center justify-between bg-gray-800 rounded-lg p-3">
               <div>
                 <p className="text-sm font-medium">{r.rule_name}</p>

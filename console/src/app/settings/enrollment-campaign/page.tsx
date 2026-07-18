@@ -81,7 +81,7 @@ export default function EnrollmentCampaignPage() {
           {([
             { id: "campaigns" as TabId, label: t("enrollmentCampaign.tabs.campaigns"), icon: Megaphone },
             { id: "create" as TabId, label: t("enrollmentCampaign.tabs.create"), icon: Plus },
-          ]).map((tab) => {
+          ]).map((tab: any) => {
             const Icon = tab.icon;
             return (
               <button key={tab.id} onClick={() => setActiveTab(tab.id)}
@@ -138,7 +138,7 @@ function CampaignsList({ campaigns, onRefresh }: { campaigns: Campaign[]; onRefr
 
   return (
     <div className="space-y-3">
-      {campaigns.map((c) => {
+      {campaigns.map((c: any) => {
         const pct = c.target > 0 ? Math.round((c.enrolled / c.target) * 100) : 0;
         return (
           <div key={c.id} className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-4">
@@ -271,7 +271,7 @@ function CreateCampaign({ onLaunched }: { onLaunched: () => void }) {
           <div>
             <label className="block text-sm font-semibold text-gray-900 dark:text-white mb-2">{t("enrollmentCampaign.create.targetGroup")}</label>
             <div className="grid grid-cols-2 gap-2">
-              {TARGET_GROUPS.map((g) => (
+              {TARGET_GROUPS.map((g: any) => (
                 <button key={g.value} onClick={() => setTargetGroup(g.value)}
                   className={`p-3 rounded-lg border-2 text-left text-sm transition-all ${
                     targetGroup === g.value ? "border-blue-500 bg-blue-50 dark:bg-blue-950/30 text-blue-700 dark:text-blue-300" : "border-gray-200 dark:border-gray-700 hover:border-gray-300 text-gray-700 dark:text-gray-300"
@@ -287,7 +287,7 @@ function CreateCampaign({ onLaunched }: { onLaunched: () => void }) {
       {step === 1 && (
         <div className="space-y-3">
           <label className="block text-sm font-semibold text-gray-900 dark:text-white">{t("enrollmentCampaign.create.method")}</label>
-          {METHODS.map((m) => {
+          {METHODS.map((m: any) => {
             const Icon = m.icon;
             const active = method === m.value;
             return (

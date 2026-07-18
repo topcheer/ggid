@@ -23,7 +23,7 @@ export default function HostValidationConfigPage() {
   };
 
   const deleteHost = (host: string) => {
-    setActiveList(activeList.filter((h) => h !== host));
+    setActiveList(activeList.filter((h: any) => h !== host));
   };
 
   return (
@@ -58,7 +58,7 @@ export default function HostValidationConfigPage() {
         <div className="space-y-2">
           <h2 className="text-lg font-semibold">{mode === "whitelist" ? "Whitelist" : "Blacklist"}</h2>
           <div className="flex flex-wrap gap-2">
-            {activeList.map((host) => (
+            {activeList.map((host: any) => (
               <span
                 key={host}
                 className="inline-flex items-center gap-1 px-3 py-1 bg-gray-100 rounded text-sm font-mono"

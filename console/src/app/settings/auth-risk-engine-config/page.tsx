@@ -66,7 +66,7 @@ export default function AuthRiskEngineConfigPage() {
       <div className="bg-gray-900 rounded-xl p-6 mb-6">
         <h2 className="text-lg font-semibold mb-4">Risk Signals</h2>
         <div className="space-y-2">
-          {(data?.risk_signals ?? []).map((s) => (
+          {(data?.risk_signals ?? []).map((s: any) => (
             <div key={s.signal} className="flex items-center gap-4 bg-gray-800 rounded-lg p-3">
               <div className="flex-1">
                 <p className="text-sm font-medium">{s.signal}</p>

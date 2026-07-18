@@ -20,7 +20,7 @@ export default function ComplianceGapReportPage() {
     low: "bg-blue-900 text-blue-300",
   };
 
-  const filteredGaps = (data?.gaps ?? []).filter((g) => g.framework === selectedFramework);
+  const filteredGaps = (data?.gaps ?? []).filter((g: any) => g.framework === selectedFramework);
 
   return (
     <div className="min-h-screen bg-gray-950 text-white p-8">
@@ -77,7 +77,7 @@ export default function ComplianceGapReportPage() {
 
       {/* Framework Selector */}
       <div className="flex items-center gap-2 mb-6">
-        {(data?.frameworks ?? []).map((fw) => (
+        {(data?.frameworks ?? []).map((fw: any) => (
           <button
             key={fw}
             onClick={() => setSelectedFramework(fw)}
@@ -106,7 +106,7 @@ export default function ComplianceGapReportPage() {
             </tr>
           </thead>
           <tbody>
-            {filteredGaps.map((gap) => (
+            {filteredGaps.map((gap: any) => (
               <tr key={gap.control_id} className="border-b border-gray-800 hover:bg-gray-800/50">
                 <td className="py-3 px-4 font-mono text-blue-400">{gap.control_id}</td>
                 <td className="py-3 px-4">

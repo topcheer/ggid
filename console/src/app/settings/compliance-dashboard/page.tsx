@@ -64,7 +64,7 @@ export default function ComplianceDashboardPage() {
         <div className={cardCls}><div className="py-12 text-center"><PieChart className="mx-auto h-12 w-12 text-gray-300" /><p className="mt-4 text-sm text-gray-400">{t("complianceDashboard.noData")}</p></div></div>
       ) : (
         <div className="grid grid-cols-3 gap-4">
-          {frameworks.map((f) => {
+          {frameworks.map((f: any) => {
             const color = f.coverage_pct >= 80 ? "#16a34a" : f.coverage_pct >= 60 ? "#eab308" : "#dc2626";
             const isExpanded = selected === f.framework;
             return (

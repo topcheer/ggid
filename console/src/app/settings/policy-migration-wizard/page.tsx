@@ -49,7 +49,7 @@ export default function PolicyMigrationWizardPage() {
       <div className="bg-gray-900 rounded-xl p-6 mb-6">
         <h2 className="text-sm font-semibold mb-3">Source System</h2>
         <div className="flex flex-wrap gap-2">
-          {(data?.source_systems ?? []).map((src) => (
+          {(data?.source_systems ?? []).map((src: any) => (
             <button
               key={src}
               onClick={() => setStep(1)}
@@ -156,7 +156,7 @@ export default function PolicyMigrationWizardPage() {
           Migration History
         </h2>
         <div className="space-y-2">
-          {(data?.migration_history ?? []).map((h) => (
+          {(data?.migration_history ?? []).map((h: any) => (
             <div key={h.id} className="flex items-center gap-3 bg-gray-800 rounded-lg p-3">
               <span className={"w-2 h-2 rounded-full " + (h.status === "completed" ? "bg-green-500" : h.status === "failed" ? "bg-red-500" : "bg-yellow-500")} />
               <div className="flex-1">

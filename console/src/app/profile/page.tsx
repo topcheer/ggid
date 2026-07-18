@@ -84,16 +84,16 @@ export default function EnhancedProfilePage() {
           </div>
           <div className={card}>
             <h3 className="mb-3 flex items-center gap-2 text-sm font-semibold uppercase text-gray-400"><Key className="h-4 w-4" /> {t("profile.mfaMethods")}</h3>
-            <div className="space-y-2">{mfaMethods.map((m, i) => (
+            <div className="space-y-2">{mfaMethods.map((m: any, i: any) => (
               <div key={i} className="flex items-center justify-between rounded-lg border p-3 dark:border-gray-700">
                 <div className="flex items-center gap-3">{m.type === "webauthn" ? <Fingerprint className="h-5 w-5 text-green-500" /> : m.type === "totp" ? <Smartphone className="h-5 w-5 text-blue-500" /> : <Phone className="h-5 w-5 text-gray-400" />}<div><span className="text-sm font-medium">{m.name}</span><p className="text-xs text-gray-400">{m.type}</p></div></div>
-                <button onClick={() => setMfaMethods(prev => prev.map((x, j) => j === i ? { ...x, enabled: !x.enabled } : x))} aria-pressed={m.enabled} className={`relative h-6 w-11 rounded-full transition ${m.enabled ? "bg-green-500" : "bg-gray-300 dark:bg-gray-700"}`}><span className={`absolute top-0.5 h-5 w-5 rounded-full bg-white transition ${m.enabled ? "left-5" : "left-0.5"}`} /></button>
+                <button onClick={() => setMfaMethods(prev => prev.map((x: any, j: any) => j === i ? { ...x, enabled: !x.enabled } : x))} aria-pressed={m.enabled} className={`relative h-6 w-11 rounded-full transition ${m.enabled ? "bg-green-500" : "bg-gray-300 dark:bg-gray-700"}`}><span className={`absolute top-0.5 h-5 w-5 rounded-full bg-white transition ${m.enabled ? "left-5" : "left-0.5"}`} /></button>
               </div>
             ))}<button className="mt-2 flex items-center gap-1 rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-blue-700"><Plus className="h-3 w-3" /> {t("profile.addMfa")}</button></div>
           </div>
           <div className={card}>
             <h3 className="mb-3 flex items-center gap-2 text-sm font-semibold uppercase text-gray-400"><Globe className="h-4 w-4" /> {t("profile.linkedAccounts")}</h3>
-            <div className="space-y-2">{linkedAccounts.map((acc, i) => (
+            <div className="space-y-2">{linkedAccounts.map((acc: any, i: any) => (
               <div key={i} className="flex items-center justify-between rounded-lg border p-3 dark:border-gray-700"><div className="flex items-center gap-3"><Globe className="h-5 w-5 text-gray-400" /><div><span className="text-sm font-medium">{acc.provider}</span>{acc.email && <p className="text-xs text-gray-400">{acc.email}</p>}</div></div>{acc.connected ? <span className="flex items-center gap-1 px-2 py-0.5 rounded text-xs bg-green-100 dark:bg-green-900/30 text-green-600"><CheckCircle2 className="h-3 w-3" /> {t("profile.connected")}</span> : <button className="rounded-lg border border-gray-300 px-3 py-1 text-xs dark:border-gray-700">{t("profile.connect")}</button>}</div>
             ))}</div>
           </div>

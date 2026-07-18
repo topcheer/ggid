@@ -35,7 +35,7 @@ export default function WebauthnConfigPage() {
       <div className="bg-gray-900 rounded-xl p-6 mt-6">
         <h2 className="text-sm font-semibold mb-3">{t("webauthnConfig.supportedAlgorithms")}</h2>
         <div className="grid grid-cols-3 gap-3">
-          {(data?.supported_algorithms ?? []).map((alg) => (
+          {(data?.supported_algorithms ?? []).map((alg: any) => (
             <label key={alg.id} className="flex items-center gap-2 bg-gray-800 rounded-lg p-3 cursor-pointer">
               <input aria-label="Toggle option" type="checkbox" defaultChecked={alg.enabled} />
               <div><p className="text-sm font-medium font-mono">{alg.id}</p><p className="text-xs text-gray-400">COSE: {alg.cose_id}</p></div>
@@ -47,7 +47,7 @@ export default function WebauthnConfigPage() {
       <div className="bg-gray-900 rounded-xl p-6 mt-6">
         <h2 className="text-sm font-semibold mb-3">{t("webauthnConfig.perPlatform")}</h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {(data?.per_platform ?? []).map((p) => (
+          {(data?.per_platform ?? []).map((p: any) => (
             <div key={p.platform} className="bg-gray-800 rounded-lg p-4">
               <p className="text-sm font-semibold mb-2">{p.platform}</p>
               <div className="space-y-1 text-xs text-gray-400">

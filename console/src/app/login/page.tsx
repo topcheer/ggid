@@ -430,7 +430,7 @@ export default function LoginPage() {
             </div>
 
             <div className="grid grid-cols-3 gap-2">
-              {socialButtons.map((conn) => (
+              {socialButtons.map((conn: any) => (
                 <button
                   key={conn.id}
                   type="button"

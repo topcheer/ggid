@@ -11,7 +11,7 @@ export default function SocialProviderStatsPage() {
   if (loading) return <div className="p-8 text-gray-400">Loading social provider stats...</div>;
   if (error) return <div className="p-8 text-red-400">Error: {error}</div>;
 
-  const maxLogin = Math.max(...(data?.providers ?? []).map((p) => p.login_count_30d), 1);
+  const maxLogin = Math.max(...(data?.providers ?? []).map((p: any) => p.login_count_30d), 1);
 
   return (
     <div className="min-h-screen bg-gray-950 text-white p-8">
@@ -25,7 +25,7 @@ export default function SocialProviderStatsPage() {
 
       {/* Provider Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
-        {(data?.providers ?? []).map((p) => (
+        {(data?.providers ?? []).map((p: any) => (
           <div key={p.name} className="bg-gray-900 rounded-xl p-5">
             <div className="flex items-center justify-between mb-3">
               <h3 className="text-sm font-semibold">{p.name}</h3>
@@ -64,7 +64,7 @@ export default function SocialProviderStatsPage() {
       <div className="bg-gray-900 rounded-xl p-6">
         <h2 className="text-sm font-semibold mb-3 flex items-center gap-2"><Zap className="w-4 h-4 text-yellow-400" /> Top Errors</h2>
         <div className="space-y-2">
-          {(data?.top_errors ?? []).map((e) => (
+          {(data?.top_errors ?? []).map((e: any) => (
             <div key={e.error} className="flex items-center gap-3 bg-gray-800 rounded-lg p-3">
               <span className="text-xs font-mono text-red-400 flex-1">{e.error}</span>
               <span className="text-xs text-gray-400">{e.provider}</span>

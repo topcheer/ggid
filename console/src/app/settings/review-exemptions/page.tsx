@@ -66,13 +66,13 @@ export default function ReviewExemptionsPage() {
         method: "DELETE",
         headers: { ...authHeader(), "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" },
       });
-      setExemptions((prev) => prev.filter((e) => e.id !== revokeId));
+      setExemptions((prev) => prev.filter((e: any) => e.id !== revokeId));
       setRevokeId(null);
     } catch { /* noop */ }
   };
 
-  const active = exemptions.filter((e) => e.status === "active");
-  const expiring = active.filter((e) => e.days_remaining <= 7);
+  const active = exemptions.filter((e: any) => e.status === "active");
+  const expiring = active.filter((e: any) => e.days_remaining <= 7);
 
   return (
     <div className="space-y-6">
@@ -95,7 +95,7 @@ export default function ReviewExemptionsPage() {
       <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
         <div className="rounded-lg border p-4 dark:border-gray-800"><span className="text-sm text-gray-500">Total</span><p className="text-2xl font-bold mt-1">{exemptions.length}</p></div>
         <div className="rounded-lg border p-4 dark:border-gray-800"><span className="text-sm text-gray-500">Active</span><p className="text-2xl font-bold mt-1 text-green-600">{active.length}</p></div>
-        <div className="rounded-lg border p-4 dark:border-gray-800"><span className="text-sm text-gray-500">Expired</span><p className="text-2xl font-bold mt-1 text-gray-400">{exemptions.filter((e) => e.status === "expired").length}</p></div>
+        <div className="rounded-lg border p-4 dark:border-gray-800"><span className="text-sm text-gray-500">Expired</span><p className="text-2xl font-bold mt-1 text-gray-400">{exemptions.filter((e: any) => e.status === "expired").length}</p></div>
       </div>
 
       {/* Table */}
@@ -113,7 +113,7 @@ export default function ReviewExemptionsPage() {
             </tr>
           </thead>
           <tbody className="divide-y dark:divide-gray-800">
-            {exemptions.map((e) => (
+            {exemptions.map((e: any) => (
               <tr key={e.id} className="hover:bg-gray-50 dark:hover:bg-gray-900/30">
                 <td className="px-4 py-3 font-mono text-xs font-medium">{e.role}</td>
                 <td className="px-4 py-3 max-w-xs truncate" title={e.reason}>{e.reason || "-"}</td>

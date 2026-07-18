@@ -25,7 +25,7 @@ export default function DatabaseHealthPage() {
   if (!data) return <p className="text-sm text-gray-500 text-center py-8">{t("databaseHealth.loading")}</p>;
 
   const poolPct = (data.pool_active / data.pool_max) * 100;
-  const maxSize = Math.max(...data.table_sizes.map((t) => t.size_mb), 1);
+  const maxSize = Math.max(...data.table_sizes.map((t: any) => t.size_mb), 1);
 
   return (
     <div className="space-y-6">
@@ -42,7 +42,7 @@ export default function DatabaseHealthPage() {
 
       <div className="rounded-lg border dark:border-gray-800 p-4"><h3 className="text-sm font-semibold mb-3 flex items-center gap-2"><Clock className="w-4 h-4 text-gray-400" /> Slow Queries</h3><div className="space-y-1">{data.slow_queries.map((q: any, i: number) => (<div key={i} className="flex items-center gap-2 text-sm py-1"><span className={"px-2 py-0.5 rounded text-xs font-bold " + (q.duration_ms > 1000 ? "bg-red-100 dark:bg-red-900/30 dark:text-red-400" : "bg-yellow-100 dark:bg-yellow-900/30 dark:text-yellow-400")}>{q.duration_ms}ms</span><span className="font-mono text-xs text-gray-500 truncate flex-1">{q.query.substring(0, 80)}</span><span className="text-xs text-gray-400">{q.timestamp}</span></div>))}{data.slow_queries.length === 0 && <p className="text-xs text-gray-500">{t("databaseHealth.noSlowQueries")}</p>}</div></div>
 
-      <div className="rounded-lg border dark:border-gray-800 p-4"><h3 className="text-sm font-semibold mb-3">{t("databaseHealth.tableSizes")}</h3><div className="space-y-2">{data.table_sizes.map((t) => (<div key={t.table} className="flex items-center gap-2"><span className="text-xs text-gray-500 w-32 truncate font-mono">{t.table}</span><div className="flex-1 bg-gray-100 dark:bg-gray-800 rounded-full h-4"><div className="h-full rounded-full bg-blue-500" style={{ width: (t.size_mb / maxSize) * 100 + "%" }} /></div><span className="text-xs font-bold w-16 text-right">{t.size_mb.toFixed(1)} MB</span></div>))}</div></div>
+      <div className="rounded-lg border dark:border-gray-800 p-4"><h3 className="text-sm font-semibold mb-3">{t("databaseHealth.tableSizes")}</h3><div className="space-y-2">{data.table_sizes.map((t: any) => (<div key={t.table} className="flex items-center gap-2"><span className="text-xs text-gray-500 w-32 truncate font-mono">{t.table}</span><div className="flex-1 bg-gray-100 dark:bg-gray-800 rounded-full h-4"><div className="h-full rounded-full bg-blue-500" style={{ width: (t.size_mb / maxSize) * 100 + "%" }} /></div><span className="text-xs font-bold w-16 text-right">{t.size_mb.toFixed(1)} MB</span></div>))}</div></div>
     </div>
   );
 }

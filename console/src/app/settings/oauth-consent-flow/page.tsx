@@ -111,7 +111,7 @@ export default function OauthConsentFlowPage() {
         <div className="rounded-lg border dark:border-gray-800 p-4">
           <h3 className="text-sm font-semibold mb-2">Pre-Approved Apps</h3>
           <div className="space-y-1">
-            {config.pre_approved_apps.map((a) => (
+            {config.pre_approved_apps.map((a: any) => (
               <div key={a.client_id} className="flex items-center justify-between text-sm py-1">
                 <span className="font-medium">{a.client_name}</span>
                 <span className="text-xs text-gray-400 font-mono">{a.client_id}</span>

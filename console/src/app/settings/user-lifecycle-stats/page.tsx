@@ -57,7 +57,7 @@ export default function UserLifecycleStatsPage() {
       <div className="bg-gray-900 rounded-xl p-6 mb-6">
         <h2 className="text-sm font-semibold mb-3">Avg Time Per Stage</h2>
         <div className="space-y-2">
-          {(data?.avg_time_per_stage ?? []).map((s) => (
+          {(data?.avg_time_per_stage ?? []).map((s: any) => (
             <div key={s.stage} className="flex items-center gap-2">
               <span className="text-xs w-24 capitalize">{s.stage}</span>
               <div className="flex-1 bg-gray-800 rounded-full h-3"><div className="bg-blue-600 h-3 rounded-full" style={{ width: Math.min(s.avg_days / 30 * 100, 100) + "%" }} /></div>
@@ -72,7 +72,7 @@ export default function UserLifecycleStatsPage() {
         <div className="bg-gray-900 rounded-xl p-6">
           <h2 className="text-sm font-semibold mb-3">Transition Rules</h2>
           <div className="space-y-1">
-            {(data?.transition_rules ?? []).map((r) => (
+            {(data?.transition_rules ?? []).map((r: any) => (
               <div key={r.rule} className="flex items-center gap-2 bg-gray-800 rounded p-2 text-xs"><span className="text-gray-300">{r.rule}</span><span className="ml-auto text-gray-500">{r.trigger}</span></div>
             ))}
           </div>
@@ -80,7 +80,7 @@ export default function UserLifecycleStatsPage() {
         <div className="bg-gray-900 rounded-xl p-6">
           <h2 className="text-sm font-semibold mb-3">Monthly Transitions</h2>
           <div className="flex items-end gap-1 h-24">
-            {(data?.monthly_transitions ?? []).map((m) => (
+            {(data?.monthly_transitions ?? []).map((m: any) => (
               <div key={m.month} className="flex-1 bg-blue-600 rounded-t" style={{ height: Math.abs(m.count) / 10 + "%" }} title={m.month + ": " + m.count} />
             ))}
           </div>

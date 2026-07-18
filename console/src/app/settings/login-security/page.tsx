@@ -71,7 +71,7 @@ export default function LoginSecurityPage() {
     setUnlocking(userId);
     try {
       await apiFetch(`/api/v1/auth/lockouts/${userId}/unlock`, { method: "POST" });
-      setLockouts((prev) => prev.filter((l) => l.user_id !== userId));
+      setLockouts((prev) => prev.filter((l: any) => l.user_id !== userId));
     } catch {
       setError("Failed to unlock user");
     } finally {
@@ -169,7 +169,7 @@ export default function LoginSecurityPage() {
             <div className={cardCls}><div className="py-8 text-center"><Shield className="mx-auto h-10 w-10 text-green-300" /><p className="mt-3 text-sm text-gray-400">No active lockouts.</p></div></div>
           ) : (
             <div className="space-y-3">
-              {lockouts.map((l) => (
+              {lockouts.map((l: any) => (
                 <div key={l.id} className={`${cardCls} border-red-200 dark:border-red-800`}>
                   <div className="flex items-center justify-between">
                     <div>
@@ -200,7 +200,7 @@ export default function LoginSecurityPage() {
             <div className={cardCls}><div className="py-8 text-center"><Globe className="mx-auto h-10 w-10 text-gray-300" /><p className="mt-3 text-sm text-gray-400">No IP restrictions. All IPs allowed.</p></div></div>
           ) : (
             <div className="space-y-2">
-              {ipAllow.map((ip) => (
+              {ipAllow.map((ip: any) => (
                 <div key={ip.id} className={`${cardCls} flex items-center justify-between py-3`}>
                   <div>
                     <code className="font-mono text-sm text-gray-700 dark:text-gray-300">{ip.cidr}</code>

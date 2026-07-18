@@ -3,6 +3,7 @@ package server
 import (
 	"context"
 	"encoding/json"
+	"sync"
 	"time"
 
 	"github.com/google/uuid"
@@ -10,8 +11,12 @@ import (
 )
 
 // NHIRiskPGRepo persists NHI risk data to PostgreSQL.
+// When pool is nil, uses in-memory maps for dev/test compatibility.
 type NHIRiskPGRepo struct {
-	pool *pgxpool.Pool
+	pool      *pgxpool.Pool
+	mu        sync.RWMutex
+	memScores map[uuid.UUID]*NHIRiskScore
+	memBase   map[string][]*NHIBehaviorBaseline
 }
 
 // NewNHIRiskPGRepo creates a new PG-backed NHI risk repo (exported).
@@ -58,6 +63,12 @@ func (r *NHIRiskPGRepo) EnsureSchema(ctx context.Context) error {
 // SaveRiskScore persists a risk score evaluation.
 func (r *NHIRiskPGRepo) SaveRiskScore(ctx context.Context, score *NHIRiskScore) error {
 	if r.pool == nil {
+		r.mu.Lock()
+		defer r.mu.Unlock()
+		if r.memScores == nil {
+			r.memScores = make(map[uuid.UUID]*NHIRiskScore)
+		}
+		r.memScores[score.NHIID] = score
 		return nil
 	}
 	signalsJSON, _ := json.Marshal(score.Signals)
@@ -72,7 +83,12 @@ func (r *NHIRiskPGRepo) SaveRiskScore(ctx context.Context, score *NHIRiskScore) 
 // GetRiskScore returns the latest risk score for an NHI.
 func (r *NHIRiskPGRepo) GetRiskScore(ctx context.Context, nhiID uuid.UUID) (*NHIRiskScore, error) {
 	if r.pool == nil {
-		return nil, nil
+		r.mu.RLock()
+		defer r.mu.RUnlock()
+		if r.memScores == nil {
+			return nil, nil
+		}
+		return r.memScores[nhiID], nil
 	}
 	row := r.pool.QueryRow(ctx,
 		`SELECT nhi_id, score, level, signals, evaluated_at
@@ -91,7 +107,17 @@ func (r *NHIRiskPGRepo) GetRiskScore(ctx context.Context, nhiID uuid.UUID) (*NHI
 // ListHighRisk returns all NHIs with score >= threshold.
 func (r *NHIRiskPGRepo) ListHighRisk(ctx context.Context, threshold int) ([]*NHIRiskScore, error) {
 	if r.pool == nil {
-		return nil, nil
+		r.mu.RLock()
+		defer r.mu.RUnlock()
+		var result []*NHIRiskScore
+		if r.memScores != nil {
+			for _, s := range r.memScores {
+				if s.Score >= threshold {
+					result = append(result, s)
+				}
+			}
+		}
+		return result, nil
 	}
 	rows, err := r.pool.Query(ctx,
 		`SELECT DISTINCT ON (nhi_id) nhi_id, score, level, signals, evaluated_at
@@ -117,6 +143,12 @@ func (r *NHIRiskPGRepo) ListHighRisk(ctx context.Context, threshold int) ([]*NHI
 // SaveBaseline upserts a behavior baseline for an NHI endpoint.
 func (r *NHIRiskPGRepo) SaveBaseline(ctx context.Context, b *NHIBehaviorBaseline) error {
 	if r.pool == nil {
+		r.mu.Lock()
+		defer r.mu.Unlock()
+		if r.memBase == nil {
+			r.memBase = make(map[string][]*NHIBehaviorBaseline)
+		}
+		r.memBase[b.NHIID] = append(r.memBase[b.NHIID], b)
 		return nil
 	}
 	_, err := r.pool.Exec(ctx,
@@ -138,7 +170,12 @@ func (r *NHIRiskPGRepo) SaveBaseline(ctx context.Context, b *NHIBehaviorBaseline
 // GetBaselines returns all baselines for an NHI.
 func (r *NHIRiskPGRepo) GetBaselines(ctx context.Context, nhiID string) ([]*NHIBehaviorBaseline, error) {
 	if r.pool == nil {
-		return nil, nil
+		r.mu.RLock()
+		defer r.mu.RUnlock()
+		if r.memBase == nil {
+			return nil, nil
+		}
+		return r.memBase[nhiID], nil
 	}
 	rows, err := r.pool.Query(ctx,
 		`SELECT nhi_id, endpoint, avg_calls_per_hour, std_calls_per_hour,

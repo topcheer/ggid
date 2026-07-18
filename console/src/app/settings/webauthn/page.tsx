@@ -122,7 +122,7 @@ export default function WebAuthnSettingsPage() {
   };
 
   const removeFromAllowlist = (aaguid: string) => {
-    setConfig({ ...config, aaguid_allowlist: config.aaguid_allowlist.filter((e) => e.aaguid !== aaguid) });
+    setConfig({ ...config, aaguid_allowlist: config.aaguid_allowlist.filter((e: any) => e.aaguid !== aaguid) });
   };
 
   const addToDenylist = () => {
@@ -136,7 +136,7 @@ export default function WebAuthnSettingsPage() {
   };
 
   const removeFromDenylist = (aaguid: string) => {
-    setConfig({ ...config, aaguid_denylist: config.aaguid_denylist.filter((e) => e.aaguid !== aaguid) });
+    setConfig({ ...config, aaguid_denylist: config.aaguid_denylist.filter((e: any) => e.aaguid !== aaguid) });
   };
 
   return (
@@ -295,7 +295,7 @@ export default function WebAuthnSettingsPage() {
                 {config.aaguid_allowlist.length === 0 ? (
                   <p className="py-3 text-center text-xs text-gray-400">No entries — all authenticators allowed</p>
                 ) : (
-                  config.aaguid_allowlist.map((entry) => (
+                  config.aaguid_allowlist.map((entry: any) => (
                     <div key={entry.aaguid} className="flex items-center justify-between rounded border border-green-200 bg-white px-2.5 py-1.5 dark:border-green-800 dark:bg-gray-800">
                       <div className="min-w-0 flex-1">
                         <p className="truncate text-xs font-medium text-gray-800 dark:text-gray-200">{entry.label}</p>
@@ -349,7 +349,7 @@ export default function WebAuthnSettingsPage() {
                 {config.aaguid_denylist.length === 0 ? (
                   <p className="py-3 text-center text-xs text-gray-400">No entries — no authenticators blocked</p>
                 ) : (
-                  config.aaguid_denylist.map((entry) => (
+                  config.aaguid_denylist.map((entry: any) => (
                     <div key={entry.aaguid} className="flex items-center justify-between rounded border border-red-200 bg-white px-2.5 py-1.5 dark:border-red-800 dark:bg-gray-800">
                       <div className="min-w-0 flex-1">
                         <p className="truncate text-xs font-medium text-gray-800 dark:text-gray-200">{entry.label}</p>
@@ -408,7 +408,7 @@ export default function WebAuthnSettingsPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
-                  {credentials.map((cred) => (
+                  {credentials.map((cred: any) => (
                     <tr key={cred.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
                       <td className="px-4 py-2 text-sm font-medium text-gray-900 dark:text-gray-200">{cred.name}</td>
                       <td className="px-4 py-2">

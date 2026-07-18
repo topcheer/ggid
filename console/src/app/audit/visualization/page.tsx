@@ -193,7 +193,7 @@ export default function AuditVisualizationPage() {
       }
       // Client-side IP filter fallback
       if (ipSearch) {
-        list = list.filter((e) => (e.ip_address || "").includes(ipSearch));
+        list = list.filter((e: any) => (e.ip_address || "").includes(ipSearch));
       }
       setEvents(list);
       setError(null);
@@ -226,7 +226,7 @@ export default function AuditVisualizationPage() {
 
   const handleExportCSV = () => {
     const headers = ["timestamp", "user", "action", "ip", "result", "details"];
-    const rows = filteredEvents.map((e) => [
+    const rows = filteredEvents.map((e: any) => [
       e.created_at,
       e.actor_name || e.actor_id || "",
       e.action,
@@ -235,7 +235,7 @@ export default function AuditVisualizationPage() {
       e.metadata ? JSON.stringify(e.metadata) : "",
     ]);
     const csv = [headers, ...rows]
-      .map((row) => row.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(","))
+      .map((row: any) => row.map((cell: any) => `"${String(cell).replace(/"/g, '""')}"`).join(","))
       .join("\n");
     const blob = new Blob([csv], { type: "text/csv" });
     const url = URL.createObjectURL(blob);
@@ -246,7 +246,7 @@ export default function AuditVisualizationPage() {
     URL.revokeObjectURL(url);
   };
 
-  const filteredEvents = events.filter((e) => {
+  const filteredEvents = events.filter((e: any) => {
     if (userSearch) {
       const u = userSearch.toLowerCase();
       if (
@@ -274,7 +274,7 @@ export default function AuditVisualizationPage() {
   });
 
   const eventGroups = groupEvents(filteredEvents);
-  const expandedGroups = eventGroups.filter((g) => !collapsedGroups.has(g.key));
+  const expandedGroups = eventGroups.filter((g: any) => !collapsedGroups.has(g.key));
 
   const toggleGroup = (key: string) => {
     setCollapsedGroups((prev) => {
@@ -373,7 +373,7 @@ export default function AuditVisualizationPage() {
           </div>
           <select aria-label="Filter" value={actionFilter} onChange={(e) => setActionFilter(e.target.value)} className={inputCls}>
             <option value="all">All Actions</option>
-            {ACTION_TYPES.map((a) => (
+            {ACTION_TYPES.map((a: any) => (
               <option key={a} value={a}>
                 {a.replace(/_/g, " ")}
               </option>
@@ -434,7 +434,7 @@ export default function AuditVisualizationPage() {
           <div className="absolute left-5 top-0 bottom-0 w-0.5 bg-gradient-to-b from-gray-200 via-gray-300 to-gray-200 dark:from-gray-700 dark:via-gray-600 dark:to-gray-700" />
 
           <div className="space-y-2">
-            {eventGroups.map((group) => {
+            {eventGroups.map((group: any) => {
               const isCollapsed = collapsedGroups.has(group.key);
               const isMulti = group.events.length > 1;
 
@@ -463,7 +463,7 @@ export default function AuditVisualizationPage() {
 
                   {/* Render events in group (hidden if collapsed) */}
                   {!isCollapsed &&
-                    group.events.map((event, idx) => {
+                    group.events.map((event: any, idx: any) => {
                       const Icon = getActionIcon(event.action);
                       const initials = getInitials(event.actor_name || event.actor_id);
                       const isSuccess = event.result === "success";

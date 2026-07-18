@@ -65,7 +65,7 @@ export default function TokensPage() {
     try {
       await apiFetch(`/api/v1/oauth/tokens/${id}`, { method: "DELETE" });
       setConfirmRevoke(null);
-      setTokens((prev) => prev.filter((t) => t.id !== id));
+      setTokens((prev) => prev.filter((t: any) => t.id !== id));
     } catch {
       setError("Failed to revoke token");
     } finally {
@@ -149,11 +149,11 @@ export default function TokensPage() {
                 <th scope="col" className="px-4 py-3">User</th><th className="px-4 py-3">Client</th><th className="px-4 py-3">Scopes</th><th className="px-4 py-3">Type</th><th className="px-4 py-3">Issued</th><th className="px-4 py-3">Expires</th><th className="px-4 py-3">Last Used</th><th className="px-4 py-3 text-right">Action</th>
               </tr></thead>
               <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
-                {tokens.map((t) => (
+                {tokens.map((t: any) => (
                   <tr key={t.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/50">
                     <td className="px-4 py-3"><div className="font-medium text-gray-800 dark:text-gray-200">{t.user_name}</div></td>
                     <td className="px-4 py-3 text-gray-500">{t.client_name}</td>
-                    <td className="px-4 py-3"><div className="flex flex-wrap gap-1">{t.scopes.map((s) => <span key={s} className="rounded-full bg-indigo-100 px-2 py-0.5 text-xs text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400">{s}</span>)}</div></td>
+                    <td className="px-4 py-3"><div className="flex flex-wrap gap-1">{t.scopes.map((s: any) => <span key={s} className="rounded-full bg-indigo-100 px-2 py-0.5 text-xs text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400">{s}</span>)}</div></td>
                     <td className="px-4 py-3"><span className="rounded bg-blue-100 px-1.5 py-0.5 text-xs text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">{t.token_type}</span></td>
                     <td className="px-4 py-3 text-gray-500">{new Date(t.issued_at).toLocaleDateString()}</td>
                     <td className="px-4 py-3 text-gray-500"><span className="flex items-center gap-1"><Clock className="h-3 w-3" />{new Date(t.expires_at).toLocaleDateString()}</span></td>
@@ -170,14 +170,14 @@ export default function TokensPage() {
       {/* Mobile cards */}
       {!loading && tokens.length > 0 && (
         <div className="space-y-3 md:hidden">
-          {tokens.map((t) => (
+          {tokens.map((t: any) => (
             <div key={t.id} className={cardCls}>
               <div className="flex items-center justify-between">
                 <span className="font-medium text-gray-800 dark:text-gray-200">{t.user_name}</span>
                 <button onClick={() => setConfirmRevoke(t)} className="text-red-500"><Trash2 className="h-4 w-4" /></button>
               </div>
               <p className="mt-1 text-xs text-gray-400">{t.client_name} · {t.token_type}</p>
-              <div className="mt-1 flex flex-wrap gap-1">{t.scopes.map((s) => <span key={s} className="rounded-full bg-indigo-100 px-2 py-0.5 text-xs text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400">{s}</span>)}</div>
+              <div className="mt-1 flex flex-wrap gap-1">{t.scopes.map((s: any) => <span key={s} className="rounded-full bg-indigo-100 px-2 py-0.5 text-xs text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400">{s}</span>)}</div>
               <p className="mt-1 text-xs text-gray-400">Expires: {new Date(t.expires_at).toLocaleString()}</p>
             </div>
           ))}

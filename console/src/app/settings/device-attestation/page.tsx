@@ -46,7 +46,7 @@ export default function DeviceAttestationPage() {
 
   useEffect(() => { fetchData(); }, [fetchData]);
 
-  const filtered = filterTrust === "all" ? devices : devices.filter((d) => d.trust_level === filterTrust);
+  const filtered = filterTrust === "all" ? devices : devices.filter((d: any) => d.trust_level === filterTrust);
 
   return (
     <div className="space-y-6">
@@ -58,9 +58,9 @@ export default function DeviceAttestationPage() {
       {/* Stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <div className="rounded-lg border p-4 dark:border-gray-800"><span className="text-sm text-gray-500">{t("big1.deviceAttestation.totalDevices")}</span><p className="text-2xl font-bold mt-1">{devices.length}</p></div>
-        <div className="rounded-lg border p-4 dark:border-gray-800"><span className="text-sm text-gray-500">{t("big1.deviceAttestation.trusted")}</span><p className="text-2xl font-bold mt-1 text-green-600">{devices.filter((d) => d.trust_level === "trusted").length}</p></div>
-        <div className="rounded-lg border p-4 dark:border-gray-800"><span className="text-sm text-gray-500">{t("big1.deviceAttestation.managed")}</span><p className="text-2xl font-bold mt-1 text-yellow-600">{devices.filter((d) => d.trust_level === "managed").length}</p></div>
-        <div className="rounded-lg border p-4 dark:border-gray-800"><span className="text-sm text-gray-500">{t("big1.deviceAttestation.untrusted")}</span><p className="text-2xl font-bold mt-1 text-red-600">{devices.filter((d) => d.trust_level === "untrusted").length}</p></div>
+        <div className="rounded-lg border p-4 dark:border-gray-800"><span className="text-sm text-gray-500">{t("big1.deviceAttestation.trusted")}</span><p className="text-2xl font-bold mt-1 text-green-600">{devices.filter((d: any) => d.trust_level === "trusted").length}</p></div>
+        <div className="rounded-lg border p-4 dark:border-gray-800"><span className="text-sm text-gray-500">{t("big1.deviceAttestation.managed")}</span><p className="text-2xl font-bold mt-1 text-yellow-600">{devices.filter((d: any) => d.trust_level === "managed").length}</p></div>
+        <div className="rounded-lg border p-4 dark:border-gray-800"><span className="text-sm text-gray-500">{t("big1.deviceAttestation.untrusted")}</span><p className="text-2xl font-bold mt-1 text-red-600">{devices.filter((d: any) => d.trust_level === "untrusted").length}</p></div>
       </div>
 
       {/* Filter */}
@@ -74,7 +74,7 @@ export default function DeviceAttestationPage() {
       {/* Device list */}
       <div className="rounded-lg border dark:border-gray-800">
         <div className="divide-y dark:divide-gray-800">
-          {filtered.map((d) => (
+          {filtered.map((d: any) => (
             <div key={d.id} className="px-4 py-3">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">

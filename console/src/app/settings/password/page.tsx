@@ -504,7 +504,7 @@ export default function PasswordPolicyEnhancedPage() {
                 <span className="text-gray-400">Est. crack time: {strength.crackTime}</span>
               </div>
               <div className="flex h-2 gap-0.5">
-                {[1, 2, 3, 4, 5, 6].map((i) => (
+                {[1, 2, 3, 4, 5, 6].map((i: any) => (
                   <div
                     key={i}
                     className={`flex-1 rounded-full transition-colors ${
@@ -601,7 +601,7 @@ export default function PasswordPolicyEnhancedPage() {
                 Showing a sample of {COMMON_PASSWORDS.length} from {TOTAL_BLACKLIST.toLocaleString()} blocked passwords:
               </p>
               <div className="grid max-h-50 grid-cols-2 gap-1 overflow-y-auto sm:grid-cols-3" style={{ maxHeight: "300px" }}>
-                {COMMON_PASSWORDS.map((pw) => (
+                {COMMON_PASSWORDS.map((pw: any) => (
                   <code
                     key={pw}
                     className="rounded bg-gray-100 px-2 py-1 text-xs text-gray-600 dark:bg-gray-900 dark:text-gray-400"

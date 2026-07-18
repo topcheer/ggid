@@ -119,7 +119,7 @@ export default function IdentityRoleMiningConfigPage() {
                 </div>
               </div>
               <div className="flex flex-wrap gap-1">
-                {role.key_permissions.slice(0, 5).map((p) => (
+                {role.key_permissions.slice(0, 5).map((p: any) => (
                   <span key={p} className="text-xs px-1.5 py-0.5 bg-gray-700 rounded text-gray-300">{p}</span>
                 ))}
                 {role.key_permissions.length > 5 && (

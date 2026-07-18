@@ -43,12 +43,12 @@ export default function DeviceRegistryPage() {
   }, []);
 
   const handleRevoke = async (id: string) => {
-    try { await apiFetch(`/api/v1/auth/devices/${id}`, { method: "DELETE" }); setDevices((p) => p.filter((d) => d.id !== id)); }
+    try { await apiFetch(`/api/v1/auth/devices/${id}`, { method: "DELETE" }); setDevices((p) => p.filter((d: any) => d.id !== id)); }
     catch { setError("Revoke failed"); }
   };
 
   const handleToggleTrust = async (device: DeviceEntry) => {
-    try { await apiFetch(`/api/v1/auth/devices/${device.id}`, { method: "PATCH", body: JSON.stringify({ trusted: !device.trusted }) }); setDevices((p) => p.map((d) => d.id === device.id ? { ...d, trusted: !d.trusted } : d)); }
+    try { await apiFetch(`/api/v1/auth/devices/${device.id}`, { method: "PATCH", body: JSON.stringify({ trusted: !device.trusted }) }); setDevices((p) => p.map((d: any) => d.id === device.id ? { ...d, trusted: !d.trusted } : d)); }
     catch { setError("Toggle failed"); }
   };
 
@@ -68,7 +68,7 @@ export default function DeviceRegistryPage() {
         <>
           <div className="grid grid-cols-3 gap-4">
             <div className={cardCls}><div className="text-xs font-semibold uppercase text-gray-400">{t("big1.deviceRegistry.totalDevices")}</div><p className="mt-2 text-2xl font-bold text-blue-600">{devices.length}</p></div>
-            <div className={cardCls}><div className="text-xs font-semibold uppercase text-gray-400">{t("big1.deviceRegistry.trusted")}</div><p className="mt-2 text-2xl font-bold text-green-600">{devices.filter((d) => d.trusted).length}</p></div>
+            <div className={cardCls}><div className="text-xs font-semibold uppercase text-gray-400">{t("big1.deviceRegistry.trusted")}</div><p className="mt-2 text-2xl font-bold text-green-600">{devices.filter((d: any) => d.trusted).length}</p></div>
             <div className={cardCls}><div className="text-xs font-semibold uppercase text-gray-400">{t("big1.deviceRegistry.activeSessions")}</div><p className="mt-2 text-2xl font-bold text-indigo-600">{devices.reduce((s, d) => s + d.session_count, 0)}</p></div>
           </div>
 
@@ -87,7 +87,7 @@ export default function DeviceRegistryPage() {
                   <th scope="col" className="px-4 py-3 text-right font-semibold text-gray-600 dark:text-gray-300">{t("big1.deviceRegistry.actions")}</th>
                 </tr></thead>
                 <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-                  {devices.map((d) => (
+                  {devices.map((d: any) => (
                     <tr key={d.id} className="bg-white dark:bg-gray-900">
                       <td className="px-4 py-3"><div className="flex items-center gap-2"><PlatformIcon platform={d.platform} /><span className="font-mono text-xs text-gray-700 dark:text-gray-300">{d.fingerprint.slice(0, 24)}</span></div></td>
                       <td className="px-4 py-3"><div className="font-medium text-gray-900 dark:text-white">{d.username}</div><div className="text-xs text-gray-400 font-mono">{d.user_id.slice(0, 12)}</div></td>

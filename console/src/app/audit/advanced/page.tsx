@@ -117,8 +117,8 @@ function cloneGroup(g: ConditionGroup): ConditionGroup {
   return {
     ...g,
     id: genId(),
-    conditions: g.conditions.map((c) => ({ ...c, id: genId() })),
-    groups: g.groups.map((sub) => cloneGroup(sub)),
+    conditions: g.conditions.map((c: any) => ({ ...c, id: genId() })),
+    groups: g.groups.map((sub: any) => cloneGroup(sub)),
   };
 }
 
@@ -195,7 +195,7 @@ export default function AuditAdvancedPage() {
 
   const removeCondition = (groupId: string, condId: string) => {
     const updater = (g: ConditionGroup): ConditionGroup => {
-      if (g.id === groupId) return { ...g, conditions: g.conditions.filter((c) => c.id !== condId) };
+      if (g.id === groupId) return { ...g, conditions: g.conditions.filter((c: any) => c.id !== condId) };
       return { ...g, groups: g.groups.map(updater) };
     };
     setRootGroup((prev) => updater(prev));
@@ -203,7 +203,7 @@ export default function AuditAdvancedPage() {
 
   const removeGroup = (parentId: string, groupId: string) => {
     const updater = (g: ConditionGroup): ConditionGroup => {
-      if (g.id === parentId) return { ...g, groups: g.groups.filter((sub) => sub.id !== groupId) };
+      if (g.id === parentId) return { ...g, groups: g.groups.filter((sub: any) => sub.id !== groupId) };
       return { ...g, groups: g.groups.map(updater) };
     };
     setRootGroup((prev) => updater(prev));
@@ -212,7 +212,7 @@ export default function AuditAdvancedPage() {
   const updateCondition = (groupId: string, condId: string, patch: Partial<Condition>) => {
     const updater = (g: ConditionGroup): ConditionGroup => {
       if (g.id === groupId)
-        return { ...g, conditions: g.conditions.map((c) => (c.id === condId ? { ...c, ...patch } : c)) };
+        return { ...g, conditions: g.conditions.map((c: any) => (c.id === condId ? { ...c, ...patch } : c)) };
       return { ...g, groups: g.groups.map(updater) };
     };
     setRootGroup((prev) => updater(prev));
@@ -250,7 +250,7 @@ export default function AuditAdvancedPage() {
       case "starts_with":
         return eventVal.toLowerCase().startsWith(cond.value.toLowerCase());
       case "in":
-        return cond.value.split(",").map((v) => v.trim().toLowerCase()).includes(eventVal.toLowerCase());
+        return cond.value.split(",").map((v: any) => v.trim().toLowerCase()).includes(eventVal.toLowerCase());
       case "between":
         if (cond.field === "timestamp") {
           const t = new Date(eventVal).getTime();
@@ -265,8 +265,8 @@ export default function AuditAdvancedPage() {
   };
 
   const matchesGroup = (event: AuditEvent, group: ConditionGroup): boolean => {
-    const condResults = group.conditions.filter((c) => c.value).map((c) => matchesCondition(event, c));
-    const subResults = group.groups.map((g) => matchesGroup(event, g));
+    const condResults = group.conditions.filter((c: any) => c.value).map((c: any) => matchesCondition(event, c));
+    const subResults = group.groups.map((g: any) => matchesGroup(event, g));
     const all = [...condResults, ...subResults];
     if (all.length === 0) return true;
     return group.logic === "AND" ? all.every(Boolean) : all.some(Boolean);
@@ -287,7 +287,7 @@ export default function AuditAdvancedPage() {
       const userEventsFromIP = allEvents.filter(
         (e) => e.actor_id === event.actor_id && e.ip_address === event.ip_address,
       );
-      if (userEventsFromIP.length === 1 && allEvents.filter((e) => e.ip_address === event.ip_address).length <= 2) {
+      if (userEventsFromIP.length === 1 && allEvents.filter((e: any) => e.ip_address === event.ip_address).length <= 2) {
         return "unusual_ip";
       }
     }
@@ -324,19 +324,19 @@ export default function AuditAdvancedPage() {
       );
       let fetched = data.events || [];
       // Apply client-side query filtering
-      fetched = fetched.filter((e) => matchesGroup(e, rootGroup));
+      fetched = fetched.filter((e: any) => matchesGroup(e, rootGroup));
       setEvents(fetched);
 
       // Compute anomaly summary stats
       const now = Date.now();
       const dayAgo = now - 24 * 60 * 60 * 1000;
-      const recentEvents = fetched.filter((e) => new Date(e.created_at).getTime() > dayAgo);
+      const recentEvents = fetched.filter((e: any) => new Date(e.created_at).getTime() > dayAgo);
       setFailedLogins24h(
-        recentEvents.filter((e) => e.action === "user.login" && e.result !== "success").length,
+        recentEvents.filter((e: any) => e.action === "user.login" && e.result !== "success").length,
       );
-      setUniqueIps24h(new Set(recentEvents.map((e) => e.ip_address).filter(Boolean)).size);
+      setUniqueIps24h(new Set(recentEvents.map((e: any) => e.ip_address).filter(Boolean)).size);
       setAnomaliesDetected(
-        recentEvents.filter((e) => getAnomalyType(e, recentEvents) !== null).length,
+        recentEvents.filter((e: any) => getAnomalyType(e, recentEvents) !== null).length,
       );
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load");
@@ -370,7 +370,7 @@ export default function AuditAdvancedPage() {
   };
 
   const deleteSearch = (id: string) => {
-    setSavedSearches((prev) => prev.filter((s) => s.id !== id));
+    setSavedSearches((prev) => prev.filter((s: any) => s.id !== id));
   };
 
   // ===== Scheduled reports =====
@@ -393,12 +393,12 @@ export default function AuditAdvancedPage() {
 
   const toggleReport = (id: string) => {
     setScheduledReports((prev) =>
-      prev.map((r) => (r.id === id ? { ...r, enabled: !r.enabled } : r)),
+      prev.map((r: any) => (r.id === id ? { ...r, enabled: !r.enabled } : r)),
     );
   };
 
   const deleteReport = (id: string) => {
-    setScheduledReports((prev) => prev.filter((r) => r.id !== id));
+    setScheduledReports((prev) => prev.filter((r: any) => r.id !== id));
   };
 
   const handleExport = (format: "csv" | "json") => {
@@ -479,7 +479,7 @@ export default function AuditAdvancedPage() {
           className="rounded-md border border-gray-300 px-2 py-1.5 text-xs dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200"
         >
           <option value="">-- Select --</option>
-          {SERVICES.map((s) => <option key={s} value={s}>{s}</option>)}
+          {SERVICES.map((s: any) => <option key={s} value={s}>{s}</option>)}
         </select>
       ) : cond.field === "severity" ? (
         <select
@@ -488,7 +488,7 @@ export default function AuditAdvancedPage() {
           className="rounded-md border border-gray-300 px-2 py-1.5 text-xs dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200"
         >
           <option value="">-- Select --</option>
-          {SEVERITIES.map((s) => <option key={s} value={s}>{s}</option>)}
+          {SEVERITIES.map((s: any) => <option key={s} value={s}>{s}</option>)}
         </select>
       ) : cond.field === "result" ? (
         <select
@@ -497,7 +497,7 @@ export default function AuditAdvancedPage() {
           className="rounded-md border border-gray-300 px-2 py-1.5 text-xs dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200"
         >
           <option value="">-- Select --</option>
-          {RESULTS.map((r) => <option key={r} value={r}>{r}</option>)}
+          {RESULTS.map((r: any) => <option key={r} value={r}>{r}</option>)}
         </select>
       ) : (
         <input
@@ -552,8 +552,8 @@ export default function AuditAdvancedPage() {
 
         {/* Conditions */}
         <div className="space-y-2">
-          {group.conditions.map((cond) => renderCondition(cond, group.id))}
-          {group.groups.map((sub) => renderGroup(sub, depth + 1))}
+          {group.conditions.map((cond: any) => renderCondition(cond, group.id))}
+          {group.groups.map((sub: any) => renderGroup(sub, depth + 1))}
         </div>
 
         {/* Add buttons */}
@@ -696,7 +696,7 @@ export default function AuditAdvancedPage() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
-                    {events.map((event) => {
+                    {events.map((event: any) => {
                       const anomaly = getAnomalyType(event, events);
                       const isExpanded = expandedRows.has(event.id);
                       return (
@@ -788,7 +788,7 @@ export default function AuditAdvancedPage() {
               <p className="text-xs text-gray-400">No saved searches yet</p>
             ) : (
               <div className="space-y-1.5">
-                {savedSearches.map((s) => (
+                {savedSearches.map((s: any) => (
                   <div
                     key={s.id}
                     className="group flex items-center justify-between rounded-lg border border-gray-200 p-2 hover:border-gray-300 dark:border-gray-700"
@@ -818,7 +818,7 @@ export default function AuditAdvancedPage() {
               <p className="text-xs text-gray-400">No scheduled reports</p>
             ) : (
               <div className="space-y-2">
-                {scheduledReports.map((r) => (
+                {scheduledReports.map((r: any) => (
                   <div key={r.id} className="group rounded-lg border border-gray-200 p-2 dark:border-gray-700">
                     <div className="flex items-center justify-between">
                       <p className="truncate text-xs font-medium">{r.name}</p>

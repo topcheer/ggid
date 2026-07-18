@@ -90,7 +90,7 @@ function parseCsvLine(line: string): string[] {
 }
 
 function parseCsvText(text: string): { headers: string[]; rows: string[][] } {
-  const lines = text.trim().split(/\r?\n/).filter((l) => l.trim());
+  const lines = text.trim().split(/\r?\n/).filter((l: any) => l.trim());
   if (lines.length === 0) return { headers: [], rows: [] };
   const headers = parseCsvLine(lines[0]);
   const rows = lines.slice(1).map(parseCsvLine);
@@ -111,7 +111,7 @@ function autoDetectMapping(headers: string[]): ColumnMap {
     role: ["role", "role_name", "group"],
     external_id: ["external_id", "ext_id", "employee_id", "emp_id"],
   };
-  headers.forEach((header) => {
+  headers.forEach((header: any) => {
     const lower = header.toLowerCase().trim();
     for (const [field, names] of Object.entries(aliases)) {
       if (names.includes(lower)) {
@@ -138,13 +138,13 @@ function validateRow(
 ): RowError[] {
   const errors: RowError[] = [];
   const mapped: Record<string, string> = {};
-  headers.forEach((h, i) => {
+  headers.forEach((h: any, i: any) => {
     const field = mapping[h];
     if (field) mapped[field] = row[i] || "";
   });
 
   // Check required fields
-  GGID_FIELDS.forEach((f) => {
+  GGID_FIELDS.forEach((f: any) => {
     if (f.required) {
       const val = mapped[f.key];
       if (!val || val.trim() === "") {
@@ -180,7 +180,7 @@ function getRowFieldErrors(
 ): boolean {
   const field = mapping[header];
   if (!field) return false;
-  return allErrors.some((e) => e.row === rowIndex && e.field === field);
+  return allErrors.some((e: any) => e.row === rowIndex && e.field === field);
 }
 
 // ── Component ──────────────────────────────────────────
@@ -267,7 +267,7 @@ export default function UserImportPage() {
         delete next[csvHeader];
       } else {
         // Remove this field from any other column
-        Object.keys(next).forEach((k) => {
+        Object.keys(next).forEach((k: any) => {
           if (next[k] === fieldKey) delete next[k];
         });
         next[csvHeader] = fieldKey;
@@ -278,7 +278,7 @@ export default function UserImportPage() {
 
   const requiredFieldsMapped = useMemo(() => {
     const mappedValues = new Set(Object.values(mapping));
-    return GGID_FIELDS.filter((f) => f.required).every((f) => mappedValues.has(f.key));
+    return GGID_FIELDS.filter((f: any) => f.required).every((f) => mappedValues.has(f.key));
   }, [mapping]);
 
   // ── Validation ──
@@ -287,7 +287,7 @@ export default function UserImportPage() {
     if (headers.length === 0 || rows.length === 0) return [];
     const seenEmails = new Set<string>();
     const errs: RowError[] = [];
-    rows.forEach((row, i) => {
+    rows.forEach((row: any, i: any) => {
       errs.push(...validateRow(row, headers, mapping, i + 2, seenEmails)); // +2: header + 1-indexed
     });
     return errs;
@@ -301,12 +301,12 @@ export default function UserImportPage() {
     let valid = 0;
     let dups = 0;
 
-    rows.forEach((row, i) => {
+    rows.forEach((row: any, i: any) => {
       const rowErrs = validateRow(row, headers, mapping, i + 2, seenEmails);
       if (rowErrs.length === 0) {
         valid++;
       } else {
-        const hasDup = rowErrs.some((e) => e.message.includes("Duplicate"));
+        const hasDup = rowErrs.some((e: any) => e.message.includes("Duplicate"));
         if (hasDup) dups++;
         errorList.push(...rowErrs);
       }
@@ -333,13 +333,13 @@ export default function UserImportPage() {
     for (let i = 0; i < rows.length; i++) {
       const row = rows[i];
       const payload: Record<string, string> = {};
-      headers.forEach((h, idx) => {
+      headers.forEach((h: any, idx: any) => {
         const field = mapping[h];
         if (field) payload[field] = row[idx] || "";
       });
 
       // Skip rows with required field errors
-      const rowErrs = allRowErrors.filter((e) => e.row === i + 2);
+      const rowErrs = allRowErrors.filter((e: any) => e.row === i + 2);
       if (rowErrs.length > 0) {
         skipped++;
         setImportStats({ created, skipped, failed });
@@ -423,7 +423,7 @@ export default function UserImportPage() {
       {/* Progress Steps Bar */}
       <div className="mb-8 rounded-xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-800">
         <div className="flex items-center justify-between">
-          {STEPS.map((label, i) => (
+          {STEPS.map((label: any, i: any) => (
             <div key={label} className="flex flex-1 items-center">
               <button
                 onClick={() => i <= step && setStep(i)}
@@ -576,7 +576,7 @@ export default function UserImportPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
-                  {headers.map((header) => {
+                  {headers.map((header: any) => {
                     const sampleVal = rows[0]?.[headers.indexOf(header)] || "";
                     const mapped = mapping[header];
                     return (
@@ -597,7 +597,7 @@ export default function UserImportPage() {
                             className="rounded-lg border border-gray-300 px-2 py-1.5 text-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500 dark:border-gray-600 dark:bg-gray-900 dark:text-gray-100"
                           >
                             <option value="">— Do not import —</option>
-                            {GGID_FIELDS.map((f) => (
+                            {GGID_FIELDS.map((f: any) => (
                               <option key={f.key} value={f.key}>
                                 {f.label} {f.required ? "*" : ""}
                               </option>
@@ -631,18 +631,18 @@ export default function UserImportPage() {
                 <thead className="bg-gray-50 dark:bg-gray-900">
                   <tr>
                     <th scope="col" className="px-3 py-2 text-left text-xs font-medium text-gray-400">#</th>
-                    {headers.filter((h) => mapping[h]).map((h) => (
+                    {headers.filter((h: any) => mapping[h]).map((h: any) => (
                       <th scope="col" key={h} className="px-3 py-2 text-left font-medium text-gray-600 dark:text-gray-300">
-                        {GGID_FIELDS.find((f) => f.key === mapping[h])?.label || h}
+                        {GGID_FIELDS.find((f: any) => f.key === mapping[h])?.label || h}
                       </th>
                     ))}
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
-                  {rows.slice(0, 10).map((row, i) => (
+                  {rows.slice(0, 10).map((row: any, i: any) => (
                     <tr key={i} className="hover:bg-gray-50 dark:hover:bg-gray-900">
                       <td className="px-3 py-2 text-xs text-gray-400">{i + 2}</td>
-                      {headers.filter((h) => mapping[h]).map((h) => {
+                      {headers.filter((h: any) => mapping[h]).map((h: any) => {
                         const idx = headers.indexOf(h);
                         const hasError = getRowFieldErrors(row, idx, h, mapping, i + 2, allRowErrors);
                         return (
@@ -736,7 +736,7 @@ export default function UserImportPage() {
                           </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
-                          {validationResult.errorList.slice(0, 100).map((e, i) => (
+                          {validationResult.errorList.slice(0, 100).map((e: any, i: any) => (
                             <tr key={i}>
                               <td className="px-3 py-1.5 text-gray-500">{e.row}</td>
                               <td className="px-3 py-1.5 text-gray-600 dark:text-gray-300">{e.field}</td>

@@ -23,11 +23,11 @@ export default function SecurityEventStreamPage() {
     low: "bg-blue-900 text-blue-300",
   };
 
-  const events = (data?.events ?? []).filter((e) =>
+  const events = (data?.events ?? []).filter((e: any) =>
     (severityFilter === "all" || e.severity === severityFilter) &&
     (typeFilter === "all" || e.type === typeFilter)
   );
-  const allTypes: string[] = Array.from(new Set((data?.events ?? []).map((e) => e.type)));
+  const allTypes: string[] = Array.from(new Set((data?.events ?? []).map((e: any) => e.type)));
 
   return (
     <div className="min-h-screen bg-gray-950 text-white p-8">
@@ -53,7 +53,7 @@ export default function SecurityEventStreamPage() {
         </select>
         <select aria-label="Filter" value={typeFilter} onChange={(e) => setTypeFilter(e.target.value)} className="px-3 py-1.5 bg-gray-800 rounded-lg text-sm">
           <option value="all">All Types</option>
-          {allTypes.map((t) => <option key={t} value={t}>{t}</option>)}
+          {allTypes.map((t: any) => <option key={t} value={t}>{t}</option>)}
         </select>
         <span className="text-xs text-gray-500 ml-auto">{events.length} events</span>
       </div>
@@ -61,7 +61,7 @@ export default function SecurityEventStreamPage() {
       {/* Event Feed */}
       <div className="bg-gray-900 rounded-xl p-4">
         <div className="space-y-1 max-h-[600px] overflow-y-auto">
-          {events.map((ev) => (
+          {events.map((ev: any) => (
             <details key={ev.id} className="bg-gray-800 rounded-lg p-2 group">
               <summary className="flex items-center gap-3 cursor-pointer list-none">
                 <span className={"text-xs px-1.5 py-0.5 rounded flex-shrink-0 " + (sevColors[ev.severity] ?? "bg-gray-700")}>{ev.severity}</span>

@@ -47,7 +47,7 @@ export default function RiskProfilePage() {
           <div className="rounded-lg border dark:border-gray-800 p-4">
             <h3 className="font-semibold mb-3">Risk Factor Breakdown</h3>
             <div className="space-y-3">
-              {data.factors.map((f) => (
+              {data.factors.map((f: any) => (
                 <div key={f.key}>
                   <div className="flex items-center justify-between text-sm mb-1"><span>{f.label}</span><span className="text-xs text-gray-400">{f.score}/{f.max}</span></div>
                   <div className="w-full h-3 rounded-full bg-gray-200 dark:bg-gray-800 overflow-hidden"><div className="h-full rounded-full" style={{ width: `${(f.score / f.max) * 100}%`, backgroundColor: f.score / f.max >= 0.7 ? "#ef4444" : f.score / f.max >= 0.4 ? "#f59e0b" : "#10b981" }} /></div>

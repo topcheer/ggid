@@ -37,7 +37,7 @@ function TreeNode({ node, depth, collapsedIds, toggleNode, highlight }: TreeNode
       {hasChildren && !collapsed && (
         <div className="relative">
           <div className="absolute left-[12px] top-0 bottom-0 w-px bg-gray-200 dark:bg-gray-800" style={{ marginLeft: `${depth * 24}px` }} />
-          {node.children!.map((child) => (
+          {node.children!.map((child: any) => (
             <TreeNode key={child.id} node={child} depth={depth + 1} collapsedIds={collapsedIds} toggleNode={toggleNode} highlight={highlight} />
           ))}
         </div>
@@ -105,7 +105,7 @@ export default function OrgChartPage() {
       <div className="flex items-center gap-3 flex-wrap">
         <select value={selectedOrg} onChange={(e) => setSelectedOrg(e.target.value)} aria-label="Select organization" className="px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-900 text-sm">
           <option value="">{t("common.selectOrg")}</option>
-          {orgs.map((o) => (<option key={o.id} value={o.id}>{o.name}</option>
+          {orgs.map((o: any) => (<option key={o.id} value={o.id}>{o.name}</option>
           ))}
         </select>
         {tree && <span className="text-xs text-gray-500">{countNodes(tree)} {t("organizationsOrgChart.people")}</span>}

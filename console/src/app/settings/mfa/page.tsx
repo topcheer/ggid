@@ -367,7 +367,7 @@ export default function MFAPage() {
 
           {webauthnCreds.length > 0 && (
             <div className="space-y-2">
-              {webauthnCreds.map((cred) => (
+              {webauthnCreds.map((cred: any) => (
                 <div key={cred.id} className="flex items-center justify-between rounded-lg border border-gray-200 p-3 dark:border-gray-700">
                   <div className="flex items-center gap-3">
                     <KeyRound className="h-5 w-5 text-gray-400" />

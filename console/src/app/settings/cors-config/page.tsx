@@ -43,7 +43,7 @@ export default function CorsConfigPage() {
         <div>
           <label className="block text-sm font-medium mb-2">{t("corsSettings.allowedMethods")}</label>
           <div className="flex flex-wrap gap-4">
-            {allMethods.map((m) => {
+            {allMethods.map((m: any) => {
               const checked = form.allowed_methods.includes(m);
               return (
                 <label key={m} className="flex items-center gap-2 text-sm">

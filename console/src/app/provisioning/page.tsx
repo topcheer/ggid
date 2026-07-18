@@ -365,7 +365,7 @@ function InstanceTable({ instances, onDelete }: { instances: InstanceInfo[]; onD
           </tr>
         </thead>
         <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
-          {instances.map((inst) => (
+          {instances.map((inst: any) => (
             <tr key={inst.name} className="hover:bg-gray-50 dark:hover:bg-gray-800">
               <td className="px-4 py-3">
                 <div className="flex items-center gap-2">
@@ -433,7 +433,7 @@ function TenantTable({ tenants, onDelete }: { tenants: TenantInfo[]; onDelete: (
           </tr>
         </thead>
         <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
-          {tenants.map((t) => (
+          {tenants.map((t: any) => (
             <tr key={t.name} className="hover:bg-gray-50 dark:hover:bg-gray-800">
               <td className="px-4 py-3">
                 <div className="flex items-center gap-2">
@@ -585,7 +585,7 @@ function CreateInstanceForm({
             label="Driver"
             name="dbDriver"
             defaultValue={env.defaultDatabase.driver}
-            options={env.databaseDrivers.map((d) => ({ value: d, label: d }))}
+            options={env.databaseDrivers.map((d: any) => ({ value: d, label: d }))}
           />
           <Field
             label="DB Host"
@@ -645,7 +645,7 @@ function CreateInstanceForm({
             <SelectField
               label="IdP Provider"
               name="idpProvider"
-              options={[{ value: "", label: "None" }, ...env.idpProviders.map((p) => ({ value: p, label: p.toUpperCase() }))]}
+              options={[{ value: "", label: "None" }, ...env.idpProviders.map((p: any) => ({ value: p, label: p.toUpperCase() }))]}
             />
             <Field label="Entity ID / Issuer" name="idpEntityId" placeholder="https://idp.example.com" />
             <Field label="SSO URL" name="idpSsoUrl" placeholder="https://idp.example.com/sso" />
@@ -778,7 +778,7 @@ function CreateTenantForm({
             name="ggidInstanceRef"
             options={[
               { value: "", label: "Default shared instance" },
-              ...instances.map((i) => ({ value: i.name, label: `${i.name} (${i.namespace})` })),
+              ...instances.map((i: any) => ({ value: i.name, label: `${i.name} (${i.namespace})` })),
             ]}
           />
         )}
@@ -864,7 +864,7 @@ function SelectField({
         onChange={onChange}
         className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 focus:border-brand-500 focus:outline-none"
       >
-        {options.map((opt) => (
+        {options.map((opt: any) => (
           <option key={opt.value} value={opt.value}>{opt.label}</option>
         ))}
       </select>

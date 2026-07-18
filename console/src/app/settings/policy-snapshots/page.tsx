@@ -74,8 +74,8 @@ export default function PolicySnapshotsPage() {
     }
   };
 
-  const filtered = filterPolicy ? snapshots.filter((s) => s.policy_id.includes(filterPolicy)) : snapshots;
-  const uniquePolicies = [...new Set(snapshots.map((s) => s.policy_id))];
+  const filtered = filterPolicy ? snapshots.filter((s: any) => s.policy_id.includes(filterPolicy)) : snapshots;
+  const uniquePolicies = [...new Set(snapshots.map((s: any) => s.policy_id))];
 
   return (
     <div className="space-y-6">
@@ -93,7 +93,7 @@ export default function PolicySnapshotsPage() {
       <div className="flex items-center gap-3">
         <select aria-label="Filter" value={filterPolicy} onChange={(e) => setFilterPolicy(e.target.value)} className="px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-900 text-sm">
           <option value="">All Policies</option>
-          {uniquePolicies.map((p) => (<option key={p} value={p}>{p}</option>))}
+          {uniquePolicies.map((p: any) => (<option key={p} value={p}>{p}</option>))}
         </select>
         <span className="text-sm text-gray-500">{filtered.length} snapshots</span>
       </div>
@@ -113,7 +113,7 @@ export default function PolicySnapshotsPage() {
             </tr>
           </thead>
           <tbody className="divide-y dark:divide-gray-800">
-            {filtered.map((snap) => (
+            {filtered.map((snap: any) => (
               <tr key={snap.id} className="hover:bg-gray-50 dark:hover:bg-gray-900/30">
                 <td className="px-4 py-3 font-mono text-xs">{snap.id}</td>
                 <td className="px-4 py-3 font-mono text-xs">{snap.policy_id}</td>

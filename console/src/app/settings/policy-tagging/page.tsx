@@ -14,7 +14,7 @@ export default function PolicyTaggingPage() {
   if (loading) return <div className="p-8 text-gray-400">Loading policy tagging...</div>;
   if (error) return <div className="p-8 text-red-400">Error: {error}</div>;
 
-  const categories: string[] = Array.from(new Set((data?.tag_taxonomy ?? []).map((t) => t.category)));
+  const categories: string[] = Array.from(new Set((data?.tag_taxonomy ?? []).map((t: any) => t.category)));
 
   const filteredTags = (data?.tag_taxonomy ?? []).filter(
     (t) => selectedCategory === "all" || t.category === selectedCategory
@@ -56,7 +56,7 @@ export default function PolicyTaggingPage() {
               >
                 All Categories
               </button>
-              {categories.map((cat) => (
+              {categories.map((cat: any) => (
                 <button
                   key={cat}
                   onClick={() => setSelectedCategory(cat)}
@@ -84,7 +84,7 @@ export default function PolicyTaggingPage() {
               >
                 All
               </button>
-              {filteredTags.map((t) => (
+              {filteredTags.map((t: any) => (
                 <button
                   key={t.name}
                   onClick={() => setSelectedTag(selectedTag === t.name ? null : t.name)}
@@ -120,7 +120,7 @@ export default function PolicyTaggingPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {filteredPolicies.map((p) => (
+                  {filteredPolicies.map((p: any) => (
                     <tr key={p.policy_id} className="border-b border-gray-800 hover:bg-gray-800/50">
                       <td className="py-3 pr-4">
                         <p className="font-medium">{p.policy_name}</p>
@@ -137,7 +137,7 @@ export default function PolicyTaggingPage() {
                       </td>
                       <td className="py-3 pr-4">
                         <div className="flex flex-wrap gap-1">
-                          {p.tags.map((tag) => (
+                          {p.tags.map((tag: any) => (
                             <span key={tag} className="text-xs px-2 py-0.5 rounded bg-blue-900 text-blue-300">{tag}</span>
                           ))}
                         </div>
@@ -157,7 +157,7 @@ export default function PolicyTaggingPage() {
                 Tag Cloud
               </h2>
               <div className="flex flex-wrap gap-2 items-center">
-                {(data?.tag_taxonomy ?? []).map((t) => {
+                {(data?.tag_taxonomy ?? []).map((t: any) => {
                   const size = Math.max(0.75, Math.min(1.8, 0.75 + (t.usage_count / 20)));
                   return (
                     <span
@@ -178,7 +178,7 @@ export default function PolicyTaggingPage() {
                 Auto-Tag Rules
               </h2>
               <div className="space-y-2">
-                {(data?.auto_tag_rules ?? []).map((rule) => (
+                {(data?.auto_tag_rules ?? []).map((rule: any) => (
                   <div key={rule.id} className="bg-gray-800 rounded-lg p-3">
                     <div className="flex items-center justify-between mb-1">
                       <p className="text-sm font-medium">{rule.name}</p>

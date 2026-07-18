@@ -14,7 +14,7 @@ export default function IdentityDynamicGroupingPage() {
   if (error) return <div className="p-8 text-red-400">Error: {error}</div>;
 
   const group = previewGroup
-    ? (data?.group_rules ?? []).find((g) => g.group_name === previewGroup)
+    ? (data?.group_rules ?? []).find((g: any) => g.group_name === previewGroup)
     : (data?.group_rules ?? [])[0];
 
   return (
@@ -69,7 +69,7 @@ export default function IdentityDynamicGroupingPage() {
         <div className="bg-gray-900 rounded-xl p-6">
           <h2 className="text-lg font-semibold mb-4">{t("idDynamicGrouping.groupRules")}</h2>
           <div className="space-y-2">
-            {(data?.group_rules ?? []).map((g) => (
+            {(data?.group_rules ?? []).map((g: any) => (
               <div
                 key={g.group_name}
                 className={"bg-gray-800 rounded-lg p-3 cursor-pointer transition " + (previewGroup === g.group_name ? "border border-blue-500" : "hover:border hover:border-gray-600")}

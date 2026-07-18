@@ -68,7 +68,7 @@ export default function PasswordAgePolicyPage() {
           {policy.upcoming_expiry.length > 0 && (
             <div className="rounded-lg border dark:border-gray-800 p-4">
               <h3 className="text-sm font-semibold flex items-center gap-2 mb-3"><Clock className="w-4 h-4 text-orange-500" /> Upcoming Expirations</h3>
-              <div className="space-y-1">{policy.upcoming_expiry.map((u) => (
+              <div className="space-y-1">{policy.upcoming_expiry.map((u: any) => (
                 <div key={u.user_id} className="flex items-center gap-2 text-sm"><span className="font-medium">{u.username}</span><span className="text-xs text-gray-400">{u.org}</span><span className={`ml-auto px-2 py-0.5 rounded text-xs font-bold ${u.expires_in_days <= 3 ? "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400" : u.expires_in_days <= 7 ? "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400" : "bg-gray-100 dark:bg-gray-800"}`}>{u.expires_in_days}d left</span></div>
               ))}</div>
             </div>

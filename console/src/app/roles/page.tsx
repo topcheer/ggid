@@ -356,7 +356,7 @@ export default function RolesPage() {
       ) : tab === "roles" ? (
         /* ===== Roles Grid ===== */
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {roles.map((role) => (
+          {roles.map((role: any) => (
             <div key={role.id} className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-700 dark:bg-gray-800">
               <div className="mb-3 flex items-start justify-between">
                 <div className="flex items-center gap-3">
@@ -411,7 +411,7 @@ export default function RolesPage() {
                     <p className="text-[10px] text-gray-400">{t("roles.noUsersAssigned")}</p>
                   ) : (
                     <div className="flex flex-wrap gap-1">
-                      {roleUsers[role.id].slice(0, 5).map((u) => (
+                      {roleUsers[role.id].slice(0, 5).map((u: any) => (
                         <span key={u.id} className="rounded bg-white px-1.5 py-0.5 text-[10px] dark:bg-gray-600">
                           {u.username}
                         </span>
@@ -658,7 +658,7 @@ function PermissionAssignment({
   const { t } = useI18n();
   const [search, setSearch] = useState("");
   const [selected, setSelected] = useState<Set<string>>(new Set());
-  const rolePermIds = new Set(rolePerms.map((p) => p.id));
+  const rolePermIds = new Set(rolePerms.map((p: any) => p.id));
 
   const filteredPerms = permissions.filter(
     (p) =>
@@ -688,7 +688,7 @@ function PermissionAssignment({
           className="rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 focus:border-brand-500 focus:outline-none"
         >
           <option value="">{t("roles.chooseRole")}</option>
-          {roles.map((r) => (
+          {roles.map((r: any) => (
             <option key={r.id} value={r.id}>
               {r.name || r.key}
               {r.system_role ? " (system)" : ""}
@@ -715,7 +715,7 @@ function PermissionAssignment({
               <p className="text-sm text-gray-400">{t("roles.noPermsAssigned")}</p>
             ) : (
               <div className="flex flex-wrap gap-2">
-                {rolePerms.map((p) => (
+                {rolePerms.map((p: any) => (
                   <div
                     key={p.id}
                     className="flex items-center gap-2 rounded-lg border border-green-200 bg-green-50 px-3 py-1.5"
@@ -757,7 +757,7 @@ function PermissionAssignment({
                     if (selected.size === filteredPerms.length) {
                       setSelected(new Set());
                     } else {
-                      setSelected(new Set(filteredPerms.map((p) => p.id)));
+                      setSelected(new Set(filteredPerms.map((p: any) => p.id)));
                     }
                   }}
                   className="text-xs font-medium text-brand-600 hover:text-brand-700"
@@ -776,13 +776,13 @@ function PermissionAssignment({
               </div>
             </div>
             <div className="max-h-96 overflow-y-auto">
-              {resourceGroups.map((resource) => (
+              {resourceGroups.map((resource: any) => (
                 <div key={resource}>
                   <div className="sticky top-0 flex items-center justify-between border-b border-gray-100 dark:border-gray-700 bg-gray-50 px-4 py-1.5">
                     <span className="text-xs font-bold uppercase tracking-wide text-gray-600">{resource}</span>
                     <span className="text-xs text-gray-400">{groupedPerms[resource].length} permission{groupedPerms[resource].length !== 1 ? "s" : ""}</span>
                   </div>
-                  {groupedPerms[resource].map((p) => {
+                  {groupedPerms[resource].map((p: any) => {
                     const assigned = rolePermIds.has(p.id);
                     const isChecked = selected.has(p.id);
                     return (
@@ -890,7 +890,7 @@ function RolePermissionMatrix({
       for (const role of roles) {
         try {
           const data = await apiFetch<{ permissions?: Permission[] }>(`/api/v1/roles/${role.id}/permissions`);
-          m[role.id] = new Set((data.permissions || []).map((p) => p.id));
+          m[role.id] = new Set((data.permissions || []).map((p: any) => p.id));
         } catch {
           m[role.id] = new Set();
         }
@@ -930,7 +930,7 @@ function RolePermissionMatrix({
           </tr>
         </thead>
         <tbody className="divide-y divide-gray-100">
-          {roles.map((role) => (
+          {roles.map((role: any) => (
             <tr key={role.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
               <td className="px-3 py-2 font-medium">
                 {role.name}
@@ -939,7 +939,7 @@ function RolePermissionMatrix({
               {Object.entries(grouped).map(([resource, perms]) => {
                 const rolePerms = matrix[role.id];
                 const hasAll = perms.every((p) => rolePerms?.has(p.id));
-                const hasSome = perms.some((p) => rolePerms?.has(p.id));
+                const hasSome = perms.some((p: any) => rolePerms?.has(p.id));
                 return (
                   <td key={resource} className="px-3 py-2 text-center">
                     {hasAll ? (
@@ -982,7 +982,7 @@ function RoleHierarchyTree({
     return acc;
   }, {});
 
-  const roots = roles.filter((r) => !r.parent_role_id);
+  const roots = roles.filter((r: any) => !r.parent_role_id);
 
   const loadEffective = async (roleId: string) => {
     try {
@@ -991,7 +991,7 @@ function RoleHierarchyTree({
       ).catch(() => ({ permissions: [] }));
       setEffectivePerms((prev) => ({
         ...prev,
-        [roleId]: (data.permissions || []).map((p) => p.key),
+        [roleId]: (data.permissions || []).map((p: any) => p.key),
       }));
     } catch { /* ignore */ }
   };
@@ -1037,7 +1037,7 @@ function RoleHierarchyTree({
           </div>
           {perms.length > 0 && (
             <div className="flex flex-wrap gap-1">
-              {perms.slice(0, 5).map((p) => (
+              {perms.slice(0, 5).map((p: any) => (
                 <span key={p} className="rounded bg-blue-50 px-1.5 py-0.5 text-xs text-blue-600">{p}</span>
               ))}
               {perms.length > 5 && <span className="text-xs text-gray-400">+{perms.length - 5} more</span>}
@@ -1049,7 +1049,7 @@ function RoleHierarchyTree({
         </div>
         {isExpanded && children.length > 0 && (
           <div className="border-l border-gray-200">
-            {children.map((child) => renderNode(child, depth + 1))}
+            {children.map((child: any) => renderNode(child, depth + 1))}
           </div>
         )}
       </div>
@@ -1071,7 +1071,7 @@ function RoleHierarchyTree({
         </p>
       ) : (
         <div>
-          {roots.map((root) => renderNode(root, 0))}
+          {roots.map((root: any) => renderNode(root, 0))}
         </div>
       )}
     </div>
@@ -1118,14 +1118,14 @@ function ABACConditionBuilder({
   };
 
   const updateRule = (idx: number, field: keyof ConditionRule, value: string) => {
-    setRules(rules.map((r, i) => i === idx ? { ...r, [field]: value } : r));
+    setRules(rules.map((r: any, i: any) => i === idx ? { ...r, [field]: value } : r));
   };
 
   const generatedJSON = JSON.stringify({
     name: policyName || "abac_policy",
     effect: effect,
     combine: combineMode,
-    conditions: rules.map((r) => ({
+    conditions: rules.map((r: any) => ({
       attribute: r.attribute,
       operator: r.operator,
       value: r.value,
@@ -1194,7 +1194,7 @@ function ABACConditionBuilder({
 
         {/* Condition rules */}
         <div className="space-y-2">
-          {rules.map((rule, idx) => (
+          {rules.map((rule: any, idx: any) => (
             <div key={idx} className="flex items-center gap-2">
               <span className="flex h-6 w-6 items-center justify-center rounded-full bg-gray-100 text-xs font-medium text-gray-500 dark:text-gray-400">
                 {idx + 1}
@@ -1204,7 +1204,7 @@ function ABACConditionBuilder({
                 onChange={(e) => updateRule(idx, "attribute", e.target.value)}
                 className="flex-1 rounded-lg border border-gray-300 px-2 py-1.5 text-sm"
               >
-                {ABAC_ATTRIBUTES.map((attr) => (
+                {ABAC_ATTRIBUTES.map((attr: any) => (
                   <option key={attr} value={attr}>{attr}</option>
                 ))}
               </select>
@@ -1213,7 +1213,7 @@ function ABACConditionBuilder({
                 onChange={(e) => updateRule(idx, "operator", e.target.value)}
                 className="w-28 rounded-lg border border-gray-300 px-2 py-1.5 text-sm font-mono"
               >
-                {ABAC_OPERATORS.map((op) => (
+                {ABAC_OPERATORS.map((op: any) => (
                   <option key={op} value={op}>{op}</option>
                 ))}
               </select>

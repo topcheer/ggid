@@ -73,7 +73,7 @@ export default function SoDPage() {
   useEffect(() => { load(); }, [load]);
 
   const handleCreate = async () => {
-    const roleList = form.roles.split(",").map((r) => r.trim()).filter(Boolean);
+    const roleList = form.roles.split(",").map((r: any) => r.trim()).filter(Boolean);
     if (roleList.length < 2 || !form.description.trim()) return;
     setCreating(true);
     try {
@@ -96,7 +96,7 @@ export default function SoDPage() {
       await apiFetch(`/api/v1/policy/sod/rules/${rule.id}`, {
         method: "PATCH", body: JSON.stringify({ enabled: !rule.enabled }),
       });
-      setRules((prev) => prev.map((r) => r.id === rule.id ? { ...r, enabled: !r.enabled } : r));
+      setRules((prev) => prev.map((r: any) => r.id === rule.id ? { ...r, enabled: !r.enabled } : r));
     } catch {
       setError("Failed to toggle rule");
     }
@@ -113,8 +113,8 @@ export default function SoDPage() {
   };
 
   const cardCls = "rounded-xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-700 dark:bg-gray-800";
-  const violCount = violations.filter((v) => v.severity === "critical").length;
-  const activeRules = rules.filter((r) => r.enabled).length;
+  const violCount = violations.filter((v: any) => v.severity === "critical").length;
+  const activeRules = rules.filter((r: any) => r.enabled).length;
 
   return (
     <div className="space-y-6">
@@ -190,7 +190,7 @@ export default function SoDPage() {
           </div>
         ) : (
           <div className="space-y-3">
-            {rules.map((rule) => {
+            {rules.map((rule: any) => {
               const colors = SEVERITY_COLOR[rule.severity];
               return (
                 <div key={rule.id} className={`${cardCls} ${rule.enabled ? "" : "opacity-60"}`}>
@@ -237,7 +237,7 @@ export default function SoDPage() {
           </div>
         ) : (
           <div className="space-y-3">
-            {violations.map((v) => {
+            {violations.map((v: any) => {
               const colors = SEVERITY_COLOR[v.severity];
               return (
                 <div key={v.id} className={`${cardCls} ${colors.border}`}>
@@ -290,7 +290,7 @@ export default function SoDPage() {
               <div>
                 <label className="text-sm font-medium text-gray-700 dark:text-gray-300">{t("backend3.sod.severity")}</label>
                 <div className="mt-2 flex gap-2">
-                  {(["critical", "high", "medium"] as const).map((s) => {
+                  {(["critical", "high", "medium"] as const).map((s: any) => {
                     const colors = SEVERITY_COLOR[s];
                     return (
                       <button key={s} onClick={() => setForm((p) => ({ ...p, severity: s }))}
@@ -306,7 +306,7 @@ export default function SoDPage() {
               <button onClick={() => setShowAdd(false)} className="rounded-lg px-4 py-2 text-sm text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700">{t("backend3.sod.cancel")}</button>
               <button
                 onClick={handleCreate}
-                disabled={form.roles.split(",").filter((r) => r.trim()).length < 2 || !form.description.trim() || creating}
+                disabled={form.roles.split(",").filter((r: any) => r.trim()).length < 2 || !form.description.trim() || creating}
                 className="flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50"
               >
                 {creating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />} Create Rule

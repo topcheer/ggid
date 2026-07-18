@@ -144,7 +144,7 @@ export default function EventCorrelationPage() {
           <div className={cardCls}><div className="py-12 text-center"><Zap className="mx-auto h-12 w-12 text-gray-300" /><p className="mt-4 text-sm text-gray-400">No correlation rules defined.</p></div></div>
         ) : (
           <div className="space-y-3">
-            {rules.map((r) => {
+            {rules.map((r: any) => {
               const sev = SEV_CONFIG[r.severity];
               const SevIcon = sev.icon;
               return (
@@ -175,7 +175,7 @@ export default function EventCorrelationPage() {
         <div className={cardCls}><div className="py-12 text-center"><Activity className="mx-auto h-12 w-12 text-gray-300" /><p className="mt-4 text-sm text-gray-400">No correlated events. Run analysis to detect patterns.</p></div></div>
       ) : (
         <div className="space-y-4">
-          {results.map((g) => {
+          {results.map((g: any) => {
             const sev = SEV_CONFIG[g.severity];
             const SevIcon = sev.icon;
             return (
@@ -194,7 +194,7 @@ export default function EventCorrelationPage() {
                   </div>
                 </div>
                 <div className="mt-3 space-y-1">
-                  {g.events.slice(0, 5).map((e) => (
+                  {g.events.slice(0, 5).map((e: any) => (
                     <div key={e.id} className="flex items-center gap-3 rounded-lg bg-gray-50 px-3 py-1.5 text-xs dark:bg-gray-900/30">
                       <span className="font-mono text-gray-500">{e.type}</span>
                       <span className="text-gray-400">{e.user}</span>

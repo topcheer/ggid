@@ -58,7 +58,7 @@ export default function PolicyExceptionsPage() {
         <button onClick={() => setShowCreate(true)} className="px-4 py-2 rounded-lg bg-orange-600 text-white text-sm font-medium hover:bg-orange-700 flex items-center gap-2"><Plus className="w-4 h-4" /> New Exception</button>
       </div>
 
-      <div className="space-y-3">{exceptions.map((e) => (
+      <div className="space-y-3">{exceptions.map((e: any) => (
         <div key={e.id} className="rounded-lg border dark:border-gray-800">
           <div className="flex items-center justify-between p-4 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-900/30" onClick={() => setExpanded(expanded === e.id ? null : e.id)}>
             <div className="flex items-center gap-3"><ChevronRight className={`w-4 h-4 text-gray-400 transition-transform ${expanded === e.id ? "rotate-90" : ""}`} /><div><span className="font-medium">{e.policy_name}</span><p className="text-xs text-gray-400 font-mono">{e.policy_id} - granted to: {e.granted_to}</p></div></div>

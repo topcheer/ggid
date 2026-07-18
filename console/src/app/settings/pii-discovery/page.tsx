@@ -105,7 +105,7 @@ export default function PIIDiscoveryPage() {
         <div className="bg-gray-900 rounded-xl p-6">
           <h2 className="text-sm font-semibold mb-3">Per Database Breakdown</h2>
           <div className="space-y-2">
-            {(data?.per_database_breakdown ?? []).map((d) => (
+            {(data?.per_database_breakdown ?? []).map((d: any) => (
               <div key={d.database} className="flex items-center justify-between bg-gray-800 rounded-lg p-2">
                 <span className="text-sm font-mono text-gray-300">{d.database}</span>
                 <div className="flex items-center gap-3">

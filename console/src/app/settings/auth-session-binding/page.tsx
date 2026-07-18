@@ -67,7 +67,7 @@ export default function AuthSessionBindingPage() {
               </tr>
             </thead>
             <tbody>
-              {(data?.per_application_binding ?? []).map((app) => (
+              {(data?.per_application_binding ?? []).map((app: any) => (
                 <tr key={app.app} className="border-b border-gray-800">
                   <td className="py-3 pr-4 font-medium">{app.app}</td>
                   <td className="py-3 pr-4 capitalize">{app.method}</td>

@@ -48,7 +48,7 @@ export default function ComplianceHeatmapPage() {
       </div>
 
       <select aria-label="Framework" value={framework} onChange={(e) => setFramework(e.target.value)} className="px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-900 text-sm">
-        {frameworks.map((f) => <option key={f} value={f}>{f}</option>)}
+        {frameworks.map((f: any) => <option key={f} value={f}>{f}</option>)}
       </select>
 
       {data && (
@@ -59,14 +59,14 @@ export default function ComplianceHeatmapPage() {
               <thead className="bg-gray-50 dark:bg-gray-900/50 sticky top-0">
                 <tr>
                   <th scope="col" className="px-4 py-3 text-left font-medium sticky left-0 bg-gray-50 dark:bg-gray-900/50">Control</th>
-                  {data.months.map((m) => <th scope="col" key={m} className="px-3 py-3 text-center font-medium text-xs whitespace-nowrap">{m}</th>)}
+                  {data.months.map((m: any) => <th scope="col" key={m} className="px-3 py-3 text-center font-medium text-xs whitespace-nowrap">{m}</th>)}
                 </tr>
               </thead>
               <tbody className="divide-y dark:divide-gray-800">
-                {data.controls.map((ctrl) => (
+                {data.controls.map((ctrl: any) => (
                   <tr key={ctrl} className="hover:bg-gray-50 dark:hover:bg-gray-900/30">
                     <td className="px-4 py-2 font-mono text-xs font-medium sticky left-0 bg-white dark:bg-gray-900 whitespace-nowrap">{ctrl}</td>
-                    {data.months.map((m) => {
+                    {data.months.map((m: any) => {
                       const score = data.scores[ctrl]?.[m] || 0;
                       return (
                         <td key={m} className="px-1 py-1 text-center">

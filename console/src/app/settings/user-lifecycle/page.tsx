@@ -40,7 +40,7 @@ export default function UserLifecyclePage() {
   useEffect(() => { fetchData(); });
 
   const bulkAction = async (action: string) => {
-    try { await fetch("/api/v1/identity/user-lifecycle/bulk", { method: "POST", headers: { ...authHeader(), "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" }, body: JSON.stringify({ action, stage: tab, user_ids: users.map((u) => u.id) }) }); fetchData(); }
+    try { await fetch("/api/v1/identity/user-lifecycle/bulk", { method: "POST", headers: { ...authHeader(), "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" }, body: JSON.stringify({ action, stage: tab, user_ids: users.map((u: any) => u.id) }) }); fetchData(); }
     catch { /* noop */ }
   };
 
@@ -49,7 +49,7 @@ export default function UserLifecyclePage() {
       <div><h1 className="text-2xl font-bold flex items-center gap-2"><Users className="w-6 h-6 text-blue-500" /> User Lifecycle</h1><p className="text-sm text-gray-500 mt-1">Track user lifecycle stages with auto-deactivation rules.</p></div>
 
       <div className="flex items-center gap-2 flex-wrap">
-        {stages.map((s) => <button key={s} onClick={() => setTab(s)} className={"px-4 py-2 rounded-lg text-sm font-medium capitalize " + (tab === s ? "bg-blue-600 text-white" : "border dark:border-gray-700")}>{s}</button>)}
+        {stages.map((s: any) => <button key={s} onClick={() => setTab(s)} className={"px-4 py-2 rounded-lg text-sm font-medium capitalize " + (tab === s ? "bg-blue-600 text-white" : "border dark:border-gray-700")}>{s}</button>)}
       </div>
 
       <div className="rounded-lg border dark:border-gray-800 p-4 flex items-center gap-4">
@@ -59,7 +59,7 @@ export default function UserLifecyclePage() {
 
       <div className="overflow-x-auto rounded-lg border dark:border-gray-800">
         <table className="w-full text-sm"><thead className="bg-gray-50 dark:bg-gray-900/50"><tr><th className="px-4 py-3 text-left font-medium">User</th><th className="px-4 py-3 text-left font-medium">Stage</th><th className="px-4 py-3 text-left font-medium">Last Active</th><th className="px-4 py-3 text-left font-medium">Days Inactive</th><th className="px-4 py-3 text-left font-medium">Since</th></tr></thead>
-          <tbody className="divide-y dark:divide-gray-800">{users.map((u) => (<tr key={u.id} className="hover:bg-gray-50 dark:hover:bg-gray-900/30"><td className="px-4 py-3 font-medium">{u.username}</td><td className="px-4 py-3"><span className={"px-2 py-0.5 rounded text-xs " + stageColors[u.stage]}>{u.stage}</span></td><td className="px-4 py-3 text-xs text-gray-500">{u.last_active}</td><td className="px-4 py-3"><span className={"font-bold " + (u.days_inactive > 90 ? "text-red-600" : u.days_inactive > 60 ? "text-orange-600" : "text-gray-600")}>{u.days_inactive}d</span></td><td className="px-4 py-3 text-xs text-gray-400">{u.stage_since}</td></tr>))}{users.length === 0 && !loading && <tr><td colSpan={5} className="px-4 py-8 text-center text-gray-500">No users in this stage.</td></tr>}</tbody>
+          <tbody className="divide-y dark:divide-gray-800">{users.map((u: any) => (<tr key={u.id} className="hover:bg-gray-50 dark:hover:bg-gray-900/30"><td className="px-4 py-3 font-medium">{u.username}</td><td className="px-4 py-3"><span className={"px-2 py-0.5 rounded text-xs " + stageColors[u.stage]}>{u.stage}</span></td><td className="px-4 py-3 text-xs text-gray-500">{u.last_active}</td><td className="px-4 py-3"><span className={"font-bold " + (u.days_inactive > 90 ? "text-red-600" : u.days_inactive > 60 ? "text-orange-600" : "text-gray-600")}>{u.days_inactive}d</span></td><td className="px-4 py-3 text-xs text-gray-400">{u.stage_since}</td></tr>))}{users.length === 0 && !loading && <tr><td colSpan={5} className="px-4 py-8 text-center text-gray-500">No users in this stage.</td></tr>}</tbody>
         </table>
       </div>
     </div>

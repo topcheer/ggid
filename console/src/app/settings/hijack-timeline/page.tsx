@@ -69,7 +69,7 @@ export default function HijackTimelinePage() {
           <div className="relative pl-8">
             <div className="absolute left-3 top-0 bottom-0 w-px bg-gray-200 dark:bg-gray-800" />
             <div className="space-y-2">
-              {data.events.map((evt) => { const Icon = eventIcons[evt.event_type] || AlertTriangle; return (
+              {data.events.map((evt: any) => { const Icon = eventIcons[evt.event_type] || AlertTriangle; return (
                 <div key={evt.id} className="relative">
                   <div className="absolute -left-5 w-4 h-4 rounded-full bg-red-500 border-2 border-red-200" />
                   <div className="rounded-lg border dark:border-gray-800 p-3 ml-2">

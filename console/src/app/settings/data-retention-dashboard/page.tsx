@@ -100,7 +100,7 @@ export default function DataRetentionDashboardPage() {
         <div className="bg-gray-900 rounded-xl p-6">
           <h2 className="text-sm font-semibold mb-3">Compliance Status</h2>
           <div className="flex flex-wrap gap-2">
-            {(data?.compliance_status ?? []).map((c) => (
+            {(data?.compliance_status ?? []).map((c: any) => (
               <span key={c.framework} className={"text-xs px-2 py-1 rounded " + (c.compliant ? "bg-green-900 text-green-300" : "bg-red-900 text-red-300")}>
                 {c.framework} {c.compliant ? "OK" : "GAP"}
               </span>

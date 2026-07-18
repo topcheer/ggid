@@ -24,7 +24,7 @@ export default function ConsentManagementPage() {
 
       {/* Region Compliance */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-        {(data?.per_region_compliance ?? []).map((r) => (
+        {(data?.per_region_compliance ?? []).map((r: any) => (
           <div key={r.region} className="bg-gray-900 rounded-xl p-4">
             <p className="text-xs text-gray-400 mb-1">{r.region}</p>
             <p className="text-xl font-bold text-green-400">{r.compliance_pct}%</p>

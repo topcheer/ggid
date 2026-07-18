@@ -155,7 +155,7 @@ function LogsTab() {
             <th className="py-2 px-3 font-medium text-gray-600 dark:text-gray-400 text-right">{t("caeMonitor.logs.riskDelta")}</th>
           </tr></thead>
           <tbody>
-            {logs.map((l) => (
+            {logs.map((l: any) => (
               <tr key={l.id} className="border-b border-gray-100 dark:border-gray-800/50">
                 <td className="py-3 px-3 text-xs text-gray-500">{new Date(l.timestamp).toLocaleTimeString()}</td>
                 <td className="py-3 px-3 text-gray-900 dark:text-white">{l.user}</td>
@@ -215,7 +215,7 @@ function TriggersTab() {
       )}
 
       <div className="space-y-2">
-        {triggers.map((tr) => (
+        {triggers.map((tr: any) => (
           <div key={tr.id} className="flex items-center gap-3 p-3 rounded-lg border border-gray-200 dark:border-gray-800">
             <div className="flex-1">
               <div className="flex items-center gap-2">
@@ -224,11 +224,11 @@ function TriggersTab() {
               </div>
             </div>
             <span className={`px-2 py-0.5 text-xs rounded-full ${resultColors[tr.action]}`}>{tr.action.replace(/_/g, " ")}</span>
-            <button onClick={() => setTriggers(triggers.map((x) => x.id === tr.id ? { ...x, enabled: !x.enabled } : x))}
+            <button onClick={() => setTriggers(triggers.map((x: any) => x.id === tr.id ? { ...x, enabled: !x.enabled } : x))}
               className={`relative w-10 h-6 rounded-full transition-colors ${tr.enabled ? "bg-blue-600" : "bg-gray-300 dark:bg-gray-600"}`}>
               <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full transition-transform ${tr.enabled ? "translate-x-4" : ""}`} />
             </button>
-            <button onClick={() => { if (confirm(t("caeMonitor.triggers.confirmDelete"))) setTriggers(triggers.filter((x) => x.id !== tr.id)); }}
+            <button onClick={() => { if (confirm(t("caeMonitor.triggers.confirmDelete"))) setTriggers(triggers.filter((x: any) => x.id !== tr.id)); }}
               className="p-1.5 hover:bg-red-50 dark:hover:bg-red-950 rounded"><Trash2 className="w-4 h-4 text-red-500" /></button>
           </div>
         ))}
@@ -246,12 +246,12 @@ function TriggerForm({ onAdd, onCancel }: { onAdd: (t: Trigger) => void; onCance
     <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 space-y-3 bg-gray-50 dark:bg-gray-800/50">
       <div className="grid grid-cols-3 gap-3">
         <select value={event} onChange={(e) => setEvent(e.target.value)} className="px-2 py-1.5 rounded border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-xs text-gray-900 dark:text-white">
-          {TRIGGER_EVENTS.map((e) => <option key={e} value={e}>{e}</option>)}
+          {TRIGGER_EVENTS.map((e: any) => <option key={e} value={e}>{e}</option>)}
         </select>
         <input type="text" value={condition} onChange={(e) => setCondition(e.target.value)} placeholder="condition"
           className="px-2 py-1.5 rounded border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-xs text-gray-900 dark:text-white" />
         <select value={action} onChange={(e) => setAction(e.target.value)} className="px-2 py-1.5 rounded border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-xs text-gray-900 dark:text-white">
-          {TRIGGER_ACTIONS.map((a) => <option key={a} value={a}>{a}</option>)}
+          {TRIGGER_ACTIONS.map((a: any) => <option key={a} value={a}>{a}</option>)}
         </select>
       </div>
       <div className="flex gap-2">

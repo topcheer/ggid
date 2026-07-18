@@ -45,7 +45,7 @@ export default function TokenFamiliesPage() {
   }, []);
 
   const cardCls = "rounded-xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-700 dark:bg-gray-800";
-  const flagged = families.filter((f) => f.theft_detected);
+  const flagged = families.filter((f: any) => f.theft_detected);
 
   return (
     <div className="space-y-6">
@@ -65,7 +65,7 @@ export default function TokenFamiliesPage() {
         <div className={cardCls}><div className="py-12 text-center"><Share2 className="mx-auto h-12 w-12 text-gray-300" /><p className="mt-4 text-sm text-gray-400">No token families.</p></div></div>
       ) : (
         <div className="space-y-4">
-          {families.map((fam) => (
+          {families.map((fam: any) => (
             <div key={fam.family_id} className={`${cardCls} ${fam.theft_detected ? "border-red-300 dark:border-red-800" : ""}`}>
               <div className="mb-3 flex items-center justify-between">
                 <div className="flex items-center gap-2"><KeyRound className="h-4 w-4 text-purple-500" /><span className="font-mono text-sm font-semibold text-gray-900 dark:text-white">{fam.family_id.slice(0, 16)}</span></div>

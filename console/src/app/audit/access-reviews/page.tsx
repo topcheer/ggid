@@ -83,7 +83,7 @@ export default function AccessReviewsPage() {
     setActionLoading("bulk");
     try {
       await Promise.all(
-        Array.from(selected).map((id) =>
+        Array.from(selected).map((id: any) =>
           apiFetch(`/api/v1/audit/access-reviews/${id}/decision`, {
             method: "POST",
             body: JSON.stringify({ decision }),
@@ -111,15 +111,15 @@ export default function AccessReviewsPage() {
     if (selected.size === reviews.length) {
       setSelected(new Set());
     } else {
-      setSelected(new Set(reviews.map((r) => r.id)));
+      setSelected(new Set(reviews.map((r: any) => r.id)));
     }
   };
 
   const summary: ReviewSummary = {
     pending: reviews.length,
-    approved: history.filter((r) => r.status === "approved").length,
-    revoked: history.filter((r) => r.status === "revoked").length,
-    overdue: reviews.filter((r) => {
+    approved: history.filter((r: any) => r.status === "approved").length,
+    revoked: history.filter((r: any) => r.status === "revoked").length,
+    overdue: reviews.filter((r: any) => {
       const age = Date.now() - new Date(r.created_at).getTime();
       return age > 14 * 24 * 60 * 60 * 1000; // 14 days
     }).length,
@@ -216,7 +216,7 @@ export default function AccessReviewsPage() {
                 Select all
               </label>
 
-              {reviews.map((r) => {
+              {reviews.map((r: any) => {
                 const isOverdue = Date.now() - new Date(r.created_at).getTime() > 14 * 24 * 60 * 60 * 1000;
                 return (
                   <div key={r.id} className={`${cardCls} ${isOverdue ? "border-red-200 dark:border-red-800" : ""}`}>
@@ -230,7 +230,7 @@ export default function AccessReviewsPage() {
                           {isOverdue && <span className="rounded-full bg-red-100 px-2 py-0.5 text-xs font-medium text-red-700 dark:bg-red-900/30 dark:text-red-400">Overdue</span>}
                         </div>
                         <div className="mt-2 flex flex-wrap gap-1">
-                          {r.roles.map((role) => (
+                          {r.roles.map((role: any) => (
                             <span key={role} className="flex items-center gap-1 rounded-full bg-indigo-100 px-2 py-0.5 text-xs font-medium text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400">
                               <Shield className="h-3 w-3" />{role}
                             </span>
@@ -296,7 +296,7 @@ export default function AccessReviewsPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
-                {history.map((r) => (
+                {history.map((r: any) => (
                   <tr key={r.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/50">
                     <td className="px-4 py-3">
                       <div className="font-medium text-gray-800 dark:text-gray-200">{r.user_name}</div>
@@ -304,7 +304,7 @@ export default function AccessReviewsPage() {
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex flex-wrap gap-1">
-                        {r.roles.map((role) => <span key={role} className="rounded-full bg-indigo-100 px-2 py-0.5 text-xs text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400">{role}</span>)}
+                        {r.roles.map((role: any) => <span key={role} className="rounded-full bg-indigo-100 px-2 py-0.5 text-xs text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400">{role}</span>)}
                       </div>
                     </td>
                     <td className="px-4 py-3">

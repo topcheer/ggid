@@ -79,8 +79,8 @@ export default function ImportWizardPage() {
         setSourceFields(fields);
         // Auto-map by name similarity
         const autoMap: Record<string, string> = {};
-        fields.forEach((f) => {
-          const match = TARGET_FIELDS.find((tf) =>
+        fields.forEach((f: any) => {
+          const match = TARGET_FIELDS.find((tf: any) =>
             tf.key === f || tf.key.replace(/_/g, "") === f.replace(/_/g, "").toLowerCase()
           );
           autoMap[f] = match ? match.key : "skip";
@@ -100,18 +100,18 @@ export default function ImportWizardPage() {
           setError("Invalid CSV: need header + at least 1 row");
           return;
         }
-        const headers = lines[0].split(",").map((h) => h.trim().replace(/^["']|["']$/g, ""));
+        const headers = lines[0].split(",").map((h: any) => h.trim().replace(/^["']|["']$/g, ""));
         setSourceFields(headers);
         const autoMap: Record<string, string> = {};
-        headers.forEach((h) => {
-          const match = TARGET_FIELDS.find((tf) =>
+        headers.forEach((h: any) => {
+          const match = TARGET_FIELDS.find((tf: any) =>
             tf.key === h || tf.key.replace(/_/g, "") === h.replace(/_/g, "").toLowerCase()
           );
           autoMap[h] = match ? match.key : "skip";
         });
         setMapping(autoMap);
         const parsedRows: ImportRow[] = lines.slice(1, 51).map((line: any, i: number) => {
-          const vals = line.split(",").map((v) => v.trim().replace(/^["']|["']$/g, ""));
+          const vals = line.split(",").map((v: any) => v.trim().replace(/^["']|["']$/g, ""));
           const email = vals[headers.indexOf("email")] || "";
           return {
             row: i + 1,
@@ -164,10 +164,10 @@ export default function ImportWizardPage() {
       const data = await res.json();
       setResult({
         total: data.total || rows.length,
-        valid: data.valid || rows.filter((r) => r.status === "valid").length,
-        invalid: data.invalid || rows.filter((r) => r.status === "invalid").length,
+        valid: data.valid || rows.filter((r: any) => r.status === "valid").length,
+        invalid: data.invalid || rows.filter((r: any) => r.status === "invalid").length,
         warnings: 0,
-        imported: data.imported || data.valid || rows.filter((r) => r.status === "valid").length,
+        imported: data.imported || data.valid || rows.filter((r: any) => r.status === "valid").length,
         failed: data.failed || 0,
         duration_ms: data.duration_ms || 0,
       });
@@ -326,7 +326,7 @@ export default function ImportWizardPage() {
             </p>
 
             <div className="space-y-2">
-              {sourceFields.map((field) => (
+              {sourceFields.map((field: any) => (
                 <div key={field} className="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800">
                   <div className="flex-1">
                     <span className="text-sm font-medium text-gray-900 dark:text-white">{field}</span>
@@ -338,7 +338,7 @@ export default function ImportWizardPage() {
                     className="flex-1 px-3 py-1.5 rounded-lg border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-sm text-gray-900 dark:text-white"
                   >
                     <option value="skip">{t("importWizard.mapping.skip")}</option>
-                    {TARGET_FIELDS.map((tf) => (
+                    {TARGET_FIELDS.map((tf: any) => (
                       <option key={tf.key} value={tf.key}>
                         {t(`importWizard.mapping.${tf.key === "first_name" ? "firstName" : tf.key === "last_name" ? "lastName" : tf.key === "display_name" ? "displayName" : tf.key}`)}
                       </option>
@@ -379,8 +379,8 @@ export default function ImportWizardPage() {
             {/* Stats */}
             <div className="grid grid-cols-3 gap-3 mb-4">
               <StatCard label={t("importWizard.preview.totalRows")} value={rows.length} color="blue" />
-              <StatCard label={t("importWizard.preview.validRows")} value={rows.filter((r) => r.status === "valid").length} color="green" />
-              <StatCard label={t("importWizard.preview.invalidRows")} value={rows.filter((r) => r.status === "invalid").length} color="red" />
+              <StatCard label={t("importWizard.preview.validRows")} value={rows.filter((r: any) => r.status === "valid").length} color="green" />
+              <StatCard label={t("importWizard.preview.invalidRows")} value={rows.filter((r: any) => r.status === "invalid").length} color="red" />
             </div>
 
             {/* Preview Table */}
@@ -396,7 +396,7 @@ export default function ImportWizardPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {rows.map((r) => (
+                  {rows.map((r: any) => (
                     <tr key={r.row} className="border-b border-gray-100 dark:border-gray-800/50">
                       <td className="py-2 px-3 text-gray-500">{r.row}</td>
                       <td className="py-2 px-3 text-gray-900 dark:text-white">{r.email || "—"}</td>

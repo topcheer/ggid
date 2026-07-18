@@ -241,7 +241,7 @@ export default function ScimPage() {
       setMsg(`${syncType === "full" ? "Full" : "Incremental"} sync started for ${syncTarget.name}`);
       // Update last_sync
       setApps((prev) =>
-        prev.map((a) =>
+        prev.map((a: any) =>
           a.id === syncTarget.id ? { ...a, last_sync: new Date().toISOString() } : a,
         ),
       );
@@ -258,11 +258,11 @@ export default function ScimPage() {
   };
 
   const updateMapping = (id: string, field: "source" | "target", value: string) => {
-    setMappings(mappings.map((m) => (m.id === id ? { ...m, [field]: value } : m)));
+    setMappings(mappings.map((m: any) => (m.id === id ? { ...m, [field]: value } : m)));
   };
 
   const deleteMapping = (id: string) => {
-    setMappings(mappings.filter((m) => m.id !== id));
+    setMappings(mappings.filter((m: any) => m.id !== id));
   };
 
   const inputCls =
@@ -323,7 +323,7 @@ export default function ScimPage() {
         <>
           {/* Connected Apps */}
           <div className="mb-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            {apps.map((app) => {
+            {apps.map((app: any) => {
               const sc = statusConfig(app.status);
               const StatusIcon = sc.icon;
               const userProgress = app.total_users ? Math.round((app.synced_users || 0) / app.total_users * 100) : 0;
@@ -428,7 +428,7 @@ export default function ScimPage() {
                 <Users className="h-4 w-4 text-gray-400" /> {t("scim.recentUserSync")}
               </h2>
               <div className="space-y-2">
-                {syncEvents.filter((e) => e.type.startsWith("user")).map((event) => (
+                {syncEvents.filter((e: any) => e.type.startsWith("user")).map((event: any) => (
                   <div
                     key={event.id}
                     className="flex items-center justify-between rounded-lg border border-gray-100 p-2 dark:border-gray-700"
@@ -471,7 +471,7 @@ export default function ScimPage() {
                 <FolderTree className="h-4 w-4 text-gray-400" /> {t("scim.recentGroupSync")}
               </h2>
               <div className="space-y-2">
-                {syncEvents.filter((e) => e.type.startsWith("group")).map((event) => (
+                {syncEvents.filter((e: any) => e.type.startsWith("group")).map((event: any) => (
                   <div
                     key={event.id}
                     className="flex items-center justify-between rounded-lg border border-gray-100 p-2 dark:border-gray-700"
@@ -505,7 +505,7 @@ export default function ScimPage() {
                     </div>
                   </div>
                 ))}
-                {syncEvents.filter((e) => e.type.startsWith("group")).length === 0 && (
+                {syncEvents.filter((e: any) => e.type.startsWith("group")).length === 0 && (
                   <p className="py-4 text-center text-xs text-gray-400">{t("scim.noGroupSyncEvents")}</p>
                 )}
               </div>
@@ -521,7 +521,7 @@ export default function ScimPage() {
               </span>
             </h2>
             <div className="space-y-2">
-              {mappings.map((mapping) => (
+              {mappings.map((mapping: any) => (
                 <div key={mapping.id} className="flex items-center gap-2">
                   <select
                     value={mapping.source}
@@ -529,7 +529,7 @@ export default function ScimPage() {
                     className={inputCls}
                   >
                     <option value="">{t("scim.sourceAttr")}</option>
-                    {SOURCE_ATTRIBUTES.map((a) => (
+                    {SOURCE_ATTRIBUTES.map((a: any) => (
                       <option key={a} value={a}>{a}</option>
                     ))}
                   </select>
@@ -540,7 +540,7 @@ export default function ScimPage() {
                     className={inputCls}
                   >
                     <option value="">{t("scim.targetAttr")}</option>
-                    {TARGET_ATTRIBUTES.map((a) => (
+                    {TARGET_ATTRIBUTES.map((a: any) => (
                       <option key={a} value={a}>{a}</option>
                     ))}
                   </select>
@@ -580,7 +580,7 @@ export default function ScimPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {history.map((entry) => {
+                  {history.map((entry: any) => {
                     const sc = getHistoryStatus(entry.status);
                     const StatusIcon = sc.icon;
                     const isExpanded = expandedHistory === entry.id;

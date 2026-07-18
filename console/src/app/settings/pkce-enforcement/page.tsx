@@ -60,7 +60,7 @@ export default function PkceEnforcementPage() {
           </div>
 
           {config.exempted_clients.length > 0 && (
-            <div className="rounded-lg border border-yellow-300 dark:border-yellow-800 bg-yellow-50 dark:bg-yellow-900/20 p-3"><span className="text-sm font-medium text-yellow-700 dark:text-yellow-400">Exempted Clients: </span>{config.exempted_clients.map((c) => <span key={c} className="font-mono text-xs mr-2">{c}</span>)}</div>
+            <div className="rounded-lg border border-yellow-300 dark:border-yellow-800 bg-yellow-50 dark:bg-yellow-900/20 p-3"><span className="text-sm font-medium text-yellow-700 dark:text-yellow-400">Exempted Clients: </span>{config.exempted_clients.map((c: any) => <span key={c} className="font-mono text-xs mr-2">{c}</span>)}</div>
           )}
 
           <div className="overflow-x-auto rounded-lg border dark:border-gray-800">

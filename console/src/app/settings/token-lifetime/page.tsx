@@ -31,7 +31,7 @@ export default function TokenLifetimePage() {
 
   useEffect(() => { fetchData(); }, [fetchData]);
 
-  const maxCount = data ? Math.max(...data.distribution.map((d) => d.count), 1) : 1;
+  const maxCount = data ? Math.max(...data.distribution.map((d: any) => d.count), 1) : 1;
 
   return (
     <div className="space-y-6">
@@ -89,7 +89,7 @@ export default function TokenLifetimePage() {
                 </tr>
               </thead>
               <tbody className="divide-y dark:divide-gray-800">
-                {data.per_client.map((c) => (
+                {data.per_client.map((c: any) => (
                   <tr key={c.client_id} className="hover:bg-gray-50 dark:hover:bg-gray-900/30">
                     <td className="px-4 py-3 font-medium">{c.client_name}</td>
                     <td className="px-4 py-3">{c.avg_minutes}m</td>

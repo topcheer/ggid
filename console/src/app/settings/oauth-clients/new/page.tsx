@@ -75,7 +75,7 @@ export default function OAuthClientNewPage() {
       if (customScopes.trim()) scopes.push(...customScopes.trim().split(/\s+/));
       const body: Record<string, unknown> = {
         name: clientName,
-        redirect_uris: redirectUris.split("\n").map((u) => u.trim()).filter(Boolean),
+        redirect_uris: redirectUris.split("\n").map((u: any) => u.trim()).filter(Boolean),
         grant_types: appType === "m2m" ? ["client_credentials"] : ["authorization_code"],
         response_types: appType === "m2m" ? ["token"] : ["code"],
         token_endpoint_auth_method: authMethod,
@@ -129,7 +129,7 @@ export default function OAuthClientNewPage() {
         {/* Stepper */}
         {step < 4 && (
           <div className="flex items-center gap-2 mb-8">
-            {steps.map((s, i) => {
+            {steps.map((s: any, i: any) => {
               const isActive = step === i;
               const isPast = step > i;
               return (
@@ -156,7 +156,7 @@ export default function OAuthClientNewPage() {
             <div className="space-y-3">
               <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-3">{t("oauthWizard.appType.title")}</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                {appTypes.map((a) => {
+                {appTypes.map((a: any) => {
                   const Icon = a.icon;
                   const selected = appType === a.id;
                   return (
@@ -179,7 +179,7 @@ export default function OAuthClientNewPage() {
           {step === 1 && (
             <div className="space-y-3">
               <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-3">{t("oauthWizard.authMethod.title")}</h3>
-              {authMethods.map((m) => {
+              {authMethods.map((m: any) => {
                 const Icon = m.icon;
                 const selected = authMethod === m.id;
                 const disabled = (appType === "spa" && m.id !== "pkce") || (appType === "m2m" && m.id !== "client_secret");
@@ -207,7 +207,7 @@ export default function OAuthClientNewPage() {
               <h3 className="text-sm font-semibold text-gray-900 dark:text-white">{t("oauthWizard.scopes.title")}</h3>
               <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">{t("oauthWizard.scopes.description")}</p>
               <div className="space-y-2">
-                {standardScopes.map((s) => {
+                {standardScopes.map((s: any) => {
                   const selected = selectedScopes.has(s.id);
                   return (
                     <label key={s.id} className={`flex items-center gap-3 p-3 rounded-lg border-2 cursor-pointer transition-all ${selected ? "border-blue-500 bg-blue-50 dark:bg-blue-950/20" : "border-gray-200 dark:border-gray-700 hover:border-gray-300"}`}>

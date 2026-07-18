@@ -71,7 +71,7 @@ export default function ClientEventsPage() {
 
       <select aria-label="Selected id" value={selectedId} onChange={(e) => setSelectedId(e.target.value)} className="px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-900 text-sm">
         <option value="">Select a client...</option>
-        {clients.map((c) => <option key={c.client_id} value={c.client_id}>{c.client_name} ({c.client_id})</option>)}
+        {clients.map((c: any) => <option key={c.client_id} value={c.client_id}>{c.client_name} ({c.client_id})</option>)}
       </select>
 
       {events.length > 0 && !loading && (
@@ -80,7 +80,7 @@ export default function ClientEventsPage() {
             <h3 className="font-semibold flex items-center gap-2"><Activity className="w-4 h-4" /> Event Timeline ({events.length})</h3>
           </div>
           <div className="relative max-h-[600px] overflow-y-auto">
-            {events.map((evt, i) => {
+            {events.map((evt: any, i: any) => {
               const cfg = eventIcons[evt.event_type] || eventIcons.updated;
               const Icon = cfg.icon;
               return (

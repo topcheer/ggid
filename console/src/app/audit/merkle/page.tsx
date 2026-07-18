@@ -89,7 +89,7 @@ export default function MerklePage() {
               <div className="flex gap-2"><div className="w-px h-4 bg-gray-300 dark:bg-gray-700 ml-4" /><div className="w-px h-4 bg-gray-300 dark:bg-gray-700 ml-12" /></div>
               {/* Leaves */}
               <div className="flex gap-2 flex-wrap justify-center">
-                {TREE_DATA.leaves.map((leaf, i) => (
+                {TREE_DATA.leaves.map((leaf: any, i: any) => (
                   <div key={i} className="rounded-lg border border-gray-200 dark:border-gray-700 px-2 py-1"><code className="text-xs font-mono text-gray-500">{leaf.hash}</code><p className="text-[10px] text-gray-400">{leaf.event}</p></div>
                 ))}
               </div>

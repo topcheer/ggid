@@ -35,7 +35,7 @@ export default function LockoutPolicyConfigPage() {
         </div>
         <div className="bg-gray-900 rounded-xl p-6">
           <h2 className="text-sm font-semibold mb-3">Current Lockouts</h2>
-          <div className="space-y-1">{(data?.current_lockouts ?? []).map((l) => (
+          <div className="space-y-1">{(data?.current_lockouts ?? []).map((l: any) => (
             <div key={l.username} className="flex items-center gap-2 bg-gray-800 rounded p-2 text-xs"><span className="flex-1">{l.username}</span><span className="text-gray-400">{l.attempts} attempts</span><span className="text-red-400">unlocks {l.unlock_at}</span></div>
           ))}{data?.current_lockouts?.length === 0 && <p className="text-xs text-gray-500">No active lockouts</p>}</div>
         </div>
@@ -44,7 +44,7 @@ export default function LockoutPolicyConfigPage() {
       <div className="bg-gray-900 rounded-xl p-6 mt-6">
         <h2 className="text-sm font-semibold mb-3">Per-Endpoint Configuration</h2>
         <table className="w-full text-sm"><thead><tr className="border-b border-gray-800 text-gray-400"><th className="text-left py-2">Endpoint</th><th className="text-left py-2">Threshold</th><th className="text-left py-2">Lockout</th></tr></thead>
-          <tbody>{(data?.per_endpoint ?? []).map((e) => (<tr key={e.endpoint} className="border-b border-gray-800"><td className="py-2 font-mono text-xs">{e.endpoint}</td><td className="py-2">{e.threshold}</td><td className="py-2">{e.lockout_min}m</td></tr>))}</tbody>
+          <tbody>{(data?.per_endpoint ?? []).map((e: any) => (<tr key={e.endpoint} className="border-b border-gray-800"><td className="py-2 font-mono text-xs">{e.endpoint}</td><td className="py-2">{e.threshold}</td><td className="py-2">{e.lockout_min}m</td></tr>))}</tbody>
         </table>
       </div>
     </div>

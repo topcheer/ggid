@@ -87,9 +87,9 @@ function rowsToObjects(
   rows: string[][],
   mappings: ColumnMapping[],
 ): Record<string, string>[] {
-  return rows.map((row) => {
+  return rows.map((row: any) => {
     const obj: Record<string, string> = {};
-    mappings.forEach((m) => {
+    mappings.forEach((m: any) => {
       if (m.ggidField) {
         const colIdx = headers.indexOf(m.csvColumn);
         if (colIdx >= 0 && colIdx < row.length) {
@@ -105,7 +105,7 @@ function objectsToCSV(objects: Record<string, unknown>[]): string {
   if (objects.length === 0) return "";
   const keys = Array.from(
     objects.reduce((set, obj) => {
-      Object.keys(obj).forEach((k) => set.add(k));
+      Object.keys(obj).forEach((k: any) => set.add(k));
       return set;
     }, new Set<string>()),
   );
@@ -117,7 +117,7 @@ function objectsToCSV(objects: Record<string, unknown>[]): string {
     return s;
   };
   const headerLine = keys.join(",");
-  const dataLines = objects.map((obj) => keys.map((k) => escapeCSV(obj[k])).join(","));
+  const dataLines = objects.map((obj: any) => keys.map((k: any) => escapeCSV(obj[k])).join(","));
   return [headerLine, ...dataLines].join("\n");
 }
 
@@ -148,7 +148,7 @@ export default function DataPage() {
   const [dryRunResult, setDryRunResult] = useState<DryRunResult | null>(null);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const currentTab = TABS.find((t) => t.key === activeTab)!;
+  const currentTab = TABS.find((t: any) => t.key === activeTab)!;
 
   const resetImportState = useCallback(() => {
     setFileName(null);
@@ -194,7 +194,7 @@ export default function DataPage() {
           setCsvHeaders(headers);
           setCsvRows(rows);
           // Auto-map columns by fuzzy matching header names to fields
-          const autoMappings: ColumnMapping[] = headers.map((h) => {
+          const autoMappings: ColumnMapping[] = headers.map((h: any) => {
             const normalized = h.toLowerCase().replace(/[\s_-]/g, "");
             const match = currentTab.fields.find(
               (f) => f.toLowerCase().replace(/[\s_-]/g, "") === normalized,
@@ -212,7 +212,7 @@ export default function DataPage() {
   };
 
   const updateMapping = (csvCol: string, ggidField: string) => {
-    setMappings(mappings.map((m) => (m.csvColumn === csvCol ? { ...m, ggidField } : m)));
+    setMappings(mappings.map((m: any) => (m.csvColumn === csvCol ? { ...m, ggidField } : m)));
   };
 
   const getPreviewRecords = (): Record<string, string>[] => {
@@ -246,7 +246,7 @@ export default function DataPage() {
       const warnings: string[] = [];
       const requiredFields = activeTab === "users" ? ["username", "email"] : ["name"];
       records.forEach((rec: any, idx: number) => {
-        requiredFields.forEach((f) => {
+        requiredFields.forEach((f: any) => {
           if (!rec[f]) {
             errors.push(`Row ${idx + 1}: missing required field "${f}"`);
           }
@@ -343,7 +343,7 @@ export default function DataPage() {
 
       {/* Tabs */}
       <div className="mb-6 flex gap-1 border-b border-gray-200 dark:border-gray-700">
-        {TABS.map((tab) => (
+        {TABS.map((tab: any) => (
           <button
             key={tab.key}
             onClick={() => switchTab(tab.key)}
@@ -413,7 +413,7 @@ export default function DataPage() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
-                    {mappings.map((m) => (
+                    {mappings.map((m: any) => (
                       <tr key={m.csvColumn}>
                         <td className="px-2 py-1.5 text-sm text-gray-700 dark:text-gray-300">
                           {m.csvColumn}
@@ -428,7 +428,7 @@ export default function DataPage() {
                             className="w-full rounded border border-gray-300 px-2 py-1 text-xs dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200"
                           >
                             <option value="">— Skip —</option>
-                            {currentTab.fields.map((f) => (
+                            {currentTab.fields.map((f: any) => (
                               <option key={f} value={f}>
                                 {f}
                               </option>
@@ -453,7 +453,7 @@ export default function DataPage() {
                 <table className="w-full">
                   <thead className="bg-gray-50 dark:bg-gray-900">
                     <tr>
-                      {previewKeys.map((k) => (
+                      {previewKeys.map((k: any) => (
                         <th
                           key={k}
                           className="px-3 py-1.5 text-left text-xs font-medium uppercase text-gray-500"
@@ -466,7 +466,7 @@ export default function DataPage() {
                   <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
                     {previewRecords.map((row: any, i: number) => (
                       <tr key={i}>
-                        {previewKeys.map((k) => (
+                        {previewKeys.map((k: any) => (
                           <td
                             key={k}
                             className="max-w-[200px] truncate px-3 py-1.5 text-xs text-gray-700 dark:text-gray-300"
@@ -583,7 +583,7 @@ export default function DataPage() {
           <div className="mt-6 rounded-lg bg-gray-50 p-4 dark:bg-gray-900">
             <h3 className="mb-2 text-xs font-semibold uppercase text-gray-500">Supported Fields</h3>
             <div className="flex flex-wrap gap-1.5">
-              {currentTab.fields.map((f) => (
+              {currentTab.fields.map((f: any) => (
                 <span
                   key={f}
                   className="rounded bg-gray-200 px-2 py-0.5 text-xs text-gray-600 dark:bg-gray-700 dark:text-gray-400"

@@ -535,7 +535,7 @@ export default function NotificationPreviewPage() {
                 )}
                 {recipientResults.length > 0 && (
                   <ul className="mt-2 max-h-40 overflow-y-auto rounded-lg border border-gray-200 dark:border-gray-700">
-                    {recipientResults.map((u) => (
+                    {recipientResults.map((u: any) => (
                       <li key={u.id}>
                         <button
                           onClick={() => { setSelectedRecipient(u); setRecipientSearch(""); setRecipientResults([]); }}
@@ -731,7 +731,7 @@ export default function NotificationPreviewPage() {
                     </tr>
                   </thead>
                   <tbody>
-                    {deliveryLog.map((entry) => (
+                    {deliveryLog.map((entry: any) => (
                       <>
                         <tr
                           key={entry.id}
@@ -760,7 +760,7 @@ export default function NotificationPreviewPage() {
                           <tr key={entry.id + "-detail"} className="bg-gray-50 dark:bg-gray-900/30">
                             <td colSpan={6} className="px-6 py-4">
                               <div className="flex items-center gap-2">
-                                {entry.timeline.map((step, idx) => (
+                                {entry.timeline.map((step: any, idx: any) => (
                                   <div key={idx} className="flex items-center">
                                     <div className="flex flex-col items-center">
                                       <div className={`flex h-8 w-8 items-center justify-center rounded-full ${

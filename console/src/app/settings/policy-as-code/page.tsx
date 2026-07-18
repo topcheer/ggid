@@ -59,7 +59,7 @@ export default function PolicyAsCodePage() {
   };
 
   const handleDelete = async (id: string) => {
-    try { await apiFetch(`/api/v1/policy/as-code/${id}`, { method: "DELETE" }); setPolicies((p) => p.filter((x) => x.id !== id)); }
+    try { await apiFetch(`/api/v1/policy/as-code/${id}`, { method: "DELETE" }); setPolicies((p) => p.filter((x: any) => x.id !== id)); }
     catch { setError("Delete failed"); }
   };
 
@@ -82,7 +82,7 @@ export default function PolicyAsCodePage() {
         <div className="space-y-3">
           {policies.length === 0 ? (
             <div className={cardCls}><div className="py-12 text-center"><FileCode className="mx-auto h-12 w-12 text-gray-300" /><p className="mt-4 text-sm text-gray-400">No policies defined yet.</p></div></div>
-          ) : policies.map((p) => (
+          ) : policies.map((p: any) => (
             <div key={p.id} className={cardCls}>
               <div className="flex items-center justify-between">
                 <div className="flex-1">

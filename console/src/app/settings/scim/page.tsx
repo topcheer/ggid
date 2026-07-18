@@ -92,7 +92,7 @@ export default function SCIMPage() {
   const handleSync = async (resourceType: "users" | "groups") => {
     setSyncing(resourceType);
     setSyncStatus((prev) =>
-      prev.map((s) => (s.resourceType === resourceType ? { ...s, status: "syncing" } : s))
+      prev.map((s: any) => (s.resourceType === resourceType ? { ...s, status: "syncing" } : s))
     );
     try {
       const data = await apiFetch<SyncStatus>(`/api/v1/identity/scim/config/sync`, {
@@ -100,12 +100,12 @@ export default function SCIMPage() {
         body: JSON.stringify({ resourceType }),
       });
       setSyncStatus((prev) =>
-        prev.map((s) => (s.resourceType === resourceType ? { ...data, status: "success" } : s))
+        prev.map((s: any) => (s.resourceType === resourceType ? { ...data, status: "success" } : s))
       );
       setMsg(`${resourceType} sync completed`);
     } catch {
       setSyncStatus((prev) =>
-        prev.map((s) =>
+        prev.map((s: any) =>
           s.resourceType === resourceType
             ? { ...s, status: "error", errorMessage: "Sync failed — endpoint unavailable" }
             : s
@@ -243,7 +243,7 @@ export default function SCIMPage() {
           <div className={cardCls}>
             <h3 className="mb-4 text-sm font-semibold text-gray-700 dark:text-gray-300">Sync Status</h3>
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-              {syncStatus.map((sync) => (
+              {syncStatus.map((sync: any) => (
                 <div
                   key={sync.resourceType}
                   className="rounded-lg border border-gray-200 p-4 dark:border-gray-700"

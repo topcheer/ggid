@@ -55,7 +55,7 @@ export default function EmergencyAccessAuditPage() {
     if (startDate && endDate) fetchData();
   }, [startDate, endDate, fetchData]);
 
-  const activeCount = records.filter((r) => r.status === "active").length;
+  const activeCount = records.filter((r: any) => r.status === "active").length;
   const totalActions = records.reduce((s, r) => s + r.actions_taken.length, 0);
 
   return (
@@ -98,7 +98,7 @@ export default function EmergencyAccessAuditPage() {
 
       {/* Records timeline */}
       <div className="space-y-4">
-        {records.map((r) => (
+        {records.map((r: any) => (
           <div key={r.id} className="rounded-lg border dark:border-gray-800 overflow-hidden">
             <div className="px-4 py-3 border-b dark:border-gray-800 bg-gray-50 dark:bg-gray-900/30">
               <div className="flex items-center justify-between">
@@ -123,7 +123,7 @@ export default function EmergencyAccessAuditPage() {
                 <div>
                   <span className="text-xs text-gray-400">Actions Taken ({r.actions_taken.length})</span>
                   <div className="flex flex-wrap gap-1 mt-1">
-                    {r.actions_taken.map((a, i) => (
+                    {r.actions_taken.map((a: any, i: any) => (
                       <span key={i} className="px-2 py-0.5 rounded text-xs bg-gray-100 dark:bg-gray-800 font-mono">{a}</span>
                     ))}
                   </div>

@@ -33,11 +33,11 @@ const CATEGORY_ICON: Record<string, typeof Shield> = {
 };
 
 function PermissionTree({ nodes, depth = 0 }: { nodes: PermissionNode[]; depth?: number }) {
-  const [expanded, setExpanded] = useState<Set<string>>(new Set(nodes.map((n) => n.id)));
+  const [expanded, setExpanded] = useState<Set<string>>(new Set(nodes.map((n: any) => n.id)));
   const toggle = (id: string) => setExpanded((prev) => { const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n; });
   return (
     <div className="space-y-0.5">
-      {nodes.map((n) => {
+      {nodes.map((n: any) => {
         const isOpen = expanded.has(n.id);
         const hasChildren = n.children.length > 0;
         return (
@@ -119,7 +119,7 @@ export default function RoleTemplatesPage() {
         <div className="flex justify-center py-12"><Loader2 className="h-8 w-8 animate-spin text-indigo-600" /></div>
       ) : (
         <div className="grid gap-4 md:grid-cols-2">
-          {templates.map((t) => {
+          {templates.map((t: any) => {
             const Icon = CATEGORY_ICON[t.category] ?? Shield;
             const isPreview = previewId === t.id;
             return (

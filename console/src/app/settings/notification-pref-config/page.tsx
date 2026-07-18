@@ -22,9 +22,9 @@ export default function NotificationPrefConfigPage() {
 
       <div className="bg-gray-900 rounded-xl p-6 mb-6">
         <h2 className="text-sm font-semibold mb-4 flex items-center gap-2"><Bell className="w-4 h-4 text-blue-400" /> Event × Channel Matrix</h2>
-        <table className="w-full text-sm"><thead><tr className="border-b border-gray-800 text-gray-400"><th className="text-left py-2">Event</th>{channels.map((c) => <th key={c} className="text-center py-2 capitalize">{c}</th>)}</tr></thead>
-          <tbody>{(data?.matrix ?? []).map((row) => (
-            <tr key={row.event} className="border-b border-gray-800"><td className="py-2 text-xs font-medium">{row.event_label}</td>{channels.map((c) => <td key={c} className="text-center py-2"><input aria-label="Toggle" type="checkbox" defaultChecked={row.channels.includes(c)} /></td>)}</tr>
+        <table className="w-full text-sm"><thead><tr className="border-b border-gray-800 text-gray-400"><th className="text-left py-2">Event</th>{channels.map((c: any) => <th key={c} className="text-center py-2 capitalize">{c}</th>)}</tr></thead>
+          <tbody>{(data?.matrix ?? []).map((row: any) => (
+            <tr key={row.event} className="border-b border-gray-800"><td className="py-2 text-xs font-medium">{row.event_label}</td>{channels.map((c: any) => <td key={c} className="text-center py-2"><input aria-label="Toggle" type="checkbox" defaultChecked={row.channels.includes(c)} /></td>)}</tr>
           ))}</tbody>
         </table>
       </div>

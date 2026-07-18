@@ -66,7 +66,7 @@ export default function IdentitySoftDeleteConfigPage() {
       <div className="bg-gray-900 rounded-xl p-4 mb-6">
         <h2 className="text-sm font-semibold mb-3">{t("idSoftDeleteConfig.perEntity")}</h2>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          {(data?.per_entity_config ?? []).map((e) => (
+          {(data?.per_entity_config ?? []).map((e: any) => (
             <div key={e.entity} className="bg-gray-800 rounded-lg p-3">
               <div className="flex items-center gap-2 mb-1">
                 <Archive className="w-3 h-3 text-gray-400" />
@@ -97,7 +97,7 @@ export default function IdentitySoftDeleteConfigPage() {
               </tr>
             </thead>
             <tbody>
-              {(data?.soft_deleted_items ?? []).map((item) => (
+              {(data?.soft_deleted_items ?? []).map((item: any) => (
                 <tr key={item.id} className="border-b border-gray-800">
                   <td className="py-3 pr-3">
                     <span className="text-xs px-2 py-0.5 rounded bg-gray-700 capitalize">{item.entity}</span>

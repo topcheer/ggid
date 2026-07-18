@@ -87,7 +87,7 @@ const VARIABLES = [
   { key: "{{.ActionURL}}", label: "Action URL", sample: "https://app.example.com/action?id=xyz" },
 ];
 
-const SAMPLE_DATA: Record<string, string> = Object.fromEntries(VARIABLES.map((v) => [v.key, v.sample]));
+const SAMPLE_DATA: Record<string, string> = Object.fromEntries(VARIABLES.map((v: any) => [v.key, v.sample]));
 
 function defaultTemplate(type: TemplateType): { subject: string; htmlBody: string; textBody: string } {
   switch (type) {
@@ -218,20 +218,20 @@ export default function NotificationTemplatesPage() {
     }
   }, [msg]);
 
-  const selectedTemplate = templates.find((t) => t.id === selectedId) || null;
+  const selectedTemplate = templates.find((t: any) => t.id === selectedId) || null;
 
   // Get content for current language (fall back to English)
   const langTemplate: TemplateRecord | null =
     selectedTemplate && selectedTemplate.language === selectedLang
       ? selectedTemplate
-      : templates.find((t) => t.type === selectedTemplate?.type && t.language === selectedLang) || null;
+      : templates.find((t: any) => t.type === selectedTemplate?.type && t.language === selectedLang) || null;
 
   const current = langTemplate?.content || null;
 
   const updateCurrent = (updater: (c: TemplateContent) => TemplateContent) => {
     if (!langTemplate) return;
     setTemplates((prev) =>
-      prev.map((t) =>
+      prev.map((t: any) =>
         t.id === langTemplate.id
           ? { ...t, content: updater({ ...t.content }) }
           : t,
@@ -282,7 +282,7 @@ export default function NotificationTemplatesPage() {
 
   const deleteTemplate = (id: string) => {
     setTemplates((prev) => {
-      const filtered = prev.filter((t) => t.id !== id);
+      const filtered = prev.filter((t: any) => t.id !== id);
       if (selectedId === id && filtered.length > 0) setSelectedId(filtered[0].id);
       return filtered;
     });
@@ -292,7 +292,7 @@ export default function NotificationTemplatesPage() {
     if (!langTemplate) return;
     if (langTemplate.type === type) return;
     setTemplates((prev) =>
-      prev.map((t) =>
+      prev.map((t: any) =>
         t.id === langTemplate.id
           ? { ...t, type, content: { ...defaultTemplate(type), status: "draft", version: 1 }, versions: [] }
           : t,
@@ -336,7 +336,7 @@ export default function NotificationTemplatesPage() {
     };
     updateCurrent((c) => ({ ...c, status: "active", version: newVersion }));
     setTemplates((prev) =>
-      prev.map((t) =>
+      prev.map((t: any) =>
         t.id === langTemplate.id
           ? { ...t, content: { ...t.content, status: "active", version: newVersion }, versions: [versionEntry, ...t.versions] }
           : t,
@@ -383,10 +383,10 @@ export default function NotificationTemplatesPage() {
 
   const restoreVersion = (version: number) => {
     if (!langTemplate) return;
-    const v = langTemplate.versions.find((x) => x.version === version);
+    const v = langTemplate.versions.find((x: any) => x.version === version);
     if (!v) return;
     setTemplates((prev) =>
-      prev.map((t) =>
+      prev.map((t: any) =>
         t.id === langTemplate.id
           ? { ...t, content: { ...t.content, htmlBody: v.htmlBody, subject: v.subject } }
           : t,
@@ -466,7 +466,7 @@ export default function NotificationTemplatesPage() {
               </button>
             </div>
             <div className="space-y-1">
-              {templates.map((tpl) => (
+              {templates.map((tpl: any) => (
                 <div
                   key={tpl.id}
                   onClick={() => { setSelectedId(tpl.id); setSelectedLang(tpl.language); }}
@@ -519,7 +519,7 @@ export default function NotificationTemplatesPage() {
                 onChange={(e) => changeTemplateType(e.target.value as TemplateType)}
                 className={inputCls}
               >
-                {TEMPLATE_TYPES.map((t) => (
+                {TEMPLATE_TYPES.map((t: any) => (
                   <option key={t} value={t}>{TEMPLATE_LABELS[t]}</option>
                 ))}
               </select>
@@ -533,7 +533,7 @@ export default function NotificationTemplatesPage() {
                 onChange={(e) => setSelectedLang(e.target.value)}
                 className={inputCls}
               >
-                {LANGUAGES.map((l) => (
+                {LANGUAGES.map((l: any) => (
                   <option key={l.code} value={l.code}>{l.label}</option>
                 ))}
               </select>
@@ -565,7 +565,7 @@ export default function NotificationTemplatesPage() {
                 </button>
                 {showVersionHistory && (
                   <div className="absolute z-10 mt-1 w-56 rounded-lg border border-gray-200 bg-white p-2 shadow-lg dark:border-gray-700 dark:bg-gray-800">
-                    {langTemplate.versions.map((v) => (
+                    {langTemplate.versions.map((v: any) => (
                       <div
                         key={v.version}
                         onClick={() => restoreVersion(v.version)}
@@ -666,7 +666,7 @@ export default function NotificationTemplatesPage() {
             <h3 className="mb-1 text-xs font-semibold uppercase text-gray-500">Variables</h3>
             <p className="mb-3 text-xs text-gray-400">Click to insert at cursor</p>
             <div className="space-y-1">
-              {VARIABLES.map((v) => (
+              {VARIABLES.map((v: any) => (
                 <div key={v.key} className="space-y-0.5">
                   <p className="text-xs text-gray-400">{v.label}</p>
                   <div className="flex gap-1">

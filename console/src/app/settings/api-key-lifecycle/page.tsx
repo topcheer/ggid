@@ -28,7 +28,7 @@ export default function APIKeyLifecyclePage() {
   const create = async () => {
     if (!form.name) return;
     try {
-      const res = await fetch("/api/v1/auth/api-keys", { method: "POST", headers: { ...authHeader(), "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" }, body: JSON.stringify({ name: form.name, scopes: form.scopes.split(",").map((s) => s.trim()).filter(Boolean), expires_at: form.expires_at }) });
+      const res = await fetch("/api/v1/auth/api-keys", { method: "POST", headers: { ...authHeader(), "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" }, body: JSON.stringify({ name: form.name, scopes: form.scopes.split(",").map((s: any) => s.trim()).filter(Boolean), expires_at: form.expires_at }) });
       if (!res.ok) { setError("API key creation not available yet"); return; }
       setShowCreate(false); setForm({ name: "", scopes: "", expires_at: "" }); fetchData();
     } catch (e) { setError(e instanceof Error ? e.message : "Failed to create API key"); }
@@ -61,9 +61,9 @@ export default function APIKeyLifecyclePage() {
             <tr><th scope="col" className="px-4 py-3 text-left font-medium">Name</th><th className="px-4 py-3 text-left font-medium">Scopes</th><th className="px-4 py-3 text-left font-medium">Created</th><th className="px-4 py-3 text-left font-medium">Expires</th><th className="px-4 py-3 text-left font-medium">Last Used</th><th className="px-4 py-3 text-left font-medium">Usage</th><th className="px-4 py-3 text-left font-medium">Status</th><th className="px-4 py-3 text-left font-medium">Actions</th></tr>
           </thead>
           <tbody className="divide-y dark:divide-gray-800">
-            {keys.map((k) => (
+            {keys.map((k: any) => (
               <tr key={k.id} className="hover:bg-gray-50 dark:hover:bg-gray-900/30">
-                <td className="px-4 py-3 font-medium">{k.name}</td><td className="px-4 py-3"><div className="flex flex-wrap gap-1 max-w-32">{k.scopes.map((s) => <span key={s} className="px-1 py-0.5 rounded text-xs bg-gray-100 dark:bg-gray-800 font-mono">{s}</span>)}</div></td><td className="px-4 py-3 text-xs text-gray-500">{k.created_at}</td><td className="px-4 py-3 text-xs text-gray-500">{k.expires_at}</td><td className="px-4 py-3 text-xs text-gray-500">{k.last_used || "-"}</td><td className="px-4 py-3 text-xs font-bold">{k.usage_count.toLocaleString()}</td>
+                <td className="px-4 py-3 font-medium">{k.name}</td><td className="px-4 py-3"><div className="flex flex-wrap gap-1 max-w-32">{k.scopes.map((s: any) => <span key={s} className="px-1 py-0.5 rounded text-xs bg-gray-100 dark:bg-gray-800 font-mono">{s}</span>)}</div></td><td className="px-4 py-3 text-xs text-gray-500">{k.created_at}</td><td className="px-4 py-3 text-xs text-gray-500">{k.expires_at}</td><td className="px-4 py-3 text-xs text-gray-500">{k.last_used || "-"}</td><td className="px-4 py-3 text-xs font-bold">{k.usage_count.toLocaleString()}</td>
                 <td className="px-4 py-3"><span className={"px-2 py-0.5 rounded text-xs " + statusColors[k.status]}>{k.status}</span></td>
                 <td className="px-4 py-3">
                   <div className="flex gap-2">

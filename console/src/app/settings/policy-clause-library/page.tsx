@@ -16,8 +16,8 @@ export default function PolicyClauseLibraryPage() {
   if (loading) return <div className="p-8 text-gray-400">Loading clause library...</div>;
   if (error) return <div className="p-8 text-red-400">Error: {error}</div>;
 
-  const categories: string[] = Array.from(new Set((data?.clauses ?? []).map((c) => c.category)));
-  const filtered = (data?.clauses ?? []).filter((c) => {
+  const categories: string[] = Array.from(new Set((data?.clauses ?? []).map((c: any) => c.category)));
+  const filtered = (data?.clauses ?? []).filter((c: any) => {
     if (filterCategory !== "all" && c.category !== filterCategory) return false;
     if (searchQuery && !c.text.toLowerCase().includes(searchQuery.toLowerCase()) && !c.clause_id.toLowerCase().includes(searchQuery.toLowerCase())) return false;
     return true;
@@ -57,7 +57,7 @@ export default function PolicyClauseLibraryPage() {
         >
           All
         </button>
-        {categories.map((cat) => (
+        {categories.map((cat: any) => (
           <button
             key={cat}
             onClick={() => setFilterCategory(cat)}
@@ -99,7 +99,7 @@ export default function PolicyClauseLibraryPage() {
               </tr>
             </thead>
             <tbody>
-              {filtered.slice(0, 15).map((c) => (
+              {filtered.slice(0, 15).map((c: any) => (
                 <tr key={c.clause_id} className="border-b border-gray-800">
                   <td className="py-3 pr-3 font-mono text-xs text-blue-400">{c.clause_id}</td>
                   <td className="py-3 pr-3">

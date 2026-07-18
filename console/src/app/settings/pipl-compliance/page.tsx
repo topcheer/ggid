@@ -57,7 +57,7 @@ export default function PiplCompliancePage() {
             { label: "Data Minimization", value: data?.data_handling_rules?.data_minimization },
             { label: "Purpose Limitation", value: data?.data_handling_rules?.purpose_limitation },
             { label: "Cross-Border Assessment", value: data?.data_handling_rules?.cross_border_assessment },
-          ].map((rule) => (
+          ].map((rule: any) => (
             <div key={rule.label} className="flex items-center justify-between bg-gray-800 rounded-lg p-3">
               <span className="text-sm font-medium">{rule.label}</span>
               <span className={"text-xs px-2 py-0.5 rounded " + (rule.value ? "bg-green-900 text-green-300" : "bg-gray-700 text-gray-400")}>

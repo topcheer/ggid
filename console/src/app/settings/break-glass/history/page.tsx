@@ -85,7 +85,7 @@ export default function BreakGlassHistoryPage() {
           <div className="grid grid-cols-3 gap-4">
             <div className={cardCls}><div className="flex items-center gap-2"><Calendar className="h-4 w-4 text-purple-500" /><span className="text-xs font-semibold uppercase text-gray-400">Total Activations</span></div><p className="mt-2 text-2xl font-bold text-purple-600">{records.length}</p></div>
             <div className={cardCls}><div className="text-xs font-semibold uppercase text-gray-400">Total Duration</div><p className="mt-2 text-2xl font-bold text-gray-700 dark:text-gray-200">{Math.floor(totalMinutes / 60)}h {totalMinutes % 60}m</p></div>
-            <div className={cardCls}><div className="text-xs font-semibold uppercase text-gray-400">Unique Requesters</div><p className="mt-2 text-2xl font-bold text-gray-700 dark:text-gray-200">{new Set(records.map((r) => r.requester)).size}</p></div>
+            <div className={cardCls}><div className="text-xs font-semibold uppercase text-gray-400">Unique Requesters</div><p className="mt-2 text-2xl font-bold text-gray-700 dark:text-gray-200">{new Set(records.map((r: any) => r.requester)).size}</p></div>
           </div>
 
           {/* History table */}
@@ -105,7 +105,7 @@ export default function BreakGlassHistoryPage() {
                   <th scope="col" className="px-4 py-3 text-left font-semibold text-gray-600 dark:text-gray-300">Status</th>
                 </tr></thead>
                 <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-                  {records.map((r) => (
+                  {records.map((r: any) => (
                     <tr key={r.id} className="bg-white dark:bg-gray-900">
                       <td className="px-4 py-3"><div className="font-medium text-gray-900 dark:text-white">{r.requester_name || r.requester.slice(0, 12)}</div></td>
                       <td className="px-4 py-3 text-gray-500">{r.reason}</td>

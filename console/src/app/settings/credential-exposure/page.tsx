@@ -115,7 +115,7 @@ export default function CredentialExposurePage() {
             <div className="rounded-lg border dark:border-gray-800">
               <div className="px-4 py-3 border-b dark:border-gray-800"><h3 className="font-semibold flex items-center gap-2"><Key className="w-4 h-4" /> API Keys ({data.api_keys.length})</h3></div>
               <div className="divide-y dark:divide-gray-800 max-h-48 overflow-y-auto">
-                {data.api_keys.map((k) => (
+                {data.api_keys.map((k: any) => (
                   <div key={k.id} className="px-4 py-2 text-sm">
                     <div className="flex items-center justify-between">
                       <span className="font-medium">{k.name}</span>

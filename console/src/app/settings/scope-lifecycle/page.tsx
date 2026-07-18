@@ -46,7 +46,7 @@ export default function ScopeLifecyclePage() {
 
   useEffect(() => { fetchData(); }, [fetchData]);
 
-  const pending = requests.filter((r) => r.status === "pending").length;
+  const pending = requests.filter((r: any) => r.status === "pending").length;
 
   return (
     <div className="space-y-6">
@@ -57,12 +57,12 @@ export default function ScopeLifecyclePage() {
 
       <div className="grid grid-cols-3 gap-4">
         <div className="rounded-lg border p-4 dark:border-gray-800"><span className="text-sm text-gray-500">Pending</span><p className="text-xl font-bold text-yellow-600 mt-1">{pending}</p></div>
-        <div className="rounded-lg border p-4 dark:border-gray-800"><span className="text-sm text-gray-500">Approved</span><p className="text-xl font-bold text-green-600 mt-1">{requests.filter((r) => r.status === "approved").length}</p></div>
+        <div className="rounded-lg border p-4 dark:border-gray-800"><span className="text-sm text-gray-500">Approved</span><p className="text-xl font-bold text-green-600 mt-1">{requests.filter((r: any) => r.status === "approved").length}</p></div>
         <div className="rounded-lg border p-4 dark:border-gray-800"><span className="text-sm text-gray-500">Total</span><p className="text-xl font-bold mt-1">{requests.length}</p></div>
       </div>
 
       <div className="space-y-3">
-        {requests.map((req) => (
+        {requests.map((req: any) => (
           <div key={req.id} className="rounded-lg border dark:border-gray-800 p-4">
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-2"><span className="font-mono text-sm font-medium">{req.scope}</span><span className={`px-2 py-0.5 rounded text-xs ${riskColors[req.risk_level]}`}>{req.risk_level} risk</span></div>

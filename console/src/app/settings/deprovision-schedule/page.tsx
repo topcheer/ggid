@@ -61,7 +61,7 @@ export default function DeprovisionSchedulePage() {
       <div className="relative pl-8">
         <div className="absolute left-3 top-0 bottom-0 w-px bg-gray-200 dark:bg-gray-800" />
         <div className="space-y-4">
-          {jobs.map((job) => (
+          {jobs.map((job: any) => (
             <div key={job.id} className="relative">
               <div className={`absolute -left-5 w-4 h-4 rounded-full border-2 ${job.status === "scheduled" ? "bg-blue-500 border-blue-200" : job.status === "completed" ? "bg-green-500 border-green-200" : "bg-gray-400 border-gray-200"}`} />
               <div className="rounded-lg border dark:border-gray-800 p-4 ml-2">

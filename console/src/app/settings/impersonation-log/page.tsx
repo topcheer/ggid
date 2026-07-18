@@ -30,8 +30,8 @@ export default function ImpersonationLogPage() {
       fetchData();
     } catch (e) { setError(e instanceof Error ? e.message : "Failed to revoke session"); }
   };
-  const filtered = search ? events.filter((e) => e.impersonator.includes(search) || e.target_user.includes(search)) : events;
-  const active = events.filter((e) => e.is_active).length;
+  const filtered = search ? events.filter((e: any) => e.impersonator.includes(search) || e.target_user.includes(search)) : events;
+  const active = events.filter((e: any) => e.is_active).length;
   return (
     <div className="space-y-6">
       <div><h1 className="text-2xl font-bold flex items-center gap-2"><UserCog className="w-6 h-6 text-orange-500" /> {t("big1.impersonationLog.title")}</h1><p className="text-sm text-gray-500 mt-1">{t("big1.impersonationLog.trackAdminImpersonationSessions")}</p></div>
@@ -44,7 +44,7 @@ export default function ImpersonationLogPage() {
       {loading && <div className="rounded-lg border dark:border-gray-800 p-8 text-center"><div className="inline-block w-5 h-5 border-2 border-current border-t-transparent rounded-full animate-spin text-blue-600 mb-2" /><div className="text-sm text-gray-500">{t("big1.impersonationLog.loadingLog")}</div></div>}
       <div className="overflow-x-auto rounded-lg border dark:border-gray-800">
         <table className="w-full text-sm"><thead className="bg-gray-50 dark:bg-gray-900/50"><tr><th className="px-4 py-3 text-left font-medium">{t("big1.impersonationLog.impersonator")}</th><th className="px-4 py-3 text-left font-medium">{t("big1.impersonationLog.target")}</th><th className="px-4 py-3 text-left font-medium">{t("big1.impersonationLog.start")}</th><th className="px-4 py-3 text-left font-medium">{t("big1.impersonationLog.duration")}</th><th className="px-4 py-3 text-left font-medium">{t("big1.impersonationLog.reason")}</th><th className="px-4 py-3 text-left font-medium">{t("big1.impersonationLog.ip")}</th><th className="px-4 py-3 text-left font-medium">{t("big1.impersonationLog.status")}</th><th className="px-4 py-3 text-left font-medium">{t("big1.impersonationLog.action")}</th></tr></thead>
-          <tbody className="divide-y dark:divide-gray-800">{filtered.map((e) => (
+          <tbody className="divide-y dark:divide-gray-800">{filtered.map((e: any) => (
             <tr key={e.id} className="hover:bg-gray-50 dark:hover:bg-gray-900/30">
               <td className="px-4 py-3 font-medium">{e.impersonator}</td><td className="px-4 py-3 text-orange-600 font-medium">{e.target_user}</td><td className="px-4 py-3 text-xs text-gray-500">{e.start_at}</td><td className="px-4 py-3 text-xs">{e.duration_minutes}{t("big1.impersonationLog.m")}</td><td className="px-4 py-3 text-xs text-gray-500">{e.reason}</td><td className="px-4 py-3 font-mono text-xs text-gray-400">{e.ip_address}</td>
               <td className="px-4 py-3">{e.is_active ? <span className="px-2 py-0.5 rounded text-xs bg-green-100 dark:bg-green-900/30 dark:text-green-400">{t("big1.impersonationLog.active")}</span> : <span className="px-2 py-0.5 rounded text-xs bg-gray-100 dark:bg-gray-800">{t("big1.impersonationLog.ended")}</span>}</td>

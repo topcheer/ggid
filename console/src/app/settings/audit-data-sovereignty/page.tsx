@@ -64,7 +64,7 @@ export default function AuditDataSovereigntyPage() {
         <div className="bg-gray-900 rounded-xl p-6">
           <h2 className="text-lg font-semibold mb-4">Data Residency Regions</h2>
           <div className="space-y-2">
-            {(data?.data_residency_regions ?? []).map((r) => (
+            {(data?.data_residency_regions ?? []).map((r: any) => (
               <div key={r.region} className="bg-gray-800 rounded-lg p-3">
                 <div className="flex items-center justify-between mb-1">
                   <p className="text-sm font-medium">{r.region}</p>

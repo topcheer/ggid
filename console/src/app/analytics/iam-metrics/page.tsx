@@ -83,17 +83,17 @@ function MTTDTab() {
   const mttrChange = prev.mttr > 0 ? Math.round(((latest.mttr - prev.mttr) / prev.mttr) * 100) : 0;
 
   // SVG dual-line chart
-  const maxVal = Math.max(...data.map((d) => Math.max(d.mttd, d.mttr)), 1);
+  const maxVal = Math.max(...data.map((d: any) => Math.max(d.mttd, d.mttr)), 1);
   const chartW = 700, chartH = 200, pad = 35;
   const xStep = data.length > 1 ? (chartW - pad * 2) / (data.length - 1) : 0;
   const yScale = (v: number) => chartH - pad - (v / maxVal) * (chartH - pad * 2);
   const linePath = (key: "mttd" | "mttr") =>
-    data.map((d, i) => `${i === 0 ? "M" : "L"} ${pad + i * xStep} ${yScale(d[key])}`).join(" ");
+    data.map((d: any, i: any) => `${i === 0 ? "M" : "L"} ${pad + i * xStep} ${yScale(d[key])}`).join(" ");
 
   return (
     <div className="space-y-4">
       <div className="flex gap-2">
-        {(["7d", "30d"] as const).map((r) => (
+        {(["7d", "30d"] as const).map((r: any) => (
           <button key={r} onClick={() => setRange(r)}
             className={`px-3 py-1.5 rounded-lg text-xs font-medium ${range === r ? "bg-blue-600 text-white" : "bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-gray-700"}`}>
             {r === "7d" ? t("iamMetrics.mttd.trend7d") : t("iamMetrics.mttd.trend30d")}
@@ -128,7 +128,7 @@ function MTTDTab() {
         <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-4">{t("iamMetrics.mttd.title")}</h3>
         <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">{t("iamMetrics.mttd.description")}</p>
         <svg viewBox={`0 0 ${chartW} ${chartH}`} className="w-full h-48">
-          {[0, 0.25, 0.5, 0.75, 1].map((p) => (
+          {[0, 0.25, 0.5, 0.75, 1].map((p: any) => (
             <line key={p} x1={pad} y1={pad + p * (chartH - pad * 2)} x2={chartW - pad} y2={pad + p * (chartH - pad * 2)}
               stroke="currentColor" className="text-gray-100 dark:text-gray-800" strokeWidth={1} />
           ))}
@@ -168,7 +168,7 @@ function CoverageTab() {
   return (
     <div className="space-y-4">
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        {coverage.map((c) => {
+        {coverage.map((c: any) => {
           const Icon = c.icon;
           return (
             <div key={c.label} className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-4">
@@ -184,7 +184,7 @@ function CoverageTab() {
         <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-4">{t("iamMetrics.coverage.title")}</h3>
         <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">{t("iamMetrics.coverage.description")}</p>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          {coverage.map((c) => {
+          {coverage.map((c: any) => {
             const covered = (c.pct / 100) * 2 * Math.PI * radius;
             const circumference = 2 * Math.PI * radius;
             return (
@@ -255,7 +255,7 @@ function HygieneTab() {
         <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-4">{t("iamMetrics.hygiene.title")}</h3>
         <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">{t("iamMetrics.hygiene.description")}</p>
         <div className="space-y-3">
-          {issues.map((issue) => {
+          {issues.map((issue: any) => {
             const Icon = issue.icon;
             const colors = colorMap[issue.color];
             return (
@@ -303,7 +303,7 @@ function IncidentsTab() {
   const total = totalITDR + totalSOAR + totalManual;
 
   // SVG stacked bar chart
-  const maxVal = Math.max(...data.map((d) => d.itdr + d.soar + d.manual), 1);
+  const maxVal = Math.max(...data.map((d: any) => d.itdr + d.soar + d.manual), 1);
   const barW = data.length > 0 ? (700 - 60) / data.length : 0;
   const colors = { itdr: "#8b5cf6", soar: "#3b82f6", manual: "#ef4444" };
 
@@ -320,7 +320,7 @@ function IncidentsTab() {
         <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">{t("iamMetrics.incidents.description")}</p>
 
         <svg viewBox="0 0 700 240" className="w-full h-56">
-          {data.map((d, i) => {
+          {data.map((d: any, i: any) => {
             const total_h = ((d.itdr + d.soar + d.manual) / maxVal) * 180;
             const itdrH = (d.itdr / (d.itdr + d.soar + d.manual)) * total_h;
             const soarH = (d.soar / (d.itdr + d.soar + d.manual)) * total_h;

@@ -35,13 +35,13 @@ export default function OrgTreePage() {
   const toggle = (id: string) => { const n = new Set(expanded); n.has(id) ? n.delete(id) : n.add(id); setExpanded(n); };
 
   const renderNode = (node: OrgUnit, depth: number = 0): React.ReactNode => {
-    if (search && !node.name.toLowerCase().includes(search.toLowerCase())) { return node.children.flatMap((c) => c ? [renderNode(c, depth)] : []).find((x) => x) || null; }
+    if (search && !node.name.toLowerCase().includes(search.toLowerCase())) { return node.children.flatMap((c) => c ? [renderNode(c, depth)] : []).find((x: any) => x) || null; }
     return (<div key={node.id}>
       <div className={"flex items-center gap-2 py-2 hover:bg-gray-50 dark:hover:bg-gray-900/30 rounded " + (depth > 0 ? "ml-" + (depth * 4) : "")} style={{ paddingLeft: depth * 20 }}>
         {node.children.length > 0 ? <button onClick={() => toggle(node.id)}><ChevronRight className={"w-4 h-4 text-gray-400 transition-transform " + (expanded.has(node.id) ? "rotate-90" : "")} /></button> : <span className="w-4" />}
         <Network className="w-4 h-4 text-blue-400" /><div className="flex-1"><span className="text-sm font-medium">{node.name}</span><span className="text-xs text-gray-400 ml-2">{node.member_count} members</span><span className="text-xs text-gray-400 ml-2">Manager: {node.manager}</span></div><span className="text-xs font-mono text-gray-400">${(node.budget / 1000).toFixed(0)}k</span>
       </div>
-      {expanded.has(node.id) && node.children.map((c) => renderNode(c, depth + 1))}
+      {expanded.has(node.id) && node.children.map((c: any) => renderNode(c, depth + 1))}
     </div>);
   };
 
@@ -54,7 +54,7 @@ export default function OrgTreePage() {
 
       <div className="relative max-w-xs"><Search className="absolute left-2 top-2.5 w-4 h-4 text-gray-400" /><input aria-label="Search units..." type="text" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search units..." className="w-full pl-8 pr-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-900 text-sm" /></div>
 
-      <div className="rounded-lg border dark:border-gray-800 p-4">{tree.map((n) => renderNode(n))}{tree.length === 0 && !loading && <p className="text-sm text-gray-500 text-center py-8">No data.</p>}</div>
+      <div className="rounded-lg border dark:border-gray-800 p-4">{tree.map((n: any) => renderNode(n))}{tree.length === 0 && !loading && <p className="text-sm text-gray-500 text-center py-8">No data.</p>}</div>
 
       {showAdd && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={() => setShowAdd(false)}><div role="dialog" aria-modal="true" className="bg-white dark:bg-gray-900 rounded-lg shadow-xl max-w-md w-full mx-4" onClick={(e) => e.stopPropagation()}>

@@ -14,7 +14,7 @@ export default function EmailTemplateConfigPage() {
   if (loading) return <div className="p-8 text-gray-400">{t("big1.emailTemplateConfig.loading")}</div>;
   if (error) return <div className="p-8 text-red-400">{t("big1.emailTemplateConfig.error")}{error}</div>;
 
-  const tmpl = (data?.templates ?? []).find((t) => t.id === selected);
+  const tmpl = (data?.templates ?? []).find((t: any) => t.id === selected);
 
   return (
     <div className="min-h-screen bg-gray-950 text-white p-8">
@@ -24,20 +24,20 @@ export default function EmailTemplateConfigPage() {
       </div>
 
       <div className="flex gap-2 mb-4">
-        {(data?.templates ?? []).map((t) => (
+        {(data?.templates ?? []).map((t: any) => (
           <button key={t.id} onClick={() => setSelected(t.id)} className={"px-3 py-1.5 rounded-lg text-sm font-medium transition " + (selected === t.id ? "bg-blue-600" : "bg-gray-800 hover:bg-gray-700")}>{t.name}</button>
         ))}
       </div>
 
       <div className="flex gap-2 mb-4">
-        {["en", "zh", "ja"].map((l) => <button key={l} onClick={() => setLang(l)} className={"text-xs px-2 py-1 rounded " + (lang === l ? "bg-blue-600" : "bg-gray-800")}>{l.toUpperCase()}</button>)}
+        {["en", "zh", "ja"].map((l: any) => <button key={l} onClick={() => setLang(l)} className={"text-xs px-2 py-1 rounded " + (lang === l ? "bg-blue-600" : "bg-gray-800")}>{l.toUpperCase()}</button>)}
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="bg-gray-900 rounded-xl p-4">
           <div className="flex items-center gap-2 mb-2"><Mail className="w-4 h-4 text-blue-400" /><h2 className="text-sm font-semibold">{t("big1.emailTemplateConfig.htmlEditor")}</h2></div>
           <div className="mb-2 flex flex-wrap gap-1">
-            {tmpl?.variables.map((v) => <span key={v} className="text-xs font-mono px-1.5 py-0.5 bg-gray-800 rounded text-blue-400 cursor-pointer">{v}</span>)}
+            {tmpl?.variables.map((v: any) => <span key={v} className="text-xs font-mono px-1.5 py-0.5 bg-gray-800 rounded text-blue-400 cursor-pointer">{v}</span>)}
           </div>
           <textarea aria-label="Text input" defaultValue={tmpl?.body_html} rows={12} className="w-full px-3 py-2 bg-gray-800 rounded-lg text-xs font-mono" />
           <label className="flex items-center gap-2 mt-2 text-xs"><input aria-label="Toggle option" type="checkbox" defaultChecked={tmpl?.enabled} />{t("big1.emailTemplateConfig.enabled")}</label>

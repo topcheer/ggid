@@ -46,7 +46,7 @@ export default function ComplianceScorePage() {
   const chartWidth = 600;
   const chartHeight = 200;
   const padding = 40;
-  const scores = data?.history.map((h) => h.score) || [];
+  const scores = data?.history.map((h: any) => h.score) || [];
   const minScore = Math.min(...scores, 0);
   const maxScore = Math.max(...scores, 100);
   const xStep = data && data.history.length > 1 ? (chartWidth - padding * 2) / (data.history.length - 1) : 0;
@@ -67,7 +67,7 @@ export default function ComplianceScorePage() {
       {/* Framework selector */}
       <div className="flex items-center gap-3">
         <select aria-label="Selected framework" value={selectedFramework} onChange={(e) => setSelectedFramework(e.target.value)} className="px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-900 text-sm">
-          {frameworks.map((f) => <option key={f} value={f}>{f}</option>)}
+          {frameworks.map((f: any) => <option key={f} value={f}>{f}</option>)}
         </select>
         {data && (
           <div className="flex items-center gap-2">
@@ -85,7 +85,7 @@ export default function ComplianceScorePage() {
             <h3 className="font-semibold mb-4">Score Trend ({data.history.length} months)</h3>
             <svg viewBox={`0 0 ${chartWidth} ${chartHeight}`} className="w-full h-48">
               {/* Grid lines */}
-              {[0, 25, 50, 75, 100].map((y) => (
+              {[0, 25, 50, 75, 100].map((y: any) => (
                 <g key={y}>
                   <line x1={padding} y1={getY(y)} x2={chartWidth - padding} y2={getY(y)} stroke="currentColor" strokeWidth={0.5} className="text-gray-200 dark:text-gray-800" />
                   <text x={padding - 8} y={getY(y) + 4} textAnchor="end" className="text-[10px] fill-gray-400">{y}</text>

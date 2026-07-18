@@ -76,7 +76,7 @@ export default function PasswordMigrationPage() {
         </div>
 
         <div className="flex gap-1 mb-6 bg-gray-200 dark:bg-gray-800 rounded-lg p-1">
-          {tabs.map((tab) => {
+          {tabs.map((tab: any) => {
             const Icon = tab.icon;
             return (
               <button
@@ -166,7 +166,7 @@ function OverviewTab() {
     );
   }
 
-  const levelColor = LEVELS.find((l) => l.value === stats.deprecation_level)?.color || "gray";
+  const levelColor = LEVELS.find((l: any) => l.value === stats.deprecation_level)?.color || "gray";
   const colorMap: Record<string, string> = {
     gray: "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300",
     blue: "bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-300",
@@ -392,7 +392,7 @@ function ConfigTab() {
           {t("passwordMigration.config.deprecationLevel")}
         </label>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-          {LEVELS.map((lvl) => {
+          {LEVELS.map((lvl: any) => {
             const colorMap: Record<string, string> = {
               gray: statsBorderColor("gray"),
               blue: statsBorderColor("blue"),
@@ -555,7 +555,7 @@ function UsersTab() {
 
   useEffect(() => { load(); }, [load]);
 
-  const filtered = users.filter((u) => {
+  const filtered = users.filter((u: any) => {
     if (filter !== "all" && u.status !== filter) return false;
     if (search && !u.email.toLowerCase().includes(search.toLowerCase()) && !u.display_name.toLowerCase().includes(search.toLowerCase())) return false;
     return true;
@@ -568,7 +568,7 @@ function UsersTab() {
         method: "POST",
         headers: { ...authHeader() },
       });
-      setUsers(users.map((u) => u.user_id === userId ? { ...u, status: "nudged" } : u));
+      setUsers(users.map((u: any) => u.user_id === userId ? { ...u, status: "nudged" } : u));
       setMsg(t("passwordMigration.users.nudgeSent").replace("{count}", "1"));
     } catch {
       setMsg(t("passwordMigration.users.nudgeSent").replace("{count}", "1"));
@@ -580,15 +580,15 @@ function UsersTab() {
 
   const nudgeAll = async () => {
     setSending(true);
-    const pending = users.filter((u) => u.status === "pending");
+    const pending = users.filter((u: any) => u.status === "pending");
     try {
-      await Promise.all(pending.map((u) =>
+      await Promise.all(pending.map((u: any) =>
         fetch(`${API_BASE}/api/v1/auth/enrollment/nudge/${u.user_id}`, {
           method: "POST",
           headers: { ...authHeader() },
         }).catch(() => {})
       ));
-      setUsers(users.map((u) => u.status === "pending" ? { ...u, status: "nudged" } : u));
+      setUsers(users.map((u: any) => u.status === "pending" ? { ...u, status: "nudged" } : u));
       setMsg(t("passwordMigration.users.nudgeSent").replace("{count}", String(pending.length)));
     } finally {
       setSending(false);
@@ -621,7 +621,7 @@ function UsersTab() {
         </div>
         <button
           onClick={nudgeAll}
-          disabled={sending || !users.some((u) => u.status === "pending")}
+          disabled={sending || !users.some((u: any) => u.status === "pending")}
           className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white rounded-lg text-sm font-medium"
         >
           {sending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
@@ -649,7 +649,7 @@ function UsersTab() {
           />
         </div>
         <div className="flex gap-1">
-          {(["all", "pending", "nudged", "enrolled"] as const).map((f) => (
+          {(["all", "pending", "nudged", "enrolled"] as const).map((f: any) => (
             <button
               key={f}
               onClick={() => setFilter(f)}
@@ -683,7 +683,7 @@ function UsersTab() {
               </tr>
             </thead>
             <tbody>
-              {filtered.map((u) => (
+              {filtered.map((u: any) => (
                 <tr key={u.user_id} className="border-b border-gray-100 dark:border-gray-800/50">
                   <td className="py-3 px-3 font-medium text-gray-900 dark:text-white">{u.display_name}</td>
                   <td className="py-3 px-3 text-gray-600 dark:text-gray-400">{u.email}</td>
@@ -694,7 +694,7 @@ function UsersTab() {
                   </td>
                   <td className="py-3 px-3">
                     <div className="flex gap-1">
-                      {u.auth_methods.map((m) => (
+                      {u.auth_methods.map((m: any) => (
                         <span key={m} className="px-1.5 py-0.5 text-xs bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 rounded">
                           {m}
                         </span>

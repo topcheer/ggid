@@ -67,7 +67,7 @@ export default function ClientAnalyticsPage() {
             <div className={cardCls}><div className="py-12 text-center"><BarChart3 className="mx-auto h-12 w-12 text-gray-300" /><p className="mt-4 text-sm text-gray-400">No analytics data available.</p></div></div>
           ) : (
             <div className="space-y-3">
-              {stats.map((c) => {
+              {stats.map((c: any) => {
                 const isExpanded = selected === c.client_id;
                 return (
                   <div key={c.client_id} className={cardCls}>
@@ -88,7 +88,7 @@ export default function ClientAnalyticsPage() {
                       <div className="mt-3 border-t border-gray-200 pt-3 dark:border-gray-700">
                         <div className="mb-2 text-xs font-semibold uppercase text-gray-400">Top Scopes</div>
                         <div className="space-y-2">
-                          {c.top_scopes.map((s) => (
+                          {c.top_scopes.map((s: any) => (
                             <div key={s.scope}>
                               <div className="flex items-center justify-between text-xs"><span className="font-mono text-gray-600 dark:text-gray-300">{s.scope}</span><span className="font-medium text-gray-500">{s.count.toLocaleString()}</span></div>
                               <div className="mt-0.5 h-1.5 overflow-hidden rounded-full bg-gray-200 dark:bg-gray-700"><div className="h-full rounded-full bg-indigo-400" style={{ width: `${Math.min(100, (s.count / c.total_tokens) * 100)}%` }} /></div>

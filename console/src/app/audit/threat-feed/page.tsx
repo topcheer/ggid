@@ -60,7 +60,7 @@ export default function ThreatFeedPage() {
 
   const togglePause = () => { const np = !paused; setPaused(np); pausedRef.current = np; };
 
-  const filtered = filter === "all" ? threats : threats.filter((t) => t.severity === filter);
+  const filtered = filter === "all" ? threats : threats.filter((t: any) => t.severity === filter);
   const cardCls = "rounded-xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-700 dark:bg-gray-800";
 
   return (
@@ -81,7 +81,7 @@ export default function ThreatFeedPage() {
 
       {/* Filter tabs */}
       <div className="flex gap-2">
-        {["all", "critical", "high", "medium", "low", "info"].map((f) => (
+        {["all", "critical", "high", "medium", "low", "info"].map((f: any) => (
           <button key={f} onClick={() => setFilter(f)} aria-label={`Filter by ${f}`} aria-pressed={filter === f} className={`rounded-lg px-3 py-1.5 text-xs font-medium ${filter === f ? "bg-red-600 text-white" : "bg-gray-100 text-gray-500 dark:bg-gray-800"}`}>{f}</button>
         ))}
       </div>
@@ -89,8 +89,8 @@ export default function ThreatFeedPage() {
       {/* Stats */}
       <div className="grid grid-cols-4 gap-4">
         <div className={cardCls}><div className="text-xs font-semibold uppercase text-gray-400">Total</div><p className="mt-2 text-2xl font-bold text-gray-700 dark:text-gray-200">{threats.length}</p></div>
-        <div className={cardCls}><div className="text-xs font-semibold uppercase text-gray-400">Critical</div><p className="mt-2 text-2xl font-bold text-red-600">{threats.filter((t) => t.severity === "critical").length}</p></div>
-        <div className={cardCls}><div className="text-xs font-semibold uppercase text-gray-400">High</div><p className="mt-2 text-2xl font-bold text-orange-600">{threats.filter((t) => t.severity === "high").length}</p></div>
+        <div className={cardCls}><div className="text-xs font-semibold uppercase text-gray-400">Critical</div><p className="mt-2 text-2xl font-bold text-red-600">{threats.filter((t: any) => t.severity === "critical").length}</p></div>
+        <div className={cardCls}><div className="text-xs font-semibold uppercase text-gray-400">High</div><p className="mt-2 text-2xl font-bold text-orange-600">{threats.filter((t: any) => t.severity === "high").length}</p></div>
         <div className={cardCls}><div className="text-xs font-semibold uppercase text-gray-400">Filtered</div><p className="mt-2 text-2xl font-bold text-indigo-600">{filtered.length}</p></div>
       </div>
 
@@ -98,7 +98,7 @@ export default function ThreatFeedPage() {
       <div className="space-y-2">
         {filtered.length === 0 ? (
           <div className={cardCls}><div className="py-12 text-center"><Shield className="mx-auto h-12 w-12 text-gray-300" /><p className="mt-4 text-sm text-gray-400">{paused ? "Feed paused." : "No threats detected."}</p></div></div>
-        ) : filtered.map((t) => (
+        ) : filtered.map((t: any) => (
           <div key={t.id} className={`${cardCls} flex items-center justify-between py-3`}>
             <div className="flex items-center gap-3">
               <span className={`inline-flex rounded-full px-2 py-1 text-xs font-medium ${sevColors[t.severity] || ""}`}>{t.severity}</span>

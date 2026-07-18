@@ -38,7 +38,7 @@ export default function DepartmentsPage() {
       const data = await apiFetch<{ departments?: Department[]; items?: Department[] }>("/api/v1/orgs/departments").catch(() => null);
       const depts = data?.departments ?? data?.items ?? [];
       setDepartments(depts);
-      setExpanded(new Set(depts.filter((d) => d.children?.length > 0).map((d) => d.id)));
+      setExpanded(new Set(depts.filter((d: any) => d.children?.length > 0).map((d: any) => d.id)));
     } catch {
       setError("Failed to load departments");
     } finally {
@@ -125,7 +125,7 @@ export default function DepartmentsPage() {
           <span className="flex items-center gap-1"><DollarSign className="h-3 w-3" />{(dept.budget / 1000).toFixed(0)}K</span>
           {dept.cost_center && <span className="flex items-center gap-1"><Hash className="h-3 w-3" />{dept.cost_center}</span>}
         </div>
-        {isOpen && hasChildren && dept.children.map((child) => renderDept(child, depth + 1))}
+        {isOpen && hasChildren && dept.children.map((child: any) => renderDept(child, depth + 1))}
       </div>
     );
   };
@@ -160,7 +160,7 @@ export default function DepartmentsPage() {
             <div><p className="text-xs font-semibold uppercase text-gray-400">Total Headcount</p><p className="mt-1 text-xl font-bold text-indigo-600">{allDepts.reduce((sum, d) => sum + d.headcount, 0)}</p></div>
             <div><p className="text-xs font-semibold uppercase text-gray-400">Total Budget</p><p className="mt-1 text-xl font-bold text-indigo-600">${(allDepts.reduce((sum, d) => sum + d.budget, 0) / 1000000).toFixed(1)}M</p></div>
           </div>
-          {departments.map((d) => renderDept(d, 0))}
+          {departments.map((d: any) => renderDept(d, 0))}
         </div>
       )}
 
@@ -178,7 +178,7 @@ export default function DepartmentsPage() {
                 <label className="text-sm font-medium text-gray-700 dark:text-gray-300">{t("departments.parentDepartment")}</label>
                 <select aria-label="form" value={form.parent_id} onChange={(e) => setForm((p) => ({ ...p, parent_id: e.target.value }))} className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white">
                   <option value="">{t("departments.rootLevel")}</option>
-                  {allDepts.filter((d) => d.id !== editDept?.id).map((d) => <option key={d.id} value={d.id}>{d.name}</option>)}
+                  {allDepts.filter((d: any) => d.id !== editDept?.id).map((d: any) => <option key={d.id} value={d.id}>{d.name}</option>)}
                 </select>
               </div>
               <div className="grid grid-cols-2 gap-3">

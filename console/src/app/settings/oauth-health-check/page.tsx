@@ -53,7 +53,7 @@ export default function OAuthHealthCheckPage() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {data.endpoints.map((e) => { const cfg = statusConfig[e.status]; const Icon = cfg.icon; return (
+            {data.endpoints.map((e: any) => { const cfg = statusConfig[e.status]; const Icon = cfg.icon; return (
               <div key={e.name} className="rounded-lg border dark:border-gray-800 p-4"><div className="flex items-center justify-between"><span className="font-medium text-sm capitalize">{e.name}</span><Icon className={"w-5 h-5 " + cfg.color} /></div><p className="font-mono text-xs text-gray-400 mt-1 truncate">{e.url}</p><div className="flex items-center justify-between mt-2"><span className={"text-xs font-bold " + cfg.color}>{e.status}</span><span className={"text-xs " + (e.response_time_ms > 500 ? "text-red-500" : e.response_time_ms > 200 ? "text-yellow-500" : "text-green-500")}>{e.response_time_ms}ms</span></div></div>
             ); })}
           </div>

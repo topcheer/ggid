@@ -35,7 +35,7 @@ export default function OAuthClientDeploymentPage() {
 
       {/* Environments */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-        {(data?.environments ?? []).map((env) => (
+        {(data?.environments ?? []).map((env: any) => (
           <div key={env.name} className="bg-gray-900 rounded-xl p-4">
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-2">

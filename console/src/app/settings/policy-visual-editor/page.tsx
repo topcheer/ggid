@@ -19,7 +19,7 @@ export default function PolicyVisualEditorPage() {
     action: "bg-green-900 border-green-600 text-green-300",
   };
 
-  const selectedNodeData = (data?.nodes ?? []).find((n) => n.id === selectedNode);
+  const selectedNodeData = (data?.nodes ?? []).find((n: any) => n.id === selectedNode);
 
   return (
     <div className="min-h-screen bg-gray-950 text-white p-8">
@@ -58,7 +58,7 @@ export default function PolicyVisualEditorPage() {
               { type: "subject", label: "Subject" },
               { type: "condition", label: "Condition" },
               { type: "action", label: "Action" },
-            ].map((node) => (
+            ].map((node: any) => (
               <div
                 key={node.type}
                 className={"p-3 rounded-lg border-2 cursor-grab text-sm font-medium " + nodeColors[node.type]}
@@ -76,7 +76,7 @@ export default function PolicyVisualEditorPage() {
               Templates
             </h3>
             <div className="space-y-1">
-              {(data?.template_gallery ?? []).map((t) => (
+              {(data?.template_gallery ?? []).map((t: any) => (
                 <div key={t.name} className="text-xs px-2 py-1.5 bg-gray-800 rounded hover:bg-gray-700 cursor-pointer">
                   {t.name}
                 </div>
@@ -95,7 +95,7 @@ export default function PolicyVisualEditorPage() {
             {/* Subject Column */}
             <div className="space-y-4">
               <p className="text-xs text-gray-500 text-center uppercase">Subjects</p>
-              {(data?.nodes ?? []).filter((n) => n.type === "subject").map((n) => (
+              {(data?.nodes ?? []).filter((n: any) => n.type === "subject").map((n: any) => (
                 <div
                   key={n.id}
                   onClick={() => setSelectedNode(n.id)}
@@ -108,7 +108,7 @@ export default function PolicyVisualEditorPage() {
             {/* Condition Column */}
             <div className="space-y-4">
               <p className="text-xs text-gray-500 text-center uppercase">Conditions</p>
-              {(data?.nodes ?? []).filter((n) => n.type === "condition").map((n) => (
+              {(data?.nodes ?? []).filter((n: any) => n.type === "condition").map((n: any) => (
                 <div
                   key={n.id}
                   onClick={() => setSelectedNode(n.id)}
@@ -121,7 +121,7 @@ export default function PolicyVisualEditorPage() {
             {/* Action Column */}
             <div className="space-y-4">
               <p className="text-xs text-gray-500 text-center uppercase">Actions</p>
-              {(data?.nodes ?? []).filter((n) => n.type === "action").map((n) => (
+              {(data?.nodes ?? []).filter((n: any) => n.type === "action").map((n: any) => (
                 <div
                   key={n.id}
                   onClick={() => setSelectedNode(n.id)}

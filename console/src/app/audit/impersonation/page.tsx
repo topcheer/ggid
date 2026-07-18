@@ -58,7 +58,7 @@ export default function ImpersonationLogPage() {
   const handleExport = () => {
     const csv = [
       "ID,Impersonator,Impersonated,Reason,Started,Ended,Duration(s),IP,Status",
-      ...records.map((r) => `${r.id},${r.impersonator_name},${r.impersonated_name},${r.reason},${r.started_at},${r.ended_at ?? ""},${r.duration_seconds ?? ""},${r.ip_address},${r.status}`),
+      ...records.map((r: any) => `${r.id},${r.impersonator_name},${r.impersonated_name},${r.reason},${r.started_at},${r.ended_at ?? ""},${r.duration_seconds ?? ""},${r.ip_address},${r.status}`),
     ].join("\n");
     const blob = new Blob([csv], { type: "text/csv" });
     const url = URL.createObjectURL(blob);
@@ -77,7 +77,7 @@ export default function ImpersonationLogPage() {
   };
 
   const cardCls = "rounded-xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800";
-  const filtered = statusFilter ? records.filter((r) => r.status === statusFilter) : records;
+  const filtered = statusFilter ? records.filter((r: any) => r.status === statusFilter) : records;
 
   const statusIcon = (status: string) => {
     if (status === "active") return <CheckCircle2 className="h-4 w-4 text-green-500" />;
@@ -150,7 +150,7 @@ export default function ImpersonationLogPage() {
                 </tr>
               </thead>
               <tbody>
-                {filtered.map((r) => (
+                {filtered.map((r: any) => (
                   <tr key={r.id} className="border-b border-gray-100 dark:border-gray-700/50">
                     <td className="px-4 py-3">
                       <div className="font-medium text-gray-800 dark:text-gray-200">{r.impersonator_name}</div>

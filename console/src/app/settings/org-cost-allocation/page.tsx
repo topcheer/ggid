@@ -12,7 +12,7 @@ export default function OrgCostAllocationPage() {
   if (loading) return <div className="p-8 text-gray-400">Loading cost allocation...</div>;
   if (error) return <div className="p-8 text-red-400">Error: {error}</div>;
 
-  const maxCost = Math.max(...(data?.monthly_cost_breakdown ?? [{ amount: 1 }]).map((d) => d.amount), 1);
+  const maxCost = Math.max(...(data?.monthly_cost_breakdown ?? [{ amount: 1 }]).map((d: any) => d.amount), 1);
 
   return (
     <div className="min-h-screen bg-gray-950 text-white p-8">
@@ -56,7 +56,7 @@ export default function OrgCostAllocationPage() {
               </tr>
             </thead>
             <tbody>
-              {(data?.allocation_rules ?? []).map((r) => (
+              {(data?.allocation_rules ?? []).map((r: any) => (
                 <tr key={r.department} className="border-b border-gray-800">
                   <td className="py-3 pr-4 font-medium">{r.department}</td>
                   <td className="py-3 pr-4 text-gray-300 font-mono">{r.cost_center}</td>
@@ -86,7 +86,7 @@ export default function OrgCostAllocationPage() {
             Monthly Cost Breakdown
           </h2>
           <div className="space-y-2">
-            {(data?.monthly_cost_breakdown ?? []).map((d) => (
+            {(data?.monthly_cost_breakdown ?? []).map((d: any) => (
               <div key={d.department} className="flex items-center gap-3">
                 <span className="text-sm w-24 text-gray-300">{d.department}</span>
                 <div className="flex-1 bg-gray-700 rounded-full h-5 relative">

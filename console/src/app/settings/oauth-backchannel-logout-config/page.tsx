@@ -100,7 +100,7 @@ export default function OAuthBackchannelLogoutConfigPage() {
         <div className="bg-gray-900 rounded-xl p-6">
           <h2 className="text-lg font-semibold mb-4">Per-Client Configuration</h2>
           <div className="space-y-2">
-            {(data?.client_configs ?? []).map((c) => (
+            {(data?.client_configs ?? []).map((c: any) => (
               <div key={c.client_id} className="flex items-center justify-between bg-gray-800 rounded-lg p-3">
                 <div>
                   <p className="text-sm font-medium">{c.client_name}</p>

@@ -39,7 +39,7 @@ export default function PolicyConflictsPage() {
 
   useEffect(() => { fetchData(); }, [fetchData]);
 
-  const critical = conflicts.filter((c) => c.severity === "critical").length;
+  const critical = conflicts.filter((c: any) => c.severity === "critical").length;
 
   return (
     <div className="space-y-6">
@@ -58,7 +58,7 @@ export default function PolicyConflictsPage() {
         <table className="w-full text-sm">
           <thead className="bg-gray-50 dark:bg-gray-900/50"><tr><th className="px-4 py-3 text-left font-medium">Policy A</th><th className="px-4 py-3 text-left font-medium">Policy B</th><th className="px-4 py-3 text-left font-medium">Overlap</th><th className="px-4 py-3 text-left font-medium">Severity</th></tr></thead>
           <tbody className="divide-y dark:divide-gray-800">
-            {conflicts.map((c) => (
+            {conflicts.map((c: any) => (
               <><tr key={c.id} className="hover:bg-gray-50 dark:hover:bg-gray-900/30 cursor-pointer" onClick={() => setExpanded(expanded === c.id ? null : c.id)}><td className="px-4 py-3 font-mono text-xs font-medium">{c.policy_a}</td><td className="px-4 py-3 font-mono text-xs font-medium">{c.policy_b}</td><td className="px-4 py-3"><span className="px-2 py-0.5 rounded text-xs bg-blue-100 dark:bg-blue-900/30 dark:text-blue-400">{c.overlap_type}</span></td><td className="px-4 py-3"><span className={`px-2 py-0.5 rounded text-xs ${sevColors[c.severity]}`}>{c.severity}</span></td></tr>{expanded === c.id && <tr className="bg-gray-50 dark:bg-gray-900/30"><td colSpan={4} className="px-8 py-3"><div className="space-y-1 text-xs"><div><span className="text-gray-500">Resource: </span><span className="font-mono">{c.resource_pattern}</span></div><div><span className="text-gray-500">Description: </span>{c.description}</div></div></td></tr>}</>
             ))}
             {conflicts.length === 0 && !loading && <tr><td colSpan={4} className="px-4 py-8 text-center text-gray-500">No conflicts detected.</td></tr>}

@@ -35,7 +35,7 @@ export default function DataClassificationPolicyPage() {
 
       {/* Classification Levels */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-        {(data?.levels ?? []).map((level) => {
+        {(data?.levels ?? []).map((level: any) => {
           const cfg = levelConfig[level.name] ?? levelConfig.internal;
           return (
             <div key={level.id} className="bg-gray-900 rounded-xl p-4">
@@ -64,7 +64,7 @@ export default function DataClassificationPolicyPage() {
         <div className="bg-gray-900 rounded-xl p-6">
           <h2 className="text-lg font-semibold mb-4">Handling Rules by Level</h2>
           <div className="space-y-4">
-            {(data?.levels ?? []).map((level) => {
+            {(data?.levels ?? []).map((level: any) => {
               const cfg = levelConfig[level.name] ?? levelConfig.internal;
               return (
                 <div key={level.id}>

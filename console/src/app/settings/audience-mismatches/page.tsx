@@ -33,8 +33,8 @@ export default function AudienceMismatchesPage() {
 
   useEffect(() => { fetchData(); }, [fetchData]);
 
-  const filtered = filterBlocked === "" ? mismatches : filterBlocked === "blocked" ? mismatches.filter((m) => m.blocked) : mismatches.filter((m) => !m.blocked);
-  const blockedCount = mismatches.filter((m) => m.blocked).length;
+  const filtered = filterBlocked === "" ? mismatches : filterBlocked === "blocked" ? mismatches.filter((m: any) => m.blocked) : mismatches.filter((m: any) => !m.blocked);
+  const blockedCount = mismatches.filter((m: any) => m.blocked).length;
 
   return (
     <div className="space-y-6">
@@ -56,7 +56,7 @@ export default function AudienceMismatchesPage() {
 
       <div className="overflow-x-auto rounded-lg border dark:border-gray-800">
         <table className="w-full text-sm"><thead className="bg-gray-50 dark:bg-gray-900/50"><tr><th className="px-4 py-3 text-left font-medium">{t("backend3.audienceMismatches.token")}</th><th className="px-4 py-3 text-left font-medium">{t("backend3.audienceMismatches.expected")}</th><th className="px-4 py-3 text-left font-medium">{t("backend3.audienceMismatches.actual")}</th><th className="px-4 py-3 text-left font-medium">{t("backend3.audienceMismatches.resource")}</th><th className="px-4 py-3 text-left font-medium">{t("backend3.audienceMismatches.status")}</th><th className="px-4 py-3 text-left font-medium">{t("backend3.audienceMismatches.timestamp")}</th></tr></thead>
-          <tbody className="divide-y dark:divide-gray-800">{filtered.map((m) => (<tr key={m.id} className="hover:bg-gray-50 dark:hover:bg-gray-900/30"><td className="px-4 py-3 font-mono text-xs text-gray-500">{m.token_preview}</td><td className="px-4 py-3 font-mono text-xs">{m.expected_audience}</td><td className="px-4 py-3 font-mono text-xs">{m.actual_audience}</td><td className="px-4 py-3 text-xs text-gray-500">{m.resource}</td><td className="px-4 py-3">{m.blocked ? <span className="flex items-center gap-1 text-xs text-red-600"><Ban className="w-3.5 h-3.5" /> Blocked</span> : <span className="flex items-center gap-1 text-xs text-yellow-600"><Eye className="w-3.5 h-3.5" /> Allowed</span>}</td><td className="px-4 py-3 text-xs text-gray-400">{m.timestamp}</td></tr>))}{filtered.length === 0 && !loading && <tr><td colSpan={6} className="px-4 py-8 text-center text-gray-500">No mismatches found.</td></tr>}</tbody>
+          <tbody className="divide-y dark:divide-gray-800">{filtered.map((m: any) => (<tr key={m.id} className="hover:bg-gray-50 dark:hover:bg-gray-900/30"><td className="px-4 py-3 font-mono text-xs text-gray-500">{m.token_preview}</td><td className="px-4 py-3 font-mono text-xs">{m.expected_audience}</td><td className="px-4 py-3 font-mono text-xs">{m.actual_audience}</td><td className="px-4 py-3 text-xs text-gray-500">{m.resource}</td><td className="px-4 py-3">{m.blocked ? <span className="flex items-center gap-1 text-xs text-red-600"><Ban className="w-3.5 h-3.5" /> Blocked</span> : <span className="flex items-center gap-1 text-xs text-yellow-600"><Eye className="w-3.5 h-3.5" /> Allowed</span>}</td><td className="px-4 py-3 text-xs text-gray-400">{m.timestamp}</td></tr>))}{filtered.length === 0 && !loading && <tr><td colSpan={6} className="px-4 py-8 text-center text-gray-500">No mismatches found.</td></tr>}</tbody>
         </table>
       </div>
     </div>

@@ -53,7 +53,7 @@ export default function RoleRequestsPage() {
     setActionId(id);
     try {
       await fetch(`/api/v1/policy/role-requests/${id}/approve`, { method: "POST", headers: { ...authHeader(), "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
-      setRequests((prev) => prev.map((r) => r.id === id ? { ...r, status: r.approval_step.step >= r.approval_step.total ? "completed" : "approved" } : r));
+      setRequests((prev) => prev.map((r: any) => r.id === id ? { ...r, status: r.approval_step.step >= r.approval_step.total ? "completed" : "approved" } : r));
     } catch { /* noop */ }
     finally { setActionId(null); }
   };
@@ -62,7 +62,7 @@ export default function RoleRequestsPage() {
     setActionId(id);
     try {
       await fetch(`/api/v1/policy/role-requests/${id}/reject`, { method: "POST", headers: { ...authHeader(), "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
-      setRequests((prev) => prev.map((r) => r.id === id ? { ...r, status: "rejected" } : r));
+      setRequests((prev) => prev.map((r: any) => r.id === id ? { ...r, status: "rejected" } : r));
     } catch { /* noop */ }
     finally { setActionId(null); }
   };
@@ -81,7 +81,7 @@ export default function RoleRequestsPage() {
     } catch { /* noop */ }
   };
 
-  const filtered = tab === "pending" ? requests.filter((r) => r.status === "pending") : requests.filter((r) => r.is_mine);
+  const filtered = tab === "pending" ? requests.filter((r: any) => r.status === "pending") : requests.filter((r: any) => r.is_mine);
 
   return (
     <div className="space-y-6">
@@ -95,13 +95,13 @@ export default function RoleRequestsPage() {
 
       {/* Tabs */}
       <div className="flex items-center gap-1 border-b dark:border-gray-800">
-        <button onClick={() => setTab("pending")} className={`px-4 py-2 text-sm font-medium border-b-2 ${tab === "pending" ? "border-blue-500 text-blue-600" : "border-transparent text-gray-500"}`}>Pending Approvals ({requests.filter((r) => r.status === "pending").length})</button>
-        <button onClick={() => setTab("mine")} className={`px-4 py-2 text-sm font-medium border-b-2 ${tab === "mine" ? "border-blue-500 text-blue-600" : "border-transparent text-gray-500"}`}>My Requests ({requests.filter((r) => r.is_mine).length})</button>
+        <button onClick={() => setTab("pending")} className={`px-4 py-2 text-sm font-medium border-b-2 ${tab === "pending" ? "border-blue-500 text-blue-600" : "border-transparent text-gray-500"}`}>Pending Approvals ({requests.filter((r: any) => r.status === "pending").length})</button>
+        <button onClick={() => setTab("mine")} className={`px-4 py-2 text-sm font-medium border-b-2 ${tab === "mine" ? "border-blue-500 text-blue-600" : "border-transparent text-gray-500"}`}>My Requests ({requests.filter((r: any) => r.is_mine).length})</button>
       </div>
 
       {/* Request list */}
       <div className="space-y-3">
-        {filtered.map((r) => (
+        {filtered.map((r: any) => (
           <div key={r.id} className="rounded-lg border dark:border-gray-800 p-4">
             <div className="flex items-center justify-between">
               <div className="flex-1">

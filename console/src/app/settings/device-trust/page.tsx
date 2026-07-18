@@ -66,7 +66,7 @@ export default function DeviceTrustPage() {
   };
 
   const cardCls = "rounded-xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-700 dark:bg-gray-800";
-  const untrusted = devices.filter((d) => d.trust_score < 50 || d.jailbroken || !d.encrypted);
+  const untrusted = devices.filter((d: any) => d.trust_score < 50 || d.jailbroken || !d.encrypted);
 
   return (
     <div className="space-y-6">
@@ -118,7 +118,7 @@ export default function DeviceTrustPage() {
                     <th scope="col" className="px-4 py-3 text-left font-semibold text-gray-600 dark:text-gray-300">{t("backend.deviceTrust.lastSeen")}</th>
                   </tr></thead>
                   <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-                    {devices.map((d) => (
+                    {devices.map((d: any) => (
                       <tr key={d.device_id} className="bg-white dark:bg-gray-900">
                         <td className="px-4 py-3 font-mono text-xs text-gray-500">{d.device_id.slice(0, 16)}</td>
                         <td className="px-4 py-3 font-medium text-gray-900 dark:text-white">{d.username}</td>

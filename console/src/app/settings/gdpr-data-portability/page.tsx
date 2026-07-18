@@ -41,7 +41,7 @@ export default function GDPRDataPortabilityPage() {
           <div>
             <p className="text-xs text-gray-400 mb-2">Data Scope (select what to include):</p>
             <div className="flex flex-wrap gap-2">
-              {scopeOptions.map((scope) => (
+              {scopeOptions.map((scope: any) => (
                 <button
                   key={scope}
                   onClick={() => setSelectedScopes(prev => prev.includes(scope) ? prev.filter(s => s !== scope) : [...prev, scope])}
@@ -92,7 +92,7 @@ export default function GDPRDataPortabilityPage() {
                   <td className="py-3 pr-3 text-xs">{r.format}</td>
                   <td className="py-3 pr-3">
                     <div className="flex gap-1">
-                      {r.scope.map((s) => (
+                      {r.scope.map((s: any) => (
                         <span key={s} className="text-xs px-1 py-0.5 bg-gray-700 rounded text-gray-400">{s}</span>
                       ))}
                     </div>

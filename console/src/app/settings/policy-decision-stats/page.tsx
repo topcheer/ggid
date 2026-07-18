@@ -50,12 +50,12 @@ export default function PolicyDecisionStatsPage() {
         <div className="bg-gray-900 rounded-xl p-6">
           <h2 className="text-sm font-semibold mb-3">By Policy</h2>
           <table className="w-full text-sm"><thead><tr className="border-b border-gray-800 text-gray-400"><th className="text-left py-2">Policy</th><th className="text-right py-2">Allow</th><th className="text-right py-2">Deny</th></tr></thead>
-            <tbody>{(data?.by_policy ?? []).map((p) => <tr key={p.policy} className="border-b border-gray-800"><td className="py-2 text-sm">{p.policy}</td><td className="py-2 text-right text-green-400">{p.allow}</td><td className="py-2 text-right text-red-400">{p.deny}</td></tr>)}</tbody>
+            <tbody>{(data?.by_policy ?? []).map((p: any) => <tr key={p.policy} className="border-b border-gray-800"><td className="py-2 text-sm">{p.policy}</td><td className="py-2 text-right text-green-400">{p.allow}</td><td className="py-2 text-right text-red-400">{p.deny}</td></tr>)}</tbody>
           </table>
         </div>
         <div className="bg-gray-900 rounded-xl p-6">
           <h2 className="text-sm font-semibold mb-3">By Resource Type</h2>
-          <div className="space-y-2">{(data?.by_resource_type ?? []).map((r) => (
+          <div className="space-y-2">{(data?.by_resource_type ?? []).map((r: any) => (
             <div key={r.type} className="flex items-center gap-2"><span className="text-xs w-32">{r.type}</span><div className="flex-1 bg-gray-800 rounded-full h-2"><div className="bg-blue-600 h-2 rounded-full" style={{ width: r.pct + "%" }} /></div><span className="text-xs text-gray-400">{r.pct}%</span></div>
           ))}</div>
         </div>
@@ -64,7 +64,7 @@ export default function PolicyDecisionStatsPage() {
       {/* Top Denied Actions */}
       <div className="bg-gray-900 rounded-xl p-6">
         <h2 className="text-sm font-semibold mb-3">Top Denied Actions</h2>
-        <div className="space-y-1">{(data?.top_denied_actions ?? []).map((a) => (
+        <div className="space-y-1">{(data?.top_denied_actions ?? []).map((a: any) => (
           <div key={a.action} className="flex items-center gap-2 bg-gray-800 rounded p-2"><XCircle className="w-3 h-3 text-red-400" /><span className="text-xs font-mono flex-1">{a.action}</span><span className="text-xs text-gray-400">{a.count}</span></div>
         ))}</div>
       </div>

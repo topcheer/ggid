@@ -32,9 +32,9 @@ export default function CorrelationRulesPage() {
       setEditing(null); setRules(await apiFetch<CorrelationRule[]>("/api/v1/audit/correlation-rules").catch(() => rules));
     } catch { setError("Save failed"); }
   };
-  const handleDelete = async (id: string) => { try { await apiFetch(`/api/v1/audit/correlation-rules/${id}`, { method: "DELETE" }); setRules((p) => p.filter((r) => r.id !== id)); } catch { setError("Delete failed"); } };
+  const handleDelete = async (id: string) => { try { await apiFetch(`/api/v1/audit/correlation-rules/${id}`, { method: "DELETE" }); setRules((p) => p.filter((r: any) => r.id !== id)); } catch { setError("Delete failed"); } };
   const handleTest = async (id: string) => { setTesting(id); setTestResult(null); try { const r = await apiFetch<{ matched: boolean; matches: number }>(`/api/v1/audit/correlation-rules/${id}/test`, { method: "POST" }); setTestResult({ ...r, ruleId: id }); } catch { setError("Test failed"); } finally { setTesting(null); } };
-  const toggle = (r: CorrelationRule) => { setRules((prev) => prev.map((x) => x.id === r.id ? { ...x, enabled: !x.enabled } : x)); apiFetch(`/api/v1/audit/correlation-rules/${r.id}`, { method: "PUT", body: JSON.stringify({ enabled: !r.enabled }) }).catch(() => {}); };
+  const toggle = (r: CorrelationRule) => { setRules((prev) => prev.map((x: any) => x.id === r.id ? { ...x, enabled: !x.enabled } : x)); apiFetch(`/api/v1/audit/correlation-rules/${r.id}`, { method: "PUT", body: JSON.stringify({ enabled: !r.enabled }) }).catch(() => {}); };
 
   const cardCls = "rounded-xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-700 dark:bg-gray-800";
   return (
@@ -42,7 +42,7 @@ export default function CorrelationRulesPage() {
       <div className="flex items-center justify-between"><div><h1 className="flex items-center gap-2 text-2xl font-bold text-gray-900 dark:text-white"><Zap className="h-6 w-6 text-orange-600" /> {t("correlationRules.title")}</h1><p className="mt-1 text-sm text-gray-500 dark:text-gray-400">Event correlation rules with pattern matching, time windows, and thresholds.</p></div><button onClick={() => setEditing({ id: "", name: "", pattern: "", window_minutes: 5, threshold: 3, enabled: true, action: "alert", created_at: "", last_triggered: "", trigger_count: 0 })} className="flex items-center gap-2 rounded-lg bg-orange-600 px-4 py-2 text-sm font-medium text-white hover:bg-orange-700"><Plus className="h-4 w-4" /> New Rule</button></div>
       {error && <div role="alert" className="flex items-center gap-2 rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700 dark:bg-red-900/20 dark:text-red-400"><AlertCircle className="h-4 w-4 shrink-0" />{error}<button onClick={() => setError(null)} aria-label="Dismiss error" className="ml-auto"><X className="h-4 w-4" /></button></div>}
       {loading ? <div className="flex justify-center py-12"><Loader2 className="h-8 w-8 animate-spin text-orange-600" /></div> : rules.length === 0 ? <div className={cardCls}><div className="py-12 text-center"><Zap className="mx-auto h-12 w-12 text-gray-300" /><p className="mt-4 text-sm text-gray-400">No correlation rules.</p></div></div> : (
-        <div className="space-y-2">{rules.map((r) => (
+        <div className="space-y-2">{rules.map((r: any) => (
           <div key={r.id} className={cardCls}>
             <div className="flex items-start justify-between">
               <div className="flex-1"><div className="flex items-center gap-2"><span className="font-semibold text-gray-900 dark:text-white">{r.name}</span><span className="rounded bg-gray-100 px-1.5 py-0.5 text-xs text-gray-500 dark:bg-gray-700">action: {r.action}</span>{r.trigger_count > 0 && <span className="rounded bg-orange-100 px-1.5 py-0.5 text-xs text-orange-600 dark:bg-orange-900/30">{r.trigger_count} triggers</span>}</div>

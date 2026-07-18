@@ -88,10 +88,10 @@ export default function SSOProvidersPage() {
     setExpandedId(p.id);
   };
 
-  const handleDelete = (id: string) => persist(providers.filter((p) => p.id !== id));
-  const handleToggle = (id: string) => persist(providers.map((p) => (p.id === id ? { ...p, enabled: !p.enabled } : p)));
+  const handleDelete = (id: string) => persist(providers.filter((p: any) => p.id !== id));
+  const handleToggle = (id: string) => persist(providers.map((p: any) => (p.id === id ? { ...p, enabled: !p.enabled } : p)));
   const handleUpdate = (id: string, field: keyof SSOProvider, value: unknown) =>
-    setProviders(providers.map((p) => (p.id === id ? { ...p, [field]: value } : p)));
+    setProviders(providers.map((p: any) => (p.id === id ? { ...p, [field]: value } : p)));
 
   const handleTest = async (id: string) => {
     setTesting(id);
@@ -139,7 +139,7 @@ export default function SSOProvidersPage() {
         </div>
       ) : (
         <div className="space-y-4">
-          {providers.map((p) => (
+          {providers.map((p: any) => (
             <div key={p.id} className={cardCls}>
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
@@ -206,7 +206,7 @@ export default function SSOProvidersPage() {
                   <div>
                     <h4 className="mb-2 text-xs font-semibold uppercase text-gray-400">Attribute Mapping</h4>
                     <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
-                      {ATTR_KEYS.map((key) => (
+                      {ATTR_KEYS.map((key: any) => (
                         <div key={key} className="flex items-center gap-2">
                           <span className="w-24 text-xs font-medium text-gray-500">{key}</span>
                           <input

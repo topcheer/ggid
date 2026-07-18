@@ -64,7 +64,7 @@ export default function CostCentersPage() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {data.departments.map((d) => (
+            {data.departments.map((d: any) => (
               <div key={d.id} className="rounded-lg border dark:border-gray-800 p-4 space-y-3">
                 <div className="flex items-center justify-between"><div><span className="font-semibold">{d.name}</span><p className="text-xs font-mono text-gray-400">{d.cost_center}</p></div>{d.alerts.length > 0 && <span className="px-2 py-0.5 rounded text-xs bg-red-100 dark:bg-red-900/30 dark:text-red-400 flex items-center gap-1"><AlertTriangle className="w-3 h-3" />{d.alerts.length}</span>}</div>
                 <div className="grid grid-cols-2 gap-2 text-sm"><div className="flex items-center gap-1"><Users className="w-3.5 h-3.5 text-gray-400" /><span className="text-gray-500">{t("backend3.costCenters.members")}</span><span className="font-bold ml-auto">{d.member_count}</span></div><div className="flex items-center gap-1"><DollarSign className="w-3.5 h-3.5 text-gray-400" /><span className="text-gray-500">{t("backend3.costCenters.budget")}</span><span className="font-bold ml-auto">${d.budget.toLocaleString()}</span></div></div>

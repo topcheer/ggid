@@ -49,7 +49,7 @@ export default function DepartmentAnalyticsPage() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {depts.map((d) => (
+        {depts.map((d: any) => (
           <div key={d.id} className="rounded-lg border dark:border-gray-800 p-4 space-y-3">
             <div className="flex items-center justify-between"><div className="flex items-center gap-2"><Building2 className="w-5 h-5 text-gray-400" /><span className="font-semibold">{d.name}</span></div><span className="flex items-center gap-1 text-sm text-gray-500"><Users className="w-3.5 h-3.5" />{d.headcount}</span></div>
             <div className="grid grid-cols-2 gap-2 text-sm">

@@ -26,15 +26,15 @@ export default function GeoFencingConfigPage() {
       <div className="bg-gray-900 rounded-xl p-6 mb-6">
         <h2 className="text-sm font-semibold mb-4 flex items-center gap-2"><Globe className="w-4 h-4 text-blue-400" />{t("big1.geoFencingConfig.rules")}</h2>
         <table className="w-full text-sm"><thead><tr className="border-b border-gray-800 text-gray-400"><th className="text-left py-2">{t("big1.geoFencingConfig.country")}</th><th className="text-left py-2">{t("big1.geoFencingConfig.cidr")}</th><th className="text-left py-2">{t("big1.geoFencingConfig.action")}</th><th className="text-left py-2">{t("big1.geoFencingConfig.label")}</th></tr></thead>
-          <tbody>{(data?.rules ?? []).map((r) => (
+          <tbody>{(data?.rules ?? []).map((r: any) => (
             <tr key={r.id} className="border-b border-gray-800"><td className="py-2">{r.country}</td><td className="py-2 font-mono text-xs">{r.cidr}</td><td className="py-2"><span className={"text-xs px-2 py-0.5 rounded " + (r.action === "allow" ? "bg-green-900 text-green-300" : r.action === "challenge" ? "bg-yellow-900 text-yellow-300" : "bg-red-900 text-red-300")}>{r.action}</span></td><td className="py-2 text-xs text-gray-400">{r.label}</td></tr>
           ))}</tbody>
         </table>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div className="bg-gray-900 rounded-xl p-6"><h2 className="text-sm font-semibold mb-3">{t("big1.geoFencingConfig.whitelistIps")}</h2><div className="space-y-1">{(data?.whitelist_ips ?? []).map((ip) => (<div key={ip} className="text-xs font-mono bg-gray-800 rounded px-2 py-1">{ip}</div>))}</div></div>
-        <div className="bg-gray-900 rounded-xl p-6"><h2 className="text-sm font-semibold mb-3">{t("big1.geoFencingConfig.mapCoverage")}</h2><div className="flex flex-wrap gap-1">{(data?.rules ?? []).map((r) => (<span key={r.id} className={"text-xs px-2 py-0.5 rounded " + (r.action === "allow" ? "bg-green-900 text-green-300" : r.action === "challenge" ? "bg-yellow-900 text-yellow-300" : "bg-red-900 text-red-300")}>{r.country}</span>))}</div></div>
+        <div className="bg-gray-900 rounded-xl p-6"><h2 className="text-sm font-semibold mb-3">{t("big1.geoFencingConfig.whitelistIps")}</h2><div className="space-y-1">{(data?.whitelist_ips ?? []).map((ip: any) => (<div key={ip} className="text-xs font-mono bg-gray-800 rounded px-2 py-1">{ip}</div>))}</div></div>
+        <div className="bg-gray-900 rounded-xl p-6"><h2 className="text-sm font-semibold mb-3">{t("big1.geoFencingConfig.mapCoverage")}</h2><div className="flex flex-wrap gap-1">{(data?.rules ?? []).map((r: any) => (<span key={r.id} className={"text-xs px-2 py-0.5 rounded " + (r.action === "allow" ? "bg-green-900 text-green-300" : r.action === "challenge" ? "bg-yellow-900 text-yellow-300" : "bg-red-900 text-red-300")}>{r.country}</span>))}</div></div>
       </div>
     </div>
   );

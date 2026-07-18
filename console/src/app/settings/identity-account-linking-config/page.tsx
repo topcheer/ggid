@@ -66,7 +66,7 @@ export default function IdentityAccountLinkingConfigPage() {
             Linking Methods
           </h2>
           <div className="space-y-2">
-            {(data?.linking_methods ?? []).map((m) => (
+            {(data?.linking_methods ?? []).map((m: any) => (
               <div key={m.method} className="flex items-center justify-between bg-gray-800 rounded-lg p-3">
                 <div>
                   <p className="text-sm font-medium capitalize">{m.method.replace(/_/g, " ")}</p>

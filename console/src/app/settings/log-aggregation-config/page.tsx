@@ -24,11 +24,11 @@ export default function LogAggregationConfigPage() {
   };
 
   const deleteOutput = (id: string) => {
-    setOutputs(outputs.filter((o) => o.id !== id));
+    setOutputs(outputs.filter((o: any) => o.id !== id));
   };
 
   const updateOutput = (id: string, patch: Partial<LogOutput>) => {
-    setOutputs(outputs.map((o) => (o.id === id ? { ...o, ...patch } : o)));
+    setOutputs(outputs.map((o: any) => (o.id === id ? { ...o, ...patch } : o)));
   };
 
   return (
@@ -99,7 +99,7 @@ export default function LogAggregationConfigPage() {
           </button>
         </div>
         <div className="space-y-3">
-          {outputs.map((output) => (
+          {outputs.map((output: any) => (
             <div key={output.id} className="border rounded p-3 flex items-center gap-3">
               <input
                 type="text"

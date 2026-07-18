@@ -14,7 +14,7 @@ export default function IdentityUserAttestationPage() {
   if (error) return <div className="p-8 text-red-400">Error: {error}</div>;
 
   const campaign = selectedCampaign
-    ? (data?.campaigns ?? []).find((c) => c.id === selectedCampaign)
+    ? (data?.campaigns ?? []).find((c: any) => c.id === selectedCampaign)
     : (data?.campaigns ?? [])[0];
 
   return (
@@ -73,7 +73,7 @@ export default function IdentityUserAttestationPage() {
             onChange={(e) => setSelectedCampaign(e.target.value)}
             className="flex-1 bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-500"
           >
-            {(data?.campaigns ?? []).map((c) => (
+            {(data?.campaigns ?? []).map((c: any) => (
               <option key={c.id} value={c.id}>{c.name}</option>
             ))}
           </select>
@@ -102,7 +102,7 @@ export default function IdentityUserAttestationPage() {
               </tr>
             </thead>
             <tbody>
-              {(campaign?.user_list ?? []).map((u) => (
+              {(campaign?.user_list ?? []).map((u: any) => (
                 <tr key={u.user_id} className="border-b border-gray-800">
                   <td className="py-3 pr-4 font-medium">{u.user_name}</td>
                   <td className="py-3 pr-4">

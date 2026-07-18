@@ -100,7 +100,7 @@ export default function OAuthFlowsPage() {
         const list = Array.isArray(data) ? data : data.flows || [];
         setFlowHistory(list);
         // Check for active flow
-        const active = list.find((f) => f.status === "active");
+        const active = list.find((f: any) => f.status === "active");
         if (active?.currentStep) {
           setCurrentStep(active.currentStep);
         } else {
@@ -183,7 +183,7 @@ export default function OAuthFlowsPage() {
             onChange={(e) => setSelectedClient(e.target.value)}
             className={`${inputCls} max-w-md`}
           >
-            {clients.map((c) => (
+            {clients.map((c: any) => (
               <option key={c.id} value={c.id}>
                 {c.name || c.client_id || c.id}
               </option>
@@ -208,7 +208,7 @@ export default function OAuthFlowsPage() {
             </h2>
 
             <div className="space-y-0">
-              {FLOW_STEPS.map((step, idx) => {
+              {FLOW_STEPS.map((step: any, idx: any) => {
                 const status = getStepStatus(step.num);
                 const statusCfg = STEP_STATUS[status];
                 const isLast = idx === FLOW_STEPS.length - 1;
@@ -320,7 +320,7 @@ export default function OAuthFlowsPage() {
                   <div>
                     <span className="mb-2 block text-sm text-gray-500">Granted Scopes</span>
                     <div className="flex flex-wrap gap-2">
-                      {tokenDetails.scopes.map((scope) => (
+                      {tokenDetails.scopes.map((scope: any) => (
                         <span
                           key={scope}
                           className="rounded-full bg-brand-100 px-3 py-1 text-xs font-medium text-brand-700 dark:bg-brand-900/30 dark:text-brand-400"
@@ -356,7 +356,7 @@ export default function OAuthFlowsPage() {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-50 dark:divide-gray-700/50">
-                      {flowHistory.slice(0, 10).map((flow) => (
+                      {flowHistory.slice(0, 10).map((flow: any) => (
                         <tr key={flow.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50">
                           <td className="px-2 py-2 text-xs text-gray-500">
                             {flow.startedAt

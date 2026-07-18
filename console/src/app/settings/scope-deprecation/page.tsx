@@ -61,7 +61,7 @@ export default function ScopeDeprecationPage() {
         <table className="w-full text-sm">
           <thead className="bg-gray-50 dark:bg-gray-900/50"><tr><th className="px-4 py-3 text-left font-medium">Scope</th><th className="px-4 py-3 text-left font-medium">Deprecated</th><th className="px-4 py-3 text-left font-medium">Sunset Date</th><th className="px-4 py-3 text-left font-medium">Replacement</th><th className="px-4 py-3 text-left font-medium">Usage</th><th className="px-4 py-3 text-left font-medium">Status</th></tr></thead>
           <tbody className="divide-y dark:divide-gray-800">
-            {scopes.map((s) => (
+            {scopes.map((s: any) => (
               <tr key={s.id} className="hover:bg-gray-50 dark:hover:bg-gray-900/30">
                 <td className="px-4 py-3 font-mono text-xs font-medium">{s.name}</td>
                 <td className="px-4 py-3 text-gray-500">{s.deprecated_at || "-"}</td>
@@ -82,7 +82,7 @@ export default function ScopeDeprecationPage() {
             <div className="flex items-center justify-between px-6 py-4 border-b dark:border-gray-800"><h3 className="font-semibold flex items-center gap-2"><Ban className="w-5 h-5 text-orange-500" /> Deprecate Scope</h3><button onClick={() => setShowDeprecate(false)} aria-label="Close"><X className="w-5 h-5 text-gray-400" /></button></div>
             <div className="px-6 py-4 space-y-3">
               <div><label className="text-sm font-medium">Scope to Deprecate</label><input aria-label="old:scope" type="text" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="old:scope" className="w-full mt-1 px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-800 text-sm font-mono" /></div>
-              <div><label className="text-sm font-medium">Replacement Scope</label><select aria-label="form" value={form.replacement} onChange={(e) => setForm({ ...form, replacement: e.target.value })} className="w-full mt-1 px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-800 text-sm"><option value="">None</option>{available.map((s) => <option key={s.name} value={s.name}>{s.name}</option>)}</select></div>
+              <div><label className="text-sm font-medium">Replacement Scope</label><select aria-label="form" value={form.replacement} onChange={(e) => setForm({ ...form, replacement: e.target.value })} className="w-full mt-1 px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-800 text-sm"><option value="">None</option>{available.map((s: any) => <option key={s.name} value={s.name}>{s.name}</option>)}</select></div>
               <div><label className="text-sm font-medium">Sunset Date</label><input aria-label="form" type="date" value={form.sunset_date} onChange={(e) => setForm({ ...form, sunset_date: e.target.value })} className="w-full mt-1 px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-800 text-sm" /></div>
             </div>
             <div className="flex justify-end gap-2 px-6 py-4 border-t dark:border-gray-800"><button onClick={() => setShowDeprecate(false)} className="px-4 py-2 rounded-lg border dark:border-gray-700 text-sm">Cancel</button><button onClick={deprecate} disabled={!form.name} className="px-4 py-2 rounded-lg bg-orange-600 text-white text-sm font-medium hover:bg-orange-700 disabled:opacity-50 flex items-center gap-1"><Save className="w-4 h-4" /> Deprecate</button></div>

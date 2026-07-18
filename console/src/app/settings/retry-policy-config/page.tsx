@@ -34,7 +34,7 @@ export default function RetryPolicyConfigPage() {
   };
 
   const removeRetryOn = (condition: string) => {
-    setRetryOn(retryOn.filter((c) => c !== condition));
+    setRetryOn(retryOn.filter((c: any) => c !== condition));
   };
 
   const addRoute = () => {
@@ -85,7 +85,7 @@ export default function RetryPolicyConfigPage() {
       <section className="bg-white rounded-lg shadow p-6 space-y-4">
         <h2 className="text-lg font-semibold">{"Retry On"}</h2>
         <div className="flex flex-wrap gap-2">
-          {retryOn.map((condition) => (
+          {retryOn.map((condition: any) => (
             <span
               key={condition}
               className="inline-flex items-center gap-1 px-3 py-1 bg-gray-100 rounded text-sm font-mono"

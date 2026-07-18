@@ -55,7 +55,7 @@ export default function ComplianceDriftPage() {
       </div>
 
       <select aria-label="Framework" value={framework} onChange={(e) => setFramework(e.target.value)} className="px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-900 text-sm">
-        {frameworks.map((f) => <option key={f} value={f}>{f}</option>)}
+        {frameworks.map((f: any) => <option key={f} value={f}>{f}</option>)}
       </select>
 
       {data && (

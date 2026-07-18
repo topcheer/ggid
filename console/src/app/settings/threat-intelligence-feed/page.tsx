@@ -36,7 +36,7 @@ export default function ThreatIntelligenceFeedPage() {
         <div className="bg-gray-900 rounded-xl p-4">
           <Shield className="w-5 h-5 text-green-400 mb-1" />
           <p className="text-xs text-gray-400">{t("threatIntel.autoBlockRules")}</p>
-          <p className="text-xl font-bold">{data?.auto_block_rules?.filter((r) => r.enabled).length ?? 0}</p>
+          <p className="text-xl font-bold">{data?.auto_block_rules?.filter((r: any) => r.enabled).length ?? 0}</p>
         </div>
         <div className="bg-gray-900 rounded-xl p-4">
           <Activity className="w-5 h-5 text-yellow-400 mb-1" />
@@ -54,8 +54,8 @@ export default function ThreatIntelligenceFeedPage() {
           {t("threatIntel.intelligenceSources")}
         </h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-          {(data?.intel_sources ?? []).map((src) => {
-            const health = data?.feed_health?.find((h) => h.source_name === src.source_name);
+          {(data?.intel_sources ?? []).map((src: any) => {
+            const health = data?.feed_health?.find((h: any) => h.source_name === src.source_name);
             return (
               <div key={src.source_name} className="bg-gray-800 rounded-lg p-3">
                 <div className="flex items-center justify-between mb-2">
@@ -116,7 +116,7 @@ export default function ThreatIntelligenceFeedPage() {
                   <td className="py-3 pr-3 text-xs text-gray-400">{ind.source}</td>
                   <td className="py-3 pr-3">
                     <div className="flex flex-wrap gap-1">
-                      {ind.tags.map((tag) => (
+                      {ind.tags.map((tag: any) => (
                         <span key={tag} className="text-xs px-1.5 py-0.5 bg-purple-900/50 text-purple-300 rounded">{tag}</span>
                       ))}
                     </div>
@@ -135,7 +135,7 @@ export default function ThreatIntelligenceFeedPage() {
           {t("threatIntel.autoBlockRules")}
         </h2>
         <div className="space-y-2">
-          {(data?.auto_block_rules ?? []).map((rule) => (
+          {(data?.auto_block_rules ?? []).map((rule: any) => (
             <div key={rule.rule_name} className="flex items-center justify-between bg-gray-800 rounded-lg p-3">
               <div>
                 <p className="text-sm font-medium">{rule.rule_name}</p>

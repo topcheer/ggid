@@ -39,7 +39,7 @@ export default function PolicyVersionDiffPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const selectedPolicy = policies.find((p) => p.id === policyId);
+  const selectedPolicy = policies.find((p: any) => p.id === policyId);
 
   const diff = useCallback(async () => {
     if (!policyId || !versionA || !versionB) return;
@@ -68,9 +68,9 @@ export default function PolicyVersionDiffPage() {
 
       <div className="rounded-lg border dark:border-gray-800 p-4 space-y-3">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-          <div><label className="text-sm font-medium">Policy</label><select aria-label="Policy id" value={policyId} onChange={(e) => { setPolicyId(e.target.value); setVersionA(""); setVersionB(""); setData(null); }} className="w-full mt-1 px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-900 text-sm"><option value="">Select</option>{policies.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}</select></div>
-          <div><label className="text-sm font-medium">Version A</label><select aria-label="version A" value={versionA} onChange={(e) => setVersionA(e.target.value)} className="w-full mt-1 px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-900 text-sm"><option value="">Select</option>{selectedPolicy?.versions.map((v) => <option key={v} value={v}>{v}</option>)}</select></div>
-          <div><label className="text-sm font-medium">Version B</label><select aria-label="version B" value={versionB} onChange={(e) => setVersionB(e.target.value)} className="w-full mt-1 px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-900 text-sm"><option value="">Select</option>{selectedPolicy?.versions.map((v) => <option key={v} value={v}>{v}</option>)}</select></div>
+          <div><label className="text-sm font-medium">Policy</label><select aria-label="Policy id" value={policyId} onChange={(e) => { setPolicyId(e.target.value); setVersionA(""); setVersionB(""); setData(null); }} className="w-full mt-1 px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-900 text-sm"><option value="">Select</option>{policies.map((p: any) => <option key={p.id} value={p.id}>{p.name}</option>)}</select></div>
+          <div><label className="text-sm font-medium">Version A</label><select aria-label="version A" value={versionA} onChange={(e) => setVersionA(e.target.value)} className="w-full mt-1 px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-900 text-sm"><option value="">Select</option>{selectedPolicy?.versions.map((v: any) => <option key={v} value={v}>{v}</option>)}</select></div>
+          <div><label className="text-sm font-medium">Version B</label><select aria-label="version B" value={versionB} onChange={(e) => setVersionB(e.target.value)} className="w-full mt-1 px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-900 text-sm"><option value="">Select</option>{selectedPolicy?.versions.map((v: any) => <option key={v} value={v}>{v}</option>)}</select></div>
         </div>
         <button onClick={diff} disabled={loading || !policyId || !versionA || !versionB} aria-label="Compare selected policy versions" className="px-4 py-2 rounded-lg bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 disabled:opacity-50 flex items-center gap-2"><GitCompare className="w-4 h-4" /> {loading ? "Comparing..." : "Compare Versions"}</button>
       </div>

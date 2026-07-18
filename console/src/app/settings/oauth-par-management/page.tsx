@@ -66,7 +66,7 @@ export default function OAuthParManagementPage() {
         <div className="bg-gray-900 rounded-xl p-6">
           <h2 className="text-lg font-semibold mb-4">Active Pushed Requests</h2>
           <div className="space-y-2 max-h-96 overflow-y-auto">
-            {(data?.active_pushed_requests ?? []).map((req) => (
+            {(data?.active_pushed_requests ?? []).map((req: any) => (
               <div key={req.request_uri} className="bg-gray-800 rounded-lg p-3">
                 <div className="flex items-center justify-between mb-2">
                   <code className="text-xs text-blue-400 truncate">{req.request_uri}</code>
@@ -99,7 +99,7 @@ export default function OAuthParManagementPage() {
           <div className="bg-gray-900 rounded-xl p-6">
             <h2 className="text-lg font-semibold mb-4">Per-Client Usage</h2>
             <div className="space-y-2">
-              {(data?.per_client_usage ?? []).map((c) => (
+              {(data?.per_client_usage ?? []).map((c: any) => (
                 <div key={c.client_id} className="bg-gray-800 rounded-lg p-3">
                   <div className="flex items-center justify-between mb-1">
                     <span className="text-sm font-medium">{c.client_name}</span>
@@ -110,7 +110,7 @@ export default function OAuthParManagementPage() {
                       className="bg-blue-500 rounded-full h-1"
                       style={{
                         width: `${
-                          (c.request_count / Math.max(...(data?.per_client_usage ?? [{ request_count: 1 }]).map((x) => x.request_count), 1)) * 100
+                          (c.request_count / Math.max(...(data?.per_client_usage ?? [{ request_count: 1 }]).map((x: any) => x.request_count), 1)) * 100
                         }%`,
                       }}
                     />

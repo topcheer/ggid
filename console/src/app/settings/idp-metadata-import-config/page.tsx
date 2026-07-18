@@ -44,7 +44,7 @@ export default function IdpMetadataImportConfigPage() {
 
       <div className="bg-gray-900 rounded-xl p-6">
         <h2 className="text-sm font-semibold mb-3">{t("big1.idpMetadataImportConfig.savedIdps")}</h2>
-        <div className="space-y-2">{(data?.saved_idps ?? []).map((idp) => (
+        <div className="space-y-2">{(data?.saved_idps ?? []).map((idp: any) => (
           <div key={idp.entity_id} className="flex items-center gap-3 bg-gray-800 rounded p-3"><CheckCircle className="w-4 h-4 text-green-400" /><div className="flex-1"><p className="text-sm font-medium">{idp.name}</p><p className="text-xs text-gray-400 font-mono">{idp.entity_id}</p></div><span className="text-xs text-gray-500">{t("big1.idpMetadataImportConfig.imported")}{idp.imported_at}</span></div>
         ))}</div>
       </div>

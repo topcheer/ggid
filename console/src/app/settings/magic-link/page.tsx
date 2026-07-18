@@ -82,7 +82,7 @@ export default function MagicLinkPage() {
     setNewDomain("");
   };
 
-  const removeDomain = (d: string) => setDraft((p) => ({ ...p, allowed_domains: p.allowed_domains.filter((x) => x !== d) }));
+  const removeDomain = (d: string) => setDraft((p) => ({ ...p, allowed_domains: p.allowed_domains.filter((x: any) => x !== d) }));
 
   const cardCls = "rounded-xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-700 dark:bg-gray-800";
 
@@ -153,7 +153,7 @@ export default function MagicLinkPage() {
             <div className="py-3">
               <span className="flex items-center gap-1 text-sm text-gray-700 dark:text-gray-300"><Globe className="h-4 w-4 text-gray-400" />Allowed Domains</span>
               <div className="mt-2 flex flex-wrap gap-2">
-                {cfg.allowed_domains.map((d) => (
+                {cfg.allowed_domains.map((d: any) => (
                   <span key={d} className="flex items-center gap-1 rounded-lg bg-indigo-50 px-2 py-1 text-xs text-indigo-700 dark:bg-indigo-900/20 dark:text-indigo-400">
                     @{d}
                     {editing && <button onClick={() => removeDomain(d)} aria-label="Remove domain"><X className="h-3 w-3" /></button>}

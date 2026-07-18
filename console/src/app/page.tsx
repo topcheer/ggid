@@ -130,7 +130,7 @@ export default function DashboardPage() {
     { label: "Pending Approvals", value: loading ? "..." : String(pendingApprovals ?? 0), icon: FileCheck, color: "bg-amber-500", href: "/access-requests" },
   ];
 
-  const hourlyData = (auditStats?.hourly_distribution || []).map((h) => ({
+  const hourlyData = (auditStats?.hourly_distribution || []).map((h: any) => ({
     time: new Date(h.hour).toLocaleTimeString("en-US", { hour: "numeric", hour12: true }),
     events: h.count,
   }));
@@ -173,7 +173,7 @@ export default function DashboardPage() {
 
       {/* Real-time stat cards */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {realTimeStats.map((stat) => {
+        {realTimeStats.map((stat: any) => {
           const Icon = stat.icon;
           return (
             <div
@@ -200,7 +200,7 @@ export default function DashboardPage() {
           <Heart className="h-4 w-4 text-red-500" /> {t("dashboard.systemHealth")}
         </h2>
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-          {health.map((svc) => (
+          {health.map((svc: any) => (
             <div key={svc.name} className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-800">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
@@ -227,7 +227,7 @@ export default function DashboardPage() {
           <p className="py-8 text-center text-sm text-gray-400">{t("dashboard.noRecentEvents")}</p>
         ) : (
           <div className="space-y-2">
-            {activityFeed.map((event) => {
+            {activityFeed.map((event: any) => {
               const iconMap: Record<string, React.ReactNode> = {
                 "user.login": <UsersIcon className="h-4 w-4 text-blue-500" />,
                 "user.login.success": <UsersIcon className="h-4 w-4 text-blue-500" />,
@@ -267,7 +267,7 @@ export default function DashboardPage() {
         <Activity className="h-4 w-4 text-brand-600" /> {t("dashboard.overview")}
       </h2>
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4 xl:grid-cols-7">
-        {stats.map((stat) => {
+        {stats.map((stat: any) => {
           const Icon = stat.icon;
           return (
             <Link
@@ -329,7 +329,7 @@ export default function DashboardPage() {
             <p className="py-8 text-center text-sm text-gray-400">{t("dashboard.noRecentEvents")}</p>
           ) : (
             <div className="space-y-3">
-              {recentEvents.map((event) => (
+              {recentEvents.map((event: any) => (
                 <div key={event.id} className="flex items-center justify-between">
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-sm font-medium">{event.action}</p>
@@ -362,7 +362,7 @@ export default function DashboardPage() {
           </h2>
           {(auditStats?.top_actors || []).length > 0 ? (
             <div className="space-y-2">
-              {(auditStats?.top_actors || []).slice(0, 5).map((actor, idx) => (
+              {(auditStats?.top_actors || []).slice(0, 5).map((actor: any, idx: any) => (
                 <div key={actor.actor_id} className="flex items-center gap-3">
                   <span className="flex h-7 w-7 items-center justify-center rounded-full bg-brand-50 text-xs font-bold text-brand-600">
                     {idx + 1}

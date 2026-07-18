@@ -34,7 +34,7 @@ export default function SecurityKPITrackerPage() {
           KPI Definitions
         </h2>
         <div className="space-y-3">
-          {(data?.kpi_definitions ?? []).map((k) => {
+          {(data?.kpi_definitions ?? []).map((k: any) => {
             const pct = k.target > 0 ? Math.min((k.current / k.target) * 100, 150) : 0;
             const onTrack = k.trend === "up" ? k.current >= k.target : k.current <= k.target;
             return (
@@ -71,7 +71,7 @@ export default function SecurityKPITrackerPage() {
           <h2 className="text-sm font-semibold mb-4">Monthly History</h2>
           <div className="flex items-end gap-2 h-32">
             {(data?.monthly_history ?? []).map((m: any, i: number) => {
-              const max = Math.max(...(data?.monthly_history ?? []).map((x) => x.value), 1);
+              const max = Math.max(...(data?.monthly_history ?? []).map((x: any) => x.value), 1);
               return (
                 <div key={i} className="flex-1 flex flex-col items-center">
                   <div className="w-full bg-blue-500 rounded-t" style={{ height: max > 0 ? (m.value / max) * 100 + "%" : "0" }} />
@@ -88,7 +88,7 @@ export default function SecurityKPITrackerPage() {
             Alert Thresholds
           </h2>
           <div className="space-y-2">
-            {(data?.alert_thresholds ?? []).map((t) => (
+            {(data?.alert_thresholds ?? []).map((t: any) => (
               <div key={t.kpi} className="flex items-center justify-between bg-gray-800 rounded-lg p-2">
                 <span className="text-sm">{t.kpi}</span>
                 <span className={"text-xs px-2 py-0.5 rounded " + (t.triggered ? "bg-red-900 text-red-300" : "bg-gray-700 text-gray-400")}>

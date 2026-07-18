@@ -69,7 +69,7 @@ export default function OAuthClientsPage() {
     try {
       const body = {
         client_name: form.client_name,
-        redirect_uris: form.redirect_uris.split("\n").map((u) => u.trim()).filter(Boolean),
+        redirect_uris: form.redirect_uris.split("\n").map((u: any) => u.trim()).filter(Boolean),
         grant_types: form.grant_types,
         scopes: form.scopes,
       };
@@ -92,7 +92,7 @@ export default function OAuthClientsPage() {
   const handleSaveEdit = async () => {
     if (!editClient) return;
     try {
-      const uris = editUris.split("\n").map((u) => u.trim()).filter(Boolean);
+      const uris = editUris.split("\n").map((u: any) => u.trim()).filter(Boolean);
       await apiFetch(`/api/v1/oauth/clients/${editClient.client_id}`, {
         method: "PATCH", body: JSON.stringify({ redirect_uris: uris }),
       });
@@ -116,14 +116,14 @@ export default function OAuthClientsPage() {
   const toggleGrant = (g: string) => {
     setForm((p) => ({
       ...p,
-      grant_types: p.grant_types.includes(g) ? p.grant_types.filter((x) => x !== g) : [...p.grant_types, g],
+      grant_types: p.grant_types.includes(g) ? p.grant_types.filter((x: any) => x !== g) : [...p.grant_types, g],
     }));
   };
 
   const toggleScope = (s: string) => {
     setForm((p) => ({
       ...p,
-      scopes: p.scopes.includes(s) ? p.scopes.filter((x) => x !== s) : [...p.scopes, s],
+      scopes: p.scopes.includes(s) ? p.scopes.filter((x: any) => x !== s) : [...p.scopes, s],
     }));
   };
 
@@ -200,7 +200,7 @@ export default function OAuthClientsPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
-                {clients.map((c) => (
+                {clients.map((c: any) => (
                   <tr key={c.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/50">
                     <td className="px-4 py-3">
                       <div className="font-medium text-gray-800 dark:text-gray-200">{c.client_name}</div>
@@ -219,7 +219,7 @@ export default function OAuthClientsPage() {
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex flex-wrap gap-1">
-                        {c.grant_types.slice(0, 2).map((g) => (
+                        {c.grant_types.slice(0, 2).map((g: any) => (
                           <span key={g} className="rounded-full bg-blue-100 px-2 py-0.5 text-xs text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">{g.replace("_", " ")}</span>
                         ))}
                         {c.grant_types.length > 2 && <span className="text-xs text-gray-400">+{c.grant_types.length - 2}</span>}
@@ -244,7 +244,7 @@ export default function OAuthClientsPage() {
 
           {/* Mobile cards */}
           <div className="space-y-3 md:hidden">
-            {clients.map((c) => (
+            {clients.map((c: any) => (
               <div key={c.id} className={cardCls}>
                 <div className="flex items-center justify-between">
                   <span className="font-medium text-gray-800 dark:text-gray-200">{c.client_name}</span>
@@ -255,7 +255,7 @@ export default function OAuthClientsPage() {
                 </div>
                 <p className="mt-1 font-mono text-xs text-indigo-600">{c.client_id.substring(0, 20)}...</p>
                 <div className="mt-2 flex flex-wrap gap-1">
-                  {c.grant_types.map((g) => (
+                  {c.grant_types.map((g: any) => (
                     <span key={g} className="rounded-full bg-blue-100 px-2 py-0.5 text-xs text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">{g.replace("_", " ")}</span>
                   ))}
                 </div>
@@ -286,7 +286,7 @@ export default function OAuthClientsPage() {
               <div>
                 <label className="text-sm font-medium text-gray-700 dark:text-gray-300">{t("oauth.grantTypes")}</label>
                 <div className="mt-2 flex flex-wrap gap-2">
-                  {GRANT_TYPES.map((g) => (
+                  {GRANT_TYPES.map((g: any) => (
                     <button key={g} onClick={() => toggleGrant(g)} className={`rounded-lg border px-3 py-1.5 text-xs font-medium ${form.grant_types.includes(g) ? "border-indigo-500 bg-indigo-50 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400" : "border-gray-300 text-gray-500 dark:border-gray-600"}`}>
                       {g.replace("_", " ")}
                     </button>
@@ -296,7 +296,7 @@ export default function OAuthClientsPage() {
               <div>
                 <label className="text-sm font-medium text-gray-700 dark:text-gray-300">{t("common.scopes")}</label>
                 <div className="mt-2 flex flex-wrap gap-2">
-                  {DEFAULT_SCOPES.map((s) => (
+                  {DEFAULT_SCOPES.map((s: any) => (
                     <button key={s} onClick={() => toggleScope(s)} className={`rounded-lg border px-3 py-1.5 text-xs font-medium ${form.scopes.includes(s) ? "border-indigo-500 bg-indigo-50 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400" : "border-gray-300 text-gray-500 dark:border-gray-600"}`}>
                       {s}
                     </button>

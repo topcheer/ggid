@@ -74,7 +74,7 @@ export default function OAuthMtlsConfigPage() {
             Trusted CA Certificates
           </h2>
           <div className="space-y-2">
-            {(data?.trusted_ca_certs ?? []).map((ca) => (
+            {(data?.trusted_ca_certs ?? []).map((ca: any) => (
               <div key={ca.name} className="bg-gray-800 rounded-lg p-3">
                 <div className="flex items-center justify-between mb-1">
                   <p className="text-sm font-medium">{ca.name}</p>
@@ -104,7 +104,7 @@ export default function OAuthMtlsConfigPage() {
                 </tr>
               </thead>
               <tbody>
-                {(data?.per_client_mtls ?? []).map((c) => (
+                {(data?.per_client_mtls ?? []).map((c: any) => (
                   <tr key={c.client} className="border-b border-gray-800">
                     <td className="py-3 pr-3 font-mono text-xs text-blue-400">{c.client}</td>
                     <td className="py-3 pr-3">

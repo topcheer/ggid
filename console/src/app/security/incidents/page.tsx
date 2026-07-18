@@ -76,15 +76,15 @@ export default function IncidentsPage() {
     setResolving(resolveIncident.id);
     try {
       await apiFetch(`/api/v1/audit/incidents/${resolveIncident.id}/resolve`, { method: "POST", body: JSON.stringify({ resolution_notes: resolveNotes }) });
-      setIncidents((p) => p.map((i) => i.id === resolveIncident.id ? { ...i, status: "resolved", resolution_notes: resolveNotes, resolved_at: new Date().toISOString() } : i));
+      setIncidents((p) => p.map((i: any) => i.id === resolveIncident.id ? { ...i, status: "resolved", resolution_notes: resolveNotes, resolved_at: new Date().toISOString() } : i));
       setResolveIncident(null); setResolveNotes("");
     } catch { setError(t("incidents.resolveFailed")); }
     finally { setResolving(null); }
   };
 
   const cardCls = "rounded-xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-700 dark:bg-gray-800";
-  const activeIncidents = incidents.filter((i) => i.status !== "resolved" && i.status !== "closed");
-  const stats = { critical: activeIncidents.filter((i) => i.severity === "critical").length, high: activeIncidents.filter((i) => i.severity === "high").length, open: activeIncidents.length, resolved: incidents.filter((i) => i.status === "resolved").length };
+  const activeIncidents = incidents.filter((i: any) => i.status !== "resolved" && i.status !== "closed");
+  const stats = { critical: activeIncidents.filter((i: any) => i.severity === "critical").length, high: activeIncidents.filter((i: any) => i.severity === "high").length, open: activeIncidents.length, resolved: incidents.filter((i: any) => i.status === "resolved").length };
 
   return (
     <div className="space-y-6">
@@ -125,7 +125,7 @@ export default function IncidentsPage() {
                   <th scope="col" className="px-4 py-3 text-right font-semibold text-gray-600 dark:text-gray-300">Actions</th>
                 </tr></thead>
                 <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-                  {incidents.map((inc) => (
+                  {incidents.map((inc: any) => (
                     <tr key={inc.id} className="bg-white dark:bg-gray-900">
                       <td className="px-4 py-3"><div className="font-medium text-gray-900 dark:text-white">{inc.title}</div>{inc.description && <div className="text-xs text-gray-400">{inc.description}</div>}</td>
                       <td className="px-4 py-3 text-gray-500">{inc.type}</td>

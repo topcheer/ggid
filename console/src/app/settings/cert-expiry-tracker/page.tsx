@@ -26,22 +26,22 @@ export default function CertExpiryTrackerPage() {
         <div className="bg-gray-900 rounded-xl p-4">
           <CheckCircle className="w-5 h-5 text-green-400 mb-1" />
           <p className="text-xs text-gray-400">Healthy (&gt;90d)</p>
-          <p className="text-xl font-bold text-green-400">{data?.certs?.filter((c) => c.days_remaining > 90).length ?? 0}</p>
+          <p className="text-xl font-bold text-green-400">{data?.certs?.filter((c: any) => c.days_remaining > 90).length ?? 0}</p>
         </div>
         <div className="bg-gray-900 rounded-xl p-4">
           <Calendar className="w-5 h-5 text-yellow-400 mb-1" />
           <p className="text-xs text-gray-400">Expiring (&lt;90d)</p>
-          <p className="text-xl font-bold text-yellow-400">{data?.certs?.filter((c) => c.days_remaining <= 90 && c.days_remaining > 30).length ?? 0}</p>
+          <p className="text-xl font-bold text-yellow-400">{data?.certs?.filter((c: any) => c.days_remaining <= 90 && c.days_remaining > 30).length ?? 0}</p>
         </div>
         <div className="bg-gray-900 rounded-xl p-4">
           <AlertTriangle className="w-5 h-5 text-orange-400 mb-1" />
           <p className="text-xs text-gray-400">Critical (&lt;30d)</p>
-          <p className="text-xl font-bold text-orange-400">{data?.certs?.filter((c) => c.days_remaining <= 30 && c.days_remaining > 0).length ?? 0}</p>
+          <p className="text-xl font-bold text-orange-400">{data?.certs?.filter((c: any) => c.days_remaining <= 30 && c.days_remaining > 0).length ?? 0}</p>
         </div>
         <div className="bg-gray-900 rounded-xl p-4">
           <AlertTriangle className="w-5 h-5 text-red-400 mb-1" />
           <p className="text-xs text-gray-400">{t("backend.certExpiry.expired")}</p>
-          <p className="text-xl font-bold text-red-400">{data?.certs?.filter((c) => c.days_remaining <= 0).length ?? 0}</p>
+          <p className="text-xl font-bold text-red-400">{data?.certs?.filter((c: any) => c.days_remaining <= 0).length ?? 0}</p>
         </div>
       </div>
 
@@ -61,7 +61,7 @@ export default function CertExpiryTrackerPage() {
               </tr>
             </thead>
             <tbody>
-              {(data?.certs ?? []).map((c) => (
+              {(data?.certs ?? []).map((c: any) => (
                 <tr key={c.name} className="border-b border-gray-800">
                   <td className="py-3 pr-3 font-medium">{c.name}</td>
                   <td className="py-3 pr-3 text-xs text-gray-400">{c.type}</td>

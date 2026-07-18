@@ -28,7 +28,7 @@ export default function DeviceManagementPage() {
     try {
       const res = await fetch("/api/v1/identity/devices/" + id, { method: "DELETE", headers: { ...authHeader(), "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
       if (!res.ok) return null;
-      setDevices(devices.filter((d) => d.device_id !== id));
+      setDevices(devices.filter((d: any) => d.device_id !== id));
     } catch (e) {
       setError(e instanceof Error ? e.message : "Failed to revoke device");
     }
@@ -42,8 +42,8 @@ export default function DeviceManagementPage() {
       setError(e instanceof Error ? e.message : "Failed to revoke stale devices");
     }
   };
-  const filtered = filter ? devices.filter((d) => d.trust_level === filter) : devices;
-  const stale = devices.filter((d) => { const days = (Date.now() - new Date(d.last_seen).getTime()) / 86400000; return days > 30; }).length;
+  const filtered = filter ? devices.filter((d: any) => d.trust_level === filter) : devices;
+  const stale = devices.filter((d: any) => { const days = (Date.now() - new Date(d.last_seen).getTime()) / 86400000; return days > 30; }).length;
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -55,7 +55,7 @@ export default function DeviceManagementPage() {
       </div>
       {error && <div className="rounded-lg border border-red-200 dark:border-red-900 bg-red-50 dark:bg-red-900/20 p-3 text-sm text-red-600 flex items-center justify-between"><span className="flex items-center gap-2"><AlertTriangle className="w-4 h-4" /> {error}</span><button aria-label="action" onClick={fetchData} className="text-xs underline hover:text-red-700">{t("backend.deviceManagement.retry")}</button></div>}
       {loading && <div className="rounded-lg border dark:border-gray-800 p-8 text-center"><div className="inline-block w-5 h-5 border-2 border-current border-t-transparent rounded-full animate-spin text-blue-600 mb-2" /><div className="text-sm text-gray-500">Loading devices...</div></div>}
-      <div className="grid grid-cols-4 gap-4">{(["managed", "byod", "untrusted"] as const).map((t) => <div key={t} className="rounded-lg border p-4 dark:border-gray-800"><span className="text-sm text-gray-500 capitalize">{t}</span><p className="text-xl font-bold mt-1">{devices.filter((d) => d.trust_level === t).length}</p></div>)} <div className="rounded-lg border p-4 dark:border-gray-800"><span className="text-sm text-gray-500">{t("backend.deviceManagement.total")}</span><p className="text-xl font-bold mt-1">{devices.length}</p></div></div>
+      <div className="grid grid-cols-4 gap-4">{(["managed", "byod", "untrusted"] as const).map((t: any) => <div key={t} className="rounded-lg border p-4 dark:border-gray-800"><span className="text-sm text-gray-500 capitalize">{t}</span><p className="text-xl font-bold mt-1">{devices.filter((d: any) => d.trust_level === t).length}</p></div>)} <div className="rounded-lg border p-4 dark:border-gray-800"><span className="text-sm text-gray-500">{t("backend.deviceManagement.total")}</span><p className="text-xl font-bold mt-1">{devices.length}</p></div></div>
       <div className="flex items-center gap-2">
         <select value={filter} onChange={(e) => setFilter(e.target.value)} aria-label="Filter by trust level" className="px-3 py-1.5 rounded-lg border dark:border-gray-700 dark:bg-gray-900 text-sm">
           <option value="">{t("backend.deviceManagement.allTrustLevels")}</option><option value="managed">{t("backend.deviceManagement.managed")}</option><option value="byod">{t("backend.deviceManagement.byod")}</option><option value="untrusted">Untrusted</option>
@@ -67,7 +67,7 @@ export default function DeviceManagementPage() {
             <tr><th scope="col" className="px-4 py-3 text-left font-medium">{t("backend.deviceManagement.device")}</th><th className="px-4 py-3 text-left font-medium">User</th><th className="px-4 py-3 text-left font-medium">{t("backend.deviceManagement.platform")}</th><th className="px-4 py-3 text-left font-medium">{t("backend.deviceManagement.lastSeen")}</th><th className="px-4 py-3 text-left font-medium">Trust</th><th className="px-4 py-3 text-left font-medium">{t("backend.deviceManagement.fingerprint")}</th><th className="px-4 py-3 text-left font-medium">{t("backend.deviceManagement.action")}</th></tr>
           </thead>
           <tbody className="divide-y dark:divide-gray-800">
-            {filtered.map((d) => (
+            {filtered.map((d: any) => (
               <tr key={d.device_id} className="hover:bg-gray-50 dark:hover:bg-gray-900/30">
                 <td className="px-4 py-3"><span className="font-medium">{d.device_name}</span><p className="text-xs text-gray-400 font-mono">{d.device_id}</p></td>
                 <td className="px-4 py-3">{d.username}</td>

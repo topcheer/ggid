@@ -79,7 +79,7 @@ export default function EvidenceChainPage() {
       if (data) {
         setData({
           ...data,
-          entries: data.entries.map((e) => e.id === entryId ? { ...e, status: "verified", verified_by: "current_user", verified_at: new Date().toISOString() } : e),
+          entries: data.entries.map((e: any) => e.id === entryId ? { ...e, status: "verified", verified_by: "current_user", verified_at: new Date().toISOString() } : e),
         });
       }
     } catch {
@@ -125,7 +125,7 @@ export default function EvidenceChainPage() {
               <h3 className="font-semibold">Chain of Custody ({data.entries.length} entries)</h3>
             </div>
             <div className="relative">
-              {data.entries.map((entry, i) => {
+              {data.entries.map((entry: any, i: any) => {
                 const StatusIcon = statusIcons[entry.status] || AlertCircle;
                 return (
                   <div key={entry.id} className="relative flex gap-4 px-4 py-4">

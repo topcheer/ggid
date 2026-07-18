@@ -105,7 +105,7 @@ export default function AccessReviewsPage() {
         <div className={cardCls}><div className="py-12 text-center"><ClipboardCheck className="mx-auto h-12 w-12 text-gray-300" /><p className="mt-4 text-sm text-gray-400">No active campaigns.</p></div></div>
       ) : (
         <div className="space-y-3">
-          {campaigns.map((c) => {
+          {campaigns.map((c: any) => {
             const progress = c.total_items > 0 ? Math.round((c.reviewed_items / c.total_items) * 100) : 0;
             return (
               <div key={c.id} className={cardCls}>

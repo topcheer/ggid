@@ -41,7 +41,7 @@ export default function AuditSearchPage() {
     finally { setLoading(false); }
   }, [query, filters]);
 
-  const exportResults = () => { const csv = ["timestamp,user,action,resource,severity,detail", ...results.map((e) => [e.timestamp, e.user, e.action, e.resource, e.severity, JSON.stringify(e.detail)].join(","))].join("\n"); const blob = new Blob([csv], { type: "text/csv" }); const url = URL.createObjectURL(blob); const a = document.createElement("a"); a.href = url; a.download = "audit-export.csv"; a.click(); };
+  const exportResults = () => { const csv = ["timestamp,user,action,resource,severity,detail", ...results.map((e: any) => [e.timestamp, e.user, e.action, e.resource, e.severity, JSON.stringify(e.detail)].join(","))].join("\n"); const blob = new Blob([csv], { type: "text/csv" }); const url = URL.createObjectURL(blob); const a = document.createElement("a"); a.href = url; a.download = "audit-export.csv"; a.click(); };
 
   const saveSearch = () => { if (query) { setSavedSearches([...savedSearches, query]); } };
 
@@ -67,7 +67,7 @@ export default function AuditSearchPage() {
 
       <div className="overflow-x-auto rounded-lg border dark:border-gray-800">
         <table className="w-full text-sm"><thead className="bg-gray-50 dark:bg-gray-900/50"><tr><th className="px-4 py-3 text-left font-medium">Timestamp</th><th className="px-4 py-3 text-left font-medium">User</th><th className="px-4 py-3 text-left font-medium">Action</th><th className="px-4 py-3 text-left font-medium">Resource</th><th className="px-4 py-3 text-left font-medium">Severity</th><th className="px-4 py-3 text-left font-medium">Detail</th></tr></thead>
-          <tbody className="divide-y dark:divide-gray-800">{results.map((e) => (<tr key={e.id} className="hover:bg-gray-50 dark:hover:bg-gray-900/30"><td className="px-4 py-3 text-xs text-gray-400">{e.timestamp}</td><td className="px-4 py-3 text-xs font-mono">{e.user}</td><td className="px-4 py-3 text-xs">{e.action}</td><td className="px-4 py-3 text-xs font-mono">{e.resource}</td><td className="px-4 py-3"><span className={"px-2 py-0.5 rounded text-xs " + sevColors[e.severity]}>{e.severity}</span></td><td className="px-4 py-3 text-xs text-gray-500">{e.detail}</td></tr>))}{results.length === 0 && !loading && <tr><td colSpan={6} className="px-4 py-8 text-center text-gray-500">No results. Try searching.</td></tr>}</tbody>
+          <tbody className="divide-y dark:divide-gray-800">{results.map((e: any) => (<tr key={e.id} className="hover:bg-gray-50 dark:hover:bg-gray-900/30"><td className="px-4 py-3 text-xs text-gray-400">{e.timestamp}</td><td className="px-4 py-3 text-xs font-mono">{e.user}</td><td className="px-4 py-3 text-xs">{e.action}</td><td className="px-4 py-3 text-xs font-mono">{e.resource}</td><td className="px-4 py-3"><span className={"px-2 py-0.5 rounded text-xs " + sevColors[e.severity]}>{e.severity}</span></td><td className="px-4 py-3 text-xs text-gray-500">{e.detail}</td></tr>))}{results.length === 0 && !loading && <tr><td colSpan={6} className="px-4 py-8 text-center text-gray-500">No results. Try searching.</td></tr>}</tbody>
         </table>
       </div>
 

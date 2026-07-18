@@ -46,7 +46,7 @@ export default function OAuth21AuditPage() {
           <div>
             <h2 className="text-lg font-semibold">Overall Compliance Score</h2>
             <p className="text-sm text-gray-400">
-              {data?.compliance_checklist?.filter((c) => c.status === "pass").length ?? 0} of {data?.compliance_checklist?.length ?? 0} checks passing
+              {data?.compliance_checklist?.filter((c: any) => c.status === "pass").length ?? 0} of {data?.compliance_checklist?.length ?? 0} checks passing
             </p>
           </div>
         </div>
@@ -59,7 +59,7 @@ export default function OAuth21AuditPage() {
           Compliance Checklist
         </h2>
         <div className="space-y-2">
-          {(data?.compliance_checklist ?? []).map((c) => (
+          {(data?.compliance_checklist ?? []).map((c: any) => (
             <div key={c.item} className="flex items-center gap-3 bg-gray-800 rounded-lg p-3">
               {c.status === "pass" ? <CheckCircle className="w-5 h-5 text-green-400 flex-shrink-0" /> :
                c.status === "fail" ? <XCircle className="w-5 h-5 text-red-400 flex-shrink-0" /> :

@@ -142,7 +142,7 @@ function TimelineTab({ ops, loading, search, setSearch, filterAction, setFilterA
           <select value={filterAction} onChange={(e) => setFilterAction(e.target.value)}
             className="px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-sm text-gray-900 dark:text-white">
             <option value="all">{t("privilegedActivity.timeline.filterAction")}</option>
-            {Object.keys(ACTION_LABELS).map((a) => (
+            {Object.keys(ACTION_LABELS).map((a: any) => (
               <option key={a} value={a}>{t(`privilegedActivity.timeline.${ACTION_LABELS[a]}`)}</option>
             ))}
           </select>
@@ -165,7 +165,7 @@ function TimelineTab({ ops, loading, search, setSearch, filterAction, setFilterA
         <div className="relative">
           <div className="absolute left-4 top-0 bottom-0 w-0.5 bg-gray-200 dark:bg-gray-800" />
           <div className="space-y-3">
-            {ops.map((op) => {
+            {ops.map((op: any) => {
               const Icon = actionIcons[op.action] || Shield;
               const isBreakGlass = op.action === "break_glass";
               const isFailed = op.result === "failed";
@@ -198,7 +198,7 @@ function TimelineTab({ ops, loading, search, setSearch, filterAction, setFilterA
                     {op.scopes_delta.length > 0 && (
                       <div className="flex items-center gap-1 mt-2 flex-wrap">
                         <span className="text-xs text-gray-500">{t("privilegedActivity.timeline.scopesDelta")}:</span>
-                        {op.scopes_delta.map((s) => (
+                        {op.scopes_delta.map((s: any) => (
                           <span key={s} className={`px-1.5 py-0.5 text-xs rounded ${s.startsWith("+") ? "bg-green-100 text-green-700 dark:bg-green-950 dark:text-green-300" : "bg-red-100 text-red-700 dark:bg-red-950 dark:text-red-300"}`}>{s}</span>
                         ))}
                       </div>
@@ -224,7 +224,7 @@ function SessionsTab({ ops, loading }: { ops: PrivilegedOp[]; loading: boolean }
 
   // Group by session
   const sessions: Record<string, PrivilegedOp[]> = {};
-  ops.forEach((op) => {
+  ops.forEach((op: any) => {
     if (!sessions[op.session_id]) sessions[op.session_id] = [];
     sessions[op.session_id].push(op);
   });
@@ -243,7 +243,7 @@ function SessionsTab({ ops, loading }: { ops: PrivilegedOp[]; loading: boolean }
 
   return (
     <div className="space-y-2">
-      {sessionList.map((s) => (
+      {sessionList.map((s: any) => (
         <div key={s.session_id} className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 overflow-hidden">
           <button onClick={() => setExpanded(expanded === s.session_id ? null : s.session_id)}
             className="w-full flex items-center gap-3 p-4 hover:bg-gray-50 dark:hover:bg-gray-800/30">
@@ -268,7 +268,7 @@ function SessionsTab({ ops, loading }: { ops: PrivilegedOp[]; loading: boolean }
                   </tr>
                 </thead>
                 <tbody>
-                  {s.ops.map((op) => {
+                  {s.ops.map((op: any) => {
                     const Icon = actionIcons[op.action] || Shield;
                     return (
                       <tr key={op.seq} className="border-b border-gray-100 dark:border-gray-800/50">
@@ -318,7 +318,7 @@ function StatsTab({ ops, loading }: { ops: PrivilegedOp[]; loading: boolean }) {
   const byDay = new Map<string, number>();
   const actionCounts = new Map<string, number>();
 
-  ops.forEach((op) => {
+  ops.forEach((op: any) => {
     operators.set(op.operator, (operators.get(op.operator) || 0) + 1);
     roles.set(op.elevated_role, (roles.get(op.elevated_role) || 0) + 1);
     const day = op.timestamp.split("T")[0];
@@ -331,7 +331,7 @@ function StatsTab({ ops, loading }: { ops: PrivilegedOp[]; loading: boolean }) {
   const topOperators = [...operators.entries()].sort((a, b) => b[1] - a[1]).slice(0, 5);
   const topRoles = [...roles.entries()].sort((a, b) => b[1] - a[1]).slice(0, 5);
   const days = [...byDay.entries()].sort((a, b) => a[0].localeCompare(b[0]));
-  const maxDayCount = Math.max(...days.map((d) => d[1]), 1);
+  const maxDayCount = Math.max(...days.map((d: any) => d[1]), 1);
 
   return (
     <div className="space-y-4">

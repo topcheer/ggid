@@ -32,7 +32,7 @@ export default function AuditEventCorrelationPage() {
       <div className="bg-gray-900 rounded-xl p-6 mb-6">
         <h2 className="text-sm font-semibold mb-4 flex items-center gap-2"><GitBranch className="w-4 h-4 text-blue-400" /> Correlated Incidents</h2>
         <div className="space-y-3">
-          {(data?.correlated_incidents ?? []).map((inc) => (
+          {(data?.correlated_incidents ?? []).map((inc: any) => (
             <div key={inc.id} className="bg-gray-800 rounded-lg p-4">
               <div className="flex items-center justify-between mb-2">
                 <h3 className="text-sm font-semibold">{inc.title}</h3>
@@ -63,7 +63,7 @@ export default function AuditEventCorrelationPage() {
             <th scope="col" className="text-left py-2 pr-3">Rule</th><th className="text-left py-2 pr-3">Window</th><th className="text-left py-2 pr-3">Min Events</th><th className="text-left py-2 pr-3">Action</th>
           </tr></thead>
           <tbody>
-            {(data?.correlation_rules ?? []).map((r) => (
+            {(data?.correlation_rules ?? []).map((r: any) => (
               <tr key={r.rule} className="border-b border-gray-800">
                 <td className="py-3 pr-3 text-sm">{r.rule}</td>
                 <td className="py-3 pr-3 text-xs text-gray-400">{r.window}</td>

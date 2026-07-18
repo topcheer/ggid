@@ -109,8 +109,8 @@ export default function OAuthClientsSettingsPage() {
         body: JSON.stringify({
           name: form.name,
           grant_types: [...form.grant_types],
-          redirect_uris: form.redirect_uris.split("\n").map((s) => s.trim()).filter(Boolean),
-          scopes: form.scopes.split(",").map((s) => s.trim()).filter(Boolean),
+          redirect_uris: form.redirect_uris.split("\n").map((s: any) => s.trim()).filter(Boolean),
+          scopes: form.scopes.split(",").map((s: any) => s.trim()).filter(Boolean),
           response_types: ["code"],
         }),
       });
@@ -148,8 +148,8 @@ export default function OAuthClientsSettingsPage() {
         body: JSON.stringify({
           name: form.name,
           grant_types: [...form.grant_types],
-          redirect_uris: form.redirect_uris.split("\n").map((s) => s.trim()).filter(Boolean),
-          scopes: form.scopes.split(",").map((s) => s.trim()).filter(Boolean),
+          redirect_uris: form.redirect_uris.split("\n").map((s: any) => s.trim()).filter(Boolean),
+          scopes: form.scopes.split(",").map((s: any) => s.trim()).filter(Boolean),
         }),
       });
       setShowEdit(false);
@@ -207,7 +207,7 @@ export default function OAuthClientsSettingsPage() {
 
   const GrantCheckboxes = ({ target, onChange }: { target: ClientForm; onChange: (f: ClientForm) => void }) => (
     <div className="flex flex-wrap gap-3">
-      {ALL_GRANT_TYPES.map((gt) => (
+      {ALL_GRANT_TYPES.map((gt: any) => (
         <label key={gt} className="flex items-center gap-1.5 text-sm">
           <input
             type="checkbox"
@@ -414,7 +414,7 @@ export default function OAuthClientsSettingsPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
-              {clients.map((client) => (
+              {clients.map((client: any) => (
                 <tr key={client.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50">
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-2">
@@ -429,7 +429,7 @@ export default function OAuthClientsSettingsPage() {
                   </td>
                   <td className="px-4 py-3">
                     <div className="flex flex-wrap gap-1">
-                      {(client.grant_types || []).map((gt) => (
+                      {(client.grant_types || []).map((gt: any) => (
                         <span key={gt} className="rounded-full bg-blue-50 px-2 py-0.5 font-mono text-xs text-blue-700">
                           {gt}
                         </span>

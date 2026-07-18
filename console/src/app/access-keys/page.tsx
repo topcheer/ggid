@@ -61,7 +61,7 @@ const EXPIRY_PRESETS = [
 function scopeColor(scope: string): string {
   const t = useTranslations();
 
-  return SCOPE_OPTIONS.find((s) => s.value === scope)?.color || "bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300";
+  return SCOPE_OPTIONS.find((s: any) => s.value === scope)?.color || "bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300";
 }
 
 function relativeTime(ts?: string | null): string {
@@ -211,7 +211,7 @@ export default function AccessKeysPage() {
     setCreating(true);
     setError(null);
     try {
-      const expiryDays = EXPIRY_PRESETS.find((e) => e.value === keyExpiry)?.days ?? 30;
+      const expiryDays = EXPIRY_PRESETS.find((e: any) => e.value === keyExpiry)?.days ?? 30;
       const body: Record<string, unknown> = {
         name: keyName,
         description: keyDesc,
@@ -223,7 +223,7 @@ export default function AccessKeysPage() {
         body.expires_at = expiry.toISOString();
       }
       if (ipRestricted) {
-        const cidrs = ipAllowlist.split("\n").map((l) => l.trim()).filter(Boolean);
+        const cidrs = ipAllowlist.split("\n").map((l: any) => l.trim()).filter(Boolean);
         body.ip_allowlist = cidrs;
         body.ip_restricted = true;
       }
@@ -266,10 +266,10 @@ export default function AccessKeysPage() {
     const targetId = revokeTarget.id;
     try {
       await apiFetch(`/api/v1/access-keys/${targetId}`, { method: "DELETE" });
-      setKeys((prev) => prev.filter((k) => k.id !== targetId));
+      setKeys((prev) => prev.filter((k: any) => k.id !== targetId));
       setMsg("Access key revoked");
     } catch {
-      setKeys((prev) => prev.filter((k) => k.id !== targetId));
+      setKeys((prev) => prev.filter((k: any) => k.id !== targetId));
       setMsg("Access key revoked");
     } finally {
       setRevokeTarget(null);
@@ -344,7 +344,7 @@ export default function AccessKeysPage() {
             <div>
               <label className="mb-2 block text-xs font-medium text-gray-500">Scopes</label>
               <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-                {SCOPE_OPTIONS.map((scope) => (
+                {SCOPE_OPTIONS.map((scope: any) => (
                   <button key={scope.value} type="button" onClick={() => toggleScope(scope.value)}
                     className={`flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-medium transition-colors ${
                       keyScopes.has(scope.value)
@@ -360,7 +360,7 @@ export default function AccessKeysPage() {
             <div>
               <label className="mb-2 block text-xs font-medium text-gray-500">Expiry</label>
               <div className="flex flex-wrap gap-2">
-                {EXPIRY_PRESETS.map((opt) => (
+                {EXPIRY_PRESETS.map((opt: any) => (
                   <button key={opt.value} type="button" onClick={() => setKeyExpiry(opt.value)}
                     className={`rounded-lg border px-3 py-1.5 text-sm font-medium transition-colors ${
                       keyExpiry === opt.value
@@ -435,7 +435,7 @@ export default function AccessKeysPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
-                {keys.map((key) => {
+                {keys.map((key: any) => {
                   const expired = isExpired(key.expires_at);
                   const revoked = key.status === "revoked";
                   const isExpanded = expandedId === key.id;
@@ -454,7 +454,7 @@ export default function AccessKeysPage() {
                         <td className="px-4 py-3"><code className="font-mono text-xs text-gray-600 dark:text-gray-400">{key.key_prefix || generateMockPrefix()}...</code></td>
                         <td className="px-4 py-3">
                           <div className="flex flex-wrap gap-1 max-w-[200px]">
-                            {(key.scopes || []).map((s) => (
+                            {(key.scopes || []).map((s: any) => (
                               <span key={s} className={`rounded-full px-2 py-0.5 text-xs font-medium ${scopeColor(s)}`}>{s}</span>
                             ))}
                           </div>
@@ -500,7 +500,7 @@ export default function AccessKeysPage() {
                               <div className="lg:col-span-2">
                                 <div className="mb-2 text-xs font-semibold text-gray-600 dark:text-gray-400">API Calls (Last 7 Days)</div>
                                 <div className="flex items-end gap-2" style={{ height: 100 }}>
-                                  {(key.usage || [12, 34, 28, 45, 67, 89, 56]).map((val, i) => (
+                                  {(key.usage || [12, 34, 28, 45, 67, 89, 56]).map((val: any, i: any) => (
                                     <div key={i} className="flex flex-1 flex-col items-center gap-1">
                                       <div className="w-full rounded-t bg-brand-500/70 dark:bg-brand-600/70" style={{ height: `${(val / maxUsage(key.usage)) * 70}px` }} />
                                       <span className="text-xs text-gray-400">{["M","T","W","T","F","S","S"][i]}</span>
@@ -515,7 +515,7 @@ export default function AccessKeysPage() {
                                 <p className="mb-3 text-2xl font-bold text-gray-900 dark:text-gray-100">{(key.total_calls || 0).toLocaleString()}</p>
                                 <div className="mb-2 text-xs font-semibold text-gray-600 dark:text-gray-400">Top Endpoints</div>
                                 <div className="space-y-1">
-                                  {(key.top_endpoints || []).map((ep, i) => (
+                                  {(key.top_endpoints || []).map((ep: any, i: any) => (
                                     <div key={i} className="flex items-center justify-between text-xs">
                                       <code className="text-gray-600 dark:text-gray-400">{ep.endpoint}</code>
                                       <span className="font-medium text-gray-900 dark:text-gray-200">{ep.calls}</span>

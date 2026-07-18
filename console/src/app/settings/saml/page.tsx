@@ -327,7 +327,7 @@ export default function SamlSettingsPage() {
                         onChange={(e) => updateMapping(samlAttr, e.target.value as GgidField)}
                         className="rounded-lg border border-gray-300 px-3 py-1.5 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200"
                       >
-                        {FIELD_OPTIONS.map((opt) => (
+                        {FIELD_OPTIONS.map((opt: any) => (
                           <option key={opt} value={opt}>
                             {opt}
                           </option>

@@ -48,8 +48,8 @@ export default function ProvisioningLogPage() {
     finally { setRetrying(null); }
   };
 
-  const filtered = events.filter((e) => { if (filterSource && e.source !== filterSource) return false; if (filterStatus && e.status !== filterStatus) return false; return true; });
-  const failed = filtered.filter((e) => e.status === "failed").length;
+  const filtered = events.filter((e: any) => { if (filterSource && e.source !== filterSource) return false; if (filterStatus && e.status !== filterStatus) return false; return true; });
+  const failed = filtered.filter((e: any) => e.status === "failed").length;
 
   return (
     <div className="space-y-6">
@@ -58,7 +58,7 @@ export default function ProvisioningLogPage() {
       <div className="grid grid-cols-3 gap-4">
         <div className="rounded-lg border p-4 dark:border-gray-800"><span className="text-sm text-gray-500">Total Events</span><p className="text-xl font-bold mt-1">{events.length}</p></div>
         <div className="rounded-lg border p-4 dark:border-gray-800"><span className="text-sm text-gray-500">Failed</span><p className="text-xl font-bold text-red-600 mt-1">{failed}</p></div>
-        <div className="rounded-lg border p-4 dark:border-gray-800"><span className="text-sm text-gray-500">Sources</span><p className="text-xl font-bold mt-1">{new Set(events.map((e) => e.source)).size}</p></div>
+        <div className="rounded-lg border p-4 dark:border-gray-800"><span className="text-sm text-gray-500">Sources</span><p className="text-xl font-bold mt-1">{new Set(events.map((e: any) => e.source)).size}</p></div>
       </div>
 
       <div className="flex items-center gap-2">
@@ -69,7 +69,7 @@ export default function ProvisioningLogPage() {
       </div>
 
       <div className="space-y-2">
-        {filtered.map((e) => (
+        {filtered.map((e: any) => (
           <div key={e.id} className="rounded-lg border dark:border-gray-800 p-3">
             <div className="flex items-center justify-between cursor-pointer" onClick={() => e.status === "failed" && setExpanded(expanded === e.id ? null : e.id)}>
               <div className="flex items-center gap-3"><span className={"px-2 py-0.5 rounded text-xs " + sourceColors[e.source]}>{e.source}</span><span className={"px-2 py-0.5 rounded text-xs " + (e.status === "success" ? "bg-green-100 dark:bg-green-900/30 dark:text-green-400" : "bg-red-100 dark:bg-red-900/30 dark:text-red-400")}>{e.status}</span><span className="text-sm font-medium">{e.action}</span><span className="text-xs text-gray-500">{e.user} - {e.target_app}</span></div>

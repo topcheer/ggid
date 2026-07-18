@@ -78,7 +78,7 @@ export default function PolicyImportExportPage() {
       <div className="bg-gray-900 rounded-xl p-6">
         <h2 className="text-sm font-semibold mb-3">{t("policyImportExport.templateGallery")}</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-          {(data?.template_gallery ?? []).map((t) => (
+          {(data?.template_gallery ?? []).map((t: any) => (
             <div key={t.name} className="bg-gray-800 rounded-lg p-3 flex items-center gap-3">
               <FileCode className="w-4 h-4 text-purple-400" />
               <div className="flex-1"><p className="text-sm font-medium">{t.name}</p><p className="text-xs text-gray-400">{t.description}</p></div>

@@ -36,17 +36,17 @@ export default function AuditEvidenceCollectionPage() {
         <div className="bg-gray-900 rounded-xl p-4">
           <CheckCircle className="w-5 h-5 text-green-400 mb-1" />
           <p className="text-xs text-gray-400">Collected</p>
-          <p className="text-xl font-bold text-green-400">{data?.evidence_requests?.filter((r) => r.status === "collected").length ?? 0}</p>
+          <p className="text-xl font-bold text-green-400">{data?.evidence_requests?.filter((r: any) => r.status === "collected").length ?? 0}</p>
         </div>
         <div className="bg-gray-900 rounded-xl p-4">
           <Clock className="w-5 h-5 text-yellow-400 mb-1" />
           <p className="text-xs text-gray-400">Pending</p>
-          <p className="text-xl font-bold text-yellow-400">{data?.evidence_requests?.filter((r) => r.status === "pending").length ?? 0}</p>
+          <p className="text-xl font-bold text-yellow-400">{data?.evidence_requests?.filter((r: any) => r.status === "pending").length ?? 0}</p>
         </div>
         <div className="bg-gray-900 rounded-xl p-4">
           <AlertTriangle className="w-5 h-5 text-red-400 mb-1" />
           <p className="text-xs text-gray-400">Overdue</p>
-          <p className="text-xl font-bold text-red-400">{data?.evidence_requests?.filter((r) => r.status === "overdue").length ?? 0}</p>
+          <p className="text-xl font-bold text-red-400">{data?.evidence_requests?.filter((r: any) => r.status === "overdue").length ?? 0}</p>
         </div>
       </div>
 
@@ -54,7 +54,7 @@ export default function AuditEvidenceCollectionPage() {
       <div className="bg-gray-900 rounded-xl p-6 mb-6">
         <h2 className="text-sm font-semibold mb-4">Collection Progress by Framework</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-          {(data?.collection_progress ?? []).map((p) => (
+          {(data?.collection_progress ?? []).map((p: any) => (
             <div key={p.framework} className="bg-gray-800 rounded-lg p-3">
               <div className="flex items-center justify-between mb-2">
                 <span className="text-sm font-semibold">{p.framework}</span>

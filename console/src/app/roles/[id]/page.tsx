@@ -111,7 +111,7 @@ export default function RoleDetailPage() {
         method: "POST",
         body: JSON.stringify({ permission_id: permId }),
       });
-      const perm = allPermissions.find((p) => p.id === permId);
+      const perm = allPermissions.find((p: any) => p.id === permId);
       if (perm) setPermissions([...permissions, perm]);
       setShowAddPerm(false);
       setMsg("Permission added");
@@ -126,7 +126,7 @@ export default function RoleDetailPage() {
       await apiFetch(`/api/v1/roles/${roleId}/permissions/${permId}`, {
         method: "DELETE",
       });
-      setPermissions(permissions.filter((p) => p.id !== permId));
+      setPermissions(permissions.filter((p: any) => p.id !== permId));
       setMsg("Permission removed");
       setTimeout(() => setMsg(""), 3000);
     } catch {
@@ -139,7 +139,7 @@ export default function RoleDetailPage() {
       await apiFetch(`/api/v1/roles/${roleId}/users/${userId}`, {
         method: "DELETE",
       });
-      setAssignedUsers(assignedUsers.filter((u) => u.id !== userId));
+      setAssignedUsers(assignedUsers.filter((u: any) => u.id !== userId));
       setMsg("User unassigned");
       setTimeout(() => setMsg(""), 3000);
     } catch {
@@ -148,7 +148,7 @@ export default function RoleDetailPage() {
   };
 
   const availablePermissions = allPermissions.filter(
-    (p) => !permissions.some((ep) => ep.id === p.id)
+    (p) => !permissions.some((ep: any) => ep.id === p.id)
   );
 
   const inputCls =
@@ -268,7 +268,7 @@ export default function RoleDetailPage() {
                 {availablePermissions.length === 0 ? (
                   <p className="text-sm text-gray-400">All permissions already assigned.</p>
                 ) : (
-                  availablePermissions.map((perm) => (
+                  availablePermissions.map((perm: any) => (
                     <div
                       key={perm.id}
                       className="flex items-center justify-between rounded-lg px-3 py-1.5 hover:bg-gray-50 dark:hover:bg-gray-700/50"
@@ -290,7 +290,7 @@ export default function RoleDetailPage() {
             )}
 
             <div className="space-y-2">
-              {permissions.map((perm) => (
+              {permissions.map((perm: any) => (
                 <div
                   key={perm.id}
                   className="flex items-center justify-between rounded-lg border border-gray-100 px-3 py-2 dark:border-gray-700/50"
@@ -327,7 +327,7 @@ export default function RoleDetailPage() {
             <Users className="h-4 w-4" /> Assigned Users ({assignedUsers.length})
           </h3>
           <div className="space-y-2">
-            {assignedUsers.map((user) => (
+            {assignedUsers.map((user: any) => (
               <div
                 key={user.id}
                 className="flex items-center justify-between rounded-lg border border-gray-100 px-3 py-2 dark:border-gray-700/50"

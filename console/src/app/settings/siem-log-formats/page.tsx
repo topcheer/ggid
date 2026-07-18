@@ -24,7 +24,7 @@ export default function SiemLogFormatsPage() {
 
       {/* Format configs per destination */}
       <div className="space-y-4">
-        {(data?.format_configs ?? []).map((cfg) => (
+        {(data?.format_configs ?? []).map((cfg: any) => (
           <div key={cfg.destination} className="bg-gray-900 rounded-xl p-6">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-sm font-semibold flex items-center gap-2">
@@ -43,7 +43,7 @@ export default function SiemLogFormatsPage() {
               <div>
                 <h4 className="text-xs text-gray-400 mb-2">Field Mapping</h4>
                 <div className="space-y-1">
-                  {cfg.field_mapping.map((m) => (
+                  {cfg.field_mapping.map((m: any) => (
                     <div key={m.local_field} className="flex items-center gap-2 bg-gray-800 rounded p-2">
                       <span className="text-xs font-mono text-blue-400">{m.local_field}</span>
                       <span className="text-gray-600">{" -> "}</span>
@@ -57,7 +57,7 @@ export default function SiemLogFormatsPage() {
               <div>
                 <h4 className="text-xs text-gray-400 mb-2">Severity Mapping</h4>
                 <div className="space-y-1">
-                  {cfg.severity_mapping.map((s) => (
+                  {cfg.severity_mapping.map((s: any) => (
                     <div key={s.our_severity} className="flex items-center gap-2 bg-gray-800 rounded p-2">
                       <span className={"text-xs font-bold " + (
                         s.our_severity === "critical" ? "text-red-400" :
@@ -87,7 +87,7 @@ export default function SiemLogFormatsPage() {
       <div className="bg-gray-900 rounded-xl p-6 mt-6">
         <h2 className="text-sm font-semibold mb-3">Template Library</h2>
         <div className="flex flex-wrap gap-2">
-          {(data?.template_library ?? []).map((t) => (
+          {(data?.template_library ?? []).map((t: any) => (
             <span key={t} className="text-xs px-3 py-1.5 bg-gray-800 rounded-lg text-gray-400">{t}</span>
           ))}
         </div>

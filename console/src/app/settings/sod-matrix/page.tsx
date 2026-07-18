@@ -48,7 +48,7 @@ export default function SoDMatrixPage() {
 
   // Build conflict set for matrix
   const conflictSet = new Set<string>();
-  rules.forEach((r) => {
+  rules.forEach((r: any) => {
     conflictSet.add(`${r.role_a}::${r.role_b}`);
     conflictSet.add(`${r.role_b}::${r.role_a}`);
   });
@@ -111,7 +111,7 @@ function MatrixTab({ roles, conflictSet }: { roles: string[]; conflictSet: Set<s
             <thead>
               <tr>
                 <th className="sticky left-0 bg-gray-50 dark:bg-gray-800 p-2 border border-gray-200 dark:border-gray-700 text-gray-500 font-medium min-w-[120px]">{t("sodMatrix.rules.roleA")}</th>
-                {roles.map((r) => (
+                {roles.map((r: any) => (
                   <th key={r} className="p-2 border border-gray-200 dark:border-gray-700 text-gray-500 font-medium min-w-[60px]">
                     <div className="rotate-[-45deg] origin-bottom-left whitespace-nowrap text-xs h-16 flex items-end pb-1">{r}</div>
                   </th>
@@ -180,7 +180,7 @@ function RulesTab({ rules, setRules }: { rules: SoDRule[]; setRules: (r: SoDRule
 
   const deleteRule = (id: string) => {
     if (!confirm(t("sodMatrix.rules.confirmDelete"))) return;
-    setRules(rules.filter((r) => r.id !== id));
+    setRules(rules.filter((r: any) => r.id !== id));
     setMsg(t("sodMatrix.rules.deleted"));
     setTimeout(() => setMsg(null), 3000);
   };
@@ -206,21 +206,21 @@ function RulesTab({ rules, setRules }: { rules: SoDRule[]; setRules: (r: SoDRule
               <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">{t("sodMatrix.rules.roleA")}</label>
               <select value={newRoleA} onChange={(e) => setNewRoleA(e.target.value)} className="w-full px-2 py-1.5 rounded border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-xs text-gray-900 dark:text-white">
                 <option value="">{t("sodMatrix.rules.selectRoleA")}</option>
-                {ROLES.map((r) => <option key={r} value={r}>{r}</option>)}
+                {ROLES.map((r: any) => <option key={r} value={r}>{r}</option>)}
               </select>
             </div>
             <div>
               <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">{t("sodMatrix.rules.roleB")}</label>
               <select value={newRoleB} onChange={(e) => setNewRoleB(e.target.value)} className="w-full px-2 py-1.5 rounded border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-xs text-gray-900 dark:text-white">
                 <option value="">{t("sodMatrix.rules.selectRoleB")}</option>
-                {ROLES.filter((r) => r !== newRoleA).map((r) => <option key={r} value={r}>{r}</option>)}
+                {ROLES.filter((r: any) => r !== newRoleA).map((r: any) => <option key={r} value={r}>{r}</option>)}
               </select>
             </div>
           </div>
           <div>
             <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">{t("sodMatrix.rules.severity")}</label>
             <div className="flex gap-2">
-              {(["high", "medium", "low"] as const).map((s) => (
+              {(["high", "medium", "low"] as const).map((s: any) => (
                 <button key={s} onClick={() => setNewSeverity(s)} className={`px-3 py-1 rounded-lg text-xs font-medium border-2 ${newSeverity === s ? "border-blue-500 " + severityColors[s] : "border-gray-200 dark:border-gray-700 text-gray-500"}`}>
                   {t(`sodMatrix.rules.severity${s.replace(/^./, (m) => m.toUpperCase())}`)}
                 </button>
@@ -245,7 +245,7 @@ function RulesTab({ rules, setRules }: { rules: SoDRule[]; setRules: (r: SoDRule
         {rules.length === 0 ? (
           <div className="text-center py-8"><List className="w-10 h-10 mx-auto mb-2 text-gray-300" /><p className="text-sm text-gray-500">{t("sodMatrix.rules.noRules")}</p></div>
         ) : (
-          rules.map((r) => (
+          rules.map((r: any) => (
             <div key={r.id} className="flex items-center gap-3 p-3 rounded-lg border border-gray-200 dark:border-gray-800">
               <Shield className="w-4 h-4 text-gray-400 flex-shrink-0" />
               <div className="flex-1 min-w-0">

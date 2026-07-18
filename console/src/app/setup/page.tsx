@@ -189,14 +189,14 @@ function OrgStep({ data, setData, onBack, onNext }: { data: SetupData; setData: 
             <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">{t("setup.steps.org.industry")}</label>
             <select value={data.industry} onChange={(e) => setData({ ...data, industry: e.target.value })}
               className="w-full px-3 py-2.5 rounded-lg border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-sm text-gray-900 dark:text-white">
-              {industries.map((i) => <option key={i} value={i}>{t(`setup.steps.org.industry${i.replace(/^./, (m) => m.toUpperCase())}`)}</option>)}
+              {industries.map((i: any) => <option key={i} value={i}>{t(`setup.steps.org.industry${i.replace(/^./, (m) => m.toUpperCase())}`)}</option>)}
             </select>
           </div>
           <div>
             <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">{t("setup.steps.org.region")}</label>
             <select value={data.region} onChange={(e) => setData({ ...data, region: e.target.value })}
               className="w-full px-3 py-2.5 rounded-lg border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-sm text-gray-900 dark:text-white">
-              {regions.map((r) => <option key={r} value={r}>{t(`setup.steps.org.region${r.toUpperCase()}`)}</option>)}
+              {regions.map((r: any) => <option key={r} value={r}>{t(`setup.steps.org.region${r.toUpperCase()}`)}</option>)}
             </select>
           </div>
         </div>
@@ -233,7 +233,7 @@ function AuthStep({ data, setData, onBack, onNext }: { data: SetupData; setData:
       </div>
 
       <div className="space-y-3">
-        {strategies.map((s) => {
+        {strategies.map((s: any) => {
           const Icon = s.icon;
           const selected = data.authStrategy === s.id;
           const isRecommended = s.id === "passkey";
@@ -301,7 +301,7 @@ function SSOStep({ data, setData, onBack, onNext, onSkip }: {
       {data.ssoEnabled && (
         <div className="space-y-4">
           <div className="flex gap-2">
-            {["saml", "oidc"].map((p) => (
+            {["saml", "oidc"].map((p: any) => (
               <button key={p} onClick={() => setData({ ...data, ssoProtocol: p })}
                 className={`flex-1 px-3 py-2 rounded-lg border-2 text-sm font-medium ${data.ssoProtocol === p ? "border-blue-500 bg-blue-50 dark:bg-blue-950/20 text-blue-700 dark:text-blue-300" : "border-gray-200 dark:border-gray-700 text-gray-500"}`}>
                 {t(`setup.steps.sso.protocol${p.replace(/^./, (m) => m.toUpperCase())}`)}
@@ -379,7 +379,7 @@ function DoneStep({ data }: { data: SetupData }) {
       <div className="text-left p-4 rounded-xl bg-gray-50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700">
         <span className="text-xs font-medium text-gray-500 mb-2 block">{t("setup.steps.done.summary")}</span>
         <div className="space-y-1.5">
-          {summary.map((s) => (
+          {summary.map((s: any) => (
             <div key={s.label} className="flex items-center justify-between text-sm">
               <span className="text-gray-500">{s.label}</span>
               <span className="font-medium text-gray-900 dark:text-white">{s.value || "—"}</span>

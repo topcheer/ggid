@@ -71,7 +71,7 @@ export default function RiskScoringConfigPage() {
 
       <div className="rounded-lg border dark:border-gray-800 p-4">
         <h3 className="text-sm font-semibold mb-4">Risk Factor Weights</h3>
-        <div className="space-y-4">{weightLabels.map((w) => (
+        <div className="space-y-4">{weightLabels.map((w: any) => (
           <div key={w.key} className="flex items-center gap-4">
             <span className="text-sm w-32">{w.label}</span>
             <input aria-label="Input field" type="range" min={0} max={50} value={config.weights[w.key]} onChange={(e) => setConfig({ ...config, weights: { ...config.weights, [w.key]: parseInt(e.target.value) } })} className="flex-1" />
@@ -84,11 +84,11 @@ export default function RiskScoringConfigPage() {
       <div className="rounded-lg border dark:border-gray-800 p-4">
         <h3 className="text-sm font-semibold mb-4">Thresholds & Actions</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {(["low", "medium", "high", "critical"] as const).map((level) => (
+          {(["low", "medium", "high", "critical"] as const).map((level: any) => (
             <div key={level} className="flex items-center gap-3">
               <span className={"px-2 py-1 rounded text-xs font-medium " + (level === "low" ? "bg-gray-100 dark:bg-gray-800" : level === "medium" ? "bg-yellow-100 dark:bg-yellow-900/30 dark:text-yellow-400" : level === "high" ? "bg-orange-100 dark:bg-orange-900/30 dark:text-orange-400" : "bg-red-100 dark:bg-red-900/30 dark:text-red-400")}>{level}</span>
               <div><label className="text-xs text-gray-500">Score {"\u2265"}</label><input aria-label="config" type="number" min={0} max={100} value={config.thresholds[level]} onChange={(e) => setConfig({ ...config, thresholds: { ...config.thresholds, [level]: parseInt(e.target.value) } })} className="w-16 px-2 py-1 rounded border dark:border-gray-700 dark:bg-gray-900 text-sm" /></div>
-              <select aria-label="config" value={config.actions_per_level[level]} onChange={(e) => setConfig({ ...config, actions_per_level: { ...config.actions_per_level, [level]: e.target.value } })} className="px-2 py-1 rounded border dark:border-gray-700 dark:bg-gray-900 text-sm">{actionOptions.map((a) => <option key={a} value={a}>{a}</option>)}</select>
+              <select aria-label="config" value={config.actions_per_level[level]} onChange={(e) => setConfig({ ...config, actions_per_level: { ...config.actions_per_level, [level]: e.target.value } })} className="px-2 py-1 rounded border dark:border-gray-700 dark:bg-gray-900 text-sm">{actionOptions.map((a: any) => <option key={a} value={a}>{a}</option>)}</select>
             </div>
           ))}
         </div>

@@ -37,7 +37,7 @@ export default function FrameworkCoveragePage() {
 
   useEffect(() => { fetchData(); }, [fetchData]);
 
-  const current = data?.frameworks.find((f) => f.framework === activeTab);
+  const current = data?.frameworks.find((f: any) => f.framework === activeTab);
   const barColor = (pct: number) => pct >= 80 ? "#10b981" : pct >= 50 ? "#f59e0b" : "#ef4444";
 
   return (
@@ -48,7 +48,7 @@ export default function FrameworkCoveragePage() {
       </div>
 
       <div className="flex items-center gap-1 border-b dark:border-gray-800">
-        {frameworks.map((f) => (
+        {frameworks.map((f: any) => (
           <button key={f} onClick={() => setActiveTab(f)} className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${activeTab === f ? "border-blue-600 text-blue-600" : "border-transparent text-gray-500 hover:text-gray-700"}`}>{f}</button>
         ))}
       </div>
@@ -76,7 +76,7 @@ export default function FrameworkCoveragePage() {
           )}
 
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {data!.frameworks.map((f) => (
+            {data!.frameworks.map((f: any) => (
               <div key={f.framework} className="rounded-lg border dark:border-gray-800 p-3 cursor-pointer" onClick={() => setActiveTab(f.framework)}>
                 <span className="text-xs font-medium text-gray-500">{f.framework}</span>
                 <p className="text-lg font-bold mt-1" style={{ color: barColor(f.coverage_pct) }}>{f.coverage_pct.toFixed(0)}%</p>

@@ -70,7 +70,7 @@ export default function VelocityRulesConfigPage() {
               </tr>
             </thead>
             <tbody>
-              {(data?.rules ?? []).map((r) => {
+              {(data?.rules ?? []).map((r: any) => {
                 const pct = r.threshold > 0 ? (r.current_rate / r.threshold) * 100 : 0;
                 return (
                   <tr key={r.rule_name} className="border-b border-gray-800">
@@ -147,7 +147,7 @@ export default function VelocityRulesConfigPage() {
               <div>
                 <label className="text-xs text-gray-400">Scope</label>
                 <div className="flex gap-2 mt-1">
-                  {"per_ip".split("|").map((s) => (
+                  {"per_ip".split("|").map((s: any) => (
                     <span key={s} className="text-xs px-3 py-1.5 bg-gray-800 rounded-lg border border-gray-700">{s}</span>
                   ))}
                   <span className="text-xs px-3 py-1.5 bg-gray-800 rounded-lg border border-gray-700">per_ip</span>

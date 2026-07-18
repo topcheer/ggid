@@ -117,7 +117,7 @@ export default function SecurityCenterPage() {
 
   const overview = data!.overview;
   const heatmap = data!.heatmap;
-  const anomalies = data!.anomalies.filter((a) => !dismissedAnomalies.has(a.id));
+  const anomalies = data!.anomalies.filter((a: any) => !dismissedAnomalies.has(a.id));
   const allowlist = data!.ip_allowlist;
   const denylist = data!.ip_denylist;
   const recommendations = data!.recommendations;
@@ -149,7 +149,7 @@ export default function SecurityCenterPage() {
   // Heatmap helpers
   const days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
   const hours = Array.from({ length: 24 }, (_, i) => i);
-  const maxCount = Math.max(1, ...heatmap.map((c) => c.count));
+  const maxCount = Math.max(1, ...heatmap.map((c: any) => c.count));
   const heatColor = (count: number) => {
     const ratio = count / maxCount;
     if (ratio === 0) return "bg-gray-100 dark:bg-gray-700";
@@ -159,7 +159,7 @@ export default function SecurityCenterPage() {
     return "bg-red-500 dark:bg-red-600";
   };
   const getCell = (day: string, hour: number) =>
-    heatmap.find((c) => c.day === day && c.hour === hour)?.count ?? 0;
+    heatmap.find((c: any) => c.day === day && c.hour === hour)?.count ?? 0;
 
   const addAllow = () => {
     if (!allowInput.trim()) return;
@@ -169,7 +169,7 @@ export default function SecurityCenterPage() {
   };
 
   const removeAllow = (ip: string) => {
-    setData({ ...data!, ip_allowlist: allowlist.filter((x) => x !== ip) });
+    setData({ ...data!, ip_allowlist: allowlist.filter((x: any) => x !== ip) });
   };
 
   const addDeny = () => {
@@ -180,7 +180,7 @@ export default function SecurityCenterPage() {
   };
 
   const removeDeny = (ip: string) => {
-    setData({ ...data!, ip_denylist: denylist.filter((x) => x !== ip) });
+    setData({ ...data!, ip_denylist: denylist.filter((x: any) => x !== ip) });
   };
 
   const dismissAnomaly = (id: string) => {
@@ -191,7 +191,7 @@ export default function SecurityCenterPage() {
   const toggleRec = (id: string) => {
     setData({
       ...data!,
-      recommendations: recommendations.map((r) =>
+      recommendations: recommendations.map((r: any) =>
         r.id === id ? { ...r, done: !r.done } : r,
       ),
     });
@@ -251,7 +251,7 @@ export default function SecurityCenterPage() {
               {/* Hour labels */}
               <div className="mb-1 flex">
                 <div className="w-10 shrink-0" />
-                {hours.map((h) => (
+                {hours.map((h: any) => (
                   <div
                     key={h}
                     className="flex-1 text-center text-[10px] text-gray-400"
@@ -261,10 +261,10 @@ export default function SecurityCenterPage() {
                 ))}
               </div>
               {/* Day rows */}
-              {days.map((day) => (
+              {days.map((day: any) => (
                 <div key={day} className="mb-0.5 flex items-center">
                   <div className="w-10 shrink-0 text-xs font-medium text-gray-500">{day}</div>
-                  {hours.map((h) => {
+                  {hours.map((h: any) => {
                     const count = getCell(day, h);
                     return (
                       <div
@@ -299,7 +299,7 @@ export default function SecurityCenterPage() {
             </p>
           ) : (
             <div className="space-y-3">
-              {anomalies.map((alert) => (
+              {anomalies.map((alert: any) => (
                 <div
                   key={alert.id}
                   className="flex items-start justify-between rounded-lg border border-gray-200 p-4 dark:border-gray-700"
@@ -372,7 +372,7 @@ export default function SecurityCenterPage() {
             {allowlist.length === 0 ? (
               <p className="text-sm text-gray-400">No IPs on allowlist</p>
             ) : (
-              allowlist.map((ip) => (
+              allowlist.map((ip: any) => (
                 <div
                   key={ip}
                   className="flex items-center justify-between rounded-lg border border-green-200 bg-green-50 px-3 py-2 dark:border-green-800 dark:bg-green-950/40"
@@ -417,7 +417,7 @@ export default function SecurityCenterPage() {
             {denylist.length === 0 ? (
               <p className="text-sm text-gray-400">No IPs on denylist</p>
             ) : (
-              denylist.map((ip) => (
+              denylist.map((ip: any) => (
                 <div
                   key={ip}
                   className="flex items-center justify-between rounded-lg border border-red-200 bg-red-50 px-3 py-2 dark:border-red-800 dark:bg-red-950/40"
@@ -443,7 +443,7 @@ export default function SecurityCenterPage() {
           <ShieldCheck className="h-5 w-5 text-brand-600" /> Security Recommendations
         </h2>
         <div className="space-y-2">
-          {recommendations.map((rec) => (
+          {recommendations.map((rec: any) => (
             <div
               key={rec.id}
               className="flex items-start justify-between rounded-lg border border-gray-200 p-4 dark:border-gray-700"

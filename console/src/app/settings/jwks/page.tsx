@@ -121,7 +121,7 @@ export default function JwksPage() {
                     <th scope="col" className="px-4 py-3">{t("backend.jwks.keyId")}</th><th className="px-4 py-3">{t("backend.jwks.retiredAt")}</th><th className="px-4 py-3">{t("backend.jwks.status")}</th>
                   </tr></thead>
                   <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
-                    {status.previous_keys.map((k) => (
+                    {status.previous_keys.map((k: any) => (
                       <tr key={k.kid} className="hover:bg-gray-50 dark:hover:bg-gray-800/50">
                         <td className="px-4 py-3 font-mono text-xs text-gray-500">{k.kid}</td>
                         <td className="px-4 py-3 text-gray-400">{new Date(k.retired_at).toLocaleString()}</td>
@@ -132,7 +132,7 @@ export default function JwksPage() {
                 </table>
               </div>
               <div className="space-y-2 md:hidden">
-                {status.previous_keys.map((k) => (
+                {status.previous_keys.map((k: any) => (
                   <div key={k.kid} className={`${cardCls} py-3`}>
                     <p className="font-mono text-xs text-gray-500">{k.kid}</p>
                     <p className="text-xs text-gray-400">Retired: {new Date(k.retired_at).toLocaleString()}</p>

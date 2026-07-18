@@ -56,9 +56,9 @@ export default function CoverageMatrixPage() {
 
           {data.subjects.length > 0 && data.resources.length > 0 && (
             <div className="overflow-x-auto rounded-lg border dark:border-gray-800">
-              <table className="w-full text-sm"><thead className="bg-gray-50 dark:bg-gray-900/50"><tr><th className="px-3 py-2 text-left font-medium sticky">{t("backend3.coverageMatrix.subject")}</th>{data.resources.map((r) => <th key={r} className="px-2 py-2 text-center text-xs font-mono">{r}</th>)}</tr></thead>
-                <tbody className="divide-y dark:divide-gray-800">{data.subjects.map((subj) => (
-                  <tr key={subj} className="hover:bg-gray-50 dark:hover:bg-gray-900/30"><td className="px-3 py-2 font-mono text-xs">{subj}</td>{data.resources.map((res) => { const cell = data.cells.find((c) => c.subject === subj && c.resource === res); const pct = cell?.coverage_pct ?? 0; return (<td key={res} className="px-2 py-2 text-center"><div className={`inline-block w-10 h-7 rounded ${cellColor(pct)} flex items-center justify-center text-xs font-bold text-white`}>{pct > 0 ? pct + "%" : "-"}</div></td>); })}</tr>
+              <table className="w-full text-sm"><thead className="bg-gray-50 dark:bg-gray-900/50"><tr><th className="px-3 py-2 text-left font-medium sticky">{t("backend3.coverageMatrix.subject")}</th>{data.resources.map((r: any) => <th key={r} className="px-2 py-2 text-center text-xs font-mono">{r}</th>)}</tr></thead>
+                <tbody className="divide-y dark:divide-gray-800">{data.subjects.map((subj: any) => (
+                  <tr key={subj} className="hover:bg-gray-50 dark:hover:bg-gray-900/30"><td className="px-3 py-2 font-mono text-xs">{subj}</td>{data.resources.map((res: any) => { const cell = data.cells.find((c: any) => c.subject === subj && c.resource === res); const pct = cell?.coverage_pct ?? 0; return (<td key={res} className="px-2 py-2 text-center"><div className={`inline-block w-10 h-7 rounded ${cellColor(pct)} flex items-center justify-center text-xs font-bold text-white`}>{pct > 0 ? pct + "%" : "-"}</div></td>); })}</tr>
                 ))}</tbody>
               </table>
             </div>

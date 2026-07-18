@@ -60,9 +60,9 @@ export default function BreakGlassPage() {
   };
 
   const cardCls = "rounded-xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-700 dark:bg-gray-800";
-  const activeReqs = requests.filter((r) => r.status === "active");
-  const history = requests.filter((r) => r.status !== "active");
-  const pendingCount = requests.filter((r) => r.status === "pending").length;
+  const activeReqs = requests.filter((r: any) => r.status === "active");
+  const history = requests.filter((r: any) => r.status !== "active");
+  const pendingCount = requests.filter((r: any) => r.status === "pending").length;
 
   return (
     <div className="space-y-6">
@@ -95,7 +95,7 @@ export default function BreakGlassPage() {
             <div>
               <h2 className="mb-3 flex items-center gap-2 text-sm font-semibold uppercase text-red-500"><AlertTriangle className="h-4 w-4" /> Active Emergency Access</h2>
               <div className="space-y-2">
-                {activeReqs.map((r) => {
+                {activeReqs.map((r: any) => {
                   const remaining = r.expires_at ? Math.max(0, new Date(r.expires_at).getTime() - Date.now()) : 0;
                   const mins = Math.floor(remaining / 60000);
                   return (
@@ -129,7 +129,7 @@ export default function BreakGlassPage() {
                     <th scope="col" className="px-4 py-3 text-left font-semibold text-gray-600 dark:text-gray-300">Notified</th>
                   </tr></thead>
                   <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-                    {history.map((r) => (
+                    {history.map((r: any) => (
                       <tr key={r.id} className="bg-white dark:bg-gray-900">
                         <td className="px-4 py-3"><div className="font-medium text-gray-900 dark:text-white">{r.requester_name || r.requester.slice(0, 12)}</div></td>
                         <td className="px-4 py-3 text-gray-500">{r.reason}</td>

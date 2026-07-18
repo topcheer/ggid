@@ -82,7 +82,7 @@ export default function MonitoringPage() {
     loadData();
   }, [loadData]);
 
-  const healthyCount = services.filter((s) => s.status === "healthy").length;
+  const healthyCount = services.filter((s: any) => s.status === "healthy").length;
   const totalReqs = gwStats?.total_requests || 0;
   const totalErrors = gwStats?.total_errors || 0;
   const errorRate = totalReqs > 0 ? ((totalErrors / totalReqs) * 100).toFixed(2) : "0.00";
@@ -149,7 +149,7 @@ export default function MonitoringPage() {
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100">
-            {(services.length > 0 ? services : SERVICES.map((s) => ({ ...s, status: "checking" as const }))).map((svc) => (
+            {(services.length > 0 ? services : SERVICES.map((s: any) => ({ ...s, status: "checking" as const }))).map((svc: any) => (
               <tr key={svc.name} className="hover:bg-gray-50">
                 <td className="px-4 py-3 text-sm font-medium">{svc.name}</td>
                 <td className="px-4 py-3">

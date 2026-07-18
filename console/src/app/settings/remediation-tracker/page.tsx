@@ -41,7 +41,7 @@ export default function RemediationTrackerPage() {
         <div className="bg-gray-900 rounded-xl p-4">
           <Wrench className="w-5 h-5 text-yellow-400 mb-1" />
           <p className="text-xs text-gray-400">In Progress</p>
-          <p className="text-xl font-bold text-yellow-400">{data?.remediation_items?.filter((r) => r.status === "in_progress").length ?? 0}</p>
+          <p className="text-xl font-bold text-yellow-400">{data?.remediation_items?.filter((r: any) => r.status === "in_progress").length ?? 0}</p>
         </div>
       </div>
 
@@ -126,7 +126,7 @@ export default function RemediationTrackerPage() {
       <div className="bg-gray-900 rounded-xl p-6">
         <h2 className="text-sm font-semibold mb-4">Per Team Breakdown</h2>
         <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-3">
-          {(data?.per_team_breakdown ?? []).map((t) => (
+          {(data?.per_team_breakdown ?? []).map((t: any) => (
             <div key={t.team} className="bg-gray-800 rounded-lg p-3 text-center">
               <p className="text-xs text-gray-400">{t.team}</p>
               <p className="text-lg font-bold">{t.total}</p>

@@ -83,7 +83,7 @@ export default function ImpersonationLogPage() {
               <th scope="col" className="px-4 py-3">Impersonator</th><th className="px-4 py-3"></th><th className="px-4 py-3">Target</th><th className="px-4 py-3">Started</th><th className="px-4 py-3">Duration</th><th className="px-4 py-3">Actions</th><th className="px-4 py-3">IP</th>
             </tr></thead>
             <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
-              {entries.map((e) => (
+              {entries.map((e: any) => (
                 <tr key={e.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/50">
                   <td className="px-4 py-3 font-medium text-gray-800 dark:text-gray-200">{e.impersonator_name}</td>
                   <td className="px-4 py-3"><ArrowRight className="h-4 w-4 text-gray-300" /></td>
@@ -102,7 +102,7 @@ export default function ImpersonationLogPage() {
       {/* Mobile */}
       {!loading && entries.length > 0 && (
         <div className="space-y-3 md:hidden">
-          {entries.map((e) => (
+          {entries.map((e: any) => (
             <div key={e.id} className={cardCls}>
               <div className="flex items-center gap-2 text-sm">
                 <span className="font-medium text-gray-800 dark:text-gray-200">{e.impersonator_name}</span>

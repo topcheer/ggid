@@ -123,7 +123,7 @@ function EndpointsTab() {
               </tr>
             </thead>
             <tbody>
-              {endpoints.map((e, i) => (
+              {endpoints.map((e: any, i: any) => (
                 <tr key={i} className="border-b border-gray-100 dark:border-gray-800/50 hover:bg-gray-50 dark:hover:bg-gray-800/30">
                   <td className="py-3 px-3"><span className={`text-xs font-bold ${methodColors[e.method] || "text-gray-500"}`}>{e.method}</span></td>
                   <td className="py-3 px-3 font-mono text-xs text-gray-900 dark:text-white">{e.path}</td>
@@ -202,7 +202,7 @@ function SlowRequestsTab() {
               </tr>
             </thead>
             <tbody>
-              {requests.map((r) => (
+              {requests.map((r: any) => (
                 <tr key={r.id} className="border-b border-gray-100 dark:border-gray-800/50">
                   <td className="py-3 px-3 text-xs text-gray-500">{new Date(r.timestamp).toLocaleTimeString()}</td>
                   <td className="py-3 px-3"><span className="text-xs font-mono text-gray-900 dark:text-white">{r.method} {r.path}</span></td>

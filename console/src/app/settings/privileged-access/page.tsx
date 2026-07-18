@@ -57,14 +57,14 @@ export default function PrivilegedAccessPage() {
         headers: { ...authHeader(), "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" },
         body: JSON.stringify({ ids: [...selectedIds] }),
       });
-      setAccounts((prev) => prev.filter((a) => !selectedIds.has(a.id)));
+      setAccounts((prev) => prev.filter((a: any) => !selectedIds.has(a.id)));
       setSelectedIds(new Set());
       setShowConfirm(false);
     } catch { /* noop */ }
     finally { setRevoking(false); }
   };
 
-  const expiringSoon = accounts.filter((a) => a.days_until_expiry <= 7);
+  const expiringSoon = accounts.filter((a: any) => a.days_until_expiry <= 7);
 
   return (
     <div className="space-y-6">
@@ -88,7 +88,7 @@ export default function PrivilegedAccessPage() {
             <span className="font-semibold text-orange-700 dark:text-orange-400">{expiringSoon.length} privileged access{expiringSoon.length > 1 ? "es" : ""} expiring within 7 days</span>
           </div>
           <div className="space-y-1">
-            {expiringSoon.map((a) => (
+            {expiringSoon.map((a: any) => (
               <div key={a.id} className="flex items-center gap-2 text-sm text-orange-600 dark:text-orange-400">
                 <Clock className="w-3 h-3" />
                 <span className="font-medium">{a.username}</span>
@@ -111,7 +111,7 @@ export default function PrivilegedAccessPage() {
         </div>
         <div className="rounded-lg border p-4 dark:border-gray-800">
           <span className="text-sm text-gray-500">Expired</span>
-          <p className="text-2xl font-bold mt-1 text-red-600">{accounts.filter((a) => a.days_until_expiry <= 0).length}</p>
+          <p className="text-2xl font-bold mt-1 text-red-600">{accounts.filter((a: any) => a.days_until_expiry <= 0).length}</p>
         </div>
         <div className="rounded-lg border p-4 dark:border-gray-800">
           <span className="text-sm text-gray-500">Unique Roles</span>
@@ -125,7 +125,7 @@ export default function PrivilegedAccessPage() {
           <thead className="bg-gray-50 dark:bg-gray-900/50">
             <tr>
               <th scope="col" className="px-4 py-3 text-left font-medium w-8">
-                <input aria-label="Selected ids" type="checkbox" checked={selectedIds.size === accounts.length && accounts.length > 0} onChange={(e) => setSelectedIds(e.target.checked ? new Set(accounts.map((a) => a.id)) : new Set())} className="rounded" />
+                <input aria-label="Selected ids" type="checkbox" checked={selectedIds.size === accounts.length && accounts.length > 0} onChange={(e) => setSelectedIds(e.target.checked ? new Set(accounts.map((a: any) => a.id)) : new Set())} className="rounded" />
               </th>
               <th scope="col" className="px-4 py-3 text-left font-medium">User</th>
               <th scope="col" className="px-4 py-3 text-left font-medium">Roles</th>
@@ -136,7 +136,7 @@ export default function PrivilegedAccessPage() {
             </tr>
           </thead>
           <tbody className="divide-y dark:divide-gray-800">
-            {accounts.map((a) => {
+            {accounts.map((a: any) => {
               const isExpired = a.days_until_expiry <= 0;
               const isExpiring = a.days_until_expiry > 0 && a.days_until_expiry <= 7;
               return (
@@ -185,7 +185,7 @@ export default function PrivilegedAccessPage() {
             <div className="px-6 py-4 text-sm space-y-2">
               <p>Revoking privileged access for <span className="font-bold text-red-600">{selectedIds.size} account{selectedIds.size > 1 ? "s" : ""}</span>:</p>
               <ul className="text-gray-500 ml-4 list-disc max-h-40 overflow-y-auto">
-                {accounts.filter((a) => selectedIds.has(a.id)).map((a) => <li key={a.id}>{a.username} ({a.roles.join(", ")})</li>)}
+                {accounts.filter((a: any) => selectedIds.has(a.id)).map((a: any) => <li key={a.id}>{a.username} ({a.roles.join(", ")})</li>)}
               </ul>
               <p className="text-red-600">This will immediately remove all privileged roles. Users will lose access to admin functions.</p>
             </div>

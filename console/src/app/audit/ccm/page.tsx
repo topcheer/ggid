@@ -59,10 +59,10 @@ export default function CCMPage() {
 
   useEffect(() => { load(); }, [load]);
 
-  const filtered = frameworkFilter === "all" ? controls : controls.filter((c) => c.framework === frameworkFilter);
-  const passCount = controls.filter((c) => c.status === "pass").length;
-  const warnCount = controls.filter((c) => c.status === "warn").length;
-  const failCount = controls.filter((c) => c.status === "fail").length;
+  const filtered = frameworkFilter === "all" ? controls : controls.filter((c: any) => c.framework === frameworkFilter);
+  const passCount = controls.filter((c: any) => c.status === "pass").length;
+  const warnCount = controls.filter((c: any) => c.status === "warn").length;
+  const failCount = controls.filter((c: any) => c.status === "fail").length;
 
   const tabs: { id: TabId; label: string; icon: typeof ShieldCheck }[] = [
     { id: "controls", label: t("ccm.tabs.controls"), icon: ShieldCheck },
@@ -131,7 +131,7 @@ function ControlsTab({ controls, loading, framework, setFramework }: {
     <div className="space-y-3">
       <div className="flex gap-2">
         <button onClick={() => setFramework("all")} className={`px-3 py-1.5 rounded-lg text-xs font-medium ${framework === "all" ? "bg-blue-600 text-white" : "bg-white dark:bg-gray-800 text-gray-600 border border-gray-200 dark:border-gray-700"}`}>{t("ccm.controls.frameworkAll")}</button>
-        {FRAMEWORKS.map((f) => (
+        {FRAMEWORKS.map((f: any) => (
           <button key={f} onClick={() => setFramework(f)} className={`px-3 py-1.5 rounded-lg text-xs font-medium ${framework === f ? "bg-blue-600 text-white" : "bg-white dark:bg-gray-800 text-gray-600 border border-gray-200 dark:border-gray-700"}`}>{f}</button>
         ))}
       </div>
@@ -147,7 +147,7 @@ function ControlsTab({ controls, loading, framework, setFramework }: {
               <th className="py-2 px-4 font-medium text-gray-600 dark:text-gray-400">{t("ccm.controls.lastChecked")}</th>
             </tr></thead>
             <tbody>
-              {controls.map((c) => {
+              {controls.map((c: any) => {
                 const cfg = statusConfig[c.status];
                 const Icon = cfg.icon;
                 return (
@@ -208,12 +208,12 @@ function HistoryTab() {
   const maxVal = 100;
   const xStep = data.length > 1 ? (chartW - pad * 2) / (data.length - 1) : 0;
   const yScale = (v: number) => chartH - pad - (v / maxVal) * (chartH - pad * 2);
-  const linePath = (key: string) => data.map((d, i) => `${i === 0 ? "M" : "L"} ${pad + i * xStep} ${yScale((d as Record<string, unknown>)[key] as number)}`).join(" ");
+  const linePath = (key: string) => data.map((d: any, i: any) => `${i === 0 ? "M" : "L"} ${pad + i * xStep} ${yScale((d as Record<string, unknown>)[key] as number)}`).join(" ");
 
   return (
     <div className="space-y-4">
       <div className="flex gap-2">
-        {(["30d", "90d"] as const).map((r) => (
+        {(["30d", "90d"] as const).map((r: any) => (
           <button key={r} onClick={() => setRange(r)} className={`px-3 py-1.5 rounded-lg text-xs font-medium ${range === r ? "bg-blue-600 text-white" : "bg-white dark:bg-gray-800 text-gray-600 border border-gray-200 dark:border-gray-700"}`}>
             {r === "30d" ? t("ccm.history.days30") : t("ccm.history.days90")}
           </button>
@@ -223,13 +223,13 @@ function HistoryTab() {
         <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-4">{t("ccm.history.title")}</h3>
         <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">{t("ccm.history.description")}</p>
         <svg viewBox={`0 0 ${chartW} ${chartH}`} className="w-full h-48">
-          {[0, 25, 50, 75, 100].map((p) => (
+          {[0, 25, 50, 75, 100].map((p: any) => (
             <g key={p}>
               <line x1={pad} y1={yScale(p)} x2={chartW - pad} y2={yScale(p)} stroke="currentColor" className="text-gray-100 dark:text-gray-800" strokeWidth={1} />
               <text x={pad - 5} y={yScale(p) + 3} textAnchor="end" className="fill-gray-400 text-xs">{p}</text>
             </g>
           ))}
-          {Object.keys(colors).map((fw) => (
+          {Object.keys(colors).map((fw: any) => (
             <path key={fw} d={linePath(fw)} fill="none" stroke={colors[fw]} strokeWidth={2} />
           ))}
         </svg>

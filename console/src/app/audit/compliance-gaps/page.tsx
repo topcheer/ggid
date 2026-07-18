@@ -68,7 +68,7 @@ export default function ComplianceGapsPage() {
         headers: { ...authHeader(), "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" },
         body: JSON.stringify({ status: newStatus }),
       });
-      setGaps((prev) => prev.map((g) => g.id === updateGap.id ? { ...g, status: newStatus as ComplianceGap["status"] } : g));
+      setGaps((prev) => prev.map((g: any) => g.id === updateGap.id ? { ...g, status: newStatus as ComplianceGap["status"] } : g));
       setUpdateGap(null);
       setNewStatus("");
     } catch {
@@ -76,13 +76,13 @@ export default function ComplianceGapsPage() {
     }
   };
 
-  const filtered = filterStatus === "all" ? gaps : gaps.filter((g) => g.status === filterStatus);
+  const filtered = filterStatus === "all" ? gaps : gaps.filter((g: any) => g.status === filterStatus);
 
   const summary = {
-    open: gaps.filter((g) => g.status === "open").length,
-    in_progress: gaps.filter((g) => g.status === "in_progress").length,
-    remediated: gaps.filter((g) => g.status === "remediated").length,
-    accepted_risk: gaps.filter((g) => g.status === "accepted_risk").length,
+    open: gaps.filter((g: any) => g.status === "open").length,
+    in_progress: gaps.filter((g: any) => g.status === "in_progress").length,
+    remediated: gaps.filter((g: any) => g.status === "remediated").length,
+    accepted_risk: gaps.filter((g: any) => g.status === "accepted_risk").length,
   };
 
   return (
@@ -94,7 +94,7 @@ export default function ComplianceGapsPage() {
 
       {/* Summary cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        {(["open", "in_progress", "remediated", "accepted_risk"] as const).map((s) => (
+        {(["open", "in_progress", "remediated", "accepted_risk"] as const).map((s: any) => (
           <div key={s} className="rounded-lg border p-4 dark:border-gray-800 cursor-pointer hover:border-blue-400" onClick={() => setFilterStatus(filterStatus === s ? "all" : s)}>
             <span className="text-sm text-gray-500 capitalize">{s.replace("_", " ")}</span>
             <p className={`text-2xl font-bold mt-1`}>
@@ -131,7 +131,7 @@ export default function ComplianceGapsPage() {
             </tr>
           </thead>
           <tbody className="divide-y dark:divide-gray-800">
-            {filtered.map((gap) => (
+            {filtered.map((gap: any) => (
               <tr key={gap.id} className="hover:bg-gray-50 dark:hover:bg-gray-900/30">
                 <td className="px-4 py-3 font-mono text-xs">{gap.control_id}</td>
                 <td className="px-4 py-3">{gap.framework}</td>

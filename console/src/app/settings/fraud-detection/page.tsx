@@ -71,7 +71,7 @@ export default function FraudDetectionPage() {
         <div className="bg-gray-900 rounded-xl p-6">
           <h2 className="text-lg font-semibold mb-4">{t("fraudDetect.flaggedAccounts")}</h2>
           <div className="space-y-2 max-h-80 overflow-y-auto">
-            {(data?.flagged_accounts ?? []).map((a) => (
+            {(data?.flagged_accounts ?? []).map((a: any) => (
               <div key={a.user} className="bg-gray-800 rounded-lg p-3">
                 <div className="flex items-start justify-between mb-1">
                   <p className="text-sm font-medium">{a.user}</p>
@@ -80,7 +80,7 @@ export default function FraudDetectionPage() {
                   </span>
                 </div>
                 <div className="flex flex-wrap gap-1 mb-2">
-                  {a.signals.map((s) => (
+                  {a.signals.map((s: any) => (
                     <span key={s} className="text-xs px-1.5 py-0.5 bg-gray-700 rounded">{s}</span>
                   ))}
                 </div>
@@ -101,7 +101,7 @@ export default function FraudDetectionPage() {
           <div className="bg-gray-900 rounded-xl p-6">
             <h2 className="text-sm font-semibold mb-4">{t("fraudDetect.velocityRules")}</h2>
             <div className="space-y-2">
-              {(data?.velocity_rules ?? []).map((r) => (
+              {(data?.velocity_rules ?? []).map((r: any) => (
                 <div key={r.rule} className="bg-gray-800 rounded-lg p-3">
                   <div className="flex items-center justify-between mb-1">
                     <p className="text-sm font-medium">{r.rule}</p>

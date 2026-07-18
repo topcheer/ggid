@@ -57,7 +57,7 @@ export default function SessionRiskPage() {
     setEvaluating(sessionId);
     try {
       const updated = await apiFetch<SessionRiskEntry>(`/api/v1/auth/sessions/${sessionId}/reevaluate`, { method: "POST" });
-      setSessions((p) => p.map((s) => s.session_id === sessionId ? updated : s));
+      setSessions((p) => p.map((s: any) => s.session_id === sessionId ? updated : s));
     } catch { setError("Re-evaluate failed"); }
     finally { setEvaluating(null); }
   };
@@ -72,7 +72,7 @@ export default function SessionRiskPage() {
   };
 
   const cardCls = "rounded-xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-700 dark:bg-gray-800";
-  const flagged = sessions.filter((s) => s.reevaluate_recommended);
+  const flagged = sessions.filter((s: any) => s.reevaluate_recommended);
 
   return (
     <div className="space-y-6">
@@ -94,7 +94,7 @@ export default function SessionRiskPage() {
             <div className={cardCls}><div className="flex items-center gap-2"><Activity className="h-4 w-4 text-blue-500" /><span className="text-xs font-semibold uppercase text-gray-400">Active Sessions</span></div><p className="mt-2 text-2xl font-bold text-blue-600">{sessions.length}</p></div>
             <div className={cardCls}><div className="flex items-center gap-2"><AlertCircle className="h-4 w-4 text-red-500" /><span className="text-xs font-semibold uppercase text-gray-400">Flagged</span></div><p className="mt-2 text-2xl font-bold text-red-600">{flagged.length}</p></div>
             <div className={cardCls}><div className="flex items-center gap-2"><TrendingUp className="h-4 w-4 text-orange-500" /><span className="text-xs font-semibold uppercase text-gray-400">Avg Risk</span></div><p className="mt-2 text-2xl font-bold text-orange-600">{sessions.length > 0 ? Math.round(sessions.reduce((s, e) => s + e.current_risk, 0) / sessions.length) : 0}</p></div>
-            <div className={cardCls}><div className="flex items-center gap-2"><TrendingDown className="h-4 w-4 text-green-500" /><span className="text-xs font-semibold uppercase text-gray-400">Low Risk</span></div><p className="mt-2 text-2xl font-bold text-green-600">{sessions.filter((s) => s.current_risk < 25).length}</p></div>
+            <div className={cardCls}><div className="flex items-center gap-2"><TrendingDown className="h-4 w-4 text-green-500" /><span className="text-xs font-semibold uppercase text-gray-400">Low Risk</span></div><p className="mt-2 text-2xl font-bold text-green-600">{sessions.filter((s: any) => s.current_risk < 25).length}</p></div>
           </div>
 
           {/* Sessions table */}
@@ -114,7 +114,7 @@ export default function SessionRiskPage() {
                   <th scope="col" className="px-4 py-3 text-right font-semibold text-gray-600 dark:text-gray-300">Actions</th>
                 </tr></thead>
                 <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-                  {sessions.map((s) => (
+                  {sessions.map((s: any) => (
                     <tr key={s.session_id} className={`bg-white dark:bg-gray-900 ${s.reevaluate_recommended ? "border-l-4 border-l-orange-400" : ""}`}>
                       <td className="px-4 py-3"><div className="font-medium text-gray-900 dark:text-white">{s.username}</div><div className="text-xs text-gray-400 font-mono">{s.session_id.slice(0, 12)}</div></td>
                       <td className="px-4 py-3"><span className={`text-lg font-bold ${riskColor(s.current_risk)}`}>{s.current_risk}</span></td>
@@ -127,7 +127,7 @@ export default function SessionRiskPage() {
                           </span>
                         )}
                       </td>
-                      <td className="px-4 py-3"><div className="flex flex-wrap gap-1">{s.factors.filter((f) => f.detected).map((f) => <span key={f.type} className="rounded bg-red-100 px-1.5 py-0.5 text-xs text-red-600 dark:bg-red-900/30">{f.type.replace(/_/g, " ")}</span>)}{s.factors.filter((f) => f.detected).length === 0 && <span className="text-xs text-green-500">clean</span>}</div></td>
+                      <td className="px-4 py-3"><div className="flex flex-wrap gap-1">{s.factors.filter((f: any) => f.detected).map((f: any) => <span key={f.type} className="rounded bg-red-100 px-1.5 py-0.5 text-xs text-red-600 dark:bg-red-900/30">{f.type.replace(/_/g, " ")}</span>)}{s.factors.filter((f: any) => f.detected).length === 0 && <span className="text-xs text-green-500">clean</span>}</div></td>
                       <td className="px-4 py-3"><div className="text-xs text-gray-500">{s.location}</div><div className="text-xs text-gray-400 font-mono">{s.ip_address}</div></td>
                       <td className="px-4 py-3 text-xs text-gray-400">{s.last_evaluated ? new Date(s.last_evaluated).toLocaleTimeString() : "—"}</td>
                       <td className="px-4 py-3 text-right"><button onClick={() => handleReevaluate(s.session_id)} disabled={evaluating === s.session_id} className="flex items-center gap-1 text-xs text-orange-600 hover:underline">{evaluating === s.session_id ? <Loader2 className="h-3 w-3 animate-spin" /> : <RefreshCw className="h-3 w-3" />} Re-eval</button></td>

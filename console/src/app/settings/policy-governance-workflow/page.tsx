@@ -61,11 +61,11 @@ export default function PolicyGovernanceWorkflowPage() {
               Reviewer Assignment by Category
             </h2>
             <div className="space-y-2">
-              {(data?.reviewer_assignment ?? []).map((ra) => (
+              {(data?.reviewer_assignment ?? []).map((ra: any) => (
                 <div key={ra.category} className="flex items-center justify-between bg-gray-800 rounded-lg p-3">
                   <span className="text-sm font-medium capitalize">{ra.category}</span>
                   <div className="flex items-center gap-1">
-                    {ra.reviewers.map((r) => (
+                    {ra.reviewers.map((r: any) => (
                       <span key={r} className="text-xs px-2 py-0.5 rounded bg-purple-900 text-purple-300">{r}</span>
                     ))}
                   </div>

@@ -355,11 +355,11 @@ export default function SAMLPage() {
   }, []);
 
   const removeMapping = useCallback((id: string) => {
-    setMappings((prev) => prev.filter((m) => m.id !== id));
+    setMappings((prev) => prev.filter((m: any) => m.id !== id));
   }, []);
 
   const updateMapping = useCallback((id: string, field: keyof AttributeMapping, value: string) => {
-    setMappings((prev) => prev.map((m) => (m.id === id ? { ...m, [field]: value } : m)));
+    setMappings((prev) => prev.map((m: any) => (m.id === id ? { ...m, [field]: value } : m)));
   }, []);
 
   return (
@@ -474,7 +474,7 @@ export default function SAMLPage() {
                 onChange={(e) => setIdpConfig({ ...idpConfig, name_id_format: e.target.value })}
                 className={inputCls}
               >
-                {NAME_ID_FORMATS.map((f) => (
+                {NAME_ID_FORMATS.map((f: any) => (
                   <option key={f.value} value={f.value}>{f.label}</option>
                 ))}
               </select>
@@ -486,7 +486,7 @@ export default function SAMLPage() {
                 onChange={(e) => setIdpConfig({ ...idpConfig, authn_context_class: e.target.value })}
                 className={inputCls}
               >
-                {AUTHN_CONTEXT_CLASSES.map((c) => (
+                {AUTHN_CONTEXT_CLASSES.map((c: any) => (
                   <option key={c.value} value={c.value}>{c.label}</option>
                 ))}
               </select>
@@ -670,7 +670,7 @@ export default function SAMLPage() {
               </tr>
             </thead>
             <tbody>
-              {mappings.map((m) => (
+              {mappings.map((m: any) => (
                 <tr key={m.id} className="border-b border-gray-100 dark:border-gray-700/50">
                   <td className="py-2 pr-4">
                     <input
@@ -689,7 +689,7 @@ export default function SAMLPage() {
                       className={`${inputCls} text-xs`}
                       aria-label={`GGID field ${m.id}`}
                     >
-                      {GGID_FIELDS.map((f) => (
+                      {GGID_FIELDS.map((f: any) => (
                         <option key={f.value} value={f.value}>{f.label}</option>
                       ))}
                     </select>

@@ -20,7 +20,7 @@ export default function IdentityAccessRevokePage() {
 
   const allOptions = ["sessions", "tokens", "api_keys", "app_access", "ssh_keys"];
   const toggleSelect = (key: string) => {
-    setSelected((prev) => prev.includes(key) ? prev.filter((k) => k !== key) : [...prev, key]);
+    setSelected((prev) => prev.includes(key) ? prev.filter((k: any) => k !== key) : [...prev, key]);
   };
 
   return (
@@ -55,7 +55,7 @@ export default function IdentityAccessRevokePage() {
               className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-500"
             />
             <div className="mt-3 space-y-1 max-h-32 overflow-y-auto">
-              {(data?.searchable_users ?? []).filter((u) => !searchQuery || u.username.includes(searchQuery)).slice(0, 5).map((u) => (
+              {(data?.searchable_users ?? []).filter((u: any) => !searchQuery || u.username.includes(searchQuery)).slice(0, 5).map((u: any) => (
                 <div key={u.user_id} className="flex items-center justify-between bg-gray-800 rounded-lg p-2">
                   <div>
                     <p className="text-sm font-medium">{u.username}</p>
@@ -82,7 +82,7 @@ export default function IdentityAccessRevokePage() {
               <span className="text-sm font-medium">{t("idAccessRevoke.revokeEverything")}</span>
             </label>
             <div className="space-y-2">
-              {allOptions.map((opt) => (
+              {allOptions.map((opt: any) => (
                 <label key={opt} className="flex items-center gap-2 cursor-pointer">
                   <input
                     type="checkbox"
@@ -136,7 +136,7 @@ export default function IdentityAccessRevokePage() {
               Estimated Impact
             </h2>
             <div className="grid grid-cols-2 gap-3">
-              {(data?.estimated_impact ?? []).map((imp) => (
+              {(data?.estimated_impact ?? []).map((imp: any) => (
                 <div key={imp.category} className="bg-gray-800 rounded-lg p-3">
                   <p className="text-xs text-gray-400 mb-1 capitalize">{imp.category.replace(/_/g, " ")}</p>
                   <p className="text-xl font-bold text-red-400">{imp.count}</p>

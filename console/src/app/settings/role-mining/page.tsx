@@ -66,7 +66,7 @@ export default function RoleMiningPage() {
         headers: { ...authHeader(), "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" },
         body: JSON.stringify({ user_id: userId, current_role: rec.current_role, recommended_role: rec.recommended_role }),
       });
-      setUsers((prev) => prev.map((u) => u.user_id === userId ? { ...u, recommendations: u.recommendations.filter((r) => r !== rec) } : u));
+      setUsers((prev) => prev.map((u: any) => u.user_id === userId ? { ...u, recommendations: u.recommendations.filter((r: any) => r !== rec) } : u));
     } catch {
       /* noop */
     } finally {
@@ -74,8 +74,8 @@ export default function RoleMiningPage() {
     }
   };
 
-  const selectedUser = users.find((u) => u.user_id === selectedUserId || u.username === selectedUserId);
-  const filteredUsers = users.filter((u) => !search || u.username.toLowerCase().includes(search.toLowerCase()) || u.email.toLowerCase().includes(search.toLowerCase()));
+  const selectedUser = users.find((u: any) => u.user_id === selectedUserId || u.username === selectedUserId);
+  const filteredUsers = users.filter((u: any) => !search || u.username.toLowerCase().includes(search.toLowerCase()) || u.email.toLowerCase().includes(search.toLowerCase()));
 
   const riskColor: Record<string, string> = {
     low: "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400",
@@ -133,7 +133,7 @@ export default function RoleMiningPage() {
           className="px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-900 text-sm"
         >
           <option value="">Select a user...</option>
-          {filteredUsers.map((u) => (
+          {filteredUsers.map((u: any) => (
             <option key={u.user_id} value={u.user_id}>{u.username} ({u.unused_count} unused, {u.over_granted_count} over-granted)</option>
           ))}
         </select>
@@ -147,10 +147,10 @@ export default function RoleMiningPage() {
           {/* Unused permissions */}
           <div className="rounded-lg border dark:border-gray-800">
             <div className="px-4 py-3 border-b dark:border-gray-800">
-              <h3 className="font-semibold flex items-center gap-2"><Shield className="w-4 h-4" /> Unused Permissions ({selectedUser.permissions.filter((p) => p.usage_count === 0).length})</h3>
+              <h3 className="font-semibold flex items-center gap-2"><Shield className="w-4 h-4" /> Unused Permissions ({selectedUser.permissions.filter((p: any) => p.usage_count === 0).length})</h3>
             </div>
             <div className="divide-y dark:divide-gray-800">
-              {selectedUser.permissions.filter((p) => p.usage_count === 0).map((p: any, i: number) => (
+              {selectedUser.permissions.filter((p: any) => p.usage_count === 0).map((p: any, i: number) => (
                 <div key={i} className="px-4 py-2 flex items-center justify-between text-sm">
                   <div>
                     <span className="font-mono">{p.permission}</span>
@@ -159,7 +159,7 @@ export default function RoleMiningPage() {
                   <span className="text-gray-400">Never used</span>
                 </div>
               ))}
-              {selectedUser.permissions.filter((p) => p.usage_count === 0).length === 0 && (
+              {selectedUser.permissions.filter((p: any) => p.usage_count === 0).length === 0 && (
                 <p className="px-4 py-3 text-sm text-gray-500">No unused permissions.</p>
               )}
             </div>

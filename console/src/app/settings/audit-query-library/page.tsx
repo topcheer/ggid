@@ -17,7 +17,7 @@ export default function AuditQueryLibraryPage() {
   const allTags: string[] = Array.from(new Set((data?.saved_queries ?? []).flatMap((q) => q.tags)));
   const filteredQueries = tagFilter === "all"
     ? (data?.saved_queries ?? [])
-    : (data?.saved_queries ?? []).filter((q) => q.tags.includes(tagFilter));
+    : (data?.saved_queries ?? []).filter((q: any) => q.tags.includes(tagFilter));
 
   return (
     <div className="min-h-screen bg-gray-950 text-white p-8">
@@ -80,7 +80,7 @@ export default function AuditQueryLibraryPage() {
         >
           All
         </button>
-        {allTags.map((tag) => (
+        {allTags.map((tag: any) => (
           <button
             key={tag}
             onClick={() => setTagFilter(tag)}
@@ -99,7 +99,7 @@ export default function AuditQueryLibraryPage() {
             Saved Queries ({filteredQueries.length})
           </h2>
           <div className="space-y-3">
-            {filteredQueries.map((q) => (
+            {filteredQueries.map((q: any) => (
               <div key={q.id} className="bg-gray-900 rounded-xl p-4">
                 <div className="flex items-start justify-between mb-2">
                   <div>
@@ -121,7 +121,7 @@ export default function AuditQueryLibraryPage() {
                   <code className="text-xs text-blue-400 font-mono break-all">{q.query_body}</code>
                 </div>
                 <div className="flex items-center gap-3 flex-wrap">
-                  {q.tags.map((tag) => (
+                  {q.tags.map((tag: any) => (
                     <span key={tag} className="text-xs px-2 py-0.5 rounded bg-gray-800 text-gray-400">{tag}</span>
                   ))}
                   <span className="text-xs text-gray-500 flex items-center gap-1">

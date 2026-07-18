@@ -546,7 +546,7 @@ function ColorPicker({
       </div>
       {/* Presets */}
       <div className="mt-2 flex items-center gap-1.5">
-        {presets.map((c) => (
+        {presets.map((c: any) => (
           <button
             key={c}
             onClick={() => onChange(c)}

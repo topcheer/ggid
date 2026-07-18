@@ -86,8 +86,8 @@ export default function AccountLinkingPage() {
     }
   };
 
-  const linkedProviderIds = new Set(accounts.map((a) => a.provider));
-  const availableToLink = AVAILABLE_PROVIDERS.filter((p) => !linkedProviderIds.has(p.id));
+  const linkedProviderIds = new Set(accounts.map((a: any) => a.provider));
+  const availableToLink = AVAILABLE_PROVIDERS.filter((p: any) => !linkedProviderIds.has(p.id));
   const cardCls = "rounded-xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-700 dark:bg-gray-800";
 
   return (
@@ -124,7 +124,7 @@ export default function AccountLinkingPage() {
               </div>
             ) : (
               <div className="space-y-3">
-                {accounts.map((a) => {
+                {accounts.map((a: any) => {
                   const Icon = PROVIDER_ICON[a.provider] ?? Mail;
                   return (
                     <div key={a.id} className={cardCls}>
@@ -163,7 +163,7 @@ export default function AccountLinkingPage() {
             <div>
               <h2 className="mb-3 text-sm font-semibold uppercase text-gray-500">Available Providers</h2>
               <div className="grid gap-3 sm:grid-cols-2">
-                {availableToLink.map((p) => {
+                {availableToLink.map((p: any) => {
                   const Icon = PROVIDER_ICON[p.id] ?? Link2;
                   return (
                     <div key={p.id} className={`${cardCls} flex items-center justify-between`}>

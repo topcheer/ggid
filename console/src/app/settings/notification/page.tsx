@@ -230,7 +230,7 @@ export default function NotificationPage() {
           </div>
         ) : (
           <div className="space-y-3">
-            {settings.templates.map((t) => {
+            {settings.templates.map((t: any) => {
               const Icon = CHANNEL_ICON[t.channel];
               return (
                 <div key={t.id} className={cardCls}>
@@ -249,7 +249,7 @@ export default function NotificationPage() {
                         <p className="mt-1 line-clamp-2 text-xs text-gray-400">{t.body}</p>
                         {t.variables.length > 0 && (
                           <div className="mt-2 flex flex-wrap gap-1">
-                            {t.variables.map((v) => (
+                            {t.variables.map((v: any) => (
                               <code key={v} className="rounded bg-gray-100 px-1.5 py-0.5 text-xs text-gray-500 dark:bg-gray-700">{`{{${v}}}`}</code>
                             ))}
                           </div>
@@ -291,7 +291,7 @@ export default function NotificationPage() {
               <div>
                 <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Channel</label>
                 <div className="mt-2 flex gap-2">
-                  {(["email", "sms", "push"] as const).map((ch) => {
+                  {(["email", "sms", "push"] as const).map((ch: any) => {
                     const Icon = CHANNEL_ICON[ch];
                     return (
                       <button key={ch} onClick={() => setTmplForm((p) => ({ ...p, channel: ch }))}

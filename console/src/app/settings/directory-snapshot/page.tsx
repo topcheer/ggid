@@ -35,7 +35,7 @@ export default function DirectorySnapshotPage() {
   useEffect(() => { fetchData(); }, [fetchData]);
 
   const total = snapshot?.by_status.reduce((s, d) => s + d.count, 0) || 1;
-  const maxOrg = Math.max(...(snapshot?.by_org.map((d) => d.count) || [1]), 1);
+  const maxOrg = Math.max(...(snapshot?.by_org.map((d: any) => d.count) || [1]), 1);
 
   return (
     <div className="space-y-6">
@@ -56,19 +56,19 @@ export default function DirectorySnapshotPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="rounded-lg border dark:border-gray-800 p-4"><h3 className="text-sm font-semibold mb-3">{t("directorySnapshot.byStatus")}</h3>
               <div className="flex items-center gap-4">
-                <div className="relative w-32 h-32"><svg viewBox="0 0 64 64" className="w-full h-full -rotate-90">{(() => { let offset = 0; return snapshot.by_status.map((d) => { const pct = d.count / total; const dash = pct * 176; const circle = <circle key={d.status} cx={32} cy={32} r={28} fill="none" stroke={statusColors[d.status] || "#ccc"} strokeWidth={8} strokeDasharray={`${dash} 176`} strokeDashoffset={-offset * 176} />; offset += pct; return circle; }); })()}</svg></div>
-                <div className="space-y-1">{snapshot.by_status.map((d) => (<div key={d.status} className="flex items-center gap-2 text-sm"><span className="w-3 h-3 rounded-full" style={{ background: statusColors[d.status] || "#ccc" }} /><span className="capitalize">{d.status}</span><span className="font-bold ml-auto">{d.count}</span></div>))}</div>
+                <div className="relative w-32 h-32"><svg viewBox="0 0 64 64" className="w-full h-full -rotate-90">{(() => { let offset = 0; return snapshot.by_status.map((d: any) => { const pct = d.count / total; const dash = pct * 176; const circle = <circle key={d.status} cx={32} cy={32} r={28} fill="none" stroke={statusColors[d.status] || "#ccc"} strokeWidth={8} strokeDasharray={`${dash} 176`} strokeDashoffset={-offset * 176} />; offset += pct; return circle; }); })()}</svg></div>
+                <div className="space-y-1">{snapshot.by_status.map((d: any) => (<div key={d.status} className="flex items-center gap-2 text-sm"><span className="w-3 h-3 rounded-full" style={{ background: statusColors[d.status] || "#ccc" }} /><span className="capitalize">{d.status}</span><span className="font-bold ml-auto">{d.count}</span></div>))}</div>
               </div>
             </div>
 
             <div className="rounded-lg border dark:border-gray-800 p-4"><h3 className="text-sm font-semibold mb-3">{t("directorySnapshot.byOrg")}</h3>
-              <div className="space-y-2">{snapshot.by_org.slice(0, 8).map((d) => (<div key={d.org} className="flex items-center gap-2"><span className="text-xs text-gray-500 w-24 truncate">{d.org}</span><div className="flex-1 bg-gray-100 dark:bg-gray-800 rounded-full h-5 overflow-hidden"><div className="h-full bg-blue-500 rounded-full" style={{ width: `${(d.count / maxOrg) * 100}%` }} /></div><span className="text-xs font-bold w-8 text-right">{d.count}</span></div>))}</div>
+              <div className="space-y-2">{snapshot.by_org.slice(0, 8).map((d: any) => (<div key={d.org} className="flex items-center gap-2"><span className="text-xs text-gray-500 w-24 truncate">{d.org}</span><div className="flex-1 bg-gray-100 dark:bg-gray-800 rounded-full h-5 overflow-hidden"><div className="h-full bg-blue-500 rounded-full" style={{ width: `${(d.count / maxOrg) * 100}%` }} /></div><span className="text-xs font-bold w-8 text-right">{d.count}</span></div>))}</div>
             </div>
           </div>
 
           <div className="overflow-x-auto rounded-lg border dark:border-gray-800">
             <table className="w-full text-sm"><thead className="bg-gray-50 dark:bg-gray-900/50"><tr><th className="px-4 py-3 text-left font-medium">{t("directorySnapshot.role")}</th><th className="px-4 py-3 text-left font-medium">{t("directorySnapshot.count")}</th><th className="px-4 py-3 text-left font-medium">{t("directorySnapshot.share")}</th></tr></thead>
-              <tbody className="divide-y dark:divide-gray-800">{snapshot.by_role.map((d) => (<tr key={d.role} className="hover:bg-gray-50 dark:hover:bg-gray-900/30"><td className="px-4 py-3 font-medium">{d.role}</td><td className="px-4 py-3 font-bold">{d.count}</td><td className="px-4 py-3"><div className="flex items-center gap-2"><div className="w-24 bg-gray-100 dark:bg-gray-800 rounded-full h-2 overflow-hidden"><div className="h-full bg-purple-500 rounded-full" style={{ width: `${(d.count / total) * 100}%` }} /></div><span className="text-xs text-gray-500">{((d.count / total) * 100).toFixed(1)}%</span></div></td></tr>))}</tbody>
+              <tbody className="divide-y dark:divide-gray-800">{snapshot.by_role.map((d: any) => (<tr key={d.role} className="hover:bg-gray-50 dark:hover:bg-gray-900/30"><td className="px-4 py-3 font-medium">{d.role}</td><td className="px-4 py-3 font-bold">{d.count}</td><td className="px-4 py-3"><div className="flex items-center gap-2"><div className="w-24 bg-gray-100 dark:bg-gray-800 rounded-full h-2 overflow-hidden"><div className="h-full bg-purple-500 rounded-full" style={{ width: `${(d.count / total) * 100}%` }} /></div><span className="text-xs text-gray-500">{((d.count / total) * 100).toFixed(1)}%</span></div></td></tr>))}</tbody>
             </table>
           </div>
 

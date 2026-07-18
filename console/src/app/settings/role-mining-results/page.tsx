@@ -39,7 +39,7 @@ export default function RoleMiningResultsPage() {
         <div className="bg-gray-900 rounded-xl p-6">
           <h2 className="text-sm font-semibold mb-3">Suggested Consolidation</h2>
           <div className="space-y-2">
-            {(data?.suggested_consolidation ?? []).map((c) => (
+            {(data?.suggested_consolidation ?? []).map((c: any) => (
               <div key={c.merge_target} className="bg-gray-800 rounded-lg p-3">
                 <p className="text-sm font-medium mb-1">Merge into: {c.merge_target}</p>
                 <p className="text-xs text-gray-400">{c.roles_to_merge.join(", ")}</p>
@@ -53,7 +53,7 @@ export default function RoleMiningResultsPage() {
       <div className="bg-gray-900 rounded-xl p-6 mt-6">
         <h2 className="text-sm font-semibold mb-3">Over-Assigned Roles</h2>
         <div className="space-y-1">
-          {(data?.over_assigned ?? []).map((o) => (
+          {(data?.over_assigned ?? []).map((o: any) => (
             <div key={o.user} className="flex items-center gap-2 bg-gray-800 rounded p-2 text-xs">
               <span className="text-gray-300 flex-1">{o.user}</span>
               <span className="text-gray-400">{o.role}</span>

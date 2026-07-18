@@ -128,7 +128,7 @@ export default function AuditTimelinePage() {
   }, [loadEvents]);
 
   // Client-side filtering for service and severity (may not be server-side filterable)
-  const filteredEvents = events.filter((e) => {
+  const filteredEvents = events.filter((e: any) => {
     if (serviceFilter !== "all" && inferService(e) !== serviceFilter) return false;
     if (severityFilter !== "all" && inferSeverity(e) !== severityFilter) return false;
     if (userSearch) {
@@ -249,7 +249,7 @@ export default function AuditTimelinePage() {
           <div className="absolute left-5 top-0 bottom-0 w-0.5 bg-gray-200 dark:bg-gray-700" />
 
           <div className="space-y-4">
-            {filteredEvents.map((event, idx) => {
+            {filteredEvents.map((event: any, idx: any) => {
               const sev = inferSeverity(event);
               const cfg = SEVERITY_CONFIG[sev];
               const Icon = getEventIcon(event.action);

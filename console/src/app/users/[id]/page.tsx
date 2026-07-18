@@ -266,7 +266,7 @@ export default function UserDetailPage({ params }: { params: { id: string } }) {
         method: "DELETE",
       });
       setMsg("Credential deleted successfully");
-      setCredentials((prev) => prev.filter((c) => c.id !== credId));
+      setCredentials((prev) => prev.filter((c: any) => c.id !== credId));
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to delete credential");
     } finally {
@@ -440,12 +440,12 @@ export default function UserDetailPage({ params }: { params: { id: string } }) {
       </div>
     );
 
-  const assignedRoleIds = new Set(userRoles.map((r) => r.id));
+  const assignedRoleIds = new Set(userRoles.map((r: any) => r.id));
 
   // Combine all credential types (password, totp, webauthn, social)
   const allCredentials: { id: string; type: string; name: string; created_at?: string; last_used_at?: string }[] = [
-    ...credentials.map((c) => ({ id: c.id, type: c.type || "webauthn", name: c.name || c.id.slice(0, 8), created_at: c.created_at, last_used_at: c.last_used_at })),
-    ...socialConnections.map((c) => ({ id: c.id, type: "social", name: `${c.provider}${c.name ? ` (${c.name})` : ""}`, created_at: c.created_at })),
+    ...credentials.map((c: any) => ({ id: c.id, type: c.type || "webauthn", name: c.name || c.id.slice(0, 8), created_at: c.created_at, last_used_at: c.last_used_at })),
+    ...socialConnections.map((c: any) => ({ id: c.id, type: "social", name: `${c.provider}${c.name ? ` (${c.name})` : ""}`, created_at: c.created_at })),
   ];
 
   return (
@@ -519,7 +519,7 @@ export default function UserDetailPage({ params }: { params: { id: string } }) {
             { key: "sessions" as const, label: "Sessions" },
             { key: "credentials" as const, label: "Credentials" },
             { key: "audit" as const, label: "Audit Trail" },
-          ]).map((tab) => (
+          ]).map((tab: any) => (
             <button
               key={tab.key}
               onClick={() => setActiveTab(tab.key)}
@@ -653,7 +653,7 @@ export default function UserDetailPage({ params }: { params: { id: string } }) {
                     {userRoles.length === 0 ? (
                       <span className="text-xs text-gray-400">{t("userDetail.noRoles")}</span>
                     ) : (
-                      userRoles.map((role) => (
+                      userRoles.map((role: any) => (
                         <span key={role.id} className="rounded-full bg-brand-50 px-2.5 py-0.5 text-xs font-medium text-brand-700">
                           {role.name || role.key}
                         </span>
@@ -668,7 +668,7 @@ export default function UserDetailPage({ params }: { params: { id: string } }) {
                   {orgs.length === 0 ? (
                     <span className="text-xs text-gray-400">{t("userDetail.noMemberships")}</span>
                   ) : (
-                    orgs.map((org) => (
+                    orgs.map((org: any) => (
                       <div key={org.id} className="text-xs text-gray-600 dark:text-gray-300">
                         {org.name} <span className="text-gray-400">({org.role || "member"})</span>
                       </div>
@@ -738,7 +738,7 @@ export default function UserDetailPage({ params }: { params: { id: string } }) {
                 <p className="py-6 text-center text-sm text-gray-400">No active sessions</p>
               ) : (
                 <div className="space-y-2">
-                  {sessions.map((s) => {
+                  {sessions.map((s: any) => {
                     const DevIcon = deviceIcon(s.user_agent);
                     return (
                       <div
@@ -794,7 +794,7 @@ export default function UserDetailPage({ params }: { params: { id: string } }) {
                 <p className="py-6 text-center text-sm text-gray-400">No credentials registered</p>
               ) : (
                 <div className="space-y-2">
-                  {allCredentials.map((cred) => {
+                  {allCredentials.map((cred: any) => {
                     const Icon = cred.type === "social" ? Globe : cred.type === "webauthn" ? Fingerprint : cred.type === "totp" ? Shield : KeyRound;
                     return (
                       <div
@@ -855,7 +855,7 @@ export default function UserDetailPage({ params }: { params: { id: string } }) {
                 <p className="py-6 text-center text-sm text-gray-400">No events recorded</p>
               ) : (
                 <div className="space-y-1">
-                  {activity.slice(0, 20).map((event) => (
+                  {activity.slice(0, 20).map((event: any) => (
                     <div
                       key={event.id}
                       className="flex items-start justify-between rounded-lg border border-gray-50 p-2.5 dark:border-gray-700/50"

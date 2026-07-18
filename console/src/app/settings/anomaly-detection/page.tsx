@@ -44,17 +44,17 @@ export default function AnomalyDetectionPage() {
   useEffect(() => { fetchData(); }, [fetchData]);
 
   const updateStatus = async (id: string, status: "acknowledged" | "dismissed") => {
-    setEvents(events.map((e) => e.id === id ? { ...e, status } : e));
+    setEvents(events.map((e: any) => e.id === id ? { ...e, status } : e));
     try { await fetch("/api/v1/audit/anomaly-detection/" + id, { method: "PATCH", headers: { ...authHeader(), "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" }, body: JSON.stringify({ status }) }); } catch { /* noop */ }
   };
 
-  const filtered = events.filter((e) => {
+  const filtered = events.filter((e: any) => {
     if (filterType && e.type !== filterType) return false;
     if (filterSeverity && e.severity !== filterSeverity) return false;
     return true;
   });
-  const activeCount = events.filter((e) => e.status === "active").length;
-  const types = [...new Set(events.map((e) => e.type))];
+  const activeCount = events.filter((e: any) => e.status === "active").length;
+  const types = [...new Set(events.map((e: any) => e.type))];
 
   if (error) return (
     <div className="p-8">
@@ -74,13 +74,13 @@ export default function AnomalyDetectionPage() {
 
       <div className="flex items-center gap-2">
         <Filter className="w-4 h-4 text-gray-400" />
-        <select aria-label="Filter" value={filterType} onChange={(e) => setFilterType(e.target.value)} className="px-3 py-1.5 rounded-lg border dark:border-gray-700 dark:bg-gray-900 text-sm"><option value="">{t("anomalyDetect.allTypes")}</option>{types.map((type) => <option key={type} value={type}>{type}</option>)}</select>
+        <select aria-label="Filter" value={filterType} onChange={(e) => setFilterType(e.target.value)} className="px-3 py-1.5 rounded-lg border dark:border-gray-700 dark:bg-gray-900 text-sm"><option value="">{t("anomalyDetect.allTypes")}</option>{types.map((type: any) => <option key={type} value={type}>{type}</option>)}</select>
         <select aria-label="Filter" value={filterSeverity} onChange={(e) => setFilterSeverity(e.target.value)} className="px-3 py-1.5 rounded-lg border dark:border-gray-700 dark:bg-gray-900 text-sm"><option value="">{t("anomalyDetect.allSeverities")}</option><option value="low">{t("anomalyDetect.low")}</option><option value="medium">{t("anomalyDetect.medium")}</option><option value="high">{t("anomalyDetect.high")}</option><option value="critical">{t("anomalyDetect.critical")}</option></select>
         <span className="text-sm text-gray-500">{t("anomalyDetect.eventsCount").replace("{count}", String(filtered.length))}</span>
       </div>
 
       <div className="space-y-2">
-        {filtered.map((e) => (
+        {filtered.map((e: any) => (
           <div key={e.id} className="rounded-lg border dark:border-gray-800 p-3 flex items-center gap-4">
             <div className={"w-1 self-stretch rounded " + (e.severity === "critical" ? "bg-red-500" : e.severity === "high" ? "bg-orange-500" : e.severity === "medium" ? "bg-yellow-500" : "bg-gray-400")} />
             <div className="flex-1"><div className="flex items-center gap-2"><span className={"px-2 py-0.5 rounded text-xs " + sevColors[e.severity]}>{e.severity}</span><span className="text-xs font-mono text-gray-500">{e.type}</span>{e.status !== "active" && <span className="text-xs text-gray-400 italic">({e.status})</span>}</div><p className="text-sm mt-1">{e.detail}</p><div className="flex items-center gap-3 text-xs text-gray-400 mt-1"><span>{t("anomalyDetect.user").replace("{user}", e.user)}</span><span>{t("anomalyDetect.confidence").replace("{value}", String(e.confidence))}</span><span>{e.timestamp}</span></div></div>

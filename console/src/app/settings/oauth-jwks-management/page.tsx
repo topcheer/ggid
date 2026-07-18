@@ -43,7 +43,7 @@ export default function OAuthJwksManagementPage() {
             <Key className="w-4 h-4" />
             <span className="text-xs text-gray-400">Active Keys</span>
           </div>
-          <p className="text-2xl font-bold">{data?.active_keys?.filter((k) => k.status === "active").length ?? 0}</p>
+          <p className="text-2xl font-bold">{data?.active_keys?.filter((k: any) => k.status === "active").length ?? 0}</p>
         </div>
         <div className="bg-gray-900 rounded-xl p-4">
           <div className="flex items-center gap-2 mb-1 text-green-400">
@@ -78,7 +78,7 @@ export default function OAuthJwksManagementPage() {
             Active Keys
           </h2>
           <div className="space-y-2">
-            {(data?.active_keys ?? []).map((key) => (
+            {(data?.active_keys ?? []).map((key: any) => (
               <div key={key.kid} className="bg-gray-800 rounded-lg p-3">
                 <div className="flex items-center justify-between mb-2">
                   <code className="text-xs font-mono text-blue-400">{key.kid}</code>

@@ -53,12 +53,12 @@ export default function ComplianceMappingPage() {
   useEffect(() => { load(framework); });
 
   const handleStatusChange = async (id: string, status: ControlMapping["status"]) => {
-    try { await apiFetch(`/api/v1/audit/compliance-mapping/${id}`, { method: "PUT", body: JSON.stringify({ status }) }); setMappings((p) => p.map((m) => m.id === id ? { ...m, status } : m)); }
+    try { await apiFetch(`/api/v1/audit/compliance-mapping/${id}`, { method: "PUT", body: JSON.stringify({ status }) }); setMappings((p) => p.map((m: any) => m.id === id ? { ...m, status } : m)); }
     catch { setError("Update failed"); }
   };
 
   const cardCls = "rounded-xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-700 dark:bg-gray-800";
-  const stats = { compliant: mappings.filter((m) => m.status === "compliant").length, partial: mappings.filter((m) => m.status === "partial").length, missing: mappings.filter((m) => m.status === "missing").length };
+  const stats = { compliant: mappings.filter((m: any) => m.status === "compliant").length, partial: mappings.filter((m: any) => m.status === "partial").length, missing: mappings.filter((m: any) => m.status === "missing").length };
 
   return (
     <div className="space-y-6">
@@ -69,7 +69,7 @@ export default function ComplianceMappingPage() {
 
       {/* Framework selector */}
       <div className="flex gap-2">
-        {frameworks.map((fw) => (
+        {frameworks.map((fw: any) => (
           <button key={fw} onClick={() => { setFramework(fw); load(fw); }} className={`rounded-lg px-4 py-2 text-sm font-medium ${framework === fw ? "bg-teal-600 text-white" : "bg-gray-100 text-gray-600 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300"}`}>{fw}</button>
         ))}
       </div>
@@ -101,14 +101,14 @@ export default function ComplianceMappingPage() {
                   <th scope="col" className="px-4 py-3 text-left font-semibold text-gray-600 dark:text-gray-300">Policies</th>
                 </tr></thead>
                 <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-                  {mappings.map((m) => (
+                  {mappings.map((m: any) => (
                     <tr key={m.id} className="bg-white dark:bg-gray-900">
                       <td className="px-4 py-3"><span className="font-mono text-xs font-semibold text-gray-900 dark:text-white">{m.control_id}</span></td>
                       <td className="px-4 py-3 text-gray-600 dark:text-gray-300">{m.requirement}</td>
                       <td className="px-4 py-3 text-gray-400">{m.category}</td>
                       <td className="px-4 py-3"><select aria-label="Select option" value={m.status} onChange={(e) => handleStatusChange(m.id, e.target.value as ControlMapping["status"])} className={`rounded-full px-2 py-0.5 text-xs font-medium border-0 ${statusColors[m.status] || ""}`}>{statusIcons[m.status]}<option value="compliant">compliant</option><option value="partial">partial</option><option value="missing">missing</option><option value="not_applicable">not_applicable</option></select></td>
                       <td className="px-4 py-3"><span className="flex items-center gap-1 text-gray-500"><FileText className="h-3 w-3" />{m.evidence_count}</span></td>
-                      <td className="px-4 py-3"><div className="flex flex-wrap gap-1">{m.mapped_policies.slice(0, 3).map((p) => <span key={p} className="rounded bg-indigo-100 px-1 py-0.5 text-xs text-indigo-600 dark:bg-indigo-900/30">{p}</span>)}{m.mapped_policies.length > 3 && <span className="text-xs text-gray-400">+{m.mapped_policies.length - 3}</span>}</div></td>
+                      <td className="px-4 py-3"><div className="flex flex-wrap gap-1">{m.mapped_policies.slice(0, 3).map((p: any) => <span key={p} className="rounded bg-indigo-100 px-1 py-0.5 text-xs text-indigo-600 dark:bg-indigo-900/30">{p}</span>)}{m.mapped_policies.length > 3 && <span className="text-xs text-gray-400">+{m.mapped_policies.length - 3}</span>}</div></td>
                     </tr>
                   ))}
                 </tbody>

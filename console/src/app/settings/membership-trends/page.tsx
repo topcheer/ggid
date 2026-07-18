@@ -31,8 +31,8 @@ export default function MembershipTrendsPage() {
       <div className="bg-gray-900 rounded-xl p-6 mb-6">
         <h2 className="text-sm font-semibold mb-4">Joiners vs Leavers (12 months)</h2>
         <div className="flex items-end gap-2 h-40">
-          {(data?.monthly ?? []).map((m) => {
-            const max = Math.max(...(data?.monthly ?? []).map((x) => Math.max(x.joiners, x.leavers)), 1);
+          {(data?.monthly ?? []).map((m: any) => {
+            const max = Math.max(...(data?.monthly ?? []).map((x: any) => Math.max(x.joiners, x.leavers)), 1);
             return (
               <div key={m.month} className="flex-1 flex flex-col items-center">
                 <div className="flex items-end gap-0.5 w-full justify-center">
@@ -52,7 +52,7 @@ export default function MembershipTrendsPage() {
         <div className="bg-gray-900 rounded-xl p-6">
           <h2 className="text-sm font-semibold mb-3">By Department</h2>
           <div className="space-y-2">
-            {(data?.by_department ?? []).map((d) => (
+            {(data?.by_department ?? []).map((d: any) => (
               <div key={d.dept} className="flex items-center gap-2"><span className="text-xs w-24">{d.dept}</span><div className="flex-1 bg-gray-800 rounded-full h-2"><div className="bg-blue-600 h-2 rounded-full" style={{ width: (d.members / (data?.total_members ?? 1) * 100) + "%" }} /></div><span className="text-xs text-gray-400">{d.members}</span></div>
             ))}
           </div>
@@ -60,7 +60,7 @@ export default function MembershipTrendsPage() {
         <div className="bg-gray-900 rounded-xl p-6">
           <h2 className="text-sm font-semibold mb-3">Top Attrition Reasons</h2>
           <div className="space-y-2">
-            {(data?.attrition_reasons ?? []).map((r) => (
+            {(data?.attrition_reasons ?? []).map((r: any) => (
               <div key={r.reason} className="flex items-center gap-2"><TrendingDown className="w-3 h-3 text-red-400" /><span className="text-xs flex-1">{r.reason}</span><span className="text-xs text-gray-400">{r.count}</span></div>
             ))}
           </div>

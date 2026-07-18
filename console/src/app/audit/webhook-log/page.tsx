@@ -45,8 +45,8 @@ export default function WebhookLogPage() {
   }, []);
 
   const cardCls = "rounded-xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-700 dark:bg-gray-800";
-  const successCount = entries.filter((e) => e.status === "delivered").length;
-  const failCount = entries.filter((e) => e.status === "failed").length;
+  const successCount = entries.filter((e: any) => e.status === "delivered").length;
+  const failCount = entries.filter((e: any) => e.status === "failed").length;
 
   return (
     <div className="space-y-6">
@@ -68,7 +68,7 @@ export default function WebhookLogPage() {
       : entries.length === 0 ? <div className={cardCls}><div className="py-12 text-center"><Webhook className="mx-auto h-12 w-12 text-gray-300" /><p className="mt-4 text-sm text-gray-400">No webhook deliveries recorded.</p></div></div>
       : (
         <div className="space-y-2">
-          {entries.map((e) => {
+          {entries.map((e: any) => {
             const cfg = STATUS_CONFIG[e.status] ?? STATUS_CONFIG.pending;
             const StatusIcon = cfg.icon;
             return (

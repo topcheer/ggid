@@ -32,9 +32,9 @@ export default function ResourceTagsPage() {
     try { await apiFetch("/api/v1/policy/resource-tags", { method: "POST", body: JSON.stringify({ resource_path: assignPath, tags: { [assignKey]: assignVal } }) }); setTags(await apiFetch<ResourceTagEntry[]>("/api/v1/policy/resource-tags").catch(() => tags)); setShowAssign(false); setAssignPath(""); setAssignKey(""); setAssignVal(""); }
     catch { setError("Assign failed"); } finally { setAssigning(false); }
   };
-  const handleDelete = async (id: string) => { try { await apiFetch(`/api/v1/policy/resource-tags/${id}`, { method: "DELETE" }); setTags((p) => p.filter((t) => t.id !== id)); } catch { setError("Delete failed"); } };
+  const handleDelete = async (id: string) => { try { await apiFetch(`/api/v1/policy/resource-tags/${id}`, { method: "DELETE" }); setTags((p) => p.filter((t: any) => t.id !== id)); } catch { setError("Delete failed"); } };
 
-  const filtered = filter ? tags.filter((t) => t.resource_path.includes(filter) || Object.values(t.tags).some((v) => v.includes(filter))) : tags;
+  const filtered = filter ? tags.filter((t: any) => t.resource_path.includes(filter) || Object.values(t.tags).some((v: any) => v.includes(filter))) : tags;
   const cardCls = "rounded-xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-700 dark:bg-gray-800";
 
   return (
@@ -45,7 +45,7 @@ export default function ResourceTagsPage() {
       {loading ? <div className="flex justify-center py-12"><Loader2 className="h-8 w-8 animate-spin text-purple-600" /></div> : filtered.length === 0 ? <div className={cardCls}><div className="py-12 text-center"><Tag className="mx-auto h-12 w-12 text-gray-300" /><p className="mt-4 text-sm text-gray-400">No tagged resources.</p></div></div> : (
         <div className="overflow-x-auto rounded-xl border border-gray-200 dark:border-gray-700">
           <table className="w-full text-sm"><thead className="bg-gray-50 dark:bg-gray-800"><tr><th className="px-4 py-3 text-left font-semibold text-gray-600 dark:text-gray-300">Resource</th><th className="px-4 py-3 text-left font-semibold text-gray-600 dark:text-gray-300">Type</th><th className="px-4 py-3 text-left font-semibold text-gray-600 dark:text-gray-300">Tags</th><th className="px-4 py-3 text-left font-semibold text-gray-600 dark:text-gray-300">Updated</th><th className="px-4 py-3 text-right font-semibold text-gray-600 dark:text-gray-300">Actions</th></tr></thead>
-            <tbody className="divide-y divide-gray-200 dark:divide-gray-700">{filtered.map((t) => (<tr key={t.id} className="bg-white dark:bg-gray-900"><td className="px-4 py-3 font-mono text-xs text-gray-700 dark:text-gray-300">{t.resource_path}</td><td className="px-4 py-3 text-gray-500">{t.resource_type}</td><td className="px-4 py-3"><div className="flex flex-wrap gap-1">{Object.entries(t.tags).map(([k, v]) => <span key={k} className="rounded bg-purple-100 px-1.5 py-0.5 text-xs text-purple-600 dark:bg-purple-900/30">{k}: {v}</span>)}</div></td><td className="px-4 py-3 text-gray-400">{new Date(t.updated_at).toLocaleDateString()}</td><td className="px-4 py-3 text-right"><button onClick={() => handleDelete(t.id)} className="text-red-400 hover:text-red-600"><Trash2 className="h-4 w-4" /></button></td></tr>))}</tbody>
+            <tbody className="divide-y divide-gray-200 dark:divide-gray-700">{filtered.map((t: any) => (<tr key={t.id} className="bg-white dark:bg-gray-900"><td className="px-4 py-3 font-mono text-xs text-gray-700 dark:text-gray-300">{t.resource_path}</td><td className="px-4 py-3 text-gray-500">{t.resource_type}</td><td className="px-4 py-3"><div className="flex flex-wrap gap-1">{Object.entries(t.tags).map(([k, v]) => <span key={k} className="rounded bg-purple-100 px-1.5 py-0.5 text-xs text-purple-600 dark:bg-purple-900/30">{k}: {v}</span>)}</div></td><td className="px-4 py-3 text-gray-400">{new Date(t.updated_at).toLocaleDateString()}</td><td className="px-4 py-3 text-right"><button onClick={() => handleDelete(t.id)} className="text-red-400 hover:text-red-600"><Trash2 className="h-4 w-4" /></button></td></tr>))}</tbody>
           </table>
         </div>
       )}

@@ -57,7 +57,7 @@ export default function AccountRecoveryPage() {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="rounded-lg border dark:border-gray-800 p-4">
           <h3 className="text-sm font-semibold mb-3">Recovery Methods</h3>
-          <div className="space-y-2">{config.methods.map((m) => (<div key={m} className="flex items-center gap-2 text-sm"><span className="w-2 h-2 rounded-full bg-green-500" />{m}</div>
+          <div className="space-y-2">{config.methods.map((m: any) => (<div key={m} className="flex items-center gap-2 text-sm"><span className="w-2 h-2 rounded-full bg-green-500" />{m}</div>
           ))}</div>
         </div>
         <div className="rounded-lg border dark:border-gray-800 p-4">
@@ -80,7 +80,7 @@ export default function AccountRecoveryPage() {
             </tr>
           </thead>
           <tbody className="divide-y dark:divide-gray-800">
-            {codes.map((c) => (
+            {codes.map((c: any) => (
               <tr key={c.user_id} className="hover:bg-gray-50 dark:hover:bg-gray-900/30">
                 <td className="px-4 py-3 font-medium">{c.username}</td>
                 <td className="px-4 py-3 text-xs">{c.total}</td>
@@ -98,7 +98,7 @@ export default function AccountRecoveryPage() {
       <div className="rounded-lg border dark:border-gray-800 p-4">
         <h3 className="text-sm font-semibold mb-3 flex items-center gap-2"><Ban className="w-4 h-4 text-gray-400" /> Recovery Audit Trail</h3>
         <div className="space-y-1">
-          {audit.slice(0, 10).map((a) => (
+          {audit.slice(0, 10).map((a: any) => (
             <div key={a.id} className="flex items-center justify-between text-sm py-1">
               <div>
                 <span className="font-medium">{a.user}</span>

@@ -48,14 +48,14 @@ export default function SecretRotationPage() {
 
   const handleToggleAuto = async (s: SecretStatus) => {
     setSavingId(s.id);
-    try { await apiFetch(`/api/v1/oauth/secret-rotation/${s.id}`, { method: "PATCH", body: JSON.stringify({ auto_rotate: !s.auto_rotate }) }); setSecrets((prev) => prev.map((x) => x.id === s.id ? { ...x, auto_rotate: !x.auto_rotate } : x)); }
+    try { await apiFetch(`/api/v1/oauth/secret-rotation/${s.id}`, { method: "PATCH", body: JSON.stringify({ auto_rotate: !s.auto_rotate }) }); setSecrets((prev) => prev.map((x: any) => x.id === s.id ? { ...x, auto_rotate: !x.auto_rotate } : x)); }
     catch { setError("Toggle failed"); }
     finally { setSavingId(null); }
   };
 
   const cardCls = "rounded-xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-700 dark:bg-gray-800";
   const statusColors: Record<string, string> = { active: "text-green-600 bg-green-100 dark:bg-green-900/30 dark:text-green-400", expiring: "text-yellow-600 bg-yellow-100 dark:bg-yellow-900/30 dark:text-yellow-400", expired: "text-red-600 bg-red-100 dark:bg-red-900/30 dark:text-red-400" };
-  const expiring = secrets.filter((s) => s.status !== "active");
+  const expiring = secrets.filter((s: any) => s.status !== "active");
 
   return (
     <div className="space-y-6">
@@ -74,7 +74,7 @@ export default function SecretRotationPage() {
         <div className="overflow-x-auto rounded-xl border border-gray-200 dark:border-gray-700">
           <table className="w-full text-sm">
             <thead className="bg-gray-50 dark:bg-gray-800"><tr><th className="px-4 py-3 text-left font-semibold text-gray-600 dark:text-gray-300">Client</th><th className="px-4 py-3 text-left font-semibold text-gray-600 dark:text-gray-300">Status</th><th className="px-4 py-3 text-left font-semibold text-gray-600 dark:text-gray-300">Created</th><th className="px-4 py-3 text-left font-semibold text-gray-600 dark:text-gray-300">Last Rotated</th><th className="px-4 py-3 text-left font-semibold text-gray-600 dark:text-gray-300">Expires</th><th className="px-4 py-3 text-left font-semibold text-gray-600 dark:text-gray-300">Grace Period</th><th className="px-4 py-3 text-left font-semibold text-gray-600 dark:text-gray-300">Auto-Rotate</th><th className="px-4 py-3 text-right font-semibold text-gray-600 dark:text-gray-300">Actions</th></tr></thead>
-            <tbody className="divide-y divide-gray-200 dark:divide-gray-700">{secrets.map((s) => (
+            <tbody className="divide-y divide-gray-200 dark:divide-gray-700">{secrets.map((s: any) => (
               <tr key={s.id} className="bg-white dark:bg-gray-900">
                 <td className="px-4 py-3"><div className="font-medium text-gray-900 dark:text-white">{s.client_name}</div><div className="text-xs text-gray-400 font-mono">{s.client_id.slice(0, 16)}</div></td>
                 <td className="px-4 py-3"><span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${statusColors[s.status] || ""}`}>{s.status}</span></td>

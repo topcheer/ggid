@@ -108,7 +108,7 @@ export default function ReviewSchedulesPage() {
 function SchedulesTab({ schedules, setSchedules }: { schedules: Schedule[]; setSchedules: (s: Schedule[]) => void }) {
   const t = useTranslations();
 
-  const toggle = (id: string) => setSchedules(schedules.map((s) => s.id === id ? { ...s, enabled: !s.enabled } : s));
+  const toggle = (id: string) => setSchedules(schedules.map((s: any) => s.id === id ? { ...s, enabled: !s.enabled } : s));
 
   if (schedules.length === 0) {
     return <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-12 text-center"><CalendarClock className="w-12 h-12 mx-auto mb-3 text-gray-300" /><p className="text-sm text-gray-500">{t("reviewSchedules.schedules.noSchedules")}</p></div>;
@@ -116,7 +116,7 @@ function SchedulesTab({ schedules, setSchedules }: { schedules: Schedule[]; setS
 
   return (
     <div className="space-y-2">
-      {schedules.map((s) => (
+      {schedules.map((s: any) => (
         <div key={s.id} className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-4">
           <div className="flex items-center justify-between mb-2">
             <div className="flex items-center gap-2">
@@ -184,7 +184,7 @@ function CreateTab({ onCreated }: { onCreated: () => void }) {
         <label className="block text-sm font-medium text-gray-900 dark:text-white mb-1">{t("reviewSchedules.create.scope")}</label>
         <p className="text-xs text-gray-500 mb-2">{t("reviewSchedules.create.scopeDesc")}</p>
         <div className="grid grid-cols-2 gap-2">
-          {SCOPES.map((s) => (
+          {SCOPES.map((s: any) => (
             <button key={s} onClick={() => setScope(s)}
               className={`flex items-center gap-2 p-3 rounded-lg border-2 text-sm transition-all ${scope === s ? "border-blue-500 bg-blue-50 dark:bg-blue-950/30 text-blue-700 dark:text-blue-300" : "border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400"}`}>
               {scope === s && <Check className="w-3 h-3" />}
@@ -198,7 +198,7 @@ function CreateTab({ onCreated }: { onCreated: () => void }) {
         <label className="block text-sm font-medium text-gray-900 dark:text-white mb-1">{t("reviewSchedules.create.frequency")}</label>
         <p className="text-xs text-gray-500 mb-2">{t("reviewSchedules.create.frequencyDesc")}</p>
         <div className="flex flex-wrap gap-2">
-          {FREQUENCIES.map((f) => (
+          {FREQUENCIES.map((f: any) => (
             <button key={f} onClick={() => setFrequency(f)}
               className={`px-3 py-1.5 rounded-lg text-sm font-medium border-2 transition-all ${frequency === f ? "border-blue-500 " + (freqColors[f] || "") : "border-gray-200 dark:border-gray-700 text-gray-500"}`}>
               {t(`reviewSchedules.schedules.frequency${f.replace(/^./, (m) => m.toUpperCase())}`)}
@@ -262,7 +262,7 @@ function HistoryTab({ history }: { history: CampaignHistory[] }) {
             <th className="py-2 px-4 font-medium text-gray-600 dark:text-gray-400">{t("reviewSchedules.history.status")}</th>
           </tr></thead>
           <tbody>
-            {history.map((h) => (
+            {history.map((h: any) => (
               <tr key={h.id} className="border-b border-gray-100 dark:border-gray-800/50">
                 <td className="py-3 px-4 font-medium text-gray-900 dark:text-white">{h.name}</td>
                 <td className="py-3 px-4 text-gray-600 dark:text-gray-400">{h.period}</td>

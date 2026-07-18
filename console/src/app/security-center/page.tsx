@@ -138,12 +138,12 @@ export default function SecurityCenterDashboardPage() {
     try {
       await apiFetch(`/api/v1/webauthn/devices/${id}`, { method: "DELETE" });
       setData((prev) =>
-        prev ? { ...prev, webauthn_devices: prev.webauthn_devices.filter((d) => d.id !== id) } : prev,
+        prev ? { ...prev, webauthn_devices: prev.webauthn_devices.filter((d: any) => d.id !== id) } : prev,
       );
       setMsg(t("security.deviceRevoked"));
     } catch {
       setData((prev) =>
-        prev ? { ...prev, webauthn_devices: prev.webauthn_devices.filter((d) => d.id !== id) } : prev,
+        prev ? { ...prev, webauthn_devices: prev.webauthn_devices.filter((d: any) => d.id !== id) } : prev,
       );
       setMsg(t("security.deviceRevoked"));
     }
@@ -185,7 +185,7 @@ export default function SecurityCenterDashboardPage() {
   };
 
   // Failed login chart max
-  const maxFailed = Math.max(1, ...d.failed_login_chart.map((b) => b.count));
+  const maxFailed = Math.max(1, ...d.failed_login_chart.map((b: any) => b.count));
 
   // MFA donut math
   const mfaTotal = d.mfa_enrolled + d.mfa_not_enrolled;
@@ -194,7 +194,7 @@ export default function SecurityCenterDashboardPage() {
   const enrolledArc = (enrolledPct / 100) * donutCircumference;
 
   // MFA method bar max
-  const maxMethod = Math.max(1, ...d.mfa_methods.map((m) => m.count));
+  const maxMethod = Math.max(1, ...d.mfa_methods.map((m: any) => m.count));
 
   return (
     <div>
@@ -248,15 +248,15 @@ export default function SecurityCenterDashboardPage() {
               </g>
               {/* Grid lines */}
               <g stroke="#94a3b8" strokeWidth="0.1" opacity="0.3">
-                {[10, 20, 30, 40, 50, 60, 70, 80, 90].map((x) => (
+                {[10, 20, 30, 40, 50, 60, 70, 80, 90].map((x: any) => (
                   <line key={`v${x}`} x1={x} y1="0" x2={x} y2="50" />
                 ))}
-                {[10, 20, 30, 40].map((y) => (
+                {[10, 20, 30, 40].map((y: any) => (
                   <line key={`h${y}`} x1="0" y1={y} x2="100" y2={y} />
                 ))}
               </g>
               {/* Session dots */}
-              {d.session_locations.map((s, i) => {
+              {d.session_locations.map((s: any, i: any) => {
                 const { x, y } = geoToXY(s.lat, s.lng);
                 const svgX = x;
                 const svgY = y / 2;
@@ -328,7 +328,7 @@ export default function SecurityCenterDashboardPage() {
 
           {/* Breakdown bars */}
           <div className="space-y-3">
-            {d.mfa_methods.map((m) => (
+            {d.mfa_methods.map((m: any) => (
               <div key={m.method}>
                 <div className="mb-1 flex items-center justify-between text-xs">
                   <span className="font-medium text-gray-700 dark:text-gray-300">{m.method}</span>
@@ -359,7 +359,7 @@ export default function SecurityCenterDashboardPage() {
             <AlertTriangle className="h-5 w-5 text-amber-500" /> {t("security.failedLogins7d")}
           </h2>
           <div className="flex items-end justify-between gap-2" style={{ height: "200px" }}>
-            {d.failed_login_chart.map((day) => (
+            {d.failed_login_chart.map((day: any) => (
               <div
                 key={day.date}
                 className="group relative flex flex-1 flex-col items-center justify-end"
@@ -371,7 +371,7 @@ export default function SecurityCenterDashboardPage() {
                   <div className="absolute -top-2 left-1/2 z-10 w-44 -translate-x-1/2 -translate-y-full rounded-lg border border-gray-200 bg-white p-2 shadow-lg dark:border-gray-600 dark:bg-gray-800">
                     <p className="text-xs font-semibold text-gray-900 dark:text-gray-100">{day.date} — {day.count} failed</p>
                     <p className="mt-1 text-[10px] text-gray-400">Top IPs:</p>
-                    {day.top_ips.map((ip, i) => (
+                    {day.top_ips.map((ip: any, i: any) => (
                       <p key={i} className="font-mono text-[10px] text-gray-500">{ip}</p>
                     ))}
                   </div>
@@ -412,7 +412,7 @@ export default function SecurityCenterDashboardPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
-                {d.risky_ips.map((r) => {
+                {d.risky_ips.map((r: any) => {
                   const isBlocked = blockedIPs.has(r.ip);
                   return (
                     <tr key={r.ip}>
@@ -456,7 +456,7 @@ export default function SecurityCenterDashboardPage() {
           <p className="py-4 text-center text-sm text-gray-400">{t("security.noWebauthn")}</p>
         ) : (
           <div className="grid gap-3 sm:grid-cols-2">
-            {d.webauthn_devices.map((dev) => (
+            {d.webauthn_devices.map((dev: any) => (
               <div
                 key={dev.id}
                 className="flex items-center justify-between rounded-lg border border-gray-200 p-4 dark:border-gray-700"

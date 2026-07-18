@@ -46,10 +46,10 @@ export default function GeofencingPage() {
   };
 
   const toggleCountry = (code: string) => {
-    setRule((prev) => ({ ...prev, allowed_countries: prev.allowed_countries.includes(code) ? prev.allowed_countries.filter((c) => c !== code) : [...prev.allowed_countries, code] }));
+    setRule((prev) => ({ ...prev, allowed_countries: prev.allowed_countries.includes(code) ? prev.allowed_countries.filter((c: any) => c !== code) : [...prev.allowed_countries, code] }));
   };
   const toggleRegion = (r: string) => {
-    setRule((prev) => ({ ...prev, denied_regions: prev.denied_regions.includes(r) ? prev.denied_regions.filter((x) => x !== r) : [...prev.denied_regions, r] }));
+    setRule((prev) => ({ ...prev, denied_regions: prev.denied_regions.includes(r) ? prev.denied_regions.filter((x: any) => x !== r) : [...prev.denied_regions, r] }));
   };
 
   return (
@@ -64,7 +64,7 @@ export default function GeofencingPage() {
         <div className="rounded-lg border dark:border-gray-800 p-4">
           <h3 className="font-semibold mb-3">Allowed Countries ({rule.allowed_countries.length})</h3>
           <div className="grid grid-cols-4 gap-2">
-            {countries.map((c) => (
+            {countries.map((c: any) => (
               <label key={c} className="flex items-center gap-1 text-xs cursor-pointer">
                 <input aria-label="Rule" type="checkbox" checked={rule.allowed_countries.includes(c)} onChange={() => toggleCountry(c)} className="rounded" /><span className="font-mono">{c}</span>
               </label>
@@ -76,7 +76,7 @@ export default function GeofencingPage() {
         <div className="rounded-lg border dark:border-gray-800 p-4">
           <h3 className="font-semibold mb-3">Denied Regions ({rule.denied_regions.length})</h3>
           <div className="grid grid-cols-3 gap-2">
-            {regions.map((r) => (
+            {regions.map((r: any) => (
               <label key={r} className="flex items-center gap-1 text-xs cursor-pointer">
                 <input aria-label="Rule" type="checkbox" checked={rule.denied_regions.includes(r)} onChange={() => toggleRegion(r)} className="rounded" /><span className="font-mono">{r}</span>
               </label>

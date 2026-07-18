@@ -95,7 +95,7 @@ export default function AuthBackChannelAuthPage() {
                 </tr>
               </thead>
               <tbody>
-                {(data?.per_client_ciba ?? []).map((c) => (
+                {(data?.per_client_ciba ?? []).map((c: any) => (
                   <tr key={c.client_id} className="border-b border-gray-800">
                     <td className="py-3 pr-3 font-mono text-xs text-blue-400">{c.client_id}</td>
                     <td className="py-3 pr-3 capitalize">{c.delivery_mode}</td>

@@ -74,7 +74,7 @@ function SuccessTab() {
     const labels = range === "24h"
       ? Array.from({ length: 24 }, (_, i) => `${i}:00`)
       : ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
-    setData(labels.map((label, i) => ({
+    setData(labels.map((label: any, i: any) => ({
       hour: label,
       success: 50 + Math.floor(Math.random() * 80),
       failed: Math.floor(Math.random() * 20),
@@ -92,13 +92,13 @@ function SuccessTab() {
   const peakHour = data.reduce((max, d) => d.success > max.success ? d : max, data[0]);
 
   // SVG stacked bar chart
-  const maxVal = Math.max(...data.map((d) => d.success + d.failed), 1);
+  const maxVal = Math.max(...data.map((d: any) => d.success + d.failed), 1);
   const barW = data.length > 0 ? (700 - 60) / data.length : 0;
 
   return (
     <div className="space-y-4">
       <div className="flex gap-2">
-        {(["24h", "7d"] as const).map((r) => (
+        {(["24h", "7d"] as const).map((r: any) => (
           <button key={r} onClick={() => setRange(r)}
             className={`px-3 py-1.5 rounded-lg text-xs font-medium ${range === r ? "bg-blue-600 text-white" : "bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-gray-700"}`}>
             {r === "24h" ? t("loginSecurity.success.last24h") : t("loginSecurity.success.last7d")}
@@ -116,7 +116,7 @@ function SuccessTab() {
       <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-6">
         <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-4">{t("loginSecurity.success.title")}</h3>
         <svg viewBox="0 0 700 220" className="w-full h-48">
-          {data.map((d, i) => {
+          {data.map((d: any, i: any) => {
             const total_h = ((d.success + d.failed) / maxVal) * 160;
             const successH = (d.success / (d.success + d.failed)) * total_h;
             const failedH = total_h - successH;
@@ -186,7 +186,7 @@ function FailureTab() {
         <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-4">{t("loginSecurity.failures.title")}</h3>
         <div className="flex flex-col md:flex-row items-center gap-8">
           <svg width="180" height="180" viewBox="0 0 180 180" className="flex-shrink-0">
-            {reasons.map((r, i) => {
+            {reasons.map((r: any, i: any) => {
               const startAngle = (cumulative / total) * 2 * Math.PI - Math.PI / 2;
               cumulative += r.count;
               const endAngle = (cumulative / total) * 2 * Math.PI - Math.PI / 2;
@@ -203,7 +203,7 @@ function FailureTab() {
           </svg>
 
           <div className="flex-1 space-y-2 w-full">
-            {reasons.map((r, i) => {
+            {reasons.map((r: any, i: any) => {
               const pct = total > 0 ? Math.round((r.count / total) * 100) : 0;
               return (
                 <div key={r.reason} className="flex items-center gap-3">
@@ -260,8 +260,8 @@ function GeoTab() {
 
   if (loading) return <Spinner />;
 
-  const totalCountries = new Set(locations.map((l) => l.country)).size;
-  const suspiciousIPs = locations.filter((l) => l.flagged).reduce((s, l) => s + l.unique_ips, 0);
+  const totalCountries = new Set(locations.map((l: any) => l.country)).size;
+  const suspiciousIPs = locations.filter((l: any) => l.flagged).reduce((s, l) => s + l.unique_ips, 0);
 
   return (
     <div className="space-y-4">
@@ -286,7 +286,7 @@ function GeoTab() {
               </tr>
             </thead>
             <tbody>
-              {locations.map((l, i) => (
+              {locations.map((l: any, i: any) => (
                 <tr key={i} className="border-b border-gray-100 dark:border-gray-800/50">
                   <td className="py-3 px-3">
                     <div className="flex items-center gap-2">

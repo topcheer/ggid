@@ -319,7 +319,7 @@ export default function ProfileSettingsPage() {
               onChange={(e) => setProfile({ ...profile, timezone: e.target.value })}
               className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
             >
-              {TIMEZONES.map((tz) => (
+              {TIMEZONES.map((tz: any) => (
                 <option key={tz} value={tz}>
                   {tz}
                 </option>
@@ -336,7 +336,7 @@ export default function ProfileSettingsPage() {
               onChange={(e) => setProfile({ ...profile, language: e.target.value })}
               className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
             >
-              {LANGUAGES.map((lang) => (
+              {LANGUAGES.map((lang: any) => (
                 <option key={lang.value} value={lang.value}>
                   {lang.label}
                 </option>

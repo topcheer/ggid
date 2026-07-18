@@ -160,8 +160,8 @@ export default function SSOConnectionsPage() {
         }
         if (data.social && Array.isArray(data.social)) {
           setSocialProviders((prev) =>
-            prev.map((p) => {
-              const remote = (data.social as SocialProvider[]).find((r) => r.id === p.id);
+            prev.map((p: any) => {
+              const remote = (data.social as SocialProvider[]).find((r: any) => r.id === p.id);
               return remote ? { ...p, enabled: remote.enabled } : p;
             }),
           );
@@ -385,8 +385,8 @@ export default function SSOConnectionsPage() {
         discoveryUrl: o.discoveryUrl,
         clientId: o.clientId,
         clientSecret: o.clientSecret,
-        scopes: o.scopes.filter((s) => ["openid", "profile", "email"].includes(s)),
-        customScope: o.scopes.filter((s) => !["openid", "profile", "email"].includes(s)).join(" "),
+        scopes: o.scopes.filter((s: any) => ["openid", "profile", "email"].includes(s)),
+        customScope: o.scopes.filter((s: any) => !["openid", "profile", "email"].includes(s)).join(" "),
         tokenEndpoint: o.tokenEndpoint,
       });
       setWizardType("OIDC");
@@ -396,18 +396,18 @@ export default function SSOConnectionsPage() {
   };
 
   const deleteProvider = (id: string) => {
-    setProviders((prev) => prev.filter((p) => p.id !== id));
+    setProviders((prev) => prev.filter((p: any) => p.id !== id));
     showToast("success", t("sso.providerDeleted"));
   };
 
   const toggleProviderActive = (id: string) => {
     setProviders((prev) =>
-      prev.map((p) => (p.id === id ? { ...p, active: !p.active } : p)),
+      prev.map((p: any) => (p.id === id ? { ...p, active: !p.active } : p)),
     );
   };
 
   const toggleSocial = async (id: string) => {
-    const updated = socialProviders.map((p) =>
+    const updated = socialProviders.map((p: any) =>
       p.id === id ? { ...p, enabled: !p.enabled } : p,
     );
     setSocialProviders(updated);
@@ -627,7 +627,7 @@ export default function SSOConnectionsPage() {
                   Map SAML attributes from your IdP to GGID user fields.
                 </p>
                 <div className="space-y-3">
-                  {GGID_FIELDS.map((field) => (
+                  {GGID_FIELDS.map((field: any) => (
                     <div key={field} className="grid grid-cols-[1fr_auto_1fr] items-center gap-3">
                       <div className="rounded-lg bg-gray-50 px-3 py-2 text-sm font-medium text-gray-700 dark:bg-gray-700 dark:text-gray-300">
                         {field}
@@ -644,7 +644,7 @@ export default function SSOConnectionsPage() {
                         className={inputCls}
                       >
                         <option value="">-- Not mapped --</option>
-                        {SAML_ATTRS.map((attr) => (
+                        {SAML_ATTRS.map((attr: any) => (
                           <option key={attr} value={attr}>{attr}</option>
                         ))}
                       </select>
@@ -761,14 +761,14 @@ export default function SSOConnectionsPage() {
                 <div>
                   <label className={labelCls}>Scopes</label>
                   <div className="flex flex-wrap gap-2">
-                    {["openid", "profile", "email"].map((scope) => (
+                    {["openid", "profile", "email"].map((scope: any) => (
                       <button
                         key={scope}
                         onClick={() =>
                           setOidcForm((prev) => ({
                             ...prev,
                             scopes: prev.scopes.includes(scope)
-                              ? prev.scopes.filter((s) => s !== scope)
+                              ? prev.scopes.filter((s: any) => s !== scope)
                               : [...prev.scopes, scope],
                           }))
                         }
@@ -817,7 +817,7 @@ export default function SSOConnectionsPage() {
         <div className="mb-6">
           <h2 className="mb-3 text-sm font-semibold uppercase text-gray-500">{t("sso.configuredProviders")}</h2>
           <div className="grid gap-3 sm:grid-cols-2">
-            {providers.map((provider) => {
+            {providers.map((provider: any) => {
               const result = testResults[provider.id];
               return (
                 <div
@@ -934,7 +934,7 @@ export default function SSOConnectionsPage() {
             {t("sso.socialHint")}
           </p>
           <div className="space-y-3">
-            {socialProviders.map((provider) => (
+            {socialProviders.map((provider: any) => (
               <div
                 key={provider.id}
                 className="flex items-center justify-between rounded-lg border border-gray-200 p-4 dark:border-gray-700"

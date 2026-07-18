@@ -36,7 +36,7 @@ export default function TokenFamilyPage() {
     catch { /* noop */ }
   };
 
-  const reuseCount = families.filter((f) => f.reuse_detected).length;
+  const reuseCount = families.filter((f: any) => f.reuse_detected).length;
 
   return (
     <div className="space-y-6">
@@ -53,7 +53,7 @@ export default function TokenFamilyPage() {
       )}
 
       <div className="space-y-2">
-        {families.map((f) => (
+        {families.map((f: any) => (
           <div key={f.family_id} className="rounded-lg border dark:border-gray-800">
             <div className="flex items-center justify-between p-3 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-900/30" onClick={() => setExpanded(expanded === f.family_id ? null : f.family_id)}>
               <div className="flex items-center gap-2">
@@ -77,7 +77,7 @@ export default function TokenFamilyPage() {
               <div className="border-t dark:border-gray-800 p-3 bg-gray-50 dark:bg-gray-900/30">
                 <h4 className="text-xs font-semibold text-gray-500 mb-2">{t("backend.tokenFamily.childTokens")}</h4>
                 <div className="space-y-1">
-                  {f.child_tokens.map((c) => (
+                  {f.child_tokens.map((c: any) => (
                     <div key={c.id} className="flex items-center gap-2 text-xs">
                       <span className="font-mono text-gray-500 w-40 truncate">{c.id}</span>
                       <span className="text-gray-400">{c.client}</span>

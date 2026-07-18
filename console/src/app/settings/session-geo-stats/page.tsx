@@ -35,8 +35,8 @@ export default function SessionGeoStatsPage() {
 
   useEffect(() => { fetchData(); }, [fetchData]);
 
-  const maxCity = Math.max(...(data?.top_cities.map((c) => c.sessions) || [1]), 1);
-  const maxHeat = Math.max(...(data?.heatmap.map((h) => h.intensity) || [1]), 1);
+  const maxCity = Math.max(...(data?.top_cities.map((c: any) => c.sessions) || [1]), 1);
+  const maxHeat = Math.max(...(data?.heatmap.map((h: any) => h.intensity) || [1]), 1);
 
   return (
     <div className="space-y-6">
@@ -64,7 +64,7 @@ export default function SessionGeoStatsPage() {
 
             <div className="rounded-lg border dark:border-gray-800 p-4">
               <h3 className="text-sm font-semibold mb-3">{t("sessionGeoStats.countries")}</h3>
-              <div className="space-y-1">{data.countries.map((c) => (
+              <div className="space-y-1">{data.countries.map((c: any) => (
                 <div key={c.code} className="flex items-center gap-2 text-sm"><span className="font-mono text-xs bg-gray-100 dark:bg-gray-800 px-1.5 py-0.5 rounded">{c.code}</span><span className="flex-1">{c.name}</span><span className="font-bold">{c.sessions}</span><span className="text-xs text-gray-400">{c.pct.toFixed(1)}%</span></div>
               ))}</div>
             </div>

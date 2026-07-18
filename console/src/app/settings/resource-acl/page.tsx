@@ -58,7 +58,7 @@ export default function ResourceACLPage() {
   }, []);
 
   // Build tree from rules' resource paths
-  const allPaths = Array.from(new Set(["/", ...rules.map((r) => r.resource_path)]));
+  const allPaths = Array.from(new Set(["/", ...rules.map((r: any) => r.resource_path)]));
   const tree: TreeNode = { path: "/", name: "root", is_dir: true, children: [] };
   const pathToNode = new Map<string, TreeNode>([["/", tree]]);
   for (const p of allPaths) {
@@ -68,7 +68,7 @@ export default function ResourceACLPage() {
     let currPath = "";
     for (const part of parts) {
       currPath += "/" + part;
-      let child = curr.children.find((c) => c.name === part);
+      let child = curr.children.find((c: any) => c.name === part);
       if (!child) {
         child = { path: currPath, name: part, is_dir: !part.includes("."), children: [] };
         curr.children.push(child);
@@ -98,7 +98,7 @@ export default function ResourceACLPage() {
   };
 
   const handleDelete = async (id: string) => {
-    try { await apiFetch(`/api/v1/policy/resource-acl/${id}`, { method: "DELETE" }); setRules((p) => p.filter((r) => r.id !== id)); }
+    try { await apiFetch(`/api/v1/policy/resource-acl/${id}`, { method: "DELETE" }); setRules((p) => p.filter((r: any) => r.id !== id)); }
     catch { setError("Delete failed"); }
   };
 
@@ -111,13 +111,13 @@ export default function ResourceACLPage() {
           {node.is_dir ? <Folder className="h-4 w-4 text-blue-400" /> : <File className="h-4 w-4 text-gray-400" />}
           <button onClick={() => setSelectedPath(node.path)} className="flex-1 text-left text-sm text-gray-700 dark:text-gray-300">{node.name}</button>
         </div>
-        {expandedPaths.has(node.path) && node.children.map((c) => renderTree(c, depth + 1))}
+        {expandedPaths.has(node.path) && node.children.map((c: any) => renderTree(c, depth + 1))}
       </div>
     );
   };
 
   const cardCls = "rounded-xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-700 dark:bg-gray-800";
-  const pathRules = selectedPath ? rules.filter((r) => r.resource_path === selectedPath) : rules;
+  const pathRules = selectedPath ? rules.filter((r: any) => r.resource_path === selectedPath) : rules;
 
   return (
     <div className="space-y-6">
@@ -147,7 +147,7 @@ export default function ResourceACLPage() {
               <div className={cardCls}><div className="py-8 text-center"><FolderTree className="mx-auto h-10 w-10 text-gray-300" /><p className="mt-3 text-sm text-gray-400">No ACL rules for this resource.</p></div></div>
             ) : (
               <div className="space-y-2">
-                {pathRules.map((r) => (
+                {pathRules.map((r: any) => (
                   <div key={r.id} className={`${cardCls} py-3`}>
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3">
@@ -157,7 +157,7 @@ export default function ResourceACLPage() {
                         {r.inherited && <span className="text-xs text-gray-400">inherited</span>}
                       </div>
                       <div className="flex items-center gap-3">
-                        {r.permissions.length > 0 && <div className="flex gap-1">{r.permissions.map((p) => <span key={p} className="rounded bg-gray-100 px-1.5 py-0.5 text-xs text-gray-500 dark:bg-gray-700">{p}</span>)}</div>}
+                        {r.permissions.length > 0 && <div className="flex gap-1">{r.permissions.map((p: any) => <span key={p} className="rounded bg-gray-100 px-1.5 py-0.5 text-xs text-gray-500 dark:bg-gray-700">{p}</span>)}</div>}
                         <button onClick={() => setEditing({ ...r })} className="text-xs text-indigo-600 hover:underline">Edit</button>
                         <button onClick={() => handleDelete(r.id)} className="text-red-400 hover:text-red-600"><Trash2 className="h-3 w-3" /></button>
                       </div>
@@ -183,7 +183,7 @@ export default function ResourceACLPage() {
                 <div><label className="mb-1 block text-xs font-semibold uppercase text-gray-400">Type</label><select aria-label="editing" value={editing.principal_type} onChange={(e) => setEditing({ ...editing, principal_type: e.target.value as ACLRule["principal_type"] })} className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-900 dark:text-gray-200"><option value="user">User</option><option value="role">Role</option><option value="group">Group</option><option value="service">Service</option></select></div>
                 <div><label className="mb-1 block text-xs font-semibold uppercase text-gray-400">Effect</label><select aria-label="editing" value={editing.effect} onChange={(e) => setEditing({ ...editing, effect: e.target.value as "allow" | "deny" })} className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-900 dark:text-gray-200"><option value="allow">Allow</option><option value="deny">Deny</option></select></div>
               </div>
-              <div><label className="mb-1 block text-xs font-semibold uppercase text-gray-400">Permissions (comma-separated)</label><input aria-label="read, write" value={editing.permissions.join(", ")} onChange={(e) => setEditing({ ...editing, permissions: e.target.value.split(",").map((s) => s.trim()).filter(Boolean) })} placeholder="read, write" className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-900 dark:text-gray-200" /></div>
+              <div><label className="mb-1 block text-xs font-semibold uppercase text-gray-400">Permissions (comma-separated)</label><input aria-label="read, write" value={editing.permissions.join(", ")} onChange={(e) => setEditing({ ...editing, permissions: e.target.value.split(",").map((s: any) => s.trim()).filter(Boolean) })} placeholder="read, write" className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-900 dark:text-gray-200" /></div>
               <div><label className="mb-1 block text-xs font-semibold uppercase text-gray-400">Conditions</label><input aria-label="time >= 9am AND time <= 17pm" value={editing.conditions} onChange={(e) => setEditing({ ...editing, conditions: e.target.value })} placeholder="time >= 9am AND time <= 17pm" className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-900 dark:text-gray-200" /></div>
               <button onClick={handleSave} className="flex w-full items-center justify-center gap-2 rounded-lg bg-emerald-600 py-2 text-sm font-medium text-white hover:bg-emerald-700"><Save className="h-4 w-4" /> Save Rule</button>
             </div>

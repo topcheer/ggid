@@ -46,14 +46,14 @@ export default function StandingAccessPage() {
         method: "POST",
         headers: { ...authHeader(), "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" },
       });
-      setEntries((prev) => prev.filter((e) => e.id !== id));
+      setEntries((prev) => prev.filter((e: any) => e.id !== id));
     } catch { /* noop */ }
     finally { setApplyingId(null); }
   };
 
-  const jitRecommended = entries.filter((e) => e.jit_recommended);
+  const jitRecommended = entries.filter((e: any) => e.jit_recommended);
   const totalEntries = entries.length;
-  const unused90 = entries.filter((e) => e.days_since_use >= 90).length;
+  const unused90 = entries.filter((e: any) => e.days_since_use >= 90).length;
 
   return (
     <div className="space-y-6">
@@ -98,7 +98,7 @@ export default function StandingAccessPage() {
             </tr>
           </thead>
           <tbody className="divide-y dark:divide-gray-800">
-            {entries.map((e) => (
+            {entries.map((e: any) => (
               <tr key={e.id} className="hover:bg-gray-50 dark:hover:bg-gray-900/30">
                 <td className="px-4 py-3 font-medium">{e.username}</td>
                 <td className="px-4 py-3 font-mono text-xs">{e.resource}</td>

@@ -20,7 +20,7 @@ export default function SamlAttributeMappingConfigPage() {
       <div className="bg-gray-900 rounded-xl p-6 mb-6">
         <h2 className="text-sm font-semibold mb-4">Mappings</h2>
         <table className="w-full text-sm"><thead><tr className="border-b border-gray-800 text-gray-400"><th className="text-left py-2">Source Attribute</th><th className="text-left py-2"></th><th className="text-left py-2">Target Field</th><th className="text-left py-2">Transform</th><th className="text-left py-2">Actions</th></tr></thead>
-          <tbody>{(data?.mappings ?? []).map((m) => (
+          <tbody>{(data?.mappings ?? []).map((m: any) => (
             <tr key={m.id} className="border-b border-gray-800">
               <td className="py-2 font-mono text-xs text-blue-400">{m.source_attribute}</td>
               <td className="py-2"><ArrowRight className="w-3 h-3 text-gray-600" /></td>
@@ -35,7 +35,7 @@ export default function SamlAttributeMappingConfigPage() {
       <div className="bg-gray-900 rounded-xl p-6">
         <h2 className="text-sm font-semibold mb-3">Per-IdP Override</h2>
         <table className="w-full text-sm"><thead><tr className="border-b border-gray-800 text-gray-400"><th className="text-left py-2">IdP</th><th className="text-left py-2">Overrides</th><th className="text-left py-2">Status</th></tr></thead>
-          <tbody>{(data?.per_idp ?? []).map((o) => (
+          <tbody>{(data?.per_idp ?? []).map((o: any) => (
             <tr key={o.idp} className="border-b border-gray-800"><td className="py-2">{o.idp}</td><td className="py-2 text-xs text-gray-400">{o.override_count} mappings</td><td className="py-2"><span className="text-xs px-2 py-0.5 rounded bg-green-900 text-green-300">{o.status}</span></td></tr>
           ))}</tbody>
         </table>

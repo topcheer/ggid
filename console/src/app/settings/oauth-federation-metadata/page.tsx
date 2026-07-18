@@ -32,7 +32,7 @@ export default function OAuthFederationMetadataPage() {
       <div className="bg-gray-900 rounded-xl p-6">
         <h2 className="text-sm font-semibold mb-4">Federated Entities</h2>
         <div className="space-y-3">
-          {(data?.federated_entities ?? []).map((e) => (
+          {(data?.federated_entities ?? []).map((e: any) => (
             <div key={e.entity_id} className="bg-gray-800 rounded-lg p-4">
               <div className="flex items-start justify-between mb-2">
                 <div className="flex items-center gap-3">
@@ -60,7 +60,7 @@ export default function OAuthFederationMetadataPage() {
                 <div>
                   <p className="text-xs text-gray-500">Entity Categories</p>
                   <div className="flex flex-wrap gap-1">
-                    {e.entity_categories.map((cat) => (
+                    {e.entity_categories.map((cat: any) => (
                       <span key={cat} className="text-xs px-1.5 py-0.5 bg-gray-700 rounded text-gray-400">{cat}</span>
                     ))}
                   </div>

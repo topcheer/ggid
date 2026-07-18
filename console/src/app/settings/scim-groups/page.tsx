@@ -45,10 +45,10 @@ export default function ScimGroupsPage() {
     if (!form.display_name.trim()) return;
     setCreating(true);
     try {
-      const memberIds = form.member_ids.split(",").map((s) => s.trim()).filter(Boolean);
+      const memberIds = form.member_ids.split(",").map((s: any) => s.trim()).filter(Boolean);
       await apiFetch("/api/v1/scim/Groups", {
         method: "POST",
-        body: JSON.stringify({ displayName: form.display_name, members: memberIds.map((id) => ({ value: id })) }),
+        body: JSON.stringify({ displayName: form.display_name, members: memberIds.map((id: any) => ({ value: id })) }),
       });
       setForm({ display_name: "", member_ids: "" });
       setShowCreate(false);
@@ -76,7 +76,7 @@ export default function ScimGroupsPage() {
       await apiFetch(`/api/v1/scim/Groups/${groupId}/members/${userId}`, { method: "DELETE" });
       await load();
       if (selectedGroup?.id === groupId) {
-        const updated = groups.find((g) => g.id === groupId);
+        const updated = groups.find((g: any) => g.id === groupId);
         if (updated) setSelectedGroup(updated);
       }
     } catch {
@@ -113,7 +113,7 @@ export default function ScimGroupsPage() {
             <div className={cardCls}><div className="py-12 text-center"><Users className="mx-auto h-12 w-12 text-gray-300" /><p className="mt-4 text-sm text-gray-400">No SCIM groups.</p></div></div>
           ) : (
             <div className="space-y-3">
-              {groups.map((g) => (
+              {groups.map((g: any) => (
                 <div key={g.id} className={`${cardCls} cursor-pointer transition ${selectedGroup?.id === g.id ? "ring-2 ring-indigo-400" : ""}`} onClick={() => setSelectedGroup(g)}>
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
@@ -144,7 +144,7 @@ export default function ScimGroupsPage() {
                 <p className="py-4 text-center text-xs text-gray-400">No members in this group.</p>
               ) : (
                 <div className="space-y-2">
-                  {selectedGroup.members.map((m) => (
+                  {selectedGroup.members.map((m: any) => (
                     <div key={m.value} className="flex items-center justify-between rounded-lg bg-gray-50 px-3 py-2 dark:bg-gray-900/30">
                       <span className="text-sm text-gray-600 dark:text-gray-300">{m.display || m.value}</span>
                       <button onClick={() => handleRemoveMember(selectedGroup.id, m.value)} className="rounded p-1 text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20"><UserMinus className="h-3.5 w-3.5" /></button>

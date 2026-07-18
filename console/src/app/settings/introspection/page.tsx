@@ -190,7 +190,7 @@ export default function IntrospectionPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
-                  {stats.entries.map((e) => (
+                  {stats.entries.map((e: any) => (
                     <tr key={e.token_hash} className="hover:bg-gray-50 dark:hover:bg-gray-800/50">
                       <td className="px-4 py-3 font-mono text-xs text-gray-500">{e.token_hash.substring(0, 20)}...</td>
                       <td className="px-4 py-3 font-mono text-xs text-gray-600 dark:text-gray-300">{e.client_id.substring(0, 16)}...</td>
@@ -219,7 +219,7 @@ export default function IntrospectionPage() {
 
             {/* Mobile cards */}
             <div className="space-y-3 md:hidden">
-              {stats.entries.map((e) => (
+              {stats.entries.map((e: any) => (
                 <div key={e.token_hash} className={cardCls}>
                   <div className="flex items-center justify-between">
                     <span className="font-mono text-xs text-gray-400">{e.token_hash.substring(0, 16)}...</span>

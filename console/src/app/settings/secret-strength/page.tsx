@@ -77,14 +77,14 @@ export default function SecretStrengthPage() {
       {/* Client selector */}
       <select aria-label="Selected id" value={selectedId} onChange={(e) => setSelectedId(e.target.value)} className="px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-900 text-sm">
         <option value="">Select a client...</option>
-        {clients.map((c) => <option key={c.client_id} value={c.client_id}>{c.client_name} ({c.client_id})</option>)}
+        {clients.map((c: any) => <option key={c.client_id} value={c.client_id}>{c.client_name} ({c.client_id})</option>)}
       </select>
 
       {loading && <p className="text-sm text-gray-500">Loading...</p>}
 
       {reports.length > 0 && !loading && (
         <div className="space-y-4">
-          {reports.map((r) => (
+          {reports.map((r: any) => (
             <div key={r.secret_id} className="rounded-lg border dark:border-gray-800 p-4 space-y-4">
               <div className="flex items-center justify-between">
                 <div>
@@ -123,7 +123,7 @@ export default function SecretStrengthPage() {
                 <div>
                   <span className="text-xs text-gray-500 mb-2 block">Character Diversity ({r.character_diversity.length} chars)</span>
                   <div className="grid grid-cols-2 gap-1">
-                    {(["lowercase", "uppercase", "numbers", "symbols"] as const).map((type) => (
+                    {(["lowercase", "uppercase", "numbers", "symbols"] as const).map((type: any) => (
                       <div key={type} className="flex items-center gap-1 text-xs">
                         {r.character_diversity[type] ? <CheckCircle2 className="w-3 h-3 text-green-500" /> : <XCircle className="w-3 h-3 text-red-400" />}
                         <span className="capitalize">{type}</span>

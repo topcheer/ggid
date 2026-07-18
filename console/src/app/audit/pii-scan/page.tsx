@@ -120,7 +120,7 @@ export default function PIIScanPage() {
                     <th scope="col" className="px-4 py-3 text-left font-semibold text-gray-600 dark:text-gray-300">Sample</th>
                   </tr></thead>
                   <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-                    {result.findings.map((f) => (
+                    {result.findings.map((f: any) => (
                       <tr key={f.id} className="bg-white dark:bg-gray-900">
                         <td className="px-4 py-3 font-mono text-xs text-gray-700 dark:text-gray-300">{f.field}</td>
                         <td className="px-4 py-3"><span className="text-gray-900 dark:text-white">{f.entity}</span><span className="block text-xs text-gray-400">{f.entity_type}</span></td>

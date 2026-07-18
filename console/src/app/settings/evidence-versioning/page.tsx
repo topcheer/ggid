@@ -47,7 +47,7 @@ export default function EvidenceVersioningPage() {
 
   useEffect(() => { fetchItems(); }, [fetchItems]);
 
-  const selectedItem = items.find((i) => i.id === selectedId);
+  const selectedItem = items.find((i: any) => i.id === selectedId);
 
   const createVersion = async () => {
     if (!selectedId || !newDescription) return;
@@ -91,7 +91,7 @@ export default function EvidenceVersioningPage() {
       {/* Evidence selector */}
       <select aria-label="Selected id" value={selectedId} onChange={(e) => setSelectedId(e.target.value)} className="px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-900 text-sm">
         <option value="">Select evidence...</option>
-        {items.map((i) => <option key={i.id} value={i.id}>{i.control_id} ({i.framework}) - v{i.current_version}</option>)}
+        {items.map((i: any) => <option key={i.id} value={i.id}>{i.control_id} ({i.framework}) - v{i.current_version}</option>)}
       </select>
 
       {selectedItem && (

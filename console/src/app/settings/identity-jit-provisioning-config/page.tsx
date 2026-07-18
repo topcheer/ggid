@@ -33,7 +33,7 @@ export default function IdentityJitProvisioningConfigPage() {
             <Zap className="w-4 h-4" />
             <span className="text-xs text-gray-400">{t("idJitProvisioning.jitEnabled")}</span>
           </div>
-          <p className="text-lg font-bold">{data?.per_idp_config?.some((p) => p.enabled) ? "Yes" : "No"}</p>
+          <p className="text-lg font-bold">{data?.per_idp_config?.some((p: any) => p.enabled) ? "Yes" : "No"}</p>
         </div>
         <div className="bg-gray-900 rounded-xl p-4">
           <div className="flex items-center gap-2 mb-1 text-blue-400">
@@ -63,7 +63,7 @@ export default function IdentityJitProvisioningConfigPage() {
         <div className="bg-gray-900 rounded-xl p-6">
           <h2 className="text-sm font-semibold mb-4">{t("idJitProvisioning.perIdp")}</h2>
           <div className="space-y-2">
-            {(data?.per_idp_config ?? []).map((p) => (
+            {(data?.per_idp_config ?? []).map((p: any) => (
               <div key={p.idp_name} className="flex items-center justify-between bg-gray-800 rounded-lg p-3">
                 <div>
                   <p className="text-sm font-medium">{p.idp_name}</p>
@@ -81,7 +81,7 @@ export default function IdentityJitProvisioningConfigPage() {
         <div className="bg-gray-900 rounded-xl p-6">
           <h2 className="text-sm font-semibold mb-4">{t("idJitProvisioning.defaultGroups")}</h2>
           <div className="flex flex-wrap gap-2">
-            {(data?.default_group_assignments ?? []).map((g) => (
+            {(data?.default_group_assignments ?? []).map((g: any) => (
               <span key={g} className="text-xs px-3 py-1.5 bg-gray-800 rounded-lg border border-gray-700">{g}</span>
             ))}
           </div>

@@ -74,7 +74,7 @@ export default function ComplianceReportsPage() {
     if (!form.name.trim()) return;
     setCreating(true);
     try {
-      const recipients = form.recipients.split(",").map((r) => r.trim()).filter(Boolean);
+      const recipients = form.recipients.split(",").map((r: any) => r.trim()).filter(Boolean);
       await apiFetch("/api/v1/audit/compliance/schedules", {
         method: "POST", body: JSON.stringify({ ...form, recipients }),
       });
@@ -140,7 +140,7 @@ export default function ComplianceReportsPage() {
           <div className={cardCls}><div className="py-12 text-center"><FileText className="mx-auto h-12 w-12 text-gray-300" /><p className="mt-4 text-sm text-gray-400">No scheduled reports.</p></div></div>
         ) : (
           <div className="space-y-3">
-            {schedules.map((s) => (
+            {schedules.map((s: any) => (
               <div key={s.id} className={cardCls}>
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
@@ -182,7 +182,7 @@ export default function ComplianceReportsPage() {
                 <th scope="col" className="px-4 py-3">Schedule</th><th className="px-4 py-3">Framework</th><th className="px-4 py-3">Generated</th><th className="px-4 py-3">Size</th><th className="px-4 py-3 text-right">Download</th>
               </tr></thead>
               <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
-                {pastReports.map((r) => (
+                {pastReports.map((r: any) => (
                   <tr key={r.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/50">
                     <td className="px-4 py-3 font-medium text-gray-700 dark:text-gray-300">{r.schedule_name}</td>
                     <td className="px-4 py-3"><span className="rounded-full bg-indigo-100 px-2 py-0.5 text-xs uppercase text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400">{r.framework}</span></td>
@@ -208,11 +208,11 @@ export default function ComplianceReportsPage() {
             <div className="mt-4 space-y-4">
               <div><label className="text-sm font-medium text-gray-700 dark:text-gray-300">Name</label><input aria-label="Monthly SOC2 Report" value={form.name} onChange={(e) => setForm((p) => ({ ...p, name: e.target.value }))} placeholder="Monthly SOC2 Report" className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white" /></div>
               <div className="grid grid-cols-2 gap-3">
-                <div><label className="text-sm font-medium text-gray-700 dark:text-gray-300">Framework</label><select aria-label="form" value={form.framework} onChange={(e) => setForm((p) => ({ ...p, framework: e.target.value }))} className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white">{FRAMEWORKS.map((f) => <option key={f} value={f}>{f.toUpperCase()}</option>)}</select></div>
-                <div><label className="text-sm font-medium text-gray-700 dark:text-gray-300">Frequency</label><select aria-label="form" value={form.frequency} onChange={(e) => setForm((p) => ({ ...p, frequency: e.target.value }))} className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white">{FREQUENCIES.map((f) => <option key={f.value} value={f.value}>{f.label}</option>)}</select></div>
+                <div><label className="text-sm font-medium text-gray-700 dark:text-gray-300">Framework</label><select aria-label="form" value={form.framework} onChange={(e) => setForm((p) => ({ ...p, framework: e.target.value }))} className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white">{FRAMEWORKS.map((f: any) => <option key={f} value={f}>{f.toUpperCase()}</option>)}</select></div>
+                <div><label className="text-sm font-medium text-gray-700 dark:text-gray-300">Frequency</label><select aria-label="form" value={form.frequency} onChange={(e) => setForm((p) => ({ ...p, frequency: e.target.value }))} className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white">{FREQUENCIES.map((f: any) => <option key={f.value} value={f.value}>{f.label}</option>)}</select></div>
               </div>
               <div><label className="text-sm font-medium text-gray-700 dark:text-gray-300">Recipients (comma-separated emails)</label><input aria-label="security@company.com, audit@company.com" value={form.recipients} onChange={(e) => setForm((p) => ({ ...p, recipients: e.target.value }))} placeholder="security@company.com, audit@company.com" className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white" /></div>
-              <div><label className="text-sm font-medium text-gray-700 dark:text-gray-300">Format</label><select aria-label="form" value={form.format} onChange={(e) => setForm((p) => ({ ...p, format: e.target.value }))} className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white">{["pdf", "csv", "json"].map((f) => <option key={f} value={f}>{f.toUpperCase()}</option>)}</select></div>
+              <div><label className="text-sm font-medium text-gray-700 dark:text-gray-300">Format</label><select aria-label="form" value={form.format} onChange={(e) => setForm((p) => ({ ...p, format: e.target.value }))} className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white">{["pdf", "csv", "json"].map((f: any) => <option key={f} value={f}>{f.toUpperCase()}</option>)}</select></div>
             </div>
             <div className="mt-6 flex justify-end gap-2">
               <button onClick={() => setShowCreate(false)} className="rounded-lg px-4 py-2 text-sm text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700">Cancel</button>

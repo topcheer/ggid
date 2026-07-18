@@ -36,19 +36,19 @@ export default function VulnScanResultsPage() {
         </div>
         <div className="bg-gray-900 rounded-xl p-3 text-center">
           <p className="text-xs text-gray-400">Critical</p>
-          <p className="text-xl font-bold text-red-400">{data?.findings?.filter((f) => f.severity === "Critical").length ?? 0}</p>
+          <p className="text-xl font-bold text-red-400">{data?.findings?.filter((f: any) => f.severity === "Critical").length ?? 0}</p>
         </div>
         <div className="bg-gray-900 rounded-xl p-3 text-center">
           <p className="text-xs text-gray-400">High</p>
-          <p className="text-xl font-bold text-orange-400">{data?.findings?.filter((f) => f.severity === "High").length ?? 0}</p>
+          <p className="text-xl font-bold text-orange-400">{data?.findings?.filter((f: any) => f.severity === "High").length ?? 0}</p>
         </div>
         <div className="bg-gray-900 rounded-xl p-3 text-center">
           <p className="text-xs text-gray-400">Medium</p>
-          <p className="text-xl font-bold text-yellow-400">{data?.findings?.filter((f) => f.severity === "Medium").length ?? 0}</p>
+          <p className="text-xl font-bold text-yellow-400">{data?.findings?.filter((f: any) => f.severity === "Medium").length ?? 0}</p>
         </div>
         <div className="bg-gray-900 rounded-xl p-3 text-center">
           <p className="text-xs text-gray-400">Low</p>
-          <p className="text-xl font-bold text-blue-400">{data?.findings?.filter((f) => f.severity === "Low").length ?? 0}</p>
+          <p className="text-xl font-bold text-blue-400">{data?.findings?.filter((f: any) => f.severity === "Low").length ?? 0}</p>
         </div>
       </div>
 

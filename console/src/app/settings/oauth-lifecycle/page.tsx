@@ -70,9 +70,9 @@ export default function OAuthLifecyclePage() {
   };
 
   const cardCls = "rounded-xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-700 dark:bg-gray-800";
-  const active = clients.filter((c) => c.status === "active").length;
-  const suspended = clients.filter((c) => c.status === "suspended").length;
-  const expired = clients.filter((c) => c.status === "expired").length;
+  const active = clients.filter((c: any) => c.status === "active").length;
+  const suspended = clients.filter((c: any) => c.status === "suspended").length;
+  const expired = clients.filter((c: any) => c.status === "expired").length;
   const totalTokens = clients.reduce((s, c) => s + c.active_tokens, 0);
 
   return (
@@ -110,7 +110,7 @@ export default function OAuthLifecyclePage() {
                   <th scope="col" className="px-4 py-3 text-right font-semibold text-gray-600 dark:text-gray-300">Actions</th>
                 </tr></thead>
                 <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-                  {clients.map((c) => (
+                  {clients.map((c: any) => (
                     <tr key={c.id} className="bg-white dark:bg-gray-900">
                       <td className="px-4 py-3"><div className="font-medium text-gray-900 dark:text-white">{c.client_name}</div><div className="text-xs text-gray-400 font-mono">{c.client_id.slice(0, 16)}</div></td>
                       <td className="px-4 py-3"><span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${statusColors[c.status] || ""}`}>{c.status}</span>{c.status === "suspended" && c.suspend_reason && <div className="mt-0.5 text-xs text-yellow-600">{c.suspend_reason}</div>}</td>

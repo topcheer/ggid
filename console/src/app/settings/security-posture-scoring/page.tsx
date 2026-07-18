@@ -86,7 +86,7 @@ export default function SecurityPostureScoringPage() {
       <div className="bg-gray-900 rounded-xl p-6 mb-6">
         <h2 className="text-sm font-semibold mb-4">{t("securityPosture.scoresByCategory")}</h2>
         <div className="space-y-3">
-          {(data?.by_category ?? []).map((cat) => (
+          {(data?.by_category ?? []).map((cat: any) => (
             <div key={cat.category} className="flex items-center gap-3">
               <span className="text-sm w-24 capitalize">{cat.category}</span>
               <div className="flex-1 h-3 bg-gray-800 rounded-full">

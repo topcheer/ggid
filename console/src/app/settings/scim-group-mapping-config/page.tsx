@@ -20,7 +20,7 @@ export default function ScimGroupMappingConfigPage() {
       <div className="bg-gray-900 rounded-xl p-6 mb-6">
         <h2 className="text-sm font-semibold mb-4">Group Mappings</h2>
         <table className="w-full text-sm"><thead><tr className="border-b border-gray-800 text-gray-400"><th className="text-left py-2">External Group</th><th className="text-left py-2">Local Role</th><th className="text-left py-2">Auto Provision</th><th className="text-left py-2">Direction</th></tr></thead>
-          <tbody>{(data?.mappings ?? []).map((m) => (
+          <tbody>{(data?.mappings ?? []).map((m: any) => (
             <tr key={m.id} className="border-b border-gray-800">
               <td className="py-2 font-mono text-xs text-blue-400">{m.external_group}</td>
               <td className="py-2 font-mono text-xs text-green-400">{m.local_role}</td>
@@ -32,7 +32,7 @@ export default function ScimGroupMappingConfigPage() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div className="bg-gray-900 rounded-xl p-6"><h2 className="text-sm font-semibold mb-3">Per-App Override</h2><div className="space-y-2">{(data?.per_app ?? []).map((a) => (<div key={a.app} className="flex items-center gap-2 bg-gray-800 rounded p-2 text-xs"><span className="flex-1">{a.app}</span><span className="text-gray-400">{a.mapping_count} mappings</span></div>))}</div></div>
+        <div className="bg-gray-900 rounded-xl p-6"><h2 className="text-sm font-semibold mb-3">Per-App Override</h2><div className="space-y-2">{(data?.per_app ?? []).map((a: any) => (<div key={a.app} className="flex items-center gap-2 bg-gray-800 rounded p-2 text-xs"><span className="flex-1">{a.app}</span><span className="text-gray-400">{a.mapping_count} mappings</span></div>))}</div></div>
         <div className="bg-gray-900 rounded-xl p-6"><h2 className="text-sm font-semibold mb-3">Last Sync</h2><div className="space-y-1 text-xs text-gray-400"><div>Status: <span className="text-green-400">{data?.last_sync?.status}</span></div><div>Synced: {data?.last_sync?.synced_at}</div><div>Added: {data?.last_sync?.added} / Removed: {data?.last_sync?.removed} / Errors: {data?.last_sync?.errors}</div></div></div>
       </div>
     </div>

@@ -110,7 +110,7 @@ export default function ApiKeysPage() {
     setForm((prev) => ({
       ...prev,
       scopes: prev.scopes.includes(scope)
-        ? prev.scopes.filter((s) => s !== scope)
+        ? prev.scopes.filter((s: any) => s !== scope)
         : [...prev.scopes, scope],
     }));
   };
@@ -201,7 +201,7 @@ export default function ApiKeysPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
-                {keys.map((k) => (
+                {keys.map((k: any) => (
                   <tr key={k.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/50">
                     <td className="px-4 py-3 font-medium text-gray-800 dark:text-gray-200">{k.name}</td>
                     <td className="px-4 py-3">
@@ -215,7 +215,7 @@ export default function ApiKeysPage() {
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex flex-wrap gap-1">
-                        {k.scopes.map((s) => (
+                        {k.scopes.map((s: any) => (
                           <span key={s} className="rounded-full bg-indigo-100 px-2 py-0.5 text-xs font-medium text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400">
                             {s}
                           </span>
@@ -250,7 +250,7 @@ export default function ApiKeysPage() {
 
           {/* Mobile cards */}
           <div className="space-y-3 md:hidden">
-            {keys.map((k) => (
+            {keys.map((k: any) => (
               <div key={k.id} className={cardCls}>
                 <div className="flex items-center justify-between">
                   <span className="font-medium text-gray-800 dark:text-gray-200">{k.name}</span>
@@ -261,7 +261,7 @@ export default function ApiKeysPage() {
                 </div>
                 <p className="mt-1 font-mono text-xs text-gray-400">{k.key_prefix}...</p>
                 <div className="mt-2 flex flex-wrap gap-1">
-                  {k.scopes.map((s) => (
+                  {k.scopes.map((s: any) => (
                     <span key={s} className="rounded-full bg-indigo-100 px-2 py-0.5 text-xs text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400">{s}</span>
                   ))}
                 </div>
@@ -296,7 +296,7 @@ export default function ApiKeysPage() {
               <div>
                 <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Scopes</label>
                 <div className="mt-2 space-y-2">
-                  {SCOPE_OPTIONS.map((opt) => (
+                  {SCOPE_OPTIONS.map((opt: any) => (
                     <label key={opt.value} className="flex cursor-pointer items-center gap-2">
                       <input
                         type="checkbox"
@@ -319,7 +319,7 @@ export default function ApiKeysPage() {
                   onChange={(e) => setForm((p) => ({ ...p, expires_in_days: Number(e.target.value) }))}
                   className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white"
                 >
-                  {EXPIRY_OPTIONS.map((opt) => (
+                  {EXPIRY_OPTIONS.map((opt: any) => (
                     <option key={opt.value} value={opt.value}>{opt.label}</option>
                   ))}
                 </select>

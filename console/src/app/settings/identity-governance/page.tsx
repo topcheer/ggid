@@ -74,7 +74,7 @@ export default function IdentityGovernancePage() {
         <div className={cardCls}>
           <h3 className="mb-4 flex items-center gap-2 text-sm font-semibold text-gray-700 dark:text-gray-300"><AlertTriangle className="h-4 w-4" /> SoD Violation Breakdown</h3>
           <div className="space-y-2">
-            {["critical", "high", "medium"].map((sev) => {
+            {["critical", "high", "medium"].map((sev: any) => {
               const count = metrics.sod_violations[sev as keyof typeof metrics.sod_violations];
               const colors = { critical: "bg-red-500", high: "bg-orange-500", medium: "bg-yellow-500" };
               const max = Math.max(sodTotal, 1);
@@ -94,7 +94,7 @@ export default function IdentityGovernancePage() {
         <div>
           <h2 className="mb-3 text-sm font-semibold uppercase text-gray-500">{t("backend.identityGovernance.recentCampaigns")}</h2>
           <div className="space-y-2">
-            {metrics.recent_campaigns.map((c) => (
+            {metrics.recent_campaigns.map((c: any) => (
               <div key={c.id} className={`${cardCls} flex items-center justify-between py-3`}>
                 <div><span className="font-medium text-gray-800 dark:text-gray-200">{c.name}</span></div>
                 <div className="flex items-center gap-3">

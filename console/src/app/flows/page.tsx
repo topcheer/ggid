@@ -67,7 +67,7 @@ const STEP_TYPES: StepTypeDef[] = [
 ];
 
 const STEP_MAP: Record<string, StepTypeDef> = Object.fromEntries(
-  STEP_TYPES.map((s) => [s.type, s]),
+  STEP_TYPES.map((s: any) => [s.type, s]),
 );
 
 function getStepDef(type: StepType): StepTypeDef {
@@ -119,14 +119,14 @@ export default function FlowBuilderPage() {
   const addStepToSegment = useCallback((segId: string, branchId: string | undefined, type: StepType) => {
     const newStep = makeStep(type);
     setSegments((prev) =>
-      prev.map((seg) => {
+      prev.map((seg: any) => {
         if (seg.id !== segId) return seg;
         if (seg.type === "linear") {
           return { ...seg, steps: [...(seg.steps || []), newStep] };
         }
         return {
           ...seg,
-          branches: seg.branches?.map((b) =>
+          branches: seg.branches?.map((b: any) =>
             b.id === branchId ? { ...b, steps: [...b.steps, newStep] } : b,
           ),
         };
@@ -136,24 +136,24 @@ export default function FlowBuilderPage() {
 
   const removeStep = useCallback((segId: string, branchId: string | undefined, stepId: string) => {
     setSegments((prev) =>
-      prev.map((seg) => {
+      prev.map((seg: any) => {
         if (seg.id !== segId) return seg;
         if (seg.type === "linear") {
-          return { ...seg, steps: (seg.steps || []).filter((s) => s.id !== stepId) };
+          return { ...seg, steps: (seg.steps || []).filter((s: any) => s.id !== stepId) };
         }
         return {
           ...seg,
-          branches: seg.branches?.map((b) =>
-            b.id === branchId ? { ...b, steps: b.steps.filter((s) => s.id !== stepId) } : b,
+          branches: seg.branches?.map((b: any) =>
+            b.id === branchId ? { ...b, steps: b.steps.filter((s: any) => s.id !== stepId) } : b,
           ),
         };
       }),
     );
     // Clear selection if we removed the selected step
     if (selectedStepLocation?.segId === segId && selectedStepLocation?.branchId === branchId) {
-      const seg = segments.find((s) => s.id === segId);
-      const steps = seg?.type === "linear" ? seg.steps : seg?.branches?.find((b) => b.id === branchId)?.steps;
-      if (steps && !steps.some((s) => s.id === stepId)) {
+      const seg = segments.find((s: any) => s.id === segId);
+      const steps = seg?.type === "linear" ? seg.steps : seg?.branches?.find((b: any) => b.id === branchId)?.steps;
+      if (steps && !steps.some((s: any) => s.id === stepId)) {
         setSelectedStep(null);
         setSelectedStepLocation(null);
       }
@@ -162,21 +162,21 @@ export default function FlowBuilderPage() {
 
   const updateStepConfig = useCallback((segId: string, branchId: string | undefined, stepId: string, config: Partial<StepConfig>) => {
     setSegments((prev) =>
-      prev.map((seg) => {
+      prev.map((seg: any) => {
         if (seg.id !== segId) return seg;
         if (seg.type === "linear") {
           return {
             ...seg,
-            steps: (seg.steps || []).map((s) =>
+            steps: (seg.steps || []).map((s: any) =>
               s.id === stepId ? { ...s, config: { ...s.config, ...config } } : s,
             ),
           };
         }
         return {
           ...seg,
-          branches: seg.branches?.map((b) =>
+          branches: seg.branches?.map((b: any) =>
             b.id === branchId
-              ? { ...b, steps: b.steps.map((s) => s.id === stepId ? { ...s, config: { ...s.config, ...config } } : s) }
+              ? { ...b, steps: b.steps.map((s: any) => s.id === stepId ? { ...s, config: { ...s.config, ...config } } : s) }
               : b,
           ),
         };
@@ -211,9 +211,9 @@ export default function FlowBuilderPage() {
     // For reorder within same segment
     if (dragState.segId === targetSegId && dragState.branchId === targetBranchId) {
       setSegments((prev) =>
-        prev.map((seg) => {
+        prev.map((seg: any) => {
           if (seg.id !== targetSegId) return seg;
-          const stepList = seg.type === "linear" ? seg.steps : seg.branches?.find((b) => b.id === targetBranchId)?.steps;
+          const stepList = seg.type === "linear" ? seg.steps : seg.branches?.find((b: any) => b.id === targetBranchId)?.steps;
           if (!stepList) return seg;
           const reordered = [...stepList];
           const [moved] = reordered.splice(dragState.index, 1);
@@ -223,7 +223,7 @@ export default function FlowBuilderPage() {
           }
           return {
             ...seg,
-            branches: seg.branches?.map((b) =>
+            branches: seg.branches?.map((b: any) =>
               b.id === targetBranchId ? { ...b, steps: reordered } : b,
             ),
           };
@@ -258,12 +258,12 @@ export default function FlowBuilderPage() {
   };
 
   const removeSegment = (segId: string) => {
-    setSegments(segments.filter((s) => s.id !== segId));
+    setSegments(segments.filter((s: any) => s.id !== segId));
   };
 
   const addBranchToSegment = (segId: string) => {
     setSegments((prev) =>
-      prev.map((seg) =>
+      prev.map((seg: any) =>
         seg.id === segId && seg.type === "branch"
           ? { ...seg, branches: [...(seg.branches || []), { id: `br_${Date.now()}`, steps: [] }] }
           : seg,
@@ -280,7 +280,7 @@ export default function FlowBuilderPage() {
       const payload = {
         name: "Login Flow",
         active: isActive,
-        segments: segments.map((seg) => ({
+        segments: segments.map((seg: any) => ({
           type: seg.type,
           steps: seg.type === "linear" ? seg.steps : undefined,
           branches: seg.type === "branch" ? seg.branches : undefined,
@@ -309,10 +309,10 @@ export default function FlowBuilderPage() {
           result.push({ label: step.name, icon: def.icon });
         }
       } else if (seg.type === "branch" && seg.branches) {
-        const allBranchSteps = seg.branches.map((b) => b.steps.map((s) => s.name));
+        const allBranchSteps = seg.branches.map((b: any) => b.steps.map((s: any) => s.name));
         const firstBranch = allBranchSteps[0] || [];
         for (let i = 0; i < firstBranch.length; i++) {
-          const alternatives = allBranchSteps.map((bs) => bs[i]).filter(Boolean);
+          const alternatives = allBranchSteps.map((bs: any) => bs[i]).filter(Boolean);
           if (alternatives.length > 1) {
             result.push({ label: alternatives[0], icon: GitBranch, alternatives });
           } else {
@@ -400,7 +400,7 @@ export default function FlowBuilderPage() {
               <p className="py-8 text-center text-sm text-gray-400">No steps in flow. Add steps in edit mode.</p>
             ) : (
               <div className="space-y-1">
-                {previewSteps.map((step, i) => (
+                {previewSteps.map((step: any, i: any) => (
                   <div key={i}>
                     <div className="flex items-center gap-3 rounded-lg border border-gray-200 p-3 dark:border-gray-700">
                       <span className="flex h-7 w-7 items-center justify-center rounded-full bg-brand-100 text-xs font-bold text-brand-600">
@@ -435,7 +435,7 @@ export default function FlowBuilderPage() {
                 Step Types
               </h3>
               <div className="space-y-1.5">
-                {STEP_TYPES.map((st) => (
+                {STEP_TYPES.map((st: any) => (
                   <div
                     key={st.type}
                     draggable
@@ -478,7 +478,7 @@ export default function FlowBuilderPage() {
                           <Trash2 className="h-3.5 w-3.5" />
                         </button>
                       </div>
-                      {(seg.steps || []).map((step, idx) => (
+                      {(seg.steps || []).map((step: any, idx: any) => (
                         <StepCard
                           key={step.id}
                           step={step}
@@ -542,7 +542,7 @@ export default function FlowBuilderPage() {
                             >
                               <p className="mb-2 text-xs font-medium text-gray-400">Path {bIdx + 1}</p>
                               <div className="space-y-2">
-                                {branch.steps.map((step, idx) => (
+                                {branch.steps.map((step: any, idx: any) => (
                                   <StepCard
                                     key={step.id}
                                     step={step}

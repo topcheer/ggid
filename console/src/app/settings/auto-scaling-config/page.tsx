@@ -114,7 +114,7 @@ export default function AutoScalingConfigPage() {
       <section className="bg-white rounded-lg shadow p-6 space-y-4">
         <h2 className="text-lg font-semibold">{"Metrics"}</h2>
         <div className="space-y-3">
-          {metrics.map((m) => (
+          {metrics.map((m: any) => (
             <div key={m.service} className="border rounded p-3">
               <div className="flex items-center justify-between mb-2">
                 <span className="font-mono text-sm">{m.service}</span>

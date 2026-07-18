@@ -33,7 +33,7 @@ export default function AuthorizeFlowAnalyticsPage() {
   useEffect(() => { fetchData(); }, [fetchData]);
 
   const gaugeColor = data ? (data.consent_rate >= 80 ? "#10b981" : data.consent_rate >= 50 ? "#f59e0b" : "#ef4444") : "#3b82f6";
-  const maxAbandon = Math.max(...(data?.abandonment_at_step.map((a) => a.count) || [1]), 1);
+  const maxAbandon = Math.max(...(data?.abandonment_at_step.map((a: any) => a.count) || [1]), 1);
 
   return (
     <div className="space-y-6">
@@ -58,14 +58,14 @@ export default function AuthorizeFlowAnalyticsPage() {
 
           <div className="rounded-lg border dark:border-gray-800 p-4">
             <h3 className="text-sm font-semibold flex items-center gap-2 mb-3"><TrendingDown className="w-4 h-4 text-red-500" /> Abandonment Funnel</h3>
-            <div className="space-y-2">{data.abandonment_at_step.map((s) => (
+            <div className="space-y-2">{data.abandonment_at_step.map((s: any) => (
               <div key={s.step} className="flex items-center gap-2"><span className="text-xs text-gray-500 w-32">{s.step}</span><div className="flex-1 bg-gray-100 dark:bg-gray-800 rounded-full h-5 overflow-hidden"><div className="h-full bg-red-500 rounded-full" style={{ width: `${(s.count / maxAbandon) * 100}%` }} /></div><span className="text-xs font-bold w-20 text-right">{s.count} ({s.pct.toFixed(1)}%)</span></div>
             ))}</div>
           </div>
 
           <div className="overflow-x-auto rounded-lg border dark:border-gray-800">
             <table className="w-full text-sm"><thead className="bg-gray-50 dark:bg-gray-900/50"><tr><th className="px-4 py-3 text-left font-medium">Client</th><th className="px-4 py-3 text-left font-medium">Attempts</th><th className="px-4 py-3 text-left font-medium">Success Rate</th></tr></thead>
-              <tbody className="divide-y dark:divide-gray-800">{data.top_clients.map((c) => (<tr key={c.client_id} className="hover:bg-gray-50 dark:hover:bg-gray-900/30"><td className="px-4 py-3"><span className="font-medium">{c.client_name}</span><p className="text-xs text-gray-400 font-mono">{c.client_id}</p></td><td className="px-4 py-3 font-bold">{c.attempts.toLocaleString()}</td><td className="px-4 py-3"><span className={`font-bold ${c.success_pct >= 80 ? "text-green-600" : c.success_pct >= 50 ? "text-yellow-600" : "text-red-600"}`}>{c.success_pct.toFixed(1)}%</span></td></tr>))}</tbody>
+              <tbody className="divide-y dark:divide-gray-800">{data.top_clients.map((c: any) => (<tr key={c.client_id} className="hover:bg-gray-50 dark:hover:bg-gray-900/30"><td className="px-4 py-3"><span className="font-medium">{c.client_name}</span><p className="text-xs text-gray-400 font-mono">{c.client_id}</p></td><td className="px-4 py-3 font-bold">{c.attempts.toLocaleString()}</td><td className="px-4 py-3"><span className={`font-bold ${c.success_pct >= 80 ? "text-green-600" : c.success_pct >= 50 ? "text-yellow-600" : "text-red-600"}`}>{c.success_pct.toFixed(1)}%</span></td></tr>))}</tbody>
             </table>
           </div>
         </>

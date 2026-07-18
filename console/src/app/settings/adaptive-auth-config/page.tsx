@@ -23,7 +23,7 @@ export default function AdaptiveAuthConfigPage() {
       <div className="bg-gray-900 rounded-xl p-6 mb-6">
         <h2 className="text-sm font-semibold mb-4 flex items-center gap-2"><Shield className="w-4 h-4 text-blue-400" /> Risk Threshold Matrix</h2>
         <div className="grid grid-cols-4 gap-3">
-          {(data?.risk_thresholds ?? []).map((t) => (
+          {(data?.risk_thresholds ?? []).map((t: any) => (
             <div key={t.level} className="bg-gray-800 rounded-lg p-4 text-center">
               <span className={"text-xs px-2 py-0.5 rounded inline-block mb-2 " + (riskColors[t.level] ?? "bg-gray-700")}>{t.level}</span>
               <p className="text-sm font-medium mt-1">{t.required_factor}</p>
@@ -37,7 +37,7 @@ export default function AdaptiveAuthConfigPage() {
         <div className="bg-gray-900 rounded-xl p-6">
           <h2 className="text-sm font-semibold mb-3">Signal Weights</h2>
           <div className="space-y-3">
-            {(data?.signal_weights ?? []).map((s) => (
+            {(data?.signal_weights ?? []).map((s: any) => (
               <div key={s.signal}>
                 <div className="flex justify-between text-xs mb-1"><span>{s.signal}</span><span className="text-gray-400">{s.weight}%</span></div>
                 <div className="w-full bg-gray-800 rounded-full h-2"><div className="bg-blue-600 h-2 rounded-full" style={{ width: s.weight + "%" }} /></div>
@@ -49,7 +49,7 @@ export default function AdaptiveAuthConfigPage() {
           <div className="bg-gray-900 rounded-xl p-6">
             <h2 className="text-sm font-semibold mb-3 flex items-center gap-2"><Zap className="w-4 h-4 text-yellow-400" /> Step-Up Triggers</h2>
             <div className="space-y-1">
-              {(data?.step_up_triggers ?? []).map((t) => (
+              {(data?.step_up_triggers ?? []).map((t: any) => (
                 <div key={t} className="flex items-center gap-2 bg-gray-800 rounded p-2"><span className="text-xs">{t}</span></div>
               ))}
             </div>
@@ -57,7 +57,7 @@ export default function AdaptiveAuthConfigPage() {
           <div className="bg-gray-900 rounded-xl p-6">
             <h2 className="text-sm font-semibold mb-3">Per-Role Override</h2>
             <table className="w-full text-sm"><thead><tr className="border-b border-gray-800 text-gray-400"><th className="text-left py-2">Role</th><th className="text-left py-2">Min Factor</th></tr></thead>
-              <tbody>{(data?.role_overrides ?? []).map((r) => (
+              <tbody>{(data?.role_overrides ?? []).map((r: any) => (
                 <tr key={r.role} className="border-b border-gray-800"><td className="py-2">{r.role}</td><td className="py-2 text-xs text-blue-400">{r.min_factor}</td></tr>
               ))}</tbody>
             </table>

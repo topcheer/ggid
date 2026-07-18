@@ -121,7 +121,7 @@ export default function ExportsPage() {
   }, [loadJobs]);
 
   // Auto-refresh if pending/processing jobs exist
-  const hasActiveJobs = jobs.some((j) => j.status === "pending" || j.status === "processing");
+  const hasActiveJobs = jobs.some((j: any) => j.status === "pending" || j.status === "processing");
   useEffect(() => {
     if (hasActiveJobs) {
       refreshTimer.current = setInterval(() => {
@@ -209,10 +209,10 @@ export default function ExportsPage() {
     try {
       await apiFetch(`/api/v1/exports/${jobId}`, { method: "DELETE" });
       setMsg({ type: "success", text: "Export job deleted" });
-      setJobs((prev) => prev.filter((j) => j.id !== jobId));
+      setJobs((prev) => prev.filter((j: any) => j.id !== jobId));
     } catch {
       setMsg({ type: "success", text: "Export job deleted" });
-      setJobs((prev) => prev.filter((j) => j.id !== jobId));
+      setJobs((prev) => prev.filter((j: any) => j.id !== jobId));
     }
   };
 
@@ -274,7 +274,7 @@ export default function ExportsPage() {
             <div>
               <label className="mb-1 block text-xs font-medium text-gray-500">Data Type</label>
               <select aria-label="data Type" value={dataType} onChange={(e) => setDataType(e.target.value)} className={inputCls}>
-                {DATA_TYPES.map((t) => (
+                {DATA_TYPES.map((t: any) => (
                   <option key={t.value} value={t.value}>{t.label}</option>
                 ))}
               </select>
@@ -284,7 +284,7 @@ export default function ExportsPage() {
             <div>
               <label className="mb-2 block text-xs font-medium text-gray-500">Format</label>
               <div className="flex flex-wrap gap-2">
-                {FORMATS.map((f) => (
+                {FORMATS.map((f: any) => (
                   <button
                     key={f.value}
                     type="button"
@@ -373,7 +373,7 @@ export default function ExportsPage() {
               <div>
                 <label className="mb-2 block text-xs font-medium text-gray-500">Recurrence</label>
                 <div className="flex flex-wrap gap-2">
-                  {RECURRENCE_OPTIONS.map((r) => (
+                  {RECURRENCE_OPTIONS.map((r: any) => (
                     <button
                       key={r.value}
                       type="button"
@@ -440,7 +440,7 @@ export default function ExportsPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
-                {jobs.map((job) => (
+                {jobs.map((job: any) => (
                   <tr key={job.id} className="hover:bg-gray-50 dark:hover:bg-gray-900">
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-2">
@@ -451,7 +451,7 @@ export default function ExportsPage() {
                       </div>
                     </td>
                     <td className="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">
-                      {DATA_TYPES.find((t) => t.value === job.data_type)?.label || job.data_type}
+                      {DATA_TYPES.find((t: any) => t.value === job.data_type)?.label || job.data_type}
                     </td>
                     <td className="px-4 py-3 text-sm text-gray-700 dark:text-gray-300 uppercase">
                       {job.format}

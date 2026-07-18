@@ -104,7 +104,7 @@ const ALL_PERMS = PERMISSION_GROUPS.flatMap((g) => g.permissions);
 // Pre-populate sensible defaults so the grid is useful on first load
 
 const DEFAULT_MATRIX: Record<string, Set<string>> = {
-  admin: new Set(ALL_PERMS.map((p) => p.key)),
+  admin: new Set(ALL_PERMS.map((p: any) => p.key)),
   manager: new Set(["users.create", "users.read", "users.update", "users.export", "orgs.create", "orgs.read", "orgs.update", "policies.read", "audit.read"]),
   editor: new Set(["users.read", "orgs.read", "policies.read", "policies.evaluate", "audit.read"]),
   viewer: new Set(["users.read", "orgs.read", "policies.read", "audit.read"]),
@@ -148,11 +148,11 @@ export default function PermissionMatrixPage() {
     );
   }, [search]);
 
-  const filteredPermKeys = useMemo(() => new Set(filteredPerms.map((p) => p.key)), [filteredPerms]);
+  const filteredPermKeys = useMemo(() => new Set(filteredPerms.map((p: any) => p.key)), [filteredPerms]);
 
   const visibleRoles = useMemo(() => {
     if (roleFilter === "all") return roles;
-    return roles.filter((r) => r.id === roleFilter);
+    return roles.filter((r: any) => r.id === roleFilter);
   }, [roles, roleFilter]);
 
   // ===== Toggle handlers =====
@@ -189,9 +189,9 @@ export default function PermissionMatrixPage() {
       const set = new Set(next[roleId] || []);
       const allAssigned = group.permissions.every((p) => set.has(p.key));
       if (allAssigned) {
-        group.permissions.forEach((p) => set.delete(p.key));
+        group.permissions.forEach((p: any) => set.delete(p.key));
       } else {
-        group.permissions.forEach((p) => set.add(p.key));
+        group.permissions.forEach((p: any) => set.add(p.key));
       }
       next[roleId] = set;
       return next;
@@ -220,32 +220,32 @@ export default function PermissionMatrixPage() {
     setMatrix((prev) => {
       const next = { ...prev };
       const set = new Set(next[bulkRole] || []);
-      bulkSelected.forEach((k) => set.add(k));
+      bulkSelected.forEach((k: any) => set.add(k));
       next[bulkRole] = set;
       return next;
     });
-    setMsg(`Applied ${bulkSelected.size} permission(s) to ${roles.find((r) => r.id === bulkRole)?.name || bulkRole}`);
+    setMsg(`Applied ${bulkSelected.size} permission(s) to ${roles.find((r: any) => r.id === bulkRole)?.name || bulkRole}`);
     setBulkSelected(new Set());
     setError(null);
   };
 
   const selectAllInBulkGroup = () => {
-    const group = PERMISSION_GROUPS.find((g) => g.label === bulkGroup);
+    const group = PERMISSION_GROUPS.find((g: any) => g.label === bulkGroup);
     if (group) {
-      setBulkSelected(new Set(group.permissions.map((p) => p.key)));
+      setBulkSelected(new Set(group.permissions.map((p: any) => p.key)));
     }
   };
 
   // ===== Export CSV =====
 
   const handleExportCSV = () => {
-    const headers = ["Role", ...ALL_PERMS.map((p) => p.key)];
-    const rows = roles.map((role) => {
+    const headers = ["Role", ...ALL_PERMS.map((p: any) => p.key)];
+    const rows = roles.map((role: any) => {
       const perms = matrix[role.id] || new Set<string>();
-      return [role.name, ...ALL_PERMS.map((p) => (perms.has(p.key) ? "Y" : "N"))];
+      return [role.name, ...ALL_PERMS.map((p: any) => (perms.has(p.key) ? "Y" : "N"))];
     });
     const csv = [headers, ...rows]
-      .map((row) => row.map((cell) => `"${cell}"`).join(","))
+      .map((row: any) => row.map((cell: any) => `"${cell}"`).join(","))
       .join("\n");
     const blob = new Blob([csv], { type: "text/csv" });
     const url = URL.createObjectURL(blob);
@@ -262,7 +262,7 @@ export default function PermissionMatrixPage() {
     setSaving(true);
     setError(null);
     try {
-      const payload = roles.map((role) => ({
+      const payload = roles.map((role: any) => ({
         role_id: role.id,
         role_key: role.key,
         permissions: [...(matrix[role.id] || [])],
@@ -348,7 +348,7 @@ export default function PermissionMatrixPage() {
           className="rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200"
         >
           <option value="all">All Roles</option>
-          {roles.map((r) => (
+          {roles.map((r: any) => (
             <option key={r.id} value={r.id}>{r.name}</option>
           ))}
         </select>
@@ -363,7 +363,7 @@ export default function PermissionMatrixPage() {
               <th scope="col" className="sticky left-0 z-30 border-b border-r border-gray-200 bg-gray-100 px-4 py-3 text-left font-semibold text-gray-600 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300">
                 Permission
               </th>
-              {visibleRoles.map((role) => (
+              {visibleRoles.map((role: any) => (
                 <th
                   key={role.id}
                   className="border-b border-r border-gray-200 bg-gray-100 px-3 py-3 text-center font-semibold text-gray-600 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300"
@@ -381,8 +381,8 @@ export default function PermissionMatrixPage() {
             </tr>
           </thead>
           <tbody>
-            {PERMISSION_GROUPS.map((group) => {
-              const groupPerms = group.permissions.filter((p) => filteredPermKeys.has(p.key));
+            {PERMISSION_GROUPS.map((group: any) => {
+              const groupPerms = group.permissions.filter((p: any) => filteredPermKeys.has(p.key));
               if (groupPerms.length === 0) return null;
               const isCollapsed = collapsedGroups.has(group.label);
 
@@ -405,7 +405,7 @@ export default function PermissionMatrixPage() {
                     </td>
                   </tr>
                   {/* Permission rows */}
-                  {!isCollapsed && groupPerms.map((perm) => (
+                  {!isCollapsed && groupPerms.map((perm: any) => (
                     <tr key={perm.key} className="hover:bg-gray-50 dark:hover:bg-gray-700/50">
                       <td className="sticky left-0 z-10 border-b border-r border-gray-100 bg-white px-4 py-2 font-medium text-gray-700 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300">
                         <div className="flex flex-col">
@@ -413,7 +413,7 @@ export default function PermissionMatrixPage() {
                           <span className="text-[10px] font-mono text-gray-400">{perm.key}</span>
                         </div>
                       </td>
-                      {visibleRoles.map((role) => {
+                      {visibleRoles.map((role: any) => {
                         const allowed = matrix[role.id]?.has(perm.key) ?? false;
                         return (
                           <td
@@ -442,7 +442,7 @@ export default function PermissionMatrixPage() {
                       <td className="sticky left-0 z-10 border-b border-r-2 border-gray-200 bg-gray-50/50 px-4 py-1.5 text-xs text-gray-400 dark:border-gray-700 dark:bg-gray-900/30">
                         Toggle all {group.label}
                       </td>
-                      {visibleRoles.map((role) => {
+                      {visibleRoles.map((role: any) => {
                         const allOn = groupPerms.every((p) => matrix[role.id]?.has(p.key));
                         return (
                           <td key={role.id} className="border-b border-r border-gray-200 px-3 py-1.5 text-center dark:border-gray-700">
@@ -470,7 +470,7 @@ export default function PermissionMatrixPage() {
 
       {/* Summary stats */}
       <div className="mt-4 flex flex-wrap gap-3">
-        {roles.map((role) => {
+        {roles.map((role: any) => {
           const count = matrix[role.id]?.size || 0;
           const total = ALL_PERMS.length;
           const pct = Math.round((count / total) * 100);
@@ -505,7 +505,7 @@ export default function PermissionMatrixPage() {
               className="rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200"
             >
               <option value="">-- Choose --</option>
-              {roles.map((r) => (
+              {roles.map((r: any) => (
                 <option key={r.id} value={r.id}>{r.name}</option>
               ))}
             </select>
@@ -521,7 +521,7 @@ export default function PermissionMatrixPage() {
                 className="rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200"
               >
                 <option value="">-- Choose --</option>
-                {PERMISSION_GROUPS.map((g) => (
+                {PERMISSION_GROUPS.map((g: any) => (
                   <option key={g.label} value={g.label}>{g.label}</option>
                 ))}
               </select>
@@ -543,7 +543,7 @@ export default function PermissionMatrixPage() {
                 Permissions ({bulkSelected.size} selected)
               </label>
               <div className="flex flex-wrap gap-2 rounded-lg border border-gray-200 p-3 dark:border-gray-700">
-                {PERMISSION_GROUPS.find((g) => g.label === bulkGroup)?.permissions.map((p) => (
+                {PERMISSION_GROUPS.find((g: any) => g.label === bulkGroup)?.permissions.map((p: any) => (
                   <label
                     key={p.key}
                     className={`flex cursor-pointer items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs ${

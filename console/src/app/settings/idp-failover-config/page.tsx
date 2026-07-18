@@ -24,7 +24,7 @@ export default function IdpFailoverConfigPage() {
 
       {/* Primary / Secondary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-        {data?.idp_cards?.map((idp) => (
+        {data?.idp_cards?.map((idp: any) => (
           <div key={idp.name} className={"rounded-xl p-6 border " + (idp.role === "primary" ? "bg-blue-950 border-blue-800" : "bg-gray-900 border-gray-700")}>
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-3">
@@ -57,7 +57,7 @@ export default function IdpFailoverConfigPage() {
       <div className="bg-gray-900 rounded-xl p-6 mb-6">
         <h2 className="text-sm font-semibold mb-3">{t("big1.idpFailoverConfig.failoverRules")}</h2>
         <div className="space-y-2">
-          {(data?.failover_rules ?? []).map((r) => (
+          {(data?.failover_rules ?? []).map((r: any) => (
             <div key={r.trigger} className="flex items-center gap-3 bg-gray-800 rounded-lg p-3">
               <Zap className="w-4 h-4 text-yellow-400" />
               <div className="flex-1">
@@ -83,7 +83,7 @@ export default function IdpFailoverConfigPage() {
         <div className="bg-gray-900 rounded-xl p-6">
           <h2 className="text-sm font-semibold mb-3">{t("big1.idpFailoverConfig.failoverHistory")}</h2>
           <div className="space-y-1">
-            {(data?.failover_history ?? []).map((h) => (
+            {(data?.failover_history ?? []).map((h: any) => (
               <div key={h.id} className="flex items-center gap-2 bg-gray-800 rounded p-2 text-xs">
                 <span className="text-gray-500">{h.timestamp}</span>
                 <span className="text-gray-300">{h.from}</span>

@@ -39,7 +39,7 @@ export default function ClientHealthPage() {
 
   useEffect(() => { fetchData(); }, [fetchData]);
 
-  const summary = { healthy: clients.filter((c) => c.status === "healthy").length, warning: clients.filter((c) => c.status === "warning").length, critical: clients.filter((c) => c.status === "critical").length };
+  const summary = { healthy: clients.filter((c: any) => c.status === "healthy").length, warning: clients.filter((c: any) => c.status === "warning").length, critical: clients.filter((c: any) => c.status === "critical").length };
 
   return (
     <div className="space-y-6">
@@ -55,7 +55,7 @@ export default function ClientHealthPage() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {clients.map((c) => {
+        {clients.map((c: any) => {
           const cfg = statusConfig[c.status];
           return (
             <div key={c.client_id} className="rounded-lg border dark:border-gray-800 p-4 space-y-3">

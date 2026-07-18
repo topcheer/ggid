@@ -69,7 +69,7 @@ export default function AuthTokenBindingEnforcementPage() {
               </tr>
             </thead>
             <tbody>
-              {(data?.per_client_binding_policy ?? []).map((c) => (
+              {(data?.per_client_binding_policy ?? []).map((c: any) => (
                 <tr key={c.client_id} className="border-b border-gray-800">
                   <td className="py-3 pr-3 font-mono text-xs text-blue-400">{c.client_id}</td>
                   <td className="py-3 pr-3">
@@ -79,7 +79,7 @@ export default function AuthTokenBindingEnforcementPage() {
                   </td>
                   <td className="py-3 pr-3">
                     <div className="flex flex-wrap gap-1">
-                      {c.allowed_methods.map((m) => (
+                      {c.allowed_methods.map((m: any) => (
                         <span key={m} className="text-xs px-1.5 py-0.5 bg-gray-800 rounded font-mono">{m}</span>
                       ))}
                     </div>

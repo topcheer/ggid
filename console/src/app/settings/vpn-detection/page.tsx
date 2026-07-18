@@ -32,7 +32,7 @@ export default function VPNDetectionPage() {
   const [loading, setLoading] = useState(false);
 
   const checkIP = async () => {
-    const ips = ipInput.split(/[\n,]/).map((s) => s.trim()).filter(Boolean);
+    const ips = ipInput.split(/[\n,]/).map((s: any) => s.trim()).filter(Boolean);
     if (ips.length === 0) return;
     setLoading(true);
     try {
@@ -42,7 +42,7 @@ export default function VPNDetectionPage() {
     finally { setLoading(false); }
   };
 
-  const flagged = results.filter((r) => r.is_vpn || r.is_proxy || r.is_tor);
+  const flagged = results.filter((r: any) => r.is_vpn || r.is_proxy || r.is_tor);
 
   return (
     <div className="space-y-6">
@@ -63,7 +63,7 @@ export default function VPNDetectionPage() {
           <div className="rounded-lg border p-4 dark:border-gray-800"><span className="text-sm text-gray-500">Checked</span><p className="text-2xl font-bold mt-1">{results.length}</p></div>
           <div className="rounded-lg border p-4 dark:border-gray-800"><span className="text-sm text-gray-500">VPN/Proxy</span><p className="text-2xl font-bold mt-1 text-orange-600">{flagged.length}</p></div>
           <div className="rounded-lg border p-4 dark:border-gray-800"><span className="text-sm text-gray-500">Clean</span><p className="text-2xl font-bold mt-1 text-green-600">{results.length - flagged.length}</p></div>
-          <div className="rounded-lg border p-4 dark:border-gray-800"><span className="text-sm text-gray-500">Countries</span><p className="text-2xl font-bold mt-1">{new Set(results.map((r) => r.country_code)).size}</p></div>
+          <div className="rounded-lg border p-4 dark:border-gray-800"><span className="text-sm text-gray-500">Countries</span><p className="text-2xl font-bold mt-1">{new Set(results.map((r: any) => r.country_code)).size}</p></div>
         </div>
       )}
 

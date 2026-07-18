@@ -45,7 +45,7 @@ export default function OAuthRateLimitPerClientPage() {
           <div className="flex items-center gap-2">
             <span className="text-xs text-gray-400">Whitelist IPs:</span>
             <div className="flex gap-1">
-              {(data?.whitelist_ips ?? []).map((ip) => (
+              {(data?.whitelist_ips ?? []).map((ip: any) => (
                 <span key={ip} className="text-xs font-mono px-2 py-0.5 bg-green-900 text-green-300 rounded">{ip}</span>
               ))}
             </div>
@@ -72,7 +72,7 @@ export default function OAuthRateLimitPerClientPage() {
               </tr>
             </thead>
             <tbody>
-              {(data?.rate_limits ?? []).map((r) => {
+              {(data?.rate_limits ?? []).map((r: any) => {
                 const usagePct = r.daily_quota > 0 ? Math.round((r.current_usage_today / r.daily_quota) * 100) : 0;
                 return (
                   <tr key={r.client_id} className="border-b border-gray-800">

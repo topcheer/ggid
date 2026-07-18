@@ -32,7 +32,7 @@ export default function PolicyApprovalWorkflowConfigPage() {
         <div className="bg-gray-900 rounded-xl p-6">
           <h2 className="text-sm font-semibold mb-3">Reviewer Assignment</h2>
           <div className="space-y-1">
-            {(data?.reviewers ?? []).map((r) => (
+            {(data?.reviewers ?? []).map((r: any) => (
               <div key={r.category} className="flex items-center gap-2 bg-gray-800 rounded p-2 text-xs">
                 <span className="flex-1">{r.category}</span>
                 <span className="text-blue-400">{r.reviewer}</span>
@@ -44,7 +44,7 @@ export default function PolicyApprovalWorkflowConfigPage() {
           <div className="bg-gray-900 rounded-xl p-6">
             <h2 className="text-sm font-semibold mb-3 flex items-center gap-2"><Snowflake className="w-4 h-4 text-cyan-400" /> Change Freeze Windows</h2>
             <div className="space-y-1">
-              {(data?.freeze_windows ?? []).map((f) => (
+              {(data?.freeze_windows ?? []).map((f: any) => (
                 <div key={f.name} className="text-xs bg-gray-800 rounded p-2">
                   <span className="font-medium">{f.name}</span>{" - "}<span className="text-gray-400">{f.period}</span>
                 </div>

@@ -52,7 +52,7 @@ export default function UserTimelinePage() {
 
   const handleFilterChange = (f: string) => { setFilter(f); if (events.length > 0) handleLoad(); };
 
-  const filtered = filter === "all" ? events : events.filter((e) => e.event_type === filter);
+  const filtered = filter === "all" ? events : events.filter((e: any) => e.event_type === filter);
   const cardCls = "rounded-xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-700 dark:bg-gray-800";
 
   return (
@@ -71,7 +71,7 @@ export default function UserTimelinePage() {
 
       {/* Filter tabs */}
       {events.length > 0 && (
-        <div className="flex flex-wrap gap-1">{filterTypes.map((f) => <button key={f} onClick={() => handleFilterChange(f)} className={`rounded px-2 py-1 text-xs font-medium ${filter === f ? "bg-indigo-600 text-white" : "bg-gray-100 text-gray-500 dark:bg-gray-800"}`}>{f.replace(/_/g, " ")}</button>)}</div>
+        <div className="flex flex-wrap gap-1">{filterTypes.map((f: any) => <button key={f} onClick={() => handleFilterChange(f)} className={`rounded px-2 py-1 text-xs font-medium ${filter === f ? "bg-indigo-600 text-white" : "bg-gray-100 text-gray-500 dark:bg-gray-800"}`}>{f.replace(/_/g, " ")}</button>)}</div>
       )}
 
       {/* Timeline */}
@@ -82,7 +82,7 @@ export default function UserTimelinePage() {
         <div className="relative">
           <div className="absolute left-5 top-0 bottom-0 w-px bg-gray-200 dark:bg-gray-700" />
           <div className="space-y-4">
-            {filtered.map((e) => (
+            {filtered.map((e: any) => (
               <div key={e.id} className="relative flex gap-4 pl-2">
                 <div className="z-10 flex h-8 w-8 items-center justify-center rounded-full border-2 border-white bg-white dark:border-gray-800 dark:bg-gray-800">{typeIcons[e.event_type] || <Clock className="h-4 w-4 text-gray-400" />}</div>
                 <div className="flex-1 rounded-lg border border-gray-200 bg-white p-3 shadow-sm dark:border-gray-700 dark:bg-gray-800">

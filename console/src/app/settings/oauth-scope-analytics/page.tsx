@@ -63,7 +63,7 @@ export default function OAuthScopeAnalyticsPage() {
               </tr>
             </thead>
             <tbody>
-              {(data?.scope_usage ?? []).map((s) => {
+              {(data?.scope_usage ?? []).map((s: any) => {
                 const denyPct = s.requested_count > 0 ? (s.denied_count / s.requested_count) * 100 : 0;
                 return (
                   <tr key={s.scope_name} className="border-b border-gray-800">
@@ -75,7 +75,7 @@ export default function OAuthScopeAnalyticsPage() {
                     </td>
                     <td className="py-3 pr-3">
                       <div className="flex flex-wrap gap-1">
-                        {s.deny_reasons.map((r) => (
+                        {s.deny_reasons.map((r: any) => (
                           <span key={r} className="text-xs px-1.5 py-0.5 bg-gray-800 rounded">{r}</span>
                         ))}
                       </div>
@@ -119,7 +119,7 @@ export default function OAuthScopeAnalyticsPage() {
             Unused Scopes (0 requests in 30d)
           </h2>
           <div className="flex flex-wrap gap-2">
-            {(data?.unused_scopes ?? []).map((s) => (
+            {(data?.unused_scopes ?? []).map((s: any) => (
               <span key={s} className="text-xs px-3 py-1.5 bg-gray-800 rounded-lg border border-gray-700 font-mono text-gray-400">
                 {s}
               </span>

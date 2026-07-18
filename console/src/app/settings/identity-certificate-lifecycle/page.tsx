@@ -36,7 +36,7 @@ export default function IdentityCertificateLifecyclePage() {
         <div className="bg-gray-900 rounded-xl p-4">
           <AlertTriangle className="w-5 h-5 text-red-400 mb-1" />
           <p className="text-xs text-gray-400">{t("idCertLifecycle.expiring30d")}</p>
-          <p className="text-xl font-bold text-red-400">{data?.expiry_calendar?.filter((e) => e.days_until <= 30).length ?? 0}</p>
+          <p className="text-xl font-bold text-red-400">{data?.expiry_calendar?.filter((e: any) => e.days_until <= 30).length ?? 0}</p>
         </div>
         <div className="bg-gray-900 rounded-xl p-4">
           <Ban className="w-5 h-5 text-gray-400 mb-1" />
@@ -61,7 +61,7 @@ export default function IdentityCertificateLifecyclePage() {
               </tr>
             </thead>
             <tbody>
-              {(data?.certificates ?? []).map((c) => (
+              {(data?.certificates ?? []).map((c: any) => (
                 <tr key={c.serial} className="border-b border-gray-800">
                   <td className="py-3 pr-3 text-sm font-medium">{c.name}</td>
                   <td className="py-3 pr-3">
@@ -90,7 +90,7 @@ export default function IdentityCertificateLifecyclePage() {
             Renewal Queue
           </h2>
           <div className="space-y-2">
-            {(data?.renewal_queue ?? []).map((r) => (
+            {(data?.renewal_queue ?? []).map((r: any) => (
               <div key={r.name} className="flex items-center justify-between bg-gray-800 rounded-lg p-3">
                 <div>
                   <p className="text-sm font-medium">{r.name}</p>
@@ -113,7 +113,7 @@ export default function IdentityCertificateLifecyclePage() {
             Revocation List
           </h2>
           <div className="space-y-2">
-            {(data?.revocation_list ?? []).map((r) => (
+            {(data?.revocation_list ?? []).map((r: any) => (
               <div key={r.serial} className="flex items-center gap-3 bg-gray-800 rounded-lg p-3">
                 <FileText className="w-3 h-3 text-gray-500" />
                 <div className="flex-1">

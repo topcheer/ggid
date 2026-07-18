@@ -47,7 +47,7 @@ export default function EvidenceExpiryPage() {
         headers: { ...authHeader(), "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" },
       });
       if (!res.ok) return null;
-      setItems((prev) => prev.map((e) => e.id === id ? { ...e, status: "valid", days_remaining: 90, expires_at: new Date(Date.now() + 90 * 86400000).toISOString().split("T")[0] } : e));
+      setItems((prev) => prev.map((e: any) => e.id === id ? { ...e, status: "valid", days_remaining: 90, expires_at: new Date(Date.now() + 90 * 86400000).toISOString().split("T")[0] } : e));
     } catch (e) { setError(e instanceof Error ? e.message : "Failed to refresh evidence"); }
     finally {
       setRefreshing((prev) => { const n = new Set(prev); n.delete(id); return n; });
@@ -55,16 +55,16 @@ export default function EvidenceExpiryPage() {
   };
 
   const batchRefresh = async () => {
-    const expiring = items.filter((e) => e.status !== "valid");
+    const expiring = items.filter((e: any) => e.status !== "valid");
     for (const e of expiring) {
       await refreshOne(e.id);
     }
   };
 
-  const filtered = filterStatus === "all" ? items : items.filter((e) => e.status === filterStatus);
-  const expired = items.filter((e) => e.status === "expired");
-  const expiring = items.filter((e) => e.status === "expiring");
-  const valid = items.filter((e) => e.status === "valid");
+  const filtered = filterStatus === "all" ? items : items.filter((e: any) => e.status === filterStatus);
+  const expired = items.filter((e: any) => e.status === "expired");
+  const expiring = items.filter((e: any) => e.status === "expiring");
+  const valid = items.filter((e: any) => e.status === "valid");
 
   const urgencyColor: Record<string, string> = {
     expired: "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400",
@@ -119,7 +119,7 @@ export default function EvidenceExpiryPage() {
             <tr><th scope="col" className="px-4 py-3 text-left font-medium">Control</th><th className="px-4 py-3 text-left font-medium">Framework</th><th className="px-4 py-3 text-left font-medium">Type</th><th className="px-4 py-3 text-left font-medium">Collected</th><th className="px-4 py-3 text-left font-medium">Expires</th><th className="px-4 py-3 text-left font-medium">Days</th><th className="px-4 py-3 text-left font-medium">Status</th><th className="px-4 py-3 text-left font-medium">Action</th></tr>
           </thead>
           <tbody className="divide-y dark:divide-gray-800">
-            {filtered.map((e) => (
+            {filtered.map((e: any) => (
               <tr key={e.id} className={"hover:bg-gray-50 dark:hover:bg-gray-900/30 " + rowBorder[e.status]}>
                 <td className="px-4 py-3 font-medium">{e.control_id}</td>
                 <td className="px-4 py-3 text-xs text-gray-500">{e.framework}</td>

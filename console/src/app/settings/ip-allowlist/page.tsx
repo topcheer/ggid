@@ -35,7 +35,7 @@ function isValidCIDR(input: string): boolean {
   const m = input.match(/^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})\/(\d{1,2})$/);
   if (!m) return false;
   const octets = [m[1], m[2], m[3], m[4]].map(Number);
-  if (octets.some((o) => o > 255)) return false;
+  if (octets.some((o: any) => o > 255)) return false;
   const prefix = Number(m[5]);
   return prefix >= 0 && prefix <= 32;
 }
@@ -70,9 +70,9 @@ function isIPInCIDR(ip: string, cidr: string): boolean {
 // Check IP against sorted rules — first match wins
 function checkIP(ip: string, rules: IPRule[]): boolean {
   const sorted = [...rules]
-    .filter((r) => r.enabled)
+    .filter((r: any) => r.enabled)
     .sort((a, b) => a.priority - b.priority);
-  return sorted.some((r) => isIPInCIDR(ip, r.cidr));
+  return sorted.some((r: any) => isIPInCIDR(ip, r.cidr));
 }
 
 export default function IPAllowlistPage() {
@@ -129,7 +129,7 @@ export default function IPAllowlistPage() {
       return;
     }
     // Check duplicate
-    if (rules.some((r) => r.cidr === cidr)) {
+    if (rules.some((r: any) => r.cidr === cidr)) {
       setCidrError(t("settings.duplicateCidr"));
       return;
     }
@@ -142,13 +142,13 @@ export default function IPAllowlistPage() {
 
   const handleDeleteRule = (id: string) => {
     setRules((prev) =>
-      prev.filter((r) => r.id !== id).map((r: any, i: number) => ({ ...r, priority: i + 1 })),
+      prev.filter((r: any) => r.id !== id).map((r: any, i: number) => ({ ...r, priority: i + 1 })),
     );
     setMsg(t("settings.ruleDeleted"));
   };
 
   const handleToggleRule = (id: string) => {
-    setRules((prev) => prev.map((r) => (r.id === id ? { ...r, enabled: !r.enabled } : r)));
+    setRules((prev) => prev.map((r: any) => (r.id === id ? { ...r, enabled: !r.enabled } : r)));
   };
 
   // Drag handlers

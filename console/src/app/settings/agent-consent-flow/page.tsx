@@ -53,7 +53,7 @@ export default function AgentConsentFlowPage() {
           Pending Consent Requests
         </h2>
         <div className="space-y-3">
-          {(data?.pending_consent_requests ?? []).map((req) => (
+          {(data?.pending_consent_requests ?? []).map((req: any) => (
             <div key={req.id} className="bg-gray-800 rounded-lg p-4">
               <div className="flex items-start justify-between mb-3">
                 <div>
@@ -68,7 +68,7 @@ export default function AgentConsentFlowPage() {
               <div className="mb-3">
                 <p className="text-xs text-gray-500 mb-1">Requested Scopes:</p>
                 <div className="flex flex-wrap gap-1">
-                  {req.requested_scopes.map((s) => (
+                  {req.requested_scopes.map((s: any) => (
                     <span key={s} className="text-xs px-2 py-0.5 bg-gray-700 rounded font-mono">{s}</span>
                   ))}
                 </div>
@@ -119,7 +119,7 @@ export default function AgentConsentFlowPage() {
                   <td className="py-3 pr-3 text-xs text-gray-400">{h.user}</td>
                   <td className="py-3 pr-3">
                     <div className="flex flex-wrap gap-0.5">
-                      {h.scopes.map((s) => (
+                      {h.scopes.map((s: any) => (
                         <span key={s} className="text-xs px-1 py-0.5 bg-gray-800 rounded font-mono">{s}</span>
                       ))}
                     </div>

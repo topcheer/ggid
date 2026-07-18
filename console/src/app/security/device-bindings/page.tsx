@@ -62,7 +62,7 @@ export default function DeviceBindingsPage() {
     try {
       await apiFetch(`/api/v1/security/device-bindings/${id}`, { method: "DELETE" });
       setConfirmUnbind(null);
-      setBindings((prev) => prev.filter((b) => b.id !== id));
+      setBindings((prev) => prev.filter((b: any) => b.id !== id));
     } catch {
       setError("Failed to unbind device");
     } finally {
@@ -70,7 +70,7 @@ export default function DeviceBindingsPage() {
     }
   };
 
-  const active = bindings.filter((b) => b.status === "active");
+  const active = bindings.filter((b: any) => b.status === "active");
   const cardCls = "rounded-xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-700 dark:bg-gray-800";
 
   return (
@@ -86,7 +86,7 @@ export default function DeviceBindingsPage() {
       <div className="grid grid-cols-3 gap-4">
         <div className={cardCls}><p className="text-xs font-semibold uppercase text-gray-400">Total Devices</p><p className="mt-1 text-2xl font-bold text-indigo-600">{bindings.length}</p></div>
         <div className={cardCls}><p className="text-xs font-semibold uppercase text-gray-400">Active</p><p className="mt-1 text-2xl font-bold text-green-600">{active.length}</p></div>
-        <div className={cardCls}><p className="text-xs font-semibold uppercase text-gray-400">Device Types</p><p className="mt-1 text-2xl font-bold text-indigo-600">{new Set(bindings.map((b) => b.device_type)).size}</p></div>
+        <div className={cardCls}><p className="text-xs font-semibold uppercase text-gray-400">Device Types</p><p className="mt-1 text-2xl font-bold text-indigo-600">{new Set(bindings.map((b: any) => b.device_type)).size}</p></div>
       </div>
 
       {error && (
@@ -101,7 +101,7 @@ export default function DeviceBindingsPage() {
         <div className={cardCls}><div className="py-12 text-center"><Smartphone className="mx-auto h-12 w-12 text-gray-300" /><p className="mt-4 text-sm text-gray-400">No device bindings.</p></div></div>
       ) : (
         <div className="space-y-3">
-          {bindings.map((b) => {
+          {bindings.map((b: any) => {
             const Icon = TYPE_ICON[b.device_type] ?? Shield;
             return (
               <div key={b.id} className={cardCls}>

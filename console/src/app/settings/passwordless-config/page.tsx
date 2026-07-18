@@ -22,7 +22,7 @@ export default function PasswordlessConfigPage() {
       <div className="bg-gray-900 rounded-xl p-6 mb-6">
         <h2 className="text-sm font-semibold mb-4">Enabled Methods</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {(data?.methods ?? []).map((m) => (
+          {(data?.methods ?? []).map((m: any) => (
             <div key={m.id} className="flex items-center gap-3 bg-gray-800 rounded-lg p-4">
               <div className={m.enabled ? "text-green-400" : "text-gray-600"}>{icons[m.id] ?? <KeyRound className="w-5 h-5" />}</div>
               <div className="flex-1"><p className="text-sm font-medium">{m.label}</p><p className="text-xs text-gray-400">{m.description}</p></div>
@@ -45,7 +45,7 @@ export default function PasswordlessConfigPage() {
         <div className="bg-gray-900 rounded-xl p-6">
           <h2 className="text-sm font-semibold mb-3">Per-Role Requirement</h2>
           <table className="w-full text-sm"><thead><tr className="border-b border-gray-800 text-gray-400"><th className="text-left py-2">Role</th><th className="text-left py-2">Required Method</th></tr></thead>
-            <tbody>{(data?.per_role ?? []).map((r) => (
+            <tbody>{(data?.per_role ?? []).map((r: any) => (
               <tr key={r.role} className="border-b border-gray-800"><td className="py-2 text-sm">{r.role}</td><td className="py-2 text-xs"><span className={"px-2 py-0.5 rounded " + (r.method === "none" ? "bg-gray-700" : "bg-blue-900 text-blue-300")}>{r.method}</span></td></tr>
             ))}</tbody>
           </table>

@@ -45,7 +45,7 @@ export default function MembershipGraphPage() {
 
       <select aria-label="Group id" value={groupId} onChange={(e) => setGroupId(e.target.value)} className="px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-900 text-sm">
         <option value="">Select Group</option>
-        {groups.map((g) => <option key={g.id} value={g.id}>{g.name}</option>)}
+        {groups.map((g: any) => <option key={g.id} value={g.id}>{g.name}</option>)}
       </select>
 
       {data && (
@@ -63,14 +63,14 @@ export default function MembershipGraphPage() {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <div className="rounded-lg border dark:border-gray-800 p-4">
               <h3 className="text-sm font-semibold mb-3">Direct Members</h3>
-              <div className="space-y-1">{data.direct_members.map((m) => (
+              <div className="space-y-1">{data.direct_members.map((m: any) => (
                 <div key={m.id} className="flex items-center gap-2 text-sm"><span className={`w-2 h-2 rounded-full ${m.type === "user" ? "bg-green-500" : "bg-blue-500"}`} /><span className="flex-1">{m.name}</span><span className="text-xs text-gray-400 font-mono">{m.type}</span></div>
               ))}{data.direct_members.length === 0 && <p className="text-xs text-gray-400">No direct members.</p>}</div>
             </div>
 
             <div className="rounded-lg border dark:border-gray-800 p-4">
               <h3 className="text-sm font-semibold mb-3">Parent Groups (Chain)</h3>
-              <div className="space-y-1">{data.parent_groups.map((p) => (
+              <div className="space-y-1">{data.parent_groups.map((p: any) => (
                 <div key={p.id} className="flex items-center gap-2 text-sm"><span className="w-2 h-2 rounded-full bg-orange-500" /><span className="flex-1">{p.name}</span></div>
               ))}{data.parent_groups.length === 0 && <p className="text-xs text-gray-400">No parent groups.</p>}</div>
             </div>
@@ -79,11 +79,11 @@ export default function MembershipGraphPage() {
           <div className="rounded-lg border dark:border-gray-800 p-4">
             <h3 className="text-sm font-semibold mb-3">Nested Groups Tree</h3>
             <div className="space-y-1">
-              {data.nested_groups.map((ng) => (
+              {data.nested_groups.map((ng: any) => (
                 <div key={ng.id}>
                   <div className="flex items-center gap-2 text-sm py-1"><span className="text-xs text-gray-400">L{ng.depth}</span><span className="w-2 h-2 rounded-full bg-purple-500" /><span className="flex-1 font-medium">{ng.name}</span></div>
                   {ng.children && ng.children.length > 0 && (
-                    <div className="ml-8 space-y-1 border-l dark:border-gray-800 pl-3">{ng.children.map((c) => (
+                    <div className="ml-8 space-y-1 border-l dark:border-gray-800 pl-3">{ng.children.map((c: any) => (
                       <div key={c.id} className="flex items-center gap-2 text-sm py-0.5"><span className="w-1.5 h-1.5 rounded-full bg-gray-400" /><span className="text-gray-500">{c.name}</span></div>
                     ))}</div>
                   )}

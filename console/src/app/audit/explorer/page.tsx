@@ -111,12 +111,12 @@ export default function AuditExplorerPage() {
                 <select value={filterType} onChange={(e) => setFilterType(e.target.value)}
                   className="px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-sm text-gray-900 dark:text-white">
                   <option value="all">{t("auditExplorer.events.allTypes")}</option>
-                  {EVENT_TYPES.map((tp) => <option key={tp} value={tp}>{tp}</option>)}
+                  {EVENT_TYPES.map((tp: any) => <option key={tp} value={tp}>{tp}</option>)}
                 </select>
                 <select value={filterSeverity} onChange={(e) => setFilterSeverity(e.target.value)}
                   className="px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-sm text-gray-900 dark:text-white">
                   <option value="all">{t("auditExplorer.events.allSeverities")}</option>
-                  {["info", "warning", "error", "critical"].map((s) => <option key={s} value={s}>{t(`auditExplorer.events.severity${s.replace(/^./, (m) => m.toUpperCase())}`)}</option>)}
+                  {["info", "warning", "error", "critical"].map((s: any) => <option key={s} value={s}>{t(`auditExplorer.events.severity${s.replace(/^./, (m) => m.toUpperCase())}`)}</option>)}
                 </select>
                 <select value={filterRange} onChange={(e) => setFilterRange(e.target.value)}
                   className="px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-sm text-gray-900 dark:text-white">
@@ -152,7 +152,7 @@ export default function AuditExplorerPage() {
                       </tr>
                     </thead>
                     <tbody>
-                      {events.map((e) => (
+                      {events.map((e: any) => (
                         <>
                           <tr key={e.id} className="border-b border-gray-100 dark:border-gray-800/50 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800/30"
                             onClick={() => toggleRow(e.id)}>
@@ -271,7 +271,7 @@ function ExportTab({ events }: { events: AuditEvent[] }) {
 
   const doExport = () => {
     setExporting(true);
-    const data = events.filter((e) => {
+    const data = events.filter((e: any) => {
       if (filterType !== "all" && e.type !== filterType) return false;
       if (filterSeverity !== "all" && e.severity !== filterSeverity) return false;
       return true;
@@ -283,7 +283,7 @@ function ExportTab({ events }: { events: AuditEvent[] }) {
         content = JSON.stringify(data, null, 2);
       } else {
         const headers = ["id", "timestamp", "type", "severity", "user", "action", "resource", "status", "ip_address"];
-        const rows = data.map((e: any) => headers.map((h) => `"${String(e[h] || "").replace(/"/g, '""')}"`).join(","));
+        const rows = data.map((e: any) => headers.map((h: any) => `"${String(e[h] || "").replace(/"/g, '""')}"`).join(","));
         content = [headers.join(","), ...rows].join("\n");
       }
       const blob = new Blob([content], { type: format === "json" ? "application/json" : "text/csv" });
@@ -342,7 +342,7 @@ function ExportTab({ events }: { events: AuditEvent[] }) {
           <select value={filterType} onChange={(e) => setFilterType(e.target.value)}
             className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-sm text-gray-900 dark:text-white">
             <option value="all">{t("auditExplorer.events.allTypes")}</option>
-            {EVENT_TYPES.map((tp) => <option key={tp} value={tp}>{tp}</option>)}
+            {EVENT_TYPES.map((tp: any) => <option key={tp} value={tp}>{tp}</option>)}
           </select>
         </div>
         <div>
@@ -350,7 +350,7 @@ function ExportTab({ events }: { events: AuditEvent[] }) {
           <select value={filterSeverity} onChange={(e) => setFilterSeverity(e.target.value)}
             className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-sm text-gray-900 dark:text-white">
             <option value="all">{t("auditExplorer.events.allSeverities")}</option>
-            {["info", "warning", "error", "critical"].map((s) => <option key={s} value={s}>{s}</option>)}
+            {["info", "warning", "error", "critical"].map((s: any) => <option key={s} value={s}>{s}</option>)}
           </select>
         </div>
       </div>

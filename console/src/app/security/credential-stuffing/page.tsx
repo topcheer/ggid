@@ -42,7 +42,7 @@ export default function CredentialStuffingPage() {
   };
 
   const cardCls = "rounded-xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-700 dark:bg-gray-800";
-  const maxAttempts = Math.max(...(data?.ip_spread ?? []).map((s) => s.attempts), 1);
+  const maxAttempts = Math.max(...(data?.ip_spread ?? []).map((s: any) => s.attempts), 1);
 
   return (
     <div className="space-y-6">
@@ -70,7 +70,7 @@ export default function CredentialStuffingPage() {
             <div className={cardCls}>
               <h3 className="mb-4 flex items-center gap-2 text-sm font-semibold text-gray-700 dark:text-gray-300"><Globe className="h-4 w-4" /> IP Distribution (Top 10)</h3>
               <div className="space-y-2">
-                {data.ip_spread.slice(0, 10).map((s) => (
+                {data.ip_spread.slice(0, 10).map((s: any) => (
                   <div key={s.ip}>
                     <div className="flex items-center justify-between text-sm"><span className="font-mono text-gray-600 dark:text-gray-300">{s.ip}</span><span className="font-bold text-red-500">{s.attempts}</span></div>
                     <div className="mt-1 h-2 overflow-hidden rounded-full bg-gray-200 dark:bg-gray-700"><div className="h-full rounded-full bg-red-400" style={{ width: `${(s.attempts / maxAttempts) * 100}%` }} /></div>
@@ -85,7 +85,7 @@ export default function CredentialStuffingPage() {
             <div>
               <h2 className="mb-3 text-sm font-semibold uppercase text-gray-500">Blocked IPs</h2>
               <div className="space-y-2">
-                {data.blocked_ips.map((b) => (
+                {data.blocked_ips.map((b: any) => (
                   <div key={b.ip} className={`${cardCls} flex items-center justify-between py-3`}><div><span className="font-mono text-sm text-gray-700 dark:text-gray-300">{b.ip}</span><p className="text-xs text-gray-400">Blocked {new Date(b.blocked_at).toLocaleString()}</p></div><span className="rounded-full bg-red-100 px-2 py-0.5 text-xs font-medium text-red-700 dark:bg-red-900/30 dark:text-red-400">{b.attempts} attempts</span></div>
                 ))}
               </div>

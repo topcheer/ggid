@@ -71,7 +71,7 @@ export default function OAuthRedirectURIValidationPage() {
         <div className="bg-gray-900 rounded-xl p-6">
           <h2 className="text-lg font-semibold mb-4">Per-Client Allowed URIs</h2>
           <div className="space-y-3 max-h-80 overflow-y-auto">
-            {(data?.per_client_uris ?? []).map((client) => (
+            {(data?.per_client_uris ?? []).map((client: any) => (
               <div key={client.client_id} className="bg-gray-800 rounded-lg p-3">
                 <div className="flex items-center justify-between mb-2">
                   <p className="text-sm font-medium">{client.client_name}</p>

@@ -54,16 +54,16 @@ export default function ComplianceGapHeatmapPage() {
             <thead>
               <tr>
                 <th scope="col" className="text-left text-xs text-gray-400 p-2 sticky left-0 bg-gray-900">Framework</th>
-                {(data?.control_categories ?? []).map((cat) => (
+                {(data?.control_categories ?? []).map((cat: any) => (
                   <th scope="col" key={cat} className="text-center text-xs text-gray-400 p-2 min-w-24">{cat}</th>
                 ))}
               </tr>
             </thead>
             <tbody>
-              {(data?.frameworks ?? []).map((fw) => (
+              {(data?.frameworks ?? []).map((fw: any) => (
                 <tr key={fw}>
                   <td className="text-sm font-medium p-2 sticky left-0 bg-gray-900">{fw}</td>
-                  {(data?.control_categories ?? []).map((cat) => {
+                  {(data?.control_categories ?? []).map((cat: any) => {
                     const cellKey = fw + ":" + cat;
                     const cellData = data?.heatmap?.[cellKey];
                     const status = cellData?.status ?? "not_applicable";

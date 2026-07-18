@@ -149,7 +149,7 @@ function LogTab() {
     setLoading(false);
   }, []);
 
-  const filtered = logs.filter((l) => !search || l.email.toLowerCase().includes(search.toLowerCase()));
+  const filtered = logs.filter((l: any) => !search || l.email.toLowerCase().includes(search.toLowerCase()));
 
   const statusColors: Record<string, string> = {
     success: "bg-green-100 text-green-700 dark:bg-green-950 dark:text-green-300",
@@ -183,7 +183,7 @@ function LogTab() {
             </tr>
           </thead>
           <tbody>
-            {filtered.map((l) => (
+            {filtered.map((l: any) => (
               <tr key={l.user_id} className="border-b border-gray-100 dark:border-gray-800/50">
                 <td className="py-3 px-3 font-medium text-gray-900 dark:text-white">{l.email}</td>
                 <td className="py-3 px-3"><span className="px-2 py-0.5 text-xs bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 rounded">{l.source}</span></td>

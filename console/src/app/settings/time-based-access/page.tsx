@@ -56,7 +56,7 @@ export default function TimeBasedAccessPage() {
   };
 
   const handleDelete = async (id: string) => {
-    try { await apiFetch(`/api/v1/policy/time-based/rules/${id}`, { method: "DELETE" }); setRules((p) => p.filter((r) => r.id !== id)); }
+    try { await apiFetch(`/api/v1/policy/time-based/rules/${id}`, { method: "DELETE" }); setRules((p) => p.filter((r: any) => r.id !== id)); }
     catch { setError("Delete failed"); }
   };
 
@@ -90,7 +90,7 @@ export default function TimeBasedAccessPage() {
         <div className={cardCls}><div className="py-12 text-center"><Clock className="mx-auto h-12 w-12 text-gray-300" /><p className="mt-4 text-sm text-gray-400">No time-based access rules yet.</p></div></div>
       ) : (
         <div className="space-y-3">
-          {rules.map((r) => (
+          {rules.map((r: any) => (
             <div key={r.id} className={cardCls}>
               <div className="flex items-start justify-between">
                 <div className="flex-1">
@@ -138,8 +138,8 @@ export default function TimeBasedAccessPage() {
                 <p className="mt-1 text-xs text-gray-400">Quick pick: click a weekday for a default 9am rule.</p>
               </div>
               <div className="grid grid-cols-3 gap-3">
-                <div><label className="mb-1 block text-xs font-semibold uppercase text-gray-400">Start</label><select aria-label="H" value={editing.start_time} onChange={(e) => setEditing({ ...editing, start_time: e.target.value })} className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-900 dark:text-gray-200">{hours.map((h) => <option key={h} value={h}>{h}</option>)}</select></div>
-                <div><label className="mb-1 block text-xs font-semibold uppercase text-gray-400">End</label><select aria-label="editing" value={editing.end_time} onChange={(e) => setEditing({ ...editing, end_time: e.target.value })} className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-900 dark:text-gray-200">{hours.map((h) => <option key={h} value={h}>{h}</option>)}</select></div>
+                <div><label className="mb-1 block text-xs font-semibold uppercase text-gray-400">Start</label><select aria-label="H" value={editing.start_time} onChange={(e) => setEditing({ ...editing, start_time: e.target.value })} className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-900 dark:text-gray-200">{hours.map((h: any) => <option key={h} value={h}>{h}</option>)}</select></div>
+                <div><label className="mb-1 block text-xs font-semibold uppercase text-gray-400">End</label><select aria-label="editing" value={editing.end_time} onChange={(e) => setEditing({ ...editing, end_time: e.target.value })} className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-900 dark:text-gray-200">{hours.map((h: any) => <option key={h} value={h}>{h}</option>)}</select></div>
                 <div><label className="mb-1 block text-xs font-semibold uppercase text-gray-400">Timezone</label><select aria-label="editing" value={editing.timezone} onChange={(e) => setEditing({ ...editing, timezone: e.target.value })} className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-900 dark:text-gray-200"><option>UTC</option><option>America/New_York</option><option>Europe/London</option><option>Asia/Tokyo</option><option>America/Los_Angeles</option></select></div>
               </div>
               {/* Allowed roles */}

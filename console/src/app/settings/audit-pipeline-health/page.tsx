@@ -59,7 +59,7 @@ export default function AuditPipelineHealthPage() {
               </tr>
             </thead>
             <tbody>
-              {(data?.pipeline_stages ?? []).map((s) => (
+              {(data?.pipeline_stages ?? []).map((s: any) => (
                 <tr key={s.name} className="border-b border-gray-800">
                   <td className="py-3 pr-3 text-sm font-medium">{s.name}</td>
                   <td className="py-3 pr-3 text-right text-gray-300">{s.throughput.toLocaleString()} ev/s</td>

@@ -26,7 +26,7 @@ export default function IdpDiscoveryConfigPage() {
       <div className="bg-gray-900 rounded-xl p-6 mb-6">
         <h2 className="text-sm font-semibold mb-4">{t("big1.idpDiscoveryConfig.discoveryMethods")}</h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {(data?.discovery_methods ?? []).map((m) => (
+          {(data?.discovery_methods ?? []).map((m: any) => (
             <div key={m.method} className="bg-gray-800 rounded-lg p-4 border border-gray-700">
               <div className="flex items-center gap-2 mb-2">
                 <Globe className="w-4 h-4 text-blue-400" />
@@ -45,7 +45,7 @@ export default function IdpDiscoveryConfigPage() {
       <div className="bg-gray-900 rounded-xl p-6 mb-6">
         <h2 className="text-sm font-semibold mb-4">{t("big1.idpDiscoveryConfig.emailDomainIdPMapping")}</h2>
         <div className="space-y-2">
-          {(data?.email_domain_rules ?? []).map((r) => (
+          {(data?.email_domain_rules ?? []).map((r: any) => (
             <div key={r.domain} className="flex items-center gap-3 bg-gray-800 rounded-lg p-3">
               <span className="text-sm font-mono text-blue-400">*@{r.domain}</span>
               <span className="text-gray-600">{" -> "}</span>
@@ -74,7 +74,7 @@ export default function IdpDiscoveryConfigPage() {
         <div className="bg-gray-900 rounded-xl p-6 mt-6">
           <h2 className="text-sm font-semibold mb-3">{t("big1.idpDiscoveryConfig.recentDiscoveryLog")}</h2>
           <div className="space-y-1">
-            {data.discovery_log.map((log) => (
+            {data.discovery_log.map((log: any) => (
               <div key={log.id} className="flex items-center gap-2 bg-gray-800 rounded p-2 text-xs">
                 <span className="text-gray-500">{log.timestamp}</span>
                 <span className="font-mono text-blue-400">{log.email}</span>

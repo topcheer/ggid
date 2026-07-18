@@ -215,7 +215,7 @@ export default function SecuritySettingsPage() {
     } catch {
       // offline mode — continue
     }
-    setSessions(sessions.filter((s) => s.id !== id));
+    setSessions(sessions.filter((s: any) => s.id !== id));
     setMsg("Session revoked");
   };
 
@@ -225,7 +225,7 @@ export default function SecuritySettingsPage() {
     } catch {
       // offline mode
     }
-    setSessions(sessions.filter((s) => s.current));
+    setSessions(sessions.filter((s: any) => s.current));
     setMsg("All other sessions revoked");
   };
 
@@ -265,7 +265,7 @@ export default function SecuritySettingsPage() {
     } catch {
       // offline mode
     }
-    setMfaMethods(mfaMethods.filter((m) => m.id !== id));
+    setMfaMethods(mfaMethods.filter((m: any) => m.id !== id));
     setMsg("MFA method removed");
   };
 
@@ -356,7 +356,7 @@ export default function SecuritySettingsPage() {
     } catch {
       // offline mode
     }
-    setAppPasswords(appPasswords.filter((p) => p.id !== id));
+    setAppPasswords(appPasswords.filter((p: any) => p.id !== id));
     setMsg("App password revoked");
   };
 
@@ -459,7 +459,7 @@ export default function SecuritySettingsPage() {
             <h2 className="flex items-center gap-2 text-sm font-semibold text-gray-700">
               <Monitor className="h-4 w-4 text-brand-600" /> Active Sessions
             </h2>
-            {sessions.filter((s) => !s.current).length > 0 && (
+            {sessions.filter((s: any) => !s.current).length > 0 && (
               <button
                 onClick={handleRevokeAllSessions}
                 className="rounded-lg border border-red-200 px-3 py-1 text-xs font-medium text-red-600 hover:bg-red-50"
@@ -472,7 +472,7 @@ export default function SecuritySettingsPage() {
             {sessionsLoaded && sessions.length === 0 && (
               <p className="py-4 text-center text-sm text-gray-400">No active sessions</p>
             )}
-            {sessions.map((s) => {
+            {sessions.map((s: any) => {
               const isMobile = /iphone|android|mobile/i.test(s.device);
               const Icon = isMobile ? Smartphone : Monitor;
               return (
@@ -521,7 +521,7 @@ export default function SecuritySettingsPage() {
             {mfaLoaded && mfaMethods.length === 0 && (
               <p className="py-2 text-sm text-gray-400">No MFA methods enrolled</p>
             )}
-            {mfaMethods.map((m) => {
+            {mfaMethods.map((m: any) => {
               const Icon = mfaTypeIcon(m.type);
               return (
                 <div
@@ -708,7 +708,7 @@ export default function SecuritySettingsPage() {
 
           {/* List */}
           <div className="space-y-2">
-            {appPasswords.map((p) => (
+            {appPasswords.map((p: any) => (
               <div
                 key={p.id}
                 className="flex items-center justify-between rounded-lg border border-gray-100 p-3"

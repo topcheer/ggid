@@ -89,7 +89,7 @@ export default function SessionsPage() {
         return;
       }
       const list = Array.isArray(data) ? data : data.sessions || [];
-      setSessions(list.map((s, i) => ({ ...s, current: s.current ?? (i === 0) })));
+      setSessions(list.map((s: any, i: any) => ({ ...s, current: s.current ?? (i === 0) })));
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load sessions");
       setSessions([]);
@@ -127,10 +127,10 @@ export default function SessionsPage() {
     setRevokingId(sessionId);
     try {
       await apiFetch(`/api/v1/sessions/${sessionId}`, { method: "DELETE" }).catch(() => {});
-      setSessions((prev) => prev.filter((s) => s.id !== sessionId));
+      setSessions((prev) => prev.filter((s: any) => s.id !== sessionId));
       showMessage(t("sessions.sessionrevoked"));
     } catch {
-      setSessions((prev) => prev.filter((s) => s.id !== sessionId));
+      setSessions((prev) => prev.filter((s: any) => s.id !== sessionId));
       showMessage(t("sessions.sessionrevoked"));
     } finally {
       setRevokingId(null);
@@ -142,10 +142,10 @@ export default function SessionsPage() {
     setRevokingAll(true);
     try {
       await apiFetch("/api/v1/sessions", { method: "DELETE" }).catch(() => {});
-      setSessions((prev) => prev.filter((s) => s.current));
+      setSessions((prev) => prev.filter((s: any) => s.current));
       showMessage(t("sessions.allothersessionsrevoked"));
     } catch {
-      setSessions((prev) => prev.filter((s) => s.current));
+      setSessions((prev) => prev.filter((s: any) => s.current));
       showMessage(t("sessions.allothersessionsrevoked"));
     } finally {
       setRevokingAll(false);
@@ -179,7 +179,7 @@ export default function SessionsPage() {
       .split(/[\s@._]+/)
       .filter(Boolean)
       .slice(0, 2)
-      .map((p) => p[0]?.toUpperCase() || "")
+      .map((p: any) => p[0]?.toUpperCase() || "")
       .join("") || "U";
   };
 
@@ -292,7 +292,7 @@ export default function SessionsPage() {
   // Unique locations for filter dropdown
   const locationOptions = useMemo(() => {
     const locs = new Set<string>();
-    sessions.forEach((s) => {
+    sessions.forEach((s: any) => {
       const loc = getLocationStr(s);
       if (loc !== "Unknown") locs.add(loc);
     });
@@ -316,12 +316,12 @@ export default function SessionsPage() {
 
     // Device filter
     if (deviceFilter !== "All") {
-      result = result.filter((s) => getDeviceType(s) === deviceFilter);
+      result = result.filter((s: any) => getDeviceType(s) === deviceFilter);
     }
 
     // Location filter
     if (locationFilter && locationFilter !== "All") {
-      result = result.filter((s) => getLocationStr(s) === locationFilter);
+      result = result.filter((s: any) => getLocationStr(s) === locationFilter);
     }
 
     // Sort
@@ -365,10 +365,10 @@ export default function SessionsPage() {
 
   // Summary stats
   const uniqueDevices = useMemo(() => {
-    return new Set(processedSessions.map((s) => getDeviceType(s)));
+    return new Set(processedSessions.map((s: any) => getDeviceType(s)));
   }, [processedSessions]);
 
-  const sessionsNearExpiry = sessions.filter((s) => {
+  const sessionsNearExpiry = sessions.filter((s: any) => {
     if (!s.expires_at) return false;
     const remaining = new Date(s.expires_at).getTime() - Date.now();
     return remaining > 0 && remaining < 60 * 60 * 1000;
@@ -575,7 +575,7 @@ export default function SessionsPage() {
           onChange={(e) => setDeviceFilter(e.target.value)}
           className="rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200"
         >
-          {DEVICE_FILTERS.map((d) => (
+          {DEVICE_FILTERS.map((d: any) => (
             <option key={d} value={d}>{d === "All" ? "All Devices" : d}</option>
           ))}
         </select>
@@ -584,7 +584,7 @@ export default function SessionsPage() {
           onChange={(e) => setLocationFilter(e.target.value)}
           className="rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200"
         >
-          {locationOptions.map((l) => (
+          {locationOptions.map((l: any) => (
             <option key={l} value={l}>{l === "All" ? "All Locations" : l}</option>
           ))}
         </select>
@@ -634,7 +634,7 @@ export default function SessionsPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
-                {processedSessions.map((session) => {
+                {processedSessions.map((session: any) => {
                   const status = getSessionStatus(session);
                   const deviceType = getDeviceType(session);
                   return (

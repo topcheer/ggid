@@ -28,8 +28,8 @@ export default function RedirectURIValidationConfigPage() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-        <div className="bg-gray-900 rounded-xl p-6"><h2 className="text-sm font-semibold mb-3">Custom Scheme Allowlist</h2><div className="space-y-1">{(data?.custom_schemes ?? []).map((s) => (<div key={s} className="text-xs font-mono bg-gray-800 rounded px-2 py-1">{s}</div>))}</div></div>
-        <div className="bg-gray-900 rounded-xl p-6"><h2 className="text-sm font-semibold mb-3">Per-Client Allowed Patterns</h2><div className="space-y-2">{(data?.per_client ?? []).map((c) => (<div key={c.client} className="bg-gray-800 rounded p-3"><p className="text-xs font-medium mb-1">{c.client}</p><div className="space-y-0.5">{c.uris.map((u) => (<div key={u} className="text-xs font-mono text-gray-400">{u}</div>))}</div></div>))}</div></div>
+        <div className="bg-gray-900 rounded-xl p-6"><h2 className="text-sm font-semibold mb-3">Custom Scheme Allowlist</h2><div className="space-y-1">{(data?.custom_schemes ?? []).map((s: any) => (<div key={s} className="text-xs font-mono bg-gray-800 rounded px-2 py-1">{s}</div>))}</div></div>
+        <div className="bg-gray-900 rounded-xl p-6"><h2 className="text-sm font-semibold mb-3">Per-Client Allowed Patterns</h2><div className="space-y-2">{(data?.per_client ?? []).map((c: any) => (<div key={c.client} className="bg-gray-800 rounded p-3"><p className="text-xs font-medium mb-1">{c.client}</p><div className="space-y-0.5">{c.uris.map((u: any) => (<div key={u} className="text-xs font-mono text-gray-400">{u}</div>))}</div></div>))}</div></div>
       </div>
 
       <div className="bg-gray-900 rounded-xl p-6">

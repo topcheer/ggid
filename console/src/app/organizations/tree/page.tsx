@@ -86,7 +86,7 @@ function findNode(nodes: OrgNode[], id: string): OrgNode | null {
 // Check if targetId is a descendant of sourceId
 function isDescendant(node: OrgNode, targetId: string): boolean {
   if (node.id === targetId) return true;
-  return node.children.some((c) => isDescendant(c, targetId));
+  return node.children.some((c: any) => isDescendant(c, targetId));
 }
 
 // Get flat ordered list of orgs at same depth level (siblings)
@@ -98,7 +98,7 @@ function getSiblings(nodes: OrgNode[], parentId: string | undefined, excludeId?:
     const parent = findNode(nodes, parentId);
     siblings = parent ? parent.children : [];
   }
-  return siblings.filter((n) => n.id !== excludeId);
+  return siblings.filter((n: any) => n.id !== excludeId);
 }
 
 // ===== Context Menu =====
@@ -166,8 +166,8 @@ export default function OrganizationTreePage() {
       setMemberCounts(counts);
 
       // Default: expand root orgs
-      const roots = list.filter((o) => !o.parent_id);
-      setExpanded(new Set(roots.map((r) => r.id)));
+      const roots = list.filter((o: any) => !o.parent_id);
+      setExpanded(new Set(roots.map((r: any) => r.id)));
       setError(null);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load organizations");
@@ -209,7 +209,7 @@ export default function OrganizationTreePage() {
     }
     const q = search.toLowerCase();
     const matched = new Set<string>();
-    orgs.forEach((org) => {
+    orgs.forEach((org: any) => {
       if (org.name.toLowerCase().includes(q) || (org.description || "").toLowerCase().includes(q)) {
         matched.add(org.id);
       }
@@ -218,11 +218,11 @@ export default function OrganizationTreePage() {
     // Auto-expand ancestors of matched nodes
     if (matched.size > 0) {
       const newExpanded = new Set(expanded);
-      matched.forEach((id) => {
-        let current = orgs.find((o) => o.id === id);
+      matched.forEach((id: any) => {
+        let current = orgs.find((o: any) => o.id === id);
         while (current?.parent_id) {
           newExpanded.add(current.parent_id);
-          current = orgs.find((o) => o.id === current!.parent_id);
+          current = orgs.find((o: any) => o.id === current!.parent_id);
         }
       });
       setExpanded(newExpanded);
@@ -231,7 +231,7 @@ export default function OrganizationTreePage() {
 
   // ---- Build tree ----
   const tree = buildTree(orgs, memberCounts);
-  const orgMap = new Map(orgs.map((o) => [o.id, o]));
+  const orgMap = new Map(orgs.map((o: any) => [o.id, o]));
 
   // ---- Expand/collapse toggle ----
   const toggleExpand = (id: string) => {
@@ -274,7 +274,7 @@ export default function OrganizationTreePage() {
     if (!sourceOrgId || sourceOrgId === targetOrgId) return;
 
     // Prevent dropping onto own descendant
-    const sourceNode = tree.find((n) => n.id === sourceOrgId);
+    const sourceNode = tree.find((n: any) => n.id === sourceOrgId);
     if (sourceNode && isDescendant(sourceNode, targetOrgId)) {
       setError("Cannot reassign an org to its own descendant");
       return;
@@ -282,7 +282,7 @@ export default function OrganizationTreePage() {
 
     // Optimistically update parent_id in local state
     setOrgs((prev) =>
-      prev.map((o) => (o.id === sourceOrgId ? { ...o, parent_id: targetOrgId } : o)),
+      prev.map((o: any) => (o.id === sourceOrgId ? { ...o, parent_id: targetOrgId } : o)),
     );
 
     try {
@@ -604,7 +604,7 @@ export default function OrganizationTreePage() {
         {/* Render children */}
         {isExpanded && hasChildren && (
           <div className="mt-1 space-y-1">
-            {node.children.map((child) => renderNode(child, depth + 1))}
+            {node.children.map((child: any) => renderNode(child, depth + 1))}
           </div>
         )}
       </div>
@@ -685,7 +685,7 @@ export default function OrganizationTreePage() {
         </div>
       ) : (
         <div className="space-y-1">
-          {tree.map((root) => renderNode(root, 0))}
+          {tree.map((root: any) => renderNode(root, 0))}
         </div>
       )}
 

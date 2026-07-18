@@ -56,7 +56,7 @@ export default function CredentialVaultPage() {
   };
 
   const handleDelete = async (id: string) => {
-    try { await apiFetch(`/api/v1/auth/credential-vault/${id}`, { method: "DELETE" }); setCreds((p) => p.filter((c) => c.id !== id)); if (revealedId === id) { setRevealedId(null); setRevealedValue(null); } }
+    try { await apiFetch(`/api/v1/auth/credential-vault/${id}`, { method: "DELETE" }); setCreds((p) => p.filter((c: any) => c.id !== id)); if (revealedId === id) { setRevealedId(null); setRevealedValue(null); } }
     catch { setError("Delete failed"); }
   };
 
@@ -89,7 +89,7 @@ export default function CredentialVaultPage() {
               <th scope="col" className="px-4 py-3 text-right font-semibold text-gray-600 dark:text-gray-300">Actions</th>
             </tr></thead>
             <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-              {creds.map((c) => (
+              {creds.map((c: any) => (
                 <tr key={c.id} className="bg-white dark:bg-gray-900">
                   <td className="px-4 py-3"><div className="flex items-center gap-2"><Lock className="h-3 w-3 text-gray-400" /><span className="font-mono text-sm font-medium text-gray-900 dark:text-white">{c.key}</span></div>{revealedId === c.id && revealedValue && <div className="mt-1 rounded bg-amber-50 px-2 py-1 font-mono text-xs text-amber-700 dark:bg-amber-900/20 dark:text-amber-400">{revealedValue}</div>}</td>
                   <td className="px-4 py-3 text-gray-500">{c.description || "—"}</td>

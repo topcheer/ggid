@@ -128,7 +128,7 @@ export default function AuditReportsPage() {
       }
 
       // Apply client-side filters
-      events = events.filter((e) => {
+      events = events.filter((e: any) => {
         if (config.user_search) {
           const u = config.user_search.toLowerCase();
           if (!(e.actor_name || "").toLowerCase().includes(u) &&
@@ -163,7 +163,7 @@ export default function AuditReportsPage() {
   }, [loadReportData]);
 
   // ---- SVG Chart rendering ----
-  const maxCount = useMemo(() => Math.max(...chartData.map((d) => d.count), 1), [chartData]);
+  const maxCount = useMemo(() => Math.max(...chartData.map((d: any) => d.count), 1), [chartData]);
 
   const renderBarChart = () => {
     const barWidth = chartData.length > 0 ? Math.max(20, 600 / chartData.length - 10) : 0;
@@ -174,7 +174,7 @@ export default function AuditReportsPage() {
     return (
       <svg viewBox={`0 0 ${w} ${chartHeight + 50}`} className="w-full" style={{ maxHeight: 320 }}>
         {/* Grid lines */}
-        {[0, 0.25, 0.5, 0.75, 1].map((r) => (
+        {[0, 0.25, 0.5, 0.75, 1].map((r: any) => (
           <g key={r}>
             <line
               x1={labelW} y1={chartHeight - r * chartHeight + 10}
@@ -187,7 +187,7 @@ export default function AuditReportsPage() {
           </g>
         ))}
         {/* Bars */}
-        {chartData.map((d, i) => {
+        {chartData.map((d: any, i: any) => {
           const h = (d.count / maxCount) * chartHeight;
           const x = labelW + i * (barWidth + 10) + 5;
           const y = chartHeight - h + 10;
@@ -213,17 +213,17 @@ export default function AuditReportsPage() {
     const w = 600;
     const stepX = chartData.length > 1 ? (w - labelW - 20) / (chartData.length - 1) : 0;
 
-    const points = chartData.map((d, i) => ({
+    const points = chartData.map((d: any, i: any) => ({
       x: labelW + 10 + i * stepX,
       y: chartHeight - (d.count / maxCount) * chartHeight + 10,
       data: d,
     }));
 
-    const pathD = points.map((p, i) => `${i === 0 ? "M" : "L"} ${p.x} ${p.y}`).join(" ");
+    const pathD = points.map((p: any, i: any) => `${i === 0 ? "M" : "L"} ${p.x} ${p.y}`).join(" ");
 
     return (
       <svg viewBox={`0 0 ${w} ${chartHeight + 50}`} className="w-full" style={{ maxHeight: 320 }}>
-        {[0, 0.25, 0.5, 0.75, 1].map((r) => (
+        {[0, 0.25, 0.5, 0.75, 1].map((r: any) => (
           <g key={r}>
             <line x1={labelW} y1={chartHeight - r * chartHeight + 10} x2={w - 10} y2={chartHeight - r * chartHeight + 10} stroke="#e5e7eb" strokeWidth={1} />
             <text x={labelW - 8} y={chartHeight - r * chartHeight + 14} textAnchor="end" fontSize={10} fill="#9ca3af">
@@ -239,7 +239,7 @@ export default function AuditReportsPage() {
           />
         )}
         <path d={pathD} fill="none" stroke="#6366f1" strokeWidth={2} />
-        {points.map((p, i) => (
+        {points.map((p: any, i: any) => (
           <g key={i}>
             <circle cx={p.x} cy={p.y} r={4} fill="#6366f1" stroke="white" strokeWidth={2} />
             <text x={p.x} y={chartHeight + 25} textAnchor="middle" fontSize={10} fill="#6b7280">
@@ -256,7 +256,7 @@ export default function AuditReportsPage() {
     const cx = 150, cy = 130, r = 100;
     let cumulative = 0;
 
-    const slices = chartData.map((d, i) => {
+    const slices = chartData.map((d: any, i: any) => {
       const startAngle = (cumulative / total) * 2 * Math.PI - Math.PI / 2;
       cumulative += d.count;
       const endAngle = (cumulative / total) * 2 * Math.PI - Math.PI / 2;
@@ -271,7 +271,7 @@ export default function AuditReportsPage() {
 
     return (
       <svg viewBox="0 0 300 300" className="w-full" style={{ maxHeight: 320 }}>
-        {slices.map((s, i) => (
+        {slices.map((s: any, i: any) => (
           <path key={i} d={s.path} fill={s.color} stroke="white" strokeWidth={2} />
         ))}
         <circle cx={cx} cy={cy} r={45} fill="white" />
@@ -319,8 +319,8 @@ export default function AuditReportsPage() {
 
   const handleExportCSV = () => {
     const rows = [["Group", "Count", "Percentage"]];
-    chartData.forEach((d) => rows.push([d.name, String(d.count), `${d.percentage}%`]));
-    const csv = rows.map((r) => r.join(",")).join("\n");
+    chartData.forEach((d: any) => rows.push([d.name, String(d.count), `${d.percentage}%`]));
+    const csv = rows.map((r: any) => r.join(",")).join("\n");
     const blob = new Blob([csv], { type: "text/csv" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
@@ -337,7 +337,7 @@ export default function AuditReportsPage() {
   };
 
   const handleDeleteReport = (id: string) => {
-    setSavedReports((prev) => prev.filter((r) => r.id !== id));
+    setSavedReports((prev) => prev.filter((r: any) => r.id !== id));
     showMsg("Report deleted");
   };
 
@@ -409,19 +409,19 @@ export default function AuditReportsPage() {
               <div>
                 <label className={labelCls}>{t("auditReports.eventType")}</label>
                 <select aria-label="config" value={config.event_type} onChange={(e) => setConfig({ ...config, event_type: e.target.value })} className={inputCls}>
-                  {EVENT_TYPES.map((t) => <option key={t} value={t}>{t === "all" ? "All Events" : t.charAt(0).toUpperCase() + t.slice(1)}</option>)}
+                  {EVENT_TYPES.map((t: any) => <option key={t} value={t}>{t === "all" ? "All Events" : t.charAt(0).toUpperCase() + t.slice(1)}</option>)}
                 </select>
               </div>
               <div>
                 <label className={labelCls}>{t("auditReports.severity")}</label>
                 <select aria-label="config" value={config.severity} onChange={(e) => setConfig({ ...config, severity: e.target.value })} className={inputCls}>
-                  {SEVERITIES.map((s) => <option key={s} value={s}>{s === "all" ? "All Severities" : s.charAt(0).toUpperCase() + s.slice(1)}</option>)}
+                  {SEVERITIES.map((s: any) => <option key={s} value={s}>{s === "all" ? "All Severities" : s.charAt(0).toUpperCase() + s.slice(1)}</option>)}
                 </select>
               </div>
               <div>
                 <label className={labelCls}>{t("auditReports.service")}</label>
                 <select aria-label="config" value={config.service} onChange={(e) => setConfig({ ...config, service: e.target.value })} className={inputCls}>
-                  {SERVICES.map((s) => <option key={s} value={s}>{s === "all" ? "All Services" : s.charAt(0).toUpperCase() + s.slice(1)}</option>)}
+                  {SERVICES.map((s: any) => <option key={s} value={s}>{s === "all" ? "All Services" : s.charAt(0).toUpperCase() + s.slice(1)}</option>)}
                 </select>
               </div>
             </div>
@@ -431,7 +431,7 @@ export default function AuditReportsPage() {
               <div>
                 <label className={labelCls}>{t("auditReports.groupBy")}</label>
                 <div className="flex flex-wrap gap-2">
-                  {(["none", "day", "user", "service", "event_type"] as const).map((g) => (
+                  {(["none", "day", "user", "service", "event_type"] as const).map((g: any) => (
                     <label key={g} className={`cursor-pointer rounded-lg border px-3 py-1.5 text-xs font-medium ${config.group_by === g ? "border-brand-500 bg-brand-50 text-brand-700 dark:bg-brand-950/30 dark:text-brand-400" : "border-gray-300 text-gray-600 dark:border-gray-600 dark:text-gray-400"}`}>
                       <input aria-label="Config" type="radio" name="group_by" value={g} checked={config.group_by === g} onChange={(e) => setConfig({ ...config, group_by: e.target.value as ReportConfig["group_by"] })} className="hidden" />
                       {g === "none" ? "None" : g === "event_type" ? "Event Type" : g.charAt(0).toUpperCase() + g.slice(1)}
@@ -446,7 +446,7 @@ export default function AuditReportsPage() {
                     { v: "bar", icon: BarChart3, label: "Bar" },
                     { v: "line", icon: LineChart, label: "Line" },
                     { v: "pie", icon: PieIcon, label: "Pie" },
-                  ] as const).map((c) => (
+                  ] as const).map((c: any) => (
                     <label key={c.v} className={`flex cursor-pointer items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-medium ${config.chart_type === c.v ? "border-brand-500 bg-brand-50 text-brand-700 dark:bg-brand-950/30 dark:text-brand-400" : "border-gray-300 text-gray-600 dark:border-gray-600 dark:text-gray-400"}`}>
                       <input aria-label="Config" type="radio" name="chart_type" value={c.v} checked={config.chart_type === c.v} onChange={(e) => setConfig({ ...config, chart_type: e.target.value as ReportConfig["chart_type"] })} className="hidden" />
                       <c.icon className="h-3.5 w-3.5" /> {c.label}
@@ -467,7 +467,7 @@ export default function AuditReportsPage() {
             {/* Legend */}
             {chartData.length > 0 && (
               <div className="mt-4 flex flex-wrap gap-3">
-                {chartData.map((d, i) => (
+                {chartData.map((d: any, i: any) => (
                   <div key={i} className="flex items-center gap-1.5 text-xs text-gray-600 dark:text-gray-400">
                     <span className="h-3 w-3 rounded" style={{ backgroundColor: CHART_COLORS[i % CHART_COLORS.length] }} />
                     {d.name} ({d.count})
@@ -491,7 +491,7 @@ export default function AuditReportsPage() {
                     </tr>
                   </thead>
                   <tbody>
-                    {chartData.map((d, i) => (
+                    {chartData.map((d: any, i: any) => (
                       <tr key={i} className="border-b border-gray-100 dark:border-gray-700/50">
                         <td className="py-2 pr-4 text-sm text-gray-800 dark:text-gray-200">{d.name}</td>
                         <td className="py-2 pr-4 text-sm font-medium text-gray-900 dark:text-gray-100">{d.count}</td>
@@ -543,7 +543,7 @@ export default function AuditReportsPage() {
                   <div>
                     <label className={labelCls}>Day of Week</label>
                     <select aria-label="schedule" value={schedule.day_of_week} onChange={(e) => setSchedule({ ...schedule, day_of_week: parseInt(e.target.value) })} className={inputCls}>
-                      {DAYS_OF_WEEK.map((d, i) => <option key={i} value={i}>{d}</option>)}
+                      {DAYS_OF_WEEK.map((d: any, i: any) => <option key={i} value={i}>{d}</option>)}
                     </select>
                   </div>
                 )}
@@ -551,7 +551,7 @@ export default function AuditReportsPage() {
                   <div>
                     <label className={labelCls}>Day of Month</label>
                     <select aria-label="schedule" value={schedule.day_of_month} onChange={(e) => setSchedule({ ...schedule, day_of_month: parseInt(e.target.value) })} className={inputCls}>
-                      {Array.from({ length: 28 }, (_, i) => i + 1).map((d) => <option key={d} value={d}>{d}</option>)}
+                      {Array.from({ length: 28 }, (_, i) => i + 1).map((d: any) => <option key={d} value={d}>{d}</option>)}
                     </select>
                   </div>
                 )}
@@ -582,7 +582,7 @@ export default function AuditReportsPage() {
               <p className="py-4 text-center text-xs text-gray-400">No saved reports yet</p>
             ) : (
               <div className="space-y-2">
-                {savedReports.map((r) => (
+                {savedReports.map((r: any) => (
                   <div key={r.id} className="flex items-center justify-between rounded-lg border border-gray-200 px-3 py-2 dark:border-gray-700">
                     <div className="min-w-0 flex-1">
                       <p className="truncate text-sm font-medium text-gray-800 dark:text-gray-200">{r.name}</p>

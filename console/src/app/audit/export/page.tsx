@@ -96,7 +96,7 @@ export default function AuditExportPage() {
               <div>
                 <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Format</label>
                 <div className="mt-2 flex gap-3">
-                  {(["csv", "json"] as const).map((f) => (
+                  {(["csv", "json"] as const).map((f: any) => (
                     <button key={f} onClick={() => setFormat(f)} className={`flex items-center gap-2 rounded-lg border px-4 py-2 text-sm font-medium ${format === f ? "border-indigo-500 bg-indigo-50 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400" : "border-gray-300 text-gray-500 dark:border-gray-600"}`}>
                       <FileText className="h-4 w-4" />{f.toUpperCase()}
                     </button>

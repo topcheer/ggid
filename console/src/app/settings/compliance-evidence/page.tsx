@@ -100,9 +100,9 @@ export default function ComplianceEvidencePage() {
   };
 
   const cardCls = "rounded-xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-700 dark:bg-gray-800";
-  const fwControls = selectedControl ? controls.filter((c) => c.id === selectedControl) : controls;
-  const fwArtifacts = selectedControl ? artifacts.filter((a) => a.control_id === selectedControl) : artifacts;
-  const stats = { compliant: controls.filter((c) => c.status === "compliant").length, partial: controls.filter((c) => c.status === "partial").length, missing: controls.filter((c) => c.status === "missing").length };
+  const fwControls = selectedControl ? controls.filter((c: any) => c.id === selectedControl) : controls;
+  const fwArtifacts = selectedControl ? artifacts.filter((a: any) => a.control_id === selectedControl) : artifacts;
+  const stats = { compliant: controls.filter((c: any) => c.status === "compliant").length, partial: controls.filter((c: any) => c.status === "partial").length, missing: controls.filter((c: any) => c.status === "missing").length };
 
   return (
     <div className="space-y-6">
@@ -116,7 +116,7 @@ export default function ComplianceEvidencePage() {
 
       {/* Framework selector */}
       <div className="flex gap-2">
-        {frameworks.map((fw) => (
+        {frameworks.map((fw: any) => (
           <button key={fw} onClick={() => handleFrameworkChange(fw)} className={`rounded-lg px-4 py-2 text-sm font-medium ${framework === fw ? "bg-indigo-600 text-white" : "bg-gray-100 text-gray-600 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300"}`}>{fw}</button>
         ))}
       </div>
@@ -137,7 +137,7 @@ export default function ComplianceEvidencePage() {
           <div>
             <h2 className="mb-3 text-sm font-semibold uppercase text-gray-500">Control Checklist — {framework}</h2>
             <div className="space-y-2">
-              {fwControls.map((c) => (
+              {fwControls.map((c: any) => (
                 <div key={c.id} className={`${cardCls} cursor-pointer`} onClick={() => setSelectedControl(selectedControl === c.id ? null : c.id)}>
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
@@ -183,7 +183,7 @@ export default function ComplianceEvidencePage() {
                     <th scope="col" className="px-4 py-3 text-right font-semibold text-gray-600 dark:text-gray-300">Actions</th>
                   </tr></thead>
                   <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-                    {fwArtifacts.map((a) => (
+                    {fwArtifacts.map((a: any) => (
                       <tr key={a.id} className="bg-white dark:bg-gray-900">
                         <td className="px-4 py-3 font-medium text-gray-900 dark:text-white">{a.name}</td>
                         <td className="px-4 py-3 font-mono text-xs text-gray-500">{a.control_id}</td>

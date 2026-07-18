@@ -295,7 +295,7 @@ export default function GroupsPage() {
 
   // Hierarchy
   const buildHierarchy = (allGroups: Group[], parentId?: string, depth = 0): { group: Group; depth: number }[] => {
-    const children = allGroups.filter((g) => (parentId ? g.parent_id === parentId : !g.parent_id));
+    const children = allGroups.filter((g: any) => (parentId ? g.parent_id === parentId : !g.parent_id));
     const result: { group: Group; depth: number }[] = [];
     for (const child of children) {
       result.push({ group: child, depth });
@@ -305,13 +305,13 @@ export default function GroupsPage() {
   };
 
   const hierarchicalGroups = buildHierarchy(groups);
-  const groupNameById = (id?: string) => groups.find((g) => g.id === id)?.name || "—";
+  const groupNameById = (id?: string) => groups.find((g: any) => g.id === id)?.name || "—";
 
   // Stats
   const totalMembers = useMemo(() => {
     return groups.reduce((sum, g) => sum + (g.member_count ?? g.members?.length ?? 0), 0);
   }, [groups]);
-  const rootGroups = groups.filter((g) => !g.parent_id).length;
+  const rootGroups = groups.filter((g: any) => !g.parent_id).length;
   const maxDepth = useMemo(() => {
     let max = 0;
     hierarchicalGroups.forEach(({ depth }) => { if (depth > max) max = depth; });
@@ -332,7 +332,7 @@ export default function GroupsPage() {
     if (selectedIds.size === groups.length) {
       setSelectedIds(new Set());
     } else {
-      setSelectedIds(new Set(groups.map((g) => g.id)));
+      setSelectedIds(new Set(groups.map((g: any) => g.id)));
     }
   };
 
@@ -387,8 +387,8 @@ export default function GroupsPage() {
           >
             <option value="">- Root (no parent) -</option>
             {groups
-              .filter((g) => g.id !== editingGroup?.id)
-              .map((g) => (
+              .filter((g: any) => g.id !== editingGroup?.id)
+              .map((g: any) => (
                 <option key={g.id} value={g.id}>{g.name}</option>
               ))}
           </select>
@@ -579,7 +579,7 @@ export default function GroupsPage() {
               {filteredUsers.length === 0 ? (
                 <p className="py-4 text-center text-sm text-gray-400">No users found</p>
               ) : (
-                filteredUsers.map((u) => (
+                filteredUsers.map((u: any) => (
                   <div
                     key={u.id}
                     className="flex items-center justify-between rounded-lg px-3 py-2 hover:bg-gray-50 dark:hover:bg-gray-700/50"
@@ -611,7 +611,7 @@ export default function GroupsPage() {
               <button onClick={() => setShowBulkRolePicker(false)} className="text-gray-400 hover:text-gray-600" aria-label="Close"><X className="h-5 w-5" /></button>
             </div>
             <div className="space-y-2">
-              {roles.map((r) => (
+              {roles.map((r: any) => (
                 <label key={r.id} className="flex cursor-pointer items-center gap-3 rounded-lg border border-gray-200 p-3 hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-gray-700/50">
                   <input
                     type="checkbox"
@@ -723,7 +723,7 @@ function GroupRow({
         <td className="px-4 py-3 text-sm text-gray-500">{groupNameById(group.parent_id)}</td>
         <td className="px-4 py-3">
           <div className="flex flex-wrap gap-1">
-            {(group.roles || []).map((r) => (
+            {(group.roles || []).map((r: any) => (
               <span
                 key={r.id}
                 className="inline-flex items-center gap-0.5 rounded-full bg-purple-50 px-2 py-0.5 text-xs text-purple-700 dark:bg-purple-900/30 dark:text-purple-300"
@@ -780,7 +780,7 @@ function GroupRow({
                       className="rounded-lg border border-gray-300 px-3 py-1.5 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200"
                     >
                       <option value="" disabled>Select a role to assign...</option>
-                      {roles.map((r) => <option key={r.id} value={r.id}>{r.name || r.key}</option>)}
+                      {roles.map((r: any) => <option key={r.id} value={r.id}>{r.name || r.key}</option>)}
                     </select>
                   </div>
                 </div>
@@ -814,7 +814,7 @@ function GroupRow({
                     </button>
                   </div>
                   <div className="space-y-1">
-                    {(group.members || []).map((m) => (
+                    {(group.members || []).map((m: any) => (
                       <div key={m.id} className="flex items-center justify-between rounded-lg bg-white px-3 py-1.5 dark:bg-gray-800">
                         <div>
                           <span className="text-sm font-medium dark:text-gray-200">{m.username}</span>

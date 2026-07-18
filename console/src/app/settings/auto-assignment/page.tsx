@@ -74,7 +74,7 @@ export default function AutoAssignmentPage() {
       <div className="flex items-center gap-4">
         <select aria-label="Campaign" value={campaign} onChange={(e) => setCampaign(e.target.value)} className="px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-900 text-sm">
           <option value="">Select Campaign</option>
-          {campaigns.map((c) => <option key={c} value={c}>{c}</option>)}
+          {campaigns.map((c: any) => <option key={c} value={c}>{c}</option>)}
         </select>
         {campaign && <span className="text-sm text-gray-500">{assignments.length} reviewers · {totalUsers} users assigned</span>}
       </div>
@@ -83,7 +83,7 @@ export default function AutoAssignmentPage() {
         <table className="w-full text-sm">
           <thead className="bg-gray-50 dark:bg-gray-900/50"><tr><th className="px-4 py-3 text-left font-medium">Reviewer</th><th className="px-4 py-3 text-left font-medium">Assigned Users</th><th className="px-4 py-3 text-left font-medium">Strategy</th><th className="px-4 py-3 text-left font-medium">Last Assigned</th><th className="px-4 py-3 text-left font-medium">Action</th></tr></thead>
           <tbody className="divide-y dark:divide-gray-800">
-            {assignments.map((a) => (
+            {assignments.map((a: any) => (
               <tr key={a.id} className="hover:bg-gray-50 dark:hover:bg-gray-900/30">
                 <td className="px-4 py-3"><span className="font-medium">{a.reviewer_name}</span><p className="text-xs text-gray-400 font-mono">{a.reviewer_id}</p></td>
                 <td className="px-4 py-3"><span className="font-bold text-indigo-600">{a.assigned_users}</span></td>

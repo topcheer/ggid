@@ -52,7 +52,7 @@ export default function AccessReviewCampaignsPage() {
   };
 
   const toggleReminders = async (id: string) => {
-    setCampaigns(campaigns.map((c) => c.id === id ? { ...c, reminders: !c.reminders } : c));
+    setCampaigns(campaigns.map((c: any) => c.id === id ? { ...c, reminders: !c.reminders } : c));
   };
 
   return (
@@ -63,7 +63,7 @@ export default function AccessReviewCampaignsPage() {
       </div>
 
       <div className="space-y-3">
-        {campaigns.map((c) => (
+        {campaigns.map((c: any) => (
           <div key={c.id} className="rounded-lg border dark:border-gray-800 p-4">
             <div className="flex items-center justify-between mb-2">
               <div><span className="font-semibold">{c.name}</span><p className="text-xs text-gray-400 mt-0.5">{t("accessReviewCampaigns.scope")} {c.scope} - {t("accessReviewCampaigns.deadline")} {c.deadline}</p></div>
@@ -74,7 +74,7 @@ export default function AccessReviewCampaignsPage() {
               <button onClick={() => toggleReminders(c.id)} className={`flex items-center gap-1 text-xs px-2 py-1 rounded ${c.reminders ? "text-orange-600 bg-orange-50 dark:bg-orange-900/20" : "text-gray-400"}`}><Bell className="w-3.5 h-3.5" /> {c.reminders ? t("accessReviewCampaigns.on") : t("accessReviewCampaigns.off")}</button>
               {c.auto_revoke && <span className="px-2 py-0.5 rounded text-xs bg-red-100 dark:bg-red-900/30 dark:text-red-400">{t("accessReviewCampaigns.autoRevoke")}</span>}
             </div>
-            <div className="flex flex-wrap gap-1">{c.reviewers.map((r) => <span key={r} className="px-1.5 py-0.5 rounded text-xs bg-gray-100 dark:bg-gray-800 font-mono">{r}</span>)}</div>
+            <div className="flex flex-wrap gap-1">{c.reviewers.map((r: any) => <span key={r} className="px-1.5 py-0.5 rounded text-xs bg-gray-100 dark:bg-gray-800 font-mono">{r}</span>)}</div>
           </div>
         ))}
         {campaigns.length === 0 && !loading && <p className="text-sm text-gray-500 text-center py-8">{t("accessReviewCampaigns.noCampaigns")}</p>}
@@ -86,8 +86,8 @@ export default function AccessReviewCampaignsPage() {
             <div className="flex items-center justify-between px-6 py-4 border-b dark:border-gray-800"><h3 className="font-semibold">{t("accessReviewCampaigns.newCampaign")}</h3><button onClick={() => setShowCreate(false)} aria-label="Close"><X className="w-5 h-5 text-gray-400" /></button></div>
             <div className="px-6 py-4 space-y-3">
               <div><label className="text-sm font-medium">{t("accessReviewCampaigns.name")}</label><input aria-label="Q4 Access Review" type="text" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="Q4 Access Review" className="w-full mt-1 px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-800 text-sm" /></div>
-              <div><label className="text-sm font-medium">{t("accessReviewCampaigns.scope")}</label><select aria-label="form" value={form.scope} onChange={(e) => setForm({ ...form, scope: e.target.value })} className="w-full mt-1 px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-800 text-sm">{scopes.map((s) => <option key={s} value={s}>{s}</option>)}</select></div>
-              <div><label className="text-sm font-medium">{t("accessReviewCampaigns.reviewers")}</label><div className="flex items-center gap-2 mt-1"><input aria-label="reviewer@example.com" type="text" value={reviewerInput} onChange={(e) => setReviewerInput(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter" && reviewerInput) { setForm({ ...form, reviewers: [...form.reviewers, reviewerInput] }); setReviewerInput(""); } }} placeholder="reviewer@example.com" className="flex-1 px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-800 text-sm" /><button onClick={() => { if (reviewerInput) { setForm({ ...form, reviewers: [...form.reviewers, reviewerInput] }); setReviewerInput(""); } }} className="px-3 py-2 rounded-lg bg-gray-100 dark:bg-gray-800 text-sm"><Plus className="w-4 h-4" /></button></div><div className="flex flex-wrap gap-1 mt-2">{form.reviewers.map((r) => <span key={r} className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs bg-blue-100 dark:bg-blue-900/30 dark:text-blue-400 font-mono">{r}<button onClick={() => setForm({ ...form, reviewers: form.reviewers.filter((x) => x !== r) })}><X className="w-3 h-3" /></button></span>)}</div></div>
+              <div><label className="text-sm font-medium">{t("accessReviewCampaigns.scope")}</label><select aria-label="form" value={form.scope} onChange={(e) => setForm({ ...form, scope: e.target.value })} className="w-full mt-1 px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-800 text-sm">{scopes.map((s: any) => <option key={s} value={s}>{s}</option>)}</select></div>
+              <div><label className="text-sm font-medium">{t("accessReviewCampaigns.reviewers")}</label><div className="flex items-center gap-2 mt-1"><input aria-label="reviewer@example.com" type="text" value={reviewerInput} onChange={(e) => setReviewerInput(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter" && reviewerInput) { setForm({ ...form, reviewers: [...form.reviewers, reviewerInput] }); setReviewerInput(""); } }} placeholder="reviewer@example.com" className="flex-1 px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-800 text-sm" /><button onClick={() => { if (reviewerInput) { setForm({ ...form, reviewers: [...form.reviewers, reviewerInput] }); setReviewerInput(""); } }} className="px-3 py-2 rounded-lg bg-gray-100 dark:bg-gray-800 text-sm"><Plus className="w-4 h-4" /></button></div><div className="flex flex-wrap gap-1 mt-2">{form.reviewers.map((r: any) => <span key={r} className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs bg-blue-100 dark:bg-blue-900/30 dark:text-blue-400 font-mono">{r}<button onClick={() => setForm({ ...form, reviewers: form.reviewers.filter((x: any) => x !== r) })}><X className="w-3 h-3" /></button></span>)}</div></div>
               <div><label className="text-sm font-medium">Deadline</label><input aria-label="form" type="date" value={form.deadline} onChange={(e) => setForm({ ...form, deadline: e.target.value })} className="w-full mt-1 px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-800 text-sm" /></div>
               <label className="flex items-center gap-2 text-sm"><input aria-label="Form" type="checkbox" checked={form.auto_revoke} onChange={(e) => setForm({ ...form, auto_revoke: e.target.checked })} className="rounded" /> {t("accessReviewCampaigns.autoRevokeAfterDeadline")}</label>
             </div>

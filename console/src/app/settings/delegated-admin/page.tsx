@@ -47,7 +47,7 @@ export default function DelegatedAdminPage() {
   }, []);
 
   const togglePerm = (perm: string) => {
-    setForm((f) => ({ ...f, permissions: f.permissions.includes(perm) ? f.permissions.filter((p) => p !== perm) : [...f.permissions, perm] }));
+    setForm((f) => ({ ...f, permissions: f.permissions.includes(perm) ? f.permissions.filter((p: any) => p !== perm) : [...f.permissions, perm] }));
   };
 
   const handleGrant = async () => {
@@ -63,15 +63,15 @@ export default function DelegatedAdminPage() {
     setRevoking(id);
     try {
       await apiFetch(`/api/v1/policy/delegated-admin/${id}/revoke`, { method: "POST" });
-      setDelegations((p) => p.map((d) => d.id === id ? { ...d, revoked: true } : d));
+      setDelegations((p) => p.map((d: any) => d.id === id ? { ...d, revoked: true } : d));
     } catch { setError("Revoke failed"); }
     finally { setRevoking(null); }
   };
 
   const cardCls = "rounded-xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-700 dark:bg-gray-800";
   const allPerms = ["read", "write", "admin", "full"];
-  const active = delegations.filter((d) => !d.revoked);
-  const expired = delegations.filter((d) => d.revoked || (d.expires_at && new Date(d.expires_at) < new Date()));
+  const active = delegations.filter((d: any) => !d.revoked);
+  const expired = delegations.filter((d: any) => d.revoked || (d.expires_at && new Date(d.expires_at) < new Date()));
 
   return (
     <div className="space-y-6">
@@ -91,7 +91,7 @@ export default function DelegatedAdminPage() {
           {/* Stats */}
           <div className="grid grid-cols-3 gap-4">
             <div className={cardCls}><div className="flex items-center gap-2"><ShieldCheck className="h-4 w-4 text-green-500" /><span className="text-xs font-semibold uppercase text-gray-400">Active</span></div><p className="mt-2 text-2xl font-bold text-green-600">{active.length}</p></div>
-            <div className={cardCls}><div className="flex items-center gap-2"><Clock className="h-4 w-4 text-orange-500" /><span className="text-xs font-semibold uppercase text-gray-400">Expiring Soon</span></div><p className="mt-2 text-2xl font-bold text-orange-600">{delegations.filter((d) => !d.revoked && d.expires_at && new Date(d.expires_at).getTime() - Date.now() < 7 * 86400000).length}</p></div>
+            <div className={cardCls}><div className="flex items-center gap-2"><Clock className="h-4 w-4 text-orange-500" /><span className="text-xs font-semibold uppercase text-gray-400">Expiring Soon</span></div><p className="mt-2 text-2xl font-bold text-orange-600">{delegations.filter((d: any) => !d.revoked && d.expires_at && new Date(d.expires_at).getTime() - Date.now() < 7 * 86400000).length}</p></div>
             <div className={cardCls}><div className="flex items-center gap-2"><X className="h-4 w-4 text-gray-400" /><span className="text-xs font-semibold uppercase text-gray-400">Revoked/Expired</span></div><p className="mt-2 text-2xl font-bold text-gray-500">{expired.length}</p></div>
           </div>
 
@@ -110,11 +110,11 @@ export default function DelegatedAdminPage() {
                   <th scope="col" className="px-4 py-3 text-right font-semibold text-gray-600 dark:text-gray-300">Actions</th>
                 </tr></thead>
                 <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-                  {delegations.map((d) => (
+                  {delegations.map((d: any) => (
                     <tr key={d.id} className={`bg-white dark:bg-gray-900 ${d.revoked ? "opacity-50" : ""}`}>
                       <td className="px-4 py-3"><div className="font-medium text-gray-900 dark:text-white">{d.delegate_name || d.delegate}</div><div className="text-xs text-gray-400 font-mono">{d.delegate.slice(0, 16)}</div></td>
                       <td className="px-4 py-3"><span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${scopeColors[d.scope_type] || ""}`}>{d.scope_type}</span><div className="mt-0.5 text-xs text-gray-400">{d.scope_value || "—"}</div></td>
-                      <td className="px-4 py-3"><div className="flex flex-wrap gap-1">{d.permissions.map((p) => <span key={p} className="rounded bg-gray-100 px-1.5 py-0.5 text-xs text-gray-600 dark:bg-gray-700 dark:text-gray-300">{p}</span>)}</div></td>
+                      <td className="px-4 py-3"><div className="flex flex-wrap gap-1">{d.permissions.map((p: any) => <span key={p} className="rounded bg-gray-100 px-1.5 py-0.5 text-xs text-gray-600 dark:bg-gray-700 dark:text-gray-300">{p}</span>)}</div></td>
                       <td className="px-4 py-3 text-gray-400">{d.granted_by.slice(0, 12)}</td>
                       <td className="px-4 py-3"><span className={`${d.expires_at && new Date(d.expires_at) < new Date() ? "text-red-500" : "text-gray-400"}`}>{d.expires_at ? new Date(d.expires_at).toLocaleDateString() : "—"}</span>{d.revoked && <span className="ml-1 text-xs text-red-500">revoked</span>}</td>
                       <td className="px-4 py-3 text-right">{!d.revoked && <button onClick={() => handleRevoke(d.id)} disabled={revoking === d.id} aria-label={revoking === d.id ? "Revoking delegation" : "Revoke delegation"} className="text-red-500 hover:text-red-700">{revoking === d.id ? <Loader2 className="inline h-3 w-3 animate-spin" /> : "Revoke"}</button>}</td>
@@ -138,7 +138,7 @@ export default function DelegatedAdminPage() {
                 <div className="flex-1"><label className="mb-1 block text-xs font-semibold uppercase text-gray-400">Scope Type</label><select aria-label="form" value={form.scope_type} onChange={(e) => setForm({ ...form, scope_type: e.target.value as Delegation["scope_type"] })} className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-900 dark:text-gray-200"><option value="org">Organization</option><option value="role">Role</option><option value="dept">Department</option><option value="global">Global</option></select></div>
                 <div className="flex-1"><label className="mb-1 block text-xs font-semibold uppercase text-gray-400">Scope Value</label><input aria-label="e.g. eng-dept" value={form.scope_value} onChange={(e) => setForm({ ...form, scope_value: e.target.value })} placeholder="e.g. eng-dept" className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-900 dark:text-gray-200" /></div>
               </div>
-              <div><label className="mb-1 block text-xs font-semibold uppercase text-gray-400">Permissions</label><div className="flex gap-2">{allPerms.map((p) => <button key={p} onClick={() => togglePerm(p)} className={`rounded-lg px-3 py-1.5 text-xs font-medium ${form.permissions.includes(p) ? "bg-purple-600 text-white" : "bg-gray-100 text-gray-500 dark:bg-gray-700"}`}>{p}</button>)}</div></div>
+              <div><label className="mb-1 block text-xs font-semibold uppercase text-gray-400">Permissions</label><div className="flex gap-2">{allPerms.map((p: any) => <button key={p} onClick={() => togglePerm(p)} className={`rounded-lg px-3 py-1.5 text-xs font-medium ${form.permissions.includes(p) ? "bg-purple-600 text-white" : "bg-gray-100 text-gray-500 dark:bg-gray-700"}`}>{p}</button>)}</div></div>
               <div><label className="mb-1 block text-xs font-semibold uppercase text-gray-400">Expires At</label><input aria-label="form" type="datetime-local" value={form.expires_at} onChange={(e) => setForm({ ...form, expires_at: e.target.value })} className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-900 dark:text-gray-200" /></div>
               <button onClick={handleGrant} disabled={!form.delegate || form.permissions.length === 0} aria-label="Grant delegated access" className="flex w-full items-center justify-center gap-2 rounded-lg bg-purple-600 py-2 text-sm font-medium text-white hover:bg-purple-700 disabled:opacity-50"><ShieldCheck className="h-4 w-4" /> Grant Access</button>
             </div>

@@ -59,7 +59,7 @@ export default function OnboardingPage() {
       <div className="text-center"><h1 className="flex items-center justify-center gap-2 text-2xl font-bold text-gray-900 dark:text-white"><Rocket className="h-7 w-7 text-blue-500" /> {t("onboarding.title")}</h1><p className="mt-1 text-sm text-gray-500 dark:text-gray-400">{t("onboarding.subtitle")}</p></div>
 
       {/* Step indicator */}
-      <div className="flex items-center justify-center gap-2">{steps.map((label, i) => { const Icon = icons[i]; return (
+      <div className="flex items-center justify-center gap-2">{steps.map((label: any, i: any) => { const Icon = icons[i]; return (
         <div key={i} className="flex items-center"><div className="flex flex-col items-center gap-1"><div className={`flex h-9 w-9 items-center justify-center rounded-full ${i < step ? "bg-green-500 text-white" : i === step ? "bg-blue-600 text-white" : "bg-gray-200 dark:bg-gray-700 text-gray-400"}`}>{i < step ? <Check className="h-4 w-4" /> : <Icon className="h-4 w-4" />}</div><span className={`text-xs hidden sm:block ${i === step ? "font-medium text-blue-600" : "text-gray-400"}`}>{label}</span></div>{i < steps.length - 1 && <div className={`h-px w-8 mx-1 ${i < step ? "bg-green-400" : "bg-gray-200 dark:bg-gray-700"}`} />}</div>
       );})}</div>
 

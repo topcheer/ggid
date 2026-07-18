@@ -68,7 +68,7 @@ export default function JITElevationPage() {
     setActionId(id);
     try {
       await fetch(`/api/v1/policy/jit-elevation/${id}/approve`, { method: "POST", headers: { ...authHeader(), "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
-      setRequests((prev) => prev.map((r) => r.id === id ? { ...r, status: "active" } : r));
+      setRequests((prev) => prev.map((r: any) => r.id === id ? { ...r, status: "active" } : r));
     } catch { /* noop */ }
     finally { setActionId(null); }
   };
@@ -77,13 +77,13 @@ export default function JITElevationPage() {
     setActionId(id);
     try {
       await fetch(`/api/v1/policy/jit-elevation/${id}/reject`, { method: "POST", headers: { ...authHeader(), "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
-      setRequests((prev) => prev.map((r) => r.id === id ? { ...r, status: "rejected" } : r));
+      setRequests((prev) => prev.map((r: any) => r.id === id ? { ...r, status: "rejected" } : r));
     } catch { /* noop */ }
     finally { setActionId(null); }
   };
 
-  const pending = requests.filter((r) => r.status === "pending");
-  const active = requests.filter((r) => r.status === "active");
+  const pending = requests.filter((r: any) => r.status === "pending");
+  const active = requests.filter((r: any) => r.status === "active");
 
   return (
     <div className="space-y-6">
@@ -115,7 +115,7 @@ export default function JITElevationPage() {
         <div className="rounded-lg border dark:border-gray-800">
           <div className="px-4 py-3 border-b dark:border-gray-800"><h3 className="font-semibold flex items-center gap-2"><Clock className="w-4 h-4 text-yellow-500" /> Pending ({pending.length})</h3></div>
           <div className="divide-y dark:divide-gray-800 max-h-80 overflow-y-auto">
-            {pending.map((r) => (
+            {pending.map((r: any) => (
               <div key={r.id} className="px-4 py-3">
                 <div className="flex items-center gap-2 mb-1">
                   <User className="w-3 h-3 text-gray-400" />
@@ -138,7 +138,7 @@ export default function JITElevationPage() {
         <div className="rounded-lg border dark:border-gray-800">
           <div className="px-4 py-3 border-b dark:border-gray-800"><h3 className="font-semibold flex items-center gap-2"><Zap className="w-4 h-4 text-green-500" /> Active ({active.length})</h3></div>
           <div className="divide-y dark:divide-gray-800 max-h-80 overflow-y-auto">
-            {active.map((r) => (
+            {active.map((r: any) => (
               <div key={r.id} className="px-4 py-3">
                 <div className="flex items-center gap-2 mb-1">
                   <span className="text-sm font-medium">{r.username}</span>
@@ -175,7 +175,7 @@ export default function JITElevationPage() {
             </tr>
           </thead>
           <tbody className="divide-y dark:divide-gray-800">
-            {requests.slice(0, 20).map((r) => (
+            {requests.slice(0, 20).map((r: any) => (
               <tr key={r.id} className="hover:bg-gray-50 dark:hover:bg-gray-900/30">
                 <td className="px-4 py-3 font-medium">{r.username}</td>
                 <td className="px-4 py-3 font-mono text-xs">{r.role}</td>

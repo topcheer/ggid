@@ -64,7 +64,7 @@ export default function PolicyEmergencyChangesPage() {
           Active Emergencies
         </h2>
         <div className="space-y-3">
-          {(data?.active_emergencies ?? []).map((e) => (
+          {(data?.active_emergencies ?? []).map((e: any) => (
             <div key={e.policy} className="bg-red-900/20 border border-red-800 rounded-lg p-4">
               <div className="flex items-start justify-between mb-2">
                 <div>
@@ -98,7 +98,7 @@ export default function PolicyEmergencyChangesPage() {
       <div className="bg-gray-900 rounded-xl p-6">
         <h2 className="text-sm font-semibold mb-4">Emergency History (30d)</h2>
         <div className="space-y-2">
-          {(data?.emergency_history ?? []).map((h) => (
+          {(data?.emergency_history ?? []).map((h: any) => (
             <div key={h.id} className="flex items-center gap-3 bg-gray-800 rounded-lg p-3">
               <span className={"w-2 h-2 rounded-full " + (h.outcome === "reverted" ? "bg-green-500" : h.outcome === "expired" ? "bg-yellow-500" : "bg-red-500")} />
               <div className="flex-1">

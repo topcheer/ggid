@@ -54,7 +54,7 @@ export default function TokenRotationPage() {
       {error && <div className="rounded-lg border border-red-200 dark:border-red-900 bg-red-50 dark:bg-red-900/20 p-3 text-sm text-red-600 flex items-center justify-between"><span className="flex items-center gap-2"><AlertTriangle className="w-4 h-4" /> {error}</span><button onClick={() => { setError(null); fetchClients(); if (selectedId) fetchConfig(selectedId); }} aria-label="Retry loading token rotation" className="text-xs underline hover:text-red-700">{t("backend.tokenRotation.retry")}</button></div>}
       <select value={selectedId} onChange={(e) => setSelectedId(e.target.value)} aria-label="Select OAuth client" className="px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-900 text-sm">
         <option value="">{t("backend.tokenRotation.selectClient")}</option>
-        {clients.map((c) => <option key={c.client_id} value={c.client_id}>{c.client_name}</option>)}
+        {clients.map((c: any) => <option key={c.client_id} value={c.client_id}>{c.client_name}</option>)}
       </select>
       {config && (
         <div className="rounded-lg border dark:border-gray-800 p-6 space-y-5 max-w-lg">

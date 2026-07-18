@@ -112,7 +112,7 @@ export default function CloneTemplatePage() {
     finally { setCreating(false); }
   };
 
-  const filteredUsers = users.filter((u) => !search || u.username.toLowerCase().includes(search.toLowerCase()));
+  const filteredUsers = users.filter((u: any) => !search || u.username.toLowerCase().includes(search.toLowerCase()));
 
   return (
     <div className="space-y-6">
@@ -136,7 +136,7 @@ export default function CloneTemplatePage() {
           </div>
           <div className="rounded-lg border dark:border-gray-800 max-h-80 overflow-y-auto">
             <div className="divide-y dark:divide-gray-800">
-              {filteredUsers.slice(0, 30).map((u) => (
+              {filteredUsers.slice(0, 30).map((u: any) => (
                 <button key={u.user_id} onClick={() => { setSelectedUserId(u.user_id); }} className={`w-full text-left px-3 py-2 hover:bg-gray-50 dark:hover:bg-gray-900/30 ${selectedUserId === u.user_id ? "bg-blue-50 dark:bg-blue-900/20" : ""}`}>
                   <div className="text-sm font-medium">{u.username}</div>
                   <div className="text-xs text-gray-400">{u.email}</div>
@@ -190,7 +190,7 @@ export default function CloneTemplatePage() {
       <div className="rounded-lg border dark:border-gray-800">
         <div className="px-4 py-3 border-b dark:border-gray-800"><h3 className="font-semibold">Saved Templates ({templates.length})</h3></div>
         <div className="divide-y dark:divide-gray-800">
-          {templates.map((t) => (
+          {templates.map((t: any) => (
             <div key={t.id} className="px-4 py-3 flex items-center justify-between">
               <div>
                 <span className="font-medium text-sm">{t.name}</span>
@@ -238,7 +238,7 @@ export default function CloneTemplatePage() {
               <div><label className="text-sm font-medium">Template</label>
                 <select aria-label="selected Template Id" value={selectedTemplateId} onChange={(e) => setSelectedTemplateId(e.target.value)} className="w-full mt-1 px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-800 text-sm">
                   <option value="">Select...</option>
-                  {templates.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}
+                  {templates.map((t: any) => <option key={t.id} value={t.id}>{t.name}</option>)}
                 </select>
               </div>
               <div><label className="text-sm font-medium">New Username</label><input aria-label="target Username" type="text" value={targetUsername} onChange={(e) => setTargetUsername(e.target.value)} className="w-full mt-1 px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-800 text-sm" /></div>

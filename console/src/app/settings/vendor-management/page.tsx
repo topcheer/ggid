@@ -54,7 +54,7 @@ export default function VendorManagementPage() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {vendors.map((v) => (
+        {vendors.map((v: any) => (
           <div key={v.id} className="rounded-lg border dark:border-gray-800 p-4 space-y-3">
             <div className="flex items-center justify-between"><div><span className="font-semibold">{v.name}</span><p className="text-xs text-gray-400">{v.service_type}</p></div><span className={`px-2 py-1 rounded text-xs ${riskColors[v.risk_rating]}`}>{v.risk_rating}</span></div>
             <div className="space-y-1 text-sm"><div className="flex items-center gap-2"><ShieldCheck className="w-3.5 h-3.5 text-gray-400" /><span className="text-gray-500">Data Access:</span><span className="font-mono text-xs">{v.data_access_scope}</span></div><div className="flex items-center gap-2"><span className="text-gray-500">Compliance:</span><span className={`font-medium ${complianceColors[v.compliance_status]}`}>{v.compliance_status.replace("_", " ")}</span></div><div className="flex items-center gap-2"><span className="text-gray-500">Last Assessment:</span><span className="text-xs">{v.last_assessment}</span></div></div>

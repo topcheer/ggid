@@ -68,7 +68,7 @@ export default function PolicySetEvalPage() {
           <table className="w-full text-sm">
             <thead className="bg-gray-50 dark:bg-gray-900/50"><tr><th className="px-4 py-3 text-left font-medium">Policy</th><th className="px-4 py-3 text-left font-medium">Decision</th><th className="px-4 py-3 text-left font-medium">Matched Rule</th></tr></thead>
             <tbody className="divide-y dark:divide-gray-800">
-              {results.map((r) => {
+              {results.map((r: any) => {
                 const cfg = decisionConfig[r.decision] || decisionConfig.no_match;
                 const Icon = cfg.icon;
                 return (

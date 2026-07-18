@@ -212,7 +212,7 @@ export default function APIExplorerPage() {
                     <Plus className="h-3 w-3" /> Add
                   </button>
                 </div>
-                {ep.headers.map((h, i) => (
+                {ep.headers.map((h: any, i: any) => (
                   <div key={i} className="mb-1 flex gap-2">
                     <input
                       type="text"

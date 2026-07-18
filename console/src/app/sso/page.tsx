@@ -105,9 +105,9 @@ export default function SSOPage() {
     setTesting(p.id);
     try {
       await apiFetch(`/api/v1/settings/sso/providers/${p.id}/test`, { method: "POST" });
-      setProviders((prev) => prev.map((x) => x.id === p.id ? { ...x, test_status: "success", last_tested: new Date().toISOString() } : x));
+      setProviders((prev) => prev.map((x: any) => x.id === p.id ? { ...x, test_status: "success", last_tested: new Date().toISOString() } : x));
     } catch {
-      setProviders((prev) => prev.map((x) => x.id === p.id ? { ...x, test_status: "failed", last_tested: new Date().toISOString() } : x));
+      setProviders((prev) => prev.map((x: any) => x.id === p.id ? { ...x, test_status: "failed", last_tested: new Date().toISOString() } : x));
     } finally {
       setTesting(null);
     }
@@ -118,7 +118,7 @@ export default function SSOPage() {
       await apiFetch(`/api/v1/settings/sso/providers/${p.id}`, {
         method: "PATCH", body: JSON.stringify({ enabled: !p.enabled }),
       });
-      setProviders((prev) => prev.map((x) => x.id === p.id ? { ...x, enabled: !x.enabled } : x));
+      setProviders((prev) => prev.map((x: any) => x.id === p.id ? { ...x, enabled: !x.enabled } : x));
     } catch {
       setError("Failed to toggle provider");
     }
@@ -203,8 +203,8 @@ export default function SSOPage() {
         </div>
       ) : (
         <div className="grid gap-4 md:grid-cols-2">
-          {providers.map((p) => {
-            const typeInfo = PROVIDER_TYPES.find((t) => t.value === p.type) ?? PROVIDER_TYPES[0];
+          {providers.map((p: any) => {
+            const typeInfo = PROVIDER_TYPES.find((t: any) => t.value === p.type) ?? PROVIDER_TYPES[0];
             const TypeIcon = typeInfo.icon;
             return (
               <div key={p.id} className={cardCls}>
@@ -282,7 +282,7 @@ export default function SSOPage() {
               <div>
                 <label className="text-sm font-medium text-gray-700 dark:text-gray-300">{t("sso.providerType")}</label>
                 <div className="mt-2 grid grid-cols-3 gap-2">
-                  {PROVIDER_TYPES.map((t) => {
+                  {PROVIDER_TYPES.map((t: any) => {
                     const Icon = t.icon;
                     return (
                       <button key={t.value} onClick={() => setForm((p) => ({ ...p, type: t.value }))}

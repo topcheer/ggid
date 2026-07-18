@@ -69,7 +69,7 @@ export default function OnboardingChecklistPage() {
     if (!checklist) return;
     setTogglingStep(stepKey);
     try {
-      const step = checklist.steps.find((s) => s.key === stepKey);
+      const step = checklist.steps.find((s: any) => s.key === stepKey);
       await fetch(`/api/v1/oauth/clients/${selectedId}/onboarding/${stepKey}`, {
         method: "POST",
         headers: { ...authHeader(), "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" },
@@ -77,8 +77,8 @@ export default function OnboardingChecklistPage() {
       });
       setChecklist((prev) => prev ? {
         ...prev,
-        steps: prev.steps.map((s) => s.key === stepKey ? { ...s, completed: !s.completed, completed_at: !s.completed ? new Date().toISOString() : null } : s),
-        completion_pct: Math.round((prev.steps.filter((s) => s.key === stepKey ? !s.completed : s.completed).length / prev.steps.length) * 100),
+        steps: prev.steps.map((s: any) => s.key === stepKey ? { ...s, completed: !s.completed, completed_at: !s.completed ? new Date().toISOString() : null } : s),
+        completion_pct: Math.round((prev.steps.filter((s: any) => s.key === stepKey ? !s.completed : s.completed).length / prev.steps.length) * 100),
       } : null);
     } catch { /* noop */ }
     finally { setTogglingStep(null); }
@@ -93,7 +93,7 @@ export default function OnboardingChecklistPage() {
 
       <select aria-label="Selected id" value={selectedId} onChange={(e) => setSelectedId(e.target.value)} className="px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-900 text-sm">
         <option value="">{t("onboardingChecklist.selectClient")}</option>
-        {clients.map((c) => <option key={c.client_id} value={c.client_id}>{c.client_name}</option>)}
+        {clients.map((c: any) => <option key={c.client_id} value={c.client_id}>{c.client_name}</option>)}
       </select>
 
       {checklist && (
@@ -110,7 +110,7 @@ export default function OnboardingChecklistPage() {
             <div className="w-full h-3 rounded-full bg-gray-200 dark:bg-gray-800 overflow-hidden">
               <div className={`h-full rounded-full transition-all ${checklist.completion_pct === 100 ? "bg-green-500" : "bg-blue-500"}`} style={{ width: `${checklist.completion_pct}%` }} />
             </div>
-            <p className="text-xs text-gray-400 mt-2">{checklist.steps.filter((s) => s.completed).length} of {checklist.steps.length} steps completed</p>
+            <p className="text-xs text-gray-400 mt-2">{checklist.steps.filter((s: any) => s.completed).length} of {checklist.steps.length} steps completed</p>
           </div>
 
           {/* Steps */}

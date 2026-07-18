@@ -243,7 +243,7 @@ export default function ImpersonatePage() {
 
       // Update history entry with end time
       setHistory((prev) =>
-        prev.map((h, idx) =>
+        prev.map((h: any, idx: any) =>
           idx === 0 && h.endTime === null
             ? { ...h, endTime: new Date().toISOString() }
             : h,
@@ -402,7 +402,7 @@ export default function ImpersonatePage() {
                     </div>
                   ) : (
                     <ul className="max-h-72 overflow-y-auto py-1">
-                      {searchResults.map((user) => (
+                      {searchResults.map((user: any) => (
                         <li key={user.id}>
                           <button
                             onClick={() => handleSelectUser(user)}
@@ -433,7 +433,7 @@ export default function ImpersonatePage() {
                             </div>
                             {user.roles && user.roles.length > 0 && (
                               <div className="flex flex-shrink-0 flex-wrap justify-end gap-1">
-                                {user.roles.slice(0, 2).map((r) => (
+                                {user.roles.slice(0, 2).map((r: any) => (
                                   <span key={r} className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${roleBadgeColor(r)}`}>
                                     {r}
                                   </span>
@@ -498,7 +498,7 @@ export default function ImpersonatePage() {
                   </p>
                   {selectedUser.roles && selectedUser.roles.length > 0 ? (
                     <div className="flex flex-wrap gap-1.5">
-                      {selectedUser.roles.map((r) => (
+                      {selectedUser.roles.map((r: any) => (
                         <span key={r} className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${roleBadgeColor(r)}`}>
                           {r}
                         </span>
@@ -611,7 +611,7 @@ export default function ImpersonatePage() {
                     </tr>
                   </thead>
                   <tbody>
-                    {history.map((entry) => (
+                    {history.map((entry: any) => (
                       <tr
                         key={entry.id}
                         className="border-b border-gray-100 align-top dark:border-gray-700/50"

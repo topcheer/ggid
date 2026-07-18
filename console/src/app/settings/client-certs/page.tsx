@@ -54,14 +54,14 @@ export default function ClientCertsPage() {
 
   const handleToggleAuto = async (certId: string) => {
     setToggling(certId);
-    try { await apiFetch(`/api/v1/oauth/client-certs/${certId}`, { method: "PATCH", body: JSON.stringify({ auto_rotate: !certs.find((c) => c.id === certId)?.auto_rotate }) }); setCerts((p) => p.map((c) => c.id === certId ? { ...c, auto_rotate: !c.auto_rotate } : c)); }
+    try { await apiFetch(`/api/v1/oauth/client-certs/${certId}`, { method: "PATCH", body: JSON.stringify({ auto_rotate: !certs.find((c: any) => c.id === certId)?.auto_rotate }) }); setCerts((p) => p.map((c: any) => c.id === certId ? { ...c, auto_rotate: !c.auto_rotate } : c)); }
     catch { setError("Toggle failed"); }
     finally { setToggling(null); }
   };
 
   const cardCls = "rounded-xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-700 dark:bg-gray-800";
-  const expired = certs.filter((c) => c.status === "expired" || (c.expires_at && new Date(c.expires_at) < new Date()));
-  const expiringSoon = certs.filter((c) => c.status === "active" && c.expires_at && new Date(c.expires_at).getTime() - Date.now() < 30 * 86400000);
+  const expired = certs.filter((c: any) => c.status === "expired" || (c.expires_at && new Date(c.expires_at) < new Date()));
+  const expiringSoon = certs.filter((c: any) => c.status === "active" && c.expires_at && new Date(c.expires_at).getTime() - Date.now() < 30 * 86400000);
 
   return (
     <div className="space-y-6">
@@ -97,7 +97,7 @@ export default function ClientCertsPage() {
               <th scope="col" className="px-4 py-3 text-right font-semibold text-gray-600 dark:text-gray-300">{t("backend.clientCerts.actions")}</th>
             </tr></thead>
             <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-              {certs.map((c) => {
+              {certs.map((c: any) => {
                 const isExpired = c.status === "expired" || (c.expires_at && new Date(c.expires_at) < new Date());
                 return (
                   <tr key={c.id} className={`bg-white dark:bg-gray-900 ${isExpired ? "opacity-60" : ""}`}>

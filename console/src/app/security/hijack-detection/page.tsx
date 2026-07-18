@@ -40,7 +40,7 @@ export default function HijackDetectionPage() {
 
   const handleTerminate = async (sessionId: string) => {
     setTerminating(sessionId);
-    try { await apiFetch(`/api/v1/auth/sessions/${sessionId}/terminate`, { method: "POST" }); setSessions((p) => p.filter((s) => s.session_id !== sessionId)); }
+    try { await apiFetch(`/api/v1/auth/sessions/${sessionId}/terminate`, { method: "POST" }); setSessions((p) => p.filter((s: any) => s.session_id !== sessionId)); }
     catch { setError("Terminate failed"); }
     finally { setTerminating(null); }
   };
@@ -62,7 +62,7 @@ export default function HijackDetectionPage() {
       : sessions.length === 0 ? (
         <div className={cardCls}><div className="py-12 text-center"><ShieldAlert className="mx-auto h-12 w-12 text-green-300" /><p className="mt-4 text-sm text-gray-400">No suspicious sessions detected.</p></div></div>
       ) : (
-        <div className="space-y-3">{sessions.map((s) => (
+        <div className="space-y-3">{sessions.map((s: any) => (
           <div key={s.session_id} className={`${cardCls} border-l-4 border-l-red-400`}>
             <div className="flex items-start justify-between">
               <div className="flex-1">

@@ -41,7 +41,7 @@ export default function AuthAdaptiveAuthFlowPage() {
           Risk Threshold Matrix
         </h2>
         <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
-          {(data?.risk_threshold_matrix ?? []).map((entry) => (
+          {(data?.risk_threshold_matrix ?? []).map((entry: any) => (
             <div key={entry.risk_level} className="bg-gray-800 rounded-lg p-4">
               <span className={"text-xs px-2 py-1 rounded block mb-2 text-center " + riskColors[entry.risk_level]}>
                 {entry.risk_level}
@@ -67,7 +67,7 @@ export default function AuthAdaptiveAuthFlowPage() {
             Signal Weights
           </h2>
           <div className="space-y-3">
-            {(data?.signal_weights ?? []).map((sig) => (
+            {(data?.signal_weights ?? []).map((sig: any) => (
               <div key={sig.signal}>
                 <div className="flex items-center justify-between mb-1">
                   <span className="text-sm capitalize">{sig.signal}</span>
@@ -135,7 +135,7 @@ export default function AuthAdaptiveAuthFlowPage() {
               </tr>
             </thead>
             <tbody>
-              {(data?.override_per_role ?? []).map((r) => (
+              {(data?.override_per_role ?? []).map((r: any) => (
                 <tr key={r.role} className="border-b border-gray-800">
                   <td className="py-3 pr-4 font-medium">{r.role}</td>
                   <td className="py-3 pr-4">

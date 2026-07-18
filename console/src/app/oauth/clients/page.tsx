@@ -232,7 +232,7 @@ export default function OAuthClientsPage() {
                             <div>
                               <p className="mb-1 text-xs font-medium text-gray-500">Redirect URIs</p>
                               {(c.redirect_uris || []).length > 0 ? (
-                                <ul className="space-y-1">{c.redirect_uris!.map((uri, i) => <li key={i} className="font-mono text-xs text-gray-600 dark:text-gray-400">{uri}</li>)}</ul>
+                                <ul className="space-y-1">{c.redirect_uris!.map((uri: any, i: any) => <li key={i} className="font-mono text-xs text-gray-600 dark:text-gray-400">{uri}</li>)}</ul>
                               ) : <p className="text-xs text-gray-400">None configured</p>}
                             </div>
                             <div>

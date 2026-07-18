@@ -84,7 +84,7 @@ export default function AuditComplianceSchedulerPage() {
               </tr>
             </thead>
             <tbody>
-              {(data?.scheduled_audits ?? []).map((a) => (
+              {(data?.scheduled_audits ?? []).map((a: any) => (
                 <tr key={a.id} className="border-b border-gray-800">
                   <td className="py-3 pr-3 font-medium">{a.framework}</td>
                   <td className="py-3 pr-3 text-gray-300 font-mono text-xs">{a.frequency_cron}</td>

@@ -61,7 +61,7 @@ export default function OAuthClientDetailPage({ params }: { params: { id: string
       await apiFetch(`/api/v1/oauth/clients/${client.client_id}`, {
         method: "PUT",
         body: JSON.stringify({
-          redirect_uris: uriText.split("\n").map((s) => s.trim()).filter(Boolean),
+          redirect_uris: uriText.split("\n").map((s: any) => s.trim()).filter(Boolean),
         }),
       });
       setEditingURIs(false);
@@ -162,7 +162,7 @@ export default function OAuthClientDetailPage({ params }: { params: { id: string
         <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
           <h3 className="mb-3 text-sm font-semibold">{t("oauthClients.scopes")}</h3>
           <div className="flex flex-wrap gap-2">
-            {(client.scopes || []).map((scope, i) => (
+            {(client.scopes || []).map((scope: any, i: any) => (
               <span key={i} className="rounded-full bg-purple-50 px-3 py-1 text-xs text-purple-700">{scope}</span>
             ))}
           </div>
@@ -193,7 +193,7 @@ export default function OAuthClientDetailPage({ params }: { params: { id: string
             />
           ) : (
             <div className="space-y-1">
-              {(client.redirect_uris || []).map((uri, i) => (
+              {(client.redirect_uris || []).map((uri: any, i: any) => (
                 <div key={i} className="rounded-lg bg-blue-50 px-3 py-1.5 font-mono text-sm text-blue-700">{uri}</div>
               ))}
               {(!client.redirect_uris || client.redirect_uris.length === 0) && (

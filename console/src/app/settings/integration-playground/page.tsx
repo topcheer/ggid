@@ -182,7 +182,7 @@ function APITester() {
       {/* Presets */}
       <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-4">
         <div className="flex flex-wrap gap-2">
-          {presets.map((p) => (
+          {presets.map((p: any) => (
             <button key={p.label} onClick={() => applyPreset(p)} className="px-3 py-1.5 rounded-lg text-xs font-medium bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700">
               {p.label}
             </button>
@@ -280,7 +280,7 @@ function WebhookTester() {
         <div>
           <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-2">{t("integrationPlayground.webhook.eventType")}</label>
           <div className="flex flex-wrap gap-2">
-            {eventTypes.map((e) => (
+            {eventTypes.map((e: any) => (
               <button key={e} onClick={() => updateEventType(e)} className={`px-3 py-1.5 rounded-lg text-xs font-medium border-2 transition-all ${eventType === e ? "border-blue-500 bg-blue-50 dark:bg-blue-950/20 text-blue-700 dark:text-blue-300" : "border-gray-200 dark:border-gray-700 text-gray-500"}`}>{e}</button>
             ))}
           </div>

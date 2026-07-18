@@ -50,7 +50,7 @@ export default function AuditRealtimePage() {
 
   const exportSnapshot = () => { const json = JSON.stringify(events, null, 2); const blob = new Blob([json], { type: "application/json" }); const url = URL.createObjectURL(blob); const a = document.createElement("a"); a.href = url; a.download = "audit-snapshot-" + Date.now() + ".json"; a.click(); };
 
-  const filtered = events.filter((e) => { if (filterSeverity && e.severity !== filterSeverity) return false; if (filterType && !e.action.includes(filterType)) return false; return true; });
+  const filtered = events.filter((e: any) => { if (filterSeverity && e.severity !== filterSeverity) return false; if (filterType && !e.action.includes(filterType)) return false; return true; });
 
   if (loading && events.length === 0) return (<div className="p-8 flex items-center justify-center"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" /></div>);
   if (error && events.length === 0) return (<div className="p-8"><div className="rounded-lg border border-red-300 bg-red-50 dark:bg-red-950 dark:border-red-800 p-4"><p className="text-red-700 dark:text-red-400 text-sm font-medium">Error: {error}</p><button onClick={() => { setLoading(true); fetchData(); }} className="mt-2 px-4 py-1.5 rounded-lg bg-red-600 text-white text-sm hover:bg-red-700">Retry</button></div></div>);
@@ -69,7 +69,7 @@ export default function AuditRealtimePage() {
       </div>
 
       <div ref={feedRef} className="space-y-2 max-h-[60vh] overflow-y-auto">
-        {filtered.map((e) => (
+        {filtered.map((e: any) => (
           <div key={e.id} className={"rounded-lg border-l-4 dark:border-gray-800 bg-white dark:bg-gray-900 p-3 " + sevColors[e.severity]}>
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2"><span className={"text-xs font-medium " + resultColors[e.result]}>{e.result}</span><span className="text-sm font-medium">{e.action}</span><span className="text-xs text-gray-500">{e.user}</span></div>

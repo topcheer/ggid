@@ -37,7 +37,7 @@ export default function WebhookDeliveryPage() {
 
   const handleRetry = async (id: string) => {
     setRetrying(id);
-    try { await apiFetch(`/api/v1/settings/webhooks/deliveries/${id}/retry`, { method: "POST" }); setDeliveries((prev) => prev.filter((d) => d.id !== id)); }
+    try { await apiFetch(`/api/v1/settings/webhooks/deliveries/${id}/retry`, { method: "POST" }); setDeliveries((prev) => prev.filter((d: any) => d.id !== id)); }
     catch { setError(t("webhookDelivery.retryFailed")); }
     finally { setRetrying(null); }
   };
@@ -74,7 +74,7 @@ export default function WebhookDeliveryPage() {
       : deliveries.length === 0 ? <div className={cardCls}><div className="py-12 text-center"><Webhook className="mx-auto h-12 w-12 text-gray-300" /><p className="mt-4 text-sm text-gray-400">{t("webhookDelivery.empty")}</p></div></div>
       : (
         <div className="space-y-3">
-          {deliveries.map((d) => (
+          {deliveries.map((d: any) => (
             <div key={d.id} className={`${cardCls} ${d.status === "exhausted" ? "border-red-200 dark:border-red-800" : ""}`}>
               <div className="flex items-start justify-between">
                 <div className="flex-1">

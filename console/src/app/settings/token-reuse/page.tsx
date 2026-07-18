@@ -46,9 +46,9 @@ export default function TokenReusePage() {
 
   useEffect(() => { fetchData(); }, [fetchData]);
 
-  const filtered = filterRisk === "all" ? reuses : reuses.filter((r) => r.risk_level === filterRisk);
-  const critical = reuses.filter((r) => r.risk_level === "critical").length;
-  const high = reuses.filter((r) => r.risk_level === "high").length;
+  const filtered = filterRisk === "all" ? reuses : reuses.filter((r: any) => r.risk_level === filterRisk);
+  const critical = reuses.filter((r: any) => r.risk_level === "critical").length;
+  const high = reuses.filter((r: any) => r.risk_level === "high").length;
 
   return (
     <div className="space-y-6">
@@ -62,7 +62,7 @@ export default function TokenReusePage() {
         <div className="rounded-lg border p-4 dark:border-gray-800"><span className="text-sm text-gray-500">Total Detections</span><p className="text-2xl font-bold mt-1">{reuses.length}</p></div>
         <div className="rounded-lg border p-4 dark:border-gray-800"><span className="text-sm text-gray-500">Critical</span><p className="text-2xl font-bold mt-1 text-red-600">{critical}</p></div>
         <div className="rounded-lg border p-4 dark:border-gray-800"><span className="text-sm text-gray-500">High</span><p className="text-2xl font-bold mt-1 text-orange-600">{high}</p></div>
-        <div className="rounded-lg border p-4 dark:border-gray-800"><span className="text-sm text-gray-500">Unique Users</span><p className="text-2xl font-bold mt-1">{new Set(reuses.map((r) => r.user_id)).size}</p></div>
+        <div className="rounded-lg border p-4 dark:border-gray-800"><span className="text-sm text-gray-500">Unique Users</span><p className="text-2xl font-bold mt-1">{new Set(reuses.map((r: any) => r.user_id)).size}</p></div>
       </div>
 
       {critical > 0 && (
@@ -101,7 +101,7 @@ export default function TokenReusePage() {
             </tr>
           </thead>
           <tbody className="divide-y dark:divide-gray-800">
-            {filtered.map((r) => (
+            {filtered.map((r: any) => (
               <tr key={r.id} className="hover:bg-gray-50 dark:hover:bg-gray-900/30">
                 <td className="px-4 py-3 font-mono text-xs text-gray-500">{r.token_masked}</td>
                 <td className="px-4 py-3"><span className="font-medium">{r.username}</span></td>

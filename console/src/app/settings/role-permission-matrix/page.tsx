@@ -33,10 +33,10 @@ export default function RolePermissionMatrixPage() {
 
   if (!data) return <p className="text-sm text-gray-500 text-center py-8">Loading...</p>;
 
-  const filteredPerms = data.permissions.filter((p) => !search || p.includes(search.toLowerCase()));
+  const filteredPerms = data.permissions.filter((p: any) => !search || p.includes(search.toLowerCase()));
 
   const cellColors: Record<string, string> = { allow: "bg-green-500", deny: "bg-red-500", inherit: "bg-gray-300 dark:bg-gray-700" };
-  const getPermCount = (role: string) => Object.values(data.assignments[role] || {}).filter((v) => v === "allow").length;
+  const getPermCount = (role: string) => Object.values(data.assignments[role] || {}).filter((v: any) => v === "allow").length;
 
   return (
     <div className="space-y-6">
@@ -48,8 +48,8 @@ export default function RolePermissionMatrixPage() {
       <input aria-label="Search permissions..." type="text" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search permissions..." className="px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-900 text-sm w-64" />
 
       <div className="overflow-x-auto rounded-lg border dark:border-gray-800">
-        <table className="w-full text-sm"><thead><tr><th className="px-3 py-2 text-left text-xs font-medium text-gray-500 sticky left-0 bg-gray-50 dark:bg-gray-900">Permission</th>{data.roles.map((r) => (<th key={r} className="px-3 py-2 text-center text-xs font-medium"><div className="flex flex-col items-center gap-1"><span>{r}</span><span className="px-1.5 py-0.5 rounded bg-blue-100 dark:bg-blue-900/30 dark:text-blue-400 text-[10px]">{getPermCount(r)}</span></div></th>))}</tr></thead>
-          <tbody className="divide-y dark:divide-gray-800">{filteredPerms.map((perm) => (<tr key={perm} className="hover:bg-gray-50 dark:hover:bg-gray-900/30"><td className="px-3 py-2 font-mono text-xs font-medium sticky left-0 bg-white dark:bg-gray-900">{perm}</td>{data.roles.map((role) => { const val = data.assignments[role]?.[perm] || "inherit"; return (<td key={role} className="px-3 py-2"><button onClick={() => toggleCell(role, perm)} className={"w-8 h-8 rounded mx-auto block " + cellColors[val]} title={role + " / " + perm + ": " + val} /></td>); })}</tr>))}</tbody>
+        <table className="w-full text-sm"><thead><tr><th className="px-3 py-2 text-left text-xs font-medium text-gray-500 sticky left-0 bg-gray-50 dark:bg-gray-900">Permission</th>{data.roles.map((r: any) => (<th key={r} className="px-3 py-2 text-center text-xs font-medium"><div className="flex flex-col items-center gap-1"><span>{r}</span><span className="px-1.5 py-0.5 rounded bg-blue-100 dark:bg-blue-900/30 dark:text-blue-400 text-[10px]">{getPermCount(r)}</span></div></th>))}</tr></thead>
+          <tbody className="divide-y dark:divide-gray-800">{filteredPerms.map((perm: any) => (<tr key={perm} className="hover:bg-gray-50 dark:hover:bg-gray-900/30"><td className="px-3 py-2 font-mono text-xs font-medium sticky left-0 bg-white dark:bg-gray-900">{perm}</td>{data.roles.map((role: any) => { const val = data.assignments[role]?.[perm] || "inherit"; return (<td key={role} className="px-3 py-2"><button onClick={() => toggleCell(role, perm)} className={"w-8 h-8 rounded mx-auto block " + cellColors[val]} title={role + " / " + perm + ": " + val} /></td>); })}</tr>))}</tbody>
         </table>
       </div>
 

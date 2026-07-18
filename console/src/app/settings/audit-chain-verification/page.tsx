@@ -95,7 +95,7 @@ export default function AuditChainVerificationPage() {
               </tr>
             </thead>
             <tbody>
-              {(data?.verification_log ?? []).map((v) => (
+              {(data?.verification_log ?? []).map((v: any) => (
                 <tr key={v.run_id} className="border-b border-gray-800">
                   <td className="py-3 pr-3 font-mono text-xs text-blue-400">{v.run_id}</td>
                   <td className="py-3 pr-3 text-gray-400 text-xs">{v.timestamp}</td>

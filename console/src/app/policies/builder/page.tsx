@@ -97,11 +97,11 @@ function makeNode(type: NodeType): PolicyNode {
 // Syntax highlight JSON
 function highlightJSON(obj: unknown): React.ReactNode {
   const json = JSON.stringify(obj, null, 2);
-  return json.split("\n").map((line, i) => {
+  return json.split("\n").map((line: any, i: any) => {
     const parts = line.split(/("(?:\\.|[^"\\])*"|\b\d+\b)/g);
     return (
       <div key={i} className="whitespace-pre">
-        {parts.map((part, j) => {
+        {parts.map((part: any, j: any) => {
           if (/^"(?:\\.|[^"\\])*"$/.test(part)) {
             // Check if it's a key (followed by colon)
             const nextChar = parts[j + 1];
@@ -170,16 +170,16 @@ export default function PolicyBuilderPage() {
   };
 
   const deleteNode = (id: string) => {
-    setNodes((prev) => prev.filter((n) => n.id !== id));
+    setNodes((prev) => prev.filter((n: any) => n.id !== id));
   };
 
   const updateNode = (id: string, field: keyof PolicyNode, value: string) => {
-    setNodes((prev) => prev.map((n) => (n.id === id ? { ...n, [field]: value } : n)));
+    setNodes((prev) => prev.map((n: any) => (n.id === id ? { ...n, [field]: value } : n)));
   };
 
   // Validation
   const validationErrors: { id: string; message: string }[] = [];
-  nodes.forEach((node) => {
+  nodes.forEach((node: any) => {
     if (!node.attribute && node.type !== "action") {
       validationErrors.push({ id: node.id, message: "Attribute required" });
     }
@@ -195,24 +195,24 @@ export default function PolicyBuilderPage() {
   });
   const errorCount = validationErrors.length;
 
-  const getError = (id: string) => validationErrors.find((e) => e.id === id)?.message;
+  const getError = (id: string) => validationErrors.find((e: any) => e.id === id)?.message;
 
   // Generate policy JSON from nodes
   const buildPolicyJSON = useCallback(() => {
-    const subjects = nodes.filter((n) => n.type === "subject");
-    const resources = nodes.filter((n) => n.type === "resource");
-    const actions = nodes.filter((n) => n.type === "action");
-    const conditions = nodes.filter((n) => n.type === "condition");
+    const subjects = nodes.filter((n: any) => n.type === "subject");
+    const resources = nodes.filter((n: any) => n.type === "resource");
+    const actions = nodes.filter((n: any) => n.type === "action");
+    const conditions = nodes.filter((n: any) => n.type === "condition");
 
     return {
       name: policyName || "Untitled Policy",
       effect: policyEffect,
       rules: [
         {
-          subjects: subjects.map((n) => ({ attribute: n.attribute, operator: n.operator, value: n.value })),
-          resources: resources.map((n) => ({ attribute: n.attribute, operator: n.operator, value: n.value })),
-          actions: actions.map((n) => n.attribute),
-          conditions: conditions.map((n) => ({
+          subjects: subjects.map((n: any) => ({ attribute: n.attribute, operator: n.operator, value: n.value })),
+          resources: resources.map((n: any) => ({ attribute: n.attribute, operator: n.operator, value: n.value })),
+          actions: actions.map((n: any) => n.attribute),
+          conditions: conditions.map((n: any) => ({
             attribute: n.attribute,
             operator: n.operator,
             value: n.value,
@@ -220,7 +220,7 @@ export default function PolicyBuilderPage() {
           effect: policyEffect,
         },
       ],
-      nodes: nodes.map((n) => ({ type: n.type, attribute: n.attribute, operator: n.operator, value: n.value })),
+      nodes: nodes.map((n: any) => ({ type: n.type, attribute: n.attribute, operator: n.operator, value: n.value })),
     };
   }, [nodes, policyName, policyEffect]);
 
@@ -339,7 +339,7 @@ export default function PolicyBuilderPage() {
         <div className="w-48 flex-shrink-0">
           <h3 className="mb-3 text-xs font-semibold uppercase tracking-wide text-gray-400">Node Types</h3>
           <div className="space-y-2">
-            {sidebarNodes.map((type) => {
+            {sidebarNodes.map((type: any) => {
               const cfg = NODE_CONFIG[type];
               const Icon = cfg.icon;
               return (
@@ -409,7 +409,7 @@ export default function PolicyBuilderPage() {
             </div>
           ) : (
             <div className="space-y-3">
-              {nodes.map((node, idx) => {
+              {nodes.map((node: any, idx: any) => {
                 const cfg = NODE_CONFIG[node.type];
                 const Icon = cfg.icon;
                 const err = getError(node.id);
@@ -448,7 +448,7 @@ export default function PolicyBuilderPage() {
                               className={inputCls}
                             >
                               <option value="">Select action...</option>
-                              {cfg.attributes.map((a) => (
+                              {cfg.attributes.map((a: any) => (
                                 <option key={a} value={a}>
                                   {a}
                                 </option>
@@ -465,7 +465,7 @@ export default function PolicyBuilderPage() {
                               className={inputCls}
                             >
                               <option value="">Select attribute...</option>
-                              {cfg.attributes.map((a) => (
+                              {cfg.attributes.map((a: any) => (
                                 <option key={a} value={a}>
                                   {a}
                                 </option>
@@ -477,7 +477,7 @@ export default function PolicyBuilderPage() {
                               className={inputCls}
                             >
                               <option value="">Select operator...</option>
-                              {(cfg.operators || ALL_OPERATORS).map((op) => (
+                              {(cfg.operators || ALL_OPERATORS).map((op: any) => (
                                 <option key={op} value={op}>
                                   {op}
                                 </option>
@@ -516,7 +516,7 @@ export default function PolicyBuilderPage() {
 
               {/* Add node quick button */}
               <div className="flex gap-2 pt-2">
-                {sidebarNodes.map((type) => {
+                {sidebarNodes.map((type: any) => {
                   const cfg = NODE_CONFIG[type];
                   const Icon = cfg.icon;
                   return (

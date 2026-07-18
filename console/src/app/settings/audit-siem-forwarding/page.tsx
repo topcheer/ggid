@@ -23,7 +23,7 @@ export default function AuditSiemForwardingPage() {
 
       {/* Destinations */}
       <div className="space-y-4">
-        {(data?.destinations ?? []).map((dest) => (
+        {(data?.destinations ?? []).map((dest: any) => (
           <div key={dest.id} className="bg-gray-900 rounded-xl p-6">
             <div className="flex items-start justify-between mb-4">
               <div className="flex items-center gap-3">
@@ -63,7 +63,7 @@ export default function AuditSiemForwardingPage() {
             <div className="mt-3">
               <p className="text-xs text-gray-500 mb-1">Event Filter ({dest.event_filter.length} types)</p>
               <div className="flex flex-wrap gap-1">
-                {dest.event_filter.map((f) => (
+                {dest.event_filter.map((f: any) => (
                   <span key={f} className="text-xs px-1.5 py-0.5 bg-gray-800 rounded text-gray-400">{f}</span>
                 ))}
               </div>

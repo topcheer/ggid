@@ -33,7 +33,7 @@ export default function TokenRevocationStatsPage() {
 
   useEffect(() => { fetchData(); }, [fetchData]);
 
-  const maxTrend = Math.max(...(data?.trend_30d.map((t) => t.count) || [1]), 1);
+  const maxTrend = Math.max(...(data?.trend_30d.map((t: any) => t.count) || [1]), 1);
 
   return (
     <div className="space-y-6">
@@ -51,8 +51,8 @@ export default function TokenRevocationStatsPage() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="rounded-lg border dark:border-gray-800 p-4"><h3 className="text-sm font-semibold mb-3">By Reason</h3><div className="space-y-2">{data.by_reason.map((r) => (<div key={r.reason} className="flex items-center gap-2"><span className="w-3 h-3 rounded" style={{ background: reasonColors[r.reason] || "#ccc" }} /><span className="text-xs capitalize flex-1">{r.reason.replace("_", " ")}</span><span className="font-bold text-sm">{r.count}</span></div>))}</div></div>
-            <div className="rounded-lg border dark:border-gray-800 p-4"><h3 className="text-sm font-semibold mb-3">By Client</h3><div className="space-y-2">{data.by_client.map((c) => (<div key={c.client_id} className="flex items-center gap-2"><span className="text-xs font-medium flex-1">{c.client_name}</span><span className="px-2 py-0.5 rounded text-xs bg-red-100 dark:bg-red-900/30 dark:text-red-400 font-bold">{c.count}</span></div>))}</div></div>
+            <div className="rounded-lg border dark:border-gray-800 p-4"><h3 className="text-sm font-semibold mb-3">By Reason</h3><div className="space-y-2">{data.by_reason.map((r: any) => (<div key={r.reason} className="flex items-center gap-2"><span className="w-3 h-3 rounded" style={{ background: reasonColors[r.reason] || "#ccc" }} /><span className="text-xs capitalize flex-1">{r.reason.replace("_", " ")}</span><span className="font-bold text-sm">{r.count}</span></div>))}</div></div>
+            <div className="rounded-lg border dark:border-gray-800 p-4"><h3 className="text-sm font-semibold mb-3">By Client</h3><div className="space-y-2">{data.by_client.map((c: any) => (<div key={c.client_id} className="flex items-center gap-2"><span className="text-xs font-medium flex-1">{c.client_name}</span><span className="px-2 py-0.5 rounded text-xs bg-red-100 dark:bg-red-900/30 dark:text-red-400 font-bold">{c.count}</span></div>))}</div></div>
           </div>
         </>
       )}

@@ -52,7 +52,7 @@ export default function AgentBehavioralMonitorPage() {
       <div className="bg-gray-900 rounded-xl p-6 mb-6">
         <h2 className="text-lg font-semibold mb-4">Monitored Agents</h2>
         <div className="space-y-2">
-          {(data?.monitored_agents ?? []).map((a) => (
+          {(data?.monitored_agents ?? []).map((a: any) => (
             <div key={a.agent_id} className="flex items-center gap-4 bg-gray-800 rounded-lg p-3">
               <Bot className="w-4 h-4 text-gray-500" />
               <div className="flex-1">

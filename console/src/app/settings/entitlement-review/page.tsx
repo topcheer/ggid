@@ -86,8 +86,8 @@ export default function EntitlementReviewPage() {
     finally { setLoading(false); }
   }, [search]);
 
-  const unused = perms.filter((p) => p.unused_90d).length;
-  const overPriv = perms.filter((p) => p.over_privileged).length;
+  const unused = perms.filter((p: any) => p.unused_90d).length;
+  const overPriv = perms.filter((p: any) => p.over_privileged).length;
 
   const cardCls = "rounded-xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-700 dark:bg-gray-800";
 
@@ -191,7 +191,7 @@ export default function EntitlementReviewPage() {
           <>
             <div className="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-4">
               <div className="rounded-lg border p-3 dark:border-gray-800"><span className="text-xs text-gray-500">Total Perms</span><p className="text-xl font-bold mt-1">{perms.length}</p></div>
-              <div className="rounded-lg border p-3 dark:border-gray-800"><span className="text-xs text-gray-500">Direct</span><p className="text-xl font-bold text-blue-600 mt-1">{perms.filter((p) => p.source === "direct").length}</p></div>
+              <div className="rounded-lg border p-3 dark:border-gray-800"><span className="text-xs text-gray-500">Direct</span><p className="text-xl font-bold text-blue-600 mt-1">{perms.filter((p: any) => p.source === "direct").length}</p></div>
               <div className="rounded-lg border p-3 dark:border-gray-800"><span className="text-xs text-gray-500">Unused 90d</span><p className="text-xl font-bold text-yellow-600 mt-1">{unused}</p></div>
               <div className="rounded-lg border p-3 dark:border-gray-800"><span className="text-xs text-gray-500">Over-Privileged</span><p className="text-xl font-bold text-red-600 mt-1">{overPriv}</p></div>
             </div>
@@ -209,7 +209,7 @@ export default function EntitlementReviewPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y dark:divide-gray-800">
-                  {perms.map((p) => {
+                  {perms.map((p: any) => {
                     const cfg = recConfig[p.recommendation];
                     const Icon = cfg.icon;
                     return (

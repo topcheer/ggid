@@ -45,8 +45,8 @@ export default function AccessFrequencyPage() {
     fetchData(search);
   }, [search, fetchData]);
 
-  const maxAccess = data ? Math.max(...data.buckets.map((b) => b.access_count), 1) : 1;
-  const maxUsers = data ? Math.max(...data.buckets.map((b) => b.unique_users), 1) : 1;
+  const maxAccess = data ? Math.max(...data.buckets.map((b: any) => b.access_count), 1) : 1;
+  const maxUsers = data ? Math.max(...data.buckets.map((b: any) => b.unique_users), 1) : 1;
 
   return (
     <div className="space-y-6">
@@ -126,7 +126,7 @@ export default function AccessFrequencyPage() {
                 <h3 className="font-semibold flex items-center gap-2"><AlertTriangle className="w-4 h-4 text-orange-500" /> Anomaly Hours ({data.anomaly_count})</h3>
               </div>
               <div className="divide-y dark:divide-gray-800 max-h-48 overflow-y-auto">
-                {data.buckets.filter((b) => b.is_anomaly).map((b: any, i: number) => (
+                {data.buckets.filter((b: any) => b.is_anomaly).map((b: any, i: number) => (
                   <div key={i} className="px-4 py-2 flex items-center justify-between text-sm">
                     <span className="flex items-center gap-2"><AlertTriangle className="w-3 h-3 text-orange-500" /> {b.hour}</span>
                     <div className="flex items-center gap-3 text-xs text-gray-500">
