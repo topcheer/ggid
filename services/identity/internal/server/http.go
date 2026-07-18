@@ -57,6 +57,7 @@ dormantRepo       *dormantRepo
 rlsRepo           *rlsRepo
 quotaRepo         *quotaRepo
 secretRepo        *secretRepo
+backupRepo        *backupRepo
 identityPolicyMap *identityPolicyMapRepo
 	devicePostureRepo *devicePostureRepo
 }
@@ -198,7 +199,14 @@ func (h *HTTPHandler) registerRoutes() {
 	h.mux.HandleFunc("/api/v1/scim/sync/", h.handleSCIMSyncTarget)
 	// Tenant Quota Engine.
 	h.mux.HandleFunc("/api/v1/quotas/", h.handleTenantQuota)
-	// Secrets Management (Vault/KMS/env).\n\th.mux.HandleFunc(\"/api/v1/admin/secrets\", h.handleSecretsList)\n\th.mux.HandleFunc(\"/api/v1/admin/secrets/health\", h.handleSecretsHealth)\n\th.mux.HandleFunc(\"/api/v1/admin/secrets/rotate/\", h.handleSecretsRotate)
+	// Secrets Management (Vault/KMS/env).
+	h.mux.HandleFunc("/api/v1/admin/secrets", h.handleSecretsList)
+	h.mux.HandleFunc("/api/v1/admin/secrets/health", h.handleSecretsHealth)
+	h.mux.HandleFunc("/api/v1/admin/secrets/rotate/", h.handleSecretsRotate)
+	// Automated Backup System.
+	h.mux.HandleFunc("/api/v1/admin/backups", h.handleBackupList)
+	h.mux.HandleFunc("/api/v1/admin/backups/trigger", h.handleBackupTrigger)
+	h.mux.HandleFunc("/api/v1/admin/backups/", h.handleBackupVerify)
 	h.mux.HandleFunc("/api/v1/identity/gdpr/export", h.handleGDPRExport)
 	h.mux.HandleFunc("/api/v1/identity/scim/error-recovery", h.handleSCIMErrorRecovery)
 	h.mux.HandleFunc("/api/v1/identity/idp/failover-config", h.handleIdPFailoverConfig)

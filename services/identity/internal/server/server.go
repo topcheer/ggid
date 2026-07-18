@@ -196,7 +196,19 @@ func New(cfg *conf.Config) (*Server, error) {
 	}
 	httpHandler.SetQuotaRepo(qRepo)
 
-	// Secrets Management (Vault/KMS/env).\n\tsRepo := newSecretRepo(pool)\n\tif err := sRepo.EnsureSchema(ctx); err != nil {\n\t\tlog.Printf(\"Secrets schema ensure error (non-fatal): %v\", err)\n\t}\n\thttpHandler.SetSecretRepo(sRepo)
+	// Secrets Management (Vault/KMS/env).
+	sRepo := newSecretRepo(pool)
+	if err := sRepo.EnsureSchema(ctx); err != nil {
+		log.Printf("Secrets schema ensure error (non-fatal): %v", err)
+	}
+	httpHandler.SetSecretRepo(sRepo)
+
+	// Automated Backup System.
+	bRepo := newBackupRepo(pool)
+	if err := bRepo.EnsureSchema(ctx); err != nil {
+		log.Printf("Backup schema ensure error (non-fatal): %v", err)
+	}
+	httpHandler.SetBackupRepo(bRepo)
 
 	// Policy memory map repo (lifecycle_rules + review_campaigns).
 	ipmRepo := newIdentityPolicyMapRepo(pool)
