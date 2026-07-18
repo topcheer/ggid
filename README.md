@@ -24,48 +24,55 @@ GGID is the only open-source IAM evolving into a **Zero Trust platform** with:
 - **Hash-chained audit trail** (HMAC-SHA256, tamper-evident)
 - **WASM plugin architecture** (wazero runtime)
 
-## Quickstart (5 Minutes)
+## Quick Start (5 minutes)
 
 ### 1. Start GGID
 
 ```bash
-# Clone and start infrastructure
- git clone https://github.com/topcheer/ggid.git
-cd ggid
-make docker-run   # PostgreSQL + Redis + NATS
-make migrate-up   # Apply database migrations
-make build        # Build all services
+# Option A: Docker one-liner (recommended)
+docker run -d -p 8080:8080 -p 3000:3000 ggid/ggid-all-in-one:latest
+
+# Option B: From source
+git clone https://github.com/topcheer/ggid.git && cd ggid
+make docker-run && make migrate-up && make build && make run
 ```
 
-### 2. Create Admin User
+### 2. Open Console
 
 ```bash
-curl -X POST http://localhost:8081/api/v1/identity/users \
-  -H "Content-Type: application/json" \
-  -d '{"email":"admin@corp.com","password":"Admin123!","name":"Admin"}'
+open http://localhost:3000
 ```
 
-### 3. Login & Get Token
+### 3. Login
+
+```
+Email:    admin@ggid.dev
+Password: Admin@123456
+```
+
+### 4. Try the API
 
 ```bash
-TOKEN=$(curl -s -X POST http://localhost:8082/api/v1/auth/login \
+# Login and get token
+TOKEN=$(curl -s -X POST http://localhost:8080/api/v1/auth/login \
   -H "Content-Type: application/json" \
-  -d '{"username":"admin@corp.com","password":"Admin123!"}' | jq -r .access_token)
-echo $TOKEN
+  -d '{"email":"admin@ggid.dev","password":"Admin@123456"}' | jq -r '.access_token')
+
+# List users
+curl -s http://localhost:8080/api/v1/users \
+  -H "Authorization: Bearer $TOKEN" | jq '.[0]'
 ```
 
-### 4. Create OAuth Client
+### 5. SDK Quickstarts
 
-```bash
-curl -X POST http://localhost:8083/api/v1/oauth/clients \
-  -H "Authorization: Bearer $TOKEN" \
-  -H "Content-Type: application/json" \
-  -d '{"client_name":"My App","redirect_uris":["http://localhost:3000/callback"]}'
-```
+| Language | Example | Command |
+|----------|---------|---------|
+| **Go** | `sdk/go/examples/quickstart/` | `go run sdk/go/examples/quickstart/main.go` |
+| **React** | `sdk/react/examples/quickstart.tsx` | Import `@ggid/react` in your app |
+| **Python** | `sdk/python/examples/quickstart.py` | `python sdk/python/examples/quickstart.py` |
+| **cURL** | `sdk/curl/quickstart.sh` | `bash sdk/curl/quickstart.sh` |
 
-### 5. Access Console
-
-Open `http://localhost:8080` in your browser.
+Each example covers: login → get user → create OAuth client, in under 50 lines.
 
 ## Architecture
 
