@@ -129,7 +129,7 @@ jobs:
   docker-build:
     name: Docker Build (periodic)
     runs-on: ubuntu-latest
-    if: github.event_name == 'push' && github.run_number % 10 == 0
+    if: false  # Disabled: periodic docker build, enable manually
     steps:
       - uses: actions/checkout@v4
 
