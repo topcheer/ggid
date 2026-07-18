@@ -45,10 +45,8 @@ func (h *Handler) handleAuthzCheck(w http.ResponseWriter, r *http.Request) {
 	// Simplified check: if no policy engine configured, default deny.
 	// In production, this delegates to the policy service PDP.
 	allowed := false
-	reason := "no policy engine configured"
+	reason := ""
 
-	// If the handler has a policy evaluation method, use it.
-	// For now, check against known patterns.
 	if h.policyCheckFn != nil {
 		allowed, reason = h.policyCheckFn(req.UserID, req.Resource, req.Action)
 	} else {
