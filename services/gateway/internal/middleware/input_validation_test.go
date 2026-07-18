@@ -56,6 +56,10 @@ func TestDetectMaliciousInput_Clean(t *testing.T) {
 }
 
 func TestInputValidationMiddleware_RejectsSQLi(t *testing.T) {
+	// Reset config to ensure no exemptions from other tests.
+	SetInputValidationConfig(InputValidationConfig{
+		Enabled: true, ExemptPaths: map[string]bool{}, MaxBodySize: 10 * 1024 * 1024,
+	})
 	body := `{"username":"' OR 1=1--","password":"test"}`
 	req := httptest.NewRequest("POST", "/api/v1/auth/login", io.NopCloser(strings.NewReader(body)))
 	req.Header.Set("Content-Type", "application/json")
