@@ -1,772 +1,181 @@
-# Production Security Checklist
+# GGID Security Checklist
 
-> Pre-deployment security audit checklist for GGID production environments.
-
----
-
-## TLS / Network Security
-
-- [ ] **TLS 1.3 enforced** — Disable TLS 1.0/1.1/1.2 at load balancer level
-- [ ] **HSTS header** — `Strict-Transport-Security: max-age=31536000; includeSubDomains; preload`
-- [ ] **Certificate management** — Use cert-manager (Let's Encrypt) or internal CA
-- [ ] **mTLS between services** — Optional via Istio/Linkerd service mesh
-- [ ] **Database TLS** — `sslmode=verify-full` with CA certificate
-- [ ] **Redis TLS** — Enable `rediss://` protocol for encrypted connections
-- [ ] **NATS TLS** — Configure server certificate verification
-- [ ] **LDAP STARTTLS/LDAPS** — Never use plaintext LDAP in production
-
-```nginx
-# Nginx Ingress TLS configuration
-ssl_protocols TLSv1.3;
-ssl_prefer_server_ciphers off;
-ssl_session_cache shared:SSL:10m;
-ssl_session_timeout 10m;
-add_header Strict-Transport-Security "max-age=31536000; includeSubDomains; preload" always;
-```
+Pre-production security audit checklist. All items must pass before v1.0-stable release.
 
 ---
 
-## HTTP Security Headers
+## Authentication & Sessions
 
-- [ ] **Content-Security-Policy** — Restrict script/style/img sources
-- [ ] **X-Frame-Options** — `DENY` to prevent clickjacking
-- [ ] **X-Content-Type-Options** — `nosniff`
-- [ ] **Referrer-Policy** — `strict-origin-when-cross-origin`
-- [ ] **Permissions-Policy** — Disable unused browser features
+- [x] **Password hashing**: Argon2id is the default algorithm (no bcrypt/sha256 for new passwords)
+- [x] **Legacy hash migration**: JIT migration transparently upgrades bcrypt/pbkdf2 → Argon2id on next login
+- [x] **Access token TTL**: Configurable, default expires at session creation (typically 15min)
+- [x] **Refresh token TTL**: 24 hours with rotation on each use
+- [x] **Session binding**: DPoP proof-of-possession supported (optional per session)
+- [x] **Rate limiting**: Login attempts rate-limited (brute-force protection with lockout)
+- [x] **Password spray detection**: Threshold-based blocking (15 unique users/10min → 24h block)
+- [x] **MFA**: TOTP + backup codes + WebAuthn (passkey) supported
+- [x] **Break-glass**: Emergency access with full audit trail + reason required
 
-```yaml
-# Gateway middleware headers
-security_headers:
-  Content-Security-Policy: "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'; font-src 'self';"
-  X-Frame-Options: "DENY"
-  X-Content-Type-Options: "nosniff"
-  Referrer-Policy: "strict-origin-when-cross-origin"
-  Permissions-Policy: "geolocation=(), microphone=(), camera=()"
-```
+### Risk Items
+- [ ] Verify access token TTL is set to ≤15min in production config (currently derived from session TTL)
+- [ ] Consider shorter refresh TTL for high-risk tenants (configurable via CAP)
+
+---
+
+## Public Endpoints (No Auth Required)
+
+The following paths skip JWT verification. All are intentionally public:
+
+| Path | Justification | Rate-Limited |
+|------|--------------|-------------|
+| `/api/v1/auth/login` | User authentication | Yes (brute-force) |
+| `/api/v1/auth/register` | Self-service signup | Yes (per-IP) |
+| `/api/v1/auth/refresh` | Token rotation | Yes (per-token) |
+| `/api/v1/auth/password/forgot` | Password reset request | Yes (per-email) |
+| `/api/v1/auth/password/reset` | Password reset execution | Yes (per-token) |
+| `/api/v1/auth/social/*` | Social login callback | Yes |
+| `/healthz`, `/readyz` | Health checks | No (read-only) |
+| `/.well-known/*` | OIDC discovery + JWKS | No (public keys only) |
+| `/api/v1/system/initialized` | Bootstrap check | No (boolean only) |
+| `/api/v1/system/bootstrap` | Initial tenant setup | Must be disabled after bootstrap |
+| `/api/v1/tenants/resolve` | Tenant lookup from slug | Yes |
+| `/api/v1/dashboard` | Public dashboard stats | Consider adding auth |
+| `/api/v1/oauth/jwks` | Public signing keys | No |
+
+### Risk Items
+- [ ] `/api/v1/system/bootstrap` should be disabled after initial setup (env: `BOOTSTRAP_ENABLED=false`)
+- [ ] `/api/v1/dashboard` exposes aggregate stats without auth — verify no sensitive data leaks
 
 ---
 
 ## CORS Configuration
 
-- [ ] **Restrictive origins** — Never use `*` in production
-- [ ] **Explicit methods** — Only allow needed HTTP methods
-- [ ] **Credential support** — `AllowCredentials: true` with specific origins
-- [ ] **Preflight caching** — Set `MaxAge: 86400`
-
-```go
-corsConfig := cors.Config{
-    AllowOrigins:     []string{"https://console.example.com"},
-    AllowMethods:     []string{"GET", "POST", "PUT", "PATCH", "DELETE"},
-    AllowHeaders:     []string{"Authorization", "Content-Type", "X-Tenant-ID"},
-    ExposeHeaders:    []string{"X-Request-ID"},
-    AllowCredentials: true,
-    MaxAge:           24 * time.Hour,
-}
-```
+- [x] CORS is configurable via environment variables
+- [ ] **Verify production**: `CORS_ALLOWED_ORIGINS` must NOT be `*` in production
+- [ ] Set to specific origins: `https://console.yourcompany.com,https://app.yourcompany.com`
+- [ ] Preflight cache: `Access-Control-Max-Age` set (reduces OPTIONS overhead)
+- [ ] Credentials: `Access-Control-Allow-Credentials: true` only for whitelisted origins
 
 ---
 
-## Secret Management
+## Rate Limiting
 
-- [ ] **No secrets in env files** — Use Vault, AWS Secrets Manager, or Sealed Secrets
-- [ ] **Database password** — Stored in external secret, rotated quarterly
-- [ ] **JWT signing keys** — RS256 private key in Vault/KMS, never in image
-- [ ] **Redis password** — Required in production (`requirepass`)
-- [ ] **NATS credentials** — Auth enabled with user/password or JWT
-- [ ] **LDAP bind password** — Stored in sealed secret
-- [ ] **Webhook signing secrets** — Per-tenant, stored in DB encrypted
-- [ ] **API keys** — Hashed at rest, never logged
+| Endpoint | Limit | Scope |
+|----------|-------|-------|
+| Login | 5 attempts / 5 min | Per username + IP |
+| Register | 3 / hour | Per IP |
+| Password reset | 3 / hour | Per email |
+| Token refresh | 10 / min | Per refresh token |
+| OAuth authorize | 10 / min | Per client_id |
+| Global API | 1000 / min | Per tenant (configurable) |
+| GraphQL | 100 / min | Per user |
 
-```bash
-# External Secrets Operator with Vault
-apiVersion: external-secrets.io/v1beta1
-kind: ExternalSecret
-metadata:
-  name: ggid-db-credentials
-spec:
-  secretStoreRef:
-    name: vault-backend
-  target:
-    name: postgres-credentials
-  data:
-    - secretKey: password
-      remoteRef:
-        key: ggid/prod/postgres
-        property: password
-```
-
-### Key Rotation Schedule
-
-| Secret | Rotation Period | Method |
-|--------|----------------|--------|
-| JWT signing keys | 90 days | JWKS key rotation with overlap window |
-| Database password | Quarterly | Vault rotation + service restart |
-| Redis password | Annually | Config + rolling restart |
-| API keys | Per-policy (default 365d) | Admin rotation endpoint |
-| TLS certificates | 90 days (Let's Encrypt) | cert-manager auto-renewal |
-| SAML certificates | Annually | Manual rotation |
+- [x] Password spray detection: 15 unique users / 10 min → 24h block
+- [x] Multi-dimensional rate limiting: tenant + user + IP + endpoint + tier
+- [ ] Verify Redis-backed rate limiter is connected in production (not in-memory)
 
 ---
 
-## RBAC & Least Privilege
+## JWT Configuration
 
-- [ ] **No superuser for application** — Create dedicated `ggid_app` role
-- [ ] **Database grants** — Only `SELECT, INSERT, UPDATE, DELETE` on needed tables
-- [ ] **Schema access** — Restrict to `public` schema only
-- [ ] **Service accounts** — Each service has its own DB user with minimal grants
-
-```sql
--- Create restricted application role
-CREATE ROLE ggid_app WITH LOGIN PASSWORD 'secure-password';
-GRANT CONNECT ON DATABASE ggid TO ggid_app;
-GRANT USAGE ON SCHEMA public TO ggid_app;
-GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO ggid_app;
-
--- Do NOT grant: CREATE, DROP, ALTER, TRUNCATE, REFERENCES, TRIGGER
--- RLS applies to ggid_app (not superuser)
-```
-
-- [ ] **Admin role** — Separate `ggid_admin` with BYPASSRLS for migrations only
-- [ ] **API scopes** — Token scopes match exact permission needs
+- [x] Algorithm: RS256 (asymmetric, JWKS-compatible)
+- [x] Key rotation: JWKS rotation endpoint + graceful overlap period
+- [x] Claims: `iss`, `sub`, `aud`, `exp`, `iat`, `jti`, `tenant_id`, `session_id`
+- [x] DPoP support: Proof-of-possession binding (optional)
+- [x] Refresh token rotation: Single-use with replay detection
+- [ ] **Verify**: Access token `exp` ≤ 15min in production config
+- [ ] **Verify**: JWT secret is ≥256 bits (check `JWT_SECRET` env var)
 
 ---
 
-## Audit & Logging
+## Password Storage
 
-- [ ] **Audit logging enabled** — NATS JetStream consumer running
-- [ ] **Audit table append-only** — No UPDATE/DELETE grants on `audit_events`
-- [ ] **PII redaction** — Logs filter email, phone, SSN, credit card
-- [ ] **Structured JSON logs** — Machine-parseable for SIEM ingestion
-- [ ] **Request ID tracing** — Every request has unique `X-Request-ID`
-- [ ] **Log retention** — 90 days hot, 1 year cold storage
-- [ ] **SIEM forwarding** — Splunk/Sentinel integration active
-
-```bash
-# Verify audit is working
-curl $API/api/v1/audit/events?limit=5 \
-  -H "Authorization: Bearer $TOKEN"
-
-# Should return recent events
-# Check NATS consumer health
-nats consumer info AUDIT_EVENTS audit-consumer
-```
+- [x] **Argon2id** is the default and only algorithm for new passwords
+- [x] Transparent rehashing: legacy hashes (bcrypt, pbkdf2, scrypt, ssha) → Argon2id on next login
+- [x] Password history: Configurable (default: 5 previous passwords checked)
+- [x] Password strength: zxcvbn score ≥ 2 required at registration + password change
+- [x] HIBP breach check: Known breached passwords forced to score 0
+- [x] No plaintext passwords stored or logged
 
 ---
 
-## Password Policy
+## Audit Logging
 
-- [ ] **Minimum length** — 12+ characters enforced
-- [ ] **Complexity rules** — Upper, lower, digit, special required
-- [ ] **Password history** — Last 5+ passwords checked
-- [ ] **Max age** — 90 days (configurable per NIST guidance)
-- [ ] **Breach detection** — HIBP k-anonymity API enabled
-- [ ] **bcrypt cost** — 12 or higher
+- [x] All sensitive operations emit audit events via NATS:
+  - Login/logout/refresh
+  - Password change/reset
+  - MFA enroll/disable
+  - Role assignment/revocation
+  - Policy create/update/delete
+  - Break-glass activation
+  - OAuth client management
+  - Conditional access decisions
+  - Session revocation
+- [x] Hash chain integrity verification endpoint (`/api/v1/audit/verify-integrity`)
+- [x] Conditional access policy changes audited with before/after diff
+- [x] NHI risk evaluations logged
+- [x] CCM compliance scan results persisted to PostgreSQL
 
-```bash
-# Verify password policy
-curl $API/api/v1/settings/password-policy \
-  -H "Authorization: Bearer $ADMIN_TOKEN"
-```
-
----
-
-## Rate Limiting & Brute Force Protection
-
-- [ ] **Per-IP rate limiting** — 60 req/min default for API endpoints
-- [ ] **Login rate limiting** — 10 attempts/min per IP + username
-- [ ] **Account lockout** — Lock after 5 failed attempts (15-min TTL)
-- [ ] **Register rate limiting** — 5/min per IP
-- [ ] **Refresh token rate limiting** — 30/min per token
-- [ ] **SCIM rate limiting** — 100/min per API key
-- [ ] **Progressive delays** — Exponential backoff on repeated failures
-
-```bash
-# Verify rate limiting is active
-for i in $(seq 1 15); do
-  curl -s -o /dev/null -w "%{http_code} " \
-    -X POST $API/api/v1/auth/login \
-    -H "Content-Type: application/json" \
-    -d '{"username":"test","password":"wrong"}'
-done
-# Expected: 401 401 401 401 401 429 429 429 ...
-```
+### Coverage Gaps
+- [ ] User export (CSV) should log what data was exported
+- [ ] Admin key rotation should log operator identity
 
 ---
 
-## Session Security
+## Data Isolation
 
-- [ ] **Short-lived access tokens** — 15-minute expiry
-- [ ] **Refresh token rotation** — One-time use, rotated on each refresh
-- [ ] **Session revocation** — Redis-backed, immediate invalidation
-- [ ] **Concurrent session limits** — Max 5 active sessions per user
-- [ ] **Idle timeout** — 30-minute inactivity → session revoked
-- [ ] **Secure cookies** — `HttpOnly`, `Secure`, `SameSite=Strict`
+- [x] Multi-tenant isolation via Row-Level Security (RLS) on all tables
+- [x] `X-Tenant-ID` header required on all tenant-scoped requests
+- [x] Tenant context propagated through request context
+- [ ] **Verify**: RLS policies tested with cross-tenant queries (integration test)
 
 ---
 
-## Container & Infrastructure
+## Secrets Management
 
-- [ ] **Non-root containers** — `runAsNonRoot: true`, `runAsUser: 65532`
-- [ ] **Read-only root filesystem** — `readOnlyRootFilesystem: true`
-- [ ] **Resource limits** — CPU and memory limits on all containers
-- [ ] **Network policies** — Default deny, explicit allow rules
-- [ ] **Pod Security Standards** — `restricted` profile enforced
-- [ ] **Image scanning** — Trivy/Grype in CI pipeline
-- [ ] **Image signing** — Cosign verification before deployment
+- [x] Secrets stored in `keys.env` (not in main config YAML)
+- [x] `AES_KEY` required (32-byte hex for encryption at rest)
+- [x] `JWT_SECRET` required (signing key)
+- [x] Database credentials via env vars (not hardcoded)
+- [ ] **Verify**: No secrets in git history (run `git log -p | grep -i "password\|secret\|key" | head`)
+- [ ] Consider external secret manager (Vault/AWS Secrets Manager) for production
 
-```yaml
-podSecurityContext:
-  runAsNonRoot: true
-  runAsUser: 65532
-  fsGroup: 65532
-  seccompProfile:
-    type: RuntimeDefault
+---
 
-containerSecurityContext:
-  allowPrivilegeEscalation: false
-  readOnlyRootFilesystem: true
-  capabilities:
-    drop: ["ALL"]
-```
+## Transport Security
+
+- [x] TLS termination at gateway
+- [x] Internal service-to-service over plaintext (behind firewall)
+- [ ] **Verify**: TLS 1.2+ only (disable TLS 1.0/1.1)
+- [ ] **Verify**: HSTS header set in production
+- [ ] **Verify**: Security headers (X-Frame-Options, X-Content-Type-Options, CSP)
 
 ---
 
 ## Dependency Security
 
-- [ ] **Dependency scanning** — `govulncheck` in CI
-- [ ] **License audit** — Only Apache 2.0 / MIT compatible licenses
-- [ ] **Go version** — Latest stable (1.25+)
-- [ ] **Base images** — Distroless or Alpine, not full Debian for production
-- [ ] **Regular updates** — Monthly dependency review cycle
-
-```bash
-# Run vulnerability check
-go install golang.org/x/vuln/cmd/govulncheck@latest
-govulncheck ./...
-
-# Scan container image
-trivy image ghcr.io/ggid/gateway:latest
-```
+- [x] `govulncheck` runs in CI (advisory mode)
+- [x] `gosec` runs in CI (advisory mode)
+- [ ] **Action**: Review and fix any high-severity findings before v1.0
+- [ ] Run `go mod audit` before release
 
 ---
 
-## Incident Readiness
+## OWASP Top 10 Coverage
 
-- [ ] **On-call rotation** — Defined and documented
-- [ ] **Runbooks** — Available for common incidents (login outage, DB failover)
-- [ ] **Alerting rules** — Configured in Prometheus/Grafana
-- [ ] **Backup verification** — Quarterly restore drill
-- [ ] **Penetration testing** — Annual third-party assessment
-
----
-
-## SQL Injection Prevention
-
-All GGID database queries use parameterized statements. Never concatenate user
-input into SQL strings.
-
-- [ ] **Parameterized queries everywhere** — pgx prepared statements, no `fmt.Sprintf` for values
-- [ ] **No raw SQL in handlers** — All queries go through repository layer
-- [ ] **Input validation** — Validate type, length, format before DB layer
-- [ ] **Column allow-list** — Sort/filter columns validated against allow-list
-- [ ] **No dynamic table/column names** — Schema is static, no user-controlled DDL
-- [ ] **Query timeout** — All queries have context timeout (default 5s)
-- [ ] **Connection-level RLS** — PostgreSQL Row-Level Security enforced per-tenant
-
-```go
-// CORRECT: parameterized query
-err := pool.QueryRow(ctx,
-    "SELECT id, email FROM users WHERE tenant_id = $1 AND email = $2",
-    tenantID, email,
-).Scan(&id, &email)
-
-// WRONG: string concatenation (SQL injection risk)
-query := fmt.Sprintf("SELECT id FROM users WHERE email = '%s'", email) // NEVER DO THIS
-```
-
-### PostgreSQL Row-Level Security
-
-RLS ensures tenant isolation at the database level — even if a query omits the
-`tenant_id` filter, PostgreSQL enforces it:
-
-```sql
--- Enable RLS on all tenant-scoped tables
-ALTER TABLE users ENABLE ROW LEVEL SECURITY;
-ALTER TABLE roles ENABLE ROW LEVEL SECURITY;
-ALTER TABLE audit_events ENABLE ROW LEVEL SECURITY;
-
--- Policy: users can only see their own tenant's rows
-CREATE POLICY tenant_isolation ON users
-  FOR ALL
-  USING (tenant_id = current_setting('app.tenant_id')::uuid);
-
--- Set tenant context per connection
-SET LOCAL app.tenant_id = '00000000-0000-0000-0000-000000000001';
-```
-
-### Dynamic Sort/Filter Safety
-
-When users specify sort columns or filter fields, validate against an allow-list:
-
-```go
-var allowedSortColumns = map[string]string{
-    "created_at": "created_at",
-    "email":      "email",
-    "username":   "username",
-    "updated_at": "updated_at",
-}
-
-func safeSortColumn(input string) string {
-    if col, ok := allowedSortColumns[input]; ok {
-        return col
-    }
-    return "created_at" // safe default
-}
-```
+| Risk | Status | Notes |
+|------|--------|-------|
+| A01: Broken Access Control | ✅ | RBAC + ABAC + CAP + tenant isolation |
+| A02: Cryptographic Failures | ✅ | Argon2id + AES-256 + TLS |
+| A03: Injection | ✅ | Parameterized queries (pgx) everywhere |
+| A04: Insecure Design | ✅ | Threat-modeled architecture |
+| A05: Security Misconfiguration | ⚠️ | Verify CORS/bootstrap disabled |
+| A06: Vulnerable Components | ⚠️ | govulncheck advisory mode |
+| A07: Auth Failures | ✅ | MFA + rate limiting + spray detection |
+| A08: Data Integrity Failures | ✅ | Hash chain audit + code signing |
+| A09: Logging Failures | ✅ | Comprehensive audit + CCM |
+| A10: SSRF | ✅ | No outbound URL fetching from user input |
 
 ---
 
-## XSS Prevention
-
-Cross-Site Scripting (XSS) is mitigated through defense-in-depth.
-
-- [ ] **Content-Security-Policy header** — Strict `script-src 'self'` with nonce
-- [ ] **Output encoding** — All user-generated content HTML-escaped on render
-- [ ] **React auto-escaping** — Console uses React (auto-escapes by default)
-- [ ] **`dangerouslySetInnerHTML` audit** — No raw HTML injection in Console code
-- [ ] **HttpOnly cookies** — Session cookies inaccessible to JavaScript
-- [ ] **Input sanitization** — Email, username validated against allow-list regex
-- [ ] **SVG sanitization** — Logo uploads sanitized (no `<script>` tags in SVG)
-
-### Content-Security-Policy Configuration
-
-```yaml
-# Recommended CSP for production
-Content-Security-Policy: >
-  default-src 'self';
-  script-src 'self' 'nonce-{RANDOM_NONCE}';
-  style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
-  font-src 'self' https://fonts.gstatic.com;
-  img-src 'self' data: https:;
-  connect-src 'self' https://iam.yourcompany.com;
-  frame-ancestors 'none';
-  base-uri 'self';
-  form-action 'self';
-  object-src 'none';
-```
-
-### CSP Nonce (Per-Request)
-
-```go
-// Generate a unique nonce per request
-func cspMiddleware(next http.Handler) http.Handler {
-    return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-        nonce := generateNonce(32) // base64 encoded random bytes
-        csp := fmt.Sprintf(
-            "default-src 'self'; script-src 'self' 'nonce-%s';",
-            nonce,
-        )
-        w.Header().Set("Content-Security-Policy", csp)
-        ctx := context.WithValue(r.Context(), nonceKey, nonce)
-        next.ServeHTTP(w, r.WithContext(ctx))
-    })
-}
-
-// In templates: <script nonce="{{.Nonce}}">...</script>
-```
-
-### XSS in Email Templates
-
-Email HTML is sandboxed — email clients strip JavaScript. Still sanitize:
-
-```go
-import "html"
-
-func sanitizeEmailTemplate(raw string) string {
-    // Escape user-provided variables before interpolation
-    return html.EscapeString(raw)
-}
-```
-
----
-
-## JWT Secret Rotation
-
-JWT signing keys must be rotated regularly without invalidating active sessions.
-
-- [ ] **RS256 or EdDSA keys** — Never use symmetric HS256 in production
-- [ ] **JWKS endpoint** — Public keys published at `/.well-known/jwks.json`
-- [ ] **Overlap window** — Old key remains valid for 24h after new key is active
-- [ ] **Key ID (`kid`)** — Each key has a unique ID for selection during verification
-- [ ] **Automated rotation** — 90-day rotation via Vault Transcrypt or KMS
-- [ ] **Key storage** — Private keys in Vault/KMS, never in container images
-
-### Rotation Process
-
-```
-1. Generate new key pair (kid: "2024-07-key")
-      |
-2. Add new key to JWKS (both keys now valid)
-      |
-3. Switch signing to new key (new tokens use "2024-07-key")
-      |
-4. Wait 24h (overlap window)
-      |
-5. Remove old key from JWKS
-      |
-6. Old tokens expire naturally (access: 15min, refresh: 7d)
-```
-
-### Configuration
-
-```bash
-# Vault Transit Engine for key management
-vault secrets enable transit
-vault write -f transit/keys/ggid-jwt type=rsa-2048
-
-# Auto-rotate every 90 days
-vault write transit/keys/ggid-jwt/config min_decryption_version=1 \
-  auto_rotate_period=7776000  # 90 days in seconds
-```
-
-### Verification with Multiple Keys
-
-```go
-// GGID verifies JWTs against all keys in JWKS
-keySet := jwk.NewSet()
-// Fetch from /.well-known/jwks.json
-// Keys with matching kid are tried first
-
-token, err := jwt.Parse(
-    tokenString,
-    jwt.WithKeySet(keySet),
-    jwt.WithAcceptableSkew(30*time.Second),
-)
-```
-
----
-
-## Consolidated Hardening Checklist
-
-A quick-reference production hardening audit. All items should be verified
-before going live.
-
-### TLS / Encryption in Transit
-
-- [ ] TLS 1.2+ enforced everywhere (no TLS 1.0/1.1)
-- [ ] TLS 1.3 preferred
-- [ ] HSTS header: `Strict-Transport-Security: max-age=31536000; includeSubDomains; preload`
-- [ ] Internal service-to-service traffic encrypted (mTLS or private subnet)
-- [ ] PostgreSQL connections use `sslmode=require` or `verify-full`
-- [ ] Redis connections use TLS (if traversing untrusted network)
-- [ ] LDAP connections use StartTLS or LDAPS (`ldaps://`)
-- [ ] Certificate auto-renewal configured (Let's Encrypt / cert-manager)
-
-### JWT Configuration
-
-- [ ] **RS256 or EdDSA signing** (never HS256 in production)
-- [ ] JWKS endpoint published (`/.well-known/jwks.json`)
-- [ ] Access token TTL: 15 minutes or less
-- [ ] Refresh token TTL: 7 days maximum
-- [ ] **Refresh token rotation enabled** (one-time-use, detect reuse)
-- [ ] JWT includes `jti` (unique token ID) for revocation
-- [ ] JWT includes `tenant_id` for multi-tenant isolation
-- [ ] Key rotation process documented (90-day cycle)
-- [ ] Private key stored in Vault/KMS (not in container image)
-
-### OAuth / OIDC Hardening
-
-- [ ] **PKCE required for all public clients** (SPAs, mobile apps)
-- [ ] `redirect_uri` exact match enforced (no wildcards)
-- [ ] `state` parameter validated on authorization callback
-- [ ] Authorization code TTL: 60 seconds or less
-- [ ] Client secrets rotated annually
-- [ ] Token introspection endpoint protected (client credentials required)
-- [ ] Consent screen shown for third-party clients
-
-### CORS Policy
-
-- [ ] **CORS allowlist configured** (never `Access-Control-Allow-Origin: *` in production)
-- [ ] `Access-Control-Allow-Credentials: true` only for trusted origins
-- [ ] `Access-Control-Allow-Methods` restricted to needed methods only
-- [ ] Preflight cache (`Access-Control-Max-Age`) set to 24h
-- [ ] Per-tenant CORS origins configurable
-
-### Rate Limiting
-
-- [ ] **Per-tenant rate limits configured** (not just per-IP)
-- [ ] Auth endpoints: 10 requests/min per IP+username
-- [ ] Login brute-force protection: 5 attempts → 15-minute lockout
-- [ ] API endpoints: 60 requests/min per user
-- [ ] `X-RateLimit-*` headers returned on all responses
-- [ ] 429 response includes `Retry-After` header
-- [ ] Redis fail-open mode configured (or fail-closed for strict environments)
-
-### Audit & Logging
-
-- [ ] **Audit log retention policy set** (minimum 90 days hot, 1 year cold)
-- [ ] Audit events include: timestamp, user_id, tenant_id, action, IP, user_agent
-- [ ] PII redaction enabled in logs (`email`, `password`, `token` fields)
-- [ ] NATS JetStream retention: 7 days for event stream
-- [ ] Log shipping to external SIEM (Splunk, ELK, Datadog)
-- [ ] Alert on suspicious patterns (mass login failures, privilege escalation)
-
-### Database Security
-
-- [ ] **RLS enabled on all multi-tenant tables** (users, roles, orgs, audit_events)
-- [ ] Database user has least privilege (SELECT/INSERT/UPDATE/DELETE only, no DDL)
-- [ ] Connection pooling via PgBouncer (transaction mode)
-- [ ] Query timeout: 5 seconds maximum
-- [ ] Parameterized queries everywhere (no string concatenation)
-- [ ] Connection encryption (SSL/TLS)
-- [ ] Automated daily backups with retention policy
-- [ ] PITR (Point-in-Time Recovery) enabled for production
-
-### Session Security
-
-- [ ] Session cookies: `Secure; HttpOnly; SameSite=Strict`
-- [ ] Session data stored in Redis (not local memory)
-- [ | Maximum concurrent sessions per user: 5 (configurable)
-- [ ] Session idle timeout: 30 minutes
-- [ ] Logout invalidates both JWT (via jti revocation) and Redis session
-- [ ] "Remember me" extends refresh token TTL only (not access token)
-
-### Container & Infrastructure
-
-- [ ] Distroless or Alpine base images (no shell in production)
-- [ ] Container runs as non-root user
-- [ ] Read-only root filesystem (`readOnlyRootFilesystem: true`)
-- [ ] Resource limits set (CPU and memory)
-- [ ] Image vulnerability scanning in CI (Trivy)
-- [ ] Images signed (Cosign) and verified on deploy
-- [ ] Network policies restrict pod-to-pod communication
-- [ ] No secrets in environment variables (use Docker Secrets or Vault)
-
----
-
-## Final Sign-off
-
-| Category | Checked By | Date | Notes |
-|----------|-----------|------|-------|
-| TLS/Network | __________ | ______ | ______ |
-| HTTP Headers | __________ | ______ | ______ |
-| Secret Management | __________ | ______ | ______ |
-| RBAC | __________ | ______ | ______ |
-| Audit/Logging | __________ | ______ | ______ |
-| Password Policy | __________ | ______ | ______ |
-| Rate Limiting | __________ | ______ | ______ |
-| Container Security | __________ | ______ | ______ |
-| Dependency Security | __________ | ______ | ______ |
-
----
-
-## References
-
-- [Security Whitepaper](./security-whitepaper.md) — Threat model (STRIDE)
-- [Security Hardening](./security-hardening.md) — Hardening guide
-- [Password Policy](./password-policy.md) — Policy configuration
-- [Rate Limiting](./rate-limiting.md) — Rate limit details
-- [Compliance Checklist](./compliance-checklist.md) — GDPR/SOC2/ISO27001
-
----
-
-## Secret Rotation Procedure
-
-### Rotation Schedule
-
-| Secret | Rotation Period | Method |
-|--------|----------------|--------|
-| JWT signing key (RSA) | 90 days | Dual-key overlap |
-| Cookie encryption key | 90 days | Grace period rotation |
-| Database password | 60 days | `ALTER ROLE` + restart |
-| Redis password | 60 days | ConfigMap + restart |
-| NATS credentials | 90 days | Account-based rotation |
-| LDAP bind password | 90 days | Service account reset |
-| OAuth client secrets | 180 days | Admin API rotation |
-| API keys | 180 days | Admin API rotation |
-| TLS certificates | 90 days (Let's Encrypt) / 1 year (CA) | cert-manager / manual |
-
-### JWT Signing Key Rotation
-
-```bash
-# 1. Generate new RSA key pair
-openssl genpkey -algorithm RSA -out new-jwt.key -pkeyopt rsa_keygen_bits:2048
-openssl rsa -in new-jwt.key -pubout -out new-jwt.pub
-
-# 2. Deploy with dual keys (old + new)
-JWT_SIGNING_KEY=/etc/ggid/keys/jwt.key
-JWT_SIGNING_KEY_NEW=/etc/ggid/keys/new-jwt.key
-# Gateway accepts tokens signed with either key
-
-# 3. Wait for old tokens to expire (15 min access tokens = wait 15 min)
-sleep 900
-
-# 4. Switch primary signing key to new
-JWT_SIGNING_KEY=/etc/ggid/keys/new-jwt.key
-# Remove old key from config
-
-# 5. Restart auth and gateway services
-docker compose restart auth gateway
-```
-
-### Database Password Rotation
-
-```bash
-# 1. Set new password
-docker exec ggid-postgres psql -U ggid_admin -d ggid \
-  -c "ALTER ROLE ggid_app WITH PASSWORD 'new-strong-password';"
-
-# 2. Update environment
-DATABASE_URL=postgres://ggid_app:new-strong-password@postgres:5432/ggid
-
-# 3. Rolling restart (no downtime with connection pooling)
-kubectl rollout restart deployment/auth
-kubectl rollout restart deployment/identity
-kubectl rollout restart deployment/oauth
-```
-
-### Automated Rotation (Vault)
-
-```yaml
-# Vault dynamic database credentials
-vault:
-  database:
-    enabled: true
-    role: "ggid-app"
-    credential_ttl: "24h"
-    max_ttl: "48h"
-
-  transit:
-    jwt_signing:
-      enabled: true
-      key_name: "g gid-jwt-signing"
-      key_type: "rsa-2048"
-      rotation_period: "2160h"  # 90 days
-```
-
----
-
-## Audit Log Retention
-
-### Retention Policy
-
-| Data Type | Hot Storage | Warm Storage | Cold Archive | Total Retention |
-|-----------|------------|-------------|-------------|-----------------|
-| Authentication events | 30 days | 90 days | 1 year | 15 months |
-| Admin actions | 90 days | 1 year | 7 years | 8+ years |
-| User CRUD events | 90 days | 1 year | 3 years | 4+ years |
-| Security events | 90 days | 1 year | 7 years | 8+ years |
-| OAuth token events | 30 days | 90 days | 1 year | 15 months |
-| Session data | 7 days | 30 days | N/A | 37 days |
-
-### Configuration
-
-```yaml
-audit:
-  retention:
-    hot_days: 30           # Fast query (PostgreSQL)
-    warm_days: 365         # Slower query (compressed partitions)
-    cold_years: 7          # Archive (S3 Glacier / cold storage)
-
-    # Auto-partitioning by month
-    partition_strategy: "monthly"
-
-    # Auto-purge expired records
-    purge_cron: "0 2 * * *"    # Daily at 2 AM
-    batch_size: 10000           # Purge in batches to avoid lock contention
-
-  storage:
-    hot: "postgresql"
-    warm: "postgresql_compressed"
-    cold: "s3://ggid-audit-archive/"
-
-  compliance:
-    immutable: true          # WORM (Write Once Read Many)
-    tamper_proof: true       # Hash chain verification
-```
-
-### Legal Hold
-
-```bash
-# Apply legal hold (prevents purging)
-curl -X POST http://localhost:8080/api/v1/admin/audit/legal-hold \
-  -H "Authorization: Bearer $ADMIN_TOKEN" \
-  -d '{
-    "reason": "SOC2 audit Q1 2024",
-    "start_date": "2024-01-01",
-    "end_date": "2024-03-31",
-    "hold_until": "2025-06-30"
-  }'
-```
-
-### Hash Chain Verification
-
-```bash
-# Verify audit log integrity (tamper detection)
-curl http://localhost:8080/api/v1/admin/audit/verify-integrity \
-  -H "Authorization: Bearer $ADMIN_TOKEN" \
-  -d '{ "start": "2024-01-01T00:00:00Z", "end": "2024-01-31T23:59:59Z" }'
-
-# Response:
-# { "verified": true, "events_checked": 152348, "chain_intact": true }
-```
-
----
-
-## Session Timeout Configuration
-
-### Session Tiers
-
-| Tier | Access Token TTL | Session Max | Idle Timeout | Re-auth |
-|------|-----------------|-------------|-------------|---------|
-| Standard | 15 min | 8 hours | 1 hour | 7 days |
-| Elevated (admin) | 10 min | 4 hours | 30 min | 4 hours |
-| High-security | 5 min | 2 hours | 15 min | 1 hour |
-| Service (M2M) | 1 hour | N/A | N/A | N/A |
-
-### Configuration
-
-```yaml
-session:
-  # Access token lifetime (short-lived JWT)
-  access_token_ttl: "15m"
-
-  # Maximum session duration (hard limit regardless of activity)
-  max_session_duration: "8h"
-
-  # Idle timeout (revoked after inactivity)
-  idle_timeout: "1h"
-
-  # Require re-authentication after this period (even if active)
-  reauth_interval: "168h"    # 7 days
-
-  # Concurrent session limit per user
-  max_concurrent_sessions: 3
-
-  # Require step-up auth for sensitive operations
-  step_up_auth:
-    enabled: true
-    max_age: "300s"           # Must have authenticated within 5 min
-    operations:
-      - "user.delete"
-      - "role.assign"
-      - "tenant.config.change"
-      - "admin.impersonate"
-```
-
-### Per-Role Session Policy
-
-```sql
--- Longer sessions for service accounts, shorter for admins
-UPDATE tenant_settings
-SET session_policy = jsonb_set(
-  session_policy,
-  '{role_overrides}',
-  '{
-    "service-account": {"max_session_duration": "720h", "idle_timeout": "0"},
-    "admin": {"max_session_duration": "4h", "idle_timeout": "30m", "reauth_interval": "4h"},
-    "viewer": {"max_session_duration": "8h", "idle_timeout": "1h"}
-  }'
-)
-WHERE tenant_id = "your-tenant-id";
-```
+*Last updated: 2025-07-18*
