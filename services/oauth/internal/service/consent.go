@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"fmt"
+	"sync"
 	"time"
 
 	"github.com/google/uuid"
@@ -130,6 +131,16 @@ type RevocationStore interface {
 // revocation is handled by SessionRevocationManager in the auth service.
 
 
+
+// memRevocationStore is an in-memory token revocation store.
+type memRevocationStore struct {
+	mu       sync.RWMutex
+	revoked  map[string]time.Time
+}
+
+func newMemRevocationStore() *memRevocationStore {
+	return &memRevocationStore{revoked: make(map[string]time.Time)}
+}
 
 func (s *memRevocationStore) Revoke(ctx context.Context, tokenID string, expiresAt time.Time) error {
 	s.mu.Lock()
