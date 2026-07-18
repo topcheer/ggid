@@ -467,13 +467,11 @@ function MethodPoliciesTab() {
         await fetch(`${API_BASE}/api/v1/auth/method-policies/${id}`, {
           method: "DELETE",
           headers: { ...authHeader() },
-      });
-      setPolicies(policies.filter((p: any) => p.id !== id));
-      setMsg({ type: "success", text: t("securityPolicy.methodPolicies.policyDeleted") });
-    } catch {
-      setMsg({ type: "error", text: t("settings.endpointUnavailable") });
-    }
-    setTimeout(() => setMsg(null), 3000);
+        });
+        setPolicies(policies.filter((p: any) => p.id !== id));
+        setMsg({ type: "success", text: t("securityPolicy.methodPolicies.policyDeleted") });
+      },
+    });
   };
 
   const handleSaved = () => {
