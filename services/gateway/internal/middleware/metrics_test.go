@@ -59,13 +59,13 @@ func TestRequestMetricsRegistered(t *testing.T) {
 	body, _ := io.ReadAll(rr2.Body)
 	bodyStr := string(body)
 
-	// Check for http_requests_total (registered in metrics.go init)
-	if !strings.Contains(bodyStr, "http_requests_total") {
-		t.Error("missing http_requests_total metric")
+	// Check for ggid_http_requests_total (registered in metrics.go init)
+	if !strings.Contains(bodyStr, "ggid_http_requests_total") {
+		t.Error("missing ggid_http_requests_total metric")
 	}
-	// Check for http_request_duration_seconds
-	if !strings.Contains(bodyStr, "http_request_duration_seconds") {
-		t.Error("missing http_request_duration_seconds metric")
+	// Check for ggid_http_duration_seconds
+	if !strings.Contains(bodyStr, "ggid_http_duration_seconds") {
+		t.Error("missing ggid_http_duration_seconds metric")
 	}
 }
 
@@ -91,7 +91,7 @@ func TestMetricsMiddleware_RecordsRequest(t *testing.T) {
 }
 
 // TestMetricsMiddleware_CounterIncrementAndLabels verifies that after making
-// requests, the http_requests_total counter is incremented with the correct
+// requests, the ggid_http_requests_total counter is incremented with the correct
 // labels (method, path, status) visible in the /metrics output.
 func TestMetricsMiddleware_CounterIncrementAndLabels(t *testing.T) {
 	next := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -119,12 +119,12 @@ func TestMetricsMiddleware_CounterIncrementAndLabels(t *testing.T) {
 	body, _ := io.ReadAll(metricsRR.Body)
 	bodyStr := string(body)
 
-	// Verify http_requests_total has the GET /api/v1/users 200 label combination
-	if !strings.Contains(bodyStr, `http_requests_total{method="GET",path="/api/v1/users",status="200"}`) {
+	// Verify ggid_http_requests_total has the GET /api/v1/users 200 label combination
+	if !strings.Contains(bodyStr, `ggid_http_requests_total{method="GET",path="/api/v1/users",status="200"}`) {
 		t.Errorf("expected GET /api/v1/users 200 label in metrics output\nOutput:\n%s", bodyStr)
 	}
 	// Verify POST label
-	if !strings.Contains(bodyStr, `http_requests_total{method="POST",path="/api/v1/orgs",status="200"}`) {
+	if !strings.Contains(bodyStr, `ggid_http_requests_total{method="POST",path="/api/v1/orgs",status="200"}`) {
 		t.Errorf("expected POST /api/v1/orgs 200 label in metrics output\nOutput:\n%s", bodyStr)
 	}
 	// Verify the counter value is >= 1 for the GET path.
@@ -199,6 +199,9 @@ func TestPrometheusMetricNaming(t *testing.T) {
 	req := httptest.NewRequest(http.MethodGet, "/test", nil)
 	mw.ServeHTTP(httptest.NewRecorder(), req)
 
+	// Increment auth failure counter so it appears in metrics output
+	authFailures.WithLabelValues("test").Inc()
+
 	// Scrape metrics
 	metricsReq := httptest.NewRequest(http.MethodGet, "/metrics", nil)
 	metricsRR := httptest.NewRecorder()
@@ -208,8 +211,8 @@ func TestPrometheusMetricNaming(t *testing.T) {
 
 	// Required metric names that should be present
 	requiredMetrics := []string{
-		"http_requests_total",
-		"http_request_duration_seconds",
+		"ggid_http_requests_total",
+		"ggid_http_duration_seconds",
 		"ggid_auth_failures_total",
 	}
 
