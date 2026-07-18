@@ -97,3 +97,8 @@ console-build:
 console-deploy: console-build
 	docker build --platform linux/amd64 -f console/Dockerfile -t registry.iot2.win/ggid/console:latest .
 	docker push registry.iot2.win/ggid/console:latest
+
+# KB-311: Generate OpenAPI spec from route scanning
+swagger:
+	@bash scripts/gen-swagger.sh
+	@echo ">> Swagger spec generated at deploy/openapi.yaml"
