@@ -364,6 +364,14 @@ func (gw *Gateway) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		gw.handleSystemHealth(w, r)
 		return
 	}
+	if r.URL.Path == "/api/v1/system/quickstart" && r.Method == http.MethodPost {
+		gw.handleQuickstart(w, r)
+		return
+	}
+	if r.URL.Path == "/api/v1/system/status" && r.Method == http.MethodGet {
+		gw.handleSystemStatus(w, r)
+		return
+	}
 	if r.URL.Path == "/api/v1/system/bootstrap" && r.Method == http.MethodPost {
 		gw.handleSystemBootstrap(w, r)
 		return
