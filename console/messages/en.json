@@ -1949,5 +1949,85 @@
       "role": "Role",
       "noData": "No statistics available"
     }
+  },
+  "ccm": {
+    "title": "Continuous Compliance Monitoring",
+    "description": "Automated control checks for DORA, HIPAA, SOX, and ISO 27001 compliance",
+    "tabs": {
+      "controls": "Controls",
+      "history": "History",
+      "actions": "Actions"
+    },
+    "controls": {
+      "title": "Control Status",
+      "framework": "Framework",
+      "control": "Control",
+      "status": "Status",
+      "metric": "Metric",
+      "threshold": "Threshold",
+      "lastChecked": "Last Checked",
+      "noControls": "No controls configured",
+      "statusPass": "Pass",
+      "statusWarn": "Warn",
+      "statusFail": "Fail",
+      "frameworkAll": "All Frameworks"
+    },
+    "history": {
+      "title": "Compliance Score Trend",
+      "description": "Historical compliance scores by framework",
+      "days30": "Last 30 Days",
+      "days90": "Last 90 Days",
+      "score": "Score",
+      "noData": "No history data"
+    },
+    "actions": {
+      "title": "Manual Actions",
+      "description": "Trigger compliance checks and export reports",
+      "runNow": "Run All Checks",
+      "runFramework": "Run by Framework",
+      "runSingle": "Run Single Control",
+      "exportReport": "Export Report",
+      "exportCsv": "CSV",
+      "exportJson": "JSON",
+      "running": "Running checks...",
+      "runSuccess": "Compliance checks completed",
+      "lastRun": "Last Run",
+      "nextRun": "Next Scheduled Run",
+      "schedule": "Schedule: every"
+    }
+  },
+  "sodMatrix": {
+    "title": "Separation of Duties Matrix",
+    "description": "Define and manage conflicting role pairs to enforce SoD policies",
+    "tabs": {
+      "matrix": "Conflict Matrix",
+      "rules": "Rule Management"
+    },
+    "matrix": {
+      "title": "Role Conflict Matrix",
+      "description": "Red cells indicate conflicting role pairs",
+      "noRoles": "No roles found to build matrix",
+      "conflict": "Conflict",
+      "noConflict": "OK"
+    },
+    "rules": {
+      "title": "SoD Rules",
+      "description": "Description",
+      "roleA": "Role A",
+      "roleB": "Role B",
+      "severity": "Severity",
+      "addRule": "Add Rule",
+      "noRules": "No SoD rules configured",
+      "confirmDelete": "Delete this SoD rule?",
+      "save": "Save",
+      "severityHigh": "High",
+      "severityMedium": "Medium",
+      "severityLow": "Low",
+      "saved": "SoD rule saved successfully",
+      "deleted": "SoD rule deleted",
+      "placeholderDesc": "e.g. Cannot approve payments and reconcile accounts",
+      "selectRoleA": "Select Role A",
+      "selectRoleB": "Select Role B"
+    }
   }
 }
