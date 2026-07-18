@@ -141,8 +141,23 @@ func (h *Handler) handleBreakGlassActivate(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	// Audit: break-glass activated.
-	h.publishAuditEvent("break_glass.activate", "success", tc.TenantID, requesterID)
+	// Audit: break-glass activated with structured privileged operation context (KB-279).
+	h.publishAuditEventWithMeta(r,
+		"break_glass.activate", "success",
+		"privileged_operation", "break-glass activation", rec.ID,
+		map[string]any{
+			"op_type":         "break_glass",
+			"operator_id":     requesterID,
+			"operator_name":   rec.RequesterName,
+			"target_resource": req.Scope,
+			"elevated_role":   "break_glass",
+			"reason":          req.Reason,
+			"duration_min":    req.DurationMinutes,
+			"scopes_before":   []string{},
+			"scopes_after":    []string{"break_glass:" + req.Scope},
+			"scopes_delta":    []string{"+" + req.Scope},
+		},
+	)
 
 	// In production, send SOC webhook notification here.
 	slog.Warn("BREAK-GLASS activated", "user_id", requesterID, "tenant_id", tc.TenantID, "reason", req.Reason, "scope", req.Scope, "duration_min", req.DurationMinutes)
