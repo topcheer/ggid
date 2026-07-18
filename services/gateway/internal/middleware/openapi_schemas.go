@@ -403,8 +403,8 @@ func errResp(code, desc string) (string, EnhancedResponse) {
 
 // enhancedOp creates an EnhancedOperation with standard responses.
 func enhancedOp(tags []string, summary, desc string) *EnhancedOperation {
-	resp400, _ := errResp("400", "Bad Request")
-	resp401, _ := errResp("401", "Unauthorized")
+	_, resp400 := errResp("400", "Bad Request")
+	_, resp401 := errResp("401", "Unauthorized")
 	return &EnhancedOperation{
 		Tags:        tags,
 		Summary:     summary,

@@ -712,3 +712,80 @@ var (
 	_ = stdcrypto.Reader
 	_ = (*rsa.PrivateKey)(nil)
 )
+
+func TestUpdateAgentScopes_Success(t *testing.T) {
+	ResetAgentStore()
+	svc, _, _, _ := newTestOAuthService()
+	agent, err := svc.RegisterAgent(context.Background(), &AgentRegistration{
+		TenantID: testTenantID, Name: "scoped-agent", Type: AgentTypeCodingAssistant,
+		OwnerUserID: uuid.New(),
+		AllowedScopes: []string{"users:read"},
+	})
+	if err != nil {
+		t.Fatalf("RegisterAgent: %v", err)
+	}
+
+	// Update scopes
+	err = svc.UpdateAgentScopes(context.Background(), agent.ID, []string{"users:read", "audit:read", "invalid:scope"})
+	if err != nil {
+		t.Fatalf("UpdateAgentScopes: %v", err)
+	}
+
+	// Verify scopes were filtered and stored
+	scopes, err := svc.GetAgentScopes(context.Background(), agent.ID)
+	if err != nil {
+		t.Fatalf("GetAgentScopes: %v", err)
+	}
+	if len(scopes) != 2 {
+		t.Errorf("expected 2 valid scopes (invalid filtered), got %d: %v", len(scopes), scopes)
+	}
+}
+
+func TestUpdateAgentScopes_NotFound(t *testing.T) {
+	ResetAgentStore()
+	svc, _, _, _ := newTestOAuthService()
+	err := svc.UpdateAgentScopes(context.Background(), uuid.New(), []string{"users:read"})
+	if err == nil {
+		t.Error("expected error for non-existent agent")
+	}
+}
+
+func TestGetAgentScopes_NotFound(t *testing.T) {
+	ResetAgentStore()
+	svc, _, _, _ := newTestOAuthService()
+	_, err := svc.GetAgentScopes(context.Background(), uuid.New())
+	if err == nil {
+		t.Error("expected error for non-existent agent")
+	}
+}
+
+func TestValidateAgentScopes(t *testing.T) {
+	tests := []struct {
+		input []string
+		want  int
+	}{
+		{[]string{"users:read", "users:write"}, 2},
+		{[]string{"users:read", "invalid:scope", "audit:read"}, 2},
+		{[]string{}, 0},
+		{[]string{"  ", "users:read  "}, 1},
+	}
+	for _, tt := range tests {
+		got := ValidateAgentScopes(tt.input)
+		if len(got) != tt.want {
+			t.Errorf("ValidateAgentScopes(%v) = %v (len %d), want len %d", tt.input, got, len(got), tt.want)
+		}
+	}
+}
+
+func TestStandardAgentScopes_Contains(t *testing.T) {
+	required := []string{"users:read", "users:write", "roles:read", "audit:read", "agents:read"}
+	validMap := make(map[string]bool)
+	for _, s := range StandardAgentScopes {
+		validMap[s] = true
+	}
+	for _, r := range required {
+		if !validMap[r] {
+			t.Errorf("StandardAgentScopes missing required scope: %s", r)
+		}
+	}
+}
