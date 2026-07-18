@@ -686,6 +686,23 @@ func (h *HTTPHandler) listUsers(ctx context.Context, w http.ResponseWriter, r *h
 		filter.SortDesc = false
 	}
 
+	// Cache: only cache default list queries (no complex filters) for 30s.
+	cacheKey := ""
+	if filter.Search == "" && filter.Status == nil && filter.CreatedAfter == nil &&
+		filter.CreatedBefore == nil && filter.LastLoginAfter == nil &&
+		filter.OrgID == nil && filter.RoleID == nil &&
+		filter.PageSize == 50 && filter.Offset == 0 {
+		if tc, e := ggidtenant.FromContext(ctx); e == nil {
+			cacheKey = "users:default:" + tc.TenantID.String()
+			if cached, ok := globalTTLCache.Get(cacheKey); ok {
+				w.Header().Set("Content-Type", "application/json")
+				w.Header().Set("X-Cache", "HIT")
+				w.Write(cached)
+				return
+			}
+		}
+	}
+
 	result, err := h.svc.ListUsers(ctx, filter)
 	if err != nil {
 		writeServiceError(w, err)
@@ -696,6 +713,19 @@ func (h *HTTPHandler) listUsers(ctx context.Context, w http.ResponseWriter, r *h
 	for i, u := range result.Users {
 		users[i] = userToJSON(u)
 	}
+
+	// Cache the response if caching is enabled.
+	if cacheKey != "" {
+		respBody := map[string]any{
+			"users":       users,
+			"total":       result.Total,
+			"next_offset": result.NextOffset,
+		}
+		if data, err := json.Marshal(respBody); err == nil {
+			globalTTLCache.Set(cacheKey, data, 30*time.Second)
+		}
+	}
+
 	writeJSON(w, http.StatusOK, map[string]any{
 		"users":       users,
 		"total":       result.Total,
@@ -709,6 +739,9 @@ func (h *HTTPHandler) deleteUser(ctx context.Context, userID uuid.UUID, w http.R
 		return
 	}
 	writeJSON(w, http.StatusOK, map[string]string{"status": "deleted"})
+
+	// Invalidate user list cache.
+	globalTTLCache.Invalidate("users:default:")
 
 	if tc, e := ggidtenant.FromContext(ctx); e == nil {
 		h.publishAuditEvent("user.delete", "success", "user", userID, tc.TenantID, uuid.Nil)
