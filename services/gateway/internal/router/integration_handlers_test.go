@@ -8,9 +8,6 @@ import (
 	"testing"
 )
 
-func stringReader(s string) *strings.Reader {
-	return strings.NewReader(s)
-}
 
 func TestWebhookCatalog(t *testing.T) {
 	gw := &Gateway{}
