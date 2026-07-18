@@ -46,7 +46,7 @@ open http://localhost:3000
 ### 3. Login
 
 ```
-Email:    admin@ggid.dev
+Username: admin
 Password: Admin@123456
 ```
 
@@ -56,11 +56,13 @@ Password: Admin@123456
 # Login and get token
 TOKEN=$(curl -s -X POST http://localhost:8080/api/v1/auth/login \
   -H "Content-Type: application/json" \
-  -d '{"email":"admin@ggid.dev","password":"Admin@123456"}' | jq -r '.access_token')
+  -H "X-Tenant-ID: 00000000-0000-0000-0000-000000000001" \
+  -d '{"username":"admin","password":"Admin@123456"}' | jq -r '.access_token')
 
 # List users
 curl -s http://localhost:8080/api/v1/users \
-  -H "Authorization: Bearer $TOKEN" | jq '.[0]'
+  -H "Authorization: Bearer $TOKEN" \
+  -H "X-Tenant-ID: 00000000-0000-0000-0000-000000000001" | jq '.users[0]'
 ```
 
 ### 5. SDK Quickstarts
@@ -83,8 +85,8 @@ graph TB
     Auth[Auth :9001]
     ID[Identity :8081]
     OAuth[OAuth :9005]
-    Policy[Policy :8084]
-    Audit[Audit :8085]
+    Policy[Policy :8070]
+    Audit[Audit :8072]
     PG[(PostgreSQL)]
     Redis[(Redis)]
     NATS[(NATS)]
