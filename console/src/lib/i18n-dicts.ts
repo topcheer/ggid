@@ -9129,6 +9129,14 @@ export const de: Record<string, string> = {
 };
 
 export const en: Record<string, string> = {
+  "nav.helpAbout": "About GGID",
+  "nav.helpApiDocs": "API Reference",
+  "nav.helpBuild": "Build",
+  "nav.helpGithubIssues": "Report Issue",
+  "nav.helpMenu": "Help",
+  "nav.helpQuickStart": "Quick Start",
+  "nav.helpSwagger": "Swagger UI",
+  "nav.helpVersion": "Version",
   "importEnhanced.preCheck.checking": "Checking data...",
   "importEnhanced.preCheck.duplicates": "Duplicates",
   "importEnhanced.preCheck.fixFirst": "Please fix issues before importing",

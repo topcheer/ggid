@@ -12,6 +12,7 @@ import {
   Activity, PieChart, Database, Lock, Crown, Zap, ShieldCheck,
   Scroll, FileText, Terminal, Building, HelpCircle, AlertTriangle,
   Layers, Grid3x3, CalendarClock, GitBranch, ExternalLink,
+  Rocket, Info,
 } from "lucide-react";
 import { useTheme } from "@/lib/theme";
 import { useI18n } from "@/lib/i18n";
@@ -222,7 +223,8 @@ export function Sidebar() {
             </button>
             <LanguageSwitcher compact />
             <div className="flex-1" />
-            <Link href="/docs" className="flex h-8 w-8 items-center justify-center rounded-lg text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800" title="Docs"><HelpCircle className="h-4 w-4" /></Link>
+            {/* Help dropdown */}
+            <HelpDropdown t={t} />
           </div>
 
           {/* Health */}
@@ -246,5 +248,73 @@ export function Sidebar() {
         </div>
       </aside>
     </>
+  );
+}
+
+// ============ Help Dropdown ============
+
+const BUILD_VERSION = "1.0.0";
+const BUILD_DATE = new Date().toISOString().split("T")[0];
+
+function HelpDropdown({ t }: { t: (key: string) => string }) {
+  const [open, setOpen] = useState(false);
+
+  const items = [
+    { label: t("nav.helpQuickStart"), icon: Rocket, href: "/docs" },
+    { label: t("nav.helpApiDocs"), icon: BookOpen, href: "/docs" },
+    { label: t("nav.helpSwagger"), icon: Terminal, href: "http://localhost:8080/docs", external: true },
+    { label: t("nav.helpGithubIssues"), icon: ExternalLink, href: "https://github.com/topcheer/ggid/issues", external: true },
+  ];
+
+  return (
+    <div className="relative">
+      <button onClick={() => setOpen(!open)}
+        className="flex h-8 w-8 items-center justify-center rounded-lg text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800"
+        title={t("nav.helpMenu")}>
+        {open ? <ChevronDown className="h-4 w-4" /> : <HelpCircle className="h-4 w-4" />}
+      </button>
+
+      {open && (
+        <>
+          {/* Backdrop */}
+          <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
+
+          {/* Dropdown */}
+          <div className="absolute bottom-10 right-0 z-50 w-56 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-xl py-1">
+            <div className="px-3 py-2 border-b border-gray-100 dark:border-gray-800">
+              <span className="text-xs font-semibold uppercase tracking-wider text-gray-400">{t("nav.helpMenu")}</span>
+            </div>
+
+            {items.map((item, i) => {
+              const Icon = item.icon;
+              return item.external ? (
+                <a key={i} href={item.href} target="_blank" rel="noopener noreferrer"
+                  className="flex items-center gap-3 px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800"
+                  onClick={() => setOpen(false)}>
+                  <Icon className="w-4 h-4 text-gray-400" />{item.label}
+                </a>
+              ) : (
+                <Link key={i} href={item.href}
+                  className="flex items-center gap-3 px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800"
+                  onClick={() => setOpen(false)}>
+                  <Icon className="w-4 h-4 text-gray-400" />{item.label}
+                </Link>
+              );
+            })}
+
+            {/* Version info */}
+            <div className="px-3 py-2 border-t border-gray-100 dark:border-gray-800 mt-1">
+              <div className="flex items-center gap-2 text-xs text-gray-400">
+                <Info className="w-3 h-3" />
+                <span>{t("nav.helpVersion")} {BUILD_VERSION}</span>
+              </div>
+              <div className="text-xs text-gray-400 mt-0.5 pl-5">
+                {t("nav.helpBuild")} {BUILD_DATE}
+              </div>
+            </div>
+          </div>
+        </>
+      )}
+    </div>
   );
 }

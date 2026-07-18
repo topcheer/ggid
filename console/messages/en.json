@@ -66,7 +66,15 @@
     "tenants": "Tenants",
     "integrationPlayground": "Integration Playground",
     "docs": "Documentation",
-    "setup": "Setup Wizard"
+    "setup": "Setup Wizard",
+    "helpMenu": "Help",
+    "helpQuickStart": "Quick Start",
+    "helpApiDocs": "API Reference",
+    "helpSwagger": "Swagger UI",
+    "helpGithubIssues": "Report Issue",
+    "helpVersion": "Version",
+    "helpBuild": "Build",
+    "helpAbout": "About GGID"
   },
   "common": {
     "loading": "Loading...",
