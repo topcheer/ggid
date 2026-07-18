@@ -989,10 +989,12 @@ func serveSwaggerUI(w http.ResponseWriter, _ *http.Request) {
 	_, _ = w.Write([]byte(swaggerHTML))
 }
 
-// serveOpenAPISpec writes the OpenAPI 3.0 JSON spec.
+// serveOpenAPISpec writes the OpenAPI 3.1 JSON spec (dynamically generated
+// from route scanning + schema definitions).
 func serveOpenAPISpec(w http.ResponseWriter, _ *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
-	_, _ = w.Write([]byte(openAPISpec))
+	spec := middleware.GenerateOpenAPISpec()
+	_ = json.NewEncoder(w).Encode(spec)
 }
 
 // handleDashboardStats returns aggregate dashboard statistics.

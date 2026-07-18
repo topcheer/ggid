@@ -22,10 +22,10 @@ type OpenAPIServer struct {
 }
 
 type OpenAPIPath struct {
-	Get    *OpenAPIOperation `json:"get,omitempty"`
-	Post   *OpenAPIOperation `json:"post,omitempty"`
-	Put    *OpenAPIOperation `json:"put,omitempty"`
-	Delete *OpenAPIOperation `json:"delete,omitempty"`
+	Get    any `json:"get,omitempty"`
+	Post   any `json:"post,omitempty"`
+	Put    any `json:"put,omitempty"`
+	Delete any `json:"delete,omitempty"`
 }
 
 type OpenAPIOperation struct {
@@ -103,6 +103,8 @@ func generatePaths(sec []map[string][]string) map[string]OpenAPIPath {
 	addOrgPaths(m)
 	addAdminPaths(m)
 	addGatewayPaths(m)
+	// Overwrite top 50 core endpoints with full request/response schemas
+	registerEnhancedPaths(m)
 	return m
 }
 
