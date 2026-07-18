@@ -241,6 +241,10 @@
 | KB-227 | **k6 load test suite** (5 flows: login/token/user/policy/risk) | devops | P0 | load-testing | 4d |
 | KB-228 | **Baseline metrics + capacity model** (1K/10K/100K users → infra) | devops | P0 | load-testing | 2d |
 | KB-229 | **Soak + spike + DB index audit** (24h + 20x burst + tuning) | devops | P1 | load-testing | 4d |
+| KB-230 | **PG streaming replication + failover** (active-passive) | devops | P0 | multi-region | 4d |
+| KB-231 | **GeoDNS + region discovery API** (geo-routing) | devops | P1 | multi-region | 2d |
+| KB-232 | **Bidirectional logical replication + LWW conflict resolution** (active-active) | devops | P2 | multi-region | 5d |
+| KB-233 | **Per-tenant data residency** (publication filters for GDPR/PIPL) | backend | P2 | multi-region | 3d |
 | KB-038 | **Journey definition store** (PostgreSQL) | backend | P0 | identity-orchestration | 3d |
 | KB-039 | **Journey definition parser** (YAML JDL) | backend | P0 | identity-orchestration | 4d |
 | KB-040 | **Journey engine** (state machine executor) | backend | P0 | identity-orchestration | 5d |
@@ -370,6 +374,7 @@
 | CI/CD Pipeline & GitOps Hardening | DONE | docs/research/cicd-pipeline-hardening.md |
 | Disaster Recovery & Backup Automation | DONE | docs/research/disaster-recovery-backup.md |
 | Load Testing Strategy & Capacity Planning | DONE | docs/research/load-testing-capacity-planning.md |
+| Multi-Region Active-Active Deployment | DONE | docs/research/multi-region-active-active.md |
 | OAuth Client Lifecycle Management (DCR) | NEXT | — |
 
 ---
