@@ -157,3 +157,111 @@ func SetSecureCookie(w http.ResponseWriter, name, value, path string, maxAge int
 		SameSite: http.SameSiteStrictMode,
 	})
 }
+
+// SecurityHeadersConfig allows configurable security headers per tenant.
+type SecurityHeadersConfig struct {
+	Enabled             bool                      `json:"enabled"`
+	FrameOption         string                    `json:"frame_option"`
+	FrameDeny           bool                      `json:"frame_deny"`
+	CSP                 string                    `json:"csp"`
+	HSTS                string                    `json:"hsts"`
+	ContentTypeNosniff  bool                      `json:"content_type_nosniff"`
+	HSTSMaxAge          int                       `json:"hsts_max_age"`
+	FrameAllowFrom      string                    `json:"frame_allow_from"`
+	PerTenant           map[string]string         `json:"per_tenant"`
+	PerTenantOverrides  map[string]*SecurityHeadersConfig `json:"per_tenant_overrides"`
+}
+
+// DefaultSecurityHeadersConfig returns the default security headers configuration.
+func DefaultSecurityHeadersConfig() *SecurityHeadersConfig {
+	return &SecurityHeadersConfig{
+		Enabled:            true,
+		FrameOption:        "DENY",
+		FrameDeny:          true,
+		CSP:                "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'",
+		HSTS:               "max-age=31536000; includeSubDomains",
+		ContentTypeNosniff: true,
+	}
+}
+
+// SecurityHeadersConfigurable returns middleware that applies configurable security headers.
+func SecurityHeadersConfigurable(cfg *SecurityHeadersConfig) func(http.Handler) http.Handler {
+	if cfg == nil {
+		cfg = DefaultSecurityHeadersConfig()
+	}
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			active := cfg
+			// Check per-tenant override
+			if cfg.PerTenantOverrides != nil {
+				tenantID := r.Header.Get("X-Tenant-ID")
+				if override, ok := cfg.PerTenantOverrides[tenantID]; ok {
+					active = mergeSecurityHeaders(cfg, override)
+				}
+			}
+			if active.Enabled {
+				if active.FrameDeny {
+					w.Header().Set("X-Frame-Options", "DENY")
+				} else if active.FrameAllowFrom != "" {
+					w.Header().Set("X-Frame-Options", "ALLOW-FROM "+active.FrameAllowFrom)
+				}
+				if active.CSP != "" {
+					w.Header().Set("Content-Security-Policy", active.CSP)
+				}
+				if active.HSTS != "" {
+					w.Header().Set("Strict-Transport-Security", active.HSTS)
+				}
+				if active.ContentTypeNosniff {
+					w.Header().Set("X-Content-Type-Options", "nosniff")
+				}
+				w.Header().Set("X-XSS-Protection", "1; mode=block")
+				w.Header().Set("Referrer-Policy", "strict-origin-when-cross-origin")
+			}
+			next.ServeHTTP(w, r)
+		})
+	}
+}
+
+// mergeSecurityHeaders merges an override config onto a base config.
+// nil base → use defaults; nil override → return base unchanged.
+func mergeSecurityHeaders(base, override *SecurityHeadersConfig) *SecurityHeadersConfig {
+	if base == nil && override != nil {
+		return override
+	}
+	if base == nil {
+		return DefaultSecurityHeadersConfig()
+	}
+	if override == nil {
+		return base
+	}
+	merged := &SecurityHeadersConfig{
+		Enabled:            base.Enabled,
+		FrameOption:        base.FrameOption,
+		FrameDeny:          base.FrameDeny,
+		CSP:                base.CSP,
+		HSTS:               base.HSTS,
+		ContentTypeNosniff: base.ContentTypeNosniff,
+	}
+	if override.Enabled {
+		merged.Enabled = true
+	}
+	if override.FrameOption != "" {
+		merged.FrameOption = override.FrameOption
+	}
+	if override.FrameDeny {
+		merged.FrameDeny = true
+	}
+	if override.CSP != "" {
+		merged.CSP = override.CSP
+	}
+	if override.HSTS != "" {
+		merged.HSTS = override.HSTS
+	}
+	if override.ContentTypeNosniff {
+		merged.ContentTypeNosniff = true
+	}
+	if base.PerTenantOverrides != nil {
+		merged.PerTenantOverrides = base.PerTenantOverrides
+	}
+	return merged
+}
