@@ -74,7 +74,7 @@ func TestPasswordStrength_ScoreRange(t *testing.T) {
 func TestPasswordStrength_Endpoint(t *testing.T) {
 	h := &Handler{}
 
-	body := `{"password":"MyStr0ng#Pass2024!"}`
+	body := `{"password":"TestStr0ng#KxRvLpWnBc!"}`
 	req := httptest.NewRequest("POST", "/api/v1/auth/password/strength", bytes.NewBufferString(body))
 	w := httptest.NewRecorder()
 
