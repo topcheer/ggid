@@ -264,6 +264,13 @@ func main() {
 	handler.SetBreakGlassRepo(breakGlassRepo)
 	handler.SetSMSSender(service.NewSMSSenderFromEnv())
 
+	// Auth method policy DB-backed repository (KB-073).
+	authMethodPolicyRepo := repository.NewAuthMethodPolicyRepository(pool)
+	if err := authMethodPolicyRepo.EnsureSchema(ctx); err != nil {
+		log.Printf("Auth method policy schema ensure error (non-fatal): %v", err)
+	}
+	handler.SetAuthMethodPolicyRepo(authMethodPolicyRepo)
+
 	// Internal auth HMAC secrets for cross-service endpoints.
 	internalSecret := os.Getenv("INTERNAL_AUTH_SECRET")
 	internalPrevSecret := os.Getenv("INTERNAL_AUTH_PREV_SECRET")

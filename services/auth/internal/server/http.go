@@ -44,6 +44,7 @@ type Handler struct {
 	waCredStore    webauthn.CredentialStore
 	revocationMgr  *service.SessionRevocationManager
 	breakGlassRepo  *repository.BreakGlassRepository
+	authMethodPolicyRepo *repository.AuthMethodPolicyRepository
 	smsSender           service.SMSSender
 	memMapRepo          *authMemoryMapRepo
 	verificationRepo    *verificationRepo
@@ -204,6 +205,7 @@ func (h *Handler) registerRoutes() {
 	h.mux.HandleFunc("/api/v1/auth/sessions/revoke", h.handleRevokeSessions)
 	h.mux.HandleFunc("/api/v1/auth/sessions/revoke-user", h.handleRevokeUser)
 	h.mux.HandleFunc("/api/v1/auth/invalidate-sessions/", h.handleInvalidateSessions)
+	h.mux.HandleFunc("/api/v1/auth/multi-hash/verify", h.handleMultiHashVerify)
 	h.mux.HandleFunc("/api/v1/auth/internal/revoke-user", h.handleInternalRevokeUser)
 	h.mux.HandleFunc("/api/v1/auth/password-pepper/rotate", h.handlePepperRotate)
 	h.mux.HandleFunc("/api/v1/auth/password-pepper/status", h.handlePepperStatus)
@@ -468,6 +470,8 @@ func (h *Handler) registerRoutes() {
 	h.mux.HandleFunc("/api/v1/auth/certificates", h.tsHandler.HandleCertificates)
 	h.mux.HandleFunc("/api/v1/auth/certificates/", h.tsHandler.HandleCertificates)
 	h.mux.HandleFunc("/api/v1/auth/mtls/config", h.tsHandler.HandleMTLSConfig)
+	h.mux.HandleFunc("/api/v1/auth/method-policies", h.handleAuthMethodPolicies)
+	h.mux.HandleFunc("/api/v1/auth/method-policies/", h.handleAuthMethodPolicies)
 
 	// Batch 3C: 14 additional auth endpoints
 	h.registerBatch3CRoutes()
