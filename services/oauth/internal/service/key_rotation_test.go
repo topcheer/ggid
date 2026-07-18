@@ -114,3 +114,82 @@ func TestStartRotationTicker(t *testing.T) {
 		t.Error("expected key to rotate via ticker")
 	}
 }
+
+func TestKeyAge(t *testing.T) {
+	key, _ := rsa.GenerateKey(rand.Reader, 2048)
+	kp := NewRotatingKeyProvider(key, 1*time.Hour)
+
+	// Key just initialized: age should be very small (not 0)
+	age1 := kp.KeyAge()
+	if age1 < 0 || age1 > 1*time.Second {
+		t.Errorf("expected small age at init, got %v", age1)
+	}
+
+	// Rotate and check age resets to near-zero
+	_ = kp.RotateKey()
+	age2 := kp.KeyAge()
+	if age2 <= 0 || age2 > 1*time.Second {
+		t.Errorf("expected small age after rotation, got %v", age2)
+	}
+}
+
+func TestRotatedAt(t *testing.T) {
+	key, _ := rsa.GenerateKey(rand.Reader, 2048)
+	kp := NewRotatingKeyProvider(key, 1*time.Hour)
+
+	// rotatedAt is set at init time now
+	if kp.RotatedAt().IsZero() {
+		t.Error("expected non-zero RotatedAt at init")
+	}
+	_ = kp.RotateKey()
+	if kp.RotatedAt().IsZero() {
+		t.Error("expected non-zero RotatedAt after rotation")
+	}
+}
+
+func TestStartAutoRotation_RotatesWhenOld(t *testing.T) {
+	key, _ := rsa.GenerateKey(rand.Reader, 2048)
+	kp := NewRotatingKeyProvider(key, 1*time.Hour)
+
+	oldKID := kp.KeyID()
+	var auditCalls []struct{ old, new string }
+
+	// maxAge = 50ms, checkInterval = 20ms — should rotate after ~50ms
+	stop := kp.StartAutoRotation(20*time.Millisecond, 50*time.Millisecond, func(old, new string) {
+		auditCalls = append(auditCalls, struct{ old, new string }{old, new})
+	})
+	time.Sleep(120 * time.Millisecond) // enough for 1 rotation, not 2
+	stop()
+
+	newKID := kp.KeyID()
+	if newKID == oldKID {
+		t.Error("expected key to auto-rotate when age exceeds maxAge")
+	}
+	if len(auditCalls) == 0 {
+		t.Fatal("expected at least one audit callback on rotation")
+	}
+	// First audit call should have the original old KID
+	if auditCalls[0].old != oldKID {
+		t.Errorf("first audit old_kid: want %s, got %s", oldKID, auditCalls[0].old)
+	}
+	// Last audit call should have the current new KID
+	if auditCalls[len(auditCalls)-1].new != newKID {
+		t.Errorf("last audit new_kid: want %s, got %s", newKID, auditCalls[len(auditCalls)-1].new)
+	}
+}
+
+func TestStartAutoRotation_SkipsWhenNew(t *testing.T) {
+	key, _ := rsa.GenerateKey(rand.Reader, 2048)
+	kp := NewRotatingKeyProvider(key, 1*time.Hour)
+
+	oldKID := kp.KeyID()
+
+	// maxAge = 10s, checkInterval = 50ms — should NOT rotate
+	stop := kp.StartAutoRotation(50*time.Millisecond, 10*time.Second, nil)
+	time.Sleep(200 * time.Millisecond)
+	stop()
+
+	if kp.KeyID() != oldKID {
+		t.Error("expected key to NOT rotate when age < maxAge")
+	}
+}

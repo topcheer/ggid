@@ -25,6 +25,7 @@ type RotatingKeyProvider struct {
 	previous *rsa.PrivateKey
 	previousID string
 	rotatedAt time.Time
+	createdAt time.Time
 	gracePeriod time.Duration
 }
 
@@ -33,9 +34,12 @@ func NewRotatingKeyProvider(initialKey *rsa.PrivateKey, gracePeriod time.Duratio
 	if gracePeriod == 0 {
 		gracePeriod = 24 * time.Hour
 	}
+	now := time.Now()
 	return &RotatingKeyProvider{
 		current:    initialKey,
 		currentID:  generateKeyID(initialKey),
+		createdAt:  now,
+		rotatedAt:  now, // initialize so KeyAge works from startup
 		gracePeriod: gracePeriod,
 	}
 }
@@ -171,6 +175,61 @@ func (r *RotatingKeyProvider) StartRotationTicker(interval time.Duration) func()
 			case <-ticker.C:
 				if err := r.RotateKey(); err != nil {
 					slog.Error("scheduled key rotation failed", "error", err)
+				}
+				r.CleanupExpired()
+			case <-done:
+				ticker.Stop()
+				return
+			}
+		}
+	}()
+	return func() { close(done) }
+}
+
+// RotatedAt returns when the key was last rotated.
+func (r *RotatingKeyProvider) RotatedAt() time.Time {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+	return r.rotatedAt
+}
+// KeyAge returns how long the current key has been in use.
+func (r *RotatingKeyProvider) KeyAge() time.Duration {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+	return time.Since(r.rotatedAt)
+}
+
+// StartAutoRotation starts a background goroutine that checks key age every
+// checkInterval and rotates the key if it exceeds maxAge. An optional auditFn
+// is called after each successful rotation (e.g., to publish an audit event).
+// Returns a stop function.
+func (r *RotatingKeyProvider) StartAutoRotation(checkInterval, maxAge time.Duration, auditFn func(oldKid, newKid string)) func() {
+	if checkInterval <= 0 {
+		checkInterval = 1 * time.Hour
+	}
+	if maxAge <= 0 {
+		maxAge = 90 * 24 * time.Hour // default: 90 days
+	}
+	ticker := time.NewTicker(checkInterval)
+	done := make(chan struct{})
+	go func() {
+		for {
+			select {
+			case <-ticker.C:
+				age := r.KeyAge()
+				if age > maxAge {
+					oldKid := r.KeyID()
+					if err := r.RotateKey(); err != nil {
+						slog.Error("auto key rotation failed", "error", err, "key_age", age.String())
+						continue
+					}
+					newKid := r.KeyID()
+					slog.Info("auto key rotation completed",
+						"old_kid", oldKid, "new_kid", newKid,
+						"key_age", age.String(), "max_age", maxAge.String())
+					if auditFn != nil {
+						auditFn(oldKid, newKid)
+					}
 				}
 				r.CleanupExpired()
 			case <-done:

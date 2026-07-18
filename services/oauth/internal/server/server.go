@@ -98,8 +98,28 @@ func NewWithKeyProvider(cfg *conf.Config, kp crypto.KeyProvider) (*Server, error
 	// HSM/KMS providers cannot be rotated in-process, so use them directly.
 	if rsaPriv, ok := kp.Signer().(*rsa.PrivateKey); ok {
 		rotatingKP = service.NewRotatingKeyProvider(rsaPriv, 24*time.Hour)
-		stopTicker = rotatingKP.StartRotationTicker(24 * time.Hour)
-		log.Printf("OAuth key rotation enabled (24h interval, 24h grace period)")
+
+		// Auto-rotation: check key age every hour, rotate if older than maxAge.
+		// JWT_KEY_ROTATION_DAYS configures the max key age (default: 90 days).
+		rotationDays := 90
+		if d := os.Getenv("JWT_KEY_ROTATION_DAYS"); d != "" {
+			if parsed, err := strconv.Atoi(d); err == nil && parsed > 0 {
+				rotationDays = parsed
+			}
+		}
+		maxAge := time.Duration(rotationDays) * 24 * time.Hour
+		checkInterval := 1 * time.Hour
+
+		stopTicker = rotatingKP.StartAutoRotation(checkInterval, maxAge, func(oldKid, newKid string) {
+			slog.Info("JWT key auto-rotated (audit)",
+				"event", "key.rotated",
+				"key_type", "jwt_signing",
+				"old_kid", oldKid,
+				"new_kid", newKid,
+				"rotation_days", rotationDays,
+			)
+		})
+		log.Printf("OAuth auto key rotation enabled (max age %dd, check every 1h, 24h grace period)", rotationDays)
 		kp = rotatingKP
 	} else {
 		log.Printf("OAuth key provider is not a local RSA key; rotation disabled")

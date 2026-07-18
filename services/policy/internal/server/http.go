@@ -478,6 +478,9 @@ func (s *HTTPServer) handleAssignRole(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Audit: record role assignment.
+	s.publishAuditEvent("role.assigned", "success", "role", roleID, userID)
+
 	writeJSON(w, http.StatusOK, map[string]any{
 		"status":  "assigned",
 		"role_id": req.RoleID,
