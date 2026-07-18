@@ -876,3 +876,55 @@ curl /api/v1/audit/threat-intel/stats -H "Authorization: Bearer $TOKEN"
 **业务价值**: HIGH（ITDR 从纯内部规则 → 内外联动，检测准确率显著提升）
 **实现难度**: Medium（外部 API 适配 + 定时采集 + ITDR 注入）
 **工作量**: ~4d
+
+---
+
+## Round 39 — 2026-07-18: Identity Deception + A2A Protocol
+
+### KB-230: Honey credential generation + detection [P2]
+**Type**: Backend (services/audit)
+**Research**: docs/research/identity-deception-canary-tokens.md
+Generate fake credential pairs, register in canary token registry (SHA-256 hash), detect usage at gateway auth layer. Any honey-credential login → ITDR Critical Alert with source IP capture.
+**Effort**: 2d
+
+### KB-231: Canary API key planting + monitoring [P2]
+**Type**: Backend (services/gateway)
+**Research**: docs/research/identity-deception-canary-tokens.md
+Generate fake API keys with distinct prefixes, monitor for usage across all API calls, alert on first use with full source attribution (IP, UA, geo).
+**Effort**: 2d
+
+### KB-232: Decoy account lifecycle management [P2]
+**Type**: Backend (services/identity)
+**Research**: docs/research/identity-deception-canary-tokens.md
+Create decoy admin/service accounts that trigger alerts when accessed or queried via SCIM/API. Integrate with ITDR for instant critical alerts.
+**Effort**: 1d
+
+### KB-233: Deception dashboard in console [P2]
+**Type**: Frontend (console/src)
+**Research**: docs/research/identity-deception-canary-tokens.md
+Console page (/security/deception) for planting tokens, viewing hit alerts, and managing decoy identities. Shows real-time canary hit map.
+**Effort**: 2d
+
+### KB-234: Agent Card endpoint (/.well-known/agent-card) [P1]
+**Type**: Backend (services/oauth)
+**Research**: docs/research/a2a-protocol-agent-auth.md
+Implement `/.well-known/agent-card` returning JSON Agent Card with capabilities, skills, and OAuth2 security schemes. Follows Google A2A protocol spec.
+**Effort**: 2d
+
+### KB-235: Skill-based OAuth scope management [P1]
+**Type**: Backend (services/oauth)
+**Research**: docs/research/a2a-protocol-agent-auth.md
+Extend scope management to support per-skill scopes (e.g., `read:employee_status`) mapping to specific agent capabilities. Enables fine-grained agent authorization.
+**Effort**: 3d
+
+### KB-236: A2A delegation chain validation [P1]
+**Type**: Backend (services/oauth)
+**Research**: docs/research/a2a-protocol-agent-auth.md
+Validate multi-hop delegation chains (User → AgentA → AgentB → Service) with proper audit trail. Extends existing token_exchange_delegation.go for A2A patterns.
+**Effort**: 3d
+
+### KB-237: A2A console — agent registry [P2]
+**Type**: Frontend (console/src)
+**Research**: docs/research/a2a-protocol-agent-auth.md
+Console page for registering external agents, viewing Agent Cards, managing inter-agent trust relationships. Route: /admin/agent-registry.
+**Effort**: 3d
