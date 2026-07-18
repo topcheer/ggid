@@ -39,7 +39,7 @@ export function useEvidenceExpiry(baseUrl: string = "") {
         method: "POST",
       });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      setItems((prev: any) => prev.map((e: any) => e.id === id ? { ...e, status: "valid", days_remaining: 90 } : e));
+      setItems((prev) => prev.map((e: any) => e.id === id ? { ...e, status: "valid", days_remaining: 90 } : e));
       return true;
     } catch (e: any) {
       setError(e.message);

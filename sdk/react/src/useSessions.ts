@@ -84,7 +84,7 @@ export function useSessions(): UseSessionsResult {
           headers: makeHeaders(),
         });
         if (!resp.ok) throw new Error(`Failed to revoke session (${resp.status})`);
-        setSessions((prev: any) => prev.filter((s: any) => s.id !== id));
+        setSessions((prev) => prev.filter((s: any) => s.id !== id));
         return true;
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Unknown error');

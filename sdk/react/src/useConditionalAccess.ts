@@ -96,7 +96,7 @@ export function useConditionalAccess(): UseConditionalAccessResult {
     try {
       const resp = await fetch(`${apiBaseUrl}/api/v1/policy/conditional-access/${id}`, { method: 'DELETE', headers: makeHeaders() });
       if (!resp.ok) throw new Error(`Delete failed (${resp.status})`);
-      setPolicies((prev: any) => prev.filter((p: any) => p.id !== id)); return true;
+      setPolicies((prev) => prev.filter((p: any) => p.id !== id)); return true;
     } catch (err) { setError(err instanceof Error ? err.message : 'Unknown'); return false; }
   }, [apiBaseUrl, makeHeaders]);
 

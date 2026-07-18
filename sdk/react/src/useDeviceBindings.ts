@@ -88,7 +88,7 @@ export function useDeviceBindings(): UseDeviceBindingsResult {
         });
         if (!resp.ok) throw new Error(`Failed to bind device (${resp.status})`);
         const created = await resp.json();
-        setBindings((prev: any) => [...prev, created]);
+        setBindings((prev) => [...prev, created]);
         return created;
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Unknown error');
@@ -105,7 +105,7 @@ export function useDeviceBindings(): UseDeviceBindingsResult {
           method: 'DELETE', headers: makeHeaders(),
         });
         if (!resp.ok) throw new Error(`Failed to unbind device (${resp.status})`);
-        setBindings((prev: any) => prev.filter((b: any) => b.id !== id));
+        setBindings((prev) => prev.filter((b: any) => b.id !== id));
         return true;
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Unknown error');

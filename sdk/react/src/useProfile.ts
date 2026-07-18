@@ -98,7 +98,7 @@ export function useProfile(): UseProfileResult {
       const data = await resp.json();
       const avatarUrl = data.avatar_url ?? data.url ?? '';
       if (avatarUrl) {
-        setProfile((prev: any) => prev ? { ...prev, avatar_url: avatarUrl } : prev);
+        setProfile((prev) => prev ? { ...prev, avatar_url: avatarUrl } : prev);
       }
       return avatarUrl || null;
     } catch (err) {

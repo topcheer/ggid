@@ -60,7 +60,7 @@ export function useRoleMining(baseUrl: string = "") {
         body: JSON.stringify({ user_id: userId, current_role: currentRole, recommended_role: recommendedRole }),
       });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      setAnalysis((prev: any) => prev.map((u: any) =>
+      setAnalysis((prev) => prev.map((u: any) =>
         u.user_id === userId
           ? { ...u, recommendations: u.recommendations.filter((r: any) => r.current_role !== currentRole || r.recommended_role !== recommendedRole) }
           : u

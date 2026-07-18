@@ -94,7 +94,7 @@ export function useRateLimits(tenantIdFilter?: string): UseRateLimitsResult {
         });
         if (!resp.ok) throw new Error(`Failed to create rate limit (${resp.status})`);
         const created = await resp.json();
-        setLimits((prev: any) => [...prev, created]);
+        setLimits((prev) => [...prev, created]);
         return created;
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Unknown error');
@@ -114,7 +114,7 @@ export function useRateLimits(tenantIdFilter?: string): UseRateLimitsResult {
         });
         if (!resp.ok) throw new Error(`Failed to update rate limit (${resp.status})`);
         const updated = await resp.json();
-        setLimits((prev: any) => prev.map((l: any) => (l.id === id ? updated : l)));
+        setLimits((prev) => prev.map((l: any) => (l.id === id ? updated : l)));
         return true;
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Unknown error');
@@ -132,7 +132,7 @@ export function useRateLimits(tenantIdFilter?: string): UseRateLimitsResult {
           headers: makeHeaders(),
         });
         if (!resp.ok) throw new Error(`Failed to delete rate limit (${resp.status})`);
-        setLimits((prev: any) => prev.filter((l: any) => l.id !== id));
+        setLimits((prev) => prev.filter((l: any) => l.id !== id));
         return true;
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Unknown error');

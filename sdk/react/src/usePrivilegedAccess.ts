@@ -42,7 +42,7 @@ export function usePrivilegedAccess(baseUrl: string = "") {
         body: JSON.stringify({ ids }),
       });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      setAccounts((prev: any) => prev.filter((a: any) => !ids.includes(a.id)));
+      setAccounts((prev) => prev.filter((a: any) => !ids.includes(a.id)));
       return true;
     } catch (e: any) {
       setError(e.message);

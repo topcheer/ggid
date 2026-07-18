@@ -68,7 +68,7 @@ export function GGIDProvider({
       .then(async (r) => {
         if (!r.ok) throw new Error('Failed to load user');
         const user = await r.json();
-        setState((prev: any) => ({ ...prev, user, isLoading: false }));
+        setState((prev) => ({ ...prev, user, isLoading: false }));
       })
       .catch(() => {
         // Token expired or invalid — clear and reset
@@ -98,7 +98,7 @@ export function GGIDProvider({
 
       const newTokenSet: GGIDTokenSet = await resp.json();
       saveTokenSet(storageKey, newTokenSet);
-      setState((prev: any) => ({ ...prev, tokenSet: newTokenSet }));
+      setState((prev) => ({ ...prev, tokenSet: newTokenSet }));
     } catch {
       // Refresh failed — logout
       saveTokenSet(storageKey, null);
@@ -130,7 +130,7 @@ export function GGIDProvider({
   }, [state.tokenSet?.access_token, state.tokenSet?.expires_at, refreshToken]);
 
   const login = useCallback(async (username: string, password: string) => {
-    setState((prev: any) => ({ ...prev, isLoading: true, error: null }));
+    setState((prev) => ({ ...prev, isLoading: true, error: null }));
     try {
       const resp = await fetch(`${config.apiBaseUrl}/api/v1/auth/login`, {
         method: 'POST',
@@ -154,7 +154,7 @@ export function GGIDProvider({
         error: null,
       });
     } catch (err) {
-      setState((prev: any) => ({
+      setState((prev) => ({
         ...prev,
         isLoading: false,
         error: err instanceof Error ? err.message : 'Login failed',

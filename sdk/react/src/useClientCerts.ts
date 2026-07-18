@@ -84,7 +84,7 @@ export function useClientCerts(): UseClientCertsResult {
     try {
       const resp = await fetch(`${apiBaseUrl}/api/v1/oauth/client-certs/${certId}/revoke`, { method: 'POST', headers: makeHeaders() });
       if (!resp.ok) throw new Error(`Revoke failed (${resp.status})`);
-      setCerts((prev: any) => prev.map((c: any) => c.id === certId ? { ...c, status: 'revoked' } : c));
+      setCerts((prev) => prev.map((c: any) => c.id === certId ? { ...c, status: 'revoked' } : c));
       return true;
     } catch (err) { setError(err instanceof Error ? err.message : 'Unknown'); return false; }
   }, [apiBaseUrl, makeHeaders]);
@@ -95,7 +95,7 @@ export function useClientCerts(): UseClientCertsResult {
       if (!cert) return false;
       const resp = await fetch(`${apiBaseUrl}/api/v1/oauth/client-certs/${certId}`, { method: 'PATCH', headers: makeHeaders(), body: JSON.stringify({ auto_rotate: !cert.auto_rotate }) });
       if (!resp.ok) throw new Error(`Toggle failed (${resp.status})`);
-      setCerts((prev: any) => prev.map((c: any) => c.id === certId ? { ...c, auto_rotate: !c.auto_rotate } : c));
+      setCerts((prev) => prev.map((c: any) => c.id === certId ? { ...c, auto_rotate: !c.auto_rotate } : c));
       return true;
     } catch (err) { setError(err instanceof Error ? err.message : 'Unknown'); return false; }
   }, [apiBaseUrl, makeHeaders, certs]);

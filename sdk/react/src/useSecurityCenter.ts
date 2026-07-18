@@ -105,7 +105,7 @@ export function useSecurityCenter(): UseSecurityCenterResult {
   }, [isAuthenticated, fetchAll]);
 
   const dismissThreat = useCallback(async (id: string): Promise<boolean> => {
-    setThreats((prev: any) => prev.map((t: any) => (t.id === id ? { ...t, status: 'ignored' } : t)));
+    setThreats((prev) => prev.map((t: any) => (t.id === id ? { ...t, status: 'ignored' } : t)));
     try {
       const resp = await fetch(`${apiBaseUrl}/api/v1/security/threats/${id}/dismiss`, {
         method: 'POST', headers: makeHeaders(),
@@ -117,7 +117,7 @@ export function useSecurityCenter(): UseSecurityCenterResult {
   }, [apiBaseUrl, makeHeaders]);
 
   const resolveRecommendation = useCallback(async (id: string): Promise<boolean> => {
-    setRecommendations((prev: any) => prev.map((r: any) => (r.id === id ? { ...r, status: 'resolved' } : r)));
+    setRecommendations((prev) => prev.map((r: any) => (r.id === id ? { ...r, status: 'resolved' } : r)));
     try {
       const resp = await fetch(`${apiBaseUrl}/api/v1/security/recommendations/${id}/resolve`, {
         method: 'POST', headers: makeHeaders(),

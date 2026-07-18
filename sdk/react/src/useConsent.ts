@@ -78,7 +78,7 @@ export function useConsent(): UseConsentResult {
           method: 'DELETE', headers: makeHeaders(),
         });
         if (!resp.ok) throw new Error(`Failed to revoke consent (${resp.status})`);
-        setConsents((prev: any) => prev.filter((c: any) => c.id !== id));
+        setConsents((prev) => prev.filter((c: any) => c.id !== id));
         return true;
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Unknown error');
@@ -95,7 +95,7 @@ export function useConsent(): UseConsentResult {
           method: 'DELETE', headers: makeHeaders(),
         });
         if (!resp.ok) throw new Error(`Failed to revoke consent (${resp.status})`);
-        setConsents((prev: any) => prev.filter((c: any) => c.client_id !== clientId));
+        setConsents((prev) => prev.filter((c: any) => c.client_id !== clientId));
         return true;
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Unknown error');

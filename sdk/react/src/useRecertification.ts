@@ -47,7 +47,7 @@ export function useRecertification(baseUrl: string = "") {
         body: JSON.stringify({ decisions }),
       });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      setUsers((prev: any) => prev.map((u: any) => u.decision !== "pending" ? { ...u, decision: "pending", comment: "" } : u));
+      setUsers((prev) => prev.map((u: any) => u.decision !== "pending" ? { ...u, decision: "pending", comment: "" } : u));
       return true;
     } catch (e: any) {
       setError(e.message);

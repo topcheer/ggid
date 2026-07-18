@@ -60,7 +60,7 @@ export function useHijackDetection(): UseHijackDetectionResult {
     try {
       const resp = await fetch(`${apiBaseUrl}/api/v1/auth/sessions/${sessionId}/terminate`, { method: 'POST', headers: makeHeaders() });
       if (!resp.ok) throw new Error(`Terminate failed (${resp.status})`);
-      setSuspicious((prev: any) => prev.filter((s: any) => s.session_id !== sessionId));
+      setSuspicious((prev) => prev.filter((s: any) => s.session_id !== sessionId));
       return true;
     } catch (err) { setError(err instanceof Error ? err.message : 'Unknown'); return false; }
   }, [apiBaseUrl, makeHeaders]);

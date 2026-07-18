@@ -63,7 +63,7 @@ export function useTokenEvents(maxEvents = 100): UseTokenEventsResult {
       if (pausedRef.current) return;
       try {
         const event: TokenEvent = JSON.parse(msg.data);
-        setEvents((prev: any) => [event, ...prev].slice(0, maxEvents));
+        setEvents((prev) => [event, ...prev].slice(0, maxEvents));
       } catch { /* ignore */ }
     };
 

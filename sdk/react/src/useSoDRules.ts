@@ -85,7 +85,7 @@ export function useSoDRules(): UseSoDRulesResult {
         });
         if (!resp.ok) throw new Error(`Failed to create rule (${resp.status})`);
         const created = await resp.json();
-        setRules((prev: any) => [...prev, created]);
+        setRules((prev) => [...prev, created]);
         return created;
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Unknown error');
@@ -103,7 +103,7 @@ export function useSoDRules(): UseSoDRulesResult {
         });
         if (!resp.ok) throw new Error(`Failed to update rule (${resp.status})`);
         const updated = await resp.json();
-        setRules((prev: any) => prev.map((r: any) => (r.id === id ? updated : r)));
+        setRules((prev) => prev.map((r: any) => (r.id === id ? updated : r)));
         return true;
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Unknown error');
@@ -120,7 +120,7 @@ export function useSoDRules(): UseSoDRulesResult {
           method: 'DELETE', headers: makeHeaders(),
         });
         if (!resp.ok) throw new Error(`Failed to delete rule (${resp.status})`);
-        setRules((prev: any) => prev.filter((r: any) => r.id !== id));
+        setRules((prev) => prev.filter((r: any) => r.id !== id));
         return true;
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Unknown error');
