@@ -2,6 +2,7 @@ package server
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
@@ -286,5 +287,45 @@ func TestNHIRisk_SOARTrigger(t *testing.T) {
 		if !ok || soarTriggered != true {
 			t.Error("expected SOAR trigger for critical risk")
 		}
+	}
+}
+
+// Test 13: PG repo wiring — engine with nil-pool PG repo behaves like in-memory.
+func TestNHIRisk_PGRepoNilPool(t *testing.T) {
+	engine := NewNHIRiskEngine()
+	engine.SetPGRepo(NewNHIRiskPGRepo(nil)) // nil pool = no-op PG
+
+	nhiID := uuid.New()
+	engine.RecordBaseline(nhiID.String(), "/api/v1/test", 10, "1.2.3.4", 14)
+	score := engine.EvaluateRisk(nhiID, CurrentActivity{
+		NHIID:        nhiID.String(),
+		Endpoint:     "/api/v1/test",
+		CallsPerHour: 10,
+		IP:           "1.2.3.4",
+		Hour:         14,
+	})
+
+	if score == nil {
+		t.Fatal("expected score result with PG repo nil pool")
+	}
+	// GetRiskScore should return from PG first (nil pool falls back to in-memory).
+	got := engine.GetRiskScore(nhiID)
+	if got == nil {
+		t.Fatal("expected non-nil score from GetRiskScore with PG repo")
+	}
+	// ListHighRisk should work via PG fallback.
+	high := engine.ListHighRisk(0)
+	if len(high) == 0 {
+		t.Error("expected at least 1 result from ListHighRisk")
+	}
+}
+
+// Test 14: EnsureSchema with PG repo nil pool returns nil.
+func TestNHIRisk_PGRepoEnsureSchema(t *testing.T) {
+	engine := NewNHIRiskEngine()
+	engine.SetPGRepo(NewNHIRiskPGRepo(nil))
+
+	if err := engine.EnsureSchema(context.Background()); err != nil {
+		t.Errorf("EnsureSchema with nil pool should return nil, got %v", err)
 	}
 }

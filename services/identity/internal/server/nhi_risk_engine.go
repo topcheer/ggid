@@ -32,10 +32,13 @@ type NHIRiskScore struct {
 }
 
 // NHIRiskEngine evaluates NHI behavior against baselines.
+// Uses PG-backed repo when configured (pool != nil), falls back to
+// in-memory maps when no DB is available (tests/dev).
 type NHIRiskEngine struct {
-	mu       sync.RWMutex
+	mu        sync.RWMutex
 	baselines map[string][]*NHIBehaviorBaseline // nhi_id → baselines
 	scores    map[uuid.UUID]*NHIRiskScore       // nhi_id → latest score
+	pgRepo    *NHIRiskPGRepo                     // PG persistence (nil = in-memory)
 }
 
 func NewNHIRiskEngine() *NHIRiskEngine {
@@ -45,8 +48,16 @@ func NewNHIRiskEngine() *NHIRiskEngine {
 	}
 }
 
-// EnsureSchema is a no-op for the in-memory version (DB schema would go here).
+// SetPGRepo wires a PostgreSQL-backed repo for persistent storage.
+func (e *NHIRiskEngine) SetPGRepo(repo *NHIRiskPGRepo) {
+	e.pgRepo = repo
+}
+
+// EnsureSchema creates DB tables if PG repo is configured.
 func (e *NHIRiskEngine) EnsureSchema(ctx context.Context) error {
+	if e.pgRepo != nil {
+		return e.pgRepo.EnsureSchema(ctx)
+	}
 	return nil
 }
 
@@ -87,6 +98,12 @@ func (e *NHIRiskEngine) RecordBaseline(nhiID, endpoint string, callsPerHour floa
 		LastSeen:        time.Now(),
 		TotalCalls:      1,
 	})
+
+	// Persist new baseline to PG.
+	if e.pgRepo != nil {
+		rec := e.baselines[nhiID][len(e.baselines[nhiID])-1]
+		_ = e.pgRepo.SaveBaseline(context.Background(), rec)
+	}
 }
 
 // RiskSignals represents detected anomalies for an evaluation.
@@ -209,18 +226,35 @@ func (e *NHIRiskEngine) EvaluateRisk(nhiID uuid.UUID, currentActivity CurrentAct
 	e.scores[nhiID] = result
 	e.mu.Unlock()
 
+	// Persist to PG if configured.
+	if e.pgRepo != nil {
+		_ = e.pgRepo.SaveRiskScore(context.Background(), result)
+	}
+
 	return result
 }
 
 // GetRiskScore returns the latest risk score for an NHI.
+// Tries PG first, falls back to in-memory.
 func (e *NHIRiskEngine) GetRiskScore(nhiID uuid.UUID) *NHIRiskScore {
+	if e.pgRepo != nil {
+		if score, err := e.pgRepo.GetRiskScore(context.Background(), nhiID); err == nil && score != nil {
+			return score
+		}
+	}
 	e.mu.RLock()
 	defer e.mu.RUnlock()
 	return e.scores[nhiID]
 }
 
 // ListHighRisk returns all NHIs with score >= threshold.
+// Queries PG if configured, otherwise scans in-memory.
 func (e *NHIRiskEngine) ListHighRisk(threshold int) []*NHIRiskScore {
+	if e.pgRepo != nil {
+		if high, err := e.pgRepo.ListHighRisk(context.Background(), threshold); err == nil {
+			return high
+		}
+	}
 	e.mu.RLock()
 	defer e.mu.RUnlock()
 
