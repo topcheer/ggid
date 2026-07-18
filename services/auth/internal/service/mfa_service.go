@@ -85,34 +85,37 @@ func (s *MFAService) SetupMFA(ctx context.Context, userID uuid.UUID, deviceName 
 
 // VerifyMFA verifies a TOTP code. On first verification, the device is enabled.
 // On subsequent verifications, it returns success if the code is valid.
-func (s *MFAService) VerifyMFA(ctx context.Context, deviceID uuid.UUID, code string) error {
+// Returns wasFirstEnrollment=true when the device transitioned from disabled to enabled.
+func (s *MFAService) VerifyMFA(ctx context.Context, deviceID uuid.UUID, code string) (bool, error) {
 	tc, err := tenant.FromContext(ctx)
 	if err != nil {
-		return fmt.Errorf("tenant context required")
+		return false, fmt.Errorf("tenant context required")
 	}
 
 	device, err := s.repo.GetDeviceByID(ctx, tc.TenantID, deviceID)
 	if err != nil {
-		return fmt.Errorf("device not found: %w", err)
+		return false, fmt.Errorf("device not found: %w", err)
 	}
 
 	// Validate TOTP code.
 	valid := totp.Validate(code, device.Secret)
 	if !valid {
-		return ErrInvalidMFACode
+		return false, ErrInvalidMFACode
 	}
 
 	// If not yet verified, enable the device.
+	wasFirstEnrollment := false
 	if !device.Enabled {
 		now := time.Now()
 		device.Enabled = true
 		device.VerifiedAt = &now
 		if err := s.repo.UpdateDevice(ctx, device); err != nil {
-			return fmt.Errorf("enable device: %w", err)
+			return false, fmt.Errorf("enable device: %w", err)
 		}
+		wasFirstEnrollment = true
 	}
 
-	return nil
+	return wasFirstEnrollment, nil
 }
 
 // VerifyUserCode finds the user's enabled device and validates the code.

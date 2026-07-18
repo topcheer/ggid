@@ -87,7 +87,7 @@ func TestGapRegression_MFA_VerifyInvalidCode(t *testing.T) {
 	}
 
 	// Invalid code
-	err := svc.VerifyMFA(mfaCtx(), deviceID, "000000")
+	_, err := svc.VerifyMFA(mfaCtx(), deviceID, "000000")
 	if err == nil {
 		t.Fatal("invalid TOTP code should be rejected")
 	}
@@ -99,7 +99,7 @@ func TestGapRegression_MFA_VerifyUnknownDevice(t *testing.T) {
 	repo := newMockMFARepo()
 	svc := NewMFAService(repo)
 
-	err := svc.VerifyMFA(mfaCtx(), uuid.New(), "123456")
+	_, err := svc.VerifyMFA(mfaCtx(), uuid.New(), "123456")
 	if err == nil {
 		t.Fatal("verifying unknown device should return error")
 	}

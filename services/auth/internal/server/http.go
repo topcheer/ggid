@@ -876,6 +876,10 @@ func (h *Handler) changePassword(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Invalidate all other sessions (password change = security-critical event).
+	// The user must re-authenticate on other devices with the new password.
+	h.TriggerInvalidation(tc.TenantID, userID, InvReasonPasswordChange, "")
+
 	// Audit: password change
 	h.publishAuditEvent("user.password.change", "success", tc.TenantID, userID)
 
@@ -1017,13 +1021,30 @@ func (h *Handler) mfaVerify(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := h.authSvc.MFAService().VerifyMFA(r.Context(), deviceID, req.Code); err != nil {
+	wasFirstEnrollment, err := h.authSvc.MFAService().VerifyMFA(r.Context(), deviceID, req.Code)
+	if err != nil {
 		if stderrors.Is(err, service.ErrInvalidMFACode) {
 			writeError(w, http.StatusUnauthorized, "invalid MFA code")
 			return
 		}
 		writeInternalError(w, "auth handler", err)
 		return
+	}
+
+	// On first MFA enrollment, invalidate all non-MFA sessions.
+	// Sessions created before MFA was active are less secure and should be re-authenticated.
+	if wasFirstEnrollment {
+		tc, terr := ggidtenant.FromContext(r.Context())
+		if terr == nil {
+			// Extract userID from device via MFA service.
+			devices, _ := h.authSvc.MFAService().ListDevices(r.Context(), uuid.Nil)
+			for _, d := range devices {
+				if d.ID == deviceID {
+					h.TriggerInvalidation(tc.TenantID, d.UserID, InvReasonMFAEnrollment, "")
+					break
+				}
+			}
+		}
 	}
 
 	writeJSON(w, http.StatusOK, map[string]bool{"verified": true})

@@ -76,6 +76,7 @@ type Gateway struct {
 	rateLimiter    *middleware.TenantBucketLimiter
 	multiDimLimiter *middleware.MultiDimRateLimiter
 	postureEngine   *posture.Engine
+	postureDropFn   func(ctx context.Context, tenantID, userID string, score int)
 	reloadFunc     ReloadFunc
 	routeVersion   int64
 	stats          *middleware.StatsCollector
@@ -1092,6 +1093,13 @@ func (gw *Gateway) SetPostureEngine(engine *posture.Engine) {
 	gw.postureEngine = engine
 }
 
+// SetPostureDropHandler injects a callback for posture-drop session revocation.
+// When device posture drops below threshold, this callback triggers session invalidation
+// via the auth service's internal revoke-user endpoint.
+func (gw *Gateway) SetPostureDropHandler(fn func(ctx context.Context, tenantID, userID string, score int)) {
+	gw.postureDropFn = fn
+}
+
 func (gw *Gateway) handlePostureEvaluate(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	if gw.postureEngine == nil {
@@ -1110,6 +1118,17 @@ func (gw *Gateway) handlePostureEvaluate(w http.ResponseWriter, r *http.Request)
 	}
 	result := gw.postureEngine.Evaluate(tenantID, input)
 	gw.postureEngine.PersistResult(r.Context(), tenantID, result)
+
+	// Posture drop: when device is non-compliant or blocked, revoke sessions.
+	if !result.Compliant || result.Action == "block" {
+		if gw.postureDropFn != nil {
+			userID := r.Header.Get("X-User-ID")
+			if userID != "" {
+				gw.postureDropFn(r.Context(), tenantID, userID, result.Score)
+			}
+		}
+	}
+
 	_ = json.NewEncoder(w).Encode(result)
 }
 

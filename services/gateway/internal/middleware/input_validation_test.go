@@ -1,7 +1,6 @@
 package middleware
 
 import (
-	"io"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -61,7 +60,9 @@ func TestInputValidationMiddleware_RejectsSQLi(t *testing.T) {
 		Enabled: true, ExemptPaths: map[string]bool{}, MaxBodySize: 10 * 1024 * 1024,
 	})
 	body := `{"username":"' OR 1=1--","password":"test"}`
-	req := httptest.NewRequest("POST", "/api/v1/auth/login", io.NopCloser(strings.NewReader(body)))
+	// Use strings.NewReader directly so httptest.NewRequest can detect ContentLength.
+	// io.NopCloser wrapping hides the length, causing ContentLength=-1 which skips validation.
+	req := httptest.NewRequest("POST", "/api/v1/auth/login", strings.NewReader(body))
 	req.Header.Set("Content-Type", "application/json")
 	w := httptest.NewRecorder()
 
@@ -80,7 +81,7 @@ func TestInputValidationMiddleware_RejectsSQLi(t *testing.T) {
 
 func TestInputValidationMiddleware_AllowsClean(t *testing.T) {
 	body := `{"username":"testuser","password":"Password123"}`
-	req := httptest.NewRequest("POST", "/api/v1/auth/login", io.NopCloser(strings.NewReader(body)))
+	req := httptest.NewRequest("POST", "/api/v1/auth/login", strings.NewReader(body))
 	req.Header.Set("Content-Type", "application/json")
 	w := httptest.NewRecorder()
 
@@ -96,8 +97,28 @@ func TestInputValidationMiddleware_AllowsClean(t *testing.T) {
 }
 
 func TestInputValidationMiddleware_ExemptPath(t *testing.T) {
+	// Set config with the exempt path we're testing.
+	SetInputValidationConfig(InputValidationConfig{
+		Enabled: true,
+		ExemptPaths: map[string]bool{
+			"/api/v1/dlp/scan": true,
+		},
+		MaxBodySize: 10 * 1024 * 1024,
+	})
+	t.Cleanup(func() {
+		SetInputValidationConfig(InputValidationConfig{
+			Enabled: true,
+			ExemptPaths: map[string]bool{
+				"/api/v1/audit/pii-scan": true,
+				"/api/v1/crypto/fields":  true,
+				"/api/v1/dlp/scan":       true,
+				"/graphql":               true,
+			},
+			MaxBodySize: 10 * 1024 * 1024,
+		})
+	})
 	body := `{"data":"<script>alert(1)</script>"}`
-	req := httptest.NewRequest("POST", "/api/v1/dlp/scan", io.NopCloser(strings.NewReader(body)))
+	req := httptest.NewRequest("POST", "/api/v1/dlp/scan", strings.NewReader(body))
 	req.Header.Set("Content-Type", "application/json")
 	w := httptest.NewRecorder()
 

@@ -84,7 +84,7 @@ func TestLoginMFA_Success(t *testing.T) {
 	// Verify the device with a valid code.
 	code, _ := totp.GenerateCode(setupResp.Secret, time.Now())
 	deviceID, _ := uuid.Parse(setupResp.DeviceID)
-	_ = mfaSvc.VerifyMFA(ctx, deviceID, code)
+	_, _ = mfaSvc.VerifyMFA(ctx, deviceID, code)
 
 	svc := &AuthService{
 		cfg:             conf.Default(),
