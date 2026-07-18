@@ -4,7 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"log"
+	"log/slog"
 	"time"
 
 	"github.com/google/uuid"
@@ -178,7 +178,7 @@ func (r *lifecycleRepo) LogExecution(ctx context.Context, exec *LifecycleExecuti
 		exec.ID, exec.TenantID, exec.RuleID, exec.UserID, exec.Trigger, exec.ActionType, paramsJSON, exec.Result, exec.Error,
 	)
 	if err != nil {
-		log.Printf("lifecycle: failed to log execution: %v", err)
+		slog.Error("lifecycle: failed to log execution", "error", err)
 	}
 }
 

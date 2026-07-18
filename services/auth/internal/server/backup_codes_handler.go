@@ -2,7 +2,7 @@ package server
 
 import (
 	"encoding/json"
-	"log"
+	"log/slog"
 	"net/http"
 	"strings"
 
@@ -63,7 +63,7 @@ func (h *Handler) backupCodesGenerate(w http.ResponseWriter, r *http.Request) {
 
 	codes, err := bcs.GenerateBackupCodes(r.Context(), userID)
 	if err != nil {
-		log.Printf("backup code generation error for user %s: %v", req.UserID, err)
+		slog.Error("backup code generation error", "user_id", req.UserID, "error", err)
 		writeInternalError(w, "backup_codes_generate", err)
 		return
 	}
@@ -113,7 +113,7 @@ func (h *Handler) backupCodesVerify(w http.ResponseWriter, r *http.Request) {
 
 	tokens, err := h.authSvc.LoginWithBackupCode(r.Context(), req.Username, req.Password, req.BackupCode, ip, userAgent)
 	if err != nil {
-		log.Printf("backup code verify error for user %s: %v", req.Username, err)
+		slog.Error("backup code verify error", "username", req.Username, "error", err)
 		// Map backup code error to 401.
 		if strings.Contains(err.Error(), "invalid or used backup code") {
 			errors.WriteSimpleAPIError(w, http.StatusUnauthorized, string(errors.ErrUnauthenticated), "invalid or used backup code")

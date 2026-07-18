@@ -5,7 +5,7 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
-	"log"
+	"log/slog"
 	"net/http"
 	"strconv"
 	"time"
@@ -68,7 +68,7 @@ func (h *Handler) handleRevokeUser(w http.ResponseWriter, r *http.Request) {
 
 	result, err := h.revocationMgr.RevokeUser(r.Context(), tenantID, userID, req.Reason)
 	if err != nil {
-		log.Printf("revoke-user error: %v", err)
+		slog.Error("revoke-user error", "error", err)
 		writeError(w, http.StatusInternalServerError, "revocation failed")
 		return
 	}
@@ -127,7 +127,7 @@ func (h *Handler) handleInternalRevokeUser(w http.ResponseWriter, r *http.Reques
 
 	result, err := h.revocationMgr.RevokeUser(r.Context(), tenantID, userID, req.Reason)
 	if err != nil {
-		log.Printf("internal revoke-user error: %v", err)
+		slog.Error("internal revoke-user error", "error", err)
 		writeError(w, http.StatusInternalServerError, "revocation failed")
 		return
 	}

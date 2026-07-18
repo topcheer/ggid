@@ -3,7 +3,7 @@ package server
 import (
 	"crypto/x509"
 	"encoding/json"
-	"log"
+	"log/slog"
 	"net/http"
 	"strings"
 	"time"
@@ -164,7 +164,7 @@ func (h *TrustStoreHandler) uploadCertificate(w http.ResponseWriter, r *http.Req
 	cert.AutoRenew = req.AutoRenew
 
 	if err := h.store.AddCertificate(cert); err != nil {
-		log.Printf("trust store add cert error: %v", err)
+		slog.Error("trust store add cert error", "error", err)
 		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "internal server error"})
 		return
 	}
@@ -214,7 +214,7 @@ func (h *TrustStoreHandler) renewCertificate(w http.ResponseWriter, r *http.Requ
 	// submit a CSR to an internal CA or ACME endpoint)
 	newPEM, newKey, fp, err := truststore.GenerateSelfSignedCert(cert.Name)
 	if err != nil {
-		log.Printf("trust store cert renewal error: %v", err)
+		slog.Error("trust store cert renewal error", "error", err)
 		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "internal server error"})
 		return
 	}

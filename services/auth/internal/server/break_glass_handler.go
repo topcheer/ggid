@@ -2,7 +2,7 @@ package server
 
 import (
 	"encoding/json"
-	"log"
+	"log/slog"
 	"net/http"
 	"strings"
 	"time"
@@ -55,7 +55,7 @@ func (h *Handler) handleBreakGlassHistory(w http.ResponseWriter, r *http.Request
 	limit := 50
 	records, err := h.breakGlassRepo.ListByTenant(r.Context(), tc.TenantID, limit)
 	if err != nil {
-		log.Printf("break-glass history error: %v", err)
+		slog.Error("break-glass history error", "error", err)
 		writeError(w, http.StatusInternalServerError, "failed to query break-glass history")
 		return
 	}
@@ -136,7 +136,7 @@ func (h *Handler) handleBreakGlassActivate(w http.ResponseWriter, r *http.Reques
 	}
 
 	if err := h.breakGlassRepo.Create(r.Context(), rec); err != nil {
-		log.Printf("break-glass activate error: %v", err)
+		slog.Error("break-glass activate error", "error", err)
 		writeError(w, http.StatusInternalServerError, "failed to activate break-glass")
 		return
 	}
@@ -145,8 +145,7 @@ func (h *Handler) handleBreakGlassActivate(w http.ResponseWriter, r *http.Reques
 	h.publishAuditEvent("break_glass.activate", "success", tc.TenantID, requesterID)
 
 	// In production, send SOC webhook notification here.
-	log.Printf("BREAK-GLASS: activated for user %s in tenant %s (reason: %s, scope: %s, %dm)",
-		requesterID, tc.TenantID, req.Reason, req.Scope, req.DurationMinutes)
+	slog.Warn("BREAK-GLASS activated", "user_id", requesterID, "tenant_id", tc.TenantID, "reason", req.Reason, "scope", req.Scope, "duration_min", req.DurationMinutes)
 
 	writeJSON(w, http.StatusCreated, map[string]any{
 		"id":               rec.ID,

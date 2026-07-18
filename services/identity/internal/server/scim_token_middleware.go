@@ -5,7 +5,7 @@ import (
 	"crypto/hmac"
 	"crypto/sha256"
 	"encoding/hex"
-	"log"
+	"log/slog"
 	"net/http"
 	"os"
 	"strings"
@@ -43,7 +43,7 @@ func (h *HTTPHandler) scimTokenAuth(next http.Handler) http.Handler {
 		tokenHash := hashSCIMToken(token)
 		scimToken, err := h.scimRepo.FindByHash(r.Context(), tokenHash)
 		if err != nil || scimToken == nil {
-			log.Printf("SCIM auth: invalid or revoked token from %s", r.RemoteAddr)
+			slog.Warn("SCIM auth: invalid or revoked token", "remote_addr", r.RemoteAddr)
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusUnauthorized)
 			w.Write([]byte(`{"error":"invalid SCIM token"}`))

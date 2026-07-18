@@ -2,7 +2,7 @@ package server
 
 import (
 	"encoding/json"
-	"log"
+	"log/slog"
 	"net/http"
 
 	ggidtenant "github.com/ggid/ggid/pkg/tenant"
@@ -51,7 +51,7 @@ func (h *HTTPHandler) handleReBACSyncRBAC(w http.ResponseWriter, r *http.Request
 	// Framework ready — actual role sync requires policy service DB access.
 	// Future: call policy service internal API to get all user-role assignments,
 	// then write tuples. For now returns structured empty result.
-	log.Printf("ReBAC sync: tenant=%s dry_run=%v — framework ready, needs policy service integration", tc.TenantID, req.DryRun)
+	slog.Info("ReBAC sync: framework ready, needs policy service integration", "tenant", tc.TenantID, "dry_run", req.DryRun)
 
 	writeJSON(w, http.StatusOK, ReBACSyncResult{
 		SyncedCount: 0,

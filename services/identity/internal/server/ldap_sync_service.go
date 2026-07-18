@@ -4,7 +4,7 @@ import (
 	"context"
 	"crypto/tls"
 	"fmt"
-	"log"
+	"log/slog"
 
 	"github.com/go-ldap/ldap/v3"
 	"github.com/ggid/ggid/pkg/authprovider"
@@ -104,7 +104,7 @@ func (h *HTTPHandler) runLDAPSync(ctx context.Context, cfg *LDAPSyncConfig) (*ld
 		synced++
 	}
 
-	log.Printf("LDAP sync complete: %d users synced, %d errors", synced, len(errs))
+	slog.Info("LDAP sync complete", "synced", synced, "errors", len(errs))
 	return &ldapTestResult{usersFound: synced}, errs
 }
 

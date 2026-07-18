@@ -4,7 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"log"
+	"log/slog"
 	"net/http"
 	"strings"
 
@@ -56,7 +56,7 @@ func (h *HTTPHandler) handleTenantResolve(w http.ResponseWriter, r *http.Request
 
 	var t TenantInfo
 	if err := row.Scan(&t.ID, &t.Name, &t.Slug); err != nil {
-		log.Printf("tenant resolve: scan error for slug=%q: %v", slug, err)
+		slog.Error("tenant resolve: scan error", "slug", slug, "error", err)
 		writeJSON(w, http.StatusNotFound, map[string]string{"error": "tenant not found"})
 		return
 	}
@@ -98,7 +98,7 @@ func (h *HTTPHandler) handleSystemBootstrap(w http.ResponseWriter, r *http.Reque
 	// Security check: refuse if system already initialized.
 	var userCount int
 	if err := h.svc.Pool().QueryRow(ctx, `SELECT count(*) FROM users WHERE deleted_at IS NULL`).Scan(&userCount); err != nil {
-		log.Printf("bootstrap: failed to count users: %v", err)
+		slog.Error("bootstrap: failed to count users", "error", err)
 		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "failed to check system state"})
 		return
 	}
@@ -135,7 +135,7 @@ func (h *HTTPHandler) handleSystemBootstrap(w http.ResponseWriter, r *http.Reque
 		 RETURNING id::text`,
 		req.TenantName, req.TenantSlug).Scan(&tenantIDStr)
 	if err != nil {
-		log.Printf("bootstrap: failed to create tenant: %v", err)
+		slog.Error("bootstrap: failed to create tenant", "error", err)
 		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "failed to create tenant"})
 		return
 	}
@@ -153,7 +153,7 @@ func (h *HTTPHandler) handleSystemBootstrap(w http.ResponseWriter, r *http.Reque
 		DisplayName: req.AdminUsername,
 	})
 	if err != nil {
-		log.Printf("bootstrap: failed to create admin user: %v", err)
+		slog.Error("bootstrap: failed to create admin user", "error", err)
 		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": fmt.Sprintf("failed to create admin user: %v", err)})
 		return
 	}
@@ -161,7 +161,7 @@ func (h *HTTPHandler) handleSystemBootstrap(w http.ResponseWriter, r *http.Reque
 	// 3. Insert credential for admin user (Argon2id hash).
 	hash, err := crypto.HashPassword(req.AdminPassword)
 	if err != nil {
-		log.Printf("bootstrap: failed to hash password: %v", err)
+		slog.Error("bootstrap: failed to hash password", "error", err)
 		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "failed to hash password"})
 		return
 	}
@@ -171,7 +171,7 @@ func (h *HTTPHandler) handleSystemBootstrap(w http.ResponseWriter, r *http.Reque
 		 ON CONFLICT DO NOTHING`,
 		tenantID, user.ID, req.AdminUsername, hash)
 	if err != nil {
-		log.Printf("bootstrap: failed to insert credential: %v", err)
+		slog.Error("bootstrap: failed to insert credential", "error", err)
 		// Non-fatal — user is created, credential can be set via password reset.
 	}
 
@@ -182,7 +182,7 @@ func (h *HTTPHandler) handleSystemBootstrap(w http.ResponseWriter, r *http.Reque
 		 ON CONFLICT DO NOTHING`,
 		tenantID)
 	if err != nil {
-		log.Printf("bootstrap: failed to create admin role: %v", err)
+		slog.Error("bootstrap: failed to create admin role", "error", err)
 	}
 
 	var roleIDStr string
@@ -198,7 +198,7 @@ func (h *HTTPHandler) handleSystemBootstrap(w http.ResponseWriter, r *http.Reque
 			user.ID, roleID, tenantID, user.ID)
 	}
 
-	log.Printf("bootstrap: system initialized — tenant=%s user=%s", tenantIDStr, user.ID.String())
+	slog.Info("bootstrap: system initialized", "tenant", tenantIDStr, "user", user.ID.String())
 	writeJSON(w, http.StatusCreated, BootstrapResponse{
 		TenantID: tenantIDStr,
 		UserID:   user.ID.String(),

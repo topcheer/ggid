@@ -5,7 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"log"
+	"log/slog"
 	"net/http"
 	"strings"
 	"time"
@@ -73,7 +73,7 @@ func (e *JMLEngine) ProcessEvent(ctx context.Context, event LifecycleEvent) {
 
 	rules, err := e.repo.FindMatchingRules(ctx, event.TenantID, trigger, event.UserAttrs)
 	if err != nil {
-		log.Printf("JML: failed to find matching rules: %v", err)
+		slog.Error("JML: failed to find matching rules", "error", err)
 		return
 	}
 
@@ -102,16 +102,16 @@ func (e *JMLEngine) executeAction(action LifecycleAction, event LifecycleEvent, 
 		}
 		// Call policy service AssignRole via internal API.
 		if err := e.callPolicyAssignRole(event.TenantID, event.UserID, roleIDStr); err != nil {
-			log.Printf("JML: assign_role failed for user %s: %v", event.UserID, err)
+			slog.Error("JML: assign_role failed", "user_id", event.UserID, "error", err)
 			return "failed: " + err.Error()
 		}
-		log.Printf("JML: assign_role success user=%s role=%s", event.UserID, roleIDStr)
+		slog.Info("JML: assign_role success", "user_id", event.UserID, "role", roleIDStr)
 		return "success"
 
 	case "revoke_access":
 		// 1. Revoke all roles via policy service.
 		if err := e.callPolicyRevokeAll(event.TenantID, event.UserID); err != nil {
-			log.Printf("JML: revoke_access role revoke failed for user %s: %v", event.UserID, err)
+			slog.Error("JML: revoke_access failed", "user_id", event.UserID, "error", err)
 			// Continue to CAE revoke anyway.
 		}
 		// 2. CAE: publish session revoke via NATS.
@@ -122,18 +122,18 @@ func (e *JMLEngine) executeAction(action LifecycleAction, event LifecycleEvent, 
 				"reason":    "lifecycle_leaver_" + rule.Name,
 			})
 			if err := e.natsConn.Publish("ggid.session.revoke", payload); err != nil {
-				log.Printf("JML: CAE session revoke publish failed: %v", err)
+				slog.Error("JML: CAE session revoke publish failed", "error", err)
 				return "failed: CAE publish error"
 			}
 		}
-		log.Printf("JML: revoke_access success user=%s (roles revoked + CAE session revoke)", event.UserID)
+		slog.Info("JML: revoke_access success", "user_id", event.UserID)
 		return "success"
 
 	case "notify", "notify_manager":
 		webhookURL, _ := action.Params["webhook_url"].(string)
 		if webhookURL != "" {
 			if err := e.sendWebhook(webhookURL, event, action); err != nil {
-				log.Printf("JML: notify webhook failed: %v", err)
+				slog.Error("JML: notify webhook failed", "error", err)
 				return "failed: webhook error"
 			}
 		}
@@ -148,7 +148,7 @@ func (e *JMLEngine) executeAction(action LifecycleAction, event LifecycleEvent, 
 			})
 			e.natsConn.Publish("ggid.lifecycle.notify", payload)
 		}
-		log.Printf("JML: notify success user=%s webhook=%s", event.UserID, webhookURL)
+		slog.Info("JML: notify success", "user_id", event.UserID, "webhook", webhookURL)
 		return "success"
 
 	case "create_account":
@@ -157,13 +157,13 @@ func (e *JMLEngine) executeAction(action LifecycleAction, event LifecycleEvent, 
 		if email == "" {
 			return "failed: missing email in event attrs"
 		}
-		log.Printf("JML: create_account user=%s email=%s name=%s — would call identity CreateUser", event.UserID, email, name)
+		slog.Info("JML: create_account", "user_id", event.UserID, "email", email, "name", name)
 		// In production: call h.svc.CreateUser(ctx, ...) with attrs from event.
 		return "success"
 
 	case "disable_account":
 		// Disable the user account + revoke sessions.
-		log.Printf("JML: disable_account user=%s — revoking access + disabling", event.UserID)
+		slog.Info("JML: disable_account", "user_id", event.UserID)
 		if e.natsConn != nil {
 			payload, _ := json.Marshal(map[string]any{
 				"tenant_id": event.TenantID.String(),
