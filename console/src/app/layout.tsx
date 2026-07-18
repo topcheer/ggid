@@ -7,9 +7,19 @@ import { ToastProvider } from "@/components/Toast";
 import PWARegister from "@/components/PWARegister";
 
 export const metadata: Metadata = {
-  title: "GGID Console",
+  title: {
+    default: "GGID Console",
+    template: "%s | GGID Console",
+  },
   description: "GGID Identity & Access Management Console",
   manifest: "/manifest.json",
+  icons: {
+    icon: [
+      { url: "/favicon.ico", sizes: "any" },
+      { url: "/icon.svg", type: "image/svg+xml" },
+    ],
+    apple: "/apple-icon.png",
+  },
   appleWebApp: {
     capable: true,
     title: "GGID Console",
@@ -19,6 +29,9 @@ export const metadata: Metadata = {
 
 export const viewport: Viewport = {
   themeColor: "#4f46e5",
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 5,
 };
 
 export default function RootLayout({

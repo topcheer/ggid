@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useTranslations } from "@/lib/i18n";
+import { usePageTitle } from "@/lib/usePageTitle";
 import { authHeader } from "@/lib/auth-helpers";
 import {
   Users, Activity, Shield, Clock, TrendingUp, AlertTriangle,
@@ -19,6 +20,7 @@ interface KPIData {
 
 export default function DashboardPage() {
   const t = useTranslations();
+  usePageTitle("Dashboard");
   const [kpi, setKpi] = useState<KPIData | null>(null);
   const [loading, setLoading] = useState(true);
   const [isNew, setIsNew] = useState(false);

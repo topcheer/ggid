@@ -6,11 +6,13 @@ import {
   CheckCircle2, ChevronRight, Search,
 } from "lucide-react";
 import { useTranslations } from "@/lib/i18n";
+import { usePageTitle } from "@/lib/usePageTitle";
 
 interface SettingsCard { href: string; icon: typeof Shield; label: string; desc: string; category: string; color: string; badge?: string; }
 
 export default function SettingsHubPage() {
   const t = useTranslations();
+  usePageTitle("Settings");
   const [search, setSearch] = useState("");
 
   const cards: SettingsCard[] = [

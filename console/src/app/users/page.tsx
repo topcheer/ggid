@@ -3,6 +3,7 @@
 import { useState, useCallback, useRef } from "react";
 import { useUsers, useApi, type User } from "@/lib/api";
 import { useTranslations } from "@/lib/i18n";
+import { usePageTitle } from "@/lib/usePageTitle";
 import Link from "next/link";
 import {
   Search,
@@ -39,6 +40,7 @@ export default function UsersPage() {
   const { users, loading, error, refresh } = useUsers();
   const { apiFetch } = useApi();
   const t = useTranslations();
+  usePageTitle("Users");
   const [search, setSearch] = useState("");
   const [showCreate, setShowCreate] = useState(false);
   const [page, setPage] = useState(0);
