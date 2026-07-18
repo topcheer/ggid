@@ -12,7 +12,7 @@ import (
 var (
 	requestsTotal = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
-			Name: "http_requests_total",
+			Name: "ggid_http_requests_total",
 			Help: "Total number of HTTP requests",
 		},
 		[]string{"method", "path", "status"},
@@ -20,7 +20,7 @@ var (
 
 	requestDuration = prometheus.NewHistogramVec(
 		prometheus.HistogramOpts{
-			Name:    "http_request_duration_seconds",
+			Name:    "ggid_http_duration_seconds",
 			Help:    "HTTP request duration in seconds",
 			Buckets: prometheus.DefBuckets,
 		},
@@ -29,22 +29,38 @@ var (
 
 	authFailures = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
-			Name: "auth_failures_total",
+			Name: "ggid_auth_failures_total",
 			Help: "Total number of authentication failures",
 		},
 		[]string{"reason"},
 	)
 
+	authAttempts = prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Name: "ggid_auth_attempts_total",
+			Help: "Total authentication attempts (success + failure)",
+		},
+		[]string{"method", "result"},
+	)
+
+	riskEvaluations = prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Name: "ggid_risk_evaluations_total",
+			Help: "Total risk evaluations performed (NHI + CAP + CAE)",
+		},
+		[]string{"source", "action"},
+	)
+
 	activeSessions = prometheus.NewGauge(
 		prometheus.GaugeOpts{
-			Name: "active_sessions",
+			Name: "ggid_active_sessions",
 			Help: "Number of active sessions",
 		},
 	)
 )
 
 func init() {
-	prometheus.MustRegister(requestsTotal, requestDuration, authFailures, activeSessions)
+	prometheus.MustRegister(requestsTotal, requestDuration, authFailures, authAttempts, riskEvaluations, activeSessions)
 }
 
 // MetricsHandler returns the Prometheus metrics endpoint handler.
@@ -80,6 +96,20 @@ func MetricsMiddleware(next http.Handler) http.Handler {
 // IncAuthFailure increments the auth failure counter.
 func IncAuthFailure(reason string) {
 	authFailures.WithLabelValues(reason).Inc()
+}
+
+// IncAuthAttempt records an auth attempt (success or failure).
+func IncAuthAttempt(method string, success bool) {
+	result := "failure"
+	if success {
+		result = "success"
+	}
+	authAttempts.WithLabelValues(method, result).Inc()
+}
+
+// IncRiskEvaluation records a risk evaluation (NHI, CAP, or CAE).
+func IncRiskEvaluation(source, action string) {
+	riskEvaluations.WithLabelValues(source, action).Inc()
 }
 
 // SetActiveSessions sets the active sessions gauge.
