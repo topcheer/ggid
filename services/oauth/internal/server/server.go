@@ -110,7 +110,6 @@ func NewWithKeyProvider(cfg *conf.Config, kp crypto.KeyProvider) (*Server, error
 		codeRepo   repository.AuthorizationCodeRepository
 		tokenRepo  repository.IDTokenRepository
 		pool       *pgxpool.Pool
-		scopeAdapter *scopeStoreAdapter
 	)
 
 	if cfg.Database.URL != "" {
@@ -129,8 +128,6 @@ func NewWithKeyProvider(cfg *conf.Config, kp crypto.KeyProvider) (*Server, error
 				codeRepo = repository.NewPGAuthorizationCodeRepository(pool)
 				tokenRepo = repository.NewPGIDTokenRepository(pool)
 				// Initialize persistent stores (PG-first, in-memory fallback)
-				scopeAdapter = newScopeStoreAdapter(pool)
-				scopeAdapterVar = scopeAdapter
 				brandingAdapterVar = newBrandingAdapter(pool)
 				parAdapterVar = newPARAdapter(pool)
 				dpopAdapterVar = newDPoPAdapter(pool)

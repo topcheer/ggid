@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	"context"
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
@@ -130,7 +131,7 @@ var gqlLog *graphQLQueryLog
 func InitGraphQLQueryLog(pool *pgxpool.Pool) {
 	gqlLog = &graphQLQueryLog{pool: pool}
 	if pool != nil {
-		pool.Exec(nil, `CREATE TABLE IF NOT EXISTS graphql_query_log (
+		pool.Exec(context.Background(), `CREATE TABLE IF NOT EXISTS graphql_query_log (
 			id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
 			operation TEXT NOT NULL,
 			query_hash TEXT,
@@ -149,7 +150,7 @@ func LogGraphQLQuery(operation, queryHash string, complexity, depth, durationMs 
 	if gqlLog == nil || gqlLog.pool == nil {
 		return
 	}
-	gqlLog.pool.Exec(nil, `INSERT INTO graphql_query_log (operation,query_hash,complexity,depth,duration_ms,error,user_id) VALUES ($1,$2,$3,$4,$5,$6,$7)`,
+	gqlLog.pool.Exec(context.Background(), `INSERT INTO graphql_query_log (operation,query_hash,complexity,depth,duration_ms,error,user_id) VALUES ($1,$2,$3,$4,$5,$6,$7)`,
 		operation, queryHash, complexity, depth, durationMs, errMsg, userID)
 }
 

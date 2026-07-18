@@ -192,7 +192,7 @@ func (s *HTTPServer) EvaluateAuthorize(ctx context.Context, req *AuthorizeReques
 		if s.roleSvc != nil {
 			// Simplified: if we can list roles, RBAC is available.
 			roles, err := s.roleSvc.ListRoles(ctx, uuid.Nil, 1, 1)
-			if err == nil && len(roles) >= 0 {
+			if err == nil && roles != nil {
 				rbacAllow = true // RBAC allows by default when no explicit deny rules
 				evaluatedBy = append(evaluatedBy, "rbac")
 			}

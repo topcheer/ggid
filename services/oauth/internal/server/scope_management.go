@@ -25,7 +25,7 @@ type CustomScope struct {
 var scopeCache sync.Map // name → *CustomScope
 
 // scopeStoreAdapter is used by the scope management handlers for PG-backed operations.
-var scopeAdapterVar *scopeStoreAdapter
+// Set via SetScopeAdapter during server initialization.
 
 func handleScopes(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
