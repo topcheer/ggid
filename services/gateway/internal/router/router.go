@@ -397,6 +397,20 @@ func (gw *Gateway) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// OpenAPI spec + Swagger UI.
+	if r.URL.Path == "/swagger.json" && r.Method == http.MethodGet {
+		middleware.OpenAPISpecHandler().ServeHTTP(w, r)
+		return
+	}
+	if r.URL.Path == "/docs" && r.Method == http.MethodGet {
+		middleware.SwaggerUIHandler().ServeHTTP(w, r)
+		return
+	}
+	// WASM Plugin management (proxied to identity service).
+	if strings.HasPrefix(r.URL.Path, "/api/v1/plugins") {
+		// Proxy to identity backend — let the appRouter handle it.
+	}
+
 	// Provisioning requests are proxied to the ggid-operator API server
 	// (registered in cfg.Routes as /api/v1/provisioning). No stub fallback:
 	// if the operator is unreachable the proxy returns 502, which is more
