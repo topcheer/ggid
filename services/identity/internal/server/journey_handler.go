@@ -171,7 +171,7 @@ func (h *HTTPHandler) handleJourneys(w http.ResponseWriter, r *http.Request) {
 		case http.MethodPost:
 			h.journeyCreate(w, r)
 		default:
-			writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+			writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 		}
 		return
 	}
@@ -187,22 +187,22 @@ func (h *HTTPHandler) handleJourneys(w http.ResponseWriter, r *http.Request) {
 		case http.MethodDelete:
 			h.journeyDelete(w, r, id)
 		default:
-			writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+			writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 		}
 		return
 	}
-	writeError(w, http.StatusNotFound, "not found")
+	writeJSONError(w, http.StatusNotFound, "not found")
 }
 
 func (h *HTTPHandler) journeyCreate(w http.ResponseWriter, r *http.Request) {
 	tc, _ := ggidtenant.FromContext(r.Context())
 	var j JourneyDefinition
 	if err := json.NewDecoder(r.Body).Decode(&j); err != nil {
-		writeError(w, http.StatusBadRequest, "invalid body")
+		writeJSONError(w, http.StatusBadRequest, "invalid body")
 		return
 	}
 	if j.Name == "" {
-		writeError(w, http.StatusBadRequest, "name required")
+		writeJSONError(w, http.StatusBadRequest, "name required")
 		return
 	}
 	j.ID = uuid.New().String()
@@ -216,7 +216,7 @@ func (h *HTTPHandler) journeyCreate(w http.ResponseWriter, r *http.Request) {
 	j.UpdatedAt = j.CreatedAt
 	if h.journeyRepo != nil {
 		if err := h.journeyRepo.Create(r.Context(), &j); err != nil {
-			writeError(w, http.StatusInternalServerError, "failed to create journey")
+			writeJSONError(w, http.StatusInternalServerError, "failed to create journey")
 			return
 		}
 	}
@@ -231,7 +231,7 @@ func (h *HTTPHandler) journeyList(w http.ResponseWriter, r *http.Request) {
 		var err error
 		journeys, err = h.journeyRepo.List(r.Context(), tc.TenantID.String(), status)
 		if err != nil {
-			writeError(w, http.StatusInternalServerError, "failed to list")
+			writeJSONError(w, http.StatusInternalServerError, "failed to list")
 			return
 		}
 	}
@@ -247,12 +247,12 @@ func (h *HTTPHandler) journeyGet(w http.ResponseWriter, r *http.Request, id stri
 		var err error
 		j, err = h.journeyRepo.Get(r.Context(), id)
 		if err != nil {
-			writeError(w, http.StatusNotFound, "journey not found")
+			writeJSONError(w, http.StatusNotFound, "journey not found")
 			return
 		}
 	}
 	if j == nil {
-		writeError(w, http.StatusNotFound, "journey not found")
+		writeJSONError(w, http.StatusNotFound, "journey not found")
 		return
 	}
 	writeJSON(w, http.StatusOK, j)
@@ -261,13 +261,13 @@ func (h *HTTPHandler) journeyGet(w http.ResponseWriter, r *http.Request, id stri
 func (h *HTTPHandler) journeyUpdate(w http.ResponseWriter, r *http.Request, id string) {
 	var update JourneyDefinition
 	if err := json.NewDecoder(r.Body).Decode(&update); err != nil {
-		writeError(w, http.StatusBadRequest, "invalid body")
+		writeJSONError(w, http.StatusBadRequest, "invalid body")
 		return
 	}
 	update.ID = id
 	if h.journeyRepo != nil {
 		if err := h.journeyRepo.Update(r.Context(), &update); err != nil {
-			writeError(w, http.StatusInternalServerError, "failed to update")
+			writeJSONError(w, http.StatusInternalServerError, "failed to update")
 			return
 		}
 	}
@@ -288,12 +288,12 @@ func (h *HTTPHandler) journeyDryRun(w http.ResponseWriter, r *http.Request, id s
 		var err error
 		j, err = h.journeyRepo.Get(r.Context(), id)
 		if err != nil || j == nil {
-			writeError(w, http.StatusNotFound, "journey not found")
+			writeJSONError(w, http.StatusNotFound, "journey not found")
 			return
 		}
 	}
 	if j == nil {
-		writeError(w, http.StatusNotFound, "journey not found")
+		writeJSONError(w, http.StatusNotFound, "journey not found")
 		return
 	}
 

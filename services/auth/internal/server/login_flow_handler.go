@@ -39,7 +39,7 @@ var loginFlowStore = struct {
 // POST /api/v1/auth/login-flow/record
 func (h *Handler) handleLoginFlowRecord(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
-		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 
@@ -49,15 +49,15 @@ func (h *Handler) handleLoginFlowRecord(w http.ResponseWriter, r *http.Request) 
 		Steps    []loginFlowStep `json:"steps"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		writeError(w, http.StatusBadRequest, "invalid request body")
+		writeJSONError(w, http.StatusBadRequest, "invalid request body")
 		return
 	}
 	if req.UserID == "" {
-		writeError(w, http.StatusBadRequest, "user_id is required")
+		writeJSONError(w, http.StatusBadRequest, "user_id is required")
 		return
 	}
 	if len(req.Steps) == 0 {
-		writeError(w, http.StatusBadRequest, "steps must not be empty")
+		writeJSONError(w, http.StatusBadRequest, "steps must not be empty")
 		return
 	}
 

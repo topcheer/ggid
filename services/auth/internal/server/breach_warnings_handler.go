@@ -23,12 +23,12 @@ var (
 // GET /api/v1/auth/breach-warnings?user_id=X
 func (h *Handler) handleBreachWarnings(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
-		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 	userID := r.URL.Query().Get("user_id")
 	if userID == "" {
-		writeError(w, http.StatusBadRequest, "user_id required")
+		writeJSONError(w, http.StatusBadRequest, "user_id required")
 		return
 	}
 

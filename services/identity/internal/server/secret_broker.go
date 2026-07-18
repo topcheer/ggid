@@ -271,7 +271,7 @@ func (h *HTTPHandler) handleSecretBroker(w http.ResponseWriter, r *http.Request)
 	case strings.HasSuffix(path, "/revoke"):
 		h.sbRevoke(w, r, tc)
 	default:
-		writeError(w, http.StatusNotFound, "not found")
+		writeJSONError(w, http.StatusNotFound, "not found")
 	}
 }
 
@@ -280,14 +280,14 @@ func (h *HTTPHandler) sbTargets(w http.ResponseWriter, r *http.Request, tc *ggid
 	case http.MethodPost:
 		var t SecretTarget
 		if err := json.NewDecoder(r.Body).Decode(&t); err != nil {
-			writeError(w, http.StatusBadRequest, "invalid body")
+			writeJSONError(w, http.StatusBadRequest, "invalid body")
 			return
 		}
 		if tc != nil {
 			t.TenantID = tc.TenantID
 		}
 		if t.Name == "" || t.Type == "" {
-			writeError(w, http.StatusBadRequest, "name and type required")
+			writeJSONError(w, http.StatusBadRequest, "name and type required")
 			return
 		}
 		if t.TTLSeconds == 0 {
@@ -296,7 +296,7 @@ func (h *HTTPHandler) sbTargets(w http.ResponseWriter, r *http.Request, tc *ggid
 		t.Enabled = true
 		if h.secretBrokerRepo != nil {
 			if err := h.secretBrokerRepo.CreateTarget(r.Context(), &t); err != nil {
-				writeError(w, http.StatusInternalServerError, "failed")
+				writeJSONError(w, http.StatusInternalServerError, "failed")
 				return
 			}
 		}
@@ -311,7 +311,7 @@ func (h *HTTPHandler) sbTargets(w http.ResponseWriter, r *http.Request, tc *ggid
 		}
 		writeJSON(w, http.StatusOK, map[string]any{"targets": targets, "total": len(targets)})
 	default:
-		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 	}
 }
 
@@ -320,14 +320,14 @@ func (h *HTTPHandler) sbTargetByID(w http.ResponseWriter, r *http.Request, tc *g
 	idStr := parts[len(parts)-1]
 	id, err := uuid.Parse(idStr)
 	if err != nil {
-		writeError(w, http.StatusBadRequest, "invalid id")
+		writeJSONError(w, http.StatusBadRequest, "invalid id")
 		return
 	}
 	switch r.Method {
 	case http.MethodPut:
 		var t SecretTarget
 		if err := json.NewDecoder(r.Body).Decode(&t); err != nil {
-			writeError(w, http.StatusBadRequest, "invalid body")
+			writeJSONError(w, http.StatusBadRequest, "invalid body")
 			return
 		}
 		t.ID = id
@@ -347,7 +347,7 @@ func (h *HTTPHandler) sbTargetByID(w http.ResponseWriter, r *http.Request, tc *g
 		if h.secretBrokerRepo != nil && tc != nil {
 			t, err := h.secretBrokerRepo.GetTarget(r.Context(), id, tc.TenantID)
 			if err != nil {
-				writeError(w, http.StatusNotFound, "not found")
+				writeJSONError(w, http.StatusNotFound, "not found")
 				return
 			}
 			writeJSON(w, http.StatusOK, t)
@@ -355,13 +355,13 @@ func (h *HTTPHandler) sbTargetByID(w http.ResponseWriter, r *http.Request, tc *g
 		}
 		writeJSON(w, http.StatusOK, map[string]any{})
 	default:
-		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 	}
 }
 
 func (h *HTTPHandler) sbBroker(w http.ResponseWriter, r *http.Request, tc *ggidtenant.Context) {
 	if r.Method != http.MethodPost {
-		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 	var req struct {
@@ -371,26 +371,26 @@ func (h *HTTPHandler) sbBroker(w http.ResponseWriter, r *http.Request, tc *ggidt
 		JITRequestID string `json:"jit_request_id"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		writeError(w, http.StatusBadRequest, "invalid body")
+		writeJSONError(w, http.StatusBadRequest, "invalid body")
 		return
 	}
 	targetID, err := uuid.Parse(req.TargetID)
 	if err != nil {
-		writeError(w, http.StatusBadRequest, "invalid target_id")
+		writeJSONError(w, http.StatusBadRequest, "invalid target_id")
 		return
 	}
 	if tc == nil {
-		writeError(w, http.StatusBadRequest, "tenant context required")
+		writeJSONError(w, http.StatusBadRequest, "tenant context required")
 		return
 	}
 	// Look up target for TTL + default role.
 	target, err := h.secretBrokerRepo.GetTarget(r.Context(), targetID, tc.TenantID)
 	if err != nil || target == nil {
-		writeError(w, http.StatusNotFound, "target not found")
+		writeJSONError(w, http.StatusNotFound, "target not found")
 		return
 	}
 	if !target.Enabled {
-		writeError(w, http.StatusForbidden, "target disabled")
+		writeJSONError(w, http.StatusForbidden, "target disabled")
 		return
 	}
 	role := req.Role
@@ -431,23 +431,23 @@ func (h *HTTPHandler) sbActive(w http.ResponseWriter, r *http.Request, tc *ggidt
 
 func (h *HTTPHandler) sbRevoke(w http.ResponseWriter, r *http.Request, tc *ggidtenant.Context) {
 	if r.Method != http.MethodPost {
-		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 	var req struct {
 		GrantID string `json:"grant_id"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		writeError(w, http.StatusBadRequest, "invalid body")
+		writeJSONError(w, http.StatusBadRequest, "invalid body")
 		return
 	}
 	grantID, err := uuid.Parse(req.GrantID)
 	if err != nil {
-		writeError(w, http.StatusBadRequest, "invalid grant_id")
+		writeJSONError(w, http.StatusBadRequest, "invalid grant_id")
 		return
 	}
 	if tc == nil {
-		writeError(w, http.StatusBadRequest, "tenant context required")
+		writeJSONError(w, http.StatusBadRequest, "tenant context required")
 		return
 	}
 	h.secretBrokerRepo.RevokeGrant(r.Context(), grantID, tc.TenantID)

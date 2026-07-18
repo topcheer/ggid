@@ -144,33 +144,33 @@ func (h *Handler) handleEmailConfig(w http.ResponseWriter, r *http.Request) {
 	case http.MethodPut, http.MethodPost:
 		var cfg EmailConfig
 		if err := json.NewDecoder(r.Body).Decode(&cfg); err != nil {
-			writeError(w, http.StatusBadRequest, "invalid JSON")
+			writeJSONError(w, http.StatusBadRequest, "invalid JSON")
 			return
 		}
 		validProviders := map[string]bool{"smtp": true, "sendgrid": true, "ses": true, "mailgun": true}
 		if !validProviders[cfg.Provider] {
-			writeError(w, http.StatusBadRequest, "provider must be smtp, sendgrid, ses, or mailgun")
+			writeJSONError(w, http.StatusBadRequest, "provider must be smtp, sendgrid, ses, or mailgun")
 			return
 		}
 		if h.emailRepo != nil { h.emailRepo.config = cfg }
 		writeJSON(w, http.StatusOK, map[string]any{"status": "updated", "provider": cfg.Provider})
 	default:
-		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 	}
 }
 
 func (h *Handler) handleEmailTest(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
-		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 	var req struct{ To string `json:"to"` }
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		writeError(w, http.StatusBadRequest, "invalid JSON")
+		writeJSONError(w, http.StatusBadRequest, "invalid JSON")
 			return
 	}
 	if req.To == "" {
-		writeError(w, http.StatusBadRequest, "to address required")
+		writeJSONError(w, http.StatusBadRequest, "to address required")
 		return
 	}
 	if h.emailRepo != nil {

@@ -11,7 +11,7 @@ import (
 // 0-29: 8h (low), 30-59: 4h (medium), 60-79: 1h (high), 80+: 15min (critical)
 func (h *Handler) handleSessionTimeout(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
-		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 	riskStr := r.URL.Query().Get("risk_score")

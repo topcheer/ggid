@@ -23,13 +23,13 @@ type searchResult struct {
 // Ranked search across username, email, display_name, phone.
 func (h *HTTPHandler) handleSmartSearch(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
-		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 
 	query := r.URL.Query().Get("q")
 	if query == "" {
-		writeError(w, http.StatusBadRequest, "q query parameter is required")
+		writeJSONError(w, http.StatusBadRequest, "q query parameter is required")
 		return
 	}
 
@@ -47,7 +47,7 @@ func (h *HTTPHandler) handleSmartSearch(w http.ResponseWriter, r *http.Request) 
 	// Use the identity service to list users, then score them
 	ctx, ok := injectTenant(r)
 	if !ok {
-		writeError(w, http.StatusBadRequest, "missing or invalid X-Tenant-ID header")
+		writeJSONError(w, http.StatusBadRequest, "missing or invalid X-Tenant-ID header")
 		return
 	}
 

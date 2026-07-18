@@ -36,16 +36,16 @@ func (h *HTTPHandler) handleMDMConnectors(w http.ResponseWriter, r *http.Request
 	case http.MethodPost:
 		var req MDMConnector
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-			writeError(w, http.StatusBadRequest, "invalid JSON")
+			writeJSONError(w, http.StatusBadRequest, "invalid JSON")
 			return
 		}
 		if req.Name == "" || req.Type == "" {
-			writeError(w, http.StatusBadRequest, "name and type required")
+			writeJSONError(w, http.StatusBadRequest, "name and type required")
 			return
 		}
 		validTypes := map[string]bool{"intune": true, "jamf": true, "android": true}
 		if !validTypes[req.Type] {
-			writeError(w, http.StatusBadRequest, "type must be intune, jamf, or android")
+			writeJSONError(w, http.StatusBadRequest, "type must be intune, jamf, or android")
 			return
 		}
 		req.ID = uuid.New().String()
@@ -55,19 +55,19 @@ func (h *HTTPHandler) handleMDMConnectors(w http.ResponseWriter, r *http.Request
 	case http.MethodGet:
 		writeJSON(w, http.StatusOK, map[string]any{"connectors": []MDMConnector{}, "count": 0})
 	default:
-		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 	}
 }
 
 // POST /api/v1/mdm/sync/:connector
 func (h *HTTPHandler) handleMDMSync(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
-		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 	connectorID := strings.TrimPrefix(r.URL.Path, "/api/v1/mdm/sync/")
 	if connectorID == "" {
-		writeError(w, http.StatusBadRequest, "connector id required")
+		writeJSONError(w, http.StatusBadRequest, "connector id required")
 		return
 	}
 	writeJSON(w, http.StatusOK, map[string]any{
@@ -79,7 +79,7 @@ func (h *HTTPHandler) handleMDMSync(w http.ResponseWriter, r *http.Request) {
 // GET /api/v1/mdm/devices
 func (h *HTTPHandler) handleMDMDevices(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
-		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 	writeJSON(w, http.StatusOK, map[string]any{"devices": []MDMDevice{}, "count": 0})
@@ -88,13 +88,13 @@ func (h *HTTPHandler) handleMDMDevices(w http.ResponseWriter, r *http.Request) {
 // GET /api/v1/mdm/devices/:id/compliance
 func (h *HTTPHandler) handleMDMCompliance(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
-		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 	deviceID := strings.TrimPrefix(r.URL.Path, "/api/v1/mdm/devices/")
 	deviceID = strings.TrimSuffix(deviceID, "/compliance")
 	if deviceID == "" {
-		writeError(w, http.StatusBadRequest, "device id required")
+		writeJSONError(w, http.StatusBadRequest, "device id required")
 		return
 	}
 	writeJSON(w, http.StatusOK, map[string]any{

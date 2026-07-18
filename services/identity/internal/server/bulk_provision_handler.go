@@ -18,7 +18,7 @@ type BulkUser struct {
 // POST /api/v1/users/bulk-provision
 func (h *HTTPHandler) handleBulkProvision(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
-		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 
@@ -26,11 +26,11 @@ func (h *HTTPHandler) handleBulkProvision(w http.ResponseWriter, r *http.Request
 		Users []BulkUser `json:"users"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		writeError(w, http.StatusBadRequest, "invalid JSON")
+		writeJSONError(w, http.StatusBadRequest, "invalid JSON")
 		return
 	}
 	if len(req.Users) == 0 {
-		writeError(w, http.StatusBadRequest, "users array required")
+		writeJSONError(w, http.StatusBadRequest, "users array required")
 		return
 	}
 

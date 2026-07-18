@@ -86,7 +86,7 @@ func hmacSHA256(secret, data []byte) []byte {
 // POST /api/v1/identity/sd-jwt/issue
 func (h *HTTPHandler) handleSDJWTIssue(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
-		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 
@@ -95,11 +95,11 @@ func (h *HTTPHandler) handleSDJWTIssue(w http.ResponseWriter, r *http.Request) {
 
 	var req SDJWTIssueRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		writeError(w, http.StatusBadRequest, "invalid body")
+		writeJSONError(w, http.StatusBadRequest, "invalid body")
 		return
 	}
 	if req.Subject == "" {
-		writeError(w, http.StatusBadRequest, "subject required")
+		writeJSONError(w, http.StatusBadRequest, "subject required")
 		return
 	}
 	if req.TTLSeconds == 0 {
@@ -174,17 +174,17 @@ func (h *HTTPHandler) handleSDJWTIssue(w http.ResponseWriter, r *http.Request) {
 // POST /api/v1/identity/sd-jwt/verify
 func (h *HTTPHandler) handleSDJWTVerify(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
-		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 
 	var req SDJWTVerifyRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		writeError(w, http.StatusBadRequest, "invalid body")
+		writeJSONError(w, http.StatusBadRequest, "invalid body")
 		return
 	}
 	if req.SDJWT == "" {
-		writeError(w, http.StatusBadRequest, "sd_jwt required")
+		writeJSONError(w, http.StatusBadRequest, "sd_jwt required")
 		return
 	}
 

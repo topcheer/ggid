@@ -25,13 +25,13 @@ func (h *HTTPHandler) handleIdPConfig(w http.ResponseWriter, r *http.Request) {
 	// parts: ["api", "v1", "tenants", "{tenantID}", "idp-config", ...]
 
 	if len(parts) < 5 || parts[4] != "idp-config" {
-		writeError(w, http.StatusBadRequest, "invalid idp-config path")
+		writeJSONError(w, http.StatusBadRequest, "invalid idp-config path")
 		return
 	}
 
 	tenantID, err := uuid.Parse(parts[3])
 	if err != nil {
-		writeError(w, http.StatusBadRequest, "invalid tenant_id")
+		writeJSONError(w, http.StatusBadRequest, "invalid tenant_id")
 		return
 	}
 
@@ -40,7 +40,7 @@ func (h *HTTPHandler) handleIdPConfig(w http.ResponseWriter, r *http.Request) {
 	if len(parts) >= 6 && parts[5] != "" {
 		id, err := uuid.Parse(parts[5])
 		if err != nil {
-			writeError(w, http.StatusBadRequest, "invalid config id")
+			writeJSONError(w, http.StatusBadRequest, "invalid config id")
 			return
 		}
 		configID = &id
@@ -55,7 +55,7 @@ func (h *HTTPHandler) handleIdPConfig(w http.ResponseWriter, r *http.Request) {
 			configs, err := h.idpConfigSvc.List(ctx, tenantID)
 			if err != nil {
 				slog.Error("idp_config list error", "err", err)
-				writeError(w, http.StatusInternalServerError, "internal server error")
+				writeJSONError(w, http.StatusInternalServerError, "internal server error")
 				return
 			}
 			writeJSON(w, http.StatusOK, map[string]any{"configs": configs})
@@ -67,18 +67,18 @@ func (h *HTTPHandler) handleIdPConfig(w http.ResponseWriter, r *http.Request) {
 				ConfigJSON string `json:"config_json"`
 			}
 			if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-				writeError(w, http.StatusBadRequest, "invalid JSON body")
+				writeJSONError(w, http.StatusBadRequest, "invalid JSON body")
 				return
 			}
 			cfg, err := h.idpConfigSvc.Create(ctx, tenantID, idpconfig.IdPType(req.IdPType), req.Name, req.ConfigJSON)
 			if err != nil {
-				writeError(w, http.StatusBadRequest, err.Error())
+				writeJSONError(w, http.StatusBadRequest, err.Error())
 				return
 			}
 			writeJSON(w, http.StatusCreated, cfg)
 
 		default:
-			writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+			writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 		}
 		return
 	}
@@ -88,7 +88,7 @@ func (h *HTTPHandler) handleIdPConfig(w http.ResponseWriter, r *http.Request) {
 	case http.MethodGet:
 		cfg, err := h.idpConfigSvc.Get(ctx, *configID)
 		if err != nil {
-			writeError(w, http.StatusNotFound, err.Error())
+			writeJSONError(w, http.StatusNotFound, err.Error())
 			return
 		}
 		writeJSON(w, http.StatusOK, cfg)
@@ -100,12 +100,12 @@ func (h *HTTPHandler) handleIdPConfig(w http.ResponseWriter, r *http.Request) {
 			Enabled    bool   `json:"enabled"`
 		}
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-			writeError(w, http.StatusBadRequest, "invalid JSON body")
+			writeJSONError(w, http.StatusBadRequest, "invalid JSON body")
 			return
 		}
 		cfg, err := h.idpConfigSvc.Update(ctx, *configID, req.Name, req.ConfigJSON, req.Enabled)
 		if err != nil {
-			writeError(w, http.StatusBadRequest, err.Error())
+			writeJSONError(w, http.StatusBadRequest, err.Error())
 			return
 		}
 		writeJSON(w, http.StatusOK, cfg)
@@ -113,12 +113,12 @@ func (h *HTTPHandler) handleIdPConfig(w http.ResponseWriter, r *http.Request) {
 	case http.MethodDelete:
 		if err := h.idpConfigSvc.Delete(ctx, *configID); err != nil {
 			slog.Error("idp_config delete error", "err", err)
-			writeError(w, http.StatusInternalServerError, "internal server error")
+			writeJSONError(w, http.StatusInternalServerError, "internal server error")
 			return
 		}
 		writeJSON(w, http.StatusOK, map[string]string{"status": "deleted"})
 
 	default:
-		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 	}
 }

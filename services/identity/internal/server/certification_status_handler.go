@@ -11,7 +11,7 @@ import (
 // GET /api/v1/users/{id}/certification-status
 func (h *HTTPHandler) handleCertificationStatus(ctx context.Context, userID uuid.UUID, w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
-		writeError(w, http.StatusMethodNotAllowed, "method not allowed"); return
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed"); return
 	}
 	writeJSON(w, http.StatusOK, map[string]any{
 		"user_id": userID.String(),

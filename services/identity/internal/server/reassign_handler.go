@@ -13,7 +13,7 @@ import (
 // POST /api/v1/users/{id}/reassign
 func (h *HTTPHandler) reassignUser(ctx context.Context, userID uuid.UUID, w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
-		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 	var req struct {
@@ -22,7 +22,7 @@ func (h *HTTPHandler) reassignUser(ctx context.Context, userID uuid.UUID, w http
 		NewManager string `json:"new_manager"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		writeError(w, http.StatusBadRequest, "invalid JSON")
+		writeJSONError(w, http.StatusBadRequest, "invalid JSON")
 		return
 	}
 	writeJSON(w, http.StatusOK, map[string]any{

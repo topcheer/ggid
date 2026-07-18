@@ -25,7 +25,7 @@ type CoverageMatrixResult struct {
 
 func (s *HTTPServer) handleCoverageMatrix(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
-		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 	subjects := []string{"user:alice", "user:bob", "role:admin", "role:viewer"}

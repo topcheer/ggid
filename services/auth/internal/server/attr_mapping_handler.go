@@ -27,7 +27,7 @@ func (h *Handler) handleAttrMappings(w http.ResponseWriter, r *http.Request) {
 		case http.MethodPost:
 			h.attrMappingCreate(w, r)
 		default:
-			writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+			writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 		}
 		return
 	}
@@ -35,7 +35,7 @@ func (h *Handler) handleAttrMappings(w http.ResponseWriter, r *http.Request) {
 	// Sub-routes: /test or /:id
 	if path == "test" {
 		if r.Method != http.MethodPost {
-			writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+			writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 			return
 		}
 		h.attrMappingTest(w, r)
@@ -52,23 +52,23 @@ func (h *Handler) handleAttrMappings(w http.ResponseWriter, r *http.Request) {
 	case http.MethodDelete:
 		h.attrMappingDelete(w, r, mappingID)
 	default:
-		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 	}
 }
 
 func (h *Handler) attrMappingList(w http.ResponseWriter, r *http.Request) {
 	if h.attrMapRepo == nil {
-		writeError(w, http.StatusServiceUnavailable, "attribute mapping repo not configured")
+		writeJSONError(w, http.StatusServiceUnavailable, "attribute mapping repo not configured")
 		return
 	}
 	tc, err := ggidtenant.FromContext(r.Context())
 	if err != nil {
-		writeError(w, http.StatusBadRequest, "X-Tenant-ID header required")
+		writeJSONError(w, http.StatusBadRequest, "X-Tenant-ID header required")
 		return
 	}
 	mappings, err := h.attrMapRepo.List(r.Context(), tc.TenantID)
 	if err != nil {
-		writeError(w, http.StatusInternalServerError, "failed to list mappings")
+		writeJSONError(w, http.StatusInternalServerError, "failed to list mappings")
 		return
 	}
 	writeJSON(w, http.StatusOK, map[string]any{
@@ -79,26 +79,26 @@ func (h *Handler) attrMappingList(w http.ResponseWriter, r *http.Request) {
 
 func (h *Handler) attrMappingCreate(w http.ResponseWriter, r *http.Request) {
 	if h.attrMapRepo == nil {
-		writeError(w, http.StatusServiceUnavailable, "attribute mapping repo not configured")
+		writeJSONError(w, http.StatusServiceUnavailable, "attribute mapping repo not configured")
 		return
 	}
 	tc, err := ggidtenant.FromContext(r.Context())
 	if err != nil {
-		writeError(w, http.StatusBadRequest, "X-Tenant-ID header required")
+		writeJSONError(w, http.StatusBadRequest, "X-Tenant-ID header required")
 		return
 	}
 	var m AttributeMapping
 	if err := json.NewDecoder(r.Body).Decode(&m); err != nil {
-		writeError(w, http.StatusBadRequest, "invalid JSON body")
+		writeJSONError(w, http.StatusBadRequest, "invalid JSON body")
 		return
 	}
 	m.TenantID = tc.TenantID.String()
 	if err := ValidateMapping(&m); err != nil {
-		writeError(w, http.StatusBadRequest, err.Error())
+		writeJSONError(w, http.StatusBadRequest, err.Error())
 		return
 	}
 	if err := h.attrMapRepo.Create(r.Context(), &m); err != nil {
-		writeError(w, http.StatusInternalServerError, "failed to create mapping")
+		writeJSONError(w, http.StatusInternalServerError, "failed to create mapping")
 		return
 	}
 	writeJSON(w, http.StatusCreated, m)
@@ -106,12 +106,12 @@ func (h *Handler) attrMappingCreate(w http.ResponseWriter, r *http.Request) {
 
 func (h *Handler) attrMappingGet(w http.ResponseWriter, r *http.Request, id string) {
 	if h.attrMapRepo == nil {
-		writeError(w, http.StatusServiceUnavailable, "attribute mapping repo not configured")
+		writeJSONError(w, http.StatusServiceUnavailable, "attribute mapping repo not configured")
 		return
 	}
 	m, err := h.attrMapRepo.Get(r.Context(), id)
 	if err != nil {
-		writeError(w, http.StatusNotFound, "mapping not found")
+		writeJSONError(w, http.StatusNotFound, "mapping not found")
 		return
 	}
 	writeJSON(w, http.StatusOK, m)
@@ -119,21 +119,21 @@ func (h *Handler) attrMappingGet(w http.ResponseWriter, r *http.Request, id stri
 
 func (h *Handler) attrMappingUpdate(w http.ResponseWriter, r *http.Request, id string) {
 	if h.attrMapRepo == nil {
-		writeError(w, http.StatusServiceUnavailable, "attribute mapping repo not configured")
+		writeJSONError(w, http.StatusServiceUnavailable, "attribute mapping repo not configured")
 		return
 	}
 	var m AttributeMapping
 	if err := json.NewDecoder(r.Body).Decode(&m); err != nil {
-		writeError(w, http.StatusBadRequest, "invalid JSON body")
+		writeJSONError(w, http.StatusBadRequest, "invalid JSON body")
 		return
 	}
 	m.ID = id
 	if err := ValidateMapping(&m); err != nil {
-		writeError(w, http.StatusBadRequest, err.Error())
+		writeJSONError(w, http.StatusBadRequest, err.Error())
 		return
 	}
 	if err := h.attrMapRepo.Update(r.Context(), &m); err != nil {
-		writeError(w, http.StatusInternalServerError, "failed to update mapping")
+		writeJSONError(w, http.StatusInternalServerError, "failed to update mapping")
 		return
 	}
 	writeJSON(w, http.StatusOK, m)
@@ -141,11 +141,11 @@ func (h *Handler) attrMappingUpdate(w http.ResponseWriter, r *http.Request, id s
 
 func (h *Handler) attrMappingDelete(w http.ResponseWriter, r *http.Request, id string) {
 	if h.attrMapRepo == nil {
-		writeError(w, http.StatusServiceUnavailable, "attribute mapping repo not configured")
+		writeJSONError(w, http.StatusServiceUnavailable, "attribute mapping repo not configured")
 		return
 	}
 	if err := h.attrMapRepo.Delete(r.Context(), id); err != nil {
-		writeError(w, http.StatusInternalServerError, "failed to delete mapping")
+		writeJSONError(w, http.StatusInternalServerError, "failed to delete mapping")
 		return
 	}
 	writeJSON(w, http.StatusOK, map[string]string{"status": "deleted"})
@@ -153,22 +153,22 @@ func (h *Handler) attrMappingDelete(w http.ResponseWriter, r *http.Request, id s
 
 func (h *Handler) attrMappingTest(w http.ResponseWriter, r *http.Request) {
 	if h.attrMapRepo == nil {
-		writeError(w, http.StatusServiceUnavailable, "attribute mapping repo not configured")
+		writeJSONError(w, http.StatusServiceUnavailable, "attribute mapping repo not configured")
 		return
 	}
 	tc, err := ggidtenant.FromContext(r.Context())
 	if err != nil {
-		writeError(w, http.StatusBadRequest, "X-Tenant-ID header required")
+		writeJSONError(w, http.StatusBadRequest, "X-Tenant-ID header required")
 		return
 	}
 	var input map[string][]string
 	if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
-		writeError(w, http.StatusBadRequest, "invalid JSON body")
+		writeJSONError(w, http.StatusBadRequest, "invalid JSON body")
 		return
 	}
 	result, err := h.attrMapRepo.TestMapping(r.Context(), tc.TenantID, input)
 	if err != nil {
-		writeError(w, http.StatusInternalServerError, "test failed")
+		writeJSONError(w, http.StatusInternalServerError, "test failed")
 		return
 	}
 	writeJSON(w, http.StatusOK, result)

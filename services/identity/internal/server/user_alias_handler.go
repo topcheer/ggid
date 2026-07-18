@@ -38,11 +38,11 @@ func (h *HTTPHandler) handleUserAliases(w http.ResponseWriter, r *http.Request) 
 		}
 	}
 	if userID == "" {
-		writeError(w, http.StatusBadRequest, "user ID is required in path")
+		writeJSONError(w, http.StatusBadRequest, "user ID is required in path")
 		return
 	}
 	if _, err := uuid.Parse(userID); err != nil {
-		writeError(w, http.StatusBadRequest, "invalid user_id")
+		writeJSONError(w, http.StatusBadRequest, "invalid user_id")
 		return
 	}
 
@@ -53,17 +53,17 @@ func (h *HTTPHandler) handleUserAliases(w http.ResponseWriter, r *http.Request) 
 			Value     string `json:"value"`
 		}
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-			writeError(w, http.StatusBadRequest, "invalid request body")
+			writeJSONError(w, http.StatusBadRequest, "invalid request body")
 			return
 		}
 
 		validTypes := map[string]bool{"email": true, "username": true, "upn": true}
 		if !validTypes[req.AliasType] {
-			writeError(w, http.StatusBadRequest, "alias_type must be one of: email, username, upn")
+			writeJSONError(w, http.StatusBadRequest, "alias_type must be one of: email, username, upn")
 			return
 		}
 		if req.Value == "" {
-			writeError(w, http.StatusBadRequest, "value is required")
+			writeJSONError(w, http.StatusBadRequest, "value is required")
 			return
 		}
 
@@ -97,7 +97,7 @@ func (h *HTTPHandler) handleUserAliases(w http.ResponseWriter, r *http.Request) 
 	case http.MethodDelete:
 		aliasID := r.URL.Query().Get("id")
 		if aliasID == "" {
-			writeError(w, http.StatusBadRequest, "id query parameter is required")
+			writeJSONError(w, http.StatusBadRequest, "id query parameter is required")
 			return
 		}
 
@@ -116,7 +116,7 @@ func (h *HTTPHandler) handleUserAliases(w http.ResponseWriter, r *http.Request) 
 		userAliasStore.Unlock()
 
 		if !found {
-			writeError(w, http.StatusNotFound, "alias not found")
+			writeJSONError(w, http.StatusNotFound, "alias not found")
 			return
 		}
 
@@ -126,6 +126,6 @@ func (h *HTTPHandler) handleUserAliases(w http.ResponseWriter, r *http.Request) 
 		})
 
 	default:
-		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 	}
 }

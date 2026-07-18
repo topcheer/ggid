@@ -35,11 +35,11 @@ func (h *HTTPHandler) handleImportValidationConfig(w http.ResponseWriter, r *htt
 	case http.MethodPut:
 		var cfg ImportValidationConfig
 		if err := json.NewDecoder(r.Body).Decode(&cfg); err != nil {
-			http.Error(w, `{"error":"invalid request body"}`, http.StatusBadRequest)
+			writeJSONError(w, http.StatusBadRequest, "invalid request body")
 			return
 		}
 		if cfg.MaxBatchSize < 1 {
-			http.Error(w, `{"error":"max_batch_size must be at least 1"}`, http.StatusBadRequest)
+			writeJSONError(w, http.StatusBadRequest, "max_batch_size must be at least 1")
 			return
 		}
 		globalImportValidationConfig = &cfg
@@ -47,6 +47,6 @@ func (h *HTTPHandler) handleImportValidationConfig(w http.ResponseWriter, r *htt
 		w.WriteHeader(http.StatusOK)
 		json.NewEncoder(w).Encode(cfg)
 	default:
-		http.Error(w, `{"error":"method not allowed"}`, http.StatusMethodNotAllowed)
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 	}
 }

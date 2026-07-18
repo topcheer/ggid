@@ -29,7 +29,7 @@ var profileVersionStore = struct {
 // GET /api/v1/users/{id}/profile-diff?version_a=1&version_b=3
 func (h *HTTPHandler) handleProfileDiff(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
-		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 
@@ -43,7 +43,7 @@ func (h *HTTPHandler) handleProfileDiff(w http.ResponseWriter, r *http.Request) 
 		}
 	}
 	if userID == "" {
-		writeError(w, http.StatusBadRequest, "user ID is required in path")
+		writeJSONError(w, http.StatusBadRequest, "user ID is required in path")
 		return
 	}
 

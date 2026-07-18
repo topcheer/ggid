@@ -28,13 +28,13 @@ type ReBACSyncResult struct {
 // POST /api/v1/identity/rebac/sync-rbac
 func (h *HTTPHandler) handleReBACSyncRBAC(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
-		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 
 	tc, err := ggidtenant.FromContext(r.Context())
 	if err != nil {
-		writeError(w, http.StatusBadRequest, "tenant context required")
+		writeJSONError(w, http.StatusBadRequest, "tenant context required")
 		return
 	}
 
@@ -44,7 +44,7 @@ func (h *HTTPHandler) handleReBACSyncRBAC(w http.ResponseWriter, r *http.Request
 	}
 
 	if h.rebacRepo == nil {
-		writeError(w, http.StatusServiceUnavailable, "ReBAC not configured")
+		writeJSONError(w, http.StatusServiceUnavailable, "ReBAC not configured")
 		return
 	}
 

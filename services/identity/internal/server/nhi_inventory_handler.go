@@ -12,7 +12,7 @@ var nhiSvc = service.NewNHILifecycleService()
 
 func (h *HTTPHandler) handleNHIInventory(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
-		http.Error(w, `{"error":"method not allowed"}`, http.StatusMethodNotAllowed)
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 	nhiType := r.URL.Query().Get("type")
@@ -35,7 +35,7 @@ func (h *HTTPHandler) handleNHIInventory(w http.ResponseWriter, r *http.Request)
 
 func (h *HTTPHandler) handleNHIOrphans(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
-		http.Error(w, `{"error":"method not allowed"}`, http.StatusMethodNotAllowed)
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 	orphans := nhiSvc.DetectOrphans(90)
@@ -45,18 +45,18 @@ func (h *HTTPHandler) handleNHIOrphans(w http.ResponseWriter, r *http.Request) {
 
 func (h *HTTPHandler) handleNHIDecommission(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
-		http.Error(w, `{"error":"method not allowed"}`, http.StatusMethodNotAllowed)
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 	parts := strings.Split(strings.TrimSuffix(r.URL.Path, "/"), "/")
 	if len(parts) < 1 {
-		http.Error(w, `{"error":"nhi id required"}`, http.StatusBadRequest)
+		writeJSONError(w, http.StatusBadRequest, "nhi id required")
 		return
 	}
 	id := parts[len(parts)-1]
 	result := nhiSvc.DecommissionNHI(id)
 	if result == nil {
-		http.Error(w, `{"error":"nhi not found"}`, http.StatusNotFound)
+		writeJSONError(w, http.StatusNotFound, "nhi not found")
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")

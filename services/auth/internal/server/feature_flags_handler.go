@@ -51,7 +51,7 @@ func (h *Handler) handleFeatureFlags(w http.ResponseWriter, r *http.Request) {
 	if r.URL.Path == "/api/v1/admin/feature-flags" && r.Method == http.MethodPost {
 		var req FeatureFlag
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-			writeError(w, http.StatusBadRequest, "invalid body")
+			writeJSONError(w, http.StatusBadRequest, "invalid body")
 			return
 		}
 		if req.EnvOverride == nil {
@@ -83,9 +83,9 @@ func (h *Handler) handleFeatureFlags(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 		}
-		writeError(w, http.StatusNotFound, "flag not found")
+		writeJSONError(w, http.StatusNotFound, "flag not found")
 		return
 	}
 
-	writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+	writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 }

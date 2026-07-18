@@ -41,11 +41,11 @@ func (h *HTTPHandler) handleSCIMTargets(w http.ResponseWriter, r *http.Request) 
 	case http.MethodPost:
 		var req SCIMTarget
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-			writeError(w, http.StatusBadRequest, "invalid JSON")
+			writeJSONError(w, http.StatusBadRequest, "invalid JSON")
 			return
 		}
 		if req.Name == "" || req.BaseURL == "" {
-			writeError(w, http.StatusBadRequest, "name and base_url required")
+			writeJSONError(w, http.StatusBadRequest, "name and base_url required")
 			return
 		}
 		req.ID = uuid.New().String()
@@ -67,18 +67,18 @@ func (h *HTTPHandler) handleSCIMTargets(w http.ResponseWriter, r *http.Request) 
 		if targets == nil { targets = []map[string]any{} }
 		writeJSON(w, http.StatusOK, map[string]any{"targets": targets, "count": len(targets)})
 	default:
-		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 	}
 }
 
 func (h *HTTPHandler) handleSCIMSyncTarget(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
-		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 	targetID := strings.TrimPrefix(r.URL.Path, "/api/v1/scim/sync/")
 	if targetID == "" {
-		writeError(w, http.StatusBadRequest, "target id required")
+		writeJSONError(w, http.StatusBadRequest, "target id required")
 		return
 	}
 	// Simulate sync — in production, calls SCIM client.
@@ -98,7 +98,7 @@ func (h *HTTPHandler) handleSCIMSyncTarget(w http.ResponseWriter, r *http.Reques
 
 func (h *HTTPHandler) handleSCIMSyncLog(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
-		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 	var log []map[string]any

@@ -137,7 +137,7 @@ func (r *secretRepo) CheckHealth(ctx context.Context) map[string]any {
 
 func (h *HTTPHandler) handleSecretsList(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
-		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 	var refs []*SecretReference
@@ -150,12 +150,12 @@ func (h *HTTPHandler) handleSecretsList(w http.ResponseWriter, r *http.Request) 
 
 func (h *HTTPHandler) handleSecretsRotate(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
-		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 	name := strings.TrimPrefix(r.URL.Path, "/api/v1/admin/secrets/rotate/")
 	if name == "" {
-		writeError(w, http.StatusBadRequest, "secret name required")
+		writeJSONError(w, http.StatusBadRequest, "secret name required")
 		return
 	}
 	if h.secretRepo != nil {
@@ -166,7 +166,7 @@ func (h *HTTPHandler) handleSecretsRotate(w http.ResponseWriter, r *http.Request
 
 func (h *HTTPHandler) handleSecretsHealth(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
-		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 	var health map[string]any

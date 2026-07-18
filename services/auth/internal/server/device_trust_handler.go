@@ -20,7 +20,7 @@ type DeviceTrust struct {
 
 func (h *Handler) handleDeviceTrustScore(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
-		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 	deviceID := strings.TrimPrefix(r.URL.Path, "/api/v1/auth/devices/")
@@ -44,7 +44,7 @@ func (h *Handler) handleDeviceTrustScore(w http.ResponseWriter, r *http.Request)
 
 func (h *Handler) handleDeviceReport(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
-		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 	deviceID := strings.TrimPrefix(r.URL.Path, "/api/v1/auth/devices/")
@@ -56,7 +56,7 @@ func (h *Handler) handleDeviceReport(w http.ResponseWriter, r *http.Request) {
 		Jailbreak   bool `json:"jailbreak"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		writeError(w, http.StatusBadRequest, "invalid request body")
+		writeJSONError(w, http.StatusBadRequest, "invalid request body")
 		return
 	}
 	score := 0

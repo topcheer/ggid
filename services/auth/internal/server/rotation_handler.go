@@ -20,19 +20,19 @@ func (h *Handler) handleRotationRoute(w http.ResponseWriter, r *http.Request) {
 		h.handleRotationExecute(w, r)
 		return
 	}
-	http.Error(w, `{"error":"not found"}`, http.StatusNotFound)
+	writeJSONError(w, http.StatusNotFound, "not found")
 }
 
 func (h *Handler) handleRotationSchedule(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
-		http.Error(w, `{"error":"method not allowed"}`, http.StatusMethodNotAllowed)
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 	parts := strings.Split(strings.TrimSuffix(r.URL.Path, "/"), "/")
 	id := parts[len(parts)-2]
 	var policy service.RotationPolicy
 	if err := json.NewDecoder(r.Body).Decode(&policy); err != nil {
-		http.Error(w, `{"error":"invalid request body"}`, http.StatusBadRequest)
+		writeJSONError(w, http.StatusBadRequest, "invalid request body")
 		return
 	}
 	sched := rotSvc.ScheduleRotation(id, policy)
@@ -43,7 +43,7 @@ func (h *Handler) handleRotationSchedule(w http.ResponseWriter, r *http.Request)
 
 func (h *Handler) handleRotationDue(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
-		http.Error(w, `{"error":"method not allowed"}`, http.StatusMethodNotAllowed)
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 	due := rotSvc.CheckDueRotations()
@@ -53,7 +53,7 @@ func (h *Handler) handleRotationDue(w http.ResponseWriter, r *http.Request) {
 
 func (h *Handler) handleRotationExecute(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
-		http.Error(w, `{"error":"method not allowed"}`, http.StatusMethodNotAllowed)
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 	parts := strings.Split(strings.TrimSuffix(r.URL.Path, "/"), "/")

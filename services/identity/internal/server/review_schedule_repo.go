@@ -215,14 +215,14 @@ func (h *HTTPHandler) handleReviewSchedules(w http.ResponseWriter, r *http.Reque
 		case http.MethodPost:
 			h.reviewSchedCreate(w, r)
 		default:
-			writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+			writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 		}
 		return
 	}
 
 	if path == "run" {
 		if r.Method != http.MethodPost {
-			writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+			writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 			return
 		}
 		h.reviewSchedRun(w, r)
@@ -236,23 +236,23 @@ func (h *HTTPHandler) handleReviewSchedules(w http.ResponseWriter, r *http.Reque
 	case http.MethodDelete:
 		h.reviewSchedDelete(w, r, scheduleID)
 	default:
-		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 	}
 }
 
 func (h *HTTPHandler) reviewSchedList(w http.ResponseWriter, r *http.Request) {
 	if h.reviewSchedRepo == nil {
-		writeError(w, http.StatusServiceUnavailable, "review schedule repo not configured")
+		writeJSONError(w, http.StatusServiceUnavailable, "review schedule repo not configured")
 		return
 	}
 	tc, err := ggidtenant.FromContext(r.Context())
 	if err != nil {
-		writeError(w, http.StatusBadRequest, "X-Tenant-ID header required")
+		writeJSONError(w, http.StatusBadRequest, "X-Tenant-ID header required")
 		return
 	}
 	schedules, err := h.reviewSchedRepo.List(r.Context(), tc.TenantID)
 	if err != nil {
-		writeError(w, http.StatusInternalServerError, "failed to list schedules")
+		writeJSONError(w, http.StatusInternalServerError, "failed to list schedules")
 		return
 	}
 	writeJSON(w, http.StatusOK, map[string]any{
@@ -263,26 +263,26 @@ func (h *HTTPHandler) reviewSchedList(w http.ResponseWriter, r *http.Request) {
 
 func (h *HTTPHandler) reviewSchedCreate(w http.ResponseWriter, r *http.Request) {
 	if h.reviewSchedRepo == nil {
-		writeError(w, http.StatusServiceUnavailable, "review schedule repo not configured")
+		writeJSONError(w, http.StatusServiceUnavailable, "review schedule repo not configured")
 		return
 	}
 	tc, err := ggidtenant.FromContext(r.Context())
 	if err != nil {
-		writeError(w, http.StatusBadRequest, "X-Tenant-ID header required")
+		writeJSONError(w, http.StatusBadRequest, "X-Tenant-ID header required")
 		return
 	}
 	var s ReviewSchedule
 	if err := json.NewDecoder(r.Body).Decode(&s); err != nil {
-		writeError(w, http.StatusBadRequest, "invalid JSON body")
+		writeJSONError(w, http.StatusBadRequest, "invalid JSON body")
 		return
 	}
 	s.TenantID = tc.TenantID.String()
 	if err := validateSchedule(&s); err != nil {
-		writeError(w, http.StatusBadRequest, err.Error())
+		writeJSONError(w, http.StatusBadRequest, err.Error())
 		return
 	}
 	if err := h.reviewSchedRepo.Create(r.Context(), &s); err != nil {
-		writeError(w, http.StatusInternalServerError, "failed to create schedule")
+		writeJSONError(w, http.StatusInternalServerError, "failed to create schedule")
 		return
 	}
 	writeJSON(w, http.StatusCreated, s)
@@ -290,21 +290,21 @@ func (h *HTTPHandler) reviewSchedCreate(w http.ResponseWriter, r *http.Request) 
 
 func (h *HTTPHandler) reviewSchedUpdate(w http.ResponseWriter, r *http.Request, id string) {
 	if h.reviewSchedRepo == nil {
-		writeError(w, http.StatusServiceUnavailable, "review schedule repo not configured")
+		writeJSONError(w, http.StatusServiceUnavailable, "review schedule repo not configured")
 		return
 	}
 	var s ReviewSchedule
 	if err := json.NewDecoder(r.Body).Decode(&s); err != nil {
-		writeError(w, http.StatusBadRequest, "invalid JSON body")
+		writeJSONError(w, http.StatusBadRequest, "invalid JSON body")
 		return
 	}
 	s.ID = id
 	if err := validateSchedule(&s); err != nil {
-		writeError(w, http.StatusBadRequest, err.Error())
+		writeJSONError(w, http.StatusBadRequest, err.Error())
 		return
 	}
 	if err := h.reviewSchedRepo.Update(r.Context(), &s); err != nil {
-		writeError(w, http.StatusInternalServerError, "failed to update schedule")
+		writeJSONError(w, http.StatusInternalServerError, "failed to update schedule")
 		return
 	}
 	writeJSON(w, http.StatusOK, s)
@@ -312,11 +312,11 @@ func (h *HTTPHandler) reviewSchedUpdate(w http.ResponseWriter, r *http.Request, 
 
 func (h *HTTPHandler) reviewSchedDelete(w http.ResponseWriter, r *http.Request, id string) {
 	if h.reviewSchedRepo == nil {
-		writeError(w, http.StatusServiceUnavailable, "review schedule repo not configured")
+		writeJSONError(w, http.StatusServiceUnavailable, "review schedule repo not configured")
 		return
 	}
 	if err := h.reviewSchedRepo.Delete(r.Context(), id); err != nil {
-		writeError(w, http.StatusInternalServerError, "failed to delete schedule")
+		writeJSONError(w, http.StatusInternalServerError, "failed to delete schedule")
 		return
 	}
 	writeJSON(w, http.StatusOK, map[string]string{"status": "deleted", "id": id})
@@ -324,12 +324,12 @@ func (h *HTTPHandler) reviewSchedDelete(w http.ResponseWriter, r *http.Request, 
 
 func (h *HTTPHandler) reviewSchedRun(w http.ResponseWriter, r *http.Request) {
 	if h.reviewSchedRepo == nil {
-		writeError(w, http.StatusServiceUnavailable, "review schedule repo not configured")
+		writeJSONError(w, http.StatusServiceUnavailable, "review schedule repo not configured")
 		return
 	}
 	created, err := h.reviewSchedRepo.RunDueSchedules(r.Context())
 	if err != nil {
-		writeError(w, http.StatusInternalServerError, "run failed")
+		writeJSONError(w, http.StatusInternalServerError, "run failed")
 		return
 	}
 	writeJSON(w, http.StatusOK, map[string]any{

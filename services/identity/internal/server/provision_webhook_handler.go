@@ -22,7 +22,7 @@ type ProvisioningEvent struct {
 // POST /api/v1/users/provision-webhook — receive external IdP provisioning events
 func (h *HTTPHandler) handleProvisionWebhook(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
-		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 
@@ -37,12 +37,12 @@ func (h *HTTPHandler) handleProvisionWebhook(w http.ResponseWriter, r *http.Requ
 		Attributes map[string]any `json:"attributes"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		writeError(w, http.StatusBadRequest, "invalid JSON")
+		writeJSONError(w, http.StatusBadRequest, "invalid JSON")
 		return
 	}
 
 	if req.EventType == "" || req.ExternalID == "" {
-		writeError(w, http.StatusBadRequest, "event_type and external_id required")
+		writeJSONError(w, http.StatusBadRequest, "event_type and external_id required")
 		return
 	}
 

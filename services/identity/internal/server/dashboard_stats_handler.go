@@ -12,7 +12,7 @@ import (
 // Returns aggregate statistics for the dashboard widget.
 func (h *HTTPHandler) handleDashboardStats(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
-		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 

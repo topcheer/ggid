@@ -11,7 +11,7 @@ import (
 // GET /api/v1/users/search?q=X&status=active&org=Y&role=Z&last_login_before=W
 func (h *HTTPHandler) handleUserSearch(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
-		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 
@@ -50,7 +50,7 @@ func (h *HTTPHandler) handleUserSearch(w http.ResponseWriter, r *http.Request) {
 
 	result, err := h.svc.ListUsers(r.Context(), searchFilter)
 	if err != nil {
-		writeError(w, http.StatusInternalServerError, "failed to search users")
+		writeJSONError(w, http.StatusInternalServerError, "failed to search users")
 		return
 	}
 

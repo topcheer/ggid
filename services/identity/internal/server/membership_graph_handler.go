@@ -9,7 +9,7 @@ import (
 // GET /api/v1/identity/groups/{id}/membership-graph
 func (h *HTTPHandler) handleMembershipGraph(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
-		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 
@@ -17,7 +17,7 @@ func (h *HTTPHandler) handleMembershipGraph(w http.ResponseWriter, r *http.Reque
 	groupID = strings.TrimSuffix(groupID, "/membership-graph")
 	groupID = strings.TrimSuffix(groupID, "/")
 	if groupID == "" {
-		writeError(w, http.StatusBadRequest, "group ID is required")
+		writeJSONError(w, http.StatusBadRequest, "group ID is required")
 		return
 	}
 

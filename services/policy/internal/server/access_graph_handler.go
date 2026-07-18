@@ -37,7 +37,7 @@ type AccessGraphVisual struct {
 
 func (s *HTTPServer) handleAccessGraph(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
-		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 	parts := strings.Split(strings.TrimPrefix(r.URL.Path, "/api/v1/policy/access-graph/"), "/")

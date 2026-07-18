@@ -22,7 +22,7 @@ func (h *HTTPHandler) handlePrivilegeCreep(w http.ResponseWriter, r *http.Reques
 			h.pcListAlerts(w, r)
 			return
 		}
-		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 
@@ -31,7 +31,7 @@ func (h *HTTPHandler) handlePrivilegeCreep(w http.ResponseWriter, r *http.Reques
 			h.pcTriggerScan(w, r)
 			return
 		}
-		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 
@@ -40,26 +40,26 @@ func (h *HTTPHandler) handlePrivilegeCreep(w http.ResponseWriter, r *http.Reques
 			h.pcUserDiff(w, r, strings.TrimPrefix(path, "diff/"))
 			return
 		}
-		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 
-	writeError(w, http.StatusNotFound, "not found")
+	writeJSONError(w, http.StatusNotFound, "not found")
 }
 
 func (h *HTTPHandler) pcListAlerts(w http.ResponseWriter, r *http.Request) {
 	if h.pcRepo == nil {
-		writeError(w, http.StatusServiceUnavailable, "privilege creep not configured")
+		writeJSONError(w, http.StatusServiceUnavailable, "privilege creep not configured")
 		return
 	}
 	tc, err := ggidtenant.FromContext(r.Context())
 	if err != nil {
-		writeError(w, http.StatusBadRequest, "X-Tenant-ID header required")
+		writeJSONError(w, http.StatusBadRequest, "X-Tenant-ID header required")
 		return
 	}
 	alerts, err := h.pcRepo.ListAlerts(r.Context(), tc.TenantID)
 	if err != nil {
-		writeError(w, http.StatusInternalServerError, "failed to list alerts")
+		writeJSONError(w, http.StatusInternalServerError, "failed to list alerts")
 		return
 	}
 	writeJSON(w, http.StatusOK, map[string]any{
@@ -70,16 +70,16 @@ func (h *HTTPHandler) pcListAlerts(w http.ResponseWriter, r *http.Request) {
 
 func (h *HTTPHandler) pcUserDiff(w http.ResponseWriter, r *http.Request, userIDStr string) {
 	if h.pcRepo == nil {
-		writeError(w, http.StatusServiceUnavailable, "privilege creep not configured")
+		writeJSONError(w, http.StatusServiceUnavailable, "privilege creep not configured")
 		return
 	}
 	tc, err := ggidtenant.FromContext(r.Context())
 	if err != nil {
-		writeError(w, http.StatusBadRequest, "X-Tenant-ID header required")
+		writeJSONError(w, http.StatusBadRequest, "X-Tenant-ID header required")
 		return
 	}
 	if _, err := uuid.Parse(userIDStr); err != nil {
-		writeError(w, http.StatusBadRequest, "invalid user_id")
+		writeJSONError(w, http.StatusBadRequest, "invalid user_id")
 		return
 	}
 
@@ -105,12 +105,12 @@ func (h *HTTPHandler) pcUserDiff(w http.ResponseWriter, r *http.Request, userIDS
 
 func (h *HTTPHandler) pcTriggerScan(w http.ResponseWriter, r *http.Request) {
 	if h.pcRepo == nil {
-		writeError(w, http.StatusServiceUnavailable, "privilege creep not configured")
+		writeJSONError(w, http.StatusServiceUnavailable, "privilege creep not configured")
 		return
 	}
 	tc, err := ggidtenant.FromContext(r.Context())
 	if err != nil {
-		writeError(w, http.StatusBadRequest, "X-Tenant-ID header required")
+		writeJSONError(w, http.StatusBadRequest, "X-Tenant-ID header required")
 		return
 	}
 
@@ -135,7 +135,7 @@ func (h *HTTPHandler) pcTriggerScan(w http.ResponseWriter, r *http.Request) {
 
 	count, err := h.pcRepo.RunScan(r.Context(), tc.TenantID, req.UserPermissions, req.UserRoles, req.ActiveUserIDs)
 	if err != nil {
-		writeError(w, http.StatusInternalServerError, "scan failed")
+		writeJSONError(w, http.StatusInternalServerError, "scan failed")
 		return
 	}
 	writeJSON(w, http.StatusOK, map[string]any{
@@ -149,23 +149,23 @@ func (h *HTTPHandler) pcTriggerScan(w http.ResponseWriter, r *http.Request) {
 // PUT /api/v1/policy/roles/:id/baseline
 func (h *HTTPHandler) handlePrivilegeBaseline(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPut {
-		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 	if h.pcRepo == nil {
-		writeError(w, http.StatusServiceUnavailable, "privilege creep not configured")
+		writeJSONError(w, http.StatusServiceUnavailable, "privilege creep not configured")
 		return
 	}
 	tc, err := ggidtenant.FromContext(r.Context())
 	if err != nil {
-		writeError(w, http.StatusBadRequest, "X-Tenant-ID header required")
+		writeJSONError(w, http.StatusBadRequest, "X-Tenant-ID header required")
 		return
 	}
 
 	// Extract role_id from path: /api/v1/policy/roles/:id/baseline
 	roleID := extractRoleIDFromPath(r.URL.Path)
 	if roleID == "" {
-		writeError(w, http.StatusBadRequest, "role_id required in path")
+		writeJSONError(w, http.StatusBadRequest, "role_id required in path")
 		return
 	}
 
@@ -173,11 +173,11 @@ func (h *HTTPHandler) handlePrivilegeBaseline(w http.ResponseWriter, r *http.Req
 		StandardPermissions []string `json:"standard_permissions"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		writeError(w, http.StatusBadRequest, "invalid JSON body")
+		writeJSONError(w, http.StatusBadRequest, "invalid JSON body")
 		return
 	}
 	if len(req.StandardPermissions) == 0 {
-		writeError(w, http.StatusBadRequest, "standard_permissions required")
+		writeJSONError(w, http.StatusBadRequest, "standard_permissions required")
 		return
 	}
 
@@ -187,7 +187,7 @@ func (h *HTTPHandler) handlePrivilegeBaseline(w http.ResponseWriter, r *http.Req
 		StandardPermissions: req.StandardPermissions,
 	}
 	if err := h.pcRepo.SetBaseline(r.Context(), baseline); err != nil {
-		writeError(w, http.StatusInternalServerError, "failed to set baseline")
+		writeJSONError(w, http.StatusInternalServerError, "failed to set baseline")
 		return
 	}
 	writeJSON(w, http.StatusOK, baseline)

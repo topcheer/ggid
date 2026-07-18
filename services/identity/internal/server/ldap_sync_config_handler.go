@@ -76,16 +76,16 @@ func (h *HTTPHandler) handleLDAPSyncConfig(w http.ResponseWriter, r *http.Reques
 	case http.MethodPut:
 		var cfg LDAPSyncConfig
 		if err := json.NewDecoder(r.Body).Decode(&cfg); err != nil {
-			writeError(w, http.StatusBadRequest, "invalid JSON body")
+			writeJSONError(w, http.StatusBadRequest, "invalid JSON body")
 			return
 		}
 		// Basic validation
 		if cfg.ServerURL == "" {
-			writeError(w, http.StatusBadRequest, "server_url is required")
+			writeJSONError(w, http.StatusBadRequest, "server_url is required")
 			return
 		}
 		if cfg.BaseDN == "" {
-			writeError(w, http.StatusBadRequest, "base_dn is required")
+			writeJSONError(w, http.StatusBadRequest, "base_dn is required")
 			return
 		}
 		if cfg.UserFilter == "" {
@@ -106,7 +106,7 @@ func (h *HTTPHandler) handleLDAPSyncConfig(w http.ResponseWriter, r *http.Reques
 		json.NewEncoder(w).Encode(map[string]any{"status": "saved", "server_url": cfg.ServerURL})
 
 	default:
-		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 	}
 }
 
@@ -114,7 +114,7 @@ func (h *HTTPHandler) handleLDAPSyncConfig(w http.ResponseWriter, r *http.Reques
 // POST /api/v1/identity/ldap/sync-config/test
 func (h *HTTPHandler) handleLDAPSyncConfigTest(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
-		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 
@@ -125,7 +125,7 @@ func (h *HTTPHandler) handleLDAPSyncConfigTest(w http.ResponseWriter, r *http.Re
 		stored := ldapConfigStore.config
 		ldapConfigStore.RUnlock()
 		if stored == nil {
-			writeError(w, http.StatusBadRequest, "no LDAP config provided and none saved")
+			writeJSONError(w, http.StatusBadRequest, "no LDAP config provided and none saved")
 			return
 		}
 		cfg = *stored
@@ -166,7 +166,7 @@ type ldapTestResult struct {
 // POST /api/v1/identity/ldap/sync
 func (h *HTTPHandler) handleLDAPSync(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
-		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 
@@ -175,7 +175,7 @@ func (h *HTTPHandler) handleLDAPSync(w http.ResponseWriter, r *http.Request) {
 	ldapConfigStore.RUnlock()
 
 	if cfg == nil {
-		writeError(w, http.StatusBadRequest, "LDAP sync config not set — configure and save first")
+		writeJSONError(w, http.StatusBadRequest, "LDAP sync config not set — configure and save first")
 		return
 	}
 
@@ -224,7 +224,7 @@ func (h *HTTPHandler) handleLDAPSync(w http.ResponseWriter, r *http.Request) {
 // GET /api/v1/identity/ldap/sync-status
 func (h *HTTPHandler) handleLDAPSyncStatus(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
-		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 

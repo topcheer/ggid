@@ -21,7 +21,7 @@ func (h *HTTPHandler) handleZTNA(w http.ResponseWriter, r *http.Request) {
 		case http.MethodPost:
 			h.ztnaCreateApp(w, r)
 		default:
-			writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+			writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 		}
 	case strings.HasSuffix(path, "/ztna/access-logs"):
 		h.ztnaListLogs(w, r)
@@ -32,24 +32,24 @@ func (h *HTTPHandler) handleZTNA(w http.ResponseWriter, r *http.Request) {
 	case strings.Contains(path, "/ztna/apps/"):
 		h.ztnaAppByID(w, r)
 	default:
-		writeError(w, http.StatusNotFound, "not found")
+		writeJSONError(w, http.StatusNotFound, "not found")
 	}
 }
 
 func (h *HTTPHandler) ztnaCreateApp(w http.ResponseWriter, r *http.Request) {
 	tc, err := ggidtenant.FromContext(r.Context())
 	if err != nil {
-		writeError(w, http.StatusBadRequest, "tenant context required")
+		writeJSONError(w, http.StatusBadRequest, "tenant context required")
 		return
 	}
 	var app ProtectedApp
 	if err := json.NewDecoder(r.Body).Decode(&app); err != nil {
-		writeError(w, http.StatusBadRequest, "invalid body")
+		writeJSONError(w, http.StatusBadRequest, "invalid body")
 		return
 	}
 	app.TenantID = tc.TenantID
 	if app.Name == "" || app.Slug == "" || app.UpstreamURL == "" {
-		writeError(w, http.StatusBadRequest, "name, slug, upstream_url required")
+		writeJSONError(w, http.StatusBadRequest, "name, slug, upstream_url required")
 		return
 	}
 	if app.AuthMode == "" {
@@ -60,7 +60,7 @@ func (h *HTTPHandler) ztnaCreateApp(w http.ResponseWriter, r *http.Request) {
 	}
 	app.Enabled = true
 	if err := h.abRepo.CreateApp(r.Context(), &app); err != nil {
-		writeError(w, http.StatusInternalServerError, "failed to create app")
+		writeJSONError(w, http.StatusInternalServerError, "failed to create app")
 		return
 	}
 	writeJSON(w, http.StatusCreated, app)
@@ -69,12 +69,12 @@ func (h *HTTPHandler) ztnaCreateApp(w http.ResponseWriter, r *http.Request) {
 func (h *HTTPHandler) ztnaListApps(w http.ResponseWriter, r *http.Request) {
 	tc, err := ggidtenant.FromContext(r.Context())
 	if err != nil {
-		writeError(w, http.StatusBadRequest, "tenant context required")
+		writeJSONError(w, http.StatusBadRequest, "tenant context required")
 		return
 	}
 	apps, err := h.abRepo.ListApps(r.Context(), tc.TenantID)
 	if err != nil {
-		writeError(w, http.StatusInternalServerError, "failed")
+		writeJSONError(w, http.StatusInternalServerError, "failed")
 		return
 	}
 	if apps == nil {
@@ -86,48 +86,48 @@ func (h *HTTPHandler) ztnaListApps(w http.ResponseWriter, r *http.Request) {
 func (h *HTTPHandler) ztnaAppByID(w http.ResponseWriter, r *http.Request) {
 	tc, err := ggidtenant.FromContext(r.Context())
 	if err != nil {
-		writeError(w, http.StatusBadRequest, "tenant context required")
+		writeJSONError(w, http.StatusBadRequest, "tenant context required")
 		return
 	}
 	parts := strings.Split(r.URL.Path, "/")
 	if len(parts) < 5 {
-		writeError(w, http.StatusNotFound, "not found")
+		writeJSONError(w, http.StatusNotFound, "not found")
 		return
 	}
 	appID, err := uuid.Parse(parts[len(parts)-1])
 	if err != nil {
-		writeError(w, http.StatusBadRequest, "invalid app id")
+		writeJSONError(w, http.StatusBadRequest, "invalid app id")
 		return
 	}
 	switch r.Method {
 	case http.MethodPut:
 		var app ProtectedApp
 		if err := json.NewDecoder(r.Body).Decode(&app); err != nil {
-			writeError(w, http.StatusBadRequest, "invalid body")
+			writeJSONError(w, http.StatusBadRequest, "invalid body")
 			return
 		}
 		app.ID = appID
 		app.TenantID = tc.TenantID
 		if err := h.abRepo.UpdateApp(r.Context(), &app); err != nil {
-			writeError(w, http.StatusInternalServerError, "failed")
+			writeJSONError(w, http.StatusInternalServerError, "failed")
 			return
 		}
 		writeJSON(w, http.StatusOK, app)
 	case http.MethodDelete:
 		if err := h.abRepo.DeleteApp(r.Context(), appID, tc.TenantID); err != nil {
-			writeError(w, http.StatusInternalServerError, "failed")
+			writeJSONError(w, http.StatusInternalServerError, "failed")
 			return
 		}
 		writeJSON(w, http.StatusOK, map[string]bool{"deleted": true})
 	default:
-		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 	}
 }
 
 func (h *HTTPHandler) ztnaListLogs(w http.ResponseWriter, r *http.Request) {
 	tc, err := ggidtenant.FromContext(r.Context())
 	if err != nil {
-		writeError(w, http.StatusBadRequest, "tenant context required")
+		writeJSONError(w, http.StatusBadRequest, "tenant context required")
 		return
 	}
 	var appID *uuid.UUID
@@ -138,7 +138,7 @@ func (h *HTTPHandler) ztnaListLogs(w http.ResponseWriter, r *http.Request) {
 	}
 	logs, err := h.abRepo.ListAccessLogs(r.Context(), tc.TenantID, appID, 50)
 	if err != nil {
-		writeError(w, http.StatusInternalServerError, "failed")
+		writeJSONError(w, http.StatusInternalServerError, "failed")
 		return
 	}
 	if logs == nil {
@@ -150,7 +150,7 @@ func (h *HTTPHandler) ztnaListLogs(w http.ResponseWriter, r *http.Request) {
 func (h *HTTPHandler) ztnaMetrics(w http.ResponseWriter, r *http.Request) {
 	tc, err := ggidtenant.FromContext(r.Context())
 	if err != nil {
-		writeError(w, http.StatusBadRequest, "tenant context required")
+		writeJSONError(w, http.StatusBadRequest, "tenant context required")
 		return
 	}
 	apps, _ := h.abRepo.ListApps(r.Context(), tc.TenantID)
@@ -163,7 +163,7 @@ func (h *HTTPHandler) ztnaMetrics(w http.ResponseWriter, r *http.Request) {
 
 func (h *HTTPHandler) ztnaTestPolicy(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
-		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 	var req struct {
@@ -172,7 +172,7 @@ func (h *HTTPHandler) ztnaTestPolicy(w http.ResponseWriter, r *http.Request) {
 		Security     map[string]any `json:"security"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		writeError(w, http.StatusBadRequest, "invalid body")
+		writeJSONError(w, http.StatusBadRequest, "invalid body")
 		return
 	}
 	decision := evaluateAccessPolicy(req.AccessPolicy, req.User, req.Security)

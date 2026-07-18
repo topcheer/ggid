@@ -114,7 +114,7 @@ func (r *backupRepo) TriggerBackup(ctx context.Context, backupType string) (*Bac
 
 func (h *HTTPHandler) handleBackupList(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
-		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 	var backups []*BackupRecord
@@ -127,7 +127,7 @@ func (h *HTTPHandler) handleBackupList(w http.ResponseWriter, r *http.Request) {
 
 func (h *HTTPHandler) handleBackupTrigger(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
-		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 	backupType := "full"
@@ -146,13 +146,13 @@ func (h *HTTPHandler) handleBackupTrigger(w http.ResponseWriter, r *http.Request
 
 func (h *HTTPHandler) handleBackupVerify(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
-		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 	id := strings.TrimPrefix(r.URL.Path, "/api/v1/admin/backups/")
 	id = strings.TrimSuffix(id, "/verify")
 	if id == "" {
-		writeError(w, http.StatusBadRequest, "backup id required")
+		writeJSONError(w, http.StatusBadRequest, "backup id required")
 		return
 	}
 	if h.backupRepo != nil {
@@ -163,13 +163,13 @@ func (h *HTTPHandler) handleBackupVerify(w http.ResponseWriter, r *http.Request)
 
 func (h *HTTPHandler) handleBackupRestore(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
-		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 	id := strings.TrimPrefix(r.URL.Path, "/api/v1/admin/backups/")
 	id = strings.TrimSuffix(id, "/restore")
 	if id == "" {
-		writeError(w, http.StatusBadRequest, "backup id required")
+		writeJSONError(w, http.StatusBadRequest, "backup id required")
 		return
 	}
 	// In production: download from S3, decrypt, pg_restore.

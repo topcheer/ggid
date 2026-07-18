@@ -78,12 +78,12 @@ func initRoleMiningData() {
 func (h *HTTPHandler) handleRoleMining(w http.ResponseWriter, r *http.Request) {
 	initRoleMiningData()
 	if r.Method != http.MethodGet {
-		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 	val, ok := roleMiningStore.Load("latest")
 	if !ok {
-		http.Error(w, "no data", http.StatusNotFound)
+		writeJSONError(w, http.StatusNotFound, "no data")
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")

@@ -29,7 +29,7 @@ var userFreezeStore = struct {
 // POST /api/v1/users/{id}/unfreeze — restore user access
 func (h *HTTPHandler) handleFreezeUnfreeze(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
-		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 
@@ -49,11 +49,11 @@ func (h *HTTPHandler) handleFreezeUnfreeze(w http.ResponseWriter, r *http.Reques
 	}
 
 	if userID == "" || action == "" {
-		writeError(w, http.StatusBadRequest, "user ID and action (freeze/unfreeze) are required")
+		writeJSONError(w, http.StatusBadRequest, "user ID and action (freeze/unfreeze) are required")
 		return
 	}
 	if _, err := uuid.Parse(userID); err != nil {
-		writeError(w, http.StatusBadRequest, "invalid user_id")
+		writeJSONError(w, http.StatusBadRequest, "invalid user_id")
 		return
 	}
 

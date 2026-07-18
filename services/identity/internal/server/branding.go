@@ -22,7 +22,7 @@ func (h *HTTPHandler) handleBranding(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if len(parts) < 5 || parts[0] != "api" || parts[1] != "v1" || parts[2] != "tenants" || parts[4] != "branding" {
-		writeError(w, http.StatusBadRequest, "invalid branding path")
+		writeJSONError(w, http.StatusBadRequest, "invalid branding path")
 		return
 	}
 	tenantID := parts[3]
@@ -32,7 +32,7 @@ func (h *HTTPHandler) handleBranding(w http.ResponseWriter, r *http.Request) {
 		branding, err := h.brandingStore.GetBranding(r.Context(), tenantID)
 		if err != nil {
 			slog.Error("branding get error", "err", err)
-			writeError(w, http.StatusInternalServerError, "internal server error")
+			writeJSONError(w, http.StatusInternalServerError, "internal server error")
 			return
 		}
 		w.Header().Set("Content-Type", "application/json")
@@ -41,13 +41,13 @@ func (h *HTTPHandler) handleBranding(w http.ResponseWriter, r *http.Request) {
 	case http.MethodPut:
 		var req domain.TenantBranding
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-			writeError(w, http.StatusBadRequest, "invalid JSON body")
+			writeJSONError(w, http.StatusBadRequest, "invalid JSON body")
 			return
 		}
 		branding, err := h.brandingStore.UpdateBranding(r.Context(), tenantID, &req)
 		if err != nil {
 			slog.Error("branding update error", "err", err)
-			writeError(w, http.StatusInternalServerError, "internal server error")
+			writeJSONError(w, http.StatusInternalServerError, "internal server error")
 			return
 		}
 		w.Header().Set("Content-Type", "application/json")
@@ -55,6 +55,6 @@ func (h *HTTPHandler) handleBranding(w http.ResponseWriter, r *http.Request) {
 		json.NewEncoder(w).Encode(branding)
 
 	default:
-		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 	}
 }

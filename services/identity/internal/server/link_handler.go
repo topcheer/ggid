@@ -10,7 +10,7 @@ import (
 // POST /api/v1/users/link — link external provider to local user
 func (h *HTTPHandler) handleLinkAccount(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
-		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 	var req struct {
@@ -19,11 +19,11 @@ func (h *HTTPHandler) handleLinkAccount(w http.ResponseWriter, r *http.Request) 
 		ExternalID string `json:"external_id"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		writeError(w, http.StatusBadRequest, "invalid JSON")
+		writeJSONError(w, http.StatusBadRequest, "invalid JSON")
 		return
 	}
 	if req.Provider == "" || req.ExternalID == "" {
-		writeError(w, http.StatusBadRequest, "provider and external_id required")
+		writeJSONError(w, http.StatusBadRequest, "provider and external_id required")
 		return
 	}
 	writeJSON(w, http.StatusCreated, map[string]any{
@@ -36,7 +36,7 @@ func (h *HTTPHandler) handleLinkAccount(w http.ResponseWriter, r *http.Request) 
 // POST /api/v1/users/unlink — unlink external provider
 func (h *HTTPHandler) handleUnlinkAccount(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
-		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 	var req struct {
@@ -44,7 +44,7 @@ func (h *HTTPHandler) handleUnlinkAccount(w http.ResponseWriter, r *http.Request
 		Provider string `json:"provider"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		writeError(w, http.StatusBadRequest, "invalid JSON")
+		writeJSONError(w, http.StatusBadRequest, "invalid JSON")
 		return
 	}
 	writeJSON(w, http.StatusOK, map[string]any{
@@ -56,7 +56,7 @@ func (h *HTTPHandler) handleUnlinkAccount(w http.ResponseWriter, r *http.Request
 // POST /api/v1/users/import/validate — pre-check CSV/JSON import data
 func (h *HTTPHandler) handleImportValidate(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
-		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 	var req struct {
@@ -66,7 +66,7 @@ func (h *HTTPHandler) handleImportValidate(w http.ResponseWriter, r *http.Reques
 		} `json:"users"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		writeError(w, http.StatusBadRequest, "invalid JSON")
+		writeJSONError(w, http.StatusBadRequest, "invalid JSON")
 		return
 	}
 
@@ -96,7 +96,7 @@ func (h *HTTPHandler) handleImportValidate(w http.ResponseWriter, r *http.Reques
 // POST /api/v1/users/bulk/status — batch update user status
 func (h *HTTPHandler) handleBulkStatus(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
-		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 	var req struct {
@@ -104,11 +104,11 @@ func (h *HTTPHandler) handleBulkStatus(w http.ResponseWriter, r *http.Request) {
 		Status  string   `json:"status"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		writeError(w, http.StatusBadRequest, "invalid JSON")
+		writeJSONError(w, http.StatusBadRequest, "invalid JSON")
 		return
 	}
 	if req.Status != "active" && req.Status != "inactive" && req.Status != "locked" && req.Status != "suspended" {
-		writeError(w, http.StatusBadRequest, "invalid status")
+		writeJSONError(w, http.StatusBadRequest, "invalid status")
 		return
 	}
 	writeJSON(w, http.StatusOK, map[string]any{

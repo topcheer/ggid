@@ -18,7 +18,7 @@ type SuspiciousSession struct {
 // GET /api/v1/auth/sessions/hijack-check
 func (h *Handler) handleHijackCheck(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
-		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 

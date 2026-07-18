@@ -38,7 +38,7 @@ func (h *HTTPHandler) handleAccessReviewCampaigns(w http.ResponseWriter, r *http
 	case http.MethodPost:
 		var req CampaignRequest
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-			http.Error(w, fmt.Sprintf("invalid request: %v", err), http.StatusBadRequest)
+			writeJSONError(w, http.StatusBadRequest, "invalid request body")
 			return
 		}
 		if req.CampaignName == "" {
@@ -99,6 +99,6 @@ func (h *HTTPHandler) handleAccessReviewCampaigns(w http.ResponseWriter, r *http
 		w.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(w).Encode(map[string]any{"campaigns": campaigns, "count": len(campaigns)})
 	default:
-		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 	}
 }

@@ -11,7 +11,7 @@ import (
 // Searches users by custom attributes.
 func (h *HTTPHandler) handleUserByAttribute(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
-		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 
@@ -27,14 +27,14 @@ func (h *HTTPHandler) handleUserByAttribute(w http.ResponseWriter, r *http.Reque
 	}
 
 	if len(attrs) == 0 {
-		writeError(w, http.StatusBadRequest, "at least one attribute filter is required")
+		writeJSONError(w, http.StatusBadRequest, "at least one attribute filter is required")
 		return
 	}
 
 	// Fetch all users (with empty search to get all)
 	result, err := h.svc.ListUsers(r.Context(), &domain.ListUsersFilter{})
 	if err != nil {
-		writeError(w, http.StatusInternalServerError, "failed to search users")
+		writeJSONError(w, http.StatusInternalServerError, "failed to search users")
 		return
 	}
 

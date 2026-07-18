@@ -25,34 +25,34 @@ type ListSubjectsRequest struct {
 // POST /api/v1/identity/list-objects
 func (h *HTTPHandler) handleReBACListObjects(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
-		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 
 	tc, err := ggidtenant.FromContext(r.Context())
 	if err != nil {
-		writeError(w, http.StatusBadRequest, "tenant context required")
+		writeJSONError(w, http.StatusBadRequest, "tenant context required")
 		return
 	}
 
 	var req ListObjectsRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		writeError(w, http.StatusBadRequest, "invalid request body")
+		writeJSONError(w, http.StatusBadRequest, "invalid request body")
 		return
 	}
 	if req.Namespace == "" || req.Relation == "" || req.Subject == "" {
-		writeError(w, http.StatusBadRequest, "namespace, relation, subject required")
+		writeJSONError(w, http.StatusBadRequest, "namespace, relation, subject required")
 		return
 	}
 
 	if h.rebacRepo == nil {
-		writeError(w, http.StatusServiceUnavailable, "ReBAC not configured")
+		writeJSONError(w, http.StatusServiceUnavailable, "ReBAC not configured")
 		return
 	}
 
 	tuples, err := h.rebacRepo.ReadTuples(r.Context(), tc.TenantID, req.Namespace, "", req.Relation, req.Subject)
 	if err != nil {
-		writeError(w, http.StatusInternalServerError, "failed to query tuples")
+		writeJSONError(w, http.StatusInternalServerError, "failed to query tuples")
 		return
 	}
 
@@ -71,34 +71,34 @@ func (h *HTTPHandler) handleReBACListObjects(w http.ResponseWriter, r *http.Requ
 // POST /api/v1/identity/list-subjects
 func (h *HTTPHandler) handleReBACListSubjects(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
-		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 
 	tc, err := ggidtenant.FromContext(r.Context())
 	if err != nil {
-		writeError(w, http.StatusBadRequest, "tenant context required")
+		writeJSONError(w, http.StatusBadRequest, "tenant context required")
 		return
 	}
 
 	var req ListSubjectsRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		writeError(w, http.StatusBadRequest, "invalid request body")
+		writeJSONError(w, http.StatusBadRequest, "invalid request body")
 		return
 	}
 	if req.Namespace == "" || req.Object == "" || req.Relation == "" {
-		writeError(w, http.StatusBadRequest, "namespace, object, relation required")
+		writeJSONError(w, http.StatusBadRequest, "namespace, object, relation required")
 		return
 	}
 
 	if h.rebacRepo == nil {
-		writeError(w, http.StatusServiceUnavailable, "ReBAC not configured")
+		writeJSONError(w, http.StatusServiceUnavailable, "ReBAC not configured")
 		return
 	}
 
 	subjects, err := h.rebacRepo.DirectSubjects(r.Context(), tc.TenantID, req.Namespace, req.Object, req.Relation)
 	if err != nil {
-		writeError(w, http.StatusInternalServerError, "failed to query subjects")
+		writeJSONError(w, http.StatusInternalServerError, "failed to query subjects")
 		return
 	}
 

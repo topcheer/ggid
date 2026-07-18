@@ -64,12 +64,12 @@ func initCostCenterData() {
 func (s *HTTPServer) handleCostCenters(w http.ResponseWriter, r *http.Request) {
 	initCostCenterData()
 	if r.Method != http.MethodGet {
-		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 	val, ok := costCenterStore.Load("latest")
 	if !ok {
-		http.Error(w, "no data", http.StatusNotFound)
+		writeJSONError(w, http.StatusNotFound, "no data")
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")

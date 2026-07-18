@@ -52,6 +52,6 @@ func (s *HTTPServer) handleExportScheduleConfig(w http.ResponseWriter, r *http.R
 		w.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(w).Encode(map[string]any{"status": "updated"})
 	default:
-		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 	}
 }

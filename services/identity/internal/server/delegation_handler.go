@@ -30,11 +30,11 @@ func (h *HTTPHandler) handleDelegations(ctx context.Context, userID uuid.UUID, w
 			EndDate     string   `json:"end_date"`
 		}
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-			writeError(w, http.StatusBadRequest, "invalid JSON")
+			writeJSONError(w, http.StatusBadRequest, "invalid JSON")
 			return
 		}
 		if req.DelegatedTo == "" {
-			writeError(w, http.StatusBadRequest, "delegated_to required")
+			writeJSONError(w, http.StatusBadRequest, "delegated_to required")
 			return
 		}
 		now := time.Now().UTC()
@@ -63,6 +63,6 @@ func (h *HTTPHandler) handleDelegations(ctx context.Context, userID uuid.UUID, w
 		if result == nil { result = []map[string]any{} }
 		writeJSON(w, http.StatusOK, map[string]any{"delegations": result, "count": len(result)})
 	default:
-		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 	}
 }

@@ -198,11 +198,11 @@ func (h *HTTPHandler) handleConsentRegistry(w http.ResponseWriter, r *http.Reque
 			ClientID string   `json:"client_id"`
 		}
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-			writeError(w, http.StatusBadRequest, "invalid JSON")
+			writeJSONError(w, http.StatusBadRequest, "invalid JSON")
 			return
 		}
 		if req.UserID == "" || req.Purpose == "" {
-			writeError(w, http.StatusBadRequest, "user_id and purpose required")
+			writeJSONError(w, http.StatusBadRequest, "user_id and purpose required")
 			return
 		}
 		c := &ConsentRecord{
@@ -221,7 +221,7 @@ func (h *HTTPHandler) handleConsentRegistry(w http.ResponseWriter, r *http.Reque
 		reason := r.URL.Query().Get("reason")
 		id, err := uuid.Parse(idStr)
 		if err != nil {
-			writeError(w, http.StatusBadRequest, "valid id required")
+			writeJSONError(w, http.StatusBadRequest, "valid id required")
 			return
 		}
 		if h.consentRepo != nil {
@@ -230,7 +230,7 @@ func (h *HTTPHandler) handleConsentRegistry(w http.ResponseWriter, r *http.Reque
 		writeJSON(w, http.StatusOK, map[string]any{"status": "withdrawn", "id": idStr})
 
 	default:
-		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 	}
 }
 

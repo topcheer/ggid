@@ -43,7 +43,7 @@ func (s *HTTPServer) handlePolicyExceptions(w http.ResponseWriter, r *http.Reque
 	case http.MethodPost:
 		var req ExceptionRequest
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-			http.Error(w, fmt.Sprintf("invalid request: %v", err), http.StatusBadRequest)
+			writeJSONError(w, http.StatusBadRequest, "invalid request body")
 			return
 		}
 		if req.PolicyID == "" {
@@ -85,6 +85,6 @@ func (s *HTTPServer) handlePolicyExceptions(w http.ResponseWriter, r *http.Reque
 		w.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(w).Encode(map[string]any{"exceptions": items, "count": len(items)})
 	default:
-		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 	}
 }

@@ -36,11 +36,11 @@ func (h *HTTPHandler) handlePluginsRoute(w http.ResponseWriter, r *http.Request)
 			Version string `json:"version"`
 		}
 		if err := json.NewDecoder(r.Body).Decode(&meta); err != nil {
-			writeError(w, http.StatusBadRequest, "invalid JSON")
+			writeJSONError(w, http.StatusBadRequest, "invalid JSON")
 			return
 		}
 		if meta.Name == "" {
-			writeError(w, http.StatusBadRequest, "name required")
+			writeJSONError(w, http.StatusBadRequest, "name required")
 			return
 		}
 		plugin := WASMPlugin{
@@ -76,5 +76,5 @@ func (h *HTTPHandler) handlePluginsRoute(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+	writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 }

@@ -125,18 +125,18 @@ func isValidTableName(name string) bool {
 
 func (h *HTTPHandler) handleRLSEnable(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
-		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 	// Extract table name from path: /api/v1/admin/rls/enable/{table}
 	table := r.URL.Path[len("/api/v1/admin/rls/enable/"):]
 	if table == "" || !isValidTableName(table) {
-		writeError(w, http.StatusBadRequest, "valid table name required")
+		writeJSONError(w, http.StatusBadRequest, "valid table name required")
 		return
 	}
 	if h.rlsRepo != nil {
 		if err := h.rlsRepo.EnableRLS(r.Context(), table); err != nil {
-			writeError(w, http.StatusInternalServerError, "failed to enable RLS")
+			writeJSONError(w, http.StatusInternalServerError, "failed to enable RLS")
 			return
 		}
 	}
@@ -145,7 +145,7 @@ func (h *HTTPHandler) handleRLSEnable(w http.ResponseWriter, r *http.Request) {
 
 func (h *HTTPHandler) handleRLSStatus(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
-		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 	var status []map[string]any
@@ -160,7 +160,7 @@ func (h *HTTPHandler) handleRLSStatus(w http.ResponseWriter, r *http.Request) {
 
 func (h *HTTPHandler) handleRLSTest(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
-		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 	var result map[string]any

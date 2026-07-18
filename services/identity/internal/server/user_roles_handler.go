@@ -47,11 +47,11 @@ func (h *HTTPHandler) handleUserRoles(ctx context.Context, userID uuid.UUID, w h
 			RoleName string `json:"role_name"`
 		}
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-			writeError(w, http.StatusBadRequest, "invalid request body")
+			writeJSONError(w, http.StatusBadRequest, "invalid request body")
 			return
 		}
 		if req.RoleID == "" {
-			writeError(w, http.StatusBadRequest, "role_id is required")
+			writeJSONError(w, http.StatusBadRequest, "role_id is required")
 			return
 		}
 		if req.RoleName == "" {
@@ -69,7 +69,7 @@ func (h *HTTPHandler) handleUserRoles(ctx context.Context, userID uuid.UUID, w h
 		for _, existing := range userRoles[userID] {
 			if existing.RoleID == req.RoleID {
 				userRolesMu.Unlock()
-				writeError(w, http.StatusConflict, "role already assigned")
+				writeJSONError(w, http.StatusConflict, "role already assigned")
 				return
 			}
 		}
@@ -80,7 +80,7 @@ func (h *HTTPHandler) handleUserRoles(ctx context.Context, userID uuid.UUID, w h
 	case http.MethodDelete:
 		// Extract role ID from path: /api/v1/users/{id}/roles/{roleId}
 		if len(parts) < 6 {
-			writeError(w, http.StatusBadRequest, "role ID is required")
+			writeJSONError(w, http.StatusBadRequest, "role ID is required")
 			return
 		}
 		roleID := parts[5]
@@ -96,13 +96,13 @@ func (h *HTTPHandler) handleUserRoles(ctx context.Context, userID uuid.UUID, w h
 		}
 		userRolesMu.Unlock()
 		if !found {
-			writeError(w, http.StatusNotFound, "role assignment not found")
+			writeJSONError(w, http.StatusNotFound, "role assignment not found")
 			return
 		}
 		writeJSON(w, http.StatusOK, map[string]string{"status": "revoked"})
 
 	default:
-		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 	}
 }
 

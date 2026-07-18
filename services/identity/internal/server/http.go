@@ -395,7 +395,7 @@ func (h *HTTPHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	defer func() {
 		if rvr := recover(); rvr != nil {
 			slog.Error("PANIC recovered in identity handler", "error", rvr)
-			writeError(w, http.StatusInternalServerError, "internal server error")
+			writeJSONError(w, http.StatusInternalServerError, "internal server error")
 		}
 	}()
 	// Inject tenant context from X-Tenant-ID header (same pattern as auth/audit).
@@ -422,7 +422,7 @@ func (h *HTTPHandler) readyz(w http.ResponseWriter, r *http.Request) {
 func (h *HTTPHandler) handleUsers(w http.ResponseWriter, r *http.Request) {
 	ctx, ok := injectTenant(r)
 	if !ok {
-		writeError(w, http.StatusBadRequest, "missing or invalid X-Tenant-ID header")
+		writeJSONError(w, http.StatusBadRequest, "missing or invalid X-Tenant-ID header")
 		return
 	}
 
@@ -432,21 +432,21 @@ func (h *HTTPHandler) handleUsers(w http.ResponseWriter, r *http.Request) {
 	case http.MethodGet:
 		h.listUsers(ctx, w, r)
 	default:
-		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 	}
 }
 
 func (h *HTTPHandler) handleUserByID(w http.ResponseWriter, r *http.Request) {
 	ctx, ok := injectTenant(r)
 	if !ok {
-		writeError(w, http.StatusBadRequest, "missing or invalid X-Tenant-ID header")
+		writeJSONError(w, http.StatusBadRequest, "missing or invalid X-Tenant-ID header")
 		return
 	}
 
 	// Extract user ID from path /api/v1/users/{id}
 	parts := strings.Split(strings.TrimPrefix(r.URL.Path, "/api/v1/users/"), "/")
 	if len(parts) == 0 || parts[0] == "" {
-		writeError(w, http.StatusBadRequest, "user ID is required")
+		writeJSONError(w, http.StatusBadRequest, "user ID is required")
 		return
 	}
 
@@ -458,7 +458,7 @@ func (h *HTTPHandler) handleUserByID(w http.ResponseWriter, r *http.Request) {
 
 	userID, err := uuid.Parse(parts[0])
 	if err != nil {
-		writeError(w, http.StatusBadRequest, "invalid user ID")
+		writeJSONError(w, http.StatusBadRequest, "invalid user ID")
 		return
 	}
 
@@ -520,7 +520,7 @@ func (h *HTTPHandler) handleUserByID(w http.ResponseWriter, r *http.Request) {
 	case action == "management-chain" && r.Method == http.MethodGet:
 		h.handleManagementChain(ctx, userID, w, r)
 	default:
-		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 	}
 }
 
@@ -530,12 +530,12 @@ func (h *HTTPHandler) handleUserByID(w http.ResponseWriter, r *http.Request) {
 func (h *HTTPHandler) handleMe(ctx context.Context, w http.ResponseWriter, r *http.Request) {
 	userIDStr := r.Header.Get("X-User-ID")
 	if userIDStr == "" {
-		writeError(w, http.StatusUnauthorized, "authentication required")
+		writeJSONError(w, http.StatusUnauthorized, "authentication required")
 		return
 	}
 	userID, err := uuid.Parse(userIDStr)
 	if err != nil {
-		writeError(w, http.StatusUnauthorized, "invalid user identity")
+		writeJSONError(w, http.StatusUnauthorized, "invalid user identity")
 		return
 	}
 
@@ -556,7 +556,7 @@ func (h *HTTPHandler) handleMe(ctx context.Context, w http.ResponseWriter, r *ht
 			AvatarURL   *string `json:"avatar_url"`
 		}
 		if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
-			writeError(w, http.StatusBadRequest, "invalid request body")
+			writeJSONError(w, http.StatusBadRequest, "invalid request body")
 			return
 		}
 		user, err := h.svc.UpdateUser(ctx, userID, &domain.UpdateUserInput{
@@ -571,7 +571,7 @@ func (h *HTTPHandler) handleMe(ctx context.Context, w http.ResponseWriter, r *ht
 		writeJSON(w, http.StatusOK, userToJSON(user))
 
 	default:
-		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 	}
 }
 
@@ -586,12 +586,12 @@ func (h *HTTPHandler) createUser(ctx context.Context, w http.ResponseWriter, r *
 		Timezone    string `json:"timezone"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		writeError(w, http.StatusBadRequest, "invalid JSON body")
+		writeJSONError(w, http.StatusBadRequest, "invalid JSON body")
 		return
 	}
 
 	if req.Username == "" || req.Email == "" || req.Password == "" {
-		writeError(w, http.StatusBadRequest, "username, email, and password are required")
+		writeJSONError(w, http.StatusBadRequest, "username, email, and password are required")
 		return
 	}
 
@@ -723,7 +723,7 @@ func (h *HTTPHandler) updateUser(ctx context.Context, userID uuid.UUID, w http.R
 		Timezone    *string `json:"timezone"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		writeError(w, http.StatusBadRequest, "invalid JSON body")
+		writeJSONError(w, http.StatusBadRequest, "invalid JSON body")
 		return
 	}
 	user, err := h.svc.UpdateUser(ctx, userID, &domain.UpdateUserInput{
@@ -812,13 +812,13 @@ func (h *HTTPHandler) uploadAvatar(ctx context.Context, userID uuid.UUID, w http
 	r.Body = http.MaxBytesReader(w, r.Body, 2<<20) // 2MB
 
 	if err := r.ParseMultipartForm(2 << 20); err != nil {
-		writeError(w, http.StatusBadRequest, "file too large or invalid form data (max 2MB)")
+		writeJSONError(w, http.StatusBadRequest, "file too large or invalid form data (max 2MB)")
 		return
 	}
 
 	file, header, err := r.FormFile("file")
 	if err != nil {
-		writeError(w, http.StatusBadRequest, "file field is required")
+		writeJSONError(w, http.StatusBadRequest, "file field is required")
 		return
 	}
 	defer file.Close()
@@ -826,20 +826,20 @@ func (h *HTTPHandler) uploadAvatar(ctx context.Context, userID uuid.UUID, w http
 	// Validate content type.
 	contentType := header.Header.Get("Content-Type")
 	if !strings.HasPrefix(contentType, "image/") {
-		writeError(w, http.StatusBadRequest, "file must be an image (image/*)")
+		writeJSONError(w, http.StatusBadRequest, "file must be an image (image/*)")
 		return
 	}
 
 	// Validate file size (redundant with MaxBytesReader, but explicit).
 	if header.Size > 2<<20 {
-		writeError(w, http.StatusBadRequest, "file size exceeds 2MB limit")
+		writeJSONError(w, http.StatusBadRequest, "file size exceeds 2MB limit")
 		return
 	}
 
 	// Read the file content.
 	data, err := io.ReadAll(file)
 	if err != nil {
-		writeError(w, http.StatusInternalServerError, "failed to read file")
+		writeJSONError(w, http.StatusInternalServerError, "failed to read file")
 		return
 	}
 
@@ -857,7 +857,7 @@ func (h *HTTPHandler) uploadAvatar(ctx context.Context, userID uuid.UUID, w http
 	// Store file locally (production would use S3/CDN).
 	avatarDir := "uploads/avatars"
 	if err := os.MkdirAll(avatarDir, 0755); err != nil {
-		writeError(w, http.StatusInternalServerError, "failed to create avatar directory")
+		writeJSONError(w, http.StatusInternalServerError, "failed to create avatar directory")
 		return
 	}
 
@@ -865,7 +865,7 @@ func (h *HTTPHandler) uploadAvatar(ctx context.Context, userID uuid.UUID, w http
 	filePath := filepath.Join(avatarDir, filename)
 
 	if err := os.WriteFile(filePath, data, 0644); err != nil {
-		writeError(w, http.StatusInternalServerError, "failed to save avatar")
+		writeJSONError(w, http.StatusInternalServerError, "failed to save avatar")
 		return
 	}
 
@@ -962,20 +962,20 @@ func writeServiceError(w http.ResponseWriter, err error) {
 // Accepts CSV body with columns: username,email,password
 func (h *HTTPHandler) handleImportCSV(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
-		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
-		writeError(w, http.StatusBadRequest, "failed to read body")
+		writeJSONError(w, http.StatusBadRequest, "failed to read body")
 		return
 	}
 	defer r.Body.Close()
 
 	lines := strings.Split(strings.TrimSpace(string(body)), "\n")
 	if len(lines) == 0 {
-		writeError(w, http.StatusBadRequest, "empty CSV")
+		writeJSONError(w, http.StatusBadRequest, "empty CSV")
 		return
 	}
 
@@ -1068,13 +1068,13 @@ func (h *HTTPHandler) handleImportCSV(w http.ResponseWriter, r *http.Request) {
 // Streams the user list in the requested format.
 func (h *HTTPHandler) handleExportUsers(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
-		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 
 	ctx, ok := injectTenant(r)
 	if ! ok {
-		writeError(w, http.StatusBadRequest, "missing or invalid X-Tenant-ID header")
+		writeJSONError(w, http.StatusBadRequest, "missing or invalid X-Tenant-ID header")
 		return
 	}
 
@@ -1083,12 +1083,12 @@ func (h *HTTPHandler) handleExportUsers(w http.ResponseWriter, r *http.Request) 
 		format = "csv"
 	}
 	if format != "csv" && format != "json" {
-		writeError(w, http.StatusBadRequest, "format must be csv or json")
+		writeJSONError(w, http.StatusBadRequest, "format must be csv or json")
 		return
 	}
 
 	if h.svc == nil {
-		writeError(w, http.StatusInternalServerError, "service not initialized")
+		writeJSONError(w, http.StatusInternalServerError, "service not initialized")
 		return
 	}
 

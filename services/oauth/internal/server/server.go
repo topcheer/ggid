@@ -1707,7 +1707,7 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 		} else if strings.HasSuffix(path, "/behavior") {
 			handleAgentBehavior(w, r)
 		} else {
-			http.Error(w, "not found", http.StatusNotFound)
+			writeJSONError(w, http.StatusNotFound, "not found")
 		}
 	})
 	mux.HandleFunc("/api/v1/oauth/introspection/config", func(w http.ResponseWriter, r *http.Request) {

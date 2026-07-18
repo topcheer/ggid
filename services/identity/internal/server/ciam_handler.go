@@ -65,17 +65,17 @@ var tenantBrandingStore = map[uuid.UUID]*TenantBranding{}
 // POST /api/v1/identity/tenants/self-register
 func (h *HTTPHandler) handleSelfRegister(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
-		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 
 	var req SelfRegisterRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		writeError(w, http.StatusBadRequest, "invalid request body")
+		writeJSONError(w, http.StatusBadRequest, "invalid request body")
 		return
 	}
 	if req.OrgName == "" || req.Admin.Email == "" || req.Admin.Password == "" {
-		writeError(w, http.StatusBadRequest, "org_name, admin.email, and admin.password are required")
+		writeJSONError(w, http.StatusBadRequest, "org_name, admin.email, and admin.password are required")
 		return
 	}
 
@@ -107,7 +107,7 @@ func (h *HTTPHandler) handleSelfRegister(w http.ResponseWriter, r *http.Request)
 // GET /api/v1/identity/ciam/metrics
 func (h *HTTPHandler) handleCIAMMetrics(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
-		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 
@@ -133,7 +133,7 @@ func (h *HTTPHandler) handleTenantBranding(w http.ResponseWriter, r *http.Reques
 	tenantIDStr := r.Header.Get("X-Tenant-ID")
 	tenantID, err := uuid.Parse(tenantIDStr)
 	if err != nil {
-		writeError(w, http.StatusBadRequest, "valid X-Tenant-ID header required")
+		writeJSONError(w, http.StatusBadRequest, "valid X-Tenant-ID header required")
 		return
 	}
 
@@ -151,7 +151,7 @@ func (h *HTTPHandler) handleTenantBranding(w http.ResponseWriter, r *http.Reques
 	case http.MethodPut:
 		var branding TenantBranding
 		if err := json.NewDecoder(r.Body).Decode(&branding); err != nil {
-			writeError(w, http.StatusBadRequest, "invalid request body")
+			writeJSONError(w, http.StatusBadRequest, "invalid request body")
 			return
 		}
 		tenantBrandingStore[tenantID] = &branding
@@ -159,6 +159,6 @@ func (h *HTTPHandler) handleTenantBranding(w http.ResponseWriter, r *http.Reques
 		writeJSON(w, http.StatusOK, branding)
 
 	default:
-		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 	}
 }

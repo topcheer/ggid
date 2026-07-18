@@ -54,7 +54,7 @@ func RecordImpersonation(impersonator, target, tenantID, reason, ip, ua string) 
 // Returns impersonation audit records with filtering.
 func (h *HTTPHandler) handleImpersonationAudit(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
-		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 

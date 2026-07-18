@@ -43,15 +43,15 @@ func (h *HTTPHandler) handleLifecycleRules(w http.ResponseWriter, r *http.Reques
 			Enabled    *bool             `json:"enabled"`
 		}
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-			writeError(w, http.StatusBadRequest, "invalid JSON body")
+			writeJSONError(w, http.StatusBadRequest, "invalid JSON body")
 			return
 		}
 		if req.Name == "" || req.Trigger == "" {
-			writeError(w, http.StatusBadRequest, "name and trigger are required")
+			writeJSONError(w, http.StatusBadRequest, "name and trigger are required")
 			return
 		}
 		if req.Trigger != "joiner" && req.Trigger != "mover" && req.Trigger != "leaver" {
-			writeError(w, http.StatusBadRequest, "trigger must be joiner, mover, or leaver")
+			writeJSONError(w, http.StatusBadRequest, "trigger must be joiner, mover, or leaver")
 			return
 		}
 		enabled := true
@@ -109,20 +109,20 @@ func (h *HTTPHandler) handleLifecycleRules(w http.ResponseWriter, r *http.Reques
 		writeJSON(w, http.StatusOK, map[string]any{"rules": rules, "count": len(rules)})
 
 	default:
-		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 	}
 }
 
 // GET /api/v1/users/{id}/lifecycle-preview — preview applicable rules for a user.
 func (h *HTTPHandler) handleLifecyclePreview(ctx context.Context, userID uuid.UUID, w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
-		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 
 	user, err := h.svc.GetUser(ctx, userID)
 	if err != nil {
-		writeError(w, http.StatusNotFound, "user not found")
+		writeJSONError(w, http.StatusNotFound, "user not found")
 		return
 	}
 

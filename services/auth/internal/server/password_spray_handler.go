@@ -24,7 +24,7 @@ var sprayTracker = struct {
 // Detects single_password → multiple_users pattern in a short time window.
 func (h *Handler) handleDetectPasswordSpray(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
-		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 
@@ -35,7 +35,7 @@ func (h *Handler) handleDetectPasswordSpray(w http.ResponseWriter, r *http.Reque
 		IPAddress         string `json:"ip_address"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		writeError(w, http.StatusBadRequest, "invalid request body")
+		writeJSONError(w, http.StatusBadRequest, "invalid request body")
 		return
 	}
 

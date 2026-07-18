@@ -176,12 +176,14 @@ export function Sidebar() {
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
             <input type="text" value={search} onChange={(e) => setSearch(e.target.value)} placeholder={t("nav.searchPlaceholder")}
+              aria-label={t("nav.searchPlaceholder")}
+              role="searchbox"
               className="w-full pl-9 pr-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-sm text-gray-900 dark:text-white" />
           </div>
         </div>
 
         {/* Nav */}
-        <nav className="flex-1 overflow-y-auto p-3 space-y-1">
+        <nav className="flex-1 overflow-y-auto p-3 space-y-1" aria-label="Main navigation">
           {filtered.length === 0 && <p className="text-xs text-gray-400 px-3 py-4 text-center">{t("nav.searchNoResults")}</p>}
           {filtered.map((group) => {
             const GroupIcon = group.icon;

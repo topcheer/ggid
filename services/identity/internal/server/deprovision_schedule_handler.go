@@ -40,7 +40,7 @@ func (h *HTTPHandler) handleDeprovisionSchedule(w http.ResponseWriter, r *http.R
 		}
 	}
 	if userID == "" {
-		writeError(w, http.StatusBadRequest, "user ID is required in path")
+		writeJSONError(w, http.StatusBadRequest, "user ID is required in path")
 		return
 	}
 
@@ -53,7 +53,7 @@ func (h *HTTPHandler) handleDeprovisionSchedule(w http.ResponseWriter, r *http.R
 			CascadeToApps    []string `json:"cascade_to_apps"`
 		}
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-			writeError(w, http.StatusBadRequest, "invalid request body")
+			writeJSONError(w, http.StatusBadRequest, "invalid request body")
 			return
 		}
 		if req.ScheduledAt == "" {
@@ -96,6 +96,6 @@ func (h *HTTPHandler) handleDeprovisionSchedule(w http.ResponseWriter, r *http.R
 		})
 
 	default:
-		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 	}
 }

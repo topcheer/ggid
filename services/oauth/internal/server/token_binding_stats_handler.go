@@ -61,7 +61,7 @@ func initTokenBindingData() {
 func handleTokenBindingStats(w http.ResponseWriter, r *http.Request) {
 	initTokenBindingData()
 	if r.Method != http.MethodGet {
-		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")

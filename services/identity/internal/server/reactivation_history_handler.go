@@ -37,7 +37,7 @@ var reactivationStore = struct {
 // GET /api/v1/users/{id}/reactivation-history
 func (h *HTTPHandler) handleReactivationHistory(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
-		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 
@@ -51,7 +51,7 @@ func (h *HTTPHandler) handleReactivationHistory(w http.ResponseWriter, r *http.R
 		}
 	}
 	if userID == "" {
-		writeError(w, http.StatusBadRequest, "user ID is required in path")
+		writeJSONError(w, http.StatusBadRequest, "user ID is required in path")
 		return
 	}
 	if _, err := uuid.Parse(userID); err != nil {

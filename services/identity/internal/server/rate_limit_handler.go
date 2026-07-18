@@ -188,14 +188,14 @@ func (h *HTTPHandler) handleRateLimits(w http.ResponseWriter, r *http.Request) {
 	case http.MethodPost:
 		var rl TenantRateLimit
 		if err := json.NewDecoder(r.Body).Decode(&rl); err != nil {
-			writeError(w, http.StatusBadRequest, "invalid body")
+			writeJSONError(w, http.StatusBadRequest, "invalid body")
 			return
 		}
 		if tc != nil {
 			rl.TenantID = tc.TenantID
 		}
 		if rl.EndpointPattern == "" {
-			writeError(w, http.StatusBadRequest, "endpoint_pattern required")
+			writeJSONError(w, http.StatusBadRequest, "endpoint_pattern required")
 			return
 		}
 		if rl.RPSLimit <= 0 {
@@ -210,7 +210,7 @@ func (h *HTTPHandler) handleRateLimits(w http.ResponseWriter, r *http.Request) {
 		rl.Enabled = true
 		if h.rateLimitRepo != nil {
 			if err := h.rateLimitRepo.Upsert(r.Context(), &rl); err != nil {
-				writeError(w, http.StatusInternalServerError, "failed")
+				writeJSONError(w, http.StatusInternalServerError, "failed")
 				return
 			}
 		}
@@ -225,7 +225,7 @@ func (h *HTTPHandler) handleRateLimits(w http.ResponseWriter, r *http.Request) {
 		}
 		writeJSON(w, http.StatusOK, map[string]any{"rate_limits": limits, "total": len(limits)})
 	default:
-		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 	}
 }
 

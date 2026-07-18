@@ -51,7 +51,7 @@ func (s *HTTPServer) handleComplianceConfig(w http.ResponseWriter, r *http.Reque
 	case http.MethodPut:
 		var cfg ComplianceConfig
 		if err := json.NewDecoder(r.Body).Decode(&cfg); err != nil {
-			http.Error(w, `{"error":"invalid request body"}`, http.StatusBadRequest)
+			writeJSONError(w, http.StatusBadRequest, "invalid request body")
 			return
 		}
 		globalComplianceConfig = &cfg
@@ -59,6 +59,6 @@ func (s *HTTPServer) handleComplianceConfig(w http.ResponseWriter, r *http.Reque
 		w.WriteHeader(http.StatusOK)
 		json.NewEncoder(w).Encode(cfg)
 	default:
-		http.Error(w, `{"error":"method not allowed"}`, http.StatusMethodNotAllowed)
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 	}
 }

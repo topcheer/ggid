@@ -24,7 +24,7 @@ func (h *HTTPHandler) handleDeprovision(ctx context.Context, userID uuid.UUID, w
 	}
 	// Body is optional
 	if r.ContentLength > 0 {
-		if err := json.NewDecoder(r.Body).Decode(&req); err != nil { writeError(w, http.StatusBadRequest, "invalid request body"); return }
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil { writeJSONError(w, http.StatusBadRequest, "invalid request body"); return }
 	}
 
 	steps := []map[string]any{}
@@ -32,7 +32,7 @@ func (h *HTTPHandler) handleDeprovision(ctx context.Context, userID uuid.UUID, w
 	// 1. Get user info first (for audit export)
 	user, err := h.svc.GetUser(ctx, userID)
 	if err != nil {
-		writeError(w, http.StatusNotFound, "user not found")
+		writeJSONError(w, http.StatusNotFound, "user not found")
 		return
 	}
 

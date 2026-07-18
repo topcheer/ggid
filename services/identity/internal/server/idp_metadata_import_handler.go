@@ -56,6 +56,6 @@ func (h *HTTPHandler) handleIdPMetadataImport(w http.ResponseWriter, r *http.Req
 		w.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(w).Encode(result)
 	default:
-		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 	}
 }

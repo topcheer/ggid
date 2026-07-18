@@ -36,7 +36,7 @@ var riskProfileStore = struct {
 // GET /api/v1/users/{id}/risk-profile
 func (h *HTTPHandler) handleRiskProfile(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
-		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 
@@ -50,11 +50,11 @@ func (h *HTTPHandler) handleRiskProfile(w http.ResponseWriter, r *http.Request) 
 		}
 	}
 	if userID == "" {
-		writeError(w, http.StatusBadRequest, "user ID is required in path")
+		writeJSONError(w, http.StatusBadRequest, "user ID is required in path")
 		return
 	}
 	if _, err := uuid.Parse(userID); err != nil {
-		writeError(w, http.StatusBadRequest, "invalid user_id")
+		writeJSONError(w, http.StatusBadRequest, "invalid user_id")
 		return
 	}
 

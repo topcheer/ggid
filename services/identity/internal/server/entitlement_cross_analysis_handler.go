@@ -29,7 +29,7 @@ type CrossAnalysisUser struct {
 func (h *HTTPHandler) handleEntitlementCrossAnalysis(w http.ResponseWriter, r *http.Request) {
 	tc, err := ggidtenant.FromContext(r.Context())
 	if err != nil {
-		writeError(w, http.StatusBadRequest, "tenant context required")
+		writeJSONError(w, http.StatusBadRequest, "tenant context required")
 		return
 	}
 

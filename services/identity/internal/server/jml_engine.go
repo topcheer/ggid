@@ -252,7 +252,7 @@ func (h *HTTPHandler) handleJML(w http.ResponseWriter, r *http.Request) {
 		case http.MethodGet:
 			h.jmlListRules(w, r)
 		default:
-			writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+			writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 		}
 		return
 	}
@@ -264,30 +264,30 @@ func (h *HTTPHandler) handleJML(w http.ResponseWriter, r *http.Request) {
 		h.jmlListExecutions(w, r)
 		return
 	}
-	writeError(w, http.StatusNotFound, "not found")
+	writeJSONError(w, http.StatusNotFound, "not found")
 }
 
 func (h *HTTPHandler) jmlCreateRule(w http.ResponseWriter, r *http.Request) {
 	tc, err := ggidtenant.FromContext(r.Context())
 	if err != nil {
-		writeError(w, http.StatusBadRequest, "tenant context required")
+		writeJSONError(w, http.StatusBadRequest, "tenant context required")
 		return
 	}
 	var rule LifecycleRule
 	if err := json.NewDecoder(r.Body).Decode(&rule); err != nil {
-		writeError(w, http.StatusBadRequest, "invalid request body")
+		writeJSONError(w, http.StatusBadRequest, "invalid request body")
 		return
 	}
 	rule.TenantID = tc.TenantID.String()
 	if rule.Name == "" || rule.Trigger == "" {
-		writeError(w, http.StatusBadRequest, "name and trigger are required")
+		writeJSONError(w, http.StatusBadRequest, "name and trigger are required")
 		return
 	}
 	if rule.Enabled == false && rule.Conditions == nil {
 		rule.Enabled = true
 	}
 	if err := h.lifecycleRepo.CreateRule(r.Context(), tc.TenantID, &rule); err != nil {
-		writeError(w, http.StatusInternalServerError, "failed to create rule")
+		writeJSONError(w, http.StatusInternalServerError, "failed to create rule")
 		return
 	}
 	writeJSON(w, http.StatusCreated, rule)
@@ -296,13 +296,13 @@ func (h *HTTPHandler) jmlCreateRule(w http.ResponseWriter, r *http.Request) {
 func (h *HTTPHandler) jmlListRules(w http.ResponseWriter, r *http.Request) {
 	tc, err := ggidtenant.FromContext(r.Context())
 	if err != nil {
-		writeError(w, http.StatusBadRequest, "tenant context required")
+		writeJSONError(w, http.StatusBadRequest, "tenant context required")
 		return
 	}
 	trigger := r.URL.Query().Get("trigger")
 	rules, err := h.lifecycleRepo.ListRules(r.Context(), tc.TenantID, trigger)
 	if err != nil {
-		writeError(w, http.StatusInternalServerError, "failed to list rules")
+		writeJSONError(w, http.StatusInternalServerError, "failed to list rules")
 		return
 	}
 	if rules == nil {
@@ -314,17 +314,17 @@ func (h *HTTPHandler) jmlListRules(w http.ResponseWriter, r *http.Request) {
 func (h *HTTPHandler) jmlProcessEvent(w http.ResponseWriter, r *http.Request) {
 	tc, err := ggidtenant.FromContext(r.Context())
 	if err != nil {
-		writeError(w, http.StatusBadRequest, "tenant context required")
+		writeJSONError(w, http.StatusBadRequest, "tenant context required")
 		return
 	}
 	var event LifecycleEvent
 	if err := json.NewDecoder(r.Body).Decode(&event); err != nil {
-		writeError(w, http.StatusBadRequest, "invalid request body")
+		writeJSONError(w, http.StatusBadRequest, "invalid request body")
 		return
 	}
 	event.TenantID = tc.TenantID
 	if h.lifecycleEngine == nil {
-		writeError(w, http.StatusServiceUnavailable, "lifecycle engine not configured")
+		writeJSONError(w, http.StatusServiceUnavailable, "lifecycle engine not configured")
 		return
 	}
 	go h.lifecycleEngine.ProcessEvent(r.Context(), event)
@@ -334,7 +334,7 @@ func (h *HTTPHandler) jmlProcessEvent(w http.ResponseWriter, r *http.Request) {
 func (h *HTTPHandler) jmlListExecutions(w http.ResponseWriter, r *http.Request) {
 	tc, err := ggidtenant.FromContext(r.Context())
 	if err != nil {
-		writeError(w, http.StatusBadRequest, "tenant context required")
+		writeJSONError(w, http.StatusBadRequest, "tenant context required")
 		return
 	}
 	var userID uuid.UUID
@@ -343,7 +343,7 @@ func (h *HTTPHandler) jmlListExecutions(w http.ResponseWriter, r *http.Request) 
 	}
 	execs, err := h.lifecycleRepo.ListExecutions(r.Context(), tc.TenantID, userID)
 	if err != nil {
-		writeError(w, http.StatusInternalServerError, "failed to list executions")
+		writeJSONError(w, http.StatusInternalServerError, "failed to list executions")
 		return
 	}
 	if execs == nil {

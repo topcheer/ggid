@@ -31,7 +31,7 @@ type StuffingUAStat struct {
 
 func (h *Handler) handleCredentialStuffingStats(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
-		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 	// Return empty real stats — no hardcoded mock data.

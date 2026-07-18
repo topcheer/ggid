@@ -37,11 +37,11 @@ func (h *HTTPHandler) handleCryptoFields(w http.ResponseWriter, r *http.Request)
 	case http.MethodPost:
 		var req CryptoField
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-			writeError(w, http.StatusBadRequest, "invalid JSON")
+			writeJSONError(w, http.StatusBadRequest, "invalid JSON")
 			return
 		}
 		if req.Resource == "" || req.Field == "" {
-			writeError(w, http.StatusBadRequest, "resource and field required")
+			writeJSONError(w, http.StatusBadRequest, "resource and field required")
 			return
 		}
 		if req.Algorithm == "" {
@@ -54,13 +54,13 @@ func (h *HTTPHandler) handleCryptoFields(w http.ResponseWriter, r *http.Request)
 	case http.MethodDelete:
 		id := strings.TrimPrefix(path, "/api/v1/crypto/fields/")
 		if id == "" || strings.Contains(id, "/") {
-			writeError(w, http.StatusBadRequest, "valid field id required")
+			writeJSONError(w, http.StatusBadRequest, "valid field id required")
 			return
 		}
 		writeJSON(w, http.StatusOK, map[string]any{"status": "deleted", "id": id})
 
 	default:
-		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 	}
 
 	_ = fmt.Sprintf // suppress unused import if fmt not otherwise used

@@ -30,13 +30,13 @@ type SessionRevokeUserRequest struct {
 //   - Audit event published
 func (h *Handler) handleRevokeUser(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
-		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 
 	var req SessionRevokeUserRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		writeError(w, http.StatusBadRequest, "invalid request body")
+		writeJSONError(w, http.StatusBadRequest, "invalid request body")
 		return
 	}
 
@@ -46,14 +46,14 @@ func (h *Handler) handleRevokeUser(w http.ResponseWriter, r *http.Request) {
 			tenantID, err = uuid.Parse(tidStr)
 		}
 		if err != nil {
-			writeError(w, http.StatusBadRequest, "valid tenant_id is required")
+			writeJSONError(w, http.StatusBadRequest, "valid tenant_id is required")
 			return
 		}
 	}
 
 	userID, err := uuid.Parse(req.UserID)
 	if err != nil {
-		writeError(w, http.StatusBadRequest, "valid user_id is required")
+		writeJSONError(w, http.StatusBadRequest, "valid user_id is required")
 		return
 	}
 
@@ -62,14 +62,14 @@ func (h *Handler) handleRevokeUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if h.revocationMgr == nil {
-		writeError(w, http.StatusServiceUnavailable, "session revocation not configured")
+		writeJSONError(w, http.StatusServiceUnavailable, "session revocation not configured")
 		return
 	}
 
 	result, err := h.revocationMgr.RevokeUser(r.Context(), tenantID, userID, req.Reason)
 	if err != nil {
 		slog.Error("revoke-user error", "error", err)
-		writeError(w, http.StatusInternalServerError, "revocation failed")
+		writeJSONError(w, http.StatusInternalServerError, "revocation failed")
 		return
 	}
 
@@ -86,33 +86,33 @@ func (h *Handler) handleRevokeUser(w http.ResponseWriter, r *http.Request) {
 // POST /api/v1/auth/internal/revoke-user
 func (h *Handler) handleInternalRevokeUser(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
-		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 
 	// Verify internal auth HMAC if configured.
 	if h.internalSecret != "" {
 		if !h.verifyInternalSignature(r) {
-			writeError(w, http.StatusUnauthorized, "invalid internal auth signature")
+			writeJSONError(w, http.StatusUnauthorized, "invalid internal auth signature")
 			return
 		}
 	}
 
 	var req SessionRevokeUserRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		writeError(w, http.StatusBadRequest, "invalid request body")
+		writeJSONError(w, http.StatusBadRequest, "invalid request body")
 		return
 	}
 
 	tenantID, err := uuid.Parse(req.TenantID)
 	if err != nil {
-		writeError(w, http.StatusBadRequest, "valid tenant_id is required")
+		writeJSONError(w, http.StatusBadRequest, "valid tenant_id is required")
 		return
 	}
 
 	userID, err := uuid.Parse(req.UserID)
 	if err != nil {
-		writeError(w, http.StatusBadRequest, "valid user_id is required")
+		writeJSONError(w, http.StatusBadRequest, "valid user_id is required")
 		return
 	}
 
@@ -121,14 +121,14 @@ func (h *Handler) handleInternalRevokeUser(w http.ResponseWriter, r *http.Reques
 	}
 
 	if h.revocationMgr == nil {
-		writeError(w, http.StatusServiceUnavailable, "session revocation not configured")
+		writeJSONError(w, http.StatusServiceUnavailable, "session revocation not configured")
 		return
 	}
 
 	result, err := h.revocationMgr.RevokeUser(r.Context(), tenantID, userID, req.Reason)
 	if err != nil {
 		slog.Error("internal revoke-user error", "error", err)
-		writeError(w, http.StatusInternalServerError, "revocation failed")
+		writeJSONError(w, http.StatusInternalServerError, "revocation failed")
 		return
 	}
 

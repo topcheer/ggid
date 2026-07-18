@@ -28,7 +28,7 @@ var (
 // POST /api/v1/auth/email-otp/verify — verify OTP and return JWT.
 func (h *Handler) handleEmailOTPSend(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
-		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 
@@ -36,11 +36,11 @@ func (h *Handler) handleEmailOTPSend(w http.ResponseWriter, r *http.Request) {
 		Email string `json:"email"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		writeError(w, http.StatusBadRequest, "invalid JSON body")
+		writeJSONError(w, http.StatusBadRequest, "invalid JSON body")
 		return
 	}
 	if req.Email == "" {
-		writeError(w, http.StatusBadRequest, "email is required")
+		writeJSONError(w, http.StatusBadRequest, "email is required")
 		return
 	}
 
@@ -57,7 +57,7 @@ func (h *Handler) handleEmailOTPSend(w http.ResponseWriter, r *http.Request) {
 	}
 	if len(valid) >= 3 {
 		otpRateLimit.Unlock()
-		writeError(w, http.StatusTooManyRequests, "rate limit exceeded: max 3 OTPs per hour")
+		writeJSONError(w, http.StatusTooManyRequests, "rate limit exceeded: max 3 OTPs per hour")
 		return
 	}
 	otpSendLog[req.Email] = append(valid, now)
@@ -91,7 +91,7 @@ func (h *Handler) handleEmailOTPSend(w http.ResponseWriter, r *http.Request) {
 
 func (h *Handler) handleEmailOTPVerify(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
-		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 
@@ -100,11 +100,11 @@ func (h *Handler) handleEmailOTPVerify(w http.ResponseWriter, r *http.Request) {
 		Code  string `json:"code"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		writeError(w, http.StatusBadRequest, "invalid JSON body")
+		writeJSONError(w, http.StatusBadRequest, "invalid JSON body")
 		return
 	}
 	if req.Email == "" || req.Code == "" {
-		writeError(w, http.StatusBadRequest, "email and code are required")
+		writeJSONError(w, http.StatusBadRequest, "email and code are required")
 		return
 	}
 
@@ -113,11 +113,11 @@ func (h *Handler) handleEmailOTPVerify(w http.ResponseWriter, r *http.Request) {
 		row, _ := h.memMapRepo.GetJSON(r.Context(), "auth_otp_json", req.Code)
 		if row != nil {
 			if email, _ := row["email"].(string); email != req.Email {
-				writeError(w, http.StatusUnauthorized, "OTP email mismatch")
+				writeJSONError(w, http.StatusUnauthorized, "OTP email mismatch")
 				return
 			}
 			if used, _ := row["used"].(bool); used {
-				writeError(w, http.StatusUnauthorized, "OTP already used")
+				writeJSONError(w, http.StatusUnauthorized, "OTP already used")
 				return
 			}
 			// Mark as used in PG
@@ -144,23 +144,23 @@ func (h *Handler) handleEmailOTPVerify(w http.ResponseWriter, r *http.Request) {
 	entry, ok := otpStore[req.Code]
 	if !ok {
 		otpStoreMu.Unlock()
-		writeError(w, http.StatusUnauthorized, "invalid OTP code")
+		writeJSONError(w, http.StatusUnauthorized, "invalid OTP code")
 		return
 	}
 	if entry.Used {
 		otpStoreMu.Unlock()
-		writeError(w, http.StatusUnauthorized, "OTP already used")
+		writeJSONError(w, http.StatusUnauthorized, "OTP already used")
 		return
 	}
 	if time.Now().UTC().After(entry.ExpiresAt) {
 		delete(otpStore, req.Code)
 		otpStoreMu.Unlock()
-		writeError(w, http.StatusGone, "OTP expired")
+		writeJSONError(w, http.StatusGone, "OTP expired")
 		return
 	}
 	if entry.Email != req.Email {
 		otpStoreMu.Unlock()
-		writeError(w, http.StatusUnauthorized, "OTP email mismatch")
+		writeJSONError(w, http.StatusUnauthorized, "OTP email mismatch")
 		return
 	}
 	entry.Used = true

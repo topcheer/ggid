@@ -28,7 +28,7 @@ var replayStore = struct {
 // Body: {"request_data": "...", "user_id": "...", "ip_address": "...", "timestamp_window_seconds": 30}
 func (h *Handler) handleReplayCheck(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
-		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 
@@ -39,11 +39,11 @@ func (h *Handler) handleReplayCheck(w http.ResponseWriter, r *http.Request) {
 		TimestampWindowSeconds int   `json:"timestamp_window_seconds"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		writeError(w, http.StatusBadRequest, "invalid request body")
+		writeJSONError(w, http.StatusBadRequest, "invalid request body")
 		return
 	}
 	if req.RequestData == "" {
-		writeError(w, http.StatusBadRequest, "request_data is required")
+		writeJSONError(w, http.StatusBadRequest, "request_data is required")
 		return
 	}
 	if req.TimestampWindowSeconds <= 0 {

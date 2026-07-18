@@ -236,7 +236,7 @@ func (h *HTTPHandler) handleJIT(w http.ResponseWriter, r *http.Request) {
 	case http.MethodGet:
 		h.jitListMappings(w, r)
 	default:
-		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 	}
 }
 
@@ -244,20 +244,20 @@ func (h *HTTPHandler) jitCreateMapping(w http.ResponseWriter, r *http.Request) {
 	tc, _ := ggidtenant.FromContext(r.Context())
 	var m JITMapping
 	if err := json.NewDecoder(r.Body).Decode(&m); err != nil {
-		writeError(w, http.StatusBadRequest, "invalid body")
+		writeJSONError(w, http.StatusBadRequest, "invalid body")
 		return
 	}
 	if tc != nil {
 		m.TenantID = tc.TenantID
 	}
 	if m.Protocol == "" || m.IdpEntityID == "" {
-		writeError(w, http.StatusBadRequest, "protocol and idp_entity_id required")
+		writeJSONError(w, http.StatusBadRequest, "protocol and idp_entity_id required")
 		return
 	}
 	m.Enabled = true
 	if h.jitRepo != nil {
 		if err := h.jitRepo.Create(r.Context(), &m); err != nil {
-			writeError(w, http.StatusInternalServerError, "failed")
+			writeJSONError(w, http.StatusInternalServerError, "failed")
 			return
 		}
 	}
@@ -278,7 +278,7 @@ func (h *HTTPHandler) jitListMappings(w http.ResponseWriter, r *http.Request) {
 
 func (h *HTTPHandler) jitDryRun(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
-		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 	var req struct {
@@ -287,7 +287,7 @@ func (h *HTTPHandler) jitDryRun(w http.ResponseWriter, r *http.Request) {
 		ExternalAttrs map[string]any `json:"external_attributes"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		writeError(w, http.StatusBadRequest, "invalid body")
+		writeJSONError(w, http.StatusBadRequest, "invalid body")
 		return
 	}
 	tc, _ := ggidtenant.FromContext(r.Context())
@@ -298,7 +298,7 @@ func (h *HTTPHandler) jitDryRun(w http.ResponseWriter, r *http.Request) {
 		mapping, _ = h.jitRepo.Find(r.Context(), tc.TenantID, req.Protocol, req.IdpEntityID)
 	}
 	if mapping == nil {
-		writeError(w, http.StatusNotFound, "no JIT mapping found for protocol/entity")
+		writeJSONError(w, http.StatusNotFound, "no JIT mapping found for protocol/entity")
 		return
 	}
 

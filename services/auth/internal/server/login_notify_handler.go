@@ -52,11 +52,11 @@ func (h *Handler) handleLoginNotify(w http.ResponseWriter, r *http.Request) {
 			Channel  string `json:"channel"`
 		}
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-			writeError(w, http.StatusBadRequest, "invalid JSON")
+			writeJSONError(w, http.StatusBadRequest, "invalid JSON")
 			return
 		}
 		if req.UserID == "" {
-			writeError(w, http.StatusBadRequest, "user_id required")
+			writeJSONError(w, http.StatusBadRequest, "user_id required")
 			return
 		}
 		channel := req.Channel
@@ -77,5 +77,5 @@ func (h *Handler) handleLoginNotify(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	writeError(w, http.StatusNotFound, "not found")
+	writeJSONError(w, http.StatusNotFound, "not found")
 }

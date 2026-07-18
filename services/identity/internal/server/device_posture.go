@@ -243,19 +243,19 @@ func evaluatePosture(dp *DevicePosture) {
 func (h *HTTPHandler) handleDevicePosture(w http.ResponseWriter, r *http.Request) {
 	tc, err := ggidtenant.FromContext(r.Context())
 	if err != nil {
-		writeError(w, http.StatusBadRequest, "tenant context required")
+		writeJSONError(w, http.StatusBadRequest, "tenant context required")
 		return
 	}
 
 	// Extract device_id from path: /api/v1/identity/devices/{id}/posture
 	parts := splitPath(r.URL.Path)
 	if len(parts) < 5 {
-		writeError(w, http.StatusBadRequest, "device id required")
+		writeJSONError(w, http.StatusBadRequest, "device id required")
 		return
 	}
 	deviceID := parts[3]
 	if deviceID == "" {
-		writeError(w, http.StatusBadRequest, "device id required")
+		writeJSONError(w, http.StatusBadRequest, "device id required")
 		return
 	}
 
@@ -289,7 +289,7 @@ func (h *HTTPHandler) handleDevicePosture(w http.ResponseWriter, r *http.Request
 	case http.MethodPut:
 		var input PostureCheckInput
 		if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
-			writeError(w, http.StatusBadRequest, "invalid body")
+			writeJSONError(w, http.StatusBadRequest, "invalid body")
 			return
 		}
 		input.DeviceID = deviceID
@@ -306,7 +306,7 @@ func (h *HTTPHandler) handleDevicePosture(w http.ResponseWriter, r *http.Request
 
 		if err := h.devicePostureRepo.Upsert(r.Context(), dp); err != nil {
 			slog.Error("device posture upsert error", "error", err)
-			writeError(w, http.StatusInternalServerError, "failed to update posture")
+			writeJSONError(w, http.StatusInternalServerError, "failed to update posture")
 			return
 		}
 
@@ -320,7 +320,7 @@ func (h *HTTPHandler) handleDevicePosture(w http.ResponseWriter, r *http.Request
 		writeJSON(w, http.StatusOK, dp)
 
 	default:
-		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 	}
 }
 

@@ -35,7 +35,7 @@ var skillMatrixStore = struct {
 // Returns a users × skills grid with proficiency levels.
 func (h *HTTPHandler) handleSkillMatrix(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
-		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 

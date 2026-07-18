@@ -135,7 +135,7 @@ func GenerateECDSAKeyPair() (string, string, error) {
 
 func (h *Handler) handleKeyList(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
-		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 	var keys []*ActiveKey
@@ -148,13 +148,13 @@ func (h *Handler) handleKeyList(w http.ResponseWriter, r *http.Request) {
 
 func (h *Handler) handleKeyRotate(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
-		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 	keyType := strings.TrimPrefix(r.URL.Path, "/api/v1/admin/keys/rotate/")
 	validTypes := map[string]bool{"jwt_signing": true, "scep_ca": true, "webhook_hmac": true}
 	if !validTypes[keyType] {
-		writeError(w, http.StatusBadRequest, "type must be jwt_signing, scep_ca, or webhook_hmac")
+		writeJSONError(w, http.StatusBadRequest, "type must be jwt_signing, scep_ca, or webhook_hmac")
 		return
 	}
 	var entry *KeyRotationEntry
@@ -169,7 +169,7 @@ func (h *Handler) handleKeyRotate(w http.ResponseWriter, r *http.Request) {
 
 func (h *Handler) handleKeyHistory(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
-		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 	var history []*KeyRotationEntry

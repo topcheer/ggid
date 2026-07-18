@@ -17,12 +17,12 @@ import (
 func (h *HTTPHandler) handleSCIMTokens(w http.ResponseWriter, r *http.Request) {
 	tc, err := ggidtenant.FromContext(r.Context())
 	if err != nil {
-		writeError(w, http.StatusBadRequest, "tenant context required")
+		writeJSONError(w, http.StatusBadRequest, "tenant context required")
 		return
 	}
 
 	if h.scimRepo == nil {
-		writeError(w, http.StatusServiceUnavailable, "SCIM token management not configured")
+		writeJSONError(w, http.StatusServiceUnavailable, "SCIM token management not configured")
 		return
 	}
 
@@ -36,23 +36,23 @@ func (h *HTTPHandler) handleSCIMTokens(w http.ResponseWriter, r *http.Request) {
 		case http.MethodGet:
 			h.listSCIMTokens(w, r, tc.TenantID)
 		default:
-			writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+			writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 		}
 	case strings.HasPrefix(path, "/") && r.Method == http.MethodDelete:
 		tokenIDStr := strings.TrimPrefix(path, "/")
 		tokenID, err := uuid.Parse(tokenIDStr)
 		if err != nil {
-			writeError(w, http.StatusBadRequest, "invalid token id")
+			writeJSONError(w, http.StatusBadRequest, "invalid token id")
 			return
 		}
 		if err := h.scimRepo.Revoke(r.Context(), tokenID, tc.TenantID); err != nil {
 			slog.Error("SCIM token revoke error", "error", err)
-			writeError(w, http.StatusInternalServerError, "failed to revoke token")
+			writeJSONError(w, http.StatusInternalServerError, "failed to revoke token")
 			return
 		}
 		writeJSON(w, http.StatusOK, map[string]bool{"revoked": true})
 	default:
-		writeError(w, http.StatusNotFound, "not found")
+		writeJSONError(w, http.StatusNotFound, "not found")
 	}
 }
 
@@ -61,11 +61,11 @@ func (h *HTTPHandler) createSCIMToken(w http.ResponseWriter, r *http.Request, te
 		Name string `json:"name"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		writeError(w, http.StatusBadRequest, "invalid request body")
+		writeJSONError(w, http.StatusBadRequest, "invalid request body")
 		return
 	}
 	if req.Name == "" {
-		writeError(w, http.StatusBadRequest, "name is required")
+		writeJSONError(w, http.StatusBadRequest, "name is required")
 		return
 	}
 
@@ -78,7 +78,7 @@ func (h *HTTPHandler) createSCIMToken(w http.ResponseWriter, r *http.Request, te
 	token, plaintext, err := h.scimRepo.Create(r.Context(), tenantID, req.Name, createdBy, hashSCIMToken)
 	if err != nil {
 		slog.Error("SCIM token create error", "error", err)
-		writeError(w, http.StatusInternalServerError, "failed to create token")
+		writeJSONError(w, http.StatusInternalServerError, "failed to create token")
 		return
 	}
 
@@ -101,7 +101,7 @@ func (h *HTTPHandler) listSCIMTokens(w http.ResponseWriter, r *http.Request, ten
 	tokens, err := h.scimRepo.ListByTenant(r.Context(), tenantID)
 	if err != nil {
 		slog.Error("SCIM token list error", "error", err)
-		writeError(w, http.StatusInternalServerError, "failed to list tokens")
+		writeJSONError(w, http.StatusInternalServerError, "failed to list tokens")
 		return
 	}
 	if tokens == nil {

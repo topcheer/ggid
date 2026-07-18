@@ -33,11 +33,11 @@ func (s *HTTPServer) handleDelegationConfig(w http.ResponseWriter, r *http.Reque
 	case http.MethodPut:
 		var cfg DelegationConfig
 		if err := json.NewDecoder(r.Body).Decode(&cfg); err != nil {
-			http.Error(w, `{"error":"invalid request body"}`, http.StatusBadRequest)
+			writeJSONError(w, http.StatusBadRequest, "invalid request body")
 			return
 		}
 		if cfg.MaxDelegationDepth < 1 {
-			http.Error(w, `{"error":"max_delegation_depth must be at least 1"}`, http.StatusBadRequest)
+			writeJSONError(w, http.StatusBadRequest, "max_delegation_depth must be at least 1")
 			return
 		}
 		globalDelegationConfig = &cfg
@@ -45,6 +45,6 @@ func (s *HTTPServer) handleDelegationConfig(w http.ResponseWriter, r *http.Reque
 		w.WriteHeader(http.StatusOK)
 		json.NewEncoder(w).Encode(cfg)
 	default:
-		http.Error(w, `{"error":"method not allowed"}`, http.StatusMethodNotAllowed)
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 	}
 }

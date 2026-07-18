@@ -139,16 +139,16 @@ func (r *privilegedOpRepo) List(ctx context.Context, tenantID uuid.UUID, operato
 // handlePrivilegedOperations handles GET /api/v1/identity/privileged-operations.
 func (h *HTTPHandler) handlePrivilegedOperations(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
-		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 	if h.privilOpRepo == nil {
-		writeError(w, http.StatusServiceUnavailable, "privileged operations not configured")
+		writeJSONError(w, http.StatusServiceUnavailable, "privileged operations not configured")
 		return
 	}
 	tc, err := ggidtenant.FromContext(r.Context())
 	if err != nil {
-		writeError(w, http.StatusBadRequest, "X-Tenant-ID header required")
+		writeJSONError(w, http.StatusBadRequest, "X-Tenant-ID header required")
 		return
 	}
 
@@ -158,7 +158,7 @@ func (h *HTTPHandler) handlePrivilegedOperations(w http.ResponseWriter, r *http.
 
 	ops, err := h.privilOpRepo.List(r.Context(), tc.TenantID, operatorID, action, limit)
 	if err != nil {
-		writeError(w, http.StatusInternalServerError, "failed to list operations")
+		writeJSONError(w, http.StatusInternalServerError, "failed to list operations")
 		return
 	}
 

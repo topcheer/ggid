@@ -67,7 +67,7 @@ func handleAgentConsent(w http.ResponseWriter, r *http.Request) {
 			Scopes   []string `json:"scopes"`
 		}
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-			http.Error(w, fmt.Sprintf("invalid request: %v", err), http.StatusBadRequest)
+			writeJSONError(w, http.StatusBadRequest, "invalid request body")
 			return
 		}
 		entry := ConsentHistoryEntry{
@@ -80,6 +80,6 @@ func handleAgentConsent(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusCreated)
 		json.NewEncoder(w).Encode(entry)
 	default:
-		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 	}
 }

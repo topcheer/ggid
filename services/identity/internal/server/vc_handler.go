@@ -12,7 +12,7 @@ var vcIssuer = service.NewVCIssuer()
 
 func (h *HTTPHandler) handleVCIssue(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
-		http.Error(w, `{"error":"method not allowed"}`, http.StatusMethodNotAllowed)
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 	var req struct {
@@ -22,16 +22,16 @@ func (h *HTTPHandler) handleVCIssue(w http.ResponseWriter, r *http.Request) {
 		Claims         map[string]any `json:"claims"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, `{"error":"invalid request body"}`, http.StatusBadRequest)
+		writeJSONError(w, http.StatusBadRequest, "invalid request body")
 		return
 	}
 	vc, err := vcIssuer.IssueVC(req.IssuerDID, req.SubjectDID, req.CredentialType, req.Claims)
 	if err != nil {
-		writeError(w, http.StatusInternalServerError, "failed to issue credential")
+		writeJSONError(w, http.StatusInternalServerError, "failed to issue credential")
 		return
 	}
 	if err := vcIssuer.SignVC(vc, req.IssuerDID); err != nil {
-		http.Error(w, `{"error":"signing failed"}`, http.StatusInternalServerError)
+		writeJSONError(w, http.StatusInternalServerError, "signing failed")
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")
@@ -41,7 +41,7 @@ func (h *HTTPHandler) handleVCIssue(w http.ResponseWriter, r *http.Request) {
 
 func (h *HTTPHandler) handleVCVerify(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
-		http.Error(w, `{"error":"method not allowed"}`, http.StatusMethodNotAllowed)
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 	var req struct {
@@ -49,7 +49,7 @@ func (h *HTTPHandler) handleVCVerify(w http.ResponseWriter, r *http.Request) {
 		IssuerDID string                       `json:"issuer_did"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, `{"error":"invalid request body"}`, http.StatusBadRequest)
+		writeJSONError(w, http.StatusBadRequest, "invalid request body")
 		return
 	}
 	err := vcIssuer.VerifyVC(&req.VC, req.IssuerDID)
@@ -63,7 +63,7 @@ func (h *HTTPHandler) handleVCVerify(w http.ResponseWriter, r *http.Request) {
 
 func (h *HTTPHandler) handleVCList(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
-		http.Error(w, `{"error":"method not allowed"}`, http.StatusMethodNotAllowed)
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 	issuerDID := r.URL.Query().Get("issuer")
@@ -74,12 +74,12 @@ func (h *HTTPHandler) handleVCList(w http.ResponseWriter, r *http.Request) {
 
 func (h *HTTPHandler) handleVCRevoke(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodDelete {
-		http.Error(w, `{"error":"method not allowed"}`, http.StatusMethodNotAllowed)
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 	parts := strings.Split(strings.TrimSuffix(r.URL.Path, "/"), "/")
 	if len(parts) < 1 {
-		http.Error(w, `{"error":"vc id required"}`, http.StatusBadRequest)
+		writeJSONError(w, http.StatusBadRequest, "vc id required")
 		return
 	}
 	vcID := parts[len(parts)-1]
@@ -94,7 +94,7 @@ func (h *HTTPHandler) handleVCRevoke(w http.ResponseWriter, r *http.Request) {
 
 func (h *HTTPHandler) handleVCPresent(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
-		http.Error(w, `{"error":"method not allowed"}`, http.StatusMethodNotAllowed)
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 	var req struct {
@@ -103,7 +103,7 @@ func (h *HTTPHandler) handleVCPresent(w http.ResponseWriter, r *http.Request) {
 		Challenge string         `json:"challenge"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, `{"error":"invalid request body"}`, http.StatusBadRequest)
+		writeJSONError(w, http.StatusBadRequest, "invalid request body")
 		return
 	}
 	vp := map[string]any{

@@ -21,7 +21,7 @@ func (h *HTTPHandler) handleReBACTuples(w http.ResponseWriter, r *http.Request) 
 	case http.MethodDelete:
 		h.rebacDeleteTuple(w, r)
 	default:
-		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 	}
 }
 
@@ -29,7 +29,7 @@ func (h *HTTPHandler) handleReBACTuples(w http.ResponseWriter, r *http.Request) 
 // POST /api/v1/identity/check
 func (h *HTTPHandler) handleReBACCheck(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
-		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 	h.rebacCheck(w, r)
@@ -38,24 +38,24 @@ func (h *HTTPHandler) handleReBACCheck(w http.ResponseWriter, r *http.Request) {
 func (h *HTTPHandler) rebacCheck(w http.ResponseWriter, r *http.Request) {
 	tc, err := ggidtenant.FromContext(r.Context())
 	if err != nil {
-		writeError(w, http.StatusBadRequest, "tenant context required")
+		writeJSONError(w, http.StatusBadRequest, "tenant context required")
 		return
 	}
 
 	var req CheckRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		writeError(w, http.StatusBadRequest, "invalid request body")
+		writeJSONError(w, http.StatusBadRequest, "invalid request body")
 		return
 	}
 	req.TenantID = tc.TenantID
 
 	if req.Namespace == "" || req.Object == "" || req.Relation == "" || req.Subject == "" {
-		writeError(w, http.StatusBadRequest, "namespace, object, relation, and subject are required")
+		writeJSONError(w, http.StatusBadRequest, "namespace, object, relation, and subject are required")
 		return
 	}
 
 	if h.rebacRepo == nil {
-		writeError(w, http.StatusServiceUnavailable, "ReBAC not configured")
+		writeJSONError(w, http.StatusServiceUnavailable, "ReBAC not configured")
 		return
 	}
 
@@ -66,7 +66,7 @@ func (h *HTTPHandler) rebacCheck(w http.ResponseWriter, r *http.Request) {
 func (h *HTTPHandler) rebacWriteTuple(w http.ResponseWriter, r *http.Request) {
 	tc, err := ggidtenant.FromContext(r.Context())
 	if err != nil {
-		writeError(w, http.StatusBadRequest, "tenant context required")
+		writeJSONError(w, http.StatusBadRequest, "tenant context required")
 		return
 	}
 
@@ -77,11 +77,11 @@ func (h *HTTPHandler) rebacWriteTuple(w http.ResponseWriter, r *http.Request) {
 		Subject   string `json:"subject"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		writeError(w, http.StatusBadRequest, "invalid request body")
+		writeJSONError(w, http.StatusBadRequest, "invalid request body")
 		return
 	}
 	if req.Namespace == "" || req.Object == "" || req.Relation == "" || req.Subject == "" {
-		writeError(w, http.StatusBadRequest, "namespace, object, relation, and subject are required")
+		writeJSONError(w, http.StatusBadRequest, "namespace, object, relation, and subject are required")
 		return
 	}
 
@@ -94,7 +94,7 @@ func (h *HTTPHandler) rebacWriteTuple(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := h.rebacRepo.WriteTuple(r.Context(), tuple); err != nil {
-		writeError(w, http.StatusInternalServerError, "failed to write tuple")
+		writeJSONError(w, http.StatusInternalServerError, "failed to write tuple")
 		return
 	}
 
@@ -104,7 +104,7 @@ func (h *HTTPHandler) rebacWriteTuple(w http.ResponseWriter, r *http.Request) {
 func (h *HTTPHandler) rebacListTuples(w http.ResponseWriter, r *http.Request) {
 	tc, err := ggidtenant.FromContext(r.Context())
 	if err != nil {
-		writeError(w, http.StatusBadRequest, "tenant context required")
+		writeJSONError(w, http.StatusBadRequest, "tenant context required")
 		return
 	}
 
@@ -115,7 +115,7 @@ func (h *HTTPHandler) rebacListTuples(w http.ResponseWriter, r *http.Request) {
 
 	tuples, err := h.rebacRepo.ReadTuples(r.Context(), tc.TenantID, ns, obj, rel, subj)
 	if err != nil {
-		writeError(w, http.StatusInternalServerError, "failed to list tuples")
+		writeJSONError(w, http.StatusInternalServerError, "failed to list tuples")
 		return
 	}
 	if tuples == nil {
@@ -127,7 +127,7 @@ func (h *HTTPHandler) rebacListTuples(w http.ResponseWriter, r *http.Request) {
 func (h *HTTPHandler) rebacDeleteTuple(w http.ResponseWriter, r *http.Request) {
 	tc, err := ggidtenant.FromContext(r.Context())
 	if err != nil {
-		writeError(w, http.StatusBadRequest, "tenant context required")
+		writeJSONError(w, http.StatusBadRequest, "tenant context required")
 		return
 	}
 
@@ -138,12 +138,12 @@ func (h *HTTPHandler) rebacDeleteTuple(w http.ResponseWriter, r *http.Request) {
 		Subject   string `json:"subject"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		writeError(w, http.StatusBadRequest, "invalid request body")
+		writeJSONError(w, http.StatusBadRequest, "invalid request body")
 		return
 	}
 
 	if err := h.rebacRepo.DeleteTuple(r.Context(), tc.TenantID, req.Namespace, req.Object, req.Relation, req.Subject); err != nil {
-		writeError(w, http.StatusInternalServerError, "failed to delete tuple")
+		writeJSONError(w, http.StatusInternalServerError, "failed to delete tuple")
 		return
 	}
 

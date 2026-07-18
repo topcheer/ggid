@@ -34,7 +34,7 @@ type OAuth21AuditResult struct {
 func handleOAuth21Audit(oauthSvc *service.OAuthService) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
-		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 

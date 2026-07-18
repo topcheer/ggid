@@ -14,7 +14,7 @@ import (
 // POST /api/v1/users/jit-provision
 func (h *HTTPHandler) handleJITProvision(ctx context.Context, w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
-		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 
@@ -28,15 +28,15 @@ func (h *HTTPHandler) handleJITProvision(ctx context.Context, w http.ResponseWri
 		TenantID    string         `json:"tenant_id"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		writeError(w, http.StatusBadRequest, "invalid JSON body")
+		writeJSONError(w, http.StatusBadRequest, "invalid JSON body")
 		return
 	}
 	if req.Provider == "" || req.ExternalID == "" {
-		writeError(w, http.StatusBadRequest, "provider and external_id are required")
+		writeJSONError(w, http.StatusBadRequest, "provider and external_id are required")
 		return
 	}
 	if req.Email == "" {
-		writeError(w, http.StatusBadRequest, "email is required")
+		writeJSONError(w, http.StatusBadRequest, "email is required")
 		return
 	}
 
@@ -78,7 +78,7 @@ func (h *HTTPHandler) handleJITProvision(ctx context.Context, w http.ResponseWri
 	user, err := h.svc.CreateUser(ctx, input)
 	if err != nil {
 		slog.Error("jit provision error", "error", err)
-		writeError(w, http.StatusInternalServerError, "failed to provision user")
+		writeJSONError(w, http.StatusInternalServerError, "failed to provision user")
 		return
 	}
 

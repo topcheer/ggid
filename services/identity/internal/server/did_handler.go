@@ -29,18 +29,18 @@ func (h *HTTPHandler) handleDIDRoute(w http.ResponseWriter, r *http.Request) {
 
 func (h *HTTPHandler) handleDIDResolve(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
-		http.Error(w, `{"error":"method not allowed"}`, http.StatusMethodNotAllowed)
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 	parts := strings.Split(strings.TrimSuffix(r.URL.Path, "/"), "/")
 	if len(parts) < 1 {
-		http.Error(w, `{"error":"did required"}`, http.StatusBadRequest)
+		writeJSONError(w, http.StatusBadRequest, "did required")
 		return
 	}
 	did := parts[len(parts)-1]
 	doc, err := didResolver.ResolveDID(did)
 	if err != nil {
-		writeError(w, http.StatusNotFound, "DID not found")
+		writeJSONError(w, http.StatusNotFound, "DID not found")
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")
@@ -49,7 +49,7 @@ func (h *HTTPHandler) handleDIDResolve(w http.ResponseWriter, r *http.Request) {
 
 func (h *HTTPHandler) handleDIDList(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
-		http.Error(w, `{"error":"method not allowed"}`, http.StatusMethodNotAllowed)
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 	var dids []string
@@ -68,18 +68,18 @@ func (h *HTTPHandler) handleDIDList(w http.ResponseWriter, r *http.Request) {
 
 func (h *HTTPHandler) handleDIDRegister(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
-		http.Error(w, `{"error":"method not allowed"}`, http.StatusMethodNotAllowed)
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 	var req struct {
 		DID string `json:"did"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, `{"error":"invalid request body"}`, http.StatusBadRequest)
+		writeJSONError(w, http.StatusBadRequest, "invalid request body")
 		return
 	}
 	if req.DID == "" {
-		http.Error(w, `{"error":"did required"}`, http.StatusBadRequest)
+		writeJSONError(w, http.StatusBadRequest, "did required")
 		return
 	}
 	didActiveCache.Store(req.DID, true)
@@ -93,12 +93,12 @@ func (h *HTTPHandler) handleDIDRegister(w http.ResponseWriter, r *http.Request) 
 
 func (h *HTTPHandler) handleDIDDeactivate(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodDelete {
-		http.Error(w, `{"error":"method not allowed"}`, http.StatusMethodNotAllowed)
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 	parts := strings.Split(strings.TrimSuffix(r.URL.Path, "/"), "/")
 	if len(parts) < 1 {
-		http.Error(w, `{"error":"did required"}`, http.StatusBadRequest)
+		writeJSONError(w, http.StatusBadRequest, "did required")
 		return
 	}
 	did := parts[len(parts)-1]

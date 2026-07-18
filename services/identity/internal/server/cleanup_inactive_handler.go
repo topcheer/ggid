@@ -10,7 +10,7 @@ import (
 // POST /api/v1/users/cleanup-inactive?days=90
 func (h *HTTPHandler) handleCleanupInactive(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
-		writeError(w, http.StatusMethodNotAllowed, "method not allowed"); return
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed"); return
 	}
 	days, _ := strconv.Atoi(r.URL.Query().Get("days"))
 	if days == 0 { days = 90 }
@@ -18,7 +18,7 @@ func (h *HTTPHandler) handleCleanupInactive(w http.ResponseWriter, r *http.Reque
 		Action   string `json:"action"`   // disable, archive, delete
 		DryRun   bool   `json:"dry_run"`
 	}
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil { writeError(w, http.StatusBadRequest, "invalid request body"); return }
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil { writeJSONError(w, http.StatusBadRequest, "invalid request body"); return }
 	if req.Action == "" { req.Action = "disable" }
 	affected := []map[string]any{
 		{"user_id": "u-103", "username": "mlee", "last_active": "2026-04-01T00:00:00Z", "days_inactive": 102},

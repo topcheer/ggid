@@ -21,7 +21,7 @@ type MergeConflict struct {
 // POST /api/v1/users/merge-conflicts — detect merge conflicts between users
 func (h *HTTPHandler) handleMergeConflicts(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
-		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 
@@ -40,11 +40,11 @@ func (h *HTTPHandler) handleMergeConflicts(w http.ResponseWriter, r *http.Reques
 		} `json:"target"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		writeError(w, http.StatusBadRequest, "invalid JSON")
+		writeJSONError(w, http.StatusBadRequest, "invalid JSON")
 		return
 	}
 	if req.SourceUserID == "" || req.TargetUserID == "" {
-		writeError(w, http.StatusBadRequest, "source_user_id and target_user_id required")
+		writeJSONError(w, http.StatusBadRequest, "source_user_id and target_user_id required")
 		return
 	}
 

@@ -29,7 +29,7 @@ var quarantineStore sync.Map
 
 func (s *HTTPServer) handlePolicyQuarantine(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
-		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 	// Extract policy ID from path /api/v1/policy/{id}/quarantine

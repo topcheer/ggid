@@ -20,19 +20,19 @@ import (
 // Returns job_id immediately; processing runs asynchronously.
 func (h *HTTPHandler) handleImportAsync(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
-		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 
 	if h.importJobRepo == nil {
-		writeError(w, http.StatusServiceUnavailable, "import job system not configured")
+		writeJSONError(w, http.StatusServiceUnavailable, "import job system not configured")
 		return
 	}
 
 	// Resolve tenant.
 	tc, err := ggidtenant.FromContext(r.Context())
 	if err != nil {
-		writeError(w, http.StatusBadRequest, "X-Tenant-ID header required")
+		writeJSONError(w, http.StatusBadRequest, "X-Tenant-ID header required")
 		return
 	}
 
@@ -43,13 +43,13 @@ func (h *HTTPHandler) handleImportAsync(w http.ResponseWriter, r *http.Request) 
 	if strings.HasPrefix(r.Header.Get("Content-Type"), "multipart/form-data") {
 		// Multipart file upload.
 		if err := r.ParseMultipartForm(32 << 20); err != nil {
-			writeError(w, http.StatusBadRequest, "failed to parse multipart form")
+			writeJSONError(w, http.StatusBadRequest, "failed to parse multipart form")
 			return
 		}
 
 		file, header, err := r.FormFile("file")
 		if err != nil {
-			writeError(w, http.StatusBadRequest, "file field required")
+			writeJSONError(w, http.StatusBadRequest, "file field required")
 			return
 		}
 		defer file.Close()
@@ -57,26 +57,26 @@ func (h *HTTPHandler) handleImportAsync(w http.ResponseWriter, r *http.Request) 
 		format = detectFormat(header.Filename)
 		data, err := io.ReadAll(file)
 		if err != nil {
-			writeError(w, http.StatusBadRequest, "failed to read file")
+			writeJSONError(w, http.StatusBadRequest, "failed to read file")
 			return
 		}
 
 		records, err = parseRecords(data, format)
 		if err != nil {
-			writeError(w, http.StatusBadRequest, err.Error())
+			writeJSONError(w, http.StatusBadRequest, err.Error())
 			return
 		}
 	} else {
 		// Inline JSON body.
 		format = "json"
 		if err := json.NewDecoder(r.Body).Decode(&records); err != nil {
-			writeError(w, http.StatusBadRequest, "invalid JSON body")
+			writeJSONError(w, http.StatusBadRequest, "invalid JSON body")
 			return
 		}
 	}
 
 	if len(records) == 0 {
-		writeError(w, http.StatusBadRequest, "no records to import")
+		writeJSONError(w, http.StatusBadRequest, "no records to import")
 		return
 	}
 
@@ -100,7 +100,7 @@ func (h *HTTPHandler) handleImportAsync(w http.ResponseWriter, r *http.Request) 
 
 	if err := h.importJobRepo.Create(r.Context(), job); err != nil {
 		slog.Error("failed to create import job", "error", err)
-		writeError(w, http.StatusInternalServerError, "failed to create import job")
+		writeJSONError(w, http.StatusInternalServerError, "failed to create import job")
 		return
 	}
 
@@ -120,12 +120,12 @@ func (h *HTTPHandler) handleImportAsync(w http.ResponseWriter, r *http.Request) 
 // GET /api/v1/identity/users/import-async/:job_id
 func (h *HTTPHandler) handleImportAsyncStatus(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
-		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 
 	if h.importJobRepo == nil {
-		writeError(w, http.StatusServiceUnavailable, "import job system not configured")
+		writeJSONError(w, http.StatusServiceUnavailable, "import job system not configured")
 		return
 	}
 
@@ -133,13 +133,13 @@ func (h *HTTPHandler) handleImportAsyncStatus(w http.ResponseWriter, r *http.Req
 	// Remove any trailing slash or query.
 	jobID = strings.TrimSuffix(jobID, "/")
 	if jobID == "" {
-		writeError(w, http.StatusBadRequest, "job_id required in path")
+		writeJSONError(w, http.StatusBadRequest, "job_id required in path")
 		return
 	}
 
 	job, err := h.importJobRepo.Get(r.Context(), jobID)
 	if err != nil {
-		writeError(w, http.StatusNotFound, "job not found")
+		writeJSONError(w, http.StatusNotFound, "job not found")
 		return
 	}
 
@@ -150,24 +150,24 @@ func (h *HTTPHandler) handleImportAsyncStatus(w http.ResponseWriter, r *http.Req
 // GET /api/v1/identity/users/import-async
 func (h *HTTPHandler) handleImportAsyncList(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
-		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 
 	if h.importJobRepo == nil {
-		writeError(w, http.StatusServiceUnavailable, "import job system not configured")
+		writeJSONError(w, http.StatusServiceUnavailable, "import job system not configured")
 		return
 	}
 
 	tc, err := ggidtenant.FromContext(r.Context())
 	if err != nil {
-		writeError(w, http.StatusBadRequest, "X-Tenant-ID header required")
+		writeJSONError(w, http.StatusBadRequest, "X-Tenant-ID header required")
 		return
 	}
 
 	jobs, err := h.importJobRepo.List(r.Context(), tc.TenantID)
 	if err != nil {
-		writeError(w, http.StatusInternalServerError, "failed to list jobs")
+		writeJSONError(w, http.StatusInternalServerError, "failed to list jobs")
 		return
 	}
 

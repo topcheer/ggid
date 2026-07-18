@@ -50,11 +50,11 @@ func (h *HTTPHandler) handleDeprovisioningConfig(w http.ResponseWriter, r *http.
 	case http.MethodPut:
 		var cfg DeprovisioningConfig
 		if err := json.NewDecoder(r.Body).Decode(&cfg); err != nil {
-			http.Error(w, `{"error":"invalid request body"}`, http.StatusBadRequest)
+			writeJSONError(w, http.StatusBadRequest, "invalid request body")
 			return
 		}
 		if cfg.GracePeriodDays < 0 {
-			http.Error(w, `{"error":"grace_period_days must be non-negative"}`, http.StatusBadRequest)
+			writeJSONError(w, http.StatusBadRequest, "grace_period_days must be non-negative")
 			return
 		}
 		globalDeprovisioningConfig = &cfg
@@ -62,6 +62,6 @@ func (h *HTTPHandler) handleDeprovisioningConfig(w http.ResponseWriter, r *http.
 		w.WriteHeader(http.StatusOK)
 		json.NewEncoder(w).Encode(cfg)
 	default:
-		http.Error(w, `{"error":"method not allowed"}`, http.StatusMethodNotAllowed)
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 	}
 }

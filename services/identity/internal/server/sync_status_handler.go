@@ -21,7 +21,7 @@ type idpSyncStatus struct {
 // Returns real sync status from the LDAP sync state + other configured providers.
 func (h *HTTPHandler) handleSyncStatus(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
-		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 

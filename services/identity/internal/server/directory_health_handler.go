@@ -25,7 +25,7 @@ var directoryHealthStore = struct {
 // GET /api/v1/identity/directory-health
 func (h *HTTPHandler) handleDirectoryHealth(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
-		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 

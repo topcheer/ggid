@@ -39,7 +39,7 @@ type UpcomingStart struct {
 // Returns joiner/mover/leaver onboarding dashboard data.
 func (h *HTTPHandler) handleJoinerDashboard(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
-		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 

@@ -9,12 +9,12 @@ import (
 // defaults until credential scanning is implemented.
 func (h *Handler) handleCredentialExposure(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
-		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 	userID := r.URL.Query().Get("user_id")
 	if userID == "" {
-		writeError(w, http.StatusBadRequest, "user_id required")
+		writeJSONError(w, http.StatusBadRequest, "user_id required")
 		return
 	}
 	writeJSON(w, http.StatusOK, map[string]any{

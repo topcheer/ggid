@@ -36,7 +36,7 @@ func (h *HTTPHandler) handleUserPreferences(ctx context.Context, userID uuid.UUI
 	case http.MethodPut, http.MethodPost:
 		var prefs UserPreferences
 		if err := json.NewDecoder(r.Body).Decode(&prefs); err != nil {
-			writeError(w, http.StatusBadRequest, "invalid JSON")
+			writeJSONError(w, http.StatusBadRequest, "invalid JSON")
 			return
 		}
 		if h.identityPolicyMap != nil {
@@ -48,6 +48,6 @@ func (h *HTTPHandler) handleUserPreferences(ctx context.Context, userID uuid.UUI
 		}
 		writeJSON(w, http.StatusOK, map[string]any{"status": "updated", "user_id": userID, "preferences": prefs})
 	default:
-		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 	}
 }

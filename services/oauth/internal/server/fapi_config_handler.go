@@ -49,7 +49,7 @@ func handleFAPIConfig(oauthSvc *service.OAuthService) http.HandlerFunc {
 		case http.MethodPut:
 			handleFAPIConfigPut(w, r, ctx, oauthSvc)
 		default:
-			http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+			writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 		}
 	}
 }

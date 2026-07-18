@@ -35,7 +35,7 @@ func (h *Handler) handleDLPPoliciesCRUD(w http.ResponseWriter, r *http.Request) 
 	case http.MethodDelete:
 		h.deleteDLPPolicy(w, r)
 	default:
-		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 	}
 }
 
@@ -54,11 +54,11 @@ func (h *Handler) listDLPPolicies(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) createDLPPolicy(w http.ResponseWriter, r *http.Request) {
 	var rule DLPPolicyRule
 	if err := json.NewDecoder(r.Body).Decode(&rule); err != nil {
-		writeError(w, http.StatusBadRequest, "invalid request body")
+		writeJSONError(w, http.StatusBadRequest, "invalid request body")
 		return
 	}
 	if rule.Name == "" || rule.FieldType == "" || rule.Strategy == "" {
-		writeError(w, http.StatusBadRequest, "name, field_type, and strategy are required")
+		writeJSONError(w, http.StatusBadRequest, "name, field_type, and strategy are required")
 		return
 	}
 	rule.ID = uuid.New().String()
@@ -79,18 +79,18 @@ func (h *Handler) createDLPPolicy(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) updateDLPPolicy(w http.ResponseWriter, r *http.Request) {
 	parts := strings.Split(r.URL.Path, "/")
 	if len(parts) < 1 {
-		writeError(w, http.StatusBadRequest, "policy id required")
+		writeJSONError(w, http.StatusBadRequest, "policy id required")
 		return
 	}
 	id := parts[len(parts)-1]
 	if id == "" || id == "dlp" || id == "policies" {
-		writeError(w, http.StatusBadRequest, "policy id required")
+		writeJSONError(w, http.StatusBadRequest, "policy id required")
 		return
 	}
 
 	var rule DLPPolicyRule
 	if err := json.NewDecoder(r.Body).Decode(&rule); err != nil {
-		writeError(w, http.StatusBadRequest, "invalid request body")
+		writeJSONError(w, http.StatusBadRequest, "invalid request body")
 		return
 	}
 	rule.ID = id
@@ -107,12 +107,12 @@ func (h *Handler) updateDLPPolicy(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) deleteDLPPolicy(w http.ResponseWriter, r *http.Request) {
 	parts := strings.Split(r.URL.Path, "/")
 	if len(parts) < 1 {
-		writeError(w, http.StatusBadRequest, "policy id required")
+		writeJSONError(w, http.StatusBadRequest, "policy id required")
 		return
 	}
 	id := parts[len(parts)-1]
 	if id == "" || id == "dlp" || id == "policies" {
-		writeError(w, http.StatusBadRequest, "policy id required")
+		writeJSONError(w, http.StatusBadRequest, "policy id required")
 		return
 	}
 
@@ -125,14 +125,14 @@ func (h *Handler) deleteDLPPolicy(w http.ResponseWriter, r *http.Request) {
 // handleDLPScan handles POST /api/v1/dlp/scan — test endpoint to scan a response body for PII.
 func (h *Handler) handleDLPScan(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
-		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 	var req struct {
 		Body string `json:"body"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		writeError(w, http.StatusBadRequest, "invalid request body")
+		writeJSONError(w, http.StatusBadRequest, "invalid request body")
 		return
 	}
 

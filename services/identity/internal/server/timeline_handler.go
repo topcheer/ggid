@@ -9,14 +9,14 @@ import (
 // GET /api/v1/users/{id}/timeline?from=X&to=Y&page=1&limit=50
 func (h *HTTPHandler) handleUserTimeline(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
-		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 
 	// Extract user_id from path
 	parts := strings.Split(strings.Trim(r.URL.Path, "/"), "/")
 	if len(parts) < 4 {
-		writeError(w, http.StatusBadRequest, "user_id required")
+		writeJSONError(w, http.StatusBadRequest, "user_id required")
 		return
 	}
 	userID := parts[3]

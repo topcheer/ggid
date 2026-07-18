@@ -19,26 +19,26 @@ func (h *HTTPHandler) handleDataGovernance(w http.ResponseWriter, r *http.Reques
 	case strings.HasSuffix(path, "/data-governance/inventory"):
 		h.dgInventory(w, r)
 	default:
-		writeError(w, http.StatusNotFound, "not found")
+		writeJSONError(w, http.StatusNotFound, "not found")
 	}
 }
 
 func (h *HTTPHandler) dgClassifications(w http.ResponseWriter, r *http.Request) {
 	tc, err := ggidtenant.FromContext(r.Context())
 	if err != nil {
-		writeError(w, http.StatusBadRequest, "tenant context required")
+		writeJSONError(w, http.StatusBadRequest, "tenant context required")
 		return
 	}
 	switch r.Method {
 	case http.MethodPost:
 		var dc DataClassification
 		if err := json.NewDecoder(r.Body).Decode(&dc); err != nil {
-			writeError(w, http.StatusBadRequest, "invalid body")
+			writeJSONError(w, http.StatusBadRequest, "invalid body")
 			return
 		}
 		dc.TenantID = tc.TenantID
 		if dc.ResourceType == "" || dc.ResourceID == "" {
-			writeError(w, http.StatusBadRequest, "resource_type and resource_id required")
+			writeJSONError(w, http.StatusBadRequest, "resource_type and resource_id required")
 			return
 		}
 		if dc.Classification == "" {
@@ -48,14 +48,14 @@ func (h *HTTPHandler) dgClassifications(w http.ResponseWriter, r *http.Request) 
 			dc.CrossBorder = "allowed"
 		}
 		if err := h.dataGovRepo.CreateClassification(r.Context(), &dc); err != nil {
-			writeError(w, http.StatusInternalServerError, "failed")
+			writeJSONError(w, http.StatusInternalServerError, "failed")
 			return
 		}
 		writeJSON(w, http.StatusCreated, dc)
 	case http.MethodGet:
 		list, err := h.dataGovRepo.ListClassifications(r.Context(), tc.TenantID)
 		if err != nil {
-			writeError(w, http.StatusInternalServerError, "failed")
+			writeJSONError(w, http.StatusInternalServerError, "failed")
 			return
 		}
 		if list == nil {
@@ -63,31 +63,31 @@ func (h *HTTPHandler) dgClassifications(w http.ResponseWriter, r *http.Request) 
 		}
 		writeJSON(w, http.StatusOK, map[string]any{"classifications": list, "total": len(list)})
 	default:
-		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 	}
 }
 
 func (h *HTTPHandler) dgDSR(w http.ResponseWriter, r *http.Request) {
 	tc, err := ggidtenant.FromContext(r.Context())
 	if err != nil {
-		writeError(w, http.StatusBadRequest, "tenant context required")
+		writeJSONError(w, http.StatusBadRequest, "tenant context required")
 		return
 	}
 	switch r.Method {
 	case http.MethodPost:
 		var req DSRRequest
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-			writeError(w, http.StatusBadRequest, "invalid body")
+			writeJSONError(w, http.StatusBadRequest, "invalid body")
 			return
 		}
 		req.TenantID = tc.TenantID
 		req.Status = "pending"
 		if req.RequestType == "" {
-			writeError(w, http.StatusBadRequest, "request_type required")
+			writeJSONError(w, http.StatusBadRequest, "request_type required")
 			return
 		}
 		if err := h.dataGovRepo.CreateDSR(r.Context(), &req); err != nil {
-			writeError(w, http.StatusInternalServerError, "failed")
+			writeJSONError(w, http.StatusInternalServerError, "failed")
 			return
 		}
 		writeJSON(w, http.StatusCreated, req)
@@ -95,7 +95,7 @@ func (h *HTTPHandler) dgDSR(w http.ResponseWriter, r *http.Request) {
 		status := r.URL.Query().Get("status")
 		list, err := h.dataGovRepo.ListDSR(r.Context(), tc.TenantID, status)
 		if err != nil {
-			writeError(w, http.StatusInternalServerError, "failed")
+			writeJSONError(w, http.StatusInternalServerError, "failed")
 			return
 		}
 		if list == nil {
@@ -103,24 +103,24 @@ func (h *HTTPHandler) dgDSR(w http.ResponseWriter, r *http.Request) {
 		}
 		writeJSON(w, http.StatusOK, map[string]any{"requests": list, "total": len(list)})
 	default:
-		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 	}
 }
 
 func (h *HTTPHandler) dgInventory(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
-		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 	tc, err := ggidtenant.FromContext(r.Context())
 	if err != nil {
-		writeError(w, http.StatusBadRequest, "tenant context required")
+		writeJSONError(w, http.StatusBadRequest, "tenant context required")
 		return
 	}
 	// Query DB-backed classifications to build inventory.
 	classifications, err := h.dataGovRepo.ListClassifications(r.Context(), tc.TenantID)
 	if err != nil {
-		writeError(w, http.StatusInternalServerError, "failed")
+		writeJSONError(w, http.StatusInternalServerError, "failed")
 		return
 	}
 	writeJSON(w, http.StatusOK, map[string]any{

@@ -12,7 +12,7 @@ import (
 // Body: {"dry_run": true, "fix_orphaned": true, "fix_duplicates": true}
 func (h *HTTPHandler) handleDirectoryReconcile(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
-		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 

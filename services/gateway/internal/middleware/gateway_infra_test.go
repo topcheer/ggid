@@ -150,13 +150,13 @@ func TestTimeoutMiddleware_NilConfig(t *testing.T) {
 }
 
 func TestTimeoutMiddleware_ContextCancelled(t *testing.T) {
-	var ctxCancelled bool
+	var ctxCancelled atomic.Bool
 
 	handler := TimeoutMiddleware(&TimeoutConfig{
 		Default: 50 * time.Millisecond,
 	})(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		<-r.Context().Done()
-		ctxCancelled = true
+		ctxCancelled.Store(true)
 	}))
 
 	req := httptest.NewRequest("GET", "/test", nil)
@@ -165,7 +165,7 @@ func TestTimeoutMiddleware_ContextCancelled(t *testing.T) {
 
 	// Give goroutine time to observe cancellation
 	time.Sleep(50 * time.Millisecond)
-	if !ctxCancelled {
+	if !ctxCancelled.Load() {
 		t.Error("Context should have been cancelled")
 	}
 }

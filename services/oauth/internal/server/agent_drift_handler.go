@@ -13,12 +13,12 @@ var shadowScanner = service.NewShadowScanner(nil)
 
 func handleAgentDriftDetect(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
-		http.Error(w, `{"error":"method not allowed"}`, http.StatusMethodNotAllowed)
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 	parts := strings.Split(strings.TrimSuffix(r.URL.Path, "/"), "/")
 	if len(parts) < 1 {
-		http.Error(w, `{"error":"agent id required"}`, http.StatusBadRequest)
+		writeJSONError(w, http.StatusBadRequest, "agent id required")
 		return
 	}
 	agentID := parts[len(parts)-1]
@@ -29,7 +29,7 @@ func handleAgentDriftDetect(w http.ResponseWriter, r *http.Request) {
 
 func handleAgentShadows(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
-		http.Error(w, `{"error":"method not allowed"}`, http.StatusMethodNotAllowed)
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 	report := shadowScanner.ScanShadows(nil)
@@ -39,7 +39,7 @@ func handleAgentShadows(w http.ResponseWriter, r *http.Request) {
 
 func handleAgentDriftReport(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
-		http.Error(w, `{"error":"method not allowed"}`, http.StatusMethodNotAllowed)
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")

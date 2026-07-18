@@ -9,7 +9,7 @@ import (
 
 // GET /api/v1/users/{id}/profile-completeness
 func (h *HTTPHandler) handleProfileCompleteness(ctx context.Context, userID uuid.UUID, w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodGet { writeError(w, http.StatusMethodNotAllowed, "method not allowed"); return }
+	if r.Method != http.MethodGet { writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed"); return }
 	user, _ := h.svc.GetUser(ctx, userID)
 	total := 8; filled := 0; var missing []string
 	check := func(val any, name string) {

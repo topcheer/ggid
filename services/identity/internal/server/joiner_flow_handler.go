@@ -77,7 +77,7 @@ func (h *HTTPHandler) handleJoinerFlow(w http.ResponseWriter, r *http.Request) {
 	case http.MethodPost:
 		var req JoinerFlowRequest
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-			http.Error(w, fmt.Sprintf("invalid request: %v", err), http.StatusBadRequest)
+			writeJSONError(w, http.StatusBadRequest, "invalid request body")
 			return
 		}
 		if req.EmployeeID == "" {
@@ -113,6 +113,6 @@ func (h *HTTPHandler) handleJoinerFlow(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusCreated)
 		json.NewEncoder(w).Encode(flow)
 	default:
-		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 	}
 }

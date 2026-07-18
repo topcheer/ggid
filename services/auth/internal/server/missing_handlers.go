@@ -62,23 +62,23 @@ func tenantIDFromClaimsOrHeader(claims jwt.MapClaims, r *http.Request) (uuid.UUI
 // handleMFAStatus returns MFA enrollment status for the current user.
 func (h *Handler) handleMFAStatus(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
-		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 
 	claims, err := h.parseTokenFromHeader(r)
 	if err != nil {
-		writeError(w, http.StatusUnauthorized, err.Error())
+		writeJSONError(w, http.StatusUnauthorized, err.Error())
 		return
 	}
 	userID, err := userIDFromClaims(claims)
 	if err != nil {
-		writeError(w, http.StatusUnauthorized, err.Error())
+		writeJSONError(w, http.StatusUnauthorized, err.Error())
 		return
 	}
 	tenantID, err := tenantIDFromClaimsOrHeader(claims, r)
 	if err != nil {
-		writeError(w, http.StatusBadRequest, "valid tenant_id required")
+		writeJSONError(w, http.StatusBadRequest, "valid tenant_id required")
 		return
 	}
 
@@ -110,17 +110,17 @@ func (h *Handler) handleMFAStatus(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) handleTokens(w http.ResponseWriter, r *http.Request) {
 	claims, err := h.parseTokenFromHeader(r)
 	if err != nil {
-		writeError(w, http.StatusUnauthorized, err.Error())
+		writeJSONError(w, http.StatusUnauthorized, err.Error())
 		return
 	}
 	userID, err := userIDFromClaims(claims)
 	if err != nil {
-		writeError(w, http.StatusUnauthorized, err.Error())
+		writeJSONError(w, http.StatusUnauthorized, err.Error())
 		return
 	}
 	tenantID, err := tenantIDFromClaimsOrHeader(claims, r)
 	if err != nil {
-		writeError(w, http.StatusBadRequest, "valid tenant_id required")
+		writeJSONError(w, http.StatusBadRequest, "valid tenant_id required")
 		return
 	}
 
@@ -128,7 +128,7 @@ func (h *Handler) handleTokens(w http.ResponseWriter, r *http.Request) {
 	case http.MethodGet:
 		sessions, err := h.authSvc.ListSessions(r.Context(), tenantID, userID)
 		if err != nil {
-			writeError(w, http.StatusInternalServerError, "failed to list sessions")
+			writeJSONError(w, http.StatusInternalServerError, "failed to list sessions")
 			return
 		}
 		tokens := make([]map[string]interface{}, 0, len(sessions))
@@ -148,35 +148,35 @@ func (h *Handler) handleTokens(w http.ResponseWriter, r *http.Request) {
 		})
 	case http.MethodDelete:
 		if err := h.authSvc.LogoutAll(r.Context(), tenantID, userID, uuid.Nil); err != nil {
-			writeError(w, http.StatusInternalServerError, "failed to revoke tokens")
+			writeJSONError(w, http.StatusInternalServerError, "failed to revoke tokens")
 			return
 		}
 		writeJSON(w, http.StatusOK, map[string]interface{}{"status": "token revoked"})
 	default:
-		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 	}
 }
 
 // handleAuthMe returns the current authenticated user's profile.
 func (h *Handler) handleAuthMe(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
-		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 
 	claims, err := h.parseTokenFromHeader(r)
 	if err != nil {
-		writeError(w, http.StatusUnauthorized, err.Error())
+		writeJSONError(w, http.StatusUnauthorized, err.Error())
 		return
 	}
 	userID, err := userIDFromClaims(claims)
 	if err != nil {
-		writeError(w, http.StatusUnauthorized, err.Error())
+		writeJSONError(w, http.StatusUnauthorized, err.Error())
 		return
 	}
 	tenantID, err := tenantIDFromClaimsOrHeader(claims, r)
 	if err != nil {
-		writeError(w, http.StatusBadRequest, "valid tenant_id required")
+		writeJSONError(w, http.StatusBadRequest, "valid tenant_id required")
 		return
 	}
 
@@ -215,7 +215,7 @@ func (h *Handler) handleConsent(w http.ResponseWriter, r *http.Request) {
 	case http.MethodDelete:
 		writeJSON(w, http.StatusOK, map[string]interface{}{"status": "consent revoked"})
 	default:
-		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 	}
 }
 
@@ -231,7 +231,7 @@ func (h *Handler) handleDelegation(w http.ResponseWriter, r *http.Request) {
 	case http.MethodDelete:
 		writeJSON(w, http.StatusOK, map[string]interface{}{"status": "delegation revoked"})
 	default:
-		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 	}
 }
 
@@ -247,14 +247,14 @@ func (h *Handler) handleAccountLinking(w http.ResponseWriter, r *http.Request) {
 	case http.MethodDelete:
 		writeJSON(w, http.StatusOK, map[string]interface{}{"status": "account unlinked"})
 	default:
-		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 	}
 }
 
 // handleLoginSecurity returns login security configuration.
 func (h *Handler) handleLoginSecurity(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
-		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 
@@ -297,7 +297,7 @@ func (h *Handler) handleNotifications(w http.ResponseWriter, r *http.Request) {
 	case http.MethodPost:
 		writeJSON(w, http.StatusOK, map[string]interface{}{"status": "notification sent"})
 	default:
-		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 	}
 }
 
@@ -305,17 +305,17 @@ func (h *Handler) handleNotifications(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) handleDeviceBindings(w http.ResponseWriter, r *http.Request) {
 	claims, err := h.parseTokenFromHeader(r)
 	if err != nil {
-		writeError(w, http.StatusUnauthorized, err.Error())
+		writeJSONError(w, http.StatusUnauthorized, err.Error())
 		return
 	}
 	userID, err := userIDFromClaims(claims)
 	if err != nil {
-		writeError(w, http.StatusUnauthorized, err.Error())
+		writeJSONError(w, http.StatusUnauthorized, err.Error())
 		return
 	}
 	tenantID, err := tenantIDFromClaimsOrHeader(claims, r)
 	if err != nil {
-		writeError(w, http.StatusBadRequest, "valid tenant_id required")
+		writeJSONError(w, http.StatusBadRequest, "valid tenant_id required")
 		return
 	}
 
@@ -339,11 +339,11 @@ func (h *Handler) handleDeviceBindings(w http.ResponseWriter, r *http.Request) {
 			DeviceName  string `json:"device_name"`
 		}
 		if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
-			writeError(w, http.StatusBadRequest, "invalid JSON body")
+			writeJSONError(w, http.StatusBadRequest, "invalid JSON body")
 			return
 		}
 		if body.Fingerprint == "" {
-			writeError(w, http.StatusBadRequest, "fingerprint is required")
+			writeJSONError(w, http.StatusBadRequest, "fingerprint is required")
 			return
 		}
 		if err := h.authSvc.RememberTrustedDevice(r.Context(), userID, body.Fingerprint, body.DeviceName); err != nil {
@@ -356,7 +356,7 @@ func (h *Handler) handleDeviceBindings(w http.ResponseWriter, r *http.Request) {
 			Fingerprint string `json:"fingerprint"`
 		}
 		if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
-			writeError(w, http.StatusBadRequest, "invalid JSON body")
+			writeJSONError(w, http.StatusBadRequest, "invalid JSON body")
 			return
 		}
 		// Best-effort unbind: mark as untrusted by removing from known devices is not
@@ -366,14 +366,14 @@ func (h *Handler) handleDeviceBindings(w http.ResponseWriter, r *http.Request) {
 			"fingerprint": body.Fingerprint,
 		})
 	default:
-		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 	}
 }
 
 // handleRateLimits returns rate limiting configuration.
 func (h *Handler) handleRateLimits(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
-		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 

@@ -38,14 +38,14 @@ func (h *HTTPHandler) handleAccessRequests(w http.ResponseWriter, r *http.Reques
 	case strings.HasSuffix(path, "/deny") && r.Method == http.MethodPost:
 		h.denyAccessRequest(w, r)
 	default:
-		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 	}
 }
 
 func (h *HTTPHandler) createAccessRequest(w http.ResponseWriter, r *http.Request) {
 	ctx, ok := injectTenant(r)
 	if !ok {
-		writeError(w, http.StatusBadRequest, "missing or invalid X-Tenant-ID header")
+		writeJSONError(w, http.StatusBadRequest, "missing or invalid X-Tenant-ID header")
 		return
 	}
 
@@ -56,13 +56,13 @@ func (h *HTTPHandler) createAccessRequest(w http.ResponseWriter, r *http.Request
 		Reason       string `json:"reason"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
-		writeError(w, http.StatusBadRequest, "invalid JSON body")
+		writeJSONError(w, http.StatusBadRequest, "invalid JSON body")
 		return
 	}
 
 	requesterID, err := uuid.Parse(body.RequesterID)
 	if err != nil {
-		writeError(w, http.StatusBadRequest, "invalid requester_id")
+		writeJSONError(w, http.StatusBadRequest, "invalid requester_id")
 		return
 	}
 
@@ -81,7 +81,7 @@ func (h *HTTPHandler) createAccessRequest(w http.ResponseWriter, r *http.Request
 func (h *HTTPHandler) listAccessRequests(w http.ResponseWriter, r *http.Request) {
 	ctx, ok := injectTenant(r)
 	if !ok {
-		writeError(w, http.StatusBadRequest, "missing or invalid X-Tenant-ID header")
+		writeJSONError(w, http.StatusBadRequest, "missing or invalid X-Tenant-ID header")
 		return
 	}
 
@@ -102,18 +102,18 @@ func (h *HTTPHandler) listAccessRequests(w http.ResponseWriter, r *http.Request)
 func (h *HTTPHandler) approveAccessRequest(w http.ResponseWriter, r *http.Request) {
 	ctx, ok := injectTenant(r)
 	if !ok {
-		writeError(w, http.StatusBadRequest, "missing or invalid X-Tenant-ID header")
+		writeJSONError(w, http.StatusBadRequest, "missing or invalid X-Tenant-ID header")
 		return
 	}
 
 	parts := strings.Split(r.URL.Path, "/")
 	if len(parts) < 6 {
-		writeError(w, http.StatusBadRequest, "invalid URL path")
+		writeJSONError(w, http.StatusBadRequest, "invalid URL path")
 		return
 	}
 	requestID, err := uuid.Parse(parts[4])
 	if err != nil {
-		writeError(w, http.StatusBadRequest, "invalid request ID")
+		writeJSONError(w, http.StatusBadRequest, "invalid request ID")
 		return
 	}
 
@@ -121,12 +121,12 @@ func (h *HTTPHandler) approveAccessRequest(w http.ResponseWriter, r *http.Reques
 		ApproverID string `json:"approver_id"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
-		writeError(w, http.StatusBadRequest, "invalid JSON body")
+		writeJSONError(w, http.StatusBadRequest, "invalid JSON body")
 		return
 	}
 	approverID, err := uuid.Parse(body.ApproverID)
 	if err != nil {
-		writeError(w, http.StatusBadRequest, "invalid approver_id")
+		writeJSONError(w, http.StatusBadRequest, "invalid approver_id")
 		return
 	}
 
@@ -142,18 +142,18 @@ func (h *HTTPHandler) approveAccessRequest(w http.ResponseWriter, r *http.Reques
 func (h *HTTPHandler) denyAccessRequest(w http.ResponseWriter, r *http.Request) {
 	ctx, ok := injectTenant(r)
 	if !ok {
-		writeError(w, http.StatusBadRequest, "missing or invalid X-Tenant-ID header")
+		writeJSONError(w, http.StatusBadRequest, "missing or invalid X-Tenant-ID header")
 		return
 	}
 
 	parts := strings.Split(r.URL.Path, "/")
 	if len(parts) < 6 {
-		writeError(w, http.StatusBadRequest, "invalid URL path")
+		writeJSONError(w, http.StatusBadRequest, "invalid URL path")
 		return
 	}
 	requestID, err := uuid.Parse(parts[4])
 	if err != nil {
-		writeError(w, http.StatusBadRequest, "invalid request ID")
+		writeJSONError(w, http.StatusBadRequest, "invalid request ID")
 		return
 	}
 
@@ -162,12 +162,12 @@ func (h *HTTPHandler) denyAccessRequest(w http.ResponseWriter, r *http.Request) 
 		DenialReason  string `json:"denial_reason"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
-		writeError(w, http.StatusBadRequest, "invalid JSON body")
+		writeJSONError(w, http.StatusBadRequest, "invalid JSON body")
 		return
 	}
 	approverID, err := uuid.Parse(body.ApproverID)
 	if err != nil {
-		writeError(w, http.StatusBadRequest, "invalid approver_id")
+		writeJSONError(w, http.StatusBadRequest, "invalid approver_id")
 		return
 	}
 

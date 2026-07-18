@@ -38,7 +38,7 @@ func (h *Handler) handlePasswordHistoryConfig(w http.ResponseWriter, r *http.Req
 			EnforceComplexity *bool `json:"enforce_complexity"`
 		}
 		if err := readJSONBody(r, &req); err != nil {
-			writeError(w, http.StatusBadRequest, "invalid request body")
+			writeJSONError(w, http.StatusBadRequest, "invalid request body")
 			return
 		}
 
@@ -65,6 +65,6 @@ func (h *Handler) handlePasswordHistoryConfig(w http.ResponseWriter, r *http.Req
 		})
 
 	default:
-		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 	}
 }

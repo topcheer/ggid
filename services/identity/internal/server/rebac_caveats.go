@@ -122,7 +122,7 @@ type TupleWithCaveat struct {
 func (h *HTTPHandler) handleReBACCheckWithCaveat(w http.ResponseWriter, r *http.Request) {
 	tc, err := ggidtenant.FromContext(r.Context())
 	if err != nil {
-		writeError(w, http.StatusBadRequest, "tenant context required")
+		writeJSONError(w, http.StatusBadRequest, "tenant context required")
 		return
 	}
 
@@ -134,12 +134,12 @@ func (h *HTTPHandler) handleReBACCheckWithCaveat(w http.ResponseWriter, r *http.
 		Context   map[string]any `json:"context,omitempty"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		writeError(w, http.StatusBadRequest, "invalid request body")
+		writeJSONError(w, http.StatusBadRequest, "invalid request body")
 		return
 	}
 
 	if req.Namespace == "" || req.Object == "" || req.Relation == "" || req.Subject == "" {
-		writeError(w, http.StatusBadRequest, "namespace, object, relation, subject required")
+		writeJSONError(w, http.StatusBadRequest, "namespace, object, relation, subject required")
 		return
 	}
 
@@ -162,7 +162,7 @@ func (h *HTTPHandler) handleReBACCheckWithCaveat(w http.ResponseWriter, r *http.
 			Subject:   req.Subject,
 		})
 	} else {
-		writeError(w, http.StatusServiceUnavailable, "ReBAC not configured")
+		writeJSONError(w, http.StatusServiceUnavailable, "ReBAC not configured")
 		return
 	}
 

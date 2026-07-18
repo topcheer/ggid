@@ -34,7 +34,7 @@ func addSyncHistory(entry syncHistoryEntry) {
 // GET /api/v1/identity/ldap/sync-history
 func (h *HTTPHandler) handleLDAPSyncHistory(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
-		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 	syncHistoryMu.RLock()

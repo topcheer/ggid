@@ -20,7 +20,7 @@ type UserTemplate struct {
 
 func (h *HTTPHandler) handleCloneTemplate(ctx context.Context, userID uuid.UUID, w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
-		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 	user, err := h.svc.GetUser(ctx, userID)
@@ -45,7 +45,7 @@ func (h *HTTPHandler) handleCloneTemplate(ctx context.Context, userID uuid.UUID,
 
 func (h *HTTPHandler) handleCreateFromTemplate(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
-		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 	var req struct {
@@ -54,17 +54,17 @@ func (h *HTTPHandler) handleCreateFromTemplate(w http.ResponseWriter, r *http.Re
 		Email      string `json:"email"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		writeError(w, http.StatusBadRequest, "invalid JSON")
+		writeJSONError(w, http.StatusBadRequest, "invalid JSON")
 		return
 	}
 	if req.TemplateID == "" || req.Email == "" {
-		writeError(w, http.StatusBadRequest, "template_id and email required")
+		writeJSONError(w, http.StatusBadRequest, "template_id and email required")
 		return
 	}
 	if h.identityPolicyMap != nil {
 		tpl, _ := h.identityPolicyMap.Get(r.Context(), "identity_templates", req.TemplateID)
 		if tpl == nil {
-			writeError(w, http.StatusNotFound, "template not found")
+			writeJSONError(w, http.StatusNotFound, "template not found")
 			return
 		}
 		tempPwd := uuid.New().String()[:12]
@@ -76,5 +76,5 @@ func (h *HTTPHandler) handleCreateFromTemplate(w http.ResponseWriter, r *http.Re
 		})
 		return
 	}
-	writeError(w, http.StatusNotFound, "template not found")
+	writeJSONError(w, http.StatusNotFound, "template not found")
 }

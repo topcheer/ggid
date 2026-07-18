@@ -147,12 +147,12 @@ func (h *HTTPHandler) handleNotificationRules(w http.ResponseWriter, r *http.Req
 	case http.MethodPost:
 		var rule NotificationRule
 		if err := json.NewDecoder(r.Body).Decode(&rule); err != nil {
-			writeError(w, http.StatusBadRequest, "invalid JSON")
+			writeJSONError(w, http.StatusBadRequest, "invalid JSON")
 			return
 		}
 		validSev := map[string]bool{"critical": true, "high": true, "medium": true, "low": true}
 		if !validSev[rule.Severity] {
-			writeError(w, http.StatusBadRequest, "severity must be critical, high, medium, or low")
+			writeJSONError(w, http.StatusBadRequest, "severity must be critical, high, medium, or low")
 			return
 		}
 		if len(rule.Channels) == 0 {
@@ -172,13 +172,13 @@ func (h *HTTPHandler) handleNotificationRules(w http.ResponseWriter, r *http.Req
 		if rules == nil { rules = []*NotificationRule{} }
 		writeJSON(w, http.StatusOK, map[string]any{"rules": rules, "count": len(rules)})
 	default:
-		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 	}
 }
 
 func (h *HTTPHandler) handleNotificationLog(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
-		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 	var log []*NotificationLogEntry

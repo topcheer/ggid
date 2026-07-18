@@ -20,7 +20,7 @@ type GroupAnalytics struct {
 
 func (h *HTTPHandler) handleGroupAnalytics(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
-		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 	groupID := strings.TrimPrefix(r.URL.Path, "/api/v1/identity/groups/")

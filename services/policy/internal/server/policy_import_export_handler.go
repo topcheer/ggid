@@ -25,7 +25,7 @@ type PolicyImportExportResult struct {
 
 func (s *HTTPServer) handlePolicyImportExport(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet && r.Method != http.MethodPost {
-		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 	switch r.Method {

@@ -46,7 +46,7 @@ func (h *Handler) handleCertificatesV2(w http.ResponseWriter, r *http.Request) {
 			CN     string `json:"cn"`
 		}
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-			writeError(w, http.StatusBadRequest, "invalid request body")
+			writeJSONError(w, http.StatusBadRequest, "invalid request body")
 			return
 		}
 		if req.Type == "" {
@@ -59,7 +59,7 @@ func (h *Handler) handleCertificatesV2(w http.ResponseWriter, r *http.Request) {
 		// Generate a self-signed certificate
 		key, err := rsa.GenerateKey(rand.Reader, 2048)
 		if err != nil {
-			writeError(w, http.StatusInternalServerError, "failed to generate key")
+			writeJSONError(w, http.StatusInternalServerError, "failed to generate key")
 			return
 		}
 
@@ -80,7 +80,7 @@ func (h *Handler) handleCertificatesV2(w http.ResponseWriter, r *http.Request) {
 
 		certBytes, err := x509.CreateCertificate(rand.Reader, &template, &template, &key.PublicKey, key)
 		if err != nil {
-			writeError(w, http.StatusInternalServerError, "failed to create certificate")
+			writeJSONError(w, http.StatusInternalServerError, "failed to create certificate")
 			return
 		}
 
@@ -109,6 +109,6 @@ func (h *Handler) handleCertificatesV2(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusOK, map[string]string{"status": "deleted"})
 
 	default:
-		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 	}
 }

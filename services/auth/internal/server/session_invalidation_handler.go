@@ -37,21 +37,21 @@ type InvalidationAudit struct {
 // POST /api/v1/auth/invalidate-sessions/:user_id
 func (h *Handler) handleInvalidateSessions(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
-		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 
 	// Extract user_id from path.
 	userIDStr := strings.TrimPrefix(r.URL.Path, "/api/v1/auth/invalidate-sessions/")
 	if userIDStr == "" || strings.Contains(userIDStr, "/") {
-		writeError(w, http.StatusBadRequest, "valid user_id required in path")
+		writeJSONError(w, http.StatusBadRequest, "valid user_id required in path")
 		return
 	}
 
 	var req InvalidationRequest
 	if r.ContentLength > 0 {
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-			writeError(w, http.StatusBadRequest, "invalid JSON body")
+			writeJSONError(w, http.StatusBadRequest, "invalid JSON body")
 			return
 		}
 	}
@@ -66,7 +66,7 @@ func (h *Handler) handleInvalidateSessions(w http.ResponseWriter, r *http.Reques
 		req.Reason = "admin_action"
 	}
 	if !validReasons[req.Reason] {
-		writeError(w, http.StatusBadRequest, "reason must be password_change, mfa_enrollment, posture_drop, or admin_action")
+		writeJSONError(w, http.StatusBadRequest, "reason must be password_change, mfa_enrollment, posture_drop, or admin_action")
 		return
 	}
 
@@ -74,13 +74,13 @@ func (h *Handler) handleInvalidateSessions(w http.ResponseWriter, r *http.Reques
 	tenantIDStr := r.Header.Get("X-Tenant-ID")
 	tenantID, err := uuid.Parse(tenantIDStr)
 	if err != nil {
-		writeError(w, http.StatusBadRequest, "valid X-Tenant-ID header required")
+		writeJSONError(w, http.StatusBadRequest, "valid X-Tenant-ID header required")
 		return
 	}
 
 	userID, err := uuid.Parse(userIDStr)
 	if err != nil {
-		writeError(w, http.StatusBadRequest, "valid user_id required")
+		writeJSONError(w, http.StatusBadRequest, "valid user_id required")
 		return
 	}
 

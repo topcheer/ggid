@@ -53,29 +53,29 @@ type ImportError struct {
 // Validates each hash format, stores users, marks for transparent re-hash on next login.
 func (h *HTTPHandler) handleBulkImport(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
-		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 
 	tc, err := ggidtenant.FromContext(r.Context())
 	if err != nil {
-		writeError(w, http.StatusBadRequest, "tenant context required")
+		writeJSONError(w, http.StatusBadRequest, "tenant context required")
 		return
 	}
 
 	var req BulkImportRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		writeError(w, http.StatusBadRequest, "invalid request body")
+		writeJSONError(w, http.StatusBadRequest, "invalid request body")
 		return
 	}
 
 	if len(req.Users) == 0 {
-		writeError(w, http.StatusBadRequest, "no users in import payload")
+		writeJSONError(w, http.StatusBadRequest, "no users in import payload")
 		return
 	}
 
 	if len(req.Users) > 10000 {
-		writeError(w, http.StatusBadRequest, "max 10000 users per import")
+		writeJSONError(w, http.StatusBadRequest, "max 10000 users per import")
 		return
 	}
 

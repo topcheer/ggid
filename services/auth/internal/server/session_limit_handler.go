@@ -30,11 +30,11 @@ func (h *Handler) handleSessionLimit(w http.ResponseWriter, r *http.Request) {
 			Strategy    string `json:"strategy"`
 		}
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-			writeError(w, http.StatusBadRequest, "invalid JSON")
+			writeJSONError(w, http.StatusBadRequest, "invalid JSON")
 			return
 		}
 		if req.UserID == "" || req.MaxSessions == 0 {
-			writeError(w, http.StatusBadRequest, "user_id and max_sessions required")
+			writeJSONError(w, http.StatusBadRequest, "user_id and max_sessions required")
 			return
 		}
 		if req.Strategy == "" {
@@ -74,5 +74,5 @@ func (h *Handler) handleSessionLimit(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusOK, map[string]any{"limits": result, "count": len(result)})
 		return
 	}
-	writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+	writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 }

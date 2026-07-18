@@ -34,7 +34,7 @@ func (s *HTTPServer) handlePolicyVersionRoute(w http.ResponseWriter, r *http.Req
 
 func (s *HTTPServer) handlePolicyVersionCreate(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
-		http.Error(w, `{"error":"method not allowed"}`, http.StatusMethodNotAllowed)
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 	policyID := extractPolicyID(r.URL.Path, "versions")
@@ -43,7 +43,7 @@ func (s *HTTPServer) handlePolicyVersionCreate(w http.ResponseWriter, r *http.Re
 		Diff      string `json:"diff"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, `{"error":"invalid request body"}`, http.StatusBadRequest)
+		writeJSONError(w, http.StatusBadRequest, "invalid request body")
 		return
 	}
 	v := pvSvc.CreateVersion(policyID, req.CreatedBy, req.Diff)
@@ -54,7 +54,7 @@ func (s *HTTPServer) handlePolicyVersionCreate(w http.ResponseWriter, r *http.Re
 
 func (s *HTTPServer) handlePolicyVersionList(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
-		http.Error(w, `{"error":"method not allowed"}`, http.StatusMethodNotAllowed)
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 	policyID := extractPolicyID(r.URL.Path, "versions")
@@ -65,14 +65,14 @@ func (s *HTTPServer) handlePolicyVersionList(w http.ResponseWriter, r *http.Requ
 
 func (s *HTTPServer) handlePolicyVersionGet(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
-		http.Error(w, `{"error":"method not allowed"}`, http.StatusMethodNotAllowed)
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 	policyID := extractPolicyID(r.URL.Path, "versions")
 	versionID := extractLastSegment(r.URL.Path)
 	v := pvSvc.GetVersion(policyID, versionID)
 	if v == nil {
-		http.Error(w, `{"error":"version not found"}`, http.StatusNotFound)
+		writeJSONError(w, http.StatusNotFound, "version not found")
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")
@@ -81,7 +81,7 @@ func (s *HTTPServer) handlePolicyVersionGet(w http.ResponseWriter, r *http.Reque
 
 func (s *HTTPServer) handlePolicyVersionRollback(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
-		http.Error(w, `{"error":"method not allowed"}`, http.StatusMethodNotAllowed)
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 	policyID := extractPolicyID(r.URL.Path, "versions")
@@ -95,7 +95,7 @@ func (s *HTTPServer) handlePolicyVersionRollback(w http.ResponseWriter, r *http.
 	}
 	v, err := pvSvc.RollbackVersion(policyID, versionID)
 	if err != nil || v == nil {
-		http.Error(w, `{"error":"rollback failed"}`, http.StatusInternalServerError)
+		writeJSONError(w, http.StatusInternalServerError, "rollback failed")
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")
@@ -104,14 +104,14 @@ func (s *HTTPServer) handlePolicyVersionRollback(w http.ResponseWriter, r *http.
 
 func (s *HTTPServer) handlePolicyVersionCompare(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
-		http.Error(w, `{"error":"method not allowed"}`, http.StatusMethodNotAllowed)
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 	policyID := extractPolicyID(r.URL.Path, "versions")
 	v1 := r.URL.Query().Get("v1")
 	v2 := r.URL.Query().Get("v2")
 	if v1 == "" || v2 == "" {
-		http.Error(w, `{"error":"v1 and v2 query params required"}`, http.StatusBadRequest)
+		writeJSONError(w, http.StatusBadRequest, "v1 and v2 query params required")
 		return
 	}
 	diff := pvSvc.CompareVersions(policyID, atoiSafe(v1), atoiSafe(v2))

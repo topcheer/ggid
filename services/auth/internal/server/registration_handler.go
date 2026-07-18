@@ -110,24 +110,24 @@ func validatePassword(password string) bool {
 // POST /api/v1/auth/register
 func (h *Handler) handleRegister(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
-		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 	var req RegisterRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		writeError(w, http.StatusBadRequest, "invalid JSON")
+		writeJSONError(w, http.StatusBadRequest, "invalid JSON")
 		return
 	}
 	if req.Username == "" || req.Email == "" || req.Password == "" {
-		writeError(w, http.StatusBadRequest, "username, email, and password are required")
+		writeJSONError(w, http.StatusBadRequest, "username, email, and password are required")
 		return
 	}
 	if !validateEmail(req.Email) {
-		writeError(w, http.StatusBadRequest, "invalid email format")
+		writeJSONError(w, http.StatusBadRequest, "invalid email format")
 		return
 	}
 	if !validatePassword(req.Password) {
-		writeError(w, http.StatusBadRequest, "password must be 8+ chars with upper, lower, and digit")
+		writeJSONError(w, http.StatusBadRequest, "password must be 8+ chars with upper, lower, and digit")
 		return
 	}
 	// Create user in pending_verification state (would call service).
@@ -150,18 +150,18 @@ func (h *Handler) handleRegister(w http.ResponseWriter, r *http.Request) {
 // GET /api/v1/auth/verify-email?token=xxx
 func (h *Handler) handleVerifyEmail(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
-		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 	tokenStr := r.URL.Query().Get("token")
 	if tokenStr == "" {
-		writeError(w, http.StatusBadRequest, "token is required")
+		writeJSONError(w, http.StatusBadRequest, "token is required")
 		return
 	}
 	if h.verificationRepo != nil {
 		token, err := h.verificationRepo.ValidateToken(r.Context(), tokenStr, "email_verification")
 		if err != nil {
-			writeError(w, http.StatusBadRequest, "invalid or expired verification token")
+			writeJSONError(w, http.StatusBadRequest, "invalid or expired verification token")
 			return
 		}
 		h.verificationRepo.MarkUsed(r.Context(), token.ID)
@@ -171,22 +171,22 @@ func (h *Handler) handleVerifyEmail(w http.ResponseWriter, r *http.Request) {
 		})
 		return
 	}
-	writeError(w, http.StatusServiceUnavailable, "verification service not available")
+	writeJSONError(w, http.StatusServiceUnavailable, "verification service not available")
 }
 
 // POST /api/v1/auth/forgot-password
 func (h *Handler) handleForgotPassword(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
-		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 	var req struct{ Email string `json:"email"` }
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		writeError(w, http.StatusBadRequest, "invalid JSON")
+		writeJSONError(w, http.StatusBadRequest, "invalid JSON")
 		return
 	}
 	if !validateEmail(req.Email) {
-		writeError(w, http.StatusBadRequest, "invalid email")
+		writeJSONError(w, http.StatusBadRequest, "invalid email")
 		return
 	}
 	// Generate reset token (30min TTL).
@@ -202,7 +202,7 @@ func (h *Handler) handleForgotPassword(w http.ResponseWriter, r *http.Request) {
 // POST /api/v1/auth/reset-password
 func (h *Handler) handleResetPassword(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
-		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 	var req struct {
@@ -210,21 +210,21 @@ func (h *Handler) handleResetPassword(w http.ResponseWriter, r *http.Request) {
 		Password string `json:"password"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		writeError(w, http.StatusBadRequest, "invalid JSON")
+		writeJSONError(w, http.StatusBadRequest, "invalid JSON")
 		return
 	}
 	if req.Token == "" || req.Password == "" {
-		writeError(w, http.StatusBadRequest, "token and password required")
+		writeJSONError(w, http.StatusBadRequest, "token and password required")
 		return
 	}
 	if !validatePassword(req.Password) {
-		writeError(w, http.StatusBadRequest, "password must be 8+ chars with upper, lower, and digit")
+		writeJSONError(w, http.StatusBadRequest, "password must be 8+ chars with upper, lower, and digit")
 		return
 	}
 	if h.verificationRepo != nil {
 		token, err := h.verificationRepo.ValidateToken(r.Context(), req.Token, "password_reset")
 		if err != nil {
-			writeError(w, http.StatusBadRequest, "invalid or expired reset token")
+			writeJSONError(w, http.StatusBadRequest, "invalid or expired reset token")
 			return
 		}
 		h.verificationRepo.MarkUsed(r.Context(), token.ID)
@@ -234,13 +234,13 @@ func (h *Handler) handleResetPassword(w http.ResponseWriter, r *http.Request) {
 		})
 		return
 	}
-	writeError(w, http.StatusServiceUnavailable, "reset service not available")
+	writeJSONError(w, http.StatusServiceUnavailable, "reset service not available")
 }
 
 // PUT /api/v1/auth/profile
 func (h *Handler) handleProfileUpdate(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPut {
-		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 	var req struct {
@@ -249,11 +249,11 @@ func (h *Handler) handleProfileUpdate(w http.ResponseWriter, r *http.Request) {
 		Email       string `json:"email"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		writeError(w, http.StatusBadRequest, "invalid JSON")
+		writeJSONError(w, http.StatusBadRequest, "invalid JSON")
 		return
 	}
 	if req.Email != "" && !validateEmail(req.Email) {
-		writeError(w, http.StatusBadRequest, "invalid email format")
+		writeJSONError(w, http.StatusBadRequest, "invalid email format")
 		return
 	}
 	needsReverification := req.Email != ""

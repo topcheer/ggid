@@ -232,19 +232,19 @@ func (h *HTTPHandler) handleDLP(w http.ResponseWriter, r *http.Request) {
 	case http.MethodPost:
 		var p DLPPolicy
 		if err := json.NewDecoder(r.Body).Decode(&p); err != nil {
-			writeError(w, http.StatusBadRequest, "invalid body")
+			writeJSONError(w, http.StatusBadRequest, "invalid body")
 			return
 		}
 		if tc != nil { p.TenantID = tc.TenantID }
 		if p.Name == "" || p.Trigger == "" {
-			writeError(w, http.StatusBadRequest, "name and trigger required")
+			writeJSONError(w, http.StatusBadRequest, "name and trigger required")
 			return
 		}
 		if p.Action == "" { p.Action = "log" }
 		p.Enabled = true
 		if h.dlpPolicyRepo != nil {
 			if err := h.dlpPolicyRepo.Create(r.Context(), &p); err != nil {
-				writeError(w, http.StatusInternalServerError, "failed")
+				writeJSONError(w, http.StatusInternalServerError, "failed")
 				return
 			}
 		}
@@ -259,7 +259,7 @@ func (h *HTTPHandler) handleDLP(w http.ResponseWriter, r *http.Request) {
 	case http.MethodPut:
 		parts := strings.Split(path, "/")
 		id, err := uuid.Parse(parts[len(parts)-1])
-		if err != nil { writeError(w, http.StatusBadRequest, "invalid id"); return }
+		if err != nil { writeJSONError(w, http.StatusBadRequest, "invalid id"); return }
 		var p DLPPolicy
 		json.NewDecoder(r.Body).Decode(&p)
 		p.ID = id
@@ -269,7 +269,7 @@ func (h *HTTPHandler) handleDLP(w http.ResponseWriter, r *http.Request) {
 	case http.MethodDelete:
 		parts := strings.Split(path, "/")
 		id, err := uuid.Parse(parts[len(parts)-1])
-		if err != nil { writeError(w, http.StatusBadRequest, "invalid id"); return }
+		if err != nil { writeJSONError(w, http.StatusBadRequest, "invalid id"); return }
 		if h.dlpPolicyRepo != nil && tc != nil { h.dlpPolicyRepo.Delete(r.Context(), id, tc.TenantID) }
 		writeJSON(w, http.StatusOK, map[string]bool{"deleted": true})
 	}
@@ -299,7 +299,7 @@ func (h *HTTPHandler) dlpHeatmap(w http.ResponseWriter, r *http.Request) {
 
 func (h *HTTPHandler) dlpTestPolicy(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
-		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 	var req struct {

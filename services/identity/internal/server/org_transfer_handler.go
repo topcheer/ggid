@@ -34,7 +34,7 @@ var orgTransferStore = struct {
 // Transfers a user between organizations: revokes old roles, assigns new defaults, notifies, audits.
 func (h *HTTPHandler) handleTransferOrg(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
-		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 
@@ -48,11 +48,11 @@ func (h *HTTPHandler) handleTransferOrg(w http.ResponseWriter, r *http.Request) 
 		}
 	}
 	if userID == "" {
-		writeError(w, http.StatusBadRequest, "user ID is required in path")
+		writeJSONError(w, http.StatusBadRequest, "user ID is required in path")
 		return
 	}
 	if _, err := uuid.Parse(userID); err != nil {
-		writeError(w, http.StatusBadRequest, "invalid user_id")
+		writeJSONError(w, http.StatusBadRequest, "invalid user_id")
 		return
 	}
 
@@ -62,15 +62,15 @@ func (h *HTTPHandler) handleTransferOrg(w http.ResponseWriter, r *http.Request) 
 		DefaultRoles []string `json:"default_roles"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		writeError(w, http.StatusBadRequest, "invalid request body")
+		writeJSONError(w, http.StatusBadRequest, "invalid request body")
 		return
 	}
 	if req.FromOrgID == "" || req.ToOrgID == "" {
-		writeError(w, http.StatusBadRequest, "from_org_id and to_org_id are required")
+		writeJSONError(w, http.StatusBadRequest, "from_org_id and to_org_id are required")
 		return
 	}
 	if req.FromOrgID == req.ToOrgID {
-		writeError(w, http.StatusBadRequest, "from_org_id and to_org_id must be different")
+		writeJSONError(w, http.StatusBadRequest, "from_org_id and to_org_id must be different")
 		return
 	}
 

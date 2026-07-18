@@ -21,16 +21,16 @@ var reviewSeq int
 
 func handleAgentReviewCreate(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
-		http.Error(w, `{"error":"method not allowed"}`, http.StatusMethodNotAllowed)
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 	var rv AgentReview
 	if err := json.NewDecoder(r.Body).Decode(&rv); err != nil {
-		http.Error(w, `{"error":"invalid request body"}`, http.StatusBadRequest)
+		writeJSONError(w, http.StatusBadRequest, "invalid request body")
 		return
 	}
 	if rv.AgentID == "" || rv.Reviewer == "" {
-		http.Error(w, `{"error":"agent_id and reviewer required"}`, http.StatusBadRequest)
+		writeJSONError(w, http.StatusBadRequest, "agent_id and reviewer required")
 		return
 	}
 	reviewSeq++
@@ -50,7 +50,7 @@ func handleAgentReviewCreate(w http.ResponseWriter, r *http.Request) {
 
 func handleAgentReviewList(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
-		http.Error(w, `{"error":"method not allowed"}`, http.StatusMethodNotAllowed)
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 	var list []map[string]any
@@ -63,12 +63,12 @@ func handleAgentReviewList(w http.ResponseWriter, r *http.Request) {
 
 func handleAgentReviewGet(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
-		http.Error(w, `{"error":"method not allowed"}`, http.StatusMethodNotAllowed)
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 	parts := strings.Split(r.URL.Path, "/")
 	if len(parts) < 5 {
-		http.Error(w, `{"error":"agent id required"}`, http.StatusBadRequest)
+		writeJSONError(w, http.StatusBadRequest, "agent id required")
 		return
 	}
 	agentID := parts[4]
@@ -82,29 +82,29 @@ func handleAgentReviewGet(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 	}
-	http.Error(w, `{"error":"review not found"}`, http.StatusNotFound)
+	writeJSONError(w, http.StatusNotFound, "review not found")
 }
 
 func handleAgentReviewUpdate(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPut {
-		http.Error(w, `{"error":"method not allowed"}`, http.StatusMethodNotAllowed)
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 	parts := strings.Split(r.URL.Path, "/")
 	if len(parts) < 5 {
-		http.Error(w, `{"error":"review id required"}`, http.StatusBadRequest)
+		writeJSONError(w, http.StatusBadRequest, "review id required")
 		return
 	}
 	reviewID := parts[len(parts)-1]
 	var rv AgentReview
 	if err := json.NewDecoder(r.Body).Decode(&rv); err != nil {
-		http.Error(w, `{"error":"invalid request body"}`, http.StatusBadRequest)
+		writeJSONError(w, http.StatusBadRequest, "invalid request body")
 		return
 	}
 	if mapRepoVar != nil {
 		existing, err := mapRepoVar.Get(r.Context(), "oauth_agent_reviews", reviewID)
 		if err != nil {
-			http.Error(w, `{"error":"review not found"}`, http.StatusNotFound)
+			writeJSONError(w, http.StatusNotFound, "review not found")
 			return
 		}
 		existing["decision"] = rv.Decision
@@ -115,7 +115,7 @@ func handleAgentReviewUpdate(w http.ResponseWriter, r *http.Request) {
 		json.NewEncoder(w).Encode(existing)
 		return
 	}
-	http.Error(w, `{"error":"review not found"}`, http.StatusNotFound)
+	writeJSONError(w, http.StatusNotFound, "review not found")
 }
 
 func fmtReviewID(n int) string {

@@ -15,7 +15,7 @@ import (
 // Source user is deactivated after successful merge.
 func (h *HTTPHandler) handleMerge(ctx context.Context, targetUserID uuid.UUID, w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
-		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 
@@ -24,41 +24,41 @@ func (h *HTTPHandler) handleMerge(ctx context.Context, targetUserID uuid.UUID, w
 		Reason       string `json:"reason"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		writeError(w, http.StatusBadRequest, "invalid JSON body")
+		writeJSONError(w, http.StatusBadRequest, "invalid JSON body")
 		return
 	}
 	if req.SourceUserID == "" {
-		writeError(w, http.StatusBadRequest, "source_user_id is required")
+		writeJSONError(w, http.StatusBadRequest, "source_user_id is required")
 		return
 	}
 
 	sourceUserID, err := uuid.Parse(req.SourceUserID)
 	if err != nil {
-		writeError(w, http.StatusBadRequest, "invalid source_user_id")
+		writeJSONError(w, http.StatusBadRequest, "invalid source_user_id")
 		return
 	}
 
 	if sourceUserID == targetUserID {
-		writeError(w, http.StatusBadRequest, "cannot merge user with themselves")
+		writeJSONError(w, http.StatusBadRequest, "cannot merge user with themselves")
 		return
 	}
 
 	// Verify both users exist
 	targetUser, err := h.svc.GetUser(ctx, targetUserID)
 	if err != nil {
-		writeError(w, http.StatusNotFound, "target user not found")
+		writeJSONError(w, http.StatusNotFound, "target user not found")
 		return
 	}
 	sourceUser, err := h.svc.GetUser(ctx, sourceUserID)
 	if err != nil {
-		writeError(w, http.StatusNotFound, "source user not found")
+		writeJSONError(w, http.StatusNotFound, "source user not found")
 		return
 	}
 
 	// Deactivate source user
 	_, err = h.svc.DeactivateUser(ctx, sourceUserID)
 	if err != nil {
-		writeError(w, http.StatusInternalServerError, "failed to deactivate source user")
+		writeJSONError(w, http.StatusInternalServerError, "failed to deactivate source user")
 		return
 	}
 

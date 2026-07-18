@@ -22,7 +22,7 @@ func (h *HTTPHandler) handleFederation(w http.ResponseWriter, r *http.Request) {
 	case strings.HasSuffix(path, "/federation/route-email"):
 		h.fedRouteEmail(w, r)
 	default:
-		writeError(w, http.StatusNotFound, "not found")
+		writeJSONError(w, http.StatusNotFound, "not found")
 	}
 }
 
@@ -32,14 +32,14 @@ func (h *HTTPHandler) fedEntities(w http.ResponseWriter, r *http.Request) {
 	case http.MethodPost:
 		var e FederationEntity
 		if err := json.NewDecoder(r.Body).Decode(&e); err != nil {
-			writeError(w, http.StatusBadRequest, "invalid body")
+			writeJSONError(w, http.StatusBadRequest, "invalid body")
 			return
 		}
 		if tc != nil {
 			e.TenantID = tc.TenantID
 		}
 		if e.EntityID == "" || e.EntityName == "" {
-			writeError(w, http.StatusBadRequest, "entity_id and entity_name required")
+			writeJSONError(w, http.StatusBadRequest, "entity_id and entity_name required")
 			return
 		}
 		if e.TrustLevel == "" {
@@ -51,7 +51,7 @@ func (h *HTTPHandler) fedEntities(w http.ResponseWriter, r *http.Request) {
 		e.Enabled = true
 		if h.fedRepo != nil {
 			if err := h.fedRepo.CreateEntity(r.Context(), &e); err != nil {
-				writeError(w, http.StatusInternalServerError, "failed")
+				writeJSONError(w, http.StatusInternalServerError, "failed")
 				return
 			}
 		}
@@ -80,7 +80,7 @@ func (h *HTTPHandler) fedTransformRules(w http.ResponseWriter, r *http.Request) 
 	case http.MethodPost:
 		var t TransformRule
 		if err := json.NewDecoder(r.Body).Decode(&t); err != nil {
-			writeError(w, http.StatusBadRequest, "invalid body")
+			writeJSONError(w, http.StatusBadRequest, "invalid body")
 			return
 		}
 		if tc != nil {
@@ -117,7 +117,7 @@ func (h *HTTPHandler) fedDiscovery(w http.ResponseWriter, r *http.Request) {
 
 func (h *HTTPHandler) fedRouteEmail(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
-		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 	var req struct {
@@ -125,7 +125,7 @@ func (h *HTTPHandler) fedRouteEmail(w http.ResponseWriter, r *http.Request) {
 	}
 	json.NewDecoder(r.Body).Decode(&req)
 	if req.Email == "" || !strings.Contains(req.Email, "@") {
-		writeError(w, http.StatusBadRequest, "valid email required")
+		writeJSONError(w, http.StatusBadRequest, "valid email required")
 		return
 	}
 	domain := strings.SplitN(req.Email, "@", 2)[1]

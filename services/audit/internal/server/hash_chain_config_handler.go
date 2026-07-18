@@ -31,11 +31,11 @@ func (s *HTTPServer) handleAuditHashChainConfig(w http.ResponseWriter, r *http.R
 	case http.MethodPut:
 		var cfg AuditHashChainConfig
 		if err := json.NewDecoder(r.Body).Decode(&cfg); err != nil {
-			http.Error(w, `{"error":"invalid request body"}`, http.StatusBadRequest)
+			writeJSONError(w, http.StatusBadRequest, "invalid request body")
 			return
 		}
 		if cfg.AnchorIntervalBlocks < 1 {
-			http.Error(w, `{"error":"anchor_interval_blocks must be at least 1"}`, http.StatusBadRequest)
+			writeJSONError(w, http.StatusBadRequest, "anchor_interval_blocks must be at least 1")
 			return
 		}
 		globalAuditHashChainConfig = &cfg
@@ -43,6 +43,6 @@ func (s *HTTPServer) handleAuditHashChainConfig(w http.ResponseWriter, r *http.R
 		w.WriteHeader(http.StatusOK)
 		json.NewEncoder(w).Encode(cfg)
 	default:
-		http.Error(w, `{"error":"method not allowed"}`, http.StatusMethodNotAllowed)
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 	}
 }

@@ -64,6 +64,6 @@ func (h *HTTPHandler) handleIdPFailoverConfig(w http.ResponseWriter, r *http.Req
 		w.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(w).Encode(map[string]any{"status": "updated", "active": "okta-prod"})
 	default:
-		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 	}
 }

@@ -144,7 +144,7 @@ func QuotaForPlan(plan string) *TenantQuota {
 func (h *HTTPHandler) handleTenantQuota(w http.ResponseWriter, r *http.Request) {
 	tenantID := strings.TrimPrefix(r.URL.Path, "/api/v1/quotas/")
 	if tenantID == "" {
-		writeError(w, http.StatusBadRequest, "tenant_id required")
+		writeJSONError(w, http.StatusBadRequest, "tenant_id required")
 		return
 	}
 	switch r.Method {
@@ -169,7 +169,7 @@ func (h *HTTPHandler) handleTenantQuota(w http.ResponseWriter, r *http.Request) 
 			MaxAPICallsDay int    `json:"max_api_calls_per_day"`
 		}
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-			writeError(w, http.StatusBadRequest, "invalid JSON")
+			writeJSONError(w, http.StatusBadRequest, "invalid JSON")
 			return
 		}
 		q := &TenantQuota{TenantID: tenantID}
@@ -187,7 +187,7 @@ func (h *HTTPHandler) handleTenantQuota(w http.ResponseWriter, r *http.Request) 
 		}
 		writeJSON(w, http.StatusOK, map[string]any{"status": "updated", "quota": q})
 	default:
-		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 	}
 }
 

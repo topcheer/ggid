@@ -20,13 +20,13 @@ type Attestation struct {
 
 func (h *HTTPHandler) handleAttest(ctx context.Context, userID uuid.UUID, w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
-		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 	var req struct{ ExpiryDays int `json:"expiry_days"` }
 	if r.ContentLength > 0 {
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-			writeError(w, http.StatusBadRequest, "invalid request body")
+			writeJSONError(w, http.StatusBadRequest, "invalid request body")
 			return
 		}
 	}
@@ -51,7 +51,7 @@ func (h *HTTPHandler) handleAttest(ctx context.Context, userID uuid.UUID, w http
 
 func (h *HTTPHandler) handleAttestationPending(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
-		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 	var result []map[string]any

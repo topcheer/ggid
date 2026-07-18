@@ -36,11 +36,11 @@ func (h *HTTPHandler) handleProvisioningWebhooks(w http.ResponseWriter, r *http.
 			Secret string   `json:"secret"`
 		}
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-			writeError(w, http.StatusBadRequest, "invalid request body")
+			writeJSONError(w, http.StatusBadRequest, "invalid request body")
 			return
 		}
 		if req.URL == "" {
-			writeError(w, http.StatusBadRequest, "url is required")
+			writeJSONError(w, http.StatusBadRequest, "url is required")
 			return
 		}
 		if len(req.Events) == 0 {
@@ -53,7 +53,7 @@ func (h *HTTPHandler) handleProvisioningWebhooks(w http.ResponseWriter, r *http.
 		}
 		for _, e := range req.Events {
 			if !validEvents[e] {
-				writeError(w, http.StatusBadRequest, "unsupported event type: "+e)
+				writeJSONError(w, http.StatusBadRequest, "unsupported event type: "+e)
 				return
 			}
 		}
@@ -89,7 +89,7 @@ func (h *HTTPHandler) handleProvisioningWebhooks(w http.ResponseWriter, r *http.
 	case http.MethodDelete:
 		id := r.URL.Query().Get("id")
 		if id == "" {
-			writeError(w, http.StatusBadRequest, "id query parameter is required")
+			writeJSONError(w, http.StatusBadRequest, "id query parameter is required")
 			return
 		}
 
@@ -101,7 +101,7 @@ func (h *HTTPHandler) handleProvisioningWebhooks(w http.ResponseWriter, r *http.
 		provisioningWebhookStore.Unlock()
 
 		if !exists {
-			writeError(w, http.StatusNotFound, "webhook not found")
+			writeJSONError(w, http.StatusNotFound, "webhook not found")
 			return
 		}
 
@@ -111,6 +111,6 @@ func (h *HTTPHandler) handleProvisioningWebhooks(w http.ResponseWriter, r *http.
 		})
 
 	default:
-		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 	}
 }

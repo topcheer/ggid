@@ -35,11 +35,11 @@ func handleDynamicRegistrationConfig(w http.ResponseWriter, r *http.Request) {
 	case http.MethodPut:
 		var cfg DynamicRegistrationConfig
 		if err := json.NewDecoder(r.Body).Decode(&cfg); err != nil {
-			http.Error(w, `{"error":"invalid request body"}`, http.StatusBadRequest)
+			writeJSONError(w, http.StatusBadRequest, "invalid request body")
 			return
 		}
 		if cfg.MaxRedirectURIs < 1 {
-			http.Error(w, `{"error":"max_redirect_uris must be at least 1"}`, http.StatusBadRequest)
+			writeJSONError(w, http.StatusBadRequest, "max_redirect_uris must be at least 1")
 			return
 		}
 		globalDynamicRegistrationConfig = &cfg
@@ -47,6 +47,6 @@ func handleDynamicRegistrationConfig(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 		json.NewEncoder(w).Encode(cfg)
 	default:
-		http.Error(w, `{"error":"method not allowed"}`, http.StatusMethodNotAllowed)
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 	}
 }

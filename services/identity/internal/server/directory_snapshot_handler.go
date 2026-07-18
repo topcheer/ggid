@@ -9,7 +9,7 @@ import (
 // Returns a point-in-time snapshot of the user directory for comparison.
 func (h *HTTPHandler) handleDirectorySnapshot(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
-		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 

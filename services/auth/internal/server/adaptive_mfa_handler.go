@@ -25,7 +25,7 @@ type adaptiveMFAResult struct {
 // Body: {"risk_score": 45, "user_id": "...", "device_trust": "trusted", "has_mfa": true}
 func (h *Handler) handleAdaptiveMFA(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
-		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 
@@ -38,7 +38,7 @@ func (h *Handler) handleAdaptiveMFA(w http.ResponseWriter, r *http.Request) {
 		NewLocation bool   `json:"new_location"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		writeError(w, http.StatusBadRequest, "invalid JSON body")
+		writeJSONError(w, http.StatusBadRequest, "invalid JSON body")
 		return
 	}
 

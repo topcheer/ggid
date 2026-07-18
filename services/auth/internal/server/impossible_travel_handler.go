@@ -30,7 +30,7 @@ var travelEventStore = struct {
 // Returns is_detected + details about the impossible travel pattern.
 func (h *Handler) handleDetectImpossibleTravel(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
-		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 
@@ -39,11 +39,11 @@ func (h *Handler) handleDetectImpossibleTravel(w http.ResponseWriter, r *http.Re
 		LoginEvents []map[string]any  `json:"login_events"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		writeError(w, http.StatusBadRequest, "invalid request body")
+		writeJSONError(w, http.StatusBadRequest, "invalid request body")
 		return
 	}
 	if req.UserID == "" {
-		writeError(w, http.StatusBadRequest, "user_id is required")
+		writeJSONError(w, http.StatusBadRequest, "user_id is required")
 		return
 	}
 	if len(req.LoginEvents) < 2 {

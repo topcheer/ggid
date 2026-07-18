@@ -11,12 +11,12 @@ import (
 // Returning fake fingerprint data would be dangerous for SOC/hijack detection.
 func (h *Handler) handleSessionFingerprint(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
-		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 	sessionID := strings.TrimPrefix(r.URL.Path, "/api/v1/auth/sessions/")
 	sessionID = strings.TrimSuffix(sessionID, "/fingerprint")
 	_ = sessionID // validated when real implementation lands
 
-	writeError(w, http.StatusNotImplemented, "session fingerprint not yet implemented — requires session schema upgrade to store client fingerprint data at login")
+	writeJSONError(w, http.StatusNotImplemented, "session fingerprint not yet implemented — requires session schema upgrade to store client fingerprint data at login")
 }

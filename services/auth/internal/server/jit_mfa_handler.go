@@ -22,7 +22,7 @@ type JITEnrollment struct {
 // POST /api/v1/auth/mfa/jit-enroll — JIT MFA enrollment for high-risk users without MFA
 func (h *Handler) handleJITMFAEnroll(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
-		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 
@@ -32,11 +32,11 @@ func (h *Handler) handleJITMFAEnroll(w http.ResponseWriter, r *http.Request) {
 		FactorType string `json:"factor_type"` // optional, default totp
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		writeError(w, http.StatusBadRequest, "invalid JSON")
+		writeJSONError(w, http.StatusBadRequest, "invalid JSON")
 		return
 	}
 	if req.UserID == "" {
-		writeError(w, http.StatusBadRequest, "user_id required")
+		writeJSONError(w, http.StatusBadRequest, "user_id required")
 		return
 	}
 
@@ -60,7 +60,7 @@ func (h *Handler) handleJITMFAEnroll(w http.ResponseWriter, r *http.Request) {
 	enrollmentID := uuid.New().String()
 	secretBytes := make([]byte, 20)
 	if _, err := rand.Read(secretBytes); err != nil {
-		writeError(w, http.StatusInternalServerError, "failed to generate TOTP secret")
+		writeJSONError(w, http.StatusInternalServerError, "failed to generate TOTP secret")
 		return
 	}
 	secret := base32.StdEncoding.WithPadding(base32.NoPadding).EncodeToString(secretBytes)

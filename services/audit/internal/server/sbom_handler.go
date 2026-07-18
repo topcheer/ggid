@@ -43,7 +43,7 @@ var sbomComponents = []SBOMComponent{
 
 func (s *HTTPServer) handleSBOM(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
-		http.Error(w, `{"error":"method not allowed"}`, http.StatusMethodNotAllowed)
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 	bom := CycloneDXBOM{
@@ -60,12 +60,12 @@ func (s *HTTPServer) handleSBOM(w http.ResponseWriter, r *http.Request) {
 
 func (s *HTTPServer) handleSBOMComponent(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
-		http.Error(w, `{"error":"method not allowed"}`, http.StatusMethodNotAllowed)
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 	parts := strings.Split(strings.TrimSuffix(r.URL.Path, "/"), "/")
 	if len(parts) < 1 {
-		http.Error(w, `{"error":"component name required"}`, http.StatusBadRequest)
+		writeJSONError(w, http.StatusBadRequest, "component name required")
 		return
 	}
 	componentName := parts[len(parts)-1]
@@ -76,5 +76,5 @@ func (s *HTTPServer) handleSBOMComponent(w http.ResponseWriter, r *http.Request)
 			return
 		}
 	}
-	http.Error(w, `{"error":"component not found"}`, http.StatusNotFound)
+	writeJSONError(w, http.StatusNotFound, "component not found")
 }

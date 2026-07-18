@@ -35,11 +35,11 @@ func handleClientLifecycleConfig(w http.ResponseWriter, r *http.Request) {
 	case http.MethodPut:
 		var cfg ClientLifecycleConfig
 		if err := json.NewDecoder(r.Body).Decode(&cfg); err != nil {
-			http.Error(w, `{"error":"invalid request body"}`, http.StatusBadRequest)
+			writeJSONError(w, http.StatusBadRequest, "invalid request body")
 			return
 		}
 		if cfg.DefaultTokenTTL < 60 {
-			http.Error(w, `{"error":"default_token_ttl_seconds must be at least 60"}`, http.StatusBadRequest)
+			writeJSONError(w, http.StatusBadRequest, "default_token_ttl_seconds must be at least 60")
 			return
 		}
 		globalClientLifecycleConfig = &cfg
@@ -47,6 +47,6 @@ func handleClientLifecycleConfig(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 		json.NewEncoder(w).Encode(cfg)
 	default:
-		http.Error(w, `{"error":"method not allowed"}`, http.StatusMethodNotAllowed)
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 	}
 }

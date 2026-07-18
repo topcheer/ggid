@@ -9,7 +9,7 @@ import (
 
 // GET /api/v1/users/{id}/management-chain
 func (h *HTTPHandler) handleManagementChain(ctx context.Context, userID uuid.UUID, w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodGet { writeError(w, http.StatusMethodNotAllowed, "method not allowed"); return }
+	if r.Method != http.MethodGet { writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed"); return }
 	writeJSON(w, http.StatusOK, map[string]any{
 		"user_id": userID.String(),
 		"chain": []map[string]any{

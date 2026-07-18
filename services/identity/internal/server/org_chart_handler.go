@@ -8,12 +8,12 @@ import (
 // GET /api/v1/organizations/{id}/org-chart
 func (h *HTTPHandler) handleOrgChart(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
-		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 	parts := strings.Split(strings.Trim(r.URL.Path, "/"), "/")
 	if len(parts) < 4 {
-		writeError(w, http.StatusBadRequest, "organization id required")
+		writeJSONError(w, http.StatusBadRequest, "organization id required")
 		return
 	}
 	orgID := parts[3]

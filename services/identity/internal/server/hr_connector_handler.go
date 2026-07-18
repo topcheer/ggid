@@ -140,16 +140,16 @@ func (h *HTTPHandler) handleHRConnectors(w http.ResponseWriter, r *http.Request)
 	case http.MethodPost:
 		var req HRConnectorConfig
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-			writeError(w, http.StatusBadRequest, "invalid JSON")
+			writeJSONError(w, http.StatusBadRequest, "invalid JSON")
 			return
 		}
 		if req.Name == "" || req.Type == "" {
-			writeError(w, http.StatusBadRequest, "name and type required")
+			writeJSONError(w, http.StatusBadRequest, "name and type required")
 			return
 		}
 		validTypes := map[string]bool{"workday": true, "bamboohr": true, "csv": true}
 		if !validTypes[req.Type] {
-			writeError(w, http.StatusBadRequest, "type must be workday, bamboohr, or csv")
+			writeJSONError(w, http.StatusBadRequest, "type must be workday, bamboohr, or csv")
 			return
 		}
 		req.Enabled = true
@@ -165,13 +165,13 @@ func (h *HTTPHandler) handleHRConnectors(w http.ResponseWriter, r *http.Request)
 		if connectors == nil { connectors = []*HRConnectorConfig{} }
 		writeJSON(w, http.StatusOK, map[string]any{"connectors": connectors, "count": len(connectors)})
 	default:
-		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 	}
 }
 
 func (h *HTTPHandler) handleHRSync(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
-		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 	// Get all enabled connectors and sync each.
@@ -193,7 +193,7 @@ func (h *HTTPHandler) handleHRSync(w http.ResponseWriter, r *http.Request) {
 
 func (h *HTTPHandler) handleHRSyncLog(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
-		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 	limit := 50
@@ -210,7 +210,7 @@ func (h *HTTPHandler) handleHRSyncLog(w http.ResponseWriter, r *http.Request) {
 
 func (h *HTTPHandler) handleHRDormant(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
-		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 	var dormant []*UserLifecycleState
@@ -223,7 +223,7 @@ func (h *HTTPHandler) handleHRDormant(w http.ResponseWriter, r *http.Request) {
 
 func (h *HTTPHandler) handleHRReconcile(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
-		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 	var ghosts []*GhostAccount

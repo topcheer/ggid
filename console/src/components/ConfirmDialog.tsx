@@ -106,23 +106,24 @@ function ConfirmDialog({
       <div
         className="fixed inset-0 z-[200] bg-black/40 backdrop-blur-sm"
         onClick={onCancel}
+        aria-hidden="true"
       />
 
       {/* Dialog */}
       <div className="fixed left-1/2 top-1/2 z-[201] w-full max-w-sm -translate-x-1/2 -translate-y-1/2">
-        <div className={`rounded-2xl border-2 bg-white dark:bg-gray-900 shadow-2xl ${variant.border}`}>
+        <div className={`rounded-2xl border-2 bg-white dark:bg-gray-900 shadow-2xl ${variant.border}`} role="alertdialog" aria-modal="true" aria-labelledby="confirm-title" aria-describedby="confirm-desc">
           {/* Header */}
           <div className="flex items-start gap-3 p-6 pb-4">
             <div className={`flex h-10 w-10 items-center justify-center rounded-xl ${variant.iconBg} flex-shrink-0`}>
               <Icon className={`h-5 w-5 ${variant.iconColor}`} />
             </div>
             <div className="flex-1">
-              <h3 className="text-base font-bold text-gray-900 dark:text-white">{options.title}</h3>
+              <h3 id="confirm-title" className="text-base font-bold text-gray-900 dark:text-white">{options.title}</h3>
               {options.description && (
-                <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">{options.description}</p>
+                <p id="confirm-desc" className="mt-1 text-sm text-gray-500 dark:text-gray-400">{options.description}</p>
               )}
             </div>
-            <button onClick={onCancel} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
+            <button onClick={onCancel} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300" aria-label="Close dialog">
               <X className="h-4 w-4" />
             </button>
           </div>
