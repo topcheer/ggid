@@ -2,7 +2,7 @@ package server
 
 import (
 	"encoding/json"
-	"log"
+	"log/slog"
 	"net/http"
 	"time"
 
@@ -92,7 +92,7 @@ func (h *HTTPHandler) handleSelfRegister(w http.ResponseWriter, r *http.Request)
 		}
 	}
 
-	log.Printf("CIAM: B2B self-register org=%s tenant=%s admin=%s", req.OrgName, tenantID, req.Admin.Email)
+	slog.Info("CIAM B2B self-register", "org", req.OrgName, "tenant_id", tenantID, "admin", req.Admin.Email)
 
 	writeJSON(w, http.StatusCreated, SelfRegisterResponse{
 		TenantID:    tenantID.String(),
@@ -155,7 +155,7 @@ func (h *HTTPHandler) handleTenantBranding(w http.ResponseWriter, r *http.Reques
 			return
 		}
 		tenantBrandingStore[tenantID] = &branding
-		log.Printf("CIAM: branding updated for tenant %s (color=%s domain=%s)", tenantID, branding.PrimaryColor, branding.CustomDomain)
+		slog.Info("CIAM branding updated", "tenant_id", tenantID, "color", branding.PrimaryColor, "domain", branding.CustomDomain)
 		writeJSON(w, http.StatusOK, branding)
 
 	default:

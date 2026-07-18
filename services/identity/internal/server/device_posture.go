@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"log/slog"
 	"net/http"
 	"time"
 
@@ -305,7 +306,7 @@ func (h *HTTPHandler) handleDevicePosture(w http.ResponseWriter, r *http.Request
 		}
 
 		if err := h.devicePostureRepo.Upsert(r.Context(), dp); err != nil {
-			log.Printf("device posture upsert error: %v", err)
+			slog.Error("device posture upsert error", "error", err)
 			writeError(w, http.StatusInternalServerError, "failed to update posture")
 			return
 		}

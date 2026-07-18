@@ -3,7 +3,7 @@ package server
 import (
 	"encoding/json"
 	"fmt"
-	"log"
+	"log/slog"
 	"net/http"
 	"strings"
 	"time"
@@ -130,7 +130,7 @@ func (h *HTTPHandler) handleBulkImport(w http.ResponseWriter, r *http.Request) {
 		// For now, structured result ready for DB wiring.
 		_ = normalizedHash
 		_ = tc.TenantID
-		log.Printf("bulk-import: user %s hash_type=%s role=%s", user.Email, hashType, user.RoleID)
+		slog.Info("bulk import user", "email", user.Email, "hash_type", hashType, "role", user.RoleID)
 		result.Imported++
 	}
 

@@ -15,6 +15,7 @@ import (
 	"compress/flate"
 	"fmt"
 	"log"
+	"log/slog"
 	"math/big"
 	"net"
 	"net/http"
@@ -199,7 +200,7 @@ func NewWithKeyProvider(cfg *conf.Config, kp crypto.KeyProvider) (*Server, error
 	wrappedHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer func() {
 			if rvr := recover(); rvr != nil {
-				log.Printf("PANIC recovered in oauth handler: %v", rvr)
+				slog.Error("PANIC recovered in oauth handler", "error", rvr)
 				w.Header().Set("Content-Type", "application/json")
 				w.WriteHeader(http.StatusInternalServerError)
 				json.NewEncoder(w).Encode(map[string]string{"error": "internal server error"})
@@ -2138,7 +2139,7 @@ func writeJSON(w http.ResponseWriter, code int, v any) {
 // writeInternalError logs the actual error and returns a sanitized 500 response.
 // Never expose internal error details to the HTTP client.
 func writeInternalError(w http.ResponseWriter, op string, err error) {
-	log.Printf("internal error in %s: %v", op, err)
+	slog.Error("internal error", "operation", op, "error", err)
 	writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "internal server error"})
 }
 

@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"log/slog"
 	"net/http"
 	"net/mail"
 	"os"
@@ -368,7 +369,7 @@ func (h *HTTPHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// PanicRecovery — catch panics so a single bad request cannot crash the process.
 	defer func() {
 		if rvr := recover(); rvr != nil {
-			log.Printf("PANIC recovered in identity handler: %v", rvr)
+			slog.Error("PANIC recovered in identity handler", "error", rvr)
 			writeError(w, http.StatusInternalServerError, "internal server error")
 		}
 	}()

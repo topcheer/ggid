@@ -3,7 +3,7 @@ package server
 import (
 	"context"
 	"encoding/json"
-	"log"
+	"log/slog"
 	"net/http"
 	"time"
 
@@ -77,7 +77,7 @@ func (h *HTTPHandler) handleJITProvision(ctx context.Context, w http.ResponseWri
 
 	user, err := h.svc.CreateUser(ctx, input)
 	if err != nil {
-		log.Printf("jit provision error: %v", err)
+		slog.Error("jit provision error", "error", err)
 		writeError(w, http.StatusInternalServerError, "failed to provision user")
 		return
 	}
