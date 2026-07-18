@@ -251,9 +251,10 @@ func (e *NHIRiskEngine) GetRiskScore(nhiID uuid.UUID) *NHIRiskScore {
 // Queries PG if configured, otherwise scans in-memory.
 func (e *NHIRiskEngine) ListHighRisk(threshold int) []*NHIRiskScore {
 	if e.pgRepo != nil {
-		if high, err := e.pgRepo.ListHighRisk(context.Background(), threshold); err == nil {
+		if high, err := e.pgRepo.ListHighRisk(context.Background(), threshold); err == nil && high != nil {
 			return high
 		}
+		// PG returned nil/error — fall through to in-memory.
 	}
 	e.mu.RLock()
 	defer e.mu.RUnlock()

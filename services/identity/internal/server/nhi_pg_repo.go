@@ -24,6 +24,9 @@ func newNHIRiskPGRepo(pool *pgxpool.Pool) *NHIRiskPGRepo {
 }
 
 func (r *NHIRiskPGRepo) EnsureSchema(ctx context.Context) error {
+	if r == nil || r.pool == nil {
+		return nil
+	}
 	_, err := r.pool.Exec(ctx, `
 		CREATE TABLE IF NOT EXISTS nhi_risk_scores (
 			nhi_id       UUID NOT NULL,
@@ -54,6 +57,9 @@ func (r *NHIRiskPGRepo) EnsureSchema(ctx context.Context) error {
 
 // SaveRiskScore persists a risk score evaluation.
 func (r *NHIRiskPGRepo) SaveRiskScore(ctx context.Context, score *NHIRiskScore) error {
+	if r.pool == nil {
+		return nil
+	}
 	signalsJSON, _ := json.Marshal(score.Signals)
 	_, err := r.pool.Exec(ctx,
 		`INSERT INTO nhi_risk_scores (nhi_id, score, level, signals, evaluated_at)
@@ -65,6 +71,9 @@ func (r *NHIRiskPGRepo) SaveRiskScore(ctx context.Context, score *NHIRiskScore) 
 
 // GetRiskScore returns the latest risk score for an NHI.
 func (r *NHIRiskPGRepo) GetRiskScore(ctx context.Context, nhiID uuid.UUID) (*NHIRiskScore, error) {
+	if r.pool == nil {
+		return nil, nil
+	}
 	row := r.pool.QueryRow(ctx,
 		`SELECT nhi_id, score, level, signals, evaluated_at
 		 FROM nhi_risk_scores WHERE nhi_id = $1 ORDER BY evaluated_at DESC LIMIT 1`, nhiID)
@@ -81,6 +90,9 @@ func (r *NHIRiskPGRepo) GetRiskScore(ctx context.Context, nhiID uuid.UUID) (*NHI
 
 // ListHighRisk returns all NHIs with score >= threshold.
 func (r *NHIRiskPGRepo) ListHighRisk(ctx context.Context, threshold int) ([]*NHIRiskScore, error) {
+	if r.pool == nil {
+		return nil, nil
+	}
 	rows, err := r.pool.Query(ctx,
 		`SELECT DISTINCT ON (nhi_id) nhi_id, score, level, signals, evaluated_at
 		 FROM nhi_risk_scores WHERE score >= $1 ORDER BY nhi_id, evaluated_at DESC`, threshold)
@@ -104,6 +116,9 @@ func (r *NHIRiskPGRepo) ListHighRisk(ctx context.Context, threshold int) ([]*NHI
 
 // SaveBaseline upserts a behavior baseline for an NHI endpoint.
 func (r *NHIRiskPGRepo) SaveBaseline(ctx context.Context, b *NHIBehaviorBaseline) error {
+	if r.pool == nil {
+		return nil
+	}
 	_, err := r.pool.Exec(ctx,
 		`INSERT INTO nhi_behavior_baselines (nhi_id, endpoint, avg_calls_per_hour, std_calls_per_hour,
 		    known_ips, known_hours, total_calls, first_seen, last_seen)
@@ -122,6 +137,9 @@ func (r *NHIRiskPGRepo) SaveBaseline(ctx context.Context, b *NHIBehaviorBaseline
 
 // GetBaselines returns all baselines for an NHI.
 func (r *NHIRiskPGRepo) GetBaselines(ctx context.Context, nhiID string) ([]*NHIBehaviorBaseline, error) {
+	if r.pool == nil {
+		return nil, nil
+	}
 	rows, err := r.pool.Query(ctx,
 		`SELECT nhi_id, endpoint, avg_calls_per_hour, std_calls_per_hour,
 		        known_ips, known_hours, total_calls, first_seen, last_seen
@@ -179,6 +197,9 @@ func (r *NHIPGRepo) EnsureSchema(ctx context.Context) error {
 
 // RegisterNHI creates or updates an NHI identity.
 func (r *NHIPGRepo) RegisterNHI(ctx context.Context, id, tenantID, nhiType, name, owner string, metadata map[string]any) error {
+	if r.pool == nil {
+		return nil
+	}
 	metaJSON, _ := json.Marshal(metadata)
 	_, err := r.pool.Exec(ctx,
 		`INSERT INTO nhi_identities (id, tenant_id, type, name, status, owner, metadata, created_at, updated_at)
@@ -190,6 +211,9 @@ func (r *NHIPGRepo) RegisterNHI(ctx context.Context, id, tenantID, nhiType, name
 
 // ListNHI returns all NHI identities for a tenant.
 func (r *NHIPGRepo) ListNHI(ctx context.Context, tenantID uuid.UUID) ([]map[string]any, error) {
+	if r.pool == nil {
+		return nil, nil
+	}
 	rows, err := r.pool.Query(ctx,
 		`SELECT id, type, name, status, owner, metadata, created_at, updated_at, last_used
 		 FROM nhi_identities WHERE tenant_id = $1 ORDER BY created_at DESC`, tenantID)
@@ -226,6 +250,9 @@ func (r *NHIPGRepo) ListNHI(ctx context.Context, tenantID uuid.UUID) ([]map[stri
 
 // GetNHI returns a single NHI by ID.
 func (r *NHIPGRepo) GetNHI(ctx context.Context, id string) (map[string]any, error) {
+	if r.pool == nil {
+		return nil, nil
+	}
 	rows, err := r.pool.Query(ctx,
 		`SELECT id, type, name, status, owner, metadata, created_at, updated_at, last_used
 		 FROM nhi_identities WHERE id = $1`, id)
@@ -255,6 +282,9 @@ func (r *NHIPGRepo) GetNHI(ctx context.Context, id string) (map[string]any, erro
 
 // DecommissionNHI marks an NHI as decommissioned.
 func (r *NHIPGRepo) DecommissionNHI(ctx context.Context, id string) error {
+	if r.pool == nil {
+		return nil
+	}
 	_, err := r.pool.Exec(ctx,
 		`UPDATE nhi_identities SET status = 'decommissioned', updated_at = now() WHERE id = $1`, id)
 	return err
@@ -262,6 +292,9 @@ func (r *NHIPGRepo) DecommissionNHI(ctx context.Context, id string) error {
 
 // ListOrphans returns NHIs not used since the threshold.
 func (r *NHIPGRepo) ListOrphans(ctx context.Context, tenantID uuid.UUID, thresholdDays int) ([]map[string]any, error) {
+	if r.pool == nil {
+		return nil, nil
+	}
 	rows, err := r.pool.Query(ctx,
 		`SELECT id, name, type, status, last_used, GREATEST(now() - COALESCE(last_used, created_at), interval '0') as age
 		 FROM nhi_identities
