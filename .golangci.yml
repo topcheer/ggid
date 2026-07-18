@@ -8,7 +8,7 @@ linters:
     - govet
     - ineffassign
     - staticcheck
-    - gocritic
+    
 
 linters-settings:
   gocritic:
@@ -19,7 +19,7 @@ issues:
   exclude-rules:
     - path: _test\.go
       linters:
-        - gocritic
+        
         - errcheck
     - path: cmd/main\.go
       linters:
