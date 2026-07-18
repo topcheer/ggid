@@ -43,7 +43,7 @@ func SetTenantCORS(tenantID string, cfg TenantCORSConfig) {
 	tenantCORSConfigs[tenantID] = cfg
 }
 
-func GetTenantCORS(tenantID string) CORSConfig {
+func GetTenantCORS(tenantID string) TenantCORSConfig {
 	if cfg, ok := tenantCORSConfigs[tenantID]; ok {
 		return cfg
 	}
