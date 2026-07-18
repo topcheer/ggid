@@ -491,13 +491,287 @@ func enhancePolicyPaths(m map[string]OpenAPIPath) {
 	}
 }
 
-// registerEnhancedPaths applies schema-rich definitions to the top 50 endpoints.
+// registerEnhancedPaths applies schema-rich definitions to the top 50+ endpoints.
 func registerEnhancedPaths(m map[string]OpenAPIPath) {
 	enhanceAuthPaths(m)
 	enhanceIdentityPaths(m)
 	enhanceOAuthPaths(m)
 	enhancePolicyPaths(m)
+	enhanceExtendedPaths(m)
 }
+
+// enhanceExtendedPaths adds request bodies to important secondary endpoints.
+func enhanceExtendedPaths(m map[string]OpenAPIPath) {
+	// --- Auth: secondary POST endpoints ---
+	m["/api/v1/auth/mfa/factors"] = OpenAPIPath{
+		Post: enhancedOp([]string{"MFA"}, "List MFA factors",
+			"List available MFA factors for the current user.").
+			WithBody("", "Optional filter criteria", false).
+			WithOK("", "List of MFA factors").
+			With401().
+			Done(),
+	}
+	m["/api/v1/auth/mfa/status"] = OpenAPIPath{
+		Post: enhancedOp([]string{"MFA"}, "MFA status",
+			"Get MFA enrollment status for the current user.").
+			WithOK("", "MFA enrollment status").
+			With401().
+			Done(),
+	}
+	m["/api/v1/auth/mfa/jit-enroll"] = OpenAPIPath{
+		Post: enhancedOp([]string{"MFA"}, "JIT MFA enrollment",
+			"Just-in-time MFA enrollment during login flow.").
+			WithBody("MFAEnrollRequest", "MFA method selection", true).
+			WithOK("MFAEnrollResponse", "JIT enrollment details").
+			With401().
+			Done(),
+	}
+	m["/api/v1/auth/webauthn/begin"] = OpenAPIPath{
+		Post: enhancedOp([]string{"Auth"}, "Begin WebAuthn registration",
+			"Start WebAuthn (passkey) registration flow.").
+			WithBody("", "Registration options", false).
+			WithOK("", "WebAuthn challenge options").
+			With401().
+			Done(),
+	}
+	m["/api/v1/auth/login-security"] = OpenAPIPath{
+		Post: enhancedOp([]string{"Auth"}, "Login security assessment",
+			"Assess login security posture for the current user.").
+			WithBody("", "Assessment parameters", false).
+			WithOK("", "Security assessment result").
+			With401().
+			Done(),
+	}
+	m["/api/v1/auth/break-glass/activate"] = OpenAPIPath{
+		Post: enhancedOp([]string{"Auth"}, "Activate break-glass access",
+			"Emergency break-glass account activation. Requires justification.").
+			WithBody("", "Justification and target system", true).
+			WithOK("", "Break-glass session details").
+			With401().
+			With403().
+			Done(),
+	}
+
+	// --- Audit: POST endpoints ---
+	m["/api/v1/audit/retention"] = OpenAPIPath{
+		Post: enhancedOp([]string{"Audit"}, "Set retention policy",
+			"Configure audit event retention policy.").
+			WithBody("", "Retention configuration", true).
+			WithOK("OKResponse", "Retention policy updated").
+			With401().
+			With403().
+			Done(),
+	}
+	m["/api/v1/audit/compliance/config"] = OpenAPIPath{
+		Post: enhancedOp([]string{"Audit"}, "Configure compliance settings",
+			"Update compliance framework configuration.").
+			WithBody("", "Compliance configuration", true).
+			WithOK("OKResponse", "Configuration saved").
+			With401().
+			Done(),
+	}
+	m["/api/v1/audit/anomalies/detect"] = OpenAPIPath{
+		Post: enhancedOp([]string{"Audit"}, "Detect anomalies",
+			"Run anomaly detection on recent audit events.").
+			WithBody("", "Detection parameters (time range, rules)", false).
+			WithOK("", "Detected anomalies").
+			With401().
+			Done(),
+	}
+	m["/api/v1/audit/compliance-report"] = OpenAPIPath{
+		Post: enhancedOp([]string{"Audit"}, "Generate compliance report",
+			"Generate a compliance report for the given framework.").
+			WithBody("", "Report parameters (framework, format)", true).
+			WithOK("", "Compliance report").
+			With401().
+			Done(),
+	}
+	m["/api/v1/audit/integrity/sign-pqc"] = OpenAPIPath{
+		Post: enhancedOp([]string{"Audit"}, "Sign with PQC",
+			"Apply post-quantum cryptographic signature to audit chain.").
+			WithBody("", "Signing parameters", false).
+			WithOK("OKResponse", "Signature applied").
+			With401().
+			With403().
+			Done(),
+	}
+	m["/api/v1/audit/compliance/remediation-progress"] = OpenAPIPath{
+		Post: enhancedOp([]string{"Audit"}, "Remediation progress",
+			"Track remediation progress for compliance gaps.").
+			WithBody("", "Framework and time range", false).
+			WithOK("", "Remediation progress report").
+			With401().
+			Done(),
+	}
+
+	// --- Policy: POST endpoints ---
+	m["/api/v1/policies/export"] = OpenAPIPath{
+		Post: enhancedOp([]string{"Policy"}, "Export policies",
+			"Export access policies in the specified format.").
+			WithBody("", "Export parameters (format, filters)", false).
+			WithOK("", "Exported policy data").
+			With401().
+			Done(),
+	}
+	m["/api/v1/policies/dynamic-roles"] = OpenAPIPath{
+		Post: enhancedOp([]string{"Policy"}, "Create dynamic role",
+			"Create a dynamically computed role based on attributes.").
+			WithBody("", "Dynamic role definition", true).
+			With201("", "Dynamic role created").
+			With400().
+			With401().
+			Done(),
+	}
+	m["/api/v1/policies/impact-preview"] = OpenAPIPath{
+		Post: enhancedOp([]string{"Policy"}, "Preview policy impact",
+			"Preview which users/resources would be affected by a policy change.").
+			WithBody("", "Policy change proposal", true).
+			WithOK("", "Impact analysis results").
+			With401().
+			Done(),
+	}
+
+	// --- Admin ---
+	m["/api/v1/admin/migration/test"] = OpenAPIPath{
+		Post: enhancedOp([]string{"Admin"}, "Test migration",
+			"Test-run a database migration without applying it.").
+			WithBody("", "Migration test parameters", true).
+			WithOK("", "Migration test result").
+			With401().
+			With403().
+			Done(),
+	}
+	m["/api/v1/admin/rls/test"] = OpenAPIPath{
+		Post: enhancedOp([]string{"Admin"}, "Test RLS policy",
+			"Test row-level security isolation for a tenant.").
+			WithBody("", "Test parameters (tenant_id, table)", true).
+			WithOK("", "RLS test result").
+			With401().
+			With403().
+			Done(),
+	}
+	m["/api/v1/admin/rls/status"] = OpenAPIPath{
+		Post: enhancedOp([]string{"Admin"}, "RLS status",
+			"Check row-level security configuration status.").
+			WithOK("", "RLS configuration status").
+			With401().
+			With403().
+			Done(),
+	}
+	m["/api/v1/quotas/{tenant_id}"] = OpenAPIPath{
+		Put: enhancedOp([]string{"Admin"}, "Update tenant quota",
+			"Update resource quota limits for a tenant.").
+			WithPathParam("tenant_id", "Tenant UUID").
+			WithBody("", "Quota limits", true).
+			WithOK("OKResponse", "Quota updated").
+			With401().
+			With403().
+			Done(),
+	}
+
+	// --- Identity ---
+	m["/api/v1/permissions/tree"] = OpenAPIPath{
+		Post: enhancedOp([]string{"Identity"}, "Permission tree",
+			"Get the hierarchical permission tree for the tenant.").
+			WithBody("", "Optional scope filter", false).
+			WithOK("", "Permission tree").
+			With401().
+			Done(),
+	}
+	m["/api/v1/policies/permissions/tree"] = OpenAPIPath{
+		Post: enhancedOp([]string{"Policy"}, "Policy permission tree",
+			"Get the permission tree as defined by active policies.").
+			WithBody("", "Optional scope filter", false).
+			WithOK("", "Permission tree").
+			With401().
+			Done(),
+	}
+	m["/api/v1/identity/ldap/sync-config/test"] = OpenAPIPath{
+		Post: enhancedOp([]string{"Identity"}, "Test LDAP sync config",
+			"Test LDAP sync configuration without committing.").
+			WithBody("", "LDAP connection parameters", true).
+			WithOK("", "Test result").
+			With401().
+			With403().
+			Done(),
+	}
+	m["/api/v1/identity/scim/config/sync"] = OpenAPIPath{
+		Put: enhancedOp([]string{"Identity"}, "Update SCIM sync config",
+			"Update SCIM synchronization configuration.").
+			WithBody("", "SCIM sync parameters", true).
+			WithOK("OKResponse", "Configuration updated").
+			With401().
+			With403().
+			Done(),
+	}
+
+	// --- Org ---
+	m["/api/v1/org/reporting-structure"] = OpenAPIPath{
+		Post: enhancedOp([]string{"Org"}, "Reporting structure",
+			"Get organizational reporting hierarchy.").
+			WithBody("", "Optional department filter", false).
+			WithOK("", "Reporting tree").
+			With401().
+			Done(),
+	}
+	m["/api/v1/org/stats/membership-trends"] = OpenAPIPath{
+		Post: enhancedOp([]string{"Org"}, "Membership trends",
+			"Get group/organization membership trend statistics.").
+			WithBody("", "Time range and group filter", false).
+			WithOK("", "Membership trend data").
+			With401().
+			Done(),
+	}
+
+	// --- OAuth ---
+	m["/api/v1/oauth/consents/dashboard"] = OpenAPIPath{
+		Post: enhancedOp([]string{"OAuth"}, "Consent dashboard",
+			"Get OAuth consent grants for the dashboard view.").
+			WithBody("", "Dashboard filter parameters", false).
+			WithOK("", "Consent grants list").
+			With401().
+			Done(),
+	}
+
+	// --- Agents ---
+	m["/api/v1/agents/verify"] = OpenAPIPath{
+		Post: enhancedOp([]string{"Agents"}, "Verify agent token",
+			"Verify an AI agent's API token and check scope permissions.").
+			WithBody("", "Agent token to verify", true).
+			WithOK("", "Verification result with allowed scopes").
+			With401().
+			Done(),
+	}
+
+	// --- ITDR ---
+	m["/api/v1/audit/itdr/detections/"] = OpenAPIPath{
+		Post: enhancedOp([]string{"ITDR"}, "Create ITDR detection",
+			"Manually create an ITDR detection event.").
+			WithBody("", "Detection details", true).
+			With201("", "Detection created").
+			With401().
+			With403().
+			Done(),
+	}
+	m["/api/v1/audit/itdr/rules/"] = OpenAPIPath{
+		Post: enhancedOp([]string{"ITDR"}, "Create ITDR rule",
+			"Create a new ITDR detection rule.").
+			WithBody("", "Rule definition", true).
+			With201("", "Rule created").
+			With401().
+			With403().
+			Done(),
+	}
+	m["/api/v1/audit/compliance/gaps/"] = OpenAPIPath{
+		Post: enhancedOp([]string{"Audit"}, "List compliance gaps",
+			"Identify compliance gaps for a given framework.").
+			WithBody("", "Framework and filter criteria", false).
+			WithOK("", "List of compliance gaps").
+			With401().
+			Done(),
+	}
+}
+
 
 // ---------------------------------------------------------------------------
 // Fluent builder methods on EnhancedOperation
