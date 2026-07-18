@@ -145,3 +145,26 @@ jobs:
           tags: ggid/ggid-all-in-one:ci-test
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
+  ui-smoke-check:
+    name: UI Smoke Test (page coverage)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Verify all console pages have page.tsx
+        run: |
+          PAGES=$(find console/src/app -name "page.tsx" | wc -l)
+          echo "Console pages found: $PAGES"
+          if [ "$PAGES" -lt 700 ]; then
+            echo "::error::Page count dropped below 700 ($PAGES)"
+            exit 1
+          fi
+          echo "Page count check passed: $PAGES pages"
+
+      - name: Verify smoke test script exists
+        run: |
+          test -f scripts/ui-smoke-test.sh
+          chmod +x scripts/ui-smoke-test.sh
+          bash -n scripts/ui-smoke-test.sh  # syntax check
+          echo "Smoke test script syntax OK"
