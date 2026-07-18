@@ -1537,5 +1537,96 @@
       "connSuccess": "Connection successful",
       "connFailed": "Connection failed"
     }
+  },
+  "caeMonitor": {
+    "title": "CAE Monitor",
+    "description": "Continuous Access Evaluation — real-time session risk monitoring",
+    "tabs": {
+      "status": "Status",
+      "logs": "Event Log",
+      "triggers": "Triggers"
+    },
+    "status": {
+      "title": "CAE Status",
+      "activeSessions": "Active Sessions",
+      "evaluated": "Evaluated (24h)",
+      "revoked": "Revoked (24h)",
+      "avgEvalTime": "Avg Eval Time",
+      "evalEngine": "Evaluation Engine",
+      "engineRunning": "Running",
+      "engineStopped": "Stopped",
+      "lastEval": "Last Evaluation",
+      "noData": "No CAE data available",
+      "streamActive": "Event Stream Active",
+      "streamInactive": "Stream Inactive"
+    },
+    "logs": {
+      "title": "CAE Event Log",
+      "description": "Real-time continuous access evaluation events",
+      "timestamp": "Timestamp",
+      "session": "Session",
+      "user": "User",
+      "event": "Event",
+      "result": "Result",
+      "riskDelta": "Risk Δ",
+      "noLogs": "No CAE events recorded",
+      "resultRevoke": "Revoked",
+      "resultStepUp": "Step-Up Required",
+      "resultContinue": "Continued",
+      "resultChallenge": "Challenge",
+      "eventDeviceChange": "Device Changed",
+      "eventIpChange": "IP Changed",
+      "eventRiskSpike": "Risk Spike",
+      "eventPolicyMatch": "Policy Match",
+      "eventTokenExpiry": "Token Expiry"
+    },
+    "triggers": {
+      "title": "CAE Trigger Rules",
+      "description": "Configure events that trigger session re-evaluation",
+      "event": "Trigger Event",
+      "condition": "Condition",
+      "action": "Action",
+      "enabled": "Enabled",
+      "addTrigger": "Add Trigger",
+      "noTriggers": "No triggers configured",
+      "confirmDelete": "Delete this trigger?"
+    }
+  },
+  "attributeMapping": {
+    "title": "Attribute Mapping Editor",
+    "description": "Map identity provider attributes to GGID user fields",
+    "tabs": {
+      "rules": "Mapping Rules",
+      "tester": "Test Mapper"
+    },
+    "rules": {
+      "title": "Attribute Mapping Rules",
+      "sourceAttr": "Source Attribute",
+      "targetField": "Target Field",
+      "transform": "Transform",
+      "addRule": "Add Rule",
+      "noRules": "No mapping rules configured",
+      "confirmDelete": "Delete this rule?",
+      "transformNone": "None (direct)",
+      "transformLower": "Lowercase",
+      "transformUpper": "Uppercase",
+      "transformPrefix": "Prefix",
+      "transformSuffix": "Suffix",
+      "transformRegex": "Regex Replace",
+      "transformSplit": "Split & Take",
+      "save": "Save All",
+      "saved": "Mapping rules saved"
+    },
+    "tester": {
+      "title": "Attribute Mapping Tester",
+      "description": "Test mapping rules against sample IdP attributes",
+      "inputTitle": "Sample IdP Attributes (JSON)",
+      "inputPlaceholder": "{\"email\": \"alice@ldap\", \"cn\": \"Alice Chen\", \"department\": \"Engineering\"}",
+      "evaluate": "Evaluate Mapping",
+      "evaluating": "Evaluating...",
+      "outputTitle": "Mapped Result",
+      "noOutput": "Click Evaluate to see mapped result",
+      "appliedRules": "Rules Applied"
+    }
   }
 }
