@@ -1812,5 +1812,70 @@
     "statusExpired": "Expired",
     "statusRevoked": "Revoked",
     "statusIdle": "Idle"
+  },
+  "iamMetrics": {
+    "title": "IAM Metrics Dashboard",
+    "description": "Identity security KPIs: MTTD/MTTR, coverage, access hygiene, and incident trends",
+    "tabs": {
+      "mttd": "MTTD / MTTR",
+      "coverage": "Identity Coverage",
+      "hygiene": "Access Hygiene",
+      "incidents": "Incident Trends"
+    },
+    "mttd": {
+      "title": "Mean Time to Detect & Respond",
+      "description": "Average time from threat occurrence to ITDR detection (MTTD) and SOAR response (MTTR)",
+      "mttd": "MTTD (Mean Time to Detect)",
+      "mttr": "MTTR (Mean Time to Respond)",
+      "currentMTTD": "Current MTTD",
+      "currentMTTR": "Current MTTR",
+      "trend30d": "30-Day Trend",
+      "trend7d": "7-Day Trend",
+      "improvement": "Improvement vs last period",
+      "minutes": "min",
+      "hours": "hr",
+      "seconds": "s",
+      "noData": "No MTTD/MTTR data available"
+    },
+    "coverage": {
+      "title": "Identity Security Coverage",
+      "description": "Percentage of users protected by each identity security control",
+      "mfaCoverage": "MFA Coverage",
+      "passkeyCoverage": "Passkey Coverage",
+      "itdrCoverage": "ITDR Coverage",
+      "caeCoverage": "CAE Coverage",
+      "totalUsers": "Total Users",
+      "protectedUsers": "Protected Users",
+      "unprotected": "Unprotected",
+      "noData": "No coverage data available"
+    },
+    "hygiene": {
+      "title": "Access Hygiene Scorecard",
+      "description": "Identity hygiene issues requiring remediation",
+      "orphanAccounts": "Orphan Accounts",
+      "orphanAccountsDesc": "Accounts with no owner or manager",
+      "expiredPermissions": "Expired Permissions",
+      "expiredPermissionsDesc": "Permissions past their review date",
+      "pendingAccessReviews": "Pending Access Reviews",
+      "pendingAccessReviewsDesc": "Overdue certification campaigns",
+      "unrotatedServiceAccounts": "Unrotated Service Accounts",
+      "unrotatedServiceAccountsDesc": "Service accounts with stale credentials",
+      "noIssues": "No hygiene issues detected",
+      "totalIssues": "Total Issues",
+      "healthScore": "Health Score"
+    },
+    "incidents": {
+      "title": "Security Incident Trends",
+      "description": "Monthly breakdown of identity security incidents by response type",
+      "month": "Month",
+      "itdrDetected": "ITDR Detected",
+      "soarResponded": "SOAR Responded",
+      "manualIntervention": "Manual Intervention",
+      "total": "Total",
+      "resolved": "Resolved",
+      "noData": "No incident data available",
+      "ytd": "Year to Date",
+      "last6m": "Last 6 Months"
+    }
   }
 }
