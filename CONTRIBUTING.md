@@ -1,33 +1,28 @@
 # Contributing to GGID
 
-Thank you for your interest in contributing to GGID! This guide covers the development workflow.
-
----
+Thank you for your interest in contributing to GGID! This document covers everything you need to get started.
 
 ## Development Setup
 
 ### Prerequisites
 
-- **Go** 1.25+
-- **Node.js** 20+ (for Console)
-- **Docker** + Docker Compose
-- **PostgreSQL** 16 (or use Docker)
-- **Redis** 7 (or use Docker)
-- **NATS** 2.x (or use Docker)
+- **Go 1.25+**
+- **Node.js 20+** (for Console UI)
+- **Docker** (for PostgreSQL, Redis, NATS)
+- **Make**
 
 ### Quick Start
 
 ```bash
-# Clone
-git clone https://github.com/ggid/ggid.git
+# Clone the repository
+git clone https://github.com/topcheer/ggid.git
 cd ggid
 
-# Start infrastructure
-cd deploy && docker compose up -d postgres redis nats ldap
-sleep 10
+# Start infrastructure (PostgreSQL, Redis, NATS)
+make docker-run
 
-# Run migrations
-deploy/migrate.sh
+# Apply database migrations
+make migrate-up
 
 # Build all services
 make build
@@ -35,163 +30,139 @@ make build
 # Run tests
 make test
 
-# Start Console
+# Start Console UI development server
 cd console && npm install && npm run dev
 ```
-
----
 
 ## Project Structure
 
 ```
 ggid/
-├── api/proto/          # Protobuf definitions
-├── api/gen/            # Generated gRPC code
-├── pkg/                # Shared libraries
-│   ├── crypto/         # Encryption, hashing
-│   ├── tenant/         # Multi-tenant context
-│   ├── errors/         # Error types
-│   ├── authprovider/   # Auth provider chain
-│   ├── social/         # Social login connectors
-│   └── audit/          # Audit event publisher
-├── services/           # 7 microservices
-│   ├── gateway/        # API Gateway
-│   ├── identity/       # Identity Service
-│   ├── auth/           # Auth Service
-│   ├── oauth/          # OAuth/OIDC Service
-│   ├── policy/         # Policy Engine
-│   ├── org/            # Organization Service
-│   └── audit/          # Audit Service
-├── console/            # Admin Console (Next.js)
-├── sdk/                # SDKs (Go, Node.js, Java, Python)
-├── deploy/             # Docker Compose + Helm + k6
-├── docs/               # Documentation
-└── test/integration/   # E2E integration tests
+├── api/               # Protobuf definitions + generated code
+├── console/           # Next.js admin console
+├── deploy/            # Docker, K8s, migrations
+├── docs/              # Research, guides, kanban
+├── pkg/               # Shared Go packages (crypto, tenant, auth)
+├── sdk/               # 11 language SDKs
+└── services/          # Microservices
+    ├── gateway/       # API gateway (routing, middleware, plugins)
+    ├── auth/          # Authentication (login, MFA, WebAuthn)
+    ├── identity/      # User/group/device management
+    ├── oauth/         # OAuth 2.1 / OIDC provider
+    ├── policy/        # RBAC/ABAC/ReBAC authorization
+    ├── audit/         # Audit log + ITDR + detection
+    ├── org/           # Organization management
+    └── mcp/           # MCP server integration
 ```
-
----
 
 ## Code Style
 
 ### Go
 
+- Run `go fmt` before committing
+- Run `make lint` (golangci-lint) to catch issues
 - Follow [Effective Go](https://go.dev/doc/effective_go)
-- Use `gofmt` / `goimports` (enforced in CI)
-- Every public function needs a comment
-- Error handling: always check errors, wrap with context
-- Testing: table-driven tests, interface mocks (no real DB)
+- Use meaningful variable names (no single letters except in short loops)
+- Add doc comments to all exported functions
 
-### TypeScript (Console)
+### TypeScript / React
 
-- Strict mode enabled
-- Functional components with hooks
-- TailwindCSS for styling
-- Recharts for data visualization
-
-### Git Commits
-
-Use [Conventional Commits](https://www.conventionalcommits.org/):
-
-```
-feat(auth): add WebAuthn passwordless login
-fix(gateway): resolve tenant_id forwarding for POST requests
-test(policy): coverage 91% → 93% with edge cases
-docs(arch): security whitepaper and C4 architecture
-ci: add Trivy security scanning
-chore: upgrade Go dependencies
-```
-
----
+- Use TypeScript strict mode
+- Use functional components with hooks
+- Run `npx tsc --noEmit` to verify compilation
+- Follow existing patterns in `console/src/`
 
 ## Testing
 
-### Run Tests
+### Running Tests
 
 ```bash
-# All Go tests
+# Full test suite
 make test
 
-# Specific package
-go test -v ./services/auth/...
+# Short tests only (skips integration tests)
+make test-short
 
-# With coverage
-go test -cover -coverprofile=coverage.out ./...
-go tool cover -html=coverage.out
+# Race detector
+make test-race
 
-# Integration tests (requires Docker)
-go test -tags=integration -v ./test/integration/
+# Coverage report
+make coverage
 
-# Console
-cd console && npm run build
-
-# Docker E2E
-bash deploy/e2e-docker-test.sh
+# Single package
+go test ./services/auth/internal/server/ -v
 ```
 
-### Coverage Targets
+### Test Conventions
 
-| Package | Target | Current |
-|---------|--------|---------|
-| pkg/crypto | 80%+ | 81.8% |
-| pkg/tenant | 100% | 100% |
-| pkg/errors | 100% | 100% |
-| services/auth | 85%+ | 80.4% |
-| services/policy | 90%+ | 93.3% |
-| services/audit | 95%+ | 93.8% |
-| services/gateway | 80%+ | 81.0% |
+- Every new feature must have **≥3 tests**
+- No in-memory maps as DB substitutes (use real PG or test containers)
+- No `log.Printf` placeholders in production code
+- No hardcoded mock data in handlers (DB-backed)
+- Reference: [Team Acceptance Checklist](docs/team-acceptance-checklist.md)
 
----
+## Commit Conventions
 
-## Adding a New Feature
+We follow [Conventional Commits](https://conventionalcommits.org/):
 
-1. **Create a branch**: `git checkout -b feat/your-feature`
-2. **Write code**: Follow the existing patterns
-3. **Write tests**: Aim for 80%+ coverage on new code
-4. **Run locally**: `make build && make test`
-5. **Update docs**: If user-facing, update relevant docs
-6. **Submit PR**: Include description, test results, screenshots (if UI)
+```
+<type>(<scope>): <subject>
+```
 
----
+### Types
 
-## Adding a New Social Connector
+| Type | Use |
+|------|-----|
+| `feat` | New feature |
+| `fix` | Bug fix |
+| `security` | Security fix |
+| `perf` | Performance improvement |
+| `docs` | Documentation |
+| `refactor` | Code refactoring |
+| `test` | Test improvements |
+| `chore` | Maintenance |
+| `ci` | CI/CD changes |
 
-1. Implement the `Connector` interface in `pkg/social/`:
-   ```go
-   type Connector interface {
-       Name() string
-       GetAuthURL(state string) string
-       ExchangeCode(ctx context.Context, code string) (*UserInfo, error)
-   }
-   ```
-2. Register in `pkg/social/registry.go`
-3. Add tests in `pkg/social/<provider>_test.go`
-4. Add connector button to Console login page
+### Examples
 
----
+```
+feat(auth): add passkey self-enrollment
+fix(oauth): token exchange delegation chain order
+security(audit): fix hash chain verification bypass
+docs(research): add multi-region active-active doc
+```
 
-## Adding a New API Endpoint
+## Pull Request Process
 
-1. **Define the route** in the service's HTTP handler
-2. **Add gateway route** in `services/gateway/internal/router/router.go`
-3. **Write handler tests** (mock repository)
-4. **Add to OpenAPI spec** if external
-5. **Update E2E test** in `deploy/e2e-docker-test.sh`
+1. **Fork** the repository and create a feature branch
+2. **Write tests** for your changes (≥3 tests per feature)
+3. **Run** `make test` to ensure all tests pass
+4. **Run** `make lint` to ensure code quality
+5. **Create a PR** with a clear description of changes
+6. **Link** related issues/backlog items
+7. **Wait for CI** — all checks must pass
+8. **Address review feedback**
 
----
+### PR Checklist
 
-## Release Process
+- [ ] Tests added (≥3 per feature)
+- [ ] `make test` passes
+- [ ] No hardcoded mock data
+- [ ] No `log.Printf` in request handlers
+- [ ] No in-memory maps replacing DB
+- [ ] Documentation updated if needed
+- [ ] Commit messages follow conventional commits
 
-1. Update version in `deploy/helm/ggid/Chart.yaml`
-2. Update `CHANGELOG.md`
-3. Tag: `git tag v0.x.0`
-4. Build Docker images: `cd deploy && docker compose build`
-5. Push images to registry
-6. Create GitHub Release with release notes
+## Architecture Decisions
 
----
+Major architectural decisions are documented in [docs/research/](docs/research/). Browse the 48+ research documents to understand design rationale.
 
-## Questions?
+## Getting Help
 
-- Open an issue on GitHub
-- Read the [architecture docs](docs/architecture.md)
-- Check the [feature matrix](docs/feature-matrix.md)
+- Check existing [Issues](https://github.com/topcheer/ggid/issues)
+- Review the [Kanban](docs/kanban.md) for roadmap and priorities
+- Read the [Research Library](docs/research/) for architectural context
+
+## License
+
+By contributing, you agree that your contributions will be licensed under the Apache License 2.0.

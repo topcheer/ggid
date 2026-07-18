@@ -1,274 +1,210 @@
-# GGID — Production-Grade Identity & Access Management Suite
+# GGID — Open Source Identity & Access Management Platform
 
+[![Build Status](https://github.com/topcheer/ggid/workflows/CI/badge.svg)](https://github.com/topcheer/ggid/actions)
+[![Go Version](https://img.shields.io/badge/Go-1.25-00ADD8?logo=go)](https://golang.org)
 [![License: Apache 2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
-[![Build Status](https://img.shields.io/badge/build-passing-brightgreen)](#)
-[![Go Version](https://img.shields.io/badge/Go-1.25%2B-00ADD8)](#)
-[![Tests](https://img.shields.io/badge/tests-33%20packages%2C%200%20FAIL-brightgreen)](#)
-[![Docker](https://img.shields.io/badge/Docker-13%20containers-blue)](#)
-[![Coverage](https://img.shields.io/badge/coverage-75%25%2B-green)](#)
+[![Coverage](https://img.shields.io/badge/Coverage-40%25-green)]()
+[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
 
-**GGID** is a full-stack IAM platform: authentication, authorization, SSO, multi-tenancy, audit logging, and admin console. Built with Go microservices and React.
-
-## Quick Start
-
-### Option A: Docker Compose (Recommended)
-
-```bash
-# Start all services (PostgreSQL, Redis, NATS, LDAP, 7 microservices, Console)
-cd deploy && docker compose up -d
-
-# Wait for healthchecks
-sleep 30
-
-# Run E2E tests
-bash deploy/e2e-docker-test.sh
-```
-
-Access points:
-| Service | URL |
-|---------|-----|
-| Admin Console | http://127.0.0.1:3000 |
-| Hosted Login | http://127.0.0.1:8080/login |
-| API Gateway | http://127.0.0.1:8080 |
-| Swagger UI | http://127.0.0.1:8080/docs |
-
-Default credentials: `admin / Admin@123456`
-
-> **External DB support:** All deployment methods (Docker, K8s/Helm, K3s, Terraform, Bare Metal) support external PostgreSQL, Redis, NATS, and LDAP. Set `DB_HOST`, `REDIS_HOST`, `NATS_URL`, `LDAP_URL` environment variables to use your own infrastructure. See [Docker Compose Override](docs/deploy/docker-compose-override.md).
-
-### Option B: From Source
-
-### 1. Start Infrastructure
-
-```bash
-docker compose -f deploy/docker-compose.yaml up -d postgres redis nats ldap
-```
-
-### 2. Run Database Migrations
-
-```bash
-# Create database (first time only)
-docker exec ggid-postgres psql -U ggid -d postgres -c "CREATE DATABASE ggid"
-
-# Run migrations
-deploy/migrate.sh
-```
-
-### 3. Generate RSA Keys (for JWT)
-
-```bash
-mkdir -p configs
-openssl genpkey -algorithm RSA -out configs/rsa_private.pem -pkeyopt rsa_keygen_bits:2048
-openssl rsa -pubout -in configs/rsa_private.pem -out configs/rsa_public.pem
-```
-
-### 4. Build & Start Services
-
-```bash
-make build
-
-# Terminal 1: Identity Service
-DATABASE_URL="postgres://ggid:ggid@127.0.0.1:5432/ggid?sslmode=disable" \
-  ./bin/identity --http-addr=:8081 --grpc-addr=:50051
-
-# Terminal 2: Auth Service
-DATABASE_URL="postgres://ggid:ggid@127.0.0.1:5432/ggid?sslmode=disable" \
-REDIS_ADDR="127.0.0.1:6379" AUTH_HTTP_ADDR=":9001" \
-JWT_PRIVATE_KEY_PATH="configs/rsa_private.pem" \
-JWT_PUBLIC_KEY_PATH="configs/rsa_public.pem" \
-  ./bin/auth
-
-# Terminal 3: API Gateway
-GATEWAY_ADDR=":8080" ./bin/gateway
-```
-
-### 5. Test the Auth Flow
-
-```bash
-# Register
-curl -X POST http://localhost:8080/api/v1/auth/register \
-  -H "Content-Type: application/json" \
-  -H "X-Tenant-ID: 00000000-0000-0000-0000-000000000001" \
-  -d '{"username":"admin","email":"admin@test.local","password":"AdminPassw0rd123!"}'
-
-# Login → get JWT
-curl -X POST http://localhost:8080/api/v1/auth/login \
-  -H "Content-Type: application/json" \
-  -H "X-Tenant-ID: 00000000-0000-0000-0000-000000000001" \
-  -d '{"username":"admin","password":"AdminPassw0rd123!"}'
-
-# Access protected API
-curl http://localhost:8080/api/v1/users \
-  -H "X-Tenant-ID: 00000000-0000-0000-0000-000000000001" \
-  -H "Authorization: Bearer <your-jwt>"
-```
-
-### 6. Start Admin Console
-
-```bash
-cd console
-npm install
-npm run dev
-# Open http://localhost:3000
-```
-
-## 3-Line Integration
-
-Add GGID JWT auth to any backend:
-
-**Go:**
-```go
-client := ggid.New("http://localhost:8080", ggid.WithJWKS(15*time.Minute))
-userInfo, _ := client.VerifyToken(ctx, token)
-// userInfo.UserID, userInfo.TenantID, userInfo.Roles
-```
-
-**Node.js:**
-```javascript
-app.use(expressAuth({ jwksUrl: '.../.well-known/jwks.json', issuer: '...' }));
-const claims = getClaims(req); // claims.sub, claims.tenant_id
-```
-
-**Python:**
-```python
-client = GGIDClient(gateway_url="http://localhost:8080", tenant_id="...")
-claims = await client.verify_token(token)
-```
-
-Full examples: [3-Line Integration Guide](docs/quickstart/3-line-integration.md)
-
----
-
-## Features
-
-- **Authentication** — Password (Argon2id), MFA (TOTP + WebAuthn/Passkey + Email OTP), Magic Link, LDAP/AD
-- **Social Login** — Google, GitHub, Microsoft, Discord, LinkedIn, Slack, GitLab
-- **Enterprise SSO** — OAuth2/OIDC, SAML 2.0, Generic OIDC federation
-- **Authorization** — RBAC + ABAC hybrid policy engine with wildcard matching and role hierarchy
-- **Multi-Tenancy** — PostgreSQL Row-Level Security (defense in depth)
-- **API Gateway** — JWT verification (RS256+JWKS), rate limiting, CORS, circuit breaker, compression, OTel tracing
-- **Audit** — NATS JetStream event pipeline + queryable log + CSV export + SSE streaming + anomaly detection
-- **AI Agent Identity** — RFC 8693 token exchange, delegation chain, MCP server authorization
-- **IGA Workflows** — Access request approval workflows (create → approve → auto-provision)
-- **Admin Console** — Next.js 15 + Tailwind CSS (10 pages)
-- **SDK** — Go / Node.js / Java / Python
-- **SCIM 2.0** — Standard user provisioning protocol
-- **Webhooks** — Pre/post auth hooks, HMAC-signed payloads
-- **Auth Hooks** — Extensible plugin system (pre-registration, post-login, pre-token-issue)
+> Enterprise-grade IAM with Zero Trust, OAuth 2.1, ReBAC, ITDR, and AI Agent Identity — built in Go.
 
 ## Why GGID?
 
-| Feature | GGID | Auth0 | Keycloak | Ory |
-|---------|------|-------|----------|-----|
-| **License** | Apache 2.0 | Proprietary | Apache 2.0 | Apache 2.0 |
-| **Self-hosted** | Yes | No | Yes | Yes |
-| **Multi-tenancy** | RLS (defense in depth) | Built-in | Realms | Partial |
-| **Language** | Go (fast, low memory) | Node.js | Java | Go |
-| **Image size** | 18-35 MB per service | N/A | 600MB+ | 50MB+ |
-| **OAuth 2.1 + PKCE** | Yes | Yes | Yes | Yes |
-| **SAML 2.0** | Yes | Paid tier | Yes | No |
-| **WebAuthn/Passkeys** | Yes | Yes | Yes | Yes |
-| **SCIM 2.0** | Yes | Paid tier | Yes | No |
-| **Audit pipeline** | NATS JetStream | Logs | DB | DB |
-| **Admin Console** | Next.js 15 | Hosted | React | No |
-| **AI Agent Identity (MCP)** | Yes | In dev | No | No |
+GGID is the only open-source IAM evolving into a **Zero Trust platform** with:
 
-## Documentation
+- **OAuth 2.1** with PKCE, DPoP, PAR, JAR, RAR, Token Exchange (RFC 8693)
+- **ReBAC** (Zanzibar-style) + **ABAC** fine-grained authorization
+- **ITDR** with MITRE ATT&CK mapping (15 detection rules)
+- **AI Agent Identity** — first-class agent principals with delegated access
+- **Verifiable Credentials** (W3C DID/VC) with OID4VCI/OID4VP
+- **Adaptive Authentication** with unified risk engine (5 signal categories, 20 types)
+- **SM2/SM3/SM4** China GM compliance
+- **11 SDKs** (Go, Python, TypeScript, Java, C#, Rust, Ruby, PHP, Dart, React)
+- **PostgreSQL Row-Level Security** for multi-tenant isolation
+- **Hash-chained audit trail** (HMAC-SHA256, tamper-evident)
+- **WASM plugin architecture** (wazero runtime)
 
-| Document | Description |
-|----------|-------------|
-| [3-Line Integration](docs/quickstart/3-line-integration.md) | Add JWT auth in 3 lines: Go, Node.js, Python, Java |
-| [5-Minute JWT Quickstart](docs/quickstart/5-minute-jwt.md) | Docker → register → login → JWT |
-| [Docker 5-Minute](docs/quickstart/docker-5-min.md) | Zero to authenticated API call with Docker Compose |
-| [SDK Quickstart](docs/quickstart/sdk-quickstart.md) | All 4 SDKs side-by-side: Go, Node, Python, Java |
-| [Developer Onboarding](docs/quickstart/developer-onboarding.md) | 8-step onboarding: clone → build → first API call |
-| [Doc Index](docs/INDEX.md) | Complete catalog of all 362 docs |
-| [OpenAPI Spec](docs/openapi.yaml) | Complete REST API reference (Swagger/OpenAPI 3.1) |
-| [API Reference](docs/api-reference.md) | All 78+ endpoints across 7 services |
-| [API Error Codes](docs/api/error-codes.md) | 57 error codes with HTTP status and fixes |
-| [Integration Guides](docs/integration-guides/) | Express.js, Gin, Spring Boot |
-| [Code Examples](docs/examples/) | Full runnable Express.js and Go backend demos |
-| [RBAC Guide](docs/guides/role-based-access.md) | Roles, permissions, hierarchy, policy check |
-| [ABAC Guide](docs/guides/abac-policy.md) | Attribute-based policies, dry-run, compliance |
-| [Deployment Guide](docs/deploy/) | Docker, K8s, K3s, bare metal, Helm |
-| [Production Checklist](docs/deploy/production-checklist.md) | Pre-flight checklist for go-live |
-| [Security Hardening](docs/guides/security-hardening.md) | Production security checklist |
-| [Performance Tuning](docs/performance-tuning.md) | Benchmark results, pool sizing, profiling |
-| [Migration Guide](docs/migration-from-auth0.md) | Auth0 / Keycloak / Clerk → GGID |
-| [CHANGELOG](docs/CHANGELOG.md) | Notable changes by version |
-| [Architecture](docs/architecture/overview.md) | System diagram, service responsibilities |
-| [Design Docs](docs/design/) | RLS, NATS audit, policy engine, zero-trust |
-| [Contributing](docs/contributing.md) | How to contribute — code style, PR process |
-| [FAQ](docs/faq.md) | Frequently asked questions |
+## Quickstart (5 Minutes)
+
+### 1. Start GGID
+
+```bash
+# Clone and start infrastructure
+ git clone https://github.com/topcheer/ggid.git
+cd ggid
+make docker-run   # PostgreSQL + Redis + NATS
+make migrate-up   # Apply database migrations
+make build        # Build all services
+```
+
+### 2. Create Admin User
+
+```bash
+curl -X POST http://localhost:8081/api/v1/identity/users \
+  -H "Content-Type: application/json" \
+  -d '{"email":"admin@corp.com","password":"Admin123!","name":"Admin"}'
+```
+
+### 3. Login & Get Token
+
+```bash
+TOKEN=$(curl -s -X POST http://localhost:8082/api/v1/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"username":"admin@corp.com","password":"Admin123!"}' | jq -r .access_token)
+echo $TOKEN
+```
+
+### 4. Create OAuth Client
+
+```bash
+curl -X POST http://localhost:8083/api/v1/oauth/clients \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"client_name":"My App","redirect_uris":["http://localhost:3000/callback"]}'
+```
+
+### 5. Access Console
+
+Open `http://localhost:8080` in your browser.
 
 ## Architecture
 
-```
-┌──────────────┐    ┌──────────────────────────────────────────────┐
-│  Admin Console │    │              API Gateway (:8080)              │
-│  (Next.js)     │───▶│  JWT Verification · Routing · Rate Limit     │
-└──────────────┘    └──────┬──────┬──────┬──────┬──────┬──────┬──────┘
-                           │      │      │      │      │      │
-                    ┌──────▼──┐┌──▼───┐┌─▼────┐│┌─────▼──┐┌─▼────┐
-                    │Identity ││ Auth ││OAuth ││ Policy  ││ Audit│
-                    │ (:8081) ││(:9001)││(:9005)││ (:8070) ││(:8072)│
-                    └─────────┘└──────┘└──────┘└─────────┘└──────┘
-                                         ┌──────────┐
-                                         │ Org Svc  │
-                                         │ (:8071)  │
-                                         └──────────┘
-                    ┌───────────────────────────────────────────────┐
-                    │ PostgreSQL 16  ·  Redis 7  ·  NATS  ·  LDAP  │
-                    └───────────────────────────────────────────────┘
-```
+```mermaid
+graph TB
+    Client[Client / SDK]
+    GW[Gateway :8080]
+    Auth[Auth :8082]
+    ID[Identity :8081]
+    OAuth[OAuth :8083]
+    Policy[Policy :8084]
+    Audit[Audit :8085]
+    PG[(PostgreSQL)]
+    Redis[(Redis)]
+    NATS[(NATS)]
 
-## API Endpoints
-
-| Service | Endpoints |
-|---------|-----------|
-| Auth | `/api/v1/auth/register`, `/login`, `/refresh`, `/mfa/*` |
-| Identity | `/api/v1/users` (CRUD + lock/unlock) |
-| Policy | `/api/v1/roles`, `/permissions`, `/policies`, `/policies/check` |
-| Org | `/api/v1/orgs`, `/departments`, `/teams`, `/memberships` |
-| Audit | `/api/v1/audit/events` |
-| OAuth | `/oauth/authorize`, `/oauth/token`, `/oauth/jwks`, `/.well-known/openid-configuration` |
-| SAML | `/saml/metadata`, `/saml/acs`, `/saml/sso` |
-| SCIM | `/scim/v2/Users` |
-
-## Development
-
-```bash
-# Run tests
-make test                    # 15 packages, 200+ test cases
-
-# Integration tests (requires Docker)
-go test -tags=integration -v ./test/integration/
-
-# Build all services
-make build
+    Client --> GW
+    GW --> Auth
+    GW --> ID
+    GW --> OAuth
+    GW --> Policy
+    Auth --> ID
+    OAuth --> Auth
+    Policy --> ID
+    GW --> Audit
+    ID --> PG
+    Auth --> PG
+    OAuth --> PG
+    Policy --> PG
+    Audit --> PG
+    Auth --> Redis
+    ID --> Redis
+    Policy --> Redis
+    Audit --> NATS
 ```
 
-## Project Structure
+## Feature Matrix
 
-```
-ggid/
-├── api/proto/          # Protobuf definitions
-├── api/gen/            # Generated gRPC code
-├── pkg/                # Shared libraries (crypto, tenant, errors, authprovider, audit)
-├── services/           # 7 microservices
-│   ├── gateway/        # API Gateway (:8080)
-│   ├── identity/       # Identity Service (:8081)
-│   ├── auth/           # Auth Service (:9001)
-│   ├── oauth/          # OAuth/OIDC Service (:9005)
-│   ├── policy/         # Policy Engine (:8070)
-│   ├── org/            # Organization Service (:8071)
-│   └── audit/          # Audit Service (:8072)
-├── console/            # Admin Console (Next.js :3000)
-├── sdk/                # SDK (go, node, java)
-├── deploy/             # Docker Compose + Helm Chart
-└── test/integration/   # E2E integration tests
-```
+### Authentication
+- [x] OAuth 2.1 (PKCE, PAR, JAR, DPoP)
+- [x] OIDC (Discovery, UserInfo, Back-Channel Logout)
+- [x] WebAuthn / FIDO2 / Passkeys
+- [x] Passwordless (magic link, SMS)
+- [x] MFA (TOTP, SMS, push, biometric)
+- [x] Adaptive MFA (risk-based step-up)
+- [x] SAML 2.0 federation
+- [x] Social login (Google, GitHub, Microsoft, Apple)
+- [x] China GM (SM2/SM3) signing
+
+### Authorization
+- [x] ReBAC (Zanzibar-style relationship-based)
+- [x] ABAC (attribute-based conditions)
+- [x] RAR (Rich Authorization Requests)
+- [x] Token Exchange (RFC 8693, delegation chains)
+- [x] Unified PDP (per-request authorization)
+- [x] PostgreSQL Row-Level Security (tenant isolation)
+- [x] PAM JIT (zero standing privilege)
+
+### Security
+- [x] ITDR (15 MITRE ATT&CK detection rules)
+- [x] Risk Engine (5 signal categories, 20 types)
+- [x] Impossible Travel detection
+- [x] Device posture compliance
+- [x] Hash-chained audit trail (tamper-evident)
+- [x] DLP policies + egress PII redaction
+- [x] CMK/KMS (7 providers: AWS/GCP/Azure/Vault/PKCS11/SM2)
+- [x] DPoP proof-of-possession tokens
+
+### Zero Trust
+- [x] ZTNA Access Broker
+- [x] Gateway PEP (per-request authz)
+- [x] CAE continuous evaluation middleware
+- [x] Secret Broker (zero-trust secret injection)
+- [x] WASM plugin architecture (wazero)
+
+### Platform
+- [x] Multi-tenant with PostgreSQL RLS
+- [x] Hash-chain audit (HMAC-SHA256)
+- [x] SIEM/SOAR integration
+- [x] Webhook engine (HMAC signed, retry, dead-letter)
+- [x] Compliance automation (SOC2/ISO/NIST evidence)
+- [x] SCIM 2.0 outbound provisioning
+
+## Comparison
+
+| Feature | GGID | Auth0 | Okta | Keycloak |
+|---------|------|-------|------|----------|
+| Open Source | ✅ | Partial | ❌ | ✅ |
+| License | Apache 2.0 | Proprietary | Proprietary | Apache 2.0 |
+| Language | Go | Node.js | Java | Java |
+| OAuth 2.1 | ✅ | ✅ | ✅ | Partial |
+| ReBAC (Zanzibar) | ✅ | ❌ | ❌ | ❌ |
+| ITDR | ✅ | Custom | Custom | ❌ |
+| DPoP | ✅ | ❌ | ❌ | ❌ |
+| China GM (SM2/3/4) | ✅ | ❌ | ❌ | ❌ |
+| AI Agent Identity | ✅ | ❌ | ❌ | ❌ |
+| VC/DID (W3C) | ✅ | ❌ | ❌ | Partial |
+| Zero Trust (ZTNA) | ✅ | ❌ | ❌ | ❌ |
+| SDKs | 11 | 8 | 7 | 3 |
+
+## SDKs
+
+| Language | Status | Package |
+|----------|--------|---------|
+| Go | ✅ Production | go.mod |
+| React | ✅ Production | npm |
+| Java | ✅ Functional | Maven |
+| C# | ✅ Functional | NuGet |
+| TypeScript/Node | ⚠️ In progress | npm |
+| Python | ⚠️ Minimal | PyPI |
+| Rust | ⚠️ Skeleton | crates.io |
+| Ruby | ⚠️ Skeleton | gem |
+| PHP | ⚠️ Skeleton | Packagist |
+| Dart | ⚠️ Skeleton | pub.dev |
+| React Native | ⚠️ Minimal | npm |
+
+## Documentation
+
+- [Architecture](docs/research/zero-trust-maturity-assessment.md)
+- [Research Library](docs/research/) (48+ deep-dive documents)
+- [Guides](docs/guides/)
+- [Contributing](CONTRIBUTING.md)
+- [Changelog](CHANGELOG.md)
+
+## Roadmap
+
+See [Kanban](docs/kanban.md) for 254 backlog items. Highlights:
+
+- OpenAPI 3.1 spec generation + Swagger UI
+- Multi-region active-active deployment
+- GraphQL API layer
+- EU Digital Identity Wallet (eIDAS 2.0)
+- BBS+ selective disclosure
+- Service mesh (Istio + microsegmentation)
+
+## Contributing
+
+We welcome contributions! See [CONTRIBUTING.md](CONTRIBUTING.md) for details.
 
 ## License
 
-Apache License 2.0
+Apache License 2.0 — see [LICENSE](LICENSE).
