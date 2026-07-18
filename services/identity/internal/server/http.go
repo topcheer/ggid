@@ -66,6 +66,8 @@ identityPolicyMap *identityPolicyMapRepo
 	nhiRiskEngine     *NHIRiskEngine
 	privilOpRepo      *privilegedOpRepo
 	reviewSchedRepo   *reviewScheduleRepo
+	nhiPGRepo         *NHIPGRepo
+	nhiRiskPGRepo     *NHIRiskPGRepo
 }
 
 // NewHTTPHandler creates a new HTTP handler with all routes registered.

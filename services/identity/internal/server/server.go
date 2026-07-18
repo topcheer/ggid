@@ -160,6 +160,10 @@ func New(cfg *conf.Config) (*Server, error) {
 		log.Printf("NHI risk schema ensure error (non-fatal): %v", err)
 	}
 
+	// Wire NHI PG repos to handler fields.
+	httpHandler.nhiPGRepo = nhiPGRepo
+	httpHandler.nhiRiskPGRepo = nhiRiskPGRepo
+
 	// Journey definitions (JDL).
 	journeyRepo := newJourneyRepo(pool)
 	if err := journeyRepo.EnsureSchema(ctx); err != nil {

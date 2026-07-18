@@ -50,7 +50,7 @@ func (h *HTTPHandler) nhiGetRisk(w http.ResponseWriter, r *http.Request, path st
 		return
 	}
 
-	if h.nhiRiskEngine == nil {
+	if h.nhiRiskEngine == nil && h.nhiRiskPGRepo == nil {
 		writeJSON(w, http.StatusOK, map[string]any{
 			"nhi_id": nhiID,
 			"score": 0,
@@ -60,28 +60,64 @@ func (h *HTTPHandler) nhiGetRisk(w http.ResponseWriter, r *http.Request, path st
 		return
 	}
 
-	score := h.nhiRiskEngine.GetRiskScore(nhiID)
-	if score == nil {
-		writeJSON(w, http.StatusOK, map[string]any{
-			"nhi_id": nhiID,
-			"score": 0,
-			"level": "unknown",
-			"message": "no risk evaluation performed yet",
-		})
+	// Try PG first (persistent), fall back to in-memory.
+	if h.nhiRiskPGRepo != nil {
+		if score, err := h.nhiRiskPGRepo.GetRiskScore(r.Context(), nhiID); err == nil && score != nil {
+			writeJSON(w, http.StatusOK, score)
+			return
+		}
+	}
+
+	if h.nhiRiskEngine != nil {
+		score := h.nhiRiskEngine.GetRiskScore(nhiID)
+		if score == nil {
+			writeJSON(w, http.StatusOK, map[string]any{
+				"nhi_id": nhiID,
+				"score": 0,
+				"level": "unknown",
+				"message": "no risk evaluation performed yet",
+			})
+			return
+		}
+
+		writeJSON(w, http.StatusOK, score)
 		return
 	}
 
-	writeJSON(w, http.StatusOK, score)
+	writeJSON(w, http.StatusOK, map[string]any{
+		"nhi_id": nhiID,
+		"score": 0,
+		"level": "unknown",
+		"message": "no risk data available",
+	})
 }
 
 // nhiRiskAlerts returns all high-risk NHIs.
 func (h *HTTPHandler) nhiRiskAlerts(w http.ResponseWriter, r *http.Request) {
+	threshold := 50 // high and above
+
+	// Try PG first (persistent), fall back to in-memory.
+	if h.nhiRiskPGRepo != nil {
+		if alerts, err := h.nhiRiskPGRepo.ListHighRisk(r.Context(), threshold); err == nil && alerts != nil {
+			writeJSON(w, http.StatusOK, map[string]any{
+				"alerts":    alerts,
+				"count":     len(alerts),
+				"threshold": threshold,
+				"source":    "postgres",
+			})
+			return
+		}
+	}
+
 	if h.nhiRiskEngine == nil {
-		writeJSON(w, http.StatusOK, []interface{}{})
+		writeJSON(w, http.StatusOK, map[string]any{
+			"alerts":    []*NHIRiskScore{},
+			"count":     0,
+			"threshold": threshold,
+		})
 		return
 	}
 
-	threshold := 50 // high and above
 	alerts := h.nhiRiskEngine.ListHighRisk(threshold)
 	if alerts == nil {
 		alerts = []*NHIRiskScore{}
@@ -136,6 +172,20 @@ func (h *HTTPHandler) nhiRiskScan(w http.ResponseWriter, r *http.Request) {
 	}
 
 	score := h.nhiRiskEngine.EvaluateRisk(nhiID, activity)
+
+	// Persist to PostgreSQL for survival across restarts.
+	if h.nhiRiskPGRepo != nil {
+		_ = h.nhiRiskPGRepo.SaveRiskScore(r.Context(), score)
+	}
+	// Persist baseline update.
+	if h.nhiRiskPGRepo != nil {
+		_ = h.nhiRiskPGRepo.SaveBaseline(r.Context(), &NHIBehaviorBaseline{
+			NHIID:           req.NHIID,
+			Endpoint:        req.Endpoint,
+			AvgCallsPerHour: req.CallsPerHour,
+			LastSeen:        time.Now(),
+		})
+	}
 
 	// High-risk auto-trigger: SOAR playbook (revoke + notify).
 	if score.Score >= 70 {
