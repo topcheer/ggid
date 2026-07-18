@@ -1,22 +1,87 @@
 package middleware
 
 import (
+	"fmt"
 	"net/http"
 	"strings"
 )
 
-// SecurityHeadersMiddleware adds security headers to every response.
+// SecurityHeadersConfig holds configurable security header settings.
+type SecurityHeadersConfig struct {
+	Enabled            bool                          `json:"enabled"`
+	FrameDeny          bool                          `json:"frame_deny"`
+	FrameAllowFrom     string                        `json:"frame_allow_from,omitempty"`
+	CSP                string                        `json:"content_security_policy,omitempty"`
+	ContentTypeNosniff bool                          `json:"content_type_nosniff"`
+	HSTSMaxAge         int                           `json:"hsts_max_age"`
+	PerTenantOverrides map[string]*SecurityHeadersConfig `json:"per_tenant_overrides,omitempty"`
+}
+
+// DefaultSecurityHeadersConfig returns the default config.
+func DefaultSecurityHeadersConfig() *SecurityHeadersConfig {
+	return &SecurityHeadersConfig{
+		Enabled: true, FrameDeny: true, ContentTypeNosniff: true, HSTSMaxAge: 31536000,
+		CSP: "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'",
+	}
+}
+
+// mergeSecurityHeaders merges an override config onto a base config.
+func mergeSecurityHeaders(base, override *SecurityHeadersConfig) *SecurityHeadersConfig {
+	if base == nil { return override }
+	if override == nil { return base }
+	result := *base
+	if override.CSP != "" { result.CSP = override.CSP }
+	if override.FrameDeny { result.FrameDeny = true }
+	if override.FrameAllowFrom != "" { result.FrameAllowFrom = override.FrameAllowFrom }
+	if override.ContentTypeNosniff { result.ContentTypeNosniff = true }
+	if override.HSTSMaxAge > 0 { result.HSTSMaxAge = override.HSTSMaxAge }
+	result.Enabled = override.Enabled
+	return &result
+}
+
+// SecurityHeadersConfigurable returns middleware with configurable security headers.
+func SecurityHeadersConfigurable(cfg *SecurityHeadersConfig) func(http.Handler) http.Handler {
+	if cfg == nil {
+		cfg = DefaultSecurityHeadersConfig()
+	}
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			// Check per-tenant override.
+			active := cfg
+			if tenantID := r.Header.Get("X-Tenant-ID"); tenantID != "" {
+				if override, ok := cfg.PerTenantOverrides[tenantID]; ok {
+					active = override
+				}
+			}
+			if !active.Enabled {
+				next.ServeHTTP(w, r)
+				return
+			}
+			w.Header().Set("X-Content-Type-Options", "nosniff")
+			if active.FrameDeny {
+				w.Header().Set("X-Frame-Options", "DENY")
+			} else if active.FrameAllowFrom != "" {
+				w.Header().Set("X-Frame-Options", "ALLOW-FROM "+active.FrameAllowFrom)
+			}
+			if active.HSTSMaxAge > 0 {
+				w.Header().Set("Strict-Transport-Security", "max-age="+fmt.Sprintf("%d", active.HSTSMaxAge)+"; includeSubDomains")
+			}
+			csp := active.CSP
+			if csp == "" {
+				csp = "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'"
+			}
+			w.Header().Set("Content-Security-Policy", csp)
+			w.Header().Set("X-XSS-Protection", "1; mode=block")
+			w.Header().Set("Referrer-Policy", "strict-origin-when-cross-origin")
+			w.Header().Set("Permissions-Policy", "geolocation=(), microphone=(), camera=()")
+			next.ServeHTTP(w, r)
+		})
+	}
+}
+
+// SecurityHeadersMiddleware adds security headers to every response (backward compat).
 func SecurityHeadersMiddleware(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("X-Content-Type-Options", "nosniff")
-		w.Header().Set("X-Frame-Options", "DENY")
-		w.Header().Set("Strict-Transport-Security", "max-age=31536000; includeSubDomains")
-		w.Header().Set("Content-Security-Policy", "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'")
-		w.Header().Set("X-XSS-Protection", "1; mode=block")
-		w.Header().Set("Referrer-Policy", "strict-origin-when-cross-origin")
-		w.Header().Set("Permissions-Policy", "geolocation=(), microphone=(), camera=()")
-		next.ServeHTTP(w, r)
-	})
+	return SecurityHeadersConfigurable(nil)(next)
 }
 
 // CORSConfig defines per-tenant CORS settings.
@@ -54,7 +119,7 @@ func TenantCORSMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		origin := r.Header.Get("Origin")
 		tenantID := r.Header.Get("X-Tenant-ID")
-		cfg := GetCORSConfig(tenantID)
+		cfg := GetTenantCORS(tenantID)
 		allowed := false
 		for _, o := range cfg.AllowedOrigins {
 			if o == "*" || o == origin {
