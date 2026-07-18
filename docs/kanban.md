@@ -253,6 +253,8 @@
 | KB-239 | **Account linking + privacy center** (GDPR export/delete) | backend | P1 | self-service | 4d |
 | KB-240 | **README.md + CONTRIBUTING.md + LICENSE** (professional GitHub presence) | docs | P0 | readme-guide | 2d |
 | KB-241 | **Screenshots + repo badges + Mermaid architecture** | docs+frontend | P1 | readme-guide | 1d |
+| KB-242 | **Conventional commits + git-cliff + GitHub Releases** (auto-changelog) | devops | P0 | changelog-release | 2d |
+| KB-243 | **Deprecation headers + migration guide framework** (RFC 8594) | backend+docs | P1 | changelog-release | 2d |
 | KB-038 | **Journey definition store** (PostgreSQL) | backend | P0 | identity-orchestration | 3d |
 | KB-039 | **Journey definition parser** (YAML JDL) | backend | P0 | identity-orchestration | 4d |
 | KB-040 | **Journey engine** (state machine executor) | backend | P0 | identity-orchestration | 5d |
@@ -386,6 +388,7 @@
 | OpenAPI 3.1 Spec Generation & API Docs | DONE | docs/research/openapi-spec-generation.md |
 | User Self-Service & Onboarding | DONE | docs/research/user-self-service-onboarding.md |
 | README & Quickstart Guide | DONE | docs/research/readme-quickstart-guide.md |
+| Changelog & Release Notes Automation | DONE | docs/research/changelog-release-automation.md |
 | OAuth Client Lifecycle Management (DCR) | NEXT | — |
 
 ---
