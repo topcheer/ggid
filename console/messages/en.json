@@ -74,7 +74,6 @@
     "subject": "Subject",
     "issuer": "Issuer",
     "copy": "Copy",
-    "loading": "Loading...",
     "saveChanges": "Save Changes",
     "toggleVisibility": "Toggle visibility",
     "unnamed": "Unnamed",
@@ -131,7 +130,7 @@
     "hierarchy": "Hierarchy",
     "matrix": "Permission Matrix",
     "checker": "Policy Checker",
-    "abacBuilder": "ABAC Builder",
+    "abacBuilder": "ABAC Condition Builder",
     "editRole": "Edit Role",
     "deleteRole": "Delete Role",
     "roleKey": "Role Key",
@@ -194,7 +193,6 @@
     "noHierarchy": "No roles with hierarchy. Set parent_role_id when creating roles to build inheritance chains.",
     "children": "child",
     "childrenPlural": "children",
-    "abacBuilder": "ABAC Condition Builder",
     "abacDesc": "Build attribute-based access control rules visually. The generated JSON can be saved as a policy.",
     "combineMode": "Combine Mode",
     "andAllMatch": "AND (all must match)",
@@ -899,5 +897,113 @@
     "checking": "Checking...",
     "unhealthy": "Unhealthy",
     "failedLoad": "Failed to load"
+  },
+  "securityPolicy": {
+    "title": "Security Policy",
+    "description": "Configure authentication methods, password policies, and lockout rules",
+    "tabs": {
+      "methodPolicies": "Auth Methods",
+      "passwordPolicy": "Password Policy",
+      "lockoutPolicy": "Lockout Policy"
+    },
+    "methodPolicies": {
+      "title": "Authentication Method Policies",
+      "description": "Configure required and forbidden authentication methods per group",
+      "group": "Group",
+      "requiredMethods": "Required Methods",
+      "forbiddenMethods": "Forbidden Methods",
+      "addPolicy": "Add Policy",
+      "editPolicy": "Edit Policy",
+      "deletePolicy": "Delete Policy",
+      "noPolicies": "No method policies configured",
+      "confirmDelete": "Are you sure you want to delete this policy?",
+      "policySaved": "Method policy saved successfully",
+      "policyDeleted": "Method policy deleted successfully",
+      "selectGroup": "Select a group",
+      "password": "Password",
+      "webauthn": "WebAuthn",
+      "totp": "TOTP",
+      "sms": "SMS",
+      "email": "Email OTP",
+      "social": "Social Login",
+      "saml": "SAML"
+    },
+    "passwordPolicy": {
+      "title": "Password Policy",
+      "description": "Configure password requirements and expiration",
+      "minLength": "Minimum Length",
+      "requireUppercase": "Require Uppercase",
+      "requireLowercase": "Require Lowercase",
+      "requireDigit": "Require Digit",
+      "requireSpecial": "Require Special Character",
+      "preventUsername": "Prevent Username in Password",
+      "preventCommon": "Prevent Common Passwords",
+      "historyCount": "Password History Count",
+      "expiryDays": "Password Expiry (Days)",
+      "hibpCheck": "HIBP Breach Check",
+      "save": "Save Password Policy",
+      "policySaved": "Password policy saved successfully",
+      "preview": "Password Strength Preview",
+      "testPassword": "Test Password"
+    },
+    "lockoutPolicy": {
+      "title": "Account Lockout Policy",
+      "description": "Configure failed login attempt thresholds and lockout duration",
+      "maxAttempts": "Max Failed Attempts",
+      "lockoutDuration": "Lockout Duration (Seconds)",
+      "ipMaxAttempts": "IP-level Max Attempts",
+      "ipLockoutDuration": "IP Lockout Duration (Seconds)",
+      "save": "Save Lockout Policy",
+      "policySaved": "Lockout policy saved successfully"
+    }
+  },
+  "importWizard": {
+    "title": "Import Wizard",
+    "description": "Bulk import users from JSON or CSV files",
+    "steps": {
+      "upload": "Upload File",
+      "map": "Map Fields",
+      "preview": "Preview & Confirm"
+    },
+    "upload": {
+      "title": "Upload your file",
+      "description": "Select a JSON or CSV file containing user data",
+      "dragDrop": "Drag and drop your file here, or click to browse",
+      "supportedFormats": "Supported formats: JSON, CSV",
+      "maxSize": "Maximum file size: 10MB",
+      "browse": "Browse Files"
+    },
+    "mapping": {
+      "title": "Map Fields",
+      "description": "Map source columns to target fields",
+      "sourceField": "Source Field",
+      "targetField": "Target Field",
+      "email": "Email",
+      "firstName": "First Name",
+      "lastName": "Last Name",
+      "department": "Department",
+      "role": "Role",
+      "phone": "Phone",
+      "displayName": "Display Name",
+      "skip": "Skip Field"
+    },
+    "preview": {
+      "title": "Preview & Confirm",
+      "description": "Review the data before importing",
+      "totalRows": "Total Rows",
+      "validRows": "Valid Rows",
+      "invalidRows": "Invalid Rows",
+      "confirmImport": "Confirm Import",
+      "back": "Back",
+      "importing": "Importing...",
+      "importSuccess": "Import completed successfully",
+      "importFailed": "Import failed",
+      "imported": "Imported",
+      "failed": "Failed",
+      "row": "Row",
+      "status": "Status",
+      "errors": "Errors",
+      "noErrors": "No errors"
+    }
   }
 }

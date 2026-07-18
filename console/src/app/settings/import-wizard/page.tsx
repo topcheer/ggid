@@ -1,286 +1,479 @@
 "use client";
+
 import { useState, useCallback, useRef } from "react";
+import { useTranslations } from "@/lib/i18n";
+import { authHeader } from "@/lib/auth-helpers";
 import {
   Upload, Loader2, AlertCircle, X, Check, FileText, ChevronRight,
-  CheckCircle2, XCircle, AlertTriangle, Download, Table, Users,
-  Zap, RefreshCw,
+  CheckCircle2, XCircle, ArrowLeft, ArrowRight, Download,
 } from "lucide-react";
-import { authHeader } from "@/lib/auth-helpers";
-import { useTranslations } from "@/lib/i18n";
 
-const TENANT_ID = "00000000-0000-0000-0000-000000000001";
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
+const TENANT_ID = typeof window !== "undefined" ? localStorage.getItem("ggid_tenant_id") || "00000000-0000-0000-0000-000000000001" : "00000000-0000-0000-0000-000000000001";
 
-interface ImportRow { row: number; email: string; name: string; status: "valid" | "invalid" | "warning"; errors: string[]; }
-interface ImportResult { total: number; valid: number; invalid: number; warnings: number; imported: number; failed: number; duration_ms: number; }
+interface ImportRow {
+  row: number;
+  email: string;
+  name: string;
+  status: "valid" | "invalid" | "warning";
+  errors: string[];
+}
 
-type Step = "upload" | "preview" | "importing" | "done";
+interface ImportResult {
+  total: number;
+  valid: number;
+  invalid: number;
+  warnings: number;
+  imported: number;
+  failed: number;
+  duration_ms: number;
+}
+
+type Step = "upload" | "map" | "preview" | "importing" | "done";
+
+const TARGET_FIELDS = [
+  { key: "email", label: "Email", required: true },
+  { key: "first_name", label: "First Name", required: false },
+  { key: "last_name", label: "Last Name", required: false },
+  { key: "display_name", label: "Display Name", required: false },
+  { key: "department", label: "Department", required: false },
+  { key: "role", label: "Role", required: false },
+  { key: "phone", label: "Phone", required: false },
+];
 
 const SAMPLE_CSV = `email,first_name,last_name,department,role
 alice@company.com,Alice,Chen,Engineering,engineer
 bob@company.com,Bob,Smith,Sales,rep
-carol@company.com,Carol,Jones,Marketing,manager
-dave@company.com,Dave,Wong,Engineering,senior_engineer
-eve@company.com,Eve,Brown,Security,analyst`;
+carol@company.com,Carol,Wong,Marketing,manager`;
+
+const SAMPLE_JSON = JSON.stringify([
+  { email: "alice@company.com", first_name: "Alice", last_name: "Chen", department: "Engineering", role: "engineer" },
+  { email: "bob@company.com", first_name: "Bob", last_name: "Smith", department: "Sales", role: "rep" },
+], null, 2);
 
 export default function ImportWizardPage() {
   const t = useTranslations();
   const [step, setStep] = useState<Step>("upload");
-  const [csvText, setCsvText] = useState("");
   const [fileName, setFileName] = useState("");
+  const [fileContent, setFileContent] = useState("");
+  const [fileType, setFileType] = useState<"json" | "csv">("csv");
+  const [sourceFields, setSourceFields] = useState<string[]>([]);
+  const [mapping, setMapping] = useState<Record<string, string>>({});
   const [rows, setRows] = useState<ImportRow[]>([]);
-  const [error, setError] = useState<string | null>(null);
-  const [importResult, setImportResult] = useState<ImportResult | null>(null);
-  const [importing, setImporting] = useState(false);
-  const [dryRun, setDryRun] = useState(false);
-  const [progress, setProgress] = useState(0);
-  const fileInput = useRef<HTMLInputElement>(null);
+  const [result, setResult] = useState<ImportResult | null>(null);
+  const [error, setError] = useState("");
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [dragOver, setDragOver] = useState(false);
 
-  const H = { ...authHeader(), "Content-Type": "application/json", "X-Tenant-ID": TENANT_ID };
-  const card = "rounded-xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-700 dark:bg-gray-800";
-
-  const parseCSV = (text: string): ImportRow[] => {
-    const lines = text.trim().split("\n");
-    if (lines.length < 2) return [];
-    const result: ImportRow[] = [];
-    for (let i = 1; i < lines.length; i++) {
-      const cols = lines[i].split(",").map(c => c.trim());
-      const email = cols[0] || "";
-      const name = `${cols[1] || ""} ${cols[2] || ""}`.trim();
-      const errors: string[] = [];
-      if (!email || !email.includes("@")) errors.push("Invalid email");
-      if (!name) errors.push("Missing name");
-      result.push({
-        row: i, email, name,
-        status: errors.length > 0 ? "invalid" : "valid", errors,
-      });
+  // Parse uploaded file
+  const parseFile = useCallback((content: string, type: "json" | "csv") => {
+    setError("");
+    try {
+      if (type === "json") {
+        const data = JSON.parse(content);
+        if (!Array.isArray(data) || data.length === 0) {
+          setError("Invalid JSON: expected non-empty array");
+          return;
+        }
+        const fields = Object.keys(data[0]);
+        setSourceFields(fields);
+        // Auto-map by name similarity
+        const autoMap: Record<string, string> = {};
+        fields.forEach((f) => {
+          const match = TARGET_FIELDS.find((tf) =>
+            tf.key === f || tf.key.replace(/_/g, "") === f.replace(/_/g, "").toLowerCase()
+          );
+          autoMap[f] = match ? match.key : "skip";
+        });
+        setMapping(autoMap);
+        setRows(data.slice(0, 50).map((item: Record<string, unknown>, i: number) => ({
+          row: i + 1,
+          email: String(item.email || ""),
+          name: [item.first_name, item.last_name].filter(Boolean).join(" ") || String(item.display_name || ""),
+          status: item.email ? "valid" : "invalid",
+          errors: item.email ? [] : ["Missing email"],
+        })));
+      } else {
+        // CSV parse
+        const lines = content.trim().split("\n");
+        if (lines.length < 2) {
+          setError("Invalid CSV: need header + at least 1 row");
+          return;
+        }
+        const headers = lines[0].split(",").map((h) => h.trim().replace(/^["']|["']$/g, ""));
+        setSourceFields(headers);
+        const autoMap: Record<string, string> = {};
+        headers.forEach((h) => {
+          const match = TARGET_FIELDS.find((tf) =>
+            tf.key === h || tf.key.replace(/_/g, "") === h.replace(/_/g, "").toLowerCase()
+          );
+          autoMap[h] = match ? match.key : "skip";
+        });
+        setMapping(autoMap);
+        const parsedRows: ImportRow[] = lines.slice(1, 51).map((line, i) => {
+          const vals = line.split(",").map((v) => v.trim().replace(/^["']|["']$/g, ""));
+          const email = vals[headers.indexOf("email")] || "";
+          return {
+            row: i + 1,
+            email,
+            name: [vals[headers.indexOf("first_name")], vals[headers.indexOf("last_name")]].filter(Boolean).join(" "),
+            status: email ? "valid" : "invalid",
+            errors: email ? [] : ["Missing email"],
+          };
+        });
+        setRows(parsedRows);
+      }
+    } catch {
+      setError(`Failed to parse ${type.toUpperCase()} file`);
     }
-    return result;
-  };
+  }, []);
 
   const handleFile = (file: File) => {
+    const type = file.name.endsWith(".json") ? "json" : "csv";
+    setFileType(type);
     setFileName(file.name);
     const reader = new FileReader();
     reader.onload = (e) => {
-      const text = e.target?.result as string;
-      setCsvText(text);
-      setRows(parseCSV(text));
-      setStep("preview");
+      const content = e.target?.result as string;
+      setFileContent(content);
+      parseFile(content, type);
     };
     reader.readAsText(file);
   };
 
-  const handlePaste = () => {
-    if (!csvText.trim()) return;
-    setRows(parseCSV(csvText));
-    setStep("preview");
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setDragOver(false);
+    const file = e.dataTransfer.files[0];
+    if (file) handleFile(file);
   };
 
-  const doImport = async () => {
+  const handleImport = async () => {
     setStep("importing");
-    setImporting(true);
-    setProgress(0);
     try {
-      // Simulate progress
-      const timer = setInterval(() => {
-        setProgress(p => Math.min(p + 10, 90));
-      }, 200);
-
-      const res = await fetch("/api/v1/users/import", {
-        method: "POST", headers: H,
-        body: JSON.stringify({ csv_data: csvText, dry_run: dryRun }),
-      }).catch(() => null);
-
-      clearInterval(timer);
-      setProgress(100);
-
-      const validRows = rows.filter(r => r.status === "valid").length;
-      const invalidRows = rows.filter(r => r.status === "invalid").length;
-
-      if (res?.ok) {
-        const d = await res.json();
-        setImportResult({
-          total: rows.length, valid: validRows, invalid: invalidRows,
-          warnings: 0, imported: d.imported ?? validRows, failed: d.failed ?? invalidRows,
-          duration_ms: d.duration_ms ?? 0,
-        });
-      } else {
-        setImportResult({
-          total: rows.length, valid: validRows, invalid: invalidRows,
-          warnings: 0, imported: dryRun ? 0 : validRows, failed: invalidRows,
-          duration_ms: 0,
-        });
-      }
+      const res = await fetch(`${API_BASE}/api/v1/users/bulk-import`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", ...authHeader() },
+        body: JSON.stringify({
+          tenant_id: TENANT_ID,
+          format: fileType,
+          data: fileContent,
+          mapping,
+        }),
+      });
+      const data = await res.json();
+      setResult({
+        total: data.total || rows.length,
+        valid: data.valid || rows.filter((r) => r.status === "valid").length,
+        invalid: data.invalid || rows.filter((r) => r.status === "invalid").length,
+        warnings: 0,
+        imported: data.imported || data.valid || rows.filter((r) => r.status === "valid").length,
+        failed: data.failed || 0,
+        duration_ms: data.duration_ms || 0,
+      });
       setStep("done");
-    } catch { setError(t("importWizard.importError")); setStep("preview"); }
-    finally { setImporting(false); }
+    } catch {
+      setError("Import failed");
+      setStep("preview");
+    }
+  };
+
+  const downloadSample = (type: "csv" | "json") => {
+    const blob = new Blob([type === "csv" ? SAMPLE_CSV : SAMPLE_JSON], { type: "text/plain" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `sample-users.${type}`;
+    a.click();
   };
 
   const reset = () => {
-    setStep("upload"); setCsvText(""); setFileName(""); setRows([]);
-    setImportResult(null); setError(null); setProgress(0); setDryRun(false);
+    setStep("upload");
+    setFileName("");
+    setFileContent("");
+    setSourceFields([]);
+    setMapping({});
+    setRows([]);
+    setResult(null);
+    setError("");
   };
 
-  const validCount = rows.filter(r => r.status === "valid").length;
-  const invalidCount = rows.filter(r => r.status === "invalid").length;
+  const steps = [
+    { id: "upload", label: t("importWizard.steps.upload"), num: 1 },
+    { id: "map", label: t("importWizard.steps.map"), num: 2 },
+    { id: "preview", label: t("importWizard.steps.preview"), num: 3 },
+  ];
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="flex items-center gap-2 text-2xl font-bold text-gray-900 dark:text-white">
-          <Upload className="h-6 w-6 text-blue-500" /> {t("importWizard.title")}
-        </h1>
-        <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">{t("importWizard.subtitle")}</p>
-      </div>
-
-      {error && (
-        <div role="alert" className="flex items-center gap-2 rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700 dark:bg-red-900/20 dark:text-red-400">
-          <AlertCircle className="h-4 w-4 shrink-0" />{error}
-          <button onClick={() => setError(null)} aria-label="Dismiss" className="ml-auto"><X className="h-4 w-4" /></button>
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-950 p-4 md:p-8">
+      <div className="max-w-4xl mx-auto">
+        {/* Header */}
+        <div className="mb-6">
+          <div className="flex items-center gap-3 mb-2">
+            <Upload className="w-7 h-7 text-blue-600" />
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+              {t("importWizard.title")}
+            </h1>
+          </div>
+          <p className="text-gray-600 dark:text-gray-400 text-sm">
+            {t("importWizard.description")}
+          </p>
         </div>
-      )}
 
-      {/* Step indicator */}
-      <div className="flex items-center gap-2">
-        {([t("importWizard.stepUpload"), t("importWizard.stepPreview"), t("importWizard.stepImport"), t("importWizard.stepDone")] as const).map((label, i) => {
-          const stepOrder = ["upload", "preview", "importing", "done"];
-          const currentIdx = stepOrder.indexOf(step);
-          const isActive = i === currentIdx;
-          const isDone = i < currentIdx;
-          return (
-            <div key={i} className="flex items-center">
-              {i > 0 && <ChevronRight className={`h-4 w-4 mx-1 ${isDone || isActive ? "text-blue-500" : "text-gray-300"}`} />}
-              <div className={`flex items-center gap-2 ${isActive || isDone ? "text-blue-600 dark:text-blue-400" : "text-gray-400"}`}>
-                <div className={`flex h-7 w-7 items-center justify-center rounded-full text-xs font-bold ${isDone ? "bg-green-500 text-white" : isActive ? "bg-blue-600 text-white" : "bg-gray-200 dark:bg-gray-700 text-gray-400"}`}>
-                  {isDone ? <Check className="h-3.5 w-3.5" /> : i + 1}
+        {/* Stepper */}
+        <div className="flex items-center gap-2 mb-6">
+          {steps.map((s, i) => {
+            const isActive = step === s.id || (step === "importing" && s.id === "preview") || (step === "done" && s.id === "preview");
+            const isPast = steps.findIndex((x) => x.id === step) > i || step === "done";
+            return (
+              <div key={s.id} className="flex items-center gap-2">
+                {i > 0 && <ChevronRight className="w-4 h-4 text-gray-400" />}
+                <div className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium ${
+                  isActive ? "bg-blue-600 text-white" : isPast ? "bg-green-100 text-green-700 dark:bg-green-950 dark:text-green-300" : "bg-gray-200 dark:bg-gray-800 text-gray-500"
+                }`}>
+                  <span className="w-5 h-5 rounded-full flex items-center justify-center text-xs">
+                    {isPast ? <Check className="w-3 h-3" /> : s.num}
+                  </span>
+                  {s.label}
                 </div>
-                <span className="text-sm font-medium hidden sm:inline">{label}</span>
               </div>
-            </div>
-          );
-        })}
-      </div>
-
-      {/* ════ STEP: UPLOAD ════ */}
-      {step === "upload" && (
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-          <div className={card}>
-            <h3 className="mb-3 text-sm font-semibold uppercase text-gray-400">{t("importWizard.uploadFile")}</h3>
-            <div className="rounded-xl border-2 border-dashed border-gray-300 p-8 text-center dark:border-gray-700">
-              <Upload className="mx-auto h-10 w-10 text-gray-300" />
-              <p className="mt-2 text-sm text-gray-500">{t("importWizard.dropFile")}</p>
-              <input ref={fileInput} type="file" accept=".csv" className="hidden" onChange={e => { const f = e.target.files?.[0]; if (f) handleFile(f); }} />
-              <button onClick={() => fileInput.current?.click()} className="mt-3 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700">{t("importWizard.browse")}</button>
-              {fileName && <p className="mt-2 text-xs text-green-600">{fileName}</p>}
-            </div>
-          </div>
-          <div className={card}>
-            <h3 className="mb-3 text-sm font-semibold uppercase text-gray-400">{t("importWizard.pasteCsv")}</h3>
-            <textarea value={csvText} onChange={e => setCsvText(e.target.value)} placeholder={SAMPLE_CSV} rows={8} className="w-full rounded-lg border dark:border-gray-700 dark:bg-gray-900 px-3 py-2 font-mono text-xs" />
-            <div className="mt-3 flex items-center justify-between">
-              <button onClick={() => setCsvText(SAMPLE_CSV)} className="text-xs text-blue-600 hover:underline">{t("importWizard.loadSample")}</button>
-              <button onClick={handlePaste} disabled={!csvText.trim()} className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50">{t("importWizard.preview")}</button>
-            </div>
-          </div>
-          <div className={`${card} lg:col-span-2`}>
-            <h3 className="mb-2 text-sm font-semibold uppercase text-gray-400">{t("importWizard.format")}</h3>
-            <div className="overflow-x-auto"><table className="w-full text-sm"><thead><tr><th className="px-3 py-1 text-left text-xs text-gray-400">Column</th><th className="px-3 py-1 text-left text-xs text-gray-400">Required</th><th className="px-3 py-1 text-left text-xs text-gray-400">Description</th></tr></thead>
-            <tbody className="divide-y dark:divide-gray-700">
-              {[["email", "Yes", "User email address"], ["first_name", "Yes", "Given name"], ["last_name", "Yes", "Family name"], ["department", "No", "Department name"], ["role", "No", "Role assignment"]].map(([col, req, desc]) => (
-                <tr key={col}><td className="px-3 py-1.5 font-mono text-xs text-blue-500">{col}</td><td className="px-3 py-1.5 text-xs">{req}</td><td className="px-3 py-1.5 text-xs text-gray-400">{desc}</td></tr>
-              ))}
-            </tbody></table></div>
-          </div>
+            );
+          })}
         </div>
-      )}
 
-      {/* ════ STEP: PREVIEW ════ */}
-      {step === "preview" && (
-        <div className="space-y-4">
-          <div className="grid grid-cols-3 gap-4">
-            <div className={`${card} text-center`}><Table className="mx-auto h-5 w-5 text-blue-400" /><p className="mt-1 text-xl font-bold">{rows.length}</p><p className="text-xs text-gray-400">{t("importWizard.totalRows")}</p></div>
-            <div className={`${card} text-center`}><CheckCircle2 className="mx-auto h-5 w-5 text-green-400" /><p className="mt-1 text-xl font-bold text-green-600">{validCount}</p><p className="text-xs text-gray-400">{t("importWizard.validRows")}</p></div>
-            <div className={`${card} text-center`}><XCircle className="mx-auto h-5 w-5 text-red-400" /><p className="mt-1 text-xl font-bold text-red-600">{invalidCount}</p><p className="text-xs text-gray-400">{t("importWizard.invalidRows")}</p></div>
+        {error && (
+          <div className="flex items-center gap-2 px-4 py-3 mb-4 rounded-lg bg-red-50 dark:bg-red-950/30 text-red-700 dark:text-red-300 text-sm">
+            <AlertCircle className="w-4 h-4" />
+            {error}
           </div>
+        )}
 
-          <div className={card}>
-            <div className="mb-3 flex items-center justify-between">
-              <h3 className="text-sm font-semibold uppercase text-gray-400">{t("importWizard.dataPreview")}</h3>
-              <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={dryRun} onChange={e => setDryRun(e.target.checked)} className="rounded" /> {t("importWizard.dryRun")}</label>
+        {/* Step Content */}
+        {step === "upload" && (
+          <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-6">
+            <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-2">
+              {t("importWizard.upload.title")}
+            </h3>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">
+              {t("importWizard.upload.description")}
+            </p>
+
+            {/* Drop Zone */}
+            <div
+              onDrop={handleDrop}
+              onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+              onDragLeave={() => setDragOver(false)}
+              onClick={() => fileInputRef.current?.click()}
+              className={`border-2 border-dashed rounded-xl p-12 text-center cursor-pointer transition-colors ${
+                dragOver ? "border-blue-500 bg-blue-50 dark:bg-blue-950/20" : "border-gray-300 dark:border-gray-700 hover:border-blue-400"
+              }`}
+            >
+              <Upload className="w-12 h-12 mx-auto mb-3 text-gray-400" />
+              <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">
+                {t("importWizard.upload.dragDrop")}
+              </p>
+              <p className="text-xs text-gray-400">
+                {t("importWizard.upload.supportedFormats")} | {t("importWizard.upload.maxSize")}
+              </p>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept=".json,.csv"
+                onChange={(e) => { const f = e.target.files?.[0]; if (f) handleFile(f); }}
+                className="hidden"
+              />
             </div>
-            <div className="max-h-80 overflow-y-auto">
+
+            {fileName && (
+              <div className="mt-4 flex items-center gap-2 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                <FileText className="w-5 h-5 text-blue-600" />
+                <span className="text-sm text-gray-900 dark:text-white flex-1">{fileName}</span>
+                <Check className="w-4 h-4 text-green-500" />
+                <span className="text-xs text-gray-500">{rows.length} rows parsed</span>
+              </div>
+            )}
+
+            {/* Sample Downloads */}
+            <div className="mt-4 flex items-center gap-2">
+              <span className="text-xs text-gray-500">Sample files:</span>
+              <button onClick={() => downloadSample("csv")} className="text-xs text-blue-600 hover:underline flex items-center gap-1">
+                <Download className="w-3 h-3" /> sample-users.csv
+              </button>
+              <button onClick={() => downloadSample("json")} className="text-xs text-blue-600 hover:underline flex items-center gap-1">
+                <Download className="w-3 h-3" /> sample-users.json
+              </button>
+            </div>
+
+            {fileName && (
+              <button
+                onClick={() => setStep("map")}
+                className="mt-4 flex items-center gap-2 px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium text-sm"
+              >
+                {t("importWizard.steps.map")}
+                <ArrowRight className="w-4 h-4" />
+              </button>
+            )}
+          </div>
+        )}
+
+        {step === "map" && (
+          <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-6">
+            <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-2">
+              {t("importWizard.mapping.title")}
+            </h3>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">
+              {t("importWizard.mapping.description")}
+            </p>
+
+            <div className="space-y-2">
+              {sourceFields.map((field) => (
+                <div key={field} className="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800">
+                  <div className="flex-1">
+                    <span className="text-sm font-medium text-gray-900 dark:text-white">{field}</span>
+                  </div>
+                  <ChevronRight className="w-4 h-4 text-gray-400" />
+                  <select
+                    value={mapping[field] || "skip"}
+                    onChange={(e) => setMapping({ ...mapping, [field]: e.target.value })}
+                    className="flex-1 px-3 py-1.5 rounded-lg border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-sm text-gray-900 dark:text-white"
+                  >
+                    <option value="skip">{t("importWizard.mapping.skip")}</option>
+                    {TARGET_FIELDS.map((tf) => (
+                      <option key={tf.key} value={tf.key}>
+                        {t(`importWizard.mapping.${tf.key === "first_name" ? "firstName" : tf.key === "last_name" ? "lastName" : tf.key === "display_name" ? "displayName" : tf.key}`)}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              ))}
+            </div>
+
+            <div className="flex gap-2 mt-4">
+              <button
+                onClick={() => setStep("upload")}
+                className="flex items-center gap-1.5 px-4 py-2 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-lg text-sm font-medium"
+              >
+                <ArrowLeft className="w-4 h-4" />
+                {t("importWizard.preview.back")}
+              </button>
+              <button
+                onClick={() => setStep("preview")}
+                className="flex items-center gap-1.5 px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium"
+              >
+                {t("importWizard.steps.preview")}
+                <ArrowRight className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+        )}
+
+        {(step === "preview" || step === "importing") && (
+          <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-6">
+            <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-2">
+              {t("importWizard.preview.title")}
+            </h3>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">
+              {t("importWizard.preview.description")}
+            </p>
+
+            {/* Stats */}
+            <div className="grid grid-cols-3 gap-3 mb-4">
+              <StatCard label={t("importWizard.preview.totalRows")} value={rows.length} color="blue" />
+              <StatCard label={t("importWizard.preview.validRows")} value={rows.filter((r) => r.status === "valid").length} color="green" />
+              <StatCard label={t("importWizard.preview.invalidRows")} value={rows.filter((r) => r.status === "invalid").length} color="red" />
+            </div>
+
+            {/* Preview Table */}
+            <div className="overflow-x-auto max-h-64 overflow-y-auto">
               <table className="w-full text-sm">
-                <thead className="sticky top-0 bg-gray-50 dark:bg-gray-900"><tr>
-                  <th className="px-3 py-2 text-left text-xs text-gray-400">Row</th>
-                  <th className="px-3 py-2 text-left text-xs text-gray-400">Email</th>
-                  <th className="px-3 py-2 text-left text-xs text-gray-400">Name</th>
-                  <th className="px-3 py-2 text-center text-xs text-gray-400">Status</th>
-                  <th className="px-3 py-2 text-left text-xs text-gray-400">Errors</th>
-                </tr></thead>
-                <tbody className="divide-y dark:divide-gray-700">
-                  {rows.map(r => (
-                    <tr key={r.row} className={r.status === "invalid" ? "bg-red-50 dark:bg-red-950/20" : ""}>
-                      <td className="px-3 py-2 text-xs text-gray-400">{r.row}</td>
-                      <td className="px-3 py-2 text-xs font-mono">{r.email}</td>
-                      <td className="px-3 py-2 text-xs">{r.name}</td>
-                      <td className="px-3 py-2 text-center">
-                        {r.status === "valid" ? <CheckCircle2 className="mx-auto h-4 w-4 text-green-500" /> : <XCircle className="mx-auto h-4 w-4 text-red-500" />}
+                <thead className="sticky top-0 bg-gray-50 dark:bg-gray-800">
+                  <tr className="text-left">
+                    <th className="py-2 px-3 font-medium text-gray-600 dark:text-gray-400">{t("importWizard.preview.row")}</th>
+                    <th className="py-2 px-3 font-medium text-gray-600 dark:text-gray-400">Email</th>
+                    <th className="py-2 px-3 font-medium text-gray-600 dark:text-gray-400">Name</th>
+                    <th className="py-2 px-3 font-medium text-gray-600 dark:text-gray-400">{t("importWizard.preview.status")}</th>
+                    <th className="py-2 px-3 font-medium text-gray-600 dark:text-gray-400">{t("importWizard.preview.errors")}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {rows.map((r) => (
+                    <tr key={r.row} className="border-b border-gray-100 dark:border-gray-800/50">
+                      <td className="py-2 px-3 text-gray-500">{r.row}</td>
+                      <td className="py-2 px-3 text-gray-900 dark:text-white">{r.email || "—"}</td>
+                      <td className="py-2 px-3 text-gray-900 dark:text-white">{r.name || "—"}</td>
+                      <td className="py-2 px-3">
+                        {r.status === "valid" && <CheckCircle2 className="w-4 h-4 text-green-500" />}
+                        {r.status === "invalid" && <XCircle className="w-4 h-4 text-red-500" />}
+                        {r.status === "warning" && <AlertCircle className="w-4 h-4 text-yellow-500" />}
                       </td>
-                      <td className="px-3 py-2 text-xs text-red-500">{r.errors.join(", ")}</td>
+                      <td className="py-2 px-3 text-xs text-red-500">
+                        {r.errors.join(", ") || t("importWizard.preview.noErrors")}
+                      </td>
                     </tr>
                   ))}
                 </tbody>
               </table>
             </div>
-          </div>
 
-          <div className="flex items-center justify-between">
-            <button onClick={() => setStep("upload")} className="rounded-lg border border-gray-300 px-4 py-2 text-sm dark:border-gray-700">{t("common.back")}</button>
-            <button onClick={doImport} disabled={validCount === 0}
-              className="flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50">
-              <Zap className="h-4 w-4" /> {dryRun ? t("importWizard.testImport") : t("importWizard.confirmImport")} ({validCount} {t("importWizard.users")})
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* ════ STEP: IMPORTING ════ */}
-      {step === "importing" && (
-        <div className={card + " text-center py-12"}>
-          <Loader2 className="mx-auto h-12 w-12 animate-spin text-blue-500" />
-          <p className="mt-4 text-sm font-medium">{t("importWizard.importing")}</p>
-          <div className="mx-auto mt-4 max-w-xs">
-            <div className="h-2 overflow-hidden rounded-full bg-gray-200 dark:bg-gray-700">
-              <div className="h-full rounded-full bg-blue-500 transition-all" style={{ width: `${progress}%` }} />
+            <div className="flex gap-2 mt-4">
+              <button
+                onClick={() => setStep("map")}
+                className="flex items-center gap-1.5 px-4 py-2 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-lg text-sm font-medium"
+              >
+                <ArrowLeft className="w-4 h-4" />
+                {t("importWizard.preview.back")}
+              </button>
+              <button
+                onClick={handleImport}
+                disabled={step === "importing"}
+                className="flex items-center gap-2 px-6 py-2 bg-green-600 hover:bg-green-700 disabled:opacity-50 text-white rounded-lg text-sm font-medium"
+              >
+                {step === "importing" ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
+                {step === "importing" ? t("importWizard.preview.importing") : t("importWizard.preview.confirmImport")}
+              </button>
             </div>
-            <p className="mt-1 text-xs text-gray-400">{progress}%</p>
           </div>
-        </div>
-      )}
+        )}
 
-      {/* ════ STEP: DONE ════ */}
-      {step === "done" && importResult && (
-        <div className="space-y-6">
-          <div className={`${card} text-center`}>
-            <CheckCircle2 className="mx-auto h-12 w-12 text-green-500" />
-            <h2 className="mt-4 text-lg font-bold">{t("importWizard.importComplete")}</h2>
-            <p className="text-sm text-gray-400">{dryRun ? t("importWizard.dryRunNote") : t("importWizard.successNote")}</p>
-          </div>
-          <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-            <div className={`${card} text-center`}><Users className="mx-auto h-5 w-5 text-blue-400" /><p className="mt-1 text-xl font-bold">{importResult.total}</p><p className="text-xs text-gray-400">{t("importWizard.totalProcessed")}</p></div>
-            <div className={`${card} text-center`}><CheckCircle2 className="mx-auto h-5 w-5 text-green-400" /><p className="mt-1 text-xl font-bold text-green-600">{importResult.imported}</p><p className="text-xs text-gray-400">{t("importWizard.imported")}</p></div>
-            <div className={`${card} text-center`}><XCircle className="mx-auto h-5 w-5 text-red-400" /><p className="mt-1 text-xl font-bold text-red-600">{importResult.failed}</p><p className="text-xs text-gray-400">{t("importWizard.failed")}</p></div>
-            <div className={`${card} text-center`}><RefreshCw className="mx-auto h-5 w-5 text-gray-400" /><p className="mt-1 text-xl font-bold">{importResult.duration_ms}ms</p><p className="text-xs text-gray-400">{t("importWizard.duration")}</p></div>
-          </div>
-          <div className="flex justify-center gap-3">
-            <button onClick={reset} className="flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700">
-              <Upload className="h-4 w-4" /> {t("importWizard.newImport")}
+        {step === "done" && result && (
+          <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-8 text-center">
+            <CheckCircle2 className="w-16 h-16 mx-auto mb-4 text-green-500" />
+            <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-2">
+              {t("importWizard.preview.importSuccess")}
+            </h3>
+
+            <div className="grid grid-cols-4 gap-3 mt-6 max-w-md mx-auto">
+              <StatCard label={t("importWizard.preview.totalRows")} value={result.total} color="blue" />
+              <StatCard label={t("importWizard.preview.imported")} value={result.imported} color="green" />
+              <StatCard label={t("importWizard.preview.failed")} value={result.failed} color="red" />
+              <StatCard label="Time" value={`${result.duration_ms}ms`} color="gray" />
+            </div>
+
+            <button
+              onClick={reset}
+              className="mt-6 flex items-center gap-2 px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium mx-auto"
+            >
+              <Upload className="w-4 h-4" />
+              {t("importWizard.title")}
             </button>
-            <button className="flex items-center gap-2 rounded-lg border border-gray-300 px-4 py-2 text-sm dark:border-gray-700">
-              <Download className="h-4 w-4" /> {t("importWizard.downloadReport")}
-            </button>
           </div>
-        </div>
-      )}
+        )}
+      </div>
+    </div>
+  );
+}
+
+function StatCard({ label, value, color }: { label: string; value: number | string; color: "blue" | "green" | "red" | "gray" }) {
+  const colors = {
+    blue: "bg-blue-50 text-blue-700 dark:bg-blue-950/30 dark:text-blue-300",
+    green: "bg-green-50 text-green-700 dark:bg-green-950/30 dark:text-green-300",
+    red: "bg-red-50 text-red-700 dark:bg-red-950/30 dark:text-red-300",
+    gray: "bg-gray-50 text-gray-700 dark:bg-gray-800 dark:text-gray-300",
+  };
+  return (
+    <div className={`rounded-lg p-3 text-center ${colors[color]}`}>
+      <div className="text-2xl font-bold">{value}</div>
+      <div className="text-xs mt-0.5 opacity-80">{label}</div>
     </div>
   );
 }
