@@ -1072,5 +1072,109 @@
       "statusEnrolled": "Enrolled",
       "statusExpired": "Grace Expired"
     }
+  },
+  "importMonitor": {
+    "title": "Import Job Monitor",
+    "description": "Monitor async user import jobs, track progress, and review errors",
+    "tabs": {
+      "jobs": "Jobs",
+      "errors": "Error Details",
+      "upload": "New Import"
+    },
+    "jobs": {
+      "jobId": "Job ID",
+      "status": "Status",
+      "progress": "Progress",
+      "imported": "Imported",
+      "failed": "Failed",
+      "total": "Total",
+      "startedAt": "Started",
+      "completedAt": "Completed",
+      "fileName": "File",
+      "duration": "Duration",
+      "noJobs": "No import jobs found",
+      "refresh": "Refresh",
+      "statusQueued": "Queued",
+      "statusRunning": "Running",
+      "statusCompleted": "Completed",
+      "statusFailed": "Failed",
+      "statusCancelled": "Cancelled"
+    },
+    "errors": {
+      "title": "Error Details",
+      "description": "Detailed errors for each import job",
+      "selectJob": "Select a job to view errors",
+      "row": "Row",
+      "email": "Email",
+      "error": "Error",
+      "noErrors": "No errors in this job",
+      "expandAll": "Expand All",
+      "collapseAll": "Collapse All"
+    },
+    "upload": {
+      "title": "New Async Import",
+      "description": "Upload a file to start a new async import job",
+      "dragDrop": "Drag and drop or click to browse",
+      "formats": "JSON or CSV, max 10MB",
+      "start": "Start Import",
+      "started": "Import job started successfully",
+      "jobCreated": "Job created with ID"
+    }
+  },
+  "enrollmentCampaign": {
+    "title": "Enrollment Campaigns",
+    "description": "Create and manage passkey/WebAuthn enrollment campaigns",
+    "tabs": {
+      "campaigns": "Campaigns",
+      "create": "Create Campaign"
+    },
+    "campaigns": {
+      "title": "Active Campaigns",
+      "name": "Campaign Name",
+      "targetGroup": "Target Group",
+      "method": "Enrollment Method",
+      "deadline": "Deadline",
+      "progress": "Progress",
+      "enrolled": "Enrolled",
+      "target": "Target",
+      "status": "Status",
+      "actions": "Actions",
+      "noCampaigns": "No campaigns found",
+      "statusActive": "Active",
+      "statusCompleted": "Completed",
+      "statusDraft": "Draft",
+      "statusExpired": "Expired",
+      "deleteCampaign": "Delete",
+      "viewDetails": "View Details"
+    },
+    "create": {
+      "title": "Create New Campaign",
+      "step1": "Select Target Group",
+      "step2": "Choose Method",
+      "step3": "Set Deadline",
+      "step4": "Review & Launch",
+      "campaignName": "Campaign Name",
+      "campaignNamePlaceholder": "e.g. Q3 Passkey Rollout",
+      "targetGroup": "Target User Group",
+      "selectGroup": "Select a group",
+      "allUsers": "All Users",
+      "noPasskey": "Users without Passkey",
+      "adminOnly": "Admins Only",
+      "custom": "Custom Group",
+      "method": "Enrollment Method",
+      "methodPasskey": "Passkey (Platform Authenticator)",
+      "methodWebauthn": "WebAuthn (Security Key)",
+      "methodBoth": "Both (User Choice)",
+      "deadline": "Campaign Deadline",
+      "deadlineDesc": "Users must enroll before this date",
+      "sendEmail": "Send enrollment invitation email",
+      "emailTemplate": "Email Template",
+      "launch": "Launch Campaign",
+      "launched": "Campaign launched successfully",
+      "back": "Back",
+      "next": "Next",
+      "reviewTitle": "Review Campaign Details",
+      "confirmLaunch": "Confirm and Launch"
+    }
   }
 }
