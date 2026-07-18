@@ -53,6 +53,7 @@ type Handler struct {
 	tapEngine              *tap.Engine
 	migrationEngine        *jitMigrationEngine
 	attrMapRepo            *attributeMappingRepo
+	delRepo                *delegationRepo
 	tapPolicyRepo          *repository.TAPPolicyRepository
 	capRepo                *repository.ConditionalAccessRepository
 	caeRepo                *repository.CAERepository
@@ -127,6 +128,11 @@ func (h *Handler) SetMigrationEngine(e *jitMigrationEngine) {
 // SetAttrMapRepo injects the attribute mapping repository.
 func (h *Handler) SetAttrMapRepo(r *attributeMappingRepo) {
 	h.attrMapRepo = r
+}
+
+// SetDelegationRepo injects the delegation repository.
+func (h *Handler) SetDelegationRepo(r *delegationRepo) {
+	h.delRepo = r
 }
 
 // globalMemMapRepo is a package-level reference for non-handler functions.
@@ -486,6 +492,8 @@ func (h *Handler) registerRoutes() {
 	h.mux.HandleFunc("/api/v1/auth/mfa/status", h.handleMFAStatus)
 	h.mux.HandleFunc("/api/v1/auth/consent", h.handleConsent)
 	h.mux.HandleFunc("/api/v1/auth/delegation", h.handleDelegation)
+	h.mux.HandleFunc("/api/v1/auth/delegations", h.handleDelegations)
+	h.mux.HandleFunc("/api/v1/auth/delegations/", h.handleDelegations)
 	h.mux.HandleFunc("/api/v1/auth/account-linking", h.handleAccountLinking)
 	h.mux.HandleFunc("/api/v1/auth/login-security", h.handleLoginSecurity)
 	h.mux.HandleFunc("/api/v1/auth/introspection/config", h.handleIntrospectionConfig)

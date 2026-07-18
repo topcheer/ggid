@@ -333,6 +333,13 @@ func main() {
 	}
 	handler.SetAttrMapRepo(attrMapRepo)
 
+	// Delegation repository.
+	delRepo := server.NewDelegationRepo(pool)
+	if err := delRepo.EnsureSchema(ctx); err != nil {
+		log.Printf("Delegation schema ensure error (non-fatal): %v", err)
+	}
+	handler.SetDelegationRepo(delRepo)
+
 	// Internal auth HMAC secrets for cross-service endpoints.
 	internalSecret := os.Getenv("INTERNAL_AUTH_SECRET")
 	internalPrevSecret := os.Getenv("INTERNAL_AUTH_PREV_SECRET")
