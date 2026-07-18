@@ -268,6 +268,8 @@
 | KB-254 | **Escalation engine + user preferences + in-app WebSocket** | backend | P1 | notifications | 4d |
 | KB-255 | **Security hardening: request body validation + payload sanitization + govulncheck** | backend | P0 | security-audit | 3d |
 | KB-256 | **Session invalidation on password change + CORS strict default + hijack detection wiring** | backend | P1 | security-audit | 2d |
+| KB-257 | **v1.0-beta release: fix P0s + load test baseline** | team | P0 | v1-release | 10d |
+| KB-258 | **v1.0-stable: 30-day production soak + security re-audit** | team | P1 | v1-release | 30d |
 | KB-038 | **Journey definition store** (PostgreSQL) | backend | P0 | identity-orchestration | 3d |
 | KB-039 | **Journey definition parser** (YAML JDL) | backend | P0 | identity-orchestration | 4d |
 | KB-040 | **Journey engine** (state machine executor) | backend | P0 | identity-orchestration | 5d |
@@ -408,6 +410,7 @@
 | Audit Tamper Protection & WORM Storage | DONE | docs/research/audit-tamper-protection-worm.md |
 | Multi-Channel Notification & Alerting | DONE | docs/research/notification-multi-channel-alerting.md |
 | Security Hardening Audit | DONE | docs/research/security-hardening-audit.md |
+| v1.0 Release Readiness Assessment | DONE | docs/research/v1-release-readiness.md |
 | OAuth Client Lifecycle Management (DCR) | NEXT | — |
 
 ---
