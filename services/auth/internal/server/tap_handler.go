@@ -119,7 +119,6 @@ func (h *Handler) tapIssue(w http.ResponseWriter, r *http.Request) {
 
 	if h.tapEngine == nil {
 		writeJSON(w, http.StatusOK, []interface{}{}); return
-		return
 	}
 
 	code, rec, err := h.tapEngine.Issue(r.Context(), req.UserID, "admin", req.Reason, ttl)
@@ -181,7 +180,6 @@ func (h *Handler) tapBatch(w http.ResponseWriter, r *http.Request) {
 
 	if h.tapEngine == nil {
 		writeJSON(w, http.StatusOK, []interface{}{}); return
-		return
 	}
 
 	resp := tapBatchResponse{}

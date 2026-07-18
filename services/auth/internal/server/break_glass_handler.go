@@ -120,7 +120,6 @@ func (h *Handler) handleBreakGlassActivate(w http.ResponseWriter, r *http.Reques
 
 	if h.breakGlassRepo == nil {
 		writeJSON(w, http.StatusOK, []interface{}{}); return
-		return
 	}
 
 	rec := &BreakGlassRecord{

@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useTranslations } from "@/lib/i18n";
+import { useConfirm } from "@/components/ConfirmDialog";
 import { authHeader } from "@/lib/auth-helpers";
 import {
   Shield, KeyRound, Lock, Save, Loader2, Plus, Trash2, Edit2,
@@ -67,6 +68,7 @@ const DEFAULT_LOCKOUT: LockoutPolicy = {
 
 export default function SecurityPolicyPage() {
   const t = useTranslations();
+  const { confirm } = useConfirm();
   const [activeTab, setActiveTab] = useState<TabId>("passwordPolicy");
 
   const tabs: { id: TabId; label: string; icon: typeof Shield }[] = [
@@ -457,11 +459,14 @@ function MethodPoliciesTab() {
   useEffect(() => { load(); }, [load]);
 
   const handleDelete = async (id: string) => {
-    if (!confirm(t("securityPolicy.methodPolicies.confirmDelete"))) return;
-    try {
-      await fetch(`${API_BASE}/api/v1/auth/method-policies/${id}`, {
-        method: "DELETE",
-        headers: { ...authHeader() },
+    confirm({
+      title: t("securityPolicy.methodPolicies.deletePolicy"),
+      description: t("securityPolicy.methodPolicies.confirmDelete"),
+      variant: "danger",
+      onConfirm: async () => {
+        await fetch(`${API_BASE}/api/v1/auth/method-policies/${id}`, {
+          method: "DELETE",
+          headers: { ...authHeader() },
       });
       setPolicies(policies.filter((p: any) => p.id !== id));
       setMsg({ type: "success", text: t("securityPolicy.methodPolicies.policyDeleted") });

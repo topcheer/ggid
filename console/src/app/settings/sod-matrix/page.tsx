@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useTranslations } from "@/lib/i18n";
+import { useConfirm } from "@/components/ConfirmDialog";
 import { authHeader } from "@/lib/auth-helpers";
 import {
   Grid3x3, List, Plus, Trash2, Loader2, Check, X,

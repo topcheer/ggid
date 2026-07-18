@@ -59,7 +59,6 @@ func (h *Handler) handleAttrMappings(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) attrMappingList(w http.ResponseWriter, r *http.Request) {
 	if h.attrMapRepo == nil {
 		writeJSON(w, http.StatusOK, []interface{}{}); return
-		return
 	}
 	tc, err := ggidtenant.FromContext(r.Context())
 	if err != nil {
@@ -80,7 +79,6 @@ func (h *Handler) attrMappingList(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) attrMappingCreate(w http.ResponseWriter, r *http.Request) {
 	if h.attrMapRepo == nil {
 		writeJSON(w, http.StatusOK, []interface{}{}); return
-		return
 	}
 	tc, err := ggidtenant.FromContext(r.Context())
 	if err != nil {
@@ -107,7 +105,6 @@ func (h *Handler) attrMappingCreate(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) attrMappingGet(w http.ResponseWriter, r *http.Request, id string) {
 	if h.attrMapRepo == nil {
 		writeJSON(w, http.StatusOK, []interface{}{}); return
-		return
 	}
 	m, err := h.attrMapRepo.Get(r.Context(), id)
 	if err != nil {
@@ -120,7 +117,6 @@ func (h *Handler) attrMappingGet(w http.ResponseWriter, r *http.Request, id stri
 func (h *Handler) attrMappingUpdate(w http.ResponseWriter, r *http.Request, id string) {
 	if h.attrMapRepo == nil {
 		writeJSON(w, http.StatusOK, []interface{}{}); return
-		return
 	}
 	var m AttributeMapping
 	if err := json.NewDecoder(r.Body).Decode(&m); err != nil {
@@ -142,7 +138,6 @@ func (h *Handler) attrMappingUpdate(w http.ResponseWriter, r *http.Request, id s
 func (h *Handler) attrMappingDelete(w http.ResponseWriter, r *http.Request, id string) {
 	if h.attrMapRepo == nil {
 		writeJSON(w, http.StatusOK, []interface{}{}); return
-		return
 	}
 	if err := h.attrMapRepo.Delete(r.Context(), id); err != nil {
 		writeError(w, http.StatusInternalServerError, "failed to delete mapping")
@@ -154,7 +149,6 @@ func (h *Handler) attrMappingDelete(w http.ResponseWriter, r *http.Request, id s
 func (h *Handler) attrMappingTest(w http.ResponseWriter, r *http.Request) {
 	if h.attrMapRepo == nil {
 		writeJSON(w, http.StatusOK, []interface{}{}); return
-		return
 	}
 	tc, err := ggidtenant.FromContext(r.Context())
 	if err != nil {

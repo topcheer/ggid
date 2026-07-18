@@ -13,7 +13,6 @@ import (
 func (s *HTTPServer) handleThreatIntel(w http.ResponseWriter, r *http.Request) {
 	if s.threatIntelRepo == nil {
 		writeJSON(w, http.StatusOK, []interface{}{}); return
-		return
 	}
 
 	path := strings.TrimPrefix(r.URL.Path, "/api/v1/audit/threat-intel")
