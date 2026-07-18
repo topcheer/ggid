@@ -742,6 +742,33 @@ func (s *AuthService) ResetFailedLogins(ctx context.Context, tenantID uuid.UUID,
 	s.rateLimiter.rdb.Del(ctx, key)
 }
 
+// ResetLoginAttempts clears ALL brute-force counters for a username across
+// all identifier variants (username, email, IP+username). Used by admin API.
+func (s *AuthService) ResetLoginAttempts(ctx context.Context, username string) error {
+	if s.rateLimiter == nil || s.rateLimiter.rdb == nil {
+		return nil
+	}
+	// Clear by username and by email patterns.
+	// Keys are ggid:lockout:{tenantID}:{identifier}.
+	// Since we don't know the tenantID here, we scan with pattern.
+	pattern := fmt.Sprintf("ggid:lockout:*:%s", username)
+	iter := s.rateLimiter.rdb.Scan(ctx, 0, pattern, 100).Iterator()
+	var keys []string
+	for iter.Next(ctx) {
+		keys = append(keys, iter.Val())
+	}
+	// Also try lowercase variant.
+	patternLower := fmt.Sprintf("ggid:lockout:*:%s", strings.ToLower(username))
+	iterLower := s.rateLimiter.rdb.Scan(ctx, 0, patternLower, 100).Iterator()
+	for iterLower.Next(ctx) {
+		keys = append(keys, iterLower.Val())
+	}
+	if len(keys) > 0 {
+		s.rateLimiter.rdb.Del(ctx, keys...)
+	}
+	return nil
+}
+
 // --- Magic Link (Passwordless Login) ---
 
 // IssueMagicLink generates a one-time magic link token for passwordless login.
