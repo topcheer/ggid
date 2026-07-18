@@ -135,6 +135,20 @@ func TraceMiddleware(next http.Handler) http.Handler {
 	})
 }
 
+// EnrichSpan adds user_id, tenant_id, and risk_score to the current span.
+// Call this after auth middleware has resolved the user identity.
+func EnrichSpan(ctx context.Context, userID, tenantID string, riskScore int) {
+	if userID != "" {
+		SetSpanAttribute(ctx, "user_id", userID)
+	}
+	if tenantID != "" {
+		SetSpanAttribute(ctx, "tenant_id", tenantID)
+	}
+	if riskScore >= 0 {
+		SetSpanAttribute(ctx, "risk_score", fmt.Sprintf("%d", riskScore))
+	}
+}
+
 // SpanFromContext extracts the current span from context.
 func SpanFromContext(ctx context.Context) *SpanContext {
 	if v, ok := ctx.Value(traceKey{}).(*SpanContext); ok {
