@@ -1,0 +1,96 @@
+{
+  "annotations": { "list": [] },
+  "title": "GGID Auth Metrics",
+  "uid": "ggid-auth",
+  "version": 1,
+  "timezone": "browser",
+  "schemaVersion": 39,
+  "refresh": "15s",
+  "tags": ["ggid", "auth"],
+  "panels": [
+    {
+      "id": 1,
+      "title": "Auth Attempts (req/s)",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 },
+      "targets": [
+        { "expr": "sum(rate(ggid_auth_attempts_total[1m]))", "legendFormat": "total" },
+        { "expr": "sum(rate(ggid_auth_attempts_total{result=\"success\"}[1m]))", "legendFormat": "success" },
+        { "expr": "sum(rate(ggid_auth_attempts_total{result=\"failure\"}[1m]))", "legendFormat": "failure" }
+      ],
+      "fieldConfig": { "defaults": { "unit": "reqps" } }
+    },
+    {
+      "id": 2,
+      "title": "Auth Success Rate (%)",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 6, "x": 12, "y": 0 },
+      "targets": [
+        { "expr": "sum(rate(ggid_auth_attempts_total{result=\"success\"}[5m])) / sum(rate(ggid_auth_attempts_total[5m])) * 100", "legendFormat": "success %" }
+      ],
+      "fieldConfig": { "defaults": { "unit": "percent", "thresholds": { "steps": [{"color":"red","value":null},{"color":"yellow","value":90},{"color":"green","value":95}] } } }
+    },
+    {
+      "id": 3,
+      "title": "Auth Failures by Reason",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 4 },
+      "targets": [
+        { "expr": "sum by (reason) (rate(ggid_auth_failures_total[5m]))", "legendFormat": "{{reason}}" }
+      ],
+      "fieldConfig": { "defaults": { "unit": "ops" } }
+    },
+    {
+      "id": 4,
+      "title": "Active Sessions",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 6, "x": 18, "y": 0 },
+      "targets": [
+        { "expr": "ggid_active_sessions", "legendFormat": "sessions" }
+      ],
+      "fieldConfig": { "defaults": { "unit": "short", "thresholds": { "steps": [{"color":"red","value":null},{"color":"green","value":1}] } } }
+    },
+    {
+      "id": 5,
+      "title": "Login Endpoint Latency (p50/p95/p99)",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 8 },
+      "targets": [
+        { "expr": "histogram_quantile(0.50, sum(rate(ggid_http_duration_seconds_bucket{path=\"/api/v1/auth/login\"}[5m])) by (le))", "legendFormat": "p50" },
+        { "expr": "histogram_quantile(0.95, sum(rate(ggid_http_duration_seconds_bucket{path=\"/api/v1/auth/login\"}[5m])) by (le))", "legendFormat": "p95" },
+        { "expr": "histogram_quantile(0.99, sum(rate(ggid_http_duration_seconds_bucket{path=\"/api/v1/auth/login\"}[5m])) by (le))", "legendFormat": "p99" }
+      ],
+      "fieldConfig": { "defaults": { "unit": "s" } }
+    },
+    {
+      "id": 6,
+      "title": "Auth Endpoints Status Codes",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 12 },
+      "targets": [
+        { "expr": "sum by (status) (rate(ggid_http_requests_total{path=~\"/api/v1/auth/.*\"}[1m]))", "legendFormat": "{{status}}" }
+      ],
+      "fieldConfig": { "defaults": { "unit": "reqps" } }
+    },
+    {
+      "id": 7,
+      "title": "Token Issuance Rate",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 16 },
+      "targets": [
+        { "expr": "sum(rate(ggid_http_requests_total{path=\"/oauth/token\",status=\"200\"}[5m]))", "legendFormat": "tokens/sec" }
+      ],
+      "fieldConfig": { "defaults": { "unit": "ops" } }
+    },
+    {
+      "id": 8,
+      "title": "Password Reset Requests",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 20 },
+      "targets": [
+        { "expr": "sum(rate(ggid_http_requests_total{path=~\"/api/v1/auth/password/.*\"}[5m]))", "legendFormat": "reset req/s" }
+      ],
+      "fieldConfig": { "defaults": { "unit": "ops" } }
+    }
+  ]
+}

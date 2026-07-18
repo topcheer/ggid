@@ -1,0 +1,113 @@
+{
+  "annotations": { "list": [] },
+  "title": "GGID API Performance",
+  "uid": "ggid-api-perf",
+  "version": 1,
+  "timezone": "browser",
+  "schemaVersion": 39,
+  "refresh": "15s",
+  "tags": ["ggid", "performance"],
+  "panels": [
+    {
+      "id": 1,
+      "title": "Request Rate by Path (top 10)",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 0 },
+      "targets": [
+        { "expr": "topk(10, sum by (path) (rate(ggid_http_requests_total[1m])))", "legendFormat": "{{path}}" }
+      ],
+      "fieldConfig": { "defaults": { "unit": "reqps" } }
+    },
+    {
+      "id": 2,
+      "title": "Overall p95 Latency",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 6, "x": 0, "y": 8 },
+      "targets": [
+        { "expr": "histogram_quantile(0.95, sum(rate(ggid_http_duration_seconds_bucket[5m])) by (le))", "legendFormat": "p95" }
+      ],
+      "fieldConfig": { "defaults": { "unit": "s", "thresholds": { "steps": [{"color":"green","value":null},{"color":"yellow","value":0.2},{"color":"red","value":0.5}] } } }
+    },
+    {
+      "id": 3,
+      "title": "Overall p99 Latency",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 6, "x": 6, "y": 8 },
+      "targets": [
+        { "expr": "histogram_quantile(0.99, sum(rate(ggid_http_duration_seconds_bucket[5m])) by (le))", "legendFormat": "p99" }
+      ],
+      "fieldConfig": { "defaults": { "unit": "s", "thresholds": { "steps": [{"color":"green","value":null},{"color":"yellow","value":0.5},{"color":"red","value":1.0}] } } }
+    },
+    {
+      "id": 4,
+      "title": "Error Rate (5xx)",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 6, "x": 12, "y": 8 },
+      "targets": [
+        { "expr": "sum(rate(ggid_http_requests_total{status=~\"5..\"}[5m])) / sum(rate(ggid_http_requests_total[5m])) * 100", "legendFormat": "errors %" }
+      ],
+      "fieldConfig": { "defaults": { "unit": "percent", "thresholds": { "steps": [{"color":"green","value":null},{"color":"yellow","value":1},{"color":"red","value":5}] } } }
+    },
+    {
+      "id": 5,
+      "title": "Cache Hit Rate",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 6, "x": 18, "y": 8 },
+      "targets": [
+        { "expr": "sum(rate(ggid_http_requests_total{path=~\"/api/v1/.*s\",status=\"200\"}[5m]))", "legendFormat": "list req/s" }
+      ],
+      "fieldConfig": { "defaults": { "unit": "reqps" } }
+    },
+    {
+      "id": 6,
+      "title": "Latency by Endpoint (p95)",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 12 },
+      "targets": [
+        { "expr": "topk(10, histogram_quantile(0.95, sum by (path, le) (rate(ggid_http_duration_seconds_bucket[5m]))))", "legendFormat": "{{path}} p95" }
+      ],
+      "fieldConfig": { "defaults": { "unit": "s" } }
+    },
+    {
+      "id": 7,
+      "title": "Request Size (bytes)",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 12 },
+      "targets": [
+        { "expr": "histogram_quantile(0.95, sum(rate(ggid_http_request_size_bytes_bucket[5m])) by (le))", "legendFormat": "req p95" },
+        { "expr": "histogram_quantile(0.95, sum(rate(ggid_http_response_size_bytes_bucket[5m])) by (le))", "legendFormat": "resp p95" }
+      ],
+      "fieldConfig": { "defaults": { "unit": "bytes" } }
+    },
+    {
+      "id": 8,
+      "title": "Go Goroutines",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 8, "x": 0, "y": 20 },
+      "targets": [
+        { "expr": "ggid_go_goroutines", "legendFormat": "goroutines" }
+      ],
+      "fieldConfig": { "defaults": { "unit": "short" } }
+    },
+    {
+      "id": 9,
+      "title": "Memory Allocated (MB)",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 8, "x": 8, "y": 20 },
+      "targets": [
+        { "expr": "ggid_go_memory_alloc_bytes / 1024 / 1024", "legendFormat": "alloc MB" }
+      ],
+      "fieldConfig": { "defaults": { "unit": "MB" } }
+    },
+    {
+      "id": 10,
+      "title": "GC Duration (s)",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 8, "x": 16, "y": 20 },
+      "targets": [
+        { "expr": "ggid_go_gc_duration_seconds", "legendFormat": "GC" }
+      ],
+      "fieldConfig": { "defaults": { "unit": "s" } }
+    }
+  ]
+}
