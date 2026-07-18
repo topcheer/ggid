@@ -439,6 +439,12 @@ func (s *HTTPServer) handleAssignRole(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Authorization: only admins can assign roles.
+	if !isAdminRequest(r) {
+		writeJSONError(w, http.StatusForbidden, "admin role required to assign roles")
+		return
+	}
+
 	var req struct {
 		RoleID string `json:"role_id"`
 		UserID string `json:"user_id"`
@@ -1970,4 +1976,14 @@ func (s *HTTPServer) handleDecisionLog(w http.ResponseWriter, r *http.Request) {
 		"deny_count":     totalDeny,
 		"decisions":      filtered,
 	})
+}
+
+// isAdminRequest checks if the request comes from an admin user.
+// Checks X-User-Role header (set by gateway JWT middleware) or X-Is-Admin flag.
+func isAdminRequest(r *http.Request) bool {
+	role := r.Header.Get("X-User-Role")
+	if role == "admin" || role == "superadmin" {
+		return true
+	}
+	return r.Header.Get("X-Is-Admin") == "true"
 }
