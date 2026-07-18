@@ -1628,5 +1628,81 @@
       "noOutput": "Click Evaluate to see mapped result",
       "appliedRules": "Rules Applied"
     }
+  },
+  "passwordStrength": {
+    "title": "Password Strength Evaluator",
+    "description": "Real-time password analysis with zxcvbn scoring and policy configuration",
+    "tabs": {
+      "tester": "Password Tester",
+      "config": "Policy Config"
+    },
+    "tester": {
+      "title": "Password Strength Tester",
+      "enterPassword": "Enter a password to evaluate",
+      "score": "Score",
+      "crackTime": "Estimated Crack Time",
+      "guesses": "Guesses",
+      "entropy": "Entropy",
+      "suggestions": "Improvement Suggestions",
+      "addPattern": "Add more characters",
+      "addNumbers": "Add numbers",
+      "addSymbols": "Add symbols",
+      "useUncommon": "Avoid common words and patterns",
+      "avoidRepeats": "Avoid repeated characters",
+      "avoidSequences": "Avoid sequences (abc, 123)",
+      "useLonger": "Use 12+ characters",
+      "score0": "Very Weak",
+      "score1": "Weak",
+      "score2": "Fair",
+      "score3": "Strong",
+      "score4": "Very Strong",
+      "patternDetected": "Pattern Detected",
+      "warning": "Warning",
+      "noWarning": "No warnings",
+      "noSuggestions": "No suggestions — great password!"
+    },
+    "config": {
+      "title": "Password Strength Policy",
+      "minScore": "Minimum Score Required",
+      "minScoreDesc": "Reject passwords below this zxcvbn score (0-4)",
+      "dictionaryCheck": "Dictionary Check",
+      "dictionaryCheckDesc": "Check password against common dictionaries",
+      "customBlocklist": "Custom Blocklist Words",
+      "customBlocklistDesc": "One word per line — passwords containing these will be rejected",
+      "customBlocklistPlaceholder": "company\npassword\nadmin\nwelcome",
+      "breachCheck": "Breach Database Check",
+      "breachCheckDesc": "Check against HIBP breach database",
+      "save": "Save Policy",
+      "saved": "Password strength policy saved",
+      "testBlocklist": "Test Against Blocklist"
+    }
+  },
+  "userTimeline": {
+    "riskOverlay": "Risk Events",
+    "riskOverlayDesc": "Overlay ITDR detections, CAE evaluations, and policy denials on the timeline",
+    "showRiskEvents": "Show Risk Events",
+    "eventTypes": {
+      "itdr": "ITDR Detection",
+      "cae": "CAE Evaluation",
+      "policyDeny": "Policy Denied",
+      "login": "Login",
+      "logout": "Logout",
+      "tokenRefresh": "Token Refresh",
+      "passwordChange": "Password Change",
+      "mfaVerify": "MFA Verification",
+      "roleAssign": "Role Assignment"
+    },
+    "severity": {
+      "info": "Info",
+      "warning": "Warning",
+      "error": "Error",
+      "critical": "Critical"
+    },
+    "riskLevel": "Risk Level",
+    "details": "Details",
+    "noEvents": "No timeline events found",
+    "filterAll": "All Events",
+    "filterRiskOnly": "Risk Only",
+    "loadMore": "Load More"
   }
 }
