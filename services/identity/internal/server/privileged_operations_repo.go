@@ -100,16 +100,14 @@ func (r *privilegedOpRepo) List(ctx context.Context, tenantID uuid.UUID, operato
 	             ip_address, user_agent, before_perms, after_perms, metadata, timestamp
 	      FROM privileged_operations WHERE tenant_id = $1`
 	args := []any{tenantID}
-	argIdx := 2
 
 	if operatorID != "" {
-		q += " AND operator_id = $" + intToStr(argIdx)
 		args = append(args, operatorID)
-		argIdx++
+		q += " AND operator_id = $" + intToStr(len(args))
 	}
 	if action != "" {
-		q += " AND action = $" + intToStr(argIdx)
 		args = append(args, action)
+		q += " AND action = $" + intToStr(len(args))
 	}
 	q += " ORDER BY timestamp DESC LIMIT " + intToStr(limit)
 
