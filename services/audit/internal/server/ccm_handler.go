@@ -10,6 +10,15 @@ import (
 func (s *HTTPServer) handleCCM(w http.ResponseWriter, r *http.Request) {
 	path := r.URL.Path
 
+	// Known CCM paths.
+	knownPaths := map[string]bool{
+		"/api/v1/audit/ccm/results":  true,
+		"/api/v1/audit/ccm/history":  true,
+		"/api/v1/audit/ccm/run":      true,
+		"/api/v1/audit/ccm/scan":     true,
+		"/api/v1/audit/ccm/summary":  true,
+	}
+
 	switch {
 	case path == "/api/v1/audit/ccm/results" && r.Method == http.MethodGet:
 		s.ccmResults(w, r)
@@ -19,6 +28,9 @@ func (s *HTTPServer) handleCCM(w http.ResponseWriter, r *http.Request) {
 		s.ccmRun(w, r)
 	case path == "/api/v1/audit/ccm/summary" && r.Method == http.MethodGet:
 		s.ccmSummary(w, r)
+	case knownPaths[path]:
+		// Known path but wrong HTTP method.
+		errors.WriteSimpleAPIError(w, http.StatusMethodNotAllowed, "METHOD_NOT_ALLOWED", "method not allowed")
 	default:
 		errors.WriteSimpleAPIError(w, http.StatusNotFound, "NOT_FOUND", "unknown CCM endpoint: "+path)
 	}
