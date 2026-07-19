@@ -2,6 +2,7 @@ package router
 
 import (
 	"encoding/json"
+	"io"
 	"net/http"
 	"strings"
 	"time"
@@ -151,10 +152,27 @@ func (gw *Gateway) handleSystemStatus(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// System initialized state is tracked by the quickstartInitialized flag,
-	// which is set to true when bootstrap or quickstart completes successfully.
-	// On gateway restart, it defaults to false until the next bootstrap call.
+	// Determine initialization state by probing auth service.
+	// If a login attempt returns "invalid credentials" (not "no tenant context"),
+	// it means users exist → system is initialized.
 	initialized := quickstartInitialized
+	if !initialized {
+		authURL := gw.serviceURL("/api/v1/auth")
+		client := &http.Client{Timeout: 3 * time.Second}
+		tenantID := uuid.MustParse("00000000-0000-0000-0000-000000000001")
+		loginBody := `{"username":"__setup_probe__","password":"__nonexistent__"}`
+		req, _ := http.NewRequest("POST", authURL+"/api/v1/auth/login", strings.NewReader(loginBody))
+		req.Header.Set("Content-Type", "application/json")
+		req.Header.Set("X-Tenant-ID", tenantID.String())
+		if resp, err := client.Do(req); err == nil {
+			body, _ := io.ReadAll(resp.Body)
+			resp.Body.Close()
+			// "invalid credentials" = users exist in DB = initialized
+			if resp.StatusCode == 401 && strings.Contains(string(body), "invalid") {
+				initialized = true
+			}
+		}
+	}
 
 	status := SystemStatus{
 		Initialized: initialized,

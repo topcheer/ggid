@@ -76,7 +76,13 @@ export default function LdapSyncConfigPage() {
         fetch("/api/v1/identity/ldap/sync-status", { headers: { ...authHeader(), "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } }).catch(() => null),
         fetch("/api/v1/identity/ldap/sync-history", { headers: { ...authHeader(), "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } }).catch(() => null),
       ]);
-      if (configRes?.ok) { const d = await configRes.json(); const c = d.config || d; if (c) setConfig(prev => ({ ...prev, ...c })); }
+      if (configRes?.ok) { const d = await configRes.json(); const c = d.config || d; if (c) {
+        // Ensure attribute_mapping is always an array of {ldap_attr, local_attr}
+        if (c.attribute_mapping && !Array.isArray(c.attribute_mapping)) {
+          c.attribute_mapping = Object.entries(c.attribute_mapping).map(([ldap_attr, local_attr]) => ({ ldap_attr, local_attr: local_attr as string }));
+        }
+        setConfig(prev => ({ ...prev, ...c }));
+      } }
       if (statusRes?.ok) { const d = await statusRes.json(); setSyncStatus(d); }
       if (historyRes?.ok) { const d = await historyRes.json(); setHistory(d.history || []); }
     } catch { setError("Failed to load LDAP configuration"); }
@@ -154,8 +160,8 @@ export default function LdapSyncConfigPage() {
               <span className={"inline-block mt-1 px-2 py-0.5 rounded text-xs font-medium " + (statusColors[syncStatus?.status || "idle"] || statusColors.idle)}>{syncStatus?.status || "idle"}</span>
             </div>
           </div>
-          <button onClick={triggerSync} disabled={syncing || syncStatus?.status || "idle" === "syncing"} aria-label="Trigger LDAP sync" className="px-4 py-2 rounded-lg bg-blue-600 text-white text-sm font-medium flex items-center gap-2 disabled:opacity-50">
-            {syncStatus?.status || "idle" === "syncing" ? <Loader2 className="w-4 h-4 animate-spin" /> : <Play className="w-4 h-4" />} Sync Now
+          <button onClick={triggerSync} disabled={syncing || (syncStatus?.status || "idle") === "syncing"} aria-label="Trigger LDAP sync" className="px-4 py-2 rounded-lg bg-blue-600 text-white text-sm font-medium flex items-center gap-2 disabled:opacity-50">
+            {(syncStatus?.status || "idle") === "syncing" ? <Loader2 className="w-4 h-4 animate-spin" /> : <Play className="w-4 h-4" />} Sync Now
           </button>
         </div>
         {syncStatus?.last_sync && (
@@ -204,7 +210,7 @@ export default function LdapSyncConfigPage() {
       {/* Attribute Mapping */}
       <div className="rounded-lg border dark:border-gray-800 p-4">
         <h3 className="text-sm font-semibold mb-2">Attribute Mapping</h3>
-        <div className="overflow-x-auto"><table className="w-full text-sm"><thead className="bg-gray-50 dark:bg-gray-900/50"><tr><th className="px-3 py-2 text-left font-medium">LDAP Attribute</th><th className="px-3 py-2 text-left font-medium">Local Attribute</th></tr></thead><tbody className="divide-y dark:divide-gray-800">{config.attribute_mapping.map((m: any, i: number) => (<tr key={i}><td className="px-3 py-2"><input aria-label="Input field" type="text" value={m.ldap_attr} onChange={(e) => { const a = [...config.attribute_mapping]; a[i] = { ...m, ldap_attr: e.target.value }; setConfig({ ...config, attribute_mapping: a }); }} className="w-full px-2 py-1 rounded border dark:border-gray-700 dark:bg-gray-900 text-xs font-mono" /></td><td className="px-3 py-2"><input type="text" value={m.local_attr} onChange={(e) => { const a = [...config.attribute_mapping]; a[i] = { ...m, local_attr: e.target.value }; setConfig({ ...config, attribute_mapping: a }); }} className="w-full px-2 py-1 rounded border dark:border-gray-700 dark:bg-gray-900 text-xs font-mono" /></td></tr>))}</tbody></table></div>
+        <div className="overflow-x-auto"><table className="w-full text-sm"><thead className="bg-gray-50 dark:bg-gray-900/50"><tr><th className="px-3 py-2 text-left font-medium">LDAP Attribute</th><th className="px-3 py-2 text-left font-medium">Local Attribute</th></tr></thead><tbody className="divide-y dark:divide-gray-800">{(Array.isArray(config.attribute_mapping) ? config.attribute_mapping : []).map((m: any, i: number) => (<tr key={i}><td className="px-3 py-2"><input aria-label="Input field" type="text" value={m.ldap_attr} onChange={(e) => { const a = [...config.attribute_mapping]; a[i] = { ...m, ldap_attr: e.target.value }; setConfig({ ...config, attribute_mapping: a }); }} className="w-full px-2 py-1 rounded border dark:border-gray-700 dark:bg-gray-900 text-xs font-mono" /></td><td className="px-3 py-2"><input type="text" value={m.local_attr} onChange={(e) => { const a = [...config.attribute_mapping]; a[i] = { ...m, local_attr: e.target.value }; setConfig({ ...config, attribute_mapping: a }); }} className="w-full px-2 py-1 rounded border dark:border-gray-700 dark:bg-gray-900 text-xs font-mono" /></td></tr>))}</tbody></table></div>
       </div>
 
       {/* Sync History */}
