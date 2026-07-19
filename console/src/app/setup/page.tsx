@@ -107,7 +107,7 @@ export default function SetupPage() {
       <div className="w-full max-w-lg">
         {/* Logo */}
         <div className="text-center mb-8">
-          <div className="inline-flex h-12 w-12 items-center justify-center rounded-xl bg-indigo-600 text-white font-bold text-xl mb-3">G</div>
+          <div className="inline-flex h-12 w-12 items-center justify-center rounded-xl bg-brand-600 text-white font-bold text-xl mb-3">G</div>
           <h1 className="text-2xl font-bold text-slate-900 dark:text-white">GGID Setup</h1>
           <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">Initialize your identity platform</p>
         </div>
@@ -116,7 +116,7 @@ export default function SetupPage() {
         <div className="flex items-center justify-center gap-2 mb-8">
           {[1, 2, 3, 4].map((s) => (
             <div key={s} className={`h-2 w-12 rounded-full transition-colors ${
-              s <= step ? "bg-indigo-600" : "bg-slate-200 dark:bg-slate-700"
+              s <= step ? "bg-brand-600" : "bg-slate-200 dark:bg-slate-700"
             }`} />
           ))}
         </div>
@@ -137,7 +137,7 @@ export default function SetupPage() {
                 <input
                   type="text" value={form.orgName} onChange={(e) => update("orgName", e.target.value)}
                   placeholder="Acme Corporation"
-                  className="w-full rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 px-4 py-2.5 text-sm text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                  className="w-full rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 px-4 py-2.5 text-sm text-slate-900 dark:text-white focus:ring-2 focus:ring-brand-500 focus:border-transparent"
                   autoFocus
                 />
               </div>
@@ -153,7 +153,7 @@ export default function SetupPage() {
                 <input
                   type="text" value={form.adminUsername} onChange={(e) => update("adminUsername", e.target.value)}
                   placeholder="superadmin"
-                  className="w-full rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 px-4 py-2.5 text-sm text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                  className="w-full rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 px-4 py-2.5 text-sm text-slate-900 dark:text-white focus:ring-2 focus:ring-brand-500 focus:border-transparent"
                   autoFocus
                 />
               </div>
@@ -162,7 +162,7 @@ export default function SetupPage() {
                 <input
                   type="email" value={form.adminEmail} onChange={(e) => update("adminEmail", e.target.value)}
                   placeholder="admin@acme.com"
-                  className="w-full rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 px-4 py-2.5 text-sm text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                  className="w-full rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 px-4 py-2.5 text-sm text-slate-900 dark:text-white focus:ring-2 focus:ring-brand-500 focus:border-transparent"
                 />
               </div>
             </div>
@@ -176,7 +176,7 @@ export default function SetupPage() {
                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">Password</label>
                 <input
                   type="password" value={form.adminPassword} onChange={(e) => update("adminPassword", e.target.value)}
-                  className="w-full rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 px-4 py-2.5 text-sm text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                  className="w-full rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 px-4 py-2.5 text-sm text-slate-900 dark:text-white focus:ring-2 focus:ring-brand-500 focus:border-transparent"
                   autoFocus
                 />
               </div>
@@ -210,7 +210,7 @@ export default function SetupPage() {
                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">Confirm Password</label>
                 <input
                   type="password" value={form.confirmPassword} onChange={(e) => update("confirmPassword", e.target.value)}
-                  className={`w-full rounded-lg border px-4 py-2.5 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-transparent ${
+                  className={`w-full rounded-lg border px-4 py-2.5 text-sm focus:ring-2 focus:ring-brand-500 focus:border-transparent ${
                     form.confirmPassword && form.confirmPassword !== form.adminPassword
                       ? "border-red-400 dark:border-red-800 bg-red-50 dark:bg-red-900/20 text-slate-900 dark:text-white"
                       : "border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-slate-900 dark:text-white"
@@ -220,7 +220,7 @@ export default function SetupPage() {
                   <p className="mt-1 text-xs text-red-500">Passwords do not match</p>
                 )}
               </div>
-              {loading && <p className="text-sm text-indigo-600 dark:text-indigo-400">Initializing system...</p>}
+              {loading && <p className="text-sm text-brand-600 dark:text-brand-400">Initializing system...</p>}
             </div>
           )}
 
@@ -252,7 +252,7 @@ export default function SetupPage() {
               <button
                 onClick={next}
                 disabled={loading}
-                className="flex-1 px-4 py-2.5 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex-1 px-4 py-2.5 text-sm font-medium text-white bg-brand-600 hover:bg-brand-700 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {loading ? "Initializing..." : step === 3 ? "Complete Setup" : "Continue"}
               </button>
@@ -262,7 +262,7 @@ export default function SetupPage() {
           {step === 4 && (
             <button
               onClick={finish}
-              className="w-full px-4 py-2.5 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg transition-colors"
+              className="w-full px-4 py-2.5 text-sm font-medium text-white bg-brand-600 hover:bg-brand-700 rounded-lg transition-colors"
             >
               Go to Dashboard
             </button>
