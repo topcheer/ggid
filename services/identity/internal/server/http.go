@@ -764,7 +764,7 @@ func (h *HTTPHandler) deleteUser(ctx context.Context, userID uuid.UUID, w http.R
 		writeServiceError(w, err)
 		return
 	}
-	writeJSON(w, http.StatusOK, map[string]string{"status": "deleted"})
+	writeJSON(w, http.StatusOK, map[string]string{"status": "deleted", "id": userID.String()})
 
 	// Invalidate user list cache.
 	globalTTLCache.Invalidate("users:default:")
@@ -1185,6 +1185,6 @@ func (h *HTTPHandler) handleExportUsers(w http.ResponseWriter, r *http.Request) 
 
 // writeJSONError writes a standard JSON error response.
 func writeJSONError(w http.ResponseWriter, status int, msg string) {
-	writeJSON(w, status, map[string]string{"error": msg})
+	ggiderrors.WriteSimpleAPIError(w, status, httpStatusToCode(status), msg)
 }
 
