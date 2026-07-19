@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Shield, ArrowLeft, KeyRound, Building2, AlertCircle, Loader2, Fingerprint, Eye, EyeOff } from "lucide-react";
+import { Shield, ArrowLeft, KeyRound, Building2, AlertCircle, CheckCircle2, Loader2, Fingerprint, Eye, EyeOff } from "lucide-react";
 import { API_BASE_URL, DEFAULT_TENANT_ID } from "@/lib/api-config";
 import { useTranslations } from "@/lib/i18n";
 import { authHeader, isAuthenticated } from "@/lib/auth-helpers";
@@ -345,17 +345,44 @@ export default function LoginPage() {
   // Only show social login buttons that are configured via API
   const socialButtons = connectorsLoaded && connectors.length > 0 ? connectors : [];
 
-  // Check for tenant override in URL params (multi-tenant scenario)
-  const [showTenant, setShowTenant] = useState(false);
+  // Tenant field: shown by default for multi-tenant, can be hidden via ?single_tenant=1
+  const [showTenant, setShowTenant] = useState(true);
+  const [tenantError, setTenantError] = useState("");
+  const [tenantResolved, setTenantResolved] = useState(false);
   useEffect(() => {
     if (typeof window !== "undefined") {
       const params = new URLSearchParams(window.location.search);
       if (params.get("tenant")) {
-        setShowTenant(true);
         setTenantSlug(params.get("tenant") || DEFAULT_TENANT_ID);
+      }
+      // Single-tenant deployments can hide the field
+      if (params.get("single_tenant") === "1") {
+        setShowTenant(false);
       }
     }
   }, []);
+
+  // Auto-resolve tenant slug to verify it exists
+  const resolveTenant = async (slug: string) => {
+    if (!slug || slug === DEFAULT_TENANT_ID) {
+      setTenantError("");
+      setTenantResolved(false);
+      return;
+    }
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/v1/tenants/resolve?slug=${encodeURIComponent(slug)}`);
+      if (res.ok) {
+        setTenantError("");
+        setTenantResolved(true);
+      } else {
+        setTenantError("Organization not found");
+        setTenantResolved(false);
+      }
+    } catch {
+      setTenantError("");
+      setTenantResolved(false);
+    }
+  };
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-blue-50 via-white to-purple-50 dark:from-gray-950 dark:via-gray-900 dark:to-blue-950">
@@ -409,7 +436,7 @@ export default function LoginPage() {
             )}
 
           <form onSubmit={handleCredentials}>
-            {/* Tenant field - hidden by default, only shown via ?tenant=xxx URL param */}
+            {/* Tenant field — shown by default for multi-tenant */}
             {showTenant && (
             <div className="mb-4">
               <label className="mb-1 block text-sm font-medium">{t("login.tenant")}</label>
@@ -419,11 +446,19 @@ export default function LoginPage() {
                   type="text"
                   aria-label={t("login.tenant")}
                   value={tenantSlug}
-                  onChange={(e) => setTenantSlug(e.target.value)}
-                  className="w-full rounded-lg border border-gray-300 py-2 pl-9 pr-3 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
+                  onChange={(e) => { setTenantSlug(e.target.value); setTenantResolved(false); setTenantError(""); }}
+                  onBlur={(e) => resolveTenant(e.target.value)}
+                  className={`w-full rounded-lg border py-2 pl-9 pr-9 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 focus:outline-none focus:ring-1 ${
+                    tenantError ? "border-red-400 focus:border-red-500 focus:ring-red-500"
+                    : tenantResolved ? "border-green-400 focus:border-green-500 focus:ring-green-500"
+                    : "border-gray-300 focus:border-brand-500 focus:ring-brand-500"
+                  }`}
                   placeholder={t("login.tenantPlaceholder")}
                 />
+                {tenantResolved && <CheckCircle2 className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-green-500" />}
+                {tenantError && <AlertCircle className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-red-500" />}
               </div>
+              {tenantError && <p className="mt-1 text-xs text-red-500">{tenantError}</p>}
             </div>
             )}
 
