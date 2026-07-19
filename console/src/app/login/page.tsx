@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Shield, ArrowLeft, KeyRound, Building2, AlertCircle, CheckCircle2, Loader2, Fingerprint, Eye, EyeOff } from "lucide-react";
-import { API_BASE_URL, DEFAULT_TENANT_ID } from "@/lib/api-config";
+import { API_BASE_URL, DEFAULT_TENANT_ID, getEffectiveTenantSlug, resolveTenantSlug } from "@/lib/api-config";
 import { useTranslations } from "@/lib/i18n";
 import { authHeader, isAuthenticated } from "@/lib/auth-helpers";
 import { offerPasskeyUpgrade, syncSignalAfterLogin } from "@/lib/webauthn-conditional";
@@ -37,10 +37,27 @@ export default function LoginPage() {
   const [connectors, setConnectors] = useState<SocialConnector[]>([]);
   const [connectorsLoaded, setConnectorsLoaded] = useState(false);
   const [passkeySupported, setPasskeySupported] = useState(false);
-  const [tenantSlug, setTenantSlug] = useState(DEFAULT_TENANT_ID);
+  const [tenantSlug, setTenantSlug] = useState("");
+  const [resolvedTenantId, setResolvedTenantId] = useState(DEFAULT_TENANT_ID);
   const [pwFeedback, setPwFeedback] = useState("");
   const [systemInitialized, setSystemInitialized] = useState<boolean | null>(null);
   const [initUserCount, setInitUserCount] = useState(0);
+
+  // Extract tenant from subdomain on mount
+  useEffect(() => {
+    const slug = getEffectiveTenantSlug();
+    if (slug) {
+      setTenantSlug(slug);
+      resolveTenantSlug(slug).then((id) => {
+        if (id) {
+          setResolvedTenantId(id);
+          localStorage.setItem("ggid_tenant_id", id);
+        }
+      });
+    } else {
+      setResolvedTenantId(DEFAULT_TENANT_ID);
+    }
+  }, []);
 
   // Check for WebAuthn / Passkey support and attempt conditional mediation (autofill)
   useEffect(() => {
@@ -68,7 +85,7 @@ export default function LoginPage() {
   // Load social connectors from API
   useEffect(() => {
     fetch(`${API_BASE}/api/v1/auth/social/connectors`, {
-      headers: { ...authHeader(), "X-Tenant-ID": tenantSlug || DEFAULT_TENANT_ID },
+      headers: { ...authHeader(), "X-Tenant-ID": resolvedTenantId },
     })
       .then((r) => (r.ok ? r.json() : null))
       .then((data) => {
@@ -114,7 +131,7 @@ export default function LoginPage() {
     try {
       const resp = await fetch(`${API_BASE}/api/v1/auth/login`, {
         method: "POST",
-        headers: { ...authHeader(), "Content-Type": "application/json", "X-Tenant-ID": tenantSlug || DEFAULT_TENANT_ID },
+        headers: { ...authHeader(), "Content-Type": "application/json", "X-Tenant-ID": resolvedTenantId },
         body: JSON.stringify({ username, password }),
       });
       const data = await resp.json();
@@ -177,7 +194,7 @@ export default function LoginPage() {
 
       // Fetch dynamic permissions for sidebar (non-blocking, cached in localStorage)
       fetch(`${API_BASE}/api/v1/me/permissions`, {
-        headers: { Authorization: `Bearer ${data.access_token}`, "X-Tenant-ID": DEFAULT_TENANT_ID },
+        headers: { Authorization: `Bearer ${data.access_token}`, "X-Tenant-ID": resolvedTenantId },
       })
         .then(r => r.ok ? r.json() : null)
         .then(d => {
@@ -251,7 +268,7 @@ export default function LoginPage() {
       if (useBackupCode) {
         const resp = await fetch(`${API_BASE}/api/v1/auth/mfa/login`, {
           method: "POST",
-          headers: { ...authHeader(), "Content-Type": "application/json", "X-Tenant-ID": tenantSlug || DEFAULT_TENANT_ID },
+          headers: { ...authHeader(), "Content-Type": "application/json", "X-Tenant-ID": resolvedTenantId },
           body: JSON.stringify({ mfa_token: mfaToken, backup_code: backupCode.trim() }),
         });
         const data = await resp.json();
@@ -273,7 +290,7 @@ export default function LoginPage() {
 
       const resp = await fetch(`${API_BASE}/api/v1/auth/mfa/verify`, {
         method: "POST",
-        headers: { ...authHeader(), "Content-Type": "application/json", "X-Tenant-ID": tenantSlug || DEFAULT_TENANT_ID },
+        headers: { ...authHeader(), "Content-Type": "application/json", "X-Tenant-ID": resolvedTenantId },
         body: JSON.stringify({ mfa_token: mfaToken, code: totpCode }),
       });
       const data = await resp.json();
@@ -329,7 +346,7 @@ export default function LoginPage() {
     setError("");
     try {
       const resp = await fetch(`${API_BASE}/api/v1/auth/social/${provider}?redirect_uri=/`, {
-        headers: { ...authHeader(), "X-Tenant-ID": tenantSlug || DEFAULT_TENANT_ID },
+        headers: { ...authHeader(), "X-Tenant-ID": resolvedTenantId },
       });
       const data = await resp.json();
       if (data.auth_url) {

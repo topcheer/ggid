@@ -4,7 +4,16 @@ import { useEffect, useState, useCallback } from "react";
 import { API_BASE_URL, DEFAULT_TENANT_ID } from "./api-config";
 
 const API_BASE = API_BASE_URL;
-const TENANT_ID = DEFAULT_TENANT_ID;
+
+/** Get tenant ID from localStorage (set by subdomain resolver) or default */
+function getTenantId(): string {
+  if (typeof window !== "undefined") {
+    return localStorage.getItem("ggid_tenant_id") || DEFAULT_TENANT_ID;
+  }
+  return DEFAULT_TENANT_ID;
+}
+
+const TENANT_ID = typeof window !== "undefined" ? getTenantId() : DEFAULT_TENANT_ID;
 
 // Structured error from the GGID API
 export interface ApiError extends Error {

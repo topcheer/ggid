@@ -11,6 +11,84 @@ export const DEFAULT_TENANT_ID =
   process.env.NEXT_PUBLIC_TENANT_ID ||
   "00000000-0000-0000-0000-000000000001";
 
+/**
+ * Extract tenant slug from subdomain.
+ * Pattern: <slug>.ggid-console.iot2.win → slug
+ * - default.ggid-console.iot2.win → "default"
+ * - acme.ggid-console.iot2.win → "acme"
+ * - ggid-console.iot2.win (no subdomain) → "" (use default)
+ * - localhost → "" (development)
+ */
+export function getTenantSlugFromSubdomain(): string {
+  if (typeof window === "undefined") return "";
+  const hostname = window.location.hostname;
+  
+  // localhost or IP — no subdomain
+  if (hostname === "localhost" || /^\d+\.\d+\.\d+\.\d+$/.test(hostname)) {
+    return "";
+  }
+  
+  const parts = hostname.split(".");
+  // *.ggid-console.iot2.win → parts = ["slug", "ggid-console", "iot2", "win"]
+  // ggid-console.iot2.win → parts = ["ggid-console", "iot2", "win"]
+  if (parts.length >= 4 && parts[1] === "ggid-console") {
+    const slug = parts[0];
+    // Skip "www" and exact domain match
+    if (slug === "www" || slug === "ggid-console") return "";
+    return slug;
+  }
+  return "";
+}
+
+/**
+ * Get the effective tenant slug.
+ * Priority: URL ?tenant= param > subdomain > localStorage > empty (default)
+ */
+export function getEffectiveTenantSlug(): string {
+  if (typeof window === "undefined") return "";
+  // URL param override
+  const params = new URLSearchParams(window.location.search);
+  const urlTenant = params.get("tenant");
+  if (urlTenant) return urlTenant;
+  
+  // Subdomain
+  const subdomain = getTenantSlugFromSubdomain();
+  if (subdomain) return subdomain;
+  
+  return "";
+}
+
+/**
+ * Resolve tenant slug to UUID via API.
+ * Returns null if slug not found or API unavailable.
+ */
+let cachedTenantResolve: { slug: string; id: string; ts: number } | null = null;
+
+export async function resolveTenantSlug(slug: string): Promise<string | null> {
+  if (!slug || slug === "default") return DEFAULT_TENANT_ID;
+  
+  // Cache for 5 minutes
+  if (cachedTenantResolve && cachedTenantResolve.slug === slug && Date.now() - cachedTenantResolve.ts < 300000) {
+    return cachedTenantResolve.id;
+  }
+  
+  try {
+    const resp = await fetch(`${API_BASE_URL}/api/v1/tenants/resolve?slug=${encodeURIComponent(slug)}`, {
+      headers: { "Content-Type": "application/json" },
+    });
+    if (!resp.ok) return null;
+    const data = await resp.json();
+    const id = data.id || data.tenant_id || data.tenantId;
+    if (id) {
+      cachedTenantResolve = { slug, id, ts: Date.now() };
+      return id;
+    }
+    return null;
+  } catch {
+    return null;
+  }
+}
+
 export function buildUrl(path: string): string {
   if (path.startsWith("http")) return path;
   return `${API_BASE_URL}${path}`;
