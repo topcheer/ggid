@@ -86,10 +86,10 @@ func EstimateStrength(password string) StrengthResult {
 		}
 	}
 
-	// 2. Keyboard sequence check.
+	// 2. Keyboard sequence check — only flag sequences of 5+ characters.
 	for _, row := range keyboardRows {
-		for i := 0; i+3 <= len(row); i++ {
-			seq := row[i : i+3]
+		for i := 0; i+5 <= len(row); i++ {
+			seq := row[i : i+5]
 			if strings.Contains(lower, seq) {
 				if !sliceContains(result.Patterns, "keyboard_sequence") {
 					result.Patterns = append(result.Patterns, "keyboard_sequence")
