@@ -89,11 +89,15 @@ func RequireAdminScope(next http.Handler) http.Handler {
 }
 
 // hasAdminScope checks if any of the user's scopes indicate admin-level access.
+// Supports both lowercase scope strings (platform:admin, admin) and
+// role display names (Administrator, Platform Administrator, Tenant Administrator).
 func hasAdminScope(scopes []string) bool {
 	for _, sc := range scopes {
-		switch sc {
-		case "admin", "superadmin", "roles:write", "*",
-			"platform:admin", "tenant:admin":
+		lower := strings.ToLower(sc)
+		switch lower {
+		case "admin", "superadmin", "administrator", "roles:write", "*",
+			"platform:admin", "platform administrator",
+			"tenant:admin", "tenant administrator":
 			return true
 		}
 	}

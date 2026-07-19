@@ -200,7 +200,8 @@ func (gw *Gateway) buildProxies() {
 			if len(jwtClaims.Scopes) > 0 {
 				req.Header.Set("X-Scopes", strings.Join(jwtClaims.Scopes, ","))
 				for _, s := range jwtClaims.Scopes {
-				if s == "admin" || s == "superadmin" || s == "platform:admin" || s == "tenant:admin" {
+				sl := strings.ToLower(s)
+				if sl == "admin" || sl == "superadmin" || sl == "platform:admin" || sl == "tenant:admin" || sl == "administrator" || sl == "platform administrator" || sl == "tenant administrator" {
 					req.Header.Set("X-User-Role", s)
 					req.Header.Set("X-Is-Admin", "true")
 					break
@@ -642,11 +643,13 @@ func (gw *Gateway) checkRouteScope(w http.ResponseWriter, r *http.Request) bool 
 	hasPlatform := false
 	hasTenant := false
 	for _, sc := range claims.Scopes {
-		if sc == "platform:admin" || sc == "admin" || sc == "superadmin" {
+		scl := strings.ToLower(sc)
+		if scl == "platform:admin" || scl == "admin" || scl == "superadmin" ||
+			scl == "platform administrator" || scl == "administrator" {
 			hasPlatform = true
 			hasTenant = true
 		}
-		if sc == "tenant:admin" || sc == "manager" {
+		if scl == "tenant:admin" || scl == "manager" || scl == "tenant administrator" {
 			hasTenant = true
 		}
 	}
