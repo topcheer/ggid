@@ -226,7 +226,12 @@ export default function LoginPage() {
       // No MFA needed — redirect based on role
       // Non-admin users go to /profile, admin users go to /dashboard
       const userScopes = JSON.parse(localStorage.getItem("ggid_user_scopes") || "[\"user\"]");
-      const isAdmin = userScopes.includes("admin") || userScopes.includes("platform_admin") || userScopes.includes("platform:admin") || userScopes.includes("tenant:admin");
+      const isAdmin = userScopes.some((s: string) => {
+        const ls = s.toLowerCase();
+        return ls === "admin" || ls === "platform:admin" || ls === "platform_admin" ||
+               ls === "tenant:admin" || ls === "tenant_admin" ||
+               ls === "administrator" || ls === "platform administrator" || ls === "tenant administrator";
+      });
       // Use window.location.href for hard navigation — router.push can silently fail
       // when localStorage was just written (AuthGuard needs fresh page load)
       window.location.href = isAdmin ? "/dashboard" : "/profile";
