@@ -103,9 +103,11 @@ func TestAuthService_Register_DuplicateCredential_V2(t *testing.T) {
 		ID: uuid.New(), TenantID: tid, UserID: uid,
 		Identifier: "existing", Secret: "$2a$10$hash",
 	}
+	// Register now updates existing credential instead of returning error
+	// (CreateUserFromSocial may have pre-created one with random password)
 	err := svc.Register(ctx, tid, uid, "existing", "StrongPass123!")
-	if err != ErrCredentialAlreadyExists {
-		t.Errorf("expected ErrCredentialAlreadyExists, got %v", err)
+	if err != nil {
+		t.Errorf("expected no error (should update existing), got %v", err)
 	}
 }
 

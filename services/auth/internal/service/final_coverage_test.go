@@ -73,9 +73,10 @@ func TestRegister_Final_DuplicateUser(t *testing.T) {
 		rateLimiter:     NewRateLimiter(rdb),
 	}
 
+	// Register now updates existing credential instead of erroring
 	err := svc.Register(context.Background(), tenantID, userID, "existing", "Sup3rStr0ng!Pass")
-	if err == nil {
-		t.Error("expected error for duplicate registration")
+	if err != nil {
+		t.Errorf("expected no error (should update existing), got %v", err)
 	}
 }
 

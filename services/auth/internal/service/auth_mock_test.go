@@ -242,11 +242,12 @@ func TestAuthService_Register_DuplicateUser(t *testing.T) {
 	// Duplicate user now updates the credential (CreateUserFromSocial may have created one)
 	err := svc.Register(context.Background(), uuid.New(), uuid.New(), "existing", "StrongPass123")
 	if err != nil {
-		t.Errorf("expected no error for duplicate (should update), got %v", err)
+		t.Errorf("expected no error for duplicate (should update), got: %v", err)
 	}
-	// Verify the credential was updated
-	if credRepo.byID[existingCred.ID] == nil {
-		t.Error("expected credential to be updated")
+	// Verify UpdateSecret was called (mock is no-op, just ensure no error)
+	cred := credRepo.byIdentifier["existing"]
+	if cred == nil {
+		t.Error("expected credential to still exist")
 	}
 }
 
