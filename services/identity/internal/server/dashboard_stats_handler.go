@@ -26,6 +26,7 @@ func (h *HTTPHandler) handleDashboardStats(w http.ResponseWriter, r *http.Reques
 		MFAEnrollmentRate     int `json:"mfa_enrollment_rate"`
 		AuditEvents24h        int `json:"audit_events_24h"`
 		PendingAccessRequests int `json:"pending_access_requests"`
+		OAuthClients          int `json:"oauth_clients"`
 	}
 
 	stats := dashboardStats{}
@@ -39,10 +40,15 @@ func (h *HTTPHandler) handleDashboardStats(w http.ResponseWriter, r *http.Reques
 			SELECT count(*) FROM users WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1)
 		`, tenantID).Scan(&stats.TotalUsers)
 
-		// Active sessions (created in last 24h)
+		// Active sessions (non-revoked, created in last 24h)
 		_ = pool.QueryRow(ctx, `
-			SELECT count(*) FROM sessions WHERE created_at > NOW() - INTERVAL '24 hours'
+			SELECT count(*) FROM sessions WHERE revoked_at IS NULL AND created_at > NOW() - INTERVAL '24 hours'
 		`).Scan(&stats.ActiveSessions)
+
+		// OAuth clients count
+		_ = pool.QueryRow(ctx, `
+			SELECT count(*) FROM oauth_clients WHERE enabled = true AND ($1::uuid IS NULL OR tenant_id = $1)
+		`, tenantID).Scan(&stats.OAuthClients)
 
 		// Login stats from audit_events (auth_events table doesn't exist)
 		since := time.Now().Add(-24 * time.Hour)
