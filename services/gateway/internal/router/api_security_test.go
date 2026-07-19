@@ -204,16 +204,12 @@ func TestAPISecurity_NoToken_WebAuthnAAGUID(t *testing.T) {
 func TestAPISecurity_NoToken_MFA(t *testing.T) {
 	gw := newSecurityTestGateway(t)
 	handler := gw.Handler()
-	for _, tc := range []struct{ path, method string }{
-		{"/api/v1/auth/mfa/enroll", http.MethodPost},
-		{"/api/v1/auth/mfa/verify", http.MethodPost},
-	} {
-		req := httptest.NewRequest(tc.method, tc.path, nil)
-		rr := httptest.NewRecorder()
-		handler.ServeHTTP(rr, req)
-		if rr.Code != http.StatusUnauthorized {
-			t.Errorf("%s %s: expected 401, got %d", tc.method, tc.path, rr.Code)
-		}
+	// Only /mfa/enroll requires auth; /mfa/verify is public (user is mid-authentication)
+	req := httptest.NewRequest(http.MethodPost, "/api/v1/auth/mfa/enroll", nil)
+	rr := httptest.NewRecorder()
+	handler.ServeHTTP(rr, req)
+	if rr.Code != http.StatusUnauthorized {
+		t.Errorf("POST /api/v1/auth/mfa/enroll: expected 401, got %d", rr.Code)
 	}
 }
 
