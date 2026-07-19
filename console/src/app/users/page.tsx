@@ -208,10 +208,14 @@ export default function UsersPage() {
   const handleDelete = async (userId: string, username: string) => {
     if (!window.confirm(`Delete user "${username}"?`)) return;
     try {
-      await apiFetch(`/api/v1/users/${userId}`, { method: "DELETE" });
-      refresh();
+      const data = await apiFetch<{ id?: string; status?: string }>(`/api/v1/users/${userId}`, { method: "DELETE" });
+      // Remove from local list using response id (no need to re-fetch)
+      const deletedId = data?.id || userId;
+      setUsers(prev => prev.filter((u: any) => u.id !== deletedId));
+      setFormSuccess(`User "${username}" deleted.`);
+      setTimeout(() => setFormSuccess(""), 3000);
     } catch (err) {
-      console.error(err instanceof Error ? err.message : "Failed");
+      setFormError(err instanceof Error ? err.message : "Failed to delete user");
     }
   };
 
