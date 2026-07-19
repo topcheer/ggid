@@ -37,7 +37,7 @@ func (r *AuditRepository) Insert(ctx context.Context, e *domain.AuditEvent) erro
 	if domain.IsHashChainEnabled() {
 		var ph string
 		r.db.QueryRow(ctx,
-			`SELECT COALESCE(event_hash, '') FROM audit_events
+			`SELECT COALESCE(hash, '') FROM audit_events
 			 WHERE tenant_id = $1 ORDER BY created_at DESC LIMIT 1`,
 			e.TenantID,
 		).Scan(&ph)
@@ -49,7 +49,7 @@ func (r *AuditRepository) Insert(ctx context.Context, e *domain.AuditEvent) erro
 	query := `
 		INSERT INTO audit_events (tenant_id, actor_type, actor_id, actor_name, action,
 		    resource_type, resource_id, resource_name, result, ip_address,
-		    user_agent, request_id, metadata, prev_hash, event_hash)
+		    user_agent, request_id, metadata, prev_hash, hash)
 		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10::inet, $11, $12, $13, $14, $15)
 		RETURNING id, created_at`
 	return r.db.QueryRow(ctx, query,
@@ -77,7 +77,7 @@ func (r *AuditRepository) GetByID(ctx context.Context, id uuid.UUID) (*domain.Au
 		SELECT id, tenant_id, actor_type, actor_id, actor_name, action,
 		    resource_type, resource_id, resource_name, result,
 		    ip_address::text, user_agent, request_id, metadata,
-		    COALESCE(prev_hash, ''), COALESCE(event_hash, ''),
+		    COALESCE(prev_hash, ''), COALESCE(hash, ''),
 		    created_at
 		FROM audit_events WHERE id = $1`
 	err := r.db.QueryRow(ctx, query, id).Scan(

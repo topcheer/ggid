@@ -110,8 +110,9 @@ func (p *Publisher) Publish(ctx context.Context, event Event) error {
 	return nil
 }
 
-// PublishAsync publishes an audit event without waiting for acknowledgment.
-// Errors are logged but not returned to the caller.
+// PublishAsync publishes an audit event. Uses synchronous Publish to ensure
+// the message reaches JetStream before returning (PublishAsync was unreliable
+// in practice — messages could be lost if the request goroutine exited).
 func (p *Publisher) PublishAsync(event Event) {
 	if p.js == nil {
 		return
@@ -128,8 +129,15 @@ func (p *Publisher) PublishAsync(event Event) {
 		return
 	}
 
-	// Use PublishAsync — fire-and-forget for audit events.
-	_, _ = p.js.PublishAsync(p.subject, data)
+	// Use synchronous Publish with a short timeout — audit events are best-effort
+	// but should at least reach JetStream.
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+	_, err = p.js.Publish(ctx, p.subject, data)
+	if err != nil {
+		// Best-effort: don't block the request on audit failures.
+		return
+	}
 }
 
 // Close closes the underlying NATS connection.
