@@ -3,6 +3,7 @@
 import { useState, useCallback, useRef } from "react";
 import { useUsers, useApi, type User } from "@/lib/api";
 import { useTranslations } from "@/lib/i18n";
+import { PermissionGuard } from "@/components/PermissionGuard";
 import { useConfirm } from "@/components/ConfirmDialog";
 import { usePageTitle } from "@/lib/usePageTitle";
 import Link from "next/link";

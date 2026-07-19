@@ -57,6 +57,31 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
 
     if (token) {
       setIsAuthenticated(true);
+
+      // Route-level permission check: block direct URL access to admin pages
+      const ADMIN_PREFIXES: Record<string, string> = {
+        "/users": "manager", "/roles": "manager", "/audit": "manager",
+        "/organizations": "manager", "/sessions": "manager",
+        "/settings": "manager", "/api-keys": "admin", "/oauth-clients": "manager",
+        "/webhooks": "admin", "/policies": "manager", "/security/": "manager",
+        "/access-requests": "user", "/analytics/": "manager", "/monitoring/": "manager",
+      };
+      for (const [prefix, scope] of Object.entries(ADMIN_PREFIXES)) {
+        if (pathname.startsWith(prefix)) {
+          const userScopes = JSON.parse(localStorage.getItem("ggid_user_scopes") || '["user"]');
+          const hasAdmin = userScopes.includes("admin");
+          const hasManager = userScopes.includes("manager") || hasAdmin;
+          if (scope === "manager" && !hasManager) {
+            router.replace("/dashboard");
+            return;
+          }
+          if (scope === "admin" && !hasAdmin) {
+            router.replace("/dashboard");
+            return;
+          }
+          break;
+        }
+      }
     } else {
       setIsAuthenticated(false);
       if (!isPublic) {

@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { useApi } from "@/lib/api";
 import { useI18n } from "@/lib/i18n";
+import { PermissionGuard } from "@/components/PermissionGuard";
 import { Shield, Plus, Trash2, X, CheckCircle2, XCircle, Search, Copy, GitBranch, Layers, Pencil, Users } from "lucide-react";
 
 interface Role {
