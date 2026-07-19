@@ -200,8 +200,9 @@ func TestAuthSvc_Register_WeakPassword(t *testing.T) {
 func TestAuthSvc_Register_Duplicate(t *testing.T) {
 	svc, cr, _, _ := tNewAuthSvc(t)
 	cr.byName["dup"] = &domain.Credential{UserID: uuid.New()}
-	if err := svc.Register(context.Background(), uuid.New(), uuid.New(), "dup", "StrongPass123"); err == nil {
-		t.Error("expected duplicate error")
+	// Register now updates existing credential instead of erroring
+	if err := svc.Register(context.Background(), uuid.New(), uuid.New(), "dup", "StrongPass123"); err != nil {
+		t.Errorf("expected no error (should update existing), got %v", err)
 	}
 }
 
