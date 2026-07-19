@@ -52,8 +52,21 @@ export default function OAuthClientsPage() {
     setLoading(true);
     setError(null);
     try {
-      const data = await apiFetch<{ clients?: OAuthClient[]; items?: OAuthClient[] }>("/api/v1/oauth/clients").catch(() => null);
-      setClients(data?.clients ?? data?.items ?? []);
+      const data = await apiFetch<{ clients?: any[]; items?: any[] }>("/api/v1/oauth/clients").catch(() => null);
+      const raw = data?.clients ?? data?.items ?? [];
+      // Map PascalCase API response to camelCase interface
+      const mapped = raw.map((c: any) => ({
+        id: c.ID ?? c.id ?? "",
+        client_id: c.ClientID ?? c.client_id ?? "",
+        client_name: c.Name ?? c.ClientName ?? c.client_name ?? "Untitled",
+        redirect_uris: c.RedirectURIs ?? c.redirect_uris ?? [],
+        grant_types: c.GrantTypes ?? c.grant_types ?? [],
+        scopes: c.Scopes ?? c.scopes ?? [],
+        created_at: c.CreatedAt ?? c.created_at ?? "",
+        last_used: c.LastUsedAt ?? c.last_used,
+        status: c.Status ?? c.status ?? "active",
+      }));
+      setClients(mapped);
     } catch {
       setError(t("oauth.failedLoadClients"));
     } finally {

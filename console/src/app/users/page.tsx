@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useRef } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 import { useUsers, useApi, type User } from "@/lib/api";
 import { useTranslations } from "@/lib/i18n";
 import { PermissionGuard } from "@/components/PermissionGuard";
@@ -73,9 +73,8 @@ export default function UsersPage() {
   const [showExportMenu, setShowExportMenu] = useState(false);
 
   // Load roles for batch assign
-  useCallback(async () => {
-    const data = await apiFetch<{ roles?: { id: string; key: string; name: string }[] }>("/api/v1/roles").catch(() => ({ roles: [] }));
-    setRoles(data.roles || []);
+  useEffect(() => {
+    apiFetch<{ roles?: { id: string; key: string; name: string }[] }>("/api/v1/roles").then((data) => setRoles(data.roles || [])).catch(() => {});
   }, [apiFetch]);
 
   const filtered = users.filter(

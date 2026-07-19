@@ -546,6 +546,7 @@ export default function LoginPage() {
               {t("login.noAccount")}{" "}
               <a href="/register" className="font-medium text-brand-600 hover:underline">{t("login.signUp")}</a>
             </p>
+            {/* Remove misleading hardcoded demo credentials hint */}
           </form>
           </div>
         ) : (
