@@ -1,6 +1,7 @@
 package detection
 
 import (
+	"log/slog"
 	"context"
 	"fmt"
 	"time"
@@ -39,7 +40,7 @@ func (r *CredentialStuffingRule) Evaluate(ctx context.Context, evt *domain.Audit
 		return nil, nil
 	}
 
-	state.AddEvent(ctx, key, evt.CreatedAt.Unix(), member, time.Duration(windowMin)*time.Minute)
+	if err := state.AddEvent(ctx, key, evt.CreatedAt.Unix(), member, time.Duration(windowMin)*time.Minute); err != nil { slog.Debug("detection: AddEvent failed", "error", err) }
 	members, err := state.EventsSince(ctx, key, evt.CreatedAt.Add(-time.Duration(windowMin)*time.Minute).Unix())
 	if err != nil {
 		return nil, err

@@ -1,6 +1,7 @@
 package detection
 
 import (
+	"log/slog"
 	"context"
 	"fmt"
 	"math"
@@ -39,7 +40,7 @@ func (r *ImpossibleTravelRule) Evaluate(ctx context.Context, evt *domain.AuditEv
 	// Store latest location per user.
 	key := "it:" + evt.ActorID.String()
 	member := fmt.Sprintf("%.6f,%.6f,%d", lat, lon, evt.CreatedAt.Unix())
-	state.AddEvent(ctx, key, evt.CreatedAt.Unix(), member, 24*time.Hour)
+	if err := state.AddEvent(ctx, key, evt.CreatedAt.Unix(), member, 24*time.Hour); err != nil { slog.Debug("detection: AddEvent failed", "error", err) }
 
 	// Check previous location.
 	since := evt.CreatedAt.Add(-2 * time.Hour).Unix()

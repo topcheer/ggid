@@ -1,6 +1,7 @@
 package detection
 
 import (
+	"log/slog"
 	"context"
 	"fmt"
 	"strings"
@@ -51,7 +52,7 @@ func (r *ConsentPhishingRule) Evaluate(ctx context.Context, evt *domain.AuditEve
 			return nil, nil // user has granted to this app before
 		}
 		if state != nil {
-			state.AddEvent(ctx, key, evt.CreatedAt.Unix(), evt.ID.String(), 30*24*time.Hour)
+			if err := state.AddEvent(ctx, key, evt.CreatedAt.Unix(), evt.ID.String(), 30*24*time.Hour); err != nil { slog.Debug("detection: AddEvent failed", "error", err) }
 		}
 	}
 
@@ -143,7 +144,7 @@ func (r *TokenTheftRule) Evaluate(ctx context.Context, evt *domain.AuditEvent, s
 	prevFPs, _ := state.EventsSince(ctx, key, evt.CreatedAt.Unix()-int64(600)) // 10 min window
 
 	// Record current fingerprint.
-	state.AddEvent(ctx, key, evt.CreatedAt.Unix(), fingerprint, 10*time.Minute)
+	if err := state.AddEvent(ctx, key, evt.CreatedAt.Unix(), fingerprint, 10*time.Minute); err != nil { slog.Debug("detection: AddEvent failed", "error", err) }
 
 	// Check for different IP + different UA (strong theft signal).
 	for _, prev := range prevFPs {
@@ -203,7 +204,7 @@ func (r *SessionHijackRule) Evaluate(ctx context.Context, evt *domain.AuditEvent
 	key := fmt.Sprintf("session_fp:%s", sessionID)
 
 	prevFPs, _ := state.EventsSince(ctx, key, evt.CreatedAt.Unix()-int64(3600)) // 1 hour window
-	state.AddEvent(ctx, key, evt.CreatedAt.Unix(), fingerprint, time.Hour)
+	if err := state.AddEvent(ctx, key, evt.CreatedAt.Unix(), fingerprint, time.Hour); err != nil { slog.Debug("detection: AddEvent failed", "error", err) }
 
 	for _, prev := range prevFPs {
 		if prev == fingerprint {
@@ -316,7 +317,7 @@ func (r *FederationAnomalyRule) Evaluate(ctx context.Context, evt *domain.AuditE
 	knownIdps, _ := state.EventsSince(ctx, key, evt.CreatedAt.Unix()-int64(90*24*3600)) // 90 days
 
 	// Record this IdP.
-	state.AddEvent(ctx, key, evt.CreatedAt.Unix(), idpEntityID, 90*24*time.Hour)
+	if err := state.AddEvent(ctx, key, evt.CreatedAt.Unix(), idpEntityID, 90*24*time.Hour); err != nil { slog.Debug("detection: AddEvent failed", "error", err) }
 
 	// Check if IdP was seen before.
 	for _, known := range knownIdps {

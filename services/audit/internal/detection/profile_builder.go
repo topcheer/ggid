@@ -1,6 +1,7 @@
 package detection
 
 import (
+	"log/slog"
 	"context"
 	"encoding/json"
 	"math"
@@ -158,7 +159,7 @@ func (r *BaselineDeviationRule) Evaluate(ctx context.Context, evt *domain.AuditE
 	}
 
 	// Off-hours + new IP = deviation.
-	state.AddEvent(ctx, ipKey, evt.CreatedAt.Unix(), evt.ID.String(), 30*24*time.Hour)
+	if err := state.AddEvent(ctx, ipKey, evt.CreatedAt.Unix(), evt.ID.String(), 30*24*time.Hour); err != nil { slog.Debug("detection: AddEvent failed", "error", err) }
 
 	actorID := *evt.ActorID
 	det := domain.NewDetection(evt.TenantID, r.ID(), r.DefaultSeverity(),

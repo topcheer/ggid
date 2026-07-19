@@ -111,7 +111,9 @@ func (e *Engine) Verify(ctx context.Context, code string) (*TAPRecord, error) {
 
 		// Mark as used.
 		now := time.Now()
-		e.pool.Exec(ctx, `UPDATE temporary_access_passes SET used_at = $1 WHERE id = $2`, now, record.ID)
+		if _, err := e.pool.Exec(ctx, `UPDATE temporary_access_passes SET used_at = $1 WHERE id = $2`, now, record.ID); err != nil {
+			slog.Error("tap: failed to mark TAP as used", "error", err, "tap_id", record.ID)
+		}
 		record.UsedAt = &now
 
 		slog.Info("TAP used", "user_id", record.UserID, "tap_id", record.ID)
