@@ -2,9 +2,10 @@ package server
 
 import (
 	"encoding/json"
-	"net/http"
 	"net"
+	"net/http"
 	"sync"
+	"time"
 )
 
 // vpnEntry holds known VPN/datacenter IP ranges.
@@ -123,6 +124,5 @@ func (h *Handler) handleVPNCheck(w http.ResponseWriter, r *http.Request) {
 }
 
 func jsonTime() string {
-	// avoid importing time at top level since we only use it here
-	return "2026-07-13T00:00:00Z"
+	return time.Now().UTC().Format(time.RFC3339)
 }
