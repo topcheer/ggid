@@ -1029,7 +1029,7 @@ func (h *Handler) changePassword(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := h.authSvc.ChangePassword(r.Context(), tc.TenantID, userID, req.OldPassword, req.NewPassword); err != nil {
+	if err := h.authSvc.ChangePassword(r.Context(), tenantID, userID, req.OldPassword, req.NewPassword); err != nil {
 		writeAuthError(w, err)
 		return
 	}
