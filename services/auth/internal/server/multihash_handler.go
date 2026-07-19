@@ -75,7 +75,7 @@ func (h *Handler) handleMultiHashVerify(w http.ResponseWriter, r *http.Request) 
 
 	resp, err := rehashPassword(req.Password, req.Hash)
 	if err != nil {
-		writeError(w, http.StatusInternalServerError, err.Error())
+		writeError(w, http.StatusInternalServerError, "internal rehash error")
 		return
 	}
 	writeJSON(w, http.StatusOK, resp)
