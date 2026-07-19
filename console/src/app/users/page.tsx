@@ -806,7 +806,7 @@ export default function UsersPage() {
             placeholder={t("users.searchPlaceholder")}
             value={search}
             onChange={(e) => { setSearch(e.target.value); setPage(0); }}
-            className="w-full max-w-xs rounded-lg border border-gray-300 px-3 py-2"
+            className="w-full max-w-xs rounded-lg border border-gray-300 px-3 py-2 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
           />
         </div>
         {selected.size > 0 && (
