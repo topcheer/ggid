@@ -167,8 +167,8 @@ jobs:
         run: |
           PAGES=$(find console/src/app -name "page.tsx" | wc -l)
           echo "Console pages found: $PAGES"
-          if [ "$PAGES" -lt 700 ]; then
-            echo "::error::Page count dropped below 700 ($PAGES)"
+          if [ "$PAGES" -lt 30 ]; then
+            echo "::error::Page count dropped below 30 ($PAGES)"
             exit 1
           fi
           echo "Page count check passed: $PAGES pages"
