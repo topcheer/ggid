@@ -22,7 +22,7 @@ issues:
   exclude-rules:
     # Relax all linters for test files
     - path: _test\.go
-      linters: [all]
+      linters: [govet, errcheck]
     # errcheck: allow ignored returns from json encoding in HTTP handlers
     # (standard Go pattern — encoding errors on response writes are not actionable)
     - path: services/.*/internal/(server|router)/.*\.go
