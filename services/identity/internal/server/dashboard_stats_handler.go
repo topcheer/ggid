@@ -35,39 +35,39 @@ func (h *HTTPHandler) handleDashboardStats(w http.ResponseWriter, r *http.Reques
 		tenantID := tenantIDFromContext(ctx)
 
 		// Total users (non-deleted)
-		row := pool.QueryRow(ctx, `
+		_ = pool.QueryRow(ctx, `
 			SELECT count(*) FROM users WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1)
-		`, tenantID)
-		_ = row.Scan(&stats.TotalUsers)
+		`, tenantID).Scan(&stats.TotalUsers)
 
 		// Active sessions (updated in last 24h)
-		row = pool.QueryRow(ctx, `
+		_ = pool.QueryRow(ctx, `
 			SELECT count(*) FROM sessions WHERE created_at > NOW() - INTERVAL '24 hours'
-		`)
-		_ = row.Scan(&stats.ActiveSessions)
+		`).Scan(&stats.ActiveSessions)
 
 		// Auth events from last 24h
 		since := time.Now().Add(-24 * time.Hour)
-		row = pool.QueryRow(ctx, `
+		_ = pool.QueryRow(ctx, `
 			SELECT count(*) FILTER (WHERE event_type = 'login_failed') AS failed,
 			       count(*) FILTER (WHERE event_type = 'login_success') AS success
 			FROM auth_events WHERE created_at > $1
-		`, since)
-		_ = row.Scan(&stats.FailedLogins24h, &stats.SuccessfulLogins24h)
+		`, since).Scan(&stats.FailedLogins24h, &stats.SuccessfulLogins24h)
+
+		// Audit events from last 24h
+		_ = pool.QueryRow(ctx, `
+			SELECT count(*) FROM audit_events WHERE created_at > $1
+		`, since).Scan(&stats.AuditEvents24h)
 
 		// Pending access requests
-		row = pool.QueryRow(ctx, `
+		_ = pool.QueryRow(ctx, `
 			SELECT count(*) FROM access_requests WHERE status = 'pending'
-		`)
-		_ = row.Scan(&stats.PendingAccessRequests)
+		`).Scan(&stats.PendingAccessRequests)
 
 		// MFA enrollment rate
 		if stats.TotalUsers > 0 {
 			var mfaCount int
-			row = pool.QueryRow(ctx, `
+			_ = pool.QueryRow(ctx, `
 				SELECT count(DISTINCT user_id) FROM mfa_devices WHERE enabled = true
-			`)
-			_ = row.Scan(&mfaCount)
+			`).Scan(&mfaCount)
 			stats.MFAEnrollmentRate = (mfaCount * 100) / stats.TotalUsers
 		}
 	}
