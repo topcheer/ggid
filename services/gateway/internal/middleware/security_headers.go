@@ -22,7 +22,7 @@ type SecurityHeadersConfig struct {
 func DefaultSecurityHeadersConfig() *SecurityHeadersConfig {
 	return &SecurityHeadersConfig{
 		Enabled: true, FrameDeny: true, ContentTypeNosniff: true, HSTSMaxAge: 31536000,
-		CSP: "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'",
+		CSP: "default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https: wss:;",
 	}
 }
 
