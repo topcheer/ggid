@@ -1,6 +1,7 @@
 package server
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
 	"strings"
@@ -139,7 +140,8 @@ func (h *Handler) TriggerInvalidation(tenantID, userID uuid.UUID, reason Invalid
 	}
 
 	if h.revocationMgr != nil {
-		result, err := h.revocationMgr.RevokeUser(nil, tenantID, userID, string(reason))
+		ctx := context.Background()
+		result, err := h.revocationMgr.RevokeUser(ctx, tenantID, userID, string(reason))
 		if err == nil {
 			audit.SessionsRevoked = result.SessionsRevoked
 		}

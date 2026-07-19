@@ -151,9 +151,9 @@ func (c *HTTPIdentityClient) GetUserRoles(ctx context.Context, tenantID, userID 
 	}
 	scopes := make([]string, 0, len(result.Roles))
 	for _, r := range result.Roles {
-		key := r.RoleID
+		key := r.RoleName
 		if key == "" {
-			key = r.RoleName
+			key = r.RoleID
 		}
 		if key != "" {
 			scopes = append(scopes, key)

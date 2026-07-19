@@ -196,12 +196,12 @@ func (gw *Gateway) buildProxies() {
 			if len(jwtClaims.Scopes) > 0 {
 				req.Header.Set("X-Scopes", strings.Join(jwtClaims.Scopes, ","))
 				for _, s := range jwtClaims.Scopes {
-					if s == "admin" || s == "superadmin" {
-						req.Header.Set("X-User-Role", s)
-						req.Header.Set("X-Is-Admin", "true")
-						break
-					}
+				if s == "admin" || s == "superadmin" || s == "platform:admin" || s == "tenant:admin" {
+					req.Header.Set("X-User-Role", s)
+					req.Header.Set("X-Is-Admin", "true")
+					break
 				}
+			}
 			}
 			if tenantID, ok := middleware.TenantIDFromRequest(req); ok {
 				req.Header.Set("X-Tenant-ID", tenantID)
@@ -655,9 +655,17 @@ func (gw *Gateway) checkRouteScope(w http.ResponseWriter, r *http.Request) bool 
 		}
 	}
 
-	// Check tenant-admin paths
+		// Check tenant-admin paths (but allow self-service endpoints)
 	for _, prefix := range adminOnlyPaths {
 		if strings.HasPrefix(path, prefix) && !hasTenant {
+			// Allow /api/v1/users/me for self-service
+			if path == "/api/v1/users/me" || strings.HasPrefix(path, "/api/v1/users/me/") {
+				continue
+			}
+			// Allow /api/v1/tenants/resolve (public lookup)
+			if strings.HasPrefix(path, "/api/v1/tenants/resolve") {
+				continue
+			}
 			writeGatewayJSONError(w, http.StatusForbidden, "admin access required")
 			return false
 		}

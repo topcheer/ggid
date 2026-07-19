@@ -33,8 +33,7 @@ func (h *HTTPHandler) handleUserRoles(ctx context.Context, userID uuid.UUID, w h
 			return
 		}
 		rows, err := pool.Query(ctx, `
-			SELECT ur.id, ur.user_id, ur.role_id::text, r.name,
-			       ur.created_at, COALESCE(ur.granted_by::text, '')
+			SELECT ur.role_id::text, COALESCE(r.key, r.name, ur.role_id::text), ur.created_at, COALESCE(ur.granted_by::text, '')
 			FROM user_roles ur
 			LEFT JOIN roles r ON r.id = ur.role_id
 			WHERE ur.user_id = $1
@@ -49,7 +48,7 @@ func (h *HTTPHandler) handleUserRoles(ctx context.Context, userID uuid.UUID, w h
 		roles := []UserRoleAssignment{}
 		for rows.Next() {
 			var a UserRoleAssignment
-			if err := rows.Scan(&a.ID, &a.UserID, &a.RoleID, &a.RoleName, &a.AssignedAt, &a.AssignedBy); err != nil {
+			if err := rows.Scan(&a.RoleID, &a.RoleName, &a.AssignedAt, &a.AssignedBy); err != nil {
 				continue
 			}
 			roles = append(roles, a)
