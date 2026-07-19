@@ -225,6 +225,11 @@ func (gw *Gateway) handleSystemBootstrap(w http.ResponseWriter, r *http.Request)
 		"password": req.AdminPassword,
 	})
 	loginResp, err := client.Post(authURL+"/api/v1/auth/login", "application/json", bytes.NewReader(loginBody))
+	// Login needs X-Tenant-ID header for tenant context
+	loginReq, _ := http.NewRequestWithContext(r.Context(), "POST", authURL+"/api/v1/auth/login", bytes.NewReader(loginBody))
+	loginReq.Header.Set("Content-Type", "application/json")
+	loginReq.Header.Set("X-Tenant-ID", tenantID.String())
+	loginResp, err = client.Do(loginReq)
 	if err != nil {
 		writeGatewayJSONError(w, http.StatusBadGateway, "login failed after registration: "+err.Error())
 		return

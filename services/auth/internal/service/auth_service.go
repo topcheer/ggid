@@ -112,7 +112,13 @@ func (s *AuthService) Login(ctx context.Context, username, password, ip, userAge
 	}
 
 	// 2. Authenticate via provider chain
-	result, err := s.chain.Authenticate(ctx, authprovider.Credentials{
+	// Inject tenant context for LocalProvider (which uses authprovider.WithTenantContext)
+	tc, err := tenant.FromContext(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("tenant context required: %w", err)
+	}
+	authCtx := authprovider.WithTenantContext(ctx, tc.TenantID)
+	result, err := s.chain.Authenticate(authCtx, authprovider.Credentials{
 		Username: username,
 		Password: password,
 	})
@@ -144,11 +150,8 @@ func (s *AuthService) Login(ctx context.Context, username, password, ip, userAge
 	}
 	userID := *result.LinkedUser
 
-	// 4. Get tenant from context
-	tc, err := tenant.FromContext(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("tenant context required: %w", err)
-	}
+	// 4. Get tenant from context (already resolved above for authCtx)
+	// tc is already available from the earlier tenant.FromContext call
 
 	// 4a. Check if password has expired.
 	if err := s.passwordService.CheckPasswordExpiration(ctx, tc.TenantID, userID); err != nil {
