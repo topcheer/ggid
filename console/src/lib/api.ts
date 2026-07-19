@@ -218,9 +218,18 @@ export function useUserRole(): { role: UserRole; scopes: string[]; isPlatformAdm
   }, []);
 
   const hasScope = (s: string) => scopes.includes(s);
-  const role: UserRole = (hasScope("platform:admin") || hasScope("admin"))
+  // Normalize scopes for matching: handle both role keys (e.g. "platform:admin")
+  // and display names (e.g. "Platform Administrator") returned by some auth configs
+  const lowerScopes = scopes.map((s) => s.toLowerCase());
+  const hasRole = (...keys: string[]) => keys.some((k) => {
+    if (scopes.includes(k)) return true;
+    // Also check normalized forms: "platform:admin" matches "Platform Administrator"
+    const normalized = k.replace(/[:_]/g, " ").toLowerCase();
+    return lowerScopes.some((ls) => ls === normalized || ls === k.toLowerCase() || ls.includes(k.split(":").pop()!.toLowerCase()));
+  });
+  const role: UserRole = hasRole("platform:admin", "admin")
     ? "platform_admin"
-    : (hasScope("tenant:admin") || hasScope("manager"))
+    : hasRole("tenant:admin", "manager")
     ? "tenant_admin"
     : "user";
 
