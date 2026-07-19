@@ -1019,10 +1019,12 @@ func (h *Handler) changePassword(w http.ResponseWriter, r *http.Request) {
 // --- Sessions ---
 
 func (h *Handler) handleSessions(w http.ResponseWriter, r *http.Request) {
-	tc, err := ggidtenant.FromContext(r.Context())
-	if err != nil {
-		writeError(w, http.StatusBadRequest, "missing tenant context")
-		return
+	// Get tenant ID from context, or fall back to X-Tenant-ID header.
+	tenantID := uuid.Nil
+	if tc, err := ggidtenant.FromContext(r.Context()); err == nil {
+		tenantID = tc.TenantID
+	} else if tidStr := r.Header.Get("X-Tenant-ID"); tidStr != "" {
+		tenantID, _ = uuid.Parse(tidStr)
 	}
 
 	userIDStr := r.URL.Query().Get("user_id")
@@ -1052,7 +1054,7 @@ func (h *Handler) handleSessions(w http.ResponseWriter, r *http.Request) {
 
 	switch r.Method {
 	case http.MethodGet:
-		sessions, err := h.authSvc.ListSessions(r.Context(), tc.TenantID, userID)
+		sessions, err := h.authSvc.ListSessions(r.Context(), tenantID, userID)
 		if err != nil {
 			log.Printf("handleSessions: ListSessions error for user %s: %v", userID, err)
 			writeJSON(w, http.StatusOK, map[string]any{"sessions": []interface{}{}, "total": 0})

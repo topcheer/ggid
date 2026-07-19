@@ -36,7 +36,7 @@ func (r *SessionRepository) Create(ctx context.Context, s *domain.Session) error
 // FindByTokenHash looks up an active session by its token hash.
 func (r *SessionRepository) FindByTokenHash(ctx context.Context, tokenHash string) (*domain.Session, error) {
 	row := r.db.QueryRow(ctx, `
-		SELECT id, tenant_id, user_id, token_hash, device_info, ip_address, user_agent,
+		SELECT id, tenant_id, user_id, token_hash, device_info, COALESCE(ip_address::text, '') AS ip_address, user_agent,
 		       expires_at, revoked_at, created_at, metadata
 		FROM sessions
 		WHERE token_hash = $1
@@ -49,7 +49,7 @@ func (r *SessionRepository) FindByTokenHash(ctx context.Context, tokenHash strin
 // FindByID looks up a session by ID.
 func (r *SessionRepository) FindByID(ctx context.Context, id uuid.UUID) (*domain.Session, error) {
 	row := r.db.QueryRow(ctx, `
-		SELECT id, tenant_id, user_id, token_hash, device_info, ip_address, user_agent,
+		SELECT id, tenant_id, user_id, token_hash, device_info, COALESCE(ip_address::text, '') AS ip_address, user_agent,
 		       expires_at, revoked_at, created_at, metadata
 		FROM sessions
 		WHERE id = $1
@@ -62,7 +62,7 @@ func (r *SessionRepository) FindByID(ctx context.Context, id uuid.UUID) (*domain
 // ListByUser returns all active sessions for a user within a tenant.
 func (r *SessionRepository) ListByUser(ctx context.Context, tenantID, userID uuid.UUID) ([]*domain.Session, error) {
 	rows, err := r.db.Query(ctx, `
-		SELECT id, tenant_id, user_id, token_hash, device_info, ip_address, user_agent,
+		SELECT id, tenant_id, user_id, token_hash, device_info, COALESCE(ip_address::text, '') AS ip_address, user_agent,
 		       expires_at, revoked_at, created_at, metadata
 		FROM sessions
 		WHERE tenant_id = $1 AND user_id = $2 AND revoked_at IS NULL

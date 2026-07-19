@@ -47,9 +47,10 @@ func (h *Handler) runCAESweep(ctx context.Context, pool *pgxpool.Pool) {
 	rows, err := pool.Query(ctx, `
 		SELECT id, tenant_id, user_id,
 		       COALESCE(ip_address::text, ''),
-		       COALESCE(risk_score, 0)
+		       0
 		FROM sessions
 		WHERE expires_at > now()
+		  AND revoked_at IS NULL
 		  AND created_at > now() - interval '24 hours'
 		LIMIT 500
 	`)
