@@ -173,6 +173,19 @@ export default function LoginPage() {
         }
       } catch {}
 
+      // Fetch dynamic permissions for sidebar (non-blocking, cached in localStorage)
+      fetch(`${API_BASE}/api/v1/me/permissions`, {
+        headers: { Authorization: `Bearer ${data.access_token}`, "X-Tenant-ID": DEFAULT_TENANT_ID },
+      })
+        .then(r => r.ok ? r.json() : null)
+        .then(d => {
+          if (d) {
+            const perms = d.permissions || d.items || d;
+            if (Array.isArray(perms)) localStorage.setItem("ggid_user_permissions", JSON.stringify(perms));
+          }
+        })
+        .catch(() => {}); // Non-blocking — sidebar falls back to scope-based filtering
+
       // If redirect_to is set (OAuth flow), redirect back to authorize with user_id
       const params = new URLSearchParams(window.location.search);
       const redirectTo = params.get("redirect_to");

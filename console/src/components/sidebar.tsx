@@ -18,7 +18,7 @@ import { useTheme } from "@/lib/theme";
 import { useI18n } from "@/lib/i18n";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { checkApiHealthDetailed, type HealthResult } from "@/lib/api-config";
-import { useUserRole } from "@/lib/api";
+import { useUserRole, useUserPermissions, NAV_PERMISSION_MAP } from "@/lib/api";
 
 type LucideIcon = typeof Shield;
 
@@ -36,6 +36,7 @@ export function Sidebar() {
   const { mode, toggle } = useTheme();
   const { t } = useI18n();
   const { isPlatformAdmin, isTenantAdmin, scopes } = useUserRole();
+  const { hasPermission } = useUserPermissions();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [search, setSearch] = useState("");
   const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(new Set());
@@ -109,24 +110,30 @@ export function Sidebar() {
     },
   ], [t]);
 
-  // Filter nav groups/items by user role
+  // Filter nav groups/items by user role + dynamic permissions
   const roleFilteredGroups = useMemo(() => {
     const hasScope = (required?: string) => {
-      if (!required) return true; // No scope required = visible to all
-      if (isPlatformAdmin) return true; // Admin sees everything
+      if (!required) return true;
+      if (isPlatformAdmin) return true;
       if (required === "manager") return isTenantAdmin;
-      if (required === "admin") return false; // Only platform admins
+      if (required === "admin") return false;
       return scopes.includes(required);
+    };
+
+    const hasRoutePermission = (href: string) => {
+      const requiredPerms = NAV_PERMISSION_MAP[href];
+      if (!requiredPerms || requiredPerms.length === 0) return true; // No permission needed
+      return requiredPerms.every(p => hasPermission(p));
     };
 
     return navGroups
       .filter((g) => hasScope(g.requiredScope))
       .map((g) => ({
         ...g,
-        items: g.items.filter((i) => hasScope(i.requiredScope)),
+        items: g.items.filter((i) => hasScope(i.requiredScope) && hasRoutePermission(i.href)),
       }))
       .filter((g) => g.items.length > 0);
-  }, [navGroups, isPlatformAdmin, isTenantAdmin, scopes]);
+  }, [navGroups, isPlatformAdmin, isTenantAdmin, scopes, hasPermission]);
 
   // Search filter
   const filtered = search.trim()

@@ -59,7 +59,7 @@ func NewHTTPServer(roleSvc *service.RoleService, policySvc *service.PolicyServic
 // RegisterRoutes registers all Policy Engine HTTP routes on the given mux.
 func (s *HTTPServer) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("/api/v1/roles", s.handleRoles)
-	mux.HandleFunc("/api/v1/roles/", s.handleRoleByID)
+	mux.HandleFunc("/api/v1/roles/", s.handleRolesSubpath) // dispatches role-by-id + permissions
 	mux.HandleFunc("/api/v1/permissions", s.handlePermissions)
 	mux.HandleFunc("/api/v1/policies", s.handlePolicies)
 	mux.HandleFunc("/api/v1/policies/", s.handlePolicyByID)

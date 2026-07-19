@@ -452,6 +452,10 @@ func (h *HTTPHandler) handleUserByID(w http.ResponseWriter, r *http.Request) {
 
 	// Handle /api/v1/users/me — current user profile.
 	if parts[0] == "me" {
+		if len(parts) > 1 && parts[1] == "permissions" {
+			h.handleMePermissions(ctx, w, r)
+			return
+		}
 		h.handleMe(ctx, w, r)
 		return
 	}
@@ -1188,3 +1192,84 @@ func writeJSONError(w http.ResponseWriter, status int, msg string) {
 	ggiderrors.WriteSimpleAPIError(w, status, httpStatusToCode(status), msg)
 }
 
+
+// handleMePermissions returns the merged permissions for the current user
+// (union of all assigned roles' permissions).
+// GET /api/v1/users/me/permissions
+func (h *HTTPHandler) handleMePermissions(ctx context.Context, w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
+		return
+	}
+
+	userIDStr := r.Header.Get("X-User-ID")
+	if userIDStr == "" {
+		writeJSONError(w, http.StatusUnauthorized, "authentication required")
+		return
+	}
+
+	pool := h.svc.Pool()
+	if pool == nil {
+		writeJSON(w, http.StatusOK, map[string]any{"permissions": []any{}})
+		return
+	}
+
+	// Query union of all role permissions for this user.
+	// PM created role_permissions + permissions tables.
+	rows, err := pool.Query(ctx, `
+		SELECT p.key, p.resource_type, p.action,
+		       COALESCE(p.description, '')
+		FROM role_permissions rp
+		JOIN permissions p ON p.id = rp.permission_id
+		JOIN user_roles ur ON ur.role_id = rp.role_id
+		WHERE ur.user_id = $1
+		ORDER BY p.resource_type, p.action
+	`, userIDStr)
+	if err != nil {
+		// Fallback: try role_route_permissions table (alternative schema)
+		rows2, err2 := pool.Query(ctx, `
+			SELECT rrp.route_prefix, rrp.permission_level
+			FROM role_route_permissions rrp
+			JOIN user_roles ur ON ur.role_id = rrp.role_id
+			WHERE ur.user_id = $1
+			ORDER BY rrp.route_prefix
+		`, userIDStr)
+		if err2 != nil {
+			writeJSON(w, http.StatusOK, map[string]any{"permissions": []any{}})
+			return
+		}
+		defer rows2.Close()
+
+		type routePerm struct {
+			Route    string `json:"route"`
+			Level    string `json:"level"`
+		}
+		perms := []routePerm{}
+		for rows2.Next() {
+			var p routePerm
+			if err := rows2.Scan(&p.Route, &p.Level); err != nil {
+				continue
+			}
+			perms = append(perms, p)
+		}
+		writeJSON(w, http.StatusOK, map[string]any{"permissions": perms, "total": len(perms)})
+		return
+	}
+	defer rows.Close()
+
+	type apiPerm struct {
+		Key          string `json:"key"`
+		ResourceType string `json:"resource_type"`
+		Action       string `json:"action"`
+		Description  string `json:"description"`
+	}
+	perms := []apiPerm{}
+	for rows.Next() {
+		var p apiPerm
+		if err := rows.Scan(&p.Key, &p.ResourceType, &p.Action, &p.Description); err != nil {
+			continue
+		}
+		perms = append(perms, p)
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"permissions": perms, "total": len(perms)})
+}

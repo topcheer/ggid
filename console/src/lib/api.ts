@@ -233,6 +233,135 @@ export function useUserRole(): { role: UserRole; scopes: string[]; isPlatformAdm
   };
 }
 
+// ===== Dynamic Permission System =====
+
+export async function fetchUserPermissions(): Promise<string[] | null> {
+  try {
+    const token = getAuthToken();
+    if (!token) return null;
+    const res = await fetch(`${API_BASE_URL}/api/v1/me/permissions`, {
+      headers: { Authorization: `Bearer ${token}`, "X-Tenant-ID": DEFAULT_TENANT_ID },
+    });
+    if (!res.ok) return null;
+    const data = await res.json();
+    const perms = data.permissions || data.items || data;
+    return Array.isArray(perms) ? perms : null;
+  } catch {
+    return null;
+  }
+}
+
+export function getUserPermissions(): string[] {
+  if (typeof window === "undefined") return [];
+  try {
+    const raw = localStorage.getItem("ggid_user_permissions");
+    return raw ? JSON.parse(raw) : [];
+  } catch {
+    return [];
+  }
+}
+
+/** Map permission keys to nav group/item visibility */
+export const NAV_PERMISSION_MAP: Record<string, string[]> = {
+  // Group: OVERVIEW — always visible
+  "/dashboard": [],
+  "/sessions": [],
+  "/access-requests": [],
+
+  // Group: IDENTITY
+  "/users": ["users:read"],
+  "/roles": ["roles:read"],
+  "/organizations": ["orgs:read"],
+  "/organizations/analytics": ["orgs:read"],
+  "/settings/nhi": ["identity:read"],
+  "/settings/migration": ["identity:read"],
+  "/settings/attribute-mapping": ["identity:read"],
+  "/settings/import-wizard": ["identity:write"],
+  "/settings/import-monitor": ["identity:read"],
+  "/settings/review-schedules": ["identity:read"],
+
+  // Group: SECURITY
+  "/security/session-detail": ["security:read"],
+  "/security/cae-monitor": ["security:read"],
+  "/security/privileged-activity": ["security:read"],
+  "/security/risk-score": ["security:read"],
+  "/security/posture": ["security:read"],
+  "/settings/conditional-access": ["security:read"],
+  "/settings/security-policy": ["security:read"],
+  "/settings/password-migration": ["security:read"],
+  "/settings/password-strength": ["security:read"],
+  "/settings/password-policy": ["security:read"],
+  "/settings/enrollment-campaign": ["security:read"],
+  "/settings/passkey-management": ["security:read"],
+  "/settings/mfa": ["security:read"],
+
+  // Group: GOVERNANCE
+  "/settings/sod-matrix": ["governance:read"],
+  "/settings/delegations": ["governance:read"],
+  "/policies": ["policies:read"],
+
+  // Group: AUDIT
+  "/audit": ["audit:read"],
+  "/audit/explorer": ["audit:read"],
+  "/audit/ccm": ["audit:read"],
+
+  // Group: APPLICATIONS
+  "/oauth-clients": ["oauth:read"],
+  "/webhooks": ["webhooks:read"],
+  "/api-keys": ["apikeys:read"],
+  "/settings/scim": ["provisioning:read"],
+  "/settings/ldap-config": ["provisioning:read"],
+  "/settings/ldap-sync-config": ["provisioning:read"],
+
+  // Group: SETTINGS
+  "/settings": ["settings:read"],
+  "/settings/branding": ["settings:read"],
+  "/settings/feature-flags": ["settings:write"],
+
+  // Group: ADMIN
+  "/admin/tenants": ["tenants:read"],
+
+  // Group: HELP — always visible
+  "/docs": [],
+  "/monitoring": [],
+};
+
+export function useUserPermissions(): {
+  permissions: string[];
+  hasPermission: (key: string) => boolean;
+  loading: boolean;
+} {
+  const [permissions, setPermissions] = useState<string[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    // Try cached permissions first (instant render)
+    const cached = getUserPermissions();
+    if (cached.length > 0) {
+      setPermissions(cached);
+      setLoading(false);
+    }
+    // Fetch fresh from API
+    fetchUserPermissions().then(perms => {
+      if (perms && perms.length > 0) {
+        localStorage.setItem("ggid_user_permissions", JSON.stringify(perms));
+        setPermissions(perms);
+      }
+      setLoading(false);
+    });
+  }, []);
+
+  const { isPlatformAdmin } = useUserRole();
+  const hasPermission = (key: string): boolean => {
+    if (isPlatformAdmin) return true; // Admin sees everything
+    // If no dynamic permissions loaded, fall back to scope-based (legacy)
+    if (permissions.length === 0) return true; // fallback: show all (legacy behavior)
+    return permissions.includes(key);
+  };
+
+  return { permissions, hasPermission, loading };
+}
+
 export function useAuth() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -253,6 +382,7 @@ export function useAuth() {
       localStorage.removeItem("ggid_user_name");
       localStorage.removeItem("ggid_user_email");
       localStorage.removeItem("ggid_user_scopes");
+      localStorage.removeItem("ggid_user_permissions");
     }
     setIsAuthenticated(false);
   };
