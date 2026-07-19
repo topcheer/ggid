@@ -37,6 +37,7 @@ export default function LoginPage() {
   const [connectorsLoaded, setConnectorsLoaded] = useState(false);
   const [passkeySupported, setPasskeySupported] = useState(false);
   const [tenantSlug, setTenantSlug] = useState(DEFAULT_TENANT_ID);
+  const [pwFeedback, setPwFeedback] = useState("");
   const [systemInitialized, setSystemInitialized] = useState<boolean | null>(null);
   const [initUserCount, setInitUserCount] = useState(0);
 
@@ -80,16 +81,16 @@ export default function LoginPage() {
 
   // Check system initialization status on mount
   useEffect(() => {
-    fetch(`${API_BASE}/api/v1/system/initialized`)
+    fetch(`${API_BASE}/api/v1/system/status`)
       .then((r) => (r.ok ? r.json() : null))
       .then((data) => {
-        if (data) {
-          setSystemInitialized(data.initialized !== false);
-          setInitUserCount(data.user_count ?? 0);
-        } else {
-          setSystemInitialized(true); // assume initialized if endpoint unavailable
-          setInitUserCount(1);
+        if (data && data.initialized === false) {
+          // System not initialized → redirect to setup wizard
+          window.location.href = "/setup";
+          return;
         }
+        setSystemInitialized(true);
+        setInitUserCount(data?.user_count ?? 1);
       })
       .catch(() => {
         setSystemInitialized(true); // assume initialized on network error
@@ -207,10 +208,13 @@ export default function LoginPage() {
       // Re-enabled — backend valid-ids now queries DB store (commit 4a5bff9c)
       syncSignalAfterLogin().catch(() => {});
 
-      // No MFA needed — redirect to dashboard
+      // No MFA needed — redirect based on role
+      // Non-admin users go to /profile, admin users go to /dashboard
+      const userScopes = JSON.parse(localStorage.getItem("ggid_user_scopes") || "[\"user\"]");
+      const isAdmin = userScopes.includes("admin") || userScopes.includes("platform_admin");
       // Use window.location.href for hard navigation — router.push can silently fail
       // when localStorage was just written (AuthGuard needs fresh page load)
-      window.location.href = "/dashboard";
+      window.location.href = isAdmin ? "/dashboard" : "/profile";
     } catch (err) {
       setError(err instanceof Error ? err.message : "Network error — is the API running?");
     } finally {
@@ -441,12 +445,21 @@ export default function LoginPage() {
                 name="password"
                 aria-label={t("login.password")}
                 value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                onChange={(e) => {
+                  const pw = e.target.value;
+                  setPassword(pw);
+                  // Real-time password feedback
+                  if (pw.length === 0) setPwFeedback("");
+                  else if (pw.length < 8) setPwFeedback("Password is too short (min 8 characters)");
+                  else if (!/[A-Z]/.test(pw) || !/[0-9]/.test(pw)) setPwFeedback("Add uppercase and numbers for stronger security");
+                  else setPwFeedback("");
+                }}
                 required
                 autoComplete="current-password"
                 className="w-full rounded-lg border border-gray-300 px-3 py-2 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
                 placeholder="••••••••••••"
               />
+              {pwFeedback && <p className="mt-1 text-xs text-amber-600 dark:text-amber-400">{pwFeedback}</p>}
             </div>
 
             <div className="mb-6 flex items-center justify-between">
