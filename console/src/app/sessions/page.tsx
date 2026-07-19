@@ -174,7 +174,7 @@ export default function SessionsPage() {
 
   // Helpers
   const getInitials = (s: Session): string => {
-    const name = s.user_name || s.username || s.email || "User";
+    const name = s.user_name || s.username || s.email || (s.user_id ? `User ${s.user_id.substring(0, 8)}` : "User");
     return name
       .split(/[\s@._]+/)
       .filter(Boolean)
@@ -184,7 +184,7 @@ export default function SessionsPage() {
   };
 
   const getDisplayName = (s: Session): string => {
-    return s.user_name || s.username || s.email || "Unknown User";
+    return s.user_name || s.username || s.email || (s.user_id ? `User ${s.user_id.substring(0, 8)}` : "Unknown User");
   };
 
   const parseDeviceType = (ua: string): string => {

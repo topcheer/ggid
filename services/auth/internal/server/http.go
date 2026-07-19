@@ -642,7 +642,11 @@ func (h *Handler) login(w http.ResponseWriter, r *http.Request) {
 		log.Printf("login error for user %s: %v", req.Username, err)
 		// Audit: login failure
 		if tc, terr := ggidtenant.FromContext(r.Context()); terr == nil {
-			h.publishAuditEvent("user.login", "failure", tc.TenantID, uuid.Nil)
+			event := audit.NewEvent("user.login", "failure", tc.TenantID, uuid.Nil)
+			event.ActorName = req.Username
+			event.IPAddress = ip
+			event.UserAgent = userAgent
+			h.auditPublisher.PublishAsync(event)
 		}
 		writeAuthError(w, err)
 		return
@@ -657,7 +661,15 @@ func (h *Handler) login(w http.ResponseWriter, r *http.Request) {
 
 	// Audit: login success
 	if tc, err := ggidtenant.FromContext(r.Context()); err == nil {
-		h.publishAuditEvent("user.login", "success", tc.TenantID, uuid.Nil)
+		event := audit.NewEvent("user.login", "success", tc.TenantID, *authResult.LinkedUser)
+		event.ActorName = req.Username
+		if fwd := r.Header.Get("X-Forwarded-For"); fwd != "" {
+			event.IPAddress = strings.TrimSpace(strings.Split(fwd, ",")[0])
+		} else {
+			event.IPAddress = ip
+		}
+		event.UserAgent = userAgent
+		h.auditPublisher.PublishAsync(event)
 	}
 
 	// KB-080: Conditional Access Policy evaluation.
@@ -1061,7 +1073,36 @@ func (h *Handler) handleSessions(w http.ResponseWriter, r *http.Request) {
 			writeJSON(w, http.StatusOK, map[string]any{"sessions": []interface{}{}, "total": 0})
 			return
 		}
-		writeJSON(w, http.StatusOK, map[string]any{"sessions": sessions})
+		// Resolve username from identity service
+		username := ""
+		if ic := h.authSvc.IdentityClient(); ic != nil {
+			if u, err := ic.GetUser(r.Context(), tenantID, userID); err == nil && u != nil {
+				username = u.Username
+			}
+		}
+		if username == "" {
+			username = userID.String()[:8] // fallback to UUID prefix
+		}
+
+		// Enrich sessions with username for display
+		enriched := make([]map[string]any, 0, len(sessions))
+		for _, s := range sessions {
+			entry := map[string]any{
+				"id":         s.ID,
+				"user_id":    s.UserID,
+				"username":   username,
+				"ip_address": s.IPAddress,
+				"user_agent": s.UserAgent,
+				"device":     parseDeviceInfo(s.UserAgent),
+				"browser":    s.DeviceInfo["browser"],
+				"os":         s.DeviceInfo["os"],
+				"expires_at": s.ExpiresAt,
+				"created_at": s.CreatedAt,
+				"revoked":    s.RevokedAt != nil,
+			}
+			enriched = append(enriched, entry)
+		}
+		writeJSON(w, http.StatusOK, map[string]any{"sessions": enriched, "total": len(enriched)})
 
 	case http.MethodDelete:
 		sessionIDStr := r.URL.Path[len("/api/v1/auth/sessions/"):]
@@ -1620,6 +1661,52 @@ func (h *Handler) verifyEmail(w http.ResponseWriter, r *http.Request) {
 }
 
 // --- Helpers ---
+
+// parseDeviceInfo extracts browser/os/device from User-Agent string.
+func parseDeviceInfo(ua string) string {
+	ua = strings.ToLower(ua)
+	device := "Unknown"
+	switch {
+	case strings.Contains(ua, "iphone") || strings.Contains(ua, "android"):
+		device = "Mobile"
+	case strings.Contains(ua, "ipad"):
+		device = "Tablet"
+	case strings.Contains(ua, "mobile"):
+		device = "Mobile"
+	default:
+		device = "Desktop"
+	}
+
+	browser := "Unknown"
+	switch {
+	case strings.Contains(ua, "edg/"):
+		browser = "Edge"
+	case strings.Contains(ua, "chrome/"):
+		browser = "Chrome"
+	case strings.Contains(ua, "firefox/"):
+		browser = "Firefox"
+	case strings.Contains(ua, "safari/"):
+		browser = "Safari"
+	case strings.Contains(ua, "curl/"):
+		browser = "curl"
+	}
+
+	osName := "Unknown"
+	switch {
+	case strings.Contains(ua, "windows"):
+		osName = "Windows"
+	case strings.Contains(ua, "mac os") || strings.Contains(ua, "macos"):
+		osName = "macOS"
+	case strings.Contains(ua, "linux"):
+		osName = "Linux"
+	case strings.Contains(ua, "android"):
+		osName = "Android"
+	case strings.Contains(ua, "ios") || strings.Contains(ua, "iphone"):
+		osName = "iOS"
+	}
+
+	return browser + "/" + osName + " (" + device + ")"
+}
 
 func writeJSON(w http.ResponseWriter, status int, data any) {
 	w.Header().Set("Content-Type", "application/json")
