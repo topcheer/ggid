@@ -10,6 +10,26 @@ export default function SetupPage() {
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [strength, setStrength] = useState<{score: number; warnings: string[]}>({score: 0, warnings: []});
+
+  // Real-time password strength check via backend zxcvbn API
+  useEffect(() => {
+    if (!form.adminPassword) { setStrength({score: 0, warnings: []}); return; }
+    const timer = setTimeout(async () => {
+      try {
+        const resp = await fetch("/api/v1/auth/password/strength", {
+          method: "POST",
+          headers: {"Content-Type": "application/json"},
+          body: JSON.stringify({password: form.adminPassword}),
+        });
+        if (resp.ok) {
+          const data = await resp.json();
+          setStrength({score: data.score || 0, warnings: data.suggestions || []});
+        }
+      } catch {}
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [form.adminPassword]);
 
   const [form, setForm] = useState({
     adminUsername: "",
@@ -74,14 +94,8 @@ export default function SetupPage() {
       if (!/^[^@]+@[^@]+\.[^@]+$/.test(form.adminEmail)) return setError("Invalid email format");
       setStep(3);
     } else if (step === 3) {
-      const pw = form.adminPassword;
-      if (pw.length < 8) return setError("Password must be at least 8 characters");
-      if (!/[A-Z]/.test(pw)) return setError("Password must contain an uppercase letter");
-      if (!/[a-z]/.test(pw)) return setError("Password must contain a lowercase letter");
-      if (!/[0-9]/.test(pw)) return setError("Password must contain a number");
-      if (pw.length < 12 || /^(password|admin|123|qwerty|abc)/i.test(pw))
-        return setError("Password is too common. Use 12+ characters, avoid dictionary words.");
-      if (pw !== form.confirmPassword) return setError("Passwords do not match");
+      if (strength.score < 2) return setError("Password is too weak. Please use a stronger password.");
+      if (form.adminPassword !== form.confirmPassword) return setError("Passwords do not match");
       handleBootstrap();
     }
   };
@@ -166,47 +180,30 @@ export default function SetupPage() {
                   autoFocus
                 />
               </div>
-              {/* Password strength meter */}
+              {/* Password strength meter — real zxcvbn score from backend */}
               {form.adminPassword && (
                 <div className="space-y-2">
                   <div className="flex gap-1">
                     {[0,1,2,3].map((i) => (
                       <div key={i} className={`h-1.5 flex-1 rounded-full transition-colors ${
-                        (() => {
-                          const checks = [
-                            form.adminPassword.length >= 8,
-                            /[A-Z]/.test(form.adminPassword),
-                            /[a-z]/.test(form.adminPassword),
-                            /[0-9]/.test(form.adminPassword),
-                          ];
-                          const score = checks.filter(Boolean).length;
-                          return i < score
-                            ? score <= 1 ? "bg-red-500" : score === 2 ? "bg-yellow-500" : score === 3 ? "bg-blue-500" : "bg-green-500"
-                            : "bg-slate-200 dark:bg-slate-700";
-                        })()
+                        i < strength.score
+                          ? strength.score <= 1 ? "bg-red-500" : strength.score === 2 ? "bg-yellow-500" : strength.score === 3 ? "bg-blue-500" : "bg-green-500"
+                          : "bg-slate-200 dark:bg-slate-700"
                       }`} />
                     ))}
                   </div>
-                  <ul className="space-y-1 text-xs">
-                    <li className={`flex items-center gap-1.5 ${form.adminPassword.length >= 8 ? "text-green-600 dark:text-green-400" : "text-slate-400"}`}>
-                      {form.adminPassword.length >= 8 ? "✓" : "○"} At least 8 characters
-                    </li>
-                    <li className={`flex items-center gap-1.5 ${/[A-Z]/.test(form.adminPassword) ? "text-green-600 dark:text-green-400" : "text-slate-400"}`}>
-                      {/[A-Z]/.test(form.adminPassword) ? "✓" : "○"} Uppercase letter (A-Z)
-                    </li>
-                    <li className={`flex items-center gap-1.5 ${/[a-z]/.test(form.adminPassword) ? "text-green-600 dark:text-green-400" : "text-slate-400"}`}>
-                      {/[a-z]/.test(form.adminPassword) ? "✓" : "○"} Lowercase letter (a-z)
-                    </li>
-                    <li className={`flex items-center gap-1.5 ${/[0-9]/.test(form.adminPassword) ? "text-green-600 dark:text-green-400" : "text-slate-400"}`}>
-                      {/[0-9]/.test(form.adminPassword) ? "✓" : "○"} Number (0-9)
-                    </li>
-                    <li className={`flex items-center gap-1.5 ${
-                      form.adminPassword.length >= 12 && !/^(password|admin|123|qwerty|abc)/i.test(form.adminPassword)
-                        ? "text-green-600 dark:text-green-400" : "text-slate-400"
-                    }`}>
-                      {form.adminPassword.length >= 12 && !/^(password|admin|123|qwerty|abc)/i.test(form.adminPassword) ? "✓" : "○"} Avoid common dictionary words (recommended 12+ chars)
-                    </li>
-                  </ul>
+                  <p className={`text-xs font-medium ${
+                    strength.score >= 2 ? "text-green-600 dark:text-green-400" : "text-red-500"
+                  }`}>
+                    {strength.score >= 2 ? "✓ Password strength: Good" : "⚠ Password too weak — score " + strength.score + "/4"}
+                  </p>
+                  {strength.warnings.length > 0 && (
+                    <ul className="space-y-1 text-xs text-slate-500 dark:text-slate-400">
+                      {strength.warnings.slice(0, 3).map((w, i) => (
+                        <li key={i}>• {w}</li>
+                      ))}
+                    </ul>
+                  )}
                 </div>
               )}
               <div>
