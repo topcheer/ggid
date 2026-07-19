@@ -846,6 +846,7 @@ export default function UsersPage() {
                 />
               </th>
               <th scope="col" className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">{t("users.userCol")}</th>
+              <th scope="col" className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">{t("users.role")}</th>
               <th scope="col" className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">{t("common.status")}</th>
               <th scope="col" className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">{t("users.sync")}</th>
               <th scope="col" className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">{t("common.created")}</th>
@@ -854,9 +855,9 @@ export default function UsersPage() {
           </thead>
           <tbody className="divide-y divide-gray-100">
             {loading ? (
-              <tr><td colSpan={6} className="px-4 py-8 text-center text-gray-500">{t("common.loading")}</td></tr>
+              <tr><td colSpan={7} className="px-4 py-8 text-center text-gray-500">{t("common.loading")}</td></tr>
             ) : paginated.length === 0 ? (
-              <tr><td colSpan={6} className="px-4 py-8 text-center">
+              <tr><td colSpan={7} className="px-4 py-8 text-center">
                 <div className="flex flex-col items-center gap-2">
                   <p className="text-gray-500 dark:text-gray-400">{t("users.noUsers")}</p>
                   <p className="text-xs text-gray-400 dark:text-gray-500">{t("users.noUsersHint")}</p>
@@ -885,6 +886,22 @@ export default function UsersPage() {
                           <p className="text-xs text-gray-500">{user.email}</p>
                         </div>
                       </Link>
+                    </td>
+                    <td className="px-4 py-3">
+                      <div className="flex flex-wrap gap-1">
+                        {user.roles && Array.isArray(user.roles) && user.roles.length > 0 ? (
+                          user.roles.map((role: any, idx: number) => {
+                            const name = typeof role === "string" ? role : (role.role_name || role.name || role.role_id || "—");
+                            return (
+                              <span key={idx} className="rounded-full px-2 py-0.5 text-xs font-medium bg-indigo-50 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300">
+                                {name}
+                              </span>
+                            );
+                          })
+                        ) : (
+                          <span className="text-xs text-gray-300">—</span>
+                        )}
+                      </div>
                     </td>
                     <td className="px-4 py-3">
                       <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${
