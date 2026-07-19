@@ -8,7 +8,6 @@ import (
 
 	"github.com/ggid/ggid/services/policy/internal/domain"
 	"github.com/google/uuid"
-	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -149,14 +148,17 @@ func (r *RoleRepository) GetAncestorChain(ctx context.Context, roleID uuid.UUID)
 // GrantPermissions assigns permissions to a role.
 func (r *RoleRepository) GrantPermissions(ctx context.Context, roleID uuid.UUID, permissionIDs []uuid.UUID, conditions map[string]any) error {
 	condJSON, _ := json.Marshal(conditions)
-	_, err := r.db.CopyFrom(ctx,
-		pgx.Identifier{"role_permissions"},
-		[]string{"role_id", "permission_id", "conditions"},
-		pgx.CopyFromSlice(len(permissionIDs), func(i int) ([]any, error) {
-			return []any{roleID, permissionIDs[i], condJSON}, nil
-		}),
-	)
-	return err
+	for _, permID := range permissionIDs {
+		_, err := r.db.Exec(ctx, `
+			INSERT INTO role_permissions (role_id, permission_id, conditions)
+			VALUES ($1, $2, $3)
+			ON CONFLICT (role_id, permission_id) DO NOTHING
+		`, roleID, permID, condJSON)
+		if err != nil {
+			return fmt.Errorf("grant permission: %w", err)
+		}
+	}
+	return nil
 }
 
 // RevokePermissions removes permissions from a role.

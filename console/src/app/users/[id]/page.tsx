@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useParams } from "next/navigation";
 import { useApi } from "@/lib/api";
 import { useTranslations } from "@/lib/i18n";
 import { useConfirm } from "@/components/ConfirmDialog";
@@ -125,15 +125,17 @@ function credentialTypeColor(type: string): string {
   }
 }
 
-export default function UserDetailPage({ params }: { params: { id: string } }) {
+export default function UserDetailPage() {
   const t = useTranslations();
   const { apiFetch } = useApi();
   const router = useRouter();
+  const params = useParams();
+  const userId = params?.id as string;
 
   // Guard: redirect if ID is missing or literal "[id]"
   useEffect(() => {
-    if (!params.id || params.id === "[id]") router.replace("/users");
-  }, [params.id, router]);
+    if (!userId || userId === "[id]") router.replace("/users");
+  }, [userId, router]);
 
   const [user, setUser] = useState<User | null>(null);
   const [roles, setRoles] = useState<Role[]>([]);
@@ -171,7 +173,7 @@ export default function UserDetailPage({ params }: { params: { id: string } }) {
     setScimLoading(true);
     try {
       const data = await apiFetch<ScimData>(
-        `/api/v1/users/${params.id}/scim`,
+        `/api/v1/users/${userId}/scim`,
       ).catch(() => null);
       setScimData(data);
     } catch {
@@ -179,12 +181,12 @@ export default function UserDetailPage({ params }: { params: { id: string } }) {
     } finally {
       setScimLoading(false);
     }
-  }, [apiFetch, params.id]);
+  }, [apiFetch, userId]);
 
   const handleScimSync = async () => {
     setScimSyncing(true);
     try {
-      await apiFetch(`/api/v1/users/${params.id}/scim/sync`, {
+      await apiFetch(`/api/v1/users/${userId}/scim/sync`, {
         method: "POST",
       });
       setMsg("SCIM sync triggered successfully");
@@ -200,7 +202,7 @@ export default function UserDetailPage({ params }: { params: { id: string } }) {
     setActivityLoading(true);
     try {
       const data = await apiFetch<{ events?: AuditEvent[] }>(
-        `/api/v1/audit/events?actor_id=${params.id}&page_size=20`,
+        `/api/v1/audit/events?actor_id=${userId}&page_size=20`,
       ).catch(() => ({ events: [] }));
       setActivity(data.events || []);
     } catch {
@@ -208,24 +210,24 @@ export default function UserDetailPage({ params }: { params: { id: string } }) {
     } finally {
       setActivityLoading(false);
     }
-  }, [apiFetch, params.id]);
+  }, [apiFetch, userId]);
 
   const loadUserRoles = useCallback(async () => {
     try {
       const data = await apiFetch<{ roles?: Role[] }>(
-        `/api/v1/users/${params.id}/roles`,
+        `/api/v1/users/${userId}/roles`,
       ).catch(() => ({ roles: [] }));
       setUserRoles(data.roles || []);
     } catch {
       setUserRoles([]);
     }
-  }, [apiFetch, params.id]);
+  }, [apiFetch, userId]);
 
   const loadOrgs = useCallback(async () => {
     setOrgsLoading(true);
     try {
       const data = await apiFetch<{ organizations?: OrgMembership[] }>(
-        `/api/v1/org/memberships?user_id=${params.id}`,
+        `/api/v1/org/memberships?user_id=${userId}`,
       ).catch(() => ({ organizations: [] }));
       setOrgs(data.organizations || []);
     } catch {
@@ -233,13 +235,13 @@ export default function UserDetailPage({ params }: { params: { id: string } }) {
     } finally {
       setOrgsLoading(false);
     }
-  }, [apiFetch, params.id]);
+  }, [apiFetch, userId]);
 
   const loadSessions = useCallback(async () => {
     setSessionsLoading(true);
     try {
       const data = await apiFetch<{ sessions?: Session[] } | Session[]>(
-        `/api/v1/users/${params.id}/sessions`,
+        `/api/v1/users/${userId}/sessions`,
       ).catch(() => ({ sessions: [] }));
       const list = Array.isArray(data) ? data : data.sessions || [];
       setSessions(list);
@@ -248,12 +250,12 @@ export default function UserDetailPage({ params }: { params: { id: string } }) {
     } finally {
       setSessionsLoading(false);
     }
-  }, [apiFetch, params.id]);
+  }, [apiFetch, userId]);
 
   const handleRevokeSession = async (sessionId: string) => {
     setRevokingSession(sessionId);
     try {
-      await apiFetch(`/api/v1/users/${params.id}/sessions/${sessionId}`, {
+      await apiFetch(`/api/v1/users/${userId}/sessions/${sessionId}`, {
         method: "DELETE",
       });
       setMsg("Session revoked successfully");
@@ -269,7 +271,7 @@ export default function UserDetailPage({ params }: { params: { id: string } }) {
     if (!window.confirm("Delete this credential? This cannot be undone.")) return;
     setDeletingCred(credId);
     try {
-      await apiFetch(`/api/v1/users/${params.id}/credentials/${credId}`, {
+      await apiFetch(`/api/v1/users/${userId}/credentials/${credId}`, {
         method: "DELETE",
       });
       setMsg("Credential deleted successfully");
@@ -285,7 +287,7 @@ export default function UserDetailPage({ params }: { params: { id: string } }) {
     setImpersonating(true);
     try {
       const resp = await apiFetch<{ token?: string; access_token?: string }>(
-        `/api/v1/users/${params.id}/impersonate`,
+        `/api/v1/users/${userId}/impersonate`,
         { method: "POST" },
       );
       const token = resp.token || resp.access_token;
@@ -315,17 +317,17 @@ export default function UserDetailPage({ params }: { params: { id: string } }) {
   const loadData = useCallback(async () => {
     setLoading(true);
     try {
-      const u = await apiFetch<User>(`/api/v1/users/${params.id}`);
+      const u = await apiFetch<User>(`/api/v1/users/${userId}`);
       setUser(u);
       setEditForm({ display_name: u.display_name || "", email: u.email || "", phone: u.phone || "", status: u.status || "active" });
 
       const [rolesResp, credsResp, socialResp, userRolesResp, orgsResp, scimResp] = await Promise.all([
         apiFetch<{ roles?: Role[] }>("/api/v1/roles").catch(() => ({ roles: [] })),
-        apiFetch<{ credentials?: Credential[] }>(`/api/v1/users/${params.id}/credentials`).catch(() => ({ credentials: [] })),
-        apiFetch<{ connections?: SocialConnection[] }>(`/api/v1/users/${params.id}/social`).catch(() => ({ connections: [] })),
-        apiFetch<{ roles?: Role[] }>(`/api/v1/users/${params.id}/roles`).catch(() => ({ roles: [] })),
-        apiFetch<{ organizations?: OrgMembership[] }>(`/api/v1/org/memberships?user_id=${params.id}`).catch(() => ({ organizations: [] })),
-        apiFetch<ScimData>(`/api/v1/users/${params.id}/scim`).catch(() => null),
+        apiFetch<{ credentials?: Credential[] }>(`/api/v1/users/${userId}/credentials`).catch(() => ({ credentials: [] })),
+        apiFetch<{ connections?: SocialConnection[] }>(`/api/v1/users/${userId}/social`).catch(() => ({ connections: [] })),
+        apiFetch<{ roles?: Role[] }>(`/api/v1/users/${userId}/roles`).catch(() => ({ roles: [] })),
+        apiFetch<{ organizations?: OrgMembership[] }>(`/api/v1/org/memberships?user_id=${userId}`).catch(() => ({ organizations: [] })),
+        apiFetch<ScimData>(`/api/v1/users/${userId}/scim`).catch(() => null),
       ]);
       setRoles((rolesResp as { roles?: Role[] }).roles || []);
       setCredentials((credsResp as { credentials?: Credential[] }).credentials || []);
@@ -340,7 +342,7 @@ export default function UserDetailPage({ params }: { params: { id: string } }) {
     } finally {
       setLoading(false);
     }
-  }, [params.id, apiFetch]);
+  }, [userId, apiFetch]);
 
   useEffect(() => {
     loadData();
@@ -348,7 +350,7 @@ export default function UserDetailPage({ params }: { params: { id: string } }) {
 
   const handleSave = async () => {
     try {
-      await apiFetch(`/api/v1/users/${params.id}`, {
+      await apiFetch(`/api/v1/users/${userId}`, {
         method: "PUT",
         body: JSON.stringify(editForm),
       });
@@ -362,7 +364,7 @@ export default function UserDetailPage({ params }: { params: { id: string } }) {
 
   const handleLock = async (lock: boolean) => {
     try {
-      await apiFetch(`/api/v1/users/${params.id}/${lock ? "lock" : "unlock"}`, {
+      await apiFetch(`/api/v1/users/${userId}/${lock ? "lock" : "unlock"}`, {
         method: "POST",
       });
       setMsg(`User ${lock ? "locked" : "unlocked"} successfully`);
@@ -377,7 +379,7 @@ export default function UserDetailPage({ params }: { params: { id: string } }) {
     try {
       await apiFetch("/api/v1/auth/password/reset", {
         method: "POST",
-        body: JSON.stringify({ user_id: params.id, new_password: resetPassword }),
+        body: JSON.stringify({ user_id: userId, new_password: resetPassword }),
       });
       setResetPassword("");
       setMsg("Password reset successfully");
@@ -388,7 +390,7 @@ export default function UserDetailPage({ params }: { params: { id: string } }) {
 
   const handleAssignRole = async (roleId: string) => {
     try {
-      await apiFetch(`/api/v1/users/${params.id}/roles`, {
+      await apiFetch(`/api/v1/users/${userId}/roles`, {
         method: "POST",
         body: JSON.stringify({ role_id: roleId }),
       });
@@ -401,7 +403,7 @@ export default function UserDetailPage({ params }: { params: { id: string } }) {
 
   const handleRevokeRole = async (roleId: string) => {
     try {
-      await apiFetch(`/api/v1/users/${params.id}/roles/${roleId}`, {
+      await apiFetch(`/api/v1/users/${userId}/roles/${roleId}`, {
         method: "DELETE",
       });
       setMsg("Role revoked successfully");
@@ -414,7 +416,7 @@ export default function UserDetailPage({ params }: { params: { id: string } }) {
   const handleDelete = async () => {
     if (!window.confirm("Are you sure you want to delete this user?")) return;
     try {
-      await apiFetch(`/api/v1/users/${params.id}`, { method: "DELETE" });
+      await apiFetch(`/api/v1/users/${userId}`, { method: "DELETE" });
       router.push("/users");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to delete");
