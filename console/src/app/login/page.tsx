@@ -46,7 +46,7 @@ export default function LoginPage() {
       setPasskeySupported(true);
       // Conditional mediation: silently check for a passkey via autofill
       // This shows available passkeys in the browser's native autofill UI.
-      // The backend /api/v1/webauthn/auth/begin endpoint supports discoverable credentials.
+      // The backend /api/v1/auth/webauthn/auth/begin endpoint supports discoverable credentials.
       (async () => {
         try {
           const pkc = PublicKeyCredential as unknown as typeof PublicKeyCredential & { isConditionalMediationAvailable?: () => Promise<boolean> };
@@ -55,7 +55,7 @@ export default function LoginPage() {
           // Trigger a conditional passkey authentication.
           // The browser will show the passkey in the autofill dropdown.
           // This does not block the normal login flow — it runs in parallel.
-          // The actual assertion must be posted to /api/v1/webauthn/auth/finish.
+          // The actual assertion must be posted to /api/v1/auth/webauthn/auth/finish.
         } catch {
           // Conditional mediation not available — normal flow continues.
         }

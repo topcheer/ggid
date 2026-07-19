@@ -54,21 +54,9 @@ export default function ImportEnhancedPage() {
         body: JSON.stringify({ dry_run: true, data: fileContent }),
       });
       if (res.ok) { const d = await res.json(); setPreCheck(d); setPhase("precheck-result"); return; }
-    } catch { /* mock */ }
-    // Mock pre-check
-    setTimeout(() => {
-      setPreCheck({
-        total: 150, valid: 142, invalid: 5, skipped: 3, duplicates: 2, warnings: 4,
-        errors: [
-          { row: 5, email: "invalid@", error: "Invalid email format" },
-          { row: 23, email: "", error: "Missing email field" },
-          { row: 45, email: "dup@company.com", error: "Duplicate: already exists" },
-          { row: 67, email: "bad@domain", error: "Invalid domain" },
-          { row: 89, email: "empty@.com", error: "Invalid email format" },
-        ],
-      });
-      setPhase("precheck-result");
-    }, 800);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Pre-check failed");
+    }
   };
 
   const startImport = async () => {
@@ -82,38 +70,10 @@ export default function ImportEnhancedPage() {
       });
       const data = await res.json();
       if (data.job_id) { pollJob(data.job_id); return; }
-    } catch { /* mock */ }
-    // Mock import progress
-    mockImportProgress();
-  };
-
-  const mockImportProgress = () => {
-    const total = preCheck?.total || 150;
-    let current = 0;
-    pollRef.current = setInterval(() => {
-      current += Math.floor(Math.random() * 15) + 5;
-      if (current >= total) {
-        current = total;
-        if (pollRef.current) clearInterval(pollRef.current);
-        setProgress(total);
-        setTimeout(() => {
-          setSummary({
-            imported: preCheck?.valid || 142,
-            failed: preCheck?.invalid || 5,
-            skipped: preCheck?.skipped || 3,
-            duration_ms: 12500,
-            rate: Math.round((total / 12.5)),
-            errors: [
-              { type: "Invalid email format", count: 3 },
-              { type: "Duplicate user", count: 1 },
-              { type: "Missing required field", count: 1 },
-            ],
-          });
-          setPhase("summary");
-        }, 500);
-      }
-      setProgress(current);
-    }, 300);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Import failed");
+      setPhase("precheck-result");
+    }
   };
 
   const pollJob = (jobId: string) => {
@@ -135,7 +95,7 @@ export default function ImportEnhancedPage() {
             setPhase("summary");
           }
         }
-      } catch { /* mock fallback */ mockImportProgress(); if (pollRef.current) clearInterval(pollRef.current); }
+      } catch { /* poll will retry */ }
     }, 1000);
   };
 

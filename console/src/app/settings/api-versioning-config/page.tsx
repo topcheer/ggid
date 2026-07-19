@@ -48,11 +48,7 @@ export default function ApiVersioningConfigPage() {
     { version: 'v1', status: 'deprecated', releaseDate: '2025-01-15', sunsetDate: '2026-12-31', consumers: 23 },
     { version: 'v0', status: 'sunset', releaseDate: '2024-03-01', sunsetDate: '2025-06-01', consumers: 0 },
   ]);
-const [breakingChanges, setBreakingChanges] = useState([
-    { version: 'v2', change: 'Removed /users/legacy endpoint', impact: 'high', date: '2026-06-01' },
-    { version: 'v2', change: 'Changed role schema to include key field', impact: 'medium', date: '2026-06-01' },
-    { version: 'v1', change: 'Added X-Tenant-ID header requirement', impact: 'medium', date: '2025-08-01' },
-  ]);
+const [breakingChanges, setBreakingChanges] = useState<{ version: string; change: string; impact: string; date: string }[]>([]);
 
   if (loading) return <div className="flex items-center justify-center py-12"><Loader2 className="h-8 w-8 animate-spin text-blue-500" /></div>;
   if (error) return <div className="p-8 text-red-500">Error: {error}</div>;

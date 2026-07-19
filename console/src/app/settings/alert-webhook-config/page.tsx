@@ -31,8 +31,10 @@ export default function AlertWebhookConfigPage() {
             "X-Tenant-ID": "00000000-0000-0000-0000-000000000001",
           },
         });
-        if (!res.ok) return null;
+        if (!res.ok) return;
         const json = await res.json();
+        const items = json.webhooks || json.items || [];
+        setWebhooks(items.map((w: any) => ({ id: w.id || "", url: w.url || "", eventTypes: w.event_types || [], enabled: w.enabled ?? true, maxRetries: w.max_retries || 3, status: w.status || "unknown", deliveries: w.deliveries || { success: 0, failure: 0, retry: 0 } })));
       } catch (e) {
         setError(e instanceof Error ? e.message : "Failed to load");
       } finally {
@@ -46,11 +48,7 @@ export default function AlertWebhookConfigPage() {
   const [newUrl, setNewUrl] = useState('');
   const [newSecret, setNewSecret] = useState('');
   const [newEvents, setNewEvents] = useState<string[]>([]);
-  const [testResult, setTestResult] = useState('');const [webhooks, setWebhooks] = useState<Webhook[]>([
-    { id: 'w1', url: 'https://hooks.slack.com/services/xxx', eventTypes: ['alert', 'escalation'], enabled: true, maxRetries: 3, status: 'healthy', deliveries: { success: 142, failure: 2, retry: 5 } },
-    { id: 'w2', url: 'https://api.pagerduty.com/v2/enqueue', eventTypes: ['alert', 'correlation'], enabled: true, maxRetries: 5, status: 'healthy', deliveries: { success: 89, failure: 0, retry: 1 } },
-    { id: 'w3', url: 'https://hooks.example.com/alerts', eventTypes: ['correlation'], enabled: false, maxRetries: 3, status: 'down', deliveries: { success: 12, failure: 8, retry: 15 } },
-  ]);
+  const [testResult, setTestResult] = useState('');const [webhooks, setWebhooks] = useState<Webhook[]>([]);;
 
   if (loading) return <div className="flex items-center justify-center py-12"><Loader2 className="h-8 w-8 animate-spin text-blue-500" /></div>;
   if (error) return <div className="p-8 text-red-500">Error: {error}</div>;

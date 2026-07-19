@@ -58,12 +58,7 @@ export default function SOARPage() {
   const [fActions, setFActions] = useState<string[]>([]);
 
   // Executions (demo data)
-  const [executions] = useState([
-    { id: "ex-001", playbook: "MFA Fatigue Response", trigger: "mfa_fatigue_detected", user: "user:alice", status: "success", actions: 2, duration_ms: 1200, time: new Date(Date.now() - 300000).toISOString() },
-    { id: "ex-002", playbook: "Impossible Travel", trigger: "impossible_travel", user: "user:bob", status: "success", actions: 2, duration_ms: 800, time: new Date(Date.now() - 600000).toISOString() },
-    { id: "ex-003", playbook: "Credential Stuffing", trigger: "credential_stuffing", user: "user:eve", status: "running", actions: 1, duration_ms: 0, time: new Date(Date.now() - 30000).toISOString() },
-    { id: "ex-004", playbook: "Mass Data Export", trigger: "bulk_export", user: "user:carol", status: "failed", actions: 1, duration_ms: 500, time: new Date(Date.now() - 900000).toISOString() },
-  ]);
+  const [executions, setExecutions] = useState([] as any[]);
 
   const H = { ...authHeader(), "Content-Type": "application/json", "X-Tenant-ID": TENANT_ID };
   const h = { ...authHeader(), "X-Tenant-ID": TENANT_ID };

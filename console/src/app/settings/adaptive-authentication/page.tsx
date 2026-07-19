@@ -21,12 +21,7 @@ interface DeviceTrust {
 export default function AdaptiveAuthenticationPage() {
   const t = useTranslations();
   const [rules, setRules] = useState<RiskRule[]>([]);
-  const [thresholds, setThresholds] = useState([
-    { level: 'low', minScore: 0, maxScore: 25, action: 'allow' },
-    { level: 'medium', minScore: 25, maxScore: 50, action: 'step_up' },
-    { level: 'high', minScore: 50, maxScore: 75, action: 'challenge_mfa' },
-    { level: 'critical', minScore: 75, maxScore: 100, action: 'block' },
-  ]);
+  const [thresholds, setThresholds] = useState<{ level: string; minScore: number; maxScore: number; action: string }[]>([]);
 
   const [ipAllowlist, setIpAllowlist] = useState<string[]>([]);
   const [ipBlocklist, setIpBlocklist] = useState<string[]>([]);

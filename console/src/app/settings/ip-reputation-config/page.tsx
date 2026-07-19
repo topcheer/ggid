@@ -11,8 +11,8 @@ export default function IpReputationConfigPage() {
   const [checkInterval, setCheckInterval] = useState(300);
   const [blockThreshold, setBlockThreshold] = useState(80);
   const [suspiciousThreshold, setSuspiciousThreshold] = useState(50);
-  const [allowlist, setAllowlist] = useState(['10.0.0.0/8', '172.16.0.0/12']);
-  const [blocklist, setBlocklist] = useState(['203.0.113.0/24']);
+  const [allowlist, setAllowlist] = useState<string[]>([]);
+  const [blocklist, setBlocklist] = useState<string[]>([]);
   const [blockedCountries, setBlockedCountries] = useState<string[]>(['CN', 'RU']);
   const [asnBlocklist, setAsnBlocklist] = useState<string[]>(['AS12345', 'AS67890']);
   const [newIp, setNewIp] = useState('');

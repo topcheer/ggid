@@ -7,7 +7,7 @@ export default function NotificationPreviewPage() {
   const t = useTranslations();
 
   const [template, setTemplate] = useState('welcome');
-  const [variables, setVariables] = useState({ name: 'Alice', org: 'GGID Corp', code: '123456' });
+  const [variables, setVariables] = useState({ name: '', org: '', code: '' });
   const [darkMode, setDarkMode] = useState(false);
   const [mobilePreview, setMobilePreview] = useState(false);
   const [sendResult, setSendResult] = useState('');
@@ -36,7 +36,7 @@ export default function NotificationPreviewPage() {
 
   const render = (s: string) => s.replace(/\{\{(\w+)\}\}/g, (_, k) => (variables as Record<string, string>)[k] || `{{${k}}}`);
   const current = templates[template];
-  const [versions] = useState(['v1.0 (initial)', 'v1.1 (added dark mode)', 'v1.2 (current)']);
+  const [versions, setVersions] = useState<string[]>([]);
 
   const sendTest = () => {
     setSending(true);

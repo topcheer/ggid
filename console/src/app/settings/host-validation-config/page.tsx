@@ -6,8 +6,8 @@ import { useTranslations } from "@/lib/i18n";
 export default function HostValidationConfigPage() {
   const [enabled, setEnabled] = useState(true);
   const [mode, setMode] = useState("whitelist");
-  const [whitelist, setWhitelist] = useState(["app.example.com", "api.example.com"]);
-  const [blacklist, setBlacklist] = useState(["evil.com"]);
+  const [whitelist, setWhitelist] = useState<string[]>([]);
+  const [blacklist, setBlacklist] = useState<string[]>([]);
   const [newHost, setNewHost] = useState("");
 
   const t = useTranslations();

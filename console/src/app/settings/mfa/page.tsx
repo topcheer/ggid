@@ -49,14 +49,8 @@ export default function MFAPage() {
       setTotpSecret(data.secret || "");
       setTotpQrUrl(data.qr_code_url || "");
       showMessage(t("mfa.scanQrPrompt"));
-    } catch {
-      // Fallback: generate a mock secret for demo
-      const mockSecret = Array.from({ length: 16 }, () =>
-        "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567"[Math.floor(Math.random() * 32)],
-      ).join("");
-      setTotpSecret(mockSecret);
-      setTotpQrUrl(`otpauth://totp/GGID:user@example.com?secret=${mockSecret}&issuer=GGID`);
-      showMessage(t("mfa.scanQrPrompt"));
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Failed to setup TOTP");
     }
   };
 
@@ -75,13 +69,6 @@ export default function MFAPage() {
       setTotpEnrolled(true);
       if (data.recovery_codes && data.recovery_codes.length > 0) {
         setRecoveryCodes(data.recovery_codes);
-      } else {
-        // Generate mock recovery codes for demo
-        setRecoveryCodes(
-          Array.from({ length: 10 }, () =>
-            Array.from({ length: 5 }, () => "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"[Math.floor(Math.random() * 36)]).join(""),
-          ),
-        );
       }
       showMessage(t("mfa.totpEnrolledSuccess"));
     } catch {
@@ -123,17 +110,17 @@ export default function MFAPage() {
     setWebauthnLoading(true);
     setError(null);
     try {
-      const beginResp = await apiFetch<{ publicKey?: Record<string, unknown> }>("/api/v1/webauthn/register/begin", {
+      const beginResp = await apiFetch<{ publicKey?: Record<string, unknown> }>("/api/v1/auth/webauthn/register/begin", {
         method: "POST",
         body: JSON.stringify({ name: webauthnName }),
       });
       // In a real impl, we'd pass beginResp.publicKey to navigator.credentials.create()
-      // and then POST the result to /api/v1/webauthn/register/finish
+      // and then POST the result to /api/v1/auth/webauthn/register/finish
       // For now, simulate success
       try {
         if (beginResp.publicKey && typeof navigator !== "undefined" && navigator.credentials) {
           const credential = await navigator.credentials.create({ publicKey: beginResp.publicKey as unknown as PublicKeyCredentialCreationOptions });
-          await apiFetch("/api/v1/webauthn/register/finish", {
+          await apiFetch("/api/v1/auth/webauthn/register/finish", {
             method: "POST",
             body: JSON.stringify({ credential, name: webauthnName }),
           });

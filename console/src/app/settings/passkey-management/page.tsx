@@ -36,21 +36,41 @@ export default function PasskeyManagementPage() {
     s === 'pending' ? 'bg-amber-100 text-amber-700' :
     'bg-gray-100 text-gray-500';
 
-  const enrollPasskey = () => {
-    const platforms = ['Apple', 'Google', 'Microsoft', 'Hardware'];
-    const newPk: Passkey = {
-      id: `pk${passkeys.length + 1}`,
-      deviceName: enrollDevice || 'New Device',
-      platform: platforms[Math.floor(Math.random() * platforms.length)],
-      created: new Date().toISOString().slice(0, 10),
-      lastUsed: new Date().toISOString().slice(0, 10),
-      transports: ['internal', 'hybrid'],
-      syncStatus: 'pending',
-      backupEligible: true,
-    };
-    setPasskeys(prev => [...prev, newPk]);
-    setShowEnroll(false);
-    setEnrollDevice('');
+  const enrollPasskey = async () => {
+    try {
+      const beginResp = await fetch('/api/v1/auth/webauthn/register/begin', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...authHeader() },
+        body: JSON.stringify({ device_name: enrollDevice || 'New Device' }),
+      });
+      if (!beginResp.ok) throw new Error(`Registration begin failed: ${beginResp.status}`);
+      const publicKey = await beginResp.json();
+
+      // Use WebAuthn API to create credential
+      const credential = await navigator.credentials.create({ publicKey });
+      if (!credential) throw new Error('No credential returned');
+
+      // Send credential to finish endpoint
+      const finishResp = await fetch('/api/v1/auth/webauthn/register/finish', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...authHeader() },
+        body: JSON.stringify(credential),
+      });
+      if (!finishResp.ok) throw new Error(`Registration finish failed: ${finishResp.status}`);
+
+      setShowEnroll(false);
+      setEnrollDevice('');
+      // Reload passkeys from API
+      const statusResp = await fetch('/api/v1/auth/passkeys/status', {
+        headers: { ...authHeader(), 'Content-Type': 'application/json' },
+      });
+      if (statusResp.ok) {
+        const data = await statusResp.json();
+        setPasskeys(data.passkeys || (Array.isArray(data) ? data : []));
+      }
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Passkey enrollment failed');
+    }
   };
 
   useEffect(() => {

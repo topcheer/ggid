@@ -136,7 +136,7 @@ export default function SecurityCenterDashboardPage() {
 
   const revokeDevice = async (id: string) => {
     try {
-      await apiFetch(`/api/v1/webauthn/devices/${id}`, { method: "DELETE" });
+      await apiFetch(`/api/v1/auth/webauthn/devices/${id}`, { method: "DELETE" });
       setData((prev) =>
         prev ? { ...prev, webauthn_devices: prev.webauthn_devices.filter((d: any) => d.id !== id) } : prev,
       );

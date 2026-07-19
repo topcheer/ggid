@@ -37,8 +37,10 @@ export default function WebhookSubscriptionConfigPage() {
             "X-Tenant-ID": "00000000-0000-0000-0000-000000000001",
           },
         });
-        if (!res.ok) return null;
+        if (!res.ok) return;
         const json = await res.json();
+        const items = json.subscriptions || json.items || json.webhooks || [];
+        setSubscriptions(items.map((s: any) => ({ id: s.id || "", eventType: s.event_type || s.event || "", endpointUrl: s.endpoint_url || s.url || "", enabled: s.enabled ?? true, retryCount: s.retry_count || 0, maxRetries: s.max_retries || 3 })));
       } catch (e) {
         setError(e instanceof Error ? e.message : "Failed to load");
       } finally {
@@ -49,12 +51,7 @@ export default function WebhookSubscriptionConfigPage() {
   }, []);
 
   const [showForm, setShowForm] = useState(false);
-  const [newSub, setNewSub] = useState({ eventType: '', endpointUrl: '', secret: '', maxRetries: 3 });const [subscriptions, setSubscriptions] = useState<Subscription[]>([
-    { id: 'sub1', eventType: 'user.created', endpointUrl: 'https://app.example.com/hooks/user', enabled: true, retryCount: 0, maxRetries: 3 },
-    { id: 'sub2', eventType: 'user.deleted', endpointUrl: 'https://app.example.com/hooks/user', enabled: true, retryCount: 2, maxRetries: 3 },
-    { id: 'sub3', eventType: 'role.assigned', endpointUrl: 'https://hr.example.com/webhooks', enabled: true, retryCount: 0, maxRetries: 5 },
-    { id: 'sub4', eventType: 'org.created', endpointUrl: 'https://billing.example.com/hooks', enabled: false, retryCount: 5, maxRetries: 3 },
-  ]);
+  const [newSub, setNewSub] = useState({ eventType: '', endpointUrl: '', secret: '', maxRetries: 3 });const [subscriptions, setSubscriptions] = useState<Subscription[]>([]);;
 const [deliveries] = useState<Delivery[]>([
     { id: 'd1', subscription: 'user.created', status: 'success', timestamp: '2026-07-12 14:30', statusCode: 200 },
     { id: 'd2', subscription: 'user.deleted', status: 'retry', timestamp: '2026-07-12 14:15', statusCode: 500 },

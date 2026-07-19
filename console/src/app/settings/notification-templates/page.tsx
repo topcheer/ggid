@@ -19,7 +19,7 @@ export default function NotificationTemplatesPage() {
   const [error, setError] = useState<string | null>(null);
   const [templates, setTemplates] = useState<Template[]>([]);
   const [selected, setSelected] = useState<Template | null>(null);
-  const [previewData] = useState({ user_name: "John Doe", action_url: "https://app.ggid.dev/start", tenant_name: "Acme Corp", code: "123456", device: "Chrome / macOS", location: "San Francisco, US" });
+  const [previewData, setPreviewData] = useState({ user_name: "", action_url: "", tenant_name: "", code: "", device: "", location: "" });
   const [testSending, setTestSending] = useState(false);
 
   useEffect(() => {

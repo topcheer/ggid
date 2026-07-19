@@ -7,12 +7,7 @@ export default function CompressionConfigPage() {
   const [enabled, setEnabled] = useState(true);
   const [minSize, setMinSize] = useState(1024);
   const [level, setLevel] = useState(6);
-  const [mimeTypes, setMimeTypes] = useState([
-    "application/json",
-    "text/html",
-    "text/css",
-    "application/javascript",
-  ]);
+  const [mimeTypes, setMimeTypes] = useState<string[]>([]);
   const [newMime, setNewMime] = useState("");
 
   const t = useTranslations();

@@ -289,16 +289,8 @@ export default function SecuritySettingsPage() {
       );
       const codes = Array.isArray(data) ? data : data.codes || [];
       setRecoveryCodes(codes);
-    } catch {
-      // Generate mock codes for offline mode
-      const mock: string[] = [];
-      for (let i = 0; i < 10; i++) {
-        const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-        let code = "";
-        for (let j = 0; j < 4; j++) code += chars[Math.floor(Math.random() * chars.length)];
-        mock.push(`${code}-${code}`);
-      }
-      setRecoveryCodes(mock);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Failed to regenerate codes");
     } finally {
       setRegenerating(false);
       setConfirmRegenerate(false);
