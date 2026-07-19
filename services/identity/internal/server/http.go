@@ -739,9 +739,18 @@ func (h *HTTPHandler) listUsers(ctx context.Context, w http.ResponseWriter, r *h
 		return
 	}
 
+	// Batch-fetch roles for all users in a single query to avoid N+1.
+	userRolesMap := h.batchGetUserRoles(ctx, result.Users)
+
 	users := make([]map[string]any, len(result.Users))
 	for i, u := range result.Users {
-		users[i] = userToJSON(u)
+		m := userToJSON(u)
+		if roles, ok := userRolesMap[u.ID]; ok {
+			m["roles"] = roles
+		} else {
+			m["roles"] = []map[string]any{}
+		}
+		users[i] = m
 	}
 
 	// Cache the response if caching is enabled.
@@ -985,6 +994,49 @@ func userToJSON(u *domain.User) map[string]any {
 		m["primary_email_id"] = u.PrimaryEmailID.String()
 	}
 	return m
+}
+
+// batchGetUserRoles fetches roles for all given users in a single query,
+// returning a map of user_id → list of role info. Returns empty map on error.
+func (h *HTTPHandler) batchGetUserRoles(ctx context.Context, users []*domain.User) map[uuid.UUID][]map[string]any {
+	result := make(map[uuid.UUID][]map[string]any)
+	pool := h.svc.Pool()
+	if pool == nil || len(users) == 0 {
+		return result
+	}
+
+	// Collect user IDs.
+	userIDs := make([]uuid.UUID, len(users))
+	for i, u := range users {
+		userIDs[i] = u.ID
+	}
+
+	rows, err := pool.Query(ctx, `
+		SELECT ur.user_id, ur.role_id::text, COALESCE(r.key, r.name, ur.role_id::text), ur.created_at
+		FROM user_roles ur
+		LEFT JOIN roles r ON r.id = ur.role_id
+		WHERE ur.user_id = ANY($1)
+		ORDER BY ur.created_at DESC
+	`, userIDs)
+	if err != nil {
+		return result
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var userID uuid.UUID
+		var roleID, roleName string
+		var assignedAt time.Time
+		if err := rows.Scan(&userID, &roleID, &roleName, &assignedAt); err != nil {
+			continue
+		}
+		result[userID] = append(result[userID], map[string]any{
+			"role_id":    roleID,
+			"role_name":  roleName,
+			"assigned_at": assignedAt,
+		})
+	}
+	return result
 }
 
 func writeJSON(w http.ResponseWriter, status int, data any) {
