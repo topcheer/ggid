@@ -9,8 +9,16 @@ const PUBLIC_PATHS = ["/login", "/register", "/forgot-password", "/reset-passwor
 export function AuthGuard({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [checked, setChecked] = useState(false);
+
+  // Read token synchronously on first render (avoid flash of null/redirect)
+  const [isAuthenticated, setIsAuthenticated] = useState(() => {
+    if (typeof window === "undefined") return false;
+    return localStorage.getItem("ggid_access_token") !== null;
+  });
+  const [checked, setChecked] = useState(() => {
+    if (typeof window === "undefined") return false;
+    return true; // Already checked synchronously
+  });
 
   useEffect(() => {
     const token = typeof window !== "undefined" ? localStorage.getItem("ggid_access_token") : null;
