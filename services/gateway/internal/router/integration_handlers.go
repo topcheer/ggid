@@ -183,13 +183,28 @@ func (gw *Gateway) handleSystemBootstrap(w http.ResponseWriter, r *http.Request)
 		req.TenantName = "Default Organization"
 	}
 
-	// Step 1: Check if bootstrap was already done (tenant exists).
-	// Use the default tenant ID that seed.sh creates.
+	// Step 1: Create tenant record in DB via identity service.
 	tenantID := uuid.MustParse("00000000-0000-0000-0000-000000000001")
+	identityURL := gw.serviceURL("/api/v1/users")
+	client := &http.Client{Timeout: 10 * time.Second}
+
+	tenantBody, _ := json.Marshal(map[string]string{
+		"name": req.TenantName,
+		"slug": "default",
+	})
+	tenantReq, _ := http.NewRequestWithContext(r.Context(), "POST", identityURL+"/api/v1/tenants", bytes.NewReader(tenantBody))
+	tenantReq.Header.Set("Content-Type", "application/json")
+	tenantResp, err := client.Do(tenantReq)
+	if err != nil {
+		log.Printf("bootstrap: create tenant failed (non-fatal): %v", err)
+	} else {
+		io.ReadAll(tenantResp.Body)
+		tenantResp.Body.Close()
+		log.Printf("bootstrap: tenant created (status %d)", tenantResp.StatusCode)
+	}
 
 	// Step 2: Register admin user via auth service.
 	authURL := gw.serviceURL("/api/v1/auth")
-	client := &http.Client{Timeout: 10 * time.Second}
 
 	regBody, _ := json.Marshal(map[string]string{
 		"username":  req.AdminUsername,
@@ -219,36 +234,36 @@ func (gw *Gateway) handleSystemBootstrap(w http.ResponseWriter, r *http.Request)
 	json.Unmarshal(regRespBody, &regResult)
 	adminUserID, _ := regResult["user_id"].(string)
 
-	// Step 2b: Create default roles + assign admin role to bootstrap user.
-	identityURL := gw.serviceURL("/api/v1/users")
-	for _, roleKey := range []string{"admin", "manager", "user"} {
-		roleBody, _ := json.Marshal(map[string]string{
-			"key":  roleKey,
-			"name": map[string]string{"admin": "Administrator", "manager": "Manager", "user": "User"}[roleKey],
-		})
+	// Step 2b: Create default roles with proper scope keys + assign platform:admin.
+	for _, role := range []struct{ key, name string }{
+		{"platform:admin", "Platform Administrator"},
+		{"tenant:admin", "Tenant Administrator"},
+		{"tenant:auditor", "Tenant Auditor"},
+		{"user:self", "User"},
+	} {
+		roleBody, _ := json.Marshal(map[string]string{"key": role.key, "name": role.name})
 		roleReq, _ := http.NewRequestWithContext(r.Context(), "POST", identityURL+"/api/v1/roles", bytes.NewReader(roleBody))
 		roleReq.Header.Set("Content-Type", "application/json")
 		roleReq.Header.Set("X-Tenant-ID", tenantID.String())
 		roleResp, err := client.Do(roleReq)
 		if err != nil {
-			log.Printf("bootstrap: create role %s failed: %v", roleKey, err)
+			log.Printf("bootstrap: create role %s failed: %v", role.key, err)
 			continue
 		}
 		io.ReadAll(roleResp.Body)
 		roleResp.Body.Close()
-		log.Printf("bootstrap: role %s created (status %d)", roleKey, roleResp.StatusCode)
 
-		// Assign admin role to the bootstrap user
-		if roleKey == "admin" && adminUserID != "" {
-			assignBody, _ := json.Marshal(map[string]string{"role_id": roleKey, "role_name": "Administrator"})
+		// Assign platform:admin + tenant:admin to bootstrap user
+		if (role.key == "platform:admin" || role.key == "tenant:admin") && adminUserID != "" {
+			assignBody, _ := json.Marshal(map[string]string{"role_id": role.key, "role_name": role.name})
 			assignReq, _ := http.NewRequestWithContext(r.Context(), "POST", identityURL+"/api/v1/users/"+adminUserID+"/roles", bytes.NewReader(assignBody))
 			assignReq.Header.Set("Content-Type", "application/json")
 			assignReq.Header.Set("X-Tenant-ID", tenantID.String())
 			assignResp, err := client.Do(assignReq)
 			if err != nil {
-				log.Printf("bootstrap: assign admin role failed: %v", err)
+				log.Printf("bootstrap: assign role %s failed: %v", role.key, err)
 			} else {
-				log.Printf("bootstrap: admin role assigned (status %d)", assignResp.StatusCode)
+				log.Printf("bootstrap: role %s assigned (status %d)", role.key, assignResp.StatusCode)
 				assignResp.Body.Close()
 			}
 		}

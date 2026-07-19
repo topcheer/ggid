@@ -205,8 +205,8 @@ export function getUserScopes(): string[] {
 
 export function getUserRole(): UserRole {
   const scopes = getUserScopes();
-  if (scopes.includes("admin") || scopes.includes("platform_admin")) return "platform_admin";
-  if (scopes.includes("manager") || scopes.includes("tenant_admin")) return "tenant_admin";
+  if (scopes.includes("platform:admin") || scopes.includes("admin")) return "platform_admin";
+  if (scopes.includes("tenant:admin") || scopes.includes("manager")) return "tenant_admin";
   return "user";
 }
 
@@ -217,9 +217,10 @@ export function useUserRole(): { role: UserRole; scopes: string[]; isPlatformAdm
     setScopes(getUserScopes());
   }, []);
 
-  const role: UserRole = scopes.includes("admin") || scopes.includes("platform_admin")
+  const hasScope = (s: string) => scopes.includes(s);
+  const role: UserRole = (hasScope("platform:admin") || hasScope("admin"))
     ? "platform_admin"
-    : scopes.includes("manager") || scopes.includes("tenant_admin")
+    : (hasScope("tenant:admin") || hasScope("manager"))
     ? "tenant_admin"
     : "user";
 
