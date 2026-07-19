@@ -42,12 +42,12 @@ export default function DashboardPage() {
         };
         setKpi(data);
         setIsNew(data.totalUsers <= 1);
-        return;
       }
-    } catch { /* fall through to defaults */ }
-    // Only show "new user" experience if API truly unavailable AND no cached data
-    setKpi({ totalUsers: 0, activeSessions: 0, mfaCoverage: 0, auditEvents24h: 0, newUsers7d: 0, failedLogins24h: 0, oauthClients: 0 });
-    setIsNew(false); // Don't assume new user on API failure
+    } catch { /* fall through */ }
+    // Always set loading false + fallback data
+    setKpi((prev) => prev ?? { totalUsers: 0, activeSessions: 0, mfaCoverage: 0, auditEvents24h: 0, newUsers7d: 0, failedLogins24h: 0, oauthClients: 0 });
+    setIsNew(false);
+    setLoading(false);
   }, []);
 
   useEffect(() => { load(); }, [load]);
