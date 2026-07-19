@@ -202,12 +202,19 @@ func stringBody(s string) *strings.Reader {
 
 func newTestGateway(t *testing.T) *Gateway {
 	t.Helper()
+	mockBackend := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte(`{"status":"ok"}`))
+	}))
+	t.Cleanup(mockBackend.Close)
+
 	cfg := config.Default()
 	cfg.Routes = map[string]string{
-		"/api/v1/users":  "http://localhost:18001",
-		"/api/v1/roles":  "http://localhost:18002",
-		"/api/v1/orgs":   "http://localhost:18003",
-		"/api/v1/audit":  "http://localhost:18004",
+		"/api/v1/users":  mockBackend.URL,
+		"/api/v1/roles":  mockBackend.URL,
+		"/api/v1/orgs":   mockBackend.URL,
+		"/api/v1/audit":  mockBackend.URL,
 	}
 
 	// Create a JWKS client with a test key
