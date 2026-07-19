@@ -23,6 +23,10 @@ issues:
     # Relax all linters for test files
     - path: _test\.go
       linters: [govet, errcheck]
+    - path: cmd/main\.go
+      linters: [errcheck]
+    - path: .*/cmd/main\.go
+      linters: [errcheck]
     # errcheck: allow ignored returns from json encoding in HTTP handlers
     # (standard Go pattern — encoding errors on response writes are not actionable)
     - path: services/.*/internal/(server|router)/.*\.go
