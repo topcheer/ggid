@@ -164,6 +164,9 @@ func main() {
 	})
 	// REST API endpoints
 	httpAPI := httpserver.NewHTTPServer(auditSvc)
+	if db != nil {
+		httpAPI.SetPool(db)
+	}
 
 	// Wire ITDR repository into HTTP server for API queries.
 	if db != nil {

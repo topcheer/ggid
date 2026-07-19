@@ -383,7 +383,9 @@ func (s *HTTPServer) handleEvents(w http.ResponseWriter, r *http.Request) {
 		result[i] = eventToJSON(e)
 		// Fill missing actor_name from resolved cache
 		if e.ActorName == "" && e.ActorID != nil {
-			if name, ok := nameCache[*e.ActorID]; ok {
+			if *e.ActorID == uuid.Nil {
+				result[i]["actor_name"] = "system"
+			} else if name, ok := nameCache[*e.ActorID]; ok {
 				result[i]["actor_name"] = name
 			}
 		}
@@ -1737,8 +1739,15 @@ func eventToJSON(e *domain.AuditEvent) map[string]any {
 	if e.ActorID != nil {
 		m["actor_id"] = e.ActorID.String()
 	}
-		if e.ResourceID != nil && *e.ResourceID != uuid.Nil {
-		m["resource_id"] = e.ResourceID.String()
+	// Build resource display: omit empty type and nil/zero IDs
+	if e.ResourceID != nil && *e.ResourceID != uuid.Nil {
+		if e.ResourceType != "" {
+			m["resource_id"] = e.ResourceType + ":" + e.ResourceID.String()
+		} else {
+			m["resource_id"] = e.ResourceID.String()
+		}
+	} else if e.ResourceType != "" {
+		m["resource_id"] = e.ResourceType
 	}
 	if e.Metadata != nil {
 		m["metadata"] = e.Metadata
