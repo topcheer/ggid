@@ -595,6 +595,32 @@ func (h *HTTPHandler) createUser(ctx context.Context, w http.ResponseWriter, r *
 		return
 	}
 
+	// Email format validation
+	if !strings.Contains(req.Email, "@") || !strings.Contains(req.Email, ".") || len(req.Email) < 5 {
+		writeJSONError(w, http.StatusBadRequest, "invalid email format")
+		return
+	}
+
+	// Password strength validation (min 8 chars, at least 1 letter + 1 digit)
+	if len(req.Password) < 8 {
+		writeJSONError(w, http.StatusBadRequest, "password must be at least 8 characters")
+		return
+	}
+	hasLetter := false
+	hasDigit := false
+	for _, c := range req.Password {
+		switch {
+		case (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z'):
+			hasLetter = true
+		case c >= '0' && c <= '9':
+			hasDigit = true
+		}
+	}
+	if !hasLetter || !hasDigit {
+		writeJSONError(w, http.StatusBadRequest, "password must contain at least one letter and one digit")
+		return
+	}
+
 	user, err := h.svc.CreateUser(ctx, &domain.CreateUserInput{
 		Username:    req.Username,
 		Email:       req.Email,

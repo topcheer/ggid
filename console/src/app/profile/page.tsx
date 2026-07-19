@@ -1,5 +1,6 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
+import { authHeader } from "@/lib/auth-helpers";
 import {
   User, Shield, Smartphone, Loader2, AlertCircle, X, Check,
   Key, Lock, Mail, Phone, CheckCircle2, XCircle, Plus, Ban,
@@ -23,23 +24,55 @@ export default function EnhancedProfilePage() {
   const [phoneVerified, setPhoneVerified] = useState(true);
 
   // Security
-  const [mfaMethods, setMfaMethods] = useState([
-    { type: "totp", name: "Authenticator App", enabled: true },
-    { type: "webauthn", name: "Passkey — MacBook Pro", enabled: true },
-    { type: "sms", name: "SMS — +1-555-0100", enabled: false },
-  ]);
-  const [linkedAccounts] = useState([
-    { provider: "Google", email: "alice@gmail.com", connected: true },
-    { provider: "GitHub", email: "alice@company.com", connected: true },
-    { provider: "Microsoft", email: "", connected: false },
-  ]);
+  const [mfaMethods, setMfaMethods] = useState<{ type: string; name: string; enabled: boolean }[]>([]);
+  const [linkedAccounts, setLinkedAccounts] = useState<{ provider: string; email: string; connected: boolean }[]>([]);
+  const [devices, setDevices] = useState<Device[]>([]);
+  const [loadingProfile, setLoadingProfile] = useState(true);
 
-  // Devices
-  const [devices, setDevices] = useState<Device[]>([
-    { id: "d1", name: "MacBook Pro 16\"", os: "macOS 14.2", lastSeen: new Date(Date.now() - 300000).toISOString(), trusted: true },
-    { id: "d2", name: "iPhone 15 Pro", os: "iOS 17.3", lastSeen: new Date(Date.now() - 3600000).toISOString(), trusted: true },
-    { id: "d3", name: "Workstation", os: "Linux 6.5", lastSeen: new Date(Date.now() - 86400000).toISOString(), trusted: false },
-  ]);
+  const API_BASE = process.env.NEXT_PUBLIC_API_URL || "";
+
+  // Fetch real profile data
+  useEffect(() => {
+    const loadProfile = async () => {
+      setLoadingProfile(true);
+      try {
+        // Fetch MFA status
+        const mfaRes = await fetch(`${API_BASE}/api/v1/auth/mfa/status`, { headers: { ...authHeader() } });
+        if (mfaRes.ok) {
+          const mfaData = await mfaRes.json();
+          setMfaMethods(mfaData.methods || mfaData.factors || []);
+        }
+      } catch { /* empty state */ }
+
+      try {
+        // Fetch linked accounts
+        const linkRes = await fetch(`${API_BASE}/api/v1/auth/account-linking`, { headers: { ...authHeader() } });
+        if (linkRes.ok) {
+          const linkData = await linkRes.json();
+          setLinkedAccounts(linkData.accounts || linkData || []);
+        }
+      } catch { /* empty state */ }
+
+      try {
+        // Fetch sessions as device proxy
+        const sessRes = await fetch(`${API_BASE}/api/v1/auth/sessions`, { headers: { ...authHeader() } });
+        if (sessRes.ok) {
+          const sessData = await sessRes.json();
+          const sessions = sessData.sessions || sessData || [];
+          setDevices(sessions.map((s: Record<string, string>) => ({
+            id: s.session_id || s.id,
+            name: s.device || s.user_agent?.split(' ').pop() || 'Unknown Device',
+            os: s.user_agent || 'Unknown',
+            lastSeen: s.last_active || s.created_at || new Date().toISOString(),
+            trusted: s.trusted === true,
+          })));
+        }
+      } catch { /* empty state */ }
+
+      setLoadingProfile(false);
+    };
+    loadProfile();
+  }, []);
 
   const card = "rounded-xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-700 dark:bg-gray-800";
 

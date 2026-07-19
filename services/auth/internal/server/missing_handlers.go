@@ -94,7 +94,10 @@ func (h *Handler) handleMFAStatus(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	if len(methods) == 0 {
-		methods = []string{"totp", "webauthn", "email"}
+		// Return empty — no fake data
+		if !enrolled {
+			methods = []string{}
+		}
 	}
 
 	writeJSON(w, http.StatusOK, map[string]interface{}{
