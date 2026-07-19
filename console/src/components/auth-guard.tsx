@@ -10,15 +10,8 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
 
-  // Read token synchronously on first render (avoid flash of null/redirect)
-  const [isAuthenticated, setIsAuthenticated] = useState(() => {
-    if (typeof window === "undefined") return false;
-    return localStorage.getItem("ggid_access_token") !== null;
-  });
-  const [checked, setChecked] = useState(() => {
-    if (typeof window === "undefined") return false;
-    return true; // Already checked synchronously
-  });
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [checked, setChecked] = useState(false);
 
   useEffect(() => {
     const token = typeof window !== "undefined" ? localStorage.getItem("ggid_access_token") : null;
@@ -52,7 +45,13 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
     return () => window.removeEventListener("ggid:unauthorized", handleUnauthorized);
   }, [router]);
 
-  if (!checked) return null;
+  if (!checked) {
+    return (
+      <div className="flex h-screen items-center justify-center bg-gray-50 dark:bg-gray-950">
+        <div className="w-8 h-8 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
 
   const isPublic = PUBLIC_PATHS.some((p) => pathname === p || pathname.startsWith(p));
 
