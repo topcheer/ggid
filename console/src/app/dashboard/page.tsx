@@ -4,10 +4,11 @@ import { useState, useEffect, useCallback } from "react";
 import { useTranslations } from "@/lib/i18n";
 import { usePageTitle } from "@/lib/usePageTitle";
 import { authHeader } from "@/lib/auth-helpers";
+import { useUserRole } from "@/lib/api";
 import {
   Users, Activity, Shield, Clock, TrendingUp, AlertTriangle,
   UserPlus, Globe, KeyRound, FileText, ArrowRight, BookOpen,
-  Code, Rocket, ExternalLink, Zap, Loader2,
+  Code, Rocket, ExternalLink, Zap, Loader2, Monitor, Fingerprint,
 } from "lucide-react";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "";
@@ -21,9 +22,15 @@ interface KPIData {
 export default function DashboardPage() {
   const t = useTranslations();
   usePageTitle("Dashboard");
+  const { isPlatformAdmin, isTenantAdmin } = useUserRole();
   const [kpi, setKpi] = useState<KPIData | null>(null);
   const [loading, setLoading] = useState(true);
   const [isNew, setIsNew] = useState(false);
+
+  // Regular users see a simplified personal dashboard
+  if (!isTenantAdmin && !isPlatformAdmin) {
+    return <UserDashboard />;
+  }
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -183,4 +190,87 @@ function QuickLink({ icon: Icon, label, desc, href }: {
 // Use ExternalLink as GitHub icon substitute (Github icon not available in this lucide version)
 function GithubIcon(props: React.ComponentProps<typeof Shield>) {
   return <ExternalLink {...props} />;
+}
+
+// ===== User Dashboard (for regular users) =====
+function UserDashboard() {
+  usePageTitle("Dashboard");
+  const [sessions, setSessions] = useState<number>(0);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetch(`${API_BASE}/api/v1/auth/sessions`, { headers: { ...authHeader() } })
+      .then((r) => r.ok ? r.json() : null)
+      .then((d) => setSessions(d?.sessions?.length ?? d?.total ?? 0))
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, []);
+
+  return (
+    <div className="space-y-6">
+      <h1 className="text-2xl font-bold text-gray-900 dark:text-white">My Dashboard</h1>
+
+      {/* Personal summary cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-5">
+          <div className="flex items-center gap-3">
+            <div className="p-2 rounded-lg bg-blue-50 dark:bg-blue-900/30">
+              <Monitor className="w-5 h-5 text-blue-600" />
+            </div>
+            <div>
+              <p className="text-2xl font-bold text-gray-900 dark:text-white">{loading ? "..." : sessions}</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400">Active Sessions</p>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-5">
+          <div className="flex items-center gap-3">
+            <div className="p-2 rounded-lg bg-green-50 dark:bg-green-900/30">
+              <Fingerprint className="w-5 h-5 text-green-600" />
+            </div>
+            <div>
+              <p className="text-sm font-medium text-gray-900 dark:text-white">MFA Status</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400">Configure in Profile</p>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-5">
+          <div className="flex items-center gap-3">
+            <div className="p-2 rounded-lg bg-amber-50 dark:bg-amber-900/30">
+              <KeyRound className="w-5 h-5 text-amber-600" />
+            </div>
+            <div>
+              <p className="text-sm font-medium text-gray-900 dark:text-white">Password</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400">Manage in Profile</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Quick actions */}
+      <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-5">
+        <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">Quick Actions</h2>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          <a href="/profile" className="flex flex-col items-center gap-2 p-3 rounded-lg border border-gray-200 dark:border-gray-700 hover:border-blue-300 transition-colors">
+            <Shield className="w-5 h-5 text-blue-600" />
+            <span className="text-xs font-medium text-gray-700 dark:text-gray-300">Profile & Security</span>
+          </a>
+          <a href="/sessions" className="flex flex-col items-center gap-2 p-3 rounded-lg border border-gray-200 dark:border-gray-700 hover:border-blue-300 transition-colors">
+            <Monitor className="w-5 h-5 text-blue-600" />
+            <span className="text-xs font-medium text-gray-700 dark:text-gray-300">My Sessions</span>
+          </a>
+          <a href="/access-requests" className="flex flex-col items-center gap-2 p-3 rounded-lg border border-gray-200 dark:border-gray-700 hover:border-blue-300 transition-colors">
+            <FileText className="w-5 h-5 text-blue-600" />
+            <span className="text-xs font-medium text-gray-700 dark:text-gray-300">Request Access</span>
+          </a>
+          <a href="/profile" className="flex flex-col items-center gap-2 p-3 rounded-lg border border-gray-200 dark:border-gray-700 hover:border-blue-300 transition-colors">
+            <Fingerprint className="w-5 h-5 text-blue-600" />
+            <span className="text-xs font-medium text-gray-700 dark:text-gray-300">Setup MFA</span>
+          </a>
+        </div>
+      </div>
+    </div>
+  );
 }
