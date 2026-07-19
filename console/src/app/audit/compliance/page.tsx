@@ -42,53 +42,9 @@ const FRAMEWORKS = [
   { value: "pci", label: "PCI DSS" },
 ];
 
-const MOCK_REPORTS: ComplianceReport[] = [
-  {
-    id: "rpt-soc2-2025",
-    framework: "SOC 2 Type II",
-    status: "compliant",
-    score: 96,
-    lastAssessed: "2025-06-15",
-    controlsTotal: 64,
-    controlsPassed: 61,
-    controlsFailed: 3,
-    summary:
-      "GGID maintains SOC 2 Type II compliance with 96% control effectiveness. All security, availability, and confidentiality criteria are met.",
-  },
-  {
-    id: "rpt-hipaa-2025",
-    framework: "HIPAA",
-    status: "compliant",
-    score: 100,
-    lastAssessed: "2025-05-20",
-    controlsTotal: 42,
-    controlsPassed: 42,
-    controlsFailed: 0,
-    summary:
-      "Full HIPAA compliance. All administrative, physical, and technical safeguards are implemented and verified.",
-  },
-  {
-    id: "rpt-gdpr-2025",
-    framework: "GDPR",
-    status: "partial",
-    score: 88,
-    lastAssessed: "2025-06-01",
-    controlsTotal: 30,
-    controlsPassed: 26,
-    controlsFailed: 4,
-    summary:
-      "GDPR compliance at 88%. Data subject access request automation and cross-border transfer mechanisms need enhancement.",
-  },
-];
+const MOCK_REPORTS: ComplianceReport[] = [];
 
-const MOCK_CONTROLS: ControlItem[] = [
-  { id: "CC1.1", name: "Access Control Policy", description: "Formal access control policy documented and enforced.", status: "pass", evidence: "Policy doc v2.3, last reviewed 2025-04-10" },
-  { id: "CC1.2", name: "User Provisioning", description: "Automated user provisioning and de-provisioning workflows.", status: "pass", evidence: "SCIM 2.0 integration verified" },
-  { id: "CC2.1", name: "Encryption at Rest", description: "All sensitive data encrypted at rest using AES-256.", status: "pass", evidence: "Database TDE enabled, S3 SSE-KMS" },
-  { id: "CC3.1", name: "Audit Logging", description: "Comprehensive audit trail for all security-relevant events.", status: "pass", evidence: "NATS JetStream audit pipeline" },
-  { id: "CC4.1", name: "Incident Response", description: "Documented incident response plan with defined SLAs.", status: "warning", evidence: "Plan exists but tabletop exercise overdue" },
-  { id: "CC5.1", name: "Vulnerability Management", description: "Regular vulnerability scanning and remediation.", status: "fail", evidence: "3 critical CVEs pending remediation" },
-];
+const MOCK_CONTROLS: ControlItem[] = [];
 
 export default function ComplianceReportPage() {
   const t = useTranslations();

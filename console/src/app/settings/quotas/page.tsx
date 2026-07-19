@@ -43,8 +43,8 @@ export default function QuotasPage() {
 
   // Trend data (daily)
   const trendDays = Array.from({ length: 14 }, (_, i) => i + 1);
-  const apiTrend = trendDays.map(d => Math.round(8000 + Math.sin(d / 2) * 2000 + Math.random() * 1000));
-  const userTrend = trendDays.map(d => 320 + Math.round(d * 2 + Math.random() * 5));
+  const apiTrend: number[] = [];
+  const userTrend: number[] = [];
   const maxApi = Math.max(...apiTrend, 1);
 
   useEffect(() => { setLoading(false); }, []);

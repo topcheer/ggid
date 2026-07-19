@@ -236,7 +236,7 @@ export default function AccessKeysPage() {
       setShowCreate(false);
       loadKeys();
     } catch {
-      showSecretModal(generateMockSecret());
+      setError("Failed to create key");
       resetForm();
       setShowCreate(false);
       setMsg("Access key created (demo mode)");
@@ -254,7 +254,7 @@ export default function AccessKeysPage() {
       setMsg("Access key rotated successfully");
       loadKeys();
     } catch {
-      showSecretModal(generateMockSecret());
+      setError("Failed to create key");
       setMsg("Access key rotated (demo mode)");
     } finally {
       setRotatingId(null);
@@ -451,7 +451,7 @@ export default function AccessKeysPage() {
                             </div>
                           </div>
                         </td>
-                        <td className="px-4 py-3"><code className="font-mono text-xs text-gray-600 dark:text-gray-400">{key.key_prefix || generateMockPrefix()}...</code></td>
+                        <td className="px-4 py-3"><code className="font-mono text-xs text-gray-600 dark:text-gray-400">{key.key_prefix || ""}...</code></td>
                         <td className="px-4 py-3">
                           <div className="flex flex-wrap gap-1 max-w-[200px]">
                             {(key.scopes || []).map((s: any) => (

@@ -63,56 +63,7 @@ interface AttributeMapping {
   target: string;
 }
 
-const MOCK_APPS: ScimApp[] = [
-  {
-    id: "slack",
-    name: "Slack",
-    icon: "💬",
-    status: "connected",
-    last_sync: new Date(Date.now() - 300000).toISOString(),
-    user_count: 142,
-    group_count: 8,
-    total_users: 150,
-    synced_users: 142,
-    total_groups: 10,
-    synced_groups: 8,
-  },
-  {
-    id: "google",
-    name: "Google Workspace",
-    icon: "🌐",
-    status: "connected",
-    last_sync: new Date(Date.now() - 900000).toISOString(),
-    user_count: 198,
-    group_count: 15,
-    total_users: 200,
-    synced_users: 198,
-    total_groups: 15,
-    synced_groups: 15,
-  },
-  {
-    id: "okta",
-    name: "Okta",
-    icon: "🔐",
-    status: "error",
-    last_sync: new Date(Date.now() - 3600000).toISOString(),
-    user_count: 0,
-    group_count: 0,
-    total_users: 120,
-    synced_users: 0,
-    total_groups: 6,
-    synced_groups: 0,
-  },
-  {
-    id: "custom",
-    name: "Custom App",
-    icon: "⚙️",
-    status: "pending",
-    last_sync: "—",
-    user_count: 0,
-    group_count: 0,
-  },
-];
+const MOCK_APPS: ScimApp[] = [];
 
 const SOURCE_ATTRIBUTES = [
   "email",
@@ -148,22 +99,9 @@ const DEFAULT_MAPPINGS: AttributeMapping[] = [
   { id: "m5", source: "active", target: "active" },
 ];
 
-const MOCK_SYNC_EVENTS: SyncEvent[] = [
-  { id: "e1", app: "Slack", type: "user_created", entity: "john.doe@ggid.dev", timestamp: new Date(Date.now() - 120000).toISOString(), status: "success" },
-  { id: "e2", app: "Slack", type: "user_updated", entity: "jane.smith@ggid.dev", timestamp: new Date(Date.now() - 300000).toISOString(), status: "success" },
-  { id: "e3", app: "Google Workspace", type: "user_deactivated", entity: "old.user@ggid.dev", timestamp: new Date(Date.now() - 600000).toISOString(), status: "success" },
-  { id: "e4", app: "Slack", type: "group_created", entity: "engineering-team", timestamp: new Date(Date.now() - 900000).toISOString(), status: "success" },
-  { id: "e5", app: "Google Workspace", type: "user_updated", entity: "bob.wilson@ggid.dev", timestamp: new Date(Date.now() - 1200000).toISOString(), status: "success" },
-  { id: "e6", app: "Okta", type: "user_created", entity: "test.user@ggid.dev", timestamp: new Date(Date.now() - 1800000).toISOString(), status: "failed" },
-];
+const MOCK_SYNC_EVENTS: SyncEvent[] = [];
 
-const MOCK_HISTORY: SyncHistoryEntry[] = [
-  { id: "h1", timestamp: new Date(Date.now() - 300000).toISOString(), app: "Slack", type: "incremental", users_processed: 3, status: "success", duration: "2.1s" },
-  { id: "h2", timestamp: new Date(Date.now() - 900000).toISOString(), app: "Google Workspace", type: "incremental", users_processed: 5, status: "success", duration: "4.3s" },
-  { id: "h3", timestamp: new Date(Date.now() - 3600000).toISOString(), app: "Okta", type: "full", users_processed: 120, status: "failed", duration: "0.5s", details: "Connection refused: SCIM endpoint unreachable" },
-  { id: "h4", timestamp: new Date(Date.now() - 7200000).toISOString(), app: "Slack", type: "full", users_processed: 150, status: "success", duration: "12.8s" },
-  { id: "h5", timestamp: new Date(Date.now() - 86400000).toISOString(), app: "Google Workspace", type: "full", users_processed: 200, status: "partial", duration: "18.2s", details: "2 users failed: missing required attributes" },
-];
+const MOCK_HISTORY: SyncHistoryEntry[] = [];
 
 function statusConfig(status: ScimApp["status"]) {
   switch (status) {

@@ -49,8 +49,7 @@ export default function WebhookSubscriptionsPage() {
   }, [t]);
 
   const [showAdd, setShowAdd] = useState(false);const [subs] = useState<WebhookSubscription[]>([
-    { id: "wh-001", url: "https://hooks.example.com/users", events: ["user.created", "user.updated"], enabled: true, last_delivery: "2025-01-15 16:01", status: "delivered" },
-    { id: "wh-002", url: "https://api.slack.com/hooks/xyz", events: ["auth.login_failed", "policy.violation"], enabled: true, last_delivery: "2025-01-15 15:45", status: "delivered" },
+        { id: "wh-002", url: "https://api.slack.com/hooks/xyz", events: ["auth.login_failed", "policy.violation"], enabled: true, last_delivery: "2025-01-15 15:45", status: "delivered" },
     { id: "wh-003", url: "https://legacy.internal/api/audit", events: ["audit.*"], enabled: false, last_delivery: "2025-01-14 09:00", status: "failed" },
   ]);
 

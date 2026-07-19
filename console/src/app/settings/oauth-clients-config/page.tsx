@@ -87,7 +87,7 @@ export default function OauthClientsConfigPage() {
       {showSecret && (
         <div className="bg-amber-50 border border-amber-200 rounded p-4 text-sm space-y-2">
           <div className="font-medium text-amber-800">Client Secret (shown once):</div>
-          <div className="font-mono text-xs bg-white rounded p-2">gcs_secret_{Math.random().toString(36).slice(2, 18)}</div>
+          <div className="font-mono text-xs bg-white rounded p-2">{createdSecret || "(API response)"}</div>
           <button onClick={() => setShowSecret(false)} className="text-xs text-blue-600">Dismiss</button>
         </div>
       )}

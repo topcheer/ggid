@@ -92,10 +92,8 @@ export default function OAuthClientNewPage() {
       if (!res.ok) throw new Error(data.error?.detail || data.error || "Failed");
       setCreated({ client_id: data.client_id || data.id, client_secret: data.client_secret || data.secret || "" });
       setStep(4);
-    } catch {
-      // Mock for demo
-      setCreated({ client_id: `client_${Math.random().toString(36).substr(2, 16)}`, client_secret: `secret_${Math.random().toString(36).substr(2, 32)}` });
-      setStep(4);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Failed to create client");
     } finally { setCreating(false); }
   };
 

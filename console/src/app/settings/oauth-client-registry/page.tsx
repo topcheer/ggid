@@ -42,8 +42,7 @@ export default function OAuthClientRegistryPage() {
   }, []);
 
   const [showRegister, setShowRegister] = useState(false);const [clients] = useState<OAuthClient[]>([
-    { client_id: "cli-001", name: "Web Dashboard", grant_types: ["authorization_code", "refresh_token"], scopes: ["openid", "profile", "email"], status: "active", pkce_required: true, redirect_uris: ["https://dashboard.example.com/callback"] },
-    { client_id: "cli-002", name: "Mobile App", grant_types: ["authorization_code", "refresh_token"], scopes: ["openid", "profile"], status: "active", pkce_required: true, redirect_uris: ["myapp://callback"] },
+        { client_id: "cli-002", name: "Mobile App", grant_types: ["authorization_code", "refresh_token"], scopes: ["openid", "profile"], status: "active", pkce_required: true, redirect_uris: ["myapp://callback"] },
     { client_id: "cli-003", name: "Legacy Service", grant_types: ["client_credentials"], scopes: ["users:read"], status: "active", pkce_required: false, redirect_uris: [] },
     { client_id: "cli-004", name: "Partner Integration", grant_types: ["authorization_code"], scopes: ["openid", "profile", "audit:read"], status: "disabled", pkce_required: true, redirect_uris: ["https://partner.io/auth/cb"] },
   ]);

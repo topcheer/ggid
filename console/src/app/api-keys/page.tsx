@@ -131,13 +131,7 @@ export default function ApiKeysPage() {
         setNewKey(data.key);
       } else {
         // Fallback: generate a mock key for demo mode
-        const mockKey =
-          "ggid_" +
-          Array.from(
-            { length: 40 },
-            () => "abcdefghijklmnopqrstuvwxyz0123456789"[Math.floor(Math.random() * 36)]
-          ).join("");
-        setNewKey(mockKey);
+        setError("Failed to create key");
       }
       setKeyName("");
       setKeyScopes(new Set(["read"]));
@@ -146,13 +140,7 @@ export default function ApiKeysPage() {
       loadKeys();
     } catch {
       // Demo fallback
-      const mockKey =
-        "ggid_" +
-        Array.from(
-          { length: 40 },
-          () => "abcdefghijklmnopqrstuvwxyz0123456789"[Math.floor(Math.random() * 36)]
-        ).join("");
-      setNewKey(mockKey);
+      setError("Failed to create key");
       setKeyName("");
       setKeyScopes(new Set(["read"]));
       setKeyExpiry("30d");

@@ -52,7 +52,7 @@ export default function PasskeyHealthPage() {
 
   // Sparkline for trends
   const genSpark = (base: number, variance: number) => Array.from({ length: 14 }, (_, i) =>
-    Math.round(base + Math.sin(i / 2) * variance + Math.random() * variance * 0.3)
+    0
   );
   const authSpark = genSpark(status?.active ?? 5, 3);
   const maxSpark = Math.max(...authSpark, 1);

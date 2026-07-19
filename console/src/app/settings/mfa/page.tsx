@@ -71,15 +71,8 @@ export default function MFAPage() {
         setRecoveryCodes(data.recovery_codes);
       }
       showMessage(t("mfa.totpEnrolledSuccess"));
-    } catch {
-      // For demo, still mark as enrolled
-      setTotpEnrolled(true);
-      setRecoveryCodes(
-        Array.from({ length: 10 }, () =>
-          Array.from({ length: 5 }, () => "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"[Math.floor(Math.random() * 36)]).join(""),
-        ),
-      );
-      showMessage(t("mfa.totpEnrolledSuccess"));
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Verification failed");
     } finally {
       setVerifying(false);
     }

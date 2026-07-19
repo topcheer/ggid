@@ -310,7 +310,7 @@ export default function SecuritySettingsPage() {
         method: "POST",
         body: JSON.stringify({ name: appPwName }),
       });
-      const generated = data.password || Math.random().toString(36).slice(2) + Math.random().toString(36).slice(2);
+      const generated = data.password || "";
       setNewAppPw(generated);
       setShowNewAppPw(true);
       setAppPasswords((prev) => [
@@ -324,20 +324,8 @@ export default function SecuritySettingsPage() {
       ]);
       setAppPwName("");
       setMsg("App password created");
-    } catch {
-      const generated = Math.random().toString(36).slice(2) + Math.random().toString(36).slice(2);
-      setNewAppPw(generated);
-      setShowNewAppPw(true);
-      setAppPasswords((prev) => [
-        {
-          id: `ap-${Date.now()}`,
-          name: appPwName,
-          created_at: new Date().toISOString(),
-          last_used: null,
-        },
-        ...prev,
-      ]);
-      setAppPwName("");
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Failed to create app password");
       setMsg("App password created (offline mode)");
     }
   };

@@ -42,7 +42,27 @@ export default function WebAuthnEnterprisePage() {
   const card = "rounded-xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-700 dark:bg-gray-800";
 
   const toggleAaguid = (id: string) => setAaguids(prev => prev.map(a => a.id === id ? { ...a, approved: !a.approved } : a));
-  const createTap = () => { if (!tapUser) return; setCreating(true); setTimeout(() => { setTaps(prev => [{ id: `tap-${Date.now()}`, user: tapUser, code: `TAP-${Math.random().toString(36).slice(2, 6).toUpperCase()}-${Math.random().toString(36).slice(2, 6).toUpperCase()}`, expires: new Date(Date.now() + tapHours * 3600000).toISOString(), used: false }, ...prev]); setShowTapForm(false); setTapUser(""); setCreating(false); }, 800); };
+  const createTap = async () => {
+    if (!tapUser) return;
+    setCreating(true);
+    try {
+      const res = await fetch("/api/v1/auth/jit-taps", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", ...authHeader() },
+        body: JSON.stringify({ user: tapUser, hours: tapHours }),
+      });
+      if (res.ok) {
+        const d = await res.json();
+        setTaps(prev => [d, ...prev]);
+        setShowTapForm(false);
+        setTapUser("");
+      }
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Failed");
+    } finally {
+      setCreating(false);
+    }
+  };
 
   return (
     <div className="space-y-6">

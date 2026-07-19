@@ -294,8 +294,7 @@ export default function WebhooksPage() {
       setSavedAck(false);
       loadWebhooks();
     } catch {
-      const mock = "whsec_" + Array.from({ length: 32 }, () => "abcdefghijklmnopqrstuvwxyz0123456789"[Math.floor(Math.random() * 36)]).join("");
-      setNewSecret(mock);
+      setError("Failed to create webhook");
       setSecretCopied(false);
       setSavedAck(false);
     }
