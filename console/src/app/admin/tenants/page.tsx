@@ -205,15 +205,17 @@ function CreateTenant({ onCreated }: { onCreated: () => void }) {
 
       <div>
         <label className="block text-sm font-medium text-gray-900 dark:text-white mb-1">子域名 (Subdomain)</label>
+        <p className="text-xs text-gray-500 mb-2">从组织名自动生成，可自定义修改。仅限小写字母、数字和连字符。</p>
         <div className="flex items-center gap-2">
           <input type="text" value={slug} onChange={(e) => setSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ""))}
-            placeholder="acme-corp"
-            className="flex-1 px-4 py-2.5 rounded-lg border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-sm text-gray-900 dark:text-white" />
+            placeholder="acme"
+            className="flex-1 px-4 py-2.5 rounded-lg border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-sm text-gray-900 dark:text-white font-mono" />
           <span className="text-sm text-gray-500 whitespace-nowrap">.ggid-console.iot2.win</span>
         </div>
         {slug && (
-          <p className="mt-1.5 text-xs text-green-600 dark:text-green-400">
-            租户访问地址: <span className="font-mono font-medium">{slug}.ggid-console.iot2.win</span>
+          <p className="mt-1.5 text-xs text-green-600 dark:text-green-400 flex items-center gap-1">
+            <span>✓</span>
+            <span>租户访问地址: <span className="font-mono font-medium">{slug}.ggid-console.iot2.win</span></span>
           </p>
         )}
       </div>
