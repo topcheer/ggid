@@ -74,6 +74,16 @@ func (s *IdentityService) CreateUser(ctx context.Context, input *domain.CreateUs
 		return nil, err
 	}
 
+	// Also create a credential record in the credentials table so the auth
+	// service can authenticate this user (auth queries credentials, not users).
+	if pool := s.Pool(); pool != nil {
+		_, _ = pool.Exec(ctx, `
+			INSERT INTO credentials (tenant_id, user_id, type, identifier, secret, enabled)
+			VALUES ($1, $2, 'password', $3, $4, true)
+			ON CONFLICT DO NOTHING
+		`, tc.TenantID, user.ID, input.Username, hash)
+	}
+
 	// Create the primary email record.
 	pEmail, err := s.repo.AddUserEmail(ctx, tc.TenantID, user.ID, input.Email)
 	if err != nil {
