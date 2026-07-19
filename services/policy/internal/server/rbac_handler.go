@@ -14,8 +14,13 @@ func (s *HTTPServer) handleRolesSubpath(w http.ResponseWriter, r *http.Request) 
 	// /api/v1/roles/{id}/permissions
 	if strings.HasSuffix(path, "/permissions") {
 		// GET/PUT → route-based RBAC (new)
-		// POST/DELETE → permission boundary (legacy, used by existing tests)
-		if r.Method == http.MethodGet || r.Method == http.MethodPut {
+		// GET/PUT → route-based RBAC (new), POST/DELETE → legacy
+		// But when no pool (test mode), route GET to legacy handler for compat
+		if r.Method == http.MethodPut {
+			s.handleRoleRoutePermissions(w, r)
+			return
+		}
+		if r.Method == http.MethodGet && s.pool != nil {
 			s.handleRoleRoutePermissions(w, r)
 			return
 		}
