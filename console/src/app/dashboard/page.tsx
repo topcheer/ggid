@@ -42,6 +42,20 @@ export default function DashboardPage() {
           failedLogins24h: d.failed_logins_24h ?? 0,
           oauthClients: d.oauth_clients ?? 0,
         };
+        // Fallback: if identity service doesn't know OAuth client count,
+        // fetch directly from OAuth service
+        if (data.oauthClients === 0) {
+          try {
+            const oauthRes = await fetch(`${API_BASE}/api/v1/oauth/clients`, {
+              headers: { ...authHeader(), "X-Tenant-ID": localStorage.getItem("ggid_tenant_id") || DEFAULT_TENANT_ID },
+            });
+            if (oauthRes.ok) {
+              const od = await oauthRes.json();
+              const clients = od.clients || od.items || od.data || (Array.isArray(od) ? od : []);
+              data.oauthClients = Array.isArray(clients) ? clients.length : 0;
+            }
+          } catch { /* keep 0 */ }
+        }
         setKpi(data);
         setIsNew(data.totalUsers <= 1);
       }

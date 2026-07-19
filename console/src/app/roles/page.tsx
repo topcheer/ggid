@@ -280,7 +280,7 @@ export default function RolesPage() {
             onClick={handleCreate}
             disabled={!createForm.key || !createForm.name}
             className="mt-3 rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700 disabled:opacity-50"
-           aria-label="Action">
+           aria-label="Create role">
             {t("roles.createBtn")}
           </button>
         </div>
