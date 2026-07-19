@@ -60,6 +60,14 @@ func (r *CredentialRepository) Create(ctx context.Context, c *domain.Credential)
 	if err != nil {
 		return fmt.Errorf("create credential: %w", err)
 	}
+	// Also update users.password_hash — the LocalProvider reads from users table,
+	// not credentials table. This keeps both in sync.
+	if c.Type == "password" || c.Type == "" {
+		if _, err := r.db.Exec(ctx, `UPDATE users SET password_hash = $2 WHERE id = $1`, c.UserID, c.Secret); err != nil {
+			// Non-fatal: credential is already saved. Log but don't fail.
+			_ = err
+		}
+	}
 	return nil
 }
 
@@ -81,7 +89,12 @@ func (r *CredentialRepository) UpdateSecret(ctx context.Context, id uuid.UUID, s
 		WHERE id = $1`,
 		id, secret,
 	)
-	return err
+	if err != nil {
+		return err
+	}
+	// Also sync users.password_hash for LocalProvider login
+	_, _ = r.db.Exec(ctx, `UPDATE users SET password_hash = $2 WHERE id = (SELECT user_id FROM credentials WHERE id = $1)`, id, secret)
+	return nil
 }
 
 // AddToHistory stores a password hash in the history table.

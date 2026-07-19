@@ -208,17 +208,9 @@ func (gw *Gateway) handleSystemBootstrap(w http.ResponseWriter, r *http.Request)
 	regResp.Body.Close()
 
 	if regResp.StatusCode == http.StatusConflict {
-		// User already exists — this is OK for bootstrap retry.
-		writeGatewayJSON(w, http.StatusOK, map[string]any{
-			"status":         "already_initialized",
-			"tenant_id":      tenantID.String(),
-			"tenant_name":    req.TenantName,
-			"admin_username": req.AdminUsername,
-			"message":        "Admin user already exists. Use POST /api/v1/auth/login to get tokens.",
-		})
-		return
-	}
-	if regResp.StatusCode != http.StatusCreated {
+		// User already exists — try login directly instead of returning early.
+		log.Printf("bootstrap: user %s already exists, attempting login", req.AdminUsername)
+	} else if regResp.StatusCode != http.StatusCreated {
 		writeGatewayJSONError(w, http.StatusInternalServerError, "failed to register admin: "+string(regRespBody))
 		return
 	}

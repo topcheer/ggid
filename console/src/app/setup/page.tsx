@@ -1,408 +1,219 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
-import { useTranslations } from "@/lib/i18n";
-import { authHeader } from "@/lib/auth-helpers";
-import {
-  Shield, Building2, KeyRound, Globe, Check, ChevronRight,
-  ChevronLeft, Loader2, AlertCircle, Fingerprint, Lock, Sparkles,
-  ArrowRight, Zap,
-} from "lucide-react";
-
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "";
-
-type Step = "check" | "admin" | "org" | "auth" | "sso" | "done";
-
-interface SetupData {
-  email: string; password: string; enableMfa: boolean;
-  orgName: string; tenantId: string; industry: string; region: string;
-  authStrategy: "passkey" | "password" | "hybrid";
-  ssoEnabled: boolean; ssoProtocol: string; ssoEntityId: string; ssoUrl: string;
-}
-
-const initialData: SetupData = {
-  email: "", password: "", enableMfa: true,
-  orgName: "", tenantId: "", industry: "tech", region: "us",
-  authStrategy: "passkey",
-  ssoEnabled: false, ssoProtocol: "saml", ssoEntityId: "", ssoUrl: "",
-};
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { useI18n } from "@/lib/i18n";
 
 export default function SetupPage() {
-  const t = useTranslations();
-  const [step, setStep] = useState<Step>("check");
-  const [data, setData] = useState<SetupData>(initialData);
-
-  // Step 0: Check initialization status
-  const checkInit = useCallback(async () => {
-    try {
-      const res = await fetch(`${API_BASE}/api/v1/auth/me`, { headers: { ...authHeader() } });
-      if (res.ok) {
-        // Already initialized → redirect
-        window.location.href = "/dashboard";
-        return;
-      }
-    } catch { /* not initialized */ }
-    setStep("admin");
-  }, []);
-
-  useEffect(() => { checkInit(); }, [checkInit]);
-
-  if (step === "check") {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 dark:from-gray-950 dark:via-gray-900 dark:to-blue-950 flex items-center justify-center">
-        <div className="flex flex-col items-center gap-3">
-          <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
-          <p className="text-sm text-gray-500 dark:text-gray-400">{t("setup.checking")}</p>
-        </div>
-      </div>
-    );
-  }
-
-  const stepOrder: Step[] = ["admin", "org", "auth", "sso", "done"];
-  const currentIdx = stepOrder.indexOf(step);
-  const progress = step === "done" ? 100 : ((currentIdx + 1) / stepOrder.length) * 100;
-
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 dark:from-gray-950 dark:via-gray-900 dark:to-blue-950 flex flex-col items-center justify-center p-4">
-      <div className="w-full max-w-lg">
-        {/* Logo + Title */}
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-600 to-purple-600 shadow-lg mb-4">
-            <Shield className="w-8 h-8 text-white" />
-          </div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{t("setup.title")}</h1>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{t("setup.subtitle")}</p>
-        </div>
-
-        {/* Progress Bar */}
-        {step !== "done" && (
-          <div className="mb-6">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-xs text-gray-500">{t("setup.step", { n: currentIdx + 1, total: stepOrder.length - 1 })}</span>
-            </div>
-            <div className="h-1.5 bg-gray-200 dark:bg-gray-800 rounded-full overflow-hidden">
-              <div className="h-full bg-gradient-to-r from-blue-600 to-purple-600 rounded-full transition-all duration-500" style={{ width: `${progress}%` }} />
-            </div>
-          </div>
-        )}
-
-        {/* Step Content */}
-        <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 shadow-xl p-6 md:p-8">
-          {step === "admin" && <AdminStep data={data} setData={setData} onNext={() => setStep("org")} />}
-          {step === "org" && <OrgStep data={data} setData={setData} onBack={() => setStep("admin")} onNext={() => setStep("auth")} />}
-          {step === "auth" && <AuthStep data={data} setData={setData} onBack={() => setStep("org")} onNext={() => setStep("sso")} />}
-          {step === "sso" && <SSOStep data={data} setData={setData} onBack={() => setStep("auth")} onNext={() => setStep("done")} onSkip={() => setStep("done")} />}
-          {step === "done" && <DoneStep data={data} />}
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// ============ Step 1: Admin Account ============
-
-function AdminStep({ data, setData, onNext }: { data: SetupData; setData: (d: SetupData) => void; onNext: () => void }) {
-  const t = useTranslations();
+  const router = useRouter();
+  const { t } = useI18n();
+  const [step, setStep] = useState(1);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+
+  const [form, setForm] = useState({
+    adminUsername: "",
+    adminEmail: "",
+    adminPassword: "",
+    confirmPassword: "",
+    orgName: "",
+  });
+
+  const update = (k: string, v: string) => setForm({ ...form, [k]: v });
+
+  const handleBootstrap = async () => {
+    setLoading(true);
+    setError("");
+    try {
+      const resp = await fetch("/api/v1/system/bootstrap", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          admin_username: form.adminUsername,
+          admin_email: form.adminEmail,
+          admin_password: form.adminPassword,
+          tenant_name: form.orgName,
+        }),
+      });
+      const data = await resp.json();
+      if (!resp.ok && resp.status !== 200) {
+        throw new Error(data.error?.message || data.error || data.detail || "Setup failed");
+      }
+
+      // Store tokens
+      if (data.access_token) {
+        localStorage.setItem("ggid_access_token", data.access_token);
+        if (data.refresh_token) localStorage.setItem("ggid_refresh_token", data.refresh_token);
+
+        // Parse scopes from JWT
+        try {
+          const payload = JSON.parse(atob(data.access_token.split(".")[1]));
+          if (payload.tenant_id) localStorage.setItem("ggid_tenant_id", payload.tenant_id);
+          if (payload.sub) localStorage.setItem("ggid_user_id", payload.sub);
+          const scopes = payload.scopes || ["user"];
+          localStorage.setItem("ggid_user_scopes", JSON.stringify(scopes));
+        } catch {}
+      }
+
+      setStep(4); // Success step
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : "Setup failed");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const next = () => {
     setError("");
-    if (!data.email || !data.email.includes("@")) { setError(t("setup.steps.admin.email")); return; }
-    if (data.password.length < 12) { setError(t("setup.steps.admin.passwordTooShort")); return; }
-    onNext();
+    if (step === 1) {
+      if (!form.orgName.trim()) return setError("Organization name is required");
+      setStep(2);
+    } else if (step === 2) {
+      if (!form.adminUsername.trim()) return setError("Username is required");
+      if (!form.adminEmail.trim()) return setError("Email is required");
+      if (!/^[^@]+@[^@]+\.[^@]+$/.test(form.adminEmail)) return setError("Invalid email format");
+      setStep(3);
+    } else if (step === 3) {
+      if (form.adminPassword.length < 8) return setError("Password must be at least 8 characters");
+      if (form.adminPassword !== form.confirmPassword) return setError("Passwords do not match");
+      handleBootstrap();
+    }
   };
 
-  return (
-    <div className="space-y-5">
-      <div>
-        <h2 className="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
-          <Shield className="w-5 h-5 text-blue-600" />{t("setup.steps.admin.title")}
-        </h2>
-        <p className="text-sm text-gray-500 mt-1">{t("setup.steps.admin.description")}</p>
-      </div>
-
-      <div className="space-y-4">
-        <div>
-          <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">{t("setup.steps.admin.email")}</label>
-          <input type="email" value={data.email} onChange={(e) => setData({ ...data, email: e.target.value })}
-            placeholder={t("setup.steps.admin.emailPlaceholder")} autoFocus
-            className="w-full px-4 py-2.5 rounded-lg border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-sm text-gray-900 dark:text-white" />
-        </div>
-        <div>
-          <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">{t("setup.steps.admin.password")}</label>
-          <input type="password" value={data.password} onChange={(e) => setData({ ...data, password: e.target.value })}
-            placeholder={t("setup.steps.admin.passwordPlaceholder")}
-            className="w-full px-4 py-2.5 rounded-lg border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-sm text-gray-900 dark:text-white" />
-        </div>
-        <div>
-          <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">{t("setup.steps.admin.confirmPassword")}</label>
-          <input type="password" onChange={(e) => { if (e.target.value !== data.password) setError(t("setup.steps.admin.passwordMismatch")); else setError(""); }}
-            className="w-full px-4 py-2.5 rounded-lg border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-sm text-gray-900 dark:text-white" />
-        </div>
-        <label className="flex items-start gap-3 cursor-pointer p-3 rounded-lg bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-900">
-          <input type="checkbox" checked={data.enableMfa} onChange={(e) => setData({ ...data, enableMfa: e.target.checked })} className="mt-0.5 rounded" />
-          <div>
-            <span className="text-sm font-medium text-gray-900 dark:text-white flex items-center gap-1"><Fingerprint className="w-4 h-4 text-blue-600" />{t("setup.steps.admin.enableMfa")}</span>
-            <p className="text-xs text-gray-500 mt-0.5">{t("setup.steps.admin.enableMfaDesc")}</p>
-          </div>
-        </label>
-      </div>
-
-      {error && <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-red-50 dark:bg-red-950/30 text-red-600 text-sm"><AlertCircle className="w-4 h-4" />{error}</div>}
-
-      <button onClick={next} className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 hover:opacity-90 text-white rounded-xl font-medium text-sm transition-opacity">
-        {t("setup.navigation.next")}<ChevronRight className="w-4 h-4" />
-      </button>
-    </div>
-  );
-}
-
-// ============ Step 2: Organization ============
-
-function OrgStep({ data, setData, onBack, onNext }: { data: SetupData; setData: (d: SetupData) => void; onBack: () => void; onNext: () => void }) {
-  const t = useTranslations();
-
-  const industries = ["tech", "finance", "healthcare", "education", "retail", "other"];
-  const regions = ["us", "eu", "apac", "other"];
+  const finish = () => router.push("/dashboard");
 
   return (
-    <div className="space-y-5">
-      <div>
-        <h2 className="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2"><Building2 className="w-5 h-5 text-blue-600" />{t("setup.steps.org.title")}</h2>
-        <p className="text-sm text-gray-500 mt-1">{t("setup.steps.org.description")}</p>
-      </div>
-
-      <div className="space-y-4">
-        <div>
-          <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">{t("setup.steps.org.orgName")}</label>
-          <input type="text" value={data.orgName} onChange={(e) => setData({ ...data, orgName: e.target.value })} placeholder={t("setup.steps.org.orgNamePlaceholder")} autoFocus
-            className="w-full px-4 py-2.5 rounded-lg border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-sm text-gray-900 dark:text-white" />
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 flex items-center justify-center p-4">
+      <div className="w-full max-w-lg">
+        {/* Logo */}
+        <div className="text-center mb-8">
+          <div className="inline-flex h-12 w-12 items-center justify-center rounded-xl bg-indigo-600 text-white font-bold text-xl mb-3">G</div>
+          <h1 className="text-2xl font-bold text-slate-900 dark:text-white">GGID Setup</h1>
+          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">Initialize your identity platform</p>
         </div>
-        <div>
-          <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">{t("setup.steps.org.tenantId")}</label>
-          <p className="text-xs text-gray-400 mb-1">{t("setup.steps.org.tenantIdDesc")}</p>
-          <input type="text" value={data.tenantId} onChange={(e) => setData({ ...data, tenantId: e.target.value.toLowerCase().replace(/\s/g, "-") })} placeholder={t("setup.steps.org.tenantIdPlaceholder")}
-            className="w-full px-4 py-2.5 rounded-lg border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-sm font-mono text-gray-900 dark:text-white" />
-        </div>
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">{t("setup.steps.org.industry")}</label>
-            <select value={data.industry} onChange={(e) => setData({ ...data, industry: e.target.value })}
-              className="w-full px-3 py-2.5 rounded-lg border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-sm text-gray-900 dark:text-white">
-              {industries.map((i: any) => <option key={i} value={i}>{t(`setup.steps.org.industry${i.replace(/^./, (m: any) => m.toUpperCase())}`)}</option>)}
-            </select>
-          </div>
-          <div>
-            <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">{t("setup.steps.org.region")}</label>
-            <select value={data.region} onChange={(e) => setData({ ...data, region: e.target.value })}
-              className="w-full px-3 py-2.5 rounded-lg border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-sm text-gray-900 dark:text-white">
-              {regions.map((r: any) => <option key={r} value={r}>{t(`setup.steps.org.region${r.toUpperCase()}`)}</option>)}
-            </select>
-          </div>
-        </div>
-      </div>
 
-      <div className="flex gap-2">
-        <button onClick={onBack} className="flex items-center gap-1 px-4 py-2.5 bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 rounded-xl text-sm font-medium hover:bg-gray-200 dark:hover:bg-gray-700">
-          <ChevronLeft className="w-4 h-4" />{t("setup.navigation.back")}
-        </button>
-        <button onClick={onNext} disabled={!data.orgName} className="flex-1 flex items-center justify-center gap-2 px-6 py-2.5 bg-gradient-to-r from-blue-600 to-purple-600 hover:opacity-90 disabled:opacity-50 text-white rounded-xl font-medium text-sm">
-          {t("setup.navigation.next")}<ChevronRight className="w-4 h-4" />
-        </button>
-      </div>
-    </div>
-  );
-}
-
-// ============ Step 3: Auth Strategy ============
-
-function AuthStep({ data, setData, onBack, onNext }: { data: SetupData; setData: (d: SetupData) => void; onBack: () => void; onNext: () => void }) {
-  const t = useTranslations();
-
-  const strategies: { id: "passkey" | "password" | "hybrid"; icon: typeof KeyRound; badge?: string }[] = [
-    { id: "passkey", icon: Fingerprint, badge: t("setup.steps.auth.passkey") },
-    { id: "password", icon: Lock },
-    { id: "hybrid", icon: KeyRound },
-  ];
-
-  return (
-    <div className="space-y-5">
-      <div>
-        <h2 className="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2"><KeyRound className="w-5 h-5 text-blue-600" />{t("setup.steps.auth.title")}</h2>
-        <p className="text-sm text-gray-500 mt-1">{t("setup.steps.auth.description")}</p>
-      </div>
-
-      <div className="space-y-3">
-        {strategies.map((s: any) => {
-          const Icon = s.icon;
-          const selected = data.authStrategy === s.id;
-          const isRecommended = s.id === "passkey";
-          return (
-            <button key={s.id} onClick={() => setData({ ...data, authStrategy: s.id })}
-              className={`w-full flex items-start gap-3 p-4 rounded-xl border-2 text-left transition-all ${
-                selected ? "border-blue-500 bg-blue-50 dark:bg-blue-950/20" : "border-gray-200 dark:border-gray-700 hover:border-gray-300"
-              }`}>
-              <Icon className={`w-6 h-6 ${selected ? "text-blue-600" : "text-gray-400"}`} />
-              <div className="flex-1">
-                <div className="flex items-center gap-2">
-                  <span className="text-sm font-bold text-gray-900 dark:text-white">{t(`setup.steps.auth.${s.id}`)}</span>
-                  {isRecommended && <span className="px-1.5 py-0.5 text-xs bg-green-100 text-green-700 dark:bg-green-950 dark:text-green-300 rounded-full">{t("setup.steps.auth.passkey")}</span>}
-                </div>
-                <p className="text-xs text-gray-500 mt-1">{t(`setup.steps.auth.${s.id}Desc`)}</p>
-              </div>
-              {selected && <Check className="w-5 h-5 text-blue-600 flex-shrink-0" />}
-            </button>
-          );
-        })}
-      </div>
-
-      <div className="flex gap-2">
-        <button onClick={onBack} className="flex items-center gap-1 px-4 py-2.5 bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 rounded-xl text-sm font-medium">
-          <ChevronLeft className="w-4 h-4" />{t("setup.navigation.back")}
-        </button>
-        <button onClick={onNext} className="flex-1 flex items-center justify-center gap-2 px-6 py-2.5 bg-gradient-to-r from-blue-600 to-purple-600 hover:opacity-90 text-white rounded-xl font-medium text-sm">
-          {t("setup.navigation.next")}<ChevronRight className="w-4 h-4" />
-        </button>
-      </div>
-    </div>
-  );
-}
-
-// ============ Step 4: SSO (Optional) ============
-
-function SSOStep({ data, setData, onBack, onNext, onSkip }: {
-  data: SetupData; setData: (d: SetupData) => void; onBack: () => void; onNext: () => void; onSkip: () => void;
-}) {
-  const t = useTranslations();
-  const [testing, setTesting] = useState(false);
-  const [connResult, setConnResult] = useState<"success" | "failed" | null>(null);
-
-  const testConn = async () => {
-    setTesting(true); setConnResult(null);
-    setTimeout(() => { setTesting(false); setConnResult("success"); }, 1200);
-  };
-
-  return (
-    <div className="space-y-5">
-      <div>
-        <h2 className="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2"><Globe className="w-5 h-5 text-blue-600" />{t("setup.steps.sso.title")}</h2>
-        <p className="text-sm text-gray-500 mt-1">{t("setup.steps.sso.description")}</p>
-      </div>
-
-      {/* Enable toggle */}
-      <button onClick={() => setData({ ...data, ssoEnabled: !data.ssoEnabled })}
-        className={`w-full flex items-center justify-between p-4 rounded-xl border-2 transition-all ${data.ssoEnabled ? "border-blue-500 bg-blue-50 dark:bg-blue-950/20" : "border-gray-200 dark:border-gray-700"}`}>
-        <span className="text-sm font-medium text-gray-900 dark:text-white">{t("setup.steps.sso.configure")}</span>
-        <div className={`relative w-10 h-6 rounded-full transition-colors ${data.ssoEnabled ? "bg-blue-600" : "bg-gray-300 dark:bg-gray-600"}`}>
-          <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full transition-transform ${data.ssoEnabled ? "translate-x-4" : ""}`} />
-        </div>
-      </button>
-
-      {data.ssoEnabled && (
-        <div className="space-y-4">
-          <div className="flex gap-2">
-            {["saml", "oidc"].map((p: any) => (
-              <button key={p} onClick={() => setData({ ...data, ssoProtocol: p })}
-                className={`flex-1 px-3 py-2 rounded-lg border-2 text-sm font-medium ${data.ssoProtocol === p ? "border-blue-500 bg-blue-50 dark:bg-blue-950/20 text-blue-700 dark:text-blue-300" : "border-gray-200 dark:border-gray-700 text-gray-500"}`}>
-                {t(`setup.steps.sso.protocol${p.replace(/^./, (m: any) => m.toUpperCase())}`)}
-              </button>
-            ))}
-          </div>
-          <div>
-            <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">{t("setup.steps.sso.entityId")}</label>
-            <input type="text" value={data.ssoEntityId} onChange={(e) => setData({ ...data, ssoEntityId: e.target.value })} placeholder={t("setup.steps.sso.entityIdPlaceholder")}
-              className="w-full px-4 py-2.5 rounded-lg border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-sm text-gray-900 dark:text-white" />
-          </div>
-          <div>
-            <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">{t("setup.steps.sso.ssoUrl")}</label>
-            <input type="text" value={data.ssoUrl} onChange={(e) => setData({ ...data, ssoUrl: e.target.value })} placeholder={t("setup.steps.sso.ssoUrlPlaceholder")}
-              className="w-full px-4 py-2.5 rounded-lg border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-sm text-gray-900 dark:text-white" />
-          </div>
-          {data.ssoProtocol === "saml" && (
-            <div>
-              <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">{t("setup.steps.sso.certificate")}</label>
-              <textarea placeholder={t("setup.steps.sso.certificatePlaceholder")} rows={3}
-                className="w-full px-4 py-2.5 rounded-lg border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-sm font-mono text-gray-900 dark:text-white" />
-            </div>
-          )}
-          <button onClick={testConn} disabled={testing || (!data.ssoEntityId && !data.ssoUrl)}
-            className="flex items-center gap-2 px-4 py-2 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 disabled:opacity-50 rounded-lg text-sm font-medium">
-            {testing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Zap className="w-4 h-4" />}
-            {testing ? t("setup.steps.sso.testing") : t("setup.steps.sso.testConn")}
-          </button>
-          {connResult === "success" && <div className="flex items-center gap-2 text-sm text-green-600"><Check className="w-4 h-4" />{t("setup.steps.sso.connSuccess")}</div>}
-        </div>
-      )}
-
-      {!data.ssoEnabled && <p className="text-xs text-gray-400 text-center py-2">{t("setup.steps.sso.configureLater")}</p>}
-
-      <div className="flex gap-2">
-        <button onClick={onBack} className="flex items-center gap-1 px-4 py-2.5 bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 rounded-xl text-sm font-medium">
-          <ChevronLeft className="w-4 h-4" />{t("setup.navigation.back")}
-        </button>
-        <button onClick={onSkip} className="flex-1 px-4 py-2.5 bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 rounded-xl text-sm font-medium">
-          {t("setup.steps.sso.skip")}
-        </button>
-        <button onClick={onNext} className="flex items-center gap-2 px-6 py-2.5 bg-gradient-to-r from-blue-600 to-purple-600 hover:opacity-90 text-white rounded-xl font-medium text-sm">
-          {t("setup.navigation.next")}<ChevronRight className="w-4 h-4" />
-        </button>
-      </div>
-    </div>
-  );
-}
-
-// ============ Step 5: Done ============
-
-function DoneStep({ data }: { data: SetupData }) {
-  const t = useTranslations();
-
-  const summary: { label: string; value: string }[] = [
-    { label: t("setup.steps.admin.title"), value: data.email },
-    { label: t("setup.steps.org.orgName"), value: data.orgName },
-    { label: t("setup.steps.org.tenantId"), value: data.tenantId },
-    { label: t("setup.steps.auth.title"), value: t(`setup.steps.auth.${data.authStrategy}`) },
-    { label: "MFA", value: data.enableMfa ? "Enabled" : "Disabled" },
-    { label: "SSO", value: data.ssoEnabled ? t(`setup.steps.sso.protocol${data.ssoProtocol.replace(/^./, (m: any) => m.toUpperCase())}`) : t("setup.steps.sso.skip") },
-  ];
-
-  return (
-    <div className="text-center space-y-6">
-      <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-green-100 dark:bg-green-950/30 mb-2">
-        <Check className="w-10 h-10 text-green-500" />
-      </div>
-      <div>
-        <h2 className="text-xl font-bold text-gray-900 dark:text-white">{t("setup.steps.done.title")}</h2>
-        <p className="text-sm text-gray-500 mt-1">{t("setup.steps.done.ready")}</p>
-      </div>
-
-      {/* Summary */}
-      <div className="text-left p-4 rounded-xl bg-gray-50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700">
-        <span className="text-xs font-medium text-gray-500 mb-2 block">{t("setup.steps.done.summary")}</span>
-        <div className="space-y-1.5">
-          {summary.map((s: any) => (
-            <div key={s.label} className="flex items-center justify-between text-sm">
-              <span className="text-gray-500">{s.label}</span>
-              <span className="font-medium text-gray-900 dark:text-white">{s.value || "—"}</span>
-            </div>
+        {/* Progress */}
+        <div className="flex items-center justify-center gap-2 mb-8">
+          {[1, 2, 3, 4].map((s) => (
+            <div key={s} className={`h-2 w-12 rounded-full transition-colors ${
+              s <= step ? "bg-indigo-600" : "bg-slate-200 dark:bg-slate-700"
+            }`} />
           ))}
         </div>
-      </div>
 
-      {/* CTAs */}
-      <div className="space-y-2">
-        <button onClick={() => { window.location.href = "/dashboard"; }}
-          className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 hover:opacity-90 text-white rounded-xl font-medium text-sm">
-          {t("setup.steps.done.goDashboard")}<ArrowRight className="w-4 h-4" />
-        </button>
-        <div className="flex gap-2">
-          <button onClick={() => { window.location.href = "/settings/import-wizard"; }}
-            className="flex-1 px-4 py-2 bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 rounded-lg text-sm font-medium">
-            {t("setup.steps.done.importUsers")}
-          </button>
-          <button onClick={() => { window.location.href = "https://github.com/topcheer/ggid"; }}
-            className="flex-1 px-4 py-2 bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 rounded-lg text-sm font-medium">
-            {t("setup.steps.done.exploreDocs")}
-          </button>
+        <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-xl p-8 border border-slate-200 dark:border-slate-700">
+          {error && (
+            <div className="mb-4 rounded-lg bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 px-4 py-3 text-sm text-red-700 dark:text-red-300">
+              {error}
+            </div>
+          )}
+
+          {step === 1 && (
+            <div className="space-y-4">
+              <h2 className="text-lg font-semibold text-slate-900 dark:text-white">Organization</h2>
+              <p className="text-sm text-slate-500 dark:text-slate-400">Name your organization. This is your top-level tenant.</p>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">Organization Name</label>
+                <input
+                  type="text" value={form.orgName} onChange={(e) => update("orgName", e.target.value)}
+                  placeholder="Acme Corporation"
+                  className="w-full rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 px-4 py-2.5 text-sm text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                  autoFocus
+                />
+              </div>
+            </div>
+          )}
+
+          {step === 2 && (
+            <div className="space-y-4">
+              <h2 className="text-lg font-semibold text-slate-900 dark:text-white">Administrator Account</h2>
+              <p className="text-sm text-slate-500 dark:text-slate-400">This account will have full platform admin access.</p>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">Username</label>
+                <input
+                  type="text" value={form.adminUsername} onChange={(e) => update("adminUsername", e.target.value)}
+                  placeholder="superadmin"
+                  className="w-full rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 px-4 py-2.5 text-sm text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                  autoFocus
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">Email</label>
+                <input
+                  type="email" value={form.adminEmail} onChange={(e) => update("adminEmail", e.target.value)}
+                  placeholder="admin@acme.com"
+                  className="w-full rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 px-4 py-2.5 text-sm text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                />
+              </div>
+            </div>
+          )}
+
+          {step === 3 && (
+            <div className="space-y-4">
+              <h2 className="text-lg font-semibold text-slate-900 dark:text-white">Set Password</h2>
+              <p className="text-sm text-slate-500 dark:text-slate-400">Choose a strong password (min 8 characters).</p>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">Password</label>
+                <input
+                  type="password" value={form.adminPassword} onChange={(e) => update("adminPassword", e.target.value)}
+                  className="w-full rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 px-4 py-2.5 text-sm text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                  autoFocus
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">Confirm Password</label>
+                <input
+                  type="password" value={form.confirmPassword} onChange={(e) => update("confirmPassword", e.target.value)}
+                  className="w-full rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 px-4 py-2.5 text-sm text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                />
+              </div>
+              {loading && <p className="text-sm text-indigo-600 dark:text-indigo-400">Initializing system...</p>}
+            </div>
+          )}
+
+          {step === 4 && (
+            <div className="text-center space-y-4 py-4">
+              <div className="inline-flex h-16 w-16 items-center justify-center rounded-full bg-green-100 dark:bg-green-900/30">
+                <svg className="h-8 w-8 text-green-600 dark:text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                </svg>
+              </div>
+              <h2 className="text-lg font-semibold text-slate-900 dark:text-white">Setup Complete!</h2>
+              <p className="text-sm text-slate-500 dark:text-slate-400">
+                Your GGID instance is ready. You are logged in as <strong>{form.adminUsername}</strong>.
+              </p>
+            </div>
+          )}
+
+          {/* Buttons */}
+          {step < 4 && (
+            <div className="flex gap-3 mt-6">
+              {step > 1 && (
+                <button
+                  onClick={() => setStep(step - 1)}
+                  className="px-4 py-2.5 text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors"
+                >
+                  Back
+                </button>
+              )}
+              <button
+                onClick={next}
+                disabled={loading}
+                className="flex-1 px-4 py-2.5 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {loading ? "Initializing..." : step === 3 ? "Complete Setup" : "Continue"}
+              </button>
+            </div>
+          )}
+
+          {step === 4 && (
+            <button
+              onClick={finish}
+              className="w-full px-4 py-2.5 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg transition-colors"
+            >
+              Go to Dashboard
+            </button>
+          )}
         </div>
       </div>
     </div>
