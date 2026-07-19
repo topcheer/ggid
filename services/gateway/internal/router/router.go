@@ -231,6 +231,12 @@ func (gw *Gateway) buildProxies() {
 
 // ServeHTTP routes the request to the appropriate backend service.
 func (gw *Gateway) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	// --- Scope-based route guard ---
+	// After JWT validation, check if user has required scope for this path.
+	if !gw.checkRouteScope(w, r) {
+		return // 403 already written
+	}
+
 	// --- Liveness probe (Kubernetes: process alive, no backend check) ---
 	if r.URL.Path == "/healthz/live" {
 		w.Header().Set("Content-Type", "application/json")
@@ -558,7 +564,8 @@ func (gw *Gateway) Handler() http.Handler {
 		if isPublic {
 			// Public path: no JWT required, but still validate if token present
 			jwtMW := middleware.JWTAuth(gw.jwks, false, gw.cfg.JWTIssuer, gw.cfg.JWTAudience)
-			h := jwtMW(gw)
+			h := middleware.RequireAdminScope(gw) // RBAC: block non-admin from management endpoints
+			h = jwtMW(h)
 			// CAE: check jti blocklist after JWT validation
 			if gw.caeCheck != nil {
 				h = gw.caeCheck(h)
@@ -570,7 +577,8 @@ func (gw *Gateway) Handler() http.Handler {
 		} else {
 			// Protected path: JWT required
 			jwtMW := middleware.JWTAuth(gw.jwks, true, gw.cfg.JWTIssuer, gw.cfg.JWTAudience)
-			h := jwtMW(gw)
+			h := middleware.RequireAdminScope(gw) // RBAC: block non-admin from management endpoints
+			h = jwtMW(h)
 			// CAE: check jti blocklist after JWT validation
 			if gw.caeCheck != nil {
 				h = gw.caeCheck(h)
@@ -599,6 +607,63 @@ func (gw *Gateway) Handler() http.Handler {
 	handler = middleware.PanicRecovery(logger)(handler)
 
 	return handler
+}
+
+// maxBodySize returns the configured maximum request body size.
+
+// adminOnlyPaths are paths that require tenant:admin or platform:admin scope.
+var adminOnlyPaths = []string{
+	"/api/v1/users", "/api/v1/roles", "/api/v1/audit/events",
+	"/api/v1/policies", "/api/v1/webhooks", "/api/v1/oauth/clients",
+	"/api/v1/settings/", "/api/v1/admin/", "/api/v1/identity/dashboard",
+	"/api/v1/tenants",
+}
+
+// platformOnlyPaths require platform:admin scope.
+var platformOnlyPaths = []string{
+	"/api/v1/system/", "/api/v1/tenants/create",
+}
+
+// checkRouteScope verifies the user has the required scope for the request path.
+// Returns true if access is allowed, false if 403 was written.
+func (gw *Gateway) checkRouteScope(w http.ResponseWriter, r *http.Request) bool {
+	path := r.URL.Path
+
+	// Get scopes from JWT claims
+	claims := middleware.ExtractJWTClaims(r)
+	if len(claims.Scopes) == 0 {
+		return true // no JWT — let auth middleware handle
+	}
+
+	hasPlatform := false
+	hasTenant := false
+	for _, sc := range claims.Scopes {
+		if sc == "platform:admin" || sc == "admin" || sc == "superadmin" {
+			hasPlatform = true
+			hasTenant = true
+		}
+		if sc == "tenant:admin" || sc == "manager" {
+			hasTenant = true
+		}
+	}
+
+	// Check platform-only paths
+	for _, prefix := range platformOnlyPaths {
+		if strings.HasPrefix(path, prefix) && !hasPlatform {
+			writeGatewayJSONError(w, http.StatusForbidden, "platform admin access required")
+			return false
+		}
+	}
+
+	// Check tenant-admin paths
+	for _, prefix := range adminOnlyPaths {
+		if strings.HasPrefix(path, prefix) && !hasTenant {
+			writeGatewayJSONError(w, http.StatusForbidden, "admin access required")
+			return false
+		}
+	}
+
+	return true
 }
 
 // maxBodySize returns the configured maximum request body size.

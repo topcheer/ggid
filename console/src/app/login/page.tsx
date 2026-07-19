@@ -211,7 +211,7 @@ export default function LoginPage() {
       // No MFA needed — redirect based on role
       // Non-admin users go to /profile, admin users go to /dashboard
       const userScopes = JSON.parse(localStorage.getItem("ggid_user_scopes") || "[\"user\"]");
-      const isAdmin = userScopes.includes("admin") || userScopes.includes("platform_admin");
+      const isAdmin = userScopes.includes("admin") || userScopes.includes("platform_admin") || userScopes.includes("platform:admin") || userScopes.includes("tenant:admin");
       // Use window.location.href for hard navigation — router.push can silently fail
       // when localStorage was just written (AuthGuard needs fresh page load)
       window.location.href = isAdmin ? "/dashboard" : "/profile";
@@ -322,14 +322,20 @@ export default function LoginPage() {
     }
   };
 
-  // Default connectors if API doesn't respond
-  const socialButtons = connectorsLoaded && connectors.length > 0
-    ? connectors
-    : [
-        { id: "google", name: "Google", provider: "google" },
-        { id: "github", name: "GitHub", provider: "github" },
-        { id: "oidc", name: "SSO", provider: "oidc" },
-      ];
+  // Only show social login buttons that are configured via API
+  const socialButtons = connectorsLoaded && connectors.length > 0 ? connectors : [];
+
+  // Check for tenant override in URL params (multi-tenant scenario)
+  const [showTenant, setShowTenant] = useState(false);
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get("tenant")) {
+        setShowTenant(true);
+        setTenantSlug(params.get("tenant") || DEFAULT_TENANT_ID);
+      }
+    }
+  }, []);
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-blue-50 via-white to-purple-50 dark:from-gray-950 dark:via-gray-900 dark:to-blue-950">
@@ -382,29 +388,9 @@ export default function LoginPage() {
               </div>
             )}
 
-            {/* Passkey primary button */}
-            <button
-              type="button"
-              onClick={() => {
-                /* Trigger WebAuthn conditional UI autofill */
-                const usernameInput = document.getElementById("username") as HTMLInputElement;
-                if (usernameInput) { usernameInput.focus(); }
-              }}
-              className="w-full flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 to-purple-600 px-4 py-3 text-sm font-bold text-white hover:opacity-90 shadow-md mb-4"
-            >
-              <Fingerprint className="h-5 w-5" />
-              {t("loginEnhanced.passkeyButton")}
-            </button>
-            <p className="text-center text-xs text-gray-400 mb-4">{t("loginEnhanced.passkeyDesc")}</p>
-
-            {/* Divider */}
-            <div className="flex items-center gap-3 mb-4">
-              <div className="h-px flex-1 bg-gray-200 dark:bg-gray-700" />
-              <span className="text-xs text-gray-400">{t("loginEnhanced.otherMethods")}</span>
-              <div className="h-px flex-1 bg-gray-200 dark:bg-gray-700" />
-            </div>
-
           <form onSubmit={handleCredentials}>
+            {/* Tenant field - hidden by default, only shown via ?tenant=xxx URL param */}
+            {showTenant && (
             <div className="mb-4">
               <label className="mb-1 block text-sm font-medium">{t("login.tenant")}</label>
               <div className="relative">
@@ -418,8 +404,8 @@ export default function LoginPage() {
                   placeholder={t("login.tenantPlaceholder")}
                 />
               </div>
-              <p className="mt-1 text-xs text-gray-400">{t("login.tenantHint")}</p>
             </div>
+            )}
 
             <div className="mb-4">
               <label className="mb-1 block text-sm font-medium">{t("login.username")}</label>
@@ -479,7 +465,33 @@ export default function LoginPage() {
               {loading ? t("login.signingIn") : t("login.signIn")}
             </button>
 
-            {/* Social Login */}
+            {/* Passkey as alternative method */}
+            {passkeySupported && (
+            <>
+            <div className="my-5 flex items-center gap-3">
+              <div className="h-px flex-1 bg-gray-200 dark:bg-gray-700" />
+              <span className="text-xs text-gray-400 dark:text-gray-500">{t("loginEnhanced.otherMethods")}</span>
+              <div className="h-px flex-1 bg-gray-200 dark:bg-gray-700" />
+            </div>
+
+            <button
+              type="button"
+              onClick={() => {
+                /* Trigger WebAuthn conditional UI autofill */
+                const usernameInput = document.getElementById("username") as HTMLInputElement;
+                if (usernameInput) { usernameInput.focus(); }
+              }}
+              className="w-full flex items-center justify-center gap-2 rounded-xl border border-gray-300 px-4 py-2.5 text-sm font-medium text-gray-700 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-600"
+            >
+              <Fingerprint className="h-4 w-4" />
+              {t("loginEnhanced.passkeyButton")}
+            </button>
+            </>
+            )}
+
+            {/* Social Login - only show configured connectors */}
+            {socialButtons.length > 0 && (
+            <>
             <div className="my-5 flex items-center gap-3">
               <div className="h-px flex-1 bg-gray-200 dark:bg-gray-700" />
               <span className="text-xs text-gray-400 dark:text-gray-500">{t("login.orContinueWith")}</span>
@@ -500,10 +512,8 @@ export default function LoginPage() {
                 </button>
               ))}
             </div>
-
-            <div className="mt-5 rounded-lg bg-blue-50 px-3 py-2 text-center text-xs text-blue-600">
-              {t("login.demo")}
-            </div>
+            </>
+            )}
 
             {/* OAuth SSO Entry */}
             <div className="mt-4 border-t border-gray-100 pt-4 dark:border-gray-700">

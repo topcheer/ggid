@@ -71,8 +71,17 @@ function StatusTab() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    setStats({ active: 142, evaluated: 3850, revoked: 28, avgMs: 12, running: true, lastEval: "2025-07-18T09:35:00Z", streamActive: true });
-    setLoading(false);
+    const load = async () => {
+      try {
+        const res = await fetch("/api/v1/security/cae/status", { headers: { ...authHeader(), "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
+        if (res.ok) {
+          const data = await res.json();
+          setStats({ active: data.active ?? 0, evaluated: data.evaluated ?? 0, revoked: data.revoked ?? 0, avgMs: data.avg_ms ?? 0, running: data.running ?? false, lastEval: data.last_eval ?? "", streamActive: data.stream_active ?? false });
+        }
+      } catch {}
+      setLoading(false);
+    };
+    load();
   }, []);
 
   if (loading || !stats) return <Spinner />;
@@ -122,14 +131,17 @@ function LogsTab() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    setLogs([
-      { id: "1", timestamp: "2025-07-18T09:35:22Z", session_id: "s-abc123", user: "alice@company.com", event: "risk_spike", result: "step_up", risk_delta: 35 },
-      { id: "2", timestamp: "2025-07-18T09:34:10Z", session_id: "s-def456", user: "bob@company.com", event: "ip_change", result: "challenge", risk_delta: 15 },
-      { id: "3", timestamp: "2025-07-18T09:32:45Z", session_id: "s-ghi789", user: "carol@company.com", event: "device_change", result: "revoke", risk_delta: 60 },
-      { id: "4", timestamp: "2025-07-18T09:30:15Z", session_id: "s-jkl012", user: "dave@company.com", event: "policy_match", result: "continue", risk_delta: -5 },
-      { id: "5", timestamp: "2025-07-18T09:28:03Z", session_id: "s-mno345", user: "eve@company.com", event: "token_expiry", result: "step_up", risk_delta: 10 },
-    ]);
-    setLoading(false);
+    const load = async () => {
+      try {
+        const res = await fetch("/api/v1/security/cae/events", { headers: { ...authHeader(), "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
+        if (res.ok) {
+          const data = await res.json();
+          setLogs(data.events || data.items || []);
+        }
+      } catch {}
+      setLoading(false);
+    };
+    load();
   }, []);
 
   const resultColors: Record<string, string> = {
@@ -183,12 +195,7 @@ function LogsTab() {
 
 function TriggersTab() {
   const t = useTranslations();
-  const [triggers, setTriggers] = useState<Trigger[]>([
-    { id: "t1", event: "device_change", condition: "risk_score > 50", action: "revoke", enabled: true },
-    { id: "t2", event: "ip_change", condition: "new_country != prev_country", action: "step_up", enabled: true },
-    { id: "t3", event: "risk_spike", condition: "delta > 30 in 5m", action: "challenge", enabled: true },
-    { id: "t4", event: "token_expiry", condition: "expires_in < 300s", action: "step_up", enabled: false },
-  ]);
+  const [triggers, setTriggers] = useState<Trigger[]>([]);
   const [showForm, setShowForm] = useState(false);
 
   const resultColors: Record<string, string> = {
