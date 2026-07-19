@@ -260,12 +260,15 @@ func (r *AuditRepository) GetStats(ctx context.Context, tenantID uuid.UUID, sinc
 		stats.HourlyDistribution = append(stats.HourlyDistribution, hc)
 	}
 
-	// 4. Top 10 active actors
+	// 4. Top 10 active actors — LEFT JOIN users to resolve username,
+	// and GROUP BY actor_id only (not actor_name) to avoid duplicate rows
+	// when some events have actor_name and others don't.
 	actorRows, err := r.db.Query(ctx,
-		`SELECT actor_id, COALESCE(actor_name, ''), count(*) AS cnt
-		 FROM audit_events
-		 WHERE tenant_id = $1 AND created_at >= $2 AND actor_id IS NOT NULL
-		 GROUP BY actor_id, actor_name
+		`SELECT ae.actor_id, COALESCE(u.username, ae.actor_name, 'system'), count(*) AS cnt
+		 FROM audit_events ae
+		 LEFT JOIN users u ON u.id = ae.actor_id
+		 WHERE ae.tenant_id = $1 AND ae.created_at >= $2 AND ae.actor_id IS NOT NULL
+		 GROUP BY ae.actor_id, COALESCE(u.username, ae.actor_name, 'system')
 		 ORDER BY cnt DESC LIMIT 10`,
 		tenantID, since,
 	)
