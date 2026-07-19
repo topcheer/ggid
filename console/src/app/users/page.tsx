@@ -99,23 +99,35 @@ export default function UsersPage() {
     }
   };
 
+  const [creating, setCreating] = useState(false);
+  const [formError, setFormError] = useState("");
+
   const handleCreate = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
+    const username = formData.get("username") as string;
+    const email = formData.get("email") as string;
+    const password = formData.get("password") as string;
+
+    // Client-side validation
+    setFormError("");
+    if (!username || username.length < 2) { setFormError("Username must be at least 2 characters"); return; }
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { setFormError("Please enter a valid email address"); return; }
+    if (!password || password.length < 12) { setFormError("Password must be at least 12 characters"); return; }
+
+    setCreating(true);
     try {
       await apiFetch("/api/v1/users", {
         method: "POST",
-        body: JSON.stringify({
-          username: formData.get("username"),
-          email: formData.get("email"),
-          password: formData.get("password"),
-        }),
+        body: JSON.stringify({ username, email, password }),
       });
       setShowCreate(false);
-      // Delay refresh to ensure backend has committed the new user
       setTimeout(() => refresh(), 300);
     } catch (err) {
       console.error(err instanceof Error ? err.message : t("users.createFailed"));
+      setFormError(err instanceof Error ? err.message : "Failed to create user");
+    } finally {
+      setCreating(false);
     }
   };
 
@@ -632,8 +644,9 @@ export default function UsersPage() {
               <input autoComplete="current-password" name="password" type="password" required minLength={12} className="w-full rounded-lg border border-gray-300 px-3 py-2" placeholder="At least 12 characters" />
             </div>
           </div>
+          {formError && <div className="mt-3 rounded-lg border border-red-200 bg-red-50 px-4 py-2 text-sm text-red-700">{formError}</div>}
           <div className="mt-4 flex gap-2">
-            <button aria-label="action" type="submit" className="rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700">{t("common.create")}</button>
+            <button aria-label="action" type="submit" disabled={creating} className="rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700 disabled:opacity-50">{creating ? "Creating..." : t("common.create")}</button>
             <button type="button" onClick={() => setShowCreate(false)} className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium hover:bg-gray-50 dark:hover:bg-gray-700">{t("common.cancel")}</button>
           </div>
         </form>
