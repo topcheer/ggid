@@ -195,6 +195,7 @@ func (h *Handler) registerRoutes() {
 	h.mux.HandleFunc("/api/v1/auth/mfa/login", h.mfaLogin)
 
 	// Backup codes (MFA recovery codes)
+	h.mux.HandleFunc("/api/v1/auth/mfa/backup-codes", h.backupCodesRemaining) // GET alias
 	h.mux.HandleFunc("/api/v1/auth/mfa/backup-codes/generate", h.backupCodesGenerate)
 	h.mux.HandleFunc("/api/v1/auth/mfa/backup-codes/verify", h.backupCodesVerify)
 	h.mux.HandleFunc("/api/v1/auth/mfa/backup-codes/remaining", h.backupCodesRemaining)
