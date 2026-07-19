@@ -69,6 +69,9 @@ export default function UsersPage() {
   const [csvImportResult, setCsvImportResult] = useState<string | null>(null);
   const csvFileRef = useRef<HTMLInputElement>(null);
 
+  // --- Delete confirmation modal state ---
+  const [deleteTarget, setDeleteTarget] = useState<{ ids: string[]; label: string } | null>(null);
+
   // --- Export dropdown state ---
   const [showExportMenu, setShowExportMenu] = useState(false);
 
@@ -206,13 +209,17 @@ export default function UsersPage() {
   };
 
   const handleDelete = async (userId: string, username: string) => {
-    if (!window.confirm(`Delete user "${username}"?`)) return;
+    // Use modal confirmation instead of window.confirm
+    setDeleteTarget({ ids: [userId], label: `user "${username}"` });
+  };
+
+  const doDelete = async (ids: string[], label: string) => {
     try {
-      const data = await apiFetch<{ id?: string; status?: string }>(`/api/v1/users/${userId}`, { method: "DELETE" });
-      // Remove from local list using response id (no need to re-fetch)
-      const deletedId = data?.id || userId;
-      setUsers(prev => prev.filter((u: any) => u.id !== deletedId));
-      setFormSuccess(`User "${username}" deleted.`);
+      await Promise.all(ids.map((id) => apiFetch(`/api/v1/users/${id}`, { method: "DELETE" })));
+      const deletedIds = new Set(ids);
+      setUsers(prev => prev.filter((u: any) => !deletedIds.has(u.id)));
+      setSelected(new Set());
+      setFormSuccess(`${ids.length === 1 ? `User "${label}"` : `${ids.length} users`} deleted.`);
       setTimeout(() => setFormSuccess(""), 3000);
     } catch (err) {
       setFormError(err instanceof Error ? err.message : "Failed to delete user");
@@ -221,15 +228,8 @@ export default function UsersPage() {
 
   const handleBatchDelete = async () => {
     if (selected.size === 0) return;
-    if (!window.confirm(`Delete ${selected.size} selected users?`)) return;
-    try {
-      await Promise.all([...selected].map((id: any) => apiFetch(`/api/v1/users/${id}`, { method: "DELETE" })));
-      setSelected(new Set());
-      setMsg(`Deleted ${selected.size} users`);
-      refresh();
-    } catch (err) {
-      console.error(err instanceof Error ? err.message : t("users.batchDeleteFailed"));
-    }
+    // Use modal confirmation instead of window.confirm
+    setDeleteTarget({ ids: [...selected], label: `${selected.size} selected users` });
   };
 
   const handleBatchAssignRole = async () => {
@@ -970,6 +970,34 @@ export default function UsersPage() {
             >
               {t("users.next")} <ChevronRight className="h-4 w-4" />
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {deleteTarget && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() => setDeleteTarget(null)}>
+          <div className="rounded-xl bg-white p-6 shadow-xl dark:bg-gray-900 max-w-md" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center gap-3">
+              <div className="rounded-full bg-red-100 p-2 dark:bg-red-900/30">
+                <Trash2 className="h-5 w-5 text-red-600 dark:text-red-400" />
+              </div>
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Delete {deleteTarget.label}?</h3>
+            </div>
+            <p className="mt-3 text-sm text-gray-500 dark:text-gray-400">
+              This action cannot be undone. All associated data, sessions, and permissions will be permanently removed.
+            </p>
+            <div className="mt-5 flex justify-end gap-2">
+              <button onClick={() => setDeleteTarget(null)} className="rounded-lg border border-gray-300 px-4 py-2 text-sm dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800">
+                Cancel
+              </button>
+              <button
+                onClick={async () => { await doDelete(deleteTarget.ids, deleteTarget.label); setDeleteTarget(null); }}
+                className="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700"
+              >
+                Delete
+              </button>
+            </div>
           </div>
         </div>
       )}
