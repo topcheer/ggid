@@ -68,7 +68,7 @@ public class JwtVerifier {
 
             // Fetch the matching public key from JWKS
             Jwk jwk = jwkProvider.get(kid);
-            if (!"RSA".equals(jwk.getType()) && !(jwk.getPublicKey() instanceof RSAPublicKey)) {
+            if (!(jwk.getPublicKey() instanceof RSAPublicKey)) {
                 return null;
             }
             RSAPublicKey publicKey = (RSAPublicKey) jwk.getPublicKey();
@@ -105,16 +105,30 @@ public class JwtVerifier {
         user.userId = jwt.getSubject();
         user.tenantId = jwt.getClaim("tenant_id").asString();
         user.username = jwt.getClaim("username").asString();
+        if (user.username == null) {
+            user.username = jwt.getClaim("preferred_username").asString();
+        }
         user.email = jwt.getClaim("email").asString();
 
+        // Roles: check "roles" claim first, fall back to "scopes" (GGID format)
         String[] roles = jwt.getClaim("roles").asArray(String.class);
+        if (roles == null) {
+            // GGID puts role keys in "scopes" array
+            roles = jwt.getClaim("scopes").asArray(String.class);
+        }
         if (roles != null) {
             user.roles = roles;
         }
 
-        String scope = jwt.getClaim("scope").asString();
-        if (scope != null && !scope.isEmpty()) {
-            user.scopes = scope.split(" ");
+        // Scopes: support both "scope" (OAuth string) and "scopes" (GGID array)
+        String[] scopesArr = jwt.getClaim("scopes").asArray(String.class);
+        if (scopesArr != null) {
+            user.scopes = scopesArr;
+        } else {
+            String scope = jwt.getClaim("scope").asString();
+            if (scope != null && !scope.isEmpty()) {
+                user.scopes = scope.split(" ");
+            }
         }
 
         return user;

@@ -1,16 +1,15 @@
 package com.example.erp.security;
 
 import com.example.erp.service.AuthService;
+import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.HandlerInterceptor;
 
 /**
- * Authentication interceptor — extracts Bearer token from Authorization header,
- * verifies it via GGID JWT, and stores the GGIDUser in request attributes.
- *
- * Public paths (login, callback, static resources) are excluded.
+ * Authentication interceptor — extracts the GGID JWT from a cookie
+ * or Authorization header, verifies it, and attaches user info.
  */
 @Component
 public class AuthInterceptor implements HandlerInterceptor {
@@ -26,16 +25,21 @@ public class AuthInterceptor implements HandlerInterceptor {
             throws Exception {
 
         String path = request.getRequestURI();
-
-        // Skip public paths
         if (isPublicPath(path)) {
             return true;
         }
 
-        // Check session for token
-        String token = (String) request.getSession().getAttribute("access_token");
+        // Extract token from cookie first, then Authorization header
+        String token = null;
+        if (request.getCookies() != null) {
+            for (Cookie c : request.getCookies()) {
+                if ("ggid_token".equals(c.getName())) {
+                    token = c.getValue();
+                    break;
+                }
+            }
+        }
         if (token == null) {
-            // Try Authorization header (for API calls)
             String authHeader = request.getHeader("Authorization");
             if (authHeader != null && authHeader.startsWith("Bearer ")) {
                 token = authHeader.substring(7);
@@ -47,10 +51,13 @@ public class AuthInterceptor implements HandlerInterceptor {
             return false;
         }
 
-        // Verify token and attach user info
         var user = authService.verifyToken(token);
         if (user == null) {
-            request.getSession().invalidate();
+            // Clear cookie and redirect to login
+            Cookie clear = new Cookie("ggid_token", "");
+            clear.setPath("/");
+            clear.setMaxAge(0);
+            response.addCookie(clear);
             response.sendRedirect("/login?error=token_expired");
             return false;
         }

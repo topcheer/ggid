@@ -1,5 +1,3 @@
-# ERP Demo Application Configuration
-
 server:
   port: 8090
 
@@ -10,11 +8,12 @@ spring:
     cache: false
 
 # GGID Configuration
-# In production, use your actual GGID gateway URL
 ggid:
   gateway-url: ${GGID_URL:https://ggid.iot2.win}
   tenant-id: ${GGID_TENANT_ID:00000000-0000-0000-0000-000000000001}
-  jwks-url: ${GGID_JWKS_URL:https://ggid.iot2.win/oauth/jwks}
+  jwks-url: ${GGID_JWKS_URL:https://ggid.iot2.win/.well-known/jwks.json}
+  service-account-user: ${GGID_SVC_USER:admin}
+  service-account-pass: ${GGID_SVC_PASS:q7Rf9Xk2Lm3pW8zBA}
 
 logging:
   level:

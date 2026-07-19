@@ -104,11 +104,11 @@
             </div>
             <div class="kpi">
                 <div class="kpi-label">Low Stock</div>
-                <div class="kpi-value" th:text="${products.stream().filter(p -> p.stock < 100).count()}">0</div>
+                <div class="kpi-value" th:text="${lowStock}">0</div>
             </div>
             <div class="kpi">
                 <div class="kpi-label">Pending Orders</div>
-                <div class="kpi-value" th:text="${orders.stream().filter(o -> o.status == 'pending').count()}">0</div>
+                <div class="kpi-value" th:text="${pendingOrders}">0</div>
             </div>
         </div>
         <div class="card">

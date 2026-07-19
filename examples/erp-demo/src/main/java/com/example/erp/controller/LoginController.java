@@ -4,7 +4,9 @@ import com.example.erp.model.ApiResponse;
 import com.example.erp.service.AuthService;
 import dev.ggid.sdk.GGIDUser;
 import dev.ggid.sdk.TokenSet;
-import jakarta.servlet.http.HttpSession;
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
@@ -13,6 +15,7 @@ import java.util.Map;
 
 /**
  * Login controller — handles username/password authentication via GGID.
+ * Stores the access token in a cookie for stateless authentication.
  */
 @Controller
 public class LoginController {
@@ -40,18 +43,15 @@ public class LoginController {
     @PostMapping("/login.do")
     public String doLogin(@RequestParam String username,
                           @RequestParam String password,
-                          HttpSession session) {
+                          HttpServletResponse response) {
         try {
             TokenSet tokens = authService.login(username, password);
-            session.setAttribute("access_token", tokens.getAccessToken());
-            session.setAttribute("refresh_token", tokens.getRefreshToken());
-
-            // Verify and store user info
-            GGIDUser user = authService.verifyToken(tokens.getAccessToken());
-            if (user != null) {
-                session.setAttribute("user", user);
-            }
-
+            // Store token in a cookie (7 day expiry, matches token refresh cycle)
+            Cookie cookie = new Cookie("ggid_token", tokens.getAccessToken());
+            cookie.setPath("/");
+            cookie.setMaxAge(7 * 24 * 60 * 60); // 7 days
+            cookie.setHttpOnly(true);
+            response.addCookie(cookie);
             return "redirect:/";
         } catch (Exception e) {
             return "redirect:/login?error=invalid";
@@ -59,14 +59,14 @@ public class LoginController {
     }
 
     @PostMapping("/logout")
-    public String logout(HttpSession session) {
-        session.invalidate();
+    public String logout(HttpServletRequest request, HttpServletResponse response) {
+        Cookie cookie = new Cookie("ggid_token", "");
+        cookie.setPath("/");
+        cookie.setMaxAge(0);
+        response.addCookie(cookie);
         return "redirect:/login";
     }
 
-    /**
-     * Health check endpoint.
-     */
     @GetMapping("/healthz")
     @ResponseBody
     public ApiResponse<Map<String, String>> healthz() {

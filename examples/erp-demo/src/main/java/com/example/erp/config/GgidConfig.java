@@ -7,10 +7,12 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 /**
- * GGID configuration — creates the GGIDClient and JwtVerifier beans.
+ * GGID configuration.
  *
- * The GGID gateway URL and tenant ID come from application.yml.
- * In production, the JWKS URL would be https://your-ggid/oauth/jwks.
+ * The ERP app authenticates users via GGID login API and verifies JWTs
+ * via the GGID JWKS endpoint. For permission checks, it uses a service
+ * account (admin) token because the gateway blocks non-admin scopes
+ * from the policy API.
  */
 @Configuration
 public class GgidConfig {
@@ -24,6 +26,12 @@ public class GgidConfig {
     @Value("${ggid.jwks-url:https://ggid.iot2.win/oauth/jwks}")
     private String jwksUrl;
 
+    @Value("${ggid.service-account-user:admin}")
+    private String svcUser;
+
+    @Value("${ggid.service-account-pass:}")
+    private String svcPass;
+
     @Bean
     public GGIDClient ggidClient() {
         GGIDClient.Config config = new GGIDClient.Config(gatewayUrl);
@@ -33,6 +41,11 @@ public class GgidConfig {
 
     @Bean
     public JwtVerifier jwtVerifier() {
-        return new JwtVerifier(jwksUrl, gatewayUrl, 30);
+        // Issuer is "ggid-auth" (the auth service), not the gateway URL
+        return new JwtVerifier(jwksUrl, "ggid-auth", 60);
     }
+
+    public String getTenantId() { return tenantId; }
+    public String getSvcUser() { return svcUser; }
+    public String getSvcPass() { return svcPass; }
 }

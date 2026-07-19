@@ -50,6 +50,8 @@ public class ErpController {
         model.addAttribute("user", user);
         model.addAttribute("products", products);
         model.addAttribute("orders", orders);
+        model.addAttribute("lowStock", products.stream().filter(p -> p.stock < 100).count());
+        model.addAttribute("pendingOrders", orders.stream().filter(o -> "pending".equals(o.status)).count());
         model.addAttribute("pageTitle", "Dashboard");
         return "dashboard";
     }
