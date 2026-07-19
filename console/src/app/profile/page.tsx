@@ -94,7 +94,8 @@ export default function EnhancedProfilePage() {
         const mfaRes = await fetch(`${API_BASE}/api/v1/auth/mfa/status`, { headers: { ...authHeader() } });
         if (mfaRes.ok) {
           const mfaData = await mfaRes.json();
-          setMfaMethods(mfaData.methods || mfaData.factors || []);
+          const mf = mfaData.methods || mfaData.factors || [];
+          setMfaMethods(Array.isArray(mf) ? mf : []);
         }
       } catch { /* empty state */ }
 
@@ -103,7 +104,8 @@ export default function EnhancedProfilePage() {
         const linkRes = await fetch(`${API_BASE}/api/v1/auth/account-linking`, { headers: { ...authHeader() } });
         if (linkRes.ok) {
           const linkData = await linkRes.json();
-          setLinkedAccounts(linkData.accounts || linkData || []);
+          const la = linkData.accounts || linkData || [];
+          setLinkedAccounts(Array.isArray(la) ? la : []);
         }
       } catch { /* empty state */ }
 
@@ -113,6 +115,7 @@ export default function EnhancedProfilePage() {
         if (sessRes.ok) {
           const sessData = await sessRes.json();
           const sessions = sessData.sessions || sessData || [];
+          if (!Array.isArray(sessions)) { setDevices([]); return; }
           setDevices(sessions.map((s: Record<string, string>) => ({
             id: s.session_id || s.id,
             name: s.device || s.user_agent?.split(' ').pop() || 'Unknown Device',
