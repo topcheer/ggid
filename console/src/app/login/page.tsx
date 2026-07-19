@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Shield, ArrowLeft, KeyRound, Building2, AlertCircle, Loader2, Fingerprint } from "lucide-react";
+import { Shield, ArrowLeft, KeyRound, Building2, AlertCircle, Loader2, Fingerprint, Eye, EyeOff } from "lucide-react";
 import { API_BASE_URL, DEFAULT_TENANT_ID } from "@/lib/api-config";
 import { useTranslations } from "@/lib/i18n";
 import { authHeader, isAuthenticated } from "@/lib/auth-helpers";
@@ -29,6 +29,7 @@ export default function LoginPage() {
   const [useBackupCode, setUseBackupCode] = useState(false);
   const [backupCode, setBackupCode] = useState("");
   const [remember, setRemember] = useState(true);
+  const [showPassword, setShowPassword] = useState(false);
   const [mfaToken, setMfaToken] = useState("");
   const [error, setError] = useState("");
   const [rateLimitSeconds, setRateLimitSeconds] = useState(0);
@@ -439,26 +440,36 @@ export default function LoginPage() {
 
             <div className="mb-4">
               <label className="mb-1 block text-sm font-medium">{t("login.password")}</label>
-              <input
-                type="password"
-                id="password"
-                name="password"
-                aria-label={t("login.password")}
-                value={password}
-                onChange={(e) => {
-                  const pw = e.target.value;
-                  setPassword(pw);
-                  // Real-time password feedback
-                  if (pw.length === 0) setPwFeedback("");
-                  else if (pw.length < 8) setPwFeedback("Password is too short (min 8 characters)");
-                  else if (!/[A-Z]/.test(pw) || !/[0-9]/.test(pw)) setPwFeedback("Add uppercase and numbers for stronger security");
-                  else setPwFeedback("");
-                }}
-                required
-                autoComplete="current-password"
-                className="w-full rounded-lg border border-gray-300 px-3 py-2 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
-                placeholder="••••••••••••"
-              />
+              <div className="relative">
+                <input
+                  type={showPassword ? "text" : "password"}
+                  id="password"
+                  name="password"
+                  aria-label={t("login.password")}
+                  value={password}
+                  onChange={(e) => {
+                    const pw = e.target.value;
+                    setPassword(pw);
+                    // Real-time password feedback
+                    if (pw.length === 0) setPwFeedback("");
+                    else if (pw.length < 8) setPwFeedback("Password is too short (min 8 characters)");
+                    else if (!/[A-Z]/.test(pw) || !/[0-9]/.test(pw)) setPwFeedback("Add uppercase and numbers for stronger security");
+                    else setPwFeedback("");
+                  }}
+                  required
+                  autoComplete="current-password"
+                  className="w-full rounded-lg border border-gray-300 px-3 py-2 pr-10 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
+                  placeholder="••••••••••••"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  aria-label={showPassword ? "Hide password" : "Show password"}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                >
+                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
+              </div>
               {pwFeedback && <p className="mt-1 text-xs text-amber-600 dark:text-amber-400">{pwFeedback}</p>}
             </div>
 
