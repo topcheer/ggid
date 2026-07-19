@@ -120,6 +120,12 @@ async function apiFetch<T>(path: string, options?: RequestInit): Promise<T> {
           if (tokens.access_token) {
             localStorage.setItem("ggid_access_token", tokens.access_token);
             if (tokens.refresh_token) localStorage.setItem("ggid_refresh_token", tokens.refresh_token);
+            // Update scopes from refreshed token
+            try {
+              const payload = JSON.parse(atob(tokens.access_token.split(".")[1]));
+              const newScopes = payload.scopes || payload.roles || ["user"];
+              localStorage.setItem("ggid_user_scopes", JSON.stringify(Array.isArray(newScopes) ? newScopes : [newScopes]));
+            } catch {}
             // Retry the original request with the new token
             const retryHeaders = { ...headers };
             retryHeaders["Authorization"] = `Bearer ${tokens.access_token}`;
