@@ -319,6 +319,10 @@ func main() {
 	}
 	handler.SetCAERepo(caeRepo)
 
+	// KB-347: Start CAE background scanner — evaluates active sessions
+	// against Conditional Access Policies every 15 minutes.
+	handler.StartCAEScanner(ctx, pool, 15*time.Minute)
+
 	// JIT migration engine.
 	migrationEng := server.NewJITMigrationEngine(pool)
 	if err := migrationEng.EnsureSchema(ctx); err != nil {
