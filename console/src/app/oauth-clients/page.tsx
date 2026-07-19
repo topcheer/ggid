@@ -57,15 +57,15 @@ export default function OAuthClientsPage() {
       const raw = data?.clients ?? data?.items ?? [];
       // Map PascalCase API response to camelCase interface
       const mapped = raw.map((c: any) => ({
-        id: c.ID ?? c.id ?? "",
-        client_id: c.ClientID ?? c.client_id ?? "",
-        client_name: c.Name ?? c.ClientName ?? c.client_name ?? "Untitled",
-        redirect_uris: c.RedirectURIs ?? c.redirect_uris ?? [],
-        grant_types: c.GrantTypes ?? c.grant_types ?? [],
-        scopes: c.Scopes ?? c.scopes ?? [],
-        created_at: c.CreatedAt ?? c.created_at ?? "",
-        last_used: c.LastUsedAt ?? c.last_used,
-        status: c.Status ?? c.status ?? "active",
+        id: c.id ?? "",
+        client_id: c.client_id ?? "",
+        client_name: c.name ?? c.client_name ?? "Untitled",
+        redirect_uris: c.redirect_uris ?? [],
+        grant_types: c.grant_types ?? [],
+        scopes: c.scopes ?? [],
+        created_at: c.created_at ?? "",
+        last_used: c.last_used,
+        status: c.status ?? "active",
       }));
       setClients(mapped);
     } catch {
@@ -90,11 +90,10 @@ export default function OAuthClientsPage() {
       const resp = await apiFetch<any>("/api/v1/oauth/clients", {
         method: "POST", body: JSON.stringify(body),
       });
-      // Backend returns {Client: {...}, ClientSecret: "..."} (Go default JSON)
-      const secret = resp.ClientSecret || resp.client_secret || "";
-      const newClient = resp.Client || resp.client;
+      const secret = resp.client_secret || "";
+      const newClient = resp.client;
       if (secret) {
-        const newId = newClient?.ClientID || newClient?.client_id || newClient?.ID || "";
+        const newId = newClient?.client_id ?? "";
         setNewSecret({ id: newId, secret });
       }
       setForm({ client_name: "", redirect_uris: "", grant_types: ["authorization_code", "refresh_token"], scopes: ["openid", "profile", "email"] });
@@ -111,7 +110,7 @@ export default function OAuthClientsPage() {
     if (!editClient) return;
     try {
       const uris = editUris.split("\n").map((u: any) => u.trim()).filter(Boolean);
-      const cid = editClient.client_id || editClient.ClientID || editClient.ID;
+      const cid = editClient.client_id;
       await apiFetch(`/api/v1/oauth/clients/${cid}`, {
         method: "PATCH", body: JSON.stringify({ redirect_uris: uris }),
       });
