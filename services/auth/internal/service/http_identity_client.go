@@ -122,6 +122,49 @@ func (c *HTTPIdentityClient) GetUserByID(ctx context.Context, tenantID, userID u
 	}, nil
 }
 
+// GetUserRoles fetches the user's assigned role keys from the Identity Service.
+// Calls GET /api/v1/users/{id}/roles and extracts role keys.
+// Falls back to ["user"] on any error to ensure users always get basic access.
+func (c *HTTPIdentityClient) GetUserRoles(ctx context.Context, tenantID, userID uuid.UUID) ([]string, error) {
+	url := fmt.Sprintf("%s/api/v1/users/%s/roles", c.baseURL, userID)
+	req, _ := http.NewRequestWithContext(ctx, "GET", url, nil)
+	req.Header.Set("X-Tenant-ID", tenantID.String())
+	resp, err := c.client.Do(req)
+	if err != nil {
+		return []string{"user"}, nil // degraded mode — give basic access
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		return []string{"user"}, nil
+	}
+	var result struct {
+		Roles []struct {
+			RoleID   string `json:"role_id"`
+			RoleName string `json:"role_name"`
+		} `json:"roles"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return []string{"user"}, nil
+	}
+	if len(result.Roles) == 0 {
+		return []string{"user"}, nil
+	}
+	scopes := make([]string, 0, len(result.Roles))
+	for _, r := range result.Roles {
+		key := r.RoleID
+		if key == "" {
+			key = r.RoleName
+		}
+		if key != "" {
+			scopes = append(scopes, key)
+		}
+	}
+	if len(scopes) == 0 {
+		return []string{"user"}, nil
+	}
+	return scopes, nil
+}
+
 func (c *HTTPIdentityClient) FindExternalIdentity(ctx context.Context, tenantID uuid.UUID, provider, externalID string) (*ExternalIdentityLink, error) {
 	// Not implemented in identity service REST API yet
 	return nil, nil
