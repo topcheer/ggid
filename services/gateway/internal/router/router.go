@@ -33,6 +33,8 @@ var publicPaths = []string{
 	"/api/v1/auth/password/forgot",
 	"/api/v1/auth/password/reset",
 	"/api/v1/auth/password/strength",
+	"/api/v1/auth/mfa/verify",
+	"/api/v1/auth/mfa/challenge",
 	"/api/v1/auth/social/",
 	"/api/v1/healthz",
 	"/healthz",
