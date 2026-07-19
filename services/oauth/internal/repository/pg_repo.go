@@ -226,7 +226,11 @@ func (r *pgClientRepo) DeleteClient(ctx context.Context, tenantID uuid.UUID, cli
 		return err
 	}
 
-	tag, err := tx.Exec(ctx, `DELETE FROM oauth_clients WHERE client_id = $2 AND tenant_id = $1`, tenantID, clientID)
+	// Support both client_id (gcid_xxx) and internal id (UUID) for deletion
+	tag, err := tx.Exec(ctx, `
+		DELETE FROM oauth_clients
+		WHERE tenant_id = $1 AND (client_id = $2 OR id::text = $2)
+	`, tenantID, clientID)
 	if err != nil {
 		return ggiderrors.Wrap(ggiderrors.ErrInternal, "delete client", err)
 	}

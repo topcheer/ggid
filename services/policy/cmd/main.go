@@ -127,6 +127,7 @@ func main() {
 	})
 	// REST API endpoints
 	httpAPI := httpserver.NewHTTPServer(roleSvc, policySvc, evaluator)
+	httpAPI.SetPool(db) // Enable DB-backed queries (RBAC route permissions, blast radius, etc.)
 	// Wire DB-backed campaign store for SOX-compliant access review persistence.
 	httpAPI.SetCampaignRepo(httpserver.NewCampaignRepo(db))
 	// Wire JIT request repository for PAM zero-standing privileges.
