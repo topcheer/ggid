@@ -120,8 +120,8 @@ func (r *AuditRepository) List(ctx context.Context, filter domain.ListFilter, li
 		n++
 	}
 	if filter.Action != "" {
-		where += fmt.Sprintf(" AND action = $%d", n)
-		args = append(args, filter.Action)
+		where += fmt.Sprintf(" AND action LIKE $%d", n)
+		args = append(args, "%"+filter.Action+"%")
 		n++
 	}
 	if filter.ResourceType != "" {

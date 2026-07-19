@@ -979,10 +979,13 @@ func (h *Handler) changePassword(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Get tenant from context or fall back to X-Tenant-ID header
+	tenantID := uuid.Nil
 	tc, err := ggidtenant.FromContext(r.Context())
-	if err != nil {
-		writeError(w, http.StatusBadRequest, "missing tenant context")
-		return
+	if err == nil {
+		tenantID = tc.TenantID
+	} else if tidStr := r.Header.Get("X-Tenant-ID"); tidStr != "" {
+		tenantID, _ = uuid.Parse(tidStr)
 	}
 
 	// Extract user_id from X-User-ID header (set by gateway after JWT validation)
