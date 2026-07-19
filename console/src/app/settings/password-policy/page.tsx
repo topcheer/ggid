@@ -119,6 +119,7 @@ export default function PasswordPolicyPage() {
         // ignore
       }
     }
+    setLoading(false); // loaded from localStorage or use defaults
   }, []);
 
   useEffect(() => {

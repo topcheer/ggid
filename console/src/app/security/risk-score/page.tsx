@@ -109,19 +109,19 @@ export default function RiskScorePage() {
           {/* Summary cards */}
           {summary && (
             <div className="grid grid-cols-4 gap-4">
-              <div className={cardCls}><div className="flex items-center gap-2"><Users className="h-4 w-4 text-indigo-500" /><span className="text-xs font-semibold uppercase text-gray-400">Total Users</span></div><p className="mt-2 text-2xl font-bold text-indigo-600">{summary.total_users}</p></div>
-              <div className={cardCls}><div className="flex items-center gap-2"><Activity className="h-4 w-4 text-blue-500" /><span className="text-xs font-semibold uppercase text-gray-400">Average Score</span></div><p className="mt-2 text-2xl font-bold text-blue-600">{(summary.average_score ?? 0).toFixed(1)}</p></div>
-              <div className={cardCls}><div className="flex items-center gap-2"><ShieldAlert className="h-4 w-4 text-orange-500" /><span className="text-xs font-semibold uppercase text-gray-400">High Risk</span></div><p className="mt-2 text-2xl font-bold text-orange-600">{summary.high_risk_count}</p></div>
-              <div className={cardCls}><div className="flex items-center gap-2"><AlertCircle className="h-4 w-4 text-red-500" /><span className="text-xs font-semibold uppercase text-gray-400">Critical</span></div><p className="mt-2 text-2xl font-bold text-red-600">{summary.critical_count}</p></div>
+              <div className={cardCls}><div className="flex items-center gap-2"><Users className="h-4 w-4 text-indigo-500" /><span className="text-xs font-semibold uppercase text-gray-400">Total Users</span></div><p className="mt-2 text-2xl font-bold text-indigo-600">{summary?.total_users}</p></div>
+              <div className={cardCls}><div className="flex items-center gap-2"><Activity className="h-4 w-4 text-blue-500" /><span className="text-xs font-semibold uppercase text-gray-400">Average Score</span></div><p className="mt-2 text-2xl font-bold text-blue-600">{(summary?.average_score ?? 0).toFixed(1)}</p></div>
+              <div className={cardCls}><div className="flex items-center gap-2"><ShieldAlert className="h-4 w-4 text-orange-500" /><span className="text-xs font-semibold uppercase text-gray-400">High Risk</span></div><p className="mt-2 text-2xl font-bold text-orange-600">{summary?.high_risk_count}</p></div>
+              <div className={cardCls}><div className="flex items-center gap-2"><AlertCircle className="h-4 w-4 text-red-500" /><span className="text-xs font-semibold uppercase text-gray-400">Critical</span></div><p className="mt-2 text-2xl font-bold text-red-600">{summary?.critical_count}</p></div>
             </div>
           )}
 
           {/* Top factors */}
-          {summary && (summary.top_factors?.length ?? 0) > 0 && (
+          {summary && (summary?.top_factors?.length ?? 0) > 0 && (
             <div className={cardCls}>
               <h3 className="mb-4 text-sm font-semibold text-gray-700 dark:text-gray-300">Top Risk Factors</h3>
               <div className="space-y-3">
-                {summary.top_factors.map((f: any) => (
+                {summary?.top_factors.map((f: any) => (
                   <div key={f.name}>
                     <div className="flex items-center justify-between text-sm"><span className="text-gray-600 dark:text-gray-300">{f.name}</span><span className="font-bold text-gray-800 dark:text-gray-200">{(f.weight * 100).toFixed(0)}% weight</span></div>
                     <div className="mt-1 h-2 overflow-hidden rounded-full bg-gray-200 dark:bg-gray-700"><div className="h-full rounded-full bg-orange-400" style={{ width: `${Math.min(100, f.value * 100)}%` }} /></div>
@@ -133,9 +133,9 @@ export default function RiskScorePage() {
           )}
 
           {/* Distribution */}
-          {summary && (summary.distribution?.length ?? 0) > 0 && (
+          {summary && (summary?.distribution?.length ?? 0) > 0 && (
             <div className="grid grid-cols-4 gap-3">
-              {summary.distribution.map((d: any) => (
+              {summary?.distribution.map((d: any) => (
                 <div key={d.level} className={`${cardCls} text-center`}>
                   <div className={`inline-flex rounded-full px-3 py-1 text-xs font-medium ${levelColors[d.level] || ""}`}>{d.level}</div>
                   <p className="mt-2 text-2xl font-bold text-gray-900 dark:text-white">{d.count}</p>

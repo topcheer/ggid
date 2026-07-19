@@ -151,22 +151,22 @@ export default function LdapSyncConfigPage() {
             <Activity className="w-5 h-5 text-blue-500" />
             <div>
               <h3 className="text-sm font-semibold">Sync Status</h3>
-              <span className={"inline-block mt-1 px-2 py-0.5 rounded text-xs font-medium " + (statusColors[syncStatus.status] || statusColors.idle)}>{syncStatus.status}</span>
+              <span className={"inline-block mt-1 px-2 py-0.5 rounded text-xs font-medium " + (statusColors[syncStatus?.status || "idle"] || statusColors.idle)}>{syncStatus?.status || "idle"}</span>
             </div>
           </div>
-          <button onClick={triggerSync} disabled={syncing || syncStatus.status === "syncing"} aria-label="Trigger LDAP sync" className="px-4 py-2 rounded-lg bg-blue-600 text-white text-sm font-medium flex items-center gap-2 disabled:opacity-50">
-            {syncStatus.status === "syncing" ? <Loader2 className="w-4 h-4 animate-spin" /> : <Play className="w-4 h-4" />} Sync Now
+          <button onClick={triggerSync} disabled={syncing || syncStatus?.status || "idle" === "syncing"} aria-label="Trigger LDAP sync" className="px-4 py-2 rounded-lg bg-blue-600 text-white text-sm font-medium flex items-center gap-2 disabled:opacity-50">
+            {syncStatus?.status || "idle" === "syncing" ? <Loader2 className="w-4 h-4 animate-spin" /> : <Play className="w-4 h-4" />} Sync Now
           </button>
         </div>
-        {syncStatus.last_sync && (
+        {syncStatus?.last_sync && (
           <div className="grid grid-cols-3 gap-4 text-sm border-t dark:border-gray-700 pt-3">
-            <div><span className="text-gray-500">Last Sync</span><p className="font-medium text-xs">{syncStatus.last_sync.timestamp}</p></div>
-            <div><span className="text-gray-500">Users Synced</span><p className="font-medium">{syncStatus.last_sync.users_synced}</p></div>
-            <div><span className="text-gray-500">Groups Synced</span><p className="font-medium">{syncStatus.last_sync.groups_synced}</p></div>
+            <div><span className="text-gray-500">Last Sync</span><p className="font-medium text-xs">{syncStatus?.last_sync.timestamp}</p></div>
+            <div><span className="text-gray-500">Users Synced</span><p className="font-medium">{syncStatus?.last_sync.users_synced}</p></div>
+            <div><span className="text-gray-500">Groups Synced</span><p className="font-medium">{syncStatus?.last_sync.groups_synced}</p></div>
           </div>
         )}
-        {syncStatus.last_sync?.errors && syncStatus.last_sync.errors.length > 0 && (
-          <div className="mt-2 text-xs text-red-600">{syncStatus.last_sync.errors.length} errors during last sync</div>
+        {syncStatus?.last_sync?.errors && syncStatus?.last_sync.errors.length > 0 && (
+          <div className="mt-2 text-xs text-red-600">{syncStatus?.last_sync.errors.length} errors during last sync</div>
         )}
       </div>
 
