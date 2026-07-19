@@ -146,7 +146,7 @@ export default function EnhancedProfilePage() {
             name: s.device || s.user_agent?.split(' ').pop() || 'Unknown Device',
             os: s.user_agent || 'Unknown',
             lastSeen: s.last_active || s.created_at || new Date().toISOString(),
-            trusted: s.trusted === "true" || s.trusted === true,
+            trusted: String(s.trusted) === "true",
           })));
         }
       } catch { /* empty state */ }

@@ -394,17 +394,17 @@ function PolicyTester({ policies }: { policies: Policy[] }) {
               <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">{f.label}</label>
               {f.type === "number" ? (
                 <div className="flex items-center gap-2">
-                  <input type="range" min={0} max={100} value={(input as Record<string, number>)[f.key]}
+                  <input type="range" min={0} max={100} value={(input as any)[f.key]}
                     onChange={(e) => setInput({ ...input, [f.key]: parseInt(e.target.value) })} className="flex-1" />
-                  <span className="text-xs font-medium text-gray-900 dark:text-white w-8 text-right">{(input as Record<string, number>)[f.key]}</span>
+                  <span className="text-xs font-medium text-gray-900 dark:text-white w-8 text-right">{(input as any)[f.key]}</span>
                 </div>
               ) : f.type === "boolean" ? (
-                <button onClick={() => setInput({ ...input, [f.key]: !(input as Record<string, boolean>)[f.key] })}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-medium ${(input as Record<string, boolean>)[f.key] ? "bg-green-100 text-green-700 dark:bg-green-950 dark:text-green-300" : "bg-gray-100 text-gray-500 dark:bg-gray-800"}`}>
-                  {(input as Record<string, boolean>)[f.key] ? "true" : "false"}
+                <button onClick={() => setInput({ ...input, [f.key]: !(input as any)[f.key] })}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-medium ${(input as any)[f.key] ? "bg-green-100 text-green-700 dark:bg-green-950 dark:text-green-300" : "bg-gray-100 text-gray-500 dark:bg-gray-800"}`}>
+                  {(input as any)[f.key] ? "true" : "false"}
                 </button>
               ) : (
-                <input type="text" value={(input as Record<string, string>)[f.key]} onChange={(e) => setInput({ ...input, [f.key]: e.target.value })}
+                <input type="text" value={(input as any)[f.key]} onChange={(e) => setInput({ ...input, [f.key]: e.target.value })}
                   className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-sm text-gray-900 dark:text-white" />
               )}
             </div>
