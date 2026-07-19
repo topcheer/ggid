@@ -1,6 +1,8 @@
 package server
 
 import (
+	"crypto/rand"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -62,7 +64,7 @@ func (h *Handler) handlePasskeyRegisterBegin(w http.ResponseWriter, r *http.Requ
 	sess := &PasskeyRegistrationSession{
 		SessionID: fmtPKID(pkSeq),
 		UserID:    req.UserID,
-		Challenge: "challenge-" + fmtPKID(pkSeq),
+		Challenge: generateChallenge(),
 		RPID:      "auth.ggid.example",
 		CreatedAt: time.Now(),
 		Status:    "pending",
@@ -176,7 +178,7 @@ func (h *Handler) handlePasskeyAuthBegin(w http.ResponseWriter, r *http.Request)
 	pkSeq++
 	sess := &PasskeyAuthSession{
 		SessionID: fmtPKID(pkSeq),
-		Challenge: "auth-challenge-" + fmtPKID(pkSeq),
+		Challenge: generateChallenge(),
 		RPID:      "auth.ggid.example",
 		CreatedAt: time.Now(),
 		Status:    "pending",
@@ -366,4 +368,14 @@ func getBool(m map[string]any, key string) bool {
 		}
 	}
 	return false
+}
+
+// generateChallenge creates a cryptographically random challenge for WebAuthn.
+func generateChallenge() string {
+	b := make([]byte, 32)
+	if _, err := rand.Read(b); err != nil {
+		// Fallback to UUID-based (still unique, just not crypto-random)
+		return base64.StdEncoding.EncodeToString([]byte(uuid.New().String()))
+	}
+	return base64.RawURLEncoding.EncodeToString(b)
 }
