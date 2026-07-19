@@ -219,6 +219,41 @@ func (gw *Gateway) handleSystemBootstrap(w http.ResponseWriter, r *http.Request)
 	json.Unmarshal(regRespBody, &regResult)
 	adminUserID, _ := regResult["user_id"].(string)
 
+	// Step 2b: Create default roles + assign admin role to bootstrap user.
+	identityURL := gw.serviceURL("/api/v1/users")
+	for _, roleKey := range []string{"admin", "manager", "user"} {
+		roleBody, _ := json.Marshal(map[string]string{
+			"key":  roleKey,
+			"name": map[string]string{"admin": "Administrator", "manager": "Manager", "user": "User"}[roleKey],
+		})
+		roleReq, _ := http.NewRequestWithContext(r.Context(), "POST", identityURL+"/api/v1/roles", bytes.NewReader(roleBody))
+		roleReq.Header.Set("Content-Type", "application/json")
+		roleReq.Header.Set("X-Tenant-ID", tenantID.String())
+		roleResp, err := client.Do(roleReq)
+		if err != nil {
+			log.Printf("bootstrap: create role %s failed: %v", roleKey, err)
+			continue
+		}
+		io.ReadAll(roleResp.Body)
+		roleResp.Body.Close()
+		log.Printf("bootstrap: role %s created (status %d)", roleKey, roleResp.StatusCode)
+
+		// Assign admin role to the bootstrap user
+		if roleKey == "admin" && adminUserID != "" {
+			assignBody, _ := json.Marshal(map[string]string{"role_id": roleKey, "role_name": "Administrator"})
+			assignReq, _ := http.NewRequestWithContext(r.Context(), "POST", identityURL+"/api/v1/users/"+adminUserID+"/roles", bytes.NewReader(assignBody))
+			assignReq.Header.Set("Content-Type", "application/json")
+			assignReq.Header.Set("X-Tenant-ID", tenantID.String())
+			assignResp, err := client.Do(assignReq)
+			if err != nil {
+				log.Printf("bootstrap: assign admin role failed: %v", err)
+			} else {
+				log.Printf("bootstrap: admin role assigned (status %d)", assignResp.StatusCode)
+				assignResp.Body.Close()
+			}
+		}
+	}
+
 	// Step 3: Login to get JWT token.
 	loginBody, _ := json.Marshal(map[string]string{
 		"username": req.AdminUsername,
