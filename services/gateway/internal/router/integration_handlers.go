@@ -242,6 +242,9 @@ func (gw *Gateway) handleSystemBootstrap(w http.ResponseWriter, r *http.Request)
 
 	log.Printf("bootstrap: admin user %s registered, login status: %d", req.AdminUsername, loginResp.StatusCode)
 
+	// Mark system as initialized for /api/v1/system/status
+	quickstartInitialized = true
+
 	writeGatewayJSON(w, http.StatusCreated, map[string]any{
 		"status":          "bootstrapped",
 		"tenant_id":       tenantID.String(),

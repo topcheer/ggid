@@ -151,16 +151,20 @@ func (gw *Gateway) handleSystemStatus(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// System initialized state is tracked by the quickstartInitialized flag,
+	// which is set to true when bootstrap or quickstart completes successfully.
+	// On gateway restart, it defaults to false until the next bootstrap call.
+	initialized := quickstartInitialized
+
 	status := SystemStatus{
-		Initialized: quickstartInitialized,
+		Initialized: initialized,
 		Version:     "v1.0-beta",
 		Uptime:      time.Since(systemStartTime).Round(time.Second).String(),
 	}
 
-	if quickstartInitialized {
+	if initialized {
 		status.UserCount = 1
 		status.TenantCount = 1
-		status.OAuthClientCount = 1
 	}
 
 	// Check infrastructure health.

@@ -4,7 +4,23 @@ import { useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { Sidebar } from "@/components/sidebar";
 
-const PUBLIC_PATHS = ["/login", "/register", "/forgot-password", "/reset-password"];
+const PUBLIC_PATHS = ["/login", "/register", "/forgot-password", "/reset-password", "/setup"];
+
+// Check if system has been initialized (has any users).
+// Returns null = unknown, true = initialized, false = needs setup.
+async function checkSystemInitialized(): Promise<boolean | null> {
+  try {
+    const resp = await fetch("/api/v1/system/status", { method: "GET" });
+    if (resp.ok) {
+      const data = await resp.json();
+      return data.initialized === true;
+    }
+    // Fallback: if status endpoint doesn't exist, assume initialized
+    return true;
+  } catch {
+    return null;
+  }
+}
 
 export function AuthGuard({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -16,6 +32,29 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const token = typeof window !== "undefined" ? localStorage.getItem("ggid_access_token") : null;
     const isPublic = PUBLIC_PATHS.some((p) => pathname === p || pathname.startsWith(p));
+
+    // If no token and not on a public path → check if system needs setup
+    if (!token && !isPublic) {
+      checkSystemInitialized().then((initialized) => {
+        if (initialized === false) {
+          // System not initialized → redirect to setup wizard
+          router.replace("/setup");
+        } else {
+          // System initialized but not logged in → redirect to login
+          setIsAuthenticated(false);
+          router.push("/login");
+        }
+        setChecked(true);
+      });
+      return;
+    }
+
+    // If on /setup but system is already initialized → redirect to login
+    if (pathname === "/setup" && token) {
+      router.replace("/dashboard");
+      setChecked(true);
+      return;
+    }
 
     if (token) {
       setIsAuthenticated(true);
