@@ -36,6 +36,7 @@ func TestGapRegression_ConflictsDetect_ReturnsConflictPairs(t *testing.T) {
 			t.Errorf("conflict pair missing field: %s", field)
 		}
 	}
+	}
 }
 
 func TestGapRegression_ConflictsDetect_SeverityCounts(t *testing.T) {
