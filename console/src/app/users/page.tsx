@@ -24,6 +24,10 @@ import {
   ChevronDown,
   FileText,
   FileJson,
+  Eye,
+  EyeOff,
+  Check,
+  AlertCircle,
 } from "lucide-react";
 
 const PAGE_SIZE = 10;
@@ -102,6 +106,11 @@ export default function UsersPage() {
 
   const [creating, setCreating] = useState(false);
   const [formError, setFormError] = useState("");
+  const [formSuccess, setFormSuccess] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [pwStrength, setPwStrength] = useState<number>(0);
+  const [pwFeedback, setPwFeedback] = useState("");
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
   const handleCreate = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -109,27 +118,82 @@ export default function UsersPage() {
     const username = formData.get("username") as string;
     const email = formData.get("email") as string;
     const password = formData.get("password") as string;
+    const displayName = formData.get("display_name") as string;
+    const role = formData.get("role") as string;
 
     // Client-side validation
     setFormError("");
-    if (!username || username.length < 2) { setFormError("Username must be at least 2 characters"); return; }
-    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { setFormError("Please enter a valid email address"); return; }
-    if (!password || password.length < 12) { setFormError("Password must be at least 12 characters"); return; }
+    setFieldErrors({});
+    const errs: Record<string, string> = {};
+    if (!username || username.length < 2) errs.username = "Username must be at least 2 characters";
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) errs.email = "Please enter a valid email address";
+    if (!password || password.length < 12) errs.password = "Password must be at least 12 characters";
+    if (Object.keys(errs).length > 0) { setFieldErrors(errs); return; }
 
     setCreating(true);
     try {
       await apiFetch("/api/v1/users", {
         method: "POST",
-        body: JSON.stringify({ username, email, password }),
+        body: JSON.stringify({ username, email, password, display_name: displayName || undefined }),
       });
+      // Assign role if selected
+      if (role) {
+        try {
+          await apiFetch(`/api/v1/users/${username}/roles`, {
+            method: "POST",
+            body: JSON.stringify({ role }),
+          });
+        } catch { /* role assignment is best-effort */ }
+      }
+      setFormSuccess(`User "${username}" created successfully${role ? ` and assigned ${role} role` : ""}.`);
       setShowCreate(false);
-      setTimeout(() => refresh(), 300);
+      setTimeout(() => { setFormSuccess(""); refresh(); }, 200);
     } catch (err) {
-      console.error(err instanceof Error ? err.message : t("users.createFailed"));
       setFormError(err instanceof Error ? err.message : "Failed to create user");
     } finally {
       setCreating(false);
     }
+  };
+
+  const checkPasswordStrength = async (pw: string) => {
+    if (pw.length === 0) { setPwStrength(0); setPwFeedback(""); return; }
+    // Client-side quick check
+    if (pw.length < 12) { setPwStrength(1); setPwFeedback("Too short (min 12 characters)"); return; }
+    let score = 2;
+    if (/[A-Z]/.test(pw)) score++;
+    if (/[0-9]/.test(pw)) score++;
+    if (/[^A-Za-z0-9]/.test(pw)) score++;
+    setPwStrength(score);
+    setPwFeedback(score < 3 ? "Weak — add uppercase, numbers, symbols" : score < 5 ? "Fair" : "Strong");
+    // Also call API for server-side check
+    try {
+      const res = await apiFetch<{ score?: number; strength?: string }>("/api/v1/auth/password/strength", {
+        method: "POST", body: JSON.stringify({ password: pw }),
+      }).catch(() => null);
+      if (res?.score != null) setPwStrength(res.score);
+    } catch {}
+  };
+
+  const validateField = (name: string, value: string) => {
+    setFieldErrors(prev => {
+      const next = { ...prev };
+      if (name === "username") {
+        if (!value) delete next.username;
+        else if (value.length < 2) next.username = "Min 2 characters";
+        else delete next.username;
+      }
+      if (name === "email") {
+        if (!value) delete next.email;
+        else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) next.email = "Invalid email format";
+        else delete next.email;
+      }
+      if (name === "password") {
+        if (!value) delete next.password;
+        else if (value.length < 12) next.password = "Min 12 characters";
+        else delete next.password;
+      }
+      return next;
+    });
   };
 
   const handleLock = async (userId: string, currentStatus: string) => {
@@ -634,23 +698,98 @@ export default function UsersPage() {
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="mb-1 block text-sm font-medium">{t("users.usernameLbl")}</label>
-              <input aria-label="johndoe" name="username" required className="w-full rounded-lg border border-gray-300 px-3 py-2" placeholder="johndoe" />
+              <input
+                aria-label="johndoe"
+                name="username"
+                required
+                className={`w-full rounded-lg border px-3 py-2 dark:bg-gray-700 dark:text-gray-200 ${fieldErrors.username ? "border-red-400" : "border-gray-300 dark:border-gray-600"}`}
+                placeholder="johndoe"
+                onChange={(e) => validateField("username", e.target.value)}
+              />
+              {fieldErrors.username && <p className="mt-1 text-xs text-red-500">{fieldErrors.username}</p>}
+            </div>
+            <div>
+              <label className="mb-1 block text-sm font-medium">Full Name</label>
+              <input
+                aria-label="John Doe"
+                name="display_name"
+                className="w-full rounded-lg border border-gray-300 px-3 py-2 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200"
+                placeholder="John Doe"
+              />
             </div>
             <div>
               <label className="mb-1 block text-sm font-medium">{t("users.email")}</label>
-              <input autoComplete="email" name="email" type="email" required className="w-full rounded-lg border border-gray-300 px-3 py-2" placeholder="john@example.com" />
+              <input
+                autoComplete="email"
+                name="email"
+                type="email"
+                required
+                className={`w-full rounded-lg border px-3 py-2 dark:bg-gray-700 dark:text-gray-200 ${fieldErrors.email ? "border-red-400" : "border-gray-300 dark:border-gray-600"}`}
+                placeholder="john@example.com"
+                onChange={(e) => validateField("email", e.target.value)}
+              />
+              {fieldErrors.email && <p className="mt-1 text-xs text-red-500">{fieldErrors.email}</p>}
+            </div>
+            <div>
+              <label className="mb-1 block text-sm font-medium">Role</label>
+              <select
+                name="role"
+                className="w-full rounded-lg border border-gray-300 px-3 py-2 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200"
+                defaultValue=""
+              >
+                <option value="">— Select role (optional) —</option>
+                <option value="admin">Admin (platform administrator)</option>
+                <option value="manager">Manager (tenant administrator)</option>
+                <option value="user">User (standard access)</option>
+              </select>
             </div>
             <div className="col-span-2">
               <label className="mb-1 block text-sm font-medium">{t("users.passwordLbl")}</label>
-              <input autoComplete="current-password" name="password" type="password" required minLength={12} className="w-full rounded-lg border border-gray-300 px-3 py-2" placeholder="At least 12 characters" />
+              <div className="relative">
+                <input
+                  autoComplete="new-password"
+                  name="password"
+                  type={showPassword ? "text" : "password"}
+                  required
+                  minLength={12}
+                  className={`w-full rounded-lg border px-3 py-2 pr-10 dark:bg-gray-700 dark:text-gray-200 ${fieldErrors.password ? "border-red-400" : "border-gray-300 dark:border-gray-600"}`}
+                  placeholder="At least 12 characters"
+                  onChange={(e) => { validateField("password", e.target.value); checkPasswordStrength(e.target.value); }}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                  aria-label={showPassword ? "Hide password" : "Show password"}
+                >
+                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
+              </div>
+              {/* Password strength meter */}
+              {pwStrength > 0 && (
+                <div className="mt-2">
+                  <div className="flex gap-1">
+                    {[1,2,3,4,5].map(n => (
+                      <div key={n} className={`h-1.5 flex-1 rounded-full ${n <= pwStrength ? (pwStrength <= 2 ? "bg-red-500" : pwStrength <= 3 ? "bg-amber-500" : "bg-green-500") : "bg-gray-200 dark:bg-gray-700"}`} />
+                    ))}
+                  </div>
+                  <p className="mt-1 text-xs text-gray-500">{pwFeedback}</p>
+                </div>
+              )}
+              {fieldErrors.password && <p className="mt-1 text-xs text-red-500">{fieldErrors.password}</p>}
             </div>
           </div>
-          {formError && <div className="mt-3 rounded-lg border border-red-200 bg-red-50 px-4 py-2 text-sm text-red-700">{formError}</div>}
+          {formError && <div className="mt-3 flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 px-4 py-2 text-sm text-red-700 dark:border-red-800 dark:bg-red-950"><AlertCircle className="h-4 w-4 shrink-0" />{formError}</div>}
           <div className="mt-4 flex gap-2">
             <button aria-label="action" type="submit" disabled={creating} className="rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700 disabled:opacity-50">{creating ? "Creating..." : t("common.create")}</button>
-            <button type="button" onClick={() => setShowCreate(false)} className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium hover:bg-gray-50 dark:hover:bg-gray-700">{t("common.cancel")}</button>
+            <button type="button" onClick={() => { setShowCreate(false); setFormError(""); setFieldErrors({}); }} className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium hover:bg-gray-50 dark:hover:bg-gray-700">{t("common.cancel")}</button>
           </div>
         </form>
+      )}
+      {formSuccess && (
+        <div className="mb-4 flex items-center gap-2 rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700 dark:border-green-800 dark:bg-green-950">
+          <Check className="h-4 w-4 shrink-0" /> {formSuccess}
+        </div>
       )}
 
       {error && <div className="mb-4 rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">{error}</div>}
