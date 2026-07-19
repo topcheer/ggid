@@ -230,7 +230,7 @@ export default function DLPEgressPage() {
           <div className={card}>
             <h3 className="mb-3 text-sm font-semibold uppercase text-gray-400">{t("dlpEgress.topRedacted")}</h3>
             <div className="space-y-2">
-              {Object.entries(fieldTypeCounts).sort(([,a],[,b]) => b - a).map(([type, count]: any[]) => (
+              {Object.entries(fieldTypeCounts).sort(([,a]: [string, any], [,b]: [string, any]) => Number(b) - Number(a)).map(([type, count]: any[]) => (
                 <div key={type} className="flex items-center gap-3">
                   <span className="w-20 text-xs font-mono text-gray-500">{type}</span>
                   <div className="flex-1 h-5 overflow-hidden rounded-full bg-gray-100 dark:bg-gray-700">

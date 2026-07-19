@@ -1,6 +1,6 @@
 # E2E Business Flows Report
 
-**Date:** 2026-07-19 01:06:14 UTC
+**Date:** 2026-07-19 02:08:20 UTC
 **URL:** https://ggid.iot2.win
 
 ## Results
@@ -14,7 +14,7 @@
 ## Steps
 
 | # | Step | Result | Latency |
-|---|------|--------|---------|\n✅ PASS | 1. Login (admin) | 257ms\n✅ PASS | 2. Create User | 441ms\n✅ PASS | 3. List Users (total=409) | 75ms\n✅ PASS | 4. Assign Role (viewer) | 73ms\n✅ PASS | 5. Check Permission | 86ms\n✅ PASS | 6. Create OAuth Client (id=gcid_J4oC57fOwBJlii2) | 212ms\n✅ PASS | 7. Client Credentials Token | 211ms\n✅ PASS | 8. Query Audit Events (count=20) | 64ms\n✅ PASS | 9. Create Webhook | 78ms\n✅ PASS | 10. Audit Export | 70ms\n✅ PASS | 11. List Sessions | 62ms
+|---|------|--------|---------|\n✅ PASS | 1. Login (admin) | 231ms\n✅ PASS | 2. Create User | 432ms\n✅ PASS | 3. List Users (total=410) | 92ms\n✅ PASS | 4. Assign Role (viewer) | 151ms\n✅ PASS | 5. Check Permission | 80ms\n✅ PASS | 6. Create OAuth Client (id=gcid_5rnGI0plF_UoOK5) | 133ms\n✅ PASS | 7. Client Credentials Token | 116ms\n✅ PASS | 8. Query Audit Events (count=35) | 66ms\n✅ PASS | 9. Create Webhook | 61ms\n✅ PASS | 10. Audit Export | 71ms\n✅ PASS | 11. List Sessions | 91ms
 
 ## Conclusion
 
