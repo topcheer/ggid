@@ -128,7 +128,12 @@ export default function EnhancedProfilePage() {
 
       // Load profile from /users/me or JWT
       try {
-        const meRes = await fetch(`${API_BASE}/api/v1/users/me`, { headers: { ...authHeader() } });
+        const meRes = await fetch(`${API_BASE}/api/v1/users/me`, {
+          headers: {
+            ...authHeader(),
+            "X-Tenant-ID": localStorage.getItem("ggid_tenant_id") || DEFAULT_TENANT_ID,
+          },
+        });
         if (meRes.ok) {
           const me = await meRes.json();
           setName(me.display_name || me.name || me.username || "");
@@ -228,8 +233,8 @@ export default function EnhancedProfilePage() {
           <div className={card}>
             <h3 className="mb-4 text-sm font-semibold uppercase text-gray-400">{t("profile.personalInfo")}</h3>
             <div className="space-y-3">
-              <div><label className="text-sm font-medium">{t("profile.fullName")}</label><input type="text" value={name} onChange={e => setName(e.target.value)} className="mt-1 w-full rounded-lg border dark:border-gray-700 dark:bg-gray-900 px-3 py-2 text-sm" /></div>
-              <div><label className="text-sm font-medium">{t("profile.email")}</label><div className="mt-1 flex gap-2"><div className="relative flex-1"><Mail className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" /><input type="email" value={email} onChange={e => setEmail(e.target.value)} className="w-full rounded-lg border dark:border-gray-700 dark:bg-gray-900 pl-9 pr-3 py-2 text-sm" /></div>{email && <span className="flex items-center gap-1 px-2 py-1 rounded text-xs bg-green-100 dark:bg-green-900/30 text-green-600"><CheckCircle2 className="h-3 w-3" /> {t("profile.verified")}</span>}</div></div>
+              <div><label className="text-sm font-medium">{t("profile.fullName")}</label><input type="text" value={name} onChange={e => setName(e.target.value)} placeholder={!profileLoaded ? "Loading..." : "Enter your name"} className="mt-1 w-full rounded-lg border dark:border-gray-700 dark:bg-gray-900 px-3 py-2 text-sm disabled:opacity-50" disabled={!profileLoaded} /></div>
+              <div><label className="text-sm font-medium">{t("profile.email")}</label><div className="mt-1 flex gap-2"><div className="relative flex-1"><Mail className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" /><input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder={!profileLoaded ? "Loading..." : "you@example.com"} className="w-full rounded-lg border dark:border-gray-700 dark:bg-gray-900 pl-9 pr-3 py-2 text-sm disabled:opacity-50" disabled={!profileLoaded} /></div>{email && <span className="flex items-center gap-1 px-2 py-1 rounded text-xs bg-green-100 dark:bg-green-900/30 text-green-600"><CheckCircle2 className="h-3 w-3" /> {t("profile.verified")}</span>}</div></div>
               <div><label className="text-sm font-medium">{t("profile.phone")}</label><div className="mt-1 flex gap-2"><div className="relative flex-1"><Phone className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" /><input type="tel" value={phone} onChange={e => setPhone(e.target.value)} className="w-full rounded-lg border dark:border-gray-700 dark:bg-gray-900 pl-9 pr-3 py-2 text-sm" /></div>{phoneVerified ? <span className="flex items-center gap-1 px-2 py-1 rounded text-xs bg-green-100 dark:bg-green-900/30 text-green-600"><CheckCircle2 className="h-3 w-3" /> {t("profile.verified")}</span> : <button className="px-2 py-1 rounded text-xs bg-blue-600 text-white">{t("profile.verify")}</button>}</div></div>
               {profileSaved && <span className="flex items-center gap-1 text-xs text-green-600"><Check className="h-3 w-3" /> Saved</span>}
               <button onClick={saveProfile} disabled={saving || !profileLoaded} className="flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50">{saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />} {t("profile.save")}</button>
