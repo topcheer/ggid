@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useApi } from "@/lib/api";
 import { useTranslations } from "@/lib/i18n";
 import {
-  AppWindow, Plus, Trash2, Copy, Check, X, AlertCircle, Loader2,
+  AppWindow, Plus, Trash2, Copy, Check, X, AlertCircle, AlertTriangle, Loader2,
   RefreshCw, Eye, EyeOff, Shield, ExternalLink, Search,
 } from "lucide-react";
 
@@ -185,6 +185,10 @@ export default function OAuthClientsPage() {
         <div className="rounded-xl border border-green-300 bg-green-50 p-5 dark:border-green-700 dark:bg-green-900/20">
           <div className="flex items-center gap-2 text-sm font-semibold text-green-800 dark:text-green-400">
             <Check className="h-5 w-5" /> {t("oauth.clientSecretGenerated")}
+          </div>
+          <div className="mt-2 flex items-center gap-2 rounded-lg bg-amber-50 dark:bg-amber-900/20 px-3 py-2 text-xs text-amber-700 dark:text-amber-400">
+            <AlertTriangle className="h-4 w-4 shrink-0" />
+            Save this secret now — it will not be shown again.
           </div>
           <div className="mt-3 flex items-center gap-2">
             <code className="flex-1 truncate rounded-lg bg-white px-3 py-2 font-mono text-sm dark:bg-gray-900">{newSecret.secret}</code>
