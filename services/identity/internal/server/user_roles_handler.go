@@ -33,7 +33,7 @@ func (h *HTTPHandler) handleUserRoles(ctx context.Context, userID uuid.UUID, w h
 			return
 		}
 		rows, err := pool.Query(ctx, `
-			SELECT ur.role_id::text, COALESCE(r.key, r.name, ur.role_id::text), ur.created_at, COALESCE(ur.granted_by::text, '')
+			SELECT ur.role_id::text, COALESCE(r.name, r.key, ur.role_id::text), ur.created_at, COALESCE(ur.granted_by::text, '')
 			FROM user_roles ur
 			LEFT JOIN roles r ON r.id = ur.role_id
 			WHERE ur.user_id = $1

@@ -1012,7 +1012,7 @@ func (h *HTTPHandler) batchGetUserRoles(ctx context.Context, users []*domain.Use
 	}
 
 	rows, err := pool.Query(ctx, `
-		SELECT ur.user_id, ur.role_id::text, COALESCE(r.key, r.name, ur.role_id::text), ur.created_at
+		SELECT ur.user_id, ur.role_id::text, COALESCE(r.name, r.key, ur.role_id::text), ur.created_at
 		FROM user_roles ur
 		LEFT JOIN roles r ON r.id = ur.role_id
 		WHERE ur.user_id = ANY($1)
