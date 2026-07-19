@@ -4,7 +4,7 @@ import { authHeader } from "@/lib/auth-helpers";
 import {
   User, Shield, Smartphone, Loader2, AlertCircle, X, Check,
   Key, Lock, Mail, Phone, CheckCircle2, XCircle, Plus, Ban,
-  RefreshCw, ChevronRight, Fingerprint, Globe,
+  RefreshCw, ChevronRight, Fingerprint, Globe, Eye, EyeOff,
 } from "lucide-react";
 import { useTranslations } from "@/lib/i18n";
 
@@ -18,10 +18,23 @@ export default function EnhancedProfilePage() {
   const [saving, setSaving] = useState(false);
 
   // Profile
-  const [name, setName] = useState("Alice Chen");
-  const [email, setEmail] = useState("alice@company.com");
-  const [phone, setPhone] = useState("+1-555-0100");
-  const [phoneVerified, setPhoneVerified] = useState(true);
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
+  const [phoneVerified, setPhoneVerified] = useState(false);
+  const [profileLoaded, setProfileLoaded] = useState(false);
+  const [profileSaved, setProfileSaved] = useState(false);
+
+  // Change password
+  const [showChangePw, setShowChangePw] = useState(false);
+  const [curPw, setCurPw] = useState("");
+  const [newPw, setNewPw] = useState("");
+  const [confirmPw, setConfirmPw] = useState("");
+  const [showPw, setShowPw] = useState(false);
+  const [pwScore, setPwScore] = useState(0);
+  const [pwError, setPwError] = useState("");
+  const [pwSuccess, setPwSuccess] = useState("");
+  const [changingPw, setChangingPw] = useState(false);
 
   // Security
   const [mfaMethods, setMfaMethods] = useState<{ type: string; name: string; enabled: boolean }[]>([]);
@@ -105,19 +118,95 @@ export default function EnhancedProfilePage() {
             name: s.device || s.user_agent?.split(' ').pop() || 'Unknown Device',
             os: s.user_agent || 'Unknown',
             lastSeen: s.last_active || s.created_at || new Date().toISOString(),
-            trusted: s.trusted === true,
+            trusted: s.trusted === "true" || s.trusted === true,
           })));
         }
       } catch { /* empty state */ }
+
+      // Load profile from /users/me or JWT
+      try {
+        const meRes = await fetch(`${API_BASE}/api/v1/users/me`, { headers: { ...authHeader() } });
+        if (meRes.ok) {
+          const me = await meRes.json();
+          setName(me.display_name || me.name || me.username || "");
+          setEmail(me.email || "");
+          setPhone(me.phone || "");
+          setPhoneVerified(me.phone_verified || false);
+        }
+      } catch {
+        // Fallback: read from JWT payload
+        try {
+          const token = localStorage.getItem("ggid_access_token") || "";
+          if (token) {
+            const payload = JSON.parse(atob(token.split(".")[1]));
+            setName(payload.name || payload.username || "");
+            setEmail(payload.email || "");
+          }
+        } catch {}
+      }
+      setProfileLoaded(true);
 
       setLoadingProfile(false);
     };
     loadProfile();
   }, []);
 
+  const saveProfile = async () => {
+    setSaving(true);
+    try {
+      const res = await fetch(`${API_BASE}/api/v1/users/me`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json", ...authHeader() },
+        body: JSON.stringify({ display_name: name, email, phone }),
+      });
+      if (res.ok) {
+        setProfileSaved(true);
+        setTimeout(() => setProfileSaved(false), 3000);
+      }
+    } catch {}
+    setSaving(false);
+  };
+
+  const checkPwStrength = (pw: string) => {
+    if (pw.length === 0) { setPwScore(0); return; }
+    let score = pw.length < 8 ? 1 : 2;
+    if (/[A-Z]/.test(pw)) score++;
+    if (/[0-9]/.test(pw)) score++;
+    if (/[^A-Za-z0-9]/.test(pw)) score++;
+    setPwScore(Math.min(score, 5));
+  };
+
+  const handleChangePassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setPwError(""); setPwSuccess("");
+    if (newPw.length < 12) { setPwError("New password must be at least 12 characters"); return; }
+    if (newPw !== confirmPw) { setPwError("Passwords do not match"); return; }
+    if (newPw === curPw) { setPwError("New password must be different"); return; }
+    setChangingPw(true);
+    try {
+      const res = await fetch(`${API_BASE}/api/v1/auth/change-password`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", ...authHeader() },
+        body: JSON.stringify({ current_password: curPw, new_password: newPw }),
+      });
+      if (res.ok) {
+        setPwSuccess("Password changed successfully.");
+        setCurPw(""); setNewPw(""); setConfirmPw("");
+        setShowChangePw(false);
+        setTimeout(() => setPwSuccess(""), 5000);
+      } else {
+        const d = await res.json().catch(() => ({}));
+        setPwError(d.error?.message || d.error || "Failed to change password");
+      }
+    } catch {
+      setPwError("Network error — please try again");
+    }
+    setChangingPw(false);
+  };
+
   const card = "rounded-xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-700 dark:bg-gray-800";
 
-  const saveProfile = () => { setSaving(true); setTimeout(() => setSaving(false), 800); };
+
   const revokeDevice = (id: string) => setDevices(prev => prev.filter(d => d.id !== id));
 
   return (
@@ -139,7 +228,8 @@ export default function EnhancedProfilePage() {
               <div><label className="text-sm font-medium">{t("profile.fullName")}</label><input type="text" value={name} onChange={e => setName(e.target.value)} className="mt-1 w-full rounded-lg border dark:border-gray-700 dark:bg-gray-900 px-3 py-2 text-sm" /></div>
               <div><label className="text-sm font-medium">{t("profile.email")}</label><div className="mt-1 flex gap-2"><div className="relative flex-1"><Mail className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" /><input type="email" value={email} onChange={e => setEmail(e.target.value)} className="w-full rounded-lg border dark:border-gray-700 dark:bg-gray-900 pl-9 pr-3 py-2 text-sm" /></div>{email && <span className="flex items-center gap-1 px-2 py-1 rounded text-xs bg-green-100 dark:bg-green-900/30 text-green-600"><CheckCircle2 className="h-3 w-3" /> {t("profile.verified")}</span>}</div></div>
               <div><label className="text-sm font-medium">{t("profile.phone")}</label><div className="mt-1 flex gap-2"><div className="relative flex-1"><Phone className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" /><input type="tel" value={phone} onChange={e => setPhone(e.target.value)} className="w-full rounded-lg border dark:border-gray-700 dark:bg-gray-900 pl-9 pr-3 py-2 text-sm" /></div>{phoneVerified ? <span className="flex items-center gap-1 px-2 py-1 rounded text-xs bg-green-100 dark:bg-green-900/30 text-green-600"><CheckCircle2 className="h-3 w-3" /> {t("profile.verified")}</span> : <button className="px-2 py-1 rounded text-xs bg-blue-600 text-white">{t("profile.verify")}</button>}</div></div>
-              <button onClick={saveProfile} disabled={saving} className="flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50">{saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />} {t("profile.save")}</button>
+              {profileSaved && <span className="flex items-center gap-1 text-xs text-green-600"><Check className="h-3 w-3" /> Saved</span>}
+              <button onClick={saveProfile} disabled={saving || !profileLoaded} className="flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50">{saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />} {t("profile.save")}</button>
             </div>
           </div>
           <div className={card}>
@@ -154,7 +244,38 @@ export default function EnhancedProfilePage() {
         <div className="space-y-6">
           <div className={card}>
             <h3 className="mb-3 flex items-center gap-2 text-sm font-semibold uppercase text-gray-400"><Lock className="h-4 w-4" /> {t("profile.password")}</h3>
-            <button className="rounded-lg border border-gray-300 px-4 py-2 text-sm dark:border-gray-700">{t("profile.changePassword")}</button>
+            {pwSuccess && <div className="mb-3 flex items-center gap-2 rounded-lg border border-green-200 bg-green-50 px-3 py-2 text-sm text-green-700 dark:border-green-800 dark:bg-green-950"><Check className="h-4 w-4" /> {pwSuccess}</div>}
+            {pwError && <div className="mb-3 flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700 dark:border-red-800 dark:bg-red-950"><AlertCircle className="h-4 w-4" /> {pwError}</div>}
+            {showChangePw ? (
+              <form onSubmit={handleChangePassword} className="space-y-3">
+                <div>
+                  <label className="text-xs font-medium text-gray-500">Current Password</label>
+                  <input type={showPw ? "text" : "password"} value={curPw} onChange={(e) => setCurPw(e.target.value)} required className="mt-1 w-full rounded-lg border border-gray-300 dark:border-gray-700 dark:bg-gray-900 px-3 py-2 text-sm" placeholder="••••••••" />
+                </div>
+                <div>
+                  <label className="text-xs font-medium text-gray-500">New Password</label>
+                  <div className="relative">
+                    <input type={showPw ? "text" : "password"} value={newPw} onChange={(e) => { setNewPw(e.target.value); checkPwStrength(e.target.value); }} required className="mt-1 w-full rounded-lg border border-gray-300 dark:border-gray-700 dark:bg-gray-900 px-3 py-2 pr-9 text-sm" placeholder="At least 12 characters" />
+                    <button type="button" onClick={() => setShowPw(!showPw)} className="absolute right-3 top-3 text-gray-400">{showPw ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}</button>
+                  </div>
+                  {pwScore > 0 && (
+                    <div className="mt-1 flex gap-1">
+                      {[1,2,3,4,5].map(n => <div key={n} className={`h-1 flex-1 rounded-full ${n <= pwScore ? (pwScore <= 2 ? "bg-red-500" : pwScore <= 3 ? "bg-amber-500" : "bg-green-500") : "bg-gray-200 dark:bg-gray-700"}`} />)}
+                    </div>
+                  )}
+                </div>
+                <div>
+                  <label className="text-xs font-medium text-gray-500">Confirm New Password</label>
+                  <input type={showPw ? "text" : "password"} value={confirmPw} onChange={(e) => setConfirmPw(e.target.value)} required className="mt-1 w-full rounded-lg border border-gray-300 dark:border-gray-700 dark:bg-gray-900 px-3 py-2 text-sm" placeholder="••••••••" />
+                </div>
+                <div className="flex gap-2">
+                  <button type="submit" disabled={changingPw} className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50">{changingPw ? <Loader2 className="h-4 w-4 animate-spin" /> : "Change Password"}</button>
+                  <button type="button" onClick={() => { setShowChangePw(false); setCurPw(""); setNewPw(""); setConfirmPw(""); setPwError(""); }} className="rounded-lg border border-gray-300 dark:border-gray-700 px-4 py-2 text-sm">Cancel</button>
+                </div>
+              </form>
+            ) : (
+              <button onClick={() => setShowChangePw(true)} className="rounded-lg border border-gray-300 px-4 py-2 text-sm dark:border-gray-700">{t("profile.changePassword")}</button>
+            )}
           </div>
           <div className={card}>
             <h3 className="mb-3 flex items-center gap-2 text-sm font-semibold uppercase text-gray-400"><Key className="h-4 w-4" /> {t("profile.mfaMethods")}</h3>

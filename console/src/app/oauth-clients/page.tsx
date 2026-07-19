@@ -5,7 +5,7 @@ import { useApi } from "@/lib/api";
 import { useTranslations } from "@/lib/i18n";
 import {
   AppWindow, Plus, Trash2, Copy, Check, X, AlertCircle, Loader2,
-  RefreshCw, Eye, EyeOff, Shield, ExternalLink,
+  RefreshCw, Eye, EyeOff, Shield, ExternalLink, Search,
 } from "lucide-react";
 
 interface OAuthClient {
@@ -35,6 +35,7 @@ export default function OAuthClientsPage() {
   const [confirmDelete, setConfirmDelete] = useState<OAuthClient | null>(null);
   const [editClient, setEditClient] = useState<OAuthClient | null>(null);
   const [showSecrets, setShowSecrets] = useState<Record<string, boolean>>({});
+  const [search, setSearch] = useState("");
 
   // Create form
   const [form, setForm] = useState({
@@ -199,6 +200,17 @@ export default function OAuthClientsPage() {
         </div>
       ) : (
         <>
+          {/* Search */}
+          <div className="mb-4 flex items-center gap-2">
+            <Search className="h-4 w-4 text-gray-400" />
+            <input
+              type="text"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search by name, client ID, or redirect URI..."
+              className="w-full max-w-md rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200"
+            />
+          </div>
           {/* Desktop table */}
           <div className="hidden overflow-hidden rounded-xl border border-gray-200 shadow-sm md:block dark:border-gray-700">
             <table className="w-full text-sm">
@@ -213,10 +225,16 @@ export default function OAuthClientsPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
-                {clients.map((c: any) => (
+                {clients.filter((c: OAuthClient) => {
+                  if (!search.trim()) return true;
+                  const q = search.toLowerCase();
+                  return c.client_name?.toLowerCase().includes(q) ||
+                         c.client_id?.toLowerCase().includes(q) ||
+                         c.redirect_uris?.some((u: string) => u.toLowerCase().includes(q));
+                }).map((c: any) => (
                   <tr key={c.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/50">
                     <td className="px-4 py-3">
-                      <div className="font-medium text-gray-800 dark:text-gray-200">{c.client_name}</div>
+                      <div className="font-medium text-gray-800 dark:text-gray-200">{c.client_name || c.client_id.substring(0, 8)}</div>
                       <div className="text-xs text-gray-400">{c.status}</div>
                     </td>
                     <td className="px-4 py-3">

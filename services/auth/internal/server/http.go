@@ -185,6 +185,7 @@ func (h *Handler) registerRoutes() {
 	h.mux.HandleFunc("/api/v1/auth/forgot-password", h.forgotPassword)
 	h.mux.HandleFunc("/api/v1/auth/reset-password", h.resetPassword)
 	h.mux.HandleFunc("/api/v1/auth/password/change", h.changePassword)
+	h.mux.HandleFunc("/api/v1/auth/change-password", h.changePassword)
 	h.mux.HandleFunc("/api/v1/auth/sessions", h.handleSessions)
 	h.mux.HandleFunc("/api/v1/admin/config", h.handleAdminConfig)
 	h.mux.HandleFunc("/api/v1/admin/config/", h.handleAdminConfig)
@@ -960,9 +961,16 @@ func (h *Handler) changePassword(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Extract user_id from JWT token in Authorization header
+	// Extract user_id from X-User-ID header (set by gateway after JWT validation)
+	// Fall back to JWT sub claim if header not present (direct access)
 	var userID uuid.UUID
-	if req.UserID != "" {
+	if uidStr := r.Header.Get("X-User-ID"); uidStr != "" {
+		userID, err = uuid.Parse(uidStr)
+		if err != nil {
+			writeError(w, http.StatusBadRequest, "invalid user_id")
+			return
+		}
+	} else if req.UserID != "" {
 		userID, err = uuid.Parse(req.UserID)
 		if err != nil {
 			writeError(w, http.StatusBadRequest, "invalid user_id")
