@@ -33,21 +33,21 @@ export default function DashboardPage() {
         const d = await res.json();
         const data: KPIData = {
           totalUsers: d.total_users ?? d.user_count ?? 0,
-          activeSessions: d.active_sessions ?? 42,
-          mfaCoverage: d.mfa_enrollment_rate ?? 88,
-          auditEvents24h: d.audit_events_24h ?? 1520,
-          newUsers7d: d.new_users_7d ?? 15,
-          failedLogins24h: d.failed_logins_24h ?? 8,
-          oauthClients: d.oauth_clients ?? 5,
+          activeSessions: d.active_sessions ?? 0,
+          mfaCoverage: d.mfa_enrollment_rate ?? 0,
+          auditEvents24h: d.audit_events_24h ?? 0,
+          newUsers7d: d.new_users_7d ?? 0,
+          failedLogins24h: d.failed_logins_24h ?? 0,
+          oauthClients: d.oauth_clients ?? 0,
         };
         setKpi(data);
         setIsNew(data.totalUsers <= 1);
         return;
       }
-    } catch { /* mock */ }
-    // Default to new user experience
-    setKpi({ totalUsers: 1, activeSessions: 1, mfaCoverage: 0, auditEvents24h: 0, newUsers7d: 0, failedLogins24h: 0, oauthClients: 0 });
-    setIsNew(true);
+    } catch { /* fall through to defaults */ }
+    // Only show "new user" experience if API truly unavailable AND no cached data
+    setKpi({ totalUsers: 0, activeSessions: 0, mfaCoverage: 0, auditEvents24h: 0, newUsers7d: 0, failedLogins24h: 0, oauthClients: 0 });
+    setIsNew(false); // Don't assume new user on API failure
   }, []);
 
   useEffect(() => { load(); }, [load]);
