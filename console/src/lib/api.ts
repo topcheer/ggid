@@ -110,7 +110,7 @@ async function apiFetch<T>(path: string, options?: RequestInit): Promise<T> {
     const refreshToken = localStorage.getItem("ggid_refresh_token");
     if (refreshToken) {
       try {
-        const refreshResp = await fetch(`${API_BASE}/api/v1/auth/token/refresh`, {
+        const refreshResp = await fetch(`${API_BASE}/api/v1/auth/refresh`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ refresh_token: refreshToken }),
