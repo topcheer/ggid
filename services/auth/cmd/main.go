@@ -336,6 +336,7 @@ func main() {
 		log.Printf("Attribute mapping schema ensure error (non-fatal): %v", err)
 	}
 	handler.SetAttrMapRepo(attrMapRepo)
+	handler.SetPool(pool) // KB-365: for account linking queries
 
 	// Delegation repository.
 	delRepo := server.NewDelegationRepo(pool)
