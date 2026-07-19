@@ -88,8 +88,8 @@ type CreateClientInput struct {
 
 // CreateClientResult contains the new client and the plaintext secret (shown once).
 type CreateClientResult struct {
-	Client       *domain.OAuthClient
-	ClientSecret string // plaintext secret — only returned on creation
+	Client       *domain.OAuthClient `json:"client"`
+	ClientSecret string              `json:"client_secret"` // plaintext secret — only returned on creation
 }
 
 // CreateClient registers a new OAuth2 client application.

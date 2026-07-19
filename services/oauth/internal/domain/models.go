@@ -25,22 +25,22 @@ func (t ClientType) IsValid() bool {
 
 // OAuthClient represents an application registered to use OAuth2/OIDC.
 type OAuthClient struct {
-	ID                      uuid.UUID
-	TenantID                uuid.UUID
-	ClientID                string // public identifier
-	ClientSecretHash        string // Argon2id hash; empty for public clients
-	Name                    string
-	Type                    ClientType
-	GrantTypes              []string
-	ResponseTypes           []string
-	RedirectURIs            []string
-	Scopes                  []string
-	TokenEndpointAuthMethod string
-	Metadata                map[string]any
-	RequirePKCE             bool // enforce PKCE for this client
-	Enabled                 bool
-	CreatedAt               time.Time
-	UpdatedAt               time.Time
+	ID                      uuid.UUID      `json:"id"`
+	TenantID                uuid.UUID      `json:"tenant_id"`
+	ClientID                string         `json:"client_id"`       // public identifier
+	ClientSecretHash        string         `json:"client_secret_hash,omitempty"` // Argon2id hash; empty for public clients
+	Name                    string         `json:"name"`
+	Type                    ClientType     `json:"type"`
+	GrantTypes              []string       `json:"grant_types"`
+	ResponseTypes           []string       `json:"response_types"`
+	RedirectURIs            []string       `json:"redirect_uris"`
+	Scopes                  []string       `json:"scopes"`
+	TokenEndpointAuthMethod string         `json:"token_endpoint_auth_method"`
+	Metadata                map[string]any `json:"metadata,omitempty"`
+	RequirePKCE             bool           `json:"require_pkce"` // enforce PKCE for this client
+	Enabled                 bool           `json:"enabled"`
+	CreatedAt               time.Time      `json:"created_at"`
+	UpdatedAt               time.Time      `json:"updated_at"`
 }
 
 // IsConfidential returns true for confidential clients.

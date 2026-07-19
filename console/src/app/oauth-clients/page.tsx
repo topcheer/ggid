@@ -82,16 +82,20 @@ export default function OAuthClientsPage() {
     setCreating(true);
     try {
       const body = {
-        client_name: form.client_name,
+        name: form.client_name,
         redirect_uris: form.redirect_uris.split("\n").map((u: any) => u.trim()).filter(Boolean),
         grant_types: form.grant_types,
         scopes: form.scopes,
       };
-      const resp = await apiFetch<{ client?: OAuthClient; client_secret?: string; client_id?: string }>("/api/v1/oauth/clients", {
+      const resp = await apiFetch<any>("/api/v1/oauth/clients", {
         method: "POST", body: JSON.stringify(body),
       });
-      if (resp.client_secret) {
-        setNewSecret({ id: resp.client?.client_id ?? resp.client_id ?? "", secret: resp.client_secret });
+      // Backend returns {Client: {...}, ClientSecret: "..."} (Go default JSON)
+      const secret = resp.ClientSecret || resp.client_secret || "";
+      const newClient = resp.Client || resp.client;
+      if (secret) {
+        const newId = newClient?.ClientID || newClient?.client_id || newClient?.ID || "";
+        setNewSecret({ id: newId, secret });
       }
       setForm({ client_name: "", redirect_uris: "", grant_types: ["authorization_code", "refresh_token"], scopes: ["openid", "profile", "email"] });
       setShowCreate(false);
@@ -107,7 +111,8 @@ export default function OAuthClientsPage() {
     if (!editClient) return;
     try {
       const uris = editUris.split("\n").map((u: any) => u.trim()).filter(Boolean);
-      await apiFetch(`/api/v1/oauth/clients/${editClient.client_id}`, {
+      const cid = editClient.client_id || editClient.ClientID || editClient.ID;
+      await apiFetch(`/api/v1/oauth/clients/${cid}`, {
         method: "PATCH", body: JSON.stringify({ redirect_uris: uris }),
       });
       setEditClient(null);
@@ -119,7 +124,9 @@ export default function OAuthClientsPage() {
 
   const handleDelete = async (clientId: string) => {
     try {
-      await apiFetch(`/api/v1/oauth/clients/${clientId}`, { method: "DELETE" });
+      // Try the passed ID; if it doesn't work, it may need the ClientID field
+      const id = clientId || "";
+      await apiFetch(`/api/v1/oauth/clients/${id}`, { method: "DELETE" });
       setConfirmDelete(null);
       await load();
     } catch {
