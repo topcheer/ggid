@@ -121,6 +121,19 @@ export default function DashboardPage() {
           </div>
         )}
 
+        {/* Quick Actions — high-frequency admin operations */}
+        <div className="flex flex-wrap gap-2">
+          <button onClick={() => window.location.href = '/users'} className="flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 transition-colors">
+            <UserPlus className="h-4 w-4" /> {t("dashboardEnhanced.welcome.createUser")}
+          </button>
+          <button onClick={() => window.location.href = '/oauth-clients'} className="flex items-center gap-2 rounded-lg border border-gray-300 dark:border-gray-700 px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+            <Globe className="h-4 w-4" /> {t("dashboardEnhanced.welcome.createOAuth")}
+          </button>
+          <button onClick={() => window.location.href = '/audit'} className="flex items-center gap-2 rounded-lg border border-gray-300 dark:border-gray-700 px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+            <Activity className="h-4 w-4" /> View Audit Log
+          </button>
+        </div>
+
         {/* Quick Links — collapsible to save first-screen space */}
         <details className="pt-4 border-t border-gray-200 dark:border-gray-800">
           <summary className="cursor-pointer text-sm font-semibold text-gray-900 dark:text-white mb-3 flex items-center gap-2 list-none">

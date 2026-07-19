@@ -639,9 +639,9 @@ export default function AuditPage() {
                           </div>
                         </td>
                         <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-400">
-                          {event.actor_name || (event.actor_id ? event.actor_id.substring(0, 8) : "system")}
+                          <div>{event.actor_name || (event.actor_id ? event.actor_id.substring(0, 8) : "system")}</div>
                           {event.ip_address && (
-                            <span className="ml-1 font-mono text-xs text-gray-400">{event.ip_address}</span>
+                            <div className="font-mono text-xs text-gray-400">{event.ip_address}</div>
                           )}
                         </td>
                         <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-400">
