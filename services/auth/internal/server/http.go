@@ -182,6 +182,7 @@ func (h *Handler) registerRoutes() {
 	h.mux.HandleFunc("/api/v1/admin/config", h.handleAdminConfig)
 	h.mux.HandleFunc("/api/v1/admin/config/", h.handleAdminConfig)
 	h.mux.HandleFunc("/api/v1/auth/mfa/setup", h.mfaSetup)
+	h.mux.HandleFunc("/api/v1/auth/mfa/enroll", h.mfaSetup)
 	h.mux.HandleFunc("/api/v1/auth/mfa/verify", h.mfaVerify)
 	h.mux.HandleFunc("/api/v1/auth/mfa/disable", h.mfaDisable)
 	h.mux.HandleFunc("/api/v1/auth/mfa/login", h.mfaLogin)

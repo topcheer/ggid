@@ -279,6 +279,7 @@ func (s *HTTPServer) RegisterRoutes(mux *http.ServeMux) {
 
 	// Missing handler routes — aliased paths for console compatibility
 	mux.HandleFunc("/api/v1/webhooks", s.handleWebhooksList)
+	mux.HandleFunc("/api/v1/webhooks/", s.handleWebhooksList) // DELETE /webhooks/{id}
 	mux.HandleFunc("/api/v1/audit/hash-chain", s.handleHashChainStatus)
 	mux.HandleFunc("/api/v1/event-correlation/rules", s.handleEventCorrelationRules)
 	mux.HandleFunc("/api/v1/compliance/schedules", s.handleComplianceSchedulesList)

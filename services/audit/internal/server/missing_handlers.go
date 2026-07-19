@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strings"
 	"time"
 )
 
@@ -40,7 +41,24 @@ func (s *HTTPServer) handleWebhooksList(w http.ResponseWriter, r *http.Request) 
 		globalAlertWebhooks.mu.Unlock()
 		writeJSON(w, http.StatusCreated, webhook)
 	case http.MethodDelete:
-		writeJSON(w, http.StatusOK, map[string]any{"status": "deleted"})
+		// Extract webhook ID from path: /api/v1/webhooks/{id}
+		pathParts := strings.Split(r.URL.Path, "/")
+		whID := ""
+		if len(pathParts) > 0 {
+			whID = pathParts[len(pathParts)-1]
+		}
+		if whID != "" {
+			globalAlertWebhooks.mu.Lock()
+			filtered := globalAlertWebhooks.webhooks[:0]
+			for _, wh := range globalAlertWebhooks.webhooks {
+				if wh["id"] != whID {
+					filtered = append(filtered, wh)
+				}
+			}
+			globalAlertWebhooks.webhooks = filtered
+			globalAlertWebhooks.mu.Unlock()
+		}
+		writeJSON(w, http.StatusOK, map[string]any{"status": "deleted", "id": whID})
 	default:
 		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 	}

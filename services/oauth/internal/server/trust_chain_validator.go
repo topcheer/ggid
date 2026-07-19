@@ -64,6 +64,13 @@ func (v *TrustChainValidator) ValidateOIDCClient(ctx context.Context, tenantID, 
 	if v == nil || v.pool == nil {
 		return nil
 	}
+	// First-party clients (registered in oauth_clients) are always trusted.
+	// Federation trust check only applies to external OIDC federation entities.
+	var isInOAuthClients bool
+	_ = v.pool.QueryRow(ctx, `SELECT EXISTS(SELECT 1 FROM oauth_clients WHERE client_id = $1)`, clientID).Scan(&isInOAuthClients)
+	if isInOAuthClients {
+		return nil
+	}
 	entity, err := v.lookupEntity(ctx, tenantID, clientID, "oidc")
 	if err != nil {
 		return err
