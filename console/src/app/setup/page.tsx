@@ -12,6 +12,14 @@ export default function SetupPage() {
   const [error, setError] = useState("");
   const [strength, setStrength] = useState<{score: number; warnings: string[]}>({score: 0, warnings: []});
 
+  const [form, setForm] = useState({
+    adminUsername: "",
+    adminEmail: "",
+    adminPassword: "",
+    confirmPassword: "",
+    orgName: "",
+  });
+
   // Real-time password strength check via backend zxcvbn API
   useEffect(() => {
     if (!form.adminPassword) { setStrength({score: 0, warnings: []}); return; }
@@ -30,14 +38,6 @@ export default function SetupPage() {
     }, 300);
     return () => clearTimeout(timer);
   }, [form.adminPassword]);
-
-  const [form, setForm] = useState({
-    adminUsername: "",
-    adminEmail: "",
-    adminPassword: "",
-    confirmPassword: "",
-    orgName: "",
-  });
 
   const update = (k: string, v: string) => setForm({ ...form, [k]: v });
 
