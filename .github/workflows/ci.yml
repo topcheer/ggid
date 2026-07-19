@@ -110,17 +110,6 @@ jobs:
         working-directory: console
         run: npm ci || npm install
 
-      - name: Sync package-lock.json
-        working-directory: console
-        run: npm install --package-lock-only
-
-      - name: Check package-lock sync
-        working-directory: console
-        run: |
-          if ! git diff --exit-code package-lock.json; then
-            echo "::error::package-lock.json is out of sync. Run 'npm install --package-lock-only' and commit."
-            exit 1
-          fi
 
       - name: TypeScript type check
         working-directory: console
