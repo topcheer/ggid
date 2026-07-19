@@ -89,6 +89,9 @@ func (m *tSessionRepo) RevokeAllForUser(_ context.Context, _ uuid.UUID, u uuid.U
 	return nil
 }
 func (m *tSessionRepo) DeleteExpired(_ context.Context, _ time.Time) (int64, error) { return 0, nil }
+func (m *tSessionRepo) RevokeOldestForUser(_ context.Context, _ uuid.UUID, _ uuid.UUID, _ int) error {
+	return nil
+}
 func (m *tSessionRepo) UpdateJTI(_ context.Context, _ uuid.UUID, _ string, _ time.Time) error {
 	return nil
 }

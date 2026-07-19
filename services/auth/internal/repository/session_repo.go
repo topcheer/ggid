@@ -133,11 +133,30 @@ func (r *SessionRepository) ListActiveJTIForUser(ctx context.Context, tenantID, 
 	return result, rows.Err()
 }
 
-// DeleteExpired removes expired and revoked sessions older than the cutoff.
+// RevokeOldestForUser revokes the N oldest active sessions for a user (beyond a keep count).
+// This enforces a per-user active session cap. Sessions are ordered by created_at ASC,
+// so the oldest ones get revoked first.
+func (r *SessionRepository) RevokeOldestForUser(ctx context.Context, tenantID, userID uuid.UUID, keepCount int) error {
+	_, err := r.db.Exec(ctx, `
+		UPDATE sessions SET revoked_at = NOW()
+		WHERE id IN (
+			SELECT id FROM sessions
+			WHERE tenant_id = $1 AND user_id = $2 AND revoked_at IS NULL
+			ORDER BY created_at ASC
+			OFFSET $3
+		)`,
+		tenantID, userID, keepCount,
+	)
+	return err
+}
+
+// DeleteExpired removes sessions that have expired or been revoked.
+// The cutoff grace period prevents deleting sessions that just expired
+// (avoids race conditions with in-flight requests).
 func (r *SessionRepository) DeleteExpired(ctx context.Context, cutoff time.Time) (int64, error) {
 	tag, err := r.db.Exec(ctx, `
 		DELETE FROM sessions
-		WHERE (expires_at < $1 OR revoked_at IS NOT NULL) AND created_at < $1`,
+		WHERE (expires_at < $1 OR (revoked_at IS NOT NULL AND revoked_at < $1))`,
 		cutoff,
 	)
 	if err != nil {

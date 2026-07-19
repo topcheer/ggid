@@ -22,6 +22,10 @@ import (
 // suppress unused import warnings — crypto is used in SocialLogin path.
 var _ = crypto.HashPassword
 
+// maxSessionsPerUser caps the number of concurrent active sessions per user.
+// Oldest sessions beyond this limit are revoked on new login.
+const maxSessionsPerUser = 10
+
 // AuthService orchestrates the authentication workflow:
 // login, logout, register, refresh, password flows, session management, MFA.
 type AuthService struct {
@@ -208,6 +212,9 @@ func (s *AuthService) Login(ctx context.Context, username, password, ip, userAge
 	if err != nil {
 		return nil, fmt.Errorf("create session: %w", err)
 	}
+
+	// 5a. Enforce per-user session cap: revoke oldest sessions beyond 10.
+	_ = s.sessionService.EnforceSessionLimit(ctx, tc.TenantID, userID, maxSessionsPerUser)
 
 	// 6. Issue JWT access token
 	accessToken, jti, expiresIn, err := s.tokenService.IssueAccessTokenWithJTI(tc.TenantID, userID, s.getUserScopes(ctx, tc.TenantID, userID))

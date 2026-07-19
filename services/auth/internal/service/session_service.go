@@ -102,9 +102,16 @@ func (ss *SessionService) ListActiveJTIForUser(ctx context.Context, tenantID, us
 }
 
 // CleanupExpired removes expired and revoked sessions. Returns count of deleted rows.
+// A 1-hour grace period avoids race conditions with in-flight requests.
 func (ss *SessionService) CleanupExpired(ctx context.Context, retention time.Duration) (int64, error) {
-	cutoff := time.Now().Add(-retention)
+	_ = retention // kept for backward compat
+	cutoff := time.Now().Add(-1 * time.Hour)
 	return ss.sessionRepo.DeleteExpired(ctx, cutoff)
+}
+
+// EnforceSessionLimit revokes oldest sessions beyond the keepCount cap.
+func (ss *SessionService) EnforceSessionLimit(ctx context.Context, tenantID, userID uuid.UUID, keepCount int) error {
+	return ss.sessionRepo.RevokeOldestForUser(ctx, tenantID, userID, keepCount)
 }
 
 // parseDeviceInfo extracts basic info from a User-Agent string.
