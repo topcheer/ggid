@@ -18,20 +18,24 @@ import { useTheme } from "@/lib/theme";
 import { useI18n } from "@/lib/i18n";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { checkApiHealthDetailed, type HealthResult } from "@/lib/api-config";
+import { useUserRole } from "@/lib/api";
 
 type LucideIcon = typeof Shield;
 
 interface NavItem {
   href: string; label: string; icon: LucideIcon;
+  requiredScope?: string;
 }
 interface NavGroup {
   label: string; icon: LucideIcon; items: NavItem[];
+  requiredScope?: string;
 }
 
 export function Sidebar() {
   const pathname = usePathname();
   const { mode, toggle } = useTheme();
   const { t } = useI18n();
+  const { isPlatformAdmin, isTenantAdmin, scopes } = useUserRole();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [search, setSearch] = useState("");
   const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(new Set());
@@ -56,14 +60,14 @@ export function Sidebar() {
     {
       label: t("nav.groupDashboard"), icon: LayoutDashboard, items: [
         { href: "/dashboard", label: t("nav.dashboard"), icon: LayoutDashboard },
-        { href: "/analytics/iam-metrics", label: t("nav.iamMetrics"), icon: Gauge },
-        { href: "/analytics/identity", label: t("nav.identityAnalytics"), icon: PieChart },
-        { href: "/analytics/login-security", label: t("nav.loginSecurity"), icon: Activity },
-        { href: "/monitoring/api-health", label: t("nav.apiHealth"), icon: Server },
+        { href: "/analytics/iam-metrics", label: t("nav.iamMetrics"), icon: Gauge, requiredScope: "manager" },
+        { href: "/analytics/identity", label: t("nav.identityAnalytics"), icon: PieChart, requiredScope: "manager" },
+        { href: "/analytics/login-security", label: t("nav.loginSecurity"), icon: Activity, requiredScope: "manager" },
+        { href: "/monitoring/api-health", label: t("nav.apiHealth"), icon: Server, requiredScope: "manager" },
       ],
     },
     {
-      label: t("nav.groupIdentity"), icon: Users, items: [
+      label: t("nav.groupIdentity"), icon: Users, requiredScope: "manager", items: [
         { href: "/users", label: t("nav.users"), icon: Users },
         { href: "/roles", label: t("nav.roles"), icon: Shield },
         { href: "/organizations", label: t("nav.organizations"), icon: Building2 },
@@ -77,7 +81,7 @@ export function Sidebar() {
       ],
     },
     {
-      label: t("nav.groupSecurity"), icon: ShieldCheck, items: [
+      label: t("nav.groupSecurity"), icon: ShieldCheck, requiredScope: "manager", items: [
         { href: "/security/session-detail", label: t("nav.sessionDetail"), icon: Monitor },
         { href: "/security/cae-monitor", label: t("nav.caeMonitor"), icon: Activity },
         { href: "/security/privileged-activity", label: t("nav.privilegedActivity"), icon: Lock },
@@ -94,7 +98,7 @@ export function Sidebar() {
       ],
     },
     {
-      label: t("nav.groupGovernance"), icon: Crown, items: [
+      label: t("nav.groupGovernance"), icon: Crown, requiredScope: "manager", items: [
         { href: "/settings/sod-matrix", label: t("nav.sodMatrix"), icon: Grid3x3 },
         { href: "/settings/delegations", label: t("nav.delegations"), icon: Share2 },
         { href: "/access-requests", label: t("nav.accessRequests"), icon: FileCheck },
@@ -103,14 +107,14 @@ export function Sidebar() {
     },
     {
       label: t("nav.groupAudit"), icon: ScrollText, items: [
-        { href: "/audit", label: t("nav.audit"), icon: ScrollText },
-        { href: "/audit/explorer", label: t("nav.auditExplorer"), icon: Search },
-        { href: "/audit/ccm", label: t("nav.ccm"), icon: ShieldCheck },
+        { href: "/audit", label: t("nav.audit"), icon: ScrollText, requiredScope: "manager" },
+        { href: "/audit/explorer", label: t("nav.auditExplorer"), icon: Search, requiredScope: "manager" },
+        { href: "/audit/ccm", label: t("nav.ccm"), icon: ShieldCheck, requiredScope: "manager" },
         { href: "/sessions", label: t("nav.sessions"), icon: Monitor },
       ],
     },
     {
-      label: t("nav.groupSettings"), icon: Settings, items: [
+      label: t("nav.groupSettings"), icon: Settings, requiredScope: "manager", items: [
         { href: "/settings", label: t("nav.settings"), icon: Settings },
         { href: "/api-keys", label: t("nav.apiKeys"), icon: KeyRound },
         { href: "/oauth-clients", label: t("nav.oauthClients"), icon: KeyRound },
@@ -123,7 +127,7 @@ export function Sidebar() {
       ],
     },
     {
-      label: t("nav.groupAdmin"), icon: Building, items: [
+      label: t("nav.groupAdmin"), icon: Building, requiredScope: "admin", items: [
         { href: "/admin/tenants", label: t("nav.tenants"), icon: Building2 },
         { href: "/agents", label: t("nav.aiAgents"), icon: Bot },
         { href: "/api-explorer", label: t("nav.apiExplorer"), icon: Send },
@@ -137,10 +141,29 @@ export function Sidebar() {
     },
   ], [t]);
 
+  // Filter nav groups/items by user role
+  const roleFilteredGroups = useMemo(() => {
+    const hasScope = (required?: string) => {
+      if (!required) return true; // No scope required = visible to all
+      if (isPlatformAdmin) return true; // Admin sees everything
+      if (required === "manager") return isTenantAdmin;
+      if (required === "admin") return false; // Only platform admins
+      return scopes.includes(required);
+    };
+
+    return navGroups
+      .filter((g) => hasScope(g.requiredScope))
+      .map((g) => ({
+        ...g,
+        items: g.items.filter((i) => hasScope(i.requiredScope)),
+      }))
+      .filter((g) => g.items.length > 0);
+  }, [navGroups, isPlatformAdmin, isTenantAdmin, scopes]);
+
   // Search filter
   const filtered = search.trim()
-    ? navGroups.map((g) => ({ ...g, items: g.items.filter((i) => i.label.toLowerCase().includes(search.toLowerCase())) })).filter((g) => g.items.length > 0)
-    : navGroups;
+    ? roleFilteredGroups.map((g) => ({ ...g, items: g.items.filter((i) => i.label.toLowerCase().includes(search.toLowerCase())) })).filter((g) => g.items.length > 0)
+    : roleFilteredGroups;
 
   const toggleGroup = (label: string) => {
     const next = new Set(collapsedGroups);

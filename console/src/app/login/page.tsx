@@ -163,6 +163,13 @@ export default function LoginPage() {
         if (payload.sub) localStorage.setItem("ggid_user_id", payload.sub);
         if (payload.username) localStorage.setItem("ggid_user_name", payload.username);
         if (payload.email) localStorage.setItem("ggid_user_email", payload.email);
+        // Extract scopes for role-driven navigation
+        const scopes = payload.scopes || payload.roles || ["user"];
+        if (Array.isArray(scopes)) {
+          localStorage.setItem("ggid_user_scopes", JSON.stringify(scopes));
+        } else {
+          localStorage.setItem("ggid_user_scopes", JSON.stringify([scopes]));
+        }
       } catch {}
 
       // If redirect_to is set (OAuth flow), redirect back to authorize with user_id

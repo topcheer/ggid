@@ -185,6 +185,47 @@ export function useApi() {
 }
 
 // Check if user is authenticated
+export type UserRole = "user" | "tenant_admin" | "platform_admin";
+
+export function getUserScopes(): string[] {
+  if (typeof window === "undefined") return ["user"];
+  try {
+    const raw = localStorage.getItem("ggid_user_scopes");
+    return raw ? JSON.parse(raw) : ["user"];
+  } catch {
+    return ["user"];
+  }
+}
+
+export function getUserRole(): UserRole {
+  const scopes = getUserScopes();
+  if (scopes.includes("admin") || scopes.includes("platform_admin")) return "platform_admin";
+  if (scopes.includes("manager") || scopes.includes("tenant_admin")) return "tenant_admin";
+  return "user";
+}
+
+export function useUserRole(): { role: UserRole; scopes: string[]; isPlatformAdmin: boolean; isTenantAdmin: boolean; isAdmin: boolean } {
+  const [scopes, setScopes] = useState<string[]>(["user"]);
+
+  useEffect(() => {
+    setScopes(getUserScopes());
+  }, []);
+
+  const role: UserRole = scopes.includes("admin") || scopes.includes("platform_admin")
+    ? "platform_admin"
+    : scopes.includes("manager") || scopes.includes("tenant_admin")
+    ? "tenant_admin"
+    : "user";
+
+  return {
+    role,
+    scopes,
+    isPlatformAdmin: role === "platform_admin",
+    isTenantAdmin: role === "tenant_admin" || role === "platform_admin",
+    isAdmin: role === "platform_admin",
+  };
+}
+
 export function useAuth() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -204,6 +245,7 @@ export function useAuth() {
       localStorage.removeItem("ggid_user_id");
       localStorage.removeItem("ggid_user_name");
       localStorage.removeItem("ggid_user_email");
+      localStorage.removeItem("ggid_user_scopes");
     }
     setIsAuthenticated(false);
   };
