@@ -36,13 +36,13 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
           if (data.initialized === false) {
             router.replace("/setup");
           } else {
-            router.push("/login");
+            router.push(`/login?redirect_to=${encodeURIComponent(pathname)}`);
           }
           setChecked(true);
         })
         .catch(() => {
           // Fetch failed — still go to login as fallback
-          router.push("/login");
+          router.push(`/login?redirect_to=${encodeURIComponent(window.location.pathname)}`);
           setChecked(true);
         });
       return;
@@ -86,7 +86,7 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
     } else {
       setIsAuthenticated(false);
       if (!isPublic) {
-        router.push("/login");
+        router.push(`/login?redirect_to=${encodeURIComponent(pathname)}`);
       }
     }
     setChecked(true);
@@ -103,7 +103,7 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
       localStorage.removeItem("ggid_user_name");
       localStorage.removeItem("ggid_user_email");
       setIsAuthenticated(false);
-      router.push("/login");
+      router.push(`/login?redirect_to=${encodeURIComponent(window.location.pathname)}`);
     };
     window.addEventListener("ggid:unauthorized", handleUnauthorized);
     return () => window.removeEventListener("ggid:unauthorized", handleUnauthorized);
