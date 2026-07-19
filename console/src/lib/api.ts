@@ -106,7 +106,42 @@ async function apiFetch<T>(path: string, options?: RequestInit): Promise<T> {
   const resp = await fetch(`${API_BASE}${path}`, { ...options, headers });
 
   if (resp.status === 401 && typeof window !== "undefined" && !path.includes("/auth/")) {
-    // Emit event so AuthGuard can redirect without full page reload
+    // Try to refresh the token before giving up
+    const refreshToken = localStorage.getItem("ggid_refresh_token");
+    if (refreshToken) {
+      try {
+        const refreshResp = await fetch(`${API_BASE}/api/v1/auth/token/refresh`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ refresh_token: refreshToken }),
+        });
+        if (refreshResp.ok) {
+          const tokens = await refreshResp.json();
+          if (tokens.access_token) {
+            localStorage.setItem("ggid_access_token", tokens.access_token);
+            if (tokens.refresh_token) localStorage.setItem("ggid_refresh_token", tokens.refresh_token);
+            // Retry the original request with the new token
+            const retryHeaders = { ...headers };
+            retryHeaders["Authorization"] = `Bearer ${tokens.access_token}`;
+            const retryResp = await fetch(`${API_BASE}${path}`, { ...options, headers: retryHeaders });
+            if (retryResp.status === 401) {
+              // Still 401 after refresh — give up
+              window.dispatchEvent(new CustomEvent("ggid:unauthorized"));
+              throw parseApiError(401, "{\"detail\":\"Session expired\"}");
+            }
+            if (!retryResp.ok) {
+              const text = await retryResp.text();
+              throw parseApiError(retryResp.status, text);
+            }
+            if (retryResp.status === 204) return {} as T;
+            return await retryResp.json() as T;
+          }
+        }
+      } catch {
+        // Refresh failed — fall through to logout
+      }
+    }
+    // No refresh token or refresh failed — emit unauthorized
     window.dispatchEvent(new CustomEvent("ggid:unauthorized"));
     throw parseApiError(401, "{\"detail\":\"Session expired\"}");
   }
