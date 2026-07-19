@@ -209,8 +209,27 @@ export default function AuditPage() {
     : [];
 
   const actorData = stats
-    ? stats.top_actors
-        .map((a: any) => ({ name: a.actor_name || a.actor_id.slice(0, 8), count: a.count }))
+    ? Object.values(
+        stats.top_actors.reduce((acc: Record<string, { name: string; count: number }>, a: any) => {
+          const name = a.actor_name || (a.actor_id !== "00000000-0000-0000-0000-000000000000" ? a.actor_id.slice(0, 8) : "system");
+          if (!acc[name]) acc[name] = { name, count: 0 };
+          acc[name].count += a.count;
+          return acc;
+        }, {})
+      )
+        .sort((a: any, b: any) => b.count - a.count)
+    : [];
+
+  // Deduplicated top actors for the table
+  const topActorsDeduped = stats
+    ? Object.values(
+        stats.top_actors.reduce((acc: Record<string, { actor_id: string; actor_name: string; count: number }>, a: any) => {
+          const name = a.actor_name || (a.actor_id !== "00000000-0000-0000-0000-000000000000" ? a.actor_id.slice(0, 8) : "system");
+          if (!acc[name]) acc[name] = { ...a, actor_name: name, count: 0 };
+          acc[name].count += a.count;
+          return acc;
+        }, {})
+      )
         .sort((a: any, b: any) => b.count - a.count)
     : [];
 
@@ -426,18 +445,18 @@ export default function AuditPage() {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-50">
-                      {stats.top_actors.slice(0, 10).map((actor: any, i: any) => (
-                        <tr key={actor.actor_id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
+                      {topActorsDeduped.slice(0, 10).map((actor: any, i: any) => (
+                        <tr key={actor.actor_id + i} className="hover:bg-gray-50 dark:hover:bg-gray-700">
                           <td className="px-3 py-2 text-sm text-gray-400">{i + 1}</td>
                           <td className="px-3 py-2 text-sm font-medium">
-                            {actor.actor_name || actor.actor_id.slice(0, 8)}
+                            {actor.actor_name}
                           </td>
                           <td className="px-3 py-2 text-sm">{actor.count}</td>
                           <td className="px-3 py-2">
                             <div className="h-2 w-full max-w-[120px] rounded-full bg-gray-100">
                               <div
                                 className="h-2 rounded-full bg-purple-500"
-                                style={{ width: `${Math.min(100, (actor.count / Math.max(...stats.top_actors.map(a => a.count))) * 100)}%` }}
+                                style={{ width: `${Math.min(100, (actor.count / Math.max(...topActorsDeduped.map((a: any) => a.count))) * 100)}%` }}
                               />
                             </div>
                           </td>
@@ -646,7 +665,7 @@ export default function AuditPage() {
                         </td>
                         <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-400">
                           {event.resource_type && event.resource_type !== "-" ? (
-                            <>{event.resource_type}{event.resource_id && <span className="ml-1 font-mono text-xs text-gray-400">{event.resource_id.substring(0, 8)}</span>}</>
+                            <span>{event.resource_type}{event.resource_id && event.resource_id !== "00000000-0000-0000-0000-000000000000" && <span className="ml-1 font-mono text-xs text-gray-400">{event.resource_id.substring(0, 8)}</span>}</span>
                           ) : (
                             <span className="text-gray-300">—</span>
                           )}

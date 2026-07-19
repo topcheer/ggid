@@ -47,7 +47,10 @@ type HTTPServer struct {
 	threatIntelRepo *repository.ThreatIntelRepository
 	ccmEngine       *CCMEngine
 	complianceMappingRepo *repository.ComplianceMappingRepository
+	pool            *pgxpool.Pool
 }
+
+func (s *HTTPServer) SetPool(pool *pgxpool.Pool) { s.pool = pool }
 
 // SetITDRRepository injects the ITDR repository for detection API queries.
 func (s *HTTPServer) SetITDRRepository(repo *repository.ITDRRepository) {
@@ -366,9 +369,24 @@ func (s *HTTPServer) handleEvents(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Batch resolve actor_name for events missing it
+	actorIDs := make(map[uuid.UUID]bool)
+	for _, e := range events {
+		if e.ActorName == "" && e.ActorID != nil && *e.ActorID != uuid.Nil {
+			actorIDs[*e.ActorID] = true
+		}
+	}
+	nameCache := s.resolveActorNames(r.Context(), actorIDs)
+
 	result := make([]map[string]any, len(events))
 	for i, e := range events {
 		result[i] = eventToJSON(e)
+		// Fill missing actor_name from resolved cache
+		if e.ActorName == "" && e.ActorID != nil {
+			if name, ok := nameCache[*e.ActorID]; ok {
+				result[i]["actor_name"] = name
+			}
+		}
 	}
 	writeJSON(w, http.StatusOK, map[string]any{
 		"events": result,
@@ -1711,7 +1729,7 @@ func eventToJSON(e *domain.AuditEvent) map[string]any {
 		"resource_type": e.ResourceType,
 		"resource_name": e.ResourceName,
 		"result":        string(e.Result),
-		"ip_address":    e.IPAddress,
+		"ip_address":    stripCIDR(e.IPAddress),
 		"user_agent":    e.UserAgent,
 		"request_id":    e.RequestID,
 		"created_at":    e.CreatedAt,
@@ -1719,13 +1737,37 @@ func eventToJSON(e *domain.AuditEvent) map[string]any {
 	if e.ActorID != nil {
 		m["actor_id"] = e.ActorID.String()
 	}
-	if e.ResourceID != nil {
+		if e.ResourceID != nil && *e.ResourceID != uuid.Nil {
 		m["resource_id"] = e.ResourceID.String()
 	}
 	if e.Metadata != nil {
 		m["metadata"] = e.Metadata
 	}
 	return m
+}
+
+// stripCIDR removes the /32 or /128 CIDR suffix from an IP address string.
+func stripCIDR(ip string) string {
+	if i := strings.IndexByte(ip, '/'); i >= 0 {
+		return ip[:i]
+	}
+	return ip
+}
+
+// resolveActorNames batch-resolves user UUIDs to usernames via the users table.
+func (s *HTTPServer) resolveActorNames(ctx context.Context, ids map[uuid.UUID]bool) map[uuid.UUID]string {
+	result := make(map[uuid.UUID]string)
+	if len(ids) == 0 || s.pool == nil {
+		return result
+	}
+	for id := range ids {
+		var username string
+		err := s.pool.QueryRow(ctx, `SELECT username FROM users WHERE id = $1`, id).Scan(&username)
+		if err == nil && username != "" {
+			result[id] = username
+		}
+	}
+	return result
 }
 
 func writeJSON(w http.ResponseWriter, status int, data any) {
