@@ -42,7 +42,7 @@ func (h *Handler) publishAuditEventFull(
 	actorName := ""
 	if actorID != uuid.Nil && r != nil {
 		if ic := h.authSvc.IdentityClient(); ic != nil {
-			if u, err := ic.GetUser(r.Context(), tenantID, actorID); err == nil && u != nil {
+			if u, err := ic.GetUserByID(r.Context(), tenantID, actorID); err == nil && u != nil {
 				actorName = u.Username
 			}
 		}
