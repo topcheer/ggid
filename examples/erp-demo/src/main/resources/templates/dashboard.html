@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title th:text="${pageTitle} + ' - ERP'">ERP</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f8fafc; }
+        .navbar {
+            background: white; border-bottom: 1px solid #e2e8f0; padding: 0 24px;
+            height: 60px; display: flex; align-items: center; justify-content: space-between;
+            position: sticky; top: 0; z-index: 100;
+        }
+        .navbar-brand { display: flex; align-items: center; gap: 10px; }
+        .navbar-brand h1 { color: #0f766e; font-size: 20px; font-weight: 700; }
+        .user-info { display: flex; align-items: center; gap: 12px; font-size: 14px; color: #64748b; }
+        .badge {
+            background: #f0fdfa; color: #0f766e; padding: 4px 10px; border-radius: 20px;
+            font-size: 12px; font-weight: 600;
+        }
+        .container { display: flex; min-height: calc(100vh - 60px); }
+        .sidebar {
+            width: 240px; background: white; border-right: 1px solid #e2e8f0;
+            padding: 20px 0; flex-shrink: 0;
+        }
+        .sidebar a {
+            display: flex; align-items: center; gap: 10px; padding: 12px 24px;
+            color: #475569; text-decoration: none; font-size: 14px; font-weight: 500;
+            transition: all 0.15s;
+        }
+        .sidebar a:hover { background: #f8fafc; color: #0f766e; }
+        .sidebar a.active { background: #f0fdfa; color: #0f766e; border-right: 3px solid #0f766e; }
+        .main { flex: 1; padding: 30px; overflow-y: auto; }
+        .card {
+            background: white; border-radius: 12px; padding: 24px; margin-bottom: 20px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+        .page-title { font-size: 24px; font-weight: 700; color: #1e293b; margin-bottom: 20px; }
+        table { width: 100%; border-collapse: collapse; }
+        th { text-align: left; padding: 12px 16px; color: #64748b; font-size: 12px;
+             font-weight: 600; text-transform: uppercase; border-bottom: 1px solid #e2e8f0; }
+        td { padding: 14px 16px; border-bottom: 1px solid #f1f5f9; color: #334155; font-size: 14px; }
+        tr:hover { background: #f8fafc; }
+        .btn {
+            padding: 8px 16px; border: none; border-radius: 6px; font-size: 13px;
+            font-weight: 600; cursor: pointer; text-decoration: none; display: inline-block;
+            transition: all 0.15s;
+        }
+        .btn-primary { background: #0f766e; color: white; }
+        .btn-primary:hover { background: #115e59; }
+        .btn-danger { background: #fee2e2; color: #dc2626; }
+        .btn-danger:hover { background: #fecaca; }
+        .btn-success { background: #dcfce7; color: #16a34a; }
+        .btn-sm { padding: 6px 10px; font-size: 12px; }
+        .kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; margin-bottom: 20px; }
+        .kpi {
+            background: white; border-radius: 12px; padding: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+        .kpi-label { font-size: 13px; color: #64748b; font-weight: 500; }
+        .kpi-value { font-size: 28px; font-weight: 700; color: #1e293b; margin-top: 4px; }
+        .status-badge { padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: 600; }
+        .status-pending { background: #fef9c3; color: #ca8a04; }
+        .status-confirmed { background: #dbeafe; color: #2563eb; }
+        .status-shipped { background: #e0e7ff; color: #4f46e5; }
+        .status-delivered { background: #dcfce7; color: #16a34a; }
+        .role-tag { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; margin: 2px; background: #f1f5f9; color: #475569; }
+        .logout-btn {
+            background: #fee2e2; color: #dc2626; padding: 6px 12px; border-radius: 6px;
+            font-size: 13px; font-weight: 600; cursor: pointer; border: none;
+        }
+    </style>
+</head>
+<body>
+<div class="navbar">
+    <div class="navbar-brand">
+        <h1>ERP System</h1>
+    </div>
+    <div class="user-info">
+        <span>Welcome, <strong th:text="${user?.username}">User</strong></span>
+        <span class="badge" th:each="role : ${user?.roles}" th:text="${role}">role</span>
+        <form action="/logout" method="post" style="display:inline">
+            <button type="submit" class="logout-btn">Logout</button>
+        </form>
+    </div>
+</div>
+<div class="container">
+    <div class="sidebar">
+        <a href="/" th:classappend="${pageTitle == 'Dashboard'} ? 'active' : ''">Dashboard</a>
+        <a href="/inventory" th:classappend="${pageTitle == 'Inventory Management'} ? 'active' : ''">Inventory</a>
+        <a href="/orders" th:classappend="${pageTitle == 'Sales Orders'} ? 'active' : ''">Orders</a>
+        <a href="/reports" th:classappend="${pageTitle == 'Reports & Analytics'} ? 'active' : ''">Reports</a>
+        <a href="/my-permissions" th:classappend="${pageTitle == 'My Permissions'} ? 'active' : ''">My Permissions</a>
+    </div>
+    <div class="main">
+        <div class="kpi-grid">
+            <div class="kpi">
+                <div class="kpi-label">Products</div>
+                <div class="kpi-value" th:text="${products.size()}">0</div>
+            </div>
+            <div class="kpi">
+                <div class="kpi-label">Orders</div>
+                <div class="kpi-value" th:text="${orders.size()}">0</div>
+            </div>
+            <div class="kpi">
+                <div class="kpi-label">Low Stock</div>
+                <div class="kpi-value" th:text="${products.stream().filter(p -> p.stock < 100).count()}">0</div>
+            </div>
+            <div class="kpi">
+                <div class="kpi-label">Pending Orders</div>
+                <div class="kpi-value" th:text="${orders.stream().filter(o -> o.status == 'pending').count()}">0</div>
+            </div>
+        </div>
+        <div class="card">
+            <div class="page-title">Recent Orders</div>
+            <table>
+                <thead><tr><th>Order ID</th><th>Customer</th><th>Product</th><th>Total</th><th>Status</th></tr></thead>
+                <tbody>
+                <tr th:each="order : ${orders}">
+                    <td th:text="${order.id}">ORD-001</td>
+                    <td th:text="${order.customerName}">Acme</td>
+                    <td th:text="${order.product}">Laptop</td>
+                    <td>$<span th:text="${#numbers.formatDecimal(order.total, 1, 2)}">0</span></td>
+                    <td><span class="status-badge" th:classappend="'status-' + ${order.status}" th:text="${order.status}">pending</span></td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+</body>
+</html>

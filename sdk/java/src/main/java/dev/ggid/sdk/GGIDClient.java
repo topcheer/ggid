@@ -117,16 +117,36 @@ public class GGIDClient {
 
     /**
      * Check if a user has permission to perform an action on a resource.
-     * Calls GET /api/v1/policies/check?resource=xxx&action=xxx
+     * Calls POST /api/v1/policies/check with the user's token.
+     *
+     * @param token       Access token (Bearer)
+     * @param userId      User UUID (from JWT sub claim)
+     * @param resourceType  Resource type (e.g. "inventory", "orders", "invoices")
+     * @param action      Action (e.g. "read", "write", "delete", "approve")
+     * @return PolicyResult with allowed flag and reason
      */
-    public PolicyResult checkPermission(String token, String resource, String action)
+    public PolicyResult checkPermission(String token, String userId, String resourceType, String action)
             throws GGIDException, IOException {
-        String path = "/api/v1/policies/check?resource=" + resource + "&action=" + action;
-        Request request = buildRequest("GET", path, null)
+        java.util.Map<String, Object> body = new java.util.HashMap<>();
+        body.put("user_id", userId);
+        body.put("resource_type", resourceType);
+        body.put("action", action);
+        Request request = buildRequest("POST", "/api/v1/policies/check", body)
                 .newBuilder()
                 .header("Authorization", "Bearer " + token)
                 .build();
         return execute(request, PolicyResult.class);
+    }
+
+    /**
+     * Check if the current token holder has permission.
+     * Extracts user_id from JWT automatically.
+     */
+    public PolicyResult checkPermission(String token, String resourceType, String action)
+            throws GGIDException, IOException {
+        // Extract user_id from JWT sub claim
+        String userId = extractUserIdFromToken(token);
+        return checkPermission(token, userId, resourceType, action);
     }
 
     /**
@@ -290,6 +310,24 @@ public class GGIDClient {
               .append(codeChallengeMethod != null ? codeChallengeMethod : "S256");
         }
         return url.toString();
+    }
+
+    /**
+     * Extract user_id (sub claim) from a JWT without verification.
+     * Used internally for permission checks.
+     */
+    private String extractUserIdFromToken(String token) {
+        try {
+            String[] parts = token.split("\\.");
+            if (parts.length < 2) return "";
+            String payload = new String(java.util.Base64.getUrlDecoder().decode(parts[1]));
+            @SuppressWarnings("unchecked")
+            java.util.Map<String, Object> claims = mapper.readValue(payload, java.util.Map.class);
+            Object sub = claims.get("sub");
+            return sub != null ? sub.toString() : "";
+        } catch (Exception e) {
+            return "";
+        }
     }
 
     // -----------------------------------------------------------------------

@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"/>
+    <title>New Product - ERP</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; background: #f8fafc; }
+        .navbar { background: white; border-bottom: 1px solid #e2e8f0; padding: 0 24px; height: 60px; display: flex; align-items: center; }
+        .navbar h1 { color: #0f766e; font-size: 20px; font-weight: 700; }
+        .container { display: flex; min-height: calc(100vh - 60px); }
+        .sidebar { width: 240px; background: white; border-right: 1px solid #e2e8f0; padding: 20px 0; }
+        .sidebar a { display: block; padding: 12px 24px; color: #475569; text-decoration: none; font-size: 14px; }
+        .sidebar a:hover { color: #0f766e; }
+        .sidebar a.active { background: #f0fdfa; color: #0f766e; }
+        .main { flex: 1; padding: 30px; }
+        .card { background: white; border-radius: 12px; padding: 24px; max-width: 500px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+        .page-title { font-size: 24px; font-weight: 700; color: #1e293b; margin-bottom: 20px; }
+        .form-group { margin-bottom: 16px; }
+        label { display: block; font-size: 13px; font-weight: 600; color: #475569; margin-bottom: 6px; }
+        input { width: 100%; padding: 10px 14px; border: 2px solid #e2e8f0; border-radius: 8px; font-size: 15px; }
+        input:focus { outline: none; border-color: #0f766e; }
+        .btn { padding: 10px 20px; border: none; border-radius: 8px; font-size: 15px; font-weight: 600; cursor: pointer; text-decoration: none; display: inline-block; }
+        .btn-primary { background: #0f766e; color: white; }
+        .btn-secondary { background: #f1f5f9; color: #475569; }
+    </style>
+</head>
+<body>
+<div class="navbar"><h1>ERP System</h1></div>
+<div class="container">
+    <div class="sidebar">
+        <a href="/">Dashboard</a>
+        <a href="/inventory" class="active">Inventory</a>
+        <a href="/orders">Orders</a>
+        <a href="/reports">Reports</a>
+    </div>
+    <div class="main">
+        <div class="card">
+            <div class="page-title">New Product</div>
+            <form action="/inventory/create" method="post">
+                <div class="form-group"><label>Name</label><input type="text" name="name" required/></div>
+                <div class="form-group"><label>SKU</label><input type="text" name="sku" required/></div>
+                <div class="form-group"><label>Stock</label><input type="number" name="stock" value="0" required/></div>
+                <div class="form-group"><label>Price ($)</label><input type="number" step="0.01" name="price" value="0.00" required/></div>
+                <div style="display:flex; gap:10px; margin-top:20px">
+                    <button type="submit" class="btn btn-primary">Create Product</button>
+                    <a href="/inventory" class="btn btn-secondary">Cancel</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+</body>
+</html>

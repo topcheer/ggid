@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>ERP Login - GGID Demo</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #0f766e 0%, #115e59 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .login-card {
+            background: white;
+            border-radius: 16px;
+            padding: 40px;
+            width: 400px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+        }
+        .logo {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .logo h1 { color: #0f766e; font-size: 28px; font-weight: 700; }
+        .logo p { color: #64748b; font-size: 14px; margin-top: 4px; }
+        .form-group { margin-bottom: 20px; }
+        label { display: block; font-size: 13px; font-weight: 600; color: #475569; margin-bottom: 6px; }
+        input {
+            width: 100%; padding: 12px 16px; border: 2px solid #e2e8f0; border-radius: 8px;
+            font-size: 15px; transition: border-color 0.2s;
+        }
+        input:focus { outline: none; border-color: #0f766e; }
+        .btn-login {
+            width: 100%; padding: 14px; background: #0f766e; color: white; border: none;
+            border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer;
+            transition: background 0.2s;
+        }
+        .btn-login:hover { background: #115e59; }
+        .error-msg {
+            background: #fef2f2; color: #dc2626; padding: 12px; border-radius: 8px;
+            font-size: 14px; margin-bottom: 20px; text-align: center;
+        }
+        .hint {
+            margin-top: 20px; padding: 16px; background: #f0fdfa; border-radius: 8px;
+            font-size: 13px; color: #0f766e;
+        }
+        .hint code { background: #ccfbf1; padding: 2px 6px; border-radius: 4px; font-weight: 600; }
+    </style>
+</head>
+<body>
+<div class="login-card">
+    <div class="logo">
+        <h1>ERP System</h1>
+        <p>Powered by GGID IAM</p>
+    </div>
+    <div th:if="${error}" class="error-msg" th:text="${error}"></div>
+    <form action="/login.do" method="post">
+        <div class="form-group">
+            <label>Username</label>
+            <input type="text" name="username" placeholder="Enter username" required autofocus/>
+        </div>
+        <div class="form-group">
+            <label>Password</label>
+            <input type="password" name="password" placeholder="Enter password" required/>
+        </div>
+        <button type="submit" class="btn-login">Sign In</button>
+    </form>
+    <div class="hint">
+        <strong>Demo Accounts:</strong><br/>
+        <code>sales_manager</code> / <code>warehouse_manager</code> / <code>finance_officer</code><br/>
+        <code>hr_manager</code> / <code>production_manager</code> / <code>erp_admin</code>
+    </div>
+</div>
+</body>
+</html>
