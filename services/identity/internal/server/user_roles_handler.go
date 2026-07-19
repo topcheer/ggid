@@ -96,12 +96,11 @@ func (h *HTTPHandler) handleUserRoles(ctx context.Context, userID uuid.UUID, w h
 		// Insert into user_roles table (ON CONFLICT DO NOTHING for idempotency)
 		_, err = pool.Exec(ctx, `
 			INSERT INTO user_roles (user_id, role_id, scope_type, scope_id, granted_by)
-			VALUES ($1, $2, 'tenant', NULL, $3)
+			VALUES ($1, $2, 'global', '00000000-0000-0000-0000-000000000001', $3)
 			ON CONFLICT DO NOTHING
 		`, userID, roleUUID, uuid.Nil)
 		if err != nil {
-			// Check if it's a duplicate
-			writeJSON(w, http.StatusCreated, assignment)
+			writeJSONError(w, http.StatusInternalServerError, "failed to assign role: "+err.Error())
 			return
 		}
 		writeJSON(w, http.StatusCreated, assignment)
