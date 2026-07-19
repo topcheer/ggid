@@ -58,85 +58,53 @@ export function Sidebar() {
 
   const navGroups: NavGroup[] = useMemo(() => [
     {
-      label: t("nav.groupDashboard"), icon: LayoutDashboard, items: [
-        { href: "/dashboard", label: t("nav.dashboard"), icon: LayoutDashboard },
-        { href: "/analytics/iam-metrics", label: t("nav.iamMetrics"), icon: Gauge, requiredScope: "manager" },
-        { href: "/analytics/identity", label: t("nav.identityAnalytics"), icon: PieChart, requiredScope: "manager" },
-        { href: "/analytics/login-security", label: t("nav.loginSecurity"), icon: Activity, requiredScope: "manager" },
-        { href: "/monitoring/api-health", label: t("nav.apiHealth"), icon: Server, requiredScope: "manager" },
+      label: "Overview", icon: LayoutDashboard, items: [
+        { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+        { href: "/sessions", label: "My Sessions", icon: Monitor },
+        { href: "/access-requests", label: "Access Requests", icon: FileCheck },
       ],
     },
     {
-      label: t("nav.groupIdentity"), icon: Users, requiredScope: "manager", items: [
-        { href: "/users", label: t("nav.users"), icon: Users },
-        { href: "/roles", label: t("nav.roles"), icon: Shield },
-        { href: "/organizations", label: t("nav.organizations"), icon: Building2 },
-        { href: "/organizations/analytics", label: t("nav.orgAnalytics"), icon: TrendingUp },
-        { href: "/settings/nhi", label: t("nav.nhi"), icon: Bot },
-        { href: "/settings/migration", label: t("nav.migration"), icon: Database },
-        { href: "/settings/attribute-mapping", label: t("nav.attributeMapping"), icon: GitBranch },
-        { href: "/settings/import-wizard", label: "Import Wizard", icon: Cloud },
-        { href: "/settings/import-monitor", label: t("nav.importMonitor"), icon: RefreshCw },
-        { href: "/settings/review-schedules", label: t("nav.reviewSchedules"), icon: CalendarClock },
+      label: "Identity", icon: Users, requiredScope: "manager", items: [
+        { href: "/users", label: "Users", icon: Users },
+        { href: "/roles", label: "Roles", icon: Shield },
+        { href: "/organizations", label: "Organizations", icon: Building2 },
+        { href: "/settings/import-wizard", label: "Import", icon: Cloud },
+        { href: "/settings/review-schedules", label: "Access Reviews", icon: CalendarClock },
       ],
     },
     {
-      label: t("nav.groupSecurity"), icon: ShieldCheck, requiredScope: "manager", items: [
-        { href: "/security/session-detail", label: t("nav.sessionDetail"), icon: Monitor },
-        { href: "/security/cae-monitor", label: t("nav.caeMonitor"), icon: Activity },
-        { href: "/security/privileged-activity", label: t("nav.privilegedActivity"), icon: Lock },
-        { href: "/security/risk-score", label: t("nav.riskScore"), icon: Gauge },
-        { href: "/security/threat-intel", label: t("nav.threatIntel"), icon: Radar },
-        { href: "/security/rebac", label: t("nav.rebac"), icon: Share2 },
-        { href: "/settings/conditional-access", label: t("nav.conditionalAccess"), icon: Shield },
-        { href: "/settings/security-policy", label: t("nav.securityPolicy"), icon: Lock },
-        { href: "/settings/password-migration", label: t("nav.passwordMigration"), icon: KeyRound },
-        { href: "/settings/password-strength", label: t("nav.passwordStrength"), icon: Fingerprint },
-        { href: "/settings/enrollment-campaign", label: t("nav.enrollmentCampaign"), icon: Zap },
-        { href: "/settings/passkey-management", label: t("nav.passkeyManagement"), icon: Fingerprint },
-        { href: "/settings/jit-elevation", label: t("nav.jitElevation"), icon: ArrowUpCircle },
+      label: "Security", icon: ShieldCheck, requiredScope: "manager", items: [
+        { href: "/security/session-detail", label: "Sessions", icon: Monitor },
+        { href: "/security/cae-monitor", label: "CAE Monitor", icon: Activity },
+        { href: "/security/risk-score", label: "Risk Score", icon: Gauge },
+        { href: "/security/posture", label: "Posture", icon: ShieldCheck },
+        { href: "/settings/conditional-access", label: "Conditional Access", icon: Shield },
+        { href: "/settings/password-policy", label: "Password Policy", icon: KeyRound },
+        { href: "/settings/mfa", label: "MFA", icon: Fingerprint },
+        { href: "/settings/passkey-management", label: "Passkeys", icon: Fingerprint },
       ],
     },
     {
-      label: t("nav.groupGovernance"), icon: Crown, requiredScope: "manager", items: [
-        { href: "/settings/sod-matrix", label: t("nav.sodMatrix"), icon: Grid3x3 },
-        { href: "/settings/delegations", label: t("nav.delegations"), icon: Share2 },
-        { href: "/access-requests", label: t("nav.accessRequests"), icon: FileCheck },
-        { href: "/policies", label: t("nav.policies"), icon: Shield },
+      label: "Audit", icon: ScrollText, requiredScope: "manager", items: [
+        { href: "/audit", label: "Audit Log", icon: ScrollText },
+        { href: "/policies", label: "Policies", icon: Shield },
       ],
     },
     {
-      label: t("nav.groupAudit"), icon: ScrollText, items: [
-        { href: "/audit", label: t("nav.audit"), icon: ScrollText, requiredScope: "manager" },
-        { href: "/audit/explorer", label: t("nav.auditExplorer"), icon: Search, requiredScope: "manager" },
-        { href: "/audit/ccm", label: t("nav.ccm"), icon: ShieldCheck, requiredScope: "manager" },
-        { href: "/sessions", label: t("nav.sessions"), icon: Monitor },
+      label: "Applications", icon: Settings, requiredScope: "manager", items: [
+        { href: "/oauth-clients", label: "OAuth Clients", icon: KeyRound },
+        { href: "/webhooks", label: "Webhooks", icon: Webhook },
+        { href: "/api-keys", label: "API Keys", icon: KeyRound },
+        { href: "/settings/scim", label: "SCIM", icon: BookOpen },
+        { href: "/settings/ldap-config", label: "LDAP", icon: Network },
       ],
     },
     {
-      label: t("nav.groupSettings"), icon: Settings, requiredScope: "manager", items: [
-        { href: "/settings", label: t("nav.settings"), icon: Settings },
-        { href: "/api-keys", label: t("nav.apiKeys"), icon: KeyRound },
-        { href: "/oauth-clients", label: t("nav.oauthClients"), icon: KeyRound },
-        { href: "/webhooks", label: t("nav.webhooks"), icon: Webhook },
-        { href: "/settings/scim", label: t("nav.scimConfig"), icon: BookOpen },
-        { href: "/settings/ldap-config", label: t("nav.ldapConfig"), icon: Network },
-        { href: "/settings/ldap-sync-config", label: t("nav.ldapSync"), icon: RefreshCw },
-        { href: "/settings/integration-playground", label: t("nav.integrationPlayground"), icon: Terminal },
-        { href: "/provisioning", label: "Provisioning", icon: Cloud },
-      ],
-    },
-    {
-      label: t("nav.groupAdmin"), icon: Building, requiredScope: "admin", items: [
-        { href: "/admin/tenants", label: t("nav.tenants"), icon: Building2 },
-        { href: "/agents", label: t("nav.aiAgents"), icon: Bot },
-        { href: "/api-explorer", label: t("nav.apiExplorer"), icon: Send },
-      ],
-    },
-    {
-      label: t("nav.groupHelp"), icon: HelpCircle, items: [
-        { href: "/docs", label: t("nav.docs"), icon: BookOpen },
-        { href: "/monitoring", label: t("nav.monitoring"), icon: Server },
+      label: "Platform", icon: Building, requiredScope: "admin", items: [
+        { href: "/admin", label: "Tenants", icon: Building2 },
+        { href: "/settings/branding", label: "Branding", icon: Globe },
+        { href: "/settings/feature-flags", label: "Feature Flags", icon: Zap },
       ],
     },
   ], [t]);
