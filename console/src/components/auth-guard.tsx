@@ -6,22 +6,6 @@ import { Sidebar } from "@/components/sidebar";
 
 const PUBLIC_PATHS = ["/login", "/register", "/forgot-password", "/reset-password", "/setup"];
 
-// Check if system has been initialized (has any users).
-// Returns null = unknown, true = initialized, false = needs setup.
-async function checkSystemInitialized(): Promise<boolean | null> {
-  try {
-    const resp = await fetch("/api/v1/system/status", { method: "GET" });
-    if (resp.ok) {
-      const data = await resp.json();
-      return data.initialized === true;
-    }
-    // Fallback: if status endpoint doesn't exist, assume initialized
-    return true;
-  } catch {
-    return null;
-  }
-}
-
 export function AuthGuard({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
@@ -33,23 +17,38 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
     const token = typeof window !== "undefined" ? localStorage.getItem("ggid_access_token") : null;
     const isPublic = PUBLIC_PATHS.some((p) => pathname === p || pathname.startsWith(p));
 
-    // If no token and not on a public path → check if system needs setup
-    if (!token && !isPublic) {
-      checkSystemInitialized().then((initialized) => {
-        if (initialized === false) {
-          // System not initialized → redirect to setup wizard
-          router.replace("/setup");
-        } else {
-          // System initialized but not logged in → redirect to login
-          setIsAuthenticated(false);
-          router.push("/login");
-        }
-        setChecked(true);
-      });
+    // If on /setup page, clear any stale tokens to ensure clean wizard
+    if (pathname === "/setup") {
+      localStorage.removeItem("ggid_access_token");
+      localStorage.removeItem("ggid_refresh_token");
+      localStorage.removeItem("ggid_user_scopes");
+      localStorage.removeItem("ggid_user_id");
+      localStorage.removeItem("ggid_tenant_id");
+      setChecked(true);
       return;
     }
 
-    // If on /setup but system is already initialized → redirect to login
+    // If no token and not on a public path → check system status
+    if (!token && !isPublic) {
+      fetch("/api/v1/system/status")
+        .then((resp) => resp.json())
+        .then((data) => {
+          if (data.initialized === false) {
+            router.replace("/setup");
+          } else {
+            router.push("/login");
+          }
+          setChecked(true);
+        })
+        .catch(() => {
+          // Fetch failed — still go to login as fallback
+          router.push("/login");
+          setChecked(true);
+        });
+      return;
+    }
+
+    // If on /setup but already logged in → go to dashboard
     if (pathname === "/setup" && token) {
       router.replace("/dashboard");
       setChecked(true);

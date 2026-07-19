@@ -74,8 +74,14 @@ export default function SetupPage() {
       if (!/^[^@]+@[^@]+\.[^@]+$/.test(form.adminEmail)) return setError("Invalid email format");
       setStep(3);
     } else if (step === 3) {
-      if (form.adminPassword.length < 8) return setError("Password must be at least 8 characters");
-      if (form.adminPassword !== form.confirmPassword) return setError("Passwords do not match");
+      const pw = form.adminPassword;
+      if (pw.length < 8) return setError("Password must be at least 8 characters");
+      if (!/[A-Z]/.test(pw)) return setError("Password must contain an uppercase letter");
+      if (!/[a-z]/.test(pw)) return setError("Password must contain a lowercase letter");
+      if (!/[0-9]/.test(pw)) return setError("Password must contain a number");
+      if (pw.length < 12 || /^(password|admin|123|qwerty|abc)/i.test(pw))
+        return setError("Password is too common. Use 12+ characters, avoid dictionary words.");
+      if (pw !== form.confirmPassword) return setError("Passwords do not match");
       handleBootstrap();
     }
   };
@@ -151,7 +157,7 @@ export default function SetupPage() {
           {step === 3 && (
             <div className="space-y-4">
               <h2 className="text-lg font-semibold text-slate-900 dark:text-white">Set Password</h2>
-              <p className="text-sm text-slate-500 dark:text-slate-400">Choose a strong password (min 8 characters).</p>
+              <p className="text-sm text-slate-500 dark:text-slate-400">Choose a strong password for the admin account.</p>
               <div>
                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">Password</label>
                 <input
@@ -160,12 +166,62 @@ export default function SetupPage() {
                   autoFocus
                 />
               </div>
+              {/* Password strength meter */}
+              {form.adminPassword && (
+                <div className="space-y-2">
+                  <div className="flex gap-1">
+                    {[0,1,2,3].map((i) => (
+                      <div key={i} className={`h-1.5 flex-1 rounded-full transition-colors ${
+                        (() => {
+                          const checks = [
+                            form.adminPassword.length >= 8,
+                            /[A-Z]/.test(form.adminPassword),
+                            /[a-z]/.test(form.adminPassword),
+                            /[0-9]/.test(form.adminPassword),
+                          ];
+                          const score = checks.filter(Boolean).length;
+                          return i < score
+                            ? score <= 1 ? "bg-red-500" : score === 2 ? "bg-yellow-500" : score === 3 ? "bg-blue-500" : "bg-green-500"
+                            : "bg-slate-200 dark:bg-slate-700";
+                        })()
+                      }`} />
+                    ))}
+                  </div>
+                  <ul className="space-y-1 text-xs">
+                    <li className={`flex items-center gap-1.5 ${form.adminPassword.length >= 8 ? "text-green-600 dark:text-green-400" : "text-slate-400"}`}>
+                      {form.adminPassword.length >= 8 ? "✓" : "○"} At least 8 characters
+                    </li>
+                    <li className={`flex items-center gap-1.5 ${/[A-Z]/.test(form.adminPassword) ? "text-green-600 dark:text-green-400" : "text-slate-400"}`}>
+                      {/[A-Z]/.test(form.adminPassword) ? "✓" : "○"} Uppercase letter (A-Z)
+                    </li>
+                    <li className={`flex items-center gap-1.5 ${/[a-z]/.test(form.adminPassword) ? "text-green-600 dark:text-green-400" : "text-slate-400"}`}>
+                      {/[a-z]/.test(form.adminPassword) ? "✓" : "○"} Lowercase letter (a-z)
+                    </li>
+                    <li className={`flex items-center gap-1.5 ${/[0-9]/.test(form.adminPassword) ? "text-green-600 dark:text-green-400" : "text-slate-400"}`}>
+                      {/[0-9]/.test(form.adminPassword) ? "✓" : "○"} Number (0-9)
+                    </li>
+                    <li className={`flex items-center gap-1.5 ${
+                      form.adminPassword.length >= 12 && !/^(password|admin|123|qwerty|abc)/i.test(form.adminPassword)
+                        ? "text-green-600 dark:text-green-400" : "text-slate-400"
+                    }`}>
+                      {form.adminPassword.length >= 12 && !/^(password|admin|123|qwerty|abc)/i.test(form.adminPassword) ? "✓" : "○"} Avoid common dictionary words (recommended 12+ chars)
+                    </li>
+                  </ul>
+                </div>
+              )}
               <div>
                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">Confirm Password</label>
                 <input
                   type="password" value={form.confirmPassword} onChange={(e) => update("confirmPassword", e.target.value)}
-                  className="w-full rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 px-4 py-2.5 text-sm text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                  className={`w-full rounded-lg border px-4 py-2.5 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-transparent ${
+                    form.confirmPassword && form.confirmPassword !== form.adminPassword
+                      ? "border-red-400 dark:border-red-800 bg-red-50 dark:bg-red-900/20 text-slate-900 dark:text-white"
+                      : "border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-slate-900 dark:text-white"
+                  }`}
                 />
+                {form.confirmPassword && form.confirmPassword !== form.adminPassword && (
+                  <p className="mt-1 text-xs text-red-500">Passwords do not match</p>
+                )}
               </div>
               {loading && <p className="text-sm text-indigo-600 dark:text-indigo-400">Initializing system...</p>}
             </div>
