@@ -9,7 +9,7 @@ import {
   TrendingUp, Users, Crown, Layers,
 } from "lucide-react";
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || "";
 type TabId = "timeline" | "sessions" | "stats";
 
 interface PrivilegedOp {

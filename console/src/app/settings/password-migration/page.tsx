@@ -9,7 +9,7 @@ import {
   Clock, FileText, Eye,
 } from "lucide-react";
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || "";
 
 type DeprecationLevel = "off" | "read_only" | "migration_required" | "disabled";
 

@@ -9,7 +9,7 @@ import {
   KeyRound, Fingerprint, UserX, CalendarClock, RefreshCw,
 } from "lucide-react";
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || "";
 type TabId = "mttd" | "coverage" | "hygiene" | "incidents";
 
 export default function IAMMetricsPage() {

@@ -8,7 +8,7 @@ import {
   Check, AlertCircle, Radio, Shield, TrendingDown,
 } from "lucide-react";
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || "";
 type TabId = "status" | "logs" | "triggers";
 
 interface CAEEvent {

@@ -8,7 +8,7 @@ import {
   Loader2, Shield, Eye, KeyRound, Smartphone, Globe, Fingerprint,
 } from "lucide-react";
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || "";
 
 type TabId = "growth" | "methods" | "risk";
 

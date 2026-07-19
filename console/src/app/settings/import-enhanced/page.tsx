@@ -10,7 +10,7 @@ import {
   XCircle, AlertTriangle, BarChart3, Clock,
 } from "lucide-react";
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || "";
 
 type Phase = "upload" | "precheck" | "precheck-result" | "importing" | "summary";
 

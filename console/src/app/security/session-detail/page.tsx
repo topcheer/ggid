@@ -10,7 +10,7 @@ import {
   Fingerprint, Ban,
 } from "lucide-react";
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || "";
 
 interface SessionDetail {
   session_id: string; user: string; email: string;

@@ -8,7 +8,7 @@ import {
   Loader2, Activity, Lock, RefreshCw, KeyRound, UserCog,
 } from "lucide-react";
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || "";
 
 interface TimelineEvent {
   id: string;

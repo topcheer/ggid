@@ -8,7 +8,7 @@ import {
   KeyRound, UserPlus, AlertTriangle, Sparkles,
 } from "lucide-react";
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || "";
 
 const TEMPLATES = [
   { id: "verifyEmail", icon: Mail, subject: "Verify Your Email Address", vars: ["{{user_name}}", "{{verification_link}}", "{{tenant_name}}"] },

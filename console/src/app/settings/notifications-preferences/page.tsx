@@ -8,7 +8,7 @@ import {
   Check, AlertTriangle, FileText, Activity, Wrench,
 } from "lucide-react";
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || "";
 
 const CHANNELS = ["email", "slack", "teams", "webhook", "inApp"] as const;
 type Channel = typeof CHANNELS[number];

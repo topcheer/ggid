@@ -9,7 +9,7 @@ import {
   ChevronUp, ChevronDown, Zap, AlertCircle, X,
 } from "lucide-react";
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || "";
 
 type TabId = "policies" | "editor" | "tester";
 type PolicyAction = "allow" | "deny" | "require_mfa" | "require_step_up" | "block";

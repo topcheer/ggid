@@ -10,7 +10,7 @@ import {
   Code, Rocket, ExternalLink, Zap, Loader2,
 } from "lucide-react";
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || "";
 
 interface KPIData {
   totalUsers: number; activeSessions: number; mfaCoverage: number;

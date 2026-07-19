@@ -127,7 +127,7 @@ function APITab() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4">
           <div className="p-3 rounded-lg bg-gray-50 dark:bg-gray-800/50">
             <span className="text-xs text-gray-500">{t("docs.api.baseUrl")}</span>
-            <code className="block text-sm font-mono text-gray-900 dark:text-white mt-1">http://localhost:8080</code>
+            <code className="block text-sm font-mono text-gray-900 dark:text-white mt-1"></code>
           </div>
           <div className="p-3 rounded-lg bg-gray-50 dark:bg-gray-800/50">
             <span className="text-xs text-gray-500">{t("docs.api.auth")}</span>
@@ -139,11 +139,11 @@ function APITab() {
           <span className="text-xs font-medium text-gray-500 mb-2 block">{t("docs.api.sampleRequest")}</span>
           <div className="p-4 rounded-lg bg-gray-900 dark:bg-gray-800 text-xs font-mono overflow-x-auto">
             <div className="text-gray-500"># Login</div>
-            <div className="text-green-400">curl -X POST http://localhost:8080/api/v1/auth/login \</div>
+            <div className="text-green-400">curl -X POST /api/v1/auth/login \</div>
             <div className="text-green-400 ml-4">-H "Content-Type: application/json" \</div>
             <div className="text-green-400 ml-4">-d {"'\"email\":\"admin@ggid.dev\",\"password\":\"Admin@123456\"'"}</div>
             <div className="text-gray-500 mt-2"># List Users</div>
-            <div className="text-blue-400">curl http://localhost:8080/api/v1/users \</div>
+            <div className="text-blue-400">curl /api/v1/users \</div>
             <div className="text-blue-400 ml-4">-H "Authorization: Bearer {'<TOKEN>'}"</div>
           </div>
         </div>
@@ -172,7 +172,7 @@ function SDKTab() {
 import ggid "github.com/ggid/ggid/sdk/go"
 
 func main() {
-    client := ggid.NewClient("http://localhost:8080")
+    client := ggid.NewClient("")
     token, _ := client.Login(ctx, &ggid.LoginRequest{
         Email: "admin@ggid.dev",
         Password: "Admin@123456",
@@ -184,7 +184,7 @@ func main() {
 
 function App() {
   return (
-    <GGIDProvider baseUrl="http://localhost:8080">
+    <GGIDProvider baseUrl="">
       <Dashboard />
     </GGIDProvider>
   );
@@ -196,20 +196,20 @@ function Dashboard() {
 }`,
     python: `from ggid import GGIDClient
 
-client = GGIDClient(base_url="http://localhost:8080")
+client = GGIDClient(base_url="")
 token = client.login(email="admin@ggid.dev", password="Admin@123456")
 
 users = client.list_users(access_token=token["access_token"])
 for u in users:
     print(u["email"])`,
     curl: `# Login
-TOKEN=$(curl -s -X POST http://localhost:8080/api/v1/auth/login \\
+TOKEN=$(curl -s -X POST /api/v1/auth/login \\
   -H "Content-Type: application/json" \\
   -d '{"email":"admin@ggid.dev","password":"Admin@123456"}' \\
   | jq -r '.access_token')
 
 # List users
-curl -s http://localhost:8080/api/v1/users \\
+curl -s /api/v1/users \\
   -H "Authorization: Bearer $TOKEN" | jq`,
   };
 

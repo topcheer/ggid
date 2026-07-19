@@ -8,7 +8,7 @@ import {
   Shield, Clock, KeyRound, Webhook, Cpu, UserPlus, Ban,
 } from "lucide-react";
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || "";
 type TabId = "list" | "register" | "orphans";
 
 interface NHI {

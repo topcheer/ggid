@@ -8,7 +8,7 @@ import {
   X, Download, FileJson, FileText, RefreshCw, Clock, Target,
 } from "lucide-react";
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || "";
 type TabId = "controls" | "history" | "actions";
 
 interface Control {

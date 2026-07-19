@@ -9,7 +9,7 @@ import {
   Terminal, ArrowRight, Sparkles,
 } from "lucide-react";
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || "";
 type Step = 0 | 1 | 2 | 3 | 4;
 
 type AppType = "web" | "spa" | "mobile" | "m2m";

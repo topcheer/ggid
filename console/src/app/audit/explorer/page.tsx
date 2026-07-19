@@ -8,7 +8,7 @@ import {
   FileJson, FileText, Calendar, Eye, Activity, X,
 } from "lucide-react";
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || "";
 
 type TabId = "events" | "details" | "export";
 
