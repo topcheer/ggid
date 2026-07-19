@@ -345,7 +345,7 @@ export default function AnalyticsPage() {
                     <div className="flex flex-wrap gap-2">
                       {loginData.failure_reasons?.map((fr: any, i: number) => {
                         const [reason, count] = Object.entries(fr)[0];
-                        return <span key={i} className="rounded-lg bg-red-50 px-2 py-1 text-xs text-red-600 dark:bg-red-900/20">{reason.replace(/_/g, " ")}: {count}</span>;
+                        return <span key={i} className="rounded-lg bg-red-50 px-2 py-1 text-xs text-red-600 dark:bg-red-900/20">{reason.replace(/_/g, " ")}: {Number(count)}</span>;
                       })}
                     </div>
                   </div>

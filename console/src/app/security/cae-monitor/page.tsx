@@ -238,6 +238,7 @@ function TriggersTab() {
 }
 
 function TriggerForm({ onAdd, onCancel }: { onAdd: (t: Trigger) => void; onCancel: () => void }) {
+  const t = useTranslations();
   const [event, setEvent] = useState("risk_spike");
   const [condition, setCondition] = useState("");
   const [action, setAction] = useState("step_up");

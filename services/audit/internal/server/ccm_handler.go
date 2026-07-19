@@ -32,7 +32,18 @@ func (s *HTTPServer) handleCCM(w http.ResponseWriter, r *http.Request) {
 		// Known path but wrong HTTP method.
 		errors.WriteSimpleAPIError(w, http.StatusMethodNotAllowed, "METHOD_NOT_ALLOWED", "method not allowed")
 	default:
+	knownCCMPaths := map[string]bool{
+		"/api/v1/audit/ccm/results": true,
+		"/api/v1/audit/ccm/history": true,
+		"/api/v1/audit/ccm/run":     true,
+		"/api/v1/audit/ccm/scan":    true,
+		"/api/v1/audit/ccm/summary": true,
+	}
+	if knownCCMPaths[path] {
+		errors.WriteSimpleAPIError(w, http.StatusMethodNotAllowed, "METHOD_NOT_ALLOWED", "method not allowed")
+	} else {
 		errors.WriteSimpleAPIError(w, http.StatusNotFound, "NOT_FOUND", "unknown CCM endpoint: "+path)
+	}
 	}
 }
 

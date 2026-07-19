@@ -400,7 +400,6 @@ export default function LoginPage() {
                 <Building2 className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
                 <input
                   type="text"
-              aria-label="Tenant ID"
                   aria-label={t("login.tenant")}
                   value={tenantSlug}
                   onChange={(e) => setTenantSlug(e.target.value)}
@@ -415,7 +414,6 @@ export default function LoginPage() {
               <label className="mb-1 block text-sm font-medium">{t("login.username")}</label>
               <input
                 type="text"
-              aria-label="Tenant ID"
                 id="username"
                 name="username"
                 aria-label={t("login.username")}
@@ -546,7 +544,6 @@ export default function LoginPage() {
                 </label>
                 <input
                   type="text"
-              aria-label="Tenant ID"
                   id="totp-code"
                   name="totp-code"
                   aria-label={t("login.verificationCode")}
@@ -568,7 +565,6 @@ export default function LoginPage() {
                 </label>
                 <input
                   type="text"
-              aria-label="Tenant ID"
                   id="backup-code"
                   name="backup-code"
                   aria-label="Backup code"

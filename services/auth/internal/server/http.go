@@ -1054,7 +1054,7 @@ func (h *Handler) handleSessions(w http.ResponseWriter, r *http.Request) {
 	case http.MethodGet:
 		sessions, err := h.authSvc.ListSessions(r.Context(), tc.TenantID, userID)
 		if err != nil {
-			// Return empty list instead of 500 — sessions table may not exist yet
+			log.Printf("handleSessions: ListSessions error for user %s: %v", userID, err)
 			writeJSON(w, http.StatusOK, map[string]any{"sessions": []interface{}{}, "total": 0})
 			return
 		}

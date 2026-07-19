@@ -114,7 +114,7 @@ export default function DashboardPage() {
             <QuickLink icon={BookOpen} label={t("dashboardEnhanced.quickLinks.apiDocs")} desc={t("dashboardEnhanced.quickLinks.apiDocsDesc")} href="/docs" />
             <QuickLink icon={Code} label={t("dashboardEnhanced.quickLinks.sdkExamples")} desc={t("dashboardEnhanced.quickLinks.sdkExamplesDesc")} href="/docs" />
             <QuickLink icon={Rocket} label={t("dashboardEnhanced.quickLinks.deployGuide")} desc={t("dashboardEnhanced.quickLinks.deployGuideDesc")} href="https://github.com/topcheer/ggid" />
-            <QuickLink icon={GithubIcon} label={t("dashboardEnhanced.quickLinks.github")} desc={t("dashboardEnhanced.quickLinks.githubDesc")} href="https://github.com/topcheer/ggid" />
+            <QuickLink icon={GithubIcon as any} label={t("dashboardEnhanced.quickLinks.github")} desc={t("dashboardEnhanced.quickLinks.githubDesc")} href="https://github.com/topcheer/ggid" />
           </div>
         </div>
       </div>
@@ -181,6 +181,6 @@ function QuickLink({ icon: Icon, label, desc, href }: {
 }
 
 // Use ExternalLink as GitHub icon substitute (Github icon not available in this lucide version)
-function GithubIcon(props: React.ComponentProps<typeof BookOpen>) {
+function GithubIcon(props: React.ComponentProps<typeof Shield>) {
   return <ExternalLink {...props} />;
 }
