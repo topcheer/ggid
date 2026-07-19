@@ -323,15 +323,14 @@ func (e *CCMEngine) GetHistory(controlID string, limit int) []CCMResult {
 			var result []CCMResult
 			for _, rec := range records {
 				result = append(result, CCMResult{
-					ControlID:   rec.ControlID,
-					Name:        rec.Name,
-					Category:    rec.Category,
-					Status:      rec.Status,
-					Metric:      rec.Metric,
-					Threshold:   rec.Threshold,
-					Direction:   rec.Direction,
-					CheckedAt:   rec.CheckedAt,
-					Details:     rec.Details,
+					ControlID:    rec.ControlID,
+					ControlName:  rec.ControlName,
+					Category:     rec.Category,
+					Status:       rec.Status,
+					MetricValue:  rec.MetricValue,
+					Threshold:    rec.Threshold,
+					ThresholdDir: rec.ThresholdDir,
+					CheckedAt:    rec.CheckedAt,
 				})
 			}
 			return result
