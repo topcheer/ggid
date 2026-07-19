@@ -112,7 +112,8 @@ export default function UsersPage() {
         }),
       });
       setShowCreate(false);
-      refresh();
+      // Delay refresh to ensure backend has committed the new user
+      setTimeout(() => refresh(), 300);
     } catch (err) {
       console.error(err instanceof Error ? err.message : t("users.createFailed"));
     }
