@@ -27,11 +27,6 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
   const [isNew, setIsNew] = useState(false);
 
-  // Regular users see a simplified personal dashboard
-  if (!isTenantAdmin && !isPlatformAdmin) {
-    return <UserDashboard />;
-  }
-
   const load = useCallback(async () => {
     setLoading(true);
     try {
@@ -58,6 +53,11 @@ export default function DashboardPage() {
   }, []);
 
   useEffect(() => { load(); }, [load]);
+
+  // Regular users see a simplified personal dashboard (after all hooks)
+  if (!isTenantAdmin && !isPlatformAdmin) {
+    return <UserDashboard />;
+  }
 
   if (loading || !kpi) {
     return <div className="flex justify-center py-20"><Loader2 className="w-8 h-8 animate-spin text-blue-600" /></div>;
