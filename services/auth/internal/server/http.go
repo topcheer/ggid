@@ -1279,6 +1279,7 @@ type mfaLoginRequest struct {
 	Password   string `json:"password"`
 	MFACode    string `json:"mfa_code"`
 	BackupCode string `json:"backup_code"`
+	TenantSlug string `json:"tenant_slug"`
 }
 
 func (h *Handler) mfaLogin(w http.ResponseWriter, r *http.Request) {
@@ -1291,6 +1292,19 @@ func (h *Handler) mfaLogin(w http.ResponseWriter, r *http.Request) {
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		writeError(w, http.StatusBadRequest, "invalid request body")
 		return
+	}
+
+	// Inject tenant context (same fallback as regular login handler)
+	if _, err := ggidtenant.FromContext(r.Context()); err != nil {
+		if req.TenantSlug != "" {
+			if tid := h.resolveTenantBySlug(r.Context(), req.TenantSlug); tid != uuid.Nil {
+				tc := &ggidtenant.Context{
+					TenantID:       tid,
+					IsolationLevel: ggidtenant.IsolationShared,
+				}
+				r = r.WithContext(ggidtenant.WithContext(r.Context(), tc))
+			}
+		}
 	}
 
 	ip := clientIP(r)

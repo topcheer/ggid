@@ -34,8 +34,12 @@ func (h *Handler) backupCodesGenerate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Extract user_id from JWT if not provided in body.
+	// Extract user_id from X-User-ID header (set by gateway after JWT validation)
 	if req.UserID == "" {
+		req.UserID = r.Header.Get("X-User-ID")
+	}
+	if req.UserID == "" {
+		// Fallback: parse from JWT
 		authHeader := r.Header.Get("Authorization")
 		tokenStr := strings.TrimPrefix(authHeader, "Bearer ")
 		claims := jwt.MapClaims{}
