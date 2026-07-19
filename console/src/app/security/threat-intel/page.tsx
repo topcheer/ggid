@@ -283,7 +283,7 @@ export default function ThreatIntelPage() {
                         <td className="px-3 py-2 text-center">
                           <span className={`text-xs font-bold ${pct >= 90 ? "text-red-600" : pct >= 75 ? "text-orange-600" : pct >= 50 ? "text-yellow-600" : "text-blue-600"}`}>{pct}%</span>
                         </td>
-                        <td className="px-3 py-2"><div className="flex flex-wrap gap-1">{ind.tags?.map(t => <span key={t} className="px-1.5 py-0.5 rounded bg-rose-100 dark:bg-rose-900/20 text-rose-600 text-xs font-mono">{t}</span>)}</div></td>
+                        <td className="px-3 py-2"><div className="flex flex-wrap gap-1">{ind.tags?.map((t: string) => <span key={t} className="px-1.5 py-0.5 rounded bg-rose-100 dark:bg-rose-900/20 text-rose-600 text-xs font-mono">{t}</span>)}</div></td>
                         <td className="px-3 py-2 text-xs text-gray-400">{ind.first_seen ? new Date(ind.first_seen).toLocaleDateString() : "—"}</td>
                       </tr>
                     );
@@ -346,7 +346,7 @@ export default function ThreatIntelPage() {
                           <span className={`text-sm font-bold ${m.confidence >= 0.9 ? "text-red-600" : m.confidence >= 0.7 ? "text-orange-600" : "text-yellow-600"}`}>{Math.round(m.confidence * 100)}%</span>
                         </div>
                         {m.tags?.length > 0 && (
-                          <div className="mt-1 flex flex-wrap gap-1">{m.tags.map(t => <span key={t} className="px-1.5 py-0.5 rounded bg-rose-100 dark:bg-rose-900/20 text-rose-600 text-xs font-mono">{t}</span>)}</div>
+                          <div className="mt-1 flex flex-wrap gap-1">{m.tags.map((t: string) => <span key={t} className="px-1.5 py-0.5 rounded bg-rose-100 dark:bg-rose-900/20 text-rose-600 text-xs font-mono">{t}</span>)}</div>
                         )}
                       </div>
                     ))}
