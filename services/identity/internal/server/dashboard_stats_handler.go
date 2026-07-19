@@ -31,9 +31,22 @@ func (h *HTTPHandler) handleDashboardStats(w http.ResponseWriter, r *http.Reques
 
 	stats := dashboardStats{}
 
-	// Real DB queries when pool is available
+		// Real DB queries when pool is available
 	if pool := h.svc.Pool(); pool != nil {
 		tenantID := tenantIDFromContext(ctx)
+		// Fallback: parse from X-Tenant-ID header
+		if tenantID == nil {
+			if tidStr := r.Header.Get("X-Tenant-ID"); tidStr != "" {
+				if tid, err := uuid.Parse(tidStr); err == nil {
+					tenantID = &tid
+				}
+			}
+		}
+
+		// Set RLS context for this pooled connection's queries
+		if tenantID != nil {
+			_, _ = pool.Exec(ctx, `SET app.tenant_id = $1`, tenantID.String())
+		}
 
 		// Total users (non-deleted)
 		_ = pool.QueryRow(ctx, `
@@ -46,9 +59,7 @@ func (h *HTTPHandler) handleDashboardStats(w http.ResponseWriter, r *http.Reques
 		`).Scan(&stats.ActiveSessions)
 
 		// OAuth clients count
-		_ = pool.QueryRow(ctx, `
-			SELECT count(*) FROM oauth_clients WHERE enabled = true AND ($1::uuid IS NULL OR tenant_id = $1)
-		`, tenantID).Scan(&stats.OAuthClients)
+		_ = pool.QueryRow(ctx, `SELECT count(*) FROM oauth_clients WHERE enabled = true`).Scan(&stats.OAuthClients)
 
 		// Login stats from audit_events (auth_events table doesn't exist)
 		since := time.Now().Add(-24 * time.Hour)
