@@ -965,6 +965,8 @@ type changePasswordRequest struct {
 	UserID      string `json:"user_id"`
 	OldPassword string `json:"old_password"`
 	NewPassword string `json:"new_password"`
+	// CurrentPassword is an alias for OldPassword (used by frontend)
+	CurrentPassword string `json:"current_password"`
 }
 
 func (h *Handler) changePassword(w http.ResponseWriter, r *http.Request) {
@@ -1029,17 +1031,20 @@ func (h *Handler) changePassword(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := h.authSvc.ChangePassword(r.Context(), tenantID, userID, req.OldPassword, req.NewPassword); err != nil {
+	oldPw := req.OldPassword
+	if oldPw == "" {
+		oldPw = req.CurrentPassword
+	}
+	if err := h.authSvc.ChangePassword(r.Context(), tenantID, userID, oldPw, req.NewPassword); err != nil {
 		writeAuthError(w, err)
 		return
 	}
 
 	// Invalidate all other sessions (password change = security-critical event).
-	// The user must re-authenticate on other devices with the new password.
-	h.TriggerInvalidation(tc.TenantID, userID, InvReasonPasswordChange, "")
+	h.TriggerInvalidation(tenantID, userID, InvReasonPasswordChange, "")
 
 	// Audit: password change
-	h.publishAuditEvent("user.password.change", "success", tc.TenantID, userID)
+	h.publishAuditEvent("user.password.change", "success", tenantID, userID)
 
 	writeJSON(w, http.StatusOK, map[string]bool{"password_changed": true})
 }
