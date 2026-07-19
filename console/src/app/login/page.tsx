@@ -125,6 +125,7 @@ export default function LoginPage() {
 
         // Translate known error codes to user-friendly messages
         const errorMessages: Record<string, string> = {
+          unauthenticated: "Invalid username or password.",
           too_many_login_attempts: "Too many login attempts. Please try again later.",
           rate_limited: "Too many login attempts. Please try again later.",
           invalid_credentials: "Invalid username or password.",

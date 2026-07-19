@@ -639,15 +639,16 @@ export default function AuditPage() {
                           </div>
                         </td>
                         <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-400">
-                          <div>{event.actor_name || (event.actor_id ? event.actor_id.substring(0, 8) : "system")}</div>
+                          <div>{event.actor_name || (event.actor_id && event.actor_id !== "00000000-0000-0000-0000-000000000000" ? event.actor_id.substring(0, 8) : "system")}</div>
                           {event.ip_address && (
-                            <div className="font-mono text-xs text-gray-400">{event.ip_address}</div>
+                            <div className="font-mono text-xs text-gray-400">{event.ip_address.replace(/\/\d+$/, "")}</div>
                           )}
                         </td>
                         <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-400">
-                          {event.resource_type || "-"}
-                          {event.resource_id && (
-                            <span className="ml-1 font-mono text-xs text-gray-400">{event.resource_id.substring(0, 8)}</span>
+                          {event.resource_type && event.resource_type !== "-" ? (
+                            <>{event.resource_type}{event.resource_id && <span className="ml-1 font-mono text-xs text-gray-400">{event.resource_id.substring(0, 8)}</span>}</>
+                          ) : (
+                            <span className="text-gray-300">—</span>
                           )}
                         </td>
                         <td className="px-4 py-3">
