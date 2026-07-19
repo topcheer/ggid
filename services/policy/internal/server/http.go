@@ -21,6 +21,7 @@ import (
 	"github.com/ggid/ggid/services/policy/internal/repository"
 	"github.com/ggid/ggid/services/policy/internal/service"
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 // HTTPServer exposes the Policy Engine as a REST API.
@@ -29,13 +30,17 @@ type HTTPServer struct {
 	policySvc     *service.PolicyService
 	evaluator     *service.Evaluator
 	auditPublisher *audit.Publisher
-campaignRepo  *CampaignRepo
-jitRepo       *repository.JITRequestRepository
-policyMap     *policyMapRepo
-pdpRepo       *pdpRepo
+	campaignRepo  *CampaignRepo
+	jitRepo       *repository.JITRequestRepository
+	policyMap     *policyMapRepo
+	pdpRepo       *pdpRepo
 	riskRepo      *riskRepo
 	sodRepo       *sodPGRepo
+	pool          *pgxpool.Pool
 }
+
+// SetPool injects the DB pool for real queries (blast radius, etc).
+func (s *HTTPServer) SetPool(pool *pgxpool.Pool) { s.pool = pool }
 
 // NewHTTPServer creates a new Policy Engine HTTP server.
 func NewHTTPServer(roleSvc *service.RoleService, policySvc *service.PolicyService, evaluator *service.Evaluator) *HTTPServer {

@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/golang-jwt/jwt/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -244,6 +245,25 @@ func (h *Handler) handleResetPassword(w http.ResponseWriter, r *http.Request) {
 // PUT /api/v1/auth/profile
 //nolint:unused// alternative handler
 func (h *Handler) handleProfileUpdate(w http.ResponseWriter, r *http.Request) {
+	// GET returns current user profile from JWT
+	if r.Method == http.MethodGet {
+		authHeader := r.Header.Get("Authorization")
+		tokenStr := strings.TrimPrefix(authHeader, "Bearer ")
+		claims := jwt.MapClaims{}
+		_, _ = jwt.ParseWithClaims(tokenStr, claims, func(tok *jwt.Token) (any, error) {
+			return h.authSvc.PublicKey(), nil
+		})
+		userSub, _ := claims["sub"].(string)
+		tenantIDStr := r.Header.Get("X-Tenant-ID")
+		writeJSON(w, http.StatusOK, map[string]any{
+			"user_id":   userSub,
+			"tenant_id": tenantIDStr,
+			"username":  claims["preferred_username"],
+			"scopes":    claims["scopes"],
+		})
+		return
+	}
+
 	if r.Method != http.MethodPut {
 		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return

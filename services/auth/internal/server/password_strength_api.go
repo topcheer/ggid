@@ -16,6 +16,19 @@ type passwordStrengthRequest struct {
 // handlePasswordStrength handles POST /api/v1/auth/password/strength.
 // Returns score (0-4), crack time, detected patterns, and suggestions.
 func (h *Handler) handlePasswordStrength(w http.ResponseWriter, r *http.Request) {
+	// GET returns password policy info
+	if r.Method == http.MethodGet {
+		writeJSON(w, http.StatusOK, map[string]any{
+			"min_length":     8,
+			"require_upper":  true,
+			"require_lower":  true,
+			"require_digit":  true,
+			"require_symbol": false,
+			"score_range":    []string{"weak", "fair", "good", "strong"},
+		})
+		return
+	}
+
 	if r.Method != http.MethodPost {
 		errors.WriteSimpleAPIError(w, http.StatusMethodNotAllowed, "METHOD_NOT_ALLOWED", "method not allowed")
 		return

@@ -13,6 +13,7 @@ func (s *HTTPServer) handleCCM(w http.ResponseWriter, r *http.Request) {
 	// Known CCM paths.
 	knownPaths := map[string]bool{
 		"/api/v1/audit/ccm/results":  true,
+		"/api/v1/audit/ccm/latest":   true,
 		"/api/v1/audit/ccm/history":  true,
 		"/api/v1/audit/ccm/run":      true,
 		"/api/v1/audit/ccm/scan":     true,
@@ -20,7 +21,8 @@ func (s *HTTPServer) handleCCM(w http.ResponseWriter, r *http.Request) {
 	}
 
 	switch {
-	case path == "/api/v1/audit/ccm/results" && r.Method == http.MethodGet:
+	case path == "/api/v1/audit/ccm/results" && r.Method == http.MethodGet,
+		path == "/api/v1/audit/ccm/latest" && r.Method == http.MethodGet:
 		s.ccmResults(w, r)
 	case path == "/api/v1/audit/ccm/history" && r.Method == http.MethodGet:
 		s.ccmHistory(w, r)

@@ -133,7 +133,7 @@ func TestPasswordStrength_EmptyPassword(t *testing.T) {
 func TestPasswordStrength_WrongMethod(t *testing.T) {
 	h := &Handler{}
 
-	req := httptest.NewRequest("GET", "/api/v1/auth/password/strength", nil)
+	req := httptest.NewRequest("DELETE", "/api/v1/auth/password/strength", nil)
 	w := httptest.NewRecorder()
 
 	h.handlePasswordStrength(w, req)
