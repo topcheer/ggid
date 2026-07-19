@@ -30,8 +30,17 @@ export default function ConsentManagementCenterPage() {
             "X-Tenant-ID": "00000000-0000-0000-0000-000000000001",
           },
         });
-        if (!res.ok) return null;
+        if (!res.ok) return;
         const json = await res.json();
+        const items = json.consents || json.items || [];
+        setConsents(items.map((c: Record<string, string>) => ({
+          id: c.id || '', user: c.user || c.user_id || '', purpose: c.purpose || '',
+          grantedAt: c.granted_at || c.created_at || '', expires: c.expires_at || '', status: c.status || 'active',
+        })));
+        // Build purposes summary from consent data
+        const purposeMap = new Map<string, number>();
+        items.forEach((c: Record<string, string>) => { const p = c.purpose || 'unknown'; purposeMap.set(p, (purposeMap.get(p) || 0) + 1); });
+        setPurposes(Array.from(purposeMap.entries()).map(([name, count]) => ({ name, count, description: name })));
       } catch (e) {
         setError(e instanceof Error ? e.message : "Failed to load");
       } finally {
@@ -43,18 +52,9 @@ export default function ConsentManagementCenterPage() {
 
   const [filterPurpose, setFilterPurpose] = useState('all');
   const [filterStatus, setFilterStatus] = useState('all');
-  const [showReceipt, setShowReceipt] = useState<Consent | null>(null);const [consents, setConsents] = useState<Consent[]>([
-    { id: 'cn1', user: 'alice@ggid.io', purpose: 'marketing', grantedAt: '2026-06-01', expires: '2027-06-01', status: 'active' },
-    { id: 'cn2', user: 'bob@ggid.io', purpose: 'data-sharing', grantedAt: '2026-05-15', expires: '2026-11-15', status: 'active' },
-    { id: 'cn3', user: 'carol@ggid.io', purpose: 'marketing', grantedAt: '2026-01-01', expires: '2026-07-01', status: 'expired' },
-    { id: 'cn4', user: 'dave@ggid.io', purpose: 'analytics', grantedAt: '2026-07-01', expires: '2027-07-01', status: 'active' },
-    { id: 'cn5', user: 'alice@ggid.io', purpose: 'analytics', grantedAt: '2026-04-01', expires: '2026-10-01', status: 'revoked' },
-  ]);
-const [purposes] = useState([
-    { name: 'marketing', count: 2, description: 'Marketing communications' },
-    { name: 'data-sharing', count: 1, description: 'Share data with partners' },
-    { name: 'analytics', count: 2, description: 'Usage analytics tracking' },
-  ]);
+  const [showReceipt, setShowReceipt] = useState<Consent | null>(null);
+  const [consents, setConsents] = useState<Consent[]>([]);
+  const [purposes, setPurposes] = useState<{ name: string; count: number; description: string }[]>([]);
 
   if (loading) return <div className="flex items-center justify-center py-12"><Loader2 className="h-8 w-8 animate-spin text-blue-500" /></div>;
   if (error) return <div className="p-8 text-red-500">Error: {error}</div>;

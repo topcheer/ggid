@@ -32,24 +32,9 @@ export default function ApiHealthMonitorPage() {
   }, []);
 
   const t = useTranslations();
-  const [alerts] = useState([
-    { time: '14:30', msg: 'Policy evaluate latency p99 > 500ms', level: 'warn' },
-    { time: '13:15', msg: 'Org create endpoint returning 500', level: 'critical' },
-  ]);
-
-  const [endpoints] = useState<Endpoint[]>([
-    { id: 'e1', path: '/api/v1/auth/login', method: 'POST', status: 'healthy', latency: '45ms', uptime: '99.98%', errorRate: '0.02%' },
-    { id: 'e2', path: '/api/v1/users', method: 'GET', status: 'healthy', latency: '32ms', uptime: '99.99%', errorRate: '0.01%' },
-    { id: 'e3', path: '/api/v1/policy/evaluate', method: 'POST', status: 'degraded', latency: '280ms', uptime: '99.5%', errorRate: '0.5%' },
-    { id: 'e4', path: '/api/v1/audit/events', method: 'GET', status: 'healthy', latency: '67ms', uptime: '99.95%', errorRate: '0.05%' },
-    { id: 'e5', path: '/api/v1/orgs', method: 'POST', status: 'down', latency: '-', uptime: '98.2%', errorRate: '1.8%' },
-  ]);
-  const [deps] = useState([
-    { name: 'PostgreSQL', status: 'healthy', latency: '2ms' },
-    { name: 'Redis', status: 'healthy', latency: '1ms' },
-    { name: 'NATS JetStream', status: 'healthy', latency: '5ms' },
-    { name: 'SMTP Server', status: 'degraded', latency: '450ms' },
-  ]);
+  const [alerts, setAlerts] = useState<{ time: string; msg: string; level: string }[]>([]);
+  const [endpoints, setEndpoints] = useState<Endpoint[]>([]);
+  const [deps, setDeps] = useState<{ name: string; status: string; latency: string }[]>([]);
 
   if (loading) return <div className="flex items-center justify-center py-12"><Loader2 className="h-8 w-8 animate-spin text-blue-500" /></div>;
   if (error) return <div className="p-8 text-red-500">Error: {error}</div>;

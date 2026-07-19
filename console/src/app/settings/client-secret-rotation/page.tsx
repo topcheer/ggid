@@ -34,8 +34,15 @@ export default function ClientSecretRotationPage() {
             "X-Tenant-ID": "00000000-0000-0000-0000-000000000001",
           },
         });
-        if (!res.ok) return null;
+        if (!res.ok) return;
         const json = await res.json();
+        const items = json.clients || json.items || [];
+        setClients(items.map((c: Record<string, unknown>) => ({
+          id: String(c.id || ''), clientId: String(c.client_id || ''), clientName: String(c.name || c.client_name || ''),
+          lastRotated: String(c.last_rotated || ''), nextRotation: String(c.next_rotation || ''),
+          ageDays: Number(c.age_days || 0), autoRotate: Boolean(c.auto_rotate), intervalDays: Number(c.interval_days || 90),
+          dualSecret: Boolean(c.dual_secret), dualPeriodDays: Number(c.dual_period_days || 0),
+        })));
       } catch (e) {
         setError(e instanceof Error ? e.message : "Failed to load");
       } finally {
@@ -46,18 +53,9 @@ export default function ClientSecretRotationPage() {
   }, []);
 
   const [rotateTarget, setRotateTarget] = useState<ClientSecret | null>(null);
-  const [newSecret, setNewSecret] = useState('');const [clients, setClients] = useState<ClientSecret[]>([
-    { id: 'c1', clientId: 'web-app', clientName: 'Web Application', lastRotated: '2026-06-01', nextRotation: '2026-09-01', ageDays: 42, autoRotate: true, intervalDays: 90, dualSecret: true, dualPeriodDays: 7 },
-    { id: 'c2', clientId: 'mobile-app', clientName: 'Mobile App', lastRotated: '2026-04-15', nextRotation: '2026-07-15', ageDays: 89, autoRotate: false, intervalDays: 90, dualSecret: false, dualPeriodDays: 0 },
-    { id: 'c3', clientId: 'admin-cli', clientName: 'Admin CLI', lastRotated: '2025-12-01', nextRotation: '2026-06-01', ageDays: 224, autoRotate: true, intervalDays: 180, dualSecret: true, dualPeriodDays: 14 },
-    { id: 'c4', clientId: 'api-gateway', clientName: 'API Gateway', lastRotated: '2026-07-01', nextRotation: '2027-01-01', ageDays: 12, autoRotate: true, intervalDays: 180, dualSecret: false, dualPeriodDays: 0 },
-  ]);
-const [history] = useState([
-    { clientId: 'web-app', rotatedAt: '2026-06-01', rotatedBy: 'admin@ggid.io' },
-    { clientId: 'mobile-app', rotatedAt: '2026-04-15', rotatedBy: 'dev-team@ggid.io' },
-    { clientId: 'admin-cli', rotatedAt: '2025-12-01', rotatedBy: 'admin@ggid.io' },
-    { clientId: 'api-gateway', rotatedAt: '2026-07-01', rotatedBy: 'infra@ggid.io' },
-  ]);
+  const [newSecret, setNewSecret] = useState('');
+  const [clients, setClients] = useState<ClientSecret[]>([]);
+  const [history, setHistory] = useState<{ clientId: string; rotatedAt: string; rotatedBy: string }[]>([]);
 
   if (loading) return <div className="flex items-center justify-center py-12"><Loader2 className="h-8 w-8 animate-spin text-blue-500" /></div>;
   if (error) return <div className="p-8 text-red-500">Error: {error}</div>;

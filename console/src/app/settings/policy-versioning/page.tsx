@@ -6,7 +6,13 @@ import { authHeader, isAuthenticated } from "@/lib/auth-helpers";
 interface Version { version_num: number; author: string; timestamp: string; change_summary: string; is_current: boolean; }
 interface PolicyVersionData { policy_id: string; policy_name: string; versions: Version[]; }
 export default function PolicyVersioningPage() {
-  const [policies] = useState([{ id: "p1", name: "Data Access Policy" }, { id: "p2", name: "Admin Access Policy" }]);
+  const [policies, setPolicies] = useState<{ id: string; name: string }[]>([]);
+  useEffect(() => {
+    fetch("/api/v1/policies", { headers: { ...authHeader() } })
+      .then(r => r.ok ? r.json() : Promise.reject())
+      .then(d => { const items = d.policies || d.items || []; setPolicies(items.map((p: Record<string, string>) => ({ id: p.id || p.key || "", name: p.name || p.display_name || p.key || "" }))); })
+      .catch(() => {});
+  }, []);
   const [policyId, setPolicyId] = useState("");
   const [data, setData] = useState<PolicyVersionData | null>(null);
   const [loading, setLoading] = useState(false);

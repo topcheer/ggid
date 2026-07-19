@@ -280,27 +280,11 @@ func (h *Handler) registerRoutes() {
 	// Auth hooks (Auth0 Actions equivalent)
 	h.mux.HandleFunc("/api/v1/auth/hooks", h.manageHooks)
 
-	// WebAuthn route aliases under /api/v1/auth/webauthn/ — rewrite path then re-dispatch
-	h.mux.HandleFunc("/api/v1/auth/webauthn/register/begin", func(w http.ResponseWriter, r *http.Request) {
-		r2 := r.Clone(r.Context())
-		r2.URL.Path = "/api/v1/webauthn/register/begin"
-		h.mux.ServeHTTP(w, r2)
-	})
-	h.mux.HandleFunc("/api/v1/auth/webauthn/register/finish", func(w http.ResponseWriter, r *http.Request) {
-		r2 := r.Clone(r.Context())
-		r2.URL.Path = "/api/v1/webauthn/register/finish"
-		h.mux.ServeHTTP(w, r2)
-	})
-	h.mux.HandleFunc("/api/v1/auth/webauthn/login/begin", func(w http.ResponseWriter, r *http.Request) {
-		r2 := r.Clone(r.Context())
-		r2.URL.Path = "/api/v1/webauthn/login/begin"
-		h.mux.ServeHTTP(w, r2)
-	})
-	h.mux.HandleFunc("/api/v1/auth/webauthn/login/finish", func(w http.ResponseWriter, r *http.Request) {
-		r2 := r.Clone(r.Context())
-		r2.URL.Path = "/api/v1/webauthn/login/finish"
-		h.mux.ServeHTTP(w, r2)
-	})
+	// WebAuthn route aliases under /api/v1/auth/webauthn/ — dispatch to passkey handlers
+	h.mux.HandleFunc("/api/v1/auth/webauthn/register/begin", h.handlePasskeyRegisterBegin)
+	h.mux.HandleFunc("/api/v1/auth/webauthn/register/finish", h.handlePasskeyRegisterFinish)
+	h.mux.HandleFunc("/api/v1/auth/webauthn/login/begin", h.handlePasskeyAuthBegin)
+	h.mux.HandleFunc("/api/v1/auth/webauthn/login/finish", h.handlePasskeyAuthFinish)
 
 	// Passwordless (WebAuthn-only) registration + login
 	h.mux.HandleFunc("/api/v1/auth/passwordless/register", h.passwordlessRegister)

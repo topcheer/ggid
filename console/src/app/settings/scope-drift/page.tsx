@@ -7,7 +7,13 @@ interface DriftData { unused_scopes: UnusedScope[]; unregistered_scopes: string[
 const sevColors: Record<string, string> = { low: "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-400", medium: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400", high: "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400" };
 export default function ScopeDriftPage() {
   const t = useTranslations();
-  const [clients] = useState([{ id: "c1", name: "Web App" }, { id: "c2", name: "Mobile App" }]);
+  const [clients, setClients] = useState<{ id: string; name: string }[]>([]);
+  useEffect(() => {
+    fetch("/api/v1/oauth/clients", { headers: { ...authHeader(), "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } })
+      .then(r => r.ok ? r.json() : Promise.reject())
+      .then(d => { const items = d.clients || d.items || []; setClients(items.map((c: Record<string, string>) => ({ id: c.client_id || c.id || "", name: c.name || c.client_name || c.client_id || "" }))); })
+      .catch(() => {});
+  }, []);
   const [clientId, setClientId] = useState("");
   const [data, setData] = useState<DriftData | null>(null);
   const [loading, setLoading] = useState(false);
