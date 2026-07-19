@@ -307,7 +307,7 @@ export default function AuditPage() {
       ) : tab === "dashboard" ? (
         /* ===== Dashboard ===== */
         !stats ? (
-          <div className="rounded-xl border border-gray-200 bg-white p-12 text-center shadow-sm">
+          <div className="rounded-xl border border-gray-200 bg-white dark:bg-gray-900 p-12 text-center shadow-sm">
             <Activity className="mx-auto mb-4 h-12 w-12 text-gray-300" />
             <p className="text-gray-500">No stats available</p>
             <p className="mt-1 text-xs text-gray-400">Stats are generated from events in the last 24 hours.</p>
@@ -572,7 +572,7 @@ export default function AuditPage() {
             </button>
           </div>
           {events.length === 0 ? (
-            <div className="rounded-xl border border-gray-200 bg-white p-12 text-center shadow-sm">
+            <div className="rounded-xl border border-gray-200 bg-white dark:bg-gray-900 p-12 text-center shadow-sm">
               <ScrollText className="mx-auto mb-4 h-12 w-12 text-gray-300" />
               <p className="text-gray-500">No audit events found</p>
               <p className="mt-1 text-xs text-gray-400">
@@ -616,7 +616,7 @@ export default function AuditPage() {
                 ))}
               </div>
             )}
-            <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
+            <div className="overflow-hidden rounded-xl border border-gray-200 bg-white dark:bg-gray-900 shadow-sm">
               <table className="w-full">
                 <thead className="border-b border-gray-200 bg-gray-50">
                   <tr>

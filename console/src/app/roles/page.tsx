@@ -240,7 +240,7 @@ export default function RolesPage() {
 
       {/* Create Role Form */}
       {showCreate && (
-        <div className="mb-4 rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
+        <div className="mb-4 rounded-xl border border-gray-200 bg-white dark:bg-gray-900 p-4 shadow-sm">
           <div className="mb-3 flex items-center justify-between">
             <h3 className="text-sm font-semibold">{t("roles.createRole")}</h3>
             <button onClick={() => setShowCreate(false)} aria-label="Close">
@@ -300,7 +300,7 @@ export default function RolesPage() {
 
       {/* Edit Role Form */}
       {editingRole && (
-        <div className="mb-4 rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
+        <div className="mb-4 rounded-xl border border-gray-200 bg-white dark:bg-gray-900 p-4 shadow-sm">
           <div className="mb-3 flex items-center justify-between">
             <h3 className="text-sm font-semibold">{t("roles.editRolePrefix")} {editingRole.name || editingRole.key}</h3>
             <button onClick={() => setEditingRole(null)} aria-label="Close">
@@ -699,7 +699,7 @@ function PermissionAssignment({
       </div>
 
       {!selectedRole ? (
-        <div className="rounded-xl border border-gray-200 bg-white p-12 text-center shadow-sm">
+        <div className="rounded-xl border border-gray-200 bg-white dark:bg-gray-900 p-12 text-center shadow-sm">
           <Shield className="mx-auto mb-4 h-12 w-12 text-gray-300" />
           <p className="text-gray-500">{t("roles.selectRoleHint")}</p>
         </div>
@@ -708,7 +708,7 @@ function PermissionAssignment({
       ) : (
         <>
           {/* Currently assigned */}
-          <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
+          <div className="rounded-xl border border-gray-200 bg-white dark:bg-gray-900 p-4 shadow-sm">
             <h3 className="mb-3 text-sm font-semibold">
               {t("roles.assignedPerms")} ({rolePerms.length})
             </h3>
@@ -738,7 +738,7 @@ function PermissionAssignment({
           </div>
 
           {/* Available permissions */}
-          <div className="rounded-xl border border-gray-200 bg-white shadow-sm">
+          <div className="rounded-xl border border-gray-200 bg-white dark:bg-gray-900 shadow-sm">
             <div className="flex items-center justify-between border-b border-gray-200 p-4">
               <div className="flex items-center gap-3">
                 <h3 className="text-sm font-semibold">{t("roles.availablePerms")} ({filteredPerms.length})</h3>
@@ -917,7 +917,7 @@ function RolePermissionMatrix({
   }, {} as Record<string, Permission[]>);
 
   return (
-    <div className="overflow-x-auto rounded-xl border border-gray-200 bg-white shadow-sm">
+    <div className="overflow-x-auto rounded-xl border border-gray-200 bg-white dark:bg-gray-900 shadow-sm">
       <table className="w-full text-sm">
         <thead className="sticky top-0 border-b border-gray-200 bg-gray-50">
           <tr>
