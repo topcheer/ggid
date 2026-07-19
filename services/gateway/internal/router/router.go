@@ -409,7 +409,7 @@ func (gw *Gateway) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		gw.handleTenantCreate(w, r)
 		return
 	}
-	if strings.HasPrefix(r.URL.Path, "/api/v1/tenants/") && r.Method == http.MethodGet {
+	if strings.HasPrefix(r.URL.Path, "/api/v1/tenants/") && !strings.HasPrefix(r.URL.Path, "/api/v1/tenants/resolve") && r.Method == http.MethodGet {
 		gw.handleTenantDetail(w, r)
 		return
 	}
