@@ -169,11 +169,11 @@ func EstimateStrength(password string) StrengthResult {
 	}
 
 	// If patterns found, use the more conservative estimate.
-	// Only dictionary/keyboard/date patterns significantly weaken a password;
-	// l33t and repeats are minor signals that shouldn't override high entropy.
+	// Only dictionary and keyboard sequences significantly weaken a password.
+	// Date/l33t/repeats are minor signals — a 20-char password with "2024" is still strong.
 	hasSignificantPattern := false
 	for _, p := range result.Patterns {
-		if p == "dictionary" || p == "keyboard_sequence" || p == "date" || p == "all_digits" {
+		if p == "dictionary" || p == "keyboard_sequence" || p == "all_digits" {
 			hasSignificantPattern = true
 			break
 		}
