@@ -59,7 +59,7 @@ var protectedPaths = []struct {
 	{"/api/v1/auth/webauthn/aaguid", http.MethodPost},
 	{"/api/v1/auth/webauthn/aaguid/test-aaguid-id", http.MethodDelete},
 	{"/api/v1/auth/mfa/enroll", http.MethodPost},
-	{"/api/v1/auth/mfa/verify", http.MethodPost},
+	// mfa/verify is public (user is mid-authentication, has no token yet)
 	{"/api/v1/auth/profile", http.MethodGet},
 	{"/api/v1/oauth/clients", http.MethodGet},
 	{"/api/v1/oauth/clients", http.MethodPost},
