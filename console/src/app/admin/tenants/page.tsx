@@ -13,7 +13,7 @@ type TabId = "list" | "create";
 
 interface Tenant {
   id: string; name: string; plan: string; user_count: number;
-  status: string; created: string; demo?: boolean;
+  name: string; slug?: string; plan: string; user_count: number; status: string; created: string; demo?: boolean;
 }
 
 const planColors: Record<string, string> = {
@@ -41,11 +41,11 @@ export default function TenantsPage() {
       if (res.ok) { const d = await res.json(); setTenants(d.tenants || d || []); return; }
     } catch { /* mock */ }
     setTenants([
-      { id: "t-001", name: "Acme Corporation", plan: "enterprise", user_count: 850, status: "active", created: "2025-01-15" },
-      { id: "t-002", name: "TechStart Inc", plan: "pro", user_count: 320, status: "active", created: "2025-03-20" },
-      { id: "t-003", name: "DevShop LLC", plan: "free", user_count: 45, status: "trial", created: "2025-07-10" },
-      { id: "t-004", name: "GlobalTech", plan: "pro", user_count: 1200, status: "active", created: "2025-02-01" },
-      { id: "t-005", name: "Test Tenant", plan: "free", user_count: 5, status: "suspended", created: "2025-06-15", demo: true },
+      { id: "t-001", name: "Acme Corporation", slug: "acme", plan: "enterprise", user_count: 850, status: "active", created: "2025-01-15" },
+      { id: "t-002", name: "TechStart Inc", slug: "techstart", plan: "pro", user_count: 320, status: "active", created: "2025-03-20" },
+      { id: "t-003", name: "DevShop LLC", slug: "devshop", plan: "free", user_count: 45, status: "trial", created: "2025-07-10" },
+      { id: "t-004", name: "GlobalTech", slug: "globaltech", plan: "pro", user_count: 1200, status: "active", created: "2025-02-01" },
+      { id: "t-005", name: "Test Tenant", slug: "test-tenant", plan: "free", user_count: 5, status: "suspended", created: "2025-06-15", demo: true },
     ]);
   }, []);
 
@@ -120,6 +120,10 @@ function TenantList({ tenants }: { tenants: Tenant[] }) {
                     <span className="font-medium text-gray-900 dark:text-white">{t_item.name}</span>
                     {t_item.demo && <span className="px-1.5 py-0.5 text-xs bg-orange-100 text-orange-700 dark:bg-orange-950 dark:text-orange-300 rounded">{t("tenants.list.demo")}</span>}
                   </div>
+                  {t_item.slug && (
+                    <a href={`https://${t_item.slug}.ggid-console.iot2.win`} target="_blank" rel="noopener noreferrer"
+                       className="text-xs text-blue-500 hover:underline font-mono">{t_item.slug}.ggid-console.iot2.win</a>
+                  )}
                 </td>
                 <td className="py-3 px-4"><code className="text-xs text-gray-400 font-mono">{t_item.id}</code></td>
                 <td className="py-3 px-4">
@@ -146,6 +150,7 @@ function TenantList({ tenants }: { tenants: Tenant[] }) {
 function CreateTenant({ onCreated }: { onCreated: () => void }) {
   const t = useTranslations();
   const [name, setName] = useState("");
+  const [slug, setSlug] = useState("");
   const [plan, setPlan] = useState("free");
   const [adminEmail, setAdminEmail] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -166,18 +171,27 @@ function CreateTenant({ onCreated }: { onCreated: () => void }) {
     try {
       const res = await fetch(`${API_BASE}/api/v1/tenants`, {
         method: "POST", headers: { "Content-Type": "application/json", ...authHeader() },
-        body: JSON.stringify({ name, plan, admin_email: adminEmail }),
+        body: JSON.stringify({ name, slug: slug || undefined, plan, admin_email: adminEmail }),
       });
       if (res.ok) {
         setMsg(t("tenants.create.created"));
-        setTimeout(() => { setName(""); setAdminEmail(""); setMsg(null); onCreated(); }, 1500);
+        setTimeout(() => { setName(""); setSlug(""); setAdminEmail(""); setMsg(null); onCreated(); }, 1500);
         return;
       }
     } catch { /* ok */ }
     // Mock success for demo
     setMsg(t("tenants.create.created"));
-    setTimeout(() => { setName(""); setAdminEmail(""); setMsg(null); onCreated(); }, 1500);
+    setTimeout(() => { setName(""); setSlug(""); setAdminEmail(""); setMsg(null); onCreated(); }, 1500);
   };
+
+  // Auto-generate slug from name (lowercase, hyphenated)
+  const handleNameChange = (v: string) => {
+    setName(v);
+    if (!slug || slug === slugFromName(name)) {
+      setSlug(slugFromName(v));
+    }
+  };
+  const slugFromName = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
 
   return (
     <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-6 space-y-5">
@@ -185,8 +199,23 @@ function CreateTenant({ onCreated }: { onCreated: () => void }) {
 
       <div>
         <label className="block text-sm font-medium text-gray-900 dark:text-white mb-1">{t("tenants.create.name")}</label>
-        <input type="text" value={name} onChange={(e) => setName(e.target.value)} placeholder={t("tenants.create.namePlaceholder")} autoFocus
+        <input type="text" value={name} onChange={(e) => handleNameChange(e.target.value)} placeholder={t("tenants.create.namePlaceholder")} autoFocus
           className="w-full px-4 py-2.5 rounded-lg border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-sm text-gray-900 dark:text-white" />
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium text-gray-900 dark:text-white mb-1">子域名 (Subdomain)</label>
+        <div className="flex items-center gap-2">
+          <input type="text" value={slug} onChange={(e) => setSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ""))}
+            placeholder="acme-corp"
+            className="flex-1 px-4 py-2.5 rounded-lg border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-sm text-gray-900 dark:text-white" />
+          <span className="text-sm text-gray-500 whitespace-nowrap">.ggid-console.iot2.win</span>
+        </div>
+        {slug && (
+          <p className="mt-1.5 text-xs text-green-600 dark:text-green-400">
+            租户访问地址: <span className="font-mono font-medium">{slug}.ggid-console.iot2.win</span>
+          </p>
+        )}
       </div>
 
       <div>
