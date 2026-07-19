@@ -62,8 +62,18 @@ export default function EnhancedProfilePage() {
       });
       if (res.ok) {
         const d = await res.json();
-        setQrCodeUrl(d.qr_code_url || d.qr_code_uri || d.qr_url || "");
-        setMfaSecret(d.secret || d.otpauth_secret || "");
+        const rawUri = d.qr_code_uri || d.qr_code_url || d.qr_url || "";
+        // If it's an otpauth:// URI, generate QR via API and extract secret
+        let extractedSecret = d.secret || "";
+        if (!extractedSecret && rawUri) {
+          const m = rawUri.match(/secret=([^&]+)/);
+          if (m) extractedSecret = decodeURIComponent(m[1]);
+        }
+        const qrImg = rawUri.startsWith("data:") ? rawUri
+          : rawUri.startsWith("otpauth:") ? `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(rawUri)}`
+          : rawUri;
+        setQrCodeUrl(qrImg);
+        setMfaSecret(extractedSecret || d.otpauth_secret || "");
         setDeviceId(d.device_id || "");
       }
     } catch { /* show error */ }
