@@ -239,16 +239,94 @@ func (h *Handler) handleDelegation(w http.ResponseWriter, r *http.Request) {
 }
 
 // handleAccountLinking handles account linking management.
+// GET returns the user's linked social identities from user_external_identities table.
+// DELETE removes a linked provider.
 func (h *Handler) handleAccountLinking(w http.ResponseWriter, r *http.Request) {
+	claims, err := h.parseTokenFromHeader(r)
+	if err != nil {
+		writeError(w, http.StatusUnauthorized, err.Error())
+		return
+	}
+	userID, err := userIDFromClaims(claims)
+	if err != nil {
+		writeError(w, http.StatusUnauthorized, err.Error())
+		return
+	}
+
 	switch r.Method {
 	case http.MethodGet:
+		// Query real linked accounts from DB
+		if h.pool == nil {
+			writeJSON(w, http.StatusOK, map[string]interface{}{"linked_accounts": []interface{}{}})
+			return
+		}
+		rows, err := h.pool.Query(r.Context(), `
+			SELECT provider, external_id, linked_at, metadata
+			FROM user_external_identities
+			WHERE user_id = $1
+			ORDER BY linked_at DESC
+		`, userID)
+		if err != nil {
+			writeJSON(w, http.StatusOK, map[string]interface{}{"linked_accounts": []interface{}{}})
+			return
+		}
+		defer rows.Close()
+
+		accounts := []map[string]interface{}{}
+		for rows.Next() {
+			var provider, externalID string
+			var linkedAt time.Time
+			var metadata []byte
+			if err := rows.Scan(&provider, &externalID, &linkedAt, &metadata); err != nil {
+				continue
+			}
+			accounts = append(accounts, map[string]interface{}{
+				"provider":   provider,
+				"external_id": externalID,
+				"linked_at":  linkedAt.Format(time.RFC3339),
+			})
+		}
 		writeJSON(w, http.StatusOK, map[string]interface{}{
-			"linked_accounts": []interface{}{},
+			"linked_accounts": accounts,
+			"total":           len(accounts),
 		})
-	case http.MethodPost:
-		writeJSON(w, http.StatusOK, map[string]interface{}{"status": "account linked"})
+
 	case http.MethodDelete:
-		writeJSON(w, http.StatusOK, map[string]interface{}{"status": "account unlinked"})
+		// Unlink: DELETE /auth/account-linking?provider=google
+		provider := r.URL.Query().Get("provider")
+		if provider == "" {
+			writeError(w, http.StatusBadRequest, "provider query param required")
+			return
+		}
+		if h.pool == nil {
+			writeJSON(w, http.StatusOK, map[string]interface{}{"status": "unlinked", "provider": provider})
+			return
+		}
+		_, err := h.pool.Exec(r.Context(), `
+			DELETE FROM user_external_identities WHERE user_id = $1 AND provider = $2
+		`, userID, provider)
+		if err != nil {
+			writeError(w, http.StatusInternalServerError, "failed to unlink account")
+			return
+		}
+		writeJSON(w, http.StatusOK, map[string]interface{}{
+			"status":   "unlinked",
+			"provider": provider,
+		})
+
+	case http.MethodPost:
+		// Link: redirect to OAuth flow (frontend handles redirect)
+		provider := r.URL.Query().Get("provider")
+		if provider == "" {
+			writeError(w, http.StatusBadRequest, "provider query param required")
+			return
+		}
+		writeJSON(w, http.StatusOK, map[string]interface{}{
+			"status":       "redirect_required",
+			"provider":     provider,
+			"redirect_url": "/api/v1/auth/social/" + provider,
+		})
+
 	default:
 		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
 	}

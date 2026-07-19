@@ -53,6 +53,7 @@ type Handler struct {
 	tapEngine              *tap.Engine
 	migrationEngine        *jitMigrationEngine
 	attrMapRepo            *attributeMappingRepo
+	pool                   *pgxpool.Pool
 	delRepo                *delegationRepo
 	tapPolicyRepo          *repository.TAPPolicyRepository
 	capRepo                *repository.ConditionalAccessRepository
@@ -129,6 +130,11 @@ func (h *Handler) SetMigrationEngine(e *jitMigrationEngine) {
 // SetAttrMapRepo injects the attribute mapping repository.
 func (h *Handler) SetAttrMapRepo(r *attributeMappingRepo) {
 	h.attrMapRepo = r
+}
+
+// SetPool injects the DB pool for direct queries (account linking, etc).
+func (h *Handler) SetPool(pool *pgxpool.Pool) {
+	h.pool = pool
 }
 
 // SetDelegationRepo injects the delegation repository.

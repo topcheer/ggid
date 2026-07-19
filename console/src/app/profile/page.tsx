@@ -29,6 +29,47 @@ export default function EnhancedProfilePage() {
   const [devices, setDevices] = useState<Device[]>([]);
   const [loadingProfile, setLoadingProfile] = useState(true);
 
+  // MFA wizard state
+  const [mfaSetup, setMfaSetup] = useState<"idle" | "qr" | "backup">("idle");
+  const [qrCodeUrl, setQrCodeUrl] = useState("");
+  const [mfaSecret, setMfaSecret] = useState("");
+  const [totpCode, setTotpCode] = useState("");
+  const [verifying, setVerifying] = useState(false);
+  const [backupCodes, setBackupCodes] = useState<string[]>([]);
+
+  const setupTotp = async () => {
+    setMfaSetup("qr"); setTotpCode("");
+    try {
+      const res = await fetch(`${API_BASE}/api/v1/auth/mfa/setup`, { method: "POST", headers: { ...authHeader() } });
+      if (res.ok) { const d = await res.json(); setQrCodeUrl(d.qr_code_url || d.qr_url || ""); setMfaSecret(d.secret || d.otpauth_secret || ""); }
+    } catch { /* show error */ }
+  };
+
+  const verifyTotp = async () => {
+    setVerifying(true);
+    try {
+      const res = await fetch(`${API_BASE}/api/v1/auth/mfa/verify`, { method: "POST", headers: { "Content-Type": "application/json", ...authHeader() }, body: JSON.stringify({ code: totpCode }) });
+      if (res.ok) { const d = await res.json(); setBackupCodes(d.backup_codes || []); setMfaSetup("backup"); setMfaMethods(prev => [...prev, { type: "totp", name: "Authenticator App", enabled: true }]); }
+    } catch { /* error */ }
+    setVerifying(false);
+  };
+
+  const disableMfa = async (type: string) => {
+    if (!confirm(`Remove ${type} MFA method?`)) return;
+    try {
+      await fetch(`${API_BASE}/api/v1/auth/mfa/disable`, { method: "POST", headers: { "Content-Type": "application/json", ...authHeader() }, body: JSON.stringify({ method: type }) });
+      setMfaMethods(prev => prev.filter((m: any) => m.type !== type));
+    } catch { /* error */ }
+  };
+
+  const unlinkAccount = async (provider: string) => {
+    if (!confirm(`Unlink ${provider}?`)) return;
+    try {
+      await fetch(`${API_BASE}/api/v1/auth/account-linking/${provider.toLowerCase()}`, { method: "DELETE", headers: { ...authHeader() } });
+      setLinkedAccounts(prev => prev.filter(a => a.provider !== provider));
+    } catch { /* error */ }
+  }
+
   const API_BASE = process.env.NEXT_PUBLIC_API_URL || "";
 
   // Fetch real profile data
@@ -117,18 +158,82 @@ export default function EnhancedProfilePage() {
           </div>
           <div className={card}>
             <h3 className="mb-3 flex items-center gap-2 text-sm font-semibold uppercase text-gray-400"><Key className="h-4 w-4" /> {t("profile.mfaMethods")}</h3>
-            <div className="space-y-2">{mfaMethods.map((m: any, i: any) => (
-              <div key={i} className="flex items-center justify-between rounded-lg border p-3 dark:border-gray-700">
-                <div className="flex items-center gap-3">{m.type === "webauthn" ? <Fingerprint className="h-5 w-5 text-green-500" /> : m.type === "totp" ? <Smartphone className="h-5 w-5 text-blue-500" /> : <Phone className="h-5 w-5 text-gray-400" />}<div><span className="text-sm font-medium">{m.name}</span><p className="text-xs text-gray-400">{m.type}</p></div></div>
-                <button onClick={() => setMfaMethods(prev => prev.map((x: any, j: any) => j === i ? { ...x, enabled: !x.enabled } : x))} aria-pressed={m.enabled} className={`relative h-6 w-11 rounded-full transition ${m.enabled ? "bg-green-500" : "bg-gray-300 dark:bg-gray-700"}`}><span className={`absolute top-0.5 h-5 w-5 rounded-full bg-white transition ${m.enabled ? "left-5" : "left-0.5"}`} /></button>
+
+            {/* MFA Setup Wizard */}
+            {mfaSetup === "qr" && (
+              <div className="mb-4 rounded-lg border border-blue-200 dark:border-blue-900 bg-blue-50 dark:bg-blue-950/20 p-4">
+                <h4 className="text-sm font-medium mb-2">Scan QR Code</h4>
+                {qrCodeUrl ? (
+                  <img src={qrCodeUrl} alt="MFA QR Code" className="w-48 h-48 mx-auto rounded-lg" />
+                ) : (
+                  <div className="w-48 h-48 mx-auto flex items-center justify-center text-gray-400"><Loader2 className="w-8 h-8 animate-spin" /></div>
+                )}
+                <p className="text-xs text-gray-500 mt-2 text-center">Or enter manually: <code className="font-mono">{mfaSecret}</code></p>
+                <div className="mt-3">
+                  <input type="text" maxLength={6} value={totpCode} onChange={(e) => setTotpCode(e.target.value)} placeholder="Enter 6-digit code" className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-700 text-center text-lg font-mono tracking-widest" />
+                </div>
+                <div className="mt-2 flex gap-2">
+                  <button onClick={verifyTotp} disabled={totpCode.length !== 6 || verifying} className="flex-1 rounded-lg bg-blue-600 px-3 py-1.5 text-sm font-medium text-white disabled:opacity-50">
+                    {verifying ? <Loader2 className="w-4 h-4 animate-spin" /> : "Verify"}
+                  </button>
+                  <button onClick={() => { setMfaSetup("idle"); setQrCodeUrl(""); setTotpCode(""); }} className="rounded-lg border border-gray-300 px-3 py-1.5 text-sm">Cancel</button>
+                </div>
               </div>
-            ))}<button className="mt-2 flex items-center gap-1 rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-blue-700"><Plus className="h-3 w-3" /> {t("profile.addMfa")}</button></div>
+            )}
+
+            {mfaSetup === "backup" && (
+              <div className="mb-4 rounded-lg border border-green-200 dark:border-green-900 bg-green-50 dark:bg-green-950/20 p-4">
+                <h4 className="text-sm font-medium mb-2">Save Your Backup Codes</h4>
+                <div className="grid grid-cols-2 gap-1 font-mono text-sm">
+                  {backupCodes.map((code: string, i: any) => <div key={i} className="px-2 py-1 rounded bg-white dark:bg-gray-800">{code}</div>)}
+                </div>
+                <p className="text-xs text-gray-500 mt-2">Store these safely — each can be used once.</p>
+                <button onClick={() => setMfaSetup("idle")} className="mt-2 rounded-lg bg-green-600 px-3 py-1.5 text-sm font-medium text-white">I've Saved Them</button>
+              </div>
+            )}
+
+            {/* Existing MFA methods */}
+            <div className="space-y-2">
+              {mfaMethods.length === 0 && mfaSetup === "idle" && (
+                <p className="text-sm text-gray-400 py-2">No MFA methods enrolled. Enable TOTP to secure your account.</p>
+              )}
+              {mfaMethods.map((m: any, i: any) => (
+                <div key={i} className="flex items-center justify-between rounded-lg border p-3 dark:border-gray-700">
+                  <div className="flex items-center gap-3">{m.type === "webauthn" ? <Fingerprint className="h-5 w-5 text-green-500" /> : m.type === "totp" ? <Smartphone className="h-5 w-5 text-blue-500" /> : <Phone className="h-5 w-5 text-gray-400" />}<div><span className="text-sm font-medium">{m.name}</span><p className="text-xs text-gray-400">{m.type}</p></div></div>
+                  <button onClick={() => disableMfa(m.type)} className="rounded-lg border border-red-300 px-2 py-1 text-xs text-red-600 hover:bg-red-50 dark:hover:bg-red-950">Disable</button>
+                </div>
+              ))}
+              {mfaSetup === "idle" && (
+                <button onClick={setupTotp} className="mt-2 flex items-center gap-1 rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-blue-700">
+                  <Plus className="h-3 w-3" /> Enable TOTP
+                </button>
+              )}
+            </div>
           </div>
+
+          {/* Social Accounts */}
           <div className={card}>
             <h3 className="mb-3 flex items-center gap-2 text-sm font-semibold uppercase text-gray-400"><Globe className="h-4 w-4" /> {t("profile.linkedAccounts")}</h3>
-            <div className="space-y-2">{linkedAccounts.map((acc: any, i: any) => (
-              <div key={i} className="flex items-center justify-between rounded-lg border p-3 dark:border-gray-700"><div className="flex items-center gap-3"><Globe className="h-5 w-5 text-gray-400" /><div><span className="text-sm font-medium">{acc.provider}</span>{acc.email && <p className="text-xs text-gray-400">{acc.email}</p>}</div></div>{acc.connected ? <span className="flex items-center gap-1 px-2 py-0.5 rounded text-xs bg-green-100 dark:bg-green-900/30 text-green-600"><CheckCircle2 className="h-3 w-3" /> {t("profile.connected")}</span> : <button className="rounded-lg border border-gray-300 px-3 py-1 text-xs dark:border-gray-700">{t("profile.connect")}</button>}</div>
-            ))}</div>
+            <div className="space-y-2">
+              {linkedAccounts.length === 0 && <p className="text-sm text-gray-400 py-2">No linked social accounts.</p>}
+              {linkedAccounts.map((acc: any, i: any) => (
+                <div key={i} className="flex items-center justify-between rounded-lg border p-3 dark:border-gray-700">
+                  <div className="flex items-center gap-3"><Globe className="h-5 w-5 text-gray-400" /><div><span className="text-sm font-medium">{acc.provider}</span>{acc.email && <p className="text-xs text-gray-400">{acc.email}</p>}</div></div>
+                  {acc.connected ? (
+                    <button onClick={() => unlinkAccount(acc.provider)} className="rounded-lg border border-red-300 px-2 py-1 text-xs text-red-600 hover:bg-red-50 dark:hover:bg-red-950">Unlink</button>
+                  ) : (
+                    <a href={`${API_BASE}/api/v1/auth/social/${acc.provider.toLowerCase()}/connect`} className="rounded-lg border border-gray-300 px-3 py-1 text-xs dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800">Connect</a>
+                  )}
+                </div>
+              ))}
+              {/* Always-available providers */}
+              {["Google", "GitHub"].filter(p => !linkedAccounts.some(a => a.provider === p)).map(provider => (
+                <div key={provider} className="flex items-center justify-between rounded-lg border p-3 dark:border-gray-700">
+                  <div className="flex items-center gap-3"><Globe className="h-5 w-5 text-gray-400" /><span className="text-sm font-medium">{provider}</span></div>
+                  <a href={`${API_BASE}/api/v1/auth/social/${provider.toLowerCase()}/connect`} className="rounded-lg border border-gray-300 px-3 py-1 text-xs dark:border-gray-700 hover:bg-gray-50">Connect</a>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       )}
