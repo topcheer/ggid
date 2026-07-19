@@ -263,19 +263,24 @@ func (s *AuthService) Register(ctx context.Context, tenantID uuid.UUID, userID u
 		return err
 	}
 
-	// 2. Check if credential already exists
+	// 2. Check if credential already exists (CreateUserFromSocial may have created one with random password)
 	existing, err := s.credentialRepo.FindByIDentifier(ctx, tenantID, username)
 	if err != nil {
 		return fmt.Errorf("check existing credential: %w", err)
 	}
-	if existing != nil {
-		return ErrCredentialAlreadyExists
-	}
 
-	// 3. Hash password and create credential
+	// 3. Hash password
 	hash, err := crypto.HashPassword(password)
 	if err != nil {
 		return err
+	}
+
+	if existing != nil {
+		// Credential exists (created by CreateUserFromSocial with random password) — update it with real password
+		if err := s.credentialRepo.UpdateSecret(ctx, existing.ID, hash); err != nil {
+			return fmt.Errorf("update credential secret: %w", err)
+		}
+		return nil
 	}
 
 	cred := &domain.Credential{

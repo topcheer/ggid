@@ -232,15 +232,21 @@ func TestAuthService_Register_WeakPassword(t *testing.T) {
 func TestAuthService_Register_DuplicateUser(t *testing.T) {
 	credRepo := newMockCredRepo()
 	rdb := newTestRedis(t)
-	credRepo.byIdentifier["existing"] = &domain.Credential{UserID: uuid.New()}
+	existingCred := &domain.Credential{ID: uuid.New(), UserID: uuid.New()}
+	credRepo.byIdentifier["existing"] = existingCred
 	svc := &AuthService{
 		cfg:             conf.Default(),
 		credentialRepo:  credRepo,
 		passwordService: NewPasswordService(conf.Default().Password, credRepo, rdb),
 	}
+	// Duplicate user now updates the credential (CreateUserFromSocial may have created one)
 	err := svc.Register(context.Background(), uuid.New(), uuid.New(), "existing", "StrongPass123")
-	if err == nil {
-		t.Error("expected error for duplicate")
+	if err != nil {
+		t.Errorf("expected no error for duplicate (should update), got %v", err)
+	}
+	// Verify the credential was updated
+	if credRepo.byID[existingCred.ID] == nil {
+		t.Error("expected credential to be updated")
 	}
 }
 
