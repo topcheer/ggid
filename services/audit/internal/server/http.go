@@ -23,6 +23,7 @@ import (
 	"github.com/ggid/ggid/services/audit/internal/domain"
 	"github.com/ggid/ggid/services/audit/internal/repository"
 	"github.com/ggid/ggid/services/audit/internal/service"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/google/uuid"
 )
 
@@ -83,6 +84,14 @@ func (s *HTTPServer) SetCCMRepository(repo *repository.CCMRepository) {
 // SetComplianceMappingRepo injects the compliance mapping PG repository.
 func (s *HTTPServer) SetComplianceMappingRepo(repo *repository.ComplianceMappingRepository) {
 	s.complianceMappingRepo = repo
+}
+
+// SetCCMPool injects the DB pool into the CCM engine for real compliance queries.
+func (s *HTTPServer) SetCCMPool(pool *pgxpool.Pool) {
+	if s.ccmEngine == nil {
+		s.ccmEngine = NewCCMEngine()
+	}
+	s.ccmEngine.SetPool(pool)
 }
 
 // NewHTTPServer creates a new Audit Service HTTP server.

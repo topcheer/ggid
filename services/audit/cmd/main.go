@@ -194,6 +194,7 @@ func main() {
 			log.Printf("Warning: CCM EnsureSchema failed: %v", err)
 		}
 		httpAPI.SetCCMRepository(ccmRepo)
+		httpAPI.SetCCMPool(db) // KB-346: enable real DB queries in CCM engine
 
 		// Start async collector goroutine.
 		collector := httpserver.NewIntelCollector(threatRepo)
