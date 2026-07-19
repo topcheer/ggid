@@ -171,39 +171,48 @@
 | `GET /api/v1/audit/export` | **REAL** | PG query + CSV generation |
 | `GET /api/v1/audit/stream` (SSE) | **REAL** | PG poll + SSE push |
 
-### ITDR Detection — WIRED (logic exists, not background-processed)
+### ITDR Detection — REAL (NATS-wired, processing events)
 
 | Component | Status | Evidence |
 |-----------|--------|----------|
-| Detection Engine (`engine.go`) | **WIRED** | 15 rules with real Evaluate() logic, but `Engine.Evaluate()` is called manually, NOT via NATS subscriber. No `nats.Subscribe()` in audit service. |
-| BruteForceRule | **REAL logic** | Tracks failed login count via StateStore |
-| ImpossibleTravelRule | **REAL logic** | Geo-distance + time calculation |
-| CredentialStuffingRule | **REAL logic** | Pattern matching across IPs |
-| OffHoursAdminRule | **REAL logic** | Time-window + role check |
-| TokenReplayRule | **REAL logic** | jti tracking |
-| 10 additional rules (KB-192) | **REAL logic** | All have Evaluate() implementations |
+| NATS consumer wiring | **REAL** | `nats_consumer.go:174`: `c.engine.Evaluate(ctx, &event)` called on every persisted event |
+| Detection Engine (`engine.go`) | **REAL** | 15 rules, all with real Evaluate() logic, wired in main.go:104-126 |
+| BruteForceRule | **REAL** | Tracks failed login count via StateStore |
+| ImpossibleTravelRule | **REAL** | Geo-distance + time calculation |
+| CredentialStuffingRule | **REAL** | Pattern matching across IPs |
+| OffHoursAdminRule | **REAL** | Time-window + role check |
+| TokenReplayRule | **REAL** | jti tracking |
+| 10 additional rules (KB-192) | **REAL** | All have Evaluate() implementations |
+| ITDR → CAE callback | **REAL** | `nats_consumer.go:188`: critical detections publish `ggid.session.revoke` |
+| StateStore | **REAL** | Redis-backed (multi-replica safe) or in-memory fallback |
+| ITDR persistence | **REAL** | Detections stored in PG via `ITDRRepository` |
 
-**Gap**: The detection engine has 15 real rules with proper logic, but there is NO background goroutine subscribing to NATS to feed events into `Engine.Evaluate()`. The engine must be called explicitly via API. In production with NATS running, audit events are persisted to PG but NOT processed through the detection engine in real-time.
+**Correction**: ITDR is fully wired. The NATS consumer (`nats_consumer.go`) subscribes to audit events, persists them, then calls `engine.Evaluate()` on each event. Critical detections trigger session revocation via NATS callback. This is a real-time threat detection pipeline.
 
-### CCM Engine — STUB (hardcoded metrics)
+### CCM Engine — STUB (hardcoded metrics, real persistence)
 
 | Component | Status | Evidence |
 |-----------|--------|----------|
-| `CCMEngine.RunAll()` | **STUB** | 15 controls with hardcoded metric values (e.g., `85.0, 92.0, "lt"`). Line 119-120 comment: "creates a CCMResult with simulated metric values. In production, these would query real data sources." |
-| CCM persistence | **REAL** | Results are persisted to PG `ccm_results` table when pool configured |
+| `CCMEngine.RunAll()` | **STUB** | 15 controls with hardcoded metric values. Code comment (line 119): "creates a CCMResult with simulated metric values. In production, these would query real data sources." |
+| CCM persistence | **REAL** | Results persisted to PG `ccm_results` table when pool configured |
 | CCM history retrieval | **REAL** | PG SELECT from ccm_results |
+| CCM summary/reporting | **REAL** | Aggregates stored results |
 
-**Gap**: CCM has 15 well-defined controls with proper names, categories, and thresholds. However, `evalControl()` uses hardcoded metric values instead of querying real data sources (e.g., actual MFA enrollment count, actual dormant account count). The persistence layer is real — results are stored and retrieved from PG.
+**Gap**: CCM has 15 well-defined controls with proper names, categories, and thresholds. However, `evalControl()` uses hardcoded metric values instead of querying real data sources. The POST /ccm/run endpoint works (creates results + persists), but the metrics are not real. Results will show "pass" or "fail" based on hardcoded numbers, not actual security posture.
 
-### CAE (Continuous Access Evaluation) — WIRED (not background)
+### CAE (Continuous Access Evaluation) — PARTIAL (manual trigger, no background sweep)
 
 | Component | Status | Evidence |
 |-----------|--------|----------|
-| CAE handler | **REAL** | PG-backed evaluation store |
-| CAE evaluation logic | **REAL** | Session risk re-evaluation code exists |
-| Background goroutine | **MISSING** | No `go func()` or ticker for periodic session evaluation |
+| CAE handler `POST /cae/run` | **STUB** | Records a synthetic evaluation (line 82: "manual-sweep"), does NOT scan active sessions table |
+| CAE status `GET /cae/status` | **REAL** | PG COUNT from cae_evaluations |
+| CAE log `GET /cae/log` | **REAL** | PG SELECT from cae_evaluations |
+| `EvaluateSessionForCAE()` | **REAL** | Evaluates single session against CAP policies (programmatic API) |
+| CAP policy evaluation | **REAL** | `capRepo.Evaluate()` checks IP/risk/auth-method conditions |
+| Background goroutine | **MISSING** | No ticker/goroutine for periodic session sweep |
+| Session table scan | **MISSING** | `caeRun` does not query `sessions` table |
 
-**Gap**: CAE evaluations can be triggered via API but do NOT run automatically in the background. There is no goroutine that periodically checks active sessions against current policies.
+**Gap**: CAE has the evaluation logic (`EvaluateSessionForCAE` is real), but the POST /cae/run endpoint doesn't actually scan the sessions table — it just records a synthetic "manual-sweep" evaluation. There is no background goroutine. The infrastructure exists but the active session scanning is not implemented.
 
 ---
 
@@ -236,23 +245,22 @@
 | OAuth | 12 | 2 | 0 | 14 |
 | Policy | 8 | 10 | 0 | 18 |
 | Org | 4 | 0 | 0 | 4 |
-| Audit | 4 | 1 (CCM) | 0 | 5 |
+| Audit | 4+ITDR | 1 (CCM) | 0 | 5 |
 | Gateway | 9 | 0 | 0 | 9 |
-| **Total** | **61** | **29** | **10** | **100** |
+| **Total** | **63** | **29** | **10** | **100** |
 
 ### Severity Assessment
 
 | Category | Count | Impact |
 |----------|-------|--------|
 | **Critical (core CRUD)** | 0 | All core CRUD endpoints are REAL |
-| **High (security features)** | 3 | CCM metrics hardcoded, CAE no background, ITDR no NATS subscriber |
+| **High (security features)** | 2 | CCM metrics hardcoded, CAE no background sweep |
 | **Medium (analytics/advisory)** | 29 | STUB endpoints return realistic-looking demo data |
 | **Low (NIL-fALLBACK)** | 10 | Graceful empty responses when DB not configured |
 
 ### Top 5 Priorities for v1.1
 
-1. **ITDR background processing**: Wire NATS subscriber → `Engine.Evaluate()` for real-time threat detection
-2. **CCM real queries**: Replace hardcoded metrics in `evalControl()` with actual DB queries (user count, MFA coverage, dormant accounts)
-3. **CAE background goroutine**: Add periodic session evaluation ticker
+1. **CCM real queries**: Replace hardcoded metrics in `evalControl()` with actual DB queries
+2. **CAE background sweep**: Add goroutine for periodic active session evaluation
 4. **SCIM Groups**: Replace in-memory mock with PG-backed store
 5. **Policy advanced**: Wire standing-access, impact-preview, role-mining to real data queries
