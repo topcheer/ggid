@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"net/http"
 	"strings"
+
+	"github.com/google/uuid"
 )
 
 // handleRolesSubpath dispatches /api/v1/roles/{id} and /api/v1/roles/{id}/permissions
@@ -11,7 +13,21 @@ func (s *HTTPServer) handleRolesSubpath(w http.ResponseWriter, r *http.Request) 
 	path := r.URL.Path
 	// /api/v1/roles/{id}/permissions
 	if strings.HasSuffix(path, "/permissions") {
-		s.handleRoleRoutePermissions(w, r)
+		// GET/PUT → route-based RBAC (new)
+		// POST/DELETE → permission boundary (legacy, used by existing tests)
+		if r.Method == http.MethodGet || r.Method == http.MethodPut {
+			s.handleRoleRoutePermissions(w, r)
+			return
+		}
+		// Extract role ID from path for legacy handler
+		parts := strings.Split(strings.TrimSuffix(path, "/permissions"), "/")
+		roleIDStr := parts[len(parts)-1]
+		roleID, err := uuid.Parse(roleIDStr)
+		if err != nil {
+			writeJSONError(w, http.StatusBadRequest, "invalid role ID")
+			return
+		}
+		s.handleRolePermissions(w, r, roleID)
 		return
 	}
 	// /api/v1/roles/{id}
