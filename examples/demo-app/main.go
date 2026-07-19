@@ -74,8 +74,7 @@ func handleHome(w http.ResponseWriter, r *http.Request) {
 	cookie, err := r.Cookie("demo_user")
 	if err == nil && cookie.Value != "" {
 		// Show logged-in page
-		userData := sessions.Load(cookie.Value)
-		if userData != nil {
+		if userData, ok := sessions.Load(cookie.Value); ok && userData != nil {
 			showWelcome(w, userData.(map[string]any))
 			return
 		}
