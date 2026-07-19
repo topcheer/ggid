@@ -112,6 +112,15 @@ func JWTClaimExtraction(next http.Handler) http.Handler {
 		}
 		if len(claims.Scopes) > 0 {
 			r.Header.Set("X-Scopes", strings.Join(claims.Scopes, ","))
+			// Derive admin status from scopes for backward-compat with
+			// policy service's isAdminRequest() check.
+			for _, sc := range claims.Scopes {
+				if sc == "admin" || sc == "superadmin" || sc == "roles:write" || sc == "*" {
+					r.Header.Set("X-User-Role", sc)
+					r.Header.Set("X-Is-Admin", "true")
+					break
+				}
+			}
 		}
 		// Store in context
 		ctx := context.WithValue(r.Context(), claimsKey, claims)

@@ -296,6 +296,7 @@ func (s *HTTPServer) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("/api/v1/audit/ccm/results", s.handleCCM)
 	mux.HandleFunc("/api/v1/audit/ccm/history", s.handleCCM)
 	mux.HandleFunc("/api/v1/audit/ccm/run", s.handleCCM)
+	mux.HandleFunc("/api/v1/audit/ccm/scan", s.handleCCM)
 	mux.HandleFunc("/api/v1/audit/ccm/summary", s.handleCCM)
 }
 

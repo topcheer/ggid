@@ -15,12 +15,12 @@ func (s *HTTPServer) handleCCM(w http.ResponseWriter, r *http.Request) {
 		s.ccmResults(w, r)
 	case path == "/api/v1/audit/ccm/history" && r.Method == http.MethodGet:
 		s.ccmHistory(w, r)
-	case path == "/api/v1/audit/ccm/run" && r.Method == http.MethodPost:
+	case (path == "/api/v1/audit/ccm/run" || path == "/api/v1/audit/ccm/scan") && r.Method == http.MethodPost:
 		s.ccmRun(w, r)
 	case path == "/api/v1/audit/ccm/summary" && r.Method == http.MethodGet:
 		s.ccmSummary(w, r)
 	default:
-		errors.WriteSimpleAPIError(w, http.StatusMethodNotAllowed, "METHOD_NOT_ALLOWED", "method not allowed")
+		errors.WriteSimpleAPIError(w, http.StatusNotFound, "NOT_FOUND", "unknown CCM endpoint: "+path)
 	}
 }
 
