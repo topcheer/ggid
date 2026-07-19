@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useTranslations } from "@/lib/i18n";
 import { usePageTitle } from "@/lib/usePageTitle";
 import { authHeader } from "@/lib/auth-helpers";
+import { DEFAULT_TENANT_ID } from "@/lib/api-config";
 import { useUserRole } from "@/lib/api";
 import {
   Users, Activity, Shield, Clock, TrendingUp, AlertTriangle,
