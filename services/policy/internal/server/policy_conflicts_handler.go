@@ -74,14 +74,7 @@ func (s *HTTPServer) handlePolicyConflictsDetect(w http.ResponseWriter, r *http.
 		}
 	}
 
-	// If no real policies, return sample conflicts for demo
-	if len(conflicts) == 0 {
-		conflicts = []conflictPair{
-			{PolicyA: "pol-admin-full", PolicyB: "pol-deny-delete", Rule: "delete:users/*", OverlapType: "contradictory", Severity: "high", Detail: "One allows, one denies delete on users/*"},
-			{PolicyA: "pol-viewer-read", PolicyB: "pol-auditor-read", Rule: "read:audit/*", OverlapType: "duplicate", Severity: "low", Detail: "Both policies grant read on audit/*"},
-			{PolicyA: "pol-engineering", PolicyB: "pol-security", Rule: "*:config/*", OverlapType: "subset", Severity: "medium", Detail: "Engineering policy is a subset of security policy"},
-		}
-	}
+	// Return empty list if no real conflicts found (no mock data)
 
 	bySeverity := map[string]int{}
 	for _, c := range conflicts {

@@ -314,6 +314,31 @@ func (e *CCMEngine) GetHistory(controlID string, limit int) []CCMResult {
 		limit = 100
 	}
 
+	// Try PG repo first for persisted history
+	if e.repo != nil {
+		ctx := context.Background()
+		// Use tenant from first stored result as fallback
+		records, err := e.repo.ListHistory(ctx, uuid.Nil, controlID, limit)
+		if err == nil && len(records) > 0 {
+			var result []CCMResult
+			for _, rec := range records {
+				result = append(result, CCMResult{
+					ControlID:   rec.ControlID,
+					Name:        rec.Name,
+					Category:    rec.Category,
+					Status:      rec.Status,
+					Metric:      rec.Metric,
+					Threshold:   rec.Threshold,
+					Direction:   rec.Direction,
+					CheckedAt:   rec.CheckedAt,
+					Details:     rec.Details,
+				})
+			}
+			return result
+		}
+	}
+
+	// Fallback to in-memory history
 	var result []CCMResult
 	for i := len(e.history) - 1; i >= 0 && len(result) < limit; i-- {
 		if controlID == "" || e.history[i].ControlID == controlID {
