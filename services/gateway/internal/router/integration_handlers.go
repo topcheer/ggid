@@ -1,7 +1,10 @@
 package router
 
 import (
+	"bytes"
 	"encoding/json"
+	"io"
+	"log"
 	"net/http"
 	"strings"
 	"time"
@@ -135,6 +138,16 @@ type BootstrapRequest struct {
 	TenantName    string `json:"tenant_name"`
 }
 
+// serviceURL returns the backend URL for a given service prefix.
+func (gw *Gateway) serviceURL(prefix string) string {
+	if gw.cfg != nil && gw.cfg.Routes != nil {
+		if url, ok := gw.cfg.Routes[prefix]; ok {
+			return url
+		}
+	}
+	return "http://localhost:9001" // fallback to auth default
+}
+
 // handleSystemBootstrap initializes the system with admin + tenant + roles.
 // POST /api/v1/system/bootstrap
 //
@@ -166,31 +179,85 @@ func (gw *Gateway) handleSystemBootstrap(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	tenantID := uuid.New()
-	userID := uuid.New()
 	if req.TenantName == "" {
 		req.TenantName = "Default Organization"
 	}
 
-	// In production, this would:
-	// 1. Create tenant in identity service
-	// 2. Create admin user credential in auth service
-	// 3. Assign admin role
-	// 4. Seed default policies
-	// 5. Generate JWT token
-	// For now, return the IDs so the frontend wizard can proceed.
+	// Step 1: Check if bootstrap was already done (tenant exists).
+	// Use the default tenant ID that seed.sh creates.
+	tenantID := uuid.MustParse("00000000-0000-0000-0000-000000000001")
+
+	// Step 2: Register admin user via auth service.
+	authURL := gw.serviceURL("/api/v1/auth")
+	client := &http.Client{Timeout: 10 * time.Second}
+
+	regBody, _ := json.Marshal(map[string]string{
+		"username":  req.AdminUsername,
+		"email":     req.AdminEmail,
+		"password":  req.AdminPassword,
+		"name":      req.AdminUsername,
+		"tenant_id": tenantID.String(),
+	})
+	regResp, err := client.Post(authURL+"/api/v1/auth/register", "application/json", bytes.NewReader(regBody))
+	if err != nil {
+		log.Printf("bootstrap: register call failed: %v", err)
+		writeGatewayJSONError(w, http.StatusBadGateway, "auth service unreachable: "+err.Error())
+		return
+	}
+	regRespBody, _ := io.ReadAll(regResp.Body)
+	regResp.Body.Close()
+
+	if regResp.StatusCode == http.StatusConflict {
+		// User already exists — this is OK for bootstrap retry.
+		writeGatewayJSON(w, http.StatusOK, map[string]any{
+			"status":         "already_initialized",
+			"tenant_id":      tenantID.String(),
+			"tenant_name":    req.TenantName,
+			"admin_username": req.AdminUsername,
+			"message":        "Admin user already exists. Use POST /api/v1/auth/login to get tokens.",
+		})
+		return
+	}
+	if regResp.StatusCode != http.StatusCreated {
+		writeGatewayJSONError(w, http.StatusInternalServerError, "failed to register admin: "+string(regRespBody))
+		return
+	}
+
+	var regResult map[string]any
+	json.Unmarshal(regRespBody, &regResult)
+	adminUserID, _ := regResult["user_id"].(string)
+
+	// Step 3: Login to get JWT token.
+	loginBody, _ := json.Marshal(map[string]string{
+		"username": req.AdminUsername,
+		"password": req.AdminPassword,
+	})
+	loginResp, err := client.Post(authURL+"/api/v1/auth/login", "application/json", bytes.NewReader(loginBody))
+	if err != nil {
+		writeGatewayJSONError(w, http.StatusBadGateway, "login failed after registration: "+err.Error())
+		return
+	}
+	loginRespBody, _ := io.ReadAll(loginResp.Body)
+	loginResp.Body.Close()
+
+	var loginResult map[string]any
+	json.Unmarshal(loginRespBody, &loginResult)
+
+	log.Printf("bootstrap: admin user %s registered, login status: %d", req.AdminUsername, loginResp.StatusCode)
 
 	writeGatewayJSON(w, http.StatusCreated, map[string]any{
-		"status":     "bootstrapped",
-		"tenant_id":  tenantID.String(),
-		"tenant_name": req.TenantName,
-		"admin_user_id": userID.String(),
-		"admin_username": req.AdminUsername,
-		"message":    "System initialized. Use POST /api/v1/auth/login with admin credentials to get tokens.",
+		"status":          "bootstrapped",
+		"tenant_id":       tenantID.String(),
+		"tenant_name":     req.TenantName,
+		"admin_user_id":   adminUserID,
+		"admin_username":  req.AdminUsername,
+		"access_token":    loginResult["access_token"],
+		"refresh_token":   loginResult["refresh_token"],
+		"message":         "System initialized successfully.",
 		"next_steps": []string{
-			"POST /api/v1/auth/login to get admin JWT",
-			"GET /api/v1/webhooks/events/catalog to see subscribable events",
-			"POST /api/v1/tenants to create additional tenants",
+			"POST /api/v1/users to create more users",
+			"POST /api/v1/users/{id}/roles to assign roles",
+			"GET /api/v1/system/health to check system status",
 		},
 	})
 }
