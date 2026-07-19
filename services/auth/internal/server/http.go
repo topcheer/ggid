@@ -661,7 +661,19 @@ func (h *Handler) login(w http.ResponseWriter, r *http.Request) {
 
 	// Audit: login success
 	if tc, err := ggidtenant.FromContext(r.Context()); err == nil {
-		event := audit.NewEvent("user.login", "success", tc.TenantID, *authResult.LinkedUser)
+		// Extract user ID from the access token for audit
+		actorID := uuid.Nil
+		if tokens != nil {
+			claims := jwt.MapClaims{}
+			if _, perr := jwt.ParseWithClaims(tokens.AccessToken, claims, func(t *jwt.Token) (any, error) {
+				return h.authSvc.PublicKey(), nil
+			}); perr == nil {
+				if sub, ok := claims["sub"].(string); ok {
+					actorID, _ = uuid.Parse(sub)
+				}
+			}
+		}
+		event := audit.NewEvent("user.login", "success", tc.TenantID, actorID)
 		event.ActorName = req.Username
 		if fwd := r.Header.Get("X-Forwarded-For"); fwd != "" {
 			event.IPAddress = strings.TrimSpace(strings.Split(fwd, ",")[0])
@@ -1076,7 +1088,7 @@ func (h *Handler) handleSessions(w http.ResponseWriter, r *http.Request) {
 		// Resolve username from identity service
 		username := ""
 		if ic := h.authSvc.IdentityClient(); ic != nil {
-			if u, err := ic.GetUser(r.Context(), tenantID, userID); err == nil && u != nil {
+			if u, err := ic.GetUserByID(r.Context(), tenantID, userID); err == nil && u != nil {
 				username = u.Username
 			}
 		}
