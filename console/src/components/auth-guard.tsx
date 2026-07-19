@@ -60,22 +60,23 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
 
       // Route-level permission check: block direct URL access to admin pages
       const ADMIN_PREFIXES: Record<string, string> = {
-        "/users": "manager", "/roles": "manager", "/audit": "manager",
-        "/organizations": "manager", "/sessions": "manager",
-        "/settings": "manager", "/api-keys": "admin", "/oauth-clients": "manager",
-        "/webhooks": "admin", "/policies": "manager", "/security/": "manager",
-        "/access-requests": "user", "/analytics/": "manager", "/monitoring/": "manager",
+        "/users": "tenant", "/roles": "tenant", "/audit": "tenant",
+        "/organizations": "tenant", "/sessions": "user",
+        "/settings": "tenant", "/api-keys": "platform", "/oauth-clients": "tenant",
+        "/webhooks": "platform", "/policies": "tenant", "/security/": "tenant",
+        "/access-requests": "user", "/analytics/": "tenant", "/monitoring/": "tenant",
+        "/admin": "platform",
       };
+      const userScopes = JSON.parse(localStorage.getItem("ggid_user_scopes") || '["user:self"]');
+      const isPlatform = userScopes.some((s: string) => s === "platform:admin" || s === "admin");
+      const isTenant = userScopes.some((s: string) => s === "tenant:admin" || s === "manager" || isPlatform);
       for (const [prefix, scope] of Object.entries(ADMIN_PREFIXES)) {
         if (pathname.startsWith(prefix)) {
-          const userScopes = JSON.parse(localStorage.getItem("ggid_user_scopes") || '["user"]');
-          const hasAdmin = userScopes.includes("admin");
-          const hasManager = userScopes.includes("manager") || hasAdmin;
-          if (scope === "manager" && !hasManager) {
+          if (scope === "tenant" && !isTenant) {
             router.replace("/dashboard");
             return;
           }
-          if (scope === "admin" && !hasAdmin) {
+          if (scope === "platform" && !isPlatform) {
             router.replace("/dashboard");
             return;
           }
