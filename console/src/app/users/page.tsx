@@ -892,6 +892,7 @@ export default function UsersPage() {
                         {user.roles && Array.isArray(user.roles) && user.roles.length > 0 ? (
                           user.roles.map((role: any, idx: number) => {
                             const name = typeof role === "string" ? role : (role.role_name || role.name || role.role_id || "—");
+                            if (idx >= 2) return null;
                             return (
                               <span key={idx} className="rounded-full px-2 py-0.5 text-xs font-medium bg-indigo-50 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300">
                                 {name}
@@ -900,6 +901,11 @@ export default function UsersPage() {
                           })
                         ) : (
                           <span className="text-xs text-gray-300">—</span>
+                        )}
+                        {user.roles && Array.isArray(user.roles) && user.roles.length > 2 && (
+                          <span className="text-xs text-gray-400" title={user.roles.slice(2).map(function(r:any){return typeof r==='string'?r:r.role_name||r.name||''}).join(', ')}>
+                            +{user.roles.length - 2}
+                          </span>
                         )}
                       </div>
                     </td>
