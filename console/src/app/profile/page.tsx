@@ -45,6 +45,7 @@ export default function EnhancedProfilePage() {
 
   // MFA wizard state
   const [mfaSetup, setMfaSetup] = useState<"idle" | "qr" | "backup">("idle");
+  const [deviceId, setDeviceId] = useState("");
   const [qrCodeUrl, setQrCodeUrl] = useState("");
   const [mfaSecret, setMfaSecret] = useState("");
   const [totpCode, setTotpCode] = useState("");
@@ -54,15 +55,28 @@ export default function EnhancedProfilePage() {
   const setupTotp = async () => {
     setMfaSetup("qr"); setTotpCode("");
     try {
-      const res = await fetch(`${API_BASE}/api/v1/auth/mfa/setup`, { method: "POST", headers: { ...authHeader() } });
-      if (res.ok) { const d = await res.json(); setQrCodeUrl(d.qr_code_url || d.qr_url || ""); setMfaSecret(d.secret || d.otpauth_secret || ""); }
+      const res = await fetch(`${API_BASE}/api/v1/auth/mfa/setup`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", ...authHeader() },
+        body: JSON.stringify({ method: "totp" }),
+      });
+      if (res.ok) {
+        const d = await res.json();
+        setQrCodeUrl(d.qr_code_url || d.qr_code_uri || d.qr_url || "");
+        setMfaSecret(d.secret || d.otpauth_secret || "");
+        setDeviceId(d.device_id || "");
+      }
     } catch { /* show error */ }
   };
 
   const verifyTotp = async () => {
     setVerifying(true);
     try {
-      const res = await fetch(`${API_BASE}/api/v1/auth/mfa/verify`, { method: "POST", headers: { "Content-Type": "application/json", ...authHeader() }, body: JSON.stringify({ code: totpCode }) });
+      const res = await fetch(`${API_BASE}/api/v1/auth/mfa/verify`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", ...authHeader() },
+        body: JSON.stringify({ device_id: deviceId, code: totpCode }),
+      });
       if (res.ok) { const d = await res.json(); setBackupCodes(d.backup_codes || []); setMfaSetup("backup"); setMfaMethods(prev => [...prev, { type: "totp", name: "Authenticator App", enabled: true }]); }
     } catch { /* error */ }
     setVerifying(false);
@@ -298,7 +312,16 @@ export default function EnhancedProfilePage() {
                 ) : (
                   <div className="w-48 h-48 mx-auto flex items-center justify-center text-gray-400"><Loader2 className="w-8 h-8 animate-spin" /></div>
                 )}
-                <p className="text-xs text-gray-500 mt-2 text-center">Or enter manually: <code className="font-mono">{mfaSecret}</code></p>
+                {mfaSecret && (
+                  <div className="mt-2 rounded-lg bg-gray-100 dark:bg-gray-800 p-3 text-center">
+                    <p className="text-xs text-gray-500 mb-1">Or enter this key manually:</p>
+                    <code className="font-mono text-sm text-gray-900 dark:text-gray-100 select-all break-all">{mfaSecret}</code>
+                    <button
+                      onClick={() => { navigator.clipboard.writeText(mfaSecret); }}
+                      className="ml-2 text-xs text-blue-600 hover:underline"
+                    >Copy</button>
+                  </div>
+                )}
                 <div className="mt-3">
                   <input type="text" maxLength={6} value={totpCode} onChange={(e) => setTotpCode(e.target.value)} placeholder="Enter 6-digit code" className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-700 text-center text-lg font-mono tracking-widest" />
                 </div>
