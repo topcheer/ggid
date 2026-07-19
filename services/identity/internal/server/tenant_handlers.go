@@ -74,8 +74,12 @@ func (h *HTTPHandler) handleSystemInitialized(w http.ResponseWriter, r *http.Req
 
 	ctx := r.Context()
 	var tenantCount, userCount int
-	_ = h.svc.Pool().QueryRow(ctx, `SELECT count(*) FROM tenants`).Scan(&tenantCount)
-	_ = h.svc.Pool().QueryRow(ctx, `SELECT count(*) FROM users WHERE deleted_at IS NULL`).Scan(&userCount)
+	if err := h.svc.Pool().QueryRow(ctx, `SELECT count(*) FROM tenants`).Scan(&tenantCount); err != nil {
+		tenantCount = 0
+	}
+	if err := h.svc.Pool().QueryRow(ctx, `SELECT count(*) FROM users WHERE deleted_at IS NULL`).Scan(&userCount); err != nil {
+		userCount = 0
+	}
 
 	writeJSON(w, http.StatusOK, map[string]any{
 		"initialized":  tenantCount > 0 && userCount > 0,
@@ -186,8 +190,10 @@ func (h *HTTPHandler) handleSystemBootstrap(w http.ResponseWriter, r *http.Reque
 	}
 
 	var roleIDStr string
-	_ = h.svc.Pool().QueryRow(ctx,
-		`SELECT id::text FROM roles WHERE tenant_id = $1 AND key = 'admin'`, tenantID).Scan(&roleIDStr)
+	if err := h.svc.Pool().QueryRow(ctx,
+		`SELECT id::text FROM roles WHERE tenant_id = $1 AND key = 'admin'`, tenantID).Scan(&roleIDStr); err != nil {
+		slog.Error("bootstrap: failed to get admin role ID", "error", err)
+	}
 
 	if roleIDStr != "" {
 		roleID, _ := uuid.Parse(roleIDStr)

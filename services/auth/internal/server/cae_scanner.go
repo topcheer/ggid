@@ -83,7 +83,9 @@ func (h *Handler) runCAESweep(ctx context.Context, pool *pgxpool.Pool) {
 			log.Printf("CAE: session %s denied for user %s (policy=%s), revoking", sessionID, userID, action)
 
 			// Revoke the session: delete it from the DB and invalidate tokens.
-			_, _ = pool.Exec(ctx, `DELETE FROM sessions WHERE id = $1`, sessionID)
+			if _, err := pool.Exec(ctx, `DELETE FROM sessions WHERE id = $1`, sessionID); err != nil {
+				log.Printf("CAE: failed to delete session %s: %v", sessionID, err)
+			}
 
 			// Publish session revocation event for other services.
 			if h.auditPublisher != nil {

@@ -6,8 +6,35 @@ linters:
   disable-all: true
   enable:
     - govet
+    - errcheck
+
+linters-settings:
+  errcheck:
+    # Exclude writing to http.ResponseWriter — encoding errors are not actionable
+    # (client may have disconnected). Log these instead at the handler level.
+    exclude-functions:
+      - (net/http.ResponseWriter).Write
+      - (io.Writer).Write
+    check-type-assertions: false
+    check-blank: false
 
 issues:
   exclude-rules:
+    # Relax all linters for test files
     - path: _test\.go
       linters: [all]
+    # errcheck: allow ignored returns from json encoding in HTTP handlers
+    # (standard Go pattern — encoding errors on response writes are not actionable)
+    - path: services/.*/internal/(server|router)/.*\.go
+      linters: [errcheck]
+      text: "json\\.NewEncoder|json\\.Marshal|Encode"
+    # errcheck: allow ignored pool.Exec in repos that use nil-pool fallback
+    - path: services/.*/internal/repository/.*\.go
+      linters: [errcheck]
+      text: "pool\\.Exec|pool\\.QueryRow"
+    # errcheck: allow ignored audit publish (best-effort by design)
+    - path: services/
+      linters: [errcheck]
+      text: "PublishAsync|auditPub\\.Publish|publishAuditEvent"
+  max-issues-per-linter: 0
+  max-same-issues: 0

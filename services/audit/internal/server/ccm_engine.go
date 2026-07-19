@@ -3,6 +3,7 @@ package httpserver
 import (
 	"context"
 	"encoding/json"
+	"log/slog"
 	"sync"
 	"time"
 
@@ -131,7 +132,9 @@ func (e *CCMEngine) RunAll() []*CCMResult {
 				CheckedAt:    now,
 			})
 		}
-		_ = e.repo.StoreBatch(context.Background(), records)
+		if err := e.repo.StoreBatch(context.Background(), records); err != nil {
+			slog.Warn("CCM StoreBatch failed", "error", err)
+		}
 	}
 
 	return results
