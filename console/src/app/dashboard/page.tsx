@@ -105,25 +105,36 @@ export default function DashboardPage() {
             {/* Secondary stats */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <KPICard icon={TrendingUp} label={t("dashboardEnhanced.kpi.newUsers")} value={kpi.newUsers7d} color="text-blue-600" />
-              <KPICard icon={AlertTriangle} label={t("dashboardEnhanced.kpi.failedLogins")} value={kpi.failedLogins24h} color="text-red-500" />
+              <button onClick={() => window.location.href = '/audit?result=failure'} className="text-left">
+                <div className={`bg-white dark:bg-gray-900 rounded-xl border p-4 ${kpi.failedLogins24h > 50 ? 'border-red-400 dark:border-red-600 ring-1 ring-red-200 dark:ring-red-900' : 'border-gray-200 dark:border-gray-800'}`}>
+                  <div className="flex items-center gap-2 mb-2">
+                    <AlertTriangle className={`w-5 h-5 ${kpi.failedLogins24h > 50 ? 'text-red-600 animate-pulse' : 'text-red-500'}`} />
+                    <span className="text-xs text-gray-500 dark:text-gray-400">{t("dashboardEnhanced.kpi.failedLogins")}</span>
+                    {kpi.failedLogins24h > 50 && <span className="ml-auto text-[10px] font-bold uppercase text-red-600 dark:text-red-400 bg-red-100 dark:bg-red-900/30 px-1.5 py-0.5 rounded">Alert</span>}
+                  </div>
+                  <div className={`text-2xl font-bold ${kpi.failedLogins24h > 50 ? 'text-red-600 dark:text-red-400' : 'text-gray-900 dark:text-white'}`}>{kpi.failedLogins24h}</div>
+                  {kpi.failedLogins24h > 50 && <div className="text-xs text-red-500 mt-0.5">Investigate →</div>}
+                </div>
+              </button>
               <KPICard icon={KeyRound} label={t("dashboardEnhanced.kpi.oauthClients")} value={kpi.oauthClients} color="text-green-600" />
             </div>
           </div>
         )}
 
-        {/* Quick Links — always shown */}
-        <div className="pt-4 border-t border-gray-200 dark:border-gray-800">
-          <h2 className="text-sm font-semibold text-gray-900 dark:text-white mb-3 flex items-center gap-2">
+        {/* Quick Links — collapsible to save first-screen space */}
+        <details className="pt-4 border-t border-gray-200 dark:border-gray-800">
+          <summary className="cursor-pointer text-sm font-semibold text-gray-900 dark:text-white mb-3 flex items-center gap-2 list-none">
             <FileText className="w-4 h-4 text-blue-600" />
             {t("dashboardEnhanced.quickLinks.title")}
-          </h2>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            <span className="text-xs text-gray-400 ml-1">(click to expand)</span>
+          </summary>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-3">
             <QuickLink icon={BookOpen} label={t("dashboardEnhanced.quickLinks.apiDocs")} desc={t("dashboardEnhanced.quickLinks.apiDocsDesc")} href="/docs" />
             <QuickLink icon={Code} label={t("dashboardEnhanced.quickLinks.sdkExamples")} desc={t("dashboardEnhanced.quickLinks.sdkExamplesDesc")} href="/docs" />
             <QuickLink icon={Rocket} label={t("dashboardEnhanced.quickLinks.deployGuide")} desc={t("dashboardEnhanced.quickLinks.deployGuideDesc")} href="https://github.com/topcheer/ggid" />
             <QuickLink icon={GithubIcon as any} label={t("dashboardEnhanced.quickLinks.github")} desc={t("dashboardEnhanced.quickLinks.githubDesc")} href="https://github.com/topcheer/ggid" />
           </div>
-        </div>
+        </details>
       </div>
     </div>
   );
