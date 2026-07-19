@@ -132,25 +132,10 @@ function OverviewTab() {
           deprecation_level: data.deprecation_level ?? "read_only",
         });
       } else {
-        // Use mock data when endpoint not ready
-        setStats({
-          total_users: 100,
-          passwordless_users: 42,
-          pending_users: 58,
-          nudged_users: 15,
-          migration_rate: 42,
-          deprecation_level: "read_only",
-        });
+        setStats({ total_users: 0, passwordless_users: 0, pending_users: 0, nudged_users: 0 });
       }
     } catch {
-      setStats({
-        total_users: 100,
-        passwordless_users: 42,
-        pending_users: 58,
-        nudged_users: 15,
-        migration_rate: 42,
-        deprecation_level: "read_only",
-      });
+      setStats(null);
     } finally {
       setLoading(false);
     }

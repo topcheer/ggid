@@ -22,8 +22,10 @@ export default function AuditLogViewerPage() {
             "X-Tenant-ID": "00000000-0000-0000-0000-000000000001",
           },
         });
-        if (!res.ok) return null;
+        if (!res.ok) return;
         const json = await res.json();
+        const items = json.events || json.items || [];
+        setEvents(items.map((e: any) => ({ id: e.id || '', timestamp: e.timestamp || e.created_at || '', actor: e.actor || e.user_id || '', action: e.action || '', resource: e.resource || '', tenant: e.tenant || 'default', severity: e.severity || 'info', ip: e.ip || '' })));
       } catch (e) {
         setError(e instanceof Error ? e.message : "Failed to load");
       } finally {
@@ -36,13 +38,7 @@ export default function AuditLogViewerPage() {
   const [severityFilter, setSeverityFilter] = useState('all');
   const [actionFilter, setActionFilter] = useState('');
   const [selected, setSelected] = useState<AuditEvent | null>(null);
-  const [realtime, setRealtime] = useState(true);const [events] = useState<AuditEvent[]>([
-    { id: 'e1', timestamp: '2026-07-12 14:32:15', actor: 'admin@ggid.io', action: 'user.create', resource: 'user/alice', tenant: 'default', severity: 'info', ip: '10.0.0.5' },
-    { id: 'e2', timestamp: '2026-07-12 14:30:08', actor: 'system', action: 'auth.login', resource: 'auth/session', tenant: 'default', severity: 'info', ip: '192.168.1.50' },
-    { id: 'e3', timestamp: '2026-07-12 14:25:42', actor: 'unknown', action: 'auth.login_failed', resource: 'auth/session', tenant: 'default', severity: 'high', ip: '203.0.113.45' },
-    { id: 'e4', timestamp: '2026-07-12 14:20:01', actor: 'admin@ggid.io', action: 'policy.update', resource: 'policy/rbac', tenant: 'default', severity: 'medium', ip: '10.0.0.5' },
-    { id: 'e5', timestamp: '2026-07-12 14:15:30', actor: 'system', action: 'token.revoke', resource: 'token/abc123', tenant: 'default', severity: 'info', ip: '127.0.0.1' },
-  ]);
+  const [realtime, setRealtime] = useState(true);const [events, setEvents] = useState<AuditEvent[]>([]);
 
   if (loading) return <div className="flex items-center justify-center py-12"><Loader2 className="h-8 w-8 animate-spin text-blue-500" /></div>;
   if (error) return <div className="p-8 text-red-500">Error: {error}</div>;

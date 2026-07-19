@@ -50,13 +50,7 @@ export default function ApiVersioningStrategyPage() {
   const [approach, setApproach] = useState('url');
   const [sunsetMonths, setSunsetMonths] = useState(6);
   const [noticeTemplate, setNoticeTemplate] = useState('API version {{old_version}} is deprecated and will be sunset on {{sunset_date}}. Please migrate to {{new_version}}. See migration guide: {{migration_url}}');
-  const [showMigrationBuilder, setShowMigrationBuilder] = useState(false);const [migrationSteps, setMigrationSteps] = useState([
-    { step: 'Update API base URL from /api/v1 to /api/v2', done: false },
-    { step: 'Replace /users/legacy with /users endpoint', done: false },
-    { step: 'Add key field to role creation requests', done: false },
-    { step: 'Update response parsing for new role schema', done: false },
-    { step: 'Add X-Tenant-ID header to all requests', done: false },
-  ]);
+  const [showMigrationBuilder, setShowMigrationBuilder] = useState(false);const [migrationSteps, setMigrationSteps] = useState<{ step: string; done: boolean }[]>([]);;
 const [versions, setVersions] = useState<VersionEntry[]>([
     { version: 'v2', status: 'active', releaseDate: '2026-06-01', sunsetDate: '-', consumers: 142 },
     { version: 'v1', status: 'deprecated', releaseDate: '2025-01-15', sunsetDate: '2026-12-31', consumers: 23 },

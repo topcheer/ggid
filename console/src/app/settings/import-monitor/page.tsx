@@ -58,12 +58,7 @@ export default function ImportMonitorPage() {
         return;
       }
     } catch { /* fall through */ }
-    // Mock data
-    setJobs([
-      { job_id: "job-001", file_name: "users-batch1.csv", status: "completed", total: 150, imported: 142, failed: 8, started_at: "2025-07-15T10:00:00Z", completed_at: "2025-07-15T10:02:30Z", duration_ms: 150000 },
-      { job_id: "job-002", file_name: "employees.json", status: "running", total: 300, imported: 180, failed: 3, started_at: "2025-07-18T09:30:00Z", completed_at: null, duration_ms: 0 },
-      { job_id: "job-003", file_name: "contractors.csv", status: "failed", total: 50, imported: 12, failed: 38, started_at: "2025-07-17T14:00:00Z", completed_at: "2025-07-17T14:01:00Z", duration_ms: 60000 },
-    ]);
+    setJobs([]);
   }, []);
 
   useEffect(() => { load(); }, [load]);
