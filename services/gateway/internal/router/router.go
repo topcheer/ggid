@@ -189,6 +189,18 @@ func (gw *Gateway) buildProxies() {
 			if userID, ok := middleware.UserIDFromRequest(req); ok {
 				req.Header.Set("X-User-ID", userID.String())
 			}
+			// Forward JWT scopes so backend services can check admin authorization.
+			jwtClaims := middleware.ExtractJWTClaims(req)
+			if len(jwtClaims.Scopes) > 0 {
+				req.Header.Set("X-Scopes", strings.Join(jwtClaims.Scopes, ","))
+				for _, s := range jwtClaims.Scopes {
+					if s == "admin" || s == "superadmin" {
+						req.Header.Set("X-User-Role", s)
+						req.Header.Set("X-Is-Admin", "true")
+						break
+					}
+				}
+			}
 			if tenantID, ok := middleware.TenantIDFromRequest(req); ok {
 				req.Header.Set("X-Tenant-ID", tenantID)
 				// Inject as query param for GET requests

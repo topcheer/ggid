@@ -1984,9 +1984,24 @@ func (s *HTTPServer) handleDecisionLog(w http.ResponseWriter, r *http.Request) {
 // isAdminRequest checks if the request comes from an admin user.
 // Checks X-User-Role header (set by gateway JWT middleware) or X-Is-Admin flag.
 func isAdminRequest(r *http.Request) bool {
+	// Check X-User-Role header (set by gateway for legacy compatibility).
 	role := r.Header.Get("X-User-Role")
 	if role == "admin" || role == "superadmin" {
 		return true
 	}
-	return r.Header.Get("X-Is-Admin") == "true"
+	if r.Header.Get("X-Is-Admin") == "true" {
+		return true
+	}
+	// Check X-Scopes header (set by gateway JWTClaimExtraction middleware).
+	// JWT scopes include "admin" for admin users.
+	scopes := r.Header.Get("X-Scopes")
+	if scopes != "" {
+		for _, s := range strings.Split(scopes, ",") {
+			s = strings.TrimSpace(s)
+			if s == "admin" || s == "superadmin" {
+				return true
+			}
+		}
+	}
+	return false
 }
