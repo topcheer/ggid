@@ -21,7 +21,19 @@ export function getAuthToken(): string | null {
  */
 export function authHeader(): Record<string, string> {
   const token = getAuthToken();
-  return token ? { Authorization: `Bearer ${token}` } : {};
+  const headers: Record<string, string> = {};
+  if (token) {
+    headers["Authorization"] = `Bearer ${token}`;
+  }
+  // X-User-ID and X-Tenant-ID are needed by services that read identity
+  // from headers (e.g., identity service /users/me).
+  if (typeof window !== "undefined") {
+    const uid = localStorage.getItem("ggid_user_id");
+    if (uid) headers["X-User-ID"] = uid;
+    const tid = localStorage.getItem("ggid_tenant_id");
+    if (tid) headers["X-Tenant-ID"] = tid;
+  }
+  return headers;
 }
 
 /**

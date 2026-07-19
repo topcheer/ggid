@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect, useCallback } from "react";
 import { authHeader } from "@/lib/auth-helpers";
+import { DEFAULT_TENANT_ID } from "@/lib/api-config";
 import {
   User, Shield, Smartphone, Loader2, AlertCircle, X, Check,
   Key, Lock, Mail, Phone, CheckCircle2, XCircle, Plus, Ban,
