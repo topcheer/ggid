@@ -556,6 +556,12 @@ func (h *Handler) registerRoutes() {
 
 	// Batch 3C: 14 additional auth endpoints
 	h.registerBatch3CRoutes()
+
+	// Self-service endpoints (user-scoped, JWT-authenticated)
+	h.mux.HandleFunc("/api/v1/self-service/devices", h.handleSelfServiceDevices)
+	h.mux.HandleFunc("/api/v1/self-service/devices/", h.handleSelfServiceDevices)
+	h.mux.HandleFunc("/api/v1/self-service/sessions", h.handleSelfServiceSessions)
+	h.mux.HandleFunc("/api/v1/self-service/mfa/", h.handleMFASelfRemove)
 }
 
 // ServeHTTP implements http.Handler.

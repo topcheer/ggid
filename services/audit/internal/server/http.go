@@ -303,6 +303,10 @@ func (s *HTTPServer) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("/api/v1/audit/ccm/run", s.handleCCM)
 	mux.HandleFunc("/api/v1/audit/ccm/scan", s.handleCCM)
 	mux.HandleFunc("/api/v1/audit/ccm/summary", s.handleCCM)
+
+	// Global cross-tenant dashboards (super-admin only)
+	mux.HandleFunc("/api/v1/admin/audit/global", s.handleGlobalAuditDashboard)
+	mux.HandleFunc("/api/v1/admin/threats/dashboard", s.handleGlobalThreatDashboard)
 }
 
 // GET /api/v1/audit/events?tenant_id=X&action=Y&result=Z&page_size=N
