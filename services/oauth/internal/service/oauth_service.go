@@ -617,8 +617,8 @@ func (s *OAuthService) fetchUserPermissions(ctx context.Context, tenantID, userI
 		FROM role_permissions rp
 		JOIN permissions p ON p.id = rp.permission_id
 		JOIN user_roles ur ON ur.role_id = rp.role_id
-		WHERE ur.user_id = $1 AND ur.tenant_id = $2`,
-		userID, tenantID)
+		WHERE ur.user_id = $1`,
+		userID)
 	if err != nil {
 		return nil
 	}
