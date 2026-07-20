@@ -107,7 +107,10 @@ func JWTClaimExtraction(next http.Handler) http.Handler {
 		if claims.Subject != "" {
 			r.Header.Set("X-User-ID", claims.Subject)
 		}
-		if claims.TenantID != "" {
+		// Only set X-Tenant-ID from JWT if not already set by TenantResolver
+		// or explicit client request. This allows platform admins to target
+		// other tenants via X-Tenant-ID header.
+		if claims.TenantID != "" && r.Header.Get("X-Tenant-ID") == "" {
 			r.Header.Set("X-Tenant-ID", claims.TenantID)
 		}
 		if len(claims.Scopes) > 0 {
