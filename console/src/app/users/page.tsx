@@ -48,6 +48,7 @@ export default function UsersPage() {
   const t = useTranslations();
   usePageTitle("Users");
   const [search, setSearch] = useState("");
+  const [roleFilter, setRoleFilter] = useState("");
   const [showCreate, setShowCreate] = useState(false);
   const [page, setPage] = useState(0);
   const [selected, setSelected] = useState<Set<string>>(new Set());
@@ -81,9 +82,20 @@ export default function UsersPage() {
   }, [apiFetch]);
 
   const filtered = users.filter(
-    (u) =>
-      u.username.toLowerCase().includes(search.toLowerCase()) ||
-      u.email.toLowerCase().includes(search.toLowerCase()),
+    (u) => {
+      if (search) {
+        const q = search.toLowerCase();
+        if (!u.username.toLowerCase().includes(q) && !u.email.toLowerCase().includes(q)) return false;
+      }
+      if (roleFilter) {
+        const userRoles = (u.roles as any[]) || [];
+        if (!userRoles.some((r: any) => {
+          const name = typeof r === "string" ? r : (r.role_name || r.name || r.key || "");
+          return name.toLowerCase().includes(roleFilter.toLowerCase());
+        })) return false;
+      }
+      return true;
+    }
   );
 
   const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
@@ -809,6 +821,17 @@ export default function UsersPage() {
             className="w-full max-w-xs rounded-lg border border-gray-300 px-3 py-2 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
           />
         </div>
+        {/* Role filter */}
+        <select
+          value={roleFilter}
+          onChange={(e) => { setRoleFilter(e.target.value); setPage(0); }}
+          className="rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200"
+        >
+          <option value="">All Roles</option>
+          {roles.map(r => (
+            <option key={r.id} value={r.key || r.name}>{r.name}</option>
+          ))}
+        </select>
         {selected.size > 0 && (
           <div className="flex items-center gap-2 rounded-lg border border-amber-300 bg-amber-50 px-3 py-1.5">
             <span className="text-sm font-medium text-amber-800">{selected.size} {t("users.selected")}</span>

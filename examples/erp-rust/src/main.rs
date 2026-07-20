@@ -1,4 +1,4 @@
-# Cross-Board ERP Demo — Rust implementation
+// Cross-Board ERP Demo - Rust implementation
 // Tests all GGID core features via Rust SDK
 // Run: GGID_URL=http://localhost:8080 cargo run
 
@@ -97,7 +97,7 @@ async fn list_inventory(State(state): State<Store>, headers: HeaderMap) -> Resul
     Ok(Json(json!({ "items": s.products.values().collect::<Vec<_>>(), "total": s.products.len() })))
 }
 
-async fn create_inventory(State(state): State<Store>, headers: HeaderMap, body: Json<Product>) -> Result<Json<Value>, StatusCode> {
+async fn create_inventory(State(state): State<Store>, headers: HeaderMap, body: Json<Product>) -> Result<(StatusCode, Json<Value>), StatusCode> {
     let auth = extract_auth(&headers, &state.read().await.ggid_client).await.ok_or(StatusCode::UNAUTHORIZED)?;
     if !check_perm(&auth, "inventory:write") { return Err(StatusCode::FORBIDDEN); }
     let mut s = state.write().await;
@@ -106,8 +106,9 @@ async fn create_inventory(State(state): State<Store>, headers: HeaderMap, body: 
     let mut product = body.0;
     product.id = id.clone();
     s.products.insert(id.clone(), product.clone());
-    s.audit_log.push(AuditEntry { id: format!("AUD-{}", s.audit_log.len()+1), action: "inventory.create".into(), resource: "product".into(), result: "success".into(), actor_id: auth.user_id });
-    Ok((StatusCode::CREATED, Json(json!(product))).into())
+    let audit_id = format!("AUD-{}", s.audit_log.len()+1);
+    s.audit_log.push(AuditEntry { id: audit_id, action: "inventory.create".into(), resource: "product".into(), result: "success".into(), actor_id: auth.user_id });
+    Ok((StatusCode::CREATED, Json(json!(product))))
 }
 
 async fn list_orders(State(state): State<Store>, headers: HeaderMap) -> Result<Json<Value>, StatusCode> {
@@ -120,7 +121,7 @@ async fn list_orders(State(state): State<Store>, headers: HeaderMap) -> Result<J
     Ok(Json(json!({ "items": list, "total": list.len() })))
 }
 
-async fn create_order(State(state): State<Store>, headers: HeaderMap, body: Json<Order>) -> Result<Json<Value>, StatusCode> {
+async fn create_order(State(state): State<Store>, headers: HeaderMap, body: Json<Order>) -> Result<(StatusCode, Json<Value>), StatusCode> {
     let auth = extract_auth(&headers, &state.read().await.ggid_client).await.ok_or(StatusCode::UNAUTHORIZED)?;
     if !check_perm(&auth, "orders:write") { return Err(StatusCode::FORBIDDEN); }
     let mut s = state.write().await;
@@ -131,8 +132,9 @@ async fn create_order(State(state): State<Store>, headers: HeaderMap, body: Json
     order.status = "pending".into();
     order.created_by = auth.user_id.clone();
     s.orders.insert(id.clone(), order.clone());
-    s.audit_log.push(AuditEntry { id: format!("AUD-{}", s.audit_log.len()+1), action: "orders.create".into(), resource: "order".into(), result: "success".into(), actor_id: auth.user_id });
-    Ok((StatusCode::CREATED, Json(json!(order))).into())
+    let audit_id = format!("AUD-{}", s.audit_log.len()+1);
+    s.audit_log.push(AuditEntry { id: audit_id, action: "orders.create".into(), resource: "order".into(), result: "success".into(), actor_id: auth.user_id });
+    Ok((StatusCode::CREATED, Json(json!(order))))
 }
 
 async fn approve_order(State(state): State<Store>, headers: HeaderMap, Path(id): Path<String>) -> Result<Json<Value>, StatusCode> {
