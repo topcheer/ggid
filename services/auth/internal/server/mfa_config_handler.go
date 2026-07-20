@@ -3,6 +3,7 @@ package server
 import (
 	"encoding/json"
 	"net/http"
+	"os"
 )
 
 type MFAConfig struct {
@@ -48,7 +49,7 @@ var globalMFAConfig = &MFAConfig{
 		Period: 30,
 	},
 	WebAuthnSettings: WebAuthnSettings{
-		RPID:    "auth.ggid.example",
+		RPID:    os.Getenv("WEBAUTHN_RP_ID"),
 		Origin:  "https://auth.ggid.example",
 		Timeout: 60000,
 	},

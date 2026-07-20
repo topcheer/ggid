@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"os"
 	"strings"
 	"sync"
 	"time"
@@ -65,7 +66,7 @@ func (h *Handler) handlePasskeyRegisterBegin(w http.ResponseWriter, r *http.Requ
 		SessionID: fmtPKID(pkSeq),
 		UserID:    req.UserID,
 		Challenge: generateChallenge(),
-		RPID:      "auth.ggid.example",
+		RPID:      os.Getenv("WEBAUTHN_RP_ID"),
 		CreatedAt: time.Now(),
 		Status:    "pending",
 	}
@@ -179,7 +180,7 @@ func (h *Handler) handlePasskeyAuthBegin(w http.ResponseWriter, r *http.Request)
 	sess := &PasskeyAuthSession{
 		SessionID: fmtPKID(pkSeq),
 		Challenge: generateChallenge(),
-		RPID:      "auth.ggid.example",
+		RPID:      os.Getenv("WEBAUTHN_RP_ID"),
 		CreatedAt: time.Now(),
 		Status:    "pending",
 	}
