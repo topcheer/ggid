@@ -26,6 +26,7 @@ import (
 	"github.com/ggid/ggid/services/oauth/internal/repository"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5"
 )
 
 // OAuthService implements OAuth2 client management and the authorization code flow.
@@ -36,6 +37,12 @@ type OAuthService struct {
 	keyProvider pkgcrypto.KeyProvider
 	issuer      string
 	rdb         RedisCmdable // optional Redis client for distributed state
+	pool        PoolQuerier  // optional DB pool for user profile queries
+}
+
+// PoolQuerier is the minimal interface for DB queries (user profile lookup).
+type PoolQuerier interface {
+	QueryRow(ctx context.Context, sql string, args ...any) pgx.Row
 }
 
 // RedisCmdable is the minimal subset of go-redis used by the state store.
@@ -52,6 +59,11 @@ type RedisCmdable interface {
 // When nil or Redis is unreachable, the in-memory sync.Map fallback is used.
 func (s *OAuthService) SetRedisClient(rdb RedisCmdable) {
 	s.rdb = rdb
+}
+
+// SetPool wires a DB pool for user profile queries (used in access token claims).
+func (s *OAuthService) SetPool(pool PoolQuerier) {
+	s.pool = pool
 }
 
 // NewOAuthService creates a new OAuthService.
@@ -421,7 +433,9 @@ func (s *OAuthService) ExchangeAuthorizationCode(ctx context.Context, req *Token
 	}
 
 	// 7. Issue a signed self-contained JWT access token with AMR/ACR from auth code.
-	accessToken, expiresIn, err := s.issueAccessTokenWithAMR(code.UserID, code.TenantID, client.ClientID, joinScopes(code.Scope), code.AMR, code.ACR, code.AuthTime)
+	// Include user profile claims (email, name) so /userinfo can return them.
+	userAttrs := s.fetchUserClaims(ctx, code.TenantID, code.UserID)
+	accessToken, expiresIn, err := s.issueAccessTokenWithAMR(code.UserID, code.TenantID, client.ClientID, joinScopes(code.Scope), code.AMR, code.ACR, code.AuthTime, userAttrs)
 	if err != nil {
 		return nil, err
 	}
@@ -561,11 +575,34 @@ func padBytes(b []byte, length int) []byte {
 // --- Internal helpers ---
 
 func (s *OAuthService) issueAccessToken(userID, tenantID uuid.UUID, audience, scope string) (string, int, error) {
-	return s.issueAccessTokenWithAMR(userID, tenantID, audience, scope, nil, "", time.Time{})
+	return s.issueAccessTokenWithAMR(userID, tenantID, audience, scope, nil, "", time.Time{}, nil)
+}
+
+// fetchUserClaims retrieves user profile attributes (email, name) from the database
+// to embed in the access token for /userinfo.
+func (s *OAuthService) fetchUserClaims(ctx context.Context, tenantID, userID uuid.UUID) map[string]string {
+	attrs := map[string]string{}
+	if s.pool == nil {
+		return attrs
+	}
+	row := s.pool.QueryRow(ctx, `
+		SELECT email, COALESCE(display_name, username, '') as name
+		FROM users WHERE id = $1 AND tenant_id = $2`,
+		userID, tenantID)
+	var email, name string
+	_ = row.Scan(&email, &name)
+	if email != "" {
+		attrs["email"] = email
+		attrs["email_verified"] = "false"
+	}
+	if name != "" {
+		attrs["name"] = name
+	}
+	return attrs
 }
 
 // issueAccessTokenWithAMR issues a JWT with optional AMR/ACR claims.
-func (s *OAuthService) issueAccessTokenWithAMR(userID, tenantID uuid.UUID, audience, scope string, amr []string, acr string, authTime time.Time) (string, int, error) {
+func (s *OAuthService) issueAccessTokenWithAMR(userID, tenantID uuid.UUID, audience, scope string, amr []string, acr string, authTime time.Time, userAttrs map[string]string) (string, int, error) {
 	now := time.Now()
 	expiresAt := now.Add(15 * time.Minute)
 
@@ -597,6 +634,17 @@ func (s *OAuthService) issueAccessTokenWithAMR(userID, tenantID uuid.UUID, audie
 	}
 	if !authTime.IsZero() {
 		claimsMap["auth_time"] = authTime.Unix()
+	}
+	// Include user profile claims for /userinfo endpoint
+	if email, ok := userAttrs["email"]; ok && email != "" {
+		claimsMap["email"] = email
+		claimsMap["email_verified"] = userAttrs["email_verified"] == "true"
+	}
+	if name, ok := userAttrs["name"]; ok && name != "" {
+		claimsMap["name"] = name
+	}
+	if pic, ok := userAttrs["picture"]; ok && pic != "" {
+		claimsMap["picture"] = pic
 	}
 
 	token := jwt.NewWithClaims(s.signingMethod(), claimsMap)

@@ -185,6 +185,11 @@ func NewWithKeyProvider(cfg *conf.Config, kp crypto.KeyProvider) (*Server, error
 	// Create the OAuth service with rotating key provider.
 	oauthSvc := service.NewOAuthService(clientRepo, codeRepo, tokenRepo, kp, cfg.Issuer)
 
+	// Inject DB pool for user profile queries (access token claims).
+	if pool != nil {
+		oauthSvc.SetPool(pool)
+	}
+
 	// Initialize Redis client for refresh token lookup (shared with Auth service).
 	if redisURL := os.Getenv("REDIS_URL"); redisURL != "" {
 		opts, err := redis.ParseURL(redisURL)
