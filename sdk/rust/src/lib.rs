@@ -24,6 +24,7 @@ pub mod abac;
 pub mod middleware;
 pub mod types;
 pub mod error;
+pub mod saml;
 
 pub use client::GGIDClient;
 pub use types::{Claims, UserInfo, TokenResponse, Role, Permission, ABACEvalRequest, ABACEvalResult, ABACCondition, PolicyCheckRequest, PolicyCheckResult, IntrospectionResult, Webhook, Agent, AgentRegistration, AgentTokenResponse, AgentTokenClaims, AccessRequest, AccessRequestResponse};
