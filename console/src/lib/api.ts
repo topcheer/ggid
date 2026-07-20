@@ -220,11 +220,8 @@ export function getUserRole(): UserRole {
 }
 
 export function useUserRole(): { role: UserRole; scopes: string[]; isPlatformAdmin: boolean; isTenantAdmin: boolean; isAdmin: boolean } {
-  const [scopes, setScopes] = useState<string[]>(["user"]);
-
-  useEffect(() => {
-    setScopes(getUserScopes());
-  }, []);
+  // Sync-read from localStorage so first render has correct scopes (no redirect flash)
+  const [scopes, setScopes] = useState<string[]>(() => getUserScopes());
 
   const hasScope = (s: string) => scopes.includes(s);
   // Normalize scopes for matching: handle both role keys (e.g. "platform:admin")
