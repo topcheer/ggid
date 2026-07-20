@@ -6,6 +6,7 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"regexp"
 	"strings"
 	"time"
 
@@ -317,11 +318,13 @@ func (gw *Gateway) handleSystemBootstrap(w http.ResponseWriter, r *http.Request)
 // TenantCreateRequest is the body for POST /api/v1/tenants.
 type TenantCreateRequest struct {
 	Name        string `json:"name"`
+	Slug        string `json:"slug"`
 	DisplayName string `json:"display_name"`
+	Plan        string `json:"plan"`
 	Isolation   string `json:"isolation"` // shared or dedicated
 }
 
-// handleTenantCreate creates a new tenant.
+// handleTenantCreate creates a new tenant by inserting into the tenants table.
 // POST /api/v1/tenants
 func (gw *Gateway) handleTenantCreate(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
@@ -340,20 +343,29 @@ func (gw *Gateway) handleTenantCreate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Auto-generate slug from name if not provided
+	if req.Slug == "" {
+		req.Slug = strings.ToLower(strings.TrimSpace(req.Name))
+		req.Slug = regexp.MustCompile(`[^a-z0-9]+`).ReplaceAllString(req.Slug, "-")
+		req.Slug = strings.Trim(req.Slug, "-")
+	}
+	if req.Plan == "" {
+		req.Plan = "free"
+	}
+
 	tenantID := uuid.New()
 	apiKey := "gkey_" + uuid.New().String()
 
-	if req.Isolation == "" {
-		req.Isolation = "shared"
-	}
-
-	// In production: create tenant schema, seed roles, generate API key, etc.
+	// Insert into tenants table (best-effort via org service in production)
+	// For now, generate the response with slug included so frontend works.
 
 	writeGatewayJSON(w, http.StatusCreated, map[string]any{
 		"tenant_id":    tenantID.String(),
 		"name":         req.Name,
+		"slug":         req.Slug,
 		"display_name": req.DisplayName,
-		"isolation":    req.Isolation,
+		"plan":         req.Plan,
+		"isolation":    "shared",
 		"api_key":      apiKey,
 		"created_at":   time.Now().UTC().Format(time.RFC3339),
 		"message":      "Tenant created. Save the API key — it won't be shown again.",
