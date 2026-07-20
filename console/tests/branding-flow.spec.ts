@@ -9,12 +9,12 @@ const ADMIN_PASS = process.env.TEST_PASSWORD || '';
 async function adminLogin(request: APIRequestContext, page: Page): Promise<string> {
   const resp = await request.post(`${API_BASE}/api/v1/auth/login`, {
     headers: { 'X-Tenant-ID': TENANT, 'Content-Type': 'application/json' },
-    data: { username: ADMIN_USER, password: ADMIN_PASS },
+    data: { username: ADMIN_USER, password: ADMIN_PASS, tenant_slug: 'default' },
   });
   const { access_token } = await resp.json();
   await page.goto('/');
   await page.evaluate((token) => {
-    localStorage.setItem('ggid_token', token);
+    localStorage.setItem('ggid_access_token', token);
     localStorage.setItem('ggid_user_scopes', JSON.stringify(['Platform Administrator', 'Administrator']));
   }, access_token);
   return access_token;
@@ -31,7 +31,7 @@ test.describe('Branding settings flow', () => {
   test('update branding via API', async ({ request }) => {
     const resp = await request.post(`${API_BASE}/api/v1/auth/login`, {
       headers: { 'X-Tenant-ID': TENANT, 'Content-Type': 'application/json' },
-      data: { username: ADMIN_USER, password: ADMIN_PASS },
+      data: { username: ADMIN_USER, password: ADMIN_PASS, tenant_slug: 'default' },
     });
     const { access_token } = await resp.json();
     const headers = {
