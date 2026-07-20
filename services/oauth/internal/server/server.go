@@ -1071,9 +1071,26 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 			return
 		}
 
+		// Security: verify assertion contains a signature element.
+		// In production: use full XML-Sig verification with IdP certificate from sys_config.
 		if err := assertion.ValidateConditions(); err != nil {
 			writeJSON(w, http.StatusForbidden, map[string]string{"error": "assertion validation failed", "detail": err.Error()})
 			return
+		}
+
+		// Security: verify signature is present (reject unsigned assertions)
+		if !strings.Contains(string(rawXML), "<ds:Signature") && !strings.Contains(string(rawXML), "<Signature") {
+			writeJSON(w, http.StatusForbidden, map[string]string{"error": "unsigned_assertion", "detail": "SAML assertion must be signed"})
+			return
+		}
+
+		// Security: audience restriction check
+		if assertion.Conditions.AudienceRestriction.Audience != "" {
+			spEntityID := cfg.Issuer + "/saml/metadata"
+			if assertion.Conditions.AudienceRestriction.Audience != spEntityID {
+				writeJSON(w, http.StatusForbidden, map[string]string{"error": "audience_mismatch", "detail": "assertion audience does not match SP entity ID"})
+				return
+			}
 		}
 
 		attrs := saml.ExtractAttributes(assertion)
