@@ -115,7 +115,7 @@ test.describe('Permission Matrix — API level', () => {
             'X-Tenant-ID': TENANT,
             'Content-Type': 'application/json',
           },
-          data: { username: 'unauthorized_test', email: 'unauth@test.com', password: 'Test123!' },
+          data: { username: 'unauthorized_test', email: 'unauth@test.com', password: ADMIN_PASSWORD },
         });
         // Non-admin should get 403
         expect(createResp.status() === 403 || createResp.status() === 401).toBeTruthy();
