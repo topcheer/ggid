@@ -174,7 +174,10 @@ func (gw *Gateway) handleSystemBootstrap(w http.ResponseWriter, r *http.Request)
 		return
 	}
 	// DB check: if tenants exist, system is already bootstrapped
-	dbURL := gw.cfg.DatabaseURL
+	var dbURL string
+	if gw.cfg != nil {
+		dbURL = gw.cfg.DatabaseURL
+	}
 	if dbURL == "" {
 		dbURL = "postgres://ggid:ggid-k3s@ggid-postgresql:5432/ggid?sslmode=disable"
 	}
