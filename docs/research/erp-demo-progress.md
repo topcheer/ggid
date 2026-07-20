@@ -2,69 +2,38 @@
 
 > **Goal**: Multi-language ERP demo testing all GGID core features + all SDKs
 > **Started**: 2026-07-21
-> **Last Updated**: 2026-07-21
+> **Last Updated**: 2026-07-21 Phase 3 complete
 
-## Status Overview
+## Status Overview — ALL 8/8 COMPLETE ✅
 
-| # | Language | SDK | Dir | Status | Owner |
-|---|----------|-----|-----|--------|-------|
-| 1 | Go | Go SDK | examples/erp-go/ | ✅ Done | researcher |
-| 2 | TypeScript/Node | Node SDK | examples/erp-node/ | ✅ Done | frontend |
-| 3 | React | React SDK | examples/erp-react/ | ✅ Done | frontend |
-| 4 | Python | Python SDK | examples/erp-python/ | ✅ Done | arch_pm |
-| 5 | Java | Java SDK | examples/erp-java/ | ✅ Done | arch_pm |
-| 6 | C# | C# SDK | examples/erp-csharp/ | ✅ Done | arch_pm |
-| 7 | Ruby | Ruby SDK | examples/erp-ruby/ | 🔲 Not started | TBD |
-| 8 | Rust | Rust SDK | examples/erp-rust/ | 🔲 Not started | TBD |
+| # | Language | SDK | Dir | Status |
+|---|----------|-----|-----|--------|
+| 1 | Go | Go SDK | examples/erp-go/ | ✅ Complete |
+| 2 | TypeScript/Node | Node SDK | examples/erp-node/ | ✅ Complete |
+| 3 | React | React SDK | examples/erp-react/ | ✅ Complete |
+| 4 | Python | Python SDK | examples/erp-python/ | ✅ Complete |
+| 5 | C# | C# SDK | examples/erp-csharp/ | ✅ Complete |
+| 6 | Java | Java SDK | examples/erp-java/ | ✅ Complete |
+| 7 | Ruby | Ruby SDK | examples/erp-ruby/ | ✅ Complete |
+| 8 | Rust | Rust SDK | examples/erp-rust/ | ✅ Complete |
 
-## ERP Modules (7 modules, all CRUD)
+## Phases
 
-| Module | Endpoints | Permission Required |
-|--------|-----------|---------------------|
-| Auth | login, logout, refresh, verify | none (public) |
-| Users | CRUD + role assign | users:read, users:write, users:delete |
-| Roles | CRUD + permission tree | roles:read, roles:write |
-| Organizations | CRUD + hierarchy | orgs:read, orgs:write |
-| Inventory | CRUD products/stock | inventory:read, inventory:write, inventory:delete |
-| Orders | CRUD + approval | orders:read, orders:write, orders:approve |
-| Audit | View audit log | audit:read |
-
-## Permission Matrix
-
-| Role | Permissions |
-|------|------------|
-| Viewer | dashboard:read, inventory:read, orders:read |
-| Sales | + orders:write |
-| Manager | + orders:approve, orders:read:all |
-| Admin | admin (bypass) |
-
-## Phase Progress
-
-### Phase 1: Go + Node + React
-- [ ] Go ERP backend
-- [ ] Node ERP backend
-- [ ] React ERP frontend
-
-### Phase 2: Python + Java + C#
-- [ ] Python ERP backend
-- [ ] Java ERP backend
-- [ ] C# ERP backend
-
-### Phase 3: Ruby + Rust
-- [ ] Ruby ERP backend
-- [ ] Rust ERP backend
+### Phase 1: Go + Node + React ✅
+### Phase 2: Python + Java + C# ✅
+### Phase 3: Ruby + Rust ✅
 
 ## GGID Features Tested
 
-| Feature | How Tested |
-|--------|-----------|
-| OAuth 2.1 PKCE | Auth module login flow |
-| Token verify/refresh | Every API call |
-| JWT permissions claim | RequirePermission on all routes |
-| RBAC (roles) | Role assignment in Users module |
-| Fine-grained permissions | Permission matrix per role |
-| User CRUD | Users module |
-| Organization hierarchy | Orgs module |
-| Audit log | Audit module |
-| Multi-tenant | X-Tenant-ID header |
-| SDK completeness | Each language uses its SDK |
+| Feature | Tested |
+|--------|--------|
+| OAuth 2.1 login/refresh/verify | ✅ All 8 |
+| JWT permissions claim | ✅ All 8 |
+| Fine-grained permissions (has_permission) | ✅ All 8 |
+| User CRUD via SDK | ✅ Go/Node/Python/Ruby/Java/C# |
+| Organization CRUD | ✅ Go/Ruby |
+| Inventory CRUD + permissions | ✅ All 8 |
+| Orders CRUD + approval workflow | ✅ All 8 |
+| Row-level data filtering | ✅ Go/Ruby/Rust |
+| Audit log | ✅ All 8 |
+| Multi-tenant | ✅ All 8 |
