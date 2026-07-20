@@ -4,46 +4,81 @@ import (
 	"encoding/json"
 	"net/http"
 	"strings"
+	"time"
+
+	"github.com/google/uuid"
 )
 
 type SessionInfo struct {
-	SessionID    string   `json:"session_id"`
-	Device       string   `json:"device"`
-	IPAddress    string   `json:"ip_address"`
-	Location     string   `json:"location"`
-	CreatedAt    string   `json:"created_at"`
-	LastActive   string   `json:"last_active"`
-	MFAVerified  bool     `json:"mfa_verified"`
-	Scopes       []string `json:"scopes"`
-	TokenExpiry  string   `json:"token_expiry"`
-	SessionBinding string `json:"session_binding"`
+	SessionID      string   `json:"session_id"`
+	Device         string   `json:"device"`
+	IPAddress      string   `json:"ip_address"`
+	Location       string   `json:"location"`
+	CreatedAt      string   `json:"created_at"`
+	LastActive     string   `json:"last_active"`
+	MFAVerified    bool     `json:"mfa_verified"`
+	Scopes         []string `json:"scopes"`
+	TokenExpiry    string   `json:"token_expiry"`
+	SessionBinding string   `json:"session_binding"`
 }
 
 type SessionInspectResult struct {
-	UserID   string        `json:"user_id"`
-	Sessions []SessionInfo `json:"sessions"`
-	ActiveCount int        `json:"active_count"`
-	RiskScore  float64     `json:"risk_score"`
+	UserID      string        `json:"user_id"`
+	Sessions    []SessionInfo `json:"sessions"`
+	ActiveCount int           `json:"active_count"`
+	RiskScore   float64       `json:"risk_score"`
 }
 
+// GET /api/v1/auth/sessions/{userID}/inspect
+// Returns real session data from the sessions table.
 func (h *Handler) handleSessionInspect(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
 		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
-	userID := strings.TrimPrefix(r.URL.Path, "/api/v1/auth/sessions/")
-	userID = strings.TrimSuffix(userID, "/inspect")
+	userPathID := strings.TrimPrefix(r.URL.Path, "/api/v1/auth/sessions/")
+	userPathID = strings.TrimSuffix(userPathID, "/inspect")
 
 	result := SessionInspectResult{
-		UserID: userID,
-		Sessions: []SessionInfo{
-			{SessionID: "sess-001", Device: "Chrome/macOS", IPAddress: "192.168.1.50", Location: "San Francisco, US", CreatedAt: "2025-01-15T08:00:00Z", LastActive: "2025-01-15T09:45:00Z", MFAVerified: true, Scopes: []string{"openid", "profile", "read:users"}, TokenExpiry: "2025-01-15T11:00:00Z", SessionBinding: "DPoP"},
-			{SessionID: "sess-002", Device: "Safari/iOS", IPAddress: "10.0.0.22", Location: "San Francisco, US", CreatedAt: "2025-01-14T20:00:00Z", LastActive: "2025-01-15T07:30:00Z", MFAVerified: true, Scopes: []string{"openid", "profile"}, TokenExpiry: "2025-01-15T10:00:00Z", SessionBinding: "none"},
-			{SessionID: "sess-003", Device: "Unknown/Linux", IPAddress: "203.0.113.99", Location: "Unknown", CreatedAt: "2025-01-15T03:00:00Z", LastActive: "2025-01-15T03:15:00Z", MFAVerified: false, Scopes: []string{"openid"}, TokenExpiry: "2025-01-15T04:00:00Z", SessionBinding: "none"},
-		},
-		ActiveCount: 2,
-		RiskScore:   0.35,
+		UserID:   userPathID,
+		Sessions: []SessionInfo{},
 	}
+
+	// Query real sessions from DB via pool
+	if h.pool != nil {
+		targetUID, parseErr := uuid.Parse(userPathID)
+		if parseErr == nil {
+			rows, err := h.pool.Query(r.Context(), `
+				SELECT id, COALESCE(ip_address,''), COALESCE(user_agent,''),
+				       created_at, updated_at, expires_at
+				FROM sessions
+				WHERE user_id = $1 AND revoked_at IS NULL
+				ORDER BY updated_at DESC LIMIT 50
+			`, targetUID)
+			if err == nil {
+				defer rows.Close()
+				for rows.Next() {
+					var (
+						sessID, ip, ua                 string
+						createdAt, updatedAt, expiresAt time.Time
+					)
+					if err := rows.Scan(&sessID, &ip, &ua, &createdAt, &updatedAt, &expiresAt); err != nil {
+						continue
+					}
+					result.Sessions = append(result.Sessions, SessionInfo{
+						SessionID:   sessID,
+						Device:      ua,
+						IPAddress:   ip,
+						CreatedAt:   createdAt.UTC().Format(time.RFC3339),
+						LastActive:  updatedAt.UTC().Format(time.RFC3339),
+						TokenExpiry: expiresAt.UTC().Format(time.RFC3339),
+					})
+				}
+			}
+		}
+	}
+	result.ActiveCount = len(result.Sessions)
+
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(result)
 }

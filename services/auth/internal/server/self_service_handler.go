@@ -93,21 +93,46 @@ func (h *Handler) revokeSelfServiceDevice(w http.ResponseWriter, r *http.Request
 		return
 	}
 
+// revoked holds whether any device was successfully removed.
 	revoked := false
 
-	// Try to remove from device fingerprints (DB)
+	// Try to remove from device fingerprints (DB) — verify ownership + tenant
 	if h.memMapRepo != nil {
-		err := h.memMapRepo.DeleteJSON(r.Context(), "auth_device_fingerprints_json", deviceID)
-		if err == nil {
-			revoked = true
+		rows, _ := h.memMapRepo.ListJSON(r.Context(), "auth_device_fingerprints_json")
+		for _, row := range rows {
+			if id, _ := row["id"].(string); id == deviceID {
+				if uid, _ := row["user_id"].(string); uid == userID.String() {
+					// KB-278: verify tenant ownership before deleting
+					if tid, _ := row["tenant_id"].(string); tid != "" && tid != tenantID.String() {
+						writeError(w, http.StatusForbidden, "cross-tenant device access denied")
+						return
+					}
+					if err := h.memMapRepo.DeleteJSON(r.Context(), "auth_device_fingerprints_json", deviceID); err == nil {
+						revoked = true
+					}
+				}
+				break
+			}
 		}
 	}
 
-	// Try to remove trusted device
+	// Try to remove trusted device — verify ownership + tenant
 	if h.memMapRepo != nil && !revoked {
-		err := h.memMapRepo.DeleteJSON(r.Context(), "auth_trusted_devices_json", deviceID)
-		if err == nil {
-			revoked = true
+		rows, _ := h.memMapRepo.ListJSON(r.Context(), "auth_trusted_devices_json")
+		for _, row := range rows {
+			if id, _ := row["id"].(string); id == deviceID {
+				if uid, _ := row["user_id"].(string); uid == userID.String() {
+					// KB-278: verify tenant ownership
+					if tid, _ := row["tenant_id"].(string); tid != "" && tid != tenantID.String() {
+						writeError(w, http.StatusForbidden, "cross-tenant device access denied")
+						return
+					}
+					if err := h.memMapRepo.DeleteJSON(r.Context(), "auth_trusted_devices_json", deviceID); err == nil {
+						revoked = true
+					}
+				}
+				break
+			}
 		}
 	}
 

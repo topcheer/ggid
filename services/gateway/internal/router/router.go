@@ -635,6 +635,8 @@ var adminOnlyPaths = []string{
 // platformOnlyPaths require platform:admin scope.
 var platformOnlyPaths = []string{
 	"/api/v1/system/", "/api/v1/tenants/create",
+	"/api/v1/org/tenants/suspend", "/api/v1/org/tenants/activate",
+	"/api/v1/admin/audit/global", "/api/v1/admin/threats/dashboard",
 }
 
 // checkRouteScope verifies the user has the required scope for the request path.
