@@ -951,12 +951,23 @@ func (s *HTTPServer) handleEvaluate(w http.ResponseWriter, r *http.Request) {
 		})
 	}
 
+	// Build data_filter from attributes — tells frontend which org/group to filter by
+	dataFilter := map[string]any{}
+	if result.Allowed {
+		for _, key := range []string{"org_id", "group_id", "department", "team_id"} {
+			if v, ok := conditions[key]; ok {
+				dataFilter[key] = v
+			}
+		}
+	}
+
 	writeJSON(w, http.StatusOK, map[string]any{
 		"allowed":            result.Allowed,
 		"reason":             result.Reason,
 		"matched_by":         result.MatchedBy,
 		"matched_rules":      matchedRules,
 		"attributes":         conditions,
+		"data_filter":        dataFilter,
 		"evaluation_time_ms": time.Since(start).Milliseconds(),
 	})
 }
