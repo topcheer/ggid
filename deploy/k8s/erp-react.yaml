@@ -1,0 +1,61 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: erp-react
+  namespace: ggid
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: erp-react
+  template:
+    metadata:
+      labels:
+        app: erp-react
+    spec:
+      containers:
+      - name: erp-react
+        image: registry.iot2.win/ggid/erp-react:latest
+        ports:
+        - containerPort: 3300
+        env:
+        - name: NEXT_PUBLIC_GGID_URL
+          value: "https://ggid-console.iot2.win"
+        - name: NEXT_PUBLIC_API_BASE
+          value: "http://erp-node.ggid.svc.cluster.local:80"
+        - name: NEXT_PUBLIC_CLIENT_ID
+          value: "erp-react-pkce"
+        - name: NEXT_PUBLIC_REDIRECT_URI
+          value: "https://erp-react.iot2.win/callback"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: erp-react
+  namespace: ggid
+spec:
+  selector:
+    app: erp-react
+  ports:
+  - port: 80
+    targetPort: 3300
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: erp-react
+  namespace: ggid
+  annotations:
+    nginx.ingress.kubernetes.io/proxy-body-size: "50m"
+spec:
+  rules:
+  - host: erp-react.iot2.win
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: erp-react
+            port:
+              number: 80

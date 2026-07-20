@@ -1,38 +1,46 @@
 """
-GGID Cross-Board ERP Demo — Python Implementation
+GGID Cross-Board ERP Demo — Python (SAML 2.0 SSO)
 
-Tests all GGID core features via Python SDK:
-- OAuth login + JWT permissions claim
-- Users/Roles/Orgs CRUD
-- Inventory/Orders CRUD with fine-grained permissions
-- Audit log view
+Tenant: 00000004-0000-0000-0000-000000000001 (Python Logistics)
+Auth: SAML 2.0 SSO via GGID IdP
 
-Run: GGID_URL=https://ggid.iot2.win CLIENT_ID=xxx CLIENT_SECRET=xxx \
-     TENANT_ID=xxx python3 main.py
+Flow:
+1. User accesses / → redirect to GGID SAML SSO login
+2. GGID authenticates → POST SAMLResponse to /saml/acs
+3. Demo exchanges SAML assertion for JWT access token
+4. JWT contains permissions claim for fine-grained access control
+
+Run: GGID_URL=https://ggid.iot2.win TENANT_ID=00000004-... python3 main.py
 """
 import os
 import sys
 import json
+import base64
 import logging
 from http.server import HTTPServer, BaseHTTPRequestHandler
-from urllib.parse import urlparse, parse_qs
+from urllib.parse import urlparse, parse_qs, urlencode
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "sdk", "python"))
-
-from ggid.client import GGIDClient, GGIDConfig, GGIDError
+try:
+    from ggid.client import GGIDClient, GGIDConfig, GGIDError
+    from ggid.saml import SAMLConfig, generate_sp_metadata
+except ImportError:
+    sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "sdk", "python"))
+    from ggid.client import GGIDClient, GGIDConfig, GGIDError
+    from ggid.saml import SAMLConfig, generate_sp_metadata
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 log = logging.getLogger("erp-python")
 
 GGID_URL = os.getenv("GGID_URL", "http://localhost:8080")
-CLIENT_ID = os.getenv("CLIENT_ID", "")
-CLIENT_SECRET = os.getenv("CLIENT_SECRET", "")
-TENANT_ID = os.getenv("TENANT_ID", "00000000-0000-0000-0000-000000000001")
-ADMIN_USERNAME = os.getenv("ADMIN_USERNAME", "admin")
-ADMIN_PASSWORD = os.getenv("ADMIN_PASSWORD", "")  # Set via env var
+TENANT_ID = os.getenv("TENANT_ID", "00000004-0000-0000-0000-000000000001")
 PORT = int(os.getenv("PORT", "9100"))
+PUBLIC_URL = os.getenv("PUBLIC_URL", f"http://localhost:{PORT}")
 
-# --- In-memory data store (demo only) ---
+# SAML SP configuration
+SAML_ENTITY_ID = f"{PUBLIC_URL}/saml/metadata"
+SAML_ACS_URL = f"{PUBLIC_URL}/saml/acs"
+
+# In-memory data store
 inventory = [
     {"id": "p001", "name": "Widget A", "stock": 150, "price": 29.99},
     {"id": "p002", "name": "Widget B", "stock": 80, "price": 49.99},
@@ -42,48 +50,20 @@ orders = [
     {"id": "o001", "customer": "Acme Corp", "product_id": "p001", "qty": 10, "status": "pending", "total": 299.90},
     {"id": "o002", "customer": "Beta Inc", "product_id": "p002", "qty": 5, "status": "approved", "total": 249.95},
 ]
-admin_token = None
+sessions = {}  # session_id → access_token
 
 
 def get_client():
-    config = GGIDConfig(base_url=GGID_URL, tenant_id=TENANT_ID)
-    return GGIDClient(config)
-
-
-def ensure_admin_token():
-    global admin_token
-    if admin_token:
-        return admin_token
-    client = get_client()
-    try:
-        result = client.login(ADMIN_USERNAME, ADMIN_PASSWORD)
-        admin_token = result.get("access_token")
-        log.info("Admin login successful")
-    except GGIDError as e:
-        log.error("Admin login failed: %s", e)
-    return admin_token
-
-
-def has_permission(token, perm):
-    """Check if token's JWT has a specific permission via PDP API."""
-    resource, action = perm.split(":") if ":" in perm else (perm, "*")
-    client = get_client()
-    try:
-        result = client.check_permission(token, resource, action)
-        return result.get("allowed", False)
-    except GGIDError:
-        return False
+    return GGIDClient(GGIDConfig(base_url=GGID_URL, tenant_id=TENANT_ID))
 
 
 def extract_permissions_from_jwt(token):
     """Extract permissions claim from JWT (no verification in demo)."""
-    import base64
     parts = token.split(".")
     if len(parts) < 2:
         return []
     payload = parts[1]
-    # Add padding
-    payload += "=" * (4 - len(payload) % 4)
+    payload += "=" * (4 - len(payload) % 4) if len(payload) % 4 else ""
     try:
         claims = json.loads(base64.urlsafe_b64decode(payload))
         return claims.get("permissions", [])
@@ -98,38 +78,141 @@ class ERPHandler(BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(json.dumps(data, default=str).encode())
 
-    def _get_token(self):
+    def _redirect(self, url):
+        self.send_response(302)
+        self.send_header("Location", url)
+        self.end_headers()
+
+    def _get_session_token(self):
+        """Extract JWT from session cookie or Authorization header."""
+        # Try cookie first
+        cookie = self.headers.get("Cookie", "")
+        for part in cookie.split(";"):
+            part = part.strip()
+            if part.startswith("erp_session="):
+                sid = part.split("=", 1)[1]
+                return sessions.get(sid)
+        # Try Authorization header
         auth = self.headers.get("Authorization", "")
         if auth.startswith("Bearer "):
             return auth[7:]
         return None
 
     def _require_perm(self, perm):
-        token = self._get_token()
+        token = self._get_session_token()
         if not token:
-            self._send_json(401, {"error": "missing bearer token"})
+            self._send_json(401, {"error": "not authenticated", "saml_login": f"{PUBLIC_URL}/login"})
             return None
         perms = extract_permissions_from_jwt(token)
         if "admin" in perms or perm in perms:
             return token
-        self._send_json(403, {"error": f"missing permission: {perm}"})
+        self._send_json(403, {"error": f"missing permission: {perm}", "your_perms": perms})
         return None
 
     def do_GET(self):
         parsed = urlparse(self.path)
         path = parsed.path
 
+        # --- Public + SAML endpoints ---
         if path == "/" or path == "/healthz":
-            self._send_json(200, {"app": "ERP Python Demo", "status": "ok"})
+            self._send_json(200, {
+                "app": "ERP Python Demo (SAML SSO)",
+                "tenant": TENANT_ID,
+                "auth_method": "SAML 2.0 SSO",
+                "login_url": f"{PUBLIC_URL}/login",
+                "saml_metadata": f"{PUBLIC_URL}/saml/metadata",
+            })
             return
 
+        # SAML SP metadata endpoint
+        if path == "/saml/metadata":
+            config = SAMLConfig(entity_id=SAML_ENTITY_ID, acs_url=SAML_ACS_URL)
+            metadata = generate_sp_metadata(config)
+            self.send_response(200)
+            self.send_header("Content-Type", "application/xml")
+            self.end_headers()
+            self.wfile.write(metadata.encode())
+            return
+
+        # SAML SSO login — redirect to GGID IdP
         if path == "/login":
+            saml_sso_url = f"{GGID_URL}/saml/sso?{urlencode({'tenant_id': TENANT_ID, 'relay_state': PUBLIC_URL + '/saml/acs'})}"
+            log.info("Redirecting to SAML SSO: %s", saml_sso_url)
+            self._redirect(saml_sso_url)
+            return
+
+        # SAML ACS (Assertion Consumer Service) — receive SAMLResponse from IdP
+        if path == "/saml/acs":
+            content_length = int(self.headers.get("Content-Length", 0))
+            body = self.rfile.read(content_length).decode()
+            params = parse_qs(body)
+
+            saml_response = params.get("SAMLResponse", [""])[0]
+            relay_state = params.get("RelayState", [""])[0]
+
+            if not saml_response:
+                self._send_json(400, {"error": "missing SAMLResponse"})
+                return
+
+            # Exchange SAML assertion for JWT token via GGID API
             client = get_client()
             try:
-                result = client.login(ADMIN_USERNAME, ADMIN_PASSWORD)
-                self._send_json(200, result)
-            except GGIDError as e:
-                self._send_json(401, {"error": str(e)})
+                # GGID SAML token exchange endpoint
+                import urllib.request
+                token_url = f"{GGID_URL}/api/v1/auth/saml/token"
+                req_data = json.dumps({
+                    "saml_response": saml_response,
+                    "tenant_id": TENANT_ID,
+                }).encode()
+                req = urllib.request.Request(token_url, data=req_data, method="POST")
+                req.add_header("Content-Type", "application/json")
+                req.add_header("X-Tenant-ID", TENANT_ID)
+
+                with urllib.request.urlopen(req, timeout=10) as resp:
+                    token_data = json.loads(resp.read())
+
+                access_token = token_data.get("access_token", "")
+                if not access_token:
+                    self._send_json(401, {"error": "SAML token exchange failed", "detail": token_data})
+                    return
+
+                # Create session
+                import secrets
+                session_id = secrets.token_urlsafe(32)
+                sessions[session_id] = access_token
+
+                self.send_response(302)
+                self.send_header("Location", "/dashboard")
+                self.send_header("Set-Cookie", f"erp_session={session_id}; Path=/; HttpOnly; SameSite=Lax")
+                self.end_headers()
+                log.info("SAML SSO login successful, session created")
+                return
+
+            except Exception as e:
+                log.error("SAML ACS error: %s", e)
+                self._send_json(500, {"error": f"SAML SSO failed: {str(e)}"})
+                return
+
+        # --- Authenticated API endpoints ---
+        if path == "/dashboard":
+            token = self._get_session_token()
+            if not token:
+                self._redirect("/login")
+                return
+            perms = extract_permissions_from_jwt(token)
+            self._send_json(200, {
+                "app": "ERP Python Demo",
+                "auth_method": "SAML 2.0 SSO",
+                "permissions": perms,
+                "modules": {
+                    "inventory": "inventory:read" in perms or "admin" in perms,
+                    "orders": "orders:read" in perms or "admin" in perms,
+                    "users": "users:read" in perms or "admin" in perms,
+                    "audit": "audit:read" in perms or "admin" in perms,
+                },
+                "inventory_count": len(inventory),
+                "orders_count": len(orders),
+            })
             return
 
         # --- Inventory ---
@@ -146,19 +229,6 @@ class ERPHandler(BaseHTTPRequestHandler):
             self._send_json(200, {"orders": orders, "count": len(orders)})
             return
 
-        # --- Roles ---
-        if path == "/api/roles":
-            token = self._require_perm("roles:read")
-            if not token:
-                return
-            client = get_client()
-            try:
-                result = client.list_roles(token)
-                self._send_json(200, result)
-            except GGIDError as e:
-                self._send_json(500, {"error": str(e)})
-            return
-
         # --- Users ---
         if path == "/api/users":
             token = self._require_perm("users:read")
@@ -167,6 +237,19 @@ class ERPHandler(BaseHTTPRequestHandler):
             client = get_client()
             try:
                 result = client.list_users(token)
+                self._send_json(200, result)
+            except GGIDError as e:
+                self._send_json(500, {"error": str(e)})
+            return
+
+        # --- Roles ---
+        if path == "/api/roles":
+            token = self._require_perm("roles:read")
+            if not token:
+                return
+            client = get_client()
+            try:
+                result = client.list_roles(token)
                 self._send_json(200, result)
             except GGIDError as e:
                 self._send_json(500, {"error": str(e)})
@@ -185,15 +268,16 @@ class ERPHandler(BaseHTTPRequestHandler):
                 self._send_json(500, {"error": str(e)})
             return
 
-        # --- Permission Status (for demo dashboard) ---
+        # --- My Permissions ---
         if path == "/api/my-permissions":
-            token = self._get_token()
+            token = self._get_session_token()
             if not token:
-                self._send_json(401, {"error": "missing token"})
+                self._send_json(401, {"error": "not authenticated"})
                 return
             perms = extract_permissions_from_jwt(token)
             self._send_json(200, {
                 "permissions": perms,
+                "auth_method": "SAML 2.0 SSO",
                 "can_read_inventory": "inventory:read" in perms or "admin" in perms,
                 "can_write_orders": "orders:write" in perms or "admin" in perms,
                 "can_approve_orders": "orders:approve" in perms or "admin" in perms,
@@ -258,9 +342,11 @@ class ERPHandler(BaseHTTPRequestHandler):
 
 
 def main():
-    log.info("ERP Python Demo starting on :%d", PORT)
+    log.info("ERP Python Demo (SAML SSO) starting on :%d", PORT)
     log.info("GGID URL: %s", GGID_URL)
     log.info("Tenant: %s", TENANT_ID)
+    log.info("SAML Entity ID: %s", SAML_ENTITY_ID)
+    log.info("SAML ACS URL: %s", SAML_ACS_URL)
     server = HTTPServer(("0.0.0.0", PORT), ERPHandler)
     try:
         server.serve_forever()

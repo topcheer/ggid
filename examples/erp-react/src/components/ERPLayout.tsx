@@ -1,6 +1,6 @@
 'use client';
 import React from 'react';
-import { ERPUser, hasPermission, logout } from '@/lib/auth';
+import { ERPUser, hasPermission, logout } from '../lib/auth';
 
 export function ERPLayout({ user, children }: { user: ERPUser; children: React.ReactNode }) {
   const menuItems = [
@@ -39,5 +39,6 @@ export function ERPLayout({ user, children }: { user: ERPUser; children: React.R
         </div>
       </aside>
       <main style={{ flex: 1, padding: 24 }}>{children}</main>
-    </div>;
+    </div>
+  );
 }

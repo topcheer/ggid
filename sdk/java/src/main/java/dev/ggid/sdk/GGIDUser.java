@@ -52,5 +52,4 @@ public class GGIDUser {
         }
         return false;
     }
-    }
 }

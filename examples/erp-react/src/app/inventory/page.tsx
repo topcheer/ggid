@@ -1,8 +1,9 @@
 'use client';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { ERPUser, getUser, hasPermission, ERPLayout, authHeader, API_BASE } from '@/lib/auth';
-import { PermissionGate } from '@/components/PermissionGate';
+import { ERPUser, getUser, hasPermission, authHeader, API_BASE } from '../../lib/auth';
+import { ERPLayout } from '../../components/ERPLayout';
+import { PermissionGate } from '../../components/PermissionGate';
 
 export default function InventoryPage() {
   const router = useRouter();
@@ -31,5 +32,6 @@ export default function InventoryPage() {
           <tbody>{items.map(i => <tr key={i.id}><td style={{ padding: 8 }}>{i.sku}</td><td style={{ padding: 8 }}>{i.name}</td><td style={{ padding: 8 }}>{i.qty}</td>{canDelete && <td style={{ padding: 8 }}><button disabled={!canDelete} style={{ color: canDelete ? '#ff4d4f' : '#ccc' }}>Delete</button></td>}</tr>)}</tbody>
         </table>
       </ERPLayout>
-    </PermissionGate>);
+    </PermissionGate>
+  );
 }

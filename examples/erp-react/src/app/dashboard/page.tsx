@@ -1,7 +1,8 @@
 'use client';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { ERPUser, getUser, hasPermission, ERPLayout } from '@/lib/auth';
+import { ERPUser, getUser, hasPermission } from '../../lib/auth';
+import { ERPLayout } from '../../components/ERPLayout';
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -24,11 +25,13 @@ export default function DashboardPage() {
           <div key={s.label} style={{ flex: 1, background: '#f8f9fa', borderRadius: 8, padding: 16, textAlign: 'center' }}>
             <h3 style={{ fontSize: 24, color: '#1890ff', margin: '0 0 4px' }}>{s.value}</h3>
             <p style={{ fontSize: 12, color: '#999', margin: 0 }}>{s.label}</p>
-          </div>))}
+          </div>
+        ))}
       </div>
       <h3 style={{ marginTop: 32 }}>Your Permissions</h3>
       <ul style={{ fontSize: 14 }}>
         {user.permissions.map(p => <li key={p}><code>{p}</code></li>)}
       </ul>
-    </ERPLayout>);
+    </ERPLayout>
+  );
 }

@@ -5,6 +5,7 @@
 import type { Request, Response, NextFunction } from 'express';
 
 const GGID_URL = process.env.GGID_URL || 'http://localhost:8080';
+const TENANT = process.env.GGID_TENANT || '00000000-0000-0000-0000-000000000002';
 
 export interface ERPUser {
   user_id: string;
@@ -25,7 +26,7 @@ export async function verifyToken(token: string): Promise<ERPUser | null> {
 
   try {
     const res = await fetch(`${GGID_URL}/api/v1/auth/verify`, {
-      headers: { Authorization: `Bearer ${token}` },
+      headers: { Authorization: `Bearer ${token}`, 'X-Tenant-ID': TENANT },
     });
     if (!res.ok) return null;
     const data = await res.json();
