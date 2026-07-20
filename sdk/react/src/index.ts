@@ -996,3 +996,17 @@ export type {
   GGIDAuthState,
   GGIDAuthContextValue,
 } from './types';
+
+// SAML SP utilities
+export {
+  generateSPMetadata,
+  fetchIdPMetadata,
+  parseEntityId,
+  parseSsoUrl,
+  buildAuthnRequestUrl,
+} from "./saml";
+export type { SAMLConfig } from "./saml";
+
+// WebAuthn / Passkey
+export { usePasskey } from "./passkey";
+export type { UsePasskeyOptions, PasskeyHook } from "./passkey";

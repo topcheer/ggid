@@ -23,6 +23,8 @@ export 'src/auth.dart';
 export 'src/rbac.dart';
 export 'src/abac.dart';
 export 'src/middleware.dart';
+export 'src/saml.dart';
+export 'src/passkey.dart';
 
 /// SDK version.
 const String ggidVersion = '1.0.0';
