@@ -35,6 +35,8 @@ func envOr(k, d string) string { if v := os.Getenv(k); v != "" { return v }; ret
 type Session struct {
 	AccessToken string
 	Scopes      []string
+	Permissions []string
+	Roles       []string
 	UserInfo    map[string]any
 }
 
@@ -77,8 +79,12 @@ func hasPermission(s *Session, resource, action string) bool {
 	if s == nil { return false }
 	// Admin has all permissions
 	if hasScope(s, "admin") { return true }
-	// Check if the fine-grained permission exists in scopes
 	permKey := resource + ":" + action
+	// Check fine-grained permissions claim first (new JWT structure)
+	for _, p := range s.Permissions {
+		if strings.EqualFold(p, permKey) { return true }
+	}
+	// Fallback: check scopes for backward compatibility (old JWT structure)
 	for _, sc := range s.Scopes {
 		if strings.EqualFold(sc, permKey) { return true }
 	}
@@ -165,8 +171,10 @@ func handleCallback(w http.ResponseWriter, r *http.Request) {
 	accessToken, _ := tok["access_token"].(string)
 	if accessToken == "" { http.Error(w, "no token", http.StatusUnauthorized); return }
 
-	// Get user info + scopes from JWT
+	// Get user info + scopes/permissions/roles from JWT
 	scopes := extractScopes(accessToken)
+	permissions := extractPermissions(accessToken)
+	roles := extractRoles(accessToken)
 	uiReq, _ := http.NewRequest("GET", ggidURL+"/api/v1/oauth/userinfo", nil)
 	uiReq.Header.Set("Authorization", "Bearer "+accessToken)
 	uiResp, err := httpClient().Do(uiReq)
@@ -176,7 +184,7 @@ func handleCallback(w http.ResponseWriter, r *http.Request) {
 	var userInfo map[string]any; json.Unmarshal(body, &userInfo)
 
 	sessionID := fmt.Sprintf("sess_%d", os.Getpid())
-	sessions[sessionID] = &Session{AccessToken: accessToken, Scopes: scopes, UserInfo: userInfo}
+	sessions[sessionID] = &Session{AccessToken: accessToken, Scopes: scopes, Permissions: permissions, Roles: roles, UserInfo: userInfo}
 	http.SetCookie(w, &http.Cookie{Name: "session_id", Value: sessionID, Path: "/"})
 	http.Redirect(w, r, "/", http.StatusFound)
 }
@@ -225,15 +233,21 @@ func handleAdmin(w http.ResponseWriter, r *http.Request) {
 	renderPage(w, s, `<div class="card"><h2>Admin Panel</h2><p>Welcome, administrator. Full access granted.</p></div>`)
 }
 
-// extractScopes parses JWT scopes from the access token (no signature verification in demo)
-func extractScopes(token string) []string {
+// extractClaimsFromToken parses JWT claims from the access token (no signature verification in demo)
+func extractClaimsFromToken(token string) map[string]any {
 	parts := strings.Split(token, ".")
-	if len(parts) < 2 { return []string{} }
+	if len(parts) < 2 { return nil }
 	payload, err := base64UrlDecode(parts[1])
-	if err != nil { return []string{} }
+	if err != nil { return nil }
 	var claims map[string]any
-	if json.Unmarshal(payload, &claims) != nil { return []string{} }
-	// Try scopes array first
+	if json.Unmarshal(payload, &claims) != nil { return nil }
+	return claims
+}
+
+// extractScopes parses OAuth scopes from the access token.
+func extractScopes(token string) []string {
+	claims := extractClaimsFromToken(token)
+	if claims == nil { return []string{} }
 	if raw, ok := claims["scopes"]; ok {
 		if arr, ok := raw.([]any); ok {
 			result := make([]string, 0, len(arr))
@@ -241,9 +255,36 @@ func extractScopes(token string) []string {
 			return result
 		}
 	}
-	// Fallback: parse scope string (OAuth token uses space-separated scope)
 	if s, ok := claims["scope"].(string); ok && s != "" {
 		return strings.Fields(s)
+	}
+	return []string{}
+}
+
+// extractPermissions parses fine-grained permissions from the JWT permissions claim.
+func extractPermissions(token string) []string {
+	claims := extractClaimsFromToken(token)
+	if claims == nil { return []string{} }
+	if raw, ok := claims["permissions"]; ok {
+		if arr, ok := raw.([]any); ok {
+			result := make([]string, 0, len(arr))
+			for _, v := range arr { result = append(result, fmt.Sprintf("%v", v)) }
+			return result
+		}
+	}
+	return []string{}
+}
+
+// extractRoles parses role names from the JWT roles claim.
+func extractRoles(token string) []string {
+	claims := extractClaimsFromToken(token)
+	if claims == nil { return []string{} }
+	if raw, ok := claims["roles"]; ok {
+		if arr, ok := raw.([]any); ok {
+			result := make([]string, 0, len(arr))
+			for _, v := range arr { result = append(result, fmt.Sprintf("%v", v)) }
+			return result
+		}
 	}
 	return []string{}
 }

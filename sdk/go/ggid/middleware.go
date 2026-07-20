@@ -2,6 +2,7 @@ package ggid
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"strings"
 )
@@ -63,7 +64,7 @@ func ClaimsFromContext(ctx context.Context) map[string]interface{} {
 }
 
 // RequirePermission returns a middleware that checks if the user has permission
-// for the given resource and action.
+// for the given resource and action via a server-side API call.
 func (c *Client) RequirePermission(resource, action string) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -87,6 +88,42 @@ func (c *Client) RequirePermission(resource, action string) func(http.Handler) h
 			}
 
 			next.ServeHTTP(w, r)
+		})
+	}
+}
+
+// RequirePermissionLocal checks if the user has permission by inspecting
+// the JWT `permissions` claim directly (no API call needed).
+// This is faster than RequirePermission but requires the JWT to contain
+// the `permissions` claim (set by GGID OAuth token exchange).
+func (c *Client) RequirePermissionLocal(resource, action string) func(http.Handler) http.Handler {
+	permKey := resource + ":" + action
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			claims := ClaimsFromContext(r.Context())
+			if claims == nil {
+				http.Error(w, `{"error":"not authenticated"}`, http.StatusUnauthorized)
+				return
+			}
+			// Check permissions claim (new JWT structure)
+			if perms, ok := claims["permissions"].([]any); ok {
+				for _, p := range perms {
+					if fmt.Sprintf("%v", p) == permKey {
+						next.ServeHTTP(w, r)
+						return
+					}
+				}
+			}
+			// Check scopes for backward compat (old JWT structure)
+			if scopes, ok := claims["scopes"].([]any); ok {
+				for _, sc := range scopes {
+					if fmt.Sprintf("%v", sc) == permKey || fmt.Sprintf("%v", sc) == "admin" {
+						next.ServeHTTP(w, r)
+						return
+					}
+				}
+			}
+			http.Error(w, `{"error":"forbidden: missing "+permKey}`, http.StatusForbidden)
 		})
 	}
 }
