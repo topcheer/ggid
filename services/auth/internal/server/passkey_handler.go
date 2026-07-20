@@ -1,6 +1,7 @@
 package server
 
 import (
+	"context"
 	"crypto/rand"
 	"encoding/base64"
 	"encoding/json"
@@ -48,6 +49,39 @@ var (
 	pkSeq           int
 )
 
+// resolveWebAuthnRPID reads RP ID from sys_config DB table first, falls back to env.
+// Returns error if neither source provides a value.
+func resolveWebAuthnRPID(h *Handler) (string, error) {
+	// 1. Try DB
+	if h.pool != nil {
+		var configJSON []byte
+		err := h.pool.QueryRow(context.Background(),
+			`SELECT value::text FROM sys_config WHERE key = 'webauthn_config'`).Scan(&configJSON)
+		if err == nil && len(configJSON) > 0 {
+			var cfg struct {
+				RPID string `json:"rp_id"`
+			}
+			if json.Unmarshal(configJSON, &cfg) == nil && cfg.RPID != "" {
+				return cfg.RPID, nil
+			}
+		}
+	}
+	// 2. Fallback to env
+	if rpID := os.Getenv("WEBAUTHN_RP_ID"); rpID != "" {
+		return rpID, nil
+	}
+	return "", fmt.Errorf("WebAuthn RP ID not configured — set via /api/v1/system/config or WEBAUTHN_RP_ID env")
+}
+
+// resolveRPIDForConfig returns RP ID for display purposes (no error).
+func resolveRPIDForConfig(h *Handler) string {
+	rpID, err := resolveWebAuthnRPID(h)
+	if err != nil {
+		return ""
+	}
+	return rpID
+}
+
 func (h *Handler) handlePasskeyRegisterBegin(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
@@ -62,11 +96,16 @@ func (h *Handler) handlePasskeyRegisterBegin(w http.ResponseWriter, r *http.Requ
 	}
 	pkMu.Lock()
 	pkSeq++
+	rpID, err := resolveWebAuthnRPID(h)
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
 	sess := &PasskeyRegistrationSession{
 		SessionID: fmtPKID(pkSeq),
 		UserID:    req.UserID,
 		Challenge: generateChallenge(),
-		RPID:      os.Getenv("WEBAUTHN_RP_ID"),
+		RPID:      rpID,
 		CreatedAt: time.Now(),
 		Status:    "pending",
 	}
@@ -177,10 +216,15 @@ func (h *Handler) handlePasskeyAuthBegin(w http.ResponseWriter, r *http.Request)
 	}
 	pkMu.Lock()
 	pkSeq++
+	rpID, err := resolveWebAuthnRPID(h)
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
 	sess := &PasskeyAuthSession{
 		SessionID: fmtPKID(pkSeq),
 		Challenge: generateChallenge(),
-		RPID:      os.Getenv("WEBAUTHN_RP_ID"),
+		RPID:      rpID,
 		CreatedAt: time.Now(),
 		Status:    "pending",
 	}
