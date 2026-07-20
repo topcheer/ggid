@@ -11,6 +11,47 @@ import (
 	"github.com/google/uuid"
 )
 
+// GET /api/v1/auth/mfa/methods — returns enabled MFA methods for frontend display
+func (h *Handler) handleMFAMethods(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+		return
+	}
+
+	resp := map[string]any{
+		"totp_enabled":     true, // TOTP always available
+		"webauthn_enabled": true, // WebAuthn always available
+		"radius_enabled":   false,
+		"yubikey_enabled":  false,
+	}
+
+	if h.pool != nil {
+		// Check RADIUS config
+		var radiusJSON []byte
+		if err := h.pool.QueryRow(r.Context(), `SELECT value::text FROM sys_config WHERE key = 'radius_config'`).Scan(&radiusJSON); err == nil {
+			var cfg struct {
+				Enabled bool `json:"enabled"`
+			}
+			if json.Unmarshal(radiusJSON, &cfg) == nil {
+				resp["radius_enabled"] = cfg.Enabled
+			}
+		}
+
+		// Check Yubico config
+		var yubicoJSON []byte
+		if err := h.pool.QueryRow(r.Context(), `SELECT value::text FROM sys_config WHERE key = 'yubico_config'`).Scan(&yubicoJSON); err == nil {
+			var cfg struct {
+				Enabled bool `json:"enabled"`
+			}
+			if json.Unmarshal(yubicoJSON, &cfg) == nil {
+				resp["yubikey_enabled"] = cfg.Enabled
+			}
+		}
+	}
+
+	writeJSON(w, http.StatusOK, resp)
+}
+
 // --- RADIUS MFA Verification ---
 // POST /api/v1/auth/mfa/radius/verify
 // Body: {"user_id":"...", "passcode":"...", "username":"..."}
