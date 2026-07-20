@@ -4,7 +4,6 @@ package service
 import (
 	"context"
 	"fmt"
-	"log/slog"
 	"time"
 
 	"github.com/ggid/ggid/pkg/authprovider"
@@ -38,12 +37,6 @@ func (s *IdentityService) CreateUser(ctx context.Context, input *domain.CreateUs
 	if err != nil {
 		return nil, gerr.New(gerr.ErrFailedPrecondition, "missing tenant context")
 	}
-
-	slog.Info("CreateUser tenant diagnostic",
-		"tenant_id", tc.TenantID.String(),
-		"username", input.Username,
-		"email", input.Email,
-	)
 
 	// Check for existing username or email.
 	if existing, _ := s.repo.GetUserByUsername(ctx, tc.TenantID, input.Username); existing != nil {
