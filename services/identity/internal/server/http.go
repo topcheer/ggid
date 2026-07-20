@@ -51,10 +51,13 @@ func (h *HTTPHandler) handleTenantOrBranding(w http.ResponseWriter, r *http.Requ
 		h.handleTenantCRUD(w, r)
 		return
 	}
-	// 2 parts: {id}/access → consent; {id}/branding → branding
-	// 3 parts: {id}/access/grant or {id}/access/{consent_id}
+	// 2 parts: {id}/access → consent; {id}/branding → branding; {id}/suspend, {id}/activate
 	if len(parts) >= 2 && parts[1] == "access" {
 		h.handleConsentCRUD(w, r)
+		return
+	}
+	if len(parts) == 2 && (parts[1] == "suspend" || parts[1] == "activate") {
+		h.handleTenantSuspendActivate(w, r, parts[0], parts[1])
 		return
 	}
 	h.handleBranding(w, r)
@@ -251,6 +254,15 @@ func (h *HTTPHandler) registerRoutes() {
 	h.mux.HandleFunc("/api/v1/scim/targets", h.handleSCIMTargets)
 	h.mux.HandleFunc("/api/v1/scim/sync/log", h.handleSCIMSyncLog)
 	h.mux.HandleFunc("/api/v1/scim/sync/", h.handleSCIMSyncTarget)
+	// Self-service endpoints.
+	h.mux.HandleFunc("/api/v1/self-service/devices", h.handleSelfServiceDevices)
+	h.mux.HandleFunc("/api/v1/self-service/sessions", h.handleSelfServiceSessions)
+	h.mux.HandleFunc("/api/v1/self-service/privacy/delete-account", h.handleGDPRDeleteAccount)
+	// Webhook CRUD.
+	h.mux.HandleFunc("/api/v1/webhooks", h.handleWebhookCRUD)
+	h.mux.HandleFunc("/api/v1/webhooks/", h.handleWebhookCRUD)
+	// Key rotation.
+	h.mux.HandleFunc("/api/v1/admin/keys/rotate", h.handleKeyRotation)
 	// Tenant Quota Engine.
 	h.mux.HandleFunc("/api/v1/quotas/", h.handleTenantQuota)
 	// Secrets Management (Vault/KMS/env).
@@ -691,7 +703,8 @@ func (h *HTTPHandler) createUser(ctx context.Context, w http.ResponseWriter, r *
 
 	// Audit event: user created
 	if tc, e := ggidtenant.FromContext(ctx); e == nil {
-		h.publishAuditEvent("user.create", "success", "user", user.ID, tc.TenantID, uuid.Nil)
+		actorID, _ := uuid.Parse(r.Header.Get("X-User-ID"))
+		h.publishAuditEvent("user.create", "success", "user", user.ID, tc.TenantID, actorID)
 	}
 }
 
@@ -831,7 +844,7 @@ func (h *HTTPHandler) deleteUser(ctx context.Context, userID uuid.UUID, w http.R
 	globalTTLCache.Invalidate("users:default:")
 
 	if tc, e := ggidtenant.FromContext(ctx); e == nil {
-		h.publishAuditEvent("user.delete", "success", "user", userID, tc.TenantID, uuid.Nil)
+		actorID, _ := uuid.Parse(r.Header.Get("X-User-ID")); h.publishAuditEvent("user.delete", "success", "user", userID, tc.TenantID, actorID)
 	}
 }
 
@@ -857,7 +870,7 @@ func (h *HTTPHandler) updateUser(ctx context.Context, userID uuid.UUID, w http.R
 		return
 	}
 	if tc, e := ggidtenant.FromContext(ctx); e == nil {
-		h.publishAuditEvent("user.update", "success", "user", userID, tc.TenantID, uuid.Nil)
+		actorID, _ := uuid.Parse(r.Header.Get("X-User-ID")); h.publishAuditEvent("user.update", "success", "user", userID, tc.TenantID, actorID)
 	}
 	writeJSON(w, http.StatusOK, userToJSON(user))
 }
@@ -871,7 +884,7 @@ func (h *HTTPHandler) lockUser(ctx context.Context, userID uuid.UUID, w http.Res
 	writeJSON(w, http.StatusOK, userToJSON(user))
 
 	if tc, e := ggidtenant.FromContext(ctx); e == nil {
-		h.publishAuditEvent("user.lock", "success", "user", userID, tc.TenantID, uuid.Nil)
+		actorID, _ := uuid.Parse(r.Header.Get("X-User-ID")); h.publishAuditEvent("user.lock", "success", "user", userID, tc.TenantID, actorID)
 	}
 }
 
@@ -884,7 +897,7 @@ func (h *HTTPHandler) unlockUser(ctx context.Context, userID uuid.UUID, w http.R
 	writeJSON(w, http.StatusOK, userToJSON(user))
 
 	if tc, e := ggidtenant.FromContext(ctx); e == nil {
-		h.publishAuditEvent("user.unlock", "success", "user", userID, tc.TenantID, uuid.Nil)
+		actorID, _ := uuid.Parse(r.Header.Get("X-User-ID")); h.publishAuditEvent("user.unlock", "success", "user", userID, tc.TenantID, actorID)
 	}
 }
 
@@ -895,7 +908,7 @@ func (h *HTTPHandler) deactivateUser(ctx context.Context, userID uuid.UUID, w ht
 		return
 	}
 	if tc, e := ggidtenant.FromContext(ctx); e == nil {
-		h.publishAuditEvent("user.deactivate", "success", "user", userID, tc.TenantID, uuid.Nil)
+		actorID, _ := uuid.Parse(r.Header.Get("X-User-ID")); h.publishAuditEvent("user.deactivate", "success", "user", userID, tc.TenantID, actorID)
 	}
 	writeJSON(w, http.StatusOK, userToJSON(user))
 }
@@ -907,7 +920,7 @@ func (h *HTTPHandler) activateUser(ctx context.Context, userID uuid.UUID, w http
 		return
 	}
 	if tc, e := ggidtenant.FromContext(ctx); e == nil {
-		h.publishAuditEvent("user.activate", "success", "user", userID, tc.TenantID, uuid.Nil)
+		actorID, _ := uuid.Parse(r.Header.Get("X-User-ID")); h.publishAuditEvent("user.activate", "success", "user", userID, tc.TenantID, actorID)
 	}
 	writeJSON(w, http.StatusOK, userToJSON(user))
 }
@@ -919,7 +932,7 @@ func (h *HTTPHandler) restoreUser(ctx context.Context, userID uuid.UUID, w http.
 		return
 	}
 	if tc, e := ggidtenant.FromContext(ctx); e == nil {
-		h.publishAuditEvent("user.restore", "success", "user", userID, tc.TenantID, uuid.Nil)
+		actorID, _ := uuid.Parse(r.Header.Get("X-User-ID")); h.publishAuditEvent("user.restore", "success", "user", userID, tc.TenantID, actorID)
 	}
 	writeJSON(w, http.StatusOK, userToJSON(user))
 }
