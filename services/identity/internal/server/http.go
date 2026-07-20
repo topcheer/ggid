@@ -31,6 +31,24 @@ import (
 // compile-time interface assertion
 var _ http.Handler = (*HTTPHandler)(nil)
 
+// handleTenantOrBranding dispatches /api/v1/tenants/{id} (CRUD) vs
+// /api/v1/tenants/{id}/branding (branding) based on path depth.
+func (h *HTTPHandler) handleTenantOrBranding(w http.ResponseWriter, r *http.Request) {
+	if r.URL.Path == "/api/v1/tenants/resolve" {
+		h.handleTenantResolve(w, r)
+		return
+	}
+	rest := strings.TrimPrefix(r.URL.Path, "/api/v1/tenants/")
+	rest = strings.TrimRight(rest, "/")
+	parts := strings.Split(rest, "/")
+	// 1 part → /tenants/{id} → CRUD; 2+ parts → branding/idp-config
+	if len(parts) <= 1 {
+		h.handleTenantCRUD(w, r)
+		return
+	}
+	h.handleBranding(w, r)
+}
+
 // HTTPHandler is the HTTP handler for the Identity Service REST API.
 type HTTPHandler struct {
 	svc              *service.IdentityService
@@ -115,8 +133,9 @@ func (h *HTTPHandler) registerRoutes() {
 	h.mux.HandleFunc("/api/v1/users/import/validate", h.handleImportValidate)
 	h.mux.HandleFunc("/api/v1/users/bulk/status", h.handleBulkStatus)
 
-	// Branding endpoints
-	h.mux.HandleFunc("/api/v1/tenants/", h.handleBranding)
+	// Branding + tenant CRUD endpoints
+	h.mux.HandleFunc("/api/v1/tenants", h.handleTenantCRUD)
+	h.mux.HandleFunc("/api/v1/tenants/", h.handleTenantOrBranding)
 
 	// Access request (IGA workflow) endpoints
 	h.mux.HandleFunc("/api/v1/access-requests", h.handleAccessRequests)
