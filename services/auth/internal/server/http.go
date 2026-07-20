@@ -65,7 +65,8 @@ type Handler struct {
 	memMapRepo          *authMemoryMapRepo
 	verificationRepo    *verificationRepo
 	emailRepo           *emailRepo
-	keyRotationRepo     *keyRotationRepo
+	keyRotationRepo        *keyRotationRepo
+	registrationConfigRepo *registrationConfigRepo
 	internalSecret     string
 	internalPrevSecret string
 }
@@ -562,6 +563,9 @@ func (h *Handler) registerRoutes() {
 	h.mux.HandleFunc("/api/v1/self-service/devices/", h.handleSelfServiceDevices)
 	h.mux.HandleFunc("/api/v1/self-service/sessions", h.handleSelfServiceSessions)
 	h.mux.HandleFunc("/api/v1/self-service/mfa/", h.handleMFASelfRemove)
+
+	// Per-tenant registration configuration (admin)
+	h.mux.HandleFunc("/api/v1/auth/registration/config", h.handleRegistrationConfig)
 }
 
 // ServeHTTP implements http.Handler.

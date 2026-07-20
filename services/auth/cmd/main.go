@@ -345,6 +345,13 @@ func main() {
 	}
 	handler.SetDelegationRepo(delRepo)
 
+	// Per-tenant registration configuration (KB-270).
+	regConfigRepo := server.NewRegistrationConfigRepo(pool)
+	if err := regConfigRepo.EnsureSchema(ctx); err != nil {
+		log.Printf("Registration config schema ensure error (non-fatal): %v", err)
+	}
+	handler.SetRegistrationConfigRepo(regConfigRepo)
+
 	// Internal auth HMAC secrets for cross-service endpoints.
 	internalSecret := os.Getenv("INTERNAL_AUTH_SECRET")
 	internalPrevSecret := os.Getenv("INTERNAL_AUTH_PREV_SECRET")
