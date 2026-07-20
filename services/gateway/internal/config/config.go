@@ -29,6 +29,7 @@ type Config struct {
 	JWTIssuer       string              `yaml:"jwt_issuer"`
 	JWTAudience     string              `yaml:"jwt_audience"`
 	PublicKeyPath   string              `yaml:"public_key_path"`
+	DatabaseURL     string              `yaml:"database_url"`
 	Routes          map[string]string   `yaml:"routes"`      // path_prefix -> backend URL (backward compat)
 	RouteConfigs    map[string]RouteConfig `yaml:"route_configs"` // per-route advanced config
 	ReadTimeout     time.Duration       `yaml:"read_timeout"`

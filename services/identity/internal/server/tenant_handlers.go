@@ -7,6 +7,7 @@ import (
 	"log/slog"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/ggid/ggid/pkg/crypto"
 	"github.com/ggid/ggid/pkg/tenant"
@@ -215,3 +216,179 @@ func (h *HTTPHandler) handleSystemBootstrap(w http.ResponseWriter, r *http.Reque
 // unused but kept for reference
 var _ = context.Background
 var _ = strings.TrimSpace
+
+// --- Tenant CRUD ---
+
+// handleTenantCRUD handles GET /api/v1/tenants (list), POST /api/v1/tenants (create),
+// GET /api/v1/tenants/{id} (detail), DELETE /api/v1/tenants/{id} (delete).
+func (h *HTTPHandler) handleTenantCRUD(w http.ResponseWriter, r *http.Request) {
+	pool := h.svc.Pool()
+	if pool == nil {
+		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "database not available"})
+		return
+	}
+
+	// Dispatch: /api/v1/tenants vs /api/v1/tenants/{id}
+	path := strings.TrimRight(r.URL.Path, "/")
+	if path == "/api/v1/tenants" {
+		switch r.Method {
+		case http.MethodGet:
+			h.tenantList(w, r)
+		case http.MethodPost:
+			h.tenantCreate(w, r)
+		default:
+			writeJSON(w, http.StatusMethodNotAllowed, map[string]string{"error": "method not allowed"})
+		}
+		return
+	}
+
+	// /api/v1/tenants/{id}
+	tenantID := strings.TrimPrefix(path, "/api/v1/tenants/")
+	if tenantID == "" {
+		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "tenant_id required"})
+		return
+	}
+
+	switch r.Method {
+	case http.MethodGet:
+		h.tenantDetail(w, r, tenantID)
+	case http.MethodDelete:
+		h.tenantDelete(w, r, tenantID)
+	default:
+		writeJSON(w, http.StatusMethodNotAllowed, map[string]string{"error": "method not allowed"})
+	}
+}
+
+func (h *HTTPHandler) tenantList(w http.ResponseWriter, r *http.Request) {
+	rows, err := h.svc.Pool().Query(r.Context(), `
+		SELECT id::text, name, slug, plan::text, status::text, max_users,
+		       created_at, updated_at
+		FROM tenants ORDER BY created_at DESC`)
+	if err != nil {
+		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "failed to query tenants"})
+		return
+	}
+	defer rows.Close()
+
+	tenants := []map[string]any{}
+	for rows.Next() {
+		var id, name, slug, plan, status string
+		var maxUsers int
+		var createdAt, updatedAt time.Time
+		if err := rows.Scan(&id, &name, &slug, &plan, &status, &maxUsers, &createdAt, &updatedAt); err != nil {
+			continue
+		}
+		tenants = append(tenants, map[string]any{
+			"id":         id,
+			"tenant_id":  id,
+			"name":       name,
+			"slug":       slug,
+			"plan":       plan,
+			"status":     status,
+			"max_users":  maxUsers,
+			"created_at": createdAt,
+			"updated_at": updatedAt,
+		})
+	}
+
+	writeJSON(w, http.StatusOK, map[string]any{
+		"tenants": tenants,
+		"total":   len(tenants),
+	})
+}
+
+func (h *HTTPHandler) tenantCreate(w http.ResponseWriter, r *http.Request) {
+	var req struct {
+		Name        string `json:"name"`
+		Slug        string `json:"slug"`
+		DisplayName string `json:"display_name"`
+		Plan        string `json:"plan"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid request body"})
+		return
+	}
+	if req.Name == "" {
+		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "name is required"})
+		return
+	}
+
+	// Auto-generate slug from name
+	if req.Slug == "" {
+		req.Slug = strings.ToLower(strings.TrimSpace(req.Name))
+		req.Slug = strings.Map(func(c rune) rune {
+			if (c >= 'a' && c <= 'z') || (c >= '0' && c <= '9') {
+				return c
+			}
+			return '-'
+		}, req.Slug)
+		req.Slug = strings.Trim(req.Slug, "-")
+	}
+	if req.Plan == "" {
+		req.Plan = "free"
+	}
+
+	var tenantID string
+	err := h.svc.Pool().QueryRow(r.Context(), `
+		INSERT INTO tenants (name, slug, plan, status) VALUES ($1, $2, $3, 'active')
+		RETURNING id::text`, req.Name, req.Slug, req.Plan).Scan(&tenantID)
+	if err != nil {
+		slog.Error("tenant create: DB error", "error", err)
+		writeJSON(w, http.StatusConflict, map[string]string{"error": "tenant slug already exists or invalid"})
+		return
+	}
+
+	writeJSON(w, http.StatusCreated, map[string]any{
+		"tenant_id": tenantID,
+		"id":        tenantID,
+		"name":      req.Name,
+		"slug":      req.Slug,
+		"plan":      req.Plan,
+		"status":    "active",
+	})
+}
+
+func (h *HTTPHandler) tenantDetail(w http.ResponseWriter, r *http.Request, tenantID string) {
+	var id, name, slug, plan, status string
+	var maxUsers int
+	var createdAt, updatedAt time.Time
+	err := h.svc.Pool().QueryRow(r.Context(), `
+		SELECT id::text, name, slug, plan::text, status::text, max_users, created_at, updated_at
+		FROM tenants WHERE id::text = $1 OR slug = $1`, tenantID).Scan(
+		&id, &name, &slug, &plan, &status, &maxUsers, &createdAt, &updatedAt)
+	if err != nil {
+		writeJSON(w, http.StatusNotFound, map[string]string{"error": "tenant not found"})
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]any{
+		"tenant_id": id,
+		"id":        id,
+		"name":      name,
+		"slug":      slug,
+		"plan":      plan,
+		"status":    status,
+		"max_users": maxUsers,
+		"created_at": createdAt,
+		"updated_at": updatedAt,
+	})
+}
+
+func (h *HTTPHandler) tenantDelete(w http.ResponseWriter, r *http.Request, tenantID string) {
+	// Prevent deleting the default tenant
+	if tenantID == "00000000-0000-0000-0000-000000000001" || tenantID == "default" {
+		writeJSON(w, http.StatusForbidden, map[string]string{"error": "cannot delete default tenant"})
+		return
+	}
+
+	tag, err := h.svc.Pool().Exec(r.Context(), `
+		DELETE FROM tenants WHERE id::text = $1 OR slug = $1`, tenantID)
+	if err != nil {
+		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "failed to delete tenant"})
+		return
+	}
+	if tag.RowsAffected() == 0 {
+		writeJSON(w, http.StatusNotFound, map[string]string{"error": "tenant not found"})
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"deleted": true})
+}

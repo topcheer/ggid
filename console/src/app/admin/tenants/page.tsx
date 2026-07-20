@@ -5,7 +5,7 @@ import { useTranslations } from "@/lib/i18n";
 import { authHeader } from "@/lib/auth-helpers";
 import {
   Building2, Plus, Loader2, Check, Users, Crown, Zap,
-  Sparkles, Shield, AlertCircle,
+  Sparkles, Shield, AlertCircle, Trash2,
 } from "lucide-react";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "";
@@ -34,20 +34,41 @@ export default function TenantsPage() {
   const [tenants, setTenants] = useState<Tenant[]>([]);
   const [loading, setLoading] = useState(true);
 
+  const [deleteTarget, setDeleteTarget] = useState<Tenant | null>(null);
+  const [error, setError] = useState("");
+
   const load = useCallback(async () => {
     setLoading(true);
+    setError("");
     try {
       const res = await fetch(`${API_BASE}/api/v1/tenants`, { headers: { ...authHeader() } });
-      if (res.ok) { const d = await res.json(); setTenants(d.tenants || d || []); return; }
-    } catch { /* mock */ }
-    setTenants([
-      { id: "t-001", name: "Acme Corporation", slug: "acme", plan: "enterprise", user_count: 850, status: "active", created: "2025-01-15" },
-      { id: "t-002", name: "TechStart Inc", slug: "techstart", plan: "pro", user_count: 320, status: "active", created: "2025-03-20" },
-      { id: "t-003", name: "DevShop LLC", slug: "devshop", plan: "free", user_count: 45, status: "trial", created: "2025-07-10" },
-      { id: "t-004", name: "GlobalTech", slug: "globaltech", plan: "pro", user_count: 1200, status: "active", created: "2025-02-01" },
-      { id: "t-005", name: "Test Tenant", slug: "test-tenant", plan: "free", user_count: 5, status: "suspended", created: "2025-06-15", demo: true },
-    ]);
+      if (res.ok) {
+        const d = await res.json();
+        setTenants(d.tenants || d.items || (Array.isArray(d) ? d : []));
+        return;
+      }
+      setError("Failed to load tenants");
+    } catch {
+      setError("Network error");
+    }
+    setTenants([]);
   }, []);
+
+  const handleDelete = async (tenant: Tenant) => {
+    try {
+      const res = await fetch(`${API_BASE}/api/v1/tenants/${tenant.id}`, {
+        method: "DELETE", headers: { ...authHeader() },
+      });
+      if (res.ok) {
+        setTenants(prev => prev.filter(t => t.id !== tenant.id));
+        setDeleteTarget(null);
+      } else {
+        setError("Failed to delete tenant");
+      }
+    } catch {
+      setError("Network error");
+    }
+  };
 
   useEffect(() => { load(); }, [load]);
 
@@ -82,18 +103,38 @@ export default function TenantsPage() {
           <div className="flex justify-center py-20"><Loader2 className="w-8 h-8 animate-spin text-blue-600" /></div>
         ) : (
           <>
-            {tab === "list" && <TenantList tenants={tenants} />}
+            {error && <div className="mb-4 flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700 dark:border-red-800 dark:bg-red-950"><AlertCircle className="h-4 w-4" /> {error}</div>}
+            {tab === "list" && <TenantList tenants={tenants} onDelete={setDeleteTarget} />}
             {tab === "create" && <CreateTenant onCreated={() => { setTab("list"); load(); }} />}
           </>
         )}
       </div>
+
+      {/* Delete confirmation */}
+      {deleteTarget && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-6 max-w-md w-full mx-4">
+            <div className="flex items-center gap-3 mb-3">
+              <div className="rounded-full bg-red-100 dark:bg-red-950 p-2"><Trash2 className="h-5 w-5 text-red-600" /></div>
+              <h3 className="text-lg font-semibold">{t("common.delete")}</h3>
+            </div>
+            <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+              Delete tenant <strong>{deleteTarget.name}</strong>? This action cannot be undone.
+            </p>
+            <div className="flex justify-end gap-2">
+              <button onClick={() => setDeleteTarget(null)} className="rounded-lg border border-gray-300 dark:border-gray-700 px-4 py-2 text-sm">{t("common.cancel")}</button>
+              <button onClick={() => handleDelete(deleteTarget)} className="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700">{t("common.delete")}</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
 
 // ============ Tenant List ============
 
-function TenantList({ tenants }: { tenants: Tenant[] }) {
+function TenantList({ tenants, onDelete }: { tenants: Tenant[]; onDelete: (t: Tenant) => void }) {
   const t = useTranslations();
 
   if (tenants.length === 0) {
@@ -111,6 +152,7 @@ function TenantList({ tenants }: { tenants: Tenant[] }) {
             <th className="py-2 px-4 font-medium text-gray-600 dark:text-gray-400 text-right">{t("tenants.list.userCount")}</th>
             <th className="py-2 px-4 font-medium text-gray-600 dark:text-gray-400">{t("tenants.list.status")}</th>
             <th className="py-2 px-4 font-medium text-gray-600 dark:text-gray-400">{t("tenants.list.created")}</th>
+            <th className="py-2 px-4 font-medium text-gray-600 dark:text-gray-400 text-right">{t("common.actions")}</th>
           </tr></thead>
           <tbody>
             {tenants.map((t_item) => (
@@ -130,12 +172,17 @@ function TenantList({ tenants }: { tenants: Tenant[] }) {
                   <span className={`px-2 py-0.5 text-xs rounded-full capitalize ${planColors[t_item.plan] || planColors.free}`}>{t(`tenants.create.plan${t_item.plan.replace(/^./, (m: any) => m.toUpperCase())}`)}</span>
                 </td>
                 <td className="py-3 px-4 text-right">
-                  <span className="text-sm font-medium text-gray-900 dark:text-white flex items-center justify-end gap-1"><Users className="w-3 h-3 text-gray-400" />{t_item.user_count.toLocaleString()}</span>
+                  <span className="text-sm font-medium text-gray-900 dark:text-white flex items-center justify-end gap-1"><Users className="w-3 h-3 text-gray-400" />{(t_item.user_count ?? 0).toLocaleString()}</span>
                 </td>
                 <td className="py-3 px-4">
                   <span className={`px-2 py-0.5 text-xs rounded-full ${statusColors[t_item.status] || statusColors.active}`}>{t(`tenants.list.status${t_item.status.replace(/^./, (m: any) => m.toUpperCase())}`)}</span>
                 </td>
-                <td className="py-3 px-4 text-xs text-gray-500">{new Date(t_item.created).toLocaleDateString()}</td>
+                <td className="py-3 px-4 text-xs text-gray-500">{t_item.created ? new Date(t_item.created).toLocaleDateString() : "—"}</td>
+                <td className="py-3 px-4 text-right">
+                  <button onClick={() => onDelete(t_item)} className="rounded p-1.5 text-gray-400 hover:bg-red-50 hover:text-red-600" title={t("common.delete")}>
+                    <Trash2 className="h-4 w-4" />
+                  </button>
+                </td>
               </tr>
             ))}
           </tbody>
@@ -178,10 +225,12 @@ function CreateTenant({ onCreated }: { onCreated: () => void }) {
         setTimeout(() => { setName(""); setSlug(""); setAdminEmail(""); setMsg(null); onCreated(); }, 1500);
         return;
       }
-    } catch { /* ok */ }
-    // Mock success for demo
-    setMsg(t("tenants.create.created"));
-    setTimeout(() => { setName(""); setSlug(""); setAdminEmail(""); setMsg(null); onCreated(); }, 1500);
+    } catch {
+      setMsg(null);
+      setSubmitting(false);
+      setError("Network error — failed to create tenant");
+      return;
+    }
   };
 
   // Auto-generate slug from name (lowercase, hyphenated)

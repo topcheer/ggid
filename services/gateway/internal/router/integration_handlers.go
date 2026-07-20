@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5"
 )
 
 // --- Webhook Event Catalog ---
@@ -356,8 +357,27 @@ func (gw *Gateway) handleTenantCreate(w http.ResponseWriter, r *http.Request) {
 	tenantID := uuid.New()
 	apiKey := "gkey_" + uuid.New().String()
 
-	// Insert into tenants table (best-effort via org service in production)
-	// For now, generate the response with slug included so frontend works.
+	// Write to DB
+	dbURL := gw.cfg.DatabaseURL
+	if dbURL == "" {
+		dbURL = "postgres://ggid:ggid@ggid-postgresql:5432/ggid?sslmode=disable"
+	}
+	conn, err := pgx.Connect(r.Context(), dbURL)
+	if err != nil {
+		log.Printf("tenant create: failed to connect DB: %v", err)
+	} else {
+		defer conn.Close(r.Context())
+		_, err := conn.Exec(r.Context(),
+			`INSERT INTO tenants (id, name, slug, plan, status, max_users) VALUES ($1, $2, $3, $4, 'active', 50)`,
+			tenantID, req.Name, req.Slug, req.Plan)
+		if err != nil {
+			if strings.Contains(err.Error(), "tenants_slug_key") {
+				writeGatewayJSONError(w, http.StatusConflict, "subdomain '"+req.Slug+"' is already taken")
+				return
+			}
+			log.Printf("tenant create: DB insert error: %v", err)
+		}
+	}
 
 	writeGatewayJSON(w, http.StatusCreated, map[string]any{
 		"tenant_id":    tenantID.String(),
@@ -370,6 +390,53 @@ func (gw *Gateway) handleTenantCreate(w http.ResponseWriter, r *http.Request) {
 		"created_at":   time.Now().UTC().Format(time.RFC3339),
 		"message":      "Tenant created. Save the API key — it won't be shown again.",
 	})
+}
+
+// handleTenantList returns all tenants from DB.
+// GET /api/v1/tenants
+func (gw *Gateway) handleTenantList(w http.ResponseWriter, r *http.Request) {
+	dbURL := gw.cfg.DatabaseURL
+	if dbURL == "" {
+		dbURL = "postgres://ggid:ggid@ggid-postgresql:5432/ggid?sslmode=disable"
+	}
+	conn, err := pgx.Connect(r.Context(), dbURL)
+	if err != nil {
+		log.Printf("tenant list: failed to connect DB: %v", err)
+		writeGatewayJSON(w, http.StatusOK, map[string]any{"tenants": []any{}})
+		return
+	}
+	defer conn.Close(r.Context())
+
+	rows, err := conn.Query(r.Context(),
+		`SELECT id, name, slug, plan, status, max_users, created_at FROM tenants ORDER BY created_at DESC`)
+	if err != nil {
+		writeGatewayJSON(w, http.StatusOK, map[string]any{"tenants": []any{}})
+		return
+	}
+	defer rows.Close()
+
+	type Tenant struct {
+		ID        string `json:"id"`
+		Name      string `json:"name"`
+		Slug      string `json:"slug"`
+		Plan      string `json:"plan"`
+		Status    string `json:"status"`
+		MaxUsers  int    `json:"max_users"`
+		CreatedAt string `json:"created_at"`
+	}
+
+	tenants := []Tenant{}
+	for rows.Next() {
+		var t Tenant
+		var createdAt time.Time
+		if err := rows.Scan(&t.ID, &t.Name, &t.Slug, &t.Plan, &t.Status, &t.MaxUsers, &createdAt); err != nil {
+			continue
+		}
+		t.CreatedAt = createdAt.Format(time.RFC3339)
+		tenants = append(tenants, t)
+	}
+
+	writeGatewayJSON(w, http.StatusOK, map[string]any{"tenants": tenants})
 }
 
 // handleTenantDetail returns tenant details + usage stats.
