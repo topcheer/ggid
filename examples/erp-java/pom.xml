@@ -21,8 +21,6 @@
             <groupId>dev.ggid</groupId>
             <artifactId>ggid-sdk</artifactId>
             <version>1.0.0</version>
-            <scope>system</scope>
-            <systemPath>${project.basedir}/lib/ggid-sdk-1.0.0.jar</systemPath>
         </dependency>
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
@@ -33,16 +31,6 @@
             <groupId>com.fasterxml.jackson.datatype</groupId>
             <artifactId>jackson-datatype-jsr310</artifactId>
             <version>2.17.0</version>
-        </dependency>
-        <dependency>
-            <groupId>com.sun.net.httpserver</groupId>
-            <artifactId>httpserver</artifactId>
-            <version>20070405</version>
-        </dependency>
-        <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-simple</artifactId>
-            <version>2.0.13</version>
         </dependency>
     </dependencies>
 
