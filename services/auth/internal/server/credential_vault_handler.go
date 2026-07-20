@@ -99,8 +99,15 @@ func (h *Handler) handleCredentialVault(w http.ResponseWriter, r *http.Request) 
 		credVault[req.UserID][req.Key] = cred
 		credVaultMu.Unlock()
 
-		// PG write-through
-		if h.memMapRepo != nil {
+		// DB persistence
+		if h.pool != nil {
+			vaultID := req.UserID + ":" + req.Key
+			_, _ = h.pool.Exec(r.Context(), `
+				INSERT INTO auth_credential_vault (id, user_id, cred_key, encrypted_value, cred_type)
+				VALUES ($1, $2, $3, $4, $5)
+				ON CONFLICT (id) DO UPDATE SET encrypted_value = $4, updated_at = NOW()`,
+				vaultID, req.UserID, req.Key, encVal, "secret")
+		} else if h.memMapRepo != nil {
 			vaultID := req.UserID + ":" + req.Key
 			h.memMapRepo.StoreJSON(r.Context(), "auth_credvault_json", vaultID, map[string]any{
 				"id": vaultID, "user_id": req.UserID,
@@ -120,9 +127,18 @@ func (h *Handler) handleCredentialVault(w http.ResponseWriter, r *http.Request) 
 			writeError(w, http.StatusBadRequest, "key and user_id required")
 			return
 		}
-		// Try PG first, fall back to in-memory.
+		// Try DB first, then PG memMap, fall back to in-memory.
 		var cred *StoredCredential
-		if h.memMapRepo != nil {
+		if h.pool != nil {
+			var encVal string
+			err := h.pool.QueryRow(r.Context(), `
+				SELECT encrypted_value FROM auth_credential_vault WHERE user_id = $1 AND cred_key = $2`,
+				userID, key).Scan(&encVal)
+			if err == nil && encVal != "" {
+				cred = &StoredCredential{Key: key, Value: encVal}
+			}
+		}
+		if cred == nil && h.memMapRepo != nil {
 			vaultID := userID + ":" + key
 			if row, _ := h.memMapRepo.GetJSON(r.Context(), "auth_credvault_json", vaultID); row != nil {
 				cred = &StoredCredential{

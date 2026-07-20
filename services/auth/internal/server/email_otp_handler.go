@@ -4,28 +4,14 @@ import (
 	"encoding/json"
 	"net/http"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/ggid/ggid/pkg/crypto"
-)
-
-type otpEntry struct {
-	Code      string
-	Email     string
-	ExpiresAt time.Time
-	Used      bool
-}
-
-var (
-	otpStoreMu  sync.Mutex
-	otpStore    = make(map[string]*otpEntry) // code → entry
-	otpRateLimit sync.Mutex
-	otpSendLog   = make(map[string][]time.Time) // email → send timestamps
+	"github.com/google/uuid"
 )
 
 // POST /api/v1/auth/email-otp/send — send 6-digit OTP to email. Rate limited 3/hour.
-// POST /api/v1/auth/email-otp/verify — verify OTP and return JWT.
+// Uses auth_otp_entries DB table for persistence with in-memory rate-limit cache.
 func (h *Handler) handleEmailOTPSend(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
@@ -44,40 +30,40 @@ func (h *Handler) handleEmailOTPSend(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Rate limit: 3 per hour per email
-	otpRateLimit.Lock()
-	now := time.Now().UTC()
-	cutoff := now.Add(-time.Hour)
-	sends := otpSendLog[req.Email]
-	valid := sends[:0]
-	for _, t := range sends {
-		if t.After(cutoff) {
-			valid = append(valid, t)
+	// Rate limit via DB: count OTP entries in last hour
+	if h.pool != nil {
+		var count int
+		h.pool.QueryRow(r.Context(), `SELECT count(*) FROM auth_otp_entries WHERE email = $1 AND created_at > NOW() - INTERVAL '1 hour'`, req.Email).Scan(&count)
+		if count >= 3 {
+			writeError(w, http.StatusTooManyRequests, "rate limit exceeded: max 3 OTPs per hour")
+			return
 		}
 	}
-	if len(valid) >= 3 {
-		otpRateLimit.Unlock()
-		writeError(w, http.StatusTooManyRequests, "rate limit exceeded: max 3 OTPs per hour")
-		return
-	}
-	otpSendLog[req.Email] = append(valid, now)
-	otpRateLimit.Unlock()
 
 	// Generate 6-digit code
 	code, _ := crypto.GenerateRandomToken(6)
+	expiresAt := time.Now().UTC().Add(5 * time.Minute)
 
-	otpStoreMu.Lock()
-	otpStore[code] = &otpEntry{
-		Code: code, Email: req.Email,
-		ExpiresAt: now.Add(5 * time.Minute),
+	// Write to DB
+	tenantID := ""
+	if tc, err := extractTenantID(r); err == nil {
+		tenantID = tc.String()
 	}
-	otpStoreMu.Unlock()
+	if h.pool != nil {
+		_, err := h.pool.Exec(r.Context(),
+			`INSERT INTO auth_otp_entries (code, email, tenant_id, hashed_code, attempts, expires_at) VALUES ($1, $2, $3, $4, 0, $5)`,
+			code, req.Email, tenantID, code, expiresAt)
+		if err != nil {
+			writeError(w, http.StatusInternalServerError, "failed to store OTP")
+			return
+		}
+	}
 
-	// PG write-through
+	// Fallback: also store in memMapRepo for backward compat
 	if h.memMapRepo != nil {
 		h.memMapRepo.StoreJSON(r.Context(), "auth_otp_json", code, map[string]any{
 			"code": code, "email": req.Email,
-			"expires_at": now.Add(5 * time.Minute), "used": false,
+			"expires_at": expiresAt, "used": false,
 		})
 	}
 
@@ -108,27 +94,27 @@ func (h *Handler) handleEmailOTPVerify(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Try PG first, fall back to in-memory map.
-	if h.memMapRepo != nil {
-		row, _ := h.memMapRepo.GetJSON(r.Context(), "auth_otp_json", req.Code)
-		if row != nil {
-			if email, _ := row["email"].(string); email != req.Email {
+	// Try DB first
+	if h.pool != nil {
+		var dbEmail, tenantID string
+		var attempts int
+		var expiresAt time.Time
+		err := h.pool.QueryRow(r.Context(),
+			`SELECT email, COALESCE(tenant_id,''), COALESCE(attempts,0), expires_at FROM auth_otp_entries WHERE code = $1`,
+			req.Code).Scan(&dbEmail, &tenantID, &attempts, &expiresAt)
+		if err == nil {
+			// Found in DB
+			if dbEmail != req.Email {
 				writeError(w, http.StatusUnauthorized, "OTP email mismatch")
 				return
 			}
-			if used, _ := row["used"].(bool); used {
-				writeError(w, http.StatusUnauthorized, "OTP already used")
+			if time.Now().UTC().After(expiresAt) {
+				h.pool.Exec(r.Context(), `DELETE FROM auth_otp_entries WHERE code = $1`, req.Code)
+				writeError(w, http.StatusGone, "OTP expired")
 				return
 			}
-			// Mark as used in PG
-			row["used"] = true
-			h.memMapRepo.StoreJSON(r.Context(), "auth_otp_json", req.Code, row)
-			// Backward-compat: update in-memory
-			otpStoreMu.Lock()
-			if e, ok := otpStore[req.Code]; ok {
-				e.Used = true
-			}
-			otpStoreMu.Unlock()
+			// Delete used OTP from DB
+			_, _ = h.pool.Exec(r.Context(), `DELETE FROM auth_otp_entries WHERE code = $1`, req.Code)
 			writeJSON(w, http.StatusOK, map[string]any{
 				"status":     "authenticated",
 				"email":      req.Email,
@@ -140,39 +126,41 @@ func (h *Handler) handleEmailOTPVerify(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	otpStoreMu.Lock()
-	entry, ok := otpStore[req.Code]
-	if !ok {
-		otpStoreMu.Unlock()
-		writeError(w, http.StatusUnauthorized, "invalid OTP code")
-		return
+	// Fallback: try memMapRepo
+	if h.memMapRepo != nil {
+		row, _ := h.memMapRepo.GetJSON(r.Context(), "auth_otp_json", req.Code)
+		if row != nil {
+			if email, _ := row["email"].(string); email != req.Email {
+				writeError(w, http.StatusUnauthorized, "OTP email mismatch")
+				return
+			}
+			if used, _ := row["used"].(bool); used {
+				writeError(w, http.StatusUnauthorized, "OTP already used")
+				return
+			}
+			row["used"] = true
+			h.memMapRepo.StoreJSON(r.Context(), "auth_otp_json", req.Code, row)
+			writeJSON(w, http.StatusOK, map[string]any{
+				"status":     "authenticated",
+				"email":      req.Email,
+				"method":     "email_otp",
+				"token_type": "Bearer",
+				"expires_in": 3600,
+			})
+			return
+		}
 	}
-	if entry.Used {
-		otpStoreMu.Unlock()
-		writeError(w, http.StatusUnauthorized, "OTP already used")
-		return
-	}
-	if time.Now().UTC().After(entry.ExpiresAt) {
-		delete(otpStore, req.Code)
-		otpStoreMu.Unlock()
-		writeError(w, http.StatusGone, "OTP expired")
-		return
-	}
-	if entry.Email != req.Email {
-		otpStoreMu.Unlock()
-		writeError(w, http.StatusUnauthorized, "OTP email mismatch")
-		return
-	}
-	entry.Used = true
-	otpStoreMu.Unlock()
 
-	writeJSON(w, http.StatusOK, map[string]any{
-		"status":     "authenticated",
-		"email":      req.Email,
-		"method":     "email_otp",
-		"token_type": "Bearer",
-		"expires_in": 3600,
-	})
+	writeError(w, http.StatusUnauthorized, "invalid OTP code")
+}
+
+// extractTenantID gets tenant ID from request context or header.
+func extractTenantID(r *http.Request) (uuid.UUID, error) {
+	// Try X-Tenant-ID header
+	if tidStr := r.Header.Get("X-Tenant-ID"); tidStr != "" {
+		return uuid.Parse(tidStr)
+	}
+	return uuid.Nil, nil
 }
 
 // Ensure strings import is used
