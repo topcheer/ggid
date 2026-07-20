@@ -277,9 +277,18 @@ func (r *AuditRepository) GetStats(ctx context.Context, tenantID uuid.UUID, sinc
 	}
 	defer actorRows.Close()
 	for actorRows.Next() {
-		var aa domain.ActorActivity
-		if err := actorRows.Scan(&aa.ActorID, &aa.ActorName, &aa.Count); err != nil {
+		var actorIDStr string
+		var actorName string
+		var count int
+		if err := actorRows.Scan(&actorIDStr, &actorName, &count); err != nil {
 			return nil, err
+		}
+		aa := domain.ActorActivity{
+			ActorName: actorName,
+			Count:     count,
+		}
+		if parsed, err := uuid.Parse(actorIDStr); err == nil {
+			aa.ActorID = parsed
 		}
 		stats.TopActors = append(stats.TopActors, aa)
 	}
