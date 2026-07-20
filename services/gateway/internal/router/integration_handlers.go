@@ -134,10 +134,12 @@ func (gw *Gateway) handleWebhookCatalog(w http.ResponseWriter, _ *http.Request) 
 
 // BootstrapRequest is the body for POST /api/v1/system/bootstrap.
 type BootstrapRequest struct {
-	AdminUsername string `json:"admin_username"`
-	AdminEmail    string `json:"admin_email"`
-	AdminPassword string `json:"admin_password"`
-	TenantName    string `json:"tenant_name"`
+	AdminUsername   string `json:"admin_username"`
+	AdminEmail      string `json:"admin_email"`
+	AdminPassword   string `json:"admin_password"`
+	TenantName      string `json:"tenant_name"`
+	WebAuthnRPID    string `json:"webauthn_rp_id"`    // e.g. "ggid-console.iot2.win"
+	WebAuthnOrigins string `json:"webauthn_origins"`  // comma-separated, e.g. "https://ggid-console.iot2.win"
 }
 
 // serviceURL returns the backend URL for a given service prefix.
@@ -296,6 +298,36 @@ func (gw *Gateway) handleSystemBootstrap(w http.ResponseWriter, r *http.Request)
 
 	// Mark system as initialized for /api/v1/system/status
 	quickstartInitialized = true
+
+	// Save WebAuthn config to DB (if provided)
+	if req.WebAuthnRPID != "" {
+		origins := []string{}
+		if req.WebAuthnOrigins != "" {
+			for _, o := range strings.Split(req.WebAuthnOrigins, ",") {
+				origins = append(origins, strings.TrimSpace(o))
+			}
+		}
+		if len(origins) == 0 {
+			origins = []string{"https://" + req.WebAuthnRPID}
+		}
+		configJSON, _ := json.Marshal(map[string]any{
+			"rp_id":     req.WebAuthnRPID,
+			"rp_origins": origins,
+			"rp_name":   req.TenantName,
+		})
+		dbURL := gw.cfg.DatabaseURL
+		if dbURL == "" {
+			dbURL = "postgres://ggid:ggid-k3s@ggid-postgresql:5432/ggid?sslmode=disable"
+		}
+		if conn, err := pgx.Connect(r.Context(), dbURL); err == nil {
+			conn.Exec(r.Context(),
+				`INSERT INTO sys_config (key, value) VALUES ('webauthn_config', $1)
+				 ON CONFLICT (key) DO UPDATE SET value = $1`,
+				configJSON)
+			conn.Close(r.Context())
+			log.Printf("bootstrap: WebAuthn config saved to DB (rp_id=%s)", req.WebAuthnRPID)
+		}
+	}
 
 	writeGatewayJSON(w, http.StatusCreated, map[string]any{
 		"status":          "bootstrapped",
