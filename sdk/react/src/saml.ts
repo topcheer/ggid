@@ -3,6 +3,8 @@
  *
  * Generate SP metadata, fetch IdP metadata, and build SAML auth request URLs.
  */
+// Buffer polyfill declaration for TypeScript (Node.js global used in isomorphic code)
+declare var Buffer: any;
 
 export interface SAMLConfig {
   entityId: string;
