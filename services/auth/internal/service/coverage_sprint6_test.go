@@ -89,6 +89,9 @@ func (m *tMockIdentityClient) CreateUserFromSocial(_ context.Context, _ uuid.UUI
 func (m *tMockIdentityClient) GetUserRoles(_ context.Context, _ uuid.UUID, _ uuid.UUID) ([]string, error) {
 	return []string{"admin"}, nil
 }
+func (m *tMockIdentityClient) GetUserPermissions(_ context.Context, _ uuid.UUID, _ uuid.UUID) ([]string, error) {
+	return nil, nil
+}
 
 func (m *tMockIdentityClient) ResolveTenantBySlug(_ context.Context, _ string) (uuid.UUID, error) {
 	return uuid.Nil, fmt.Errorf("not implemented in mock")

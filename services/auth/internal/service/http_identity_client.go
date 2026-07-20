@@ -165,6 +165,38 @@ func (c *HTTPIdentityClient) GetUserRoles(ctx context.Context, tenantID, userID 
 	return scopes, nil
 }
 
+// GetUserPermissions fetches the fine-grained permissions for all roles
+// assigned to a user. Queries the role_permissions table via identity service
+// batch endpoint: GET /api/v1/users/{id}/permissions
+func (c *HTTPIdentityClient) GetUserPermissions(ctx context.Context, tenantID, userID uuid.UUID) ([]string, error) {
+	url := fmt.Sprintf("%s/api/v1/users/%s/permissions", c.baseURL, userID)
+	req, _ := http.NewRequestWithContext(ctx, "GET", url, nil)
+	req.Header.Set("X-Tenant-ID", tenantID.String())
+	resp, err := c.client.Do(req)
+	if err != nil {
+		return nil, nil // degraded mode
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		return nil, nil
+	}
+	var result struct {
+		Permissions []struct {
+			Key string `json:"key"`
+		} `json:"permissions"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil, nil
+	}
+	perms := make([]string, 0, len(result.Permissions))
+	for _, p := range result.Permissions {
+		if p.Key != "" {
+			perms = append(perms, p.Key)
+		}
+	}
+	return perms, nil
+}
+
 func (c *HTTPIdentityClient) FindExternalIdentity(ctx context.Context, tenantID uuid.UUID, provider, externalID string) (*ExternalIdentityLink, error) {
 	// Not implemented in identity service REST API yet
 	return nil, nil

@@ -244,14 +244,31 @@ func (s *AuthService) Logout(ctx context.Context, refreshToken string) error {
 	return s.tokenService.RevokeRefreshToken(ctx, refreshToken)
 }
 
-// getUserScopes resolves the real role-based scopes for a user via IdentityClient.
+// getUserScopes resolves the real role-based scopes + fine-grained permissions for a user.
+// Returns role names (e.g. "Platform Administrator") AND permission keys (e.g. "inventory:read")
+// so that SDK demos can check both via JWT scopes.
 // Falls back to ["user"] (basic access) when roles cannot be resolved.
-// This replaces the previous hardcoded []string{"admin"} that gave every user admin access.
 func (s *AuthService) getUserScopes(ctx context.Context, tenantID, userID uuid.UUID) []string {
 	if s.identityClient != nil {
 		roles, err := s.identityClient.GetUserRoles(ctx, tenantID, userID)
 		if err == nil && len(roles) > 0 {
-			return roles
+			// Merge role names with fine-grained permissions
+			scopes := make([]string, 0, len(roles)*4)
+			scopes = append(scopes, roles...)
+
+			// Fetch and append permissions (inventory:read, orders:write, etc.)
+			perms, _ := s.identityClient.GetUserPermissions(ctx, tenantID, userID)
+			seen := make(map[string]bool, len(scopes))
+			for _, s := range scopes {
+				seen[s] = true
+			}
+			for _, p := range perms {
+				if !seen[p] {
+					scopes = append(scopes, p)
+					seen[p] = true
+				}
+			}
+			return scopes
 		}
 	}
 	return []string{"user"}

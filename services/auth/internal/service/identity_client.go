@@ -37,6 +37,10 @@ type IdentityClient interface {
 	// GetUserRoles returns the role keys assigned to a user (e.g. ["admin", "user"]).
 	// Used to populate JWT scopes at login time. Returns ["user"] as fallback.
 	GetUserRoles(ctx context.Context, tenantID, userID uuid.UUID) ([]string, error)
+	// GetUserPermissions returns the fine-grained permissions (e.g. "inventory:read",
+	// "orders:write") for all roles assigned to a user. Used to populate JWT scopes
+	// so that SDK demos can check permissions directly from the access token.
+	GetUserPermissions(ctx context.Context, tenantID, userID uuid.UUID) ([]string, error)
 	// FindExternalIdentity finds a user by linked external identity (provider + externalID).
 	FindExternalIdentity(ctx context.Context, tenantID uuid.UUID, provider, externalID string) (*ExternalIdentityLink, error)
 	// LinkExternalIdentity links a social identity to an existing user.
@@ -186,6 +190,10 @@ func (n *NoopIdentityClient) CreateUserFromSocial(_ context.Context, tenantID uu
 }
 
 // ResolveTenantBySlug returns uuid.Nil for noop client (degraded mode).
+func (n *NoopIdentityClient) GetUserPermissions(_ context.Context, _ uuid.UUID, _ uuid.UUID) ([]string, error) {
+	return nil, nil
+}
+
 func (n *NoopIdentityClient) GetUserRoles(_ context.Context, _ uuid.UUID, _ uuid.UUID) ([]string, error) {
 	return []string{"user"}, nil
 }

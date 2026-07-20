@@ -555,6 +555,10 @@ func (h *HTTPHandler) handleUserByID(w http.ResponseWriter, r *http.Request) {
 		h.handleUserPreferences(ctx, userID, w, r)
 	case action == "reassign" && r.Method == http.MethodPost:
 		h.reassignUser(ctx, userID, w, r)
+	case action == "permissions" && r.Method == http.MethodGet:
+		// Return user's fine-grained permissions (union of all role permissions).
+		// Used by auth service to populate JWT scopes at login time.
+		h.handleUserPermissions(ctx, userID, w, r)
 	case action == "clone-template" && r.Method == http.MethodPost:
 		h.handleCloneTemplate(ctx, userID, w, r)
 	case action == "certification-status" && r.Method == http.MethodGet:
@@ -1349,6 +1353,52 @@ func (h *HTTPHandler) handleMePermissions(ctx context.Context, w http.ResponseWr
 			perms = append(perms, p)
 		}
 		writeJSON(w, http.StatusOK, map[string]any{"permissions": perms, "total": len(perms)})
+		return
+	}
+	defer rows.Close()
+
+	type apiPerm struct {
+		Key          string `json:"key"`
+		ResourceType string `json:"resource_type"`
+		Action       string `json:"action"`
+		Description  string `json:"description"`
+	}
+	perms := []apiPerm{}
+	for rows.Next() {
+		var p apiPerm
+		if err := rows.Scan(&p.Key, &p.ResourceType, &p.Action, &p.Description); err != nil {
+			continue
+		}
+		perms = append(perms, p)
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"permissions": perms, "total": len(perms)})
+}
+
+// handleUserPermissions returns the fine-grained permissions for a specific user ID.
+// GET /api/v1/users/{id}/permissions
+// Used by auth service to populate JWT scopes (inventory:read, orders:write, etc.)
+func (h *HTTPHandler) handleUserPermissions(ctx context.Context, userID uuid.UUID, w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
+		return
+	}
+
+	pool := h.svc.Pool()
+	if pool == nil {
+		writeJSON(w, http.StatusOK, map[string]any{"permissions": []any{}})
+		return
+	}
+
+	rows, err := pool.Query(ctx, `
+		SELECT p.key, p.resource_type, p.action, COALESCE(p.description, '')
+		FROM role_permissions rp
+		JOIN permissions p ON p.id = rp.permission_id
+		JOIN user_roles ur ON ur.role_id = rp.role_id
+		WHERE ur.user_id = $1
+		ORDER BY p.resource_type, p.action
+	`, userID)
+	if err != nil {
+		writeJSON(w, http.StatusOK, map[string]any{"permissions": []any{}})
 		return
 	}
 	defer rows.Close()
