@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"sync"
+	"time"
 
 	"github.com/ggid/ggid/services/oauth/internal/domain"
 	"github.com/google/uuid"
@@ -97,6 +98,16 @@ func (r *MemoryCodeRepository) CreateCode(_ context.Context, code *domain.Author
 	defer r.mu.Unlock()
 	r.codes[code.CodeHash] = code
 	return nil
+}
+
+func (r *MemoryCodeRepository) ResolveTenantFromCode(_ context.Context, codeHash string) (uuid.UUID, error) {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+	code, ok := r.codes[codeHash]
+	if !ok || code.Used || code.ExpiresAt.Before(time.Now()) {
+		return uuid.Nil, fmt.Errorf("code not found")
+	}
+	return code.TenantID, nil
 }
 
 func (r *MemoryCodeRepository) ConsumeCode(_ context.Context, codeHash string) (*domain.AuthorizationCode, error) {

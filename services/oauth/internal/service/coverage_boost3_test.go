@@ -39,6 +39,9 @@ func (m *errCodeRepo3) CreateCode(context.Context, *domain.AuthorizationCode) er
 func (m *errCodeRepo3) ConsumeCode(context.Context, string) (*domain.AuthorizationCode, error) {
 	return nil, m.err
 }
+func (m *errCodeRepo3) ResolveTenantFromCode(context.Context, string) (uuid.UUID, error) {
+	return uuid.Nil, m.err
+}
 
 type halfWorkingClientRepo3 struct {
 	clients   map[string]*domain.OAuthClient

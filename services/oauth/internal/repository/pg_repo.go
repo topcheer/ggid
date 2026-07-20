@@ -287,6 +287,16 @@ WHERE code_hash = $1 AND used = false AND expires_at > NOW()
 RETURNING id, tenant_id, client_id, user_id, redirect_uri, scope,
           code_challenge, code_challenge_method, nonce, expires_at, created_at`
 
+func (r *pgCodeRepo) ResolveTenantFromCode(ctx context.Context, codeHash string) (uuid.UUID, error) {
+	var tenantID uuid.UUID
+	err := r.pool.QueryRow(ctx, `SELECT tenant_id FROM oauth_authorization_codes
+		WHERE code_hash = $1 AND used = false AND expires_at > NOW()`, codeHash).Scan(&tenantID)
+	if err != nil {
+		return uuid.Nil, err
+	}
+	return tenantID, nil
+}
+
 func (r *pgCodeRepo) ConsumeCode(ctx context.Context, codeHash string) (*domain.AuthorizationCode, error) {
 	tx, err := r.pool.BeginTx(ctx, pgx.TxOptions{})
 	if err != nil {

@@ -21,6 +21,7 @@ type ClientRepository interface {
 type AuthorizationCodeRepository interface {
 	CreateCode(ctx context.Context, code *domain.AuthorizationCode) error
 	ConsumeCode(ctx context.Context, codeHash string) (*domain.AuthorizationCode, error)
+	ResolveTenantFromCode(ctx context.Context, codeHash string) (uuid.UUID, error)
 }
 
 // IDTokenRepository stores ID token records for audit (the tokens themselves are stateless JWTs).

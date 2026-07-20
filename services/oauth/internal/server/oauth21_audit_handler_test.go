@@ -47,6 +47,7 @@ type testCodeRepo struct{}
 
 func (m *testCodeRepo) CreateCode(_ context.Context, _ *domain.AuthorizationCode) error { return nil }
 func (m *testCodeRepo) ConsumeCode(_ context.Context, _ string) (*domain.AuthorizationCode, error) { return nil, nil }
+func (m *testCodeRepo) ResolveTenantFromCode(_ context.Context, _ string) (uuid.UUID, error) { return uuid.Nil, nil }
 
 type testTokenRepo struct{}
 

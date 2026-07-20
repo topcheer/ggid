@@ -584,10 +584,22 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 		}
 		_ = r.ParseForm()
 
-		// Inject tenant context from header.
+		// Resolve tenant ID from X-Tenant-ID header first (for non-auth-code flows).
+		// For authorization_code grant, fall back to tenant stored in the auth code.
 		tenantIDStr := r.Header.Get("X-Tenant-ID")
-		tenantID, err := uuid.Parse(tenantIDStr)
-		if err != nil {
+		tenantID, _ := uuid.Parse(tenantIDStr)
+
+		grantType := r.FormValue("grant_type")
+		code := r.FormValue("code")
+
+		// For authorization_code grant: if no X-Tenant-ID, look up the code's tenant
+		if grantType == "authorization_code" && code != "" && tenantID == uuid.Nil {
+			if resolvedTID, err := oauthSvc.ResolveTenantFromCode(r.Context(), code); err == nil {
+				tenantID = resolvedTID
+			}
+		}
+
+		if tenantID == uuid.Nil {
 			writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid_request", "error_description": "missing or invalid tenant context"})
 			return
 		}
@@ -597,7 +609,6 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 			IsolationLevel: tenant.IsolationShared,
 		})
 
-		grantType := r.FormValue("grant_type")
 		clientID := r.FormValue("client_id")
 		clientSecret := r.FormValue("client_secret")
 		scopeParam := r.FormValue("scope")
@@ -1332,7 +1343,7 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 		case http.MethodPost:
 			// Register a new OAuth client.
 			var body struct {
-				Name          string   `json:"name"`
+				Name          string   `json:"client_name"`
 				Type          string   `json:"type"`
 				GrantTypes    []string `json:"grant_types"`
 				ResponseTypes []string `json:"response_types"`

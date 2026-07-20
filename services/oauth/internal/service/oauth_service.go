@@ -139,6 +139,13 @@ func (s *OAuthService) CreateClient(ctx context.Context, input *CreateClientInpu
 	return &CreateClientResult{Client: client, ClientSecret: plaintextSecret}, nil
 }
 
+// ResolveTenantFromCode looks up the tenant_id stored in an authorization code
+// without consuming it. This allows the token endpoint to resolve the tenant
+// for authorization_code grants without requiring X-Tenant-ID header.
+func (s *OAuthService) ResolveTenantFromCode(ctx context.Context, code string) (uuid.UUID, error) {
+	return s.codeRepo.ResolveTenantFromCode(ctx, hashCode(code))
+}
+
 // GetClient retrieves a client by its public client_id.
 func (s *OAuthService) GetClient(ctx context.Context, clientID string) (*domain.OAuthClient, error) {
 	tc, err := tenant.FromContext(ctx)

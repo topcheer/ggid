@@ -95,6 +95,14 @@ func (m *mockCodeRepo) ConsumeCode(_ context.Context, codeHash string) (*domain.
 	return code, nil
 }
 
+func (m *mockCodeRepo) ResolveTenantFromCode(_ context.Context, codeHash string) (uuid.UUID, error) {
+	code, ok := m.codes[codeHash]
+	if !ok || code.Used || code.IsExpired() {
+		return uuid.Nil, errors.InvalidArgument("invalid or expired authorization code")
+	}
+	return code.TenantID, nil
+}
+
 type mockTokenRepo struct {
 	tokens         []*domain.IDTokenRecord
 	refreshTokens  []*domain.RefreshTokenRecord
