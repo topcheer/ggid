@@ -17,7 +17,7 @@ public class RolesHandler extends BaseHandler {
         if (user == null) return;
         if (!requirePermission(exchange, user, "roles:read")) return;
         try {
-            var roles = Main.ggid.listRoles();
+            var roles = Main.ggid.listRoles().items;
             sendJson(exchange, 200, json(Map.of("roles", roles, "total", roles.size())));
         } catch (Exception e) {
             sendJson(exchange, 200, json(Map.of("roles", List.of(), "error", e.getMessage())));
@@ -31,7 +31,7 @@ public class RolesHandler extends BaseHandler {
         if (!requirePermission(exchange, user, "roles:write")) return;
         Map<String, String> body = mapper.readValue(exchange.getRequestBody(),
                 new com.fasterxml.jackson.core.type.TypeReference<>() {});
-        Main.audit(user.getSubject(), "roles.create", "Created role: " + body.get("name"));
+        Main.audit(user.userId, "roles.create", "Created role: " + body.get("name"));
         sendJson(exchange, 201, json(Map.of("created", true, "name", body.get("name"))));
     }
 }

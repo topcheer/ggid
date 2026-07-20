@@ -25,7 +25,7 @@ public class UsersHandler extends BaseHandler {
         String id = pathId(exchange, "/users");
         try {
             if (id.isEmpty()) {
-                var users = Main.ggid.listUsers();
+                var users = Main.ggid.listUsers(1, 100).items;
                 sendJson(exchange, 200, json(Map.of("users", users, "total", users.size())));
             } else {
                 sendJson(exchange, 200, json(Map.of("message", "User detail via GGID SDK", "id", id)));
@@ -45,7 +45,7 @@ public class UsersHandler extends BaseHandler {
                 new com.fasterxml.jackson.core.type.TypeReference<>() {});
         try {
             User created = Main.ggid.createUser(body.get("username"), body.get("email"), body.get("password"));
-            Main.audit(user.getSubject(), "users.create", "Created user: " + body.get("username"));
+            Main.audit(user.userId, "users.create", "Created user: " + body.get("username"));
             sendJson(exchange, 201, json(created));
         } catch (Exception e) {
             sendJson(exchange, 400, err("Create failed: " + e.getMessage()));
@@ -58,7 +58,7 @@ public class UsersHandler extends BaseHandler {
         if (user == null) return;
         if (!requirePermission(exchange, user, "users:write")) return;
         String id = pathId(exchange, "/users");
-        Main.audit(user.getSubject(), "users.delete", "Deleted user: " + id);
+        Main.audit(user.userId, "users.delete", "Deleted user: " + id);
         sendJson(exchange, 200, json(Map.of("deleted", true, "id", id)));
     }
 }

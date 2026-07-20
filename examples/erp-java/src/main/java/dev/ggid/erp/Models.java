@@ -2,7 +2,7 @@ package dev.ggid.erp;
 
 import java.time.Instant;
 
-public class InventoryItem {
+class InventoryItem {
     public String id, name, orgId;
     public int quantity;
     public double price;

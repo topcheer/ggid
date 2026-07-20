@@ -1,4 +1,4 @@
-FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
+FROM mcr.microsoft.com/dotnet/sdk:10.0-preview AS build
 WORKDIR /app
 
 # Copy SDK and demo
@@ -13,7 +13,7 @@ RUN dotnet restore
 WORKDIR /app/erp
 RUN dotnet restore && dotnet publish -c Release -o /out
 
-FROM mcr.microsoft.com/dotnet/runtime:9.0
+FROM mcr.microsoft.com/dotnet/runtime:10.0-preview
 WORKDIR /app
 COPY --from=build /out ./
 EXPOSE 9200

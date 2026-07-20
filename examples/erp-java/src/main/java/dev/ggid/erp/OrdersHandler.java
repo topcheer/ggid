@@ -23,7 +23,7 @@ public class OrdersHandler extends BaseHandler {
 
         // Row-level filtering: if user doesn't have orders:read:all, filter by org
         if (!user.hasPermission("orders:read:all")) {
-            String userOrg = user.getClaim("org_id");
+            String userOrg = "";
             if (userOrg != null && !userOrg.isEmpty()) {
                 allOrders.removeIf(o -> !userOrg.equals(o.orgId));
             }
@@ -49,9 +49,9 @@ public class OrdersHandler extends BaseHandler {
         Order order = mapper.readValue(exchange.getRequestBody(), Order.class);
         if (order.id == null) order.id = "ORD-" + System.currentTimeMillis();
         if (order.status == null) order.status = "pending";
-        if (order.createdBy == null) order.createdBy = user.getSubject();
+        if (order.createdBy == null) order.createdBy = user.userId;
         Main.orders.put(order.id, order);
-        Main.audit(user.getSubject(), "orders.create", "Created order: " + order.id);
+        Main.audit(user.userId, "orders.create", "Created order: " + order.id);
         sendJson(exchange, 201, json(order));
     }
 
@@ -81,7 +81,7 @@ public class OrdersHandler extends BaseHandler {
         }
 
         Main.orders.put(id, existing);
-        Main.audit(user.getSubject(), "orders.update", "Updated order: " + id);
+        Main.audit(user.userId, "orders.update", "Updated order: " + id);
         sendJson(exchange, 200, json(existing));
     }
 }

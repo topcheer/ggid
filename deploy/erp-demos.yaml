@@ -1,0 +1,102 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: erp-java
+  namespace: ggid
+spec:
+  replicas: 1
+  selector: { matchLabels: { app: erp-java } }
+  template:
+    metadata: { labels: { app: erp-java } }
+    spec:
+      containers:
+      - name: erp-java
+        image: registry.iot2.win/ggid/erp-java:latest
+        ports: [{ containerPort: 9300 }]
+        env:
+        - { name: GGID_URL, value: "http://ggid-gateway:8080" }
+        - { name: TENANT_ID, value: "00000000-0000-0000-0000-000000000001" }
+        - { name: PORT, value: "9300" }
+---
+apiVersion: v1
+kind: Service
+metadata: { name: erp-java, namespace: ggid }
+spec: { selector: { app: erp-java }, ports: [{ port: 80, targetPort: 9300 }] }
+---
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata: { name: erp-java, namespace: ggid }
+spec:
+  entryPoints: [websecure]
+  routes:
+  - match: Host(`erp-java.iot2.win`)
+    kind: Rule
+    services: [{ name: erp-java, port: 80 }]
+  tls: {}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata: { name: erp-python, namespace: ggid }
+spec:
+  replicas: 1
+  selector: { matchLabels: { app: erp-python } }
+  template:
+    metadata: { labels: { app: erp-python } }
+    spec:
+      containers:
+      - name: erp-python
+        image: registry.iot2.win/ggid/erp-python:latest
+        ports: [{ containerPort: 9100 }]
+        env:
+        - { name: GGID_URL, value: "http://ggid-gateway:8080" }
+        - { name: TENANT_ID, value: "00000000-0000-0000-0000-000000000001" }
+---
+apiVersion: v1
+kind: Service
+metadata: { name: erp-python, namespace: ggid }
+spec: { selector: { app: erp-python }, ports: [{ port: 80, targetPort: 9100 }] }
+---
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata: { name: erp-python, namespace: ggid }
+spec:
+  entryPoints: [websecure]
+  routes:
+  - match: Host(`erp-python.iot2.win`)
+    kind: Rule
+    services: [{ name: erp-python, port: 80 }]
+  tls: {}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata: { name: erp-csharp, namespace: ggid }
+spec:
+  replicas: 1
+  selector: { matchLabels: { app: erp-csharp } }
+  template:
+    metadata: { labels: { app: erp-csharp } }
+    spec:
+      containers:
+      - name: erp-csharp
+        image: registry.iot2.win/ggid/erp-csharp:latest
+        ports: [{ containerPort: 9200 }]
+        env:
+        - { name: GGID_URL, value: "http://ggid-gateway:8080" }
+        - { name: TENANT_ID, value: "00000000-0000-0000-0000-000000000001" }
+---
+apiVersion: v1
+kind: Service
+metadata: { name: erp-csharp, namespace: ggid }
+spec: { selector: { app: erp-csharp }, ports: [{ port: 80, targetPort: 9200 }] }
+---
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata: { name: erp-csharp, namespace: ggid }
+spec:
+  entryPoints: [websecure]
+  routes:
+  - match: Host(`erp-csharp.iot2.win`)
+    kind: Rule
+    services: [{ name: erp-csharp, port: 80 }]
+  tls: {}

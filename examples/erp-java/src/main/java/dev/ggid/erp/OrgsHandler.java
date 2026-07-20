@@ -15,7 +15,7 @@ public class OrgsHandler extends BaseHandler {
         GGIDUser user = requireAuth(exchange);
         if (user == null) return;
         try {
-            var orgs = Main.ggid.listOrganizations();
+            var orgs = Main.ggid.listOrgs().items;
             sendJson(exchange, 200, json(Map.of("orgs", orgs, "total", orgs.size())));
         } catch (Exception e) {
             sendJson(exchange, 200, json(Map.of("orgs", List.of(), "error", e.getMessage())));
@@ -29,7 +29,7 @@ public class OrgsHandler extends BaseHandler {
         if (!requirePermission(exchange, user, "settings:write")) return;
         Map<String, String> body = mapper.readValue(exchange.getRequestBody(),
                 new com.fasterxml.jackson.core.type.TypeReference<>() {});
-        Main.audit(user.getSubject(), "orgs.create", "Created org: " + body.get("name"));
+        Main.audit(user.userId, "orgs.create", "Created org: " + body.get("name"));
         sendJson(exchange, 201, json(Map.of("created", true, "name", body.get("name"))));
     }
 }

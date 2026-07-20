@@ -23,7 +23,7 @@ public class InventoryHandler extends BaseHandler {
         List<InventoryItem> items = new ArrayList<>(Main.inventory.values());
         // Filter by org if user doesn't have inventory:read:all
         if (!user.hasPermission("inventory:read:all")) {
-            String userOrg = user.getClaim("org_id");
+            String userOrg = "";
             if (userOrg != null && !userOrg.isEmpty()) {
                 items.removeIf(item -> !userOrg.equals(item.orgId));
             }
@@ -40,7 +40,7 @@ public class InventoryHandler extends BaseHandler {
         InventoryItem item = mapper.readValue(exchange.getRequestBody(), InventoryItem.class);
         if (item.id == null) item.id = "INV-" + System.currentTimeMillis();
         Main.inventory.put(item.id, item);
-        Main.audit(user.getSubject(), "inventory.create", "Created: " + item.id);
+        Main.audit(user.userId, "inventory.create", "Created: " + item.id);
         sendJson(exchange, 201, json(item));
     }
 
@@ -51,7 +51,7 @@ public class InventoryHandler extends BaseHandler {
         if (!requirePermission(exchange, user, "inventory:write")) return;
         String id = pathId(exchange, "/inventory");
         Main.inventory.remove(id);
-        Main.audit(user.getSubject(), "inventory.delete", "Deleted: " + id);
+        Main.audit(user.userId, "inventory.delete", "Deleted: " + id);
         sendJson(exchange, 200, json(Map.of("deleted", true, "id", id)));
     }
 }

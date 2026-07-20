@@ -8,6 +8,7 @@ require 'securerandom'
 require_relative '../../sdk/ruby/lib/ggid'
 
 set :port, ENV.fetch('ERP_LISTEN', '9091').to_i
+set :bind, '0.0.0.0'
 
 GGID_URL = ENV.fetch('GGID_URL', 'http://localhost:8080')
 TENANT_ID = ENV.fetch('GGID_TENANT_ID', '00000000-0000-0000-0000-000000000001')
