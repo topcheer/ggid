@@ -46,7 +46,8 @@ func (s *HTTPServer) handleSuspendTenant(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	s.publishAuditEvent("tenant.suspend", "success", "tenants", tenantID, uuid.Nil)
+	actorID, _ := uuid.Parse(r.Header.Get("X-User-ID"))
+	s.publishAuditEvent("tenant.suspend", "success", "tenants", tenantID, actorID)
 
 	writeJSON(w, http.StatusOK, map[string]any{
 		"tenant_id": req.TenantID,
@@ -93,7 +94,8 @@ func (s *HTTPServer) handleActivateTenant(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	s.publishAuditEvent("tenant.activate", "success", "tenants", tenantID, uuid.Nil)
+	actorID2, _ := uuid.Parse(r.Header.Get("X-User-ID"))
+	s.publishAuditEvent("tenant.activate", "success", "tenants", tenantID, actorID2)
 
 	writeJSON(w, http.StatusOK, map[string]any{
 		"tenant_id": req.TenantID,

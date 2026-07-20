@@ -1432,9 +1432,12 @@ func (h *Handler) handleAccountDeletion(w http.ResponseWriter, r *http.Request) 
 		}
 
 		// Disable all credentials
-		_, _ = h.pool.Exec(r.Context(),
+		_, cErr := h.pool.Exec(r.Context(),
 			`UPDATE credentials SET enabled = false WHERE identifier = (SELECT username FROM users WHERE id::text = $1)`,
 			userID)
+		if cErr != nil {
+			slog.Error("Account deletion: credential disable failed", "user_id", userID, "error", cErr)
+		}
 	}
 
 	slog.Info("Account deleted (GDPR Art. 17)", "user_id", userID)

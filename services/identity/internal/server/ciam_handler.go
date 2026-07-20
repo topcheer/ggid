@@ -83,12 +83,24 @@ func (h *HTTPHandler) handleSelfRegister(w http.ResponseWriter, r *http.Request)
 	tenantID := uuid.New()
 	adminUserID := uuid.New()
 
-	// Store branding if provided.
+	// Store branding to DB if provided.
 	if req.Branding != nil {
-		tenantBrandingStore[tenantID] = &TenantBranding{
-			PrimaryColor: req.Branding.PrimaryColor,
-			LogoURL:      req.Branding.LogoURL,
-			CustomDomain: req.CustomDomain,
+		if pool := h.svc.Pool(); pool != nil {
+			_, err := pool.Exec(r.Context(), `
+				INSERT INTO tenant_branding (tenant_id, primary_color, logo_url, custom_domain)
+				VALUES ($1, $2, $3, $4)
+				ON CONFLICT (tenant_id) DO UPDATE SET primary_color = $2, logo_url = $3, custom_domain = $4`,
+				tenantID, req.Branding.PrimaryColor, req.Branding.LogoURL, req.CustomDomain)
+			if err != nil {
+				slog.Error("CIAM branding insert failed", "error", err)
+			}
+		} else {
+			// Fallback: in-memory for tests
+			tenantBrandingStore[tenantID] = &TenantBranding{
+				PrimaryColor: req.Branding.PrimaryColor,
+				LogoURL:      req.Branding.LogoURL,
+				CustomDomain: req.CustomDomain,
+			}
 		}
 	}
 
@@ -139,6 +151,18 @@ func (h *HTTPHandler) handleTenantBranding(w http.ResponseWriter, r *http.Reques
 
 	switch r.Method {
 	case http.MethodGet:
+		// Try DB first
+		if pool := h.svc.Pool(); pool != nil {
+			var b TenantBranding
+			err := pool.QueryRow(r.Context(),
+				`SELECT COALESCE(primary_color, '#6366f1'), COALESCE(logo_url, ''), COALESCE(custom_domain, '') FROM tenant_branding WHERE tenant_id = $1`,
+				tenantID).Scan(&b.PrimaryColor, &b.LogoURL, &b.CustomDomain)
+			if err == nil {
+				writeJSON(w, http.StatusOK, b)
+				return
+			}
+		}
+		// Fallback: in-memory or default
 		branding, ok := tenantBrandingStore[tenantID]
 		if !ok {
 			branding = &TenantBranding{
@@ -154,7 +178,21 @@ func (h *HTTPHandler) handleTenantBranding(w http.ResponseWriter, r *http.Reques
 			writeJSONError(w, http.StatusBadRequest, "invalid request body")
 			return
 		}
-		tenantBrandingStore[tenantID] = &branding
+		// Try DB first
+		if pool := h.svc.Pool(); pool != nil {
+			_, err := pool.Exec(r.Context(), `
+				INSERT INTO tenant_branding (tenant_id, primary_color, logo_url, custom_domain)
+				VALUES ($1, $2, $3, $4)
+				ON CONFLICT (tenant_id) DO UPDATE SET primary_color = $2, logo_url = $3, custom_domain = $4`,
+				tenantID, branding.PrimaryColor, branding.LogoURL, branding.CustomDomain)
+			if err != nil {
+				slog.Error("CIAM branding update failed", "error", err)
+				writeJSONError(w, http.StatusInternalServerError, "branding update failed")
+				return
+			}
+		} else {
+			tenantBrandingStore[tenantID] = &branding
+		}
 		slog.Info("CIAM branding updated", "tenant_id", tenantID, "color", branding.PrimaryColor, "domain", branding.CustomDomain)
 		writeJSON(w, http.StatusOK, branding)
 

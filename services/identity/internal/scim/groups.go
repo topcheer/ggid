@@ -8,6 +8,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/jackc/pgx/v5/pgxpool"
 	ggidtenant "github.com/ggid/ggid/pkg/tenant"
 	"github.com/google/uuid"
 )
@@ -180,19 +181,11 @@ func (h *Handler) getGroup(w http.ResponseWriter, r *http.Request, id string) {
 	writeSCIMError(w, http.StatusNotFound, "group not found")
 }
 
-// patchGroupStore provides mutable state for group PATCH operations in tests.
-// In production, this would be the database.
+// patchGroupStore is kept only for backward-compatible test access.
+// Production code uses DB via h.svc.Pool().
 var patchGroupStore = map[string]*SCIMGroup{}
 
 func (h *Handler) patchGroup(w http.ResponseWriter, r *http.Request, id string) {
-	// Initialize store with mock data on first access
-	if len(patchGroupStore) == 0 {
-		for _, g := range h.getMockGroups("", "") {
-			gc := g
-			patchGroupStore[g.ID] = &gc
-		}
-	}
-
 	var patch struct {
 		Operations []struct {
 			Op    string `json:"op"`
@@ -203,6 +196,63 @@ func (h *Handler) patchGroup(w http.ResponseWriter, r *http.Request, id string) 
 	if err := json.NewDecoder(r.Body).Decode(&patch); err != nil {
 		writeSCIMError(w, http.StatusBadRequest, "invalid PATCH body")
 		return
+	}
+
+	// Try DB-backed approach first; fall back to in-memory for tests
+	var pool *pgxpool.Pool
+	if h.svc != nil {
+		pool = h.svc.Pool()
+	}
+	if pool != nil {
+		// Load group from DB
+		var displayName string
+		err := pool.QueryRow(r.Context(),
+			`SELECT COALESCE(name, '') FROM groups WHERE id::text = $1`, id).Scan(&displayName)
+		if err != nil {
+			writeSCIMError(w, http.StatusNotFound, "group not found")
+			return
+		}
+
+		group := &SCIMGroup{ID: id, DisplayName: displayName}
+
+		// Apply each operation to DB
+		for _, op := range patch.Operations {
+			opPath := strings.ToLower(strings.TrimSpace(op.Path))
+			switch strings.ToLower(op.Op) {
+			case "replace":
+				if opPath == "displayname" {
+					if name, ok := op.Value.(string); ok {
+						_, err := pool.Exec(r.Context(),
+							`UPDATE groups SET name = $1 WHERE id::text = $2`, name, id)
+						if err != nil {
+							writeSCIMError(w, http.StatusInternalServerError, "failed to update group")
+							return
+						}
+						group.DisplayName = name
+					}
+				}
+			case "remove":
+				if opPath == "members" {
+					_, err := pool.Exec(r.Context(),
+						`DELETE FROM group_members WHERE group_id::text = $1`, id)
+					if err != nil {
+						writeSCIMError(w, http.StatusInternalServerError, "failed to remove members")
+						return
+					}
+				}
+			}
+		}
+
+		writeSCIMJSON(w, http.StatusOK, group)
+		return
+	}
+
+	// Fallback: in-memory store for tests
+	if len(patchGroupStore) == 0 {
+		for _, g := range h.getMockGroups("", "") {
+			gc := g
+			patchGroupStore[g.ID] = &gc
+		}
 	}
 
 	group, ok := patchGroupStore[id]
