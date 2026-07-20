@@ -360,7 +360,7 @@ func (gw *Gateway) handleTenantCreate(w http.ResponseWriter, r *http.Request) {
 	// Write to DB
 	dbURL := gw.cfg.DatabaseURL
 	if dbURL == "" {
-		dbURL = "postgres://ggid:ggid@ggid-postgresql:5432/ggid?sslmode=disable"
+		dbURL = "postgres://ggid:ggid-k3s@ggid-postgresql:5432/ggid?sslmode=disable"
 	}
 	conn, err := pgx.Connect(r.Context(), dbURL)
 	if err != nil {
@@ -398,7 +398,7 @@ func (gw *Gateway) handleTenantCreate(w http.ResponseWriter, r *http.Request) {
 func (gw *Gateway) handleTenantList(w http.ResponseWriter, r *http.Request) {
 	dbURL := gw.cfg.DatabaseURL
 	if dbURL == "" {
-		dbURL = "postgres://ggid:ggid@ggid-postgresql:5432/ggid?sslmode=disable"
+		dbURL = "postgres://ggid:ggid-k3s@ggid-postgresql:5432/ggid?sslmode=disable"
 	}
 	conn, err := pgx.Connect(r.Context(), dbURL)
 	if err != nil {
@@ -453,7 +453,7 @@ func (gw *Gateway) handleTenantDetail(w http.ResponseWriter, r *http.Request) {
 
 	dbURL := gw.cfg.DatabaseURL
 	if dbURL == "" {
-		dbURL = "postgres://ggid:ggid@ggid-postgresql:5432/ggid?sslmode=disable"
+		dbURL = "postgres://ggid:ggid-k3s@ggid-postgresql:5432/ggid?sslmode=disable"
 	}
 	conn, err := pgx.Connect(r.Context(), dbURL)
 	if err != nil {
