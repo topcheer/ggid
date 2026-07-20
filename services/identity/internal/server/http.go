@@ -51,6 +51,12 @@ func (h *HTTPHandler) handleTenantOrBranding(w http.ResponseWriter, r *http.Requ
 		h.handleTenantCRUD(w, r)
 		return
 	}
+	// 2 parts: {id}/access → consent; {id}/branding → branding
+	// 3 parts: {id}/access/grant or {id}/access/{consent_id}
+	if len(parts) >= 2 && parts[1] == "access" {
+		h.handleConsentCRUD(w, r)
+		return
+	}
 	h.handleBranding(w, r)
 }
 
@@ -157,6 +163,13 @@ func (h *HTTPHandler) registerRoutes() {
 
 	// Impersonation audit trail
 	h.mux.HandleFunc("/api/v1/audit/impersonation", h.handleImpersonationAudit)
+
+	// Impersonation Consent System
+	h.mux.HandleFunc("/api/v1/impersonate/start", h.handleImpersonation)
+	h.mux.HandleFunc("/api/v1/impersonate/end", h.handleImpersonation)
+	h.mux.HandleFunc("/api/v1/impersonate/active", h.handleImpersonation)
+	// Tenant access consent: /api/v1/tenants/{id}/access[/{action_or_id}]
+	h.mux.HandleFunc("/api/v1/tenants/", h.handleTenantOrBranding) // already registered, handles /access too via dispatcher
 
 	// Enhanced user search
 	h.mux.HandleFunc("/api/v1/users/search", h.handleUserSearch)

@@ -53,6 +53,7 @@ export default function SettingsHubPage() {
     // Governance
     { href: "/settings/sod-matrix", icon: Grid3x3, label: "SoD Matrix", desc: "Separation of duties rules", category: "Governance", color: "text-purple-500", keywords: ["sod", "separation", "duties", "conflict", "role"] },
     { href: "/settings/delegations", icon: ArrowRightLeft, label: "Delegations", desc: "Manage access delegations", category: "Governance", color: "text-purple-500", keywords: ["delegation", "delegate", "access", "scope"] },
+    { href: "/settings/platform-access", icon: Shield, label: "Platform Access", desc: "Grant/revoke platform admin access to your tenant", category: "Governance", color: "text-red-500", keywords: ["platform", "access", "consent", "impersonate", "support"] },
     { href: "/policies", icon: Shield, label: "Policies", desc: "Access policy management", category: "Governance", color: "text-purple-500", keywords: ["policy", "abac", "rbac", "access"] },
     { href: "/access-requests", icon: FileText, label: "Access Requests", desc: "Request and approve access", category: "Governance", color: "text-purple-500", keywords: ["access", "request", "approval"] },
     // Audit

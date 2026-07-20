@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { AuthGuard } from "@/components/auth-guard";
+import { ImpersonationBanner } from "@/components/impersonation-banner";
 import { ThemeProvider } from "@/lib/theme";
 import { I18nProvider } from "@/lib/i18n";
 import { ToastProvider } from "@/components/Toast";
@@ -55,6 +56,7 @@ export default function RootLayout({
             <ToastProvider>
               <ConfirmProvider>
                 <AuthGuard>
+                  <ImpersonationBanner />
                   {children}
                 </AuthGuard>
               </ConfirmProvider>

@@ -367,7 +367,7 @@ func (gw *Gateway) handleTenantCreate(w http.ResponseWriter, r *http.Request) {
 		log.Printf("tenant create: failed to connect DB: %v", err)
 	} else {
 		defer conn.Close(r.Context())
-		_, _ = conn.Exec(r.Context(), `SET ROLE pg_database_owner`) // bypass RLS for tenant management
+		_, _ = conn.Exec(r.Context(), `SET app.tenant_id = '00000000-0000-0000-0000-000000000001'`) // bypass RLS for tenant management
 		_, err := conn.Exec(r.Context(),
 			`INSERT INTO tenants (id, name, slug, plan, status, max_users) VALUES ($1, $2, $3, $4, 'active', 50)`,
 			tenantID, req.Name, req.Slug, req.Plan)
@@ -407,7 +407,7 @@ func (gw *Gateway) handleTenantList(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	defer conn.Close(r.Context())
-	_, _ = conn.Exec(r.Context(), `SET ROLE pg_database_owner`) // bypass RLS
+	_, _ = conn.Exec(r.Context(), `SET app.tenant_id = '00000000-0000-0000-0000-000000000001'`) // bypass RLS
 
 	rows, err := conn.Query(r.Context(),
 		`SELECT id::text, name, slug, plan, status, max_users, created_at FROM tenants ORDER BY created_at DESC`)
@@ -461,7 +461,7 @@ func (gw *Gateway) handleTenantDetail(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	defer conn.Close(r.Context())
-	_, _ = conn.Exec(r.Context(), `SET ROLE pg_database_owner`)
+	_, _ = conn.Exec(r.Context(), `SET app.tenant_id = '00000000-0000-0000-0000-000000000001'`)
 
 	if r.Method == http.MethodDelete {
 		_, err := conn.Exec(r.Context(), `DELETE FROM tenants WHERE id::text = $1 OR slug = $1`, tenantIDStr)
