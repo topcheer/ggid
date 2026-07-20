@@ -25,17 +25,14 @@ async function loginViaUI(page: Page, username: string, password: string) {
   await page.goto('/login');
   await page.waitForTimeout(2000);
   
-  // Fill tenant slug (defaults to "default" but needs to be set)
-  const tenantInputs = page.locator('input[placeholder*="default"], input[name="tenant"], input[id*="tenant"]');
-  if (await tenantInputs.count() > 0) {
-    await tenantInputs.first().fill('default');
-  }
+  // Fill tenant slug (defaults to "default" but ensure it's set)
+  await page.fill('input[placeholder="default"]', 'default');
   
-  // Fill username — use the second text input (first is tenant)
-  await page.locator('input[type="text"]').nth(1).fill(username);
+  // Fill username by id
+  await page.fill('#username', username);
   
-  // Fill password
-  await page.fill('input[type="password"]', password);
+  // Fill password by id
+  await page.fill('#password', password);
   
   // Click submit button
   await page.click('button[type="submit"]');
