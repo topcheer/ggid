@@ -6,6 +6,6 @@
     <AssemblyName>erp-csharp</AssemblyName>
   </PropertyGroup>
   <ItemGroup>
-    <ProjectReference Include="../../sdk/csharp/GgidSdk/GgidSdk.csproj" />
+    <ProjectReference Include="../../sdk/csharp/GGID.SDK.csproj" />
   </ItemGroup>
 </Project>
