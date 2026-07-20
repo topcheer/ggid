@@ -63,3 +63,22 @@ export type { IntrospectResult } from './introspect';
 // OIDC Discovery
 import './discovery';
 export type { DiscoveryConfig } from './discovery';
+
+// SAML SP utilities
+export {
+  generateSPMetadata,
+  fetchIdPMetadata,
+  parseEntityId,
+  parseSsoUrl,
+  buildAuthnRequestUrl,
+} from './saml';
+export type { SAMLConfig } from './saml';
+
+// WebAuthn / Passkey utilities
+export {
+  registerPasskey,
+  authenticateWithPasskey,
+  isWebAuthnSupported,
+  bufferToBase64url,
+  base64urlToBuffer,
+} from './passkey';
