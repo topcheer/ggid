@@ -3,7 +3,7 @@ import { test, expect, type APIRequestContext, type Page } from '@playwright/tes
 const API_BASE = process.env.API_URL || 'http://192.168.31.13:30080';
 const BASE = process.env.BASE_URL || 'https://ggid-console.iot2.win';
 const TENANT = '00000000-0000-0000-0000-000000000001';
-const ADMIN_PASSWORD = process.env.TEST_PASSWORD || 'q7Rf9Xk2Lm3pW8zB';
+const ADMIN_PASSWORD = process.env.TEST_PASSWORD || '';
 
 async function getAdminToken(request: APIRequestContext): Promise<string> {
   const resp = await request.post(`${API_BASE}/api/v1/auth/login`, {
