@@ -1,0 +1,41 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: erp-go
+  namespace: ggid
+  labels:
+    app: erp-go
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: erp-go
+  template:
+    metadata:
+      labels:
+        app: erp-go
+    spec:
+      containers:
+      - name: erp-go
+        image: registry.iot2.win/ggid/erp-go:latest
+        ports:
+        - containerPort: 9090
+        env:
+        - name: GGID_URL
+          value: "http://ggid-gateway.ggid.svc.cluster.local:8080"
+        - name: GGID_TENANT_ID
+          value: "00000001-0000-0000-0000-000000000001"
+        - name: ERP_LISTEN
+          value: ":9090"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: erp-go
+  namespace: ggid
+spec:
+  selector:
+    app: erp-go
+  ports:
+  - port: 80
+    targetPort: 9090

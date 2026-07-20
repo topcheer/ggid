@@ -2,16 +2,17 @@ FROM python:3.12-slim
 
 WORKDIR /app
 
-# Copy Python SDK
-COPY sdk/python/ggid ./ggid
-COPY sdk/python/requirements.txt ./requirements.txt
+# Copy project (SDK + demo)
+COPY . /build
 
-# Install dependencies
-RUN pip install --no-cache-dir -r requirements.txt
+# Install SDK + extra runtime deps
+RUN cd /build/sdk/python && pip install --no-cache-dir . && \
+    pip install --no-cache-dir requests PyJWT cryptography fastapi uvicorn
 
-# Copy demo
-COPY examples/erp-python/main.py ./main.py
+# Copy demo app
+RUN cp /build/examples/erp-python/main.py /app/main.py
 
+WORKDIR /app
 EXPOSE 9100
 
 CMD ["python3", "main.py"]
