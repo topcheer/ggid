@@ -74,11 +74,11 @@ func (h *HTTPHandler) handleDashboardStats(w http.ResponseWriter, r *http.Reques
 			SELECT count(*) FROM audit_events WHERE created_at > $1
 		`, since).Scan(&stats.AuditEvents24h)
 
-		// MFA enrollment rate from user_credentials table
+		// MFA enrollment rate from mfa_devices table
 		if stats.TotalUsers > 0 {
 			var mfaCount int
 			_ = pool.QueryRow(ctx, `
-				SELECT count(*) FROM user_credentials WHERE mfa_enabled = true
+				SELECT count(DISTINCT user_id) FROM mfa_devices WHERE verified_at IS NOT NULL
 			`).Scan(&mfaCount)
 			if mfaCount > 0 {
 				stats.MFAEnrollmentRate = (mfaCount * 100) / stats.TotalUsers

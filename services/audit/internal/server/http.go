@@ -435,7 +435,11 @@ func (s *HTTPServer) handleStats(w http.ResponseWriter, r *http.Request) {
 
 	tenantIDStr := r.URL.Query().Get("tenant_id")
 	if tenantIDStr == "" {
-		writeJSONError(w, http.StatusBadRequest, "tenant_id query parameter is required")
+		// Fallback: extract from X-Tenant-ID header (set by apiFetch)
+		tenantIDStr = r.Header.Get("X-Tenant-ID")
+	}
+	if tenantIDStr == "" {
+		writeJSONError(w, http.StatusBadRequest, "tenant_id query parameter or X-Tenant-ID header is required")
 		return
 	}
 	tenantID, err := uuid.Parse(tenantIDStr)
