@@ -193,6 +193,8 @@ func (h *Handler) registerRoutes() {
 	h.mux.HandleFunc("/api/v1/auth/mfa/enroll", h.mfaSetup)
 	h.mux.HandleFunc("/api/v1/auth/mfa/verify", h.mfaVerify)
 	h.mux.HandleFunc("/api/v1/auth/mfa/disable", h.mfaDisable)
+	h.mux.HandleFunc("/api/v1/auth/mfa/radius/verify", h.handleMFARadiusVerify)
+	h.mux.HandleFunc("/api/v1/auth/mfa/yubikey/verify", h.handleMFAYubiKeyVerify)
 	h.mux.HandleFunc("/api/v1/auth/mfa/login", h.mfaLogin)
 
 	// Backup codes (MFA recovery codes)

@@ -84,8 +84,8 @@ func (h *Handler) handleMFARadiusVerify(w http.ResponseWriter, r *http.Request) 
 	verified := h.verifyRadiusPasscode(ctx, radiusCfg.Server, radiusCfg.Port, radiusCfg.Secret, req.Username, req.Passcode)
 
 	// Audit
-	if tc, err := tenantCtxFromHeader(r); err == nil {
-		event := audit.NewEvent("mfa.radius.verify", map[string]bool{"verified": verified}["verified"], tc.TenantID, uuid.Nil)
+	if tid, ok := tenantCtxFromHeader(r); ok {
+		event := audit.NewEvent("mfa.radius.verify", "failed", tid, uuid.Nil)
 		event.ActorName = req.Username
 		event.IPAddress = clientIP(r)
 		if h.auditPublisher != nil {
@@ -183,8 +183,8 @@ func (h *Handler) handleMFAYubiKeyVerify(w http.ResponseWriter, r *http.Request)
 	verified, err := h.verifyYubiKeyOTP(r.Context(), yubicoCfg.ClientID, yubicoCfg.SecretKey, yubicoCfg.APIServers, req.OTP)
 	if err != nil {
 		// Audit failure
-		if tc, terr := tenantCtxFromHeader(r); terr == nil {
-			event := audit.NewEvent("mfa.yubikey.verify", "failure", tc.TenantID, uuid.Nil)
+		if tid, ok := tenantCtxFromHeader(r); ok {
+			event := audit.NewEvent("mfa.yubikey.verify", "failure", tid, uuid.Nil)
 			event.IPAddress = clientIP(r)
 			if h.auditPublisher != nil {
 				h.auditPublisher.PublishAsync(event)
@@ -195,8 +195,8 @@ func (h *Handler) handleMFAYubiKeyVerify(w http.ResponseWriter, r *http.Request)
 	}
 
 	// Audit success
-	if tc, terr := tenantCtxFromHeader(r); terr == nil {
-		event := audit.NewEvent("mfa.yubikey.verify", "success", tc.TenantID, uuid.Nil)
+	if tid, ok := tenantCtxFromHeader(r); ok {
+		event := audit.NewEvent("mfa.yubikey.verify", "success", tid, uuid.Nil)
 		event.IPAddress = clientIP(r)
 		if h.auditPublisher != nil {
 			h.auditPublisher.PublishAsync(event)
@@ -225,16 +225,15 @@ func (h *Handler) verifyYubiKeyOTP(ctx context.Context, clientID, secretKey stri
 	return false, fmt.Errorf("YubiKey validation API not yet implemented")
 }
 
-// clientIP extracts client IP from request, preferring X-Forwarded-For.
-func clientIP(r *http.Request) string {
-	return r.RemoteAddr
+// clientIP extracts client IP from request.
+// (uses existing clientIP function from http.go)
+
+// tenantCtxFromHeader resolves tenant from X-Tenant-ID header.
+func tenantCtxFromHeader(r *http.Request) (uuid.UUID, bool) {
+	if tidStr := r.Header.Get("X-Tenant-ID"); tidStr != "" {
+		if tid, err := uuid.Parse(tidStr); err == nil {
+			return tid, true
+		}
+	}
+	return uuid.Nil, false
 }
-
-// tenantCtxFromHeader creates a tenant context from X-Tenant-ID header.
-func tenantCtxFromHeader(r *http.Request) (*tenantContext, error) {
-	return &tenantContext{}, nil
-}
-
-type tenantContext struct{}
-
-func (t *tenantContext) TenantID() uuid.UUID { return uuid.Nil }
