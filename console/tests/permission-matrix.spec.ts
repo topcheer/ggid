@@ -3,6 +3,7 @@ import { test, expect, type APIRequestContext } from '@playwright/test';
 const API_BASE = process.env.API_URL || 'https://ggid.iot2.win';
 const TENANT = '00000000-0000-0000-0000-000000000001';
 const ADMIN_PASSWORD = process.env.TEST_PASSWORD || '';
+const ERP_PASSWORD = process.env.ERP_PASSWORD || '';
 
 // Permission matrix: role × resource × action → expected result
 const PERMISSION_MATRIX: Record<string, Record<string, Record<string, boolean>>> = {
@@ -41,7 +42,7 @@ const ERP_USERS = [
 async function login(request: APIRequestContext, username: string): Promise<string> {
   const resp = await request.post(`${API_BASE}/api/v1/auth/login`, {
     headers: { 'X-Tenant-ID': TENANT, 'Content-Type': 'application/json' },
-    data: { username, password: ADMIN_PASSWORD, tenant_slug: 'default' },
+    data: { username, password: ERP_PASSWORD || 'ErpDemo2024!', tenant_slug: 'default' },
   });
   const body = await resp.json();
   return body.access_token || '';
