@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test';
 import { PAGE_CATEGORIES } from './pages-data';
 
-const API_BASE = process.env.API_URL || 'http://192.168.31.13:30080';
+const API_BASE = process.env.API_URL || 'https://ggid.iot2.win';
 const TENANT = '00000000-0000-0000-0000-000000000001';
 
 // Test all settings pages load without errors

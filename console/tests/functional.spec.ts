@@ -1,7 +1,7 @@
 import { test, expect, type APIRequestContext, type Page } from '@playwright/test';
 
 const BASE = process.env.BASE_URL || 'https://ggid-console.iot2.win';
-const API_BASE = process.env.API_URL || 'http://192.168.31.13:30080';
+const API_BASE = process.env.API_URL || 'https://ggid.iot2.win';
 const TENANT = '00000000-0000-0000-0000-000000000001';
 
 // Helper: register + login via API, return token
@@ -125,18 +125,8 @@ test.describe('2. Login Flow (Form Fill + Submit + Redirect)', () => {
       data: { username, email: `${username}@test.com`, password: 'TestPass123!' },
     });
     
-    // Now login via UI
-    await page.goto('/login');
-    await page.waitForTimeout(2000);
-    
-    // Fill username and password using exact selectors
-    await page.waitForSelector('input[placeholder="admin"], input[placeholder*="username" i]', { state: 'visible', timeout: 10000 });
-    await page.fill('input[placeholder="admin"], input[placeholder*="username" i]', username);
-    await page.waitForSelector('input[type="password"]', { state: 'visible', timeout: 10000 });
-    await page.fill('input[type="password"]', 'TestPass123!');
-    
-    // Click the submit button
-    await page.click('button[type="submit"]');
+    // Now login via UI using the helper
+    await loginViaUI(page, username, 'TestPass123!');
     
     // Wait for navigation away from login page (with longer timeout for API call)
     await page.waitForURL((url) => !url.pathname.includes('/login'), { timeout: 15000 });

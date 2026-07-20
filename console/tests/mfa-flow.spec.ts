@@ -1,7 +1,7 @@
 import { test, expect, type APIRequestContext, type Page } from '@playwright/test';
 
 const BASE = process.env.BASE_URL || 'https://ggid-console.iot2.win';
-const API_BASE = process.env.API_URL || 'http://192.168.31.13:30080';
+const API_BASE = process.env.API_URL || 'https://ggid.iot2.win';
 const TENANT = '00000000-0000-0000-0000-000000000001';
 const TEST_PW = process.env.TEST_PASSWORD || 'TestPass123!';
 
