@@ -61,14 +61,15 @@ export interface TokenResponse {
   scope?: string;
 }
 
-export interface JWTCclaims {
+export interface JWTClaims {
   sub?: string;
   iss?: string;
   aud?: string;
   exp?: number;
   iat?: number;
   email?: string;
-  scope?: string;
+  scope?: string;          // OAuth scopes only (openid, profile, email)
+  permissions?: string[];  // Fine-grained permissions (inventory:read)
   tenant_id?: string;
   roles?: string[];
   [key: string]: any;

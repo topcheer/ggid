@@ -18,7 +18,9 @@ type Claims struct {
 	IssuedAt  int64  `json:"iat"`
 	TenantID  string `json:"tenant_id"`
 	ClientID  string `json:"client_id"`
-	Scope     string `json:"scope"`
+	Scope       string   `json:"scope"`          // OAuth scopes only
+	Permissions []string `json:"permissions,omitempty"` // Fine-grained permissions
+	Roles       []string `json:"roles,omitempty"`       // Role names
 }
 
 // verifyJWT verifies a JWT token against the GGID JWKS without external

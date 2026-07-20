@@ -227,7 +227,9 @@ func startServiceB(port string, jwksCache *JWKSKeyCache, tenantID string) {
 				"timestamp": time.Now().UTC().Format(time.RFC3339),
 				"caller":    claims.ClientID,
 				"tenant":    claims.TenantID,
-				"scopes":    claims.Scope,
+				"scopes":      claims.Scope,
+				"permissions": claims.Permissions,
+				"roles":       claims.Roles,
 			})
 
 		case http.MethodPost:
