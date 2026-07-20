@@ -10,14 +10,14 @@ import (
 )
 
 // UserRoleAssignment represents a role assigned to a user.
-type UserRoleAssignment struct {
-	ID         uuid.UUID `json:"id"`
-	UserID     uuid.UUID `json:"user_id"`
-	RoleID     string    `json:"role_id"`
-	RoleName   string    `json:"role_name"`
-	AssignedAt time.Time `json:"assigned_at"`
-	AssignedBy string    `json:"assigned_by"`
-}
+	type UserRoleAssignment struct {
+		ID         string    `json:"id"`
+		UserID     string    `json:"user_id"`
+		RoleID     string    `json:"role_id"`
+		RoleName   string    `json:"role_name"`
+		AssignedAt time.Time `json:"assigned_at"`
+		AssignedBy string    `json:"assigned_by"`
+	}
 
 // GET /api/v1/users/{id}/roles — list roles for a user (from DB)
 // POST /api/v1/users/{id}/roles — assign a role to a user (writes to DB)
@@ -33,7 +33,7 @@ func (h *HTTPHandler) handleUserRoles(ctx context.Context, userID uuid.UUID, w h
 			return
 		}
 		rows, err := pool.Query(ctx, `
-			SELECT ur.role_id::text, COALESCE(r.name, r.key, ur.role_id::text), ur.created_at, COALESCE(ur.granted_by::text, '')
+			SELECT ur.user_id::text, ur.role_id::text, COALESCE(r.name, r.key, ur.role_id::text), ur.created_at, COALESCE(ur.granted_by::text, '')
 			FROM user_roles ur
 			LEFT JOIN roles r ON r.id = ur.role_id
 			WHERE ur.user_id = $1
@@ -48,9 +48,10 @@ func (h *HTTPHandler) handleUserRoles(ctx context.Context, userID uuid.UUID, w h
 		roles := []UserRoleAssignment{}
 		for rows.Next() {
 			var a UserRoleAssignment
-			if err := rows.Scan(&a.RoleID, &a.RoleName, &a.AssignedAt, &a.AssignedBy); err != nil {
-				continue
-			}
+if err := rows.Scan(&a.UserID, &a.RoleID, &a.RoleName, &a.AssignedAt, &a.AssignedBy); err != nil {
+					continue
+				}
+				a.ID = a.UserID + "/" + a.RoleID
 			roles = append(roles, a)
 		}
 		writeJSON(w, http.StatusOK, map[string]any{"roles": roles})
@@ -85,12 +86,20 @@ func (h *HTTPHandler) handleUserRoles(ctx context.Context, userID uuid.UUID, w h
 			_ = pool.QueryRow(ctx, `SELECT name FROM roles WHERE id = $1`, roleUUID).Scan(&req.RoleName)
 		}
 
+		// Get authenticated user ID from gateway header
+		grantedByStr := r.Header.Get("X-User-ID")
+		grantedBy, err := uuid.Parse(grantedByStr)
+		if err != nil {
+			grantedBy = uuid.Nil
+		}
+
 		assignment := UserRoleAssignment{
-			ID:         uuid.New(),
-			UserID:     userID,
+			ID:         uuid.NewString(),
+			UserID:     userID.String(),
 			RoleID:     req.RoleID,
 			RoleName:   req.RoleName,
 			AssignedAt: time.Now(),
+			AssignedBy: grantedByStr,
 		}
 
 		// Insert into user_roles table (ON CONFLICT DO NOTHING for idempotency)
@@ -98,7 +107,7 @@ func (h *HTTPHandler) handleUserRoles(ctx context.Context, userID uuid.UUID, w h
 			INSERT INTO user_roles (user_id, role_id, scope_type, scope_id, granted_by)
 			VALUES ($1, $2, 'global', '00000000-0000-0000-0000-000000000001', $3)
 			ON CONFLICT DO NOTHING
-		`, userID, roleUUID, uuid.Nil)
+		`, userID, roleUUID, grantedBy)
 		if err != nil {
 			writeJSONError(w, http.StatusInternalServerError, "failed to assign role: "+err.Error())
 			return
