@@ -1,29 +1,33 @@
 # Cross-Board ERP Demo Progress Tracker
 
-> **Last Updated**: 2026-07-21 02:30
+> **Last Updated**: 2026-07-21 03:15
 
-## Overall: Code 8/8 | Deploy 7/8 | Health OK 5/8 | Auth Adapt 2/8 | Browser Verified 0/8
+## Overall: Code 8/8 | Deploy 7/8 | Health OK 6/8 | Auth Adapt 2/8 | Browser Verified 4/8
 
-| # | Lang | Code | Auth Method | Dockerfile | k8s | Health | Notes |
-|---|------|------|------------|-----------|-----|--------|-------|
-| 1 | Go | ✅ | ⏳ PKCE | ✅ | ✅ | ✅ ok | — |
-| 2 | Node | ✅ | ⏳ M2M | ✅ | ✅ | ✅ ok | — |
-| 3 | React | ✅ | ⏳ SPA PKCE | ✅ | ✅ | ✅ html | — |
-| 4 | Python | ✅ | ✅ SAML | ✅ | ✅ | ⚠️ / | SAML SSO working |
-| 5 | C# | ✅ | ✅ Password | ✅ | ✅ | ✅ ok | — |
-| 6 | Java | ✅ | ⏳ SAML | ✅ | ✅ | ✅ ok | — |
-| 7 | Ruby | ✅ | ⏳ Device | ✅ | ✅ | ❌ HostAuth | Image push in progress |
-| 8 | Rust | ✅ | ⏳ TokenEx | ✅ | 🔲 | 🔲 | Manifest ready, image pending |
+| # | Lang | Code | Auth | k8s | Health | Verified | Notes |
+|---|------|------|------|-----|--------|----------|-------|
+| 1 | Go | ✅ | ⏳ PKCE | ✅ | ✅ HTTP+HTTPS | ✅ Browser | — |
+| 2 | Node | ✅ | ⏳ M2M | ✅ | ✅ HTTP | ✅ Browser | — |
+| 3 | React | ✅ | ⏳ SPA | ✅ | ✅ HTTP | ✅ Browser | — |
+| 4 | Python | ✅ | ✅ SAML | ✅ | ✅ HTTPS | ✅ curl | SAML SSO, tenant ...0004 |
+| 5 | C# | ✅ | ✅ Password | ✅ | ✅ HTTPS | ✅ curl | Tenant ...0005 |
+| 6 | Java | ✅ | ⏳ SAML | ✅ | ✅ HTTPS | ✅ curl | — |
+| 7 | Ruby | ✅ | ⏳ Device | ✅ | ⚠️ internal only | 🔲 | Sinatra HostAuth ext |
+| 8 | Rust | ✅ | ⏳ TokenEx | 🔲 building | 🔲 | 🔲 | Rust 1.88 build in progress |
 
 ## Blockers
+1. Ruby: External HostAuth 403 (Sinatra 4.x), internal OK. Image push slow.
+2. Rust: Building with Rust 1.88 (deps need 1.86+)
+3. Auth method adaptation: 6/8 need code changes
 
-1. **Ruby HostAuth**: Sinatra::Base fix in local image, registry push slow/incomplete
-2. **Rust**: Image build fails (SDK compilation), manifest ready
-3. **Auth method adaptation**: 6/8 demos need auth flow changes (currently password login)
-
-## Next Steps
-
-1. Complete Ruby image push (background)
-2. Rust image build (may need SDK deps fix)
-3. Auth method adaptation phase (coordinate with team)
-4. Browser verification of working demos (Go/Node/React/C#/Java)
+## Auth Adaptation Status
+| Demo | Required | Current | Status |
+|------|----------|---------|--------|
+| Go | PKCE (OIDC) | Password | ⏳ |
+| Node | Client Credentials (M2M) | Password | ⏳ |
+| React | SPA PKCE | Password | ⏳ |
+| Python | SAML SSO | SAML | ✅ |
+| C# | Password Grant | Password | ✅ |
+| Java | SAML SSO | Password | ⏳ |
+| Ruby | Device Code | Password | ⏳ |
+| Rust | Token Exchange | Password | ⏳ |
