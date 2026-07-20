@@ -1,72 +1,66 @@
 //! Passkey/WebAuthn registration and authentication API calls.
-//!
-//! # Usage
-//!
-//! ```no_run
-//! use ggid::client::GGIDClient;
-//!
-//! # async fn example() {
-//! let client = GGIDClient::builder()
-//!     .base_url("https://ggid.example.com")
-//!     .build()
-//!     .unwrap();
-//! let options = client.begin_passkey_registration("token", "my-key").await.unwrap();
-//! # }
-//! ```
 
 use serde_json::Value;
+use super::client::GGIDClient;
+use super::error::GGIDError;
 
-impl super::client::GGIDClient {
+async fn parse_resp(resp: reqwest::Response) -> Result<Value, GGIDError> {
+    let status = resp.status();
+    let text = resp.text().await.unwrap_or_default();
+    if !status.is_success() {
+        return Err(GGIDError::Api { status: status.as_u16(), body: text });
+    }
+    Ok(serde_json::from_str(&text)?)
+}
+
+impl GGIDClient {
     /// Begin WebAuthn/Passkey registration. Returns server challenge options.
     pub async fn begin_passkey_registration(
-        &self,
-        token: &str,
-        device_name: &str,
-    ) -> Result<Value, super::error::GGIDError> {
-        self.post_authenticated(
-            "/api/v1/auth/mfa/enroll",
-            token,
-            &serde_json::json!({"type": "webauthn", "name": device_name}),
-        )
-        .await
+        &self, token: &str, device_name: &str,
+    ) -> Result<Value, GGIDError> {
+        let body = serde_json::json!({"type": "webauthn", "name": device_name});
+        let resp = self.http
+            .post(format!("{}/api/v1/auth/mfa/enroll", self.base_url))
+            .header("Authorization", format!("Bearer {}", token))
+            .header("X-Tenant-ID", &self.tenant_id)
+            .json(&body)
+            .send().await?;
+        parse_resp(resp).await
     }
 
-    /// Finish WebAuthn/Passkey registration by verifying the attestation.
+    /// Finish WebAuthn/Passkey registration.
     pub async fn finish_passkey_registration(
-        &self,
-        token: &str,
-        device_id: &str,
-        attestation: &str,
-    ) -> Result<Value, super::error::GGIDError> {
-        self.post_authenticated(
-            "/api/v1/auth/mfa/verify",
-            token,
-            &serde_json::json!({"device_id": device_id, "code": attestation}),
-        )
-        .await
+        &self, token: &str, device_id: &str, attestation: &str,
+    ) -> Result<Value, GGIDError> {
+        let body = serde_json::json!({"device_id": device_id, "code": attestation});
+        let resp = self.http
+            .post(format!("{}/api/v1/auth/mfa/verify", self.base_url))
+            .header("Authorization", format!("Bearer {}", token))
+            .header("X-Tenant-ID", &self.tenant_id)
+            .json(&body)
+            .send().await?;
+        parse_resp(resp).await
     }
 
-    /// Begin WebAuthn/Passkey login. Returns server challenge options.
-    pub async fn begin_passkey_login(
-        &self,
-        username: &str,
-    ) -> Result<Value, super::error::GGIDError> {
-        self.post_public(
-            "/api/v1/auth/webauthn/login/begin",
-            &serde_json::json!({"username": username}),
-        )
-        .await
+    /// Begin WebAuthn/Passkey login.
+    pub async fn begin_passkey_login(&self, username: &str) -> Result<Value, GGIDError> {
+        let body = serde_json::json!({"username": username});
+        let resp = self.http
+            .post(format!("{}/api/v1/auth/webauthn/login/begin", self.base_url))
+            .header("X-Tenant-ID", &self.tenant_id)
+            .json(&body)
+            .send().await?;
+        parse_resp(resp).await
     }
 
-    /// Finish WebAuthn/Passkey login by verifying the assertion.
-    pub async fn finish_passkey_login(
-        &self,
-        assertion: &str,
-    ) -> Result<Value, super::error::GGIDError> {
-        self.post_public(
-            "/api/v1/auth/webauthn/login/finish",
-            &serde_json::json!({"assertion": assertion}),
-        )
-        .await
+    /// Finish WebAuthn/Passkey login.
+    pub async fn finish_passkey_login(&self, assertion: &str) -> Result<Value, GGIDError> {
+        let body = serde_json::json!({"assertion": assertion});
+        let resp = self.http
+            .post(format!("{}/api/v1/auth/webauthn/login/finish", self.base_url))
+            .header("X-Tenant-ID", &self.tenant_id)
+            .json(&body)
+            .send().await?;
+        parse_resp(resp).await
     }
 }
