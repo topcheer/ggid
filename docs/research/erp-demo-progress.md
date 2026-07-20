@@ -8,12 +8,12 @@
 
 | # | Language | SDK | Dir | Status | Owner |
 |---|----------|-----|-----|--------|-------|
-| 1 | Go | Go SDK | examples/erp-go/ | 🔲 Not started | researcher |
-| 2 | TypeScript/Node | Node SDK | examples/erp-node/ | 🔲 Not started | frontend |
-| 3 | React | React SDK | examples/erp-react/ | 🔲 Not started | frontend |
-| 4 | Python | Python SDK | examples/erp-python/ | 🔲 Not started | backend |
+| 1 | Go | Go SDK | examples/erp-go/ | ✅ Done | researcher |
+| 2 | TypeScript/Node | Node SDK | examples/erp-node/ | ✅ Done | frontend |
+| 3 | React | React SDK | examples/erp-react/ | ✅ Done | frontend |
+| 4 | Python | Python SDK | examples/erp-python/ | ✅ Done | arch_pm |
 | 5 | Java | Java SDK | examples/erp-java/ | 🔲 Not started | backend |
-| 6 | C# | C# SDK | examples/erp-csharp/ | 🔲 Not started | backend |
+| 6 | C# | C# SDK | examples/erp-csharp/ | ✅ Done | arch_pm |
 | 7 | Ruby | Ruby SDK | examples/erp-ruby/ | 🔲 Not started | TBD |
 | 8 | Rust | Rust SDK | examples/erp-rust/ | 🔲 Not started | TBD |
 
