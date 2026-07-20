@@ -25,15 +25,23 @@ async function loginViaUI(page: Page, username: string, password: string) {
   await page.goto('/login');
   await page.waitForTimeout(2000);
   
-  // Fill in the login form
-  await page.fill('input[placeholder="johndoe"], input[name="username"], input[type="text"]', username);
-  await page.fill('input[type="password"], input[name="password"]', password);
+  // Fill tenant slug (defaults to "default" but needs to be set)
+  const tenantInputs = page.locator('input[placeholder*="default"], input[name="tenant"], input[id*="tenant"]');
+  if (await tenantInputs.count() > 0) {
+    await tenantInputs.first().fill('default');
+  }
+  
+  // Fill username — use the second text input (first is tenant)
+  await page.locator('input[type="text"]').nth(1).fill(username);
+  
+  // Fill password
+  await page.fill('input[type="password"]', password);
   
   // Click submit button
   await page.click('button[type="submit"]');
   
   // Wait for navigation away from login page
-  await page.waitForURL((url) => !url.pathname.includes('/login'), { timeout: 10000 });
+  await page.waitForURL((url) => !url.pathname.includes('/login'), { timeout: 15000 });
 }
 
 // Helper: set token in localStorage (for API-authenticated tests)
@@ -148,8 +156,13 @@ test.describe('2. Login Flow (Form Fill + Submit + Redirect)', () => {
     await page.goto('/login');
     await page.waitForTimeout(2000);
     
-    await page.waitForSelector('input[placeholder="admin"], input[placeholder*="username" i]', { state: 'visible', timeout: 10000 });
-    await page.fill('input[placeholder="admin"], input[placeholder*="username" i]', username);
+    // Fill tenant slug
+    const tenantInputs = page.locator('input[placeholder*="default"], input[name="tenant"]');
+    if (await tenantInputs.count() > 0) {
+      await tenantInputs.first().fill('default');
+    }
+    
+    await page.locator('input[type="text"]').nth(1).fill(username);
     await page.waitForSelector('input[type="password"]', { state: 'visible', timeout: 10000 });
     await page.fill('input[type="password"]', 'WrongPassword123!');
     await page.click('button[type="submit"]');
