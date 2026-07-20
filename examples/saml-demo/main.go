@@ -8,19 +8,17 @@ import (
 	"html/template"
 	"log"
 	"net/http"
+	"os"
 	"strings"
 
 	"github.com/ggid/ggid/pkg/saml"
 )
 
-const (
-	ggidBaseURL = "https://ggid.iot2.win"
-	listenAddr  = ":9090"
-)
-
 var (
-	spEntityID  = "https://ggid.iot2.win/saml"
-	spACSURL    = "http://localhost:9090/acs"
+	ggidBaseURL string
+	listenAddr  string
+	spEntityID  string
+	spACSURL    string
 	idpCertPEM  = ""
 	idpCert     *x509.Certificate
 )
@@ -39,6 +37,24 @@ type UserInfo struct {
 }
 
 func main() {
+	// Read configuration from environment variables (no hardcoded URLs)
+	ggidBaseURL = os.Getenv("GGID_URL")
+	if ggidBaseURL == "" {
+		log.Fatal("GGID_URL environment variable is required (e.g. https://ggid.example.com)")
+	}
+	listenAddr = os.Getenv("LISTEN_ADDR")
+	if listenAddr == "" {
+		listenAddr = ":9090"
+	}
+	spEntityID = os.Getenv("SP_ENTITY_ID")
+	if spEntityID == "" {
+		spEntityID = ggidBaseURL + "/saml"
+	}
+	spACSURL = os.Getenv("SP_ACS_URL")
+	if spACSURL == "" {
+		spACSURL = "http://localhost" + listenAddr + "/acs"
+	}
+
 	// Try to load IdP certificate from GGID metadata
 	loadIdPCert()
 
@@ -49,7 +65,8 @@ func main() {
 
 	fmt.Printf("SAML Demo App running on http://localhost%s\n", listenAddr)
 	fmt.Printf("GGID SAML SSO URL: %s/saml/sso\n", ggidBaseURL)
-	fmt.Printf("ACS URL: %s/acs\n", "http://localhost:9090")
+	fmt.Printf("ACS URL: %s\n", spACSURL)
+	fmt.Printf("SP Entity ID: %s\n", spEntityID)
 	log.Fatal(http.ListenAndServe(listenAddr, nil))
 }
 
@@ -112,7 +129,7 @@ func handleHome(w http.ResponseWriter, r *http.Request) {
 
 func handleLogin(w http.ResponseWriter, r *http.Request) {
 	// Redirect to GGID SAML SSO
-	ssoURL := fmt.Sprintf("%s/saml/sso?relay_state=%s", ggidBaseURL, "http://localhost:9090/acs")
+	ssoURL := fmt.Sprintf("%s/saml/sso?relay_state=%s", ggidBaseURL, spACSURL)
 	http.Redirect(w, r, ssoURL, http.StatusFound)
 }
 
