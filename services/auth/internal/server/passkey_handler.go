@@ -134,8 +134,12 @@ func (h *Handler) handlePasskeyRegisterFinish(w http.ResponseWriter, r *http.Req
 	var req struct {
 		SessionID  string `json:"session_id"`
 		Credential struct {
-			ID        string `json:"id"`
-			PublicKey string `json:"public_key"`
+			ID           string `json:"id"`
+			PublicKey    string `json:"public_key"`
+			DeviceName   string `json:"device_name"`
+			Platform     string `json:"platform"`
+			Transports   []string `json:"transports"`
+			BackupEligible bool `json:"backup_eligible"`
 		} `json:"credential"`
 		AAGUID string `json:"aaguid"`
 	}
@@ -191,19 +195,28 @@ func (h *Handler) handlePasskeyRegisterFinish(w http.ResponseWriter, r *http.Req
 		}
 	}
 
-	pkCredentials[cred.ID] = cred
 	sess.Status = "completed"
-	// PG write-through for credential and session
-	if h.memMapRepo != nil {
-		h.memMapRepo.StoreJSON(r.Context(), "auth_passkey_json", "cred:"+cred.ID, map[string]any{
-			"id": cred.ID, "user_id": cred.UserID,
-			"public_key": cred.PublicKey, "counter": cred.Counter,
-			"created_at": cred.CreatedAt, "revoked": cred.Revoked,
-		})
-		h.memMapRepo.StoreJSON(r.Context(), "auth_passkey_json", "reg:"+req.SessionID, map[string]any{
-			"session_id": req.SessionID, "user_id": sess.UserID,
-			"status": "completed",
-		})
+
+	// Persist credential to DB
+	if h.pool != nil {
+		tenantID := r.Header.Get("X-Tenant-ID")
+		if tenantID == "" {
+			tenantID = "00000000-0000-0000-0000-000000000001"
+		}
+		transportsJSON, _ := json.Marshal(req.Credential.Transports)
+		_, dbErr := h.pool.Exec(r.Context(), `
+			INSERT INTO auth_passkey_credentials
+			(id, user_id, credential_id, public_key, device_type, tenant_id, device_name, platform, transports, backup_eligible, sign_count)
+			VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, 0)
+			ON CONFLICT (id) DO UPDATE SET public_key = $4, device_name = $7, platform = $8, transports = $9`,
+			cred.ID, cred.UserID, cred.ID, cred.PublicKey,
+			req.Credential.Platform, tenantID,
+			req.Credential.DeviceName, req.Credential.Platform,
+			transportsJSON, req.Credential.BackupEligible)
+		if dbErr != nil {
+			writeError(w, http.StatusInternalServerError, "failed to save credential")
+			return
+		}
 	}
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(cred)
@@ -312,23 +325,24 @@ func (h *Handler) handlePasskeyRevoke(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	id := parts[len(parts)-1]
-	pkMu.Lock()
-	defer pkMu.Unlock()
-	cred, ok := pkCredentials[id]
-	if !ok {
-		writeError(w, http.StatusNotFound, "credential not found")
-		return
-	}
-	cred.Revoked = true
-	// PG write-through
-	if h.memMapRepo != nil {
-		if row, _ := h.memMapRepo.GetJSON(r.Context(), "auth_passkey_json", "cred:"+id); row != nil {
-			row["revoked"] = true
-			h.memMapRepo.StoreJSON(r.Context(), "auth_passkey_json", "cred:"+id, row)
-		} else {
-			h.memMapRepo.StoreJSON(r.Context(), "auth_passkey_json", "cred:"+id, map[string]any{
-				"id": id, "revoked": true,
-			})
+
+	// Revoke in DB
+	if h.pool != nil {
+		tag, err := h.pool.Exec(r.Context(), `
+			UPDATE auth_passkey_credentials SET revoked = true WHERE id = $1`, id)
+		if err != nil || tag.RowsAffected() == 0 {
+			// Try in-memory fallback
+			pkMu.Lock()
+			if cred, ok := pkCredentials[id]; ok {
+				cred.Revoked = true
+			}
+			pkMu.Unlock()
+		}
+	} else {
+		pkMu.Lock()
+		defer pkMu.Unlock()
+		if cred, ok := pkCredentials[id]; ok {
+			cred.Revoked = true
 		}
 	}
 	w.Header().Set("Content-Type", "application/json")
@@ -340,24 +354,64 @@ func (h *Handler) handlePasskeyStatus(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
+
+	// Query from DB
+	if h.pool != nil {
+		userID := r.URL.Query().Get("user_id")
+		rows, err := h.pool.Query(r.Context(), `
+			SELECT id, credential_id, device_name, platform, created_at,
+			       COALESCE(last_used, created_at), transports::text, backup_eligible
+			FROM auth_passkey_credentials
+			WHERE revoked = false AND ($1 = '' OR user_id = $1)
+			ORDER BY created_at DESC`, userID)
+		if err != nil {
+			writeError(w, http.StatusInternalServerError, "failed to query passkeys")
+			return
+		}
+		defer rows.Close()
+
+		passkeys := []map[string]any{}
+		for rows.Next() {
+			var id, credID, deviceName, platform string
+			var createdAt, lastUsed time.Time
+			var transportsStr string
+			var backupEligible bool
+			if err := rows.Scan(&id, &credID, &deviceName, &platform, &createdAt, &lastUsed, &transportsStr, &backupEligible); err != nil {
+				continue
+			}
+			var transports []string
+			_ = json.Unmarshal([]byte(transportsStr), &transports)
+			passkeys = append(passkeys, map[string]any{
+				"id":             id,
+				"device_name":    deviceName,
+				"platform":       platform,
+				"credential_id":  credID,
+				"created_at":     createdAt,
+				"last_used":      lastUsed,
+				"transports":     transports,
+				"backup_eligible": backupEligible,
+				"sync_status":    "synced",
+			})
+		}
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(map[string]any{"passkeys": passkeys, "total": len(passkeys)})
+		return
+	}
+
+	// Fallback to in-memory
 	pkMu.RLock()
 	defer pkMu.RUnlock()
-	var active, revoked int
+	passkeys := []map[string]any{}
 	for _, c := range pkCredentials {
-		if c.Revoked {
-			revoked++
-		} else {
-			active++
+		if !c.Revoked {
+			passkeys = append(passkeys, map[string]any{
+				"id": c.ID, "device_name": "", "platform": "",
+				"credential_id": c.ID, "created_at": c.CreatedAt,
+			})
 		}
 	}
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(map[string]int{
-		"active":         active,
-		"revoked":        revoked,
-		"total":          active + revoked,
-		"reg_sessions":   len(pkRegSessions),
-		"auth_sessions":  len(pkAuthSessions),
-	})
+	json.NewEncoder(w).Encode(map[string]any{"passkeys": passkeys, "total": len(passkeys)})
 }
 
 func fmtPKID(n int) string {
