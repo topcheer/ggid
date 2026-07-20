@@ -43,6 +43,7 @@ type OAuthService struct {
 // PoolQuerier is the minimal interface for DB queries (user profile lookup).
 type PoolQuerier interface {
 	QueryRow(ctx context.Context, sql string, args ...any) pgx.Row
+	Query(ctx context.Context, sql string, args ...any) (pgx.Rows, error)
 }
 
 // RedisCmdable is the minimal subset of go-redis used by the state store.
@@ -435,7 +436,10 @@ func (s *OAuthService) ExchangeAuthorizationCode(ctx context.Context, req *Token
 	// 7. Issue a signed self-contained JWT access token with AMR/ACR from auth code.
 	// Include user profile claims (email, name) so /userinfo can return them.
 	userAttrs := s.fetchUserClaims(ctx, code.TenantID, code.UserID)
-	accessToken, expiresIn, err := s.issueAccessTokenWithAMR(code.UserID, code.TenantID, client.ClientID, joinScopes(code.Scope), code.AMR, code.ACR, code.AuthTime, userAttrs)
+	// Merge OAuth scopes with user's fine-grained permissions so that
+	// SDK demos can check permissions directly from JWT scopes.
+	allScopes := s.mergeUserScopes(ctx, code.TenantID, code.UserID, joinScopes(code.Scope))
+	accessToken, expiresIn, err := s.issueAccessTokenWithAMR(code.UserID, code.TenantID, client.ClientID, allScopes, code.AMR, code.ACR, code.AuthTime, userAttrs)
 	if err != nil {
 		return nil, err
 	}
@@ -599,6 +603,59 @@ func (s *OAuthService) fetchUserClaims(ctx context.Context, tenantID, userID uui
 		attrs["name"] = name
 	}
 	return attrs
+}
+
+// fetchUserPermissions retrieves the fine-grained permission keys (e.g. "inventory:read")
+// for all roles assigned to a user. These are merged into the JWT scopes so that
+// SDK demos can check permissions directly from the access token.
+func (s *OAuthService) fetchUserPermissions(ctx context.Context, tenantID, userID uuid.UUID) []string {
+	if s.pool == nil {
+		return nil
+	}
+	rows, err := s.pool.Query(ctx, `
+		SELECT p.key
+		FROM role_permissions rp
+		JOIN permissions p ON p.id = rp.permission_id
+		JOIN user_roles ur ON ur.role_id = rp.role_id
+		WHERE ur.user_id = $1 AND ur.tenant_id = $2`,
+		userID, tenantID)
+	if err != nil {
+		return nil
+	}
+	defer rows.Close()
+	perms := []string{}
+	for rows.Next() {
+		var key string
+		if err := rows.Scan(&key); err != nil {
+			continue
+		}
+		perms = append(perms, key)
+	}
+	return perms
+}
+
+// mergeUserScopes combines the OAuth scopes (openid, profile, email) with
+// the user's role names and fine-grained permission keys. The result is a
+// space-delimited scope string for the JWT, e.g.:
+//   "openid profile email inventory:read orders:write ERP Manager"
+func (s *OAuthService) mergeUserScopes(ctx context.Context, tenantID, userID uuid.UUID, oauthScopes string) string {
+	scopes := []string{}
+	if oauthScopes != "" {
+		scopes = append(scopes, splitScopes(oauthScopes)...)
+	}
+	// Fetch user permissions and merge (dedup)
+	perms := s.fetchUserPermissions(ctx, tenantID, userID)
+	seen := make(map[string]bool, len(scopes))
+	for _, sc := range scopes {
+		seen[sc] = true
+	}
+	for _, p := range perms {
+		if !seen[p] {
+			scopes = append(scopes, p)
+			seen[p] = true
+		}
+	}
+	return strings.Join(scopes, " ")
 }
 
 // issueAccessTokenWithAMR issues a JWT with optional AMR/ACR claims.
@@ -1361,14 +1418,11 @@ func contains(slice []string, item string) bool {
 }
 
 func joinScopes(scopes []string) string {
-	result := ""
-	for i, s := range scopes {
-		if i > 0 {
-			result += " "
-		}
-		result += s
-	}
-	return result
+	return strings.Join(scopes, " ")
+}
+
+func splitScopes(s string) []string {
+	return strings.Fields(s)
 }
 
 func defaultIfEmpty(val, def string) string {
