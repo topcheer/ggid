@@ -1,225 +1,83 @@
-// Cross-Board ERP Demo — C# implementation
-// Tests all GGID core features via C# SDK.
-// Auth: OAuth2 Password Grant (tenant 00000005-...)
-// The /api/auth/login endpoint accepts username+password and returns
-// an access_token + refresh_token, which is RFC 6749 Password Grant.
-//
-// Run: GGID_URL=https://ggid.iot2.win dotnet run
-
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Net;
 using System.Text;
 using System.Text.Json;
-using System.Web;
-using Ggid.Sdk; // GGID C# SDK
+using System.Threading.Tasks;
+using System.Net.Http;
+using System.Linq;
 
-var ggidUrl = Environment.GetEnvironmentVariable("GGID_URL") ?? "http://localhost:8080";
-var tenantId = Environment.GetEnvironmentVariable("TENANT_ID") ?? "00000005-0000-0000-0000-000000000001";
-var port = int.Parse(Environment.GetEnvironmentVariable("PORT") ?? "9200");
-
-// --- In-memory data ---
-var inventory = new List<Dictionary<string, object>> {
-    new() { ["id"] = "p001", ["name"] = "Widget A", ["stock"] = 150, ["price"] = 29.99 },
-    new() { ["id"] = "p002", ["name"] = "Widget B", ["stock"] = 80, ["price"] = 49.99 },
-    new() { ["id"] = "p003", ["name"] = "Gadget C", ["stock"] = 200, ["price"] = 19.99 },
-};
-var orders = new List<Dictionary<string, object>> {
-    new() { ["id"] = "o001", ["customer"] = "Acme Corp", ["product_id"] = "p001", ["qty"] = 10, ["status"] = "pending", ["total"] = 299.90 },
-    new() { ["id"] = "o002", ["customer"] = "Beta Inc", ["product_id"] = "p002", ["qty"] = 5, ["status"] = "approved", ["total"] = 249.95 },
-};
-
-var client = new GGIDClient(ggidUrl, tenantId);
-var listener = new HttpListener();
-listener.Prefixes.Add($"http://+:{port}/");
-listener.Start();
-Console.WriteLine($"ERP C# Demo on :{port} | GGID: {ggidUrl}");
-
-while (true)
+class Program
 {
-    var ctx = listener.GetContext();
-    _ = Task.Run(() => HandleRequest(ctx, client, inventory, orders));
-}
+    static string ggidUrl = Environment.GetEnvironmentVariable("GGID_URL") ?? "http://localhost:8080";
+    static string tenantId = Environment.GetEnvironmentVariable("TENANT_ID") ?? "00000005-0000-0000-0000-000000000001";
+    static int port = int.Parse(Environment.GetEnvironmentVariable("PORT") ?? "9200");
 
-static async Task HandleRequest(HttpListenerContext ctx, GGIDClient client,
-    List<Dictionary<string, object>> inventory, List<Dictionary<string, object>> orders)
-{
-    var req = ctx.Request;
-    var resp = ctx.Response;
-    var path = req.Url!.AbsolutePath;
-    var method = req.HttpMethod;
-
-    try
+    static List<Dictionary<string, object>> inventory = new()
     {
-        // Public routes
-        if (path == "/" || path == "/health")
+        new() { ["id"] = "p001", ["name"] = "Widget A", ["stock"] = 150, ["price"] = 29.99 },
+        new() { ["id"] = "p002", ["name"] = "Widget B", ["stock"] = 80, ["price"] = 49.99 },
+    };
+    static List<Dictionary<string, object>> orders = new()
+    {
+        new() { ["id"] = "o001", ["customer"] = "Acme", ["status"] = "pending", ["total"] = 299.90 },
+        new() { ["id"] = "o002", ["customer"] = "Beta", ["status"] = "approved", ["total"] = 249.95 },
+    };
+
+    static void Main(string[] args)
+    {
+        var listener = new HttpListener();
+        listener.Prefixes.Add($"http://+:{port}/");
+        listener.Start();
+        Console.WriteLine($"ERP C# Demo on :{port} | GGID: {ggidUrl} | Tenant: {tenantId}");
+        while (true)
         {
-            await Json(resp, 200, new { app = "ERP C# Demo", status = "ok" });
-            return;
+            var ctx = listener.GetContext();
+            _ = Task.Run(() => { try { Handle(ctx); } catch (Exception e) { try { Json(ctx.Response, 500, new { error = e.Message }); } catch {} } ctx.Response.Close(); });
         }
+    }
+
+    static void Handle(HttpListenerContext ctx)
+    {
+        var path = ctx.Request.Url.AbsolutePath;
+        var method = ctx.Request.HttpMethod;
+
+        if (path == "/" || path == "/health") { Json(ctx.Response, 200, new { app = "ERP C# Demo", auth = "Password Grant", tenant_id = tenantId }); return; }
 
         if (path == "/api/auth/login" && method == "POST")
         {
-            var body = await ReadBody(req);
-            var result = await client.Login(body["username"]!, body["password"]!);
-            await Json(resp, 200, result);
+            var body = ReadBody(ctx.Request);
+            using var http = new HttpClient();
+            http.DefaultRequestHeaders.Add("X-Tenant-ID", tenantId);
+            var content = new StringContent(JsonSerializer.Serialize(body), Encoding.UTF8, "application/json");
+            var resp = http.PostAsync($"{ggidUrl}/api/v1/auth/login", content).Result;
+            var json = resp.Content.ReadAsStringAsync().Result;
+            ctx.Response.StatusCode = (int)resp.StatusCode;
+            WriteJson(ctx.Response, json);
             return;
         }
 
-        // Authenticated routes
-        var token = GetToken(req);
-        if (string.IsNullOrEmpty(token))
-        {
-            await Json(resp, 401, new { error = "Bearer token required" });
-            return;
-        }
-
+        var token = GetToken(ctx.Request);
+        if (token == null) { Json(ctx.Response, 401, new { error = "Bearer token required" }); return; }
         var perms = ExtractPermissions(token);
 
-        // --- Inventory ---
-        if (path == "/api/inventory" && method == "GET")
-        {
-            if (!HasPerm(perms, "inventory:read")) { await Json(resp, 403, new { error = "missing inventory:read" }); return; }
-            await Json(resp, 200, new { items = inventory, count = inventory.Count });
-            return;
-        }
-        if (path == "/api/inventory" && method == "POST")
-        {
-            if (!HasPerm(perms, "inventory:write")) { await Json(resp, 403, new { error = "missing inventory:write" }); return; }
-            var body = await ReadBody(req);
-            body["id"] = $"p{inventory.Count + 1:D3}";
-            inventory.Add(body);
-            await Json(resp, 201, body);
-            return;
-        }
+        if (path == "/api/inventory" && method == "GET") { if (!HasPerm(perms, "inventory:read")) { Forbid(ctx, "inventory:read"); return; } Json(ctx.Response, 200, new { items = inventory, count = inventory.Count }); return; }
+        if (path == "/api/inventory" && method == "POST") { if (!HasPerm(perms, "inventory:write")) { Forbid(ctx, "inventory:write"); return; } var b = ToObj(ReadBody(ctx.Request)); b["id"] = $"p{inventory.Count + 1:D3}"; inventory.Add(b); Json(ctx.Response, 201, b); return; }
+        if (path == "/api/orders" && method == "GET") { if (!HasPerm(perms, "orders:read")) { Forbid(ctx, "orders:read"); return; } Json(ctx.Response, 200, new { orders, count = orders.Count }); return; }
+        if (path == "/api/orders" && method == "POST") { if (!HasPerm(perms, "orders:write")) { Forbid(ctx, "orders:write"); return; } var b = ToObj(ReadBody(ctx.Request)); b["id"] = $"o{orders.Count + 1:D3}"; b["status"] = "pending"; orders.Add(b); Json(ctx.Response, 201, b); return; }
+        if (path.StartsWith("/api/orders/") && path.EndsWith("/approve") && method == "POST") { if (!HasPerm(perms, "orders:approve")) { Forbid(ctx, "orders:approve"); return; } var id = path.Split("/")[3]; var o = orders.FirstOrDefault(x => x["id"].ToString() == id); if (o == null) { Json(ctx.Response, 404, new { error = "not found" }); return; } o["status"] = "approved"; Json(ctx.Response, 200, o); return; }
+        if (path == "/api/my-permissions") { Json(ctx.Response, 200, new { permissions = perms, can_write_orders = HasPerm(perms, "orders:write"), can_approve = HasPerm(perms, "orders:approve") }); return; }
 
-        // --- Orders ---
-        if (path == "/api/orders" && method == "GET")
-        {
-            if (!HasPerm(perms, "orders:read")) { await Json(resp, 403, new { error = "missing orders:read" }); return; }
-            await Json(resp, 200, new { orders, count = orders.Count });
-            return;
-        }
-        if (path == "/api/orders" && method == "POST")
-        {
-            if (!HasPerm(perms, "orders:write")) { await Json(resp, 403, new { error = "missing orders:write" }); return; }
-            var body = await ReadBody(req);
-            body["id"] = $"o{orders.Count + 1:D3}";
-            body["status"] = "pending";
-            orders.Add(body);
-            await Json(resp, 201, body);
-            return;
-        }
-        if (path.StartsWith("/api/orders/") && path.EndsWith("/approve") && method == "POST")
-        {
-            if (!HasPerm(perms, "orders:approve")) { await Json(resp, 403, new { error = "missing orders:approve" }); return; }
-            var orderId = path.Split("/")[3];
-            var order = orders.Find(o => o["id"]!.ToString() == orderId);
-            if (order == null) { await Json(resp, 404, new { error = "order not found" }); return; }
-            order["status"] = "approved";
-            await Json(resp, 200, order);
-            return;
-        }
-
-        // --- Users ---
-        if (path == "/api/users" && method == "GET")
-        {
-            if (!HasPerm(perms, "users:read")) { await Json(resp, 403, new { error = "missing users:read" }); return; }
-            var users = await client.ListUsers(token);
-            await Json(resp, 200, users);
-            return;
-        }
-
-        // --- Roles ---
-        if (path == "/api/roles" && method == "GET")
-        {
-            if (!HasPerm(perms, "roles:read")) { await Json(resp, 403, new { error = "missing roles:read" }); return; }
-            var roles = await client.ListRoles(token);
-            await Json(resp, 200, roles);
-            return;
-        }
-
-        // --- Audit ---
-        if (path == "/api/audit" && method == "GET")
-        {
-            if (!HasPerm(perms, "audit:read")) { await Json(resp, 403, new { error = "missing audit:read" }); return; }
-            var events = await client.ListAuditEvents(token, tenantId: "00000000-0000-0000-0000-000000000001");
-            await Json(resp, 200, events);
-            return;
-        }
-
-        // --- My Permissions ---
-        if (path == "/api/my-permissions" && method == "GET")
-        {
-            await Json(resp, 200, new
-            {
-                permissions = perms,
-                can_read_inventory = HasPerm(perms, "inventory:read"),
-                can_write_orders = HasPerm(perms, "orders:write"),
-                can_approve_orders = HasPerm(perms, "orders:approve"),
-            });
-            return;
-        }
-
-        await Json(resp, 404, new { error = "not found", path });
+        Json(ctx.Response, 404, new { error = "not found", path });
     }
-    catch (Exception ex)
-    {
-        await Json(resp, 500, new { error = ex.Message });
-    }
-    finally
-    {
-        resp.Close();
-    }
-}
 
-static string? GetToken(HttpListenerRequest req)
-{
-    var auth = req.Headers["Authorization"];
-    return auth?.StartsWith("Bearer ") == true ? auth[7..] : null;
-}
-
-static List<string> ExtractPermissions(string token)
-{
-    // Extract permissions claim from JWT (no verification in demo)
-    var parts = token.Split('.');
-    if (parts.Length < 2) return new();
-    var payload = parts[1];
-    payload += new string('=', (4 - payload.Length % 4) % 4);
-    try
-    {
-        var bytes = Convert.FromBase64String(payload);
-        var json = Encoding.UTF8.GetString(bytes);
-        using var doc = JsonDocument.Parse(json);
-        if (doc.RootElement.TryGetProperty("permissions", out var perms))
-        {
-            var result = new List<string>();
-            foreach (var p in perms.EnumerateArray())
-                result.Add(p.GetString());
-            return result;
-        }
-    }
-    catch { }
-    return new();
-}
-
-static bool HasPerm(List<string> perms, string perm) =>
-    perms.Contains("admin") || perms.Contains(perm);
-
-static async Task<Dictionary<string, string>> ReadBody(HttpListenerRequest req)
-{
-    using var reader = new StreamReader(req.InputStream);
-    var body = await reader.ReadToEndAsync();
-    return JsonSerializer.Deserialize<Dictionary<string, string>>(body) ?? new();
-}
-
-static async Task Json(HttpListenerResponse resp, int status, object data)
-{
-    resp.StatusCode = status;
-    resp.ContentType = "application/json";
-    var json = JsonSerializer.Serialize(data);
-    var bytes = Encoding.UTF8.GetBytes(json);
-    resp.ContentLength64 = bytes.Length;
-    await resp.OutputStream.WriteAsync(bytes);
+    static void Forbid(HttpListenerContext ctx, string perm) => Json(ctx.Response, 403, new { error = $"missing {perm}" });
+    static string GetToken(HttpListenerRequest req) { var a = req.Headers["Authorization"]; return a != null && a.StartsWith("Bearer ") ? a.Substring(7) : null; }
+    static List<string> ExtractPermissions(string token) { try { var parts = token.Split('.'); var p = parts[1]; p += new string('=', (4 - p.Length % 4) % 4); var j = Encoding.UTF8.GetString(Convert.FromBase64String(p)); using var d = JsonDocument.Parse(j); if (d.RootElement.TryGetProperty("permissions", out var arr)) { return arr.EnumerateArray().Select(x => x.GetString()).ToList(); } } catch {} return new List<string>(); }
+    static bool HasPerm(List<string> p, string perm) => p.Contains("admin") || p.Contains(perm);
+    static Dictionary<string, string> ReadBody(HttpListenerRequest req) { using var r = new StreamReader(req.InputStream); var b = r.ReadToEnd(); return string.IsNullOrEmpty(b) ? new() : JsonSerializer.Deserialize<Dictionary<string, string>>(b) ?? new(); }
+    static Dictionary<string, object> ToObj(Dictionary<string, string> d) { var r = new Dictionary<string, object>(); foreach (var kv in d) r[kv.Key] = kv.Value; return r; }
+    static void Json(HttpListenerResponse resp, int code, object data) { resp.StatusCode = code; resp.ContentType = "application/json"; WriteJson(resp, JsonSerializer.Serialize(data)); }
+    static void WriteJson(HttpListenerResponse resp, string json) { var b = Encoding.UTF8.GetBytes(json); resp.ContentLength64 = b.Length; resp.OutputStream.Write(b, 0, b.Length); }
 }

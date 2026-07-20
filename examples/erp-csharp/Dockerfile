@@ -1,19 +1,10 @@
-FROM mcr.microsoft.com/dotnet/sdk:10.0-preview AS build
-WORKDIR /app
-
-# Copy SDK and demo
-COPY sdk/csharp/ ./sdk/
+FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
+WORKDIR /src
 COPY examples/erp-csharp/ ./erp/
+WORKDIR /src/erp
+RUN dotnet publish -c Release -o /out
 
-# Restore and build SDK first
-WORKDIR /app/sdk
-RUN dotnet restore
-
-# Build demo
-WORKDIR /app/erp
-RUN dotnet restore && dotnet publish -c Release -o /out
-
-FROM mcr.microsoft.com/dotnet/runtime:10.0-preview
+FROM mcr.microsoft.com/dotnet/runtime:9.0
 WORKDIR /app
 COPY --from=build /out ./
 EXPOSE 9200

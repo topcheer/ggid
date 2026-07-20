@@ -99,7 +99,8 @@ namespace GGID
             var body = new { username, email, password };
             var res = await _client.SendAsync(CreateRequest(HttpMethod.Post, "/api/v1/users", body));
             res.EnsureSuccessStatusCode();
-            return await (await res.Content.ReadAsStringAsync()).DeserializeAsync<JsonElement>();
+            var json = await res.Content.ReadAsStringAsync();
+            return JsonSerializer.Deserialize<JsonElement>(json);
         }
 
         public async Task<JsonElement> GetUserAsync(string userId)
