@@ -490,7 +490,6 @@ func (gw *Gateway) handleTenantList(w http.ResponseWriter, r *http.Request) {
 		var createdAt time.Time
 		if err := rows.Scan(&t.ID, &t.Name, &t.Slug, &t.Plan, &t.Status, &t.MaxUsers, &createdAt); err != nil {
 			continue
-			continue
 		}
 		t.CreatedAt = createdAt.Format(time.RFC3339)
 		tenants = append(tenants, t)
