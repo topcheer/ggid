@@ -1,6 +1,6 @@
 # GGID Team Backlog
 
-*Last updated: 2026-07-17 (Round 88: v1.0 Release Readiness Assessment complete — 2 backlog items)*
+*Last updated: 2026-07-20 (Round 89: Full Review Report #1 — 16 GAPs found, 5 P0)*
 
 ## Current Stats
 
@@ -194,6 +194,7 @@
 | 168 | **Multi-channel notifications** (P0-P1) | backend | Alerting | 7-channel notification router (email/SMS/Slack/Teams/PagerDuty/webhook/in-app) + severity routing + dedup + escalation + user prefs + quiet hours. See docs/research/notification-multi-channel-alerting.md |
 | 169 | **Security hardening audit remediation** (P0-P1) | backend | Pre-production | Request body validation + payload sanitization (SQLi/XSS) + govulncheck CI + session invalidation on password change + CORS strict + hijack detection wiring. See docs/research/security-hardening-audit.md |
 | 170 | **v1.0 release** (P0-P1) | team | Milestone | Fix P0s + load test baseline + govulncheck → v1.0-beta (2 weeks) → 30-day production soak → v1.0-stable. CONDITIONAL GO. See docs/research/v1-release-readiness.md |
+| 171 | **Full Review #1 GAPs** (P0-P2) | team | Audit | 16 GAPs from 4-role audit: SuspendTenant, global key rotation, self-service devices, GDPR deletion, global audit, threat dashboard, webhook CRUD, SCIM outbound, Swagger UI, self-service sessions, MFA removal, registration config, compliance PDF, Python SDK, webhook retry, notification Console. See docs/research/full-review-report.md |
 
 ### P3 — Quality/infrastructure improvements
 
@@ -268,6 +269,7 @@
 48. Multi-Channel Notification & Alerting → DONE (docs/research/notification-multi-channel-alerting.md) — 2 backlog items added
 49. Security Hardening Audit → DONE (docs/research/security-hardening-audit.md) — 2 backlog items added
 50. v1.0 Release Readiness Assessment → DONE (docs/research/v1-release-readiness.md) — 2 backlog items added
+51. Full Review #1 (4-role audit) → DONE (docs/research/full-review-report.md) — 16 backlog items added
 
 ## Rules
 
@@ -312,6 +314,7 @@ Active research topics:
 - Multi-Channel Notification & Alerting → DONE (docs/research/notification-multi-channel-alerting.md)
 - Security Hardening Audit → DONE (docs/research/security-hardening-audit.md)
 - v1.0 Release Readiness → DONE (docs/research/v1-release-readiness.md)
+- Full Review #1 → DONE (docs/research/full-review-report.md) — 16 GAPs, 5 P0
 - AI Agent Identity & Delegated Access → DONE (docs/research/ai-agent-identity.md)
 - Risk-Based Adaptive Authentication Engine → DONE (docs/research/risk-adaptive-auth-engine.md)
 - Consent Management Platform → DONE (docs/research/consent-management-platform.md)

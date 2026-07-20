@@ -270,6 +270,22 @@
 | KB-256 | **Session invalidation on password change + CORS strict default + hijack detection wiring** | backend | P1 | security-audit | 2d |
 | KB-257 | **v1.0-beta release: fix P0s + load test baseline** | team | P0 | v1-release | 10d |
 | KB-258 | **v1.0-stable: 30-day production soak + security re-audit** | team | P1 | v1-release | 30d |
+| KB-259 | **SuspendTenant/PauseTenant API** (P0, super admin) | backend | P0 | full-review-1 | 2d |
+| KB-260 | **Global key rotation API** (P0, super admin) | backend | P0 | full-review-1 | 4d |
+| KB-261 | **Self-service device list/revoke** (P0, end user) | backend+frontend | P0 | full-review-1 | 3d |
+| KB-262 | **GDPR account deletion endpoint** (P0, end user) | backend | P0 | full-review-1 | 2d |
+| KB-263 | **Cross-tenant global audit view** (P1, super admin) | backend+frontend | P1 | full-review-1 | 3d |
+| KB-264 | **Global threat dashboard** (P1, super admin) | backend+frontend | P1 | full-review-1 | 3d |
+| KB-265 | **Webhook CRUD admin API** (P1, tenant admin) | backend | P1 | full-review-1 | 2d |
+| KB-266 | **SCIM outbound provisioning** (P1, integrating app) | backend | P1 | full-review-1 | 4d |
+| KB-267 | **OpenAPI/Swagger UI** (P1, integrating app) | backend | P1 | full-review-1 | 2d |
+| KB-268 | **Self-service session list** (P1, end user) | backend | P1 | full-review-1 | 2d |
+| KB-269 | **MFA self-removal with re-auth** (P1, end user) | backend | P1 | full-review-1 | 2d |
+| KB-270 | **Per-tenant registration config** (P1, end user) | backend | P1 | full-review-1 | 1d |
+| KB-271 | **Compliance report PDF/CSV export** (P2, tenant admin) | backend | P2 | full-review-1 | 2d |
+| KB-272 | **Python SDK to functional tier** (P2, integrating app) | backend | P2 | full-review-1 | 5d |
+| KB-273 | **Webhook retry policy config** (P2, integrating app) | backend | P2 | full-review-1 | 1d |
+| KB-274 | **Notification preferences Console page** (P2, tenant admin) | frontend | P2 | full-review-1 | 1d |
 | KB-038 | **Journey definition store** (PostgreSQL) | backend | P0 | identity-orchestration | 3d |
 | KB-039 | **Journey definition parser** (YAML JDL) | backend | P0 | identity-orchestration | 4d |
 | KB-040 | **Journey engine** (state machine executor) | backend | P0 | identity-orchestration | 5d |
@@ -411,6 +427,7 @@
 | Multi-Channel Notification & Alerting | DONE | docs/research/notification-multi-channel-alerting.md |
 | Security Hardening Audit | DONE | docs/research/security-hardening-audit.md |
 | v1.0 Release Readiness Assessment | DONE | docs/research/v1-release-readiness.md |
+| Full Review Report #1 (4-role audit) | DONE | docs/research/full-review-report.md |
 | OAuth Client Lifecycle Management (DCR) | NEXT | — |
 
 ---
