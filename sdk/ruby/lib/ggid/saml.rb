@@ -1,51 +1,59 @@
-# GGID SAML SDK for Ruby.
-# Generates SP metadata for IdP integration.
-
-require 'net/http'
-require 'uri'
-
+# GGID SDK - SAML SP utilities (Ruby)
 module GGID
-  class SAML
-    attr_reader :entity_id, :acs_url, :slo_url
+  module SAML
+    module_function
 
-    # @param config [Hash] :entity_id, :acs_url, :slo_url (optional)
-    def initialize(config)
-      raise ArgumentError, 'entity_id is required' if config[:entity_id].nil? || config[:entity_id].empty?
-      raise ArgumentError, 'acs_url is required' if config[:acs_url].nil? || config[:acs_url].empty?
-
-      @entity_id = config[:entity_id]
-      @acs_url = config[:acs_url]
-      @slo_url = config[:slo_url]
-    end
-
-    # Generate SP metadata XML string.
-    # @return [String] XML
-    def generate_sp_metadata
-      valid_until = (Time.now + 365 * 24 * 3600).utc.iso8601
-      slo_element = ''
-      if @slo_url
-        slo_element = %(<SingleLogoutService Binding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect" Location="#{@slo_url}"/>)
-      end
-
+    # Generate SAML SP metadata XML
+    def generate_sp_metadata(entity_id:, acs_url:, slo_url: nil)
+      slo = slo_url ?
+        %(  <SingleLogoutService Binding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect" Location="#{escape_xml(slo_url)}" />\n) : ''
       %(<?xml version="1.0" encoding="UTF-8"?>
-<EntityDescriptor xmlns="urn:oasis:names:tc:SAML:2.0:metadata" entityID="#{@entity_id}" validUntil="#{valid_until}">
+<EntityDescriptor xmlns="urn:oasis:names:tc:SAML:2.0:metadata" entityID="#{escape_xml(entity_id)}">
   <SPSSODescriptor protocolSupportEnumeration="urn:oasis:names:tc:SAML:2.0:protocol">
     <NameIDFormat>urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress</NameIDFormat>
-    <AssertionConsumerService Binding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST" Location="#{@acs_url}" index="0"/>
-    #{slo_element}
-  </SPSSODescriptor>
+    <AssertionConsumerService Binding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST"
+      Location="#{escape_xml(acs_url)}" index="0" />
+#{slo}  </SPSSODescriptor>
 </EntityDescriptor>)
     end
 
-    # Fetch IdP metadata from GGID instance.
-    # @param ggid_base_url [String] e.g. https://ggid.example.com
-    # @return [String] XML
-    def self.fetch_idp_metadata(ggid_base_url)
-      url = URI("#{ggid_base_url.chomp('/')}/saml/idp/metadata")
-      res = Net::HTTP.get(url)
-      res
-    rescue StandardError => e
-      raise "Failed to fetch IdP metadata: #{e.message}"
+    # Fetch IdP metadata XML from GGID
+    def fetch_idp_metadata(ggid_base_url)
+      require 'net/http'
+      require 'uri'
+      uri = URI("#{ggid_base_url.gsub(/\/$/, '')}/saml/metadata")
+      response = Net::HTTP.get_response(uri)
+      raise "Failed to fetch IdP metadata: #{response.code}" unless response.is_a?(Net::HTTPSuccess)
+      response.body
+    end
+
+    # Extract entity ID from IdP metadata XML
+    def parse_entity_id(metadata_xml)
+      match = metadata_xml.match(/entityID="([^"]+)"/)
+      match && match[1]
+    end
+
+    # Extract SSO URL from IdP metadata XML
+    def parse_sso_url(metadata_xml)
+      match = metadata_xml.match(/SingleSignOnService[^>]*Location="([^"]+)"/)
+      match && match[1]
+    end
+
+    # Build a SAML AuthnRequest redirect URL
+    def build_authn_request_url(sso_url:, entity_id:, acs_url:, relay_state: nil)
+      require 'base64'
+      require 'cgi'
+      id = "_#{Time.now.to_i}#{rand(36**8).to_s(36)}"
+      request = %(<samlp:AuthnRequest xmlns:samlp="urn:oasis:names:tc:SAML:2.0:protocol" ID="#{id}" Version="2.0" IssueInstant="#{Time.now.utc.iso8601}" Destination="#{escape_xml(sso_url)}" AssertionConsumerServiceURL="#{escape_xml(acs_url)}"><saml:Issuer xmlns:saml="urn:oasis:names:tc:SAML:2.0:assertion">#{escape_xml(entity_id)}</saml:Issuer></samlp:AuthnRequest>)
+      encoded = Base64.strict_encode64(request)
+      sep = sso_url.include?('?') ? '&' : '?'
+      url = "#{sso_url}#{sep}SAMLRequest=#{CGI.escape(encoded)}"
+      url += "&RelayState=#{CGI.escape(relay_state)}" if relay_state
+      url
+    end
+
+    def escape_xml(str)
+      str.gsub('&', '&amp;').gsub('<', '&lt;').gsub('>', '&gt;').gsub('"', '&quot;').gsub("'", '&apos;')
     end
   end
 end

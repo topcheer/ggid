@@ -25,6 +25,7 @@ export 'src/abac.dart';
 export 'src/middleware.dart';
 export 'src/saml.dart';
 export 'src/passkey.dart';
+export 'src/users.dart';
 
 /// SDK version.
 const String ggidVersion = '1.0.0';

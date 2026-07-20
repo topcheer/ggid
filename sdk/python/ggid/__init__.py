@@ -8,6 +8,7 @@ from .client import GGIDClient, GGIDError
 from .jwt_verifier import JWTVerifier, JWTError
 from .middleware import ggid_auth, ggid_require_role, ggid_require_permission
 from .saml import SAMLConfig, generate_sp_metadata
+from .passkey import PasskeyClient
 
 __all__ = [
     "GGIDClient",
