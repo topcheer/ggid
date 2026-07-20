@@ -405,14 +405,7 @@ func (gw *Gateway) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		gw.handleWebhookCatalog(w, r)
 		return
 	}
-	if r.URL.Path == "/api/v1/tenants" && (r.Method == http.MethodPost || r.Method == http.MethodGet) {
-		if r.Method == http.MethodPost {
-			gw.handleTenantCreate(w, r)
-		} else {
-			gw.handleTenantList(w, r)
-		}
-		return
-	}
+	// Tenant list/create handled by identity service via proxy route /api/v1/tenants
 	if strings.HasPrefix(r.URL.Path, "/api/v1/tenants/") && !strings.HasPrefix(r.URL.Path, "/api/v1/tenants/resolve") && (r.Method == http.MethodGet || r.Method == http.MethodDelete) {
 		if proxy, _ := gw.matchBackend("/api/v1/identity/tenants/"); proxy != nil {
 			r2 := r.Clone(r.Context())
