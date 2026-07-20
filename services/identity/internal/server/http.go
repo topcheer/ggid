@@ -25,6 +25,7 @@ import (
 	"github.com/ggid/ggid/services/identity/internal/scim"
 	"github.com/ggid/ggid/services/identity/internal/service"
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 // compile-time interface assertion
@@ -72,9 +73,13 @@ identityPolicyMap *identityPolicyMapRepo
 
 // NewHTTPHandler creates a new HTTP handler with all routes registered.
 func NewHTTPHandler(svc *service.IdentityService) *HTTPHandler {
+	var pool *pgxpool.Pool
+	if svc != nil {
+		pool = svc.Pool()
+	}
 	h := &HTTPHandler{
 		svc:              svc,
-		brandingStore:    service.NewBrandingStore(),
+		brandingStore:    service.NewBrandingStore(pool),
 		accessRequestSvc: service.NewAccessRequestService(service.NewMemoryAccessRequestStore()),
 		idpConfigSvc:     idpconfig.NewService(idpconfig.NewMemoryStore()),
 	}

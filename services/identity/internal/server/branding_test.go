@@ -12,7 +12,7 @@ import (
 func newBrandingTestHandler() *HTTPHandler {
 	return &HTTPHandler{
 		svc:           nil, // not needed for branding
-		brandingStore: service.NewBrandingStore(),
+		brandingStore: service.NewBrandingStore(nil),
 	}
 }
 

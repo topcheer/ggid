@@ -13,7 +13,7 @@ import (
 func newIdPConfigTestHandler() *HTTPHandler {
 	return &HTTPHandler{
 		svc:          nil,
-		brandingStore: service.NewBrandingStore(),
+		brandingStore: service.NewBrandingStore(nil),
 		idpConfigSvc: idpconfig.NewService(idpconfig.NewMemoryStore()),
 	}
 }

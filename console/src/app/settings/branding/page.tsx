@@ -1,17 +1,21 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Palette, Loader2, AlertCircle, X, Upload, Check, Eye, Mail,
   Save, Type, Square, Moon, Sun, Image, Code, ChevronRight,
 } from "lucide-react";
 import { useTranslations } from "@/lib/i18n";
+import { useApi } from "@/lib/api";
+import { DEFAULT_TENANT_ID } from "@/lib/api-config";
 
 type Tab = "theme" | "assets" | "email";
 
 export default function BrandingPage() {
   const t = useTranslations();
+  const { apiFetch } = useApi();
   const [tab, setTab] = useState<Tab>("theme");
   const [saving, setSaving] = useState(false);
+  const [loaded, setLoaded] = useState(false);
 
   // Theme
   const [primaryColor, setPrimaryColor] = useState("#4f46e5");
@@ -21,10 +25,39 @@ export default function BrandingPage() {
   const [darkMode, setDarkMode] = useState(false);
 
   const card = "rounded-xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-700 dark:bg-gray-800";
-
   const fonts = ["Inter", "Roboto", "Open Sans", "Lato", "Poppins", "Noto Sans SC"];
 
-  const save = () => { setSaving(true); setTimeout(() => setSaving(false), 800); };
+  // Load branding from API on mount
+  useEffect(() => {
+    const tid = localStorage.getItem("ggid_tenant_id") || DEFAULT_TENANT_ID;
+    apiFetch<any>(`/api/v1/tenants/${tid}/branding`).then((b) => {
+      if (b) {
+        if (b.primary_color) setPrimaryColor(b.primary_color);
+        if (b.accent_color) setAccentColor(b.accent_color);
+        if (b.font_family) setFontFamily(b.font_family);
+        if (b.border_radius) setBorderRadius(b.border_radius);
+        if (b.default_mode === "dark") setDarkMode(true);
+      }
+    }).catch(() => {}).finally(() => setLoaded(true));
+  }, []);
+
+  const save = async () => {
+    setSaving(true);
+    const tid = localStorage.getItem("ggid_tenant_id") || DEFAULT_TENANT_ID;
+    try {
+      await apiFetch(`/api/v1/tenants/${tid}/branding`, {
+        method: "PUT",
+        body: JSON.stringify({
+          primary_color: primaryColor,
+          accent_color: accentColor,
+          font_family: fontFamily,
+          border_radius: borderRadius,
+          default_mode: darkMode ? "dark" : "light",
+        }),
+      });
+    } catch { /* ok for demo */ }
+    setSaving(false);
+  };
 
   return (
     <div className="space-y-6">
