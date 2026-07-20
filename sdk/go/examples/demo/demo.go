@@ -77,19 +77,10 @@ func hasPermission(s *Session, resource, action string) bool {
 	if s == nil { return false }
 	// Admin has all permissions
 	if hasScope(s, "admin") { return true }
-	// In production: call client.CheckPermission(ctx, userID, resource, action)
-	// For demo: derive from scopes
-	scopeMap := map[string]string{
-		"inventory:read": "viewer", "inventory:write": "manager",
-		"orders:read": "viewer", "orders:write": "manager",
-		"reports:read": "viewer", "reports:write": "manager",
-	}
-	needed, ok := scopeMap[resource+":"+action]
-	if !ok { return false }
+	// Check if the fine-grained permission exists in scopes
+	permKey := resource + ":" + action
 	for _, sc := range s.Scopes {
-		if strings.EqualFold(sc, needed) || strings.EqualFold(sc, "manager") {
-			return true
-		}
+		if strings.EqualFold(sc, permKey) { return true }
 	}
 	return false
 }
@@ -163,7 +154,10 @@ func handleCallback(w http.ResponseWriter, r *http.Request) {
 	if code == "" { http.Error(w, "no code", http.StatusBadRequest); return }
 
 	form := url.Values{"grant_type": {"authorization_code"}, "code": {code}, "redirect_uri": {redirectURI}, "client_id": {clientID}, "client_secret": {clientSecret}}
-	resp, err := httpClient().PostForm(ggidURL+"/api/v1/oauth/token", form)
+	req, _ := http.NewRequest("POST", ggidURL+"/api/v1/oauth/token", strings.NewReader(form.Encode()))
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	req.Header.Set("X-Tenant-ID", tenantID)
+	resp, err := httpClient().Do(req)
 	if err != nil { http.Error(w, "token exchange failed", http.StatusInternalServerError); return }
 	defer resp.Body.Close()
 	var tok map[string]any; json.NewDecoder(resp.Body).Decode(&tok)
@@ -239,12 +233,17 @@ func extractScopes(token string) []string {
 	if err != nil { return []string{} }
 	var claims map[string]any
 	if json.Unmarshal(payload, &claims) != nil { return []string{} }
+	// Try scopes array first
 	if raw, ok := claims["scopes"]; ok {
 		if arr, ok := raw.([]any); ok {
 			result := make([]string, 0, len(arr))
 			for _, v := range arr { result = append(result, fmt.Sprintf("%v", v)) }
 			return result
 		}
+	}
+	// Fallback: parse scope string (OAuth token uses space-separated scope)
+	if s, ok := claims["scope"].(string); ok && s != "" {
+		return strings.Fields(s)
 	}
 	return []string{}
 }

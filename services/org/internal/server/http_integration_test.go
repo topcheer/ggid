@@ -167,12 +167,51 @@ func (m *mockMemberRepo) List(_ context.Context, _ repository.ListMembersFilter,
 	return result, nil
 }
 
+type mockTenantRepo struct {
+	tenants map[uuid.UUID]*domain.Tenant
+}
+
+func (m *mockTenantRepo) Create(_ context.Context, t *domain.Tenant) error {
+	if m.tenants == nil {
+		m.tenants = make(map[uuid.UUID]*domain.Tenant)
+	}
+	m.tenants[t.ID] = t
+	return nil
+}
+func (m *mockTenantRepo) GetByID(_ context.Context, id uuid.UUID) (*domain.Tenant, error) {
+	t, ok := m.tenants[id]
+	if !ok {
+		return nil, errTestNotFound
+	}
+	return t, nil
+}
+func (m *mockTenantRepo) GetBySlug(_ context.Context, slug string) (*domain.Tenant, error) {
+	for _, t := range m.tenants {
+		if t.Slug == slug {
+			return t, nil
+		}
+	}
+	return nil, errTestNotFound
+}
+func (m *mockTenantRepo) Update(_ context.Context, t *domain.Tenant) error {
+	if m.tenants == nil {
+		m.tenants = make(map[uuid.UUID]*domain.Tenant)
+	}
+	m.tenants[t.ID] = t
+	return nil
+}
+func (m *mockTenantRepo) Delete(_ context.Context, id uuid.UUID) error {
+	delete(m.tenants, id)
+	return nil
+}
+
 func newTestOrgServer() *HTTPServer {
 	return NewHTTPServer(
 		service.NewOrgService(&mockOrgRepo{orgs: make(map[uuid.UUID]*domain.Organization)}),
 		service.NewDeptService(&mockDeptRepo{depts: make(map[uuid.UUID]*domain.Department)}),
 		service.NewTeamService(&mockTeamRepo{teams: make(map[uuid.UUID]*domain.Team)}),
 		service.NewMembershipService(&mockMemberRepo{members: make(map[uuid.UUID]*domain.Membership)}),
+		service.NewTenantService(&mockTenantRepo{tenants: make(map[uuid.UUID]*domain.Tenant)}),
 	)
 }
 

@@ -131,7 +131,7 @@ func main() {
 		w.Write([]byte("ready"))
 	})
 	// REST API endpoints
-	httpAPI := httpserver.NewHTTPServer(orgSvc, deptSvc, teamSvc, memberSvc)
+	httpAPI := httpserver.NewHTTPServer(orgSvc, deptSvc, teamSvc, memberSvc, tenantSvc)
 	httpAPI.RegisterRoutes(mux)
 
 	mwSecret, mwPrevSecret := middleware.LoadInternalSecrets()

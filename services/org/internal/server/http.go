@@ -26,16 +26,17 @@ import (
 
 // HTTPServer exposes the Org Service as a REST API.
 type HTTPServer struct {
-	orgSvc        *service.OrgService
-	deptSvc       *service.DeptService
-	teamSvc       *service.TeamService
-	memberSvc     *service.MembershipService
+	orgSvc         *service.OrgService
+	deptSvc        *service.DeptService
+	teamSvc        *service.TeamService
+	memberSvc      *service.MembershipService
+	tenantSvc      *service.TenantService
 	auditPublisher *audit.Publisher
 }
 
 // NewHTTPServer creates a new Org Service HTTP server.
-func NewHTTPServer(orgSvc *service.OrgService, deptSvc *service.DeptService, teamSvc *service.TeamService, memberSvc *service.MembershipService) *HTTPServer {
-	s := &HTTPServer{orgSvc: orgSvc, deptSvc: deptSvc, teamSvc: teamSvc, memberSvc: memberSvc}
+func NewHTTPServer(orgSvc *service.OrgService, deptSvc *service.DeptService, teamSvc *service.TeamService, memberSvc *service.MembershipService, tenantSvc *service.TenantService) *HTTPServer {
+	s := &HTTPServer{orgSvc: orgSvc, deptSvc: deptSvc, teamSvc: teamSvc, memberSvc: memberSvc, tenantSvc: tenantSvc}
 	if natsURL := os.Getenv("NATS_URL"); natsURL != "" {
 		if pub, err := audit.NewPublisher(context.Background(), natsURL); err == nil {
 			s.auditPublisher = pub
@@ -69,6 +70,8 @@ func (s *HTTPServer) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("/api/v1/org/vendors", s.handleVendors)
 	mux.HandleFunc("/api/v1/org/department-analytics", s.handleDepartmentAnalytics)
 	mux.HandleFunc("/api/v1/org/tenants/migrate", s.handleTenantMigrate)
+	mux.HandleFunc("/api/v1/org/tenants/suspend", s.handleSuspendTenant)
+	mux.HandleFunc("/api/v1/org/tenants/activate", s.handleActivateTenant)
 	mux.HandleFunc("/api/v1/org/stats/membership-trends", s.handleMembershipTrends)
 }
 

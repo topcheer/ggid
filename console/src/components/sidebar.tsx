@@ -104,6 +104,8 @@ export function Sidebar() {
     {
       label: "Platform", icon: Building, requiredScope: "admin", items: [
         { href: "/admin", label: "Tenants", icon: Building2 },
+        { href: "/admin/audit/global", label: "Global Audit", icon: FileText },
+        { href: "/admin/threats", label: "Threat Dashboard", icon: Shield },
         { href: "/settings/branding", label: "Branding", icon: Globe },
         { href: "/settings/feature-flags", label: "Feature Flags", icon: Zap },
       ],

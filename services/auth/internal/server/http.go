@@ -7,6 +7,7 @@ import (
 	stderrors "errors"
 	"fmt"
 	"log"
+	"log/slog"
 	"net"
 	"net/http"
 	"os"
@@ -193,6 +194,7 @@ func (h *Handler) registerRoutes() {
 	h.mux.HandleFunc("/api/v1/auth/mfa/enroll", h.mfaSetup)
 	h.mux.HandleFunc("/api/v1/auth/mfa/verify", h.mfaVerify)
 	h.mux.HandleFunc("/api/v1/auth/mfa/disable", h.mfaDisable)
+	h.mux.HandleFunc("/api/v1/auth/account/delete", h.handleAccountDeletion)
 	h.mux.HandleFunc("/api/v1/auth/mfa/methods", h.handleMFAMethods)
 	h.mux.HandleFunc("/api/v1/auth/mfa/radius/verify", h.handleMFARadiusVerify)
 	h.mux.HandleFunc("/api/v1/auth/mfa/yubikey/verify", h.handleMFAYubiKeyVerify)
@@ -1126,7 +1128,7 @@ func (h *Handler) handleSessions(w http.ResponseWriter, r *http.Request) {
 	case http.MethodGet:
 		sessions, err := h.authSvc.ListSessions(r.Context(), tenantID, userID)
 		if err != nil {
-			log.Printf("handleSessions: ListSessions error for user %s: %v", userID, err)
+			slog.Error("handleSessions: ListSessions error", "user_id", userID, "error", err)
 			writeJSON(w, http.StatusOK, map[string]any{"sessions": []interface{}{}, "total": 0})
 			return
 		}
@@ -1267,8 +1269,8 @@ func (h *Handler) mfaVerify(w http.ResponseWriter, r *http.Request) {
 	if wasFirstEnrollment {
 		tc, terr := ggidtenant.FromContext(r.Context())
 		if terr == nil {
-			// Extract userID from device via MFA service.
-			devices, _ := h.authSvc.MFAService().ListDevices(r.Context(), uuid.Nil)
+			// Extract userID from device via MFA service (scoped to tenant).
+			devices, _ := h.authSvc.MFAService().ListDevices(r.Context(), tc.TenantID)
 			for _, d := range devices {
 				if d.ID == deviceID {
 					h.TriggerInvalidation(tc.TenantID, d.UserID, InvReasonMFAEnrollment, "")
@@ -1283,6 +1285,7 @@ func (h *Handler) mfaVerify(w http.ResponseWriter, r *http.Request) {
 
 type mfaDisableRequest struct {
 	DeviceID string `json:"device_id"`
+	Password string `json:"password"` // KB-269: re-auth required to remove MFA
 }
 
 func (h *Handler) mfaDisable(w http.ResponseWriter, r *http.Request) {
@@ -1297,6 +1300,38 @@ func (h *Handler) mfaDisable(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// KB-269: Require password re-authentication before removing MFA device.
+	// Prevents attackers from removing MFA if they obtain a valid token.
+	if req.Password == "" {
+		writeError(w, http.StatusBadRequest, "password is required to remove MFA")
+		return
+	}
+
+	// Verify password against stored credentials
+	userID := r.Header.Get("X-User-ID")
+	if userID == "" {
+		writeError(w, http.StatusUnauthorized, "authentication required")
+		return
+	}
+
+	// Re-authenticate: lookup credential and verify password
+	verified := false
+	if h.pool != nil {
+		var storedHash string
+		err := h.pool.QueryRow(r.Context(),
+			`SELECT secret FROM credentials WHERE identifier = (SELECT username FROM users WHERE id::text = $1) AND type = 'password' AND enabled = true`,
+			userID).Scan(&storedHash)
+		if err == nil && storedHash != "" {
+			match, _ := crypto.VerifyPassword(req.Password, storedHash)
+			verified = match
+		}
+	}
+	if !verified {
+		slog.Error("MFA disable: re-auth failed", "user_id", userID)
+		writeError(w, http.StatusUnauthorized, "password verification failed")
+		return
+	}
+
 	deviceID, err := uuid.Parse(req.DeviceID)
 	if err != nil {
 		writeError(w, http.StatusBadRequest, "invalid device_id")
@@ -1308,7 +1343,92 @@ func (h *Handler) mfaDisable(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Audit: MFA removed
+	slog.Info("MFA device disabled (re-auth verified)", "user_id", userID, "device_id", req.DeviceID)
+
 	writeJSON(w, http.StatusOK, map[string]bool{"disabled": true})
+}
+
+// handleAccountDeletion implements GDPR Article 17 — Right to Erasure.
+// POST /api/v1/auth/account/delete
+// Body: {"password": "...", "confirm": "DELETE"}
+// Soft-deletes the user, revokes all sessions, disables credentials.
+func (h *Handler) handleAccountDeletion(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+		return
+	}
+
+	var req struct {
+		Password string `json:"password"`
+		Confirm  string `json:"confirm"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		writeError(w, http.StatusBadRequest, "invalid request body")
+		return
+	}
+
+	if req.Confirm != "DELETE" {
+		writeError(w, http.StatusBadRequest, "confirmation text must be 'DELETE'")
+		return
+	}
+
+	userID := r.Header.Get("X-User-ID")
+	if userID == "" {
+		writeError(w, http.StatusUnauthorized, "authentication required")
+		return
+	}
+
+	// Verify password before account deletion
+	if req.Password == "" {
+		writeError(w, http.StatusBadRequest, "password is required")
+		return
+	}
+
+	verified := false
+	if h.pool != nil {
+		var storedHash string
+		err := h.pool.QueryRow(r.Context(),
+			`SELECT secret FROM credentials WHERE identifier = (SELECT username FROM users WHERE id::text = $1) AND type = 'password' AND enabled = true`,
+			userID).Scan(&storedHash)
+		if err == nil && storedHash != "" {
+			match, _ := crypto.VerifyPassword(req.Password, storedHash)
+			verified = match
+		}
+	}
+	if !verified {
+		slog.Error("Account deletion: password verification failed", "user_id", userID)
+		writeError(w, http.StatusUnauthorized, "password verification failed")
+		return
+	}
+
+	// Soft-delete user
+	if h.pool != nil {
+		_, err := h.pool.Exec(r.Context(),
+			`UPDATE users SET deleted_at = NOW(), status = 'deleted' WHERE id::text = $1 AND deleted_at IS NULL`,
+			userID)
+		if err != nil {
+			slog.Error("Account deletion: DB error", "user_id", userID, "error", err)
+			writeInternalError(w, "account deletion", err)
+			return
+		}
+
+		// Revoke all sessions
+		_, _ = h.pool.Exec(r.Context(),
+			`UPDATE sessions SET revoked_at = NOW() WHERE user_id::text = $1 AND revoked_at IS NULL`,
+			userID)
+
+		// Disable all credentials
+		_, _ = h.pool.Exec(r.Context(),
+			`UPDATE credentials SET enabled = false WHERE identifier = (SELECT username FROM users WHERE id::text = $1)`,
+			userID)
+	}
+
+	slog.Info("Account deleted (GDPR Art. 17)", "user_id", userID)
+	writeJSON(w, http.StatusOK, map[string]any{
+		"deleted": true,
+		"message": "Account scheduled for deletion. All sessions revoked.",
+	})
 }
 
 type mfaLoginRequest struct {

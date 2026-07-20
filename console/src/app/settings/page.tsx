@@ -41,6 +41,7 @@ export default function SettingsHubPage() {
     { href: "/settings/password-migration", icon: KeyRound, label: "Password Migration", desc: "Passwordless transition dashboard", category: "Security", color: "text-orange-500", keywords: ["password", "migration", "passkey", "passwordless"] },
     { href: "/settings/webauthn-config", icon: Fingerprint, label: "WebAuthn Configuration", desc: "Configure passkey RP domain and origins", category: "Security", color: "text-red-500", keywords: ["webauthn", "passkey", "rp_id", "domain", "fido2"] },
     { href: "/settings/saml-config", icon: Globe, label: "SAML Configuration", desc: "Configure SAML 2.0 SSO with your IdP", category: "Integration", color: "text-cyan-500", keywords: ["saml", "sso", "idp", "federation", "assertion"] },
+    { href: "/docs", icon: FileText, label: "API Documentation", desc: "Swagger UI and API reference", category: "Integration", color: "text-cyan-500", keywords: ["api", "swagger", "docs", "openapi", "reference"] },
     { href: "/settings/conditional-access", icon: Shield, label: "Conditional Access", desc: "IF-THEN access policy builder", category: "Security", color: "text-red-500", keywords: ["conditional", "access", "policy", "mfa", "risk"] },
     { href: "/settings/rate-limits", icon: Zap, label: "Rate Limits", desc: "API and login rate limiting", category: "Security", color: "text-yellow-500", keywords: ["rate", "limit", "throttle", "api"] },
     { href: "/settings/enrollment-campaign", icon: Zap, label: "Enrollment Campaign", desc: "Passkey enrollment campaigns", category: "Security", color: "text-orange-500", keywords: ["passkey", "enrollment", "mfa", "campaign"] },
@@ -70,6 +71,7 @@ export default function SettingsHubPage() {
     { href: "/settings/oauth-clients/new", icon: KeyRound, label: "Create OAuth Client", desc: "Register a new application", category: "Integration", color: "text-cyan-500", keywords: ["oauth", "client", "register", "app"] },
     // System
     { href: "/settings/branding-config", icon: Palette, label: "Branding", desc: "Customize Console appearance", category: "System", color: "text-purple-500", keywords: ["branding", "logo", "color", "theme", "customize"] },
+    { href: "/settings/notifications", icon: Bell, label: "Notification Preferences", desc: "Choose how you receive notifications", category: "System", color: "text-blue-500", keywords: ["notification", "email", "sms", "push", "alert"] },
     { href: "/settings/quotas", icon: Gauge, label: "Quotas", desc: "Tenant quotas and limits", category: "System", color: "text-blue-500", keywords: ["quota", "limit", "tenant"] },
     { href: "/settings/observability", icon: Activity, label: "Observability", desc: "System health and metrics", category: "System", color: "text-green-500", keywords: ["health", "metrics", "monitoring"] },
     { href: "/settings/api-keys", icon: KeyRound, label: "API Keys", desc: "Manage API keys", category: "System", color: "text-indigo-500", keywords: ["api", "key", "token"] },

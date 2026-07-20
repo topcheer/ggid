@@ -106,6 +106,32 @@ func (s *TenantService) Delete(ctx context.Context, id uuid.UUID) error {
 	return s.repo.Delete(ctx, id)
 }
 
+// Suspend marks a tenant as suspended, blocking logins and API access.
+func (s *TenantService) Suspend(ctx context.Context, id uuid.UUID) error {
+	t, err := s.repo.GetByID(ctx, id)
+	if err != nil {
+		return err
+	}
+	if t.Status == domain.TenantSuspended {
+		return errors.InvalidArgument("tenant is already suspended")
+	}
+	t.Status = domain.TenantSuspended
+	return s.repo.Update(ctx, t)
+}
+
+// Activate restores a previously suspended tenant to active status.
+func (s *TenantService) Activate(ctx context.Context, id uuid.UUID) error {
+	t, err := s.repo.GetByID(ctx, id)
+	if err != nil {
+		return err
+	}
+	if t.Status != domain.TenantSuspended {
+		return errors.InvalidArgument("tenant is not suspended")
+	}
+	t.Status = domain.TenantActive
+	return s.repo.Update(ctx, t)
+}
+
 // --- OrgService ---
 
 type OrgService struct {

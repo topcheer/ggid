@@ -1,0 +1,8 @@
+[package]
+name = "oauth-demo"
+version = "0.1.0"
+edition = "2021"
+
+[[bin]]
+name = "oauth-demo"
+path = "src/main.rs"
