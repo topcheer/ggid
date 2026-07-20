@@ -202,7 +202,30 @@ devices, _ := h.authSvc.MFAService().ListDevices(r.Context(), uuid.Nil)
 
 ## Delta from Previous Review
 
-This is the **first full review** (no previous `full-review-report.md` found). All 16 GAPs are newly identified.
+This is the **first full review** (no previous `full-review-report.md` found). All 16 GAPs were initially identified.
+
+### Correction Log (post-review deep verification by arch + backend)
+
+| KB | Original | Corrected | Evidence |
+|----|----------|-----------|---------|
+| KB-260 | P0: No global key rotation | **Misreport**: API exists | `/api/v1/admin/keys/rotate/` found |
+| KB-262 | P0: No GDPR account deletion | **Misreport**: API exists | `/api/v1/auth/account/delete` found |
+| KB-267 | P1: No Swagger UI | **Misreport**: Routes registered | `gateway/router.go:476` serves `/docs` + `/swagger.json` |
+| KB-271 | P2: No compliance PDF/CSV | **Misreport**: Export exists | `report_handler.go` supports pdf/csv/json |
+| KB-265 | P1: No webhook CRUD | **Misreport**: CRUD exists | `/api/v1/audit/webhooks` has GET/POST/DELETE |
+| KB-273 | P2: No webhook retry config | **Misreport**: Config exists | `engine.go` has MaxRetries + backoff + dead_letter |
+
+### Final GAP Status After Corrections
+
+| Status | Count | Items |
+|--------|-------|-------|
+| **Misreport** | 6 | KB-260, KB-262, KB-267, KB-271, KB-265, KB-273 |
+| **Fixed** | 7 | KB-259, KB-261, CQ-2 (uuid.Nil), KB-263, KB-264, KB-268, KB-269 |
+| **Remaining** | 3 | KB-270 (P1: per-tenant registration config), KB-266 (P1: SCIM outbound scheduling), KB-272 (P2: Python SDK functional tier) |
+
+### Lesson Learned
+
+Initial review used grep-only existence checks, leading to 6 false positives. Future reviews (cron-2) must use the upgraded deep code review methodology: read_file on handler/service/repo code, trace full call chain, and verify logic completeness — not just grep for function names.
 
 ---
 
