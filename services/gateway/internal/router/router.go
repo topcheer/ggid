@@ -405,15 +405,27 @@ func (gw *Gateway) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		gw.handleWebhookCatalog(w, r)
 		return
 	}
-	if r.URL.Path == "/api/v1/tenants" && r.Method == http.MethodPost {
-		gw.handleTenantCreate(w, r)
-		return
-	}
-	if r.URL.Path == "/api/v1/tenants" && r.Method == http.MethodGet {
-		gw.handleTenantList(w, r)
+	if r.URL.Path == "/api/v1/tenants" && (r.Method == http.MethodPost || r.Method == http.MethodGet) {
+		if proxy, _ := gw.matchBackend("/api/v1/identity/tenants"); proxy != nil {
+			r2 := r.Clone(r.Context())
+			r2.URL.Path = r.URL.Path
+			proxy.ServeHTTP(w, r2)
+			return
+		}
+		if r.Method == http.MethodPost {
+			gw.handleTenantCreate(w, r)
+		} else {
+			gw.handleTenantList(w, r)
+		}
 		return
 	}
 	if strings.HasPrefix(r.URL.Path, "/api/v1/tenants/") && !strings.HasPrefix(r.URL.Path, "/api/v1/tenants/resolve") && (r.Method == http.MethodGet || r.Method == http.MethodDelete) {
+		if proxy, _ := gw.matchBackend("/api/v1/identity/tenants/"); proxy != nil {
+			r2 := r.Clone(r.Context())
+			r2.URL.Path = r.URL.Path
+			proxy.ServeHTTP(w, r2)
+			return
+		}
 		gw.handleTenantDetail(w, r)
 		return
 	}

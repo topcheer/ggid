@@ -367,6 +367,7 @@ func (gw *Gateway) handleTenantCreate(w http.ResponseWriter, r *http.Request) {
 		log.Printf("tenant create: failed to connect DB: %v", err)
 	} else {
 		defer conn.Close(r.Context())
+		_, _ = conn.Exec(r.Context(), `SET ROLE pg_database_owner`) // bypass RLS for tenant management
 		_, err := conn.Exec(r.Context(),
 			`INSERT INTO tenants (id, name, slug, plan, status, max_users) VALUES ($1, $2, $3, $4, 'active', 50)`,
 			tenantID, req.Name, req.Slug, req.Plan)
@@ -406,9 +407,10 @@ func (gw *Gateway) handleTenantList(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	defer conn.Close(r.Context())
+	_, _ = conn.Exec(r.Context(), `SET ROLE pg_database_owner`) // bypass RLS
 
 	rows, err := conn.Query(r.Context(),
-		`SELECT id, name, slug, plan, status, max_users, created_at FROM tenants ORDER BY created_at DESC`)
+		`SELECT id::text, name, slug, plan, status, max_users, created_at FROM tenants ORDER BY created_at DESC`)
 	if err != nil {
 		writeGatewayJSON(w, http.StatusOK, map[string]any{"tenants": []any{}})
 		return
@@ -431,6 +433,7 @@ func (gw *Gateway) handleTenantList(w http.ResponseWriter, r *http.Request) {
 		var createdAt time.Time
 		if err := rows.Scan(&t.ID, &t.Name, &t.Slug, &t.Plan, &t.Status, &t.MaxUsers, &createdAt); err != nil {
 			continue
+			continue
 		}
 		t.CreatedAt = createdAt.Format(time.RFC3339)
 		tenants = append(tenants, t)
@@ -439,29 +442,70 @@ func (gw *Gateway) handleTenantList(w http.ResponseWriter, r *http.Request) {
 	writeGatewayJSON(w, http.StatusOK, map[string]any{"tenants": tenants})
 }
 
-// handleTenantDetail returns tenant details + usage stats.
-// GET /api/v1/tenants/:id
+// handleTenantDetail returns tenant details + usage stats from DB.
+// GET/DELETE /api/v1/tenants/:id
 func (gw *Gateway) handleTenantDetail(w http.ResponseWriter, r *http.Request) {
+	tenantIDStr := strings.TrimPrefix(r.URL.Path, "/api/v1/tenants/")
+	if tenantIDStr == "" {
+		writeGatewayJSONError(w, http.StatusBadRequest, "tenant_id required")
+		return
+	}
+
+	dbURL := gw.cfg.DatabaseURL
+	if dbURL == "" {
+		dbURL = "postgres://ggid:ggid@ggid-postgresql:5432/ggid?sslmode=disable"
+	}
+	conn, err := pgx.Connect(r.Context(), dbURL)
+	if err != nil {
+		writeGatewayJSONError(w, http.StatusInternalServerError, "DB connection failed")
+		return
+	}
+	defer conn.Close(r.Context())
+	_, _ = conn.Exec(r.Context(), `SET ROLE pg_database_owner`)
+
+	if r.Method == http.MethodDelete {
+		_, err := conn.Exec(r.Context(), `DELETE FROM tenants WHERE id::text = $1 OR slug = $1`, tenantIDStr)
+		if err != nil {
+			writeGatewayJSONError(w, http.StatusInternalServerError, "delete failed")
+			return
+		}
+		writeGatewayJSON(w, http.StatusOK, map[string]any{"deleted": true, "tenant_id": tenantIDStr})
+		return
+	}
+
 	if r.Method != http.MethodGet {
 		writeGatewayJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 
-	tenantID := strings.TrimPrefix(r.URL.Path, "/api/v1/tenants/")
-	if tenantID == "" {
-		writeGatewayJSONError(w, http.StatusBadRequest, "tenant_id required")
+	var id, name, slug, plan, status string
+	var maxUsers int
+	var createdAt time.Time
+	err = conn.QueryRow(r.Context(),
+		`SELECT id::text, name, slug, plan, status, max_users, created_at FROM tenants WHERE id::text = $1 OR slug = $1`,
+		tenantIDStr).Scan(&id, &name, &slug, &plan, &status, &maxUsers, &createdAt)
+	if err != nil {
+		writeGatewayJSONError(w, http.StatusNotFound, "tenant not found")
 		return
 	}
 
-	// In production: fetch from DB + aggregate usage stats.
+	// Aggregate usage
+	var userCount, sessionCount int
+	tenantUUID, _ := uuid.Parse(id)
+	_ = conn.QueryRow(r.Context(), `SELECT count(*) FROM users WHERE tenant_id = $1 AND deleted_at IS NULL`, tenantUUID).Scan(&userCount)
+	_ = conn.QueryRow(r.Context(), `SELECT count(*) FROM sessions s JOIN users u ON u.id = s.user_id WHERE u.tenant_id = $1 AND s.revoked_at IS NULL`, tenantUUID).Scan(&sessionCount)
+
 	writeGatewayJSON(w, http.StatusOK, map[string]any{
-		"tenant_id": tenantID,
-		"status":    "active",
+		"id":         id,
+		"name":       name,
+		"slug":       slug,
+		"plan":       plan,
+		"status":     status,
+		"max_users":  maxUsers,
+		"created_at": createdAt.Format(time.RFC3339),
 		"usage": map[string]any{
-			"users":         0,
-			"active_sessions": 0,
-			"api_keys":      1,
-			"storage_mb":    0,
+			"users":           userCount,
+			"active_sessions": sessionCount,
 		},
 	})
 }

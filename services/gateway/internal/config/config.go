@@ -58,6 +58,7 @@ func Default() *Config {
 		JWTIssuer:     "ggid-auth",
 		JWTAudience:   "ggid",
 		PublicKeyPath: "configs/rsa_public.pem",
+		DatabaseURL:   os.Getenv("DATABASE_URL"),
 		Routes: map[string]string{
 			"/api/v1/auth":        envOrDefault("AUTH_SERVICE_URL", "http://localhost:9001"),
 			"/api/v1/identity":    envOrDefault("USERS_SERVICE_URL", "http://localhost:8081"),
