@@ -1,3 +1,4 @@
+import { flushRateLimits } from "./helpers/flush-ratelimit";
 import { test, expect, type APIRequestContext } from '@playwright/test';
 
 const BASE = process.env.BASE_URL || 'https://ggid-console.iot2.win';
@@ -5,9 +6,10 @@ const API_BASE = process.env.API_URL || 'https://ggid.iot2.win';
 const TENANT = '00000000-0000-0000-0000-000000000001';
 
 // Helper: register + login, returns auth token
-async function getAuthToken(request: APIRequestContext): Promise<string> {
+async function getAuthTokenWithFlush(request: APIRequestContext): Promise<string> {
   const username = `e2e_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`;
-  await request.post(`${API_BASE}/api/v1/auth/register`, {
+  await flushRateLimits();
+    await request.post(`${API_BASE}/api/v1/auth/register`, {
     headers: { 'X-Tenant-ID': TENANT, 'Content-Type': 'application/json' },
     data: { username, email: `${username}@test.com`, password: 'TestPass123!' },
   });
@@ -259,6 +261,7 @@ test.describe('API Integration', () => {
 
   test('auth endpoints work (refresh, sessions, mfa)', async ({ request }) => {
     const username = `auth_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`;
+    await flushRateLimits();
     await request.post(`${API_BASE}/api/v1/auth/register`, {
       headers: { 'X-Tenant-ID': TENANT, 'Content-Type': 'application/json' },
       data: { username, email: `${username}@test.com`, password: 'TestPass123!' },

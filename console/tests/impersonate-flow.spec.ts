@@ -1,3 +1,4 @@
+import { flushRateLimits } from "./helpers/flush-ratelimit";
 import { test, expect, type APIRequestContext, type Page } from '@playwright/test';
 
 const API_BASE = process.env.API_URL || 'https://ggid.iot2.win';

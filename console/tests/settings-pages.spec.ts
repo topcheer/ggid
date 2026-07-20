@@ -1,3 +1,4 @@
+import { flushRateLimits } from "./helpers/flush-ratelimit";
 import { test, expect } from '@playwright/test';
 import { PAGE_CATEGORIES } from './pages-data';
 
@@ -13,6 +14,7 @@ for (const pagePath of settingsPages) {
   test(`settings page loads: ${pagePath}`, async ({ page, request }) => {
     // First login via API to get token
     const username = `set_${Math.random().toString(36).slice(2, 10)}`;
+    await flushRateLimits();
     await request.post(`${API_BASE}/api/v1/auth/register`, {
       headers: { 'X-Tenant-ID': TENANT, 'Content-Type': 'application/json' },
       data: { username, email: `${username}@test.com`, password: 'TestPass123!' },
