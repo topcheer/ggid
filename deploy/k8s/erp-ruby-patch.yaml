@@ -1,0 +1,81 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: erp-ruby
+  namespace: ggid
+  labels:
+    app: erp-ruby
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: erp-ruby
+  template:
+    metadata:
+      labels:
+        app: erp-ruby
+    spec:
+      initContainers:
+      - name: write-app
+        image: busybox
+        command:
+        - sh
+        - -c
+        - |
+          cat > /patched/app.rb << 'EOF'
+          require 'sinatra/base'
+          require 'json'
+          require 'securerandom'
+          require '/app/sdk/ruby/lib/ggid'
+          GGID_URL_VAL = ENV.fetch('GGID_URL', 'http://localhost:8080')
+          TENANT_ID = ENV.fetch('GGID_TENANT_ID', '00000000-0000-0000-0000-000000000001')
+          $ggid = GGID::Client.new(base_url: GGID_URL_VAL, tenant_id: TENANT_ID)
+          $products = {}; $orders = {}; $audit_log = []
+          $ps = 0; $os = 0
+          class ERPApp < Sinatra::Base
+            set :port, ENV.fetch('ERP_LISTEN', '9091').to_i
+            set :bind, '0.0.0.0'
+            set :server, 'puma'
+            before '/api/*' do; content_type :json; end
+            before %r{(?!/api/auth|/health)} do
+              pass unless request.path_info.start_with?('/api/')
+              t = request.env['HTTP_AUTHORIZATION'].to_s.sub('Bearer ','')
+              halt 401,{error:'token'}.to_json if t.empty?
+              begin;@c=$ggid.verify_token(t);rescue;halt 401,{error:'invalid'}.to_json;end
+            end
+            def rp!(p);return if @c&&@c.has_permission?(p);halt 403,{error:p}.to_json;end
+            get '/health' do;{status:'ok',lang:'ruby',tenant:TENANT_ID}.to_json;end
+            post '/api/auth/login' do;d=JSON.parse(request.body.read);$ggid.login(d['username'],d['password']).to_json;end
+            get '/api/inventory' do;rp!('inventory:read');{items:$products.values,total:$products.size}.to_json;end
+            post '/api/inventory' do;rp!('inventory:write');d=JSON.parse(request.body.read);$ps+=1;id="PROD-#{$ps}";$products[id]=d.merge('id'=>id);[201,$products[id].to_json];end
+            delete '/api/inventory/:id' do;rp!('inventory:delete');$products.delete(params[:id]);{deleted:true}.to_json;end
+            get '/api/orders' do;rp!('orders:read');{items:$orders.values,total:$orders.size}.to_json;end
+            post '/api/orders' do;rp!('orders:write');d=JSON.parse(request.body.read);$os+=1;id="ORD-#{$os}";$orders[id]=d.merge('id'=>id,'status'=>'pending','created_by'=>@c&.user_id);[201,$orders[id].to_json];end
+            put '/api/orders/:id/approve' do;rp!('orders:approve');o=$orders[params[:id]];o['status']='approved' rescue nil;o.to_json;end
+            get '/api/audit' do;rp!('audit:read');{items:$audit_log,total:$audit_log.size}.to_json;end
+            get '/api/dashboard' do;rp!('dashboard:read');{products:$products.size,orders:$orders.size}.to_json;end
+          end
+          ERPApp.run!
+          EOF
+        volumeMounts:
+        - name: patched
+          mountPath: /patched
+      containers:
+      - name: erp-ruby
+        image: registry.iot2.win/ggid/erp-ruby:latest
+        ports:
+        - containerPort: 9091
+        env:
+        - name: GGID_URL
+          value: "http://ggid-gateway.ggid.svc.cluster.local:8080"
+        - name: GGID_TENANT_ID
+          value: "00000007-0000-0000-0000-000000000001"
+        - name: ERP_LISTEN
+          value: "9091"
+        command: ["ruby", "/patched/app.rb"]
+        volumeMounts:
+        - name: patched
+          mountPath: /patched
+      volumes:
+      - name: patched
+        emptyDir: {}

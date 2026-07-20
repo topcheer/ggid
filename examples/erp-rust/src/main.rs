@@ -29,7 +29,7 @@ struct AppState {
     audit_log: Vec<AuditEntry>,
     product_seq: u32,
     order_seq: u32,
-    ggid_client: ggid_sdk::GGIDClient,
+    ggid_client: ggid::GGIDClient,
 }
 
 #[derive(Clone, Serialize, Deserialize)]
@@ -68,7 +68,7 @@ struct AuthContext {
     scopes: Vec<String>,
 }
 
-async fn extract_auth(headers: &HeaderMap, client: &ggid_sdk::GGIDClient) -> Option<AuthContext> {
+async fn extract_auth(headers: &HeaderMap, client: &ggid::GGIDClient) -> Option<AuthContext> {
     let auth = headers.get("authorization")?.to_str().ok()?;
     let token = auth.strip_prefix("Bearer ")?;
     let claims = client.verify_token(token).await.ok()?;
@@ -169,7 +169,7 @@ async fn main() {
     let state: Store = Arc::new(RwLock::new(AppState {
         products: HashMap::new(), orders: HashMap::new(), audit_log: Vec::new(),
         product_seq: 0, order_seq: 0,
-        ggid_client: ggid_sdk::GGIDClient::new(GGID_URL, TENANT_ID),
+        ggid_client: ggid::GGIDClient::new(GGID_URL, TENANT_ID),
     }));
 
     let app = Router::new()

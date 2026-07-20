@@ -1,11 +1,10 @@
-# Multi-stage build for Rust ERP demo
 FROM rust:1.85-alpine AS builder
 WORKDIR /app
 RUN apk add --no-cache musl-dev openssl-dev
 COPY sdk/rust/ ./sdk/rust/
 COPY examples/erp-rust/ ./examples/erp-rust/
 WORKDIR /app/examples/erp-rust
-RUN cargo build --release 2>&1 || echo "build failed, using stub"
+RUN cargo build --release
 
 FROM alpine:3.20
 RUN apk add --no-cache ca-certificates
