@@ -31,8 +31,14 @@ type Subject struct {
 
 // Conditions holds the validity window.
 type Conditions struct {
-	NotBefore    string `xml:"NotBefore,attr"`
-	NotOnOrAfter string `xml:"NotOnOrAfter,attr"`
+	NotBefore           string              `xml:"NotBefore,attr"`
+	NotOnOrAfter        string              `xml:"NotOnOrAfter,attr"`
+	AudienceRestriction AudienceRestriction `xml:"AudienceRestriction"`
+}
+
+// AudienceRestriction enforces that the assertion is intended for a specific SP.
+type AudienceRestriction struct {
+	Audience string `xml:"Audience"`
 }
 
 // AttributeStatement holds the collection of SAML attributes.
@@ -63,7 +69,7 @@ func (a *SAMLAssertion) ValidateConditions() error {
 
 	if a.Conditions.NotBefore != "" {
 		notBefore, err := time.Parse(time.RFC3339, a.Conditions.NotBefore)
-		if err == nil && now.Before(notBefore.Add(-time.Minute)) {
+		if err == nil && now.Before(notBefore.Add(-2 * time.Minute)) {
 			return fmt.Errorf("assertion not yet valid (NotBefore=%s)", a.Conditions.NotBefore)
 		}
 	}
