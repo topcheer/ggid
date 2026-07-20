@@ -1,119 +1,122 @@
 // Cross-Board ERP Demo — Go implementation
-// Tests all GGID core features via Go SDK
 package main
 
 import (
+	"context"
+	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
 	"os"
+	"strings"
 
 	ggid "github.com/ggid/ggid/sdk/go"
-	ggidmw "github.com/ggid/ggid/sdk/go/middleware"
 )
 
 var (
 	ggidURL    = getEnv("GGID_URL", "http://localhost:8080")
 	tenantID   = getEnv("GGID_TENANT_ID", "00000000-0000-0000-0000-000000000001")
-	clientID   = getEnv("GGID_CLIENT_ID", "erp-go-demo")
 	listenAddr = getEnv("ERP_LISTEN", ":9090")
 	ggidClient *ggid.Client
 )
 
+type ctxKey string
+
+const userKey ctxKey = "user"
+
 func main() {
-	// Initialize GGID SDK client
-	ggidClient = ggid.NewClient(ggidURL, tenantID, clientID, "")
+	ggidClient = ggid.New(ggidURL)
 
 	mux := http.NewServeMux()
-
-	// === Public routes (no auth) ===
 	mux.HandleFunc("/api/auth/login", handleLogin)
 	mux.HandleFunc("/api/auth/refresh", handleRefresh)
 	mux.HandleFunc("/api/auth/verify", handleVerify)
 	mux.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, 200, map[string]string{"status": "ok"})
 	})
+	mux.HandleFunc("/api/users", withAuth(handleUsers))
+	mux.HandleFunc("/api/users/", withAuth(handleUserByID))
+	mux.HandleFunc("/api/roles", withAuth(handleRoles))
+	mux.HandleFunc("/api/orgs", withAuth(handleOrgs))
+	mux.HandleFunc("/api/inventory", withAuth(handleInventory))
+	mux.HandleFunc("/api/inventory/", withAuth(handleInventoryByID))
+	mux.HandleFunc("/api/orders", withAuth(handleOrders))
+	mux.HandleFunc("/api/orders/", withAuth(handleOrderByID))
+	mux.HandleFunc("/api/audit", withAuth(handleAudit))
+	mux.HandleFunc("/api/dashboard", withAuth(handleDashboard))
 
-	// === Protected routes (JWT + permission check) ===
-	// Users
-	mux.Handle("/api/users", authMiddleware(http.HandlerFunc(handleUsers)))
-	mux.Handle("/api/users/", authMiddleware(http.HandlerFunc(handleUserByID)))
-
-	// Roles
-	mux.Handle("/api/roles", authMiddleware(http.HandlerFunc(handleRoles)))
-
-	// Organizations
-	mux.Handle("/api/orgs", authMiddleware(http.HandlerFunc(handleOrgs)))
-
-	// Inventory
-	mux.Handle("/api/inventory", authMiddleware(http.HandlerFunc(handleInventory)))
-	mux.Handle("/api/inventory/", authMiddleware(http.HandlerFunc(handleInventoryByID)))
-
-	// Orders
-	mux.Handle("/api/orders", authMiddleware(http.HandlerFunc(handleOrders)))
-	mux.Handle("/api/orders/", authMiddleware(http.HandlerFunc(handleOrderByID)))
-
-	// Audit
-	mux.Handle("/api/audit", authMiddleware(http.HandlerFunc(handleAudit)))
-
-	// Dashboard
-	mux.Handle("/api/dashboard", authMiddleware(http.HandlerFunc(handleDashboard)))
-
-	fmt.Printf("ERP Go Demo running on %s\n", listenAddr)
-	fmt.Printf("GGID URL: %s | Tenant: %s | Client: %s\n", ggidURL, tenantID, clientID)
+	fmt.Printf("ERP Go Demo on %s | GGID: %s\n", listenAddr, ggidURL)
 	log.Fatal(http.ListenAndServe(listenAddr, mux))
 }
 
-// authMiddleware verifies JWT and extracts user info + permissions
-func authMiddleware(next http.Handler) http.Handler {
-	return ggidmw.Middleware(ggidmw.Config{
-		GGIDURL:  ggidURL,
-		TenantID: tenantID,
-	})(next)
-}
-
-func getEnv(key, fallback string) string {
-	if v := os.Getenv(key); v != "" {
-		return v
+func withAuth(next http.HandlerFunc) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		token := getTokenFromHeader(r)
+		if token == "" {
+			writeJSON(w, 401, map[string]string{"error": "Bearer token required"})
+			return
+		}
+		info, err := ggidClient.VerifyToken(r.Context(), token)
+		if err != nil {
+			writeJSON(w, 401, map[string]string{"error": "invalid token"})
+			return
+		}
+		ctx := context.WithValue(r.Context(), userKey, info)
+		next(w, r.WithContext(ctx))
 	}
-	return fallback
 }
 
-// requirePerm checks if the user has a fine-grained permission
+func getUser(ctx context.Context) *ggid.UserInfo {
+	v, _ := ctx.Value(userKey).(*ggid.UserInfo)
+	return v
+}
+
+func currentUserID(r *http.Request) string {
+	if info := getUser(r.Context()); info != nil {
+		return info.UserID
+	}
+	return ""
+}
+
 func requirePerm(w http.ResponseWriter, r *http.Request, perm string) bool {
-	info, ok := ggidmw.FromContext(r.Context())
-	if !ok {
+	info := getUser(r.Context())
+	if info == nil {
 		writeJSON(w, 401, map[string]string{"error": "unauthorized"})
 		return false
 	}
-	// Check fine-grained permissions claim (new JWT structure)
 	for _, p := range info.Permissions {
-		if p == perm || p == "admin" {
-			return true
-		}
+		if p == perm || p == "admin" { return true }
 	}
-	// Fallback: check scopes for backward compatibility (old tokens)
 	for _, s := range info.Scopes {
-		if s == perm || s == "admin" {
-			return true
-		}
+		if s == perm || s == "admin" { return true }
 	}
 	writeJSON(w, 403, map[string]string{"error": "missing permission: " + perm})
 	return false
 }
 
-// requireRole checks if the user has a role
-func requireRole(w http.ResponseWriter, r *http.Request, role string) bool {
-	info, ok := ggidmw.FromContext(r.Context())
-	if !ok {
-		writeJSON(w, 401, map[string]string{"error": "unauthorized"})
-		return false
-	}
-	for _, r2 := range info.Roles {
-		if r2 == role || r2 == "admin" {
-			return true
-		}
-	}
-	writeJSON(w, 403, map[string]string{"error": "missing role: " + role})
-	return false
+func getEnv(k, fb string) string { if v := os.Getenv(k); v != "" { return v }; return fb }
+
+func writeJSON(w http.ResponseWriter, s int, d any) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(s)
+	json.NewEncoder(w).Encode(d)
+}
+
+func writeError(w http.ResponseWriter, s int, m string) { writeJSON(w, s, map[string]string{"error": m}) }
+
+func methodAllowed(w http.ResponseWriter, r *http.Request, m string) bool {
+	if r.Method != m { writeJSON(w, 405, map[string]string{"error": "method not allowed"}); return false }
+	return true
+}
+
+func parseID(r *http.Request) string {
+	parts := strings.Split(strings.TrimRight(r.URL.Path, "/"), "/")
+	if len(parts) > 0 { return parts[len(parts)-1] }
+	return ""
+}
+
+func getTokenFromHeader(r *http.Request) string {
+	auth := r.Header.Get("Authorization")
+	if strings.HasPrefix(auth, "Bearer ") { return strings.TrimPrefix(auth, "Bearer ") }
+	return ""
 }
