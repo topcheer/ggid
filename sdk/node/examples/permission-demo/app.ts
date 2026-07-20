@@ -1,163 +1,315 @@
 /**
- * GGID SDK Demo — Node.js with Fine-Grained Permissions
+ * GGID SDK Demo — Fine-Grained Permissions (Advanced)
  *
- * A web app showing how to use the GGID Node SDK for:
- * - OAuth 2.0 login
- * - Role-based menu visibility
- * - Permission-based button visibility
- * - 403 page for unauthorized access
+ * Demonstrates multi-dimensional permission control:
+ * 1. Menu visibility (link-level)
+ * 2. Button states (disabled vs hidden)
+ * 3. Row-level data filtering (org_id / group_id)
+ * 4. ABAC policy check via API
  *
- * Run: GGID_URL=https://ggid.example.com CLIENT_ID=xxx CLIENT_SECRET=xxx npx tsx app.ts
+ * Run: GGID_URL=https://ggid.example.com npx tsx app.ts
  */
 import express from "express";
 import session from "express-session";
 
 const GGID_URL = process.env.GGID_URL || "http://localhost:8080";
-const CLIENT_ID = process.env.CLIENT_ID || "";
-const CLIENT_SECRET = process.env.CLIENT_SECRET || "";
-const REDIRECT_URI = process.env.REDIRECT_URI || "http://localhost:3000/callback";
 const PORT = parseInt(process.env.PORT || "3000");
 
 const app = express();
 app.use(session({ secret: "demo-secret", resave: false, saveUninitialized: true }));
+app.use(express.json());
 
-// --- Permission helpers (what the SDK provides) ---
-interface GGIDUser {
+// --- Types ---
+interface DemoUser {
   username: string;
   email: string;
   roles: string[];
   permissions: string[];
+  org_id: string;
+  group_id: string;
 }
 
-function hasPermission(user: GGIDUser | null, perm: string): boolean {
+interface DemoOrder {
+  id: string;
+  customer: string;
+  amount: number;
+  status: string;
+  org_id: string;
+  group_id: string;
+}
+
+// --- Mock data (simulates database with org/group columns) ---
+const mockOrders: DemoOrder[] = [
+  { id: "ORD-001", customer: "Alice Corp", amount: 1200, status: "pending", org_id: "sales", group_id: "team-a" },
+  { id: "ORD-002", customer: "Bob Inc", amount: 3400, status: "approved", org_id: "sales", group_id: "team-a" },
+  { id: "ORD-003", customer: "Carol Ltd", amount: 890, status: "pending", org_id: "sales", group_id: "team-b" },
+  { id: "ORD-004", customer: "Dave Co", amount: 5600, status: "shipped", org_id: "sales", group_id: "team-b" },
+  { id: "ORD-005", customer: "Eve LLC", amount: 2100, status: "pending", org_id: "finance", group_id: "team-c" },
+];
+
+// --- Demo users with different org/group/permissions ---
+const demoUsers: Record<string, DemoUser> = {
+  "sales_a": {
+    username: "alice_sales", email: "alice@sales.com",
+    roles: ["Sales Team A"],
+    permissions: ["dashboard:read", "orders:read", "orders:write"],
+    org_id: "sales", group_id: "team-a",
+  },
+  "sales_b": {
+    username: "bob_sales", email: "bob@sales.com",
+    roles: ["Sales Team B"],
+    permissions: ["dashboard:read", "orders:read", "orders:write"],
+    org_id: "sales", group_id: "team-b",
+  },
+  "manager": {
+    username: "manager", email: "manager@company.com",
+    roles: ["Sales Manager"],
+    permissions: ["dashboard:read", "orders:read", "orders:read:all", "orders:write", "orders:approve", "inventory:read", "admin"],
+    org_id: "sales", group_id: "*",
+  },
+};
+
+// --- Permission helpers ---
+function hasPermission(user: DemoUser | null, perm: string): boolean {
   if (!user) return false;
   if (user.permissions.includes("admin")) return true;
-  return user.permissions.includes(perm);
+  return user.permissions.includes(perm) || user.permissions.includes(`${perm}:all`);
 }
 
-function requirePermission(perm: string) {
-  return (req: express.Request, res: express.Response, next: express.NextFunction) => {
-    const user = (req.session as any).user as GGIDUser | null;
-    if (!user) return res.redirect("/login");
-    if (!hasPermission(user, perm)) return res.status(403).send(render403(perm));
-    next();
-  };
+function canSeeAllData(user: DemoUser): boolean {
+  return hasPermission(user, "orders:read:all") || hasPermission(user, "admin");
 }
 
-// --- Auth routes ---
+/** Filter orders by user's org_id and group_id (row-level security) */
+function filterOrders(user: DemoUser): DemoOrder[] {
+  if (canSeeAllData(user)) return mockOrders;
+  return mockOrders.filter(o => o.org_id === user.org_id && (user.group_id === "*" || o.group_id === user.group_id));
+}
+
+// --- Routes ---
 app.get("/", (req, res) => {
-  const user = (req.session as any).user as GGIDUser | null;
+  const user = (req.session as any).user as DemoUser | null;
   if (!user) return res.redirect("/login");
   res.send(renderDashboard(user));
 });
 
 app.get("/login", (_req, res) => {
-  const authUrl = `${GGID_URL}/api/v1/oauth/authorize?` + new URLSearchParams({
-    response_type: "code", client_id: CLIENT_ID,
-    redirect_uri: REDIRECT_URI, scope: "openid profile email",
-    state: "demo",
-  }).toString();
-  res.send(renderLogin(authUrl));
+  res.send(renderLogin());
 });
 
-app.get("/callback", async (req, res) => {
-  const code = req.query.code as string;
-  if (!code) return res.status(400).send("Missing code");
-
-  // Exchange code for tokens
-  const tokenRes = await fetch(`${GGID_URL}/api/v1/oauth/token`, {
-    method: "POST",
-    headers: { "Content-Type": "application/x-www-form-urlencoded" },
-    body: new URLSearchParams({
-      grant_type: "authorization_code", code,
-      redirect_uri: REDIRECT_URI, client_id: CLIENT_ID, client_secret: CLIENT_SECRET,
-    }),
-  });
-  if (!tokenRes.ok) return res.status(500).send("Token exchange failed");
-  const tokens = await tokenRes.json();
-
-  // Get user info
-  const userRes = await fetch(`${GGID_URL}/api/v1/oauth/userinfo`, {
-    headers: { Authorization: `Bearer ${tokens.access_token}` },
-  });
-  const userInfo = await userRes.json();
-
-  // Map to internal user with permissions
-  const user: GGIDUser = {
-    username: userInfo.username || userInfo.preferred_username || "user",
-    email: userInfo.email || "",
-    roles: userInfo.roles || ["viewer"],
-    permissions: userInfo.permissions || userInfo.scope?.split(" ") || ["dashboard:read"],
-  };
-
+app.post("/login", (req, res) => {
+  const userId = req.body.user_id || "sales_a";
+  const user = demoUsers[userId] || demoUsers["sales_a"];
   (req.session as any).user = user;
-  (req.session as any).token = tokens.access_token;
   res.redirect("/");
 });
 
-// --- Protected pages with permission checks ---
-app.get("/inventory", requirePermission("inventory:read"), (req, res) => {
-  const user = (req.session as any).user as GGIDUser;
+// --- Dashboard ---
+app.get("/dashboard", (req, res) => {
+  const user = (req.session as any).user as DemoUser | null;
+  if (!user) return res.redirect("/login");
+  const userOrders = filterOrders(user);
+  res.send(renderDashboard(user, userOrders));
+});
+
+// --- Orders with row-level filtering ---
+app.get("/orders", (req, res) => {
+  const user = (req.session as any).user as DemoUser | null;
+  if (!user) return res.redirect("/login");
+  if (!hasPermission(user, "orders:read")) {
+    return res.status(403).send(render403("orders:read"));
+  }
+  const userOrders = filterOrders(user);
+  res.send(renderOrders(user, userOrders));
+});
+
+// --- Inventory with button disabled states ---
+app.get("/inventory", (req, res) => {
+  const user = (req.session as any).user as DemoUser | null;
+  if (!user) return res.redirect("/login");
+  if (!hasPermission(user, "inventory:read")) {
+    return res.status(403).send(render403("inventory:read"));
+  }
   const canWrite = hasPermission(user, "inventory:write");
   const canDelete = hasPermission(user, "inventory:delete");
   res.send(renderInventory(user, canWrite, canDelete));
 });
 
-app.get("/inventory/new", requirePermission("inventory:write"), (req, res) => {
-  const user = (req.session as any).user as GGIDUser;
-  res.send(renderInventoryForm(user));
-});
+// --- ABAC policy check (simulates POST /api/v1/policies/check) ---
+app.post("/api/policy-check", (req, res) => {
+  const user = (req.session as any).user as DemoUser | null;
+  if (!user) return res.status(401).json({ error: "not authenticated" });
 
-app.get("/orders", requirePermission("orders:read"), (req, res) => {
-  const user = (req.session as any).user as GGIDUser;
-  const canWrite = hasPermission(user, "orders:write");
-  const canApprove = hasPermission(user, "orders:approve");
-  res.send(renderOrders(user, canWrite, canApprove));
-});
+  const { resource_type, action, attributes } = req.body;
+  const allowed = hasPermission(user, `${resource_type}:${action}`);
 
-app.get("/admin", requirePermission("admin"), (req, res) => {
-  const user = (req.session as any).user as GGIDUser;
-  res.send(renderAdmin(user));
+  // Return data_filter for row-level security
+  let dataFilter: Record<string, any> = {};
+  if (allowed && resource_type === "orders" && !canSeeAllData(user)) {
+    dataFilter = { org_id: user.org_id, group_id: user.group_id };
+  }
+
+  res.json({ allowed, data_filter: dataFilter });
 });
 
 // --- HTML renderers ---
-function renderMenu(user: GGIDUser): string {
+function renderMenu(user: DemoUser): string {
   const items: string[] = [`<li><a href="/">Dashboard</a></li>`];
-  if (hasPermission(user, "orders:read"))
-    items.push(`<li><a href="/orders">Orders</a></li>`);
-  if (hasPermission(user, "inventory:read"))
-    items.push(`<li><a href="/inventory">Inventory</a></li>`);
-  if (hasPermission(user, "admin"))
-    items.push(`<li><a href="/admin">Admin</a></li>`);
-  return `<aside><h2>Menu</h2><ul>${items.join("")}</ul><p>Role: ${user.roles.join(", ")}</p></aside>`;
+  if (hasPermission(user, "orders:read")) items.push(`<li><a href="/orders">Orders ${canSeeAllData(user) ? '(All Teams)' : `(${user.group_id})`}</a></li>`);
+  if (hasPermission(user, "inventory:read")) items.push(`<li><a href="/inventory">Inventory</a></li>`);
+
+  const roleBadges = user.roles.map(r => `<span class="badge">${r}</span>`).join("");
+
+  return `
+    <aside style="width:240px;background:#1a1a2e;color:#fff;padding:20px;min-height:100vh">
+      <h2 style="margin:0 0 8px">GGID Demo</h2>
+      <div style="margin-bottom:16px">${roleBadges}</div>
+      <div style="margin-bottom:16px;padding:8px;background:#16213e;border-radius:4px;font-size:12px">
+        <div>Org: <strong>${user.org_id}</strong></div>
+        <div>Group: <strong>${user.group_id}</strong></div>
+      </div>
+      <ul style="list-style:none;padding:0">${items.join("")}</ul>
+    </aside>`;
 }
 
-function renderDashboard(user: GGIDUser): string {
-  return `<html><body>${renderMenu(user)}<main><h1>Dashboard</h1><p>Welcome, ${user.username}</p><p>Permissions: ${user.permissions.join(", ")}</p></main></body></html>`;
+function renderDashboard(user: DemoUser, orders: DemoOrder[] = []): string {
+  const totalAmount = orders.reduce((sum, o) => sum + o.amount, 0);
+  return `<html><head><style>
+    body{display:flex;font-family:system-ui;margin:0}
+    .badge{background:#0f3460;padding:2px 8px;border-radius:4px;font-size:11px;margin-right:4px}
+    .stat{background:#f8f9fa;padding:16px;border-radius:8px;text-align:center}
+    .stat h3{margin:0;font-size:24px;color:#1890ff}
+    .stat p{margin:4px 0 0;font-size:12px;color:#999}
+    .filter-notice{background:#e6f7ff;border:1px solid #91d5ff;padding:8px 12px;border-radius:4px;margin-bottom:16px;font-size:13px}
+  </style></head><body>${renderMenu(user)}
+    <main style="flex:1;padding:24px">
+      <h1>Dashboard</h1>
+      <p>Welcome, <strong>${user.username}</strong></p>
+      <div style="display:flex;gap:16px;margin:24px 0">
+        <div class="stat"><h3>${orders.length}</h3><p>Visible Orders</p></div>
+        <div class="stat"><h3>$${totalAmount.toLocaleString()}</h3><p>Total Amount</p></div>
+        <div class="stat"><h3>${user.permissions.length}</h3><p>Permissions</p></div>
+      </div>
+      <div class="filter-notice">
+        ${canSeeAllData(user)
+          ? "You can see <strong>all teams'</strong> data (orders:read:all)"
+          : `You can only see data for <strong>${user.org_id}/${user.group_id}</strong> (row-level filtered)`}
+      </div>
+      <h3>Your Permissions:</h3>
+      <ul>${user.permissions.map(p => `<li><code>${p}</code></li>`).join("")}</ul>
+    </main></body></html>`;
 }
 
-function renderLogin(authUrl: string): string {
-  return `<html><body><h1>GGID SDK Demo</h1><a href="${authUrl}">Login with GGID</a></body></html>`;
+function renderOrders(user: DemoUser, orders: DemoOrder[]): string {
+  const canWrite = hasPermission(user, "orders:write");
+  const canApprove = hasPermission(user, "orders:approve");
+
+  return `<html><head><style>
+    body{display:flex;font-family:system-ui;margin:0}
+    .badge{background:#0f3460;padding:2px 8px;border-radius:4px;font-size:11px;margin-right:4px}
+    table{width:100%;border-collapse:collapse}
+    th,td{padding:8px 12px;text-align:left;border-bottom:1px solid #eee}
+    th{background:#f5f5f5}
+    .filter-notice{background:#e6f7ff;border:1px solid #91d5ff;padding:8px 12px;border-radius:4px;margin-bottom:16px;font-size:13px}
+    .btn{padding:6px 16px;border:none;border-radius:4px;cursor:pointer;font-size:13px}
+    .btn-primary{background:#1890ff;color:#fff}
+    .btn-disabled{background:#d9d9d9;color:#999;cursor:not-allowed}
+    .btn-danger{background:#ff4d4f;color:#fff}
+    .status-pending{color:#faad14;font-weight:bold}
+    .status-approved{color:#52c41a;font-weight:bold}
+    .status-shipped{color:#1890ff;font-weight:bold}
+  </style></head><body>${renderMenu(user)}
+    <main style="flex:1;padding:24px">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <h1>Orders</h1>
+        <div>
+          <button class="btn ${canWrite ? 'btn-primary' : 'btn-disabled'}" ${canWrite ? '' : 'disabled'}>
+            ${canWrite ? '+ New Order' : 'New Order (no write permission)'}
+          </button>
+        </div>
+      </div>
+      <div class="filter-notice">
+        ${canSeeAllData(user)
+          ? "Showing <strong>all teams'</strong> orders"
+          : `Showing only <strong>${user.group_id}</strong> orders (row-level filtered by org_id/group_id)`}
+      </div>
+      <table>
+        <thead><tr><th>Order ID</th><th>Customer</th><th>Amount</th><th>Status</th><th>Team</th>${canApprove ? '<th>Action</th>' : ''}</tr></thead>
+        <tbody>
+          ${orders.map(o => `<tr>
+            <td>${o.id}</td>
+            <td>${o.customer}</td>
+            <td>$${o.amount.toLocaleString()}</td>
+            <td class="status-${o.status}">${o.status}</td>
+            <td>${o.org_id}/${o.group_id}</td>
+            ${canApprove ? `<td><button class="btn btn-primary" ${o.status === 'pending' ? '' : 'disabled'}>Approve</button></td>` : ''}
+          </tr>`).join("")}
+        </tbody>
+      </table>
+    </main></body></html>`;
 }
 
-function renderInventory(user: GGIDUser, canWrite: boolean, canDelete: boolean): string {
-  return `<html><body>${renderMenu(user)}<main><h1>Inventory</h1>${canWrite ? '<button onclick="location.href=\'/inventory/new\'">New Item</button>' : '<p>Read-only access</p>'}${canDelete ? '<button>Delete</button>' : ''}</main></body></html>`;
+function renderInventory(user: DemoUser, canWrite: boolean, canDelete: boolean): string {
+  return `<html><head><style>
+    body{display:flex;font-family:system-ui;margin:0}
+    .btn{padding:6px 16px;border:none;border-radius:4px;cursor:pointer;font-size:13px}
+    .btn-primary{background:#1890ff;color:#fff}
+    .btn-disabled{background:#d9d9d9;color:#999;cursor:not-allowed}
+    .btn-danger{background:#ff4d4f;color:#fff}
+    .btn-danger-disabled{background:#ffccc7;color:#ff4d4f;cursor:not-allowed}
+  </style></head><body>${renderMenu(user)}
+    <main style="flex:1;padding:24px">
+      <h1>Inventory</h1>
+      <div style="margin-bottom:16px">
+        <button class="btn ${canWrite ? 'btn-primary' : 'btn-disabled'}" ${canWrite ? '' : 'disabled'}>
+          ${canWrite ? '+ New Item' : 'New Item (no write permission)'}
+        </button>
+        <button class="btn ${canDelete ? 'btn-danger' : 'btn-danger-disabled'}" ${canDelete ? '' : 'disabled'} style="margin-left:8px">
+          ${canDelete ? 'Delete Selected' : 'Delete (no delete permission)'}
+        </button>
+      </div>
+      <table style="width:100%;border-collapse:collapse">
+        <thead><tr><th>SKU</th><th>Name</th><th>Qty</th></tr></thead>
+        <tbody><tr><td colspan="3" style="color:#999;padding:24px;text-align:center">No inventory data (demo)</td></tr></tbody>
+      </table>
+    </main></body></html>`;
 }
 
-function renderInventoryForm(user: GGIDUser): string {
-  return `<html><body>${renderMenu(user)}<main><h1>New Inventory Item</h1><form><input placeholder="Name"><button>Create</button></form></main></body></html>`;
-}
-
-function renderOrders(user: GGIDUser, canWrite: boolean, canApprove: boolean): string {
-  return `<html><body>${renderMenu(user)}<main><h1>Orders</h1>${canWrite ? '<button>New Order</button>' : ''}${canApprove ? '<button>Approve</button>' : ''}</main></body></html>`;
-}
-
-function renderAdmin(user: GGIDUser): string {
-  return `<html><body>${renderMenu(user)}<main><h1>Admin Panel</h1><p>Admin only content</p></main></body></html>`;
+function renderLogin(): string {
+  return `<html><head><style>
+    body{font-family:system-serif;display:flex;justify-content:center;align-items:center;height:100vh;background:#f0f2f5}
+    .card{background:#fff;padding:32px;border-radius:8px;box-shadow:0 2px 8px rgba(0,0,0,0.1);width:360px}
+    .user-btn{display:block;width:100%;padding:12px;margin:8px 0;border:1px solid #d9d9d9;border-radius:4px;cursor:pointer;text-align:left;font-size:14px}
+    .user-btn:hover{border-color:#1890ff;background:#e6f7ff}
+    .badge{display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;margin-left:4px}
+  </style></head><body>
+    <div class="card">
+      <h2>GGID Demo Login</h2>
+      <p style="color:#999">Select a demo user to see different permission behaviors:</p>
+      <form method="POST" action="/login">
+        <button class="user-btn" name="user_id" value="sales_a">
+          Alice — Sales Team A<br><small>orders:read/write, filtered to team-a</small>
+          <span class="badge" style="background:#e6f7ff;color:#1890ff">team-a</span>
+        </button>
+        <button class="user-btn" name="user_id" value="sales_b">
+          Bob — Sales Team B<br><small>orders:read/write, filtered to team-b</small>
+          <span class="badge" style="background:#f6ffed;color:#52c41a">team-b</span>
+        </button>
+        <button class="user-btn" name="user_id" value="manager">
+          Manager<br><small>orders:read:all, approve, admin</small>
+          <span class="badge" style="background:#fff1f0;color:#f5222d">all</span>
+        </button>
+      </form>
+    </div>
+  </body></html>`;
 }
 
 function render403(perm: string): string {
-  return `<html><body><h1>403 Forbidden</h1><p>You need permission: ${perm}</p><a href="/">Back to Dashboard</a></body></html>`;
+  return `<html><body style="font-family:system-serif;padding:40px">
+    <h1>403 Forbidden</h1>
+    <p>You need permission: <code>${perm}</code></p>
+    <a href="/">Back to Dashboard</a>
+  </body></html>`;
 }
 
-app.listen(PORT, () => console.log(`SDK Demo on http://localhost:${PORT}`));
+app.listen(PORT, () => console.log(`Fine-Grained Permission Demo on http://localhost:${PORT}`));
