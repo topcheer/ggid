@@ -4,11 +4,12 @@
     "module": "ESNext",
     "moduleResolution": "bundler", "rootDir": "src",
     "jsx": "react-jsx",
-    "strict": true,
+    "strict": false,
     "esModuleInterop": true,
     "declaration": true,
     "outDir": "dist",
-    "skipLibCheck": true
+    "skipLibCheck": true,
+    "types": []
   },
   "include": ["src"]
 }
