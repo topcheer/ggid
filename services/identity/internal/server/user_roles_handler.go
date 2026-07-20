@@ -48,10 +48,10 @@ func (h *HTTPHandler) handleUserRoles(ctx context.Context, userID uuid.UUID, w h
 		roles := []UserRoleAssignment{}
 		for rows.Next() {
 			var a UserRoleAssignment
-if err := rows.Scan(&a.UserID, &a.RoleID, &a.RoleName, &a.AssignedAt, &a.AssignedBy); err != nil {
-					continue
-				}
-				a.ID = a.UserID + "/" + a.RoleID
+			if err := rows.Scan(&a.UserID, &a.RoleID, &a.RoleName, &a.AssignedAt, &a.AssignedBy); err != nil {
+				continue
+			}
+			a.ID = a.UserID + "/" + a.RoleID
 			roles = append(roles, a)
 		}
 		writeJSON(w, http.StatusOK, map[string]any{"roles": roles})
