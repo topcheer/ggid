@@ -657,8 +657,13 @@ func JWTAuth(jwks *JWKSClient, required bool, issuer, audience string) func(http
 			if sub, _ := claims["sub"].(string); sub != "" {
 				ctx = context.WithValue(ctx, UserIDKey, sub)
 			}
+			// Only set tenant_id from JWT if not already set by TenantResolver.
+			// TenantResolver prioritizes X-Tenant-ID header, allowing platform
+			// admins to target other tenants. JWTAuth must not overwrite it.
 			if tid, _ := claims["tenant_id"].(string); tid != "" {
-				ctx = context.WithValue(ctx, TenantIDKey, tid)
+				if existing, ok := ctx.Value(TenantIDKey).(string); !ok || existing == "" {
+					ctx = context.WithValue(ctx, TenantIDKey, tid)
+				}
 			}
 			if jti, _ := claims["jti"].(string); jti != "" {
 				ctx = context.WithValue(ctx, JTIKey, jti)
