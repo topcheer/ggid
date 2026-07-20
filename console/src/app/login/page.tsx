@@ -37,7 +37,7 @@ export default function LoginPage() {
   const [connectors, setConnectors] = useState<SocialConnector[]>([]);
   const [connectorsLoaded, setConnectorsLoaded] = useState(false);
   const [passkeySupported, setPasskeySupported] = useState(false);
-  const [tenantSlug, setTenantSlug] = useState("");
+  const [tenantSlug, setTenantSlug] = useState(getEffectiveTenantSlug());
   const [resolvedTenantId, setResolvedTenantId] = useState(DEFAULT_TENANT_ID);
   const [pwFeedback, setPwFeedback] = useState("");
   const [systemInitialized, setSystemInitialized] = useState<boolean | null>(null);

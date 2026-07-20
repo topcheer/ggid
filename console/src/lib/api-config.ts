@@ -42,10 +42,10 @@ export function getTenantSlugFromSubdomain(): string {
 
 /**
  * Get the effective tenant slug.
- * Priority: URL ?tenant= param > subdomain > localStorage > empty (default)
+ * Priority: URL ?tenant= param > subdomain > "default" (for non-subdomain access)
  */
 export function getEffectiveTenantSlug(): string {
-  if (typeof window === "undefined") return "";
+  if (typeof window === "undefined") return "default";
   // URL param override
   const params = new URLSearchParams(window.location.search);
   const urlTenant = params.get("tenant");
@@ -55,7 +55,8 @@ export function getEffectiveTenantSlug(): string {
   const subdomain = getTenantSlugFromSubdomain();
   if (subdomain) return subdomain;
   
-  return "";
+  // No subdomain → default tenant
+  return "default";
 }
 
 /**
