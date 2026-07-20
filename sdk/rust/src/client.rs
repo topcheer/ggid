@@ -323,8 +323,8 @@ impl GGIDClient {
             .header("X-Tenant-ID", &self.tenant_id)
             .json(&json!({"username": username, "email": email, "password": password}))
             .send().await
-            .map_err(|e| GGIDError::Http(e.to_string()))?;
-        Self::parse_json(resp).await
+            .map_err(|e| GGIDError::HttpMsg(e.to_string()))?;
+        parse_json(resp).await
     }
 
     /// Get a user by ID.
@@ -334,8 +334,8 @@ impl GGIDClient {
             .header("Authorization", format!("Bearer {}", token))
             .header("X-Tenant-ID", &self.tenant_id)
             .send().await
-            .map_err(|e| GGIDError::Http(e.to_string()))?;
-        Self::parse_json(resp).await
+            .map_err(|e| GGIDError::HttpMsg(e.to_string()))?;
+        parse_json(resp).await
     }
 
     /// List users with optional pagination.
@@ -345,8 +345,8 @@ impl GGIDClient {
             .header("Authorization", format!("Bearer {}", token))
             .header("X-Tenant-ID", &self.tenant_id)
             .send().await
-            .map_err(|e| GGIDError::Http(e.to_string()))?;
-        Self::parse_json(resp).await
+            .map_err(|e| GGIDError::HttpMsg(e.to_string()))?;
+        parse_json(resp).await
     }
 
     /// Update a user by ID.
@@ -362,8 +362,8 @@ impl GGIDClient {
             .header("X-Tenant-ID", &self.tenant_id)
             .json(&data)
             .send().await
-            .map_err(|e| GGIDError::Http(e.to_string()))?;
-        Self::parse_json(resp).await
+            .map_err(|e| GGIDError::HttpMsg(e.to_string()))?;
+        parse_json(resp).await
     }
 
     /// Delete a user by ID.
@@ -373,9 +373,9 @@ impl GGIDClient {
             .header("Authorization", format!("Bearer {}", token))
             .header("X-Tenant-ID", &self.tenant_id)
             .send().await
-            .map_err(|e| GGIDError::Http(e.to_string()))?;
+            .map_err(|e| GGIDError::HttpMsg(e.to_string()))?;
         if !resp.status().is_success() {
-            return Err(GGIDError::Http(format!("delete failed: {}", resp.status())));
+            return Err(GGIDError::HttpMsg(format!("delete failed: {}", resp.status())));
         }
         Ok(())
     }
@@ -393,8 +393,8 @@ impl GGIDClient {
             .header("X-Tenant-ID", &self.tenant_id)
             .json(&json!({"name": name, "key": key}))
             .send().await
-            .map_err(|e| GGIDError::Http(e.to_string()))?;
-        Self::parse_json(resp).await
+            .map_err(|e| GGIDError::HttpMsg(e.to_string()))?;
+        parse_json(resp).await
     }
 
     // --- Passkey/WebAuthn ---
@@ -411,8 +411,8 @@ impl GGIDClient {
             .header("X-Tenant-ID", &self.tenant_id)
             .json(&json!({"user_id": user_id}))
             .send().await
-            .map_err(|e| GGIDError::Http(e.to_string()))?;
-        Self::parse_json(resp).await
+            .map_err(|e| GGIDError::HttpMsg(e.to_string()))?;
+        parse_json(resp).await
     }
 
     /// Start passkey authentication (returns challenge).
@@ -425,8 +425,8 @@ impl GGIDClient {
             .header("Authorization", format!("Bearer {}", token))
             .header("X-Tenant-ID", &self.tenant_id)
             .send().await
-            .map_err(|e| GGIDError::Http(e.to_string()))?;
-        Self::parse_json(resp).await
+            .map_err(|e| GGIDError::HttpMsg(e.to_string()))?;
+        parse_json(resp).await
     }
 
     /// Check if a token has permission for a resource+action.
@@ -710,6 +710,17 @@ impl GGIDClient {
     }
 }
 
+/// Standalone helper: parse HTTP response to JSON or error.
+async fn parse_json(resp: reqwest::Response) -> Result<serde_json::Value, GGIDError> {
+    let status = resp.status();
+    let body: serde_json::Value = resp.json().await
+        .map_err(GGIDError::from)?;
+    if !status.is_success() {
+        return Err(GGIDError::HttpMsg(format!("{}: {}", status, body)));
+    }
+    Ok(body)
+}
+
 /// Builder for custom GGIDClient configuration.
 #[derive(Default)]
 pub struct GGIDClientBuilder {
@@ -750,16 +761,5 @@ impl GGIDClientBuilder {
             tenant_id,
             http,
         })
-    }
-
-    /// Helper: parse HTTP response to JSON or error.
-    async fn parse_json(resp: reqwest::Response) -> Result<serde_json::Value, GGIDError> {
-        let status = resp.status();
-        let body: serde_json::Value = resp.json().await
-            .map_err(|e| GGIDError::Http(format!("parse error: {}", e)))?;
-        if !status.is_success() {
-            return Err(GGIDError::Http(format!("{}: {}", status, body)));
-        }
-        Ok(body)
     }
 }

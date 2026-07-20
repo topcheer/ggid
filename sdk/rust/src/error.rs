@@ -14,6 +14,9 @@ pub enum GGIDError {
     #[error("HTTP error: {0}")]
     Http(#[from] reqwest::Error),
 
+    #[error("HTTP error: {0}")]
+    HttpMsg(String),
+
     #[error("JSON error: {0}")]
     Json(#[from] serde_json::Error),
 
