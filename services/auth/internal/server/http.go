@@ -542,6 +542,11 @@ func (h *Handler) registerRoutes() {
 	h.mux.HandleFunc("/api/v1/auth/tap", h.handleTAP)
 	h.mux.HandleFunc("/api/v1/auth/tap/", h.handleTAP)
 	h.mux.HandleFunc("/api/v1/auth/conditional-access/", h.handleConditionalAccess)
+	// SAML IdP endpoints
+	h.mux.HandleFunc("/saml/metadata", h.handleSAMLMetadata)
+	h.mux.HandleFunc("/saml/sso", h.handleSAMLSSO)
+	h.mux.HandleFunc("/saml/acs", h.handleSAMLACS)
+	h.mux.HandleFunc("/saml/config", h.handleSAMLConfig)
 	h.mux.HandleFunc("/api/v1/authz/check", h.handleAuthzCheck)
 	h.mux.HandleFunc("/api/v1/auth/cae/status", h.handleCAE)
 	h.mux.HandleFunc("/api/v1/auth/cae/run", h.handleCAE)

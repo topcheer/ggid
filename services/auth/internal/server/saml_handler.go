@@ -4,7 +4,6 @@ import (
 	"crypto/x509"
 	"encoding/base64"
 	"encoding/json"
-	"encoding/xml"
 	"fmt"
 	"log/slog"
 	"net/http"
@@ -256,7 +255,7 @@ func (h *Handler) getIdPCertificate(r *http.Request) (*x509.Certificate, error) 
 	}
 
 	// Use existing pemDecode from helpers.go
-	block := pemDecode(cfg.IDPCert)
+	block, _ := pemDecode(cfg.IDPCert)
 	if block == nil {
 		return nil, fmt.Errorf("invalid PEM certificate")
 	}
