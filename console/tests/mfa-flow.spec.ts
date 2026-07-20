@@ -28,7 +28,7 @@ async function setToken(page: Page, token: string, username: string) {
     localStorage.setItem('ggid_user_name', u);
     localStorage.setItem('ggid_user_email', `${u}@test.com`);
     localStorage.setItem('ggid_tenant_id', TENANT);
-    localStorage.setItem('ggid_user_scopes', JSON.stringify(['platform:admin', 'tenant:admin', 'admin']));
+    localStorage.setItem('ggid_user_scopes', JSON.stringify(['Platform Administrator', 'Tenant Administrator', 'Administrator']));
   }, { t: token, u: username });
 }
 

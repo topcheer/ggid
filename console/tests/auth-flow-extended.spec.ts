@@ -5,18 +5,29 @@ const API_BASE = process.env.API_URL || 'https://ggid.iot2.win';
 const TENANT = '00000000-0000-0000-0000-000000000001';
 
 async function getAuthToken(request: APIRequestContext): Promise<{ token: string; user: string }> {
-  const username = `e2e_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`;
-  await request.post(`${API_BASE}/api/v1/auth/register`, {
-    headers: { 'X-Tenant-ID': TENANT, 'Content-Type': 'application/json' },
-    data: { username, email: `${username}@test.com`, password: 'TestPass123!' },
-  });
-  await new Promise(r => setTimeout(r, 500));
+  // Use admin account for admin-required tests
+  const adminPassword = process.env.TEST_ADMIN_PASSWORD || 'q7Rf9Xk2Lm3pW8zBA';
   const res = await request.post(`${API_BASE}/api/v1/auth/login`, {
     headers: { 'X-Tenant-ID': TENANT, 'Content-Type': 'application/json' },
-    data: { username, password: 'TestPass123!' },
+    data: { username: 'admin', password: adminPassword },
   });
   const body = await res.json();
-  return { token: body.access_token, user: username };
+  if (!body.access_token) {
+    // Fallback: register new user
+    const username = `e2e_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`;
+    await request.post(`${API_BASE}/api/v1/auth/register`, {
+      headers: { 'X-Tenant-ID': TENANT, 'Content-Type': 'application/json' },
+      data: { username, email: `${username}@test.com`, password: 'TestPass123!' },
+    });
+    await new Promise(r => setTimeout(r, 500));
+    const loginRes = await request.post(`${API_BASE}/api/v1/auth/login`, {
+      headers: { 'X-Tenant-ID': TENANT, 'Content-Type': 'application/json' },
+      data: { username, password: 'TestPass123!' },
+    });
+    const loginBody = await loginRes.json();
+    return { token: loginBody.access_token, user: username };
+  }
+  return { token: body.access_token, user: 'admin' };
 }
 
 async function setToken(page: Page, token: string, username: string) {
@@ -27,7 +38,7 @@ async function setToken(page: Page, token: string, username: string) {
     localStorage.setItem('ggid_user_name', u);
     localStorage.setItem('ggid_user_email', `${u}@test.com`);
     localStorage.setItem('ggid_tenant_id', TENANT);
-    localStorage.setItem('ggid_user_scopes', JSON.stringify(['platform:admin', 'tenant:admin', 'admin']));
+    localStorage.setItem('ggid_user_scopes', JSON.stringify(['Platform Administrator', 'Tenant Administrator', 'Administrator']));
   }, { t: token, u: username });
 }
 
