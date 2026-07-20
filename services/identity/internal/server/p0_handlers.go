@@ -2,6 +2,7 @@ package server
 
 import (
 	"encoding/json"
+	"log/slog"
 	"net/http"
 	"strings"
 
@@ -84,13 +85,14 @@ func (h *HTTPHandler) handleSelfServiceDevices(w http.ResponseWriter, r *http.Re
 			return
 		}
 		deviceID := pathParts[4]
-		_, err := pool.Exec(r.Context(), `
-			DELETE FROM passkey_credentials WHERE id::text = $1 AND user_id::text = $2`,
-			deviceID, userIDStr)
-		if err != nil {
-			writeJSON(w, http.StatusOK, map[string]any{"deleted": false, "error": "device not found or not owned by user"})
-			return
-		}
+			tenantIDStr := r.Header.Get("X-Tenant-ID")
+			tag, err := pool.Exec(r.Context(), `
+				DELETE FROM passkey_credentials WHERE id::text = $1 AND user_id::text = $2 AND tenant_id::text = $3`,
+				deviceID, userIDStr, tenantIDStr)
+			if err != nil || tag.RowsAffected() == 0 {
+				writeJSON(w, http.StatusOK, map[string]any{"deleted": false, "error": "device not found or not owned by user"})
+				return
+			}
 		writeJSON(w, http.StatusOK, map[string]any{"deleted": true, "device_id": deviceID})
 		return
 	}
@@ -168,12 +170,18 @@ func (h *HTTPHandler) handleGDPRDeleteAccount(w http.ResponseWriter, r *http.Req
 	}
 	defer tx.Rollback(r.Context())
 
-	// Delete related data
-	_, _ = tx.Exec(r.Context(), `DELETE FROM credentials WHERE user_id = $1`, userID)
-	_, _ = tx.Exec(r.Context(), `DELETE FROM passkey_credentials WHERE user_id = $1`, userID)
-	_, _ = tx.Exec(r.Context(), `DELETE FROM user_roles WHERE user_id = $1`, userID)
-	_, _ = tx.Exec(r.Context(), `DELETE FROM sessions WHERE user_id = $1`, userID)
-	_, _ = tx.Exec(r.Context(), `DELETE FROM user_emails WHERE user_id = $1`, userID)
+	deletions := []struct{ name, sql string }{
+		{"credentials", `DELETE FROM credentials WHERE user_id = $1`},
+		{"passkey_credentials", `DELETE FROM passkey_credentials WHERE user_id = $1`},
+		{"user_roles", `DELETE FROM user_roles WHERE user_id = $1`},
+		{"sessions", `DELETE FROM sessions WHERE user_id = $1`},
+		{"user_emails", `DELETE FROM user_emails WHERE user_id = $1`},
+	}
+	for _, d := range deletions {
+		if _, err := tx.Exec(r.Context(), d.sql, userID); err != nil {
+			slog.Error("GDPR delete: failed to clean up table", "table", d.name, "error", err)
+		}
+	}
 
 	// Anonymize user record (GDPR: keep audit trail but remove PII)
 	_, err = tx.Exec(r.Context(), `
