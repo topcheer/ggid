@@ -16,11 +16,27 @@
  */
 
 import { useState, useCallback } from "react";
-import {
-  bufferToBase64url,
-  base64urlToBuffer,
-  isWebAuthnSupported,
-} from "./passkey";
+
+// Local helpers (no external import needed)
+function bufferToBase64url(buffer: ArrayBuffer): string {
+  const bytes = new Uint8Array(buffer);
+  let binary = "";
+  for (const b of bytes) binary += String.fromCharCode(b);
+  return btoa(binary).replace(/\+/g, "-").replace(/\//g, "_").replace(/=/g, "");
+}
+
+function base64urlToBuffer(b64url: string): ArrayBuffer {
+  const padding = "=".repeat((4 - (b64url.length % 4)) % 4);
+  const base64 = (b64url + padding).replace(/-/g, "+").replace(/_/g, "/");
+  const binary = atob(base64);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+  return bytes.buffer;
+}
+
+function isWebAuthnSupported(): boolean {
+  return typeof window !== "undefined" && "PublicKeyCredential" in window;
+}
 
 export interface UsePasskeyOptions {
   apiBaseUrl: string;
