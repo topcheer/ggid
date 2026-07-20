@@ -167,6 +167,28 @@ func (gw *Gateway) handleSystemBootstrap(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
+	// Security: block bootstrap if system is already initialized
+	// Check both in-memory flag (fast path) and DB (survives restart)
+	if quickstartInitialized {
+		writeGatewayJSONError(w, http.StatusConflict, "System is already initialized. Use admin login to create new tenants via /api/v1/tenants.")
+		return
+	}
+	// DB check: if tenants exist, system is already bootstrapped
+	dbURL := gw.cfg.DatabaseURL
+	if dbURL == "" {
+		dbURL = "postgres://ggid:ggid-k3s@ggid-postgresql:5432/ggid?sslmode=disable"
+	}
+	if conn, err := pgx.Connect(r.Context(), dbURL); err == nil {
+		var tenantCount int
+		conn.QueryRow(r.Context(), "SELECT count(*) FROM tenants").Scan(&tenantCount)
+		conn.Close(r.Context())
+		if tenantCount > 0 {
+			quickstartInitialized = true
+			writeGatewayJSONError(w, http.StatusConflict, "System is already initialized. Use admin login to create new tenants via /api/v1/tenants.")
+			return
+		}
+	}
+
 	var req BootstrapRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		writeGatewayJSONError(w, http.StatusBadRequest, "invalid request body")
