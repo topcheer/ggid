@@ -79,8 +79,14 @@ func (h *Handler) handleBiometricEnroll(w http.ResponseWriter, r *http.Request) 
 	biometrics[tmpl.ID] = tmpl
 	biometricMu.Unlock()
 
-	// PG write-through
-	if h.memMapRepo != nil {
+	// DB persistence
+	if h.pool != nil {
+		_, _ = h.pool.Exec(r.Context(), `
+			INSERT INTO auth_biometrics (id, user_id, template_hash, device_id, algorithm, enabled)
+			VALUES ($1, $2, $3, $4, $5, true)
+			ON CONFLICT (id) DO UPDATE SET template_hash = $3`,
+			tmpl.ID, tmpl.UserID, tmpl.TemplateEnc, tmpl.DeviceType, "AES-GCM")
+	} else if h.memMapRepo != nil {
 		h.memMapRepo.StoreJSON(r.Context(), "auth_biometric_json", tmpl.ID, map[string]any{
 			"id": tmpl.ID, "user_id": tmpl.UserID,
 			"template_encrypted": tmpl.TemplateEnc,
@@ -121,9 +127,18 @@ func (h *Handler) handleBiometricVerify(w http.ResponseWriter, r *http.Request) 
 	biometricMu.Lock()
 	defer biometricMu.Unlock()
 
-	// Find template for user — try PG first, fall back to in-memory.
+	// Find template for user — try DB first, then PG memMap, fall back to in-memory.
 	var found *BiometricTemplate
-	if h.memMapRepo != nil {
+	if h.pool != nil {
+		var id, templateEnc, deviceType string
+		err := h.pool.QueryRow(r.Context(), `
+			SELECT id, template_hash, COALESCE(device_id, '') FROM auth_biometrics
+			WHERE user_id = $1 AND enabled = true LIMIT 1`, req.UserID).Scan(&id, &templateEnc, &deviceType)
+		if err == nil {
+			found = &BiometricTemplate{ID: id, UserID: req.UserID, TemplateEnc: templateEnc, DeviceType: deviceType}
+		}
+	}
+	if found == nil && h.memMapRepo != nil {
 		rows, _ := h.memMapRepo.ListJSON(r.Context(), "auth_biometric_json")
 		for _, row := range rows {
 			if uid, _ := row["user_id"].(string); uid == req.UserID {
