@@ -406,12 +406,6 @@ func (gw *Gateway) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if r.URL.Path == "/api/v1/tenants" && (r.Method == http.MethodPost || r.Method == http.MethodGet) {
-		if proxy, _ := gw.matchBackend("/api/v1/identity/tenants"); proxy != nil {
-			r2 := r.Clone(r.Context())
-			r2.URL.Path = r.URL.Path
-			proxy.ServeHTTP(w, r2)
-			return
-		}
 		if r.Method == http.MethodPost {
 			gw.handleTenantCreate(w, r)
 		} else {

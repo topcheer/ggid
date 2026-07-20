@@ -31,11 +31,16 @@ import (
 // compile-time interface assertion
 var _ http.Handler = (*HTTPHandler)(nil)
 
-// handleTenantOrBranding dispatches /api/v1/tenants/{id} (CRUD) vs
-// /api/v1/tenants/{id}/branding (branding) based on path depth.
+// handleTenantOrBranding dispatches /api/v1/tenants (list/create),
+// /api/v1/tenants/{id} (detail/delete), and /api/v1/tenants/{id}/branding.
 func (h *HTTPHandler) handleTenantOrBranding(w http.ResponseWriter, r *http.Request) {
 	if r.URL.Path == "/api/v1/tenants/resolve" {
 		h.handleTenantResolve(w, r)
+		return
+	}
+	// Normalize: /api/v1/tenants and /api/v1/tenants/ both → list/create
+	if r.URL.Path == "/api/v1/tenants" || r.URL.Path == "/api/v1/tenants/" {
+		h.handleTenantCRUD(w, r)
 		return
 	}
 	rest := strings.TrimPrefix(r.URL.Path, "/api/v1/tenants/")
@@ -133,8 +138,10 @@ func (h *HTTPHandler) registerRoutes() {
 	h.mux.HandleFunc("/api/v1/users/import/validate", h.handleImportValidate)
 	h.mux.HandleFunc("/api/v1/users/bulk/status", h.handleBulkStatus)
 
-	// Branding + tenant CRUD endpoints
-	h.mux.HandleFunc("/api/v1/tenants", h.handleTenantCRUD)
+	// Tenant CRUD + branding endpoints
+	// Both patterns route to handleTenantOrBranding which dispatches internally
+	// to handleTenantCRUD or handleBranding based on path depth.
+	h.mux.HandleFunc("/api/v1/tenants", h.handleTenantOrBranding)
 	h.mux.HandleFunc("/api/v1/tenants/", h.handleTenantOrBranding)
 
 	// Access request (IGA workflow) endpoints
