@@ -6,7 +6,7 @@ import { ERPLayout } from '../../components/ERPLayout';
 
 export default function DashboardPage() {
   const router = useRouter();
-  const [user, setUser] = useState<ERPUser | null>(null);
+  const [user, setUser] = useState(null);
   useEffect(() => { const u = getUser(); if (!u) { router.push('/login'); return; } setUser(u); }, [router]);
   if (!user) return null;
 

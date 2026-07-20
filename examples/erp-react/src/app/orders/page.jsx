@@ -7,8 +7,8 @@ import { PermissionGate } from '../../components/PermissionGate';
 
 export default function OrdersPage() {
   const router = useRouter();
-  const [user, setUser] = useState<ERPUser | null>(null);
-  const [orders, setOrders] = useState<any[]>([]);
+  const [user, setUser] = useState(null);
+  const [orders, setOrders] = useState([]);
 
   useEffect(() => {
     const u = getUser(); if (!u) { router.push('/login'); return; } setUser(u);

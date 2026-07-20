@@ -2,7 +2,7 @@
 import React from 'react';
 import { ERPUser, hasPermission, logout } from '../lib/auth';
 
-export function ERPLayout({ user, children }: { user: ERPUser; children: React.ReactNode }) {
+export function ERPLayout({ user, children }) {
   const menuItems = [
     { href: '/dashboard', label: 'Dashboard', perm: null },
     { href: '/inventory', label: 'Inventory', perm: 'inventory:read' },

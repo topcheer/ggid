@@ -7,8 +7,8 @@ import { PermissionGate } from '../../components/PermissionGate';
 
 export default function InventoryPage() {
   const router = useRouter();
-  const [user, setUser] = useState<ERPUser | null>(null);
-  const [items, setItems] = useState<any[]>([]);
+  const [user, setUser] = useState(null);
+  const [items, setItems] = useState([]);
 
   useEffect(() => {
     const u = getUser(); if (!u) { router.push('/login'); return; } setUser(u);
