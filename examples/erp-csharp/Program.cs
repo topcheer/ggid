@@ -1,5 +1,8 @@
 // Cross-Board ERP Demo — C# implementation
 // Tests all GGID core features via C# SDK.
+// Auth: OAuth2 Password Grant (tenant 00000005-...)
+// The /api/auth/login endpoint accepts username+password and returns
+// an access_token + refresh_token, which is RFC 6749 Password Grant.
 //
 // Run: GGID_URL=https://ggid.iot2.win dotnet run
 
