@@ -4,7 +4,7 @@ import { test, expect, type APIRequestContext, type Page } from '@playwright/tes
 const BASE = process.env.BASE_URL || 'https://ggid-console.iot2.win';
 const API_BASE = process.env.API_URL || 'https://ggid.iot2.win';
 const TENANT = '00000000-0000-0000-0000-000000000001';
-const TEST_PW = process.env.TEST_PASSWORD || 'TestPass123!';
+const TEST_PW = process.env.TEST_PASSWORD || '';
 
 async function getAuthToken(request: APIRequestContext): Promise<{ token: string; user: string }> {
   await flushRateLimits();
