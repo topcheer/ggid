@@ -42,6 +42,7 @@ func isAdminEndpoint(path string) bool {
 		"/api/v1/settings/",       // System settings
 		"/api/v1/system/",         // System management
 		"/api/v1/tenants",         // Tenant management (except resolve which is public)
+		"/api/v1/impersonate",     // Impersonation (platform admin only)
 	}
 	for _, prefix := range adminPrefixes {
 		if strings.HasPrefix(path, prefix) {

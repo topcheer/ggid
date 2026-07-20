@@ -168,8 +168,7 @@ func (h *HTTPHandler) registerRoutes() {
 	h.mux.HandleFunc("/api/v1/impersonate/start", h.handleImpersonation)
 	h.mux.HandleFunc("/api/v1/impersonate/end", h.handleImpersonation)
 	h.mux.HandleFunc("/api/v1/impersonate/active", h.handleImpersonation)
-	// Tenant access consent: /api/v1/tenants/{id}/access[/{action_or_id}]
-	h.mux.HandleFunc("/api/v1/tenants/", h.handleTenantOrBranding) // already registered, handles /access too via dispatcher
+	// Tenant access consent: handled by /tenants/ dispatcher above (parts[1]=="access")
 
 	// Enhanced user search
 	h.mux.HandleFunc("/api/v1/users/search", h.handleUserSearch)
