@@ -1,51 +1,39 @@
-import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
-import { Card, Table, Button, Tag } from 'antd';
-import { getRoleFromToken, hasPermission } from '../lib/auth';
-
-const mockInventory = [
-  { key: '1', sku: 'ERP-001', name: 'Wireless Mouse', qty: 120, location: 'WH-A' },
-  { key: '2', sku: 'ERP-002', name: 'USB Hub', qty: 45, location: 'WH-B' },
-  { key: '3', sku: 'ERP-003', name: 'HDMI Cable', qty: 200, location: 'WH-A' },
-];
+import { useEffect, useState } from 'react';
+import { UserSession, hasPermission } from '../lib/auth';
+import AppLayout from '../components/Layout';
+import { Table, Button, Result, Space } from 'antd';
 
 export default function Inventory() {
   const router = useRouter();
-  const [role, setRole] = useState('');
-
+  const [session, setSession] = useState<UserSession | null>(null);
   useEffect(() => {
-    const token = localStorage.getItem('erp_access_token');
-    if (!token) { router.push('/login'); return; }
-    setRole(getRoleFromToken(token));
-  }, []);
-
-  const canRead = hasPermission(role, 'inventory', 'read') || role === 'Administrator';
-  const canWrite = hasPermission(role, 'inventory', 'write') || role === 'Administrator';
-  const canDelete = hasPermission(role, 'inventory', 'delete') || role === 'Administrator';
-
-  if (!canRead) {
-    return <Card><h1>403 Forbidden</h1><p>You need inventory:read permission.</p><p>Current role: {role}</p></Card>;
+    const raw = localStorage.getItem('ggid_session');
+    if (!raw) { router.push('/'); return; }
+    setSession(JSON.parse(raw));
+  }, [router]);
+  if (!session) return <div>Loading...</div>;
+  if (!hasPermission(session, 'inventory:read')) {
+    return <AppLayout session={session} activeKey="inventory"><Result status="403" title="403" subTitle="No permission for inventory." /></AppLayout>;
   }
-
+  const canWrite = hasPermission(session, 'inventory:write');
   const columns = [
-    { title: 'SKU', dataIndex: 'sku' },
-    { title: 'Name', dataIndex: 'name' },
-    { title: 'Quantity', dataIndex: 'qty' },
-    { title: 'Location', dataIndex: 'location' },
-    {
-      title: 'Actions',
-      render: () => (
-        <>
-          {canDelete && <Button danger size="small">Delete</Button>}
-        </>
-      ),
-    },
+    { title: 'SKU', dataIndex: 'sku', key: 'sku' },
+    { title: 'Name', dataIndex: 'name', key: 'name' },
+    { title: 'Stock', dataIndex: 'stock', key: 'stock' },
+    ...(canWrite ? [{ title: 'Actions', key: 'actions', render: () => (<Space><Button size="small">Edit</Button><Button size="small" danger>Delete</Button></Space>) }] : []),
   ];
-
+  const data = [
+    { key: '1', sku: 'SKU-001', name: 'Widget A', stock: 150 },
+    { key: '2', sku: 'SKU-002', name: 'Widget B', stock: 75 },
+    { key: '3', sku: 'SKU-003', name: 'Gadget C', stock: 12 },
+  ];
   return (
-    <Card title="Inventory Management" extra={canWrite && <Button type="primary">+ New Item</Button>}>
-      <Table columns={columns} dataSource={mockInventory} pagination={{ pageSize: 10 }} />
-      {!canWrite && <Tag color="orange">Read-only mode (no inventory:write)</Tag>}
-    </Card>
+    <AppLayout session={session} activeKey="inventory">
+      <h1>Inventory</h1>
+      {canWrite && <Button type="primary" style={{ marginBottom: 16 }}>+ New Item</Button>}
+      {!canWrite && <p style={{ color: '#888' }}>Read-only access.</p>}
+      <Table columns={columns} dataSource={data} />
+    </AppLayout>
   );
 }

@@ -1,62 +1,76 @@
-// GGID auth helpers — OAuth flow + JWT scope extraction + permission checks
+/** GGID ERP Web — OAuth config + permission helpers */
 
-export const GGID_URL = process.env.GGID_URL || 'https://ggid.iot2.win';
+export const GGID_URL = process.env.GGID_URL || 'http://localhost:8080';
+export const ERP_API = process.env.ERP_API || 'http://localhost:8090';
 export const CLIENT_ID = process.env.CLIENT_ID || '';
 export const CLIENT_SECRET = process.env.CLIENT_SECRET || '';
-export const TENANT_ID = process.env.TENANT_ID || '00000000-0000-0000-0000-000000000001';
-export const REDIRECT_URI = process.env.REDIRECT_URI || 'http://localhost:3001/callback';
+export const REDIRECT_URI = process.env.REDIRECT_URI || 'http://localhost:3000/auth/callback';
 
-// Permission matrix per role
-const ROLE_PERMISSIONS: Record<string, string[]> = {
-  'Sales Manager': ['orders:read', 'orders:write', 'orders:approve', 'inventory:read', 'reports:read', 'dashboard:read'],
-  'Warehouse Manager': ['orders:read', 'orders:write', 'inventory:read', 'inventory:write', 'inventory:delete', 'reports:read', 'dashboard:read'],
-  'Finance Officer': ['orders:read', 'reports:read', 'reports:write', 'audit:read', 'dashboard:read'],
-  'Administrator': ['*'],
-};
-
-// Map JWT scope display names to role names
-const SCOPE_TO_ROLE: Record<string, string> = {
-  'platform administrator': 'Administrator',
-  'tenant administrator': 'Administrator',
-  'administrator': 'Administrator',
-  'sales manager': 'Sales Manager',
-  'warehouse manager': 'Warehouse Manager',
-  'finance officer': 'Finance Officer',
-};
-
-export function extractRole(scopes: string[]): string {
-  for (const scope of scopes) {
-    const lower = scope.toLowerCase();
-    if (SCOPE_TO_ROLE[lower]) return SCOPE_TO_ROLE[lower];
-  }
-  return 'Viewer';
+export interface UserSession {
+  access_token: string;
+  username: string;
+  email: string;
+  display_name: string;
+  scopes: string[];
+  roles: string[];
 }
 
-export function getPermissions(role: string): string[] {
-  if (role === 'Administrator') return ['*'];
-  return ROLE_PERMISSIONS[role] || [];
-}
-
-export function hasPermission(role: string, resource: string, action: string): boolean {
-  const perms = getPermissions(role);
-  if (perms.includes('*')) return true;
-  return perms.includes(`${resource}:${action}`);
-}
-
-// Decode JWT payload (no signature verification — backend enforces)
-export function decodeJWTPayload(token: string): Record<string, any> {
+/** Decode JWT payload without verification (client-side only). */
+export function decodeJWT(token: string): Record<string, any> | null {
   try {
     const parts = token.split('.');
-    if (parts.length < 2) return {};
-    const payload = Buffer.from(parts[1], 'base64url').toString('utf-8');
-    return JSON.parse(payload);
+    if (parts.length < 2) return null;
+    const payload = parts[1].replace(/-/g, '+').replace(/_/g, '/');
+    const decoded = Buffer.from(payload, 'base64').toString('utf-8');
+    return JSON.parse(decoded);
   } catch {
-    return {};
+    return null;
   }
 }
 
-export function getRoleFromToken(token: string): string {
-  const claims = decodeJWTPayload(token);
-  const scopes: string[] = claims.scopes || [];
-  return extractRole(scopes);
+/** Check if user has a specific permission based on roles. */
+export function hasPermission(session: UserSession | null, perm: string): boolean {
+  if (!session) return false;
+  if (session.scopes.includes('platform:admin') || session.scopes.includes('admin') || session.scopes.includes('tenant:admin')) {
+    return true;
+  }
+  const roles = session.roles.map(r => r.toLowerCase());
+  switch (perm) {
+    case 'inventory:read':
+      return roles.some(r => ['warehouse_manager', 'sales_manager', 'erp_admin', 'erp:system_admin'].includes(r));
+    case 'inventory:write':
+      return roles.some(r => ['warehouse_manager', 'erp_admin', 'erp:system_admin'].includes(r));
+    case 'orders:read':
+      return true;
+    case 'orders:write':
+      return roles.some(r => ['sales_manager', 'warehouse_manager', 'erp_admin', 'erp:system_admin'].includes(r));
+    case 'orders:approve':
+      return roles.some(r => ['sales_manager', 'erp_admin', 'erp:system_admin'].includes(r));
+    case 'reports:read':
+      return roles.some(r => ['sales_manager', 'finance_officer', 'erp_admin', 'erp:system_admin'].includes(r));
+    case 'admin':
+      return session.scopes.includes('platform:admin') || session.scopes.includes('admin');
+    default:
+      return false;
+  }
+}
+
+/** Build sidebar menu items based on permissions. */
+export function getMenuItems(session: UserSession | null) {
+  const items: { key: string; label: string; href?: string }[] = [
+    { key: 'dashboard', label: 'Dashboard', href: '/dashboard' },
+  ];
+  if (hasPermission(session, 'orders:read')) {
+    items.push({ key: 'orders', label: 'Orders', href: '/orders' });
+  }
+  if (hasPermission(session, 'inventory:read')) {
+    items.push({ key: 'inventory', label: 'Inventory', href: '/inventory' });
+  }
+  if (hasPermission(session, 'reports:read')) {
+    items.push({ key: 'reports', label: 'Reports', href: '/reports' });
+  }
+  if (hasPermission(session, 'admin')) {
+    items.push({ key: 'admin', label: 'Admin', href: '/admin' });
+  }
+  return items;
 }
