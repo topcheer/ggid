@@ -23,7 +23,8 @@ export interface GGIDUser {
   email: string;
   tenant_id: string;
   roles?: string[];
-  scopes?: string[];
+  scopes?: string[];       // OAuth scopes (openid, profile, email)
+  permissions?: string[];  // Fine-grained permissions (inventory:read, orders:write)
 }
 
 export interface GGIDTokenSet {
@@ -47,4 +48,5 @@ export interface GGIDAuthContextValue extends GGIDAuthState {
   getAccessToken: () => string | null;
   hasRole: (role: string) => boolean;
   hasScope: (scope: string) => boolean;
+  hasPermission: (permission: string) => boolean;
 }

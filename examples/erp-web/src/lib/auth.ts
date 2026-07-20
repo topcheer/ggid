@@ -26,13 +26,17 @@ export function hasPermission(user: ERPUser | null, perm: string): boolean {
 export function parseJWT(token: string): ERPUser | null {
   try {
     const payload = JSON.parse(atob(token.split('.')[1]));
-    const scopes = payload.scope?.split(' ') || payload.scopes || [];
+    // Permissions are now a separate JWT claim (array of strings)
+    // Roles are also a separate claim
+    // scope claim contains ONLY OAuth scopes (openid, profile, email)
+    const permissions: string[] = Array.isArray(payload.permissions) ? payload.permissions : [];
+    const roles: string[] = Array.isArray(payload.roles) ? payload.roles : [];
     return {
       username: payload.username || payload.preferred_username || 'user',
       email: payload.email || '',
       displayName: payload.name || payload.username || 'User',
-      roles: payload.roles || scopes.filter((s: string) => !s.includes(':')),
-      permissions: scopes,
+      roles,
+      permissions,
     };
   } catch {
     return null;

@@ -15,11 +15,13 @@ const claimsKey jwtClaimsCtxKey = "jwt_claims"
 
 // JWTCClaims holds extracted JWT claims relevant to routing.
 type JWTCClaims struct {
-	Subject  string   `json:"sub"`
-	TenantID string   `json:"tenant_id"`
-	Scopes   []string `json:"scopes"`
-	Email    string   `json:"email"`
-	Issuer   string   `json:"iss"`
+	Subject     string   `json:"sub"`
+	TenantID    string   `json:"tenant_id"`
+	Scopes      []string `json:"scopes"`         // OAuth scopes (openid, profile, email)
+	Permissions []string `json:"permissions"`   // Fine-grained permissions (inventory:read)
+	Roles       []string `json:"roles"`         // Role names (ERP Manager)
+	Email       string   `json:"email"`
+	Issuer      string   `json:"iss"`
 }
 
 // ExtractJWTClaims parses the Bearer JWT from Authorization header
@@ -82,6 +84,22 @@ func ExtractJWTClaims(r *http.Request) JWTCClaims {
 		for _, s := range v {
 			if str, ok := s.(string); ok {
 				claims.Scopes = append(claims.Scopes, str)
+			}
+		}
+	}
+	// Extract permissions claim (fine-grained authorization)
+	if v, ok := raw["permissions"].([]any); ok {
+		for _, p := range v {
+			if str, ok := p.(string); ok {
+				claims.Permissions = append(claims.Permissions, str)
+			}
+		}
+	}
+	// Extract roles claim
+	if v, ok := raw["roles"].([]any); ok {
+		for _, r := range v {
+			if str, ok := r.(string); ok {
+				claims.Roles = append(claims.Roles, str)
 			}
 		}
 	}

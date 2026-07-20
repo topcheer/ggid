@@ -43,13 +43,14 @@ type Options struct {
 
 // UserInfo holds the authenticated user information extracted from the JWT.
 type UserInfo struct {
-	UserID   string
-	TenantID string
-	Username string
-	Email    string
-	Roles    []string
-	Scopes   []string
-	Claims   map[string]any
+	UserID      string
+	TenantID    string
+	Username    string
+	Email       string
+	Roles       []string
+	Scopes      []string // OAuth scopes (openid, profile, email)
+	Permissions []string // Fine-grained permissions (inventory:read, orders:write)
+	Claims      map[string]any
 }
 
 type contextKey struct{}
@@ -123,6 +124,28 @@ func RequireRole(role string) func(http.Handler) http.Handler {
 				}
 			}
 			http.Error(w, fmt.Sprintf(`{"error":"forbidden: requires role '%s'"}`, role), http.StatusForbidden)
+		})
+	}
+}
+
+// RequirePermission returns middleware that checks if the user has the given
+// fine-grained permission (e.g. "inventory:read"). Users with the "admin"
+// permission bypass the check.
+func RequirePermission(permission string) func(http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			info, ok := FromContext(r.Context())
+			if !ok {
+				http.Error(w, `{"error":"unauthorized"}`, http.StatusUnauthorized)
+				return
+			}
+			for _, p := range info.Permissions {
+				if p == permission || p == "admin" {
+					next.ServeHTTP(w, r)
+					return
+				}
+			}
+			http.Error(w, fmt.Sprintf(`{"error":"forbidden: requires permission '%s'"}`, permission), http.StatusForbidden)
 		})
 	}
 }
@@ -273,6 +296,12 @@ func (c *jwksCache) verify(tokenString string) (*UserInfo, error) {
 	}
 	if scope, ok := claims["scope"].(string); ok {
 		info.Scopes = strings.Split(scope, " ")
+	}
+	// Extract fine-grained permissions claim (array of strings)
+	if perms, ok := claims["permissions"].([]any); ok {
+		for _, p := range perms {
+			info.Permissions = append(info.Permissions, fmt.Sprintf("%v", p))
+		}
 	}
 
 	return info, nil

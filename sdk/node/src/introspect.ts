@@ -18,6 +18,7 @@ export interface IntrospectResult {
   tenant_id?: string;
   email?: string;
   roles?: string[];
+  permissions?: string[];  // Fine-grained permissions (inventory:read, orders:write)
   [key: string]: unknown;
 }
 

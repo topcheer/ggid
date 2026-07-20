@@ -6,7 +6,8 @@ pub struct Claims {
     pub sub: String,
     pub tenant_id: String,
     pub roles: Vec<String>,
-    pub scope: String,
+    pub scope: String,         // OAuth scopes only (openid, profile, email)
+    pub permissions: Vec<String>, // Fine-grained permissions
     pub exp: u64,
     pub iat: u64,
     pub iss: String,
@@ -19,6 +20,7 @@ pub struct UserInfo {
     pub name: Option<String>,
     pub email: Option<String>,
     pub roles: Vec<String>,
+    pub permissions: Vec<String>, // Fine-grained permissions
     pub picture: Option<String>,
 }
 

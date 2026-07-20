@@ -436,10 +436,9 @@ func (s *OAuthService) ExchangeAuthorizationCode(ctx context.Context, req *Token
 	// 7. Issue a signed self-contained JWT access token with AMR/ACR from auth code.
 	// Include user profile claims (email, name) so /userinfo can return them.
 	userAttrs := s.fetchUserClaims(ctx, code.TenantID, code.UserID)
-	// Merge OAuth scopes with user's fine-grained permissions so that
-	// SDK demos can check permissions directly from JWT scopes.
-	allScopes := s.mergeUserScopes(ctx, code.TenantID, code.UserID, joinScopes(code.Scope))
-	accessToken, expiresIn, err := s.issueAccessTokenWithAMR(code.UserID, code.TenantID, client.ClientID, allScopes, code.AMR, code.ACR, code.AuthTime, userAttrs)
+	// OAuth scopes only (openid, profile, email). Permissions/roles are separate claims.
+	oauthScopes := s.mergeOAuthScopes(ctx, code.TenantID, code.UserID, joinScopes(code.Scope))
+	accessToken, expiresIn, err := s.issueAccessTokenWithAMR(code.UserID, code.TenantID, client.ClientID, oauthScopes, code.AMR, code.ACR, code.AuthTime, userAttrs)
 	if err != nil {
 		return nil, err
 	}
@@ -634,34 +633,58 @@ func (s *OAuthService) fetchUserPermissions(ctx context.Context, tenantID, userI
 	return perms
 }
 
-// mergeUserScopes combines the OAuth scopes (openid, profile, email) with
-// the user's role names and fine-grained permission keys. The result is a
-// space-delimited scope string for the JWT, e.g.:
-//   "openid profile email inventory:read orders:write ERP Manager"
-func (s *OAuthService) mergeUserScopes(ctx context.Context, tenantID, userID uuid.UUID, oauthScopes string) string {
+// mergeOAuthScopes returns the OAuth scopes as-is (openid, profile, email, etc.).
+// Fine-grained permissions and role names are NO LONGER merged into scope;
+// they are emitted as separate `permissions` and `roles` JWT claims.
+// This follows OAuth 2.1 / OIDC spec: scope = client-requested authorization scopes only.
+func (s *OAuthService) mergeOAuthScopes(ctx context.Context, tenantID, userID uuid.UUID, oauthScopes string) string {
 	scopes := []string{}
 	if oauthScopes != "" {
 		scopes = append(scopes, splitScopes(oauthScopes)...)
 	}
-	// Fetch user permissions and merge (dedup)
-	perms := s.fetchUserPermissions(ctx, tenantID, userID)
-	seen := make(map[string]bool, len(scopes))
-	for _, sc := range scopes {
-		seen[sc] = true
-	}
-	for _, p := range perms {
-		if !seen[p] {
-			scopes = append(scopes, p)
-			seen[p] = true
-		}
-	}
 	return strings.Join(scopes, " ")
 }
 
+// fetchUserRoles retrieves the role names assigned to a user (e.g. "ERP Manager").
+// These are emitted as a separate `roles` JWT claim, distinct from OAuth scope.
+func (s *OAuthService) fetchUserRoles(ctx context.Context, tenantID, userID uuid.UUID) []string {
+	if s.pool == nil {
+		return nil
+	}
+	rows, err := s.pool.Query(ctx, `
+		SELECT r.name
+		FROM user_roles ur
+		JOIN roles r ON r.id = ur.role_id
+		WHERE ur.user_id = $1`,
+		userID)
+	if err != nil {
+		return nil
+	}
+	defer rows.Close()
+	roles := []string{}
+	for rows.Next() {
+		var name string
+		if err := rows.Scan(&name); err != nil {
+			continue
+		}
+		roles = append(roles, name)
+	}
+	return roles
+}
+
 // issueAccessTokenWithAMR issues a JWT with optional AMR/ACR claims.
+// The `scope` claim contains ONLY OAuth scopes (openid, profile, email).
+// Fine-grained permissions are in the `permissions` claim (string array).
+// Role names are in the `roles` claim (string array).
+// This separation follows OAuth 2.1 / OIDC spec: scope = client-requested
+// authorization scopes; permissions/roles are application-level attributes.
 func (s *OAuthService) issueAccessTokenWithAMR(userID, tenantID uuid.UUID, audience, scope string, amr []string, acr string, authTime time.Time, userAttrs map[string]string) (string, int, error) {
 	now := time.Now()
 	expiresAt := now.Add(15 * time.Minute)
+
+	// Fetch fine-grained permissions and roles from DB for separate claims.
+	permissions := s.fetchUserPermissions(context.Background(), tenantID, userID)
+	roles := s.fetchUserRoles(context.Background(), tenantID, userID)
 
 	claims := jwt.RegisteredClaims{
 		Issuer:    s.issuer,
@@ -674,14 +697,16 @@ func (s *OAuthService) issueAccessTokenWithAMR(userID, tenantID uuid.UUID, audie
 
 	// Add custom claims.
 	claimsMap := jwt.MapClaims{
-		"iss":       s.issuer,
-		"sub":       userID.String(),
-		"aud":       audience,
-		"iat":       now.Unix(),
-		"exp":       expiresAt.Unix(),
-		"jti":       uuid.New().String(),
-		"tenant_id": tenantID.String(),
-		"scope":     scope,
+		"iss":         s.issuer,
+		"sub":         userID.String(),
+		"aud":         audience,
+		"iat":         now.Unix(),
+		"exp":         expiresAt.Unix(),
+		"jti":         uuid.New().String(),
+		"tenant_id":   tenantID.String(),
+		"scope":       scope, // OAuth scopes only (openid profile email)
+		"permissions": permissions, // Fine-grained: ["inventory:read", "orders:write"]
+		"roles":       roles,       // Role names: ["ERP Manager", "Viewer"]
 	}
 	if len(amr) > 0 {
 		claimsMap["amr"] = amr
@@ -807,15 +832,22 @@ func (s *OAuthService) ExchangeTokenRFC8693(ctx context.Context, req *RFC8693Exc
 	expiresAt := now.Add(15 * time.Minute)
 	scopeStr := strings.Join(req.Scope, " ")
 
+	// Carry forward permissions and roles from the subject token (if present)
+	// so that the delegated token preserves the user's authorization context.
+	subjectPerms := getStringSliceClaim(subjectClaims, "permissions")
+	subjectRoles := getStringSliceClaim(subjectClaims, "roles")
+
 	claimsMap := jwt.MapClaims{
-		"iss":       s.issuer,
-		"sub":       subjectID,
-		"aud":       audience,
-		"iat":       now.Unix(),
-		"exp":       expiresAt.Unix(),
-		"jti":       uuid.New().String(),
-		"tenant_id": req.TenantID.String(),
-		"scope":     scopeStr,
+		"iss":         s.issuer,
+		"sub":         subjectID,
+		"aud":         audience,
+		"iat":         now.Unix(),
+		"exp":         expiresAt.Unix(),
+		"jti":         uuid.New().String(),
+		"tenant_id":   req.TenantID.String(),
+		"scope":       scopeStr, // OAuth scopes only
+		"permissions": subjectPerms, // Carry forward fine-grained permissions
+		"roles":       subjectRoles, // Carry forward role names
 	}
 	if actClaim != nil {
 		claimsMap["act"] = actClaim

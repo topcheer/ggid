@@ -16,4 +16,5 @@ public class IntrospectionResult {
     public String tenant_id;
     public String email;
     public List<String> roles;
+    public List<String> permissions;  // Fine-grained permissions
 }

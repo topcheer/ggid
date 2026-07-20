@@ -76,13 +76,14 @@ func New(baseURL string, opts ...Option) *Client {
 
 // UserInfo represents the authenticated user information extracted from a JWT.
 type UserInfo struct {
-	UserID   string         `json:"user_id"`
-	TenantID string         `json:"tenant_id"`
-	Username string         `json:"username"`
-	Email    string         `json:"email"`
-	Roles    []string       `json:"roles"`
-	Scopes   []string       `json:"scopes"`
-	Claims   map[string]any `json:"claims,omitempty"`
+	UserID      string         `json:"user_id"`
+	TenantID    string         `json:"tenant_id"`
+	Username    string         `json:"username"`
+	Email       string         `json:"email"`
+	Roles       []string       `json:"roles"`
+	Scopes      []string       `json:"scopes"`       // OAuth scopes (openid, profile, email)
+	Permissions []string       `json:"permissions"` // Fine-grained permissions (inventory:read)
+	Claims      map[string]any `json:"claims,omitempty"`
 }
 
 // CreateUserRequest holds parameters for creating a user.
@@ -619,6 +620,12 @@ func claimsToUserInfo(token *jwt.Token) (*UserInfo, error) {
 	}
 	if scopes, ok := claims["scope"].(string); ok {
 		info.Scopes = strings.Split(scopes, " ")
+	}
+	// Extract fine-grained permissions claim
+	if perms, ok := claims["permissions"].([]any); ok {
+		for _, p := range perms {
+			info.Permissions = append(info.Permissions, fmt.Sprintf("%v", p))
+		}
 	}
 	return info, nil
 }

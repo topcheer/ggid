@@ -180,6 +180,12 @@ export function GGIDProvider({
     return state.user?.scopes?.includes(scope) ?? false;
   }, [state.user]);
 
+  const hasPermission = useCallback((permission: string) => {
+    if (!state.user?.permissions) return false;
+    if (state.user.permissions.includes('admin')) return true;
+    return state.user.permissions.includes(permission);
+  }, [state.user]);
+
   const ctx: GGIDAuthContextValue = {
     ...state,
     login,
@@ -187,6 +193,7 @@ export function GGIDProvider({
     getAccessToken,
     hasRole,
     hasScope,
+    hasPermission,
   };
 
   return <GGIDAuthContext.Provider value={ctx}>{children}</GGIDAuthContext.Provider>;

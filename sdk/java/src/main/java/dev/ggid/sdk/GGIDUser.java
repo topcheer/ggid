@@ -24,6 +24,10 @@ public class GGIDUser {
     @JsonProperty("scopes")
     public String[] scopes;
 
+    /** Fine-grained permissions (e.g. "inventory:read", "orders:write"). */
+    @JsonProperty("permissions")
+    public String[] permissions;
+
     public boolean hasRole(String role) {
         if (roles == null) return false;
         for (String r : roles) {
@@ -38,5 +42,15 @@ public class GGIDUser {
             if (s.equals(scope)) return true;
         }
         return false;
+    }
+
+    /** Check if the user has a fine-grained permission. Users with "admin" permission bypass. */
+    public boolean hasPermission(String permission) {
+        if (permissions == null) return false;
+        for (String p : permissions) {
+            if (p.equals(permission) || p.equals("admin")) return true;
+        }
+        return false;
+    }
     }
 }

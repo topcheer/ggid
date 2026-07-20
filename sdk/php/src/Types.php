@@ -19,6 +19,7 @@ final class Claims
         public readonly ?string $sub = null,
         public readonly ?string $email = null,
         public readonly ?string $name = null,
+        public readonly array $permissions = [],
     ) {}
 
     /**
@@ -37,6 +38,7 @@ final class Claims
             sub: $payload['sub'] ?? null,
             email: $payload['email'] ?? null,
             name: $payload['name'] ?? null,
+            permissions: $payload['permissions'] ?? [],
         );
     }
 
@@ -62,6 +64,16 @@ final class Claims
     {
         $scopes = explode(' ', $this->scope);
         return in_array($scope, $scopes, true);
+    }
+
+    /**
+     * Check whether the user has a fine-grained permission.
+     * Users with "admin" permission bypass.
+     */
+    public function hasPermission(string $permission): bool
+    {
+        if (in_array('admin', $this->permissions, true)) return true;
+        return in_array($permission, $this->permissions, true);
     }
 }
 

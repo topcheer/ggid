@@ -61,10 +61,12 @@ func NewTokenService(provider ggidcrypto.KeyProvider, issuer, audience string, t
 
 // AccessTokenClaims contains the JWT custom claims.
 type AccessTokenClaims struct {
-	TenantID string   `json:"tenant_id"`
-	Scopes   []string `json:"scopes,omitempty"`
-	AMR      []string `json:"amr,omitempty"` // Authentication Method References (RFC 8707)
-	ACR      string   `json:"acr,omitempty"` // Authentication Context Class Reference (AAL1/AAL2/AAL3)
+	TenantID    string   `json:"tenant_id"`
+	Scopes      []string `json:"scopes,omitempty"`                // OAuth scopes only (openid, profile, email)
+	Permissions []string `json:"permissions,omitempty"`          // Fine-grained: ["inventory:read", "orders:write"]
+	Roles       []string `json:"roles,omitempty"`               // Role names: ["ERP Manager", "Viewer"]
+	AMR         []string `json:"amr,omitempty"` // Authentication Method References (RFC 8707)
+	ACR         string   `json:"acr,omitempty"` // Authentication Context Class Reference (AAL1/AAL2/AAL3)
 	jwt.RegisteredClaims
 }
 
