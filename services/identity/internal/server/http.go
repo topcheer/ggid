@@ -135,6 +135,7 @@ func (h *HTTPHandler) registerRoutes() {
 	h.mux.HandleFunc("/api/v1/tenants/resolve", h.handleTenantResolve)
 	h.mux.HandleFunc("/api/v1/system/initialized", h.handleSystemInitialized)
 	h.mux.HandleFunc("/api/v1/system/bootstrap", h.handleSystemBootstrap)
+	h.mux.HandleFunc("/api/v1/system/config", h.handleSystemConfig)
 	h.mux.HandleFunc("/api/v1/users", h.handleUsers)
 	h.mux.HandleFunc("/api/v1/users/", h.handleUserByID)
 	h.mux.HandleFunc("/api/v1/users/import", h.handleImportCSV)

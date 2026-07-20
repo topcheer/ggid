@@ -24,11 +24,13 @@ type TenantInfo struct {
 
 // BootstrapRequest is the request body for POST /api/v1/system/bootstrap.
 type BootstrapRequest struct {
-	TenantName   string `json:"tenant_name"`
-	TenantSlug   string `json:"tenant_slug"`
-	AdminUsername string `json:"admin_username"`
-	AdminEmail   string `json:"admin_email"`
-	AdminPassword string `json:"admin_password"`
+	TenantName    string   `json:"tenant_name"`
+	TenantSlug    string   `json:"tenant_slug"`
+	AdminUsername string   `json:"admin_username"`
+	AdminEmail    string   `json:"admin_email"`
+	AdminPassword string   `json:"admin_password"`
+	WebAuthnRPID      string   `json:"webauthn_rp_id"`
+	WebAuthnRPOrigins []string `json:"webauthn_rp_origins"`
 }
 
 // BootstrapResponse is returned on successful bootstrap.
@@ -204,6 +206,25 @@ func (h *HTTPHandler) handleSystemBootstrap(w http.ResponseWriter, r *http.Reque
 			 ON CONFLICT DO NOTHING`,
 			user.ID, roleID, tenantID, user.ID)
 	}
+
+	// Save WebAuthn config if provided during bootstrap
+	if req.WebAuthnRPID != "" || len(req.WebAuthnRPOrigins) > 0 {
+		waConfig, _ := json.Marshal(map[string]any{
+			"rp_id":           req.WebAuthnRPID,
+			"rp_origins":      req.WebAuthnRPOrigins,
+			"rp_display_name": "GGID",
+		})
+		_, _ = h.svc.Pool().Exec(ctx, `
+			INSERT INTO sys_config (key, value, updated_by)
+			VALUES ('webauthn_config', $1, $2)
+			ON CONFLICT (key) DO UPDATE SET value = $1, updated_at = NOW(), updated_by = $2`,
+			waConfig, user.ID)
+	}
+
+	// Mark system as initialized
+	_, _ = h.svc.Pool().Exec(ctx, `
+		INSERT INTO sys_config (key, value) VALUES ('system_config', '{"initialized": true, "bootstrap_completed": true}')
+		ON CONFLICT (key) DO UPDATE SET value = '{"initialized": true, "bootstrap_completed": true}'`)
 
 	slog.Info("bootstrap: system initialized", "tenant", tenantIDStr, "user", user.ID.String())
 	writeJSON(w, http.StatusCreated, BootstrapResponse{
