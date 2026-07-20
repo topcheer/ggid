@@ -114,7 +114,7 @@ class ERPHandler(BaseHTTPRequestHandler):
         path = parsed.path
 
         # --- Public + SAML endpoints ---
-        if path == "/" or path == "/healthz":
+        if path == "/" or path == "/healthz" or path == "/health":
             self._send_json(200, {
                 "app": "ERP Python Demo (SAML SSO)",
                 "tenant": TENANT_ID,
