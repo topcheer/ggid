@@ -1,0 +1,8 @@
+[package]
+name = "saml-demo"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+ggid = { path = "../../" }
+tiny_http = "0.12"
