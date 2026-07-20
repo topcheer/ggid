@@ -573,6 +573,7 @@ func (gw *Gateway) Handler() http.Handler {
 			// Public path: no JWT required, but still validate if token present
 			jwtMW := middleware.JWTAuth(gw.jwks, false, gw.cfg.JWTIssuer, gw.cfg.JWTAudience)
 			h := middleware.RequireAdminScope(gw) // RBAC: block non-admin from management endpoints
+			h = middleware.CheckConsent(gw.cfg.DatabaseURL)(h) // Consent: block platform admin from tenant data without consent
 			// CAE: check jti blocklist AFTER JWTAuth (needs jti in context)
 			if gw.caeCheck != nil {
 				h = gw.caeCheck(h)
@@ -586,6 +587,7 @@ func (gw *Gateway) Handler() http.Handler {
 			// Protected path: JWT required
 			jwtMW := middleware.JWTAuth(gw.jwks, true, gw.cfg.JWTIssuer, gw.cfg.JWTAudience)
 			h := middleware.RequireAdminScope(gw) // RBAC: block non-admin from management endpoints
+			h = middleware.CheckConsent(gw.cfg.DatabaseURL)(h) // Consent: block platform admin from tenant data without consent
 			// CAE: check jti blocklist AFTER JWTAuth (needs jti in context)
 			if gw.caeCheck != nil {
 				h = gw.caeCheck(h)
