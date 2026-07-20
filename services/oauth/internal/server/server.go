@@ -763,7 +763,8 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 
 		// Publish audit event for token issuance.
 		if resp != nil && auditPub != nil {
-			event := audit.NewEvent("token_issued", "success", tenantID, uuid.Nil)
+			actorID, _ := uuid.Parse(r.Header.Get("X-User-ID"))
+			event := audit.NewEvent("token_issued", "success", tenantID, actorID)
 			event.ResourceType = "oauth_token"
 			auditPub.PublishAsync(event)
 		}
@@ -1385,7 +1386,8 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 
 			// Audit: client created
 			if auditPub != nil {
-				ev := audit.NewEvent("oauth_client.create", "success", tenantID, uuid.Nil)
+				actorID, _ := uuid.Parse(r.Header.Get("X-User-ID"))
+				ev := audit.NewEvent("oauth_client.create", "success", tenantID, actorID)
 				ev.ResourceType = "oauth_client"
 				if result.Client != nil {
 					ev.ResourceID = result.Client.ID
@@ -1501,7 +1503,8 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 			}
 			// Audit: client deleted
 			if auditPub != nil {
-				ev := audit.NewEvent("oauth_client.delete", "success", tenantID, uuid.Nil)
+				actorID, _ := uuid.Parse(r.Header.Get("X-User-ID"))
+			ev := audit.NewEvent("oauth_client.delete", "success", tenantID, actorID)
 				ev.ResourceType = "oauth_client"
 				auditPub.PublishAsync(ev)
 			}

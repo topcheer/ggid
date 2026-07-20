@@ -1424,9 +1424,12 @@ func (h *Handler) handleAccountDeletion(w http.ResponseWriter, r *http.Request) 
 		}
 
 		// Revoke all sessions
-		_, _ = h.pool.Exec(r.Context(),
+		_, sErr := h.pool.Exec(r.Context(),
 			`UPDATE sessions SET revoked_at = NOW() WHERE user_id::text = $1 AND revoked_at IS NULL`,
 			userID)
+		if sErr != nil {
+			slog.Error("Account deletion: session revoke failed", "user_id", userID, "error", sErr)
+		}
 
 		// Disable all credentials
 		_, _ = h.pool.Exec(r.Context(),
