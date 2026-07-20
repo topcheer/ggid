@@ -324,21 +324,50 @@ func (h *Handler) registerRoutes() {
 	h.mux.HandleFunc("/api/v1/security/password-policy", h.securityPasswordPolicy)
 
 	// WebAuthn / Passkey endpoints (nil credential store = skeleton mode)
+	// Try DB-backed config first, fallback to env vars
 	rpID := os.Getenv("WEBAUTHN_RP_ID")
+	rpName := os.Getenv("WEBAUTHN_RP_NAME")
+	var waOpts []webauthn.HandlerOption
+
+	if h.pool != nil {
+		var configJSON []byte
+		err := h.pool.QueryRow(context.Background(), `SELECT value::text FROM sys_config WHERE key = 'webauthn_config'`).Scan(&configJSON)
+		if err == nil && len(configJSON) > 0 {
+			var dbCfg struct {
+				RPID      string   `json:"rp_id"`
+				RPName    string   `json:"rp_name"`
+				RPOrigins []string `json:"rp_origins"`
+			}
+			if json.Unmarshal(configJSON, &dbCfg) == nil {
+				if dbCfg.RPID != "" {
+					rpID = dbCfg.RPID
+				}
+				if dbCfg.RPName != "" {
+					rpName = dbCfg.RPName
+				}
+				if len(dbCfg.RPOrigins) > 0 {
+					waOpts = append(waOpts, webauthn.WithOrigins(dbCfg.RPOrigins))
+				}
+			}
+		}
+	}
+
 	if rpID == "" {
 		rpID = "ggid.dev"
 	}
-	rpName := os.Getenv("WEBAUTHN_RP_NAME")
 	if rpName == "" {
 		rpName = "GGID Platform"
 	}
-	var waOpts []webauthn.HandlerOption
-	if originsStr := os.Getenv("WEBAUTHN_RP_ORIGINS"); originsStr != "" {
-		origins := strings.Split(originsStr, ",")
-		for i := range origins {
-			origins[i] = strings.TrimSpace(origins[i])
+
+	// Env origins as fallback if DB didn't provide them
+	if len(waOpts) == 0 {
+		if originsStr := os.Getenv("WEBAUTHN_RP_ORIGINS"); originsStr != "" {
+			origins := strings.Split(originsStr, ",")
+			for i := range origins {
+				origins[i] = strings.TrimSpace(origins[i])
+			}
+			waOpts = append(waOpts, webauthn.WithOrigins(origins))
 		}
-		waOpts = append(waOpts, webauthn.WithOrigins(origins))
 	}
 
 	// WA-12: Mobile app integration env vars
