@@ -100,11 +100,11 @@ export async function offerPasskeyUpgrade(params: {
     // Decode base64url arrays for ArrayBuffer fields
     const decodedOptions = decodeCreationOptions(publicKeyOptions);
 
-    // 4. Create the credential with conditional mediation
+    // 4. Create the credential with optional mediation (shows browser prompt)
     const credential = await navigator.credentials.create({
       publicKey: decodedOptions,
       // @ts-expect-error — mediation is part of CredentialCreationOptions in L3
-      mediation: "conditional",
+      mediation: "optional",
     }) as PublicKeyCredential | null;
 
     if (!credential) {

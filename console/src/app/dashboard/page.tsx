@@ -6,6 +6,7 @@ import { usePageTitle } from "@/lib/usePageTitle";
 import { authHeader } from "@/lib/auth-helpers";
 import { DEFAULT_TENANT_ID } from "@/lib/api-config";
 import { useUserRole } from "@/lib/api";
+import { PasskeyPrompt } from "@/components/passkey-prompt";
 import {
   Users, Activity, Shield, Clock, TrendingUp, AlertTriangle,
   UserPlus, Globe, KeyRound, FileText, ArrowRight, BookOpen,
@@ -81,6 +82,9 @@ export default function DashboardPage() {
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-950 p-4 md:p-8">
       <div className="max-w-5xl mx-auto space-y-6" role="main" id="main-content">
+        {/* Passkey upgrade prompt */}
+        <PasskeyPrompt />
+
         {/* Header */}
         <div>
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
