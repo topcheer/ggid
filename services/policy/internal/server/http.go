@@ -855,6 +855,7 @@ func (s *HTTPServer) handleCheck(w http.ResponseWriter, r *http.Request) {
 		Action       string         `json:"action"`
 		Resource     string         `json:"resource"`
 		Conditions   map[string]any `json:"conditions"`
+		Attributes   map[string]any `json:"attributes"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		writeJSONError(w, http.StatusBadRequest, "invalid JSON body")
@@ -879,11 +880,34 @@ func (s *HTTPServer) handleCheck(w http.ResponseWriter, r *http.Request) {
 		writeServiceError(w, err)
 		return
 	}
+
+	// Build data_filter from attributes for row-level scoping
+	dataFilter := buildDataFilter(req.Attributes)
+
 	writeJSON(w, http.StatusOK, map[string]any{
-		"allowed":    result.Allowed,
-		"reason":     result.Reason,
-		"matched_by": result.MatchedBy,
+		"allowed":     result.Allowed,
+		"decision":    map[bool]string{true: "allow", false: "deny"}[result.Allowed],
+		"reason":      result.Reason,
+		"matched_by":  result.MatchedBy,
+		"data_filter": dataFilter,
 	})
+}
+
+// buildDataFilter extracts data scoping filters from ABAC attributes.
+func buildDataFilter(attrs map[string]any) map[string]any {
+	if len(attrs) == 0 {
+		return nil
+	}
+	filter := make(map[string]any)
+	for _, key := range []string{"org_id", "group_id", "department", "team_id"} {
+		if v, ok := attrs[key]; ok && v != nil {
+			filter[key] = v
+		}
+	}
+	if len(filter) == 0 {
+		return nil
+	}
+	return filter
 }
 
 // --- ABAC Policy Evaluate ---
