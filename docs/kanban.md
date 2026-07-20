@@ -286,6 +286,16 @@
 | KB-272 | **Python SDK to functional tier** (P2, integrating app) | backend | P2 | full-review-1 | 5d |
 | KB-273 | **Webhook retry policy config** (P2, integrating app) | backend | P2 | full-review-1 | 1d |
 | KB-274 | **Notification preferences Console page** (P2, tenant admin) | frontend | P2 | full-review-1 | 1d |
+| KB-275 | **Session inspect: replace hardcoded mock with DB query** (P0) | backend | P0 | full-review-2 | 2d |
+| KB-276 | **Hijack check: replace hardcoded mock with DB-backed detection** (P0) | backend | P0 | full-review-2 | 3d |
+| KB-277 | **Account deletion: check session/credential revocation errors** (no _, _ =) | backend | P1 | full-review-2 | 1d |
+| KB-278 | **Self-service devices: add tenant_id scope to DELETE/SELECT** | backend | P1 | full-review-2 | 1d |
+| KB-279 | **SuspendTenant + Global audit: add super-admin RBAC check** | backend | P1 | full-review-2 | 1d |
+| KB-280 | **uuid.Nil in OAuth audit events** (4 locations: server.go:766,1388,1504) | backend | P1 | full-review-2 | 1d |
+| KB-281 | **SCIM group PATCH: replace in-memory map with DB** | backend | P1 | full-review-2 | 2d |
+| KB-282 | **Tenant branding: replace in-memory map with DB** | backend | P1 | full-review-2 | 2d |
+| KB-283 | **Batch import: verify transaction wrapping** | backend | P2 | full-review-2 | 1d |
+| KB-284 | **Add tests for new endpoints** (suspend, self-service devices, GDPR delete, global audit) | backend | P2 | full-review-2 | 2d |
 | KB-038 | **Journey definition store** (PostgreSQL) | backend | P0 | identity-orchestration | 3d |
 | KB-039 | **Journey definition parser** (YAML JDL) | backend | P0 | identity-orchestration | 4d |
 | KB-040 | **Journey engine** (state machine executor) | backend | P0 | identity-orchestration | 5d |
@@ -428,6 +438,7 @@
 | Security Hardening Audit | DONE | docs/research/security-hardening-audit.md |
 | v1.0 Release Readiness Assessment | DONE | docs/research/v1-release-readiness.md |
 | Full Review Report #1 (4-role audit) | DONE | docs/research/full-review-report.md |
+| Full Review Report #2 (deep code logic audit) | DONE | docs/research/full-review-report.md |
 | OAuth Client Lifecycle Management (DCR) | NEXT | — |
 
 ---
