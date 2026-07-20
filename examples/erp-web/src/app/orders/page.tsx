@@ -40,7 +40,7 @@ export default function OrdersPage() {
       <Space>
         <Button type="primary" size="small" icon={<CheckOutlined />}>审批</Button>
       </Space>
-    )]}] : []),
+    )}] : []),
   ];
 
   return (
