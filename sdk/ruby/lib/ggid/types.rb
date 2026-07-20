@@ -2,7 +2,7 @@
 
 module GGID
   # JWT Claims decoded from a verified access token.
-  Claims = Struct.new(:user_id, :tenant_id, :roles, :scope, :exp, :iat, :iss, :sub, :email, :name, keyword_init: true) do
+  Claims = Struct.new(:user_id, :tenant_id, :roles, :scope, :permissions, :exp, :iat, :iss, :sub, :email, :name, keyword_init: true) do
     # Check whether the token has expired.
     def expired?(now: Time.now.to_i)
       now >= exp.to_i
@@ -18,6 +18,13 @@ module GGID
       scope.to_s.split(" ").include?(scope_name)
     end
 
+    # Check whether the user has a fine-grained permission. Admin bypasses.
+    def has_permission?(permission)
+      perms = permissions || []
+      return true if perms.include?("admin")
+      perms.include?(permission)
+    end
+
     # Build a Claims from a JWT payload hash.
     def self.from_payload(payload)
       new(
@@ -25,6 +32,7 @@ module GGID
         tenant_id: payload["tenant_id"],
         roles: payload["roles"] || [],
         scope: payload["scope"] || "",
+        permissions: payload["permissions"] || [],
         exp: payload["exp"],
         iat: payload["iat"],
         iss: payload["iss"],

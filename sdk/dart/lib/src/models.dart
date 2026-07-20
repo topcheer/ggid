@@ -6,7 +6,8 @@ class Claims {
   final String? userId;
   final String? tenantId;
   final List<String> roles;
-  final String? scope;
+  final String? scope;          // OAuth scopes only (openid, profile, email)
+  final List<String> permissions; // Fine-grained permissions (inventory:read)
   final int exp;
   final int iat;
   final String? iss;
@@ -18,12 +19,19 @@ class Claims {
     this.tenantId,
     this.roles = const [],
     this.scope,
+    this.permissions = const [],
     this.exp = 0,
     this.iat = 0,
     this.iss,
     this.email,
     this.name,
   });
+
+  /// Check if user has a fine-grained permission. Admin bypasses.
+  bool hasPermission(String permission) {
+    if (permissions.contains('admin')) return true;
+    return permissions.contains(permission);
+  }
 
   factory Claims.fromJson(Map<String, dynamic> json) {
     final sub = json['sub'] ?? json['user_id'];
@@ -33,11 +41,16 @@ class Claims {
     } else if (json['role'] is String) {
       roles.add(json['role'] as String);
     }
+    final perms = <String>[];
+    if (json['permissions'] is List) {
+      perms.addAll((json['permissions'] as List).map((e) => e.toString()));
+    }
     return Claims(
       userId: sub?.toString(),
       tenantId: json['tenant_id']?.toString(),
       roles: roles,
       scope: json['scope']?.toString(),
+      permissions: perms,
       exp: (json['exp'] as num?)?.toInt() ?? 0,
       iat: (json['iat'] as num?)?.toInt() ?? 0,
       iss: json['iss']?.toString(),
@@ -51,6 +64,7 @@ class Claims {
         'tenant_id': tenantId,
         'roles': roles,
         'scope': scope,
+        'permissions': permissions,
         'exp': exp,
         'iat': iat,
         'iss': iss,

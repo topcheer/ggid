@@ -22,10 +22,17 @@ class JWTClaims:
     name: str = ""
     tenant_id: str = ""
     roles: list = field(default_factory=list)
+    permissions: list = field(default_factory=list)  # Fine-grained permissions
     exp: int = 0
     iat: int = 0
     iss: str = ""
     raw: dict = field(default_factory=dict)
+
+    def has_permission(self, permission: str) -> bool:
+        """Check if user has a fine-grained permission. Admin bypasses."""
+        if "admin" in (self.permissions or []):
+            return True
+        return permission in (self.permissions or [])
 
 
 class JWTVerifier:
@@ -110,6 +117,7 @@ class JWTVerifier:
                 name=payload.get("name", ""),
                 tenant_id=payload.get("tenant_id", ""),
                 roles=payload.get("roles", []),
+                permissions=payload.get("permissions", []),
                 exp=payload.get("exp", 0),
                 iat=payload.get("iat", 0),
                 iss=payload.get("iss", ""),

@@ -18,6 +18,7 @@ class JWTClaims:
     tenant_id: str
     scopes: list
     roles: list
+    permissions: list  # Fine-grained permissions (inventory:read, orders:write)
     exp: int
     iat: int
     iss: str
@@ -26,6 +27,17 @@ class JWTClaims:
     @property
     def is_expired(self) -> bool:
         return time.time() > self.exp
+
+    @property
+    def has_admin(self) -> bool:
+        """Check if user has admin-level permission."""
+        return "admin" in (self.permissions or []) or "admin" in (self.roles or [])
+
+    def has_permission(self, permission: str) -> bool:
+        """Check if user has a fine-grained permission. Admin bypasses."""
+        if self.has_admin:
+            return True
+        return permission in (self.permissions or [])
 
 
 class JWTVerifier:
@@ -85,11 +97,16 @@ class JWTVerifier:
 
     def _parse_claims(self, claims: dict) -> JWTClaims:
         """Parse raw JWT claims into structured JWTClaims."""
+        # scopes can be a string (space-delimited) or array
+        raw_scopes = claims.get("scopes", [])
+        if isinstance(raw_scopes, str):
+            raw_scopes = raw_scopes.split()
         return JWTClaims(
             sub=claims.get("sub", ""),
             tenant_id=claims.get("tenant_id", ""),
-            scopes=claims.get("scopes", []),
+            scopes=raw_scopes,
             roles=claims.get("roles", []),
+            permissions=claims.get("permissions", []),
             exp=claims.get("exp", 0),
             iat=claims.get("iat", 0),
             iss=claims.get("iss", ""),

@@ -106,14 +106,16 @@ def ggid_require_role(verifier: JWTVerifier, roles: List[str]):
     return decorator
 
 
-def ggid_require_permission(verifier: JWTVerifier, scopes: List[str]):
-    """Decorator that requires the JWT to have all specified scopes.
+def ggid_require_permission(verifier: JWTVerifier, permissions: List[str]):
+    """Decorator that requires the JWT to have all specified fine-grained
+    permissions (from the `permissions` claim). Users with "admin" permission
+    bypass the check.
 
     Usage:
-        @app.route("/api/data")
-        @ggid_require_permission(verifier, ["read:data"])
-        def get_data(request_claims):
-            return {"data": "..."}
+        @app.route("/api/inventory")
+        @ggid_require_permission(verifier, ["inventory:read"])
+        def get_inventory(request_claims):
+            return {"items": "..."}
     """
 
     def decorator(handler: Callable):
@@ -131,10 +133,13 @@ def ggid_require_permission(verifier: JWTVerifier, scopes: List[str]):
             try:
                 token = _get_token_from_header(auth_header)
                 claims = verifier.verify(token)
-                token_scopes = set(claims.scopes)
-                if not all(s in token_scopes for s in scopes):
-                    missing = [s for s in scopes if s not in token_scopes]
-                    return {"error": f"missing scopes: {missing}"}, 403
+                # Check fine-grained permissions claim (new JWT structure)
+                token_perms = set(claims.permissions or [])
+                # Admin bypass
+                if "admin" not in token_perms:
+                    missing = [p for p in permissions if p not in token_perms]
+                    if missing:
+                        return {"error": f"missing permissions: {missing}"}, 403
             except JWTError as e:
                 return {"error": str(e)}, 401
 
