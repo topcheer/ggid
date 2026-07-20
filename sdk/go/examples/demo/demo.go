@@ -153,8 +153,8 @@ func handleHome(w http.ResponseWriter, r *http.Request) {
 
 func handleLogin(w http.ResponseWriter, r *http.Request) {
 	state := fmt.Sprintf("state_%d", os.Getpid())
-	authURL := fmt.Sprintf("%s/api/v1/oauth/authorize?response_type=code&client_id=%s&redirect_uri=%s&scope=openid+profile+email&state=%s",
-		ggidURL, url.QueryEscape(clientID), url.QueryEscape(redirectURI), state)
+	authURL := fmt.Sprintf("%s/api/v1/oauth/authorize?response_type=code&client_id=%s&redirect_uri=%s&scope=openid+profile+email&state=%s&tenant_id=%s",
+		ggidURL, url.QueryEscape(clientID), url.QueryEscape(redirectURI), state, tenantID)
 	http.Redirect(w, r, authURL, http.StatusFound)
 }
 

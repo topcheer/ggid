@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	stderrors "errors"
 	"fmt"
+	"log/slog"
 	"net/netip"
 	"strings"
 	"time"
@@ -39,10 +40,15 @@ func (r *pgRepo) Pool() *pgxpool.Pool { return r.pool }
 // setTenantRLS sets the app.tenant_id session variable so that PostgreSQL
 // Row Level Security policies filter rows automatically.
 func setTenantRLS(ctx context.Context, tx pgx.Tx, tenantID uuid.UUID) error {
+	slog.Info("setTenantRLS", "tenant_id", tenantID.String())
 	_, err := tx.Exec(ctx, fmt.Sprintf("SET LOCAL app.tenant_id = '%s'", tenantID.String()))
 	if err != nil {
 		return fmt.Errorf("set tenant RLS: %w", err)
 	}
+	// Verify the setting took effect
+	var actual string
+	_ = tx.QueryRow(ctx, "SELECT current_setting('app.tenant_id', true)").Scan(&actual)
+	slog.Info("setTenantRLS verified", "requested", tenantID.String(), "actual", actual)
 	return nil
 }
 
@@ -262,6 +268,7 @@ func (r *pgRepo) DeleteUser(ctx context.Context, tenantID, id uuid.UUID) error {
 }
 
 func (r *pgRepo) ListUsers(ctx context.Context, filter *domain.ListUsersFilter) (*domain.ListUsersResult, error) {
+	slog.Info("ListUsers tenant diagnostic", "filter_tenant_id", filter.TenantID.String())
 	tx, err := r.pool.BeginTx(ctx, pgx.TxOptions{})
 	if err != nil {
 		return nil, ggiderrors.Wrap(ggiderrors.ErrInternal, "begin tx", err)
