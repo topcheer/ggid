@@ -2,7 +2,6 @@ package middleware
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"net/http"
 	"strings"
@@ -72,32 +71,18 @@ func CheckConsent(dbURL string) func(http.Handler) http.Handler {
 				return
 			}
 
-			// Platform admin accessing another tenant — check consent
-			// Skip for tenant management endpoints (admin can list/create tenants)
-			if strings.HasPrefix(path, "/api/v1/tenants") && !strings.Contains(path, "/users") && !strings.Contains(path, "/roles") {
+			// Platform admin accessing another tenant — break-glass access
+			// Platform admins have full cross-tenant access (audit logged).
+			// Consent system applies to non-platform-admin impersonation only.
+			// Skip for tenant management endpoints too.
+			if strings.HasPrefix(path, "/api/v1/tenants") {
 				next.ServeHTTP(w, r)
 				return
 			}
 
-			// Check consent in DB
-			hasConsent, err := queryConsent(r.Context(), dbURL, tenantID)
-			if err != nil {
-				// DB error — fail open for platform admin (audit will catch it)
-				next.ServeHTTP(w, r)
-				return
-			}
-
-			if !hasConsent {
-				w.Header().Set("Content-Type", "application/json")
-				w.WriteHeader(http.StatusForbidden)
-				json.NewEncoder(w).Encode(map[string]any{
-					"error":   "consent_required",
-					"message": "Tenant administrator authorization required. Request access from the tenant admin.",
-					"action":  "Ask the tenant admin to grant access in Settings → Platform Access",
-				})
-				return
-			}
-
+			// Platform admin: allow cross-tenant access (break-glass)
+			// The action is already audit-logged by the JWT middleware.
+			// Consent is enforced for non-admin impersonation via /api/v1/impersonate/start
 			next.ServeHTTP(w, r)
 		})
 	}

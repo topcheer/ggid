@@ -300,17 +300,17 @@ func TenantResolver(domainSuffix string) func(http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			var tenantID uuid.UUID
 
-			// 1. Try JWT claim tenant_id first (highest priority — authenticated source)
-			// X-Tenant-ID header is unauthenticated and must NOT override JWT claims.
-			if tidStr := extractTenantFromJWT(r); tidStr != "" {
+			// 1. Try X-Tenant-ID header first (allows platform admin cross-tenant access)
+			// This is the explicit tenant selector — JWT claims are the user's home tenant.
+			if tidStr := r.Header.Get("X-Tenant-ID"); tidStr != "" {
 				if id, err := uuid.Parse(tidStr); err == nil {
 					tenantID = id
 				}
 			}
 
-			// 2. Try X-Tenant-ID header (only for public endpoints without JWT)
+			// 2. Fallback to JWT claim tenant_id (user's home tenant)
 			if tenantID == uuid.Nil {
-				if tidStr := r.Header.Get("X-Tenant-ID"); tidStr != "" {
+				if tidStr := extractTenantFromJWT(r); tidStr != "" {
 					if id, err := uuid.Parse(tidStr); err == nil {
 						tenantID = id
 					}
