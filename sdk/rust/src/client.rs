@@ -307,6 +307,128 @@ impl GGIDClient {
 
     // --- RBAC ---
 
+    // --- User Management CRUD ---
+
+    /// Create a new user.
+    pub async fn create_user(
+        &self,
+        token: &str,
+        username: &str,
+        email: &str,
+        password: &str,
+    ) -> Result<serde_json::Value, GGIDError> {
+        let resp = self.http
+            .post(format!("{}/api/v1/users", self.base_url))
+            .header("Authorization", format!("Bearer {}", token))
+            .header("X-Tenant-ID", &self.tenant_id)
+            .json(&json!({"username": username, "email": email, "password": password}))
+            .send().await
+            .map_err(|e| GGIDError::Http(e.to_string()))?;
+        Self::parse_json(resp).await
+    }
+
+    /// Get a user by ID.
+    pub async fn get_user(&self, token: &str, user_id: &str) -> Result<serde_json::Value, GGIDError> {
+        let resp = self.http
+            .get(format!("{}/api/v1/users/{}", self.base_url, user_id))
+            .header("Authorization", format!("Bearer {}", token))
+            .header("X-Tenant-ID", &self.tenant_id)
+            .send().await
+            .map_err(|e| GGIDError::Http(e.to_string()))?;
+        Self::parse_json(resp).await
+    }
+
+    /// List users with optional pagination.
+    pub async fn list_users(&self, token: &str, limit: u32, offset: u32) -> Result<serde_json::Value, GGIDError> {
+        let resp = self.http
+            .get(format!("{}/api/v1/users?limit={}&offset={}", self.base_url, limit, offset))
+            .header("Authorization", format!("Bearer {}", token))
+            .header("X-Tenant-ID", &self.tenant_id)
+            .send().await
+            .map_err(|e| GGIDError::Http(e.to_string()))?;
+        Self::parse_json(resp).await
+    }
+
+    /// Update a user by ID.
+    pub async fn update_user(
+        &self,
+        token: &str,
+        user_id: &str,
+        data: serde_json::Value,
+    ) -> Result<serde_json::Value, GGIDError> {
+        let resp = self.http
+            .put(format!("{}/api/v1/users/{}", self.base_url, user_id))
+            .header("Authorization", format!("Bearer {}", token))
+            .header("X-Tenant-ID", &self.tenant_id)
+            .json(&data)
+            .send().await
+            .map_err(|e| GGIDError::Http(e.to_string()))?;
+        Self::parse_json(resp).await
+    }
+
+    /// Delete a user by ID.
+    pub async fn delete_user(&self, token: &str, user_id: &str) -> Result<(), GGIDError> {
+        let resp = self.http
+            .delete(format!("{}/api/v1/users/{}", self.base_url, user_id))
+            .header("Authorization", format!("Bearer {}", token))
+            .header("X-Tenant-ID", &self.tenant_id)
+            .send().await
+            .map_err(|e| GGIDError::Http(e.to_string()))?;
+        if !resp.status().is_success() {
+            return Err(GGIDError::Http(format!("delete failed: {}", resp.status())));
+        }
+        Ok(())
+    }
+
+    /// Create a role.
+    pub async fn create_role(
+        &self,
+        token: &str,
+        name: &str,
+        key: &str,
+    ) -> Result<serde_json::Value, GGIDError> {
+        let resp = self.http
+            .post(format!("{}/api/v1/roles", self.base_url))
+            .header("Authorization", format!("Bearer {}", token))
+            .header("X-Tenant-ID", &self.tenant_id)
+            .json(&json!({"name": name, "key": key}))
+            .send().await
+            .map_err(|e| GGIDError::Http(e.to_string()))?;
+        Self::parse_json(resp).await
+    }
+
+    // --- Passkey/WebAuthn ---
+
+    /// Start passkey registration (returns challenge + RP ID).
+    pub async fn passkey_register_begin(
+        &self,
+        token: &str,
+        user_id: &str,
+    ) -> Result<serde_json::Value, GGIDError> {
+        let resp = self.http
+            .post(format!("{}/api/v1/auth/webauthn/register/begin", self.base_url))
+            .header("Authorization", format!("Bearer {}", token))
+            .header("X-Tenant-ID", &self.tenant_id)
+            .json(&json!({"user_id": user_id}))
+            .send().await
+            .map_err(|e| GGIDError::Http(e.to_string()))?;
+        Self::parse_json(resp).await
+    }
+
+    /// Start passkey authentication (returns challenge).
+    pub async fn passkey_auth_begin(
+        &self,
+        token: &str,
+    ) -> Result<serde_json::Value, GGIDError> {
+        let resp = self.http
+            .post(format!("{}/api/v1/auth/webauthn/login/begin", self.base_url))
+            .header("Authorization", format!("Bearer {}", token))
+            .header("X-Tenant-ID", &self.tenant_id)
+            .send().await
+            .map_err(|e| GGIDError::Http(e.to_string()))?;
+        Self::parse_json(resp).await
+    }
+
     /// Check if a token has permission for a resource+action.
     ///
     /// Returns `true` if allowed, `false` if denied.
@@ -628,5 +750,16 @@ impl GGIDClientBuilder {
             tenant_id,
             http,
         })
+    }
+
+    /// Helper: parse HTTP response to JSON or error.
+    async fn parse_json(resp: reqwest::Response) -> Result<serde_json::Value, GGIDError> {
+        let status = resp.status();
+        let body: serde_json::Value = resp.json().await
+            .map_err(|e| GGIDError::Http(format!("parse error: {}", e)))?;
+        if !status.is_success() {
+            return Err(GGIDError::Http(format!("{}: {}", status, body)));
+        }
+        Ok(body)
     }
 }
