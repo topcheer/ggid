@@ -31,3 +31,7 @@ mockito = "1"
 
 [[example]]
 name = "quickstart"
+
+[[example]]
+name = "oauth-demo"
+path = "examples/oauth-demo/src/main.rs"
