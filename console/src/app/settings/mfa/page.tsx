@@ -48,12 +48,22 @@ export default function MFAPage() {
   const [yubikeyEnrolled, setYubikeyEnrolled] = useState(false);
 
   // Check if RADIUS / YubiKey backends are configured
+  const [radiusTestMode, setRadiusTestMode] = useState(false);
+  const [yubikeyTestMode, setYubikeyTestMode] = useState(false);
+
   useState(() => {
     if (typeof window === "undefined") return;
-    apiFetch<{ radius_enabled?: boolean; yubikey_enabled?: boolean }>("/api/v1/auth/mfa/methods")
+    apiFetch<{
+      radius_enabled?: boolean;
+      yubikey_enabled?: boolean;
+      radius_test_mode?: boolean;
+      yubikey_test_mode?: boolean;
+    }>("/api/v1/auth/mfa/methods")
       .then(d => {
         setRadiusAvailable(d.radius_enabled || false);
         setYubikeyAvailable(d.yubikey_enabled || false);
+        setRadiusTestMode(d.radius_test_mode || false);
+        setYubikeyTestMode(d.yubikey_test_mode || false);
       })
       .catch(() => { /* endpoints not yet available */ });
   });
@@ -437,9 +447,17 @@ export default function MFAPage() {
         <div className={cardCls}>
           <h2 className={headingCls}>
             <Lock className="mr-2 inline h-5 w-5 text-red-600" /> RSA SecurID
+            {radiusTestMode && (
+              <span className="ml-2 inline-flex items-center gap-1 rounded-full bg-yellow-100 px-2 py-0.5 text-xs font-medium text-yellow-700 dark:bg-yellow-900/40 dark:text-yellow-400">
+                Test Mode
+              </span>
+            )}
           </h2>
           <p className="mb-4 text-sm text-gray-600 dark:text-gray-400">
-            Enter the passcode from your SecurID token or soft token app.
+            {radiusTestMode
+              ? "Test mode active — any passcode will be accepted. For evaluation only."
+              : "Enter the passcode from your SecurID token or soft token app."
+            }
           </p>
           {securIdEnrolled ? (
             <div className="flex items-center gap-2 rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700 dark:border-green-800 dark:bg-green-950">
@@ -473,9 +491,17 @@ export default function MFAPage() {
         <div className={cardCls}>
           <h2 className={headingCls}>
             <Usb className="mr-2 inline h-5 w-5 text-amber-600" /> YubiKey
+            {yubikeyTestMode && (
+              <span className="ml-2 inline-flex items-center gap-1 rounded-full bg-yellow-100 px-2 py-0.5 text-xs font-medium text-yellow-700 dark:bg-yellow-900/40 dark:text-yellow-400">
+                Test Mode
+              </span>
+            )}
           </h2>
           <p className="mb-4 text-sm text-gray-600 dark:text-gray-400">
-            Insert your YubiKey and tap the gold contact to generate a one-time password.
+            {yubikeyTestMode
+              ? "Test mode active — any 44-character OTP format will be accepted. For evaluation only."
+              : "Insert your YubiKey and tap the gold contact to generate a one-time password."
+            }
           </p>
           {yubikeyEnrolled ? (
             <div className="flex items-center gap-2 rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700 dark:border-green-800 dark:bg-green-950">
