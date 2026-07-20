@@ -114,6 +114,28 @@ export default function DashboardPage() {
         {/* Existing User: KPI Dashboard */}
         {!isNew && (
           <div className="space-y-4">
+            {/* Security alert banner for high failed logins */}
+            {kpi.failedLogins24h > 100 && (
+              <a href="/audit?result=failure" className="block rounded-xl border-2 border-red-500 bg-red-50 dark:bg-red-950/50 p-4 transition hover:bg-red-100 dark:hover:bg-red-950">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-red-600 text-white animate-pulse">
+                    <AlertTriangle className="h-6 w-6" />
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-sm font-bold text-red-700 dark:text-red-400">
+                      SECURITY ALERT: {kpi.failedLogins24h.toLocaleString()} failed login attempts in the last 24 hours
+                    </p>
+                    <p className="text-xs text-red-600 dark:text-red-500">
+                      Possible brute force attack. Click to review failed login events in audit log.
+                    </p>
+                  </div>
+                  <span className="rounded-lg bg-red-600 px-3 py-1.5 text-xs font-bold uppercase text-white">
+                    Investigate →
+                  </span>
+                </div>
+              </a>
+            )}
+
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               <KPICard icon={Users} label={t("dashboardEnhanced.kpi.totalUsers")} value={kpi.totalUsers} color="text-blue-600" trend={kpi.newUsers7d > 0 ? `+${kpi.newUsers7d} (7d)` : undefined} />
               <KPICard icon={Activity} label={t("dashboardEnhanced.kpi.activeSessions")} value={kpi.activeSessions} color="text-green-600" />
