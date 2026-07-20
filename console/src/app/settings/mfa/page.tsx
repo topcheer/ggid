@@ -5,7 +5,7 @@ import { useApi } from "@/lib/api";
 import { useTranslations } from "@/lib/i18n";
 import {
   Smartphone, Fingerprint, Shield, Key, Copy, Download, Check, Loader2,
-  Mail, MessageSquare, KeyRound, AlertCircle,
+  Mail, MessageSquare, KeyRound, AlertCircle, Usb, Lock,
 } from "lucide-react";
 
 export default function MFAPage() {
@@ -35,9 +35,74 @@ export default function MFAPage() {
   const [backupSms, setBackupSms] = useState(false);
   const [backupEmail, setBackupEmail] = useState(false);
 
+  // --- SecurID (RADIUS) state ---
+  const [radiusAvailable, setRadiusAvailable] = useState(false);
+  const [securIdPasscode, setSecurIdPasscode] = useState("");
+  const [securIdVerifying, setSecurIdVerifying] = useState(false);
+  const [securIdEnrolled, setSecurIdEnrolled] = useState(false);
+
+  // --- YubiKey state ---
+  const [yubikeyAvailable, setYubikeyAvailable] = useState(false);
+  const [yubikeyOtp, setYubikeyOtp] = useState("");
+  const [yubikeyVerifying, setYubikeyVerifying] = useState(false);
+  const [yubikeyEnrolled, setYubikeyEnrolled] = useState(false);
+
+  // Check if RADIUS / YubiKey backends are configured
+  useState(() => {
+    if (typeof window === "undefined") return;
+    apiFetch<{ radius_enabled?: boolean; yubikey_enabled?: boolean }>("/api/v1/auth/mfa/methods")
+      .then(d => {
+        setRadiusAvailable(d.radius_enabled || false);
+        setYubikeyAvailable(d.yubikey_enabled || false);
+      })
+      .catch(() => { /* endpoints not yet available */ });
+  });
+
   const showMessage = (m: string) => {
     setMsg(m);
     setTimeout(() => setMsg(null), 3000);
+  };
+
+  // --- SecurID (RADIUS) verify ---
+  const verifySecurId = async () => {
+    if (securIdPasscode.length < 4) { setError("Enter a valid passcode"); return; }
+    setSecurIdVerifying(true);
+    setError(null);
+    try {
+      const res = await apiFetch<{ verified?: boolean }>("/api/v1/auth/mfa/radius/verify", {
+        method: "POST",
+        body: JSON.stringify({ passcode: securIdPasscode }),
+      });
+      if (res.verified) {
+        setSecurIdEnrolled(true);
+        showMessage("SecurID verified successfully.");
+        setSecurIdPasscode("");
+      }
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "RADIUS verification failed");
+    }
+    setSecurIdVerifying(false);
+  };
+
+  // --- YubiKey OTP verify ---
+  const verifyYubikey = async () => {
+    if (yubikeyOtp.length < 32) { setError("Insert YubiKey and tap to generate OTP"); return; }
+    setYubikeyVerifying(true);
+    setError(null);
+    try {
+      const res = await apiFetch<{ verified?: boolean }>("/api/v1/auth/mfa/yubikey/verify", {
+        method: "POST",
+        body: JSON.stringify({ otp: yubikeyOtp }),
+      });
+      if (res.verified) {
+        setYubikeyEnrolled(true);
+        showMessage("YubiKey enrolled successfully.");
+        setYubikeyOtp("");
+      }
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "YubiKey verification failed");
+    }
+    setYubikeyVerifying(false);
   };
 
   const startTotpEnrollment = async () => {
@@ -366,6 +431,78 @@ export default function MFAPage() {
             </div>
           )}
         </div>
+
+        {/* === SecurID (RADIUS) === */}
+        {radiusAvailable && (
+        <div className={cardCls}>
+          <h2 className={headingCls}>
+            <Lock className="mr-2 inline h-5 w-5 text-red-600" /> RSA SecurID
+          </h2>
+          <p className="mb-4 text-sm text-gray-600 dark:text-gray-400">
+            Enter the passcode from your SecurID token or soft token app.
+          </p>
+          {securIdEnrolled ? (
+            <div className="flex items-center gap-2 rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700 dark:border-green-800 dark:bg-green-950">
+              <Check className="h-4 w-4" /> SecurID token verified and enrolled.
+            </div>
+          ) : (
+            <div className="flex items-center gap-2">
+              <input
+                type="text"
+                value={securIdPasscode}
+                onChange={e => setSecurIdPasscode(e.target.value)}
+                placeholder="Enter passcode"
+                className="flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-900"
+                maxLength={8}
+              />
+              <button
+                onClick={verifySecurId}
+                disabled={securIdVerifying || securIdPasscode.length < 4}
+                className="flex items-center gap-1.5 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
+              >
+                {securIdVerifying ? <Loader2 className="h-4 w-4 animate-spin" /> : <Key className="h-4 w-4" />}
+                Verify
+              </button>
+            </div>
+          )}
+        </div>
+        )}
+
+        {/* === YubiKey === */}
+        {yubikeyAvailable && (
+        <div className={cardCls}>
+          <h2 className={headingCls}>
+            <Usb className="mr-2 inline h-5 w-5 text-amber-600" /> YubiKey
+          </h2>
+          <p className="mb-4 text-sm text-gray-600 dark:text-gray-400">
+            Insert your YubiKey and tap the gold contact to generate a one-time password.
+          </p>
+          {yubikeyEnrolled ? (
+            <div className="flex items-center gap-2 rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700 dark:border-green-800 dark:bg-green-950">
+              <Check className="h-4 w-4" /> YubiKey enrolled successfully.
+            </div>
+          ) : (
+            <div>
+              <input
+                type="text"
+                value={yubikeyOtp}
+                onChange={e => setYubikeyOtp(e.target.value)}
+                placeholder="Touch YubiKey to generate OTP..."
+                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm font-mono dark:border-gray-700 dark:bg-gray-900"
+                onFocus={() => setYubikeyOtp("")}
+              />
+              <button
+                onClick={verifyYubikey}
+                disabled={yubikeyVerifying || yubikeyOtp.length < 32}
+                className="mt-2 flex items-center gap-1.5 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
+              >
+                {yubikeyVerifying ? <Loader2 className="h-4 w-4 animate-spin" /> : <Usb className="h-4 w-4" />}
+                Enroll YubiKey
+              </button>
+            </div>
+          )}
+        </div>
+        )}
 
         {/* === Backup MFA Methods === */}
         <div className={cardCls}>
