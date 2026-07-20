@@ -26,6 +26,10 @@ async function setToken(page: Page, token: string, username: string) {
   await page.goto('/login');
   await page.evaluate(({ t, u }) => {
     localStorage.setItem('ggid_access_token', t);
+    localStorage.setItem('ggid_tenant_id', '00000000-0000-0000-0000-000000000001');
+    localStorage.setItem('ggid_user_id', 'admin');
+    localStorage.setItem('ggid_user_name', 'admin');
+    localStorage.setItem('ggid_user_scopes', JSON.stringify(['Platform Administrator','Tenant Administrator','Administrator']));
     localStorage.setItem('ggid_user_id', u);
     localStorage.setItem('ggid_user_name', u);
     localStorage.setItem('ggid_user_email', `${u}@test.com`);

@@ -28,8 +28,16 @@ for (const pagePath of settingsPages) {
     // Set token and visit page
     await page.goto('/login');
     await page.evaluate((t) => {
-      localStorage.setItem('access_token', t);
-      localStorage.setItem('token', t);
+      localStorage.setItem('ggid_access_token', t);
+    localStorage.setItem('ggid_tenant_id', '00000000-0000-0000-0000-000000000001');
+    localStorage.setItem('ggid_user_id', 'admin');
+    localStorage.setItem('ggid_user_name', 'admin');
+    localStorage.setItem('ggid_user_scopes', JSON.stringify(['Platform Administrator','Tenant Administrator','Administrator']));
+      localStorage.setItem('ggid_access_token', t);
+    localStorage.setItem('ggid_tenant_id', '00000000-0000-0000-0000-000000000001');
+    localStorage.setItem('ggid_user_id', 'admin');
+    localStorage.setItem('ggid_user_name', 'admin');
+    localStorage.setItem('ggid_user_scopes', JSON.stringify(['Platform Administrator','Tenant Administrator','Administrator']));
     }, access_token);
     
     const response = await page.goto(pagePath, { waitUntil: 'networkidle' });
