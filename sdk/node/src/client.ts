@@ -56,9 +56,10 @@ export class GGIDClient {
       timeout: config.timeout || 30000,
     };
     this.apiKey = config.apiKey;
-    if (config.jwksUrl) {
+    if (config.jwksUrl || config.gatewayUrl) {
       this.verifier = new JWTVerifier({
         jwksUrl: config.jwksUrl,
+        gatewayUrl: config.gatewayUrl?.replace(/\/$/, ''),
         issuer: config.issuer,
       });
     }

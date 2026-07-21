@@ -11,7 +11,6 @@ const TENANT = process.env.GGID_TENANT || '00000000-0000-0000-0000-000000000002'
 const ggidClient = new GGIDClient({
   gatewayUrl: GGID_URL,
   tenantId: TENANT,
-  jwksUrl: `${GGID_URL}/.well-known/jwks.json`,
 });
 
 export interface ERPUser {
