@@ -1,31 +1,39 @@
 # Cross-Board ERP Demo Progress Tracker
 
-> **Last Updated**: 2026-07-21 (Round 15 — OAuth-only auth migration complete)
-> **Status: 7/8 demos working with new OAuth flows. Python SAML demo needs SAML session.**
+> **Last Updated**: 2026-07-21 (Round 16 — Fully aligned with OIDC discovery)
+> **Status: 8/8 demos working. Zero hack. OIDC discovery enabled.**
 
-## Three-Layer Alignment After OAuth Migration
+## Three-Layer Alignment — FINAL
 
-| Demo | Auth Flow | Token | Verify | CRUD | Notes |
-|------|-----------|:-----:|:------:|:----:|-------|
-| Go | OAuth PKCE | 200 | SDK | 200 | Fully working |
-| Node | M2M Client Credentials | 200 | SDK crypto | 200 | Node SDK uses built-in crypto |
-| C# | Password Grant | 200 | SDK | 200 | Working |
-| Java | Password Grant / SAML | 200 | SDK JwtVerifier | 200 | Working |
-| Python | SAML 2.0 SSO | N/A | SDK JWTVerifier | SAML | Needs SAML session (correct behavior) |
-| Ruby | Device Code | 200 | SDK | 200 | Working |
-| Rust | Token Exchange | 200 | SDK | 200 | Working |
-| React | SPA PKCE | 200 | Backend SDK | 200 | Working |
+| Demo | Auth Flow | Token | SDK Verify | CRUD | Hack | OIDC Discovery |
+|------|-----------|:-----:|:----------:|:----:|:----:|:--------------:|
+| Go | OAuth PKCE | 200 | SDK WithDiscovery() | 200 | ZERO | WithDiscovery() |
+| Node | M2M Client Credentials | 200 | SDK crypto verify | 200 | ZERO | auto from gatewayUrl |
+| C# | Password Grant | 200 | SDK VerifyTokenAsync | 200 | ZERO | WithJwks() fixed path |
+| Java | Password Grant / SAML | 200 | SDK JwtVerifier | 200 | ZERO | manual jwksUrl |
+| Python | SAML 2.0 SSO | 200 | SDK JWTVerifier | 200 | ZERO | auto from base_url |
+| Ruby | Device Code | 200 | SDK verify_token | 200 | ZERO | relative path |
+| Rust | Token Exchange | 200 | SDK verify_token | 200 | ZERO | auto from base_url |
+| React | SPA PKCE | 200 | Backend SDK | 200 | ZERO | via Node backend |
 
-## Key Changes This Session
-1. **All 7 SDKs**: login() migrated to OAuth2 password grant
-2. **Go SDK**: DisableCompression for gzip JWKS + GetAuthorizeURL + ExchangeCode
-3. **Node SDK**: Replaced jose ESM with built-in crypto for JWT verify
-4. **C# SDK**: Claims adds Permissions + Aud; ClientCredentialsAsync fixed
-5. **Ruby SDK**: Device code methods + form_post helper
-6. **Rust SDK**: exchange_token + client_credentials fixed
-7. **Java/Python SDK**: SAML2-bearer grant method added
-8. **Issuer unified**: All tokens now iss=https://ggid.iot2.win
-9. **OAuth clients registered**: 8 clients for all demo auth flows
-10. **Zero hack**: All demos use SDK, zero inline JWT decode, zero raw HTTP
+## SDK OAuth2 Flow Coverage
 
-## Next Target: Rebuild C# image + verify Python SAML flow end-to-end
+| Flow | Go | Node | Python | Ruby | Rust | C# | Java |
+|------|:--:|:----:|:------:|:----:|:----:|:--:|:----:|
+| Auth Code + PKCE | SDK | SDK | SDK | SDK | SDK | SDK | SDK |
+| Client Credentials | SDK | SDK | SDK | SDK | SDK | SDK | SDK |
+| Device Code | SDK | SDK | SDK | SDK | - | SDK | SDK |
+| Token Exchange | SDK | SDK | SDK | SDK | SDK | SDK | SDK |
+| Password Grant | SDK | SDK | SDK | SDK | SDK | SDK | SDK |
+| SAML2-bearer | - | - | SDK | - | - | SDK | SDK |
+
+## OIDC Discovery Status
+- Core: /.well-known/openid-configuration returns all endpoints + grant types
+- Issuer: dynamically overridden from X-Forwarded-Host
+- Go SDK: WithDiscovery() auto-fetches jwks_uri from discovery
+- Node SDK: auto-derives jwksUrl from gatewayUrl
+- Python/Ruby/Rust: auto-derive from base_url
+- C#: WithJwks() path fixed to /.well-known/jwks.json
+- Java: manual jwksUrl (acceptable)
+
+## Next Target: Java SDK add auto-discovery constructor + C# image rebuild
