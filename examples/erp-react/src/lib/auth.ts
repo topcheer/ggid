@@ -27,7 +27,7 @@ export function hasPermission(user: ERPUser | null, perm: string): boolean {
 export function parseJWT(token: string): ERPUser | null {
   try {
     const payload = JSON.parse(atob(token.split('.')[1]));
-    const perms = payload.permissions || payload.scope?.split(' ') || [];
+    const perms = payload.permissions || [];
     return {
       user_id: payload.sub || payload.user_id || '',
       username: payload.username || payload.preferred_username || 'user',

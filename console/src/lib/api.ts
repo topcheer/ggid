@@ -368,9 +368,7 @@ export function useUserPermissions(): {
 
   const { isPlatformAdmin } = useUserRole();
   const hasPermission = (key: string): boolean => {
-    if (isPlatformAdmin) return true; // Admin sees everything
-    // If no dynamic permissions loaded, fall back to scope-based (legacy)
-    if (permissions.length === 0) return true; // fallback: show all (legacy behavior)
+    if (isPlatformAdmin) return true;
     return permissions.includes(key);
   };
 

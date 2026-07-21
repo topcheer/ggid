@@ -110,25 +110,22 @@ public class JwtVerifier {
         }
         user.email = jwt.getClaim("email").asString();
 
-        // Roles: check "roles" claim first, fall back to "scopes" (GGID format)
+        // Roles: from "roles" claim only
         String[] roles = jwt.getClaim("roles").asArray(String.class);
-        if (roles == null) {
-            // GGID puts role keys in "scopes" array
-            roles = jwt.getClaim("scopes").asArray(String.class);
-        }
         if (roles != null) {
             user.roles = roles;
         }
 
-        // Scopes: support both "scope" (OAuth string) and "scopes" (GGID array)
-        String[] scopesArr = jwt.getClaim("scopes").asArray(String.class);
-        if (scopesArr != null) {
-            user.scopes = scopesArr;
-        } else {
-            String scope = jwt.getClaim("scope").asString();
-            if (scope != null && !scope.isEmpty()) {
-                user.scopes = scope.split(" ");
-            }
+        // Permissions: from "permissions" claim only
+        String[] permissions = jwt.getClaim("permissions").asArray(String.class);
+        if (permissions != null) {
+            user.permissions = permissions;
+        }
+
+        // Scopes: from "scope" claim (OAuth2 standard, space-separated string)
+        String scope = jwt.getClaim("scope").asString();
+        if (scope != null && !scope.isEmpty()) {
+            user.scopes = scope.split(" ");
         }
 
         return user;

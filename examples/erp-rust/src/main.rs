@@ -16,9 +16,9 @@ use std::sync::Arc;
 use std::time::{SystemTime, UNIX_EPOCH};
 use tokio::sync::RwLock;
 
-// --- GGID config ---
-const GGID_URL: &str = match option_env!("GGID_URL") { Some(v) => v, None => "http://localhost:8080" };
-const TENANT_ID: &str = match option_env!("TENANT_ID") { Some(v) => v, None => "00000000-0000-0000-0000-000000000001" };
+// --- GGID config (runtime env vars) ---
+fn ggid_url() -> String { std::env::var("GGID_URL").unwrap_or_else(|_| "http://localhost:8080".into()) }
+fn tenant_id() -> String { std::env::var("GGID_TENANT_ID").or_else(|_| std::env::var("TENANT_ID")).unwrap_or_else(|_| "00000000-0000-0000-0000-000000000001".into()) }
 
 // --- State ---
 type Store = Arc<RwLock<AppState>>;
@@ -86,7 +86,6 @@ async fn extract_auth(headers: &HeaderMap, client: &ggid::GGIDClient) -> Option<
 
 fn check_perm(auth: &AuthContext, perm: &str) -> bool {
     auth.permissions.iter().any(|p| p == perm || p == "admin")
-        || auth.scopes.iter().any(|s| s == perm || s == "admin")
 }
 
 fn now_str() -> String {
@@ -179,11 +178,11 @@ struct ExchangeRequest {
     #[serde(default = "default_tenant")]
     tenant_id: String,
 }
-fn default_tenant() -> String { TENANT_ID.to_string() }
+fn default_tenant() -> String { tenant_id() }
 
 async fn token_exchange(State(state): State<Store>, Json(req): Json<ExchangeRequest>) -> Result<Json<Value>, StatusCode> {
     let client = reqwest::Client::new();
-    let token_url = format!("{}/api/v1/oauth/token", GGID_URL);
+    let token_url = format!("{}/api/v1/oauth/token", ggid_url());
     let stt = req.subject_token_type.unwrap_or_else(|| "urn:ietf:params:oauth:token-type:access_token".into());
     let form = vec![
         ("grant_type", "urn:ietf:params:oauth:grant-type:token-exchange".to_string()),
@@ -213,7 +212,7 @@ async fn main() {
     let state: Store = Arc::new(RwLock::new(AppState {
         products: HashMap::new(), orders: HashMap::new(), audit_log: Vec::new(),
         product_seq: 0, order_seq: 0,
-        ggid_client: ggid::GGIDClient::new(GGID_URL, TENANT_ID),
+        ggid_client: ggid::GGIDClient::new(&ggid_url(), &tenant_id()),
     }));
 
     let app = Router::new()

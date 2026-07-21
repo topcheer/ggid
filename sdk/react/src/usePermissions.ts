@@ -2,13 +2,12 @@
  * GGID React SDK — usePermissions hook
  *
  * Fine-grained permission checking built on top of useGGIDAuth.
- * - permissions: string[] (derived from scopes)
+ * - permissions: string[] (from JWT `permissions` claim)
  * - hasPermission(perm): checks if user has a specific permission
  * - hasAnyPermission(...perms): true if user has any of the given permissions
  * - hasAllPermissions(...perms): true if user has all of the given permissions
  *
  * Permissions follow the format: resource:action (e.g. 'users:read', 'roles:write')
- * They are derived from the user's scopes, split on ':' to normalize.
  */
 
 import { useMemo, useCallback } from 'react';
@@ -22,24 +21,7 @@ export interface UsePermissionsResult {
   loading: boolean;
 }
 
-/**
- * Normalizes a scope into a permission string.
- * Handles common scope formats:
- * - 'users:read' → 'users:read'
- * - 'user.read' → 'user:read'
- * - 'read:users' → 'users:read' (OAuth-style reversed)
- */
-function normalizePermission(scope: string): string {
-  // Already in resource:action format
-  if (scope.includes(':')) {
-    return scope;
-  }
-  // Dot notation: user.read → user:read
-  if (scope.includes('.')) {
-    return scope.replace('.', ':');
-  }
-  return scope;
-}
+
 
 /**
  * Checks if a permission is satisfied by any of the user's permissions,
@@ -70,9 +52,8 @@ export function usePermissions(): UsePermissionsResult {
   const { user, isLoading } = useGGIDAuth();
 
   const permissions = useMemo(() => {
-    const scopes = user?.scopes ?? [];
-    return scopes.map(normalizePermission);
-  }, [user?.scopes]);
+    return user?.permissions ?? [];
+  }, [user?.permissions]);
 
   const hasPermission = useCallback(
     (permission: string) => {

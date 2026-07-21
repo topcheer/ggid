@@ -37,7 +37,7 @@ export async function verifyToken(token: string): Promise<ERPUser | null> {
       email: data.email || '',
       tenant_id: data.tenant_id || data.tenant_id || '',
       roles: data.roles || [],
-      permissions: data.permissions || data.scope?.split(' ') || [],
+      permissions: data.permissions || [],
     };
 
     // Cache for 5 minutes

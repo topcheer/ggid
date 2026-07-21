@@ -97,8 +97,8 @@ class JWTVerifier:
 
     def _parse_claims(self, claims: dict) -> JWTClaims:
         """Parse raw JWT claims into structured JWTClaims."""
-        # scopes can be a string (space-delimited) or array
-        raw_scopes = claims.get("scopes", [])
+        # scopes: standard OAuth2 "scope" claim (space-delimited string)
+        raw_scopes = claims.get("scope", "")
         if isinstance(raw_scopes, str):
             raw_scopes = raw_scopes.split()
         return JWTClaims(

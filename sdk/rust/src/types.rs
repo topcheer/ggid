@@ -5,11 +5,16 @@ use serde::{Deserialize, Serialize};
 pub struct Claims {
     pub sub: String,
     pub tenant_id: String,
+    #[serde(default)]
     pub roles: Vec<String>,
+    #[serde(default)]
     pub scope: String,         // OAuth scopes only (openid, profile, email)
-    pub permissions: Vec<String>, // Fine-grained permissions
+    #[serde(default)]
+    pub permissions: Vec<String>, // Fine-grained permissions (NOT from scope)
     pub exp: u64,
+    #[serde(default)]
     pub iat: u64,
+    #[serde(default)]
     pub iss: String,
 }
 

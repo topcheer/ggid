@@ -93,7 +93,7 @@ func (s *AuthService) VerifyPhoneOTP(ctx context.Context, phone, otp, ip, userAg
 		return nil, fmt.Errorf("create session: %w", err)
 	}
 
-	accessToken, jti, expiresIn, err := s.tokenService.IssueAccessTokenWithJTI(tenantID, userID, []string{"admin"})
+	accessToken, jti, expiresIn, err := s.tokenService.IssueAccessTokenWithJTI(tenantID, userID, []string{"admin"}, nil, nil)
 	if err != nil {
 		return nil, fmt.Errorf("issue access token: %w", err)
 	}

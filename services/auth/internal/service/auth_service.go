@@ -217,7 +217,8 @@ func (s *AuthService) Login(ctx context.Context, username, password, ip, userAge
 	_ = s.sessionService.EnforceSessionLimit(ctx, tc.TenantID, userID, maxSessionsPerUser)
 
 	// 6. Issue JWT access token
-	accessToken, jti, expiresIn, err := s.tokenService.IssueAccessTokenWithJTI(tc.TenantID, userID, s.getUserScopes(ctx, tc.TenantID, userID))
+	_roles, _perms := s.getUserScopesAndPermissions(ctx, tc.TenantID, userID)
+	accessToken, jti, expiresIn, err := s.tokenService.IssueAccessTokenWithJTI(tc.TenantID, userID, _roles, _perms, _roles)
 	if err != nil {
 		return nil, fmt.Errorf("issue access token: %w", err)
 	}
@@ -244,34 +245,24 @@ func (s *AuthService) Logout(ctx context.Context, refreshToken string) error {
 	return s.tokenService.RevokeRefreshToken(ctx, refreshToken)
 }
 
-// getUserScopes resolves the real role-based scopes + fine-grained permissions for a user.
-// Returns role names (e.g. "Platform Administrator") AND permission keys (e.g. "inventory:read")
-// so that SDK demos can check both via JWT scopes.
-// Falls back to ["user"] (basic access) when roles cannot be resolved.
-func (s *AuthService) getUserScopes(ctx context.Context, tenantID, userID uuid.UUID) []string {
+// getUserScopesAndPermissions resolves role names and fine-grained permissions separately.
+// Returns: roles (e.g. "Administrator") for JWT scopes claim,
+//          permissions (e.g. "inventory:read") for JWT permissions claim.
+func (s *AuthService) getUserScopesAndPermissions(ctx context.Context, tenantID, userID uuid.UUID) (roles []string, permissions []string) {
 	if s.identityClient != nil {
 		roles, err := s.identityClient.GetUserRoles(ctx, tenantID, userID)
 		if err == nil && len(roles) > 0 {
-			// Merge role names with fine-grained permissions
-			scopes := make([]string, 0, len(roles)*4)
-			scopes = append(scopes, roles...)
-
-			// Fetch and append permissions (inventory:read, orders:write, etc.)
-			perms, _ := s.identityClient.GetUserPermissions(ctx, tenantID, userID)
-			seen := make(map[string]bool, len(scopes))
-			for _, s := range scopes {
-				seen[s] = true
-			}
-			for _, p := range perms {
-				if !seen[p] {
-					scopes = append(scopes, p)
-					seen[p] = true
-				}
-			}
-			return scopes
+			permissions, _ = s.identityClient.GetUserPermissions(ctx, tenantID, userID)
+			return roles, permissions
 		}
 	}
-	return []string{"user"}
+	return []string{"user"}, nil
+}
+
+// getUserScopes is kept for backward compatibility with callers that only need the merged list.
+func (s *AuthService) getUserScopes(ctx context.Context, tenantID, userID uuid.UUID) []string {
+	roles, _ := s.getUserScopesAndPermissions(ctx, tenantID, userID)
+	return roles
 }
 
 // writeJTI is a nil-safe helper that writes the JTI + token expiry back to the session record.
@@ -339,7 +330,8 @@ func (s *AuthService) Refresh(ctx context.Context, refreshToken string) (*domain
 	}
 
 	// 2. Issue new access token
-	accessToken, jti, expiresIn, err := s.tokenService.IssueAccessTokenWithJTI(rt.TenantID, rt.UserID, s.getUserScopes(ctx, rt.TenantID, rt.UserID))
+	_rtRoles, _rtPerms := s.getUserScopesAndPermissions(ctx, rt.TenantID, rt.UserID)
+	accessToken, jti, expiresIn, err := s.tokenService.IssueAccessTokenWithJTI(rt.TenantID, rt.UserID, _rtRoles, _rtPerms, _rtRoles)
 	if err != nil {
 		return nil, fmt.Errorf("issue access token: %w", err)
 	}
@@ -557,7 +549,8 @@ func (s *AuthService) LoginMFA(ctx context.Context, username, password, mfaCode,
 		return nil, fmt.Errorf("create session: %w", err)
 	}
 
-	accessToken, jti, expiresIn, err := s.tokenService.IssueAccessTokenWithJTI(tc.TenantID, userID, s.getUserScopes(ctx, tc.TenantID, userID))
+	_roles, _perms := s.getUserScopesAndPermissions(ctx, tc.TenantID, userID)
+	accessToken, jti, expiresIn, err := s.tokenService.IssueAccessTokenWithJTI(tc.TenantID, userID, _roles, _perms, _roles)
 	if err != nil {
 		return nil, fmt.Errorf("issue access token: %w", err)
 	}
@@ -641,7 +634,8 @@ func (s *AuthService) LoginWithBackupCode(ctx context.Context, username, passwor
 		return nil, fmt.Errorf("create session: %w", err)
 	}
 
-	accessToken, jti, expiresIn, err := s.tokenService.IssueAccessTokenWithJTI(tc.TenantID, userID, s.getUserScopes(ctx, tc.TenantID, userID))
+	_roles, _perms := s.getUserScopesAndPermissions(ctx, tc.TenantID, userID)
+	accessToken, jti, expiresIn, err := s.tokenService.IssueAccessTokenWithJTI(tc.TenantID, userID, _roles, _perms, _roles)
 	if err != nil {
 		return nil, fmt.Errorf("issue access token: %w", err)
 	}
@@ -876,7 +870,8 @@ func (s *AuthService) VerifyMagicLink(ctx context.Context, token, ip, userAgent 
 	}
 
 	// Issue JWT tokens.
-	accessToken, jti, expiresIn, err := s.tokenService.IssueAccessTokenWithJTI(tenantID, userID, s.getUserScopes(ctx, tenantID, userID))
+	_slRoles, _slPerms := s.getUserScopesAndPermissions(ctx, tenantID, userID)
+	accessToken, jti, expiresIn, err := s.tokenService.IssueAccessTokenWithJTI(tenantID, userID, _slRoles, _slPerms, _slRoles)
 	if err != nil {
 		return nil, fmt.Errorf("issue access token: %w", err)
 	}
@@ -964,7 +959,8 @@ func (s *AuthService) SocialLogin(ctx context.Context, provider, externalID, ema
 	}
 
 	// 5. Issue JWT tokens.
-	accessToken, jti, expiresIn, err := s.tokenService.IssueAccessTokenWithJTI(tc.TenantID, userID, s.getUserScopes(ctx, tc.TenantID, userID))
+	_roles, _perms := s.getUserScopesAndPermissions(ctx, tc.TenantID, userID)
+	accessToken, jti, expiresIn, err := s.tokenService.IssueAccessTokenWithJTI(tc.TenantID, userID, _roles, _perms, _roles)
 	if err != nil {
 		return nil, fmt.Errorf("issue access token: %w", err)
 	}

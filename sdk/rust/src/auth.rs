@@ -28,7 +28,7 @@ impl AuthService {
         let jwks: Value = self
             .client
             .http
-            .get(format!("{}/api/v1/oauth/jwks", self.client.base_url))
+            .get(format!("{}/.well-known/jwks.json", self.client.base_url))
             .header("X-Tenant-ID", &self.client.tenant_id)
             .send()
             .await?
@@ -58,6 +58,7 @@ impl AuthService {
 
         let mut validation = Validation::new(Algorithm::RS256);
         validation.validate_exp = true;
+        validation.validate_aud = false;
 
         let token_data = decode::<Claims>(token, &decoding_key, &validation)?;
         Ok(token_data.claims)

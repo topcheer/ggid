@@ -78,15 +78,12 @@ func hasScope(s *Session, scope string) bool {
 func hasPermission(s *Session, resource, action string) bool {
 	if s == nil { return false }
 	// Admin has all permissions
-	if hasScope(s, "admin") { return true }
+	for _, p := range s.Permissions {
+		if strings.EqualFold(p, "admin") { return true }
+	}
 	permKey := resource + ":" + action
-	// Check fine-grained permissions claim first (new JWT structure)
 	for _, p := range s.Permissions {
 		if strings.EqualFold(p, permKey) { return true }
-	}
-	// Fallback: check scopes for backward compatibility (old JWT structure)
-	for _, sc := range s.Scopes {
-		if strings.EqualFold(sc, permKey) { return true }
 	}
 	return false
 }

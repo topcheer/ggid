@@ -146,21 +146,23 @@ func ComputeACR(authMethods []string) string {
 
 // IssueAccessToken signs a new JWT for the given user.
 func (ts *TokenService) IssueAccessToken(tenantID, userID uuid.UUID, scopes []string) (string, int, error) {
-	token, _, expiresIn, err := ts.IssueAccessTokenWithJTI(tenantID, userID, scopes)
+	token, _, expiresIn, err := ts.IssueAccessTokenWithJTI(tenantID, userID, scopes, nil, nil)
 	return token, expiresIn, err
 }
 
 // IssueAccessTokenWithAMR issues a JWT with AMR/ACR claims from auth methods.
-func (ts *TokenService) IssueAccessTokenWithAMR(tenantID, userID uuid.UUID, scopes []string, authMethods []string) (token, jti string, expiresIn int, err error) {
+func (ts *TokenService) IssueAccessTokenWithAMR(tenantID, userID uuid.UUID, scopes []string, permissions []string, roles []string, authMethods []string) (token, jti string, expiresIn int, err error) {
 	now := time.Now()
 	expiresAt := now.Add(ts.jwtTTL)
 	jti = uuid.New().String()
 
 	claims := AccessTokenClaims{
-		TenantID: tenantID.String(),
-		Scopes:   scopes,
-		AMR:      ComputeAMR(authMethods),
-		ACR:      ComputeACR(authMethods),
+		TenantID:    tenantID.String(),
+		Scopes:      scopes,
+		Permissions: permissions,
+		Roles:       roles,
+		AMR:         ComputeAMR(authMethods),
+		ACR:         ComputeACR(authMethods),
 		RegisteredClaims: jwt.RegisteredClaims{
 			Issuer:    ts.jwtIssuer,
 			Subject:   userID.String(),
@@ -184,14 +186,16 @@ func (ts *TokenService) IssueAccessTokenWithAMR(tenantID, userID uuid.UUID, scop
 
 // IssueAccessTokenWithJTI signs a new JWT and returns the token + jti + expiresIn.
 // The jti is needed to write back to the session record for CAE revocation (Phase 2).
-func (ts *TokenService) IssueAccessTokenWithJTI(tenantID, userID uuid.UUID, scopes []string) (token, jti string, expiresIn int, err error) {
+func (ts *TokenService) IssueAccessTokenWithJTI(tenantID, userID uuid.UUID, scopes []string, permissions []string, roles []string) (token, jti string, expiresIn int, err error) {
 	now := time.Now()
 	expiresAt := now.Add(ts.jwtTTL)
 	jti = uuid.New().String()
 
 	claims := AccessTokenClaims{
-		TenantID: tenantID.String(),
-		Scopes:   scopes,
+		TenantID:    tenantID.String(),
+		Scopes:      scopes,
+		Permissions: permissions,
+		Roles:       roles,
 		RegisteredClaims: jwt.RegisteredClaims{
 			Issuer:    ts.jwtIssuer,
 			Subject:   userID.String(),
