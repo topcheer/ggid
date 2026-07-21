@@ -18,7 +18,7 @@ type fakeRow struct {
 	scanFn func(dest ...any) error
 }
 
-func (r fakeRow) Scan(dest ...any) error { return r.scanFn(dest) }
+func (r fakeRow) Scan(dest ...any) error { return r.scanFn(dest...) }
 
 // fakePool implements PoolQuerier for PasswordGrant tests.
 // QueryRow calls are answered in invocation order via rowFns; Query always
