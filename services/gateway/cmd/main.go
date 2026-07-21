@@ -92,6 +92,13 @@ func main() {
 	}))
 	log.Println("Gateway: CAE jti blocklist enabled")
 
+	// Dynamic RBAC (ADR-dynamic-rbac): role_route_permissions-driven access
+	// control with Redis cache; falls back to hardcoded prefixes when no data.
+	rbacResolver := middleware.NewRBACResolver(rdb, cfg.DatabaseURL)
+	middleware.SetRBACResolver(rbacResolver)
+	go rbacResolver.WarmStart(ctx)
+	log.Println("Gateway: dynamic RBAC resolver enabled (hardcoded fallback active)")
+
 	gw.PrintRoutes()
 
 	// HTTP server
