@@ -175,3 +175,13 @@ Each demo accepts any valid GGID token regardless of tenant.
 - 0 hacks
 
 ### Next Dimension: 2 — Authorization Boundaries
+
+## Dimension 2 R2: Authorization Boundaries (Round 30)
+- Admin perms: 9 items consistent ✅
+- Cross-tenant: 401 ✅ (gateway enforces)
+- Same-tenant: 200 ✅
+- Fake token: 401 ✅
+- All 7 demos admin access: inv=200 ord=200 ✅
+- 0 hacks
+
+### Next Dimension: 3 — Demo Functional Completeness
