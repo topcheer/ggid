@@ -30,22 +30,25 @@ public class JwtVerifier {
     private final int leewaySeconds;
 
     /**
-     * @param jwksUrl URL of the GGID JWKS endpoint (e.g. https://ggid.example.com/.well-known/jwks.json)
+     * Creates a JwtVerifier from a GGID base URL.
+     * The JWKS URL is derived as baseURL + "/.well-known/jwks.json".
+     * This enables OIDC-style auto-discovery — just pass the base URL.
      */
-    public JwtVerifier(String jwksUrl) {
-        this(jwksUrl, null, 0);
+    public JwtVerifier(String baseURL) {
+        this(baseURL, null, 0);
     }
 
     /**
-     * @param jwksUrl       URL of the GGID JWKS endpoint
-     * @param issuer        Expected issuer claim (optional but recommended)
-     * @param leewaySeconds Clock skew tolerance in seconds
+     * Creates a JwtVerifier from a GGID base URL with issuer validation.
      */
-    public JwtVerifier(String jwksUrl, String issuer, int leewaySeconds) {
+    public JwtVerifier(String baseURL, String issuer, int leewaySeconds) {
+        String jwksUrl = baseURL.endsWith("/")
+                ? baseURL + ".well-known/jwks.json"
+                : baseURL + "/.well-known/jwks.json";
         try {
             this.jwkProvider = new UrlJwkProvider(new URL(jwksUrl));
         } catch (Exception e) {
-            throw new IllegalArgumentException("Invalid JWKS URL: " + jwksUrl, e);
+            throw new IllegalArgumentException("Invalid GGID base URL: " + baseURL, e);
         }
         this.issuer = issuer;
         this.leewaySeconds = leewaySeconds;
