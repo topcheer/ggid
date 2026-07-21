@@ -342,6 +342,20 @@ func (gw *Gateway) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Hosted OAuth authorize: if no user_id in query (no session), show login page.
+	// The frontend JS posts credentials to /api/v1/auth/verify, gets user_id,
+	// then redirects back to /oauth/authorize?user_id=xxx which proxies to OAuth service.
+	if r.URL.Path == "/oauth/authorize" && r.Method == http.MethodGet {
+		userID := r.URL.Query().Get("user_id")
+		if userID == "" {
+			w.Header().Set("Content-Type", "text/html; charset=utf-8")
+			w.WriteHeader(http.StatusOK)
+			_, _ = w.Write([]byte(hostedLoginHTML))
+			return
+		}
+		// With user_id, proxy to OAuth service for code generation
+	}
+
 	// OpenAPI JSON spec
 	if r.URL.Path == "/api-docs" {
 		serveOpenAPISpec(w, r)
