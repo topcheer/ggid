@@ -25,7 +25,13 @@
 - SDK: GetAuthorizeURL ✅, ExchangeCode ✅, VerifyToken requires JWKS ✅
 - Demo: zero hack ✅, 10 SDK call sites ✅, compile pass ✅
 - **Global hack scan: 8/8 clean** (erp-web/erp-demo are old, not maintained)
-- Next: re-verify Rust demo, then deploy updated images for all changed demos
+
+#### Round 12: Deploy updated images
+- Go/Node/Java/Python/Ruby/Rust: 6/8 deployed with new SDK code ✅
+- Node Dockerfile fixed: SDK at /sdk/node/ matching import path
+- C#/React: build timeout, old images still running (non-blocking)
+- All 8 pods Running, all health checks 200
+- Next Target: Build C# + React images, then continue iteration
 
 ---
 
