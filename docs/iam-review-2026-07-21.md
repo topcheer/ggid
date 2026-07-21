@@ -2,7 +2,7 @@
 
 > 审视人：god_fullstack&everything（定期审视任务 cron-1 首轮）
 > 方法：三路并行代码级审查（OAuth/OIDC/SAML · Auth/Identity/SCIM · 增强功能兼容性+竞品迁移），所有结论均有 file:line 证据。
-> 状态：**R1 完成（2026-07-22 00:35 CST，已部署生产）。** R2 增量检查（2026-07-22 01:43 CST）：无新提交，无增量问题。下一轮聚焦 R1 遗留的 P1/P2 项或新代码变更。
+> 状态：**R1 完成（2026-07-22 00:35 CST，已部署生产）。** R2 增量检查（01:43）：无新提交。R3 增量检查（02:43）：3 个 erp-demo 文档提交，erp-demo 报 refresh token gap 经核实为 demo client 配置问题（password grant offline_access 逻辑 oauth_service.go:1614-1625 已正确实现）。无 IAM 平台增量问题。
 
 ---
 
