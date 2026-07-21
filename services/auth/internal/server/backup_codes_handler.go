@@ -6,7 +6,6 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/ggid/ggid/pkg/errors"
 	ggidtenant "github.com/ggid/ggid/pkg/tenant"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
@@ -83,56 +82,6 @@ func (h *Handler) backupCodesGenerate(w http.ResponseWriter, r *http.Request) {
 		"warning":    "Store these codes securely. They will not be shown again.",
 		"expires_in": "until regenerated",
 	})
-}
-
-// backupCodesVerifyRequest is the body for POST /api/v1/auth/mfa/backup-codes/verify.
-type backupCodesVerifyRequest struct {
-	Username   string `json:"username"`
-	Password   string `json:"password"`
-	BackupCode string `json:"backup_code"`
-}
-
-// backupCodesVerify handles POST /api/v1/auth/mfa/backup-codes/verify.
-// Authenticates the user with password + backup code (alternative to TOTP during MFA login).
-// The backup code is consumed (single-use) upon successful verification.
-func (h *Handler) backupCodesVerify(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPost {
-		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
-		return
-	}
-
-	var req backupCodesVerifyRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		writeError(w, http.StatusBadRequest, "invalid request body")
-		return
-	}
-
-	if req.BackupCode == "" {
-		writeError(w, http.StatusBadRequest, "backup_code is required")
-		return
-	}
-
-	ip := clientIP(r)
-	userAgent := r.Header.Get("User-Agent")
-
-	tokens, err := h.authSvc.LoginWithBackupCode(r.Context(), req.Username, req.Password, req.BackupCode, ip, userAgent)
-	if err != nil {
-		slog.Error("backup code verify error", "username", req.Username, "error", err)
-		// Map backup code error to 401.
-		if strings.Contains(err.Error(), "invalid or used backup code") {
-			errors.WriteSimpleAPIError(w, http.StatusUnauthorized, string(errors.ErrUnauthenticated), "invalid or used backup code")
-			return
-		}
-		writeAuthError(w, err)
-		return
-	}
-
-	// Audit: backup code login success
-	if tc, terr := ggidtenant.FromContext(r.Context()); terr == nil {
-		h.publishAuditEvent("user.mfa.backup_codes.used", "success", tc.TenantID, uuid.Nil)
-	}
-
-	writeJSON(w, http.StatusOK, tokens)
 }
 
 // backupCodesRemaining handles GET /api/v1/auth/mfa/backup-codes/remaining?user_id=xxx.

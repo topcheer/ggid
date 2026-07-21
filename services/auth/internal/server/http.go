@@ -201,7 +201,6 @@ func (h *Handler) registerRoutes() {
 	// Backup codes (MFA recovery codes)
 	h.mux.HandleFunc("/api/v1/auth/mfa/backup-codes", h.backupCodesRemaining) // GET alias
 	h.mux.HandleFunc("/api/v1/auth/mfa/backup-codes/generate", h.backupCodesGenerate)
-	h.mux.HandleFunc("/api/v1/auth/mfa/backup-codes/verify", h.backupCodesVerify)
 	h.mux.HandleFunc("/api/v1/auth/mfa/backup-codes/remaining", h.backupCodesRemaining)
 
 	// Password policy config endpoint
@@ -1528,36 +1527,6 @@ func (h *Handler) magicLink(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-func (h *Handler) magicLinkVerify(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodGet && r.Method != http.MethodPost {
-		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
-		return
-	}
-
-	token := r.URL.Query().Get("token")
-	if token == "" && r.Method == http.MethodPost {
-		_ = r.ParseForm()
-		token = r.FormValue("token")
-	}
-	if token == "" {
-		writeError(w, http.StatusBadRequest, "token is required")
-		return
-	}
-
-	ip := clientIP(r)
-	userAgent := r.Header.Get("User-Agent")
-
-	tokens, err := h.authSvc.VerifyMagicLink(r.Context(), token, ip, userAgent)
-	if err != nil {
-		writeError(w, http.StatusUnauthorized, "invalid or expired magic link")
-		return
-	}
-
-	writeJSON(w, http.StatusOK, tokens)
-}
-
-// --- Email Verification ---
-
 func (h *Handler) emailVerify(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
@@ -1913,39 +1882,6 @@ func (h *Handler) phoneOTPSend(w http.ResponseWriter, r *http.Request) {
 		"message": "OTP sent to phone number",
 	})
 }
-
-func (h *Handler) phoneOTPVerify(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPost {
-		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
-		return
-	}
-
-	var body struct {
-		Phone string `json:"phone"`
-		OTP   string `json:"otp"`
-	}
-	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
-		writeError(w, http.StatusBadRequest, "invalid request body")
-		return
-	}
-	if body.Phone == "" || body.OTP == "" {
-		writeError(w, http.StatusBadRequest, "phone and otp are required")
-		return
-	}
-
-	ip := clientIP(r)
-	userAgent := r.Header.Get("User-Agent")
-
-	tokens, err := h.authSvc.VerifyPhoneOTP(r.Context(), body.Phone, body.OTP, ip, userAgent)
-	if err != nil {
-		writeAuthError(w, err)
-		return
-	}
-
-	writeJSON(w, http.StatusOK, tokens)
-}
-
-// --- Step-up Authentication ---
 
 func (h *Handler) stepUpChallenge(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
@@ -2735,32 +2671,6 @@ func (h *Handler) dbConnectionsSignup(w http.ResponseWriter, r *http.Request) {
 
 
 // handleSocial routes social login requests: /api/v1/auth/social/{provider} and /api/v1/auth/social/{provider}/callback
-func (h *Handler) handleSocial(w http.ResponseWriter, r *http.Request) {
-	path := strings.TrimPrefix(r.URL.Path, "/api/v1/auth/social/")
-	parts := strings.SplitN(path, "/", 2)
-
-	provider := parts[0]
-	if provider == "" {
-		writeError(w, http.StatusBadRequest, "provider is required")
-		return
-	}
-
-	// Special case: list available connectors
-	if provider == "connectors" {
-		h.listSocialConnectors(w, r)
-		return
-	}
-
-	isCallback := len(parts) == 2 && parts[1] == "callback"
-
-	if isCallback {
-		h.socialCallback(w, r, provider)
-		return
-	}
-	h.socialBegin(w, r, provider)
-}
-
-// listSocialConnectors returns the list of registered social login providers.
 func (h *Handler) listSocialConnectors(w http.ResponseWriter, _ *http.Request) {
 	ids := h.socialReg.List()
 	connectors := make([]map[string]string, 0, len(ids))
@@ -2780,95 +2690,6 @@ func (h *Handler) listSocialConnectors(w http.ResponseWriter, _ *http.Request) {
 	})
 }
 
-func (h *Handler) socialBegin(w http.ResponseWriter, r *http.Request, provider string) {
-	// Validate the connector exists
-	conn, err := h.socialReg.Get(provider)
-	if err != nil {
-		writeError(w, http.StatusBadRequest, "unsupported provider: "+provider)
-		return
-	}
-
-	state := uuid.New().String()
-	redirectURI := r.URL.Query().Get("redirect_uri")
-	if redirectURI == "" {
-		redirectURI = "/login"
-	}
-
-	// Build callback URL
-	scheme := "https"
-	if r.TLS == nil {
-		scheme = "http"
-	}
-	// Use forwarded host if behind proxy
-	host := r.Host
-	if fh := r.Header.Get("X-Forwarded-Host"); fh != "" {
-		host = fh
-	}
-	callbackURL := scheme + "://" + host + "/api/v1/auth/social/" + provider + "/callback"
-
-	authURL, err := conn.GetAuthURL(r.Context(), state, callbackURL)
-	if err != nil {
-		writeError(w, http.StatusInternalServerError, "failed to build auth URL")
-		return
-	}
-
-	writeJSON(w, http.StatusOK, map[string]string{
-		"provider":    provider,
-		"auth_url":    authURL,
-		"state":       state,
-		"redirect_to": redirectURI,
-	})
-}
-
-func (h *Handler) socialCallback(w http.ResponseWriter, r *http.Request, provider string) {
-	code := r.URL.Query().Get("code")
-	state := r.URL.Query().Get("state")
-	if code == "" {
-		writeError(w, http.StatusBadRequest, "missing authorization code")
-		return
-	}
-
-	conn, err := h.socialReg.Get(provider)
-	if err != nil {
-		writeError(w, http.StatusBadRequest, "unsupported provider: "+provider)
-		return
-	}
-
-	scheme := "https"
-	if r.TLS == nil {
-		scheme = "http"
-	}
-	host := r.Host
-	if fh := r.Header.Get("X-Forwarded-Host"); fh != "" {
-		host = fh
-	}
-	callbackURL := scheme + "://" + host + "/api/v1/auth/social/" + provider + "/callback"
-
-	userInfo, err := conn.HandleCallback(r.Context(), code, state, callbackURL)
-	if err != nil {
-		log.Printf("social callback error (%s): %v", provider, err)
-		writeError(w, http.StatusUnauthorized, "social authentication failed")
-		return
-	}
-
-	log.Printf("social login success: provider=%s external_id=%s email=%s", userInfo.Provider, userInfo.ExternalID, userInfo.Email)
-
-	// Complete social login: JIT-provision or link identity, then issue JWT.
-	ip := clientIP(r)
-	userAgent := r.Header.Get("User-Agent")
-
-	tokens, err := h.authSvc.SocialLogin(r.Context(), userInfo.Provider, userInfo.ExternalID, userInfo.Email, userInfo.Name, userInfo.AvatarURL, ip, userAgent)
-	if err != nil {
-		log.Printf("social login completion error (%s): %v", provider, err)
-		writeError(w, http.StatusInternalServerError, "social login failed")
-		return
-	}
-
-	writeJSON(w, http.StatusOK, tokens)
-}
-
-// forceLogout handles POST /api/v1/auth/sessions/force-logout.
-// Admin operation: revokes all sessions for a user.
 func (h *Handler) forceLogout(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		writeError(w, http.StatusMethodNotAllowed, "method not allowed")

@@ -54,11 +54,7 @@ func (h *AuthGRPCHandler) Logout(ctx context.Context, req *authv1.LogoutRequest)
 }
 
 func (h *AuthGRPCHandler) RefreshToken(ctx context.Context, req *authv1.RefreshTokenRequest) (*authv1.TokenSet, error) {
-	tokens, err := h.svc.Refresh(ctx, req.GetRefreshToken())
-	if err != nil {
-		return nil, status.Error(codes.Unauthenticated, fmt.Sprintf("refresh failed: %v", err))
-	}
-	return domainToPbTokenSet(tokens), nil
+	return nil, status.Error(codes.Unimplemented, "token refresh removed — use OAuth token endpoint")
 }
 
 func (h *AuthGRPCHandler) ForgotPassword(ctx context.Context, req *authv1.ForgotPasswordRequest) (*authv1.ForgotPasswordResponse, error) {
