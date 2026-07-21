@@ -129,11 +129,35 @@ func requireClient(ctx *Context) *client.Client {
 		output.PrintError("not logged in. Run 'ggid login' first.")
 		os.Exit(1)
 	}
-	// Check token expiry.
+	// Check token expiry — try to auto-refresh via client_credentials.
 	if client.IsTokenExpired(ctx.Config.ExpiresAt) {
-		// Try to refresh via client_credentials.
-		output.PrintError("token expired. Run 'ggid login' to re-authenticate.")
-		os.Exit(1)
+		if ctx.Config.ClientID != "" && ctx.Config.ClientSecret != "" && ctx.Config.ServerURL != "" {
+			// Auto-refresh: exchange client credentials for a new token.
+			tokenResp, err := client.GetClientCredentialsToken(
+				ctx.Config.ServerURL,
+				ctx.Config.ConsoleTenantID,
+				ctx.Config.ClientID,
+				ctx.Config.ClientSecret,
+			)
+			if err == nil && tokenResp.AccessToken != "" {
+				ctx.Config.AccessToken = tokenResp.AccessToken
+				ctx.Config.ExpiresAt = time.Now().Unix() + int64(tokenResp.ExpiresIn)
+				// Save refreshed config.
+				_ = config.Save(ctx.Config)
+				// Update the client with new token.
+				ctx.Client = client.New(
+					ctx.Config.ServerURL,
+					ctx.Config.ConsoleTenantID,
+					ctx.Config.AccessToken,
+				)
+			} else {
+				output.PrintError("token expired and auto-refresh failed. Run 'ggid login' to re-authenticate.")
+				os.Exit(1)
+			}
+		} else {
+			output.PrintError("token expired. Run 'ggid login' to re-authenticate.")
+			os.Exit(1)
+		}
 	}
 	return ctx.Client
 }

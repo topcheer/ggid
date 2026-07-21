@@ -134,6 +134,22 @@ func main() {
 	case "dashboard":
 		commands.Dashboard(ctx, args)
 
+	// API Keys
+	case "api-keys", "apikeys", "apikey":
+		commands.APIKeys(ctx, args)
+
+	// Settings
+	case "settings", "setting":
+		commands.Settings(ctx, args)
+
+	// Security
+	case "security":
+		commands.Security(ctx, args)
+
+	// Monitoring
+	case "monitoring":
+		commands.Monitoring(ctx, args)
+
 	default:
 		fmt.Fprintf(os.Stderr, "unknown command: %s\n\n", cmd)
 		usage()
@@ -222,6 +238,29 @@ COMMANDS:
 
   DASHBOARD:
     dashboard          Show aggregate dashboard stats
+
+  API KEYS:
+    api-keys list      List API keys
+    api-keys create    Create an API key
+    api-keys delete <id>  Revoke an API key
+
+  SETTINGS:
+    settings get       Show all settings
+    settings branding  View branding
+    settings flags     View feature flags
+    settings mfa       View MFA settings
+    settings ldap      View LDAP config
+
+  SECURITY:
+    security sessions  View session details
+    security cae       View CAE monitor
+    security threats   View threat dashboard
+    security posture   View device posture
+
+  MONITORING:
+    monitoring gateway   Gateway stats
+    monitoring routes    Route health
+    monitoring activity  Activity log
 
 GLOBAL FLAGS:
   --server URL    Gateway URL (or GGID_SERVER_URL env)
