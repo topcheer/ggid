@@ -20,7 +20,7 @@ $order_seq = 0
 class ERPApp < Sinatra::Base
   # Sinatra 4.x adds Rack::Protection::HostAuthorization as separate middleware
   # (not controlled by :protection setting) — must disable explicitly
-  disable :host_authorization
+  set :host_authorization, permitted_hosts: ['.']
   set :port, ENV.fetch('ERP_LISTEN', '9091').to_i
   set :bind, '0.0.0.0'
   set :server, 'puma'

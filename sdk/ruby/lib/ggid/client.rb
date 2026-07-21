@@ -250,6 +250,7 @@ module GGID
       headers = {
         "Content-Type" => "application/json",
         "Accept" => "application/json",
+        "Accept-Encoding" => "identity",
         "X-Tenant-ID" => @tenant_id,
       }
       headers["Authorization"] = "Bearer #{token}" if token
