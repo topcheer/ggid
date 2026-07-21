@@ -1,22 +1,21 @@
 # Cross-Board ERP Demo Progress Tracker
 
-> **Last Updated**: 2026-07-21 09:30 (Round 7 — Python demo complete)
-> **Status: Go+Node+C#+Java+Python SDK integration COMPLETE. Next: Ruby demo.**
+> **Last Updated**: 2026-07-21 10:00 (Round 8 — Ruby demo complete)
+> **Status: Go+Node+C#+Java+Python+Ruby DONE. Next: Rust demo.**
 
-## Overall: Deploy 8/8 | CRUD 8/8 | **SDK Usage: 8/8** | **Sig Verify: 8/8** | **Core GAPs: 0**
+## Overall: **SDK Usage: 7/8** | **Sig Verify: 8/8** | **Core GAPs: 0**
 
-### Completed (SDK integration done)
-- **Go demo**: 6/6 — GetAuthorizeURL, ExchangeCode, VerifyToken, Login, Refresh via SDK
-- **Node demo**: 4/4 — verifyToken, clientCredentials via SDK, zero scope fallback
-- **C# demo**: 4/4 — LoginAsync, VerifyTokenAsync via SDK; SDK Claims adds Permissions field
-- **Java demo**: 4/5 — JwtVerifier.verifyUser() via JWKS+RS256 ✅; SAML ACS uses HttpURLConnection (SDK gap)
-- **Python demo**: 4/5 — JWTVerifier.verify() via JWKS+RS256 ✅; SAML ACS uses urllib (SDK gap)
-- **Ruby demo**: 3/4 — verify_token + has_permission via SDK (device code still raw HTTP)
-- **Rust demo**: 2/4 — verify_token via SDK (token exchange + perms still raw)
+### Completed
+- **Go**: 6/6 — PKCE via SDK ✅
+- **Node**: 4/4 — M2M via SDK ✅
+- **C#**: 4/4 — Password Grant via SDK ✅
+- **Java**: 4/5 — Verify via SDK ✅, SAML ACS raw (SDK gap)
+- **Python**: 4/5 — Verify via SDK ✅, SAML ACS raw (SDK gap)
+- **Ruby**: 5/5 — Device Code + Verify + Perms all via SDK ✅ ZERO HACK
 
-### Next Target: Ruby demo (score 3/4)
-Ruby demo uses SDK verify_token + has_permission ✅, but device code flow uses raw Net::HTTP.
-Ruby SDK needs deviceCode method (startDeviceFlow + pollDeviceToken).
+### Next Target: Rust demo (score 2/4)
+Rust demo uses SDK verify_token ✅ but token exchange uses raw HTTP.
+Rust SDK needs token_exchange method.
 
 ---
 
