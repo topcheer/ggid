@@ -140,3 +140,29 @@ Each demo accepts any valid GGID token regardless of tenant.
 2. All SDKs consistent on endpoint paths and field names — GOOD
 
 ### Next Dimension: 6 — End-to-end User Experience
+
+## Dimension 6: End-to-end User Experience (Round 28)
+- Full E2E flow on C# demo: login→perms→read→create→verify→order ALL PASS ✅
+- No-token rejection: 7/7 demos return 401 ✅
+- Invalid/malformed token: rejected ✅
+- 0 hacks confirmed ✅
+
+### E2E Results
+1. Login: token obtained ✅
+2. Permissions: 9 items returned ✅
+3. Read: 3 inventory items ✅
+4. Create: new item created (id=p004) ✅
+5. Verify: item visible in GET (4 items, E2E found) ✅
+6. Order: created with status=pending ✅
+7. No token: 401 on all demos ✅
+8. Invalid token: 403 ✅
+
+### ALL 6 DIMENSIONS COMPLETE — cycling back to Dimension 1
+
+## Dimension Summary (Rounds 23-28)
+- D1 Auth: 6/7 password grant OK, refresh token gap noted
+- D2 AuthZ: admin perms consistent, Go demo missing my-permissions
+- D3 Functional: 4/7 demos pass full content validation
+- D4 Tenant isolation: GAP found → FIXED by arch (gateway enforces)
+- D5 SDK consistency: all 7 SDKs aligned on field names + endpoints
+- D6 E2E: full user flow verified, all security checks pass
