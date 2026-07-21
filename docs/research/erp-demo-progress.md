@@ -81,3 +81,18 @@
 3. No viewer-level user to test 403 denial (all test users are admin)
 
 ### Next Dimension: 3 — Demo Functional Completeness
+
+## Dimension 3: Demo Functional Completeness (Round 25)
+- Inventory: Node(3)/Python(3)/C#(2)/Java(3) have data with correct fields ✅
+- Go/Ruby inventory empty (data init issue)
+- POST create + GET verify: C# PASS ✅
+- my-permissions: C#/Python return correct perms ✅, Java missing endpoint
+- Orders: real data but field naming inconsistent across demos
+
+### Issues Found
+1. Go/Ruby demo inventory empty — no seed data
+2. Java missing /api/my-permissions endpoint
+3. Orders field naming inconsistent: node(amount), python(qty), java(productName)
+4. Rust demo uses erp-rust-exchange not erp-rust-demo for token exchange
+
+### Next Dimension: 4 — Multi-tenant Isolation
