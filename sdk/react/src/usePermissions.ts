@@ -27,6 +27,11 @@ export interface UsePermissionsResult {
  * Checks if a permission is satisfied by any of the user's permissions,
  * including wildcard matching (e.g. 'users:*' satisfies 'users:read').
  */
+/** Normalize a permission string (lowercase, trim). */
+function normalizePermission(perm: string): string {
+  return perm.trim().toLowerCase();
+}
+
 function permissionMatches(userPerm: string, requiredPerm: string): boolean {
   // Exact match
   if (userPerm === requiredPerm) return true;
