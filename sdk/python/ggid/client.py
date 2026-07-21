@@ -111,6 +111,33 @@ class GGIDClient:
     def get_user_info(self, access_token: str) -> dict:
         return self._request("GET", "/oauth/userinfo", token=access_token)
 
+    def exchange_saml_token(self, saml_response: str, client_id: str = "") -> dict:
+        """Exchange a SAML assertion for an access token (RFC 7522 SAML2-bearer grant).
+
+        Args:
+            saml_response: Base64-encoded SAMLResponse from the IdP
+            client_id: OAuth2 client ID
+        Returns:
+            Token response dict with access_token, token_type, expires_in
+        """
+        import urllib.parse
+        form_data = urllib.parse.urlencode({
+            "grant_type": "urn:ietf:params:oauth:grant-type:saml2-bearer",
+            "assertion": saml_response,
+            "client_id": client_id,
+        })
+        resp = self._session.post(
+            f"{self._config.base_url}/api/v1/oauth/token",
+            data=form_data,
+            headers={
+                "Content-Type": "application/x-www-form-urlencoded",
+                "X-Tenant-ID": self._config.tenant_id,
+            },
+            timeout=self._config.timeout,
+        )
+        resp.raise_for_status()
+        return resp.json()
+
     def introspect_token(self, token: str, client_id: str, client_secret: str) -> dict:
         return self._request("POST", "/oauth/introspect", {
             "token": token, "client_id": client_id, "client_secret": client_secret,

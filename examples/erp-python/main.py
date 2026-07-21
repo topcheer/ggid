@@ -154,23 +154,13 @@ class ERPHandler(BaseHTTPRequestHandler):
                 self._send_json(400, {"error": "missing SAMLResponse"})
                 return
 
-            # Exchange SAML assertion for JWT token via GGID API
+            # Exchange SAML assertion for JWT via SDK exchange_saml_token
             client = get_client()
             try:
-                # GGID SAML token exchange endpoint
-                import urllib.request
-                token_url = f"{GGID_URL}/api/v1/auth/saml/token"
-                req_data = json.dumps({
-                    "saml_response": saml_response,
-                    "tenant_id": TENANT_ID,
-                }).encode()
-                req = urllib.request.Request(token_url, data=req_data, method="POST")
-                req.add_header("Content-Type", "application/json")
-                req.add_header("X-Tenant-ID", TENANT_ID)
-
-                with urllib.request.urlopen(req, timeout=10) as resp:
-                    token_data = json.loads(resp.read())
-
+                token_data = client.exchange_saml_token(
+                    saml_response,
+                    client_id=os.getenv("OAUTH_CLIENT_ID", "erp-python-demo"),
+                )
                 access_token = token_data.get("access_token", "")
                 if not access_token:
                     self._send_json(401, {"error": "SAML token exchange failed", "detail": token_data})

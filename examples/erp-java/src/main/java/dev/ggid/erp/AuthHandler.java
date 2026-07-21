@@ -85,68 +85,40 @@ public class AuthHandler extends BaseHandler {
                 return;
             }
             
-            // Exchange SAML assertion for JWT via GGID token endpoint
-            // Using SAML grant type
+            // Exchange SAML assertion for JWT via SDK exchangeSAMLToken
             try {
-                String formBody = "grant_type=urn:ietf:params:oauth:grant-type:saml2-bearer" +
-                    "&assertion=" + URLEncoder.encode(samlResponse, StandardCharsets.UTF_8) +
-                    "&tenant_id=" + System.getenv().getOrDefault("TENANT_ID", "00000000-0000-0000-0000-000000000001");
-                
-                HttpURLConnection conn = (HttpURLConnection) new URL(TOKEN_ENDPOINT).openConnection();
-                conn.setRequestMethod("POST");
-                conn.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
-                conn.setDoOutput(true);
-                conn.getOutputStream().write(formBody.getBytes(StandardCharsets.UTF_8));
-                
-                int responseCode = conn.getResponseCode();
-                String responseBody;
-                try (var is = responseCode < 400 ? conn.getInputStream() : conn.getErrorStream()) {
-                    responseBody = new String(is.readAllBytes(), StandardCharsets.UTF_8);
+                String clientId = System.getenv().getOrDefault("OAUTH_CLIENT_ID", "erp-java-demo");
+                TokenSet tokenResp = Main.ggid.exchangeSAMLToken(samlResponse, clientId);
+                String accessToken = tokenResp.getAccessToken();
+
+                if (accessToken == null || accessToken.isEmpty()) {
+                    sendJson(exchange, 401, err("Failed to obtain access token from SAML assertion"));
+                    return;
                 }
-                
-                if (responseCode == 200) {
-                    // Parse JWT from token response
-                    Map<String, Object> tokenResp = Main.mapper.readValue(responseBody, Map.class);
-                    String accessToken = (String) tokenResp.get("access_token");
-                    
-                    if (accessToken == null) {
-                        sendJson(exchange, 401, err("Failed to obtain access token from SAML assertion"));
-                        return;
-                    }
-                    
-                    // Verify the token and extract user info
-                    var user = Main.verifyToken(accessToken);
-                    if (user != null) {
-                        Main.audit(user.userId != null ? user.userId : "unknown", "saml.login", "SAML SSO login successful");
-                        String sessionId = UUID.randomUUID().toString();
-                        
-                        Map<String, Object> result = Map.of(
-                            "status", "authenticated",
-                            "session_id", sessionId,
-                            "access_token", accessToken,
-                            "user", Map.of(
-                                "sub", user.userId != null ? user.userId : "",
-                                "email", user.email != null ? user.email : "",
-                                "permissions", java.util.Arrays.asList(user.permissions)
-                            )
-                        );
-                        sendJson(exchange, 200, Main.mapper.writeValueAsString(result));
-                    } else {
-                        // Token verification failed but we got a token — still return it for client-side use
-                        Main.audit("unknown", "saml.login", "SAML SSO login (unverified token)");
-                        sendJson(exchange, 200, Main.mapper.writeValueAsString(Map.of(
-                            "status", "authenticated",
-                            "access_token", accessToken,
-                            "message", "Token issued via SAML SSO"
-                        )));
-                    }
+
+                // Verify the token and extract user info via SDK JwtVerifier
+                var user = Main.verifyToken(accessToken);
+                if (user != null) {
+                    Main.audit(user.userId != null ? user.userId : "unknown", "saml.login", "SAML SSO login successful");
+                    String sessionId = UUID.randomUUID().toString();
+
+                    Map<String, Object> result = Map.of(
+                        "status", "authenticated",
+                        "session_id", sessionId,
+                        "access_token", accessToken,
+                        "user", Map.of(
+                            "sub", user.userId != null ? user.userId : "",
+                            "email", user.email != null ? user.email : "",
+                            "permissions", java.util.Arrays.asList(user.permissions)
+                        )
+                    );
+                    sendJson(exchange, 200, Main.mapper.writeValueAsString(result));
                 } else {
-                    // Token exchange failed — fall back to returning the raw SAML response
-                    // In production this would be a proper error
+                    Main.audit("unknown", "saml.login", "SAML SSO login (unverified token)");
                     sendJson(exchange, 200, Main.mapper.writeValueAsString(Map.of(
-                        "status", "saml_received",
-                        "message", "SAML response received. Token exchange endpoint returned " + responseCode,
-                        "exchange_endpoint", TOKEN_ENDPOINT
+                        "status", "authenticated",
+                        "access_token", accessToken,
+                        "message", "Token issued via SAML SSO"
                     )));
                 }
             } catch (Exception e) {

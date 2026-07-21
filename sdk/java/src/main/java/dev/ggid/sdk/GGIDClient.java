@@ -48,6 +48,30 @@ public class GGIDClient {
                 TokenSet.class);
     }
 
+    /**
+     * Exchange a SAML assertion for an access token using OAuth2 SAML2-bearer grant
+     * (RFC 7522). Used by Service Providers after receiving a SAMLResponse from the IdP.
+     *
+     * @param samlResponse Base64-encoded SAMLResponse from the IdP
+     * @param clientId     OAuth2 client ID
+     * @return TokenSet with access_token
+     */
+    public TokenSet exchangeSAMLToken(String samlResponse, String clientId)
+            throws GGIDException, IOException {
+        FormBody formBody = new FormBody.Builder()
+                .add("grant_type", "urn:ietf:params:oauth:grant-type:saml2-bearer")
+                .add("assertion", samlResponse)
+                .add("client_id", clientId)
+                .build();
+        Request request = new Request.Builder()
+                .url(gatewayUrl + "/api/v1/oauth/token")
+                .header("X-Tenant-ID", tenantId)
+                .header("Content-Type", "application/x-www-form-urlencoded")
+                .post(formBody)
+                .build();
+        return execute(request, TokenSet.class);
+    }
+
     public void logout(String accessToken) throws GGIDException, IOException {
         post("/api/v1/auth/logout", Map.of("access_token", accessToken), Void.class);
     }
