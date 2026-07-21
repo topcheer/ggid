@@ -124,4 +124,28 @@
 
 ## 六、独立 Review 结论
 
-> 待 review 后填写。
+**Review 人**：arch_pm（spec 对齐 + 部署验证）、frontend_qa（编译测试复验委托中）
+
+**arch_pm review 结论：通过** ✅（2026-07-22 00:35 CST）
+
+审查点逐条确认：
+1. **Discovery 对齐**：移除 implicit response_types 合理（OAuth 2.1 方向），device_authorization_endpoint 路径保留正确
+2. **Audience fallback**：空值 fallback 到 client_id，不影响 Console password grant flow
+3. **Introspection**：Bearer token 方式（Method 3）保留，resource server 用 own token introspect 不受影响
+4. **SCIM /Schemas**：结构正确，但需 Okta/Entra ID 实际对接做端到端验证（后续跟进）
+
+**部署验证**：3 个服务已重建部署
+- `oauth:v2` — password grant 200 ✅，roles API (admin) 200 ✅，discovery response_types=["code"] ✅
+- `auth:latest` — TOTP skew 改动随部署生效
+- `gateway:latest` — 含 guardian_security RBAC 提权修复 + ab762f527 回归修复
+
+**guardian_security 安全修复（3 项，已随 main 部署）**：
+- SAML ACS InResponseTo/Issuer/Audience/XSW 防护 ✅（3 个安全测试全绿）
+- IdP 签名密钥持久化 ✅（sys_config，非临时密钥）
+- 动态 RBAC hasAdminScope 只认 platform:admin/tenant:admin ✅（9 个攻击向量断言拒绝）
+
+**遗留待跟进项**：
+- SCIM /Schemas 需 Okta/Entra ID 实际对接验证
+- P1/P2 后续轮次迭代（TOTP secret 加密、RP-Initiated Logout、Keycloak 路径别名、claim 映射、reuse detection TOCTOU 等）
+
+> **本轮审视状态：完成。** 下一轮 cron-1 触发时将聚焦增量问题。
