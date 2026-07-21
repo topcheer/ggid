@@ -828,7 +828,7 @@ export default function UsersPage() {
           className="rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200"
         >
           <option value="">All Roles</option>
-          {roles.map(r => (
+          {roles.filter(r => !/^Test Role/i.test(r.name)).map(r => (
             <option key={r.id} value={r.key || r.name}>{r.name}</option>
           ))}
         </select>
