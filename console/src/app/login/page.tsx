@@ -172,6 +172,16 @@ export default function LoginPage() {
       }
       localStorage.setItem("ggid_tenant_id", resolvedTenantId);
 
+      // Extract scopes/roles from JWT for sidebar visibility + RBAC
+      try {
+        const payload = JSON.parse(atob(data.access_token.split(".")[1]));
+        const userScopes = payload.scopes || payload.roles || ["user"];
+        localStorage.setItem("ggid_user_scopes", JSON.stringify(Array.isArray(userScopes) ? userScopes : [userScopes]));
+        if (payload.permissions) {
+          localStorage.setItem("ggid_user_permissions", JSON.stringify(payload.permissions));
+        }
+      } catch {}
+
       // Sync WebAuthn signal if passkey support is available
       syncSignalAfterLogin(data.access_token).catch(() => {});
 
@@ -220,6 +230,12 @@ export default function LoginPage() {
       if (data.refresh_token) {
         localStorage.setItem("ggid_refresh_token", data.refresh_token);
       }
+      // Extract scopes/roles from JWT
+      try {
+        const payload = JSON.parse(atob(data.access_token.split(".")[1]));
+        const userScopes = payload.scopes || payload.roles || ["user"];
+        localStorage.setItem("ggid_user_scopes", JSON.stringify(Array.isArray(userScopes) ? userScopes : [userScopes]));
+      } catch {}
 
       const redirectTo = sessionStorage.getItem("ggid_redirect_after_login") || "/";
       sessionStorage.removeItem("ggid_redirect_after_login");
