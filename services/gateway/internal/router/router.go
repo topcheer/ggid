@@ -73,6 +73,7 @@ var publicPaths = []string{
 	"/login",
 	"/register",
 	"/forgot-password",
+	"/device",
 }
 
 // Gateway is the API Gateway HTTP handler.
@@ -331,6 +332,13 @@ func (gw *Gateway) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if r.URL.Path == "/forgot-password" {
 		w.Header().Set("Content-Type", "text/html; charset=utf-8")
 		_, _ = w.Write([]byte(hostedForgotPasswordHTML))
+		return
+	}
+
+	// Device code approval page (RFC 8628) — used by CLI and other device flows
+	if r.URL.Path == "/device" {
+		w.Header().Set("Content-Type", "text/html; charset=utf-8")
+		_, _ = w.Write([]byte(hostedDeviceApproveHTML))
 		return
 	}
 
