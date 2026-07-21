@@ -669,13 +669,18 @@ func (gw *Gateway) checkRouteScope(w http.ResponseWriter, r *http.Request) bool 
 
 	// Get scopes from JWT claims
 	claims := middleware.ExtractJWTClaims(r)
-	if len(claims.Scopes) == 0 {
+	if len(claims.Scopes) == 0 && len(claims.Roles) == 0 {
 		return true // no JWT — let auth middleware handle
 	}
 
+	// Admin indicators may arrive as legacy scope strings (auth-service JWT)
+	// or as role names/keys in the roles claim (OAuth-issued JWT, OAuth 2.1
+	// style where scope = openid/profile/email only). Check both so either
+	// token style grants admin routes.
 	hasPlatform := false
 	hasTenant := false
-	for _, sc := range claims.Scopes {
+	adminIndicators := append(append([]string{}, claims.Scopes...), claims.Roles...)
+	for _, sc := range adminIndicators {
 		scl := strings.ToLower(sc)
 		if scl == "platform:admin" || scl == "admin" || scl == "superadmin" ||
 			scl == "platform administrator" || scl == "administrator" {

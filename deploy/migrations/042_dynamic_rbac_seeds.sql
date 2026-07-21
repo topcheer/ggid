@@ -5,6 +5,10 @@
 -- the gateway's dynamic RBAC resolver preserves the behavior previously
 -- enforced by the hardcoded adminPrefixes list. Rows are per-tenant because
 -- roles are per-tenant; ON CONFLICT makes this idempotent.
+--
+-- NOTE: intentionally admin-roles-only. Granting editor/viewer API-level
+-- read/write would WIDEN access beyond legacy behavior (static fallback
+-- denied them) — that is a product decision to be made separately.
 
 WITH admin_roles AS (
     SELECT id FROM roles
@@ -26,35 +30,5 @@ CROSS JOIN (VALUES
     ('/api/v1/system/'),
     ('/api/v1/tenants'),
     ('/api/v1/impersonate')
-) AS t(prefix)
-ON CONFLICT (role_id, route_prefix) DO NOTHING;
-
--- Editor-style roles get write access to non-dangerous management routes.
-WITH editor_roles AS (
-    SELECT id FROM roles
-    WHERE key IN ('editor') OR name IN ('Editor')
-)
-INSERT INTO role_route_permissions (role_id, route_prefix, permission_level)
-SELECT id, prefix, 'write'
-FROM editor_roles
-CROSS JOIN (VALUES
-    ('/api/v1/users'),
-    ('/api/v1/policies'),
-    ('/api/v1/webhooks')
-) AS t(prefix)
-ON CONFLICT (role_id, route_prefix) DO NOTHING;
-
--- Viewer-style roles get read-only access to listing endpoints.
-WITH viewer_roles AS (
-    SELECT id FROM roles
-    WHERE key IN ('viewer') OR name IN ('Viewer')
-)
-INSERT INTO role_route_permissions (role_id, route_prefix, permission_level)
-SELECT id, prefix, 'read'
-FROM viewer_roles
-CROSS JOIN (VALUES
-    ('/api/v1/users'),
-    ('/api/v1/roles'),
-    ('/api/v1/audit/')
 ) AS t(prefix)
 ON CONFLICT (role_id, route_prefix) DO NOTHING;
