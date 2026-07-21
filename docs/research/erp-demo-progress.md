@@ -49,3 +49,4 @@
 - 8/8 demos HTTP 200, 0 hacks confirmed
 
 #### Round 19: 6 core commits (RBAC+refresh rotation+audit WORM), 8/8 stable
+#### Round 20: auth_code refresh token fix (c78591362), 8/8 stable
