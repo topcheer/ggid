@@ -53,11 +53,24 @@ func buildSignedXML(t *testing.T, assertionID, nameID string) (string, *x509.Cer
 	now := time.Now().UTC().Format(time.RFC3339)
 	exp := time.Now().Add(5 * time.Minute).UTC().Format(time.RFC3339)
 
+	// Build the assertion body (prefix + suffix without Signature) so the
+	// DigestValue can be computed over the exact enveloped-signature
+	// pre-image: stripEnvelopedSignature(finalXML) == prefix + suffix.
+	prefix := `<Assertion xmlns="urn:oasis:names:tc:SAML:2.0:assertion" ID="` + assertionID +
+		`" IssueInstant="` + now + `" Version="2.0">` +
+		`<Issuer>https://idp.example.com</Issuer>`
+	suffix := `<Subject><NameID>` + nameID + `</NameID></Subject>` +
+		`<Conditions NotBefore="` + now + `" NotOnOrAfter="` + exp + `"/>` +
+		`<AttributeStatement>` +
+		`<Attribute Name="mail"><AttributeValue>` + nameID + `</AttributeValue></Attribute>` +
+		`</AttributeStatement>` +
+		`</Assertion>`
+	digest := sha256.Sum256([]byte(prefix + suffix))
+	digestB64 := base64.StdEncoding.EncodeToString(digest[:])
+
 	// Build full XML with a placeholder signature value.
 	placeholderSig := "PLACEHOLDER_SIGNATURE"
-	xmlStr := `<Assertion xmlns="urn:oasis:names:tc:SAML:2.0:assertion" ID="` + assertionID +
-		`" IssueInstant="` + now + `" Version="2.0">` +
-		`<Issuer>https://idp.example.com</Issuer>` +
+	xmlStr := prefix +
 		`<ds:Signature xmlns:ds="http://www.w3.org/2000/09/xmldsig#">` +
 		`<ds:SignedInfo>` +
 		`<ds:CanonicalizationMethod Algorithm="http://www.w3.org/2001/10/xml-exc-c14n#"/>` +
@@ -65,16 +78,11 @@ func buildSignedXML(t *testing.T, assertionID, nameID string) (string, *x509.Cer
 		`<ds:Reference URI="#` + assertionID + `">` +
 		`<ds:Transforms><ds:Transform Algorithm="http://www.w3.org/2000/09/xmldsig#enveloped-signature"/></ds:Transforms>` +
 		`<ds:DigestMethod Algorithm="http://www.w3.org/2001/04/xmlenc#sha256"/>` +
-		`<ds:DigestValue>` + base64.StdEncoding.EncodeToString([]byte("placeholder-digest")) + `</ds:DigestValue>` +
+		`<ds:DigestValue>` + digestB64 + `</ds:DigestValue>` +
 		`</ds:Reference></ds:SignedInfo>` +
 		`<ds:SignatureValue>` + placeholderSig + `</ds:SignatureValue>` +
 		`</ds:Signature>` +
-		`<Subject><NameID>` + nameID + `</NameID></Subject>` +
-		`<Conditions NotBefore="` + now + `" NotOnOrAfter="` + exp + `"/>` +
-		`<AttributeStatement>` +
-		`<Attribute Name="mail"><AttributeValue>` + nameID + `</AttributeValue></Attribute>` +
-		`</AttributeStatement>` +
-		`</Assertion>`
+		suffix
 
 	// Extract the exact SignedInfo bytes from the document.
 	signedInfoBytes := extractSignedInfoBytes([]byte(xmlStr))
@@ -384,13 +392,11 @@ func TestVerifySignedAssertion_WrongCert(t *testing.T) {
 
 func TestVerifySignedAssertion_TamperedSignature(t *testing.T) {
 	xmlStr, cert, _ := buildSignedXML(t, "_tamper-002", "carol@corp.com")
-	// Tamper with the NameID.
+	// Tamper with the NameID — the content digest no longer matches.
 	tampered := strings.Replace(xmlStr, "carol@corp.com", "eve@evil.com", 1)
 	_, err := VerifySignedAssertion([]byte(tampered), cert)
-	// Signature verification may or may not fail depending on what was changed,
-	// but the assertion should parse.
-	if err != nil {
-		t.Logf("tampered assertion rejected (expected): %v", err)
+	if err == nil {
+		t.Fatal("expected tampered assertion to be rejected (digest mismatch)")
 	}
 }
 

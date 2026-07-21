@@ -30,10 +30,11 @@ func extractAssertionFromResponse(t *testing.T, responseXML []byte) []byte {
 		t.Fatal("no closing </Assertion> found")
 	}
 	endIdx += startIdx + len(endTag)
-	assertionXML := responseXML[startIdx:endIdx]
-	// Remove namespace prefix for ParseAssertion (it expects bare <Assertion>)
-	cleaned := strings.ReplaceAll(string(assertionXML), "saml:", "")
-	return []byte(cleaned)
+	// Return the original assertion bytes unchanged. ParseAssertion matches
+	// XML local names regardless of namespace prefix, and signature
+	// verification requires the exact signed bytes (stripping prefixes
+	// would break the digest).
+	return responseXML[startIdx:endIdx]
 }
 
 var _ = xml.Marshal // keep import for potential future use

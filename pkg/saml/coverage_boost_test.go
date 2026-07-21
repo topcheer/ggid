@@ -97,6 +97,7 @@ func TestValidateSignature_NoSignatureElement(t *testing.T) {
 
 func TestValidateSignature_WithSignatureElement(t *testing.T) {
 	cert := genRSACert(t)
+	// Structurally present but forged/empty signature — must be rejected.
 	xmlWithSig := `<Assertion xmlns="urn:oasis:names:tc:SAML:2.0:assertion" ID="_abc123">
   <Issuer>https://idp.example.com</Issuer>
   <ds:Signature xmlns:ds="http://www.w3.org/2000/09/xmldsig#">
@@ -108,20 +109,20 @@ func TestValidateSignature_WithSignatureElement(t *testing.T) {
 	if err != nil {
 		t.Fatalf("parse: %v", err)
 	}
-	if err := ValidateSignature(assertion, cert); err != nil {
-		t.Fatalf("expected success, got: %v", err)
+	if err := ValidateSignature(assertion, cert); err == nil {
+		t.Fatal("expected forged signature to be rejected")
 	}
 }
 
 func TestValidateSignature_BareSignatureElement(t *testing.T) {
 	cert := genRSACert(t)
-	// Uses <Signature> without ds: prefix.
+	// Uses <Signature> without ds: prefix — forged value must be rejected.
 	xmlWithSig := `<Assertion xmlns="urn:oasis:names:tc:SAML:2.0:assertion">
   <Signature><SignatureValue>dummy</SignatureValue></Signature>
 </Assertion>`
 	a, _ := ParseAssertion([]byte(xmlWithSig))
-	if err := ValidateSignature(a, cert); err != nil {
-		t.Fatalf("expected success for bare Signature element, got: %v", err)
+	if err := ValidateSignature(a, cert); err == nil {
+		t.Fatal("expected forged bare Signature element to be rejected")
 	}
 }
 

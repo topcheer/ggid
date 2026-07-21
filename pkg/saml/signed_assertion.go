@@ -230,14 +230,53 @@ func cryptoHashForSignature(algorithmURI string) (crypto.Hash, error) {
 	}
 }
 
+// stripEnvelopedSignature removes the enveloped <ds:Signature> element from
+// the assertion XML, recovering the signed content pre-image per the
+// enveloped-signature transform. A single newline immediately preceding the
+// Signature element is also removed (our IdP inserts it when embedding).
+// Returns the input unchanged if no Signature element is found.
+func stripEnvelopedSignature(rawXML []byte) []byte {
+	s := string(rawXML)
+	for _, pair := range [][2]string{
+		{"<ds:Signature", "</ds:Signature>"},
+		{"<Signature", "</Signature>"},
+	} {
+		start := strings.Index(s, pair[0])
+		if start < 0 {
+			continue
+		}
+		// Guard against matching <ds:SignatureValue> / <ds:SignatureMethod>:
+		// the character after the opening prefix must delimit a tag name.
+		after := start + len(pair[0])
+		if after < len(s) {
+			c := s[after]
+			if c != ' ' && c != '>' && c != '\t' && c != '\n' && c != '\r' {
+				continue
+		}
+		}
+		end := strings.Index(s[start:], pair[1])
+		if end < 0 {
+			continue
+		}
+		stop := start + end + len(pair[1])
+		// Remove one preceding newline if present (inserted by our IdP).
+		if start > 0 && s[start-1] == '\n' {
+			start--
+		}
+		return []byte(s[:start] + s[stop:])
+	}
+	return rawXML
+}
+
 // verifyDigest verifies that the digest of the assertion content matches the
-// DigestValue in the signature reference.
+// DigestValue in the signature reference. The content is the assertion with
+// the enveloped Signature element removed (enveloped-signature transform).
 func verifyDigest(info *signatureInfo, assertionXML []byte) error {
 	h, err := hashForAlgorithm(info.digestMethod)
 	if err != nil {
 		return err
 	}
-	h.Write(assertionXML)
+	h.Write(stripEnvelopedSignature(assertionXML))
 	computed := h.Sum(nil)
 	if !constantTimeEqual(computed, info.digestValue) {
 		return fmt.Errorf("digest mismatch: computed %x, expected %x", computed, info.digestValue)
@@ -295,14 +334,16 @@ func constantTimeEqual(a, b []byte) bool {
 // Public API
 // ---------------------------------------------------------------------------
 
-// VerifySignedAssertion parses the assertion, verifies its XML digital
-// signature against the provided X.509 certificate, and validates conditions.
+// VerifySignedAssertion parses the assertion and verifies its XML digital
+// signature against the provided X.509 certificate.
 //
 // The verification process:
 //  1. Extracts the <ds:Signature> element from the raw XML.
-//  2. Verifies the DigestValue matches the hash of the assertion content.
-//  3. Verifies the cryptographic signature over the SignedInfo element.
-//  4. Validates the time conditions.
+//  2. Checks the reference URI matches the assertion ID.
+//  3. Verifies the DigestValue against the assertion content with the
+//     enveloped Signature removed (binds the signature to the content).
+//  4. Verifies the cryptographic signature over the SignedInfo element.
+//  5. Validates the time conditions.
 //
 // Returns the parsed assertion if all checks pass, or an error otherwise.
 func VerifySignedAssertion(rawXML []byte, cert *x509.Certificate) (*SAMLAssertion, error) {
@@ -325,19 +366,23 @@ func VerifySignedAssertion(rawXML []byte, cert *x509.Certificate) (*SAMLAssertio
 		return nil, fmt.Errorf("extract signature: %w", err)
 	}
 
-	// Step 3: Verify the digest of the assertion content.
-	// The referenced ID should match the assertion ID.
+	// Step 3: The referenced ID must match the assertion ID.
 	if info.referencedID != "" && info.referencedID != "#"+assertion.ID {
 		return nil, fmt.Errorf("signature reference URI %q does not match assertion ID %q",
 			info.referencedID, assertion.ID)
 	}
 
-	// Step 4: Verify the cryptographic signature.
+	// Step 4: Verify the digest binds the signature to the assertion content.
+	if err := verifyDigest(info, rawXML); err != nil {
+		return nil, fmt.Errorf("digest verification: %w", err)
+	}
+
+	// Step 5: Verify the cryptographic signature over SignedInfo.
 	if err := verifyCryptoSignature(info, cert); err != nil {
 		return nil, fmt.Errorf("signature verification failed: %w", err)
 	}
 
-	// Step 5: Validate time conditions.
+	// Step 6: Validate time conditions.
 	if err := assertion.ValidateConditions(); err != nil {
 		return nil, fmt.Errorf("condition validation failed: %w", err)
 	}
@@ -345,41 +390,8 @@ func VerifySignedAssertion(rawXML []byte, cert *x509.Certificate) (*SAMLAssertio
 	return assertion, nil
 }
 
-// VerifySignedAssertionWithDigest is a convenience method that also checks the
-// embedded DigestValue against the assertion body hash. This provides defense
-// in depth beyond the raw signature check.
+// VerifySignedAssertionWithDigest is kept for API compatibility.
+// Deprecated: VerifySignedAssertion now always verifies the content digest.
 func VerifySignedAssertionWithDigest(rawXML []byte, cert *x509.Certificate) (*SAMLAssertion, error) {
-	if cert == nil {
-		return nil, fmt.Errorf("certificate is nil")
-	}
-	if len(rawXML) == 0 {
-		return nil, fmt.Errorf("empty assertion XML")
-	}
-
-	assertion, err := ParseAssertion(rawXML)
-	if err != nil {
-		return nil, fmt.Errorf("parse assertion: %w", err)
-	}
-
-	info, err := parseSignature(rawXML)
-	if err != nil {
-		return nil, fmt.Errorf("extract signature: %w", err)
-	}
-
-	// Verify digest.
-	if err := verifyDigest(info, rawXML); err != nil {
-		return nil, fmt.Errorf("digest verification: %w", err)
-	}
-
-	// Verify crypto signature.
-	if err := verifyCryptoSignature(info, cert); err != nil {
-		return nil, fmt.Errorf("signature verification failed: %w", err)
-	}
-
-	// Validate conditions.
-	if err := assertion.ValidateConditions(); err != nil {
-		return nil, fmt.Errorf("condition validation failed: %w", err)
-	}
-
-	return assertion, nil
+	return VerifySignedAssertion(rawXML, cert)
 }

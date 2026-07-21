@@ -127,19 +127,18 @@ func TestACSFlow_FullProcessing(t *testing.T) {
 	}
 }
 
-// TestACSFlow_SignedAssertionProcessing verifies a signed assertion flows
-// through the ACS pipeline (parse → validate → verify signature).
+// TestACSFlow_SignedAssertionProcessing verifies a genuinely signed assertion
+// flows through the ACS pipeline (parse → validate → verify signature).
 func TestACSFlow_SignedAssertionProcessing(t *testing.T) {
-	raw := buildAssertionWithSignature("_acs-002", "bob@corp.com")
+	xmlStr, cert, _ := buildSignedXML(t, "_acs-002", "bob@corp.com")
 
-	assertion, err := ParseAssertion([]byte(raw))
+	assertion, err := ParseAssertion([]byte(xmlStr))
 	if err != nil {
 		t.Fatalf("ParseAssertion failed: %v", err)
 	}
 	if err := assertion.ValidateConditions(); err != nil {
 		t.Fatalf("ValidateConditions failed: %v", err)
 	}
-	cert := genRSACert(t)
 	if err := ValidateSignature(assertion, cert); err != nil {
 		t.Fatalf("ValidateSignature failed for signed assertion: %v", err)
 	}
@@ -209,7 +208,7 @@ func TestACSFlow_MultiValuedAttributes(t *testing.T) {
 // ===========================================================================
 
 // TestSignatureVerification_EmptySignatureValue tests a Signature element
-// present but with an empty SignatureValue.
+// present but with an empty SignatureValue — must be rejected.
 func TestSignatureVerification_EmptySignatureValue(t *testing.T) {
 	cert := genRSACert(t)
 	xml := `<Assertion xmlns="urn:oasis:names:tc:SAML:2.0:assertion" ID="_sig-empty">
@@ -220,12 +219,8 @@ func TestSignatureVerification_EmptySignatureValue(t *testing.T) {
   <Subject><NameID>user@corp.com</NameID></Subject>
 </Assertion>`
 	a, _ := ParseAssertion([]byte(xml))
-	// ValidateSignature only checks presence of <Signature> element, so empty
-	// value still passes the simplified check. A production implementation
-	// would verify the actual cryptographic value.
-	err := ValidateSignature(a, cert)
-	if err != nil {
-		t.Errorf("expected nil for empty signature value (simplified check), got: %v", err)
+	if err := ValidateSignature(a, cert); err == nil {
+		t.Error("expected error for empty signature value")
 	}
 }
 
@@ -243,18 +238,14 @@ func TestSignatureVerification_TamperedRawXML(t *testing.T) {
 	}
 }
 
-// TestSignatureVerification_DifferentValidCert verifies that even with a
-// valid RSA cert (wrong signer), the simplified check passes because it
-// only validates structural presence. This documents the limitation.
+// TestSignatureVerification_DifferentValidCert verifies that a signature
+// created with one key is rejected when verified with a different cert.
 func TestSignatureVerification_DifferentValidCert(t *testing.T) {
-	xml := buildAssertionWithSignature("_sig-002", "user@corp.com")
-	a, _ := ParseAssertion([]byte(xml))
-	// Generate a different cert — in production, this should FAIL because
-	// the cert doesn't match the signing key. The simplified implementation
-	// only checks for the Signature element's presence.
+	xmlStr, _, _ := buildSignedXML(t, "_sig-002", "user@corp.com")
+	a, _ := ParseAssertion([]byte(xmlStr))
 	wrongCert := genRSACert(t)
-	if err := ValidateSignature(a, wrongCert); err != nil {
-		t.Logf("ValidateSignature rejected with different cert (expected limitation): %v", err)
+	if err := ValidateSignature(a, wrongCert); err == nil {
+		t.Fatal("expected ValidateSignature to reject signature verified with wrong cert")
 	}
 }
 
@@ -268,8 +259,9 @@ func TestSignatureVerification_NoCertButHasSignature(t *testing.T) {
 	}
 }
 
-// TestSignatureVerification_BareSignatureWithRSA verifies both the <Signature>
-// (non-prefixed) path and the <ds:Signature> path produce consistent results.
+// TestSignatureVerification_BareSignatureWithRSA verifies that forged
+// signatures (invalid SignatureValue) are rejected for both the
+// <Signature> (non-prefixed) and <ds:Signature> variants.
 func TestSignatureVerification_BareSignatureWithRSA(t *testing.T) {
 	cert := genRSACert(t)
 	tests := []struct {
@@ -294,8 +286,8 @@ func TestSignatureVerification_BareSignatureWithRSA(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			a, _ := ParseAssertion([]byte(tt.xml))
-			if err := ValidateSignature(a, cert); err != nil {
-				t.Errorf("expected nil for %s, got: %v", tt.name, err)
+			if err := ValidateSignature(a, cert); err == nil {
+				t.Errorf("expected forged signature to be rejected for %s", tt.name)
 			}
 		})
 	}

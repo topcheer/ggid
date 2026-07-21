@@ -2,8 +2,12 @@ package server
 
 import (
 	"context"
+	"crypto/x509"
+	"encoding/json"
+	"encoding/pem"
 	"encoding/xml"
 	"fmt"
+	"net/http"
 	"time"
 
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -103,8 +107,7 @@ func (v *TrustChainValidator) lookupEntity(ctx context.Context, tenantID, entity
 
 // extractSAMLIssuer pulls the <Issuer> value from raw SAML XML without full parsing.
 // This is used to validate the trust chain before ParseAssertion.
-func extractSAMLIssuer(rawXML []byte) string {
-	type issuerWrapper struct {
+func extractSAMLIssuer(rawXML []byte) string {	type issuerWrapper struct {
 		XMLName xml.Name `xml:"Response"`
 		Issuer  string   `xml:"Issuer"`
 	}
@@ -123,4 +126,37 @@ func extractSAMLIssuer(rawXML []byte) string {
 		return assertion.Issuer
 	}
 	return ""
+}
+
+// samlIdpCertificate resolves the trusted IdP signing certificate used for
+// XML-DSig verification of inbound SAML assertions. It reads the PEM-encoded
+// certificate from sys_config (key "saml_config", JSON field "idp_cert"),
+// consistent with the auth service SAML handler.
+func samlIdpCertificate(r *http.Request, pool *pgxpool.Pool) (*x509.Certificate, error) {
+	if pool == nil {
+		return nil, fmt.Errorf("database not available")
+	}
+
+	var configJSON string
+	err := pool.QueryRow(r.Context(),
+		`SELECT value::text FROM sys_config WHERE key = 'saml_config'`).Scan(&configJSON)
+	if err != nil {
+		return nil, fmt.Errorf("saml_config not found in sys_config: %w", err)
+	}
+
+	var cfg struct {
+		IDPCert string `json:"idp_cert"`
+	}
+	if err := json.Unmarshal([]byte(configJSON), &cfg); err != nil {
+		return nil, fmt.Errorf("invalid saml_config JSON: %w", err)
+	}
+	if cfg.IDPCert == "" {
+		return nil, fmt.Errorf("idp_cert not configured")
+	}
+
+	block, _ := pem.Decode([]byte(cfg.IDPCert))
+	if block == nil {
+		return nil, fmt.Errorf("invalid PEM certificate in idp_cert")
+	}
+	return x509.ParseCertificate(block.Bytes)
 }

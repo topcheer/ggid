@@ -2,11 +2,9 @@
 package saml
 
 import (
-	"crypto/rsa"
 	"crypto/x509"
 	"encoding/xml"
 	"fmt"
-	"strings"
 	"time"
 )
 
@@ -84,8 +82,11 @@ func (a *SAMLAssertion) ValidateConditions() error {
 	return nil
 }
 
-// ValidateSignature verifies the XML signature against the provided certificate.
-// This is a simplified check — production usage should use a full XML-Sig library.
+// ValidateSignature performs real XML-DSig verification of the assertion's
+// signature against the provided certificate. It extracts the <ds:Signature>
+// element, checks the reference URI matches the assertion ID, and verifies
+// the RSA/ECDSA signature over the SignedInfo element. Assertions without a
+// Signature element, or with a forged/invalid signature, are rejected.
 func ValidateSignature(assertion *SAMLAssertion, cert *x509.Certificate) error {
 	if cert == nil {
 		return fmt.Errorf("certificate is nil")
@@ -94,19 +95,18 @@ func ValidateSignature(assertion *SAMLAssertion, cert *x509.Certificate) error {
 		return fmt.Errorf("assertion has no raw XML")
 	}
 
-	// Check that the certificate has an RSA public key.
-	pubKey, ok := cert.PublicKey.(*rsa.PublicKey)
-	if !ok {
-		return fmt.Errorf("certificate does not contain an RSA public key")
+	info, err := parseSignature(assertion.RawXML)
+	if err != nil {
+		return fmt.Errorf("extract signature: %w", err)
 	}
-	_ = pubKey // Used in production for actual signature verification
 
-	// In production, this would use github.com/russellhaering/go-saml
-	// or github.com/crewjam/saml to verify the XML-Signature.
-	// For now, we verify the assertion contains a Signature element.
-	if !strings.Contains(string(assertion.RawXML), "<ds:Signature") &&
-		!strings.Contains(string(assertion.RawXML), "<Signature") {
-		return fmt.Errorf("assertion does not contain a Signature element")
+	if info.referencedID != "" && assertion.ID != "" && info.referencedID != "#"+assertion.ID {
+		return fmt.Errorf("signature reference URI %q does not match assertion ID %q",
+			info.referencedID, assertion.ID)
+	}
+
+	if err := verifyCryptoSignature(info, cert); err != nil {
+		return fmt.Errorf("signature verification failed: %w", err)
 	}
 
 	return nil

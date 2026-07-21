@@ -219,7 +219,7 @@ func NewWithKeyProvider(cfg *conf.Config, kp crypto.KeyProvider) (*Server, error
 
 	// Build HTTP handler.
 	trustValidator := NewTrustChainValidator(pool)
-	handler := buildHandler(oauthSvc, cfg, rotatingKP, auditPub, trustValidator)
+	handler := buildHandler(oauthSvc, cfg, rotatingKP, auditPub, trustValidator, pool)
 
 	// Wrap with panic recovery so a single bad request cannot crash the process.
 	wrappedHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -301,7 +301,7 @@ func (s *Server) Run(ctx context.Context) error {
 }
 
 // buildHandler creates the HTTP mux with all OAuth/OIDC endpoints.
-func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *service.RotatingKeyProvider, auditPub *audit.Publisher, trustValidator *TrustChainValidator) http.Handler {
+func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *service.RotatingKeyProvider, auditPub *audit.Publisher, trustValidator *TrustChainValidator, pool *pgxpool.Pool) http.Handler {
 	mux := http.NewServeMux()
 	mux.Handle("/metrics", promhttp.Handler())
 
@@ -1092,22 +1092,19 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 			}
 		}
 
-		assertion, err := saml.ParseAssertion(rawXML)
+		// Security: real XML-DSig verification with the configured IdP
+		// certificate (sys_config saml_config.idp_cert). Fails closed: if no
+		// trusted IdP certificate is configured, all assertions are rejected.
+		idpCert, certErr := samlIdpCertificate(r, pool)
+		if certErr != nil {
+			slog.Warn("SAML ACS: no trusted IdP certificate", "error", certErr)
+			writeJSON(w, http.StatusForbidden, map[string]string{"error": "saml_idp_not_configured", "detail": "no trusted IdP certificate configured"})
+			return
+		}
+		assertion, err := saml.VerifySignedAssertion(rawXML, idpCert)
 		if err != nil {
-			writeJSON(w, http.StatusBadRequest, map[string]string{"error": "failed to parse SAML assertion", "detail": err.Error()})
-			return
-		}
-
-		// Security: verify assertion contains a signature element.
-		// In production: use full XML-Sig verification with IdP certificate from sys_config.
-		if err := assertion.ValidateConditions(); err != nil {
-			writeJSON(w, http.StatusForbidden, map[string]string{"error": "assertion validation failed", "detail": err.Error()})
-			return
-		}
-
-		// Security: verify signature is present (reject unsigned assertions)
-		if !strings.Contains(string(rawXML), "<ds:Signature") && !strings.Contains(string(rawXML), "<Signature") {
-			writeJSON(w, http.StatusForbidden, map[string]string{"error": "unsigned_assertion", "detail": "SAML assertion must be signed"})
+			slog.Warn("SAML ACS: assertion verification failed", "error", err)
+			writeJSON(w, http.StatusForbidden, map[string]string{"error": "invalid_signature", "detail": "SAML assertion signature verification failed"})
 			return
 		}
 
