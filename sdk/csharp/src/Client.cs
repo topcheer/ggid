@@ -394,3 +394,11 @@ public class GGIDClient
         return new GGIDException((int)resp.StatusCode, msg);
     }
 }
+
+    public async Task<JsonDocument> ClientCredentialsAsync(string clientId, string clientSecret, string scope = "") {
+        var form = new FormUrlEncodedContent(new Dictionary<string, string> {
+            ["grant_type"] = "client_credentials", ["client_id"] = clientId, ["client_secret"] = clientSecret, ["scope"] = scope
+        });
+        var resp = await _http.PostAsync($"{_baseUrl}/api/v1/oauth/token", form);
+        return JsonDocument.Parse(await resp.Content.ReadAsStringAsync());
+    }

@@ -179,3 +179,7 @@ module GGID
     end
   end
 end
+
+    def client_credentials(client_id:, client_secret:, scope: "")
+      post("/oauth/token", grant_type: "client_credentials", client_id: client_id, client_secret: client_secret, scope: scope)
+    end

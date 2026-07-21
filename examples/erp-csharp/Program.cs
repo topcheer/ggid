@@ -60,7 +60,7 @@ class Program
 
         var token = GetToken(ctx.Request);
         if (token == null) { Json(ctx.Response, 401, new { error = "Bearer token required" }); return; }
-        var perms = ExtractPermissions(token);
+        var perms = VerifyTokenViaIntrospect(token);
 
         if (path == "/api/inventory" && method == "GET") { if (!HasPerm(perms, "inventory:read")) { Forbid(ctx, "inventory:read"); return; } Json(ctx.Response, 200, new { items = inventory, count = inventory.Count }); return; }
         if (path == "/api/inventory" && method == "POST") { if (!HasPerm(perms, "inventory:write")) { Forbid(ctx, "inventory:write"); return; } var b = ToObj(ReadBody(ctx.Request)); b["id"] = $"p{inventory.Count + 1:D3}"; inventory.Add(b); Json(ctx.Response, 201, b); return; }
@@ -74,7 +74,21 @@ class Program
 
     static void Forbid(HttpListenerContext ctx, string perm) => Json(ctx.Response, 403, new { error = $"missing {perm}" });
     static string GetToken(HttpListenerRequest req) { var a = req.Headers["Authorization"]; return a != null && a.StartsWith("Bearer ") ? a.Substring(7) : null; }
-    static List<string> ExtractPermissions(string token) { try { var parts = token.Split('.'); var p = parts[1]; p += new string('=', (4 - p.Length % 4) % 4); var j = Encoding.UTF8.GetString(Convert.FromBase64String(p)); using var d = JsonDocument.Parse(j); if (d.RootElement.TryGetProperty("permissions", out var arr)) { return arr.EnumerateArray().Select(x => x.GetString()).ToList(); } } catch {} return new List<string>(); }
+    static List<string> VerifyTokenViaIntrospect(string token) {
+        try {
+            using var client = new HttpClient();
+            var form = new FormUrlEncodedContent(new Dictionary<string, string> { ["token"] = token, ["client_id"] = "demo", ["client_secret"] = "demo" });
+            client.DefaultRequestHeaders.Add("X-Tenant-ID", TenantId);
+            var resp = client.PostAsync($"{GgidUrl}/api/v1/oauth/introspect", form).Result;
+            if (!resp.IsSuccessStatusCode) return new List<string>();
+            var json = JsonDocument.Parse(resp.Content.ReadAsStringAsync().Result).RootElement;
+            if (json.TryGetProperty("active", out var active) && active.GetBoolean()) {
+                if (json.TryGetProperty("permissions", out var arr))
+                    return arr.EnumerateArray().Select(x => x.GetString()).ToList();
+            }
+        } catch {}
+        return new List<string>();
+    }
     static bool HasPerm(List<string> p, string perm) => p.Contains("admin") || p.Contains(perm);
     static Dictionary<string, object> ReadBody(HttpListenerRequest req) { using var r = new StreamReader(req.InputStream); var b = r.ReadToEnd(); if (string.IsNullOrEmpty(b)) return new(); using var doc = JsonDocument.Parse(b); var result = new Dictionary<string, object>(); foreach (var prop in doc.RootElement.EnumerateObject()) { result[prop.Name] = prop.Value.ValueKind switch { JsonValueKind.Number => prop.Value.GetDouble(), JsonValueKind.True => true, JsonValueKind.False => false, _ => prop.Value.GetString() }; } return result; }
     static Dictionary<string, object> ToObj(Dictionary<string, object> d) => d;

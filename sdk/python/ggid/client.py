@@ -272,3 +272,12 @@ class GGIDClient:
     def delete_webhook(self, token: str, webhook_id: str) -> dict:
         """Delete a webhook by ID."""
         return self._request("DELETE", f"/api/v1/webhooks/{webhook_id}", token=token)
+
+    def client_credentials(self, client_id: str, client_secret: str, scope: str = "") -> dict:
+        """Obtain an access token using client_credentials grant (M2M)."""
+        return self._request("POST", "/oauth/token", {
+            "grant_type": "client_credentials",
+            "client_id": client_id,
+            "client_secret": client_secret,
+            "scope": scope,
+        })

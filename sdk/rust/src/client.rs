@@ -763,3 +763,14 @@ impl GGIDClientBuilder {
         })
     }
 }
+
+    pub async fn client_credentials(&self, client_id: &str, client_secret: &str, scope: &str) -> Result<Value, Box<dyn std::error::Error + Send + Sync>> {
+        let form = vec![
+            ("grant_type", "client_credentials"),
+            ("client_id", client_id),
+            ("client_secret", client_secret),
+            ("scope", scope),
+        ];
+        let resp = self.http.post(format!("{}/api/v1/oauth/token", self.base_url)).form(&form).send().await?;
+        Ok(resp.json().await?)
+    }
