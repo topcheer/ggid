@@ -36,4 +36,13 @@
 - C#: WithJwks() path fixed to /.well-known/jwks.json
 - Java: manual jwksUrl (acceptable)
 
-## Next Target: Java SDK add auto-discovery constructor + C# image rebuild
+## Next Target: Stable — monitoring for regressions, all 7 SDKs auto-discover JWKS
+
+All 7 SDKs now auto-derive JWKS URL from base URL:
+- Go: WithDiscovery() from OIDC discovery document
+- Node: auto-derive from gatewayUrl
+- Python/Ruby/Rust: auto-derive from base_url
+- C#: WithJwks() fixed path
+- Java: JwtVerifier(baseURL) auto-derives (NEW)
+
+Last verification: 8/8 HTTP 200, 0 hacks, stable.
