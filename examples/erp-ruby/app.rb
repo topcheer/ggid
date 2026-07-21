@@ -29,13 +29,15 @@ class ERPApp < Sinatra::Base
     content_type :json
   end
 
-  before %r{(?!/api/auth|/health)} do
-    pass unless request.path_info.start_with?('/api/')
+  before '/api/*' do
+    pass if request.path_info.start_with?('/api/auth/')
     token = request.env['HTTP_AUTHORIZATION'].to_s.sub('Bearer ', '')
     halt 401, { error: 'Bearer token required' }.to_json if token.empty?
     begin
       @claims = $ggid.verify_token(token)
-    rescue
+      $stderr.puts "[ERP] verify OK: user=#{@claims.user_id} perms=#{@claims.permissions.inspect}"
+    rescue => e
+      $stderr.puts "[ERP] verify FAILED: #{e.class}: #{e.message}"
       halt 401, { error: 'invalid token' }.to_json
     end
   end
