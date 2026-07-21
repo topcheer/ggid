@@ -52,3 +52,18 @@
 #### Round 20: auth_code refresh token fix (c78591362), 8/8 stable
 #### Round 21: oauth refresh scope fix (bd7c3b647,14984c4e7), 8/8 stable, 0 hacks
 #### Round 22: IAM review R1 (11 commits), discovery+introspection+PKCE+TOTP, 8/8 stable
+
+## Dimension 1: Authentication Completeness (Round 23)
+- Password grant: 6/7 tenants OK (Rust uses token_exchange, not password grant — correct)
+- Client credentials (Node M2M): OK
+- Token structure: access_token + token_type=Bearer + expires_in=900, consistent across all
+- Refresh token: NOT issued on password grant (even with offline_access scope) — core behavior
+- No-token 401: PASS
+- Token usable: All tokens successfully verify and access demo APIs
+
+### Issues Found
+1. Go/Ruby/Rust inventory empty (items=0) — data initialization issue, not auth
+2. Refresh token not issued on password grant — core layer decision
+3. Node/Python/Java have seeded data (items=2-3), others don't
+
+### Next Dimension: 2 — Authorization Boundaries (role + permission testing)
