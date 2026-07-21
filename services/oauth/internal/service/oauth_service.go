@@ -478,28 +478,42 @@ func (s *OAuthService) ExchangeAuthorizationCode(ctx context.Context, req *Token
 	// family (RFC 6749 §10.4) — without this, web clients can never reach
 	// the refresh_token grant at all.
 	if contains(code.Scope, "offline_access") && client.SupportsGrantType("refresh_token") {
-		refreshPlain, err := pkgcrypto.GenerateRandomToken(32)
+		refreshPlain, err := s.issueRefreshTokenRecord(ctx, code.TenantID, client.ID, code.UserID, code.Scope, "")
 		if err != nil {
-			return nil, errors.Internal("generate refresh token", err)
-		}
-		rec := &domain.RefreshTokenRecord{
-			ID:        uuid.New(),
-			TenantID:  code.TenantID,
-			ClientID:  client.ID,
-			UserID:    code.UserID,
-			TokenHash: hashTokenSHA256(refreshPlain),
-			Scope:     code.Scope,
-			ExpiresAt: time.Now().Add(30 * 24 * time.Hour), // 30 days
-			CreatedAt: time.Now(),
-		}
-		rec.FamilyID = rec.ID.String() // family root
-		if err := s.tokenRepo.StoreRefreshToken(ctx, rec); err != nil {
-			return nil, errors.Internal("store refresh token", err)
+			return nil, err
 		}
 		resp.RefreshToken = refreshPlain
 	}
 
 	return resp, nil
+}
+
+// issueRefreshTokenRecord creates and stores a refresh token record.
+// When familyID is empty, the record roots a new rotation family at its
+// own ID; otherwise it joins the given family.
+func (s *OAuthService) issueRefreshTokenRecord(ctx context.Context, tenantID, clientID, userID uuid.UUID, scope []string, familyID string) (string, error) {
+	refreshPlain, err := pkgcrypto.GenerateRandomToken(32)
+	if err != nil {
+		return "", errors.Internal("generate refresh token", err)
+	}
+	rec := &domain.RefreshTokenRecord{
+		ID:        uuid.New(),
+		TenantID:  tenantID,
+		ClientID:  clientID,
+		UserID:    userID,
+		TokenHash: hashTokenSHA256(refreshPlain),
+		Scope:     scope,
+		ExpiresAt: time.Now().Add(30 * 24 * time.Hour), // 30 days
+		CreatedAt: time.Now(),
+		FamilyID:  familyID,
+	}
+	if rec.FamilyID == "" {
+		rec.FamilyID = rec.ID.String() // family root
+	}
+	if err := s.tokenRepo.StoreRefreshToken(ctx, rec); err != nil {
+		return "", errors.Internal("store refresh token", err)
+	}
+	return refreshPlain, nil
 }
 
 // --- OIDC Discovery ---
@@ -1547,13 +1561,28 @@ func (s *OAuthService) PasswordGrant(ctx context.Context, req *PasswordGrantRequ
 		return nil, fmt.Errorf("sign access token: %w", err)
 	}
 
-	// 4. Issue — TokenResponse doesn't carry username/email (those are in the JWT claims).
-	return &TokenResponse{
+	resp := &TokenResponse{
 		AccessToken: signed,
 		TokenType:   "Bearer",
 		ExpiresIn:   int(expiresAt.Sub(now).Seconds()),
 		Scope:       scopeStr,
-	}, nil
+	}
+
+	// 4. Issue a refresh token when offline_access is requested and the
+	// registered client (if any) allows the refresh_token grant. Unregistered
+	// client IDs keep legacy behavior (no refresh token).
+	if contains(req.Scope, "offline_access") {
+		if client, err := s.clientRepo.GetClientByID(ctx, tenantID, req.ClientID); err == nil && client.SupportsGrantType("refresh_token") {
+			refreshPlain, err := s.issueRefreshTokenRecord(ctx, tenantID, client.ID, userID, req.Scope, "")
+			if err != nil {
+				return nil, err
+			}
+			resp.RefreshToken = refreshPlain
+		}
+	}
+
+	// 5. Issue — TokenResponse doesn't carry username/email (those are in the JWT claims).
+	return resp, nil
 }
 
 // --- Utility functions ---
