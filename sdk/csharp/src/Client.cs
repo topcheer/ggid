@@ -393,12 +393,20 @@ public class GGIDClient
         catch { /* use raw body */ }
         return new GGIDException((int)resp.StatusCode, msg);
     }
-}
 
-    public async Task<JsonDocument> ClientCredentialsAsync(string clientId, string clientSecret, string scope = "") {
+    /// <summary>
+    /// Obtain a token using OAuth2 client_credentials grant (M2M).
+    /// </summary>
+    public async Task<TokenResponse> ClientCredentialsAsync(string clientId, string clientSecret, string scope = "") {
         var form = new FormUrlEncodedContent(new Dictionary<string, string> {
             ["grant_type"] = "client_credentials", ["client_id"] = clientId, ["client_secret"] = clientSecret, ["scope"] = scope
         });
+        _http.DefaultRequestHeaders.Remove("X-Tenant-ID");
+        _http.DefaultRequestHeaders.Add("X-Tenant-ID", _tenantId);
         var resp = await _http.PostAsync($"{_baseUrl}/api/v1/oauth/token", form);
-        return JsonDocument.Parse(await resp.Content.ReadAsStringAsync());
+        var json = await resp.Content.ReadAsStringAsync();
+        if (!resp.IsSuccessStatusCode)
+            throw new GGIDException((int)resp.StatusCode, json);
+        return JsonSerializer.Deserialize<TokenResponse>(json) ?? throw new GGIDException(500, "empty response");
     }
+}

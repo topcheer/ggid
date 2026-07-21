@@ -1,5 +1,6 @@
 FROM mcr.microsoft.com/dotnet/sdk:9.0-alpine AS build
 WORKDIR /src
+COPY sdk/csharp/ ./sdk/
 COPY examples/erp-csharp/ ./erp/
 WORKDIR /src/erp
 RUN dotnet restore

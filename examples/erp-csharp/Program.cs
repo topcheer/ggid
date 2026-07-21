@@ -5,7 +5,8 @@ using System.Net;
 using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
-using System.Net.Http;
+using GGID.SDK;
+using GGID.SDK.Models;
 using System.Linq;
 
 class Program
@@ -13,6 +14,9 @@ class Program
     static string ggidUrl = Environment.GetEnvironmentVariable("GGID_URL") ?? "http://localhost:8080";
     static string tenantId = Environment.GetEnvironmentVariable("TENANT_ID") ?? "00000005-0000-0000-0000-000000000001";
     static int port = int.Parse(Environment.GetEnvironmentVariable("PORT") ?? "9200");
+
+    // GGID SDK client with JWKS signature verification
+    static GGIDClient ggidClient = new GGIDClient(ggidUrl, tenantId).WithJwks();
 
     static List<Dictionary<string, object>> inventory = new()
     {
@@ -45,22 +49,40 @@ class Program
 
         if (path == "/" || path == "/health") { Json(ctx.Response, 200, new { app = "ERP C# Demo", auth = "Password Grant", tenant_id = tenantId }); return; }
 
+        // Login via SDK: GGIDClient.LoginAsync (Password Grant)
         if (path == "/api/auth/login" && method == "POST")
         {
             var body = ReadBody(ctx.Request);
-            using var http = new HttpClient();
-            http.DefaultRequestHeaders.Add("X-Tenant-ID", tenantId);
-            var content = new StringContent(JsonSerializer.Serialize(body), Encoding.UTF8, "application/json");
-            var resp = http.PostAsync($"{ggidUrl}/api/v1/auth/login", content).Result;
-            var json = resp.Content.ReadAsStringAsync().Result;
-            ctx.Response.StatusCode = (int)resp.StatusCode;
-            WriteJson(ctx.Response, json);
+            try
+            {
+                var tokenResp = ggidClient.LoginAsync(
+                    body.GetValueOrDefault("username")?.ToString() ?? "",
+                    body.GetValueOrDefault("password")?.ToString() ?? ""
+                ).Result;
+                Json(ctx.Response, 200, tokenResp);
+            }
+            catch (Exception e)
+            {
+                Json(ctx.Response, 401, new { error = "login failed: " + e.InnerException?.Message ?? e.Message });
+            }
             return;
         }
 
+        // Token verification via SDK: GGIDClient.VerifyTokenAsync (JWKS + RS256)
         var token = GetToken(ctx.Request);
         if (token == null) { Json(ctx.Response, 401, new { error = "Bearer token required" }); return; }
-        var perms = VerifyTokenViaIntrospect(token);
+
+        Claims claims;
+        try
+        {
+            claims = ggidClient.VerifyTokenAsync(token).Result;
+        }
+        catch
+        {
+            Json(ctx.Response, 401, new { error = "invalid token" });
+            return;
+        }
+        var perms = claims.Permissions;
 
         if (path == "/api/inventory" && method == "GET") { if (!HasPerm(perms, "inventory:read")) { Forbid(ctx, "inventory:read"); return; } Json(ctx.Response, 200, new { items = inventory, count = inventory.Count }); return; }
         if (path == "/api/inventory" && method == "POST") { if (!HasPerm(perms, "inventory:write")) { Forbid(ctx, "inventory:write"); return; } var b = ToObj(ReadBody(ctx.Request)); b["id"] = $"p{inventory.Count + 1:D3}"; inventory.Add(b); Json(ctx.Response, 201, b); return; }
@@ -74,22 +96,9 @@ class Program
 
     static void Forbid(HttpListenerContext ctx, string perm) => Json(ctx.Response, 403, new { error = $"missing {perm}" });
     static string GetToken(HttpListenerRequest req) { var a = req.Headers["Authorization"]; return a != null && a.StartsWith("Bearer ") ? a.Substring(7) : null; }
-    static List<string> VerifyTokenViaIntrospect(string token) {
-        try {
-            using var client = new HttpClient();
-            var form = new FormUrlEncodedContent(new Dictionary<string, string> { ["token"] = token, ["client_id"] = "demo", ["client_secret"] = "demo" });
-            client.DefaultRequestHeaders.Add("X-Tenant-ID", TenantId);
-            var resp = client.PostAsync($"{GgidUrl}/api/v1/oauth/introspect", form).Result;
-            if (!resp.IsSuccessStatusCode) return new List<string>();
-            var json = JsonDocument.Parse(resp.Content.ReadAsStringAsync().Result).RootElement;
-            if (json.TryGetProperty("active", out var active) && active.GetBoolean()) {
-                if (json.TryGetProperty("permissions", out var arr))
-                    return arr.EnumerateArray().Select(x => x.GetString()).ToList();
-            }
-        } catch {}
-        return new List<string>();
-    }
+
     static bool HasPerm(List<string> p, string perm) => p.Contains("admin") || p.Contains(perm);
+
     static Dictionary<string, object> ReadBody(HttpListenerRequest req) { using var r = new StreamReader(req.InputStream); var b = r.ReadToEnd(); if (string.IsNullOrEmpty(b)) return new(); using var doc = JsonDocument.Parse(b); var result = new Dictionary<string, object>(); foreach (var prop in doc.RootElement.EnumerateObject()) { result[prop.Name] = prop.Value.ValueKind switch { JsonValueKind.Number => prop.Value.GetDouble(), JsonValueKind.True => true, JsonValueKind.False => false, _ => prop.Value.GetString() }; } return result; }
     static Dictionary<string, object> ToObj(Dictionary<string, object> d) => d;
     static void Json(HttpListenerResponse resp, int code, object data) { resp.StatusCode = code; resp.ContentType = "application/json"; WriteJson(resp, JsonSerializer.Serialize(data)); }

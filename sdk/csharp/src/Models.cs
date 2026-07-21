@@ -10,10 +10,12 @@ public record Claims
     [JsonPropertyName("sub")] public string? UserId { get; init; }
     [JsonPropertyName("tenant_id")] public string? TenantId { get; init; }
     [JsonPropertyName("roles")] public List<string> Roles { get; init; } = new();
+    [JsonPropertyName("permissions")] public List<string> Permissions { get; init; } = new();
     [JsonPropertyName("scope")] public string? Scope { get; init; }
     [JsonPropertyName("exp")] public long Exp { get; init; }
     [JsonPropertyName("iat")] public long Iat { get; init; }
     [JsonPropertyName("iss")] public string? Iss { get; init; }
+    [JsonPropertyName("aud")] public string? Aud { get; init; }
     [JsonPropertyName("email")] public string? Email { get; init; }
     [JsonPropertyName("name")] public string? Name { get; init; }
 }
