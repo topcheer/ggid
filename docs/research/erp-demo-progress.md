@@ -20,14 +20,13 @@
 
 ### Next Target: Iteration — re-verify after arch's issuer unification
 
-#### Round 12-13: Deploy + issuer alignment
-- 7/8 demo images deployed with SDK code (Go/Node/Java/Python/Ruby/Rust/React)
-- C# image build stuck on dotnet restore (code is clean, old image functional)
-- Found issuer mismatch: auth tokens iss=ggid-auth, OAuth tokens iss=https://ggid.iot2.win
-- Fixed: removed hardcoded issuer from Java/Python SDK verification (signature check is primary)
-- React Dockerfile fixed (correct build context)
-- All 8 pods Running, all health 200, all CRUD pass, zero hack
-- **Waiting for**: arch's token issuer unification refactor, then re-verify all SDKs
+#### Round 14: Go SDK gzip fix + Node SDK debugging
+- Go SDK: fixed JWKS `unexpected EOF` — gateway returns gzip-compressed JWKS; added `DisableCompression: true` to http.Transport
+- Go/C# demo: fixed GGID_URL from `https://ggid.iot2.win` to internal `http://ggid-gateway...:8080`
+- Node SDK: identified `ERR_JWS_INVALID` error — caused by auth login endpoint returning 401 (missing Authorization header) after arch's OAuth refactor
+- Python/Java/Ruby/Rust: all working normally (HTTP 200)
+- **Blocked**: Go/Node can't get test tokens — `/api/v1/auth/login` now requires Authorization header. Waiting for arch confirmation.
+- Next: Once auth login is restored, re-verify all 8 demos end-to-end
 
 ---
 
