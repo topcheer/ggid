@@ -122,3 +122,21 @@ Each demo accepts any valid GGID token regardless of tenant.
 - Same-tenant: 200 ✅
 - 8/8 demos still working ✅
 - SDK layer: no action needed (gateway enforces tenant boundary)
+
+## Dimension 5: SDK Cross-language Consistency (Round 27)
+- login() return types: all return typed TokenSet/TokenResponse (except Python/Ruby return dict/Hash) ✅
+- Token field names: all use snake_case JSON tags matching OAuth2 standard ✅
+  Go: access_token/expires_in/token_type/refresh_token
+  Node: same, Rust: same, C#: JsonPropertyName, Java: @JsonProperty
+- verifyToken: all return Claims with permissions field ✅
+  Go: UserInfo.Permissions, Node: JWTClaims.permissions, Python: JWTClaims.permissions
+  Ruby: GGIDUser.permissions, Rust: Claims.permissions, C#: Claims.Permissions
+  Java: GGIDUser.permissions
+- API endpoints: all 7 SDKs use /api/v1/oauth/token ✅
+- Python/Ruby return untyped dict/Hash (vs typed in other SDKs) — acceptable for dynamic languages
+
+### Issues Found
+1. Python/Ruby login() returns raw dict/Hash — no typed TokenSet (minor, language convention)
+2. All SDKs consistent on endpoint paths and field names — GOOD
+
+### Next Dimension: 6 — End-to-end User Experience
