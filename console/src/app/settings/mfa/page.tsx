@@ -118,11 +118,19 @@ export default function MFAPage() {
   const startTotpEnrollment = async () => {
     setError(null);
     try {
-      const data = await apiFetch<{ secret?: string; qr_code_url?: string }>("/api/v1/auth/mfa/setup", {
+      const data = await apiFetch<{ secret?: string; qr_code_uri?: string; qr_code_url?: string; qr_url?: string; device_id?: string }>("/api/v1/auth/mfa/setup", {
         method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({}),
       });
       setTotpSecret(data.secret || "");
-      setTotpQrUrl(data.qr_code_url || "");
+      const qrUrl = data.qr_code_uri || data.qr_code_url || data.qr_url || "";
+      // If it's an otpauth:// URI, convert to QR image
+      if (qrUrl.startsWith("otpauth:")) {
+        setTotpQrUrl(`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(qrUrl)}`);
+      } else {
+        setTotpQrUrl(qrUrl);
+      }
       showMessage(t("mfa.scanQrPrompt"));
     } catch (e) {
       setError(e instanceof Error ? e.message : "Failed to setup TOTP");
