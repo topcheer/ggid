@@ -663,13 +663,23 @@ func JWTAuth(jwks *JWKSClient, required bool, issuer, audience string) func(http
 			jwtTenantID, _ := claims["tenant_id"].(string)
 			headerTenantID := r.Header.Get("X-Tenant-ID")
 			if jwtTenantID != "" && headerTenantID != "" && jwtTenantID != headerTenantID {
-				// Allow if user has platform:admin or Administrator role
+				// Allow cross-tenant access only for verifiable platform:admin
+				// scope — NOT raw role names like "admin"/"administrator" which
+				// any tenant can self-assign (same fix as guardian_security's
+				// 6b97c7a54 for hasAdminScope in rbac_dynamic.go).
 				isPlatformAdmin := false
-				if roles, ok := claims["roles"].([]any); ok {
-					for _, role := range roles {
-						if rs, ok := role.(string); ok {
-							lr := strings.ToLower(rs)
-							if lr == "platform:admin" || lr == "platform administrator" || lr == "administrator" || lr == "admin" {
+				if scopes, ok := claims["scope"].(string); ok {
+					for _, sc := range strings.Fields(scopes) {
+						if strings.EqualFold(sc, "platform:admin") {
+							isPlatformAdmin = true
+							break
+						}
+					}
+				}
+				if !isPlatformAdmin {
+					if roles, ok := claims["roles"].([]any); ok {
+						for _, role := range roles {
+							if rs, ok := role.(string); ok && strings.EqualFold(rs, "platform:admin") {
 								isPlatformAdmin = true
 								break
 							}
