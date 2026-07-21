@@ -1,9 +1,14 @@
 # Cross-Board ERP Demo Progress Tracker
 
-> **Last Updated**: 2026-07-21 07:10 (Round 2 — Deep Audit)
-> **Status: Go SDK FIXED. IAM Platform + SDK gaps identified.**
+> **Last Updated**: 2026-07-21 07:30 (Round 3 — Go demo complete)
+> **Status: Go demo SDK integration COMPLETE. Next: Node demo.**
 
-## Overall: Deploy 8/8 | CRUD 8/8 | **SDK Usage: 3/8** | **Sig Verify: 3/8** | **IAM Issues: 3**
+## Overall: Deploy 8/8 | CRUD 8/8 | **SDK Usage: 4/8** | **Sig Verify: 4/8** | **IAM Issues: 3**
+
+### Next Target: Node demo (score 0/4 — most urgent)
+Node demo doesn't import SDK at all. Uses manual JWKS+crypto in middleware/auth.ts.
+Node SDK already has: verifyToken(), clientCredentials(), introspectToken().
+Need: demo rewrite to import and use SDK methods.
 
 ---
 
