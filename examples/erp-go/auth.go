@@ -61,6 +61,7 @@ func handleOAuthLogin(w http.ResponseWriter, r *http.Request) {
 		"state":                 {state},
 		"code_challenge":        {challenge},
 		"code_challenge_method": {"S256"},
+		"tenant_id":             {tenantID},
 	}
 
 	authURL := fmt.Sprintf("%s/api/v1/oauth/authorize?%s", ggidURL, params.Encode())
