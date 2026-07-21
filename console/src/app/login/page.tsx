@@ -129,27 +129,58 @@ export default function LoginPage() {
     setError("");
 
     try {
-      // Initiate OAuth Authorization Code + PKCE flow.
-      // The actual credential verification happens on the OAuth authorize
-      // page's inline login form, NOT here. Console never touches credentials.
-      const { initOAuthFlow } = await import("@/lib/oauth-pkce");
-      const redirectUri = `${window.location.origin}/auth/callback`;
-      const authUrl = await initOAuthFlow(
-        `${API_BASE}/oauth/authorize`,
-        "ggid-console",
-        redirectUri,
-        resolvedTenantId,
-      );
-      // Save redirect target for after callback
-      const params = new URLSearchParams(window.location.search);
-      const redirectTo = params.get("redirect_to");
-      if (redirectTo) {
-        sessionStorage.setItem("ggid_redirect_after_login", redirectTo);
+      // OAuth2 Password Grant: exchange username/password directly for tokens.
+      // This is the standard flow for first-party console apps.
+      const tokenBody = new URLSearchParams({
+        grant_type: "password",
+        username,
+        password,
+        client_id: "ggid-console",
+        scope: "openid profile email offline_access",
+      });
+
+      const resp = await fetch(`${API_BASE}/oauth/token`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded",
+          "X-Tenant-ID": resolvedTenantId,
+        },
+        body: tokenBody.toString(),
+      });
+
+      const data = await resp.json();
+      if (!resp.ok) {
+        const msg = data.error_description || data.error || "Login failed";
+        // Check for MFA required
+        if (data.error === "mfa_required" || data.mfa_required) {
+          setMfaToken(data.mfa_token || data.access_token || "");
+          setStep("mfa");
+          setLoading(false);
+          return;
+        }
+        // Check for rate limit
+        if (resp.status === 429 && data.retry_after) {
+          setRateLimitSeconds(data.retry_after);
+        }
+        throw new Error(msg);
       }
-      // Redirect browser to OAuth authorize endpoint
-      window.location.href = authUrl;
+
+      // Store tokens
+      localStorage.setItem("ggid_access_token", data.access_token);
+      if (data.refresh_token) {
+        localStorage.setItem("ggid_refresh_token", data.refresh_token);
+      }
+      localStorage.setItem("ggid_tenant_id", resolvedTenantId);
+
+      // Sync WebAuthn signal if passkey support is available
+      syncSignalAfterLogin(data.access_token).catch(() => {});
+
+      // Save redirect target
+      const params = new URLSearchParams(window.location.search);
+      const redirectTo = params.get("redirect_to") || "/";
+      router.replace(redirectTo);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "OAuth initialization failed");
+      setError(err instanceof Error ? err.message : "Login failed");
       setLoading(false);
     }
   };
@@ -159,10 +190,44 @@ export default function LoginPage() {
     setLoading(true);
     setError("");
 
-    // MFA is handled by the OAuth authorize endpoint's inline login page.
-    // The Console login page no longer processes MFA directly.
-    setError("MFA verification is handled during the OAuth login flow. Please restart the login process.");
-    setLoading(false);
+    try {
+      // MFA verification via OAuth token endpoint with MFA code
+      const tokenBody = new URLSearchParams({
+        grant_type: "password",
+        username,
+        password,
+        client_id: "ggid-console",
+        scope: "openid profile email offline_access",
+        mfa_code: useBackupCode ? "" : totpCode,
+        backup_code: useBackupCode ? backupCode : "",
+      });
+
+      const resp = await fetch(`${API_BASE}/oauth/token`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded",
+          "X-Tenant-ID": resolvedTenantId,
+        },
+        body: tokenBody.toString(),
+      });
+
+      const data = await resp.json();
+      if (!resp.ok) {
+        throw new Error(data.error_description || data.error || "MFA verification failed");
+      }
+
+      localStorage.setItem("ggid_access_token", data.access_token);
+      if (data.refresh_token) {
+        localStorage.setItem("ggid_refresh_token", data.refresh_token);
+      }
+
+      const redirectTo = sessionStorage.getItem("ggid_redirect_after_login") || "/";
+      sessionStorage.removeItem("ggid_redirect_after_login");
+      router.replace(redirectTo);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "MFA verification failed");
+      setLoading(false);
+    }
   };
 
   // Social login is handled via OAuth authorize flow, not direct API calls.
