@@ -197,8 +197,11 @@ type OIDCDiscoveryConfig struct {
 	CodeChallengeMethodsSupported     []string `json:"code_challenge_methods_supported"`
 	CheckSessionIFrame                string   `json:"check_session_iframe,omitempty"`
 	BackchannelLogoutSupported        bool     `json:"backchannel_logout_supported"`
+	FrontchannelLogoutSupported       bool     `json:"frontchannel_logout_supported,omitempty"`
 	EndSessionEndpoint                string   `json:"end_session_endpoint,omitempty"`
 	DeviceAuthorizationEndpoint       string   `json:"device_authorization_endpoint,omitempty"`
+	RegistrationEndpoint              string   `json:"registration_endpoint,omitempty"`
+	PushedAuthorizationRequestEndpoint string  `json:"pushed_authorization_request_endpoint,omitempty"`
 }
 
 // JWKSKey represents a single key in a JWKS response.

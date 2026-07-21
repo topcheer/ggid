@@ -96,8 +96,10 @@ func TestSprint14_Discovery_Fields(t *testing.T) {
 	if c.Issuer == "" || c.AuthorizationEndpoint == "" || c.TokenEndpoint == "" || c.JwksURI == "" {
 		t.Error("missing required discovery fields")
 	}
-	if c.CheckSessionIFrame == "" {
-		t.Error("missing check_session_iframe")
+	// check_session_iframe must NOT be advertised until GET /oauth/check_session
+	// is actually implemented (see docs/research/openid-connect-session-management.md).
+	if c.CheckSessionIFrame != "" {
+		t.Error("check_session_iframe advertised but endpoint not implemented")
 	}
 	if !c.BackchannelLogoutSupported {
 		t.Error("expected backchannel_logout_supported")

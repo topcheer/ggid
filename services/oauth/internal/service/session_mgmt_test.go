@@ -233,8 +233,10 @@ func TestSessionMgmt_GenerateSessionState(t *testing.T) {
 func TestSessionMgmt_CheckSessionIFrame(t *testing.T) {
 	svc, _, _, _ := newTestOAuthService()
 	config := svc.GetDiscoveryConfig()
-	if config.CheckSessionIFrame == "" {
-		t.Error("expected non-empty check_session_iframe")
+	// Must stay empty until the check_session endpoint is implemented —
+	// advertising a dead URL breaks RP session-management clients.
+	if config.CheckSessionIFrame != "" {
+		t.Error("check_session_iframe advertised but endpoint not implemented")
 	}
 }
 

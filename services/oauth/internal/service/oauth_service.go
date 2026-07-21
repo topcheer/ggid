@@ -529,7 +529,10 @@ func (s *OAuthService) GetDiscoveryConfig() *domain.OIDCDiscoveryConfig {
 		JwksURI:                           base + "/oauth/jwks",
 		RevocationEndpoint:                base + "/oauth/revoke",
 		IntrospectionEndpoint:             base + "/oauth/introspect",
-		ResponseTypesSupported:            []string{"code", "token", "id_token"},
+		// Only the authorization code flow is implemented (OAuth 2.1 direction);
+		// implicit/hybrid response types (token, id_token) are NOT issued, so
+		// they must not be advertised or standard clients will attempt them.
+		ResponseTypesSupported:            []string{"code"},
 		GrantTypesSupported: []string{"authorization_code", "refresh_token", "client_credentials", "password", "urn:ietf:params:oauth:grant-type:device_code", "urn:ietf:params:oauth:grant-type:token-exchange", "urn:ietf:params:oauth:grant-type:jwt-bearer"},
 		SubjectTypesSupported:             []string{"public"},
 		IDTokenSigningAlgValues:           []string{"RS256"},
@@ -537,10 +540,13 @@ func (s *OAuthService) GetDiscoveryConfig() *domain.OIDCDiscoveryConfig {
 		ClaimsSupported:                   []string{"sub", "email", "name", "picture", "groups", "preferred_username", "updated_at"},
 		TokenEndpointAuthMethodsSupported: []string{"client_secret_basic", "client_secret_post", "none", "tls_client_auth", "self_signed_tls_client_auth"},
 		CodeChallengeMethodsSupported:     []string{"S256", "plain"},
-		CheckSessionIFrame:                base + "/oauth/check_session",
 		BackchannelLogoutSupported:        true,
+		FrontchannelLogoutSupported:       true,
 		EndSessionEndpoint:                base + "/oauth/logout",
+		// Must match the actual registered route (server.go: /api/v1/oauth/device_authorize).
 		DeviceAuthorizationEndpoint:       base + "/api/v1/oauth/device_authorize",
+		RegistrationEndpoint:              base + "/oauth/register",
+		PushedAuthorizationRequestEndpoint: base + "/oauth/par",
 	}
 }
 
