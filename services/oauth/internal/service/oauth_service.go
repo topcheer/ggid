@@ -384,6 +384,7 @@ type TokenExchangeRequest struct {
 	ClientSecret   string // for confidential clients
 	CodeVerifier   string // PKCE code_verifier
 	State          string // OAuth state parameter for CSRF validation
+	Audience       string // optional RFC 8707/Auth0-style target audience for the access token
 }
 
 // TokenResponse is the standard OAuth2 token endpoint response.
@@ -439,7 +440,8 @@ func (s *OAuthService) ExchangeAuthorizationCode(ctx context.Context, req *Token
 	userAttrs := s.fetchUserClaims(ctx, code.TenantID, code.UserID)
 	// OAuth scopes only (openid, profile, email). Permissions/roles are separate claims.
 	oauthScopes := s.mergeOAuthScopes(ctx, code.TenantID, code.UserID, joinScopes(code.Scope))
-	accessToken, expiresIn, err := s.issueAccessTokenWithAMR(code.UserID, code.TenantID, client.ClientID, oauthScopes, code.AMR, code.ACR, code.AuthTime, userAttrs)
+	audience := resolveAudience(req.Audience, client.ClientID)
+	accessToken, expiresIn, err := s.issueAccessTokenWithAMR(code.UserID, code.TenantID, audience, oauthScopes, code.AMR, code.ACR, code.AuthTime, userAttrs)
 	if err != nil {
 		return nil, err
 	}
@@ -624,6 +626,16 @@ func padBytes(b []byte, length int) []byte {
 }
 
 // --- Internal helpers ---
+
+// resolveAudience returns the caller-requested target audience (RFC 8707 /
+// Auth0-style `audience` parameter), falling back to the client_id when not
+// provided — preserving the pre-existing default behavior.
+func resolveAudience(requested, fallback string) string {
+	if requested != "" {
+		return requested
+	}
+	return fallback
+}
 
 func (s *OAuthService) issueAccessToken(userID, tenantID uuid.UUID, audience, scope string) (string, int, error) {
 	return s.issueAccessTokenWithAMR(userID, tenantID, audience, scope, nil, "", time.Time{}, nil)
@@ -1267,6 +1279,7 @@ type RefreshTokenRequest struct {
 	ClientID     string
 	ClientSecret string
 	Scope        []string
+	Audience     string // optional target audience (defaults to client_id)
 }
 
 // RefreshToken issues new tokens using a refresh token.
@@ -1336,7 +1349,7 @@ func (s *OAuthService) RefreshToken(ctx context.Context, req *RefreshTokenReques
 	}
 
 	// 8. Issue new access token.
-	accessToken, expiresIn, err := s.issueAccessToken(record.UserID, req.TenantID, client.ClientID, joinScopes(req.Scope))
+	accessToken, expiresIn, err := s.issueAccessToken(record.UserID, req.TenantID, resolveAudience(req.Audience, client.ClientID), joinScopes(req.Scope))
 	if err != nil {
 		return nil, err
 	}
@@ -1410,6 +1423,7 @@ type ClientCredentialsRequest struct {
 	ClientID     string
 	ClientSecret string
 	Scope        []string
+	Audience     string // optional target audience (defaults to client_id)
 }
 
 // ClientCredentials issues tokens for machine-to-machine authentication.
@@ -1445,7 +1459,7 @@ func (s *OAuthService) ClientCredentials(ctx context.Context, req *ClientCredent
 		// If the caller requested specific scopes, use those (intersected with client scopes).
 		clientPermissions = req.Scope
 	}
-	accessToken, expiresIn, err := s.issueClientAccessToken(req.TenantID, client.ClientID, joinScopes(req.Scope), clientPermissions)
+	accessToken, expiresIn, err := s.issueClientAccessToken(req.TenantID, resolveAudience(req.Audience, client.ClientID), client.ClientID, joinScopes(req.Scope), clientPermissions)
 	if err != nil {
 		return nil, err
 	}
@@ -1461,14 +1475,14 @@ func (s *OAuthService) ClientCredentials(ctx context.Context, req *ClientCredent
 // issueClientAccessToken issues a JWT for M2M (client_credentials) flows.
 // Unlike issueAccessToken, this does NOT query user_roles — instead it uses
 // the client's configured permissions directly.
-func (s *OAuthService) issueClientAccessToken(tenantID uuid.UUID, clientID, scope string, permissions []string) (string, int, error) {
+func (s *OAuthService) issueClientAccessToken(tenantID uuid.UUID, audience, clientID, scope string, permissions []string) (string, int, error) {
 	now := time.Now()
 	expiresAt := now.Add(15 * time.Minute)
 
 	claimsMap := jwt.MapClaims{
 		"iss":         s.issuer,
 		"sub":         uuid.Nil.String(),
-		"aud":         clientID,
+		"aud":         audience,
 		"iat":         now.Unix(),
 		"exp":         expiresAt.Unix(),
 		"jti":         uuid.New().String(),
@@ -1495,6 +1509,7 @@ type PasswordGrantRequest struct {
 	Password string
 	ClientID string
 	Scope    []string
+	Audience string // optional target audience (defaults to client_id)
 }
 
 // PasswordGrant authenticates a user with username/password and issues tokens.
@@ -1550,7 +1565,7 @@ func (s *OAuthService) PasswordGrant(ctx context.Context, req *PasswordGrantRequ
 	claimsMap := jwt.MapClaims{
 		"iss":         s.issuer,
 		"sub":         userID.String(),
-		"aud":         req.ClientID,
+		"aud":         resolveAudience(req.Audience, req.ClientID),
 		"iat":         now.Unix(),
 		"exp":         expiresAt.Unix(),
 		"jti":         uuid.New().String(),

@@ -651,6 +651,7 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 				ClientID:     clientID,
 				ClientSecret: clientSecret,
 				CodeVerifier: r.FormValue("code_verifier"),
+				Audience:     r.FormValue("audience"),
 			})
 		case "refresh_token":
 			resp, tokenErr = oauthSvc.RefreshToken(ctx, &service.RefreshTokenRequest{
@@ -659,6 +660,7 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 				ClientID:     clientID,
 				ClientSecret: clientSecret,
 				Scope:        scopes,
+				Audience:     r.FormValue("audience"),
 			})
 		case "client_credentials":
 			resp, tokenErr = oauthSvc.ClientCredentials(ctx, &service.ClientCredentialsRequest{
@@ -666,6 +668,7 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 				ClientID:     clientID,
 				ClientSecret: clientSecret,
 				Scope:        scopes,
+				Audience:     r.FormValue("audience"),
 			})
 		case "password":
 			// RFC 6749 §4.3: Resource Owner Password Credentials Grant.
@@ -677,6 +680,7 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 				Password:     r.FormValue("password"),
 				ClientID:     clientID,
 				Scope:        scopes,
+				Audience:     r.FormValue("audience"),
 			})
 		case "urn:ietf:params:oauth:grant-type:device_code":
 			resp, tokenErr = oauthSvc.PollDeviceToken(ctx, r.FormValue("device_code"), clientID)
