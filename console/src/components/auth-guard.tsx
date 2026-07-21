@@ -68,8 +68,14 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
         "/admin": "platform",
       };
       const userScopes = JSON.parse(localStorage.getItem("ggid_user_scopes") || '["user:self"]');
-      const isPlatform = userScopes.some((s: string) => s === "platform:admin" || s === "admin");
-      const isTenant = userScopes.some((s: string) => s === "tenant:admin" || s === "manager" || isPlatform);
+      const isPlatform = userScopes.some((s: string) => {
+        const ls = s.toLowerCase();
+        return ls === "platform:admin" || ls === "admin" || ls === "platform administrator" || ls === "platform_admin";
+      });
+      const isTenant = userScopes.some((s: string) => {
+        const ls = s.toLowerCase();
+        return ls === "tenant:admin" || ls === "manager" || ls === "tenant administrator" || ls === "tenant_admin" || isPlatform;
+      });
       for (const [prefix, scope] of Object.entries(ADMIN_PREFIXES)) {
         if (pathname.startsWith(prefix)) {
           if (scope === "tenant" && !isTenant) {

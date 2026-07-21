@@ -214,8 +214,16 @@ export function getUserScopes(): string[] {
 
 export function getUserRole(): UserRole {
   const scopes = getUserScopes();
-  if (scopes.includes("platform:admin") || scopes.includes("admin")) return "platform_admin";
-  if (scopes.includes("tenant:admin") || scopes.includes("manager")) return "tenant_admin";
+  const isPlatform = scopes.some((s) => {
+    const ls = s.toLowerCase();
+    return ls === "platform:admin" || ls === "admin" || ls === "platform administrator" || ls === "platform_admin";
+  });
+  if (isPlatform) return "platform_admin";
+  const isTenant = scopes.some((s) => {
+    const ls = s.toLowerCase();
+    return ls === "tenant:admin" || ls === "manager" || ls === "tenant administrator" || ls === "tenant_admin";
+  });
+  if (isTenant) return "tenant_admin";
   return "user";
 }
 
