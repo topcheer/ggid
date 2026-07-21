@@ -111,6 +111,10 @@ type RefreshTokenRecord struct {
 	Revoked   bool
 	Used      bool
 	CreatedAt time.Time
+	// FamilyID groups tokens created through rotation (RFC 6749 §10.4).
+	// All tokens in a family descend from one initial grant; reuse of any
+	// rotated token revokes the whole family.
+	FamilyID  string
 }
 
 // AuthorizationCode represents a short-lived OAuth2 authorization code.

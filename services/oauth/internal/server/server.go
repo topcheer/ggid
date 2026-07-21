@@ -188,6 +188,12 @@ func NewWithKeyProvider(cfg *conf.Config, kp crypto.KeyProvider) (*Server, error
 	// Inject DB pool for user profile queries (access token claims).
 	if pool != nil {
 		oauthSvc.SetPool(pool)
+		// Task-E: PG-backed refresh-token family registry (RFC 6749 §10.4).
+		familyStore := repository.NewPGTokenFamilyStore(pool)
+		if err := familyStore.EnsureSchema(ctx); err != nil {
+			log.Printf("warning: token family schema error: %v", err)
+		}
+		oauthSvc.SetTokenFamilyStore(familyStore)
 	}
 
 	// Initialize Redis client for refresh token lookup (shared with Auth service).

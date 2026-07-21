@@ -38,6 +38,7 @@ type OAuthService struct {
 	issuer      string
 	rdb         RedisCmdable // optional Redis client for distributed state
 	pool        PoolQuerier  // optional DB pool for user profile queries
+	tokenFamilyStore TokenFamilyStore // optional: RFC 6749 §10.4 family registry
 }
 
 // PoolQuerier is the minimal interface for DB queries (user profile lookup).
@@ -1262,9 +1263,13 @@ func (s *OAuthService) RefreshToken(ctx context.Context, req *RefreshTokenReques
 		}
 	}
 
-	// 5. Reuse detection: if the token was already used or revoked, revoke ALL tokens.
+	// 5. Reuse detection (RFC 6749 §10.4): a used/revoked token presented
+	// again means theft — mark the family and revoke ALL of its tokens.
 	if record.Used || record.Revoked {
-		_ = s.tokenRepo.RevokeAllRefreshTokens(ctx, req.TenantID, client.ID)
+		if record.FamilyID != "" && s.tokenFamilyStore != nil {
+			_ = s.tokenFamilyStore.MarkTheft(ctx, record.FamilyID)
+		}
+		s.revokeFamily(ctx, req.TenantID, client.ID, record.FamilyID)
 		return nil, errors.Unauthenticated("refresh token reuse detected — all tokens revoked")
 	}
 
@@ -1276,6 +1281,13 @@ func (s *OAuthService) RefreshToken(ctx context.Context, req *RefreshTokenReques
 
 	// 7. Mark the old token as used (rotation).
 	_ = s.tokenRepo.RevokeRefreshToken(ctx, req.TenantID, tokenHash)
+
+	// 7a. Resolve the rotation family: inherit from the consumed token, or
+	// start a new family rooted at the consumed token's ID.
+	familyID := record.FamilyID
+	if familyID == "" {
+		familyID = record.ID.String()
+	}
 
 	// 8. Issue new access token.
 	accessToken, expiresIn, err := s.issueAccessToken(record.UserID, req.TenantID, client.ClientID, joinScopes(req.Scope))
@@ -1296,8 +1308,14 @@ func (s *OAuthService) RefreshToken(ctx context.Context, req *RefreshTokenReques
 		TokenHash: hashTokenSHA256(newRefreshToken),
 		Scope:     req.Scope,
 		ExpiresAt: time.Now().Add(30 * 24 * time.Hour), // 30 days
+		FamilyID:  familyID,
 	}
 	_ = s.tokenRepo.StoreRefreshToken(ctx, newRecord)
+
+	// 9a. Register the rotation in the family registry (best-effort).
+	if s.tokenFamilyStore != nil {
+		_ = s.tokenFamilyStore.RegisterRotation(ctx, familyID, record.ID.String(), newRecord.ID.String())
+	}
 
 	return &TokenResponse{
 		AccessToken:  accessToken,

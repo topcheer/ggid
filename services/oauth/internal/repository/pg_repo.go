@@ -349,12 +349,12 @@ var _ = time.Now
 
 func (r *pgIDTokenRepo) GetRefreshToken(ctx context.Context, tenantID uuid.UUID, tokenHash string) (*domain.RefreshTokenRecord, error) {
 	row := r.pool.QueryRow(ctx, `
-		SELECT id, tenant_id, user_id, client_id, token_hash, scope, expires_at, revoked, created_at
+		SELECT id, tenant_id, user_id, client_id, token_hash, scope, expires_at, revoked, used, COALESCE(family_id, ''), created_at
 		FROM oidc_refresh_tokens
 		WHERE tenant_id = $1 AND token_hash = $2`,
 		tenantID, tokenHash)
 	var rec domain.RefreshTokenRecord
-	err := row.Scan(&rec.ID, &rec.TenantID, &rec.UserID, &rec.ClientID, &rec.TokenHash, &rec.Scope, &rec.ExpiresAt, &rec.Revoked, &rec.CreatedAt)
+	err := row.Scan(&rec.ID, &rec.TenantID, &rec.UserID, &rec.ClientID, &rec.TokenHash, &rec.Scope, &rec.ExpiresAt, &rec.Revoked, &rec.Used, &rec.FamilyID, &rec.CreatedAt)
 	if err != nil {
 		return nil, ggiderrors.Wrap(ggiderrors.ErrNotFound, "refresh token not found", err)
 	}
@@ -371,12 +371,23 @@ func (r *pgIDTokenRepo) RevokeAllRefreshTokens(ctx context.Context, tenantID, cl
 
 func (r *pgIDTokenRepo) StoreRefreshToken(ctx context.Context, record *domain.RefreshTokenRecord) error {
 	_, err := r.pool.Exec(ctx, `
-		INSERT INTO oidc_refresh_tokens (id, tenant_id, user_id, client_id, token_hash, scope, expires_at, revoked, used, created_at)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, false, false, $8)`,
+		INSERT INTO oidc_refresh_tokens (id, tenant_id, user_id, client_id, token_hash, scope, expires_at, revoked, used, created_at, family_id)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, false, false, $8, NULLIF($9, ''))`,
 		record.ID, record.TenantID, record.UserID, record.ClientID, record.TokenHash,
-		record.Scope, record.ExpiresAt, record.CreatedAt)
+		record.Scope, record.ExpiresAt, record.CreatedAt, record.FamilyID)
 	if err != nil {
 		return ggiderrors.Wrap(ggiderrors.ErrInternal, "store refresh token", err)
+	}
+	return nil
+}
+
+// RevokeRefreshTokensByFamily revokes every refresh token in a rotation
+// family (RFC 6749 §10.4 reuse response). It satisfies the service-layer
+// FamilyRevoker interface via type assertion.
+func (r *pgIDTokenRepo) RevokeRefreshTokensByFamily(ctx context.Context, tenantID uuid.UUID, familyID string) error {
+	_, err := r.pool.Exec(ctx, `UPDATE oidc_refresh_tokens SET revoked = true WHERE tenant_id = $1 AND family_id = $2`, tenantID, familyID)
+	if err != nil {
+		return ggiderrors.Wrap(ggiderrors.ErrInternal, "revoke refresh token family", err)
 	}
 	return nil
 }
