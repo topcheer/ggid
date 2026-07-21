@@ -63,6 +63,21 @@ func (r *auditMemoryMapRepo2) EnsureSchema(ctx context.Context) error {
 		CREATE TABLE IF NOT EXISTS audit_sig_records (
 			id TEXT PRIMARY KEY, data JSONB DEFAULT '{}', created_at TIMESTAMPTZ DEFAULT now()
 		);
+		-- Task-C: dashboard widgets via generic JSONB helpers. The legacy typed
+		-- schema lacked the "data" column, silently breaking persistence.
+		CREATE TABLE IF NOT EXISTS dashboard_widgets (
+			id TEXT PRIMARY KEY, data JSONB DEFAULT '{}', created_at TIMESTAMPTZ DEFAULT now()
+		);
+		ALTER TABLE dashboard_widgets ADD COLUMN IF NOT EXISTS data JSONB DEFAULT '{}';
+		ALTER TABLE dashboard_widgets ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ DEFAULT now();
+		-- Task-C: alert/anomaly detection rules (/api/v1/audit/rules).
+		CREATE TABLE IF NOT EXISTS audit_anomaly_rules (
+			id TEXT PRIMARY KEY, data JSONB DEFAULT '{}', created_at TIMESTAMPTZ DEFAULT now()
+		);
+		-- Task-C: alert evaluation config singleton (/api/v1/audit/alert-evaluation/config).
+		CREATE TABLE IF NOT EXISTS audit_alert_eval_config (
+			id TEXT PRIMARY KEY, data JSONB DEFAULT '{}', created_at TIMESTAMPTZ DEFAULT now()
+		);
 	`)
 	return err
 }

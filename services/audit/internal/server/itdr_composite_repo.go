@@ -19,6 +19,11 @@ func newCompositeRuleRepo(pool *pgxpool.Pool) *compositeRuleRepo {
 	return &compositeRuleRepo{pool: pool}
 }
 
+// NewCompositeRuleRepo is the exported constructor for wiring from cmd (Task-C).
+func NewCompositeRuleRepo(pool *pgxpool.Pool) *compositeRuleRepo {
+	return newCompositeRuleRepo(pool)
+}
+
 func (r *compositeRuleRepo) EnsureSchema(ctx context.Context) error {
 	if r.pool == nil {
 		return nil

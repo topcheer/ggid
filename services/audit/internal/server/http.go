@@ -1199,7 +1199,24 @@ func (s *HTTPServer) handleRetention(w http.ResponseWriter, r *http.Request) {
 
 // --- Anomaly Detection Rules ---
 
+// anomalyRules is the in-memory fallback for alert/anomaly rules when no DB
+// repo is configured (tests). Production uses the audit_anomaly_rules table
+// via memMapRepo2 (Task-C) so rules survive restarts and are consistent
+// across replicas.
 var anomalyRules = []map[string]any{}
+
+// getAnomalyRules returns the current rule set — DB-backed when available.
+func (s *HTTPServer) getAnomalyRules(ctx context.Context) []map[string]any {
+	if s.memMapRepo2 != nil {
+		if rows, err := s.memMapRepo2.ListJSON(ctx, "audit_anomaly_rules"); err == nil {
+			if rows == nil {
+				return []map[string]any{}
+			}
+			return rows
+		}
+	}
+	return anomalyRules
+}
 
 // GET/POST/DELETE /api/v1/audit/rules
 func (s *HTTPServer) handleAnomalyRules(w http.ResponseWriter, r *http.Request) {
@@ -1211,7 +1228,11 @@ func (s *HTTPServer) handleAnomalyRules(w http.ResponseWriter, r *http.Request) 
 			writeJSON(w, http.StatusOK, map[string]any{"alerts": results})
 			return
 		}
-		writeJSON(w, http.StatusOK, map[string]any{"rules": anomalyRules})
+		rules := s.getAnomalyRules(r.Context())
+		if rules == nil {
+			rules = []map[string]any{}
+		}
+		writeJSON(w, http.StatusOK, map[string]any{"rules": rules})
 
 	case http.MethodPost:
 		var req struct {
@@ -1247,6 +1268,12 @@ func (s *HTTPServer) handleAnomalyRules(w http.ResponseWriter, r *http.Request) 
 			"severity":       req.Severity,
 			"created_at":     time.Now().UTC().Format(time.RFC3339),
 		}
+		if s.memMapRepo2 != nil {
+			if err := s.memMapRepo2.StoreJSON(r.Context(), "audit_anomaly_rules", rule["id"].(string), rule); err != nil {
+				writeJSONError(w, http.StatusInternalServerError, "failed to persist rule")
+				return
+			}
+		}
 		anomalyRules = append(anomalyRules, rule)
 		writeJSON(w, http.StatusCreated, rule)
 
@@ -1255,6 +1282,9 @@ func (s *HTTPServer) handleAnomalyRules(w http.ResponseWriter, r *http.Request) 
 		if idStr == "" {
 			writeJSONError(w, http.StatusBadRequest, "id is required")
 			return
+		}
+		if s.memMapRepo2 != nil {
+			_ = s.memMapRepo2.DeleteJSON(r.Context(), "audit_anomaly_rules", idStr)
 		}
 		filtered := anomalyRules[:0]
 		for _, rule := range anomalyRules {
@@ -1274,10 +1304,10 @@ func (s *HTTPServer) handleAnomalyRules(w http.ResponseWriter, r *http.Request) 
 func (s *HTTPServer) detectAnomalies(r *http.Request) []map[string]any {
 	var alerts []map[string]any
 
-	for _, rule := range anomalyRules {
+	for _, rule := range s.getAnomalyRules(r.Context()) {
 		action, _ := rule["action"].(string)
-		threshold, _ := rule["threshold"].(int)
-		windowMins, _ := rule["window_minutes"].(int)
+		threshold := amGetInt(rule, "threshold")
+		windowMins := amGetInt(rule, "window_minutes")
 
 		since := time.Now().UTC().Add(-time.Duration(windowMins) * time.Minute)
 		tenantIDStr := r.URL.Query().Get("tenant_id")

@@ -42,6 +42,19 @@ func (h *Handler) HandleGroupResourcePublic(w http.ResponseWriter, r *http.Reque
 	h.HandleGroupResource(w, r)
 }
 
+// dbPool returns the service DB pool (nil in tests), ensuring the schema
+// exists on first use.
+func (h *Handler) dbPool(ctx context.Context) *pgxpool.Pool {
+	if h == nil || h.svc == nil {
+		return nil
+	}
+	pool := h.svc.Pool()
+	if pool != nil {
+		ensureGroupSchema(ctx, pool)
+	}
+	return pool
+}
+
 // handleGroupsCollection handles GET (list) and POST (create) for /scim/v2/Groups.
 // SCIM Groups map to GGID roles. Members are users assigned to that role.
 func (h *Handler) handleGroupsCollection(w http.ResponseWriter, r *http.Request) {
@@ -87,6 +100,26 @@ func (h *Handler) listGroups(w http.ResponseWriter, r *http.Request) {
 	}
 
 	groups := h.getMockGroups(tc.TenantID.String(), displayName)
+
+	// Merge DB-persisted groups (Task-C): created via POST and stored in
+	// scim_groups. Role-derived groups keep their IDs; skip ID collisions.
+	if pool := h.dbPool(r.Context()); pool != nil {
+		if dbGroups, err := dbListGroups(r.Context(), pool, tc.TenantID); err == nil {
+			seen := make(map[string]bool, len(groups))
+			for _, g := range groups {
+				seen[g.ID] = true
+			}
+			for _, g := range dbGroups {
+				if seen[g.ID] {
+					continue
+				}
+				if displayName != "" && !strings.EqualFold(g.DisplayName, displayName) {
+					continue
+				}
+				groups = append(groups, g)
+			}
+		}
+	}
 
 	total := len(groups)
 	end := startIndex + count
@@ -140,7 +173,14 @@ func (h *Handler) createGroup(w http.ResponseWriter, r *http.Request) {
 		},
 	}
 
-	_ = tc // tenant scoping in production
+	// Persist to PostgreSQL (Task-C) so groups survive restarts and are
+	// visible to all replicas.
+	if pool := h.dbPool(r.Context()); pool != nil {
+		if err := dbCreateGroup(r.Context(), pool, tc.TenantID, &group); err != nil {
+			writeSCIMError(w, http.StatusInternalServerError, "failed to persist group")
+			return
+		}
+	}
 
 	writeSCIMJSON(w, http.StatusCreated, group)
 }
@@ -171,6 +211,13 @@ func (h *Handler) HandleGroupResource(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) getGroup(w http.ResponseWriter, r *http.Request, id string) {
+	// DB-persisted groups first (Task-C).
+	if pool := h.dbPool(r.Context()); pool != nil {
+		if g, err := dbGetGroup(r.Context(), pool, id); err == nil && g != nil {
+			writeSCIMJSON(w, http.StatusOK, g)
+			return
+		}
+	}
 	groups := h.getMockGroups("", "")
 	for _, g := range groups {
 		if g.ID == id {
@@ -201,48 +248,64 @@ func (h *Handler) patchGroup(w http.ResponseWriter, r *http.Request, id string) 
 	// Try DB-backed approach first; fall back to in-memory for tests
 	var pool *pgxpool.Pool
 	if h.svc != nil {
-		pool = h.svc.Pool()
+		pool = h.dbPool(r.Context())
 	}
 	if pool != nil {
-		// Load group from DB
-		var displayName string
-		err := pool.QueryRow(r.Context(),
-			`SELECT COALESCE(name, '') FROM groups WHERE id::text = $1`, id).Scan(&displayName)
-		if err != nil {
+		// Load group from DB (Task-C: scim_groups table)
+		group, err := dbGetGroup(r.Context(), pool, id)
+		if err != nil || group == nil {
 			writeSCIMError(w, http.StatusNotFound, "group not found")
 			return
 		}
 
-		group := &SCIMGroup{ID: id, DisplayName: displayName}
-
-		// Apply each operation to DB
+		// Apply each operation, then persist once.
 		for _, op := range patch.Operations {
 			opPath := strings.ToLower(strings.TrimSpace(op.Path))
 			switch strings.ToLower(op.Op) {
 			case "replace":
 				if opPath == "displayname" {
 					if name, ok := op.Value.(string); ok {
-						_, err := pool.Exec(r.Context(),
-							`UPDATE groups SET name = $1 WHERE id::text = $2`, name, id)
-						if err != nil {
-							writeSCIMError(w, http.StatusInternalServerError, "failed to update group")
-							return
-						}
 						group.DisplayName = name
+					}
+				} else if opPath == "members" {
+					group.Members = valueToMembers(op.Value)
+				}
+			case "add":
+				if opPath == "members" {
+					newMembers := valueToMembers(op.Value)
+					existing := make(map[string]bool)
+					for _, m := range group.Members {
+						existing[m.Value] = true
+					}
+					for _, m := range newMembers {
+						if !existing[m.Value] {
+							group.Members = append(group.Members, m)
+							existing[m.Value] = true
+						}
 					}
 				}
 			case "remove":
-				if opPath == "members" {
-					_, err := pool.Exec(r.Context(),
-						`DELETE FROM group_members WHERE group_id::text = $1`, id)
-					if err != nil {
-						writeSCIMError(w, http.StatusInternalServerError, "failed to remove members")
-						return
+				if opPath == "members" || strings.HasPrefix(opPath, "members[") {
+					removeIDs := parseMemberFilter(op.Path)
+					if len(removeIDs) > 0 {
+						var filtered []SCIMGroupMember
+						for _, m := range group.Members {
+							if !removeIDs[m.Value] {
+								filtered = append(filtered, m)
+							}
+						}
+						group.Members = filtered
+					} else {
+						group.Members = nil
 					}
 				}
 			}
 		}
 
+		if err := dbUpdateGroup(r.Context(), pool, group); err != nil {
+			writeSCIMError(w, http.StatusInternalServerError, "failed to update group")
+			return
+		}
 		writeSCIMJSON(w, http.StatusOK, group)
 		return
 	}
@@ -377,7 +440,11 @@ func parseMemberFilter(path string) map[string]bool {
 }
 
 func (h *Handler) deleteGroup(w http.ResponseWriter, r *http.Request, id string) {
-	// In production, delete from DB. Return 204 No Content.
+	// Delete persisted group when DB is available (Task-C); 204 either way
+	// per SCIM semantics.
+	if pool := h.dbPool(r.Context()); pool != nil {
+		_ = dbDeleteGroup(r.Context(), pool, id)
+	}
 	w.WriteHeader(http.StatusNoContent)
 }
 

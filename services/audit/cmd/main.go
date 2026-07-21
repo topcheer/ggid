@@ -184,6 +184,15 @@ func main() {
 		}
 		httpAPI.SetMemMapRepo2(mmRepo2)
 
+		// Composite detection rules (Task-C): PG-backed persistence replacing
+		// the in-memory map so rules survive restarts and stay consistent
+		// across replicas.
+		compositeRepo := httpserver.NewCompositeRuleRepo(db)
+		if err := compositeRepo.EnsureSchema(ctx); err != nil {
+			log.Printf("Warning: CompositeRule EnsureSchema failed: %v", err)
+		}
+		httpAPI.SetCompositeRepo(compositeRepo)
+
 		// Threat Intelligence Integration Hub (B-37).
 		threatRepo := repository.NewThreatIntelRepository(db)
 		if err := threatRepo.EnsureSchema(ctx); err != nil {

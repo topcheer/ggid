@@ -35,11 +35,35 @@ var globalAlertEvaluationConfig = &AlertEvaluationConfig{
 	NotifyChannels:     []string{"webhook", "email", "siem"},
 }
 
+// alertEvalConfigDBID is the singleton row ID in audit_alert_eval_config.
+const alertEvalConfigDBID = "global"
+
+// loadAlertEvaluationConfig returns the DB-persisted config when available
+// (Task-C), falling back to the in-memory default otherwise.
+func (s *HTTPServer) loadAlertEvaluationConfig(r *http.Request) *AlertEvaluationConfig {
+	if s.memMapRepo2 == nil {
+		return globalAlertEvaluationConfig
+	}
+	rows, err := s.memMapRepo2.ListJSON(r.Context(), "audit_alert_eval_config")
+	if err != nil || len(rows) == 0 {
+		return globalAlertEvaluationConfig
+	}
+	raw, err := json.Marshal(rows[0])
+	if err != nil {
+		return globalAlertEvaluationConfig
+	}
+	var cfg AlertEvaluationConfig
+	if err := json.Unmarshal(raw, &cfg); err != nil {
+		return globalAlertEvaluationConfig
+	}
+	return &cfg
+}
+
 func (s *HTTPServer) handleAlertEvaluationConfig(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case http.MethodGet:
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(globalAlertEvaluationConfig)
+		json.NewEncoder(w).Encode(s.loadAlertEvaluationConfig(r))
 	case http.MethodPut:
 		var cfg AlertEvaluationConfig
 		if err := json.NewDecoder(r.Body).Decode(&cfg); err != nil {
@@ -47,6 +71,13 @@ func (s *HTTPServer) handleAlertEvaluationConfig(w http.ResponseWriter, r *http.
 			return
 		}
 		globalAlertEvaluationConfig = &cfg
+		// Persist so config survives restarts and is shared across replicas.
+		if s.memMapRepo2 != nil {
+			raw, _ := json.Marshal(&cfg)
+			var m map[string]any
+			_ = json.Unmarshal(raw, &m)
+			_ = s.memMapRepo2.StoreJSON(r.Context(), "audit_alert_eval_config", alertEvalConfigDBID, m)
+		}
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
 		json.NewEncoder(w).Encode(cfg)

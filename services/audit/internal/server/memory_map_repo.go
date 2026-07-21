@@ -31,6 +31,9 @@ func (r *auditMemoryMapRepo) EnsureSchema(ctx context.Context) error {
 			config JSONB DEFAULT '{}', position INT DEFAULT 0,
 			enabled BOOLEAN DEFAULT TRUE, created_at TIMESTAMPTZ DEFAULT now()
 		);
+		-- Task-C: the widget handler uses the generic JSONB helpers which
+		-- require a "data" column. Add it to both new and legacy schemas.
+		ALTER TABLE dashboard_widgets ADD COLUMN IF NOT EXISTS data JSONB DEFAULT '{}';
 		CREATE TABLE IF NOT EXISTS audit_retention_policies (
 			id TEXT PRIMARY KEY, tenant_id UUID, name TEXT, description TEXT,
 			category TEXT, retention_days INT DEFAULT 90,

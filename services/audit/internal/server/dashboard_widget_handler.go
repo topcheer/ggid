@@ -104,6 +104,19 @@ func amGetString(m map[string]any, key string) string {
 	return ""
 }
 
+// amGetInt extracts an int from a map value that may be int or float64 (JSONB).
+func amGetInt(m map[string]any, key string) int {
+	switch v := m[key].(type) {
+	case int:
+		return v
+	case int64:
+		return int(v)
+	case float64:
+		return int(v)
+	}
+	return 0
+}
+
 func amGetBool(m map[string]any, key string) bool {
 	if v, ok := m[key]; ok {
 		switch val := v.(type) {
