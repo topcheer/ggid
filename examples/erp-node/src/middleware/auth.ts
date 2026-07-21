@@ -1,8 +1,10 @@
 /**
- * Auth middleware — JWT verification + permission checks.
- * Uses GGID Node SDK patterns for token verification.
+ * Auth middleware — JWT verification via JWKS + permission checks.
+ * Fetches JWKS manually and uses jsonwebtoken for verification.
  */
 import type { Request, Response, NextFunction } from 'express';
+import jwt from 'jsonwebtoken';
+import crypto from 'crypto';
 
 const GGID_URL = process.env.GGID_URL || 'http://localhost:8080';
 const TENANT = process.env.GGID_TENANT || '00000000-0000-0000-0000-000000000002';
@@ -16,31 +18,59 @@ export interface ERPUser {
   permissions: string[];
 }
 
-// In-memory token cache (production: use Redis or JWT verification)
+// JWKS cache
+let jwksCache: any = null;
+let jwksCachedAt = 0;
+
+async function getSigningKey(kid: string): Promise<string> {
+  const now = Date.now();
+  if (!jwksCache || now - jwksCachedAt > 300000) {
+    const resp = await fetch(`${GGID_URL}/.well-known/jwks.json`);
+    jwksCache = await resp.json();
+    jwksCachedAt = now;
+  }
+
+  const key = jwksCache.keys?.find((k: any) => k.kid === kid);
+  if (!key) throw new Error(`No matching key for kid: ${kid}`);
+
+  // Convert JWK to PEM
+  const pubKey = crypto.createPublicKey({
+    key: {
+      kty: key.kty,
+      n: key.n,
+      e: key.e,
+    },
+    format: 'jwk',
+  });
+  return pubKey.export({ type: 'spki', format: 'pem' }) as string;
+}
+
+// In-memory token cache
 const tokenCache = new Map<string, ERPUser>();
 
-/** Verify JWT token via GGID API and extract user info */
+/** Verify JWT token via JWKS and extract user info */
 export async function verifyToken(token: string): Promise<ERPUser | null> {
-  // Check cache
   if (tokenCache.has(token)) return tokenCache.get(token)!;
 
   try {
-    const res = await fetch(`${GGID_URL}/api/v1/auth/verify`, {
-      headers: { Authorization: `Bearer ${token}`, 'X-Tenant-ID': TENANT },
-    });
-    if (!res.ok) return null;
-    const data = await res.json();
+    // Decode header to get kid
+    const decoded = jwt.decode(token, { complete: true });
+    if (!decoded || typeof decoded === 'string') return null;
+    const kid = decoded.header.kid;
+    if (!kid) return null;
+
+    const signingKey = await getSigningKey(kid);
+    const payload: any = jwt.verify(token, signingKey, { algorithms: ['RS256'] });
 
     const user: ERPUser = {
-      user_id: data.user_id || data.sub || '',
-      username: data.username || data.preferred_username || 'user',
-      email: data.email || '',
-      tenant_id: data.tenant_id || data.tenant_id || '',
-      roles: data.roles || [],
-      permissions: data.permissions || [],
+      user_id: payload.sub || '',
+      username: payload.username || payload.preferred_username || payload.sub || 'user',
+      email: payload.email || '',
+      tenant_id: payload.tenant_id || '',
+      roles: payload.roles || [],
+      permissions: payload.permissions || [],
     };
 
-    // Cache for 5 minutes
     tokenCache.set(token, user);
     setTimeout(() => tokenCache.delete(token), 300000);
     return user;
@@ -51,8 +81,7 @@ export async function verifyToken(token: string): Promise<ERPUser | null> {
 
 /** Check if user has a specific permission */
 export function hasPermission(user: ERPUser, perm: string): boolean {
-  if (user.permissions.includes('admin')) return true;
-  return user.permissions.includes(perm) || user.permissions.includes(`${perm}:all`);
+  return user.permissions.includes(perm);
 }
 
 /** Require authentication middleware */
@@ -84,9 +113,7 @@ export function requirePermission(perm: string) {
 export function requireAny(...perms: string[]) {
   return (req: Request, res: Response, next: NextFunction) => {
     const user = (req as any).user as ERPUser;
-    if (perms.some(p => hasPermission(user, p))) {
-      return next();
-    }
+    if (perms.some(p => hasPermission(user, p))) return next();
     return res.status(403).json({ error: { code: 'forbidden', message: `Requires any of: ${perms.join(', ')}` } });
   };
 }
