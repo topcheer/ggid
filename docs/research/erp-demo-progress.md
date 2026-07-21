@@ -166,3 +166,12 @@ Each demo accepts any valid GGID token regardless of tenant.
 - D4 Tenant isolation: GAP found → FIXED by arch (gateway enforces)
 - D5 SDK consistency: all 7 SDKs aligned on field names + endpoints
 - D6 E2E: full user flow verified, all security checks pass
+
+## Dimension 1 R2: Auth Completeness (Round 29)
+- Password grant: 5/5 tenants PASS (Bearer + 900s) ✅
+- Client credentials (Node M2M): PASS ✅
+- Token usable: 6/6 demos HTTP 200 ✅
+- Issuer: https://ggid.iot2.win ✅
+- 0 hacks
+
+### Next Dimension: 2 — Authorization Boundaries
