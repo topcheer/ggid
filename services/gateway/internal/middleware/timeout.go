@@ -18,7 +18,7 @@ func DefaultTimeoutConfig() *TimeoutConfig {
 	return &TimeoutConfig{
 		Default: 30 * time.Second,
 		RouteConfigs: map[string]time.Duration{
-			"/api/v1/auth/login":    10 * time.Second,
+			"/api/v1/auth/verify":    10 * time.Second,
 			"/api/v1/auth/register": 15 * time.Second,
 			"/api/v1/audit":         60 * time.Second,
 		},

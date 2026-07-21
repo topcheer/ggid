@@ -82,7 +82,7 @@ func BenchmarkRouteTimeoutMatch(b *testing.B) {
 		"/api/v1/users/550e8400-e29b-41d4-a716-446655440000",
 		"/api/v1/scim/v2/Users",
 		"/api/v1/audit/events?tenant_id=xxx",
-		"/api/v1/auth/login",
+		"/api/v1/auth/verify",
 		"/api/v1/oauth/token",
 	}
 

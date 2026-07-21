@@ -143,7 +143,7 @@ async function doLogin(){
 async function doMfa(){
   const code=document.getElementById("mfa-code").value;
   try{
-    const r=await fetch("/api/v1/auth/mfa/login",{method:"POST",headers:{"Content-Type":"application/json","X-Tenant-ID":T},body:JSON.stringify({session_id:window._session,code:code})});
+    const r=await fetch("/api/v1/auth/verify",{method:"POST",headers:{"Content-Type":"application/json","X-Tenant-ID":T},body:JSON.stringify({session_id:window._session,code:code})});
     const d=await r.json();
     if(!r.ok){showErr(d.error||"Invalid code");return}
     localStorage.setItem("ggid_access_token",d.access_token);
@@ -335,7 +335,7 @@ async function doLogin(){
 async function doMfa(){
   const code=document.getElementById("mfa-code").value;
   try{
-    const r=await fetch("/api/v1/auth/mfa/login",{method:"POST",headers:{"Content-Type":"application/json","X-Tenant-ID":T},body:JSON.stringify({session_id:window._session,code:code})});
+    const r=await fetch("/api/v1/auth/verify",{method:"POST",headers:{"Content-Type":"application/json","X-Tenant-ID":T},body:JSON.stringify({session_id:window._session,code:code})});
     const d=await r.json();
     if(!r.ok){showErr(d.error||d.detail||"Invalid code");return}
     token=d.access_token;

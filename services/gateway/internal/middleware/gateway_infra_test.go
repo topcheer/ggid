@@ -16,7 +16,7 @@ func TestTimeoutMiddleware_DefaultConfig(t *testing.T) {
 	if cfg.Default != 30*time.Second {
 		t.Errorf("Default: want 30s, got %v", cfg.Default)
 	}
-	if d := cfg.GetTimeoutForRoute("/api/v1/auth/login"); d != 10*time.Second {
+	if d := cfg.GetTimeoutForRoute("/api/v1/auth/verify"); d != 10*time.Second {
 		t.Errorf("Login timeout: want 10s, got %v", d)
 	}
 	if d := cfg.GetTimeoutForRoute("/api/v1/audit/events"); d != 60*time.Second {

@@ -57,12 +57,12 @@ func TestGenerateOpenAPISpec_EnhancedPathsWithBodies(t *testing.T) {
 func TestGenerateOpenAPISpec_AuthLoginSchema(t *testing.T) {
 	spec := GenerateOpenAPISpec()
 
-	loginPath, ok := spec.Paths["/api/v1/auth/login"]
+	loginPath, ok := spec.Paths["/api/v1/auth/verify"]
 	if !ok {
-		t.Fatal("missing /api/v1/auth/login path")
+		t.Fatal("missing /api/v1/auth/verify path")
 	}
 	if loginPath.Post == nil {
-		t.Fatal("missing POST method on /api/v1/auth/login")
+		t.Fatal("missing POST method on /api/v1/auth/verify")
 	}
 
 	// Verify it has requestBody
@@ -90,7 +90,7 @@ func TestGenerateOpenAPISpec_ResponseSchemas(t *testing.T) {
 	spec := GenerateOpenAPISpec()
 
 	// Check that login has TokenResponse in 200 response
-	loginPath := spec.Paths["/api/v1/auth/login"]
+	loginPath := spec.Paths["/api/v1/auth/verify"]
 	raw, _ := json.Marshal(loginPath.Post)
 	var m map[string]any
 	json.Unmarshal(raw, &m)

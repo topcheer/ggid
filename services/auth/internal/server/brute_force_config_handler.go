@@ -23,7 +23,7 @@ func (h *Handler) handleBruteForceConfig(w http.ResponseWriter, r *http.Request)
 			LockoutDurationMinutes: 30,
 			ProgressiveBackoff:     true,
 			PerEndpointOverrides: map[string]int{
-				"/api/v1/auth/login":    5,
+				"/api/v1/auth/verify":    5,
 				"/api/v1/auth/mfa/verify": 3,
 				"/api/v1/oauth/token":  10,
 			},

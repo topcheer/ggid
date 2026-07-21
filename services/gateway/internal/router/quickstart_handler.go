@@ -51,7 +51,7 @@ func (gw *Gateway) handleQuickstart(w http.ResponseWriter, r *http.Request) {
 			Status:        "already_initialized",
 			AdminUsername: "admin",
 			NextSteps: []string{
-				"POST /api/v1/auth/login with admin credentials to get a fresh token",
+				"POST /api/v1/auth/verify with admin credentials to get a fresh token",
 				"GET /api/v1/webhooks/events/catalog to see subscribable events",
 			},
 		})
@@ -98,7 +98,7 @@ func (gw *Gateway) handleQuickstart(w http.ResponseWriter, r *http.Request) {
 	baseURL := "http://localhost:8080"
 	sampleCurl := []string{
 		"# 1. Login as admin",
-		"curl -X POST " + baseURL + "/api/v1/auth/login \\\n  -H 'Content-Type: application/json' \\\n  -H 'X-Tenant-ID: " + tenantID.String() + "' \\\n  -d '{\"username\":\"" + req.AdminUsername + "\",\"password\":\"" + req.AdminPassword + "\"}'",
+		"curl -X POST " + baseURL + "/api/v1/auth/verify \\\n  -H 'Content-Type: application/json' \\\n  -H 'X-Tenant-ID: " + tenantID.String() + "' \\\n  -d '{\"username\":\"" + req.AdminUsername + "\",\"password\":\"" + req.AdminPassword + "\"}'",
 		"",
 		"# 2. List users",
 		"curl " + baseURL + "/api/v1/users \\\n  -H 'Authorization: Bearer <TOKEN>' \\\n  -H 'X-Tenant-ID: " + tenantID.String() + "'",
@@ -120,7 +120,7 @@ func (gw *Gateway) handleQuickstart(w http.ResponseWriter, r *http.Request) {
 		SampleCurl:        sampleCurl,
 		NextSteps: []string{
 			"Save the OAuth client secret — it won't be shown again",
-			"Login at POST /api/v1/auth/login",
+			"Login at POST /api/v1/auth/verify",
 			"Explore webhook events at GET /api/v1/webhooks/events/catalog",
 			"Read docs at GET /api/v1/system/status",
 		},
@@ -161,7 +161,7 @@ func (gw *Gateway) handleSystemStatus(w http.ResponseWriter, r *http.Request) {
 		client := &http.Client{Timeout: 3 * time.Second}
 		tenantID := uuid.MustParse("00000000-0000-0000-0000-000000000001")
 		loginBody := `{"username":"__setup_probe__","password":"__nonexistent__"}`
-		req, _ := http.NewRequest("POST", authURL+"/api/v1/auth/login", strings.NewReader(loginBody))
+		req, _ := http.NewRequest("POST", authURL+"/api/v1/auth/verify", strings.NewReader(loginBody))
 		req.Header.Set("Content-Type", "application/json")
 		req.Header.Set("X-Tenant-ID", tenantID.String())
 		if resp, err := client.Do(req); err == nil {

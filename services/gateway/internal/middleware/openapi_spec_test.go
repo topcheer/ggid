@@ -42,7 +42,7 @@ func TestSwaggerUIHandler(t *testing.T) {
 func TestOpenAPIPaths_Coverage(t *testing.T) {
 	spec := GenerateOpenAPISpec()
 	required := []string{
-		"/api/v1/auth/login", "/api/v1/auth/register",
+		"/api/v1/auth/verify", "/api/v1/auth/register",
 		"/api/v1/identity/users", "/api/v1/oauth/token",
 		"/api/v1/policy/authorize", "/api/v1/risk/evaluate",
 		"/api/v1/audit/events", "/api/v1/mdm/connectors",

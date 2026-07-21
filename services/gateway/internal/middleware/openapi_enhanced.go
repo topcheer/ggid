@@ -11,7 +11,7 @@ package middleware
 // Called after addAuthPaths to overwrite the basic entries.
 func enhanceAuthPaths(m map[string]OpenAPIPath) {
 	// POST /api/v1/auth/login
-	m["/api/v1/auth/login"] = OpenAPIPath{
+	m["/api/v1/auth/verify"] = OpenAPIPath{
 		Post: enhancedOp([]string{"Auth"}, "User login",
 			"Authenticate with username/password. Returns JWT access + refresh tokens.").
 			WithBody("LoginRequest", "Login credentials", true).

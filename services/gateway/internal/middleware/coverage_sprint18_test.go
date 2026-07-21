@@ -209,7 +209,7 @@ func TestTimeoutMiddleware_Timeout_C18(t *testing.T) {
 
 func TestTimeoutMiddleware_GetTimeoutForRoute_C18(t *testing.T) {
 	cfg := DefaultTimeoutConfig()
-	if d := cfg.GetTimeoutForRoute("/api/v1/auth/login"); d != 10*time.Second {
+	if d := cfg.GetTimeoutForRoute("/api/v1/auth/verify"); d != 10*time.Second {
 		t.Errorf("login timeout = %v, want 10s", d)
 	}
 	if d := cfg.GetTimeoutForRoute("/api/v1/unknown"); d != 30*time.Second {

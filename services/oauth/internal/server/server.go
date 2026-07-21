@@ -1244,7 +1244,7 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 
 		// If no bearer token, redirect to login with callback
 		if bearerToken == "" {
-			loginURL := cfg.Issuer + "/api/v1/auth/login?redirect=/saml/idp/sso&SAMLRequest=" + samlRequestB64
+			loginURL := cfg.Issuer + "/api/v1/auth/verify?redirect=/saml/idp/sso&SAMLRequest=" + samlRequestB64
 			if relayState != "" {
 				loginURL += "&RelayState=" + relayState
 			}

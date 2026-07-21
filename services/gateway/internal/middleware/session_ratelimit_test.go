@@ -16,7 +16,7 @@ func TestRateLimiter_AllowsUnderLimit(t *testing.T) {
 	}))
 
 	for i := 0; i < 5; i++ {
-		req := httptest.NewRequest("POST", "/api/v1/auth/login", nil)
+		req := httptest.NewRequest("POST", "/api/v1/auth/verify", nil)
 		req.RemoteAddr = "1.2.3.4:5678"
 		w := httptest.NewRecorder()
 		handler.ServeHTTP(w, req)
@@ -33,12 +33,12 @@ func TestRateLimiter_BlocksOverLimit(t *testing.T) {
 	}))
 
 	for i := 0; i < 3; i++ {
-		req := httptest.NewRequest("POST", "/api/v1/auth/login", nil)
+		req := httptest.NewRequest("POST", "/api/v1/auth/verify", nil)
 		req.RemoteAddr = "1.2.3.4:5678"
 		handler.ServeHTTP(httptest.NewRecorder(), req)
 	}
 
-	req := httptest.NewRequest("POST", "/api/v1/auth/login", nil)
+	req := httptest.NewRequest("POST", "/api/v1/auth/verify", nil)
 	req.RemoteAddr = "1.2.3.4:5678"
 	w := httptest.NewRecorder()
 	handler.ServeHTTP(w, req)
@@ -62,13 +62,13 @@ func TestRateLimiter_DifferentIPsIndependent(t *testing.T) {
 
 	// Exhaust IP A
 	for i := 0; i < 2; i++ {
-		req := httptest.NewRequest("POST", "/api/v1/auth/login", nil)
+		req := httptest.NewRequest("POST", "/api/v1/auth/verify", nil)
 		req.RemoteAddr = "1.1.1.1:1"
 		handler.ServeHTTP(httptest.NewRecorder(), req)
 	}
 
 	// IP B should still work
-	req := httptest.NewRequest("POST", "/api/v1/auth/login", nil)
+	req := httptest.NewRequest("POST", "/api/v1/auth/verify", nil)
 	req.RemoteAddr = "2.2.2.2:2"
 	w := httptest.NewRecorder()
 	handler.ServeHTTP(w, req)
@@ -148,7 +148,7 @@ func TestSessionManager_NilRedis_PassesThrough(t *testing.T) {
 	}))
 
 	// Public path
-	req := httptest.NewRequest("GET", "/api/v1/auth/login", nil)
+	req := httptest.NewRequest("GET", "/api/v1/auth/verify", nil)
 	handler.ServeHTTP(httptest.NewRecorder(), req)
 	if !called {
 		t.Error("handler should be called for public path")

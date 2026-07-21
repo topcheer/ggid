@@ -62,7 +62,7 @@ func TestInputValidationMiddleware_RejectsSQLi(t *testing.T) {
 	body := `{"username":"' OR 1=1--","password":"test"}`
 	// Use strings.NewReader directly so httptest.NewRequest can detect ContentLength.
 	// io.NopCloser wrapping hides the length, causing ContentLength=-1 which skips validation.
-	req := httptest.NewRequest("POST", "/api/v1/auth/login", strings.NewReader(body))
+	req := httptest.NewRequest("POST", "/api/v1/auth/verify", strings.NewReader(body))
 	req.Header.Set("Content-Type", "application/json")
 	w := httptest.NewRecorder()
 
@@ -81,7 +81,7 @@ func TestInputValidationMiddleware_RejectsSQLi(t *testing.T) {
 
 func TestInputValidationMiddleware_AllowsClean(t *testing.T) {
 	body := `{"username":"testuser","password":"Password123"}`
-	req := httptest.NewRequest("POST", "/api/v1/auth/login", strings.NewReader(body))
+	req := httptest.NewRequest("POST", "/api/v1/auth/verify", strings.NewReader(body))
 	req.Header.Set("Content-Type", "application/json")
 	w := httptest.NewRecorder()
 

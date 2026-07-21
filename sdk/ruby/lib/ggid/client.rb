@@ -49,10 +49,8 @@ module GGID
     #
     # @return [Hash] token response with access_token, refresh_token, etc.
     def login(username, password)
-      http_post("/api/v1/auth/login", body: {
-        username: username,
-        password: password,
-      })
+      form_post("/api/v1/oauth/token",
+               grant_type: "password", username: username, password: password)
     end
 
     # ── User Management ────────────────────────────────────────

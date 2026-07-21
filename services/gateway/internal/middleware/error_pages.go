@@ -183,7 +183,7 @@ type RouteBodySizeConfig struct {
 func NewRouteBodySizeConfig() *RouteBodySizeConfig {
 	return &RouteBodySizeConfig{
 		Limits: map[string]int64{
-			"/api/v1/auth/login":    1 * 1024,       // 1KB for login
+			"/api/v1/auth/verify":    1 * 1024,       // 1KB for login
 			"/api/v1/auth/register": 2 * 1024,       // 2KB for register
 			"/api/v1/audit":         0,              // unlimited for audit queries
 		},

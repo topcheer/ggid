@@ -65,7 +65,7 @@ func TestOpenAPIAggregator_WithMockFetcher(t *testing.T) {
 				OpenAPI: "3.0.3",
 				Info:    OpenAPIInfo{Title: "Auth Service", Version: "1.0"},
 				Paths: map[string]map[string]any{
-					"/login":          {"post": map[string]any{"summary": "Login"}},
+					"/verify":          {"post": map[string]any{"summary": "Verify"}},
 					"/register":       {"post": map[string]any{"summary": "Register"}},
 				},
 			},
@@ -83,8 +83,8 @@ func TestOpenAPIAggregator_WithMockFetcher(t *testing.T) {
 	if len(spec.Paths) != 2 {
 		t.Errorf("expected 2 paths, got %d", len(spec.Paths))
 	}
-	if _, ok := spec.Paths["/api/v1/auth/login"]; !ok {
-		t.Error("expected /api/v1/auth/login in merged paths")
+	if _, ok := spec.Paths["/api/v1/auth/verify"]; !ok {
+		t.Error("expected /api/v1/auth/verify in merged paths")
 	}
 }
 

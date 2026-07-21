@@ -313,7 +313,7 @@ func TestRouteBodySizeConfig_GetLimit(t *testing.T) {
 		path     string
 		expected int64
 	}{
-		{"/api/v1/auth/login", 1024},
+		{"/api/v1/auth/verify", 1024},
 		{"/api/v1/auth/register", 2048},
 		{"/api/v1/audit/events", 0}, // unlimited
 		{"/api/v1/users", 10 * 1024 * 1024}, // default
@@ -340,7 +340,7 @@ func TestRouteBodySizeMiddleware(t *testing.T) {
 
 	// Normal-sized body should pass
 	w := httptest.NewRecorder()
-	r := httptest.NewRequest(http.MethodPost, "/api/v1/auth/login", strings.NewReader("small body"))
+	r := httptest.NewRequest(http.MethodPost, "/api/v1/auth/verify", strings.NewReader("small body"))
 	handler.ServeHTTP(w, r)
 
 	if w.Code != http.StatusOK {

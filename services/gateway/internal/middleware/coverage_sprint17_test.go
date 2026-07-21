@@ -144,7 +144,7 @@ func TestSessionMiddleware_PublicPath_C17(t *testing.T) {
 		w.WriteHeader(http.StatusOK)
 	}))
 	rr := httptest.NewRecorder()
-	req := httptest.NewRequest("POST", "/api/v1/auth/login", nil)
+	req := httptest.NewRequest("POST", "/api/v1/auth/verify", nil)
 	h.ServeHTTP(rr, req)
 	if !called {
 		t.Error("public path should pass through")
@@ -648,7 +648,7 @@ func TestIsPublicPath_C17(t *testing.T) {
 	}{
 		{"/healthz", true},
 		{"/.well-known/jwks.json", true},
-		{"/api/v1/auth/login", true},
+		{"/api/v1/auth/verify", true},
 		{"/api/v1/auth/social/google", true},
 		{"/oauth/authorize", true},
 		{"/saml/login", true},

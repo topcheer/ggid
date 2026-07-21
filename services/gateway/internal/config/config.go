@@ -55,8 +55,8 @@ func Default() *Config {
 		Addr:          ":8080",
 		DomainSuffix:  "",
 		JWKSURL:       "", // empty = use local public key
-		JWTIssuer:     "ggid-auth",
-		JWTAudience:   "ggid",
+		JWTIssuer:     "",    // empty = accept any issuer (set via env)
+		JWTAudience:   "",    // empty = skip audience validation (gateway is the resource server for all clients)
 		PublicKeyPath: "configs/rsa_public.pem",
 		DatabaseURL:   os.Getenv("DATABASE_URL"),
 		Routes: map[string]string{

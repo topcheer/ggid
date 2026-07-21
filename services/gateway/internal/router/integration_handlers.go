@@ -214,7 +214,8 @@ func (gw *Gateway) handleSystemBootstrap(w http.ResponseWriter, r *http.Request)
 	}
 
 	// Step 1: Create tenant record in DB via identity service.
-	tenantID := uuid.MustParse("00000000-0000-0000-0000-000000000001")
+	// The identity service generates a real UUID — no hardcoded tenant IDs.
+	var tenantID uuid.UUID
 	identityURL := gw.serviceURL("/api/v1/users")
 	client := &http.Client{Timeout: 10 * time.Second}
 
@@ -228,9 +229,41 @@ func (gw *Gateway) handleSystemBootstrap(w http.ResponseWriter, r *http.Request)
 	if err != nil {
 		log.Printf("bootstrap: create tenant failed (non-fatal): %v", err)
 	} else {
-		io.ReadAll(tenantResp.Body)
+		tenantRespBody, _ := io.ReadAll(tenantResp.Body)
 		tenantResp.Body.Close()
 		log.Printf("bootstrap: tenant created (status %d)", tenantResp.StatusCode)
+		// Parse the tenant ID from the response.
+		var tenantResult map[string]any
+		if json.Unmarshal(tenantRespBody, &tenantResult) == nil {
+			if idStr, ok := tenantResult["tenant_id"].(string); ok {
+				if parsed, err := uuid.Parse(idStr); err == nil {
+					tenantID = parsed
+				}
+			}
+		}
+	}
+
+	// If tenant creation failed (e.g., already exists), resolve by slug.
+	if tenantID == uuid.Nil {
+		resolveReq, _ := http.NewRequestWithContext(r.Context(), "GET", identityURL+"/api/v1/tenants/resolve?slug=default", nil)
+		resolveResp, err := client.Do(resolveReq)
+		if err == nil {
+			resolveBody, _ := io.ReadAll(resolveResp.Body)
+			resolveResp.Body.Close()
+			var resolveResult map[string]any
+			if json.Unmarshal(resolveBody, &resolveResult) == nil {
+				if idStr, ok := resolveResult["tenant_id"].(string); ok {
+					if parsed, err := uuid.Parse(idStr); err == nil {
+						tenantID = parsed
+					}
+				}
+			}
+		}
+	}
+
+	if tenantID == uuid.Nil {
+		writeGatewayJSONError(w, http.StatusInternalServerError, "failed to create or resolve tenant")
+		return
 	}
 
 	// Step 2: Register admin user via auth service.
@@ -298,29 +331,6 @@ func (gw *Gateway) handleSystemBootstrap(w http.ResponseWriter, r *http.Request)
 			}
 		}
 	}
-
-	// Step 3: Login to get JWT token.
-	loginBody, _ := json.Marshal(map[string]string{
-		"username": req.AdminUsername,
-		"password": req.AdminPassword,
-	})
-	loginResp, err := client.Post(authURL+"/api/v1/auth/login", "application/json", bytes.NewReader(loginBody))
-	// Login needs X-Tenant-ID header for tenant context
-	loginReq, _ := http.NewRequestWithContext(r.Context(), "POST", authURL+"/api/v1/auth/login", bytes.NewReader(loginBody))
-	loginReq.Header.Set("Content-Type", "application/json")
-	loginReq.Header.Set("X-Tenant-ID", tenantID.String())
-	loginResp, err = client.Do(loginReq)
-	if err != nil {
-		writeGatewayJSONError(w, http.StatusBadGateway, "login failed after registration: "+err.Error())
-		return
-	}
-	loginRespBody, _ := io.ReadAll(loginResp.Body)
-	loginResp.Body.Close()
-
-	var loginResult map[string]any
-	json.Unmarshal(loginRespBody, &loginResult)
-
-	log.Printf("bootstrap: admin user %s registered, login status: %d", req.AdminUsername, loginResp.StatusCode)
 
 	// Step 3: Register Console as an OAuth client (Authorization Code + PKCE).
 	// This is the ONLY way to authenticate to the Console after bootstrap.

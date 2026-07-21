@@ -185,12 +185,13 @@ impl GGIDClient {
     ) -> Result<TokenResponse, GGIDError> {
         let resp = self
             .http
-            .post(format!("{}/api/v1/auth/login", self.base_url))
+            .post(format!("{}/api/v1/oauth/token", self.base_url))
             .header("X-Tenant-ID", &self.tenant_id)
-            .json(&json!({
-                "username": username,
-                "password": password,
-            }))
+            .form(&[
+                ("grant_type", "password"),
+                ("username", username),
+                ("password", password),
+            ])
             .send()
             .await?;
 

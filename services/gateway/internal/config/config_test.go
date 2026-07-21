@@ -9,11 +9,11 @@ func TestConfig_Default(t *testing.T) {
 	if cfg.Addr != ":8080" {
 		t.Errorf("expected addr :8080, got %s", cfg.Addr)
 	}
-	if cfg.JWTIssuer != "ggid-auth" {
-		t.Errorf("expected issuer ggid-auth, got %s", cfg.JWTIssuer)
+	if cfg.JWTIssuer != "" {
+		t.Errorf("expected empty issuer, got %s", cfg.JWTIssuer)
 	}
-	if cfg.JWTAudience != "ggid" {
-		t.Errorf("expected audience ggid, got %s", cfg.JWTAudience)
+	if cfg.JWTAudience != "" {
+		t.Errorf("expected empty audience, got %s", cfg.JWTAudience)
 	}
 	if cfg.PublicKeyPath != "configs/rsa_public.pem" {
 		t.Errorf("unexpected public key path: %s", cfg.PublicKeyPath)

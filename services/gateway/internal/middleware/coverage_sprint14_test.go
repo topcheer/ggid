@@ -103,7 +103,7 @@ func TestRateLimiter_LoginEndpoint(t *testing.T) {
 	handler := rl.Middleware(next)
 
 	for i := 0; i < 2; i++ {
-		req := httptest.NewRequest("POST", "/api/v1/auth/login", nil)
+		req := httptest.NewRequest("POST", "/api/v1/auth/verify", nil)
 		req.RemoteAddr = "10.0.0.5:1234"
 		rr := httptest.NewRecorder()
 		handler.ServeHTTP(rr, req)
@@ -112,7 +112,7 @@ func TestRateLimiter_LoginEndpoint(t *testing.T) {
 		}
 	}
 	// Third should be limited
-	req := httptest.NewRequest("POST", "/api/v1/auth/login", nil)
+	req := httptest.NewRequest("POST", "/api/v1/auth/verify", nil)
 	req.RemoteAddr = "10.0.0.5:1234"
 	rr := httptest.NewRecorder()
 	handler.ServeHTTP(rr, req)

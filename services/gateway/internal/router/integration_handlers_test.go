@@ -13,7 +13,8 @@ import (
 func newTestConfig(authURL string) *config.Config {
 	return &config.Config{
 		Routes: map[string]string{
-			"/api/v1/auth": authURL,
+			"/api/v1/auth":  authURL,
+			"/api/v1/users": authURL, // identity service (for tenant creation)
 		},
 	}
 }
@@ -55,9 +56,10 @@ func TestBootstrap_CallsAuthService(t *testing.T) {
 		strings.NewReader(`{"admin_username":"admin","admin_email":"a@b.com","admin_password":"password123","tenant_name":"My Org"}`))
 	w := httptest.NewRecorder()
 	gw.handleSystemBootstrap(w, req)
-	// Without a real auth service running, expect 502 Bad Gateway
-	if w.Code != http.StatusBadGateway {
-		t.Errorf("expected 502 (no auth service in test), got %d", w.Code)
+	// Without a real identity service running (tenant creation fails and
+	// slug resolution also fails), expect 500.
+	if w.Code != http.StatusInternalServerError {
+		t.Errorf("expected 500 (no identity service in test), got %d", w.Code)
 	}
 }
 
@@ -91,6 +93,12 @@ func TestBootstrap_ShortPassword(t *testing.T) {
 func TestBootstrap_WithMockAuthService(t *testing.T) {
 	// Create a mock auth service that handles register + verify
 	mockAuth := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path == "/api/v1/tenants" {
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusCreated)
+			w.Write([]byte(`{"tenant_id":"550e8400-e29b-41d4-a716-446655440000"}`))
+			return
+		}
 		if r.URL.Path == "/api/v1/auth/register" {
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusCreated)

@@ -106,7 +106,7 @@ func TestIsPublicPath_Comprehensive(t *testing.T) {
 	}{
 		{"/healthz", true},
 		{"/.well-known/jwks.json", true},
-		{"/api/v1/auth/login", true},
+		{"/api/v1/auth/verify", true},
 		{"/api/v1/auth/register", true},
 		{"/api/v1/auth/social/github", true},
 		{"/oauth/authorize", true},

@@ -22,7 +22,7 @@ func (h *Handler) handleLockoutPolicyConfig(w http.ResponseWriter, r *http.Reque
 			LockoutDurationMins: 30,
 			ProgressiveBackoff:  true,
 			PerEndpointConfig: map[string]int{
-				"/api/v1/auth/login":     5,
+				"/api/v1/auth/verify":     5,
 				"/api/v1/auth/mfa/verify": 3,
 				"/api/v1/oauth/token":    10,
 			},

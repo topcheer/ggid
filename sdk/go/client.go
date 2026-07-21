@@ -221,10 +221,21 @@ func (e *APIError) IsRateLimited() bool { return e.StatusCode == http.StatusTooM
 // Auth operations
 // ---------------------------------------------------------------------------
 
-// Login authenticates a user with username/password and returns tokens.
+// Login authenticates via OAuth2 password grant.
 func (c *Client) Login(ctx context.Context, req *LoginRequest) (*TokenSet, error) {
+	form := url.Values{
+		"grant_type": {"password"},
+		"username":  {req.Username},
+		"password":  {req.Password},
+	}
+	postReq, err := http.NewRequestWithContext(ctx, http.MethodPost,
+		c.baseURL+"/api/v1/oauth/token", strings.NewReader(form.Encode()))
+	if err != nil {
+		return nil, err
+	}
+	postReq.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	var ts TokenSet
-	if err := c.post(ctx, "/api/v1/auth/login", req, &ts); err != nil {
+	if err := c.do(postReq, &ts); err != nil {
 		return nil, err
 	}
 	return &ts, nil

@@ -17,7 +17,7 @@ package server
 // @Failure 401 {object} map[string]string "invalid credentials"
 // @Failure 423 {object} map[string]string "account locked"
 // @Failure 429 {object} map[string]string "too many login attempts"
-// @Router /api/v1/auth/login [post]
+// @Router /api/v1/auth/verify [post]
 
 // Register godoc
 // @Summary Register new user

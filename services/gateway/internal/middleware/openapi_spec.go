@@ -184,7 +184,7 @@ func addAuthPaths(m map[string]OpenAPIPath) {
 	m["/api/v1/auth/lateral-movement/detect"] = OpenAPIPath{Get: op([]string{"Auth"}, "V1 Auth Lateral Movement Detect")}
 	m["/api/v1/auth/lockout-policy"] = OpenAPIPath{Get: op([]string{"Auth"}, "V1 Auth Lockout Policy")}
 	m["/api/v1/auth/lockout-policy/config"] = OpenAPIPath{Get: op([]string{"Auth"}, "V1 Auth Lockout Policy Config")}
-	m["/api/v1/auth/login"] = OpenAPIPath{Post: op([]string{"Auth"}, "User login — authenticate with username/password, returns JWT tokens")}
+	m["/api/v1/auth/verify"] = OpenAPIPath{Post: op([]string{"Auth"}, "User login — authenticate with username/password, returns JWT tokens")}
 	m["/api/v1/auth/login-analytics"] = OpenAPIPath{Post: op([]string{"Auth"}, "V1 Auth Login Analytics")}
 	m["/api/v1/auth/login-attempts"] = OpenAPIPath{Post: op([]string{"Auth"}, "V1 Auth Login Attempts")}
 	m["/api/v1/auth/login-flow/record"] = OpenAPIPath{Post: op([]string{"Auth"}, "V1 Auth Login Flow Record")}

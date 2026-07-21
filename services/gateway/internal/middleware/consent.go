@@ -114,7 +114,7 @@ func queryConsent(ctx context.Context, dbURL, tenantID string) (bool, error) {
 
 func isConsentExempt(path string) bool {
 	exemptPrefixes := []string{
-		"/healthz", "/readyz", "/api/v1/auth/login", "/api/v1/auth/register",
+		"/healthz", "/readyz", "", "/api/v1/auth/verify", "/api/v1/auth/register",
 		"/api/v1/oauth/", "/api/v1/system/bootstrap", "/api/v1/system/initialized",
 		"/api/v1/tenants/resolve", "/api/v1/mfa/", "/.well-known/",
 		"/api/v1/impersonate/", // impersonate API handles its own consent

@@ -20,7 +20,7 @@ func TestIsListEndpoint(t *testing.T) {
 		{"/api/v1/audit/events", true},
 		// Not list endpoints
 		{"/api/v1/users/550e8400-e29b-41d4-a716-446655440000", false},
-		{"/api/v1/auth/login", false}, // login doesn't end with plural
+		{"/api/v1/auth/verify", false}, // login doesn't end with plural
 		{"/api/v1/metrics", false},   // excluded
 		{"/api/v1/stats", false},     // excluded
 		{"/healthz", false},          // not /api/v1/
@@ -104,7 +104,7 @@ func TestListCacheMiddleware_NonListEndpointBypasses(t *testing.T) {
 	handler := ListCacheMiddleware(nil, DefaultListCacheConfig())(next)
 
 	// Non-list endpoint with GET
-	req := httptest.NewRequest("GET", "/api/v1/auth/login", nil)
+	req := httptest.NewRequest("GET", "/api/v1/auth/verify", nil)
 	rr := httptest.NewRecorder()
 	handler.ServeHTTP(rr, req)
 	// nil rdb means handler = next (pass-through), should still work
