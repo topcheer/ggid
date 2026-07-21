@@ -15,7 +15,6 @@ Run: GGID_URL=https://ggid.iot2.win TENANT_ID=00000004-... python3 main.py
 import os
 import sys
 import json
-import base64
 import logging
 from http.server import HTTPServer, BaseHTTPRequestHandler
 from urllib.parse import urlparse, parse_qs, urlencode
@@ -23,10 +22,12 @@ from urllib.parse import urlparse, parse_qs, urlencode
 try:
     from ggid.client import GGIDClient, GGIDConfig, GGIDError
     from ggid.saml import SAMLConfig, generate_sp_metadata
+    from ggid.jwt_verifier import JWTVerifier, JWTClaims, JWTError
 except ImportError:
     sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "sdk", "python"))
     from ggid.client import GGIDClient, GGIDConfig, GGIDError
     from ggid.saml import SAMLConfig, generate_sp_metadata
+    from ggid.jwt_verifier import JWTVerifier, JWTClaims, JWTError
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 log = logging.getLogger("erp-python")
@@ -57,16 +58,17 @@ def get_client():
     return GGIDClient(GGIDConfig(base_url=GGID_URL, tenant_id=TENANT_ID))
 
 
+# SDK JWTVerifier with JWKS + RS256 signature verification
+_jwt_verifier = JWTVerifier(base_url=GGID_URL, issuer="ggid-auth")
+
+
 def extract_permissions_from_jwt(token):
-    """Verify token via GGID introspect endpoint and extract permissions."""
+    """Verify token via SDK JWTVerifier (JWKS + RS256) and extract permissions."""
     try:
-        client = get_client()
-        result = client.introspect_token(token, client_id="demo", client_secret="demo")
-        if result.get("active"):
-            return result.get("permissions", [])
+        claims = _jwt_verifier.verify(token)
+        return claims.permissions or []
     except Exception:
-        pass
-    return []
+        return []
 
 
 class ERPHandler(BaseHTTPRequestHandler):
