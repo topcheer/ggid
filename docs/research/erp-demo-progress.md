@@ -96,3 +96,23 @@
 4. Rust demo uses erp-rust-exchange not erp-rust-demo for token exchange
 
 ### Next Dimension: 4 — Multi-tenant Isolation
+
+## Dimension 4: Multi-tenant Isolation (Round 26)
+- JWT tenant_id correctly set for each tenant ✅
+- **CROSS-TENANT TOKEN ACCEPTED** — Go tenant token works on Java/C# demo ⚠️ SECURITY GAP
+- GGID API cross-tenant: Go token + X-Tenant-ID:00000006 → 200 (gateway doesn't enforce tenant match)
+
+### Root Cause
+SDK verifyToken validates JWT signature + expiry but does NOT validate tenant_id.
+Each demo accepts any valid GGID token regardless of tenant.
+
+### Impact
+- Low for demo (separate demo instances per tenant)
+- HIGH for production — cross-tenant data access possible
+
+### Recommendation
+- SDK: add optional tenant_id verification to verifyToken (compare JWT tenant_id with configured tenant)
+- Demo: pass expected tenant_id to SDK verifyToken
+- Gateway: enforce X-Tenant-ID matches JWT tenant_id on API calls
+
+### Next Dimension: 5 — SDK Cross-language Consistency
