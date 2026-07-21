@@ -9,7 +9,6 @@ import (
 	"net/http"
 	"os"
 	"strings"
-	"time"
 
 	ggid "github.com/ggid/ggid/sdk/go"
 )
