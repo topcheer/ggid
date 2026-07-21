@@ -37,6 +37,8 @@ func (h *Handler) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("/scim/v2/Bulk", h.handleBulk)
 	mux.HandleFunc("/scim/v2/ServiceProviderConfig", h.handleServiceProviderConfig)
 	mux.HandleFunc("/scim/v2/ResourceTypes", h.handleResourceTypes)
+	mux.HandleFunc("/scim/v2/Schemas", h.handleSchemasCollection)
+	mux.HandleFunc("/scim/v2/Schemas/", h.handleSchemaResource)
 }
 
 // --- SCIM Schema Types ---
@@ -666,7 +668,9 @@ func (h *Handler) handleServiceProviderConfig(w http.ResponseWriter, r *http.Req
 		"filter":        map[string]any{"supported": true, "maxResults": 100},
 		"changePassword": map[string]any{"supported": true},
 		"sort":          map[string]any{"supported": true},
-		"etag":          map[string]any{"supported": false},
+		// ETag + If-Match optimistic locking IS implemented (see etag.go,
+		// ComputeETag/CheckIfMatch) — advertise it so SCIM clients use it.
+		"etag":          map[string]any{"supported": true},
 		"authenticationSchemes": []map[string]any{
 			{
 				"name":        "OAuth 2.0 Bearer",
