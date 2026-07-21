@@ -82,7 +82,7 @@ export default function OAuthClientsPage() {
     setCreating(true);
     try {
       const body = {
-        name: form.client_name,
+        client_name: form.client_name,
         redirect_uris: form.redirect_uris.split("\n").map((u: any) => u.trim()).filter(Boolean),
         grant_types: form.grant_types,
         scopes: form.scopes,
