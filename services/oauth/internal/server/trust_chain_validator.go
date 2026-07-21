@@ -128,11 +128,21 @@ func extractSAMLIssuer(rawXML []byte) string {	type issuerWrapper struct {
 	return ""
 }
 
-// samlIdpCertificate resolves the trusted IdP signing certificate used for
-// XML-DSig verification of inbound SAML assertions. It reads the PEM-encoded
-// certificate from sys_config (key "saml_config", JSON field "idp_cert"),
-// consistent with the auth service SAML handler.
-func samlIdpCertificate(r *http.Request, pool *pgxpool.Pool) (*x509.Certificate, error) {
+// samlACSTrustConfig holds the trust anchors for inbound SAML assertions.
+type samlTrustConfig struct {
+	Cert          *x509.Certificate // trusted IdP signing certificate
+	IdPEntityID   string            // expected IdP entityID (optional)
+	SPEntityID    string            // our SP entityID for audience validation (optional)
+}
+
+// samlACSTrustConfig loads the trust configuration for the SAML ACS endpoint
+// from sys_config (key "saml_config"). Fields:
+//   - idp_cert      (required) PEM-encoded IdP signing certificate
+//   - idp_entity_id (optional) expected assertion Issuer
+//   - sp_entity_id  (optional) expected Audience; falls back to BaseURL+"/saml"
+//
+// Consistent with the auth service SAML handler's sys_config format.
+func samlACSTrustConfig(r *http.Request, pool *pgxpool.Pool) (*samlTrustConfig, error) {
 	if pool == nil {
 		return nil, fmt.Errorf("database not available")
 	}
@@ -145,7 +155,9 @@ func samlIdpCertificate(r *http.Request, pool *pgxpool.Pool) (*x509.Certificate,
 	}
 
 	var cfg struct {
-		IDPCert string `json:"idp_cert"`
+		IDPCert     string `json:"idp_cert"`
+		IdPEntityID string `json:"idp_entity_id"`
+		SPEntityID  string `json:"sp_entity_id"`
 	}
 	if err := json.Unmarshal([]byte(configJSON), &cfg); err != nil {
 		return nil, fmt.Errorf("invalid saml_config JSON: %w", err)
@@ -158,5 +170,13 @@ func samlIdpCertificate(r *http.Request, pool *pgxpool.Pool) (*x509.Certificate,
 	if block == nil {
 		return nil, fmt.Errorf("invalid PEM certificate in idp_cert")
 	}
-	return x509.ParseCertificate(block.Bytes)
+	cert, err := x509.ParseCertificate(block.Bytes)
+	if err != nil {
+		return nil, fmt.Errorf("parse idp_cert: %w", err)
+	}
+	return &samlTrustConfig{
+		Cert:        cert,
+		IdPEntityID: cfg.IdPEntityID,
+		SPEntityID:  cfg.SPEntityID,
+	}, nil
 }

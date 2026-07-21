@@ -82,7 +82,7 @@ export default function SCIMProvisioningPage() {
   return (
     <div className="max-w-3xl space-y-6">
       <div>
-        <h1 className="flex items-center gap-2 text-2xl font-bold text-gray-900 dark:text-white">
+        <h1 className="flex items-center gap-2 text-2xl font-bold text-gray-900 dark:text-white dark:text-white">
           <ArrowRightLeft className="h-6 w-6 text-cyan-500" /> SCIM Provisioning
         </h1>
         <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
@@ -142,7 +142,7 @@ export default function SCIMProvisioningPage() {
             <button onClick={handleSave} disabled={saving} className="flex items-center gap-2 rounded-lg bg-cyan-600 px-4 py-2 text-sm font-medium text-white hover:bg-cyan-700 disabled:opacity-50">
               {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />} Save Configuration
             </button>
-            <button onClick={testConnection} disabled={testStatus === "testing"} className="flex items-center gap-2 rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium dark:border-gray-700">
+            <button onClick={testConnection} disabled={testStatus === "testing"} className="flex items-center gap-2 rounded-lg border border-gray-300 dark:border-gray-600 px-4 py-2 text-sm font-medium dark:border-gray-700">
               {testStatus === "testing" ? <Loader2 className="h-4 w-4 animate-spin" /> : testStatus === "ok" ? <Check className="h-4 w-4 text-green-500" /> : testStatus === "fail" ? <X className="h-4 w-4 text-red-500" /> : <ArrowRightLeft className="h-4 w-4" />}
               Test Connection
             </button>

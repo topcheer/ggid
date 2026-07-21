@@ -1,6 +1,7 @@
 package saml
 
 import (
+	"bytes"
 	"crypto"
 	"crypto/ecdsa"
 	"crypto/rsa"
@@ -12,6 +13,7 @@ import (
 	"encoding/xml"
 	"fmt"
 	"hash"
+	"io"
 	"strings"
 )
 
@@ -316,6 +318,41 @@ func verifyCryptoSignature(info *signatureInfo, cert *x509.Certificate) error {
 	}
 }
 
+// validateSignaturePlacement guards against XML Signature Wrapping (XSW)
+// attacks: the Signature element must be a DIRECT child of the Assertion
+// element. A signature nested deeper (e.g. inside a forged wrapper or moved
+// into Subject/Advice) is rejected.
+func validateSignaturePlacement(rawXML []byte) error {
+	dec := xml.NewDecoder(bytes.NewReader(rawXML))
+	depth := 0
+	assertionDepth := -1
+	for {
+		tok, err := dec.Token()
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			return fmt.Errorf("xml stream: %w", err)
+		}
+		switch t := tok.(type) {
+		case xml.StartElement:
+			depth++
+			if t.Name.Local == "Assertion" && assertionDepth < 0 {
+				assertionDepth = depth
+			}
+			if t.Name.Local == "Signature" {
+				if assertionDepth < 0 || depth != assertionDepth+1 {
+					return fmt.Errorf("signature is not a direct child of Assertion (possible XSW attack)")
+				}
+				return nil
+			}
+		case xml.EndElement:
+			depth--
+		}
+	}
+	return fmt.Errorf("no Signature element found")
+}
+
 // constantTimeEqual compares two byte slices in constant time.
 func constantTimeEqual(a, b []byte) bool {
 	if len(a) != len(b) {
@@ -364,6 +401,11 @@ func VerifySignedAssertion(rawXML []byte, cert *x509.Certificate) (*SAMLAssertio
 	info, err := parseSignature(rawXML)
 	if err != nil {
 		return nil, fmt.Errorf("extract signature: %w", err)
+	}
+
+	// Step 2b: XSW protection — signature must be a direct child of Assertion.
+	if err := validateSignaturePlacement(rawXML); err != nil {
+		return nil, fmt.Errorf("signature placement: %w", err)
 	}
 
 	// Step 3: The referenced ID must match the assertion ID.

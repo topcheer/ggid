@@ -93,14 +93,14 @@ export default function PasswordStrengthPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-950 p-4 md:p-8">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-800 dark:bg-gray-950 p-4 md:p-8">
       <div className="max-w-4xl mx-auto">
         <div className="mb-6">
           <div className="flex items-center gap-3 mb-1">
             <KeyRound className="w-7 h-7 text-blue-600" />
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{t("passwordStrength.title")}</h1>
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-white dark:text-white">{t("passwordStrength.title")}</h1>
           </div>
-          <p className="text-gray-600 dark:text-gray-400 text-sm">{t("passwordStrength.description")}</p>
+          <p className="text-gray-600 dark:text-gray-400 dark:text-gray-400 text-sm">{t("passwordStrength.description")}</p>
         </div>
 
         <div className="flex gap-1 mb-6 bg-gray-200 dark:bg-gray-800 rounded-lg p-1">
@@ -136,8 +136,8 @@ function TesterTab() {
 
   return (
     <div className="space-y-4">
-      <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-6">
-        <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-3">{t("passwordStrength.tester.title")}</h3>
+      <div className="bg-white dark:bg-gray-800 dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 dark:border-gray-800 p-6">
+        <h3 className="text-sm font-semibold text-gray-900 dark:text-white dark:text-white mb-3">{t("passwordStrength.tester.title")}</h3>
 
         {/* Input */}
         <div className="relative">
@@ -146,10 +146,10 @@ function TesterTab() {
             value={pw}
             onChange={(e) => setPw(e.target.value)}
             placeholder={t("passwordStrength.tester.enterPassword")}
-            className="w-full px-4 py-3 pr-10 rounded-lg border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-sm text-gray-900 dark:text-white font-mono"
+            className="w-full px-4 py-3 pr-10 rounded-lg border border-gray-300 dark:border-gray-600 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 dark:bg-gray-800 text-sm text-gray-900 dark:text-white dark:text-white font-mono"
             autoFocus
           />
-          <button onClick={() => setShow(!show)} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+          <button onClick={() => setShow(!show)} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:text-gray-400">
             {show ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
           </button>
         </div>
@@ -205,7 +205,7 @@ function TesterTab() {
           <div className="mt-4">
             <div className="flex items-center gap-2 mb-2">
               <Lightbulb className="w-4 h-4 text-yellow-500" />
-              <span className="text-xs font-medium text-gray-600 dark:text-gray-400">{t("passwordStrength.tester.suggestions")}</span>
+              <span className="text-xs font-medium text-gray-600 dark:text-gray-400 dark:text-gray-400">{t("passwordStrength.tester.suggestions")}</span>
             </div>
             {result.suggestions.length === 0 ? (
               <div className="flex items-center gap-1 text-sm text-green-600">
@@ -214,7 +214,7 @@ function TesterTab() {
             ) : (
               <ul className="space-y-1">
                 {result.suggestions.map((s: any, i: number) => (
-                  <li key={i} className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
+                  <li key={i} className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300 dark:text-gray-300">
                     <X className="w-3 h-3 text-red-400" />{s}
                   </li>
                 ))}
@@ -252,12 +252,12 @@ function ConfigTab() {
   };
 
   return (
-    <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-6 space-y-5">
-      <h3 className="text-sm font-semibold text-gray-900 dark:text-white">{t("passwordStrength.config.title")}</h3>
+    <div className="bg-white dark:bg-gray-800 dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 dark:border-gray-800 p-6 space-y-5">
+      <h3 className="text-sm font-semibold text-gray-900 dark:text-white dark:text-white">{t("passwordStrength.config.title")}</h3>
 
       {/* Min Score */}
       <div>
-        <label className="block text-sm font-medium text-gray-900 dark:text-white mb-1">{t("passwordStrength.config.minScore")}</label>
+        <label className="block text-sm font-medium text-gray-900 dark:text-white dark:text-white mb-1">{t("passwordStrength.config.minScore")}</label>
         <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">{t("passwordStrength.config.minScoreDesc")}</p>
         <div className="flex gap-2">
           {[0, 1, 2, 3, 4].map((s: any) => {
@@ -282,11 +282,11 @@ function ConfigTab() {
 
       {/* Custom Blocklist */}
       <div>
-        <label className="block text-sm font-medium text-gray-900 dark:text-white mb-1">{t("passwordStrength.config.customBlocklist")}</label>
+        <label className="block text-sm font-medium text-gray-900 dark:text-white dark:text-white mb-1">{t("passwordStrength.config.customBlocklist")}</label>
         <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">{t("passwordStrength.config.customBlocklistDesc")}</p>
         <textarea value={blocklist} onChange={(e) => setBlocklist(e.target.value)} rows={6}
           placeholder={t("passwordStrength.config.customBlocklistPlaceholder")}
-          className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-sm font-mono text-gray-900 dark:text-white" />
+          className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 dark:bg-gray-800 text-sm font-mono text-gray-900 dark:text-white dark:text-white" />
         <p className="text-xs text-gray-400 mt-1">{blocklist.split("\n").filter(Boolean).length} words in blocklist</p>
       </div>
 
@@ -309,12 +309,12 @@ function ConfigTab() {
 
 function StatBox({ icon: Icon, label, value }: { icon: typeof Clock; label: string; value: string }) {
   return (
-    <div className="p-3 rounded-lg bg-gray-50 dark:bg-gray-800/50">
+    <div className="p-3 rounded-lg bg-gray-50 dark:bg-gray-800 dark:bg-gray-800/50">
       <div className="flex items-center gap-1 mb-1">
         <Icon className="w-3.5 h-3.5 text-gray-400" />
         <span className="text-xs text-gray-500">{label}</span>
       </div>
-      <div className="text-sm font-bold text-gray-900 dark:text-white truncate">{value}</div>
+      <div className="text-sm font-bold text-gray-900 dark:text-white dark:text-white truncate">{value}</div>
     </div>
   );
 }
@@ -323,7 +323,7 @@ function ToggleRow({ label, desc, checked, onChange }: { label: string; desc: st
   return (
     <label className="flex items-center justify-between cursor-pointer py-1">
       <div>
-        <span className="text-sm text-gray-700 dark:text-gray-300">{label}</span>
+        <span className="text-sm text-gray-700 dark:text-gray-300 dark:text-gray-300">{label}</span>
         <p className="text-xs text-gray-400">{desc}</p>
       </div>
       <button onClick={onChange}

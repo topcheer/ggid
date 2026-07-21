@@ -83,14 +83,14 @@ export default function ConditionalAccessPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-950 p-4 md:p-8">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-800 dark:bg-gray-950 p-4 md:p-8">
       <div className="max-w-5xl mx-auto">
         <div className="mb-6">
           <div className="flex items-center gap-3 mb-1">
             <Shield className="w-7 h-7 text-blue-600" />
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{t("conditionalAccess.title")}</h1>
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-white dark:text-white">{t("conditionalAccess.title")}</h1>
           </div>
-          <p className="text-gray-600 dark:text-gray-400 text-sm">{t("conditionalAccess.description")}</p>
+          <p className="text-gray-600 dark:text-gray-400 dark:text-gray-400 text-sm">{t("conditionalAccess.description")}</p>
         </div>
 
         <div className="flex gap-1 mb-6 bg-gray-200 dark:bg-gray-800 rounded-lg p-1">
@@ -147,9 +147,9 @@ function PoliciesList({ policies, loading, onEdit, onAdd, onToggle, onMove, onDe
   if (loading) return <div className="flex justify-center py-20"><Loader2 className="w-8 h-8 animate-spin text-blue-600" /></div>;
 
   return (
-    <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-6">
+    <div className="bg-white dark:bg-gray-800 dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 dark:border-gray-800 p-6">
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-sm font-semibold text-gray-900 dark:text-white">{t("conditionalAccess.policies.title")}</h3>
+        <h3 className="text-sm font-semibold text-gray-900 dark:text-white dark:text-white">{t("conditionalAccess.policies.title")}</h3>
         <button onClick={onAdd} className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium">
           <Plus className="w-4 h-4" />{t("conditionalAccess.policies.addPolicy")}
         </button>
@@ -162,16 +162,16 @@ function PoliciesList({ policies, loading, onEdit, onAdd, onToggle, onMove, onDe
           {policies.map((p: any, i: number) => {
             const actionCfg = ACTIONS.find((a: any) => a.value === p.action);
             return (
-              <div key={p.id} className="flex items-center gap-3 p-3 rounded-lg border border-gray-200 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/30">
+              <div key={p.id} className="flex items-center gap-3 p-3 rounded-lg border border-gray-200 dark:border-gray-700 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 dark:bg-gray-800 dark:hover:bg-gray-800/30">
                 {/* Priority + arrows */}
                 <div className="flex flex-col items-center gap-0.5">
-                  <button onClick={() => onMove(p.id, "up")} disabled={i === 0} className="text-gray-400 hover:text-gray-600 disabled:opacity-30"><ChevronUp className="w-4 h-4" /></button>
+                  <button onClick={() => onMove(p.id, "up")} disabled={i === 0} className="text-gray-400 hover:text-gray-600 dark:text-gray-400 disabled:opacity-30"><ChevronUp className="w-4 h-4" /></button>
                   <span className="text-xs font-bold text-gray-500">{p.priority}</span>
-                  <button onClick={() => onMove(p.id, "down")} disabled={i === policies.length - 1} className="text-gray-400 hover:text-gray-600 disabled:opacity-30"><ChevronDown className="w-4 h-4" /></button>
+                  <button onClick={() => onMove(p.id, "down")} disabled={i === policies.length - 1} className="text-gray-400 hover:text-gray-600 dark:text-gray-400 disabled:opacity-30"><ChevronDown className="w-4 h-4" /></button>
                 </div>
                 {/* Name + conditions */}
                 <div className="flex-1 min-w-0">
-                  <div className="text-sm font-medium text-gray-900 dark:text-white">{p.name}</div>
+                  <div className="text-sm font-medium text-gray-900 dark:text-white dark:text-white">{p.name}</div>
                   <div className="flex flex-wrap gap-1 mt-1">
                     {p.conditions.map((c: any, ci: number) => (
                       <span key={c.id} className="text-xs text-gray-500 dark:text-gray-400">
@@ -189,7 +189,7 @@ function PoliciesList({ policies, loading, onEdit, onAdd, onToggle, onMove, onDe
                   <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full transition-transform ${p.enabled ? "translate-x-4" : ""}`} />
                 </button>
                 {/* Actions */}
-                <button onClick={() => onEdit(p)} className="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-800 rounded"><Edit2 className="w-4 h-4 text-gray-500" /></button>
+                <button onClick={() => onEdit(p)} className="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-700 dark:bg-gray-700 dark:hover:bg-gray-800 rounded"><Edit2 className="w-4 h-4 text-gray-500" /></button>
                 <button onClick={() => { if (confirm(t("conditionalAccess.policies.confirmDelete"))) onDelete(p.id); }} className="p-1.5 hover:bg-red-50 dark:hover:bg-red-950 rounded"><Trash2 className="w-4 h-4 text-red-500" /></button>
               </div>
             );
@@ -223,27 +223,27 @@ function PolicyEditor({ editing, onSave, onCancel }: {
   };
 
   return (
-    <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-6 space-y-5">
-      <h3 className="text-sm font-semibold text-gray-900 dark:text-white">{t("conditionalAccess.editor.title")}</h3>
+    <div className="bg-white dark:bg-gray-800 dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 dark:border-gray-800 p-6 space-y-5">
+      <h3 className="text-sm font-semibold text-gray-900 dark:text-white dark:text-white">{t("conditionalAccess.editor.title")}</h3>
 
       {/* Name + Priority */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div className="md:col-span-2">
-          <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">{t("conditionalAccess.editor.name")}</label>
+          <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 dark:text-gray-400 mb-1">{t("conditionalAccess.editor.name")}</label>
           <input type="text" value={name} onChange={(e) => setName(e.target.value)} placeholder={t("conditionalAccess.editor.namePlaceholder")}
-            className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-sm text-gray-900 dark:text-white" />
+            className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 dark:bg-gray-800 text-sm text-gray-900 dark:text-white dark:text-white" />
         </div>
         <div>
-          <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">{t("conditionalAccess.editor.priority")}</label>
+          <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 dark:text-gray-400 mb-1">{t("conditionalAccess.editor.priority")}</label>
           <input type="number" value={priority} onChange={(e) => setPriority(parseInt(e.target.value) || 10)} min={1}
-            className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-sm text-gray-900 dark:text-white" />
+            className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 dark:bg-gray-800 text-sm text-gray-900 dark:text-white dark:text-white" />
         </div>
       </div>
 
       {/* Conditions */}
       <div>
         <div className="flex items-center justify-between mb-2">
-          <label className="text-sm font-semibold text-gray-900 dark:text-white">{t("conditionalAccess.editor.conditions")}</label>
+          <label className="text-sm font-semibold text-gray-900 dark:text-white dark:text-white">{t("conditionalAccess.editor.conditions")}</label>
           <div className="flex items-center gap-2">
             <div className="flex gap-1">
               {(["AND", "OR"] as const).map((l: any) => (
@@ -258,14 +258,14 @@ function PolicyEditor({ editing, onSave, onCancel }: {
         </div>
         <div className="space-y-2">
           {conditions.map((c: any, i: number) => (
-            <div key={c.id} className="flex items-center gap-2 p-2 rounded-lg bg-gray-50 dark:bg-gray-800/50">
+            <div key={c.id} className="flex items-center gap-2 p-2 rounded-lg bg-gray-50 dark:bg-gray-800 dark:bg-gray-800/50">
               {i > 0 && <span className="px-2 py-0.5 text-xs font-bold text-blue-500 bg-blue-50 dark:bg-blue-950/30 rounded">{logic}</span>}
               <select value={c.operand} onChange={(e) => updateCondition(c.id, "operand", e.target.value)}
-                className="px-2 py-1.5 rounded border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-xs text-gray-900 dark:text-white">
+                className="px-2 py-1.5 rounded border border-gray-300 dark:border-gray-600 dark:border-gray-700 bg-white dark:bg-gray-800 dark:bg-gray-800 text-xs text-gray-900 dark:text-white dark:text-white">
                 {OPERANDS.map((o: any) => <option key={o.value} value={o.value}>{o.label}</option>)}
               </select>
               <select value={c.operator} onChange={(e) => updateCondition(c.id, "operator", e.target.value)}
-                className="px-2 py-1.5 rounded border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-xs text-gray-900 dark:text-white">
+                className="px-2 py-1.5 rounded border border-gray-300 dark:border-gray-600 dark:border-gray-700 bg-white dark:bg-gray-800 dark:bg-gray-800 text-xs text-gray-900 dark:text-white dark:text-white">
                 <option value="<">&lt;</option><option value=">">&gt;</option>
                 <option value="=">=</option><option value="≠">≠</option>
                 <option value="in">in</option><option value="contains">contains</option>
@@ -275,10 +275,10 @@ function PolicyEditor({ editing, onSave, onCancel }: {
                   className="flex-1 max-w-[200px]" />
               ) : (
                 <input type="text" value={c.value} onChange={(e) => updateCondition(c.id, "value", e.target.value)} placeholder="value"
-                  className="flex-1 px-2 py-1.5 rounded border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-xs text-gray-900 dark:text-white" />
+                  className="flex-1 px-2 py-1.5 rounded border border-gray-300 dark:border-gray-600 dark:border-gray-700 bg-white dark:bg-gray-800 dark:bg-gray-800 text-xs text-gray-900 dark:text-white dark:text-white" />
               )}
               {OPERANDS.find((o: any) => o.value === c.operand)?.type === "number" && (
-                <span className="text-xs font-medium text-gray-700 dark:text-gray-300 w-8 text-right">{c.value}</span>
+                <span className="text-xs font-medium text-gray-700 dark:text-gray-300 dark:text-gray-300 w-8 text-right">{c.value}</span>
               )}
               <button onClick={() => removeCondition(c.id)} className="p-1 text-red-500 hover:bg-red-50 dark:hover:bg-red-950 rounded"><X className="w-3 h-3" /></button>
             </div>
@@ -288,7 +288,7 @@ function PolicyEditor({ editing, onSave, onCancel }: {
 
       {/* Action */}
       <div>
-        <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-2">{t("conditionalAccess.editor.action")}</label>
+        <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 dark:text-gray-400 mb-2">{t("conditionalAccess.editor.action")}</label>
         <div className="flex flex-wrap gap-2">
           {ACTIONS.map((a: any) => (
             <button key={a.value} onClick={() => setAction(a.value)}
@@ -302,9 +302,9 @@ function PolicyEditor({ editing, onSave, onCancel }: {
       </div>
 
       {/* Preview */}
-      <div className="p-3 rounded-lg bg-gray-50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700">
+      <div className="p-3 rounded-lg bg-gray-50 dark:bg-gray-800 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700 dark:border-gray-700">
         <span className="text-xs font-medium text-gray-500 mb-1 block">{t("conditionalAccess.editor.preview")}</span>
-        <code className="text-xs text-gray-900 dark:text-white">
+        <code className="text-xs text-gray-900 dark:text-white dark:text-white">
           IF {conditions.map((c: any, i: number) => `${i > 0 ? ` ${logic} ` : ""}${c.operand} ${c.operator} ${c.value}`).join("")} THEN {action.toUpperCase()}
         </code>
       </div>
@@ -315,7 +315,7 @@ function PolicyEditor({ editing, onSave, onCancel }: {
           className="flex items-center gap-2 px-6 py-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white rounded-lg text-sm font-medium">
           <Save className="w-4 h-4" />{t("conditionalAccess.editor.save")}
         </button>
-        <button onClick={onCancel} className="px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg text-sm font-medium">
+        <button onClick={onCancel} className="px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 dark:text-gray-300 rounded-lg text-sm font-medium">
           {t("conditionalAccess.editor.selectNew")}
         </button>
       </div>
@@ -384,19 +384,19 @@ function PolicyTester({ policies }: { policies: Policy[] }) {
 
   return (
     <div className="space-y-4">
-      <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-6">
-        <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-1">{t("conditionalAccess.tester.title")}</h3>
+      <div className="bg-white dark:bg-gray-800 dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 dark:border-gray-800 p-6">
+        <h3 className="text-sm font-semibold text-gray-900 dark:text-white dark:text-white mb-1">{t("conditionalAccess.tester.title")}</h3>
         <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">{t("conditionalAccess.tester.description")}</p>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
           {inputFields.map((f: any) => (
             <div key={f.key}>
-              <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">{f.label}</label>
+              <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 dark:text-gray-400 mb-1">{f.label}</label>
               {f.type === "number" ? (
                 <div className="flex items-center gap-2">
                   <input type="range" min={0} max={100} value={(input as any)[f.key]}
                     onChange={(e) => setInput({ ...input, [f.key]: parseInt(e.target.value) })} className="flex-1" />
-                  <span className="text-xs font-medium text-gray-900 dark:text-white w-8 text-right">{(input as any)[f.key]}</span>
+                  <span className="text-xs font-medium text-gray-900 dark:text-white dark:text-white w-8 text-right">{(input as any)[f.key]}</span>
                 </div>
               ) : f.type === "boolean" ? (
                 <button onClick={() => setInput({ ...input, [f.key]: !(input as any)[f.key] })}
@@ -405,7 +405,7 @@ function PolicyTester({ policies }: { policies: Policy[] }) {
                 </button>
               ) : (
                 <input type="text" value={(input as any)[f.key]} onChange={(e) => setInput({ ...input, [f.key]: e.target.value })}
-                  className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-sm text-gray-900 dark:text-white" />
+                  className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 dark:bg-gray-800 text-sm text-gray-900 dark:text-white dark:text-white" />
               )}
             </div>
           ))}
@@ -419,8 +419,8 @@ function PolicyTester({ policies }: { policies: Policy[] }) {
       </div>
 
       {result && (
-        <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-6">
-          <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-3">{t("conditionalAccess.tester.result")}</h3>
+        <div className="bg-white dark:bg-gray-800 dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 dark:border-gray-800 p-6">
+          <h3 className="text-sm font-semibold text-gray-900 dark:text-white dark:text-white mb-3">{t("conditionalAccess.tester.result")}</h3>
           <div className="flex items-center gap-4">
             <div className={`px-6 py-3 rounded-xl text-lg font-bold uppercase ${resultColors[result.action]}`}>
               {t(`conditionalAccess.tester.result${result.action.replace(/_./g, (m) => m[1].toUpperCase()).replace(/^./, (m: any) => m.toUpperCase())}`)}
@@ -428,7 +428,7 @@ function PolicyTester({ policies }: { policies: Policy[] }) {
             {result.policy ? (
               <div>
                 <div className="text-xs text-gray-500">{t("conditionalAccess.tester.matchedPolicy")}</div>
-                <div className="text-sm font-medium text-gray-900 dark:text-white">{result.policy.name}</div>
+                <div className="text-sm font-medium text-gray-900 dark:text-white dark:text-white">{result.policy.name}</div>
               </div>
             ) : (
               <span className="text-sm text-gray-400">{t("conditionalAccess.tester.noMatch")}</span>

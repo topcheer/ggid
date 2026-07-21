@@ -25,6 +25,20 @@ type SAMLAssertion struct {
 // Subject holds the assertion subject (name identifier).
 type Subject struct {
 	NameID string `xml:"NameID"`
+	SubjectConfirmation SubjectConfirmation `xml:"SubjectConfirmation"`
+}
+
+// SubjectConfirmation describes how the relying party may confirm the subject.
+type SubjectConfirmation struct {
+	Method string `xml:"Method,attr"`
+	SubjectConfirmationData SubjectConfirmationData `xml:"SubjectConfirmationData"`
+}
+
+// SubjectConfirmationData carries bearer-confirmation constraints.
+type SubjectConfirmationData struct {
+	InResponseTo string `xml:"InResponseTo,attr"`
+	Recipient    string `xml:"Recipient,attr"`
+	NotOnOrAfter string `xml:"NotOnOrAfter,attr"`
 }
 
 // Conditions holds the validity window.
@@ -110,6 +124,12 @@ func ValidateSignature(assertion *SAMLAssertion, cert *x509.Certificate) error {
 	}
 
 	return nil
+}
+
+// InResponseTo returns the ID of the AuthnRequest this assertion answers,
+// or empty for IdP-initiated (unsolicited) assertions.
+func (a *SAMLAssertion) InResponseTo() string {
+	return a.Subject.SubjectConfirmation.SubjectConfirmationData.InResponseTo
 }
 
 // ExtractAttributes converts the assertion's attributes into a map of string slices.

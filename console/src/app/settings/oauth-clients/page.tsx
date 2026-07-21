@@ -259,7 +259,7 @@ export default function OAuthClientsSettingsPage() {
             {t("oauth.secretWarning")}
           </p>
           <div className="flex items-center gap-2">
-            <code className="flex-1 rounded-lg bg-white px-3 py-2 font-mono text-sm break-all">
+            <code className="flex-1 rounded-lg bg-white dark:bg-gray-800 px-3 py-2 font-mono text-sm break-all">
               {showSecret ? newSecret.secret : "••••••••••••••••••••••••••••"}
             </code>
             <button onClick={() => setShowSecret(!showSecret)} aria-label="Toggle secret visibility" className="rounded-lg border p-2" title={t("common.toggleVisibility")}>
@@ -275,10 +275,10 @@ export default function OAuthClientsSettingsPage() {
 
       {/* Create form */}
       {showCreate && (
-        <div className="mb-6 rounded-xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800">
+        <div className="mb-6 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800">
           <div className="mb-4 flex items-center justify-between">
             <h3 className="text-sm font-semibold dark:text-gray-100">{t("oauth.registerNew")}</h3>
-            <button onClick={() => setShowCreate(false)} aria-label="Close" className="text-gray-400 hover:text-gray-600">
+            <button onClick={() => setShowCreate(false)} aria-label="Close" className="text-gray-400 hover:text-gray-600 dark:text-gray-400">
               <X className="h-5 w-5" />
             </button>
           </div>
@@ -289,7 +289,7 @@ export default function OAuthClientsSettingsPage() {
                 value={form.name}
                 onChange={(e) => setForm({ ...form, name: e.target.value })}
                 placeholder={t("oauth.clientNamePlaceholder")}
-                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200"
+                className="w-full rounded-lg border border-gray-300 dark:border-gray-600 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200"
               />
             </div>
             <div>
@@ -297,7 +297,7 @@ export default function OAuthClientsSettingsPage() {
               <input
                 value={form.scopes}
                 onChange={(e) => setForm({ ...form, scopes: e.target.value })}
-                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200"
+                className="w-full rounded-lg border border-gray-300 dark:border-gray-600 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200"
               />
             </div>
             <div className="sm:col-span-2">
@@ -307,7 +307,7 @@ export default function OAuthClientsSettingsPage() {
                 onChange={(e) => setForm({ ...form, redirect_uris: e.target.value })}
                 placeholder={"https://example.com/callback\nhttps://example.com/oauth/callback"}
                 rows={4}
-                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm font-mono dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200"
+                className="w-full rounded-lg border border-gray-300 dark:border-gray-600 px-3 py-2 text-sm font-mono dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200"
               />
             </div>
             <div className="sm:col-span-2">
@@ -326,7 +326,7 @@ export default function OAuthClientsSettingsPage() {
             </button>
             <button
               onClick={() => { setShowCreate(false); setForm(emptyForm); }}
-              className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium hover:bg-gray-50 dark:border-gray-600 dark:hover:bg-gray-700"
+              className="rounded-lg border border-gray-300 dark:border-gray-600 px-4 py-2 text-sm font-medium hover:bg-gray-50 dark:hover:bg-gray-700 dark:bg-gray-800 dark:border-gray-600 dark:hover:bg-gray-700"
             >
               {t("common.cancel")}
             </button>
@@ -336,12 +336,12 @@ export default function OAuthClientsSettingsPage() {
 
       {/* Edit modal */}
       {showEdit && editClient && (
-        <div className="mb-6 rounded-xl border-2 border-brand-300 bg-white p-6 shadow-sm dark:border-brand-700 dark:bg-gray-800">
+        <div className="mb-6 rounded-xl border-2 border-brand-300 bg-white dark:bg-gray-800 p-6 shadow-sm dark:border-brand-700 dark:bg-gray-800">
           <div className="mb-4 flex items-center justify-between">
             <h3 className="text-sm font-semibold dark:text-gray-100">
               {t("oauth.editClient")}: {editClient.name}
             </h3>
-            <button onClick={() => { setShowEdit(false); setEditClient(null); }} aria-label="Close" className="text-gray-400 hover:text-gray-600">
+            <button onClick={() => { setShowEdit(false); setEditClient(null); }} aria-label="Close" className="text-gray-400 hover:text-gray-600 dark:text-gray-400">
               <X className="h-5 w-5" />
             </button>
           </div>
@@ -351,7 +351,7 @@ export default function OAuthClientsSettingsPage() {
               <input
                 value={form.name}
                 onChange={(e) => setForm({ ...form, name: e.target.value })}
-                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200"
+                className="w-full rounded-lg border border-gray-300 dark:border-gray-600 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200"
               />
             </div>
             <div>
@@ -359,7 +359,7 @@ export default function OAuthClientsSettingsPage() {
               <input
                 value={form.scopes}
                 onChange={(e) => setForm({ ...form, scopes: e.target.value })}
-                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200"
+                className="w-full rounded-lg border border-gray-300 dark:border-gray-600 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200"
               />
             </div>
             <div className="sm:col-span-2">
@@ -368,7 +368,7 @@ export default function OAuthClientsSettingsPage() {
                 value={form.redirect_uris}
                 onChange={(e) => setForm({ ...form, redirect_uris: e.target.value })}
                 rows={4}
-                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm font-mono dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200"
+                className="w-full rounded-lg border border-gray-300 dark:border-gray-600 px-3 py-2 text-sm font-mono dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200"
               />
             </div>
             <div className="sm:col-span-2">
@@ -385,7 +385,7 @@ export default function OAuthClientsSettingsPage() {
             </button>
             <button
               onClick={() => { setShowEdit(false); setEditClient(null); }}
-              className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium hover:bg-gray-50 dark:border-gray-600 dark:hover:bg-gray-700"
+              className="rounded-lg border border-gray-300 dark:border-gray-600 px-4 py-2 text-sm font-medium hover:bg-gray-50 dark:hover:bg-gray-700 dark:bg-gray-800 dark:border-gray-600 dark:hover:bg-gray-700"
             >
               {t("common.cancel")}
             </button>
@@ -397,14 +397,14 @@ export default function OAuthClientsSettingsPage() {
       {loading ? (
         <p className="text-gray-500">{t("common.loading")}</p>
       ) : clients.length === 0 ? (
-        <div className="rounded-xl border border-gray-200 bg-white p-12 text-center shadow-sm dark:border-gray-700 dark:bg-gray-800">
+        <div className="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-12 text-center shadow-sm dark:border-gray-700 dark:bg-gray-800">
           <KeyRound className="mx-auto mb-4 h-12 w-12 text-gray-300" />
           <p className="text-gray-500">{t("oauth.noClients")}</p>
         </div>
       ) : (
-        <div className="overflow-x-auto overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-800">
+        <div className="overflow-x-auto overflow-hidden rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm dark:border-gray-700 dark:bg-gray-800">
           <table className="w-full">
-            <thead className="border-b border-gray-200 bg-gray-50 dark:border-gray-700 dark:bg-gray-700/50">
+            <thead className="border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 dark:border-gray-700 dark:bg-gray-700/50">
               <tr>
                 <th scope="col" className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">{t("common.name")}</th>
                 <th scope="col" className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">{t("oauth.clientId")}</th>
@@ -416,7 +416,7 @@ export default function OAuthClientsSettingsPage() {
             </thead>
             <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
               {clients.map((client: any) => (
-                <tr key={client.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50">
+                <tr key={client.id} className="hover:bg-gray-50 dark:hover:bg-gray-700 dark:bg-gray-800 dark:hover:bg-gray-700/50">
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-2">
                       <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand-100">
@@ -449,7 +449,7 @@ export default function OAuthClientsSettingsPage() {
                         onClick={() => handleEdit(client)}
                         aria-label={"Edit " + client.name}
                         title={t("oauth.edit")}
-                        className="rounded p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-600 dark:hover:bg-gray-700"
+                        className="rounded p-1.5 text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 dark:bg-gray-700 hover:text-gray-600 dark:text-gray-400 dark:hover:bg-gray-700"
                       >
                         <Pencil className="h-4 w-4" />
                       </button>

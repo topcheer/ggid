@@ -123,7 +123,7 @@ export default function SAMLConfigPage() {
   return (
     <div className="mx-auto max-w-3xl space-y-6 p-6">
       <div>
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">SAML Configuration</h1>
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-white dark:text-white">SAML Configuration</h1>
         <p className="mt-1 text-sm text-gray-500">
           Configure SAML 2.0 SSO integration with your Identity Provider (IdP).
         </p>
@@ -141,7 +141,7 @@ export default function SAMLConfigPage() {
       )}
 
       {/* SP Metadata (download/share) */}
-      <div className="rounded-xl border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-gray-900">
+      <div className="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-6 dark:border-gray-800 dark:bg-gray-900">
         <h2 className="mb-2 flex items-center gap-2 text-sm font-semibold uppercase text-gray-400">
           <Download className="h-4 w-4" /> Service Provider Metadata
         </h2>
@@ -152,10 +152,10 @@ export default function SAMLConfigPage() {
           {spMetadata || "Loading..."}
         </pre>
         <div className="mt-3 flex gap-2">
-          <button onClick={handleDownloadSp} className="flex items-center gap-1.5 rounded-lg border border-gray-300 px-3 py-1.5 text-sm dark:border-gray-700">
+          <button onClick={handleDownloadSp} className="flex items-center gap-1.5 rounded-lg border border-gray-300 dark:border-gray-600 px-3 py-1.5 text-sm dark:border-gray-700">
             <Download className="h-4 w-4" /> Download XML
           </button>
-          <button onClick={handleCopySp} className="flex items-center gap-1.5 rounded-lg border border-gray-300 px-3 py-1.5 text-sm dark:border-gray-700">
+          <button onClick={handleCopySp} className="flex items-center gap-1.5 rounded-lg border border-gray-300 dark:border-gray-600 px-3 py-1.5 text-sm dark:border-gray-700">
             {spCopied ? <CheckCircle2 className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4" />}
             {spCopied ? "Copied!" : "Copy"}
           </button>
@@ -163,7 +163,7 @@ export default function SAMLConfigPage() {
       </div>
 
       {/* IdP Configuration */}
-      <div className="rounded-xl border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-gray-900">
+      <div className="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-6 dark:border-gray-800 dark:bg-gray-900">
         <h2 className="mb-4 flex items-center gap-2 text-sm font-semibold uppercase text-gray-400">
           <Shield className="h-4 w-4" /> Identity Provider Configuration
         </h2>
@@ -171,56 +171,56 @@ export default function SAMLConfigPage() {
         <div className="space-y-4">
           {/* Entity ID */}
           <div>
-            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">SP Entity ID</label>
+            <label className="text-sm font-medium text-gray-700 dark:text-gray-300 dark:text-gray-300">SP Entity ID</label>
             <input
               type="text"
               value={entityId}
               onChange={e => setEntityId(e.target.value)}
               placeholder="https://ggid-console.example.com/saml/metadata"
-              className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-800"
+              className="mt-1 w-full rounded-lg border border-gray-300 dark:border-gray-600 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-800"
             />
             <p className="mt-1 text-xs text-gray-400">Unique identifier for this Service Provider.</p>
           </div>
 
           {/* ACS URL */}
           <div>
-            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">ACS URL</label>
+            <label className="text-sm font-medium text-gray-700 dark:text-gray-300 dark:text-gray-300">ACS URL</label>
             <input
               type="text"
               value={acsUrl}
               onChange={e => setAcsUrl(e.target.value)}
               placeholder="https://ggid-console.example.com/saml/acs"
-              className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-800"
+              className="mt-1 w-full rounded-lg border border-gray-300 dark:border-gray-600 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-800"
             />
             <p className="mt-1 text-xs text-gray-400">Assertion Consumer Service URL where IdP POSTs SAML responses.</p>
           </div>
 
           {/* IdP Metadata URL */}
           <div>
-            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">IdP Metadata URL (optional)</label>
+            <label className="text-sm font-medium text-gray-700 dark:text-gray-300 dark:text-gray-300">IdP Metadata URL (optional)</label>
             <input
               type="text"
               value={idpMetadataUrl}
               onChange={e => setIdpMetadataUrl(e.target.value)}
               placeholder="https://idp.example.com/metadata"
-              className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-800"
+              className="mt-1 w-full rounded-lg border border-gray-300 dark:border-gray-600 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-800"
             />
             <p className="mt-1 text-xs text-gray-400">GGID will fetch and auto-update IdP configuration from this URL.</p>
           </div>
 
           {/* IdP Metadata XML */}
           <div>
-            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">IdP Metadata XML</label>
+            <label className="text-sm font-medium text-gray-700 dark:text-gray-300 dark:text-gray-300">IdP Metadata XML</label>
             <div className="mt-1 flex gap-2">
               <textarea
                 value={idpMetadataXml}
                 onChange={e => setIdpMetadataXml(e.target.value)}
                 rows={6}
                 placeholder="Paste IdP metadata XML here, or upload a file..."
-                className="flex-1 rounded-lg border border-gray-300 px-3 py-2 font-mono text-xs dark:border-gray-700 dark:bg-gray-800"
+                className="flex-1 rounded-lg border border-gray-300 dark:border-gray-600 px-3 py-2 font-mono text-xs dark:border-gray-700 dark:bg-gray-800"
               />
             </div>
-            <label className="mt-2 inline-flex cursor-pointer items-center gap-1.5 rounded-lg border border-gray-300 px-3 py-1.5 text-sm dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800">
+            <label className="mt-2 inline-flex cursor-pointer items-center gap-1.5 rounded-lg border border-gray-300 dark:border-gray-600 px-3 py-1.5 text-sm dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 dark:bg-gray-800 dark:hover:bg-gray-800">
               <Upload className="h-4 w-4" /> Upload XML File
               <input type="file" accept=".xml,text/xml" onChange={handleUploadIdp} className="hidden" />
             </label>

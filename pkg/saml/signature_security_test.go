@@ -182,3 +182,70 @@ func TestSecurity_ReferenceIDMismatchRejected(t *testing.T) {
 		t.Fatal("assertion with mismatched reference ID must be rejected")
 	}
 }
+
+// TestSecurity_XSWSignatureMovedRejected: classic XML Signature Wrapping —
+// the valid Signature element is moved out of its position as a direct child
+// of Assertion (here: nested inside a wrapper element). Must be rejected even
+// though the signature itself is cryptographically intact.
+func TestSecurity_XSWSignatureMovedRejected(t *testing.T) {
+	cert, privKey := genRSACertWithKey(t)
+	idp := &IdentityProvider{
+		EntityID: "https://idp.example.com/saml", PrivateKey: privKey,
+		Certificate: cert.Raw, KeyID: "k",
+	}
+	resp, err := idp.BuildSAMLResponse(&SAMLResponseRequest{
+		Destination: "https://sp.example.com/acs",
+		NameID:      "user@corp.com",
+	})
+	if err != nil {
+		t.Fatalf("BuildSAMLResponse: %v", err)
+	}
+	assertionXML := string(extractAssertionFromResponse(t, resp))
+
+	// Extract the Signature element and re-insert it wrapped one level deeper.
+	sigStart := strings.Index(assertionXML, "<ds:Signature")
+	sigEnd := strings.Index(assertionXML, "</ds:Signature>") + len("</ds:Signature>")
+	if sigStart < 0 || sigEnd <= len("</ds:Signature>") {
+		t.Fatal("no Signature element found in signed assertion")
+	}
+	sigElement := assertionXML[sigStart:sigEnd]
+	// Remove from original position (plus preceding newline inserted by IdP).
+	without := assertionXML[:sigStart] + assertionXML[sigEnd:]
+	// Re-insert wrapped inside <Advice> before </Assertion>.
+	wrapped := strings.Replace(without, "</saml:Assertion>",
+		"<saml:Advice><wrapper>"+sigElement+"</wrapper></saml:Advice></saml:Assertion>", 1)
+	if wrapped == without {
+		t.Fatal("failed to re-insert wrapped signature")
+	}
+
+	if _, err := VerifySignedAssertion([]byte(wrapped), cert); err == nil {
+		t.Fatal("XSW attack (moved signature) must be rejected")
+	}
+}
+
+// TestSecurity_InResponseToParsed: SubjectConfirmationData.InResponseTo must
+// be parsed so the ACS handler can enforce replay protection.
+func TestSecurity_InResponseToParsed(t *testing.T) {
+	cert, privKey := genRSACertWithKey(t)
+	idp := &IdentityProvider{
+		EntityID: "https://idp.example.com/saml", PrivateKey: privKey,
+		Certificate: cert.Raw, KeyID: "k",
+	}
+	resp, err := idp.BuildSAMLResponse(&SAMLResponseRequest{
+		Destination:  "https://sp.example.com/acs",
+		NameID:       "user@corp.com",
+		InResponseTo: "_request-abc-123",
+	})
+	if err != nil {
+		t.Fatalf("BuildSAMLResponse: %v", err)
+	}
+	assertionXML := extractAssertionFromResponse(t, resp)
+
+	a, err := VerifySignedAssertion(assertionXML, cert)
+	if err != nil {
+		t.Fatalf("VerifySignedAssertion: %v", err)
+	}
+	if a.InResponseTo() != "_request-abc-123" {
+		t.Errorf("InResponseTo = %q, want _request-abc-123", a.InResponseTo())
+	}
+}

@@ -101,7 +101,7 @@ export default function PasskeyManagementPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold">{t("passkeyMgmt.title")}</h1>
-          <p className="text-gray-600">{t("passkeyMgmt.subtitle")}</p>
+          <p className="text-gray-600 dark:text-gray-400">{t("passkeyMgmt.subtitle")}</p>
         </div>
         <button onClick={() => setShowEnroll(!showEnroll)} className="px-4 py-2 bg-blue-600 text-white rounded text-sm">
           {showEnroll ? t("common.cancel") : t("passkeyMgmt.enrollPasskey")}
@@ -109,7 +109,7 @@ export default function PasskeyManagementPage() {
       </div>
 
       {showEnroll && (
-        <section className="bg-white rounded-lg shadow p-6 space-y-4">
+        <section className="bg-white dark:bg-gray-800 rounded-lg shadow p-6 space-y-4">
           <h2 className="text-lg font-semibold">One-Tap Passkey Enrollment</h2>
           <p className="text-sm text-gray-500">Enter a device name to begin the WebAuthn enrollment flow. The browser will prompt for platform authenticator registration.</p>
           <div>
@@ -129,27 +129,27 @@ export default function PasskeyManagementPage() {
       )}
 
       <div className="grid grid-cols-4 gap-4">
-        <div className="bg-white rounded-lg shadow p-4 text-center">
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4 text-center">
           <div className="text-2xl font-bold">{passkeys.length}</div>
           <div className="text-sm text-gray-500">Registered</div>
         </div>
-        <div className="bg-white rounded-lg shadow p-4 text-center">
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4 text-center">
           <div className="text-2xl font-bold text-green-600">{passkeys.filter(p => p.syncStatus === 'synced').length}</div>
           <div className="text-sm text-gray-500">Synced</div>
         </div>
-        <div className="bg-white rounded-lg shadow p-4 text-center">
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4 text-center">
           <div className="text-2xl font-bold text-blue-600">{passkeys.filter(p => p.backupEligible).length}</div>
           <div className="text-sm text-gray-500">Backup Eligible</div>
         </div>
-        <div className="bg-white rounded-lg shadow p-4 text-center">
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4 text-center">
           <div className="text-2xl font-bold">{new Set(passkeys.map(p => p.platform)).size}</div>
           <div className="text-sm text-gray-500">Platforms</div>
         </div>
       </div>
 
-      <section className="bg-white rounded-lg shadow overflow-hidden">
+      <section className="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
         <table className="w-full text-sm">
-          <thead className="bg-gray-50">
+          <thead className="bg-gray-50 dark:bg-gray-800">
             <tr className="text-left">
               <th scope="col" className="p-3">Device</th>
               <th scope="col" className="p-3">Platform</th>
@@ -163,12 +163,12 @@ export default function PasskeyManagementPage() {
           </thead>
           <tbody>
             {passkeys.map(p => (
-              <tr key={p.id} className="border-b hover:bg-gray-50">
+              <tr key={p.id} className="border-b hover:bg-gray-50 dark:hover:bg-gray-700 dark:bg-gray-800">
                 <td className="p-3 font-medium">{p.deviceName}</td>
                 <td className="p-3"><span className={`px-2 py-0.5 rounded text-xs ${platformColor(p.platform)}`}>{p.platform}</span></td>
                 <td className="p-3 text-gray-500">{p.created}</td>
                 <td className="p-3 text-gray-500">{p.lastUsed}</td>
-                <td className="p-3"><div className="flex flex-wrap gap-1">{p.transports.map(t => <span key={t} className="px-1.5 py-0.5 bg-gray-100 rounded text-xs font-mono">{t}</span>)}</div></td>
+                <td className="p-3"><div className="flex flex-wrap gap-1">{p.transports.map(t => <span key={t} className="px-1.5 py-0.5 bg-gray-100 dark:bg-gray-700 rounded text-xs font-mono">{t}</span>)}</div></td>
                 <td className="p-3"><span className={`px-2 py-0.5 rounded text-xs capitalize ${syncColor(p.syncStatus)}`}>{p.syncStatus.replace('-', ' ')}</span></td>
                 <td className="p-3">{p.backupEligible ? <span className="text-green-600 text-xs">Eligible</span> : <span className="text-gray-400 text-xs">N/A</span>}</td>
                 <td className="p-3"><button onClick={() => setRevokeTarget(p)} className="text-red-600 text-xs hover:underline">Revoke</button></td>
@@ -178,7 +178,7 @@ export default function PasskeyManagementPage() {
         </table>
       </section>
 
-      <section className="bg-white rounded-lg shadow p-6 space-y-3">
+      <section className="bg-white dark:bg-gray-800 rounded-lg shadow p-6 space-y-3">
         <h2 className="text-lg font-semibold">Platform Authenticator Info</h2>
         <div className="grid grid-cols-3 gap-4">
           <div className="border rounded p-4">
@@ -198,9 +198,9 @@ export default function PasskeyManagementPage() {
 
       {revokeTarget && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4 space-y-4">
+          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 max-w-md w-full mx-4 space-y-4">
             <h2 className="text-lg font-semibold">Revoke Passkey</h2>
-            <p className="text-sm text-gray-600">You are about to revoke the passkey for <strong>{revokeTarget.deviceName}</strong> ({revokeTarget.platform}). The user will need to re-enroll this device to use passkey authentication again.</p>
+            <p className="text-sm text-gray-600 dark:text-gray-400">You are about to revoke the passkey for <strong>{revokeTarget.deviceName}</strong> ({revokeTarget.platform}). The user will need to re-enroll this device to use passkey authentication again.</p>
             <div className="flex justify-end gap-3">
               <button onClick={() => setRevokeTarget(null)} className="px-4 py-2 border rounded text-sm">Cancel</button>
               <button onClick={confirmRevoke} className="px-4 py-2 bg-red-600 text-white rounded text-sm">Confirm Revoke</button>

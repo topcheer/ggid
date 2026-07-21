@@ -61,9 +61,9 @@ export default function BrandingPage() {
 
   return (
     <div className="space-y-6">
-      <div><h1 className="flex items-center gap-2 text-2xl font-bold text-gray-900 dark:text-white"><Palette className="h-6 w-6 text-pink-500" /> {t("branding.title")}</h1><p className="mt-1 text-sm text-gray-500 dark:text-gray-400">{t("branding.subtitle")}</p></div>
+      <div><h1 className="flex items-center gap-2 text-2xl font-bold text-gray-900 dark:text-white dark:text-white"><Palette className="h-6 w-6 text-pink-500" /> {t("branding.title")}</h1><p className="mt-1 text-sm text-gray-500 dark:text-gray-400">{t("branding.subtitle")}</p></div>
 
-      <div className="flex gap-1 border-b border-gray-200 dark:border-gray-700 overflow-x-auto">
+      <div className="flex gap-1 border-b border-gray-200 dark:border-gray-700 dark:border-gray-700 overflow-x-auto">
         {([["theme", t("branding.theme"), Palette], ["assets", t("branding.assets"), Image], ["email", t("branding.emailTemplates"), Mail]] as const).map(([id, label, Icon]) => (
           <button key={id} onClick={() => setTab(id as Tab)} aria-pressed={tab === id} className={`flex items-center gap-1.5 border-b-2 px-4 py-2 text-sm font-medium transition whitespace-nowrap ${tab === id ? "border-pink-600 text-pink-600 dark:text-pink-400" : "border-transparent text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"}`}><Icon className="h-4 w-4" /> {label}</button>
         ))}
@@ -101,12 +101,12 @@ export default function BrandingPage() {
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div className={card}>
               <h3 className="mb-3 text-sm font-semibold">{t("branding.logo")}</h3>
-              <div className="flex items-center gap-4"><div className="flex h-16 w-16 items-center justify-center rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-300"><Image className="h-8 w-8" /></div><button className="rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-700 flex items-center gap-2"><Upload className="h-3.5 w-3.5" /> {t("branding.upload")}</button></div>
+              <div className="flex items-center gap-4"><div className="flex h-16 w-16 items-center justify-center rounded-lg bg-gray-100 dark:bg-gray-700 dark:bg-gray-700 text-gray-300"><Image className="h-8 w-8" /></div><button className="rounded-lg border border-gray-300 dark:border-gray-600 px-3 py-2 text-sm dark:border-gray-700 flex items-center gap-2"><Upload className="h-3.5 w-3.5" /> {t("branding.upload")}</button></div>
               <p className="mt-2 text-xs text-gray-400">SVG, PNG — max 512×512px</p>
             </div>
             <div className={card}>
               <h3 className="mb-3 text-sm font-semibold">{t("branding.favicon")}</h3>
-              <div className="flex items-center gap-4"><div className="flex h-16 w-16 items-center justify-center rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-300"><Image className="h-8 w-8" /></div><button className="rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-700 flex items-center gap-2"><Upload className="h-3.5 w-3.5" /> {t("branding.upload")}</button></div>
+              <div className="flex items-center gap-4"><div className="flex h-16 w-16 items-center justify-center rounded-lg bg-gray-100 dark:bg-gray-700 dark:bg-gray-700 text-gray-300"><Image className="h-8 w-8" /></div><button className="rounded-lg border border-gray-300 dark:border-gray-600 px-3 py-2 text-sm dark:border-gray-700 flex items-center gap-2"><Upload className="h-3.5 w-3.5" /> {t("branding.upload")}</button></div>
               <p className="mt-2 text-xs text-gray-400">ICO, PNG — 32×32px / 16×16px</p>
             </div>
           </div>
@@ -123,11 +123,11 @@ export default function BrandingPage() {
         <div className="space-y-4">
           {["verification", "passwordReset", "welcome"].map(type => (
             <div key={type} className={card}>
-              <div className="flex items-center justify-between mb-3"><div className="flex items-center gap-3"><Mail className="h-5 w-5 text-pink-400" /><div><h3 className="font-semibold text-sm capitalize">{type.replace(/([A-Z])/g, " $1")}</h3><p className="text-xs text-gray-400">{t(`branding.${type}Desc`)}</p></div></div><button className="flex items-center gap-1 rounded-lg border border-gray-300 px-3 py-1.5 text-xs dark:border-gray-700"><Eye className="h-3 w-3" /> {t("branding.previewEmail")}</button></div>
+              <div className="flex items-center justify-between mb-3"><div className="flex items-center gap-3"><Mail className="h-5 w-5 text-pink-400" /><div><h3 className="font-semibold text-sm capitalize">{type.replace(/([A-Z])/g, " $1")}</h3><p className="text-xs text-gray-400">{t(`branding.${type}Desc`)}</p></div></div><button className="flex items-center gap-1 rounded-lg border border-gray-300 dark:border-gray-600 px-3 py-1.5 text-xs dark:border-gray-700"><Eye className="h-3 w-3" /> {t("branding.previewEmail")}</button></div>
               <div className="rounded-lg border p-4 dark:border-gray-700" style={{ borderRadius: `${borderRadius}px` }}>
                 <div className="rounded-t-lg p-4 text-white text-center" style={{ backgroundColor: primaryColor, borderRadius: `${borderRadius}px ${borderRadius}px 0 0` }}><div className="mx-auto flex h-8 w-8 items-center justify-center rounded font-bold" style={{ fontFamily }}>GG</div></div>
-                <div className="bg-white dark:bg-gray-900 p-4"><h4 className={`font-semibold text-sm ${darkMode ? "text-white" : "text-gray-900"}`} style={{ fontFamily }}>{t(`branding.${type}Subject`)}</h4><p className={`mt-1 text-xs ${darkMode ? "text-gray-400" : "text-gray-500"}`}>{t(`branding.${type}Body`)}</p><button className="mt-3 px-4 py-2 text-white text-xs font-medium" style={{ backgroundColor: primaryColor, borderRadius: `${borderRadius}px` }}>{t(`branding.${type}Button`)}</button></div>
-                <div className="bg-gray-50 dark:bg-gray-800 p-2 text-center text-xs text-gray-400">© 2025 GGID · {t("branding.footerText")}</div>
+                <div className="bg-white dark:bg-gray-800 dark:bg-gray-900 p-4"><h4 className={`font-semibold text-sm ${darkMode ? "text-white" : "text-gray-900"}`} style={{ fontFamily }}>{t(`branding.${type}Subject`)}</h4><p className={`mt-1 text-xs ${darkMode ? "text-gray-400" : "text-gray-500"}`}>{t(`branding.${type}Body`)}</p><button className="mt-3 px-4 py-2 text-white text-xs font-medium" style={{ backgroundColor: primaryColor, borderRadius: `${borderRadius}px` }}>{t(`branding.${type}Button`)}</button></div>
+                <div className="bg-gray-50 dark:bg-gray-800 dark:bg-gray-800 p-2 text-center text-xs text-gray-400">© 2025 GGID · {t("branding.footerText")}</div>
               </div>
             </div>
           ))}

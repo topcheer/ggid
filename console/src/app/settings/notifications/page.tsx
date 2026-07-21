@@ -54,18 +54,18 @@ export default function NotificationPreferencesPage() {
 
   return (
     <div className="mx-auto max-w-2xl p-6">
-      <h1 className="mb-1 text-2xl font-bold text-gray-900 dark:text-white">Notification Preferences</h1>
+      <h1 className="mb-1 text-2xl font-bold text-gray-900 dark:text-white dark:text-white">Notification Preferences</h1>
       <p className="mb-6 text-sm text-gray-500">Choose how and when you want to receive notifications.</p>
 
       {error && <div className="mb-4 flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-800 dark:bg-red-950"><AlertCircle className="h-4 w-4 shrink-0" /> {error}</div>}
       {success && <div className="mb-4 flex items-center gap-2 rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700 dark:border-green-800 dark:bg-green-950"><CheckCircle2 className="h-4 w-4 shrink-0" /> Preferences saved.</div>}
 
-      <div className="mb-6 rounded-xl border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-gray-900">
+      <div className="mb-6 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-6 dark:border-gray-800 dark:bg-gray-900">
         <h3 className="mb-4 text-sm font-semibold uppercase text-gray-400">Channels</h3>
         <div className="space-y-3">
           {channels.map(c => (
             <div key={c.key} className="flex items-center justify-between">
-              <div><p className="text-sm font-medium text-gray-900 dark:text-white">{c.label}</p><p className="text-xs text-gray-500">{c.desc}</p></div>
+              <div><p className="text-sm font-medium text-gray-900 dark:text-white dark:text-white">{c.label}</p><p className="text-xs text-gray-500">{c.desc}</p></div>
               <button onClick={() => toggle(c.key)} className={`relative h-6 w-11 rounded-full transition-colors ${prefs[c.key] ? "bg-blue-600" : "bg-gray-300 dark:bg-gray-700"}`}>
                 <span className={`absolute top-0.5 left-0.5 h-5 w-5 rounded-full bg-white transition-transform ${prefs[c.key] ? "translate-x-5" : ""}`}></span>
               </button>
@@ -74,12 +74,12 @@ export default function NotificationPreferencesPage() {
         </div>
       </div>
 
-      <div className="mb-6 rounded-xl border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-gray-900">
+      <div className="mb-6 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-6 dark:border-gray-800 dark:bg-gray-900">
         <h3 className="mb-4 text-sm font-semibold uppercase text-gray-400">Categories</h3>
         <div className="space-y-3">
           {categories.map(c => (
             <div key={c.key} className="flex items-center justify-between">
-              <div><p className="text-sm font-medium text-gray-900 dark:text-white">{c.label}</p><p className="text-xs text-gray-500">{c.desc}</p></div>
+              <div><p className="text-sm font-medium text-gray-900 dark:text-white dark:text-white">{c.label}</p><p className="text-xs text-gray-500">{c.desc}</p></div>
               <button onClick={() => toggle(c.key)} className={`relative h-6 w-11 rounded-full transition-colors ${prefs[c.key] ? "bg-blue-600" : "bg-gray-300 dark:bg-gray-700"}`}>
                 <span className={`absolute top-0.5 left-0.5 h-5 w-5 rounded-full bg-white transition-transform ${prefs[c.key] ? "translate-x-5" : ""}`}></span>
               </button>

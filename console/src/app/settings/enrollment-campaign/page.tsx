@@ -68,14 +68,14 @@ export default function EnrollmentCampaignPage() {
   useEffect(() => { load(); }, [load]);
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-950 p-4 md:p-8">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-800 dark:bg-gray-950 p-4 md:p-8">
       <div className="max-w-5xl mx-auto">
         <div className="mb-6">
           <div className="flex items-center gap-3 mb-1">
             <Megaphone className="w-7 h-7 text-blue-600" />
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{t("enrollmentCampaign.title")}</h1>
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-white dark:text-white">{t("enrollmentCampaign.title")}</h1>
           </div>
-          <p className="text-gray-600 dark:text-gray-400 text-sm">{t("enrollmentCampaign.description")}</p>
+          <p className="text-gray-600 dark:text-gray-400 dark:text-gray-400 text-sm">{t("enrollmentCampaign.description")}</p>
         </div>
 
         <div className="flex gap-1 mb-6 bg-gray-200 dark:bg-gray-800 rounded-lg p-1">
@@ -130,7 +130,7 @@ function CampaignsList({ campaigns, onRefresh }: { campaigns: Campaign[]; onRefr
 
   if (campaigns.length === 0) {
     return (
-      <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-12 text-center">
+      <div className="bg-white dark:bg-gray-800 dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 dark:border-gray-800 p-12 text-center">
         <Megaphone className="w-12 h-12 mx-auto mb-3 text-gray-300" />
         <p className="text-sm text-gray-500 dark:text-gray-400">{t("enrollmentCampaign.campaigns.noCampaigns")}</p>
       </div>
@@ -142,10 +142,10 @@ function CampaignsList({ campaigns, onRefresh }: { campaigns: Campaign[]; onRefr
       {campaigns.map((c: any) => {
         const pct = c.target > 0 ? Math.round((c.enrolled / c.target) * 100) : 0;
         return (
-          <div key={c.id} className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-4">
+          <div key={c.id} className="bg-white dark:bg-gray-800 dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 dark:border-gray-800 p-4">
             <div className="flex items-center justify-between mb-3">
               <div>
-                <h3 className="text-sm font-semibold text-gray-900 dark:text-white">{c.name}</h3>
+                <h3 className="text-sm font-semibold text-gray-900 dark:text-white dark:text-white">{c.name}</h3>
                 <div className="flex items-center gap-3 mt-1 text-xs text-gray-500">
                   <span className="flex items-center gap-1"><Target className="w-3 h-3" />{t(`enrollmentCampaign.create.${c.target_group === "no_passkey" ? "noPasskey" : c.target_group === "all" ? "allUsers" : c.target_group === "admins" ? "adminOnly" : "custom"}`)}</span>
                   <span className="flex items-center gap-1"><KeyRound className="w-3 h-3" />{c.method}</span>
@@ -161,7 +161,7 @@ function CampaignsList({ campaigns, onRefresh }: { campaigns: Campaign[]; onRefr
             <div className="mb-2">
               <div className="flex items-center justify-between mb-1">
                 <span className="text-xs text-gray-500">{t("enrollmentCampaign.campaigns.progress")}</span>
-                <span className="text-xs font-medium text-gray-900 dark:text-white">
+                <span className="text-xs font-medium text-gray-900 dark:text-white dark:text-white">
                   {c.enrolled}/{c.target} ({pct}%)
                 </span>
               </div>
@@ -235,7 +235,7 @@ function CreateCampaign({ onLaunched }: { onLaunched: () => void }) {
   };
 
   return (
-    <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-6">
+    <div className="bg-white dark:bg-gray-800 dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 dark:border-gray-800 p-6">
       {/* Stepper */}
       <div className="flex items-center gap-2 mb-8">
         {steps.map((s: any, i: number) => {
@@ -264,13 +264,13 @@ function CreateCampaign({ onLaunched }: { onLaunched: () => void }) {
       {step === 0 && (
         <div className="space-y-4">
           <div>
-            <label className="block text-sm font-semibold text-gray-900 dark:text-white mb-2">{t("enrollmentCampaign.create.campaignName")}</label>
+            <label className="block text-sm font-semibold text-gray-900 dark:text-white dark:text-white mb-2">{t("enrollmentCampaign.create.campaignName")}</label>
             <input type="text" value={name} onChange={(e) => setName(e.target.value)}
               placeholder={t("enrollmentCampaign.create.campaignNamePlaceholder")}
-              className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-sm text-gray-900 dark:text-white" />
+              className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 dark:bg-gray-800 text-sm text-gray-900 dark:text-white dark:text-white" />
           </div>
           <div>
-            <label className="block text-sm font-semibold text-gray-900 dark:text-white mb-2">{t("enrollmentCampaign.create.targetGroup")}</label>
+            <label className="block text-sm font-semibold text-gray-900 dark:text-white dark:text-white mb-2">{t("enrollmentCampaign.create.targetGroup")}</label>
             <div className="grid grid-cols-2 gap-2">
               {TARGET_GROUPS.map((g: any) => (
                 <button key={g.value} onClick={() => setTargetGroup(g.value)}
@@ -287,7 +287,7 @@ function CreateCampaign({ onLaunched }: { onLaunched: () => void }) {
 
       {step === 1 && (
         <div className="space-y-3">
-          <label className="block text-sm font-semibold text-gray-900 dark:text-white">{t("enrollmentCampaign.create.method")}</label>
+          <label className="block text-sm font-semibold text-gray-900 dark:text-white dark:text-white">{t("enrollmentCampaign.create.method")}</label>
           {METHODS.map((m: any) => {
             const Icon = m.icon;
             const active = method === m.value;
@@ -298,7 +298,7 @@ function CreateCampaign({ onLaunched }: { onLaunched: () => void }) {
                 }`}>
                 <Icon className={`w-5 h-5 ${active ? "text-blue-600" : "text-gray-400"}`} />
                 <div>
-                  <div className="text-sm font-medium text-gray-900 dark:text-white">
+                  <div className="text-sm font-medium text-gray-900 dark:text-white dark:text-white">
                     {t(`enrollmentCampaign.create.method${m.value.replace(/^./, (c: any) => c.toUpperCase())}`)}
                   </div>
                 </div>
@@ -312,15 +312,15 @@ function CreateCampaign({ onLaunched }: { onLaunched: () => void }) {
       {step === 2 && (
         <div className="space-y-4">
           <div>
-            <label className="block text-sm font-semibold text-gray-900 dark:text-white mb-1">{t("enrollmentCampaign.create.deadline")}</label>
+            <label className="block text-sm font-semibold text-gray-900 dark:text-white dark:text-white mb-1">{t("enrollmentCampaign.create.deadline")}</label>
             <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">{t("enrollmentCampaign.create.deadlineDesc")}</p>
             <input type="date" value={deadline} onChange={(e) => setDeadline(e.target.value)}
               min={new Date().toISOString().split("T")[0]}
-              className="w-full md:w-64 px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-sm text-gray-900 dark:text-white" />
+              className="w-full md:w-64 px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 dark:bg-gray-800 text-sm text-gray-900 dark:text-white dark:text-white" />
           </div>
           <label className="flex items-center gap-2 cursor-pointer">
             <input type="checkbox" checked={sendEmail} onChange={(e) => setSendEmail(e.target.checked)} className="rounded" />
-            <span className="text-sm text-gray-700 dark:text-gray-300 flex items-center gap-1">
+            <span className="text-sm text-gray-700 dark:text-gray-300 dark:text-gray-300 flex items-center gap-1">
               <Mail className="w-4 h-4" />
               {t("enrollmentCampaign.create.sendEmail")}
             </span>
@@ -330,7 +330,7 @@ function CreateCampaign({ onLaunched }: { onLaunched: () => void }) {
 
       {step === 3 && (
         <div className="space-y-3">
-          <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-3">{t("enrollmentCampaign.create.reviewTitle")}</h3>
+          <h3 className="text-sm font-semibold text-gray-900 dark:text-white dark:text-white mb-3">{t("enrollmentCampaign.create.reviewTitle")}</h3>
           <ReviewRow label={t("enrollmentCampaign.create.campaignName")} value={name} />
           <ReviewRow label={t("enrollmentCampaign.create.targetGroup")} value={t(`enrollmentCampaign.create.${targetGroup === "no_passkey" ? "noPasskey" : targetGroup === "all" ? "allUsers" : targetGroup === "admins" ? "adminOnly" : "custom"}`)} />
           <ReviewRow label={t("enrollmentCampaign.create.method")} value={t(`enrollmentCampaign.create.method${method.replace(/^./, (c: any) => c.toUpperCase())}`)} />
@@ -340,9 +340,9 @@ function CreateCampaign({ onLaunched }: { onLaunched: () => void }) {
       )}
 
       {/* Navigation */}
-      <div className="flex items-center justify-between mt-6 pt-4 border-t border-gray-200 dark:border-gray-800">
+      <div className="flex items-center justify-between mt-6 pt-4 border-t border-gray-200 dark:border-gray-700 dark:border-gray-800">
         {step > 0 ? (
-          <button onClick={() => setStep(step - 1)} className="flex items-center gap-1.5 px-4 py-2 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-lg text-sm font-medium">
+          <button onClick={() => setStep(step - 1)} className="flex items-center gap-1.5 px-4 py-2 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 dark:text-gray-300 rounded-lg text-sm font-medium">
             <ChevronLeft className="w-4 h-4" />
             {t("enrollmentCampaign.create.back")}
           </button>
@@ -370,7 +370,7 @@ function ReviewRow({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex items-center justify-between py-2 border-b border-gray-100 dark:border-gray-800/50">
       <span className="text-xs text-gray-500 dark:text-gray-400">{label}</span>
-      <span className="text-sm font-medium text-gray-900 dark:text-white">{value}</span>
+      <span className="text-sm font-medium text-gray-900 dark:text-white dark:text-white">{value}</span>
     </div>
   );
 }

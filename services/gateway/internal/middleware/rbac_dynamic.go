@@ -237,12 +237,19 @@ func (r *RBACResolver) loadFromDB(ctx context.Context) ([]routePermRow, error) {
 	}
 	defer rows.Close()
 	var out []routePermRow
+	skipped := 0
 	for rows.Next() {
 		var row routePermRow
 		if err := rows.Scan(&row.RoleName, &row.RoleKey, &row.Prefix, &row.Level); err != nil {
 			continue
 		}
+		if row.Prefix == "" || !strings.HasPrefix(row.Prefix, "/api/") {
+			skipped++
+		}
 		out = append(out, row)
+	}
+	if skipped > 0 {
+		slog.Warn("rbac: ignoring non-/api/ route permission rules (they cannot gate API traffic)", "count", skipped)
 	}
 	return out, rows.Err()
 }
@@ -258,9 +265,11 @@ func (r *RBACResolver) loadFromDB(ctx context.Context) ([]routePermRow, error) {
 //  4. Access granted if any of the user's roles (JWT roles claim, matched on
 //     role name or key) holds a level >= required for the matched prefix.
 func (r *RBACResolver) CheckAccess(ctx context.Context, path, method string, claims JWTCClaims) (allow, handled bool) {
-	// 1. Superuser bypass — preserves existing behavior for admins even if
-	// the seed migration has not run yet.
-	if hasAdminScope(claims.Scopes) || hasAdminScope(claims.Roles) {
+	// 1. Superuser bypass — scopes claim ONLY. Role display names must never
+	// grant superuser access: a tenant admin can create a role named
+	// "Administrator" and would otherwise escalate to platform admin.
+	// Role-based access is handled by rule 2 (role_route_permissions).
+	if hasAdminScope(claims.Scopes) {
 		return true, true
 	}
 

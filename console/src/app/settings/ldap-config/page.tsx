@@ -72,10 +72,10 @@ export default function LdapConfigPage() {
     <div className="p-6 max-w-4xl mx-auto space-y-6">
       <div>
         <h1 className="text-2xl font-bold">LDAP Configuration</h1>
-        <p className="text-gray-600">Configure LDAP directory connection, authentication, and user provisioning.</p>
+        <p className="text-gray-600 dark:text-gray-400">Configure LDAP directory connection, authentication, and user provisioning.</p>
       </div>
 
-      <section className="bg-white rounded-lg shadow p-6 space-y-4">
+      <section className="bg-white dark:bg-gray-800 rounded-lg shadow p-6 space-y-4">
         <h2 className="text-lg font-semibold">Connection Settings</h2>
         <div><label className="text-sm font-medium">LDAP URL</label><input aria-label="ldap Url" type="text" value={ldapUrl} onChange={e => setLdapUrl(e.target.value)} className="w-full border rounded px-3 py-2 text-sm mt-1 font-mono" /></div>
         <div className="grid grid-cols-2 gap-4">
@@ -92,19 +92,19 @@ export default function LdapConfigPage() {
       </section>
 
       <div className="grid grid-cols-2 gap-4">
-        <label className="flex items-center justify-between bg-white rounded-lg shadow p-4"><span className="text-sm font-medium">START_TLS</span><input aria-label="Start tls" type="checkbox" checked={startTls} onChange={e => setStartTls(e.target.checked)} className="rounded" /></label>
-        <label className="flex items-center justify-between bg-white rounded-lg shadow p-4"><span className="text-sm font-medium">Auto-Provision Users</span><input aria-label="Auto provision" type="checkbox" checked={autoProvision} onChange={e => setAutoProvision(e.target.checked)} className="rounded" /></label>
+        <label className="flex items-center justify-between bg-white dark:bg-gray-800 rounded-lg shadow p-4"><span className="text-sm font-medium">START_TLS</span><input aria-label="Start tls" type="checkbox" checked={startTls} onChange={e => setStartTls(e.target.checked)} className="rounded" /></label>
+        <label className="flex items-center justify-between bg-white dark:bg-gray-800 rounded-lg shadow p-4"><span className="text-sm font-medium">Auto-Provision Users</span><input aria-label="Auto provision" type="checkbox" checked={autoProvision} onChange={e => setAutoProvision(e.target.checked)} className="rounded" /></label>
       </div>
 
       <div className="grid grid-cols-2 gap-6">
-        <section className="bg-white rounded-lg shadow p-6 space-y-4">
+        <section className="bg-white dark:bg-gray-800 rounded-lg shadow p-6 space-y-4">
           <h2 className="text-lg font-semibold">User Filter</h2>
           <select aria-label="Filter" value={userFilter} onChange={e => setUserFilter(e.target.value)} className="w-full border rounded px-3 py-2 text-sm">
             {filterAttrs.map(a => <option key={a} value={a}>{a}</option>)}
           </select>
           <p className="text-xs text-gray-400">LDAP attribute used to match username during login.</p>
         </section>
-        <section className="bg-white rounded-lg shadow p-6 space-y-4">
+        <section className="bg-white dark:bg-gray-800 rounded-lg shadow p-6 space-y-4">
           <h2 className="text-lg font-semibold">Group Filter</h2>
           <select aria-label="Filter" value={groupFilter} onChange={e => setGroupFilter(e.target.value)} className="w-full border rounded px-3 py-2 text-sm">
             {groupAttrs.map(a => <option key={a} value={a}>{a}</option>)}
@@ -113,10 +113,10 @@ export default function LdapConfigPage() {
         </section>
       </div>
 
-      <section className="bg-white rounded-lg shadow p-6 space-y-4">
+      <section className="bg-white dark:bg-gray-800 rounded-lg shadow p-6 space-y-4">
         <h2 className="text-lg font-semibold">Attribute Mapping</h2>
         <table className="w-full text-sm">
-          <thead className="bg-gray-50"><tr className="text-left"><th className="p-3">LDAP Attribute</th><th className="p-3">Local Attribute</th><th className="p-3">Action</th></tr></thead>
+          <thead className="bg-gray-50 dark:bg-gray-800"><tr className="text-left"><th className="p-3">LDAP Attribute</th><th className="p-3">Local Attribute</th><th className="p-3">Action</th></tr></thead>
           <tbody>
             {attrMapping.map((m: any, idx: number) => (
               <tr key={idx} className="border-b"><td className="p-3 font-mono text-xs">{m.ldap}</td><td className="p-3 font-mono text-xs">{m.local}</td><td className="p-3"><button onClick={() => removeMapping(idx)} className="text-red-600 text-xs hover:underline">Remove</button></td></tr>

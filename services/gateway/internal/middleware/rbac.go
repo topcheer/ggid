@@ -125,15 +125,14 @@ func writeAdminForbidden(w http.ResponseWriter) {
 }
 
 // hasAdminScope checks if any of the user's scopes indicate admin-level access.
-// Supports both lowercase scope strings (platform:admin, admin) and
-// role display names (Administrator, Platform Administrator, Tenant Administrator).
+// Only the namespaced, non-forgeable scope strings are accepted. Loose values
+// like "admin"/"administrator" are NOT accepted here: role keys are
+// tenant-controlled, so a tenant admin could otherwise mint a role whose key
+// matches and escalate to platform admin.
 func hasAdminScope(scopes []string) bool {
 	for _, sc := range scopes {
-		lower := strings.ToLower(sc)
-		switch lower {
-		case "admin", "superadmin", "administrator", "roles:write", "*",
-			"platform:admin", "platform administrator",
-			"tenant:admin", "tenant administrator":
+		switch strings.ToLower(sc) {
+		case "platform:admin", "tenant:admin":
 			return true
 		}
 	}

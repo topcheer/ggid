@@ -61,16 +61,16 @@ export default function PasswordMigrationPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-950 p-4 md:p-8">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-800 dark:bg-gray-950 p-4 md:p-8">
       <div className="max-w-5xl mx-auto">
         <div className="mb-6">
           <div className="flex items-center gap-3 mb-2">
             <KeyRound className="w-7 h-7 text-blue-600" />
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-white dark:text-white">
               {t("passwordMigration.title")}
             </h1>
           </div>
-          <p className="text-gray-600 dark:text-gray-400 text-sm">
+          <p className="text-gray-600 dark:text-gray-400 dark:text-gray-400 text-sm">
             {t("passwordMigration.description")}
           </p>
         </div>
@@ -171,7 +171,7 @@ function OverviewTab() {
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         {/* Deprecation Level */}
-        <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-4">
+        <div className="bg-white dark:bg-gray-800 dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 dark:border-gray-800 p-4">
           <div className="flex items-center gap-2 mb-2">
             <Shield className="w-5 h-5 text-blue-600" />
             <span className="text-xs text-gray-500 dark:text-gray-400">
@@ -184,41 +184,41 @@ function OverviewTab() {
         </div>
 
         {/* Passwordless Users */}
-        <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-4">
+        <div className="bg-white dark:bg-gray-800 dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 dark:border-gray-800 p-4">
           <div className="flex items-center gap-2 mb-2">
             <Check className="w-5 h-5 text-green-500" />
             <span className="text-xs text-gray-500 dark:text-gray-400">
               {t("passwordMigration.overview.passwordlessUsers")}
             </span>
           </div>
-          <div className="text-2xl font-bold text-gray-900 dark:text-white">
+          <div className="text-2xl font-bold text-gray-900 dark:text-white dark:text-white">
             {stats.passwordless_users}
           </div>
           <div className="text-xs text-gray-400 mt-1">/ {stats.total_users} {t("passwordMigration.overview.totalUsers")}</div>
         </div>
 
         {/* Pending Migration */}
-        <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-4">
+        <div className="bg-white dark:bg-gray-800 dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 dark:border-gray-800 p-4">
           <div className="flex items-center gap-2 mb-2">
             <Clock className="w-5 h-5 text-orange-500" />
             <span className="text-xs text-gray-500 dark:text-gray-400">
               {t("passwordMigration.overview.pendingUsers")}
             </span>
           </div>
-          <div className="text-2xl font-bold text-gray-900 dark:text-white">
+          <div className="text-2xl font-bold text-gray-900 dark:text-white dark:text-white">
             {stats.pending_users}
           </div>
         </div>
 
         {/* Migration Rate */}
-        <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-4">
+        <div className="bg-white dark:bg-gray-800 dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 dark:border-gray-800 p-4">
           <div className="flex items-center gap-2 mb-2">
             <TrendingUp className="w-5 h-5 text-blue-600" />
             <span className="text-xs text-gray-500 dark:text-gray-400">
               {t("passwordMigration.overview.migrationRate")}
             </span>
           </div>
-          <div className="text-2xl font-bold text-gray-900 dark:text-white">
+          <div className="text-2xl font-bold text-gray-900 dark:text-white dark:text-white">
             {stats.migration_rate}%
           </div>
         </div>
@@ -227,8 +227,8 @@ function OverviewTab() {
       {/* Pie Chart + Progress */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {/* Pie Chart */}
-        <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-6">
-          <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-4">
+        <div className="bg-white dark:bg-gray-800 dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 dark:border-gray-800 p-6">
+          <h3 className="text-sm font-semibold text-gray-900 dark:text-white dark:text-white mb-4">
             {t("passwordMigration.overview.migrationProgress")}
           </h3>
           <div className="flex items-center justify-center">
@@ -252,7 +252,7 @@ function OverviewTab() {
                 />
               </svg>
               <div className="absolute inset-0 flex flex-col items-center justify-center">
-                <span className="text-3xl font-bold text-gray-900 dark:text-white">{stats.migration_rate}%</span>
+                <span className="text-3xl font-bold text-gray-900 dark:text-white dark:text-white">{stats.migration_rate}%</span>
                 <span className="text-xs text-gray-500">{t("passwordMigration.overview.registered")}</span>
               </div>
             </div>
@@ -260,13 +260,13 @@ function OverviewTab() {
           <div className="flex items-center justify-center gap-4 mt-4">
             <div className="flex items-center gap-2">
               <div className="w-3 h-3 rounded-full bg-green-500" />
-              <span className="text-xs text-gray-600 dark:text-gray-400">
+              <span className="text-xs text-gray-600 dark:text-gray-400 dark:text-gray-400">
                 {t("passwordMigration.overview.registered")} ({stats.passwordless_users})
               </span>
             </div>
             <div className="flex items-center gap-2">
               <div className="w-3 h-3 rounded-full bg-gray-200 dark:bg-gray-700" />
-              <span className="text-xs text-gray-600 dark:text-gray-400">
+              <span className="text-xs text-gray-600 dark:text-gray-400 dark:text-gray-400">
                 {t("passwordMigration.overview.pending")} ({stats.pending_users})
               </span>
             </div>
@@ -274,8 +274,8 @@ function OverviewTab() {
         </div>
 
         {/* Progress Bar */}
-        <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-6">
-          <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-4">
+        <div className="bg-white dark:bg-gray-800 dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 dark:border-gray-800 p-6">
+          <h3 className="text-sm font-semibold text-gray-900 dark:text-white dark:text-white mb-4">
             {t("passwordMigration.overview.migrationProgress")}
           </h3>
           <div className="space-y-4">
@@ -299,8 +299,8 @@ function ProgressBar({ label, value, total, color }: {
   return (
     <div>
       <div className="flex items-center justify-between mb-1">
-        <span className="text-xs text-gray-600 dark:text-gray-400">{label}</span>
-        <span className="text-xs font-medium text-gray-900 dark:text-white">{value} ({pct}%)</span>
+        <span className="text-xs text-gray-600 dark:text-gray-400 dark:text-gray-400">{label}</span>
+        <span className="text-xs font-medium text-gray-900 dark:text-white dark:text-white">{value} ({pct}%)</span>
       </div>
       <div className="h-2 bg-gray-200 dark:bg-gray-800 rounded-full overflow-hidden">
         <div className={`h-full ${color} rounded-full transition-all duration-500`} style={{ width: `${pct}%` }} />
@@ -370,10 +370,10 @@ function ConfigTab() {
   };
 
   return (
-    <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-6 space-y-6">
+    <div className="bg-white dark:bg-gray-800 dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 dark:border-gray-800 p-6 space-y-6">
       {/* Deprecation Level Selector */}
       <div>
-        <label className="block text-sm font-semibold text-gray-900 dark:text-white mb-3">
+        <label className="block text-sm font-semibold text-gray-900 dark:text-white dark:text-white mb-3">
           {t("passwordMigration.config.deprecationLevel")}
         </label>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
@@ -393,7 +393,7 @@ function ConfigTab() {
                   active ? colorMap[lvl.color] + " ring-2 ring-offset-2 ring-blue-500" : "border-gray-200 dark:border-gray-700 hover:border-gray-300"
                 }`}
               >
-                <div className="text-sm font-medium text-gray-900 dark:text-white capitalize">
+                <div className="text-sm font-medium text-gray-900 dark:text-white dark:text-white capitalize">
                   {t(`passwordMigration.overview.level${lvl.value.replace(/_./g, (m: any) => m[1].toUpperCase()).replace(/^./, (m: any) => m.toUpperCase())}`)}
                 </div>
                 <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
@@ -408,7 +408,7 @@ function ConfigTab() {
 
       {/* Grace Period */}
       <div>
-        <label className="block text-sm font-semibold text-gray-900 dark:text-white mb-1">
+        <label className="block text-sm font-semibold text-gray-900 dark:text-white dark:text-white mb-1">
           {t("passwordMigration.config.graceDays")}
         </label>
         <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">
@@ -420,13 +420,13 @@ function ConfigTab() {
           onChange={(e) => setConfig({ ...config, grace_days: parseInt(e.target.value) || 0 })}
           min={0}
           max={365}
-          className="w-full md:w-48 px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-sm text-gray-900 dark:text-white"
+          className="w-full md:w-48 px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 dark:bg-gray-800 text-sm text-gray-900 dark:text-white dark:text-white"
         />
       </div>
 
       {/* Banner Text */}
       <div>
-        <label className="block text-sm font-semibold text-gray-900 dark:text-white mb-1">
+        <label className="block text-sm font-semibold text-gray-900 dark:text-white dark:text-white mb-1">
           {t("passwordMigration.config.bannerText")}
         </label>
         <textarea
@@ -434,15 +434,15 @@ function ConfigTab() {
           onChange={(e) => setConfig({ ...config, banner_text: e.target.value })}
           placeholder={t("passwordMigration.config.bannerTextPlaceholder")}
           rows={2}
-          className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-sm text-gray-900 dark:text-white"
+          className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 dark:bg-gray-800 text-sm text-gray-900 dark:text-white dark:text-white"
         />
       </div>
 
       {/* Email Template */}
-      <div className="border-t border-gray-200 dark:border-gray-800 pt-4">
+      <div className="border-t border-gray-200 dark:border-gray-700 dark:border-gray-800 pt-4">
         <div className="flex items-center gap-2 mb-3">
           <Mail className="w-5 h-5 text-blue-600" />
-          <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
+          <h3 className="text-sm font-semibold text-gray-900 dark:text-white dark:text-white">
             {t("passwordMigration.config.enrollmentEmail")}
           </h3>
         </div>
@@ -451,25 +451,25 @@ function ConfigTab() {
         </p>
         <div className="space-y-3">
           <div>
-            <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">
+            <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 dark:text-gray-400 mb-1">
               {t("passwordMigration.config.emailSubject")}
             </label>
             <input
               type="text"
               value={config.email_subject}
               onChange={(e) => setConfig({ ...config, email_subject: e.target.value })}
-              className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-sm text-gray-900 dark:text-white"
+              className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 dark:bg-gray-800 text-sm text-gray-900 dark:text-white dark:text-white"
             />
           </div>
           <div>
-            <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">
+            <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 dark:text-gray-400 mb-1">
               {t("passwordMigration.config.emailBody")}
             </label>
             <textarea
               value={config.email_body}
               onChange={(e) => setConfig({ ...config, email_body: e.target.value })}
               rows={6}
-              className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-sm text-gray-900 dark:text-white font-mono"
+              className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 dark:bg-gray-800 text-sm text-gray-900 dark:text-white dark:text-white font-mono"
             />
           </div>
         </div>
@@ -594,11 +594,11 @@ function UsersTab() {
   }
 
   return (
-    <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-6 space-y-4">
+    <div className="bg-white dark:bg-gray-800 dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 dark:border-gray-800 p-6 space-y-4">
       {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
+          <h3 className="text-sm font-semibold text-gray-900 dark:text-white dark:text-white">
             {t("passwordMigration.users.title")}
           </h3>
           <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
@@ -631,7 +631,7 @@ function UsersTab() {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder={t("passwordMigration.users.searchPlaceholder")}
-            className="w-full pl-9 pr-3 py-1.5 rounded-lg border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-sm text-gray-900 dark:text-white"
+            className="w-full pl-9 pr-3 py-1.5 rounded-lg border border-gray-300 dark:border-gray-600 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 dark:bg-gray-800 text-sm text-gray-900 dark:text-white dark:text-white"
           />
         </div>
         <div className="flex gap-1">
@@ -659,20 +659,20 @@ function UsersTab() {
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-gray-200 dark:border-gray-800 text-left">
-                <th className="py-2 px-3 font-medium text-gray-600 dark:text-gray-400">{t("passwordMigration.users.user")}</th>
-                <th className="py-2 px-3 font-medium text-gray-600 dark:text-gray-400">{t("passwordMigration.users.email")}</th>
-                <th className="py-2 px-3 font-medium text-gray-600 dark:text-gray-400">{t("passwordMigration.users.status")}</th>
-                <th className="py-2 px-3 font-medium text-gray-600 dark:text-gray-400">{t("passwordMigration.users.methods")}</th>
-                <th className="py-2 px-3 font-medium text-gray-600 dark:text-gray-400">{t("passwordMigration.users.lastLogin")}</th>
-                <th className="py-2 px-3 font-medium text-gray-600 dark:text-gray-400 text-right">{t("passwordMigration.users.actions")}</th>
+              <tr className="border-b border-gray-200 dark:border-gray-700 dark:border-gray-800 text-left">
+                <th className="py-2 px-3 font-medium text-gray-600 dark:text-gray-400 dark:text-gray-400">{t("passwordMigration.users.user")}</th>
+                <th className="py-2 px-3 font-medium text-gray-600 dark:text-gray-400 dark:text-gray-400">{t("passwordMigration.users.email")}</th>
+                <th className="py-2 px-3 font-medium text-gray-600 dark:text-gray-400 dark:text-gray-400">{t("passwordMigration.users.status")}</th>
+                <th className="py-2 px-3 font-medium text-gray-600 dark:text-gray-400 dark:text-gray-400">{t("passwordMigration.users.methods")}</th>
+                <th className="py-2 px-3 font-medium text-gray-600 dark:text-gray-400 dark:text-gray-400">{t("passwordMigration.users.lastLogin")}</th>
+                <th className="py-2 px-3 font-medium text-gray-600 dark:text-gray-400 dark:text-gray-400 text-right">{t("passwordMigration.users.actions")}</th>
               </tr>
             </thead>
             <tbody>
               {filtered.map((u: any) => (
                 <tr key={u.user_id} className="border-b border-gray-100 dark:border-gray-800/50">
-                  <td className="py-3 px-3 font-medium text-gray-900 dark:text-white">{u.display_name}</td>
-                  <td className="py-3 px-3 text-gray-600 dark:text-gray-400">{u.email}</td>
+                  <td className="py-3 px-3 font-medium text-gray-900 dark:text-white dark:text-white">{u.display_name}</td>
+                  <td className="py-3 px-3 text-gray-600 dark:text-gray-400 dark:text-gray-400">{u.email}</td>
                   <td className="py-3 px-3">
                     <span className={`px-2 py-0.5 text-xs rounded-full ${statusColor[u.status]}`}>
                       {t(`passwordMigration.users.status${u.status.replace(/^./, (m: any) => m.toUpperCase())}`)}
@@ -681,7 +681,7 @@ function UsersTab() {
                   <td className="py-3 px-3">
                     <div className="flex gap-1">
                       {u.auth_methods.map((m: any) => (
-                        <span key={m} className="px-1.5 py-0.5 text-xs bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 rounded">
+                        <span key={m} className="px-1.5 py-0.5 text-xs bg-gray-100 dark:bg-gray-700 dark:bg-gray-800 text-gray-600 dark:text-gray-400 dark:text-gray-400 rounded">
                           {m}
                         </span>
                       ))}

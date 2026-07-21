@@ -105,7 +105,7 @@ export default function SettingsHubPage() {
     return (
       <>
         {text.substring(0, idx)}
-        <mark className="bg-yellow-200 dark:bg-yellow-900 text-gray-900 dark:text-yellow-200 rounded px-0.5">{text.substring(idx, idx + query.length)}</mark>
+        <mark className="bg-yellow-200 dark:bg-yellow-900 text-gray-900 dark:text-white dark:text-yellow-200 rounded px-0.5">{text.substring(idx, idx + query.length)}</mark>
         {text.substring(idx + query.length)}
       </>
     );
@@ -116,7 +116,7 @@ export default function SettingsHubPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="flex items-center gap-2 text-2xl font-bold text-gray-900 dark:text-white">
+          <h1 className="flex items-center gap-2 text-2xl font-bold text-gray-900 dark:text-white dark:text-white">
             <Settings className="h-6 w-6 text-gray-500" /> {t("settingsHub.title") || "Settings"}
           </h1>
           <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">{t("settingsHub.subtitle") || "Configure your GGID platform"}</p>
@@ -135,22 +135,22 @@ export default function SettingsHubPage() {
           placeholder={t("settingsSearch.searchPlaceholder")}
           aria-label="Search settings"
           role="searchbox"
-          className="w-full rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 pl-10 pr-10 py-2.5 text-sm shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-100 dark:focus:ring-blue-900/30 outline-none"
+          className="w-full rounded-xl border border-gray-200 dark:border-gray-700 dark:border-gray-700 bg-white dark:bg-gray-800 dark:bg-gray-900 pl-10 pr-10 py-2.5 text-sm shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-100 dark:focus:ring-blue-900/30 outline-none"
         />
         {search && (
-          <button onClick={() => setSearch("")} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+          <button onClick={() => setSearch("")} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:text-gray-400">
             <X className="h-4 w-4" />
           </button>
         )}
 
         {/* Popular keywords when focused and empty */}
         {focused && !search && (
-          <div className="absolute top-full mt-2 left-0 right-0 bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 shadow-xl p-3 z-20">
+          <div className="absolute top-full mt-2 left-0 right-0 bg-white dark:bg-gray-800 dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 dark:border-gray-700 shadow-xl p-3 z-20">
             <span className="text-xs font-medium text-gray-400 mb-2 block">{t("settingsSearch.popular")}</span>
             <div className="flex flex-wrap gap-1.5">
               {popularKeywords.map(kw => (
                 <button key={kw} onClick={() => setSearch(kw.toLowerCase())}
-                  className="px-2.5 py-1 rounded-lg bg-gray-100 dark:bg-gray-800 text-xs text-gray-600 dark:text-gray-400 hover:bg-blue-100 dark:hover:bg-blue-950 hover:text-blue-600">
+                  className="px-2.5 py-1 rounded-lg bg-gray-100 dark:bg-gray-700 dark:bg-gray-800 text-xs text-gray-600 dark:text-gray-400 dark:text-gray-400 hover:bg-blue-100 dark:hover:bg-blue-950 hover:text-blue-600">
                   {kw}
                 </button>
               ))}
@@ -188,12 +188,12 @@ export default function SettingsHubPage() {
                   <Link key={c.href} href={c.href}
                     className={`group rounded-xl border bg-white p-4 shadow-sm transition hover:shadow-md hover:border-gray-300 dark:bg-gray-800 dark:hover:border-gray-600 ${categoryColors[c.category] || "border-gray-200 dark:border-gray-700"}`}>
                     <div className="flex items-start justify-between mb-2">
-                      <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gray-100 dark:bg-gray-700">
+                      <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gray-100 dark:bg-gray-700 dark:bg-gray-700">
                         <Icon className={`h-5 w-5 ${c.color}`} />
                       </div>
                       {c.badge && <span className="px-1.5 py-0.5 rounded text-xs font-medium bg-blue-100 dark:bg-blue-900/30 text-blue-600">{c.badge}</span>}
                     </div>
-                    <h3 className="text-sm font-semibold text-gray-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400">
+                    <h3 className="text-sm font-semibold text-gray-900 dark:text-white dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400">
                       {highlight(c.label, search)}
                     </h3>
                     <p className="mt-1 text-xs text-gray-400">

@@ -70,17 +70,17 @@ export default function ImportMonitorPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-950 p-4 md:p-8">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-800 dark:bg-gray-950 p-4 md:p-8">
       <div className="max-w-5xl mx-auto">
         <div className="flex items-center justify-between mb-6">
           <div>
             <div className="flex items-center gap-3 mb-1">
               <Activity className="w-7 h-7 text-blue-600" />
-              <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{t("importMonitor.title")}</h1>
+              <h1 className="text-2xl font-bold text-gray-900 dark:text-white dark:text-white">{t("importMonitor.title")}</h1>
             </div>
-            <p className="text-gray-600 dark:text-gray-400 text-sm">{t("importMonitor.description")}</p>
+            <p className="text-gray-600 dark:text-gray-400 dark:text-gray-400 text-sm">{t("importMonitor.description")}</p>
           </div>
-          <button onClick={load} className="flex items-center gap-1.5 px-3 py-1.5 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-sm hover:bg-gray-50 dark:hover:bg-gray-700">
+          <button onClick={load} className="flex items-center gap-1.5 px-3 py-1.5 bg-white dark:bg-gray-800 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 dark:border-gray-700 rounded-lg text-sm hover:bg-gray-50 dark:hover:bg-gray-700 dark:bg-gray-800 dark:hover:bg-gray-700">
             <RefreshCw className="w-4 h-4" />
             {t("importMonitor.jobs.refresh")}
           </button>
@@ -125,7 +125,7 @@ function JobsList({ jobs, onSelect }: { jobs: ImportJob[]; onSelect: (id: string
 
   if (jobs.length === 0) {
     return (
-      <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-12 text-center">
+      <div className="bg-white dark:bg-gray-800 dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 dark:border-gray-800 p-12 text-center">
         <Activity className="w-12 h-12 mx-auto mb-3 text-gray-300" />
         <p className="text-sm text-gray-500 dark:text-gray-400">{t("importMonitor.jobs.noJobs")}</p>
       </div>
@@ -139,11 +139,11 @@ function JobsList({ jobs, onSelect }: { jobs: ImportJob[]; onSelect: (id: string
         const StatusIcon = cfg.icon;
         const pct = job.total > 0 ? Math.round(((job.imported + job.failed) / job.total) * 100) : 0;
         return (
-          <div key={job.job_id} className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-4">
+          <div key={job.job_id} className="bg-white dark:bg-gray-800 dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 dark:border-gray-800 p-4">
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-2">
                 <FileText className="w-5 h-5 text-gray-400" />
-                <span className="text-sm font-medium text-gray-900 dark:text-white">{job.file_name}</span>
+                <span className="text-sm font-medium text-gray-900 dark:text-white dark:text-white">{job.file_name}</span>
                 <span className="text-xs text-gray-400">{job.job_id}</span>
               </div>
               <span className={`flex items-center gap-1 px-2.5 py-0.5 text-xs rounded-full ${cfg.color}`}>
@@ -156,7 +156,7 @@ function JobsList({ jobs, onSelect }: { jobs: ImportJob[]; onSelect: (id: string
             <div className="mb-3">
               <div className="flex items-center justify-between mb-1">
                 <span className="text-xs text-gray-500">{t("importMonitor.jobs.progress")}</span>
-                <span className="text-xs font-medium text-gray-900 dark:text-white">{pct}%</span>
+                <span className="text-xs font-medium text-gray-900 dark:text-white dark:text-white">{pct}%</span>
               </div>
               <div className="h-2 bg-gray-200 dark:bg-gray-800 rounded-full overflow-hidden flex">
                 <div className="h-full bg-green-500" style={{ width: `${job.total > 0 ? (job.imported / job.total) * 100 : 0}%` }} />
@@ -241,15 +241,15 @@ function ErrorDetails({ jobs, selectedJob, onSelect }: {
 
   if (!selectedJob) {
     return (
-      <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-6">
+      <div className="bg-white dark:bg-gray-800 dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 dark:border-gray-800 p-6">
         <p className="text-sm text-gray-500 mb-3">{t("importMonitor.errors.selectJob")}</p>
         <div className="space-y-1">
           {jobs.filter((j: any) => j.failed > 0).map((j: any) => (
             <button key={j.job_id} onClick={() => onSelect(j.job_id)}
-              className="w-full flex items-center justify-between p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 text-left">
+              className="w-full flex items-center justify-between p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 dark:bg-gray-800 dark:hover:bg-gray-800 text-left">
               <div className="flex items-center gap-2">
                 <FileText className="w-4 h-4 text-gray-400" />
-                <span className="text-sm text-gray-900 dark:text-white">{j.file_name}</span>
+                <span className="text-sm text-gray-900 dark:text-white dark:text-white">{j.file_name}</span>
               </div>
               <span className="px-2 py-0.5 text-xs bg-red-100 text-red-700 dark:bg-red-950 dark:text-red-300 rounded-full">{j.failed} errors</span>
             </button>
@@ -263,10 +263,10 @@ function ErrorDetails({ jobs, selectedJob, onSelect }: {
   }
 
   return (
-    <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-6">
+    <div className="bg-white dark:bg-gray-800 dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 dark:border-gray-800 p-6">
       {/* Job selector */}
       <select value={selectedJob} onChange={(e) => onSelect(e.target.value)}
-        className="w-full mb-4 px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-sm text-gray-900 dark:text-white">
+        className="w-full mb-4 px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 dark:bg-gray-800 text-sm text-gray-900 dark:text-white dark:text-white">
         {jobs.map((j: any) => (
           <option key={j.job_id} value={j.job_id}>{j.file_name} — {j.failed} errors</option>
         ))}
@@ -283,29 +283,29 @@ function ErrorDetails({ jobs, selectedJob, onSelect }: {
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-gray-200 dark:border-gray-800 text-left">
-                <th className="py-2 px-3 font-medium text-gray-600 dark:text-gray-400 w-8"></th>
-                <th className="py-2 px-3 font-medium text-gray-600 dark:text-gray-400">{t("importMonitor.errors.row")}</th>
-                <th className="py-2 px-3 font-medium text-gray-600 dark:text-gray-400">{t("importMonitor.errors.email")}</th>
-                <th className="py-2 px-3 font-medium text-gray-600 dark:text-gray-400">{t("importMonitor.errors.error")}</th>
+              <tr className="border-b border-gray-200 dark:border-gray-700 dark:border-gray-800 text-left">
+                <th className="py-2 px-3 font-medium text-gray-600 dark:text-gray-400 dark:text-gray-400 w-8"></th>
+                <th className="py-2 px-3 font-medium text-gray-600 dark:text-gray-400 dark:text-gray-400">{t("importMonitor.errors.row")}</th>
+                <th className="py-2 px-3 font-medium text-gray-600 dark:text-gray-400 dark:text-gray-400">{t("importMonitor.errors.email")}</th>
+                <th className="py-2 px-3 font-medium text-gray-600 dark:text-gray-400 dark:text-gray-400">{t("importMonitor.errors.error")}</th>
               </tr>
             </thead>
             <tbody>
               {errors.map((e: any, i: number) => (
                 <>
-                  <tr key={i} className="border-b border-gray-100 dark:border-gray-800/50 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800/50" onClick={() => toggleRow(i)}>
+                  <tr key={i} className="border-b border-gray-100 dark:border-gray-800/50 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 dark:bg-gray-800 dark:hover:bg-gray-800/50" onClick={() => toggleRow(i)}>
                     <td className="py-2 px-3">
                       {expandedRows.has(i) ? <ChevronDown className="w-4 h-4 text-gray-400" /> : <ChevronRight className="w-4 h-4 text-gray-400" />}
                     </td>
                     <td className="py-2 px-3 text-gray-500">{e.row}</td>
-                    <td className="py-2 px-3 text-gray-900 dark:text-white">{e.email || "—"}</td>
+                    <td className="py-2 px-3 text-gray-900 dark:text-white dark:text-white">{e.email || "—"}</td>
                     <td className="py-2 px-3 text-red-600 dark:text-red-400 text-xs">{e.error}</td>
                   </tr>
                   {expandedRows.has(i) && (
-                    <tr className="bg-gray-50 dark:bg-gray-800/30">
+                    <tr className="bg-gray-50 dark:bg-gray-800 dark:bg-gray-800/30">
                       <td></td>
                       <td colSpan={3} className="py-3 px-3">
-                        <pre className="text-xs text-gray-600 dark:text-gray-400 whitespace-pre-wrap">
+                        <pre className="text-xs text-gray-600 dark:text-gray-400 dark:text-gray-400 whitespace-pre-wrap">
                           Row {e.row}: {e.error}{e.email ? ` (email: ${e.email})` : ""}
                         </pre>
                       </td>
@@ -363,8 +363,8 @@ function UploadTab({ onStarted }: { onStarted: () => void }) {
   };
 
   return (
-    <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-6">
-      <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-1">{t("importMonitor.upload.title")}</h3>
+    <div className="bg-white dark:bg-gray-800 dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 dark:border-gray-800 p-6">
+      <h3 className="text-sm font-semibold text-gray-900 dark:text-white dark:text-white mb-1">{t("importMonitor.upload.title")}</h3>
       <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">{t("importMonitor.upload.description")}</p>
 
       <div
@@ -377,15 +377,15 @@ function UploadTab({ onStarted }: { onStarted: () => void }) {
         }`}
       >
         <Upload className="w-10 h-10 mx-auto mb-2 text-gray-400" />
-        <p className="text-sm text-gray-600 dark:text-gray-400">{t("importMonitor.upload.dragDrop")}</p>
+        <p className="text-sm text-gray-600 dark:text-gray-400 dark:text-gray-400">{t("importMonitor.upload.dragDrop")}</p>
         <p className="text-xs text-gray-400 mt-1">{t("importMonitor.upload.formats")}</p>
         <input ref={fileRef} type="file" accept=".json,.csv" onChange={(e) => { const f = e.target.files?.[0]; if (f) handleFile(f); }} className="hidden" />
       </div>
 
       {fileName && (
-        <div className="mt-4 flex items-center gap-2 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+        <div className="mt-4 flex items-center gap-2 p-3 bg-gray-50 dark:bg-gray-800 dark:bg-gray-800 rounded-lg">
           <FileText className="w-5 h-5 text-blue-600" />
-          <span className="text-sm text-gray-900 dark:text-white flex-1">{fileName}</span>
+          <span className="text-sm text-gray-900 dark:text-white dark:text-white flex-1">{fileName}</span>
           <Check className="w-4 h-4 text-green-500" />
         </div>
       )}

@@ -9,6 +9,7 @@ import (
 	"crypto/rsa"
 	"crypto/sha256"
 	"crypto/x509"
+	"crypto/x509/pkix"
 	"encoding/base64"
 	"encoding/json"
 	"encoding/pem"
@@ -1101,26 +1102,45 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 		// Security: real XML-DSig verification with the configured IdP
 		// certificate (sys_config saml_config.idp_cert). Fails closed: if no
 		// trusted IdP certificate is configured, all assertions are rejected.
-		idpCert, certErr := samlIdpCertificate(r, pool)
+		trustCfg, certErr := samlACSTrustConfig(r, pool)
 		if certErr != nil {
 			slog.Warn("SAML ACS: no trusted IdP certificate", "error", certErr)
 			writeJSON(w, http.StatusForbidden, map[string]string{"error": "saml_idp_not_configured", "detail": "no trusted IdP certificate configured"})
 			return
 		}
-		assertion, err := saml.VerifySignedAssertion(rawXML, idpCert)
+		assertion, err := saml.VerifySignedAssertion(rawXML, trustCfg.Cert)
 		if err != nil {
 			slog.Warn("SAML ACS: assertion verification failed", "error", err)
 			writeJSON(w, http.StatusForbidden, map[string]string{"error": "invalid_signature", "detail": "SAML assertion signature verification failed"})
 			return
 		}
 
-		// Security: audience restriction check
-		if assertion.Conditions.AudienceRestriction.Audience != "" {
-			spEntityID := cfg.Issuer + "/saml/metadata"
-			if assertion.Conditions.AudienceRestriction.Audience != spEntityID {
-				writeJSON(w, http.StatusForbidden, map[string]string{"error": "audience_mismatch", "detail": "assertion audience does not match SP entity ID"})
-				return
-			}
+		// Security: replay protection. This ACS never issues server-side
+		// AuthnRequests, so a solicited response (non-empty InResponseTo)
+		// cannot be correlated with a request we made — reject it. Only
+		// IdP-initiated (unsolicited) assertions are accepted.
+		if irt := assertion.InResponseTo(); irt != "" {
+			slog.Warn("SAML ACS: unsolicited-only endpoint received InResponseTo", "in_response_to", irt)
+			writeJSON(w, http.StatusForbidden, map[string]string{"error": "unexpected_in_response_to", "detail": "SP-initiated responses are not accepted by this ACS (no request store)"})
+			return
+		}
+
+		// Security: Issuer must match the configured IdP entityID (when set).
+		if trustCfg.IdPEntityID != "" && assertion.Issuer != trustCfg.IdPEntityID {
+			slog.Warn("SAML ACS: issuer mismatch", "got", assertion.Issuer, "want", trustCfg.IdPEntityID)
+			writeJSON(w, http.StatusForbidden, map[string]string{"error": "issuer_mismatch", "detail": "assertion issuer does not match configured IdP entityID"})
+			return
+		}
+
+		// Security: audience restriction is mandatory — the assertion must be
+		// addressed to this SP. Empty audience is rejected.
+		spEntityID := trustCfg.SPEntityID
+		if spEntityID == "" {
+			spEntityID = cfg.Issuer + "/saml/metadata"
+		}
+		if assertion.Conditions.AudienceRestriction.Audience != spEntityID {
+			writeJSON(w, http.StatusForbidden, map[string]string{"error": "audience_mismatch", "detail": "assertion audience does not match SP entity ID"})
+			return
 		}
 
 		attrs := saml.ExtractAttributes(assertion)
@@ -1208,7 +1228,7 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 	// --- SAML 2.0 IdP endpoints (GGID as Identity Provider) ---
 
 	mux.HandleFunc("/saml/idp/metadata", func(w http.ResponseWriter, r *http.Request) {
-		idp := buildIdP(cfg)
+		idp := buildIdP(cfg, pool)
 		meta, err := idp.GenerateIdPMetadata()
 		if err != nil {
 			writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "failed to generate IdP metadata"})
@@ -1288,7 +1308,7 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 		}
 
 		// Build IdP and create signed SAML Response
-		idp := buildIdP(cfg)
+		idp := buildIdP(cfg, pool)
 		respXML, err := idp.BuildSAMLResponse(&saml.SAMLResponseRequest{
 			Destination:  spACSURL,
 			Audience:     spEntityID,
@@ -2396,18 +2416,10 @@ var (
 )
 
 // buildIdP constructs a SAML IdentityProvider from the OAuth server config.
-// It uses the same RSA key pair used for JWT signing to sign SAML assertions.
-func buildIdP(cfg *conf.Config) *saml.IdentityProvider {
-	// The IdP uses the OAuth signing key for SAML assertion signing.
-	// The actual key is injected via the OAuthService's keyProvider,
-	// but for the IdP we construct it from the server's key file.
-	privKey, certPEM := loadSAMLSigningKey(cfg)
-	certDER := []byte{}
-	if certPEM != nil {
-		if block, _ := pem.Decode(certPEM); block != nil {
-			certDER = block.Bytes
-		}
-	}
+// The signing key is resolved from file mounts or the persisted sys_config
+// entry so SP trust survives restarts.
+func buildIdP(cfg *conf.Config, pool *pgxpool.Pool) *saml.IdentityProvider {
+	privKey, certDER := loadSAMLSigningKey(cfg, pool)
 
 	return &saml.IdentityProvider{
 		EntityID:    cfg.Issuer + "/saml/idp/metadata",
@@ -2418,29 +2430,89 @@ func buildIdP(cfg *conf.Config) *saml.IdentityProvider {
 	}
 }
 
-// loadSAMLSigningKey loads the RSA private key and certificate from env/config.
-// Falls back to generating an ephemeral key if not configured (for development).
-func loadSAMLSigningKey(cfg *conf.Config) (*rsa.PrivateKey, []byte) {
-	// Try to load from the same key file used by the OAuth service
-	keyPath := os.Getenv("OAUTH_SIGNING_KEY_PATH")
-	if keyPath != "" {
-		if keyData, err := os.ReadFile(keyPath); err == nil {
+// loadSAMLSigningKey resolves the SAML IdP RSA signing key and certificate:
+//  1. SAML_IDP_KEY_PATH + SAML_IDP_CERT_PATH files (K8s secret mounts)
+//  2. sys_config "saml_idp_signing" {private_key_pem, cert_pem} (persisted)
+//  3. Generate a new key + self-signed cert and persist to sys_config
+//
+// Falls back to an ephemeral key (with a loud warning) only when no DB is
+// available. An ephemeral key breaks SP trust on every restart.
+func loadSAMLSigningKey(cfg *conf.Config, pool *pgxpool.Pool) (*rsa.PrivateKey, []byte) {
+	// 1. File mounts (K8s secrets).
+	keyPath, certPath := os.Getenv("SAML_IDP_KEY_PATH"), os.Getenv("SAML_IDP_CERT_PATH")
+	if keyPath != "" && certPath != "" {
+		keyData, kerr := os.ReadFile(keyPath)
+		certData, cerr := os.ReadFile(certPath)
+		if kerr == nil && cerr == nil {
 			if key, err := jwt.ParseRSAPrivateKeyFromPEM(keyData); err == nil {
-				return key, keyData
+				if block, _ := pem.Decode(certData); block != nil {
+					slog.Info("SAML IdP signing key loaded from files", "key_path", keyPath)
+					return key, block.Bytes
+				}
 			}
+		}
+		slog.Warn("SAML_IDP_KEY_PATH/CERT_PATH set but unreadable, falling through", "key_err", kerr, "cert_err", cerr)
+	}
+
+	// 2. Persisted in sys_config.
+	if pool != nil {
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+		var configJSON string
+		err := pool.QueryRow(ctx,
+			`SELECT value::text FROM sys_config WHERE key = 'saml_idp_signing'`).Scan(&configJSON)
+		if err == nil {
+			var stored struct {
+				PrivateKeyPEM string `json:"private_key_pem"`
+				CertPEM       string `json:"cert_pem"`
+			}
+			if json.Unmarshal([]byte(configJSON), &stored) == nil && stored.PrivateKeyPEM != "" {
+				if key, kerr := jwt.ParseRSAPrivateKeyFromPEM([]byte(stored.PrivateKeyPEM)); kerr == nil {
+					if block, _ := pem.Decode([]byte(stored.CertPEM)); block != nil {
+						slog.Info("SAML IdP signing key loaded from sys_config")
+						return key, block.Bytes
+					}
+				}
+			}
+			slog.Warn("saml_idp_signing present but invalid, generating a new key")
+		}
+
+		// 3. Generate and persist so restarts keep SP trust.
+		key, kerr := rsa.GenerateKey(rand.Reader, 2048)
+		if kerr == nil {
+			certDER := generateSelfSignedCert(key)
+			keyPEM := pem.EncodeToMemory(&pem.Block{Type: "RSA PRIVATE KEY", Bytes: x509.MarshalPKCS1PrivateKey(key)})
+			certPEM := pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: certDER})
+			payload, _ := json.Marshal(map[string]string{
+				"private_key_pem": string(keyPEM),
+				"cert_pem":        string(certPEM),
+			})
+			if _, err := pool.Exec(ctx, `
+				INSERT INTO sys_config (key, value) VALUES ('saml_idp_signing', $1)
+				ON CONFLICT (key) DO NOTHING`, string(payload)); err != nil {
+				slog.Error("failed to persist SAML IdP signing key", "error", err)
+			} else {
+				slog.Info("SAML IdP signing key generated and persisted to sys_config")
+			}
+			return key, certDER
 		}
 	}
 
-	// Ephemeral key for development (not for production)
+	// Ephemeral fallback — SP trust breaks on restart. Loud warning.
+	slog.Warn("SAML IdP using EPHEMERAL signing key — configure SAML_IDP_KEY_PATH/SAML_IDP_CERT_PATH or provide DB access for persistence")
 	key, _ := rsa.GenerateKey(rand.Reader, 2048)
-	certDER := generateSelfSignedCert(key)
-	return key, certDER
+	return key, generateSelfSignedCert(key)
 }
 
-// generateSelfSignedCert creates a DER-encoded self-signed certificate for development.
+// generateSelfSignedCert creates a DER-encoded self-signed certificate for
+// SAML IdP signing (10-year validity, digitalSignature key usage).
 func generateSelfSignedCert(key *rsa.PrivateKey) []byte {
+	serial, _ := rand.Int(rand.Reader, new(big.Int).Lsh(big.NewInt(1), 128))
 	template := x509.Certificate{
-		SerialNumber: big.NewInt(1),
+		SerialNumber: serial,
+		Subject:      pkix.Name{CommonName: "GGID SAML IdP", Organization: []string{"GGID"}},
+		NotBefore:    time.Now().Add(-time.Hour),
+		NotAfter:     time.Now().Add(10 * 365 * 24 * time.Hour),
 		IsCA:         true,
 		KeyUsage:     x509.KeyUsageDigitalSignature | x509.KeyUsageCertSign,
 	}

@@ -205,17 +205,17 @@ export default function ImportWizardPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-950 p-4 md:p-8">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-800 dark:bg-gray-950 p-4 md:p-8">
       <div className="max-w-4xl mx-auto">
         {/* Header */}
         <div className="mb-6">
           <div className="flex items-center gap-3 mb-2">
             <Upload className="w-7 h-7 text-blue-600" />
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-white dark:text-white">
               {t("importWizard.title")}
             </h1>
           </div>
-          <p className="text-gray-600 dark:text-gray-400 text-sm">
+          <p className="text-gray-600 dark:text-gray-400 dark:text-gray-400 text-sm">
             {t("importWizard.description")}
           </p>
         </div>
@@ -250,8 +250,8 @@ export default function ImportWizardPage() {
 
         {/* Step Content */}
         {step === "upload" && (
-          <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-6">
-            <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-2">
+          <div className="bg-white dark:bg-gray-800 dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 dark:border-gray-800 p-6">
+            <h3 className="text-sm font-semibold text-gray-900 dark:text-white dark:text-white mb-2">
               {t("importWizard.upload.title")}
             </h3>
             <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">
@@ -269,7 +269,7 @@ export default function ImportWizardPage() {
               }`}
             >
               <Upload className="w-12 h-12 mx-auto mb-3 text-gray-400" />
-              <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">
+              <p className="text-sm text-gray-600 dark:text-gray-400 dark:text-gray-400 mb-1">
                 {t("importWizard.upload.dragDrop")}
               </p>
               <p className="text-xs text-gray-400">
@@ -285,9 +285,9 @@ export default function ImportWizardPage() {
             </div>
 
             {fileName && (
-              <div className="mt-4 flex items-center gap-2 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+              <div className="mt-4 flex items-center gap-2 p-3 bg-gray-50 dark:bg-gray-800 dark:bg-gray-800 rounded-lg">
                 <FileText className="w-5 h-5 text-blue-600" />
-                <span className="text-sm text-gray-900 dark:text-white flex-1">{fileName}</span>
+                <span className="text-sm text-gray-900 dark:text-white dark:text-white flex-1">{fileName}</span>
                 <Check className="w-4 h-4 text-green-500" />
                 <span className="text-xs text-gray-500">{rows.length} rows parsed</span>
               </div>
@@ -317,8 +317,8 @@ export default function ImportWizardPage() {
         )}
 
         {step === "map" && (
-          <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-6">
-            <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-2">
+          <div className="bg-white dark:bg-gray-800 dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 dark:border-gray-800 p-6">
+            <h3 className="text-sm font-semibold text-gray-900 dark:text-white dark:text-white mb-2">
               {t("importWizard.mapping.title")}
             </h3>
             <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">
@@ -327,15 +327,15 @@ export default function ImportWizardPage() {
 
             <div className="space-y-2">
               {sourceFields.map((field: any) => (
-                <div key={field} className="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800">
+                <div key={field} className="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 dark:bg-gray-800 dark:hover:bg-gray-800">
                   <div className="flex-1">
-                    <span className="text-sm font-medium text-gray-900 dark:text-white">{field}</span>
+                    <span className="text-sm font-medium text-gray-900 dark:text-white dark:text-white">{field}</span>
                   </div>
                   <ChevronRight className="w-4 h-4 text-gray-400" />
                   <select
                     value={mapping[field] || "skip"}
                     onChange={(e) => setMapping({ ...mapping, [field]: e.target.value })}
-                    className="flex-1 px-3 py-1.5 rounded-lg border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-sm text-gray-900 dark:text-white"
+                    className="flex-1 px-3 py-1.5 rounded-lg border border-gray-300 dark:border-gray-600 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 dark:bg-gray-800 text-sm text-gray-900 dark:text-white dark:text-white"
                   >
                     <option value="skip">{t("importWizard.mapping.skip")}</option>
                     {TARGET_FIELDS.map((tf: any) => (
@@ -351,7 +351,7 @@ export default function ImportWizardPage() {
             <div className="flex gap-2 mt-4">
               <button
                 onClick={() => setStep("upload")}
-                className="flex items-center gap-1.5 px-4 py-2 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-lg text-sm font-medium"
+                className="flex items-center gap-1.5 px-4 py-2 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 dark:text-gray-300 rounded-lg text-sm font-medium"
               >
                 <ArrowLeft className="w-4 h-4" />
                 {t("importWizard.preview.back")}
@@ -368,8 +368,8 @@ export default function ImportWizardPage() {
         )}
 
         {(step === "preview" || step === "importing") && (
-          <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-6">
-            <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-2">
+          <div className="bg-white dark:bg-gray-800 dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 dark:border-gray-800 p-6">
+            <h3 className="text-sm font-semibold text-gray-900 dark:text-white dark:text-white mb-2">
               {t("importWizard.preview.title")}
             </h3>
             <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">
@@ -386,21 +386,21 @@ export default function ImportWizardPage() {
             {/* Preview Table */}
             <div className="overflow-x-auto max-h-64 overflow-y-auto">
               <table className="w-full text-sm">
-                <thead className="sticky top-0 bg-gray-50 dark:bg-gray-800">
+                <thead className="sticky top-0 bg-gray-50 dark:bg-gray-800 dark:bg-gray-800">
                   <tr className="text-left">
-                    <th className="py-2 px-3 font-medium text-gray-600 dark:text-gray-400">{t("importWizard.preview.row")}</th>
-                    <th className="py-2 px-3 font-medium text-gray-600 dark:text-gray-400">Email</th>
-                    <th className="py-2 px-3 font-medium text-gray-600 dark:text-gray-400">Name</th>
-                    <th className="py-2 px-3 font-medium text-gray-600 dark:text-gray-400">{t("importWizard.preview.status")}</th>
-                    <th className="py-2 px-3 font-medium text-gray-600 dark:text-gray-400">{t("importWizard.preview.errors")}</th>
+                    <th className="py-2 px-3 font-medium text-gray-600 dark:text-gray-400 dark:text-gray-400">{t("importWizard.preview.row")}</th>
+                    <th className="py-2 px-3 font-medium text-gray-600 dark:text-gray-400 dark:text-gray-400">Email</th>
+                    <th className="py-2 px-3 font-medium text-gray-600 dark:text-gray-400 dark:text-gray-400">Name</th>
+                    <th className="py-2 px-3 font-medium text-gray-600 dark:text-gray-400 dark:text-gray-400">{t("importWizard.preview.status")}</th>
+                    <th className="py-2 px-3 font-medium text-gray-600 dark:text-gray-400 dark:text-gray-400">{t("importWizard.preview.errors")}</th>
                   </tr>
                 </thead>
                 <tbody>
                   {rows.map((r: any) => (
                     <tr key={r.row} className="border-b border-gray-100 dark:border-gray-800/50">
                       <td className="py-2 px-3 text-gray-500">{r.row}</td>
-                      <td className="py-2 px-3 text-gray-900 dark:text-white">{r.email || "—"}</td>
-                      <td className="py-2 px-3 text-gray-900 dark:text-white">{r.name || "—"}</td>
+                      <td className="py-2 px-3 text-gray-900 dark:text-white dark:text-white">{r.email || "—"}</td>
+                      <td className="py-2 px-3 text-gray-900 dark:text-white dark:text-white">{r.name || "—"}</td>
                       <td className="py-2 px-3">
                         {r.status === "valid" && <CheckCircle2 className="w-4 h-4 text-green-500" />}
                         {r.status === "invalid" && <XCircle className="w-4 h-4 text-red-500" />}
@@ -418,7 +418,7 @@ export default function ImportWizardPage() {
             <div className="flex gap-2 mt-4">
               <button
                 onClick={() => setStep("map")}
-                className="flex items-center gap-1.5 px-4 py-2 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-lg text-sm font-medium"
+                className="flex items-center gap-1.5 px-4 py-2 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 dark:text-gray-300 rounded-lg text-sm font-medium"
               >
                 <ArrowLeft className="w-4 h-4" />
                 {t("importWizard.preview.back")}
@@ -436,9 +436,9 @@ export default function ImportWizardPage() {
         )}
 
         {step === "done" && result && (
-          <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-8 text-center">
+          <div className="bg-white dark:bg-gray-800 dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 dark:border-gray-800 p-8 text-center">
             <CheckCircle2 className="w-16 h-16 mx-auto mb-4 text-green-500" />
-            <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-2">
+            <h3 className="text-lg font-bold text-gray-900 dark:text-white dark:text-white mb-2">
               {t("importWizard.preview.importSuccess")}
             </h3>
 

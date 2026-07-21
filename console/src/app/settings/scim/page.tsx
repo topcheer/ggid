@@ -145,7 +145,7 @@ export default function SCIMPage() {
       case "syncing":
         return <Loader2 className="h-4 w-4 animate-spin text-indigo-500" />;
       default:
-        return <div className="h-4 w-4 rounded-full border-2 border-gray-300" />;
+        return <div className="h-4 w-4 rounded-full border-2 border-gray-300 dark:border-gray-600" />;
     }
   };
 
@@ -153,7 +153,7 @@ export default function SCIMPage() {
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h1 className="flex items-center gap-2 text-2xl font-bold text-gray-900 dark:text-white">
+        <h1 className="flex items-center gap-2 text-2xl font-bold text-gray-900 dark:text-white dark:text-white">
           <Server className="h-7 w-7 text-indigo-600" />
           SCIM Provisioning
         </h1>
@@ -170,16 +170,16 @@ export default function SCIMPage() {
         <>
           {/* Endpoint info */}
           <div className={cardCls}>
-            <h3 className="mb-3 text-sm font-semibold text-gray-700 dark:text-gray-300">
+            <h3 className="mb-3 text-sm font-semibold text-gray-700 dark:text-gray-300 dark:text-gray-300">
               SCIM Endpoint
             </h3>
             <div className="flex items-center gap-2">
-              <code className="flex-1 truncate rounded-lg bg-gray-100 px-3 py-2 text-sm text-gray-700 dark:bg-gray-900 dark:text-gray-300">
+              <code className="flex-1 truncate rounded-lg bg-gray-100 dark:bg-gray-700 px-3 py-2 text-sm text-gray-700 dark:text-gray-300 dark:bg-gray-900 dark:text-gray-300">
                 {config.endpoint}
               </code>
               <button
                 onClick={handleCopy}
-                className="rounded-lg border border-gray-300 p-2 text-gray-500 hover:bg-gray-50 dark:border-gray-600 dark:hover:bg-gray-700"
+                className="rounded-lg border border-gray-300 dark:border-gray-600 p-2 text-gray-500 hover:bg-gray-50 dark:hover:bg-gray-700 dark:bg-gray-800 dark:border-gray-600 dark:hover:bg-gray-700"
                aria-label="Check">
                 {copied ? <Check className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4" />}
               </button>
@@ -192,7 +192,7 @@ export default function SCIMPage() {
           {/* Auth config */}
           <div className={cardCls}>
             <div className="mb-4 flex items-center justify-between">
-              <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300">Authentication</h3>
+              <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 dark:text-gray-300">Authentication</h3>
               <button
                 onClick={() => setConfig({ ...config, enabled: !config.enabled })}
                 className={`flex h-6 w-11 items-center rounded-full transition-colors ${
@@ -219,7 +219,7 @@ export default function SCIMPage() {
                   />
                   <button
                     onClick={handleRegenerateToken}
-                    className="shrink-0 rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-600 hover:bg-gray-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700"
+                    className="shrink-0 rounded-lg border border-gray-300 dark:border-gray-600 px-3 py-2 text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700"
                    aria-label="RefreshCw">
                     <RefreshCw className="h-4 w-4" />
                   </button>
@@ -241,12 +241,12 @@ export default function SCIMPage() {
 
           {/* Sync status */}
           <div className={cardCls}>
-            <h3 className="mb-4 text-sm font-semibold text-gray-700 dark:text-gray-300">Sync Status</h3>
+            <h3 className="mb-4 text-sm font-semibold text-gray-700 dark:text-gray-300 dark:text-gray-300">Sync Status</h3>
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               {syncStatus.map((sync: any) => (
                 <div
                   key={sync.resourceType}
-                  className="rounded-lg border border-gray-200 p-4 dark:border-gray-700"
+                  className="rounded-lg border border-gray-200 dark:border-gray-700 p-4 dark:border-gray-700"
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
@@ -264,7 +264,7 @@ export default function SCIMPage() {
                   <div className="mt-3 space-y-1 text-sm">
                     <div className="flex justify-between">
                       <span className="text-gray-400">Total:</span>
-                      <span className="text-gray-700 dark:text-gray-300">{sync.totalRecords}</span>
+                      <span className="text-gray-700 dark:text-gray-300 dark:text-gray-300">{sync.totalRecords}</span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-gray-400">Synced:</span>
@@ -278,7 +278,7 @@ export default function SCIMPage() {
                     )}
                     <div className="flex justify-between">
                       <span className="text-gray-400">Last sync:</span>
-                      <span className="text-gray-700 dark:text-gray-300">{sync.lastSync}</span>
+                      <span className="text-gray-700 dark:text-gray-300 dark:text-gray-300">{sync.lastSync}</span>
                     </div>
                     {sync.errorMessage && (
                       <p className="mt-1 text-xs text-red-500">{sync.errorMessage}</p>
@@ -287,7 +287,7 @@ export default function SCIMPage() {
                   <button
                     onClick={() => handleSync(sync.resourceType)}
                     disabled={syncing === sync.resourceType}
-                    className="mt-3 flex w-full items-center justify-center gap-1 rounded-lg border border-gray-300 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50 disabled:opacity-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700"
+                    className="mt-3 flex w-full items-center justify-center gap-1 rounded-lg border border-gray-300 dark:border-gray-600 py-2 text-sm font-medium text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700 dark:bg-gray-800 disabled:opacity-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700"
                   >
                     {syncing === sync.resourceType ? (
                       <Loader2 className="h-4 w-4 animate-spin" />

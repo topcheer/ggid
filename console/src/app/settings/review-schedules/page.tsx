@@ -68,14 +68,14 @@ export default function ReviewSchedulesPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-950 p-4 md:p-8">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-800 dark:bg-gray-950 p-4 md:p-8">
       <div className="max-w-5xl mx-auto">
         <div className="mb-6">
           <div className="flex items-center gap-3 mb-1">
             <CalendarClock className="w-7 h-7 text-blue-600" />
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{t("reviewSchedules.title")}</h1>
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-white dark:text-white">{t("reviewSchedules.title")}</h1>
           </div>
-          <p className="text-gray-600 dark:text-gray-400 text-sm">{t("reviewSchedules.description")}</p>
+          <p className="text-gray-600 dark:text-gray-400 dark:text-gray-400 text-sm">{t("reviewSchedules.description")}</p>
         </div>
 
         <div className="flex gap-1 mb-6 bg-gray-200 dark:bg-gray-800 rounded-lg p-1">
@@ -111,17 +111,17 @@ function SchedulesTab({ schedules, setSchedules }: { schedules: Schedule[]; setS
   const toggle = (id: string) => setSchedules(schedules.map((s: any) => s.id === id ? { ...s, enabled: !s.enabled } : s));
 
   if (schedules.length === 0) {
-    return <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-12 text-center"><CalendarClock className="w-12 h-12 mx-auto mb-3 text-gray-300" /><p className="text-sm text-gray-500">{t("reviewSchedules.schedules.noSchedules")}</p></div>;
+    return <div className="bg-white dark:bg-gray-800 dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 dark:border-gray-800 p-12 text-center"><CalendarClock className="w-12 h-12 mx-auto mb-3 text-gray-300" /><p className="text-sm text-gray-500">{t("reviewSchedules.schedules.noSchedules")}</p></div>;
   }
 
   return (
     <div className="space-y-2">
       {schedules.map((s: any) => (
-        <div key={s.id} className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-4">
+        <div key={s.id} className="bg-white dark:bg-gray-800 dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 dark:border-gray-800 p-4">
           <div className="flex items-center justify-between mb-2">
             <div className="flex items-center gap-2">
               <Users className="w-5 h-5 text-gray-400" />
-              <span className="text-sm font-medium text-gray-900 dark:text-white">{s.name}</span>
+              <span className="text-sm font-medium text-gray-900 dark:text-white dark:text-white">{s.name}</span>
             </div>
             <div className="flex items-center gap-3">
               <span className={`px-2 py-0.5 text-xs rounded-full ${freqColors[s.frequency] || freqColors.monthly}`}>
@@ -133,9 +133,9 @@ function SchedulesTab({ schedules, setSchedules }: { schedules: Schedule[]; setS
             </div>
           </div>
           <div className="flex flex-wrap items-center gap-4 text-xs text-gray-500">
-            <span><Shield className="w-3 h-3 inline mr-1" />{t("reviewSchedules.schedules.scope")}: <span className="text-gray-700 dark:text-gray-300">{s.scope}</span></span>
-            <span><Clock className="w-3 h-3 inline mr-1" />{t("reviewSchedules.schedules.nextRun")}: <span className="text-gray-700 dark:text-gray-300">{new Date(s.next_run).toLocaleDateString()}</span></span>
-            <span><Users className="w-3 h-3 inline mr-1" />{t("reviewSchedules.schedules.reviewer")}: <span className="text-gray-700 dark:text-gray-300">{s.reviewer}</span></span>
+            <span><Shield className="w-3 h-3 inline mr-1" />{t("reviewSchedules.schedules.scope")}: <span className="text-gray-700 dark:text-gray-300 dark:text-gray-300">{s.scope}</span></span>
+            <span><Clock className="w-3 h-3 inline mr-1" />{t("reviewSchedules.schedules.nextRun")}: <span className="text-gray-700 dark:text-gray-300 dark:text-gray-300">{new Date(s.next_run).toLocaleDateString()}</span></span>
+            <span><Users className="w-3 h-3 inline mr-1" />{t("reviewSchedules.schedules.reviewer")}: <span className="text-gray-700 dark:text-gray-300 dark:text-gray-300">{s.reviewer}</span></span>
           </div>
         </div>
       ))}
@@ -171,17 +171,17 @@ function CreateTab({ onCreated }: { onCreated: () => void }) {
   };
 
   return (
-    <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-6 space-y-5">
-      <h3 className="text-sm font-semibold text-gray-900 dark:text-white">{t("reviewSchedules.create.title")}</h3>
+    <div className="bg-white dark:bg-gray-800 dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 dark:border-gray-800 p-6 space-y-5">
+      <h3 className="text-sm font-semibold text-gray-900 dark:text-white dark:text-white">{t("reviewSchedules.create.title")}</h3>
 
       <div>
-        <label className="block text-sm font-medium text-gray-900 dark:text-white mb-1">{t("reviewSchedules.create.name")}</label>
+        <label className="block text-sm font-medium text-gray-900 dark:text-white dark:text-white mb-1">{t("reviewSchedules.create.name")}</label>
         <input type="text" value={name} onChange={(e) => setName(e.target.value)} placeholder={t("reviewSchedules.create.namePlaceholder")}
-          className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-sm text-gray-900 dark:text-white" />
+          className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 dark:bg-gray-800 text-sm text-gray-900 dark:text-white dark:text-white" />
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-900 dark:text-white mb-1">{t("reviewSchedules.create.scope")}</label>
+        <label className="block text-sm font-medium text-gray-900 dark:text-white dark:text-white mb-1">{t("reviewSchedules.create.scope")}</label>
         <p className="text-xs text-gray-500 mb-2">{t("reviewSchedules.create.scopeDesc")}</p>
         <div className="grid grid-cols-2 gap-2">
           {SCOPES.map((s: any) => (
@@ -195,7 +195,7 @@ function CreateTab({ onCreated }: { onCreated: () => void }) {
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-900 dark:text-white mb-1">{t("reviewSchedules.create.frequency")}</label>
+        <label className="block text-sm font-medium text-gray-900 dark:text-white dark:text-white mb-1">{t("reviewSchedules.create.frequency")}</label>
         <p className="text-xs text-gray-500 mb-2">{t("reviewSchedules.create.frequencyDesc")}</p>
         <div className="flex flex-wrap gap-2">
           {FREQUENCIES.map((f: any) => (
@@ -209,16 +209,16 @@ function CreateTab({ onCreated }: { onCreated: () => void }) {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
-          <label className="block text-sm font-medium text-gray-900 dark:text-white mb-1">{t("reviewSchedules.create.reviewer")}</label>
+          <label className="block text-sm font-medium text-gray-900 dark:text-white dark:text-white mb-1">{t("reviewSchedules.create.reviewer")}</label>
           <p className="text-xs text-gray-500 mb-1">{t("reviewSchedules.create.reviewerDesc")}</p>
           <input type="email" value={reviewer} onChange={(e) => setReviewer(e.target.value)} placeholder={t("reviewSchedules.create.reviewerPlaceholder")}
-            className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-sm text-gray-900 dark:text-white" />
+            className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 dark:bg-gray-800 text-sm text-gray-900 dark:text-white dark:text-white" />
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-900 dark:text-white mb-1">{t("reviewSchedules.create.startDate")}</label>
+          <label className="block text-sm font-medium text-gray-900 dark:text-white dark:text-white mb-1">{t("reviewSchedules.create.startDate")}</label>
           <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)}
             min={new Date().toISOString().split("T")[0]}
-            className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-sm text-gray-900 dark:text-white" />
+            className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 dark:bg-gray-800 text-sm text-gray-900 dark:text-white dark:text-white" />
         </div>
       </div>
 
@@ -245,29 +245,29 @@ function HistoryTab({ history }: { history: CampaignHistory[] }) {
   };
 
   if (history.length === 0) {
-    return <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-12 text-center"><History className="w-12 h-12 mx-auto mb-3 text-gray-300" /><p className="text-sm text-gray-500">{t("reviewSchedules.history.noHistory")}</p></div>;
+    return <div className="bg-white dark:bg-gray-800 dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 dark:border-gray-800 p-12 text-center"><History className="w-12 h-12 mx-auto mb-3 text-gray-300" /><p className="text-sm text-gray-500">{t("reviewSchedules.history.noHistory")}</p></div>;
   }
 
   return (
-    <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 overflow-hidden">
+    <div className="bg-white dark:bg-gray-800 dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 dark:border-gray-800 overflow-hidden">
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
-          <thead><tr className="border-b border-gray-200 dark:border-gray-800 text-left bg-gray-50 dark:bg-gray-800/50">
-            <th className="py-2 px-4 font-medium text-gray-600 dark:text-gray-400">{t("reviewSchedules.history.campaign")}</th>
-            <th className="py-2 px-4 font-medium text-gray-600 dark:text-gray-400">{t("reviewSchedules.history.period")}</th>
-            <th className="py-2 px-4 font-medium text-gray-600 dark:text-gray-400">{t("reviewSchedules.history.reviewer")}</th>
-            <th className="py-2 px-4 font-medium text-gray-600 dark:text-gray-400 text-right">{t("reviewSchedules.history.reviewed")}</th>
-            <th className="py-2 px-4 font-medium text-gray-600 dark:text-gray-400 text-right">{t("reviewSchedules.history.certified")}</th>
-            <th className="py-2 px-4 font-medium text-gray-600 dark:text-gray-400 text-right">{t("reviewSchedules.history.revoked")}</th>
-            <th className="py-2 px-4 font-medium text-gray-600 dark:text-gray-400">{t("reviewSchedules.history.status")}</th>
+          <thead><tr className="border-b border-gray-200 dark:border-gray-700 dark:border-gray-800 text-left bg-gray-50 dark:bg-gray-800 dark:bg-gray-800/50">
+            <th className="py-2 px-4 font-medium text-gray-600 dark:text-gray-400 dark:text-gray-400">{t("reviewSchedules.history.campaign")}</th>
+            <th className="py-2 px-4 font-medium text-gray-600 dark:text-gray-400 dark:text-gray-400">{t("reviewSchedules.history.period")}</th>
+            <th className="py-2 px-4 font-medium text-gray-600 dark:text-gray-400 dark:text-gray-400">{t("reviewSchedules.history.reviewer")}</th>
+            <th className="py-2 px-4 font-medium text-gray-600 dark:text-gray-400 dark:text-gray-400 text-right">{t("reviewSchedules.history.reviewed")}</th>
+            <th className="py-2 px-4 font-medium text-gray-600 dark:text-gray-400 dark:text-gray-400 text-right">{t("reviewSchedules.history.certified")}</th>
+            <th className="py-2 px-4 font-medium text-gray-600 dark:text-gray-400 dark:text-gray-400 text-right">{t("reviewSchedules.history.revoked")}</th>
+            <th className="py-2 px-4 font-medium text-gray-600 dark:text-gray-400 dark:text-gray-400">{t("reviewSchedules.history.status")}</th>
           </tr></thead>
           <tbody>
             {history.map((h: any) => (
               <tr key={h.id} className="border-b border-gray-100 dark:border-gray-800/50">
-                <td className="py-3 px-4 font-medium text-gray-900 dark:text-white">{h.name}</td>
-                <td className="py-3 px-4 text-gray-600 dark:text-gray-400">{h.period}</td>
-                <td className="py-3 px-4 text-gray-600 dark:text-gray-400">{h.reviewer}</td>
-                <td className="py-3 px-4 text-right text-gray-900 dark:text-white">{h.reviewed}</td>
+                <td className="py-3 px-4 font-medium text-gray-900 dark:text-white dark:text-white">{h.name}</td>
+                <td className="py-3 px-4 text-gray-600 dark:text-gray-400 dark:text-gray-400">{h.period}</td>
+                <td className="py-3 px-4 text-gray-600 dark:text-gray-400 dark:text-gray-400">{h.reviewer}</td>
+                <td className="py-3 px-4 text-right text-gray-900 dark:text-white dark:text-white">{h.reviewed}</td>
                 <td className="py-3 px-4 text-right text-green-600 font-medium">{h.certified}</td>
                 <td className="py-3 px-4 text-right text-red-600 font-medium">{h.revoked}</td>
                 <td className="py-3 px-4">

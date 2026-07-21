@@ -78,17 +78,17 @@ export default function SecurityPolicyPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-950 p-4 md:p-8">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-800 dark:bg-gray-950 p-4 md:p-8">
       <div className="max-w-5xl mx-auto">
         {/* Header */}
         <div className="mb-6">
           <div className="flex items-center gap-3 mb-2">
             <Shield className="w-7 h-7 text-blue-600" />
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-white dark:text-white">
               {t("securityPolicy.title")}
             </h1>
           </div>
-          <p className="text-gray-600 dark:text-gray-400 text-sm">
+          <p className="text-gray-600 dark:text-gray-400 dark:text-gray-400 text-sm">
             {t("securityPolicy.description")}
           </p>
         </div>
@@ -196,7 +196,7 @@ function PasswordPolicyTab() {
   const { score, checks } = testPasswordStrength();
 
   return (
-    <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-6 space-y-6">
+    <div className="bg-white dark:bg-gray-800 dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 dark:border-gray-800 p-6 space-y-6">
       {/* Config Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Number fields */}
@@ -237,8 +237,8 @@ function PasswordPolicyTab() {
       </div>
 
       {/* Password Strength Preview */}
-      <div className="border-t border-gray-200 dark:border-gray-800 pt-4">
-        <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+      <div className="border-t border-gray-200 dark:border-gray-700 dark:border-gray-800 pt-4">
+        <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 dark:text-gray-300 mb-2">
           {t("securityPolicy.passwordPolicy.preview")}
         </h3>
         <input
@@ -246,7 +246,7 @@ function PasswordPolicyTab() {
           value={testPw}
           onChange={(e) => setTestPw(e.target.value)}
           placeholder={t("securityPolicy.passwordPolicy.testPassword")}
-          className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-sm text-gray-900 dark:text-white mb-3"
+          className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 dark:bg-gray-800 text-sm text-gray-900 dark:text-white dark:text-white mb-3"
         />
         {testPw && (
           <div className="space-y-1">
@@ -352,13 +352,13 @@ function LockoutPolicyTab() {
   }
 
   return (
-    <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-6 space-y-6">
+    <div className="bg-white dark:bg-gray-800 dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 dark:border-gray-800 p-6 space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="space-y-4">
           <div className="p-4 rounded-lg bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-900">
             <div className="flex items-center gap-2 mb-3">
               <Lock className="w-5 h-5 text-blue-600" />
-              <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
+              <h3 className="text-sm font-semibold text-gray-900 dark:text-white dark:text-white">
                 {t("securityPolicy.lockoutPolicy.title")}
               </h3>
             </div>
@@ -385,7 +385,7 @@ function LockoutPolicyTab() {
           <div className="p-4 rounded-lg bg-orange-50 dark:bg-orange-950/30 border border-orange-200 dark:border-orange-900">
             <div className="flex items-center gap-2 mb-3">
               <Shield className="w-5 h-5 text-orange-600" />
-              <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
+              <h3 className="text-sm font-semibold text-gray-900 dark:text-white dark:text-white">
                 IP-Level
               </h3>
             </div>
@@ -491,10 +491,10 @@ function MethodPoliciesTab() {
   }
 
   return (
-    <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-6 space-y-4">
+    <div className="bg-white dark:bg-gray-800 dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 dark:border-gray-800 p-6 space-y-4">
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
+          <h3 className="text-sm font-semibold text-gray-900 dark:text-white dark:text-white">
             {t("securityPolicy.methodPolicies.title")}
           </h3>
           <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
@@ -537,17 +537,17 @@ function MethodPoliciesTab() {
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-gray-200 dark:border-gray-800 text-left">
-                <th className="py-2 px-3 font-medium text-gray-600 dark:text-gray-400">
+              <tr className="border-b border-gray-200 dark:border-gray-700 dark:border-gray-800 text-left">
+                <th className="py-2 px-3 font-medium text-gray-600 dark:text-gray-400 dark:text-gray-400">
                   {t("securityPolicy.methodPolicies.group")}
                 </th>
-                <th className="py-2 px-3 font-medium text-gray-600 dark:text-gray-400">
+                <th className="py-2 px-3 font-medium text-gray-600 dark:text-gray-400 dark:text-gray-400">
                   {t("securityPolicy.methodPolicies.requiredMethods")}
                 </th>
-                <th className="py-2 px-3 font-medium text-gray-600 dark:text-gray-400">
+                <th className="py-2 px-3 font-medium text-gray-600 dark:text-gray-400 dark:text-gray-400">
                   {t("securityPolicy.methodPolicies.forbiddenMethods")}
                 </th>
-                <th className="py-2 px-3 font-medium text-gray-600 dark:text-gray-400 text-right">
+                <th className="py-2 px-3 font-medium text-gray-600 dark:text-gray-400 dark:text-gray-400 text-right">
                   Actions
                 </th>
               </tr>
@@ -555,7 +555,7 @@ function MethodPoliciesTab() {
             <tbody>
               {policies.map((p: any) => (
                 <tr key={p.id} className="border-b border-gray-100 dark:border-gray-800/50">
-                  <td className="py-3 px-3 font-medium text-gray-900 dark:text-white">{p.group}</td>
+                  <td className="py-3 px-3 font-medium text-gray-900 dark:text-white dark:text-white">{p.group}</td>
                   <td className="py-3 px-3">
                     <div className="flex flex-wrap gap-1">
                       {p.required_methods.map((m: any) => (
@@ -577,7 +577,7 @@ function MethodPoliciesTab() {
                   <td className="py-3 px-3 text-right">
                     <button
                       onClick={() => { setEditing(p); setShowForm(true); }}
-                      className="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-800 rounded"
+                      className="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-700 dark:bg-gray-700 dark:hover:bg-gray-800 rounded"
                     >
                       <Edit2 className="w-4 h-4 text-gray-500" />
                     </button>
@@ -641,9 +641,9 @@ function MethodPolicyForm({ editing, onSaved, onCancel }: {
   };
 
   return (
-    <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 space-y-4 bg-gray-50 dark:bg-gray-800/50">
+    <div className="border border-gray-200 dark:border-gray-700 dark:border-gray-700 rounded-lg p-4 space-y-4 bg-gray-50 dark:bg-gray-800 dark:bg-gray-800/50">
       <div>
-        <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">
+        <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 dark:text-gray-400 mb-1">
           {t("securityPolicy.methodPolicies.group")}
         </label>
         <input
@@ -651,13 +651,13 @@ function MethodPolicyForm({ editing, onSaved, onCancel }: {
           value={group}
           onChange={(e) => setGroup(e.target.value)}
           placeholder={t("securityPolicy.methodPolicies.selectGroup")}
-          className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm text-gray-900 dark:text-white"
+          className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 dark:border-gray-700 bg-white dark:bg-gray-800 dark:bg-gray-800 text-sm text-gray-900 dark:text-white dark:text-white"
         />
       </div>
 
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-2">
+          <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 dark:text-gray-400 mb-2">
             {t("securityPolicy.methodPolicies.requiredMethods")}
           </label>
           <div className="space-y-1">
@@ -675,7 +675,7 @@ function MethodPolicyForm({ editing, onSaved, onCancel }: {
           </div>
         </div>
         <div>
-          <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-2">
+          <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 dark:text-gray-400 mb-2">
             {t("securityPolicy.methodPolicies.forbiddenMethods")}
           </label>
           <div className="space-y-1">
@@ -705,7 +705,7 @@ function MethodPolicyForm({ editing, onSaved, onCancel }: {
         </button>
         <button
           onClick={onCancel}
-          className="px-4 py-2 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-lg text-sm font-medium"
+          className="px-4 py-2 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 dark:text-gray-300 rounded-lg text-sm font-medium"
         >
           Cancel
         </button>
@@ -725,7 +725,7 @@ function NumberField({ label, value, onChange, min, max }: {
 }) {
   return (
     <div>
-      <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">{label}</label>
+      <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 dark:text-gray-400 mb-1">{label}</label>
       <input
         type="number"
         value={value}
@@ -735,7 +735,7 @@ function NumberField({ label, value, onChange, min, max }: {
         }}
         min={min}
         max={max}
-        className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-sm text-gray-900 dark:text-white"
+        className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 dark:bg-gray-800 text-sm text-gray-900 dark:text-white dark:text-white"
       />
     </div>
   );
@@ -748,7 +748,7 @@ function ToggleRow({ label, checked, onChange }: {
 }) {
   return (
     <label className="flex items-center justify-between cursor-pointer py-1">
-      <span className="text-sm text-gray-700 dark:text-gray-300">{label}</span>
+      <span className="text-sm text-gray-700 dark:text-gray-300 dark:text-gray-300">{label}</span>
       <button
         onClick={onChange}
         className={`relative w-10 h-6 rounded-full transition-colors ${

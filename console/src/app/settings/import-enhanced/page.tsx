@@ -78,7 +78,7 @@ export default function EnhancedImportPage() {
   return (
     <div className="max-w-4xl space-y-6">
       <div>
-        <h1 className="flex items-center gap-2 text-2xl font-bold text-gray-900 dark:text-white">
+        <h1 className="flex items-center gap-2 text-2xl font-bold text-gray-900 dark:text-white dark:text-white">
           <Rocket className="h-6 w-6 text-blue-500" /> Enhanced Import
         </h1>
         <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
@@ -90,7 +90,7 @@ export default function EnhancedImportPage() {
         <h3 className="mb-4 text-sm font-semibold uppercase text-gray-400">Upload File</h3>
         <div className="space-y-4">
           <div>
-            <label className="block w-full cursor-pointer rounded-lg border-2 border-dashed border-gray-300 p-8 text-center transition hover:border-blue-500 dark:border-gray-700">
+            <label className="block w-full cursor-pointer rounded-lg border-2 border-dashed border-gray-300 dark:border-gray-600 p-8 text-center transition hover:border-blue-500 dark:border-gray-700">
               <input
                 type="file"
                 accept=".csv,.json"
@@ -114,15 +114,15 @@ export default function EnhancedImportPage() {
 
           <div className="space-y-3">
             <label className="flex items-center gap-2 text-sm">
-              <input type="checkbox" checked={config.dry_run} onChange={e => setConfig({ ...config, dry_run: e.target.checked })} className="rounded border-gray-300" />
+              <input type="checkbox" checked={config.dry_run} onChange={e => setConfig({ ...config, dry_run: e.target.checked })} className="rounded border-gray-300 dark:border-gray-600" />
               Dry run (validate without importing)
             </label>
             <label className="flex items-center gap-2 text-sm">
-              <input type="checkbox" checked={config.update_existing} onChange={e => setConfig({ ...config, update_existing: e.target.checked })} className="rounded border-gray-300" />
+              <input type="checkbox" checked={config.update_existing} onChange={e => setConfig({ ...config, update_existing: e.target.checked })} className="rounded border-gray-300 dark:border-gray-600" />
               Update existing users
             </label>
             <label className="flex items-center gap-2 text-sm">
-              <input type="checkbox" checked={config.send_welcome_email} onChange={e => setConfig({ ...config, send_welcome_email: e.target.checked })} className="rounded border-gray-300" />
+              <input type="checkbox" checked={config.send_welcome_email} onChange={e => setConfig({ ...config, send_welcome_email: e.target.checked })} className="rounded border-gray-300 dark:border-gray-600" />
               Send welcome email to new users
             </label>
           </div>
@@ -167,7 +167,7 @@ export default function EnhancedImportPage() {
           </h3>
           <div className="grid grid-cols-3 gap-4">
             <div className="text-center">
-              <div className="text-2xl font-bold text-gray-900 dark:text-white">{result.total || 0}</div>
+              <div className="text-2xl font-bold text-gray-900 dark:text-white dark:text-white">{result.total || 0}</div>
               <div className="text-xs text-gray-400">Total</div>
             </div>
             <div className="text-center">

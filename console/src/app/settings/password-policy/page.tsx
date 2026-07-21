@@ -61,7 +61,7 @@ function Toggle({
   return (
     <label className="flex cursor-pointer items-center justify-between py-2">
       <div>
-        <span className="text-sm font-medium text-gray-700 dark:text-gray-300">{label}</span>
+        <span className="text-sm font-medium text-gray-700 dark:text-gray-300 dark:text-gray-300">{label}</span>
         {description && (
           <p className="text-xs text-gray-400">{description}</p>
         )}
@@ -256,8 +256,8 @@ export default function PasswordPolicyPage() {
 
       <div className="space-y-6">
         {/* Min Length */}
-        <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800">
-          <h2 className="mb-4 flex items-center gap-2 text-sm font-semibold text-gray-700 dark:text-gray-300">
+        <div className="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800">
+          <h2 className="mb-4 flex items-center gap-2 text-sm font-semibold text-gray-700 dark:text-gray-300 dark:text-gray-300">
             <KeyRound className="h-4 w-4 text-brand-600" /> Minimum Length
           </h2>
           <div className="flex items-center gap-4">
@@ -270,7 +270,7 @@ export default function PasswordPolicyPage() {
                 const v = Math.max(8, Math.min(128, Number(e.target.value) || 8));
                 setConfig({ ...config, min_length: v });
               }}
-              className="w-24 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500 dark:border-gray-600 dark:bg-gray-900 dark:text-gray-100"
+              className="w-24 rounded-lg border border-gray-300 dark:border-gray-600 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500 dark:border-gray-600 dark:bg-gray-900 dark:text-gray-100"
             />
             <span className="text-sm text-gray-400">characters</span>
           </div>
@@ -289,8 +289,8 @@ export default function PasswordPolicyPage() {
         </div>
 
         {/* Complexity Rules */}
-        <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800">
-          <h2 className="mb-2 text-sm font-semibold text-gray-700 dark:text-gray-300">
+        <div className="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800">
+          <h2 className="mb-2 text-sm font-semibold text-gray-700 dark:text-gray-300 dark:text-gray-300">
             Complexity Rules
           </h2>
           <div className="divide-y divide-gray-100 dark:divide-gray-700">
@@ -334,8 +334,8 @@ export default function PasswordPolicyPage() {
         </div>
 
         {/* Password History */}
-        <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800">
-          <h2 className="mb-4 flex items-center gap-2 text-sm font-semibold text-gray-700 dark:text-gray-300">
+        <div className="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800">
+          <h2 className="mb-4 flex items-center gap-2 text-sm font-semibold text-gray-700 dark:text-gray-300 dark:text-gray-300">
             <History className="h-4 w-4 text-brand-600" /> Password History
           </h2>
           <label className="mb-1 block text-xs font-medium text-gray-500">
@@ -351,7 +351,7 @@ export default function PasswordPolicyPage() {
                 const v = Math.max(0, Math.min(24, Number(e.target.value) || 0));
                 setConfig({ ...config, history_count: v });
               }}
-              className="w-24 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500 dark:border-gray-600 dark:bg-gray-900 dark:text-gray-100"
+              className="w-24 rounded-lg border border-gray-300 dark:border-gray-600 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500 dark:border-gray-600 dark:bg-gray-900 dark:text-gray-100"
             />
             <span className="text-sm text-gray-400">passwords</span>
           </div>
@@ -370,8 +370,8 @@ export default function PasswordPolicyPage() {
         </div>
 
         {/* Password Expiry */}
-        <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800">
-          <h2 className="mb-4 flex items-center gap-2 text-sm font-semibold text-gray-700 dark:text-gray-300">
+        <div className="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800">
+          <h2 className="mb-4 flex items-center gap-2 text-sm font-semibold text-gray-700 dark:text-gray-300 dark:text-gray-300">
             <Clock className="h-4 w-4 text-brand-600" /> Password Expiry
           </h2>
           <label className="mb-1 block text-xs font-medium text-gray-500">
@@ -387,7 +387,7 @@ export default function PasswordPolicyPage() {
                 const v = Math.max(0, Math.min(365, Number(e.target.value) || 0));
                 setConfig({ ...config, expiry_days: v });
               }}
-              className="w-24 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500 dark:border-gray-600 dark:bg-gray-900 dark:text-gray-100"
+              className="w-24 rounded-lg border border-gray-300 dark:border-gray-600 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500 dark:border-gray-600 dark:bg-gray-900 dark:text-gray-100"
             />
             <span className="text-sm text-gray-400">days</span>
           </div>
@@ -406,8 +406,8 @@ export default function PasswordPolicyPage() {
         </div>
 
         {/* Live Preview */}
-        <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800">
-          <h2 className="mb-4 flex items-center gap-2 text-sm font-semibold text-gray-700 dark:text-gray-300">
+        <div className="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800">
+          <h2 className="mb-4 flex items-center gap-2 text-sm font-semibold text-gray-700 dark:text-gray-300 dark:text-gray-300">
             <ShieldCheck className="h-4 w-4 text-brand-600" /> Live Password Preview
           </h2>
           <p className="mb-3 text-xs text-gray-400">
@@ -419,7 +419,7 @@ export default function PasswordPolicyPage() {
               value={testUsername}
               onChange={(e) => setTestUsername(e.target.value)}
               placeholder={t("settings.testUsername")}
-              className="mb-2 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500 dark:border-gray-600 dark:bg-gray-900 dark:text-gray-100"
+              className="mb-2 w-full rounded-lg border border-gray-300 dark:border-gray-600 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500 dark:border-gray-600 dark:bg-gray-900 dark:text-gray-100"
             />
           )}
           <input
@@ -427,7 +427,7 @@ export default function PasswordPolicyPage() {
             value={testPw}
             onChange={(e) => setTestPw(e.target.value)}
             placeholder={t("settings.testPassword")}
-            className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500 dark:border-gray-600 dark:bg-gray-900 dark:text-gray-100"
+            className="w-full rounded-lg border border-gray-300 dark:border-gray-600 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500 dark:border-gray-600 dark:bg-gray-900 dark:text-gray-100"
           />
           {testPw && (
             <div className="mt-3 space-y-0.5">

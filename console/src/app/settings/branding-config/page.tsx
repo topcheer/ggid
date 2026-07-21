@@ -75,7 +75,7 @@ export default function BrandingConfigPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="flex items-center gap-2 text-2xl font-bold text-gray-900 dark:text-white">
+        <h1 className="flex items-center gap-2 text-2xl font-bold text-gray-900 dark:text-white dark:text-white">
           <Palette className="h-6 w-6 text-pink-500" /> Branding Configuration
         </h1>
         <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
@@ -130,7 +130,7 @@ export default function BrandingConfigPage() {
               <p className="mt-1 text-xs text-gray-400">SVG or PNG, max 512x512px</p>
             </div>
             <div className="flex items-center gap-4">
-              <div className="flex h-16 w-16 items-center justify-center rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-300">
+              <div className="flex h-16 w-16 items-center justify-center rounded-lg bg-gray-100 dark:bg-gray-700 dark:bg-gray-700 text-gray-300">
                 {logoUrl ? <img src={logoUrl} alt="Logo" className="h-full w-full object-contain rounded-lg" /> : <ImageIcon className="h-8 w-8" />}
               </div>
             </div>

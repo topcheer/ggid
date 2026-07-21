@@ -75,7 +75,7 @@ export default function WebAuthnConfigPage() {
 
   return (
     <div className="mx-auto max-w-2xl p-6">
-      <h1 className="mb-1 text-2xl font-bold text-gray-900 dark:text-white">WebAuthn Configuration</h1>
+      <h1 className="mb-1 text-2xl font-bold text-gray-900 dark:text-white dark:text-white">WebAuthn Configuration</h1>
       <p className="mb-6 text-sm text-gray-500">
         Configure the Relying Party (RP) domain for passkey registration and authentication.
       </p>
@@ -99,10 +99,10 @@ export default function WebAuthnConfigPage() {
         </span>
       </div>
 
-      <div className="space-y-5 rounded-xl border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-gray-900">
+      <div className="space-y-5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-6 dark:border-gray-800 dark:bg-gray-900">
         {/* RP ID */}
         <div>
-          <label className="flex items-center gap-1.5 text-sm font-medium text-gray-700 dark:text-gray-300">
+          <label className="flex items-center gap-1.5 text-sm font-medium text-gray-700 dark:text-gray-300 dark:text-gray-300">
             <Fingerprint className="h-4 w-4" /> RP ID (Domain)
           </label>
           <input
@@ -110,7 +110,7 @@ export default function WebAuthnConfigPage() {
             value={rpId}
             onChange={e => setRpId(e.target.value)}
             placeholder={currentHost}
-            className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-800"
+            className="mt-1 w-full rounded-lg border border-gray-300 dark:border-gray-600 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-800"
           />
           <p className="mt-1 text-xs text-gray-400">
             The domain users use to access Console (e.g., {currentHost}). Passkeys are scoped to this domain.
@@ -119,7 +119,7 @@ export default function WebAuthnConfigPage() {
 
         {/* Origins */}
         <div>
-          <label className="flex items-center gap-1.5 text-sm font-medium text-gray-700 dark:text-gray-300">
+          <label className="flex items-center gap-1.5 text-sm font-medium text-gray-700 dark:text-gray-300 dark:text-gray-300">
             <Server className="h-4 w-4" /> Allowed Origins
           </label>
           <textarea
@@ -127,7 +127,7 @@ export default function WebAuthnConfigPage() {
             onChange={e => setOrigins(e.target.value)}
             rows={4}
             placeholder={`https://${currentHost}`}
-            className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm font-mono dark:border-gray-700 dark:bg-gray-800"
+            className="mt-1 w-full rounded-lg border border-gray-300 dark:border-gray-600 px-3 py-2 text-sm font-mono dark:border-gray-700 dark:bg-gray-800"
           />
           <p className="mt-1 text-xs text-gray-400">
             One origin per line. Must include protocol (https://). Usually <code>https://{currentHost}</code>.
