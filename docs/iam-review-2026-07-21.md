@@ -2,7 +2,30 @@
 
 > 审视人：god_fullstack&everything（定期审视任务 cron-1 首轮）
 > 方法：三路并行代码级审查（OAuth/OIDC/SAML · Auth/Identity/SCIM · 增强功能兼容性+竞品迁移），所有结论均有 file:line 证据。
-> 状态：**R1 完成（2026-07-22 00:35 CST，已部署生产）。** R2 增量检查（01:43）：无新提交。R3 增量检查（02:43）：3 个 erp-demo 文档提交，erp-demo 报 refresh token gap 经核实为 demo client 配置问题（password grant offline_access 逻辑 oauth_service.go:1614-1625 已正确实现）。无 IAM 平台增量问题。
+> 状态：**R1 完成（已部署生产）。** R2/R3 无增量。R4（02:43）：发现 P0 安全回归 — commit 31c7e5c1e 跨租户修复重新引入裸角色名提权，已修复（be7e939ea），待 arch_pm review + 重建 gateway。
+
+---
+
+## 七、R4 增量审视（2026-07-22 02:43 CST）
+
+### 发现：P0 安全回归（跨租户 token + 裸角色名提权）
+
+erp-demo dimension 4 发现跨租户 token 被接受（commit 72cdef176），commit 31c7e5c1e 添加了 JWTAuth 租户边界校验。但修复代码的 platform admin 绕过检查了裸角色名 `"admin"` / `"administrator"` / `"platform administrator"`（middleware.go:672），**重新引入了 guardian_security 6b97c7a54 刚修复的同一提权漏洞**。
+
+**风险**：任何租户创建名为 "admin" 的角色，该用户即可跨租户访问。
+
+### 修复（be7e939ea）
+
+middleware.go JWTAuth platform admin 判定改为：
+- scope claim（空格分隔字符串）中匹配 `"platform:admin"`
+- roles claim（string array）中匹配 `"platform:admin"`
+- 不再接受裸角色名 `"admin"` / `"administrator"`
+
+测试：`go build ./...` + `go test ./services/gateway/...` 全绿。
+
+### Review
+
+> 待 arch_pm review 后填写。
 
 ---
 
