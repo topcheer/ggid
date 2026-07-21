@@ -1,13 +1,18 @@
 /**
- * Auth middleware — JWT verification via JWKS + permission checks.
- * Fetches JWKS manually and uses jsonwebtoken for verification.
+ * Auth middleware — uses GGID Node SDK for JWT verification + permission checks.
  */
 import type { Request, Response, NextFunction } from 'express';
-import jwt from 'jsonwebtoken';
-import crypto from 'crypto';
+import { GGIDClient, type JWTClaims } from '../../../sdk/node/src/client';
 
 const GGID_URL = process.env.GGID_URL || 'http://localhost:8080';
 const TENANT = process.env.GGID_TENANT || '00000000-0000-0000-0000-000000000002';
+
+// Create GGID SDK client with JWKS for JWT verification
+const ggidClient = new GGIDClient({
+  gatewayUrl: GGID_URL,
+  tenantId: TENANT,
+  jwksUrl: `${GGID_URL}/.well-known/jwks.json`,
+});
 
 export interface ERPUser {
   user_id: string;
@@ -18,57 +23,24 @@ export interface ERPUser {
   permissions: string[];
 }
 
-// JWKS cache
-let jwksCache: any = null;
-let jwksCachedAt = 0;
-
-async function getSigningKey(kid: string): Promise<string> {
-  const now = Date.now();
-  if (!jwksCache || now - jwksCachedAt > 300000) {
-    const resp = await fetch(`${GGID_URL}/.well-known/jwks.json`);
-    jwksCache = await resp.json();
-    jwksCachedAt = now;
-  }
-
-  const key = jwksCache.keys?.find((k: any) => k.kid === kid);
-  if (!key) throw new Error(`No matching key for kid: ${kid}`);
-
-  // Convert JWK to PEM
-  const pubKey = crypto.createPublicKey({
-    key: {
-      kty: key.kty,
-      n: key.n,
-      e: key.e,
-    },
-    format: 'jwk',
-  });
-  return pubKey.export({ type: 'spki', format: 'pem' }) as string;
-}
-
-// In-memory token cache
+// In-memory token cache (5 min TTL)
 const tokenCache = new Map<string, ERPUser>();
 
-/** Verify JWT token via JWKS and extract user info */
+/** Verify JWT token using GGID SDK's verifyToken (JWKS + RS256) */
 export async function verifyToken(token: string): Promise<ERPUser | null> {
   if (tokenCache.has(token)) return tokenCache.get(token)!;
 
   try {
-    // Decode header to get kid
-    const decoded = jwt.decode(token, { complete: true });
-    if (!decoded || typeof decoded === 'string') return null;
-    const kid = decoded.header.kid;
-    if (!kid) return null;
-
-    const signingKey = await getSigningKey(kid);
-    const payload: any = jwt.verify(token, signingKey, { algorithms: ['RS256'] });
+    // Use SDK's verifyToken — does JWKS fetch + RS256 verification internally
+    const claims: JWTClaims = await ggidClient.verifyToken(token);
 
     const user: ERPUser = {
-      user_id: payload.sub || '',
-      username: payload.username || payload.preferred_username || payload.sub || 'user',
-      email: payload.email || '',
-      tenant_id: payload.tenant_id || '',
-      roles: payload.roles || [],
-      permissions: payload.permissions || [],
+      user_id: claims.sub || '',
+      username: (claims as any).username || (claims as any).preferred_username || claims.sub || 'user',
+      email: (claims as any).email || '',
+      tenant_id: (claims as any).tenant_id || TENANT,
+      roles: (claims as any).roles || [],
+      permissions: (claims as any).permissions || (claims as any).scope?.split(' ') || [],
     };
 
     tokenCache.set(token, user);
@@ -81,7 +53,8 @@ export async function verifyToken(token: string): Promise<ERPUser | null> {
 
 /** Check if user has a specific permission */
 export function hasPermission(user: ERPUser, perm: string): boolean {
-  return user.permissions.includes(perm);
+  if (user.permissions.includes('admin')) return true;
+  return user.permissions.includes(perm) || user.permissions.includes(`${perm}:all`);
 }
 
 /** Require authentication middleware */
@@ -117,3 +90,6 @@ export function requireAny(...perms: string[]) {
     return res.status(403).json({ error: { code: 'forbidden', message: `Requires any of: ${perms.join(', ')}` } });
   };
 }
+
+/** Export the GGID client for use in routes (clientCredentials etc.) */
+export { ggidClient };

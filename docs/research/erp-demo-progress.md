@@ -1,68 +1,173 @@
 # Cross-Board ERP Demo Progress Tracker
 
-> **Last Updated**: 2026-07-21 07:00
-> **Status: Go SDK P0 FIXED. 6 SDKs + 6 demos still need work**
+> **Last Updated**: 2026-07-21 07:10 (Round 2 — Deep Audit)
+> **Status: Go SDK FIXED. IAM Platform + SDK gaps identified.**
 
-## Overall: Deploy 8/8 | CRUD 8/8 | **SDK Usage: 3/8** | **Signature Verification: 2/8 → 3/8 (Go fixed)**
+## Overall: Deploy 8/8 | CRUD 8/8 | **SDK Usage: 3/8** | **Sig Verify: 3/8** | **IAM Issues: 3**
 
-## Critical Finding: Demos Don't Actually Use SDKs
+---
 
-The demos "work" at the HTTP level, but most bypass the SDK entirely with inline JWT decoding and raw HTTP calls. This means the demos do NOT validate GGID's SDK capabilities.
+## Layer 1: SDK Signature Verification
 
-### Demo SDK Integration Audit
+| SDK | Unsafe Pattern | Proper Verify | Status |
+|-----|:---:|:---:|--------|
+| Go | ParseUnverified for kid extraction only (safe) | YES — VerifyToken requires WithJWKS() | **FIXED** ✅ |
+| Node | None in SDK | SDK has verifyToken() | OK (but demo doesn't use it) |
+| Python | None | SDK has jwt_verifier.verify() | OK (but demo doesn't use it) |
+| Ruby | None | SDK has verify_token() | OK |
+| Rust | None | SDK has verify_token() | OK |
+| C# | None | SDK has VerifyTokenAsync() | OK (but demo doesn't use it) |
+| Java | None | SDK has JwtVerifier.verifyUser() | OK (but demo doesn't use it) |
 
-| Demo | SDK Imported | Token Verify | Permission Check | Auth Flow | HACKS |
-|------|:-----------:|:------------:|:----------------:|:---------:|-------|
-| Go | YES | **FIXED** ✅ VerifyToken requires JWKS (commit b82fa39f3) | Missing in demo | SDK has ClientCredentials() now; PKCE still manual HTTP in demo | Go SDK fixed: ClientCredentials() added, ParseUnverified removed, WithJWKS required. Demo still needs PKCE via SDK |
-| Node | **NO** | Manual JWKS+crypto | Manual jwt.decode | Manual HTTP | middleware/auth.ts does NOT import SDK; reimplements verify from scratch |
-| React | **NO** | atob() inline | atob() inline | N/A (SPA) | auth.ts decodes JWT with atob() — no SDK, no verification |
-| Python | YES (import) | **Inline base64** | Inline base64 | Manual HTTP SAML | Imports GGIDClient but verify_token bypasses jwt_verifier.py |
-| C# | **NO** | **Inline base64** | Inline base64 | Manual HTTP | Program.cs uses raw http.PostAsync; C# SDK HAS LoginAsync() + VerifyTokenAsync() but unused |
-| Java | PARTIAL | **Inline base64** | GGIDUser.hasPermission() | Manual HTTP | Main.java splits JWT manually; AuthHandler uses HttpURLConnection |
-| Ruby | YES | **SDK verify_token** ✅ | SDK has_permission? ✅ | Manual HTTP device | SDK used for verify, but device code flow is raw Net::HTTP |
-| Rust | YES | **SDK verify_token** ✅ | Missing in demo | Manual HTTP exchange | SDK used for verify, but token exchange is raw HTTP |
+## Layer 1: SDK OAuth2 Flow Coverage Matrix
 
-### SDK OAuth2 Flow Coverage Matrix
+| Flow | Go | Node | Python | Ruby | Rust | C# | Java | GAPs |
+|------|:--:|:----:|:------:|:----:|:----:|:--:|:----:|------|
+| Auth Code + PKCE | MISSING | MISSING | MISSING | YES | YES | YES | MISSING | 4 SDKs missing |
+| Client Credentials | **YES** ✅ | **YES** ✅ | MISSING | MISSING | MISSING | MISSING | MISSING | 5 SDKs missing |
+| Device Code | YES | YES | MISSING | MISSING | MISSING | MISSING | YES | 4 SDKs missing |
+| Token Exchange | YES | YES | YES | YES | YES | YES | YES | All have it |
+| Password Grant | YES (login) | YES (login) | YES (login) | YES (login) | YES (login) | MISSING | MISSING | 2 SDKs missing |
+| SAML | YES | YES | YES | YES | YES | YES | YES | All have it |
+| Permission Check | YES | YES | YES | YES | YES | YES | YES | All have it |
+| Token Mgmt | YES | YES | YES | YES | YES | YES | YES | All have it |
 
-| Flow | Go | Node | Python | Ruby | Rust | C# | Java |
-|------|:--:|:----:|:------:|:----:|:----:|:--:|:----:|
-| Auth Code + PKCE | Missing method | Missing method | Missing | YES | YES | YES (GetAuthorizeUrl) | YES |
-| Client Credentials | **FIXED** ✅ | **MISSING** → assigned frontend | **MISSING** → assigned backend | **MISSING** → assigned backend | **MISSING** → assigned backend | **MISSING** → assigned backend | **MISSING** → assigned backend |
-| Device Code | YES (ref only) | YES (ref only) | Missing | Missing | Missing | Missing | YES |
-| Token Exchange | YES (agent) | YES (agent) | YES (agent) | YES (agent) | YES (agent) | YES (agent) | YES (agent) |
-| Password Grant | Missing | YES (login) | YES (login) | YES (login) | YES (login) | YES (login) | YES (login) |
-| SAML | YES | Missing | YES | Missing | Missing | YES | Missing |
+### SDK Gaps Requiring Implementation
 
-**Critical Gap**: NO SDK has a `clientCredentials()` method — all 7 SDKs are missing M2M support.
+| Priority | SDK | Missing Method | Assigned To |
+|----------|-----|----------------|-------------|
+| P1 | Python | clientCredentials() | backend |
+| P1 | Ruby | clientCredentials() | backend |
+| P1 | Rust | clientCredentials() | backend |
+| P1 | C# | clientCredentials() | backend |
+| P1 | Java | clientCredentials() | backend |
+| P1 | Go | getAuthorizeURL() + exchangeCode() | — |
+| P1 | Node | getAuthorizeURL() + exchangeCode() | frontend |
+| P1 | Python | getAuthorizeURL() + exchangeCode() | backend |
+| P1 | Java | getAuthorizeURL() + exchangeCode() | backend |
+| P1 | Python | deviceCode flow | backend |
+| P1 | Ruby | deviceCode flow | backend |
+| P1 | Rust | deviceCode flow | backend |
+| P1 | C# | deviceCode flow | backend |
+| P1 | C# | passwordGrant (login) | backend |
+| P1 | Java | passwordGrant (login) | backend |
 
-### Security Issues
+---
 
-1. ~~**Go SDK `verifyTokenOffline`**~~: **FIXED** (commit b82fa39f3) — VerifyToken now requires WithJWKS(), fails closed if not configured. ClientCredentials() method added.
-2. **5/8 demos decode JWT without signature verification**: Node, React, Python, C#, Java still decode JWT payload without verifying the RS256 signature. → assigned to backend (Python/Ruby/Rust/C#) + frontend (Node/React)
-3. **4/8 demos don't import the SDK at all**: Node, React, C#, Python (imports but doesn't use verify). → assigned to frontend + backend
+## Layer 2: Demo Hack Detection
 
-## Action Items (Priority Order)
+### Inline JWT Decode (MUST use SDK verifyToken instead)
 
-### P0: SDK Signature Verification
-1. ~~**Go SDK**~~: **FIXED** ✅ (commit b82fa39f3) — VerifyToken requires WithJWKS(), ClientCredentials() added
-2. **C# demo**: Replace inline base64 decode with `GGIDClient.VerifyTokenAsync()` → assigned backend
-3. **Java demo**: Replace `Main.verifyToken()` inline decode with `GGIDClient.verifyUser()` → assigned backend
-4. **Node demo**: Replace manual JWKS+crypto with `GGIDClient.verifyToken()` → assigned frontend
-5. **Python demo**: Use `jwt_verifier.verify()` instead of inline base64 → assigned backend
-6. **React demo**: Use SDK's `verifyToken()` for token validation → assigned frontend
+| Demo | File:Line | Current Hack | Should Use | Status |
+|------|-----------|-------------|------------|--------|
+| Go | orders.go:51 | `parts[1]` for path routing (NOT JWT, false positive) | N/A | OK |
+| C# | Program.cs:77 | `token.Split('.')` + base64 decode + JSON parse for permissions | `GGIDClient.VerifyTokenAsync()` | **HACK** |
+| Java | Main.java:73-79 | Changed to introspect endpoint ✅ (but still raw HttpURLConnection) | Should use SDK | **PARTIAL** |
+| Java | AuthHandler.java:116 | Base64.decode for SAML response | SDK SAML handler | **HACK** |
+| Python | main.py (stashed) | Changed to introspect_token() ✅ | Correct direction | **IN PROGRESS** |
+| React | auth.ts (stashed) | Changed to backend introspect ✅ | Correct direction | **IN PROGRESS** |
 
-### P1: SDK OAuth2 Flow Methods
-1. Add `ClientCredentials(clientID, clientSecret)` to ALL 7 SDKs (currently 0/7)
-2. Add `DeviceCode(clientID)` + `PollDeviceToken(deviceCode)` to Python, Ruby, Rust, C# SDKs
-3. Add `GetAuthorizeURL()` + `ExchangeCode()` to Go SDK
-4. Add SAML SSO helper to Node, Ruby, Rust, Java SDKs
+### Manual JWKS / Crypto Verify (MUST use SDK instead)
 
-### P2: Demo Rewrite to Use SDK
-1. Each demo must call SDK methods for ALL auth operations
-2. No inline JWT decode, no raw HTTP to GGID API, no manual JWKS
-3. Demos serve as SDK integration tests — if SDK has a gap, fix the SDK, don't hack the demo
+| Demo | File:Line | Current Hack | Should Use | Status |
+|------|-----------|-------------|------------|--------|
+| Node | middleware/auth.ts:22-63 | Manual JWKS fetch + cache + crypto.createPublicKey + jwt.verify | `GGIDClient.verifyToken()` | **HACK** |
 
-### P3: IAM Platform Compliance
-1. Token introspection endpoint should be used by resource servers
-2. JWKS rotation should be transparent to SDK consumers
-3. Permission checks should go through SDK's `checkPermission()` (PDP call) not just JWT claim read
+### Raw HTTP Calls to GGID API (MUST use SDK methods instead)
+
+| Demo | File:Line | Current Hack | Should Use | Status |
+|------|-----------|-------------|------------|--------|
+| Node | routes/auth.ts:19 | `fetch(GGID_URL/api/v1/oauth/token)` | `GGIDClient.clientCredentials()` | **HACK** |
+| Node | routes/auth.ts:37 | `fetch(GGID_URL/api/v1/auth/verify)` | `GGIDClient.verifyToken()` | **HACK** |
+| Node | routes/auth.ts:48 | `fetch(GGID_URL/api/v1/oauth/introspect)` | `GGIDClient.introspectToken()` | **HACK** |
+| React | auth.ts:42 | `fetch(GGID_URL/api/v1/oauth/introspect)` | Backend SDK introspect | **IN PROGRESS** |
+| React | auth.ts:150 | `fetch(GGID_URL/api/v1/oauth/token)` | SDK PKCE flow | **HACK** |
+| C# | Program.cs:54 | `http.PostAsync(ggidUrl/api/v1/auth/login)` | `GGIDClient.LoginAsync()` | **HACK** |
+| Java | AuthHandler.java:95 | `HttpURLConnection(TOKEN_ENDPOINT)` | SDK OAuth method | **HACK** |
+| Java | Main.java:79 | `HttpURLConnection(GGID_URL/api/v1/oauth/introspect)` | SDK introspect | **PARTIAL** |
+| Ruby | app.rb:65,90 | `Net::HTTP` for device_authorize + token poll | SDK deviceCode (needs impl) | **HACK** (SDK gap) |
+
+### Demo SDK Import Status
+
+| Demo | Imports SDK | Uses SDK for verify | Uses SDK for auth flow | Uses SDK for perms | Score |
+|------|:-----------:|:-------------------:|:----------------------:|:------------------:|:-----:|
+| Go | YES | YES (WithJWKS) ✅ | NO (manual PKCE) | NO | 2/4 |
+| Node | **NO** | NO | NO | NO | **0/4** |
+| React | **NO** | partial (introspect) | NO | NO | 1/4 |
+| Python | YES | partial (stashed fix) | NO | NO | 1/4 |
+| C# | **NO** | NO | NO | NO | **0/4** |
+| Java | PARTIAL | partial (introspect) | NO | YES (GGIDUser) | 2/4 |
+| Ruby | YES | YES ✅ | NO | YES ✅ | **3/4** |
+| Rust | YES | YES ✅ | NO | NO | 2/4 |
+
+---
+
+## Layer 3: IAM Platform Standard Compliance
+
+### JWT Claims — PASS ✅
+- iss: PRESENT (ggid-auth)
+- aud: PRESENT (ggid)
+- exp/iat: PRESENT
+- sub: PRESENT
+- tenant_id: PRESENT
+- permissions: 9 items (independent claim)
+- roles: 2 items (independent claim)
+- scope: empty string (not used for permissions)
+
+### OIDC Discovery — PARTIAL
+- issuer: ✅ https://ggid.iot2.win
+- jwks_uri: ✅ https://ggid.iot2.win/oauth/jwks
+- token_endpoint: ✅
+- authorization_endpoint: ✅
+- device_authorization_endpoint: **MISSING** — should advertise RFC 8628 endpoint
+- introspection_endpoint: ✅
+- grant_types_supported: `['authorization_code', 'refresh_token', 'client_credentials']`
+  - **MISSING**: `urn:ietf:params:oauth:grant-type:device_code`, `urn:ietf:params:oauth:grant-type:token-exchange`
+
+### JWKS Endpoint — PASS ✅
+- 2 keys, RS256, sig usage
+
+### PDP (Policy Decision Point) — FAIL
+- `/api/v1/policy/check` returns "quarantined" status — policy engine is in security hold
+- SDK's `checkPermission()` cannot work until policy is un-quarantined
+
+### Token Introspection — FAIL
+- `/api/v1/oauth/introspect` returns `{"error":"invalid_client"}`
+- Requires client authentication but no client credentials provided in introspect call
+- Demos using introspect (Java, Python stashed fix, React stashed fix) will fail
+
+### IAM Platform Gaps
+
+| Priority | Issue | Impact |
+|----------|-------|--------|
+| P0 | Token Introspection returns invalid_client | Demos can't verify tokens via introspect |
+| P0 | PDP policy engine quarantined | SDK checkPermission() non-functional |
+| P1 | OIDC discovery missing device_authorization_endpoint | Clients can't auto-discover device flow |
+| P1 | OIDC grant_types missing device_code + token_exchange | Flow discovery incomplete |
+
+---
+
+## Layer 4: Deploy & CRUD — PASS ✅
+
+All 8 pods Running. All 7 backends return inventory data. Token issuance works.
+
+---
+
+## Action Items Summary
+
+### Immediate (blocks demo SDK integration)
+1. **Fix token introspection** — must return active+claims without requiring client auth for bearer token introspection (RFC 7662)
+2. **Un-quarantine PDP** — policy engine must be active for checkPermission to work
+3. **Update OIDC discovery** — add device_authorization_endpoint + missing grant types
+
+### SDK Implementation (assigned)
+4. **backend**: Python/Ruby/Rust/C#/Java — add clientCredentials(), deviceCode, getAuthorizeURL
+5. **frontend**: Node/React — add getAuthorizeURL, rewrite demos to use SDK verifyToken
+
+### Demo Rewrite (after SDK methods exist)
+6. **Node demo**: Import SDK, replace manual JWKS+crypto, replace raw fetch calls
+7. **C# demo**: Import SDK, replace inline base64 + raw http.PostAsync
+8. **Java demo**: Use SDK JwtVerifier instead of raw HttpURLConnection
+9. **Go demo**: Use SDK getAuthorizeURL + exchangeCode (when implemented)
+10. **Ruby demo**: Use SDK deviceCode flow (when implemented)
+11. **Rust demo**: Use SDK exchangeToken flow (when implemented)
