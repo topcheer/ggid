@@ -218,9 +218,8 @@ func (h *Handler) registerRoutes() {
 	// Passkey autofill (conditional mediation)
 	h.mux.HandleFunc("/api/v1/auth/webauthn/autofill", h.passkeyAutofill)
 
-	// Magic Link (passwordless login)
+	// Magic Link (passwordless login) — send only, verification via OAuth flow
 	h.mux.HandleFunc("/api/v1/auth/magic-link", h.magicLink)
-	h.mux.HandleFunc("/api/v1/auth/magic-link/verify", h.magicLinkVerify)
 
 	// Email verification
 	h.mux.HandleFunc("/api/v1/auth/email/verify", h.emailVerify)
@@ -230,9 +229,8 @@ func (h *Handler) registerRoutes() {
 	h.mux.HandleFunc("/api/v1/auth/send-verification", h.sendVerification)
 	h.mux.HandleFunc("/api/v1/auth/verify-email", h.verifyEmail)
 
-	// Phone OTP authentication
+	// Phone OTP — send only, verification via OAuth flow
 	h.mux.HandleFunc("/api/v1/auth/phone/send", h.phoneOTPSend)
-	h.mux.HandleFunc("/api/v1/auth/phone/verify", h.phoneOTPVerify)
 
 	// Step-up authentication
 	h.mux.HandleFunc("/api/v1/auth/stepup/challenge", h.stepUpChallenge)
@@ -316,7 +314,7 @@ func (h *Handler) registerRoutes() {
 	h.mux.HandleFunc("/dbconnections/signup", h.dbConnectionsSignup)
 
 	// Social login endpoints
-	h.mux.HandleFunc("/api/v1/auth/social/", h.handleSocial)
+	// Social login is handled via OAuth authorize flow, not direct token issuance.
 
 	// Step-up check endpoint
 	h.mux.HandleFunc("/api/v1/auth/step-up-check", h.stepUpCheck)
@@ -817,10 +815,6 @@ func (h *Handler) logout(w http.ResponseWriter, r *http.Request) {
 }
 
 // --- Refresh ---
-
-type refreshRequest struct {
-	RefreshToken string `json:"refresh_token"`
-}
 
 // --- Password Flows ---
 
@@ -1332,64 +1326,6 @@ func (h *Handler) handleAccountDeletion(w http.ResponseWriter, r *http.Request) 
 		"deleted": true,
 		"message": "Account scheduled for deletion. All sessions revoked.",
 	})
-}
-
-type mfaLoginRequest struct {
-	Username   string `json:"username"`
-	Password   string `json:"password"`
-	MFACode    string `json:"mfa_code"`
-	BackupCode string `json:"backup_code"`
-	TenantSlug string `json:"tenant_slug"`
-}
-
-func (h *Handler) mfaLogin(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPost {
-		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
-		return
-	}
-
-	var req mfaLoginRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		writeError(w, http.StatusBadRequest, "invalid request body")
-		return
-	}
-
-	// Inject tenant context (same fallback as regular login handler)
-	if _, err := ggidtenant.FromContext(r.Context()); err != nil {
-		if req.TenantSlug != "" {
-			if tid := h.resolveTenantBySlug(r.Context(), req.TenantSlug); tid != uuid.Nil {
-				tc := &ggidtenant.Context{
-					TenantID:       tid,
-					IsolationLevel: ggidtenant.IsolationShared,
-				}
-				r = r.WithContext(ggidtenant.WithContext(r.Context(), tc))
-			}
-		}
-	}
-
-	ip := clientIP(r)
-	userAgent := r.Header.Get("User-Agent")
-
-	// Route: if backup_code is provided, use backup code login path.
-	if req.BackupCode != "" {
-		tokens, err := h.authSvc.LoginWithBackupCode(r.Context(), req.Username, req.Password, req.BackupCode, ip, userAgent)
-		if err != nil {
-			log.Printf("backup code login error for user %s: %v", req.Username, err)
-			writeAuthError(w, err)
-			return
-		}
-		writeJSON(w, http.StatusOK, tokens)
-		return
-	}
-
-	tokens, err := h.authSvc.LoginMFA(r.Context(), req.Username, req.Password, req.MFACode, ip, userAgent)
-	if err != nil {
-		log.Printf("MFA login error for user %s: %v", req.Username, err)
-		writeAuthError(w, err)
-		return
-	}
-
-	writeJSON(w, http.StatusOK, tokens)
 }
 
 // --- Password Policy ---
