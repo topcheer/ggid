@@ -7,10 +7,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"io"
 	"net/http"
-	"net/url"
-	"strings"
 	"sync"
 	"time"
 
@@ -29,11 +26,11 @@ type pkceSession struct {
 	CreatedAt  time.Time
 }
 
-// handleOAuthLogin redirects user to GGID OAuth2 authorize endpoint with PKCE
+// handleOAuthLogin redirects user to GGID OAuth2 authorize endpoint with PKCE.
+// Uses SDK GetAuthorizeURL() instead of manual URL construction.
 func handleOAuthLogin(w http.ResponseWriter, r *http.Request) {
 	clientID := getEnv("OAUTH_CLIENT_ID", "erp-go-demo")
 	redirectURI := getEnv("OAUTH_REDIRECT_URI", fmt.Sprintf("http://%s/api/auth/callback", r.Host))
-	scopes := "openid profile email"
 
 	// Generate PKCE verifier + challenge
 	verifier := generateCodeVerifier()
@@ -52,23 +49,16 @@ func handleOAuthLogin(w http.ResponseWriter, r *http.Request) {
 	// Clean old sessions (> 10 min)
 	go cleanPKCESessions()
 
-	// Build authorize URL
-	params := url.Values{
-		"response_type":         {"code"},
-		"client_id":             {clientID},
-		"redirect_uri":          {redirectURI},
-		"scope":                 {scopes},
-		"state":                 {state},
-		"code_challenge":        {challenge},
-		"code_challenge_method": {"S256"},
-		"tenant_id":             {tenantID},
-	}
-
-	authURL := fmt.Sprintf("%s/api/v1/oauth/authorize?%s", ggidURL, params.Encode())
+	// Use SDK to build the authorize URL
+	authURL := ggidClient.GetAuthorizeURL(clientID, redirectURI, tenantID,
+		ggid.WithState(state),
+		ggid.WithCodeChallenge(challenge),
+	)
 	http.Redirect(w, r, authURL, http.StatusFound)
 }
 
-// handleOAuthCallback handles the OAuth2 callback, exchanges code for token
+// handleOAuthCallback handles the OAuth2 callback.
+// Uses SDK ExchangeCode() instead of manual HTTP POST to token endpoint.
 func handleOAuthCallback(w http.ResponseWriter, r *http.Request) {
 	code := r.URL.Query().Get("code")
 	state := r.URL.Query().Get("state")
@@ -97,50 +87,14 @@ func handleOAuthCallback(w http.ResponseWriter, r *http.Request) {
 	}
 
 	clientID := getEnv("OAUTH_CLIENT_ID", "erp-go-demo")
-	clientSecret := getEnv("OAUTH_CLIENT_SECRET", "")
 
-	// Exchange code for token
-	tokenReq := url.Values{
-		"grant_type":    {"authorization_code"},
-		"code":          {code},
-		"redirect_uri":  {session.Redirect},
-		"client_id":     {clientID},
-		"code_verifier": {session.Verifier},
-	}
-	if clientSecret != "" {
-		tokenReq.Set("client_secret", clientSecret)
-	}
-
-	req, err := http.NewRequestWithContext(r.Context(), "POST",
-		fmt.Sprintf("%s/api/v1/oauth/token", ggidURL),
-		strings.NewReader(tokenReq.Encode()))
+	// Use SDK to exchange authorization code for tokens
+	tokens, err := ggidClient.ExchangeCode(r.Context(), code, session.Redirect, clientID, session.Verifier, tenantID)
 	if err != nil {
-		writeJSON(w, 500, map[string]string{"error": "failed to create token request"})
-		return
-	}
-	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-	req.Header.Set("X-Tenant-ID", tenantID)
-
-	resp, err := http.DefaultClient.Do(req)
-	if err != nil {
-		writeJSON(w, 502, map[string]string{"error": "failed to call GGID token endpoint"})
-		return
-	}
-	defer resp.Body.Close()
-
-	body, _ := io.ReadAll(resp.Body)
-	var tokens map[string]interface{}
-	if err := json.Unmarshal(body, &tokens); err != nil {
-		writeJSON(w, 500, map[string]string{"error": "failed to parse token response"})
+		writeJSON(w, 502, map[string]string{"error": "token exchange failed: " + err.Error()})
 		return
 	}
 
-	if resp.StatusCode != 200 {
-		writeJSON(w, resp.StatusCode, tokens)
-		return
-	}
-
-	// Return tokens to client (in production, set httpOnly cookies)
 	writeJSON(w, 200, tokens)
 }
 

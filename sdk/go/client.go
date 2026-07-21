@@ -260,6 +260,92 @@ func (c *Client) ClientCredentials(ctx context.Context, clientID, clientSecret, 
 	return &ts, nil
 }
 
+// GetAuthorizeURL builds the OAuth2 authorization endpoint URL with PKCE.
+// The client redirects the user's browser to this URL to begin the auth flow.
+// After login, GGID redirects back to redirectURI with an authorization code.
+func (c *Client) GetAuthorizeURL(clientID, redirectURI, tenantID string, opts ...AuthorizeOpt) string {
+	o := &AuthorizeConfig{
+		Scope:          "openid profile email",
+		ResponseType:   "code",
+		CodeChallengeMethod: "S256",
+	}
+	for _, opt := range opts {
+		opt(o)
+	}
+
+	params := url.Values{
+		"response_type":         {o.ResponseType},
+		"client_id":             {clientID},
+		"redirect_uri":          {redirectURI},
+		"scope":                 {o.Scope},
+		"state":                 {o.State},
+		"code_challenge_method": {o.CodeChallengeMethod},
+		"tenant_id":             {tenantID},
+	}
+	if o.CodeChallenge != "" {
+		params.Set("code_challenge", o.CodeChallenge)
+	}
+	return c.baseURL + "/api/v1/oauth/authorize?" + params.Encode()
+}
+
+// ExchangeCode exchanges an authorization code for a token set (OAuth2 §4.1).
+// Used after the redirect from GetAuthorizeURL. Pass the PKCE code_verifier
+// that corresponds to the code_challenge used in GetAuthorizeURL.
+func (c *Client) ExchangeCode(ctx context.Context, code, redirectURI, clientID, codeVerifier, tenantID string) (*TokenSet, error) {
+	form := url.Values{
+		"grant_type":    {"authorization_code"},
+		"code":          {code},
+		"redirect_uri":  {redirectURI},
+		"client_id":     {clientID},
+	}
+	if codeVerifier != "" {
+		form.Set("code_verifier", codeVerifier)
+	}
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost,
+		c.baseURL+"/api/v1/oauth/token", strings.NewReader(form.Encode()))
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	if tenantID != "" {
+		req.Header.Set("X-Tenant-ID", tenantID)
+	}
+
+	var ts TokenSet
+	if err := c.do(req, &ts); err != nil {
+		return nil, err
+	}
+	return &ts, nil
+}
+
+// AuthorizeConfig holds optional parameters for the authorize URL.
+type AuthorizeConfig struct {
+	Scope              string
+	State              string
+	ResponseType       string
+	CodeChallenge      string
+	CodeChallengeMethod string
+}
+
+// AuthorizeOpt configures optional authorize parameters.
+type AuthorizeOpt func(*AuthorizeConfig)
+
+// WithScope sets the OAuth2 scope.
+func WithScope(scope string) AuthorizeOpt {
+	return func(a *AuthorizeConfig) { a.Scope = scope }
+}
+
+// WithState sets the OAuth2 state parameter (CSRF protection).
+func WithState(state string) AuthorizeOpt {
+	return func(a *AuthorizeConfig) { a.State = state }
+}
+
+// WithCodeChallenge sets the PKCE code_challenge (S256 hashed verifier).
+func WithCodeChallenge(challenge string) AuthorizeOpt {
+	return func(a *AuthorizeConfig) { a.CodeChallenge = challenge }
+}
+
 // RefreshToken refreshes an access token using a refresh token.
 func (c *Client) RefreshToken(ctx context.Context, refreshToken string) (*TokenSet, error) {
 	body := map[string]string{"refresh_token": refreshToken}
