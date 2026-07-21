@@ -166,7 +166,6 @@ func (h *Handler) registerRoutes() {
 	h.mux.HandleFunc("/api/v1/auth/verify", h.verifyCredentials)
 	h.mux.HandleFunc("/api/v1/auth/register", h.register)
 	h.mux.HandleFunc("/api/v1/auth/logout", h.logout)
-	h.mux.HandleFunc("/api/v1/auth/refresh", h.refresh)
 	h.mux.HandleFunc("/api/v1/auth/password/forgot", h.forgotPassword)
 	h.mux.HandleFunc("/api/v1/auth/credentials/", h.handleCredentialVault)
 	h.mux.HandleFunc("/api/v1/auth/credentials/store", h.handleCredentialVault)
@@ -821,27 +820,6 @@ func (h *Handler) logout(w http.ResponseWriter, r *http.Request) {
 
 type refreshRequest struct {
 	RefreshToken string `json:"refresh_token"`
-}
-
-func (h *Handler) refresh(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPost {
-		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
-		return
-	}
-
-	var req refreshRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		writeError(w, http.StatusBadRequest, "invalid request body")
-		return
-	}
-
-	tokens, err := h.authSvc.Refresh(r.Context(), req.RefreshToken)
-	if err != nil {
-		writeAuthError(w, err)
-		return
-	}
-
-	writeJSON(w, http.StatusOK, tokens)
 }
 
 // --- Password Flows ---
