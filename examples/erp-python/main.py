@@ -59,7 +59,7 @@ def get_client():
 
 
 # SDK JWTVerifier with JWKS + RS256 signature verification
-_jwt_verifier = JWTVerifier(base_url=GGID_URL, issuer="ggid-auth")
+_jwt_verifier = JWTVerifier(base_url=GGID_URL)
 
 
 def extract_permissions_from_jwt(token):

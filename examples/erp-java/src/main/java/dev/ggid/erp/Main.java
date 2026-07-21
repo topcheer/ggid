@@ -25,7 +25,7 @@ public class Main {
     static final GGIDClient ggid = new GGIDClient(new GGIDClient.Config(GGID_URL));
     // SDK JwtVerifier with JWKS signature verification (RS256)
     static final JwtVerifier jwtVerifier = new JwtVerifier(
-        GGID_URL + "/.well-known/jwks.json", "ggid-auth", 30);
+        GGID_URL + "/.well-known/jwks.json", null, 30);
 
     public static void main(String[] args) throws Exception {
         int port = Integer.parseInt(System.getenv().getOrDefault("PORT", String.valueOf(DEFAULT_PORT)));
