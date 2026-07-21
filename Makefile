@@ -1,4 +1,4 @@
-.PHONY: help proto build test test-short test-race coverage lint lint-ci install-hooks docker-run docker-stop docker-build docker-build-allinone docker-push docker-build-services docker-push-services swagger-gen migrate-up migrate-down clean
+.PHONY: help proto build build-cli test test-short test-race coverage lint lint-ci install-hooks docker-run docker-stop docker-build docker-build-allinone docker-push docker-build-services docker-push-services swagger-gen migrate-up migrate-down clean
 
 GGID_ROOT := $(shell pwd)
 PROTO_DIR := $(GGID_ROOT)/api/proto
@@ -22,6 +22,7 @@ help:
 	@echo "  docker-stop  Stop infrastructure"
 	@echo "  docker-build-services  Build all 8 service images (prebuilt binary)"
 	@echo "  docker-push-services   Build + push all 8 service images"
+	@echo "  cli          Build the ggid-cli tool"
 	@echo "  clean        Clean build artifacts"
 
 proto:
@@ -35,6 +36,12 @@ build:
 		echo "Building $$svc..."; \\
 		cd services/$$svc && go build -o bin/$$svc ./cmd/ && cd $(GGID_ROOT); \\
 	done
+
+cli:
+	@echo "Building ggid-cli..."
+	@cd services/ggid-cli && go build -o bin/ggid ./cmd/ && cd $(GGID_ROOT)
+	@echo "Built: services/ggid-cli/bin/ggid"
+	@services/ggid-cli/bin/ggid version
 
 test:
 	go test -timeout 10m -cover $(shell go list ./... | grep -v '/sdk/examples/' | grep -v '/node_modules/' | grep -v '^github.com/ggid/ggid$$')

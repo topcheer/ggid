@@ -31,31 +31,27 @@ export function hasPermission(user: ERPUser | null, perm: string): boolean {
 }
 
 /**
- * Verify token via backend introspect endpoint (not inline decode).
- * This ensures the token is valid and not tampered with.
+ * Verify token via Node backend (which uses GGID SDK verifyToken with JWKS+RS256).
+ * SPA cannot do JWKS verification in browser — delegates to backend.
  */
 export async function verifyToken(token: string): Promise<ERPUser | null> {
   if (cachedToken === token && cachedUser) return cachedUser;
 
   try {
-    // Call backend introspect to verify token server-side
-    const res = await fetch(`${GGID_URL}/api/v1/oauth/introspect`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'X-Tenant-ID': TENANT },
-      body: new URLSearchParams({ token }),
+    // Call Node backend verify endpoint — uses SDK verifyToken() server-side
+    const res = await fetch(`${API_BASE}/api/auth/verify`, {
+      headers: { 'Authorization': `Bearer ${token}` },
     });
 
     if (!res.ok) return null;
     const data = await res.json();
-
-    if (!data.active) return null;
 
     const user: ERPUser = {
       user_id: data.sub || data.user_id || '',
       username: data.username || data.preferred_username || 'user',
       email: data.email || '',
       roles: data.roles || [],
-      permissions: data.permissions || data.scope?.split(' ') || [],
+      permissions: data.permissions || [],
     };
 
     cachedToken = token;

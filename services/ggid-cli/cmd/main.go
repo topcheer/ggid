@@ -1,32 +1,22 @@
 // Package main implements the ggid-cli command line tool.
+//
+// ggid-cli is a comprehensive CLI for managing GGID instances remotely.
+// Authentication uses Dynamic Client Registration (RFC 7591) to register
+// in the console tenant, then exchanges client credentials for access tokens.
 package main
 
 import (
-	"bytes"
-	"encoding/base64"
-	"encoding/json"
-	"flag"
 	"fmt"
-	"io"
-	"net/http"
 	"os"
-	"strings"
+	"strconv"
+	"time"
+
+	"github.com/ggid/ggid/services/ggid-cli/internal/client"
+	"github.com/ggid/ggid/services/ggid-cli/internal/commands"
+	"github.com/ggid/ggid/services/ggid-cli/internal/config"
 )
 
-var (
-	gatewayURL = os.Getenv("GGID_GATEWAY_URL")
-	token      = os.Getenv("GGID_TOKEN")
-	tenantID   = os.Getenv("GGID_TENANT_ID")
-)
-
-func init() {
-	if gatewayURL == "" {
-		gatewayURL = "http://localhost:8080"
-	}
-	if tenantID == "" {
-		tenantID = "00000000-0000-0000-0000-000000000001"
-	}
-}
+const version = "1.0.0"
 
 func main() {
 	if len(os.Args) < 2 {
@@ -34,127 +24,211 @@ func main() {
 		os.Exit(1)
 	}
 
-	switch os.Args[1] {
+	// Load config (may not exist yet for login).
+	cfg, _ := config.Load()
+
+	// Determine output format.
+	outputFormat := cfg.OutputFormat
+	if envFmt := os.Getenv("GGID_OUTPUT"); envFmt != "" {
+		outputFormat = envFmt
+	}
+	if outputFormat == "" {
+		outputFormat = "table"
+	}
+
+	// Parse global flags that may appear before the subcommand.
+	serverURL := os.Getenv("GGID_SERVER_URL")
+	if cfg.ServerURL != "" {
+		serverURL = cfg.ServerURL
+	}
+
+	// Create the authenticated client if we have a token.
+	var apiClient *client.Client
+	if serverURL != "" {
+		tenantID := cfg.ConsoleTenantID
+		if tenantID == "" {
+			tenantID = client.ConsoleTenantID
+		}
+		apiClient = client.New(serverURL, tenantID, cfg.AccessToken)
+	}
+
+	// Create the command context.
+	ctx := &commands.Context{
+		Config:       cfg,
+		Client:       apiClient,
+		ServerURL:    serverURL,
+		OutputFormat: outputFormat,
+		Version:      version,
+	}
+
+	cmd := os.Args[1]
+	args := os.Args[2:]
+
+	switch cmd {
 	case "login":
-		cmdLogin(os.Args[2:])
-	case "users":
-		cmdUsers(os.Args[2:])
-	case "roles":
-		cmdRoles(os.Args[2:])
-	case "audit":
-		cmdAudit(os.Args[2:])
+		commands.Login(ctx, args)
+	case "logout":
+		commands.Logout(ctx, args)
 	case "whoami":
-		cmdWhoami()
-	case "version":
-		fmt.Println("ggid-cli v0.1.0")
+		commands.Whoami(ctx, args)
+	case "version", "--version", "-v":
+		fmt.Printf("ggid-cli v%s\n", version)
+	case "help", "--help", "-h":
+		usage()
+
+	// Users
+	case "users":
+		commands.Users(ctx, args)
+	case "user":
+		commands.Users(ctx, args)
+
+	// Roles
+	case "roles":
+		commands.Roles(ctx, args)
+	case "role":
+		commands.Roles(ctx, args)
+
+	// Organizations
+	case "orgs", "organizations":
+		commands.Organizations(ctx, args)
+	case "org", "organization":
+		commands.Organizations(ctx, args)
+
+	// Audit
+	case "audit":
+		commands.Audit(ctx, args)
+
+	// Policies
+	case "policies":
+		commands.Policies(ctx, args)
+	case "policy":
+		commands.Policies(ctx, args)
+
+	// OAuth Clients
+	case "oauth":
+		commands.OAuthClients(ctx, args)
+
+	// Tenants
+	case "tenants":
+		commands.Tenants(ctx, args)
+	case "tenant":
+		commands.Tenants(ctx, args)
+
+	// Sessions
+	case "sessions":
+		commands.Sessions(ctx, args)
+	case "session":
+		commands.Sessions(ctx, args)
+
+	// System
+	case "system":
+		commands.System(ctx, args)
+
+	// Webhooks
+	case "webhooks":
+		commands.Webhooks(ctx, args)
+	case "webhook":
+		commands.Webhooks(ctx, args)
+
+	// Dashboard
+	case "dashboard":
+		commands.Dashboard(ctx, args)
+
 	default:
-		fmt.Fprintf(os.Stderr, "unknown command: %s\n", os.Args[1])
+		fmt.Fprintf(os.Stderr, "unknown command: %s\n\n", cmd)
 		usage()
 		os.Exit(1)
 	}
 }
 
 func usage() {
-	fmt.Println(`ggid-cli — GGID Identity & Access Management CLI
-
-Commands:
-  login    --username X --password Y [--tenant default]
-  users    [--page 1] [--size 20]
-  roles
-  audit    [--page 1] [--size 20]
-  whoami
-  version
-
-Env: GGID_GATEWAY_URL, GGID_TOKEN, GGID_TENANT_ID`)
-}
-
-func cmdLogin(args []string) {
-	fs := flag.NewFlagSet("login", flag.ExitOnError)
-	user := fs.String("username", "", "username")
-	pass := fs.String("password", "", "password")
-	slug := fs.String("tenant", "default", "tenant slug")
-	fs.Parse(args)
-
-	if *user == "" || *pass == "" {
-		fmt.Fprintln(os.Stderr, "error: --username and --password required")
-		os.Exit(1)
+	buildTime := ""
+	if bt, err := strconv.ParseInt("0", 10, 64); err == nil {
+		_ = bt
+		buildTime = time.Now().Format("2006-01-02")
 	}
+	_ = buildTime
+	fmt.Println(`ggid-cli — GGID Identity & Access Management CLI v` + version + `
 
-	body, _ := json.Marshal(map[string]string{"username": *user, "password": *pass, "tenant_slug": *slug})
-	resp, err := http.Post(gatewayURL+"/api/v1/auth/login", "application/json", bytes.NewReader(body))
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "error: %v\n", err)
-		os.Exit(1)
-	}
-	defer resp.Body.Close()
+USAGE:
+  ggid <command> [subcommand] [flags]
 
-	var result map[string]any
-	json.NewDecoder(resp.Body).Decode(&result)
-	if t, ok := result["access_token"].(string); ok {
-		fmt.Println(t)
-	} else {
-		fmt.Fprintf(os.Stderr, "login failed: %v\n", result)
-		os.Exit(1)
-	}
-}
+AUTHENTICATION:
+  The CLI uses Dynamic Client Registration (RFC 7591) to register itself
+  in the console tenant, then exchanges client credentials for tokens.
 
-func cmdUsers(args []string) {
-	fs := flag.NewFlagSet("users", flag.ExitOnError)
-	page := fs.Int("page", 1, "")
-	size := fs.Int("size", 20, "")
-	fs.Parse(args)
-	pretty(apiGet(fmt.Sprintf("/api/v1/users?page=%d&page_size=%d", *page, *size)))
-}
+  Run 'ggid login' to authenticate. Credentials are stored in ~/.ggid/config.json
 
-func cmdRoles(args []string) {
-	pretty(apiGet("/api/v1/roles"))
-}
+COMMANDS:
 
-func cmdAudit(args []string) {
-	fs := flag.NewFlagSet("audit", flag.ExitOnError)
-	page := fs.Int("page", 1, "")
-	size := fs.Int("size", 20, "")
-	fs.Parse(args)
-	pretty(apiGet(fmt.Sprintf("/api/v1/audit/events?page=%d&page_size=%d", *page, *size)))
-}
+  AUTH:
+    login              Authenticate via DCR (register + token exchange)
+    logout             Clear stored credentials
+    whoami             Show current identity and token info
+    version            Show CLI version
 
-func cmdWhoami() {
-	if token == "" {
-		fmt.Fprintln(os.Stderr, "not logged in")
-		os.Exit(1)
-	}
-	parts := strings.Split(token, ".")
-	if len(parts) >= 2 {
-		for len(parts[1])%4 != 0 {
-			parts[1] += "="
-		}
-		if decoded, err := base64.URLEncoding.DecodeString(parts[1]); err == nil {
-			var claims map[string]any
-			json.Unmarshal(decoded, &claims)
-			fmt.Printf("User:  %v\n", claims["sub"])
-			fmt.Printf("Scope: %v\n", claims["scopes"])
-		}
-	}
-	fmt.Printf("Gateway: %s\nTenant:  %s\n", gatewayURL, tenantID)
-}
+  USERS:
+    users list         List users [--page N] [--size N] [--search STR]
+    users get <id>     Get user details
+    users create       Create a user (--username, --email, --password, ...)
+    users update <id>  Update a user
+    users delete <id>  Delete a user
+    users lock <id>    Lock a user account
+    users unlock <id>  Unlock a user account
 
-func apiGet(path string) any {
-	req, _ := http.NewRequest("GET", gatewayURL+path, nil)
-	req.Header.Set("Authorization", "Bearer "+token)
-	req.Header.Set("X-Tenant-ID", tenantID)
-	resp, err := http.DefaultClient.Do(req)
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "error: %v\n", err)
-		os.Exit(1)
-	}
-	defer resp.Body.Close()
-	body, _ := io.ReadAll(resp.Body)
-	var data any
-	json.Unmarshal(body, &data)
-	return data
-}
+  ROLES:
+    roles list         List roles
+    roles get <id>     Get role details
+    roles create       Create a role (--name, --permissions)
+    roles delete <id>  Delete a role
 
-func pretty(data any) {
-	b, _ := json.MarshalIndent(data, "", "  ")
-	fmt.Println(string(b))
+  ORGANIZATIONS:
+    orgs list          List organizations
+    orgs get <id>      Get organization details
+    orgs create        Create an organization
+    orgs delete <id>   Delete an organization
+
+  AUDIT:
+    audit events       Query audit events [--page N] [--size N]
+    audit dashboard    Show audit dashboard
+
+  POLICIES:
+    policies list      List policies
+    policies get <id>  Get policy details
+
+  OAUTH CLIENTS:
+    oauth clients list    List OAuth clients
+    oauth clients get <id>  Get client details
+    oauth clients create  Create an OAuth client
+    oauth clients delete <id>  Delete an OAuth client
+
+  TENANTS:
+    tenants list       List tenants
+    tenants get <id>   Get tenant details
+    tenants create     Create a tenant
+
+  SESSIONS:
+    sessions list      List active sessions
+    sessions revoke <id>  Revoke a session
+
+  SYSTEM:
+    system health      Show system health
+    system status      Show system status
+    system bootstrap   Bootstrap initial admin
+
+  WEBHOOKS:
+    webhooks list      List webhooks
+    webhooks create    Create a webhook
+
+  DASHBOARD:
+    dashboard          Show aggregate dashboard stats
+
+GLOBAL FLAGS:
+  --server URL    Gateway URL (or GGID_SERVER_URL env)
+  --json          Force JSON output
+  --table         Force table output (default)
+
+ENVIRONMENT VARIABLES:
+  GGID_SERVER_URL     Gateway base URL
+  GGID_OUTPUT         Output format: json or table`)
 }
