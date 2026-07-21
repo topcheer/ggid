@@ -98,11 +98,45 @@ func TestRBACResolver_AdminBypass(t *testing.T) {
 	if !allow || !handled {
 		t.Errorf("admin bypass: allow=%v handled=%v", allow, handled)
 	}
-	// Admin role name in roles claim also bypasses.
+	// tenant:admin scope also bypasses.
 	allow, handled = r.CheckAccess(context.Background(), "/api/v1/anything", http.MethodDelete,
-		JWTCClaims{Roles: []string{"Tenant Administrator"}})
+		JWTCClaims{Scopes: []string{"tenant:admin"}})
 	if !allow || !handled {
 		t.Errorf("tenant admin bypass: allow=%v handled=%v", allow, handled)
+	}
+}
+
+// TestRBACResolver_RoleNameNoBypass guards the privilege-escalation fix:
+// role display names in the roles claim must NEVER trigger the superuser
+// bypass — a tenant admin can create a role named "Administrator" and would
+// otherwise escalate. Admin access must come from admin scopes or explicit
+// role_route_permissions rules.
+func TestRBACResolver_RoleNameNoBypass(t *testing.T) {
+	mr := miniredis.RunT(t)
+	rdb := redis.NewClient(&redis.Options{Addr: mr.Addr()})
+	defer rdb.Close()
+	seedSnapshot(t, rdb, []routePermRow{})
+
+	r := NewRBACResolver(rdb, "")
+	r.WarmStart(context.Background())
+
+	for _, roleName := range []string{"Administrator", "Tenant Administrator", "Platform Administrator", "SuperAdmin"} {
+		allow, handled := r.CheckAccess(context.Background(), "/api/v1/anything", http.MethodDelete,
+			JWTCClaims{Roles: []string{roleName}})
+		if allow {
+			t.Errorf("role name %q must not grant superuser bypass (allow=true)", roleName)
+		}
+		_ = handled
+	}
+
+	// Loose scope strings forgeable via tenant-controlled role keys must not
+	// grant bypass either — only namespaced platform:admin/tenant:admin.
+	for _, scope := range []string{"admin", "administrator", "superadmin", "*", "roles:write"} {
+		allow, _ := r.CheckAccess(context.Background(), "/api/v1/anything", http.MethodDelete,
+			JWTCClaims{Scopes: []string{scope}})
+		if allow {
+			t.Errorf("forgeable scope %q must not grant superuser bypass", scope)
+		}
 	}
 }
 
