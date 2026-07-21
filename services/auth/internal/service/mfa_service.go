@@ -98,8 +98,18 @@ func (s *MFAService) VerifyMFA(ctx context.Context, deviceID uuid.UUID, code str
 	}
 
 	// Validate TOTP code.
-	valid := totp.Validate(code, device.Secret)
-	if !valid {
+	// Use ValidateCustom with Skew=1 to tolerate ±1 time step (30s) of clock
+	// drift between the user's authenticator app and the server — the default
+	// totp.Validate() uses Skew=0 and rejects any clock skew, causing
+	// legitimate users with slightly drifted clocks to fail MFA.
+	valid, err := totp.ValidateCustom(code, device.Secret, time.Now().UTC(),
+		totp.ValidateOpts{
+			Period:    30,
+			Skew:      1, // accept previous and next 30-second windows
+			Digits:    otp.DigitsSix,
+			Algorithm: otp.AlgorithmSHA1,
+		})
+	if err != nil || !valid {
 		return false, ErrInvalidMFACode
 	}
 
