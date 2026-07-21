@@ -88,6 +88,51 @@ export class GGIDClient {
     return this.request<TokenSet>('POST', '/api/v1/auth/refresh', { refresh_token: refreshToken });
   }
 
+  /**
+   * OAuth2 Client Credentials grant (M2M authentication).
+   * Exchanges client_id + client_secret for an access token.
+   *
+   * @example
+   * ```ts
+   * const tokens = await client.clientCredentials({
+   *   clientId: 'erp-node-m2m',
+   *   clientSecret: process.env.CLIENT_SECRET,
+   *   scope: 'users:read orders:read',
+   * });
+   * ```
+   */
+  async clientCredentials(input: {
+    clientId: string;
+    clientSecret: string;
+    scope?: string;
+    tenantId?: string;
+  }): Promise<TokenSet> {
+    const body = new URLSearchParams({
+      grant_type: 'client_credentials',
+      client_id: input.clientId,
+      client_secret: input.clientSecret,
+    });
+    if (input.scope) body.set('scope', input.scope);
+
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/x-www-form-urlencoded',
+    };
+    if (input.tenantId) headers['X-Tenant-ID'] = input.tenantId;
+
+    const res = await fetch(`${this.config.gatewayUrl}/api/v1/oauth/token`, {
+      method: 'POST',
+      headers,
+      body,
+    });
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ error: 'token_exchange_failed' }));
+      throw new GGIDError(res.status, (err as any).error?.message || 'client_credentials failed');
+    }
+
+    return res.json();
+  }
+
   /** Verify a JWT and return claims (requires jwksUrl). */
   async verifyToken(token: string): Promise<JWTClaims> {
     if (!this.verifier) throw new Error('no jwksUrl configured');

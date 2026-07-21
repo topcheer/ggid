@@ -2,13 +2,15 @@
  * Cross-Board ERP Demo — React/Next.js Frontend
  * Uses GGID OAuth2 Authorization Code + PKCE flow.
  * Tenant: 00000000-0000-0000-0000-000000000003
+ *
+ * SECURITY: Token verification via backend introspect (not inline decode).
  */
 
 export const GGID_URL = process.env.NEXT_PUBLIC_GGID_URL || 'https://ggid.iot2.win';
 export const CLIENT_ID = process.env.NEXT_PUBLIC_CLIENT_ID || '';
 export const REDIRECT_URI = process.env.NEXT_PUBLIC_REDIRECT_URI || 'http://localhost:3300/callback';
 export const API_BASE = process.env.NEXT_PUBLIC_API_BASE || 'http://localhost:3200';
-const TENANT = '00000003-0000-0000-0000-000000000001';
+const TENANT = '00000000-0000-0000-0000-000000000003';
 
 export interface ERPUser {
   user_id: string;
@@ -18,30 +20,74 @@ export interface ERPUser {
   permissions: string[];
 }
 
+// Cached verified user
+let cachedUser: ERPUser | null = null;
+let cachedToken: string | null = null;
+
 export function hasPermission(user: ERPUser | null, perm: string): boolean {
   if (!user) return false;
   if (user.permissions.includes('admin')) return true;
   return user.permissions.includes(perm) || user.permissions.includes(`${perm}:all`);
 }
 
-export function parseJWT(token: string): ERPUser | null {
+/**
+ * Verify token via backend introspect endpoint (not inline decode).
+ * This ensures the token is valid and not tampered with.
+ */
+export async function verifyToken(token: string): Promise<ERPUser | null> {
+  if (cachedToken === token && cachedUser) return cachedUser;
+
   try {
-    const payload = JSON.parse(atob(token.split('.')[1]));
-    const perms = payload.permissions || [];
-    return {
-      user_id: payload.sub || payload.user_id || '',
-      username: payload.username || payload.preferred_username || 'user',
-      email: payload.email || '',
-      roles: payload.roles || [],
-      permissions: perms,
+    // Call backend introspect to verify token server-side
+    const res = await fetch(`${GGID_URL}/api/v1/oauth/introspect`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'X-Tenant-ID': TENANT },
+      body: new URLSearchParams({ token }),
+    });
+
+    if (!res.ok) return null;
+    const data = await res.json();
+
+    if (!data.active) return null;
+
+    const user: ERPUser = {
+      user_id: data.sub || data.user_id || '',
+      username: data.username || data.preferred_username || 'user',
+      email: data.email || '',
+      roles: data.roles || [],
+      permissions: data.permissions || data.scope?.split(' ') || [],
     };
-  } catch { return null; }
+
+    cachedToken = token;
+    cachedUser = user;
+    return user;
+  } catch {
+    return null;
+  }
 }
 
+/**
+ * Get current user — tries cache first, falls back to introspect.
+ * For synchronous access (initial render), returns cached user.
+ */
 export function getUser(): ERPUser | null {
   if (typeof window === 'undefined') return null;
-  const token = localStorage.getItem('erp_token');
-  return token ? parseJWT(token) : null;
+  // Return cached user for synchronous access
+  if (cachedUser) return cachedUser;
+  // If no cache but token exists, return null (async verify needed)
+  const token = getToken();
+  if (!token) return null;
+  // Trigger async verification
+  verifyToken(token).then(u => { if (u) cachedUser = u; });
+  return null;
+}
+
+/** Async version of getUser that always verifies */
+export async function getUserAsync(): Promise<ERPUser | null> {
+  if (typeof window === 'undefined') return null;
+  const token = getToken();
+  if (!token) return null;
+  return verifyToken(token);
 }
 
 export function getToken(): string | null {
@@ -59,18 +105,17 @@ export function authHeader(): Record<string, string> {
 export function logout() {
   localStorage.removeItem('erp_token');
   localStorage.removeItem('erp_pkce_verifier');
+  cachedUser = null;
+  cachedToken = null;
   window.location.href = '/login';
 }
 
-/** Generate PKCE code_verifier and code_challenge (S256) */
+/** Generate PKCE code_verifier */
 export function generatePKCE(): { verifier: string; challenge: string } {
   const array = new Uint8Array(32);
   crypto.getRandomValues(array);
   const verifier = btoa(String.fromCharCode(...array))
     .replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
-
-  // For S256 challenge, use SubtleCrypto (async in browser)
-  // We store verifier and compute challenge in buildAuthUrl
   return { verifier, challenge: '' };
 }
 
@@ -79,7 +124,6 @@ export async function buildAuthUrl(): Promise<string> {
   const { verifier } = generatePKCE();
   localStorage.setItem('erp_pkce_verifier', verifier);
 
-  // Compute S256 challenge
   const encoder = new TextEncoder();
   const digest = await crypto.subtle.digest('SHA-256', encoder.encode(verifier));
   const challenge = btoa(String.fromCharCode(...new Uint8Array(digest)))
@@ -119,5 +163,10 @@ export async function exchangeCodeForToken(code: string): Promise<string | null>
   const data = await res.json();
   localStorage.setItem('erp_token', data.access_token);
   localStorage.removeItem('erp_pkce_verifier');
+
+  // Verify the token immediately
+  const user = await verifyToken(data.access_token);
+  if (user) cachedUser = user;
+
   return data.access_token;
 }

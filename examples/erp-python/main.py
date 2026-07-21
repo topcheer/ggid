@@ -58,17 +58,15 @@ def get_client():
 
 
 def extract_permissions_from_jwt(token):
-    """Extract permissions claim from JWT (no verification in demo)."""
-    parts = token.split(".")
-    if len(parts) < 2:
-        return []
-    payload = parts[1]
-    payload += "=" * (4 - len(payload) % 4) if len(payload) % 4 else ""
+    """Verify token via GGID introspect endpoint and extract permissions."""
     try:
-        claims = json.loads(base64.urlsafe_b64decode(payload))
-        return claims.get("permissions", [])
+        client = get_client()
+        result = client.introspect_token(token, client_id="demo", client_secret="demo")
+        if result.get("active"):
+            return result.get("permissions", [])
     except Exception:
-        return []
+        pass
+    return []
 
 
 class ERPHandler(BaseHTTPRequestHandler):

@@ -70,32 +70,33 @@ public class Main {
         return null;
     }
 
-    // Decode JWT to GGIDUser without external verification (demo only)
+    // Verify token via GGID introspect endpoint (no inline base64 decode)
     static GGIDUser verifyToken(String token) {
         if (token == null) return null;
         try {
-            String[] parts = token.split("\\.");
-            if (parts.length < 2) return null;
-            String payload = new String(Base64.getUrlDecoder().decode(parts[1]));
+            String form = "token=" + java.net.URLEncoder.encode(token, java.nio.charset.StandardCharsets.UTF_8) +
+                "&client_id=demo&client_secret=demo";
+            java.net.HttpURLConnection conn = (java.net.HttpURLConnection) new java.net.URL(GGID_URL + "/api/v1/oauth/introspect").openConnection();
+            conn.setRequestMethod("POST");
+            conn.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
+            conn.setRequestProperty("X-Tenant-ID", TENANT_ID);
+            conn.setDoOutput(true);
+            conn.getOutputStream().write(form.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+            if (conn.getResponseCode() != 200) return null;
             @SuppressWarnings("unchecked")
-            Map<String, Object> claims = mapper.readValue(payload, Map.class);
-
+            Map<String, Object> result = mapper.readValue(conn.getInputStream(), Map.class);
+            if (!Boolean.TRUE.equals(result.get("active"))) return null;
             GGIDUser user = new GGIDUser();
-            user.userId = (String) claims.get("sub");
-            user.tenantId = (String) claims.get("tenant_id");
-            user.email = (String) claims.get("email");
-            user.username = (String) claims.getOrDefault("name", claims.get("sub"));
-
-            // Parse permissions from JWT "permissions" claim
+            user.userId = (String) result.get("sub");
+            user.tenantId = (String) result.get("tenant_id");
+            user.email = (String) result.get("email");
+            user.username = (String) result.getOrDefault("username", result.get("sub"));
             @SuppressWarnings("unchecked")
-            List<String> permList = (List<String>) claims.get("permissions");
+            List<String> permList = (List<String>) result.get("permissions");
             user.permissions = permList != null ? permList.toArray(new String[0]) : new String[0];
-
             @SuppressWarnings("unchecked")
-            List<String> rolesList = (List<String>) claims.get("roles");
-            if (rolesList != null) user.roles = rolesList.toArray(new String[0]);
-            else user.roles = new String[0];
-
+            List<String> rolesList = (List<String>) result.get("roles");
+            user.roles = rolesList != null ? rolesList.toArray(new String[0]) : new String[0];
             return user;
         } catch (Exception e) {
             return null;
