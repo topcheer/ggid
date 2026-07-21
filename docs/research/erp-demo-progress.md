@@ -116,3 +116,9 @@ Each demo accepts any valid GGID token regardless of tenant.
 - Gateway: enforce X-Tenant-ID matches JWT tenant_id on API calls
 
 ### Next Dimension: 5 — SDK Cross-language Consistency
+
+## Post-D4: Gateway tenant isolation fix verified (31c7e5c1e)
+- Cross-tenant: 401 ✅ (was 200 before fix)
+- Same-tenant: 200 ✅
+- 8/8 demos still working ✅
+- SDK layer: no action needed (gateway enforces tenant boundary)
