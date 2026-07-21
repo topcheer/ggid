@@ -235,3 +235,10 @@ All 6 dimensions verified twice, no regressions, stable.
 - 0 hacks
 
 ### Next Dimension: 2 — Authorization Boundaries
+
+## Dimension 2 C3: Authorization Boundaries (Round 36)
+- Perms: 9/2 (perms/roles) ✅ | Cross-tenant: 401 ✅ | Same-tenant: 200 ✅ | Fake: 401 ✅
+- 7/7 demo admin access: 200 ✅
+- 0 hacks
+
+### Next Dimension: 3 — Demo Functional Completeness
