@@ -185,3 +185,13 @@ Each demo accepts any valid GGID token regardless of tenant.
 - 0 hacks
 
 ### Next Dimension: 3 — Demo Functional Completeness
+
+## Dimension 3 R2: Functional Completeness (Round 31)
+- Inventory: Node(3)/Python(3)/C#(5)/Java(3) have data with fields ✅
+- Go/Ruby still empty (known seed data issue, not regression)
+- POST create→verify: C# PASS (id=p005, found in GET) ✅
+- my-permissions: 9 perms accurate ✅
+- Orders: Node(2)/Python(2)/Java(3) ✅
+- 0 hacks, no regression from R1
+
+### Next Dimension: 4 — Multi-tenant Isolation
