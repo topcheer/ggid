@@ -1375,7 +1375,13 @@ func (s *OAuthService) ClientCredentials(ctx context.Context, req *ClientCredent
 	}
 
 	// 4. Issue access token (no user — machine-to-machine).
-	accessToken, expiresIn, err := s.issueAccessToken(uuid.Nil, req.TenantID, client.ClientID, joinScopes(req.Scope))
+	// For M2M, the client's configured scopes serve as the permissions claim.
+	clientPermissions := client.Scopes
+	if len(req.Scope) > 0 {
+		// If the caller requested specific scopes, use those (intersected with client scopes).
+		clientPermissions = req.Scope
+	}
+	accessToken, expiresIn, err := s.issueClientAccessToken(req.TenantID, client.ClientID, joinScopes(req.Scope), clientPermissions)
 	if err != nil {
 		return nil, err
 	}
@@ -1386,6 +1392,36 @@ func (s *OAuthService) ClientCredentials(ctx context.Context, req *ClientCredent
 		ExpiresIn:   expiresIn,
 		Scope:       joinScopes(req.Scope),
 	}, nil
+}
+
+// issueClientAccessToken issues a JWT for M2M (client_credentials) flows.
+// Unlike issueAccessToken, this does NOT query user_roles — instead it uses
+// the client's configured permissions directly.
+func (s *OAuthService) issueClientAccessToken(tenantID uuid.UUID, clientID, scope string, permissions []string) (string, int, error) {
+	now := time.Now()
+	expiresAt := now.Add(15 * time.Minute)
+
+	claimsMap := jwt.MapClaims{
+		"iss":         s.issuer,
+		"sub":         uuid.Nil.String(),
+		"aud":         clientID,
+		"iat":         now.Unix(),
+		"exp":         expiresAt.Unix(),
+		"jti":         uuid.New().String(),
+		"tenant_id":   tenantID.String(),
+		"scope":       scope,
+		"permissions": permissions,
+		"roles":       []string{}, // M2M clients have no roles
+	}
+
+	token := jwt.NewWithClaims(s.signingMethod(), claimsMap)
+	token.Header["kid"] = s.keyProvider.Metadata().KeyID
+
+	signed, err := token.SignedString(s.keyProvider.Signer())
+	if err != nil {
+		return "", 0, fmt.Errorf("sign access token: %w", err)
+	}
+	return signed, int(expiresAt.Sub(now).Seconds()), nil
 }
 
 // --- Utility functions ---
