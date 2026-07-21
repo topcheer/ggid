@@ -195,3 +195,12 @@ Each demo accepts any valid GGID token regardless of tenant.
 - 0 hacks, no regression from R1
 
 ### Next Dimension: 4 — Multi-tenant Isolation
+
+## Dimension 4 R2: Multi-tenant Isolation (Round 32)
+- JWT tenant_id correct for Go/Java ✅
+- Cross-tenant Go→Java: 401 ✅
+- Cross-tenant Java→Go: 401 ✅ (bidirectional verified)
+- Same-tenant controls: both 200 ✅
+- 0 hacks
+
+### Next Dimension: 5 — SDK Cross-language Consistency
