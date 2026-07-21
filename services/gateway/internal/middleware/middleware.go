@@ -657,12 +657,36 @@ func JWTAuth(jwks *JWKSClient, required bool, issuer, audience string) func(http
 			if sub, _ := claims["sub"].(string); sub != "" {
 				ctx = context.WithValue(ctx, UserIDKey, sub)
 			}
-			// Only set tenant_id from JWT if not already set by TenantResolver.
-			// TenantResolver prioritizes X-Tenant-ID header, allowing platform
-			// admins to target other tenants. JWTAuth must not overwrite it.
-			if tid, _ := claims["tenant_id"].(string); tid != "" {
+			// Tenant boundary enforcement: if JWT has tenant_id and request
+			// has X-Tenant-ID header, they must match unless the user is a
+			// platform admin (cross-tenant access for admin operations).
+			jwtTenantID, _ := claims["tenant_id"].(string)
+			headerTenantID := r.Header.Get("X-Tenant-ID")
+			if jwtTenantID != "" && headerTenantID != "" && jwtTenantID != headerTenantID {
+				// Allow if user has platform:admin or Administrator role
+				isPlatformAdmin := false
+				if roles, ok := claims["roles"].([]any); ok {
+					for _, role := range roles {
+						if rs, ok := role.(string); ok {
+							lr := strings.ToLower(rs)
+							if lr == "platform:admin" || lr == "platform administrator" || lr == "administrator" || lr == "admin" {
+								isPlatformAdmin = true
+								break
+							}
+						}
+					}
+				}
+				if !isPlatformAdmin {
+					if required {
+						writeUnauthorized(w, "tenant mismatch: token tenant does not match request tenant")
+						return
+					}
+				}
+			}
+			// Set tenant_id from JWT into context (preserve existing if set by TenantResolver).
+			if jwtTenantID != "" {
 				if existing, ok := ctx.Value(TenantIDKey).(string); !ok || existing == "" {
-					ctx = context.WithValue(ctx, TenantIDKey, tid)
+					ctx = context.WithValue(ctx, TenantIDKey, jwtTenantID)
 				}
 			}
 			if jti, _ := claims["jti"].(string); jti != "" {
