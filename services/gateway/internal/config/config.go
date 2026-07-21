@@ -172,13 +172,16 @@ func LoadFromEnv(cfg *Config) *Config {
 	if v := os.Getenv("GATEWAY_DOMAIN_SUFFIX"); v != "" {
 		cfg.DomainSuffix = v
 	}
-	if v := os.Getenv("GATEWAY_JWKS_URL"); v != "" {
+	if v, ok := os.LookupEnv("GATEWAY_JWKS_URL"); ok {
 		cfg.JWKSURL = v
 	}
-	if v := os.Getenv("GATEWAY_JWT_ISSUER"); v != "" {
+	if v, ok := os.LookupEnv("GATEWAY_JWT_ISSUER"); ok {
 		cfg.JWTIssuer = v
 	}
-	if v := os.Getenv("JWT_PUBLIC_KEY_PATH"); v != "" {
+	if v, ok := os.LookupEnv("GATEWAY_JWT_AUDIENCE"); ok {
+		cfg.JWTAudience = v
+	}
+	if v, ok := os.LookupEnv("JWT_PUBLIC_KEY_PATH"); ok {
 		cfg.PublicKeyPath = v
 	}
 
