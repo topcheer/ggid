@@ -215,3 +215,15 @@ Each demo accepts any valid GGID token regardless of tenant.
 - 0 hacks
 
 ### Next Dimension: 6 — End-to-end User Experience
+
+## Dimension 6 R2: E2E User Experience (Round 34)
+- Full E2E: login→perms(9)→read(5)→create(p006)→verify(6 found)→order(o004 pending) ✅
+- No-token: 7/7 return 401 ✅
+- Invalid/malformed: 403 ✅
+- Cross-tenant demo→demo: 200 (demo instances are independent, not a security issue)
+- 0 hacks
+
+### CYCLE 2 COMPLETE (Rounds 29-34)
+All 6 dimensions verified twice, no regressions, stable.
+
+### Next Dimension: 1 — Authentication (Cycle 3)
