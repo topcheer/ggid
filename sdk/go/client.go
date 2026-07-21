@@ -228,6 +228,38 @@ func (c *Client) Logout(ctx context.Context, accessToken string) error {
 	return c.post(ctx, "/api/v1/auth/logout", map[string]string{"access_token": accessToken}, nil)
 }
 
+// ClientCredentials exchanges client credentials for an access token (RFC 6749 §4.4).
+// Used for machine-to-machine (M2M) authentication.
+func (c *Client) ClientCredentials(ctx context.Context, clientID, clientSecret, tenantID string, scopes []string) (*TokenSet, error) {
+	form := url.Values{
+		"grant_type":    {"client_credentials"},
+		"client_id":     {clientID},
+		"client_secret": {clientSecret},
+	}
+	if tenantID != "" {
+		form.Set("X-Tenant-ID", tenantID)
+	}
+	if len(scopes) > 0 {
+		form.Set("scope", strings.Join(scopes, " "))
+	}
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost,
+		c.baseURL+"/api/v1/oauth/token", strings.NewReader(form.Encode()))
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	if tenantID != "" {
+		req.Header.Set("X-Tenant-ID", tenantID)
+	}
+
+	var ts TokenSet
+	if err := c.do(req, &ts); err != nil {
+		return nil, err
+	}
+	return &ts, nil
+}
+
 // RefreshToken refreshes an access token using a refresh token.
 func (c *Client) RefreshToken(ctx context.Context, refreshToken string) (*TokenSet, error) {
 	body := map[string]string{"refresh_token": refreshToken}
@@ -239,22 +271,13 @@ func (c *Client) RefreshToken(ctx context.Context, refreshToken string) (*TokenS
 }
 
 // VerifyToken validates an access token and returns user info.
-// When JWKS is configured (WithJWKS), the JWT signature is verified;
-// otherwise claims are parsed without signature verification (offline mode).
+// Requires JWKS to be configured via WithJWKS(). Without JWKS, signature
+// verification is impossible and the call returns an error.
 func (c *Client) VerifyToken(ctx context.Context, accessToken string) (*UserInfo, error) {
-	if c.jwksURL != "" {
-		return c.verifyTokenOnline(ctx, accessToken)
+	if c.jwksURL == "" {
+		return nil, fmt.Errorf("JWKS not configured: call WithJWKS() to enable token verification")
 	}
-	return c.verifyTokenOffline(accessToken)
-}
-
-func (c *Client) verifyTokenOffline(accessToken string) (*UserInfo, error) {
-	parser := jwt.NewParser()
-	token, _, err := parser.ParseUnverified(accessToken, jwt.MapClaims{})
-	if err != nil {
-		return nil, fmt.Errorf("failed to parse token: %w", err)
-	}
-	return claimsToUserInfo(token)
+	return c.verifyTokenOnline(ctx, accessToken)
 }
 
 func (c *Client) verifyTokenOnline(ctx context.Context, accessToken string) (*UserInfo, error) {

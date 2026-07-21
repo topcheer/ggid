@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -95,36 +94,12 @@ func TestLogout(t *testing.T) {
 
 // --- Token verification tests ---
 
-func TestVerifyTokenOffline(t *testing.T) {
-	// Create an unsigned JWT-like string for offline parsing.
-	// Header: {"alg":"none","typ":"JWT"}, Payload with sub/email/roles/scope
-	header := `{"alg":"none","typ":"JWT"}`
-	payload := `{"sub":"user-1","username":"admin","email":"admin@test.com","tenant_id":"t-1","roles":["admin","editor"],"scope":"read write"}`
-	sig := ""
-	token := fmt.Sprintf("%s.%s.%s",
-		base64URLEncode([]byte(header)),
-		base64URLEncode([]byte(payload)),
-		sig)
-
+func TestVerifyTokenWithoutJWKS(t *testing.T) {
+	// Without JWKS configured, VerifyToken must refuse to verify
 	c := New("http://localhost")
-	info, err := c.VerifyToken(context.Background(), token)
-	if err != nil {
-		t.Fatalf("VerifyToken failed: %v", err)
-	}
-	if info.UserID != "user-1" {
-		t.Errorf("expected user-1, got %s", info.UserID)
-	}
-	if info.Email != "admin@test.com" {
-		t.Errorf("expected admin@test.com, got %s", info.Email)
-	}
-	if info.TenantID != "t-1" {
-		t.Errorf("expected tenant t-1, got %s", info.TenantID)
-	}
-	if len(info.Roles) != 2 || info.Roles[0] != "admin" {
-		t.Errorf("unexpected roles: %v", info.Roles)
-	}
-	if len(info.Scopes) != 2 || info.Scopes[0] != "read" {
-		t.Errorf("unexpected scopes: %v", info.Scopes)
+	_, err := c.VerifyToken(context.Background(), "any.token.here")
+	if err == nil {
+		t.Fatal("expected error when JWKS not configured")
 	}
 }
 
@@ -552,21 +527,14 @@ func TestMiddlewareInvalidScheme(t *testing.T) {
 }
 
 func TestMiddlewareValidToken(t *testing.T) {
+	// Middleware now requires JWKS for signature verification.
+	// Without JWKS, it must reject tokens.
 	c := New("http://localhost")
-	called := false
 	handler := c.Middleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		called = true
-		user := UserFromContext(r.Context())
-		if user == nil {
-			t.Fatal("user should be in context")
-		}
-		if user.UserID != "user-1" {
-			t.Errorf("expected user-1, got %s", user.UserID)
-		}
-		w.WriteHeader(200)
+		t.Fatal("handler should not be called without JWKS")
 	}), MiddlewareConfig{TenantID: "t-1"})
 
-	// Build a valid unsigned JWT.
+	// Build an unsigned JWT (should be rejected).
 	header := base64URLEncode([]byte(`{"alg":"none","typ":"JWT"}`))
 	payload := base64URLEncode([]byte(`{"sub":"user-1","username":"admin"}`))
 	token := header + "." + payload + "."
@@ -576,20 +544,17 @@ func TestMiddlewareValidToken(t *testing.T) {
 	w := httptest.NewRecorder()
 	handler.ServeHTTP(w, req)
 
-	if !called {
-		t.Error("handler was not called")
-	}
-	if w.Code != 200 {
-		t.Errorf("expected 200, got %d", w.Code)
+	if w.Code != http.StatusUnauthorized {
+		t.Errorf("expected 401 without JWKS, got %d", w.Code)
 	}
 }
 
 func TestMiddlewareTenantHeaderInjection(t *testing.T) {
+	// Without JWKS, unsigned tokens are rejected. This test verifies
+	// the rejection behavior (tenant injection only works after auth passes).
 	c := New("http://localhost")
-	var gotTenant string
 	handler := c.Middleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		gotTenant = r.Header.Get("X-Tenant-ID")
-		w.WriteHeader(200)
+		t.Fatal("handler should not be called without JWKS")
 	}), MiddlewareConfig{TenantID: "t-1"})
 
 	header := base64URLEncode([]byte(`{"alg":"none","typ":"JWT"}`))
@@ -601,8 +566,8 @@ func TestMiddlewareTenantHeaderInjection(t *testing.T) {
 	w := httptest.NewRecorder()
 	handler.ServeHTTP(w, req)
 
-	if gotTenant != "t-1" {
-		t.Errorf("expected tenant t-1 in header, got %q", gotTenant)
+	if w.Code != http.StatusUnauthorized {
+		t.Errorf("expected 401 without JWKS, got %d", w.Code)
 	}
 }
 
