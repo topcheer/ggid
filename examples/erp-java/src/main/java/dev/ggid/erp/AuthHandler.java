@@ -110,15 +110,8 @@ public class AuthHandler extends BaseHandler {
                     String accessToken = (String) tokenResp.get("access_token");
                     
                     if (accessToken == null) {
-                        // Fallback: SAML response may contain JWT directly
-                        // Try decoding SAMLResponse as base64 JWT
-                        try {
-                            byte[] decoded = java.util.Base64.getDecoder().decode(samlResponse);
-                            accessToken = new String(decoded, StandardCharsets.UTF_8);
-                        } catch (Exception e) {
-                            sendJson(exchange, 401, err("Failed to obtain access token from SAML assertion"));
-                            return;
-                        }
+                        sendJson(exchange, 401, err("Failed to obtain access token from SAML assertion"));
+                        return;
                     }
                     
                     // Verify the token and extract user info

@@ -2,6 +2,7 @@ package dev.ggid.erp;
 
 import dev.ggid.sdk.GGIDClient;
 import dev.ggid.sdk.GGIDUser;
+import dev.ggid.sdk.JwtVerifier;
 
 import java.util.Base64;
 import java.util.Map;
@@ -22,6 +23,9 @@ public class Main {
     static final Map<String, AuditLog> auditLogs = new ConcurrentHashMap<>();
 
     static final GGIDClient ggid = new GGIDClient(new GGIDClient.Config(GGID_URL));
+    // SDK JwtVerifier with JWKS signature verification (RS256)
+    static final JwtVerifier jwtVerifier = new JwtVerifier(
+        GGID_URL + "/.well-known/jwks.json", "ggid-auth", 30);
 
     public static void main(String[] args) throws Exception {
         int port = Integer.parseInt(System.getenv().getOrDefault("PORT", String.valueOf(DEFAULT_PORT)));
@@ -70,36 +74,9 @@ public class Main {
         return null;
     }
 
-    // Verify token via GGID introspect endpoint (no inline base64 decode)
+    // Verify token via SDK JwtVerifier (JWKS + RS256 signature verification)
     static GGIDUser verifyToken(String token) {
         if (token == null) return null;
-        try {
-            String form = "token=" + java.net.URLEncoder.encode(token, java.nio.charset.StandardCharsets.UTF_8) +
-                "&client_id=demo&client_secret=demo";
-            java.net.HttpURLConnection conn = (java.net.HttpURLConnection) new java.net.URL(GGID_URL + "/api/v1/oauth/introspect").openConnection();
-            conn.setRequestMethod("POST");
-            conn.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
-            conn.setRequestProperty("X-Tenant-ID", TENANT_ID);
-            conn.setDoOutput(true);
-            conn.getOutputStream().write(form.getBytes(java.nio.charset.StandardCharsets.UTF_8));
-            if (conn.getResponseCode() != 200) return null;
-            @SuppressWarnings("unchecked")
-            Map<String, Object> result = mapper.readValue(conn.getInputStream(), Map.class);
-            if (!Boolean.TRUE.equals(result.get("active"))) return null;
-            GGIDUser user = new GGIDUser();
-            user.userId = (String) result.get("sub");
-            user.tenantId = (String) result.get("tenant_id");
-            user.email = (String) result.get("email");
-            user.username = (String) result.getOrDefault("username", result.get("sub"));
-            @SuppressWarnings("unchecked")
-            List<String> permList = (List<String>) result.get("permissions");
-            user.permissions = permList != null ? permList.toArray(new String[0]) : new String[0];
-            @SuppressWarnings("unchecked")
-            List<String> rolesList = (List<String>) result.get("roles");
-            user.roles = rolesList != null ? rolesList.toArray(new String[0]) : new String[0];
-            return user;
-        } catch (Exception e) {
-            return null;
-        }
+        return jwtVerifier.verifyUser(token);
     }
 }
