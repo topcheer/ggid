@@ -25,7 +25,11 @@ middleware.go JWTAuth platform admin 判定改为：
 
 ### Review
 
-> 待 arch_pm review 后填写。
+**arch_pm review 结论：通过** ✅（2026-07-22 02:50 CST，已部署验证）
+
+admin 用户（roles: Administrator, Platform Administrator）跨租户访问现在被 401 拒绝（roles claim 不含 "platform:admin" scope）。同租户访问正常。裸角色名不再绕过 tenant boundary。
+
+**guardian_security 确认**：代码已对齐，roles claim 中 platform:admin 的租户自建角色残留风险归入下轮迭代。
 
 ---
 
