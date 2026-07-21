@@ -76,8 +76,8 @@ class Program
     static string GetToken(HttpListenerRequest req) { var a = req.Headers["Authorization"]; return a != null && a.StartsWith("Bearer ") ? a.Substring(7) : null; }
     static List<string> ExtractPermissions(string token) { try { var parts = token.Split('.'); var p = parts[1]; p += new string('=', (4 - p.Length % 4) % 4); var j = Encoding.UTF8.GetString(Convert.FromBase64String(p)); using var d = JsonDocument.Parse(j); if (d.RootElement.TryGetProperty("permissions", out var arr)) { return arr.EnumerateArray().Select(x => x.GetString()).ToList(); } } catch {} return new List<string>(); }
     static bool HasPerm(List<string> p, string perm) => p.Contains("admin") || p.Contains(perm);
-    static Dictionary<string, string> ReadBody(HttpListenerRequest req) { using var r = new StreamReader(req.InputStream); var b = r.ReadToEnd(); return string.IsNullOrEmpty(b) ? new() : JsonSerializer.Deserialize<Dictionary<string, string>>(b) ?? new(); }
-    static Dictionary<string, object> ToObj(Dictionary<string, string> d) { var r = new Dictionary<string, object>(); foreach (var kv in d) r[kv.Key] = kv.Value; return r; }
+    static Dictionary<string, object> ReadBody(HttpListenerRequest req) { using var r = new StreamReader(req.InputStream); var b = r.ReadToEnd(); if (string.IsNullOrEmpty(b)) return new(); using var doc = JsonDocument.Parse(b); var result = new Dictionary<string, object>(); foreach (var prop in doc.RootElement.EnumerateObject()) { result[prop.Name] = prop.Value.ValueKind switch { JsonValueKind.Number => prop.Value.GetDouble(), JsonValueKind.True => true, JsonValueKind.False => false, _ => prop.Value.GetString() }; } return result; }
+    static Dictionary<string, object> ToObj(Dictionary<string, object> d) => d;
     static void Json(HttpListenerResponse resp, int code, object data) { resp.StatusCode = code; resp.ContentType = "application/json"; WriteJson(resp, JsonSerializer.Serialize(data)); }
     static void WriteJson(HttpListenerResponse resp, string json) { var b = Encoding.UTF8.GetBytes(json); resp.ContentLength64 = b.Length; resp.OutputStream.Write(b, 0, b.Length); }
 }
