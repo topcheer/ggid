@@ -208,6 +208,88 @@ func TestRequireAdminScope_DynamicAndFallback(t *testing.T) {
 	}
 }
 
+// TestRBACResolver_P0Incident reproduces the production incident where a
+// broad/console route prefix in role_route_permissions blocked public and
+// unrelated API traffic.
+func TestRBACResolver_P0Incident(t *testing.T) {
+	mr := miniredis.RunT(t)
+	rdb := redis.NewClient(&redis.Options{Addr: mr.Addr()})
+	defer rdb.Close()
+
+	// Console navigation routes + a catch-all prefix, as seeded via the
+	// policy service permissions API.
+	seedSnapshot(t, rdb, []routePermRow{
+		{RoleName: "Viewer", RoleKey: "viewer", Prefix: "/dashboard", Level: "read"},
+		{RoleName: "Viewer", RoleKey: "viewer", Prefix: "/", Level: "read"},
+		{RoleName: "Administrator", RoleKey: "admin", Prefix: "/api/v1/users", Level: "admin"},
+	})
+	r := NewRBACResolver(rdb, "")
+	r.WarmStart(context.Background())
+	ctx := context.Background()
+
+	// Non-API prefixes must be ignored entirely → not handled dynamically.
+	if _, handled := r.CheckAccess(ctx, "/oauth/token", http.MethodPost, JWTCClaims{}); handled {
+		t.Error("/oauth/token must not be handled by console/catch-all prefixes")
+	}
+	if _, handled := r.CheckAccess(ctx, "/api/v1/oauth/token", http.MethodPost, JWTCClaims{}); handled {
+		t.Error("/api/v1/oauth/token must not be gated by '/' prefix")
+	}
+
+	// Real API rule still enforced.
+	allow, handled := r.CheckAccess(ctx, "/api/v1/users", http.MethodPost, JWTCClaims{Roles: []string{"Viewer"}})
+	if !handled || allow {
+		t.Errorf("viewer POST /api/v1/users: allow=%v handled=%v", allow, handled)
+	}
+}
+
+// TestRequireAdminScope_PublicExempt verifies public paths bypass RBAC even
+// when a dynamic rule would otherwise match.
+func TestRequireAdminScope_PublicExempt(t *testing.T) {
+	mr := miniredis.RunT(t)
+	rdb := redis.NewClient(&redis.Options{Addr: mr.Addr()})
+	defer rdb.Close()
+	seedSnapshot(t, rdb, []routePermRow{
+		{RoleName: "Administrator", RoleKey: "admin", Prefix: "/api/v1/system/", Level: "admin"},
+	})
+	res := NewRBACResolver(rdb, "")
+	res.WarmStart(context.Background())
+	SetRBACResolver(res)
+	SetRBACExemptPrefixes([]string{"/api/v1/system/status", "/api/v1/oauth/token", "/oauth/"})
+	defer func() {
+		SetRBACResolver(nil)
+		SetRBACExemptPrefixes(nil)
+	}()
+
+	okHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	})
+
+	// Public path overlapping an admin prefix → pass without any JWT.
+	req := httptest.NewRequest(http.MethodGet, "/api/v1/system/status", nil)
+	rec := httptest.NewRecorder()
+	RequireAdminScope(okHandler).ServeHTTP(rec, req)
+	if rec.Code != http.StatusOK {
+		t.Errorf("public /api/v1/system/status: %d, want 200", rec.Code)
+	}
+
+	// Public token endpoint → pass.
+	req = httptest.NewRequest(http.MethodPost, "/oauth/token", nil)
+	rec = httptest.NewRecorder()
+	RequireAdminScope(okHandler).ServeHTTP(rec, req)
+	if rec.Code != http.StatusOK {
+		t.Errorf("public /oauth/token: %d, want 200", rec.Code)
+	}
+
+	// Non-public admin path without JWT still falls through to JWTAuth
+	// (pass-through here, 401 happens upstream).
+	req = httptest.NewRequest(http.MethodGet, "/api/v1/system/config", nil)
+	rec = httptest.NewRecorder()
+	RequireAdminScope(okHandler).ServeHTTP(rec, req)
+	if rec.Code != http.StatusOK {
+		t.Errorf("no-JWT admin path should defer to JWTAuth: %d, want 200", rec.Code)
+	}
+}
+
 func b64url(b []byte) string {
 	const enc = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_"
 	out := make([]byte, 0, len(b)*2)

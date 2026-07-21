@@ -109,6 +109,10 @@ func (gw *Gateway) SetMultiDimRateLimiter(rl *middleware.MultiDimRateLimiter) {
 
 // New creates a new API Gateway handler.
 func New(cfg *config.Config, jwks *middleware.JWKSClient) *Gateway {
+	// Public paths bypass dynamic RBAC handling (ADR-dynamic-rbac); the
+	// static fallback also never gated them.
+	middleware.SetRBACExemptPrefixes(publicPaths)
+
 	gw := &Gateway{
 		cfg:         cfg,
 		jwks:        jwks,

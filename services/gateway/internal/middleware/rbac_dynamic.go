@@ -67,6 +67,39 @@ func NewRBACResolver(rdb *redis.Client, databaseURL string) *RBACResolver {
 	return &RBACResolver{rdb: rdb, dbURL: databaseURL}
 }
 
+// --- public-path exemptions ---------------------------------------------
+//
+// RequireAdminScope historically ran for every request — including public
+// paths — but could only block the hardcoded admin prefixes, so public
+// endpoints were never affected. Dynamic rules can match arbitrary
+// prefixes, so public paths must be exempted explicitly (P0 incident:
+// /oauth/token was blocked by a broad DB prefix row).
+
+var (
+	exemptMu       sync.RWMutex
+	exemptPrefixes []string
+)
+
+// SetRBACExemptPrefixes installs path prefixes that bypass dynamic RBAC
+// handling entirely (the router's publicPaths list).
+func SetRBACExemptPrefixes(prefixes []string) {
+	exemptMu.Lock()
+	defer exemptMu.Unlock()
+	exemptPrefixes = append([]string(nil), prefixes...)
+}
+
+// isRBACExempt reports whether the path bypasses dynamic RBAC checks.
+func isRBACExempt(path string) bool {
+	exemptMu.RLock()
+	defer exemptMu.RUnlock()
+	for _, p := range exemptPrefixes {
+		if strings.HasPrefix(path, p) {
+			return true
+		}
+	}
+	return false
+}
+
 // --- package-level wiring (keeps RequireAdminScope signature unchanged) ---
 
 var (
@@ -249,6 +282,11 @@ func (r *RBACResolver) CheckAccess(ctx context.Context, path, method string, cla
 
 	grant := 0
 	for _, row := range rows {
+		// Ignore non-API prefixes (console navigation routes like /dashboard)
+		// and empty prefixes — they must never gate API traffic.
+		if row.Prefix == "" || !strings.HasPrefix(row.Prefix, "/api/") {
+			continue
+		}
 		if !strings.HasPrefix(path, row.Prefix) {
 			continue
 		}

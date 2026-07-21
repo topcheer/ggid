@@ -68,11 +68,23 @@ func isAdminEndpoint(path string) bool {
 // and BEFORE the reverse proxy, blocking non-admin users from management endpoints.
 func RequireAdminScope(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// Public paths are never gated by RBAC (dynamic or static).
+		if isRBACExempt(r.URL.Path) {
+			next.ServeHTTP(w, r)
+			return
+		}
+
 		// Dynamic RBAC (ADR-dynamic-rbac): DB-driven route permissions take
 		// precedence when the resolver has data. Claims are extracted once and
 		// reused for both the dynamic and the fallback path.
 		claims := ExtractJWTClaims(r)
 		if res := getRBACResolver(); res != nil && res.Available() {
+			// No JWT at all → let JWTAuth produce the 401 (same contract as
+			// the static path); never 403 anonymous requests here.
+			if len(claims.Scopes) == 0 && len(claims.Roles) == 0 {
+				next.ServeHTTP(w, r)
+				return
+			}
 			if allow, handled := res.CheckAccess(r.Context(), r.URL.Path, r.Method, claims); handled {
 				if allow {
 					next.ServeHTTP(w, r)
