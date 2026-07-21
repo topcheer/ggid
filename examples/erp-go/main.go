@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"os"
 	"strings"
+	"time"
 
 	ggid "github.com/ggid/ggid/sdk/go"
 )
@@ -25,7 +26,7 @@ type ctxKey string
 const userKey ctxKey = "user"
 
 func main() {
-	ggidClient = ggid.New(ggidURL)
+	ggidClient = ggid.New(ggidURL, ggid.WithJWKS(15*time.Minute))
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("/api/auth/login", handleLogin)

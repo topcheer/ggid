@@ -1,9 +1,9 @@
 # Cross-Board ERP Demo Progress Tracker
 
-> **Last Updated**: 2026-07-21 06:30
-> **Status: 8/8 Deployed & CRUD Verified, BUT SDK Integration Has Critical Gaps**
+> **Last Updated**: 2026-07-21 07:00
+> **Status: Go SDK P0 FIXED. 6 SDKs + 6 demos still need work**
 
-## Overall: Deploy 8/8 | CRUD 8/8 | **SDK Usage: 3/8** | **Signature Verification: 2/8**
+## Overall: Deploy 8/8 | CRUD 8/8 | **SDK Usage: 3/8** | **Signature Verification: 2/8 → 3/8 (Go fixed)**
 
 ## Critical Finding: Demos Don't Actually Use SDKs
 
@@ -13,7 +13,7 @@ The demos "work" at the HTTP level, but most bypass the SDK entirely with inline
 
 | Demo | SDK Imported | Token Verify | Permission Check | Auth Flow | HACKS |
 |------|:-----------:|:------------:|:----------------:|:---------:|-------|
-| Go | YES | **ParseUnverified** (no sig check!) | Missing in demo | Manual HTTP for PKCE | auth.go builds authorize URL manually, exchanges code manually |
+| Go | YES | **FIXED** ✅ VerifyToken requires JWKS (commit b82fa39f3) | Missing in demo | SDK has ClientCredentials() now; PKCE still manual HTTP in demo | Go SDK fixed: ClientCredentials() added, ParseUnverified removed, WithJWKS required. Demo still needs PKCE via SDK |
 | Node | **NO** | Manual JWKS+crypto | Manual jwt.decode | Manual HTTP | middleware/auth.ts does NOT import SDK; reimplements verify from scratch |
 | React | **NO** | atob() inline | atob() inline | N/A (SPA) | auth.ts decodes JWT with atob() — no SDK, no verification |
 | Python | YES (import) | **Inline base64** | Inline base64 | Manual HTTP SAML | Imports GGIDClient but verify_token bypasses jwt_verifier.py |
@@ -27,7 +27,7 @@ The demos "work" at the HTTP level, but most bypass the SDK entirely with inline
 | Flow | Go | Node | Python | Ruby | Rust | C# | Java |
 |------|:--:|:----:|:------:|:----:|:----:|:--:|:----:|
 | Auth Code + PKCE | Missing method | Missing method | Missing | YES | YES | YES (GetAuthorizeUrl) | YES |
-| Client Credentials | **MISSING** | **MISSING** | **MISSING** | **MISSING** | **MISSING** | **MISSING** | **MISSING** |
+| Client Credentials | **FIXED** ✅ | **MISSING** → assigned frontend | **MISSING** → assigned backend | **MISSING** → assigned backend | **MISSING** → assigned backend | **MISSING** → assigned backend | **MISSING** → assigned backend |
 | Device Code | YES (ref only) | YES (ref only) | Missing | Missing | Missing | Missing | YES |
 | Token Exchange | YES (agent) | YES (agent) | YES (agent) | YES (agent) | YES (agent) | YES (agent) | YES (agent) |
 | Password Grant | Missing | YES (login) | YES (login) | YES (login) | YES (login) | YES (login) | YES (login) |
@@ -37,19 +37,19 @@ The demos "work" at the HTTP level, but most bypass the SDK entirely with inline
 
 ### Security Issues
 
-1. **Go SDK `verifyTokenOffline`** (sdk/go/client.go:251): Uses `jwt.ParseUnverified()` — accepts any token without signature verification. If JWKS URL not configured (default path), Go SDK is completely insecure.
-2. **6/8 demos decode JWT without signature verification**: Node, React, Python, C#, Java, Go all decode JWT payload without verifying the RS256 signature.
-3. **4/8 demos don't import the SDK at all**: Node, React, C#, Python (imports but doesn't use verify).
+1. ~~**Go SDK `verifyTokenOffline`**~~: **FIXED** (commit b82fa39f3) — VerifyToken now requires WithJWKS(), fails closed if not configured. ClientCredentials() method added.
+2. **5/8 demos decode JWT without signature verification**: Node, React, Python, C#, Java still decode JWT payload without verifying the RS256 signature. → assigned to backend (Python/Ruby/Rust/C#) + frontend (Node/React)
+3. **4/8 demos don't import the SDK at all**: Node, React, C#, Python (imports but doesn't use verify). → assigned to frontend + backend
 
 ## Action Items (Priority Order)
 
 ### P0: SDK Signature Verification
-1. **Go SDK**: Fix `verifyTokenOffline` to require JWKS by default, fail closed if unavailable
-2. **C# demo**: Replace inline base64 decode with `GGIDClient.VerifyTokenAsync()`
-3. **Java demo**: Replace `Main.verifyToken()` inline decode with `GGIDClient.verifyUser()`
-4. **Node demo**: Replace manual JWKS+crypto with `GGIDClient.verifyToken()`
-5. **Python demo**: Use `jwt_verifier.verify()` instead of inline base64
-6. **React demo**: Use SDK's `verifyToken()` for token validation
+1. ~~**Go SDK**~~: **FIXED** ✅ (commit b82fa39f3) — VerifyToken requires WithJWKS(), ClientCredentials() added
+2. **C# demo**: Replace inline base64 decode with `GGIDClient.VerifyTokenAsync()` → assigned backend
+3. **Java demo**: Replace `Main.verifyToken()` inline decode with `GGIDClient.verifyUser()` → assigned backend
+4. **Node demo**: Replace manual JWKS+crypto with `GGIDClient.verifyToken()` → assigned frontend
+5. **Python demo**: Use `jwt_verifier.verify()` instead of inline base64 → assigned backend
+6. **React demo**: Use SDK's `verifyToken()` for token validation → assigned frontend
 
 ### P1: SDK OAuth2 Flow Methods
 1. Add `ClientCredentials(clientID, clientSecret)` to ALL 7 SDKs (currently 0/7)
