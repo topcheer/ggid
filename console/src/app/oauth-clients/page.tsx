@@ -36,6 +36,8 @@ export default function OAuthClientsPage() {
   const [editClient, setEditClient] = useState<OAuthClient | null>(null);
   const [showSecrets, setShowSecrets] = useState<Record<string, boolean>>({});
   const [search, setSearch] = useState("");
+  const [page, setPage] = useState(0);
+  const PAGE_SIZE = 10;
 
   // Create form
   const [form, setForm] = useState({
@@ -241,7 +243,7 @@ export default function OAuthClientsPage() {
                   return c.client_name?.toLowerCase().includes(q) ||
                          c.client_id?.toLowerCase().includes(q) ||
                          c.redirect_uris?.some((u: string) => u.toLowerCase().includes(q));
-                }).map((c: any) => (
+                }).slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE).map((c: any) => (
                   <tr key={c.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/50">
                     <td className="px-4 py-3">
                       <div className="font-medium text-gray-800 dark:text-gray-200">{c.client_name || c.client_id.substring(0, 8)}</div>
@@ -282,6 +284,27 @@ export default function OAuthClientsPage() {
               </tbody>
             </table>
           </div>
+
+          {/* Pagination */}
+          {(() => {
+            const filtered = clients.filter((c: OAuthClient) => {
+              if (!search.trim()) return true;
+              const q = search.toLowerCase();
+              return c.client_name?.toLowerCase().includes(q) || c.client_id?.toLowerCase().includes(q) || c.redirect_uris?.some((u: string) => u.toLowerCase().includes(q));
+            });
+            const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
+            if (totalPages <= 1) return null;
+            return (
+              <div className="flex items-center justify-between mt-4">
+                <span className="text-xs text-gray-500 dark:text-gray-400">{filtered.length} clients</span>
+                <div className="flex items-center gap-2">
+                  <button onClick={() => setPage(Math.max(0, page - 1))} disabled={page === 0} className="rounded-lg border border-gray-300 dark:border-gray-700 px-3 py-1 text-sm disabled:opacity-40 hover:bg-gray-50 dark:hover:bg-gray-800">Prev</button>
+                  <span className="text-xs text-gray-500">Page {page + 1} of {totalPages}</span>
+                  <button onClick={() => setPage(Math.min(totalPages - 1, page + 1))} disabled={page >= totalPages - 1} className="rounded-lg border border-gray-300 dark:border-gray-700 px-3 py-1 text-sm disabled:opacity-40 hover:bg-gray-50 dark:hover:bg-gray-800">Next</button>
+                </div>
+              </div>
+            );
+          })()}
 
           {/* Mobile cards */}
           <div className="space-y-3 md:hidden">
