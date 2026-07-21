@@ -61,8 +61,15 @@ func WithJWKS(ttl time.Duration) Option {
 // New creates a new GGID SDK client.
 func New(baseURL string, opts ...Option) *Client {
 	c := &Client{
-		baseURL:    strings.TrimRight(baseURL, "/"),
-		httpClient: &http.Client{Timeout: 30 * time.Second},
+		baseURL: strings.TrimRight(baseURL, "/"),
+		httpClient: &http.Client{
+			Timeout: 30 * time.Second,
+			Transport: &http.Transport{
+				// Disable automatic gzip decompression — gateway returns
+				// compressed JWKS responses that cause unexpected EOF.
+				DisableCompression: true,
+			},
+		},
 	}
 	for _, opt := range opts {
 		opt(c)
