@@ -246,13 +246,23 @@ func (s *AuthService) Logout(ctx context.Context, refreshToken string) error {
 }
 
 // getUserScopesAndPermissions resolves role names and fine-grained permissions separately.
-// Returns: roles (e.g. "Administrator") for JWT scopes claim,
+// Returns: roles (e.g. "Administrator") for JWT roles claim,
 //          permissions (e.g. "inventory:read") for JWT permissions claim.
+// All permissions are explicit — no inheritance or admin bypass.
 func (s *AuthService) getUserScopesAndPermissions(ctx context.Context, tenantID, userID uuid.UUID) (roles []string, permissions []string) {
 	if s.identityClient != nil {
 		roles, err := s.identityClient.GetUserRoles(ctx, tenantID, userID)
 		if err == nil && len(roles) > 0 {
-			permissions, _ = s.identityClient.GetUserPermissions(ctx, tenantID, userID)
+			rawPerms, _ := s.identityClient.GetUserPermissions(ctx, tenantID, userID)
+			// Deduplicate permissions
+			seen := make(map[string]bool, len(rawPerms))
+			permissions = make([]string, 0, len(rawPerms))
+			for _, p := range rawPerms {
+				if !seen[p] {
+					seen[p] = true
+					permissions = append(permissions, p)
+				}
+			}
 			return roles, permissions
 		}
 	}
