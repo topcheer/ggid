@@ -34,7 +34,16 @@ export class JWTVerifier {
     if (!config.jwksUrl) {
       throw new Error('jwksUrl is required for JWTVerifier');
     }
-    this.jwks = createRemoteJWKSet(new URL(config.jwksUrl));
+    // Custom fetch that disables gzip — gateway compresses JWKS responses
+    // which causes jose's createRemoteJWKSet to fail with ERR_JWS_INVALID.
+    const customFetch = async (url: URL, init?: RequestInit) => {
+      const headers = new Headers(init?.headers);
+      headers.set('Accept-Encoding', 'identity');
+      return fetch(url, { ...init, headers });
+    };
+    this.jwks = createRemoteJWKSet(new URL(config.jwksUrl), {
+      fetch: customFetch as unknown as typeof fetch,
+    } as any);
     this.issuer = config.issuer;
   }
 
