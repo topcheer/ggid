@@ -307,7 +307,7 @@ func TestHandler_PublicPathSkipsJWT(t *testing.T) {
 	handler := gw.Handler()
 
 	// Access a public path — should not require JWT
-	req := httptest.NewRequest(http.MethodGet, "/api/v1/auth/login", nil)
+	req := httptest.NewRequest(http.MethodGet, "/api/v1/auth/verify", nil)
 	w := httptest.NewRecorder()
 	handler.ServeHTTP(w, req)
 

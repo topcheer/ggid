@@ -222,7 +222,7 @@ func TestHandler_MultiplePublicPaths(t *testing.T) {
 	handler := gw.Handler()
 
 	publicPaths := []string{
-		"/api/v1/auth/login",
+		"/api/v1/auth/verify",
 		"/api/v1/auth/register",
 		"/api/v1/auth/refresh",
 		"/api/v1/auth/password/forgot",
@@ -246,7 +246,7 @@ func TestHandler_CORSHeaders(t *testing.T) {
 	gw := testGatewayNoJWKS(t)
 	handler := gw.Handler()
 
-	req := httptest.NewRequest("OPTIONS", "/api/v1/auth/login", nil)
+	req := httptest.NewRequest("OPTIONS", "/api/v1/auth/verify", nil)
 	req.Header.Set("Origin", "https://example.com")
 	w := httptest.NewRecorder()
 	handler.ServeHTTP(w, req)

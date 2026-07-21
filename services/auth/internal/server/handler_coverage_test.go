@@ -16,31 +16,31 @@ func newTestHandler() *Handler {
 	}
 }
 
-func TestLogin_EmptyBody(t *testing.T) {
+func TestVerify_EmptyBody(t *testing.T) {
 	h := newTestHandler()
-	req := httptest.NewRequest(http.MethodPost, "/api/v1/auth/login", nil)
+	req := httptest.NewRequest(http.MethodPost, "/api/v1/auth/verify", nil)
 	rr := httptest.NewRecorder()
-	h.login(rr, req)
+	h.verifyCredentials(rr, req)
 	if rr.Code != http.StatusBadRequest {
 		t.Errorf("expected 400 for empty body, got %d", rr.Code)
 	}
 }
 
-func TestLogin_InvalidJSON(t *testing.T) {
+func TestVerify_InvalidJSON(t *testing.T) {
 	h := newTestHandler()
-	req := httptest.NewRequest(http.MethodPost, "/api/v1/auth/login", strings.NewReader("not json"))
+	req := httptest.NewRequest(http.MethodPost, "/api/v1/auth/verify", strings.NewReader("not json"))
 	rr := httptest.NewRecorder()
-	h.login(rr, req)
+	h.verifyCredentials(rr, req)
 	if rr.Code != http.StatusBadRequest {
 		t.Errorf("expected 400 for invalid JSON, got %d", rr.Code)
 	}
 }
 
-func TestLogin_GetMethod(t *testing.T) {
+func TestVerify_GetMethod(t *testing.T) {
 	h := newTestHandler()
-	req := httptest.NewRequest(http.MethodGet, "/api/v1/auth/login", nil)
+	req := httptest.NewRequest(http.MethodGet, "/api/v1/auth/verify", nil)
 	rr := httptest.NewRecorder()
-	h.login(rr, req)
+	h.verifyCredentials(rr, req)
 	if rr.Code != http.StatusMethodNotAllowed {
 		t.Errorf("expected 405 for GET, got %d", rr.Code)
 	}

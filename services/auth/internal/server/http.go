@@ -11,7 +11,6 @@ import (
 	"net"
 	"net/http"
 	"os"
-	"strconv"
 	"strings"
 	"time"
 
@@ -164,8 +163,7 @@ func (h *Handler) registerRoutes() {
 	h.mux.HandleFunc("/healthz", h.healthz)
 	h.mux.HandleFunc("/readyz", h.readyz)
 	h.mux.Handle("/metrics", promhttp.Handler())
-	h.mux.HandleFunc("/api/v1/auth/login", h.login)
-	h.mux.HandleFunc("/api/v1/auth/verify", h.verifyCredentials) // OAuth login flow credential check (no token)
+	h.mux.HandleFunc("/api/v1/auth/verify", h.verifyCredentials)
 	h.mux.HandleFunc("/api/v1/auth/register", h.register)
 	h.mux.HandleFunc("/api/v1/auth/logout", h.logout)
 	h.mux.HandleFunc("/api/v1/auth/refresh", h.refresh)
@@ -200,7 +198,6 @@ func (h *Handler) registerRoutes() {
 	h.mux.HandleFunc("/api/v1/auth/mfa/methods", h.handleMFAMethods)
 	h.mux.HandleFunc("/api/v1/auth/mfa/radius/verify", h.handleMFARadiusVerify)
 	h.mux.HandleFunc("/api/v1/auth/mfa/yubikey/verify", h.handleMFAYubiKeyVerify)
-	h.mux.HandleFunc("/api/v1/auth/mfa/login", h.mfaLogin)
 
 	// Backup codes (MFA recovery codes)
 	h.mux.HandleFunc("/api/v1/auth/mfa/backup-codes", h.backupCodesRemaining) // GET alias
@@ -317,7 +314,6 @@ func (h *Handler) registerRoutes() {
 
 	// Auth0 Lock compatible hosted login
 	h.mux.HandleFunc("/authorize", h.authorize)
-	h.mux.HandleFunc("/usernamepassword/login", h.usernamePasswordLogin)
 	h.mux.HandleFunc("/dbconnections/signup", h.dbConnectionsSignup)
 
 	// Social login endpoints
@@ -626,180 +622,6 @@ func (h *Handler) resolveTenantBySlug(ctx context.Context, slug string) uuid.UUI
 		return uuid.Nil
 	}
 	return tid
-}
-
-func (h *Handler) login(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPost {
-		h.writeErrorT(w, r, http.StatusMethodNotAllowed, "error.method_not_allowed")
-		return
-	}
-
-	var req loginRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		h.writeErrorT(w, r, http.StatusBadRequest, "error.invalid_request_body")
-		return
-	}
-
-	ip := clientIP(r)
-	userAgent := r.Header.Get("User-Agent")
-
-	// Fallback: inject tenant context from body for public endpoints (no JWT)
-	if _, err := ggidtenant.FromContext(r.Context()); err != nil && req.TenantID != "" {
-		if tid, perr := uuid.Parse(req.TenantID); perr == nil {
-			tc := &ggidtenant.Context{
-				TenantID:       tid,
-				IsolationLevel: ggidtenant.IsolationShared,
-			}
-			r = r.WithContext(ggidtenant.WithContext(r.Context(), tc))
-		}
-	}
-
-	// Fallback: if no tenant resolved yet and tenant_slug is provided, resolve via identity service.
-	if _, err := ggidtenant.FromContext(r.Context()); err != nil && req.TenantSlug != "" {
-		if tid := h.resolveTenantBySlug(r.Context(), req.TenantSlug); tid != uuid.Nil {
-			tc := &ggidtenant.Context{
-				TenantID:       tid,
-				IsolationLevel: ggidtenant.IsolationShared,
-			}
-			r = r.WithContext(ggidtenant.WithContext(r.Context(), tc))
-		}
-	}
-
-	// Brute force protection: dual-dimension sliding window rate limit.
-	if tc, err := ggidtenant.FromContext(r.Context()); err == nil {
-		if err := h.authSvc.CheckBruteForce(r.Context(), tc.TenantID, ip, req.Username); err != nil {
-			h.writeErrorT(w, r, http.StatusTooManyRequests, "error.too_many_login_attempts")
-			return
-		}
-	}
-
-	// Check if the account is locked before attempting login.
-	if tc, err := ggidtenant.FromContext(r.Context()); err == nil {
-		if h.authSvc.IsAccountLocked(r.Context(), tc.TenantID, req.Username) {
-			h.writeErrorT(w, r, http.StatusLocked, "error.account_locked")
-			return
-		}
-	}
-
-	tokens, err := h.authSvc.Login(r.Context(), req.Username, req.Password, ip, userAgent)
-	if err != nil {
-		// Record failed login attempt for lockout tracking.
-		if tc, terr := ggidtenant.FromContext(r.Context()); terr == nil {
-			_ = h.authSvc.RecordFailedLogin(r.Context(), tc.TenantID, req.Username)
-		}
-		// Log the failed attempt for security audit.
-		h.authSvc.RecordLoginAttempt(r.Context(), req.Username, ip, userAgent, false, err.Error())
-		log.Printf("login error for user %s: %v", req.Username, err)
-		// Audit: login failure
-		if tc, terr := ggidtenant.FromContext(r.Context()); terr == nil {
-			event := audit.NewEvent("user.login", "failure", tc.TenantID, uuid.Nil)
-			event.ActorName = req.Username
-			event.IPAddress = ip
-			event.UserAgent = userAgent
-			h.auditPublisher.PublishAsync(event)
-		}
-		writeAuthError(w, err)
-		return
-	}
-
-	// Reset failed login counter on success.
-	if tc, err := ggidtenant.FromContext(r.Context()); err == nil {
-		h.authSvc.ResetFailedLogins(r.Context(), tc.TenantID, req.Username)
-	}
-	// Log the successful attempt.
-	h.authSvc.RecordLoginAttempt(r.Context(), req.Username, ip, userAgent, true, "")
-
-	// Audit: login success
-	if tc, err := ggidtenant.FromContext(r.Context()); err == nil {
-		// Extract user ID from the access token for audit
-		actorID := uuid.Nil
-		if tokens != nil {
-			claims := jwt.MapClaims{}
-			if _, perr := jwt.ParseWithClaims(tokens.AccessToken, claims, func(t *jwt.Token) (any, error) {
-				return h.authSvc.PublicKey(), nil
-			}); perr == nil {
-				if sub, ok := claims["sub"].(string); ok {
-					actorID, _ = uuid.Parse(sub)
-				}
-			}
-		}
-		event := audit.NewEvent("user.login", "success", tc.TenantID, actorID)
-		event.ActorName = req.Username
-		if fwd := r.Header.Get("X-Forwarded-For"); fwd != "" {
-			event.IPAddress = strings.TrimSpace(strings.Split(fwd, ",")[0])
-		} else {
-			event.IPAddress = ip
-		}
-		event.UserAgent = userAgent
-		h.auditPublisher.PublishAsync(event)
-	}
-
-	// KB-080: Conditional Access Policy evaluation.
-	// Evaluate after auth success, before returning tokens.
-	// Enrich eval context with signals from request headers.
-	if tc, err := ggidtenant.FromContext(r.Context()); err == nil && h.capRepo != nil {
-		evalCtx := repository.EvalContext{
-			IPAddress:  ip,
-			AuthMethod: "password",
-			GeoCountry: r.Header.Get("X-Geo-Country"),
-		}
-		if rs := r.Header.Get("X-Risk-Score"); rs != "" {
-			if v, e := strconv.Atoi(rs); e == nil {
-				evalCtx.RiskScore = v
-			}
-		}
-		if dp := r.Header.Get("X-Device-Posture"); dp != "" {
-			if v, e := strconv.Atoi(dp); e == nil {
-				evalCtx.DevicePosture = v
-			}
-		}
-		action, matchedPolicy := h.capRepo.Evaluate(r.Context(), tc.TenantID, evalCtx)
-		if matchedPolicy != nil {
-			switch action {
-			case repository.ActionBlock:
-				// Revoke the tokens we just issued — login is blocked.
-				h.publishAuditEventWithMeta(r,
-					"conditional_access.login_block", "blocked",
-					"login", req.Username, uuid.Nil,
-					map[string]any{
-						"policy_id":   matchedPolicy.ID,
-						"policy_name": matchedPolicy.Name,
-						"ip":          ip,
-					},
-				)
-				writeJSON(w, http.StatusForbidden, map[string]any{
-					"error":       "access_denied",
-					"reason":      "conditional_access_policy",
-					"policy_name": matchedPolicy.Name,
-					"message":     "Login blocked by conditional access policy",
-				})
-				return
-			case repository.ActionRequireMFA, repository.ActionRequireStepUp:
-				// Return the tokens but flag that MFA/step-up is required.
-				h.publishAuditEventWithMeta(r,
-					"conditional_access.login_challenge", action,
-					"login", req.Username, uuid.Nil,
-					map[string]any{
-						"policy_id":   matchedPolicy.ID,
-						"policy_name": matchedPolicy.Name,
-						"challenge":   action,
-					},
-				)
-				writeJSON(w, http.StatusOK, map[string]any{
-					"access_token":       tokens.AccessToken,
-					"refresh_token":      tokens.RefreshToken,
-					"token_type":         tokens.TokenType,
-					"expires_in":         tokens.ExpiresIn,
-					"mfa_required":       action == repository.ActionRequireMFA,
-					"step_up_required":   action == repository.ActionRequireStepUp,
-					"challenge_reason":   matchedPolicy.Name,
-				})
-				return
-			}
-		}
-	}
-
-	writeJSON(w, http.StatusOK, tokens)
 }
 
 // verifyCredentials verifies username/password WITHOUT issuing tokens.
@@ -2953,36 +2775,6 @@ func (h *Handler) authorize(w http.ResponseWriter, r *http.Request) {
 		"domain":        r.Host,
 		"state":         r.URL.Query().Get("state"),
 	})
-}
-
-// usernamePasswordLogin handles Auth0 Lock's /usernamepassword/login endpoint.
-func (h *Handler) usernamePasswordLogin(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPost {
-		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
-		return
-	}
-
-	var body struct {
-		Username string `json:"username"`
-		Password string `json:"password"`
-		Connection string `json:"connection"`
-		ClientID  string `json:"client_id"`
-	}
-	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
-		writeError(w, http.StatusBadRequest, "invalid request body")
-		return
-	}
-
-	ip := clientIP(r)
-	userAgent := r.Header.Get("User-Agent")
-
-	tokens, err := h.authSvc.Login(r.Context(), body.Username, body.Password, ip, userAgent)
-	if err != nil {
-		writeAuthError(w, err)
-		return
-	}
-
-	writeJSON(w, http.StatusOK, tokens)
 }
 
 // dbConnectionsSignup handles Auth0 Lock's /dbconnections/signup endpoint.

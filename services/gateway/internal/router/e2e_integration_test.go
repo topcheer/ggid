@@ -157,7 +157,7 @@ func TestE2E_TenantCreate_RequiresAuth(t *testing.T) {
 func TestE2E_LoginFlow_EmptyBody_Rejected(t *testing.T) {
 	gw := newSecurityTestGateway(t)
 	handler := gw.Handler()
-	req := httptest.NewRequest(http.MethodPost, "/api/v1/auth/login", nil)
+	req := httptest.NewRequest(http.MethodPost, "/api/v1/auth/verify", nil)
 	req.Header.Set("Content-Type", "application/json")
 	rr := httptest.NewRecorder()
 	handler.ServeHTTP(rr, req)
@@ -173,7 +173,7 @@ func TestE2E_LoginFlow_MissingPassword(t *testing.T) {
 	gw := newSecurityTestGateway(t)
 	handler := gw.Handler()
 	body := `{"username":"admin"}`
-	req := httptest.NewRequest(http.MethodPost, "/api/v1/auth/login", bytes.NewBufferString(body))
+	req := httptest.NewRequest(http.MethodPost, "/api/v1/auth/verify", bytes.NewBufferString(body))
 	req.Header.Set("Content-Type", "application/json")
 	rr := httptest.NewRecorder()
 	handler.ServeHTTP(rr, req)
@@ -190,7 +190,7 @@ func TestE2E_LoginFlow_MissingUsername(t *testing.T) {
 	gw := newSecurityTestGateway(t)
 	handler := gw.Handler()
 	body := `{"password":"Admin@123456"}`
-	req := httptest.NewRequest(http.MethodPost, "/api/v1/auth/login", bytes.NewBufferString(body))
+	req := httptest.NewRequest(http.MethodPost, "/api/v1/auth/verify", bytes.NewBufferString(body))
 	req.Header.Set("Content-Type", "application/json")
 	rr := httptest.NewRecorder()
 	handler.ServeHTTP(rr, req)

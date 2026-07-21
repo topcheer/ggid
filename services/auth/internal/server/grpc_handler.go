@@ -32,16 +32,7 @@ func (h *AuthGRPCHandler) RegisterGRPC(s *grpc.Server) {
 }
 
 func (h *AuthGRPCHandler) Login(ctx context.Context, req *authv1.LoginRequest) (*authv1.LoginResponse, error) {
-	tokens, err := h.svc.Login(ctx, req.GetUsername(), req.GetPassword(), "", "")
-	if err != nil {
-		return nil, status.Error(codes.Unauthenticated, fmt.Sprintf("login failed: %v", err))
-	}
-
-	resp := &authv1.LoginResponse{
-		Tokens:      domainToPbTokenSet(tokens),
-		MfaRequired: tokens.MFARequired,
-	}
-	return resp, nil
+	return nil, status.Error(codes.Unimplemented, "direct token issuance removed — use OAuth flow")
 }
 
 func (h *AuthGRPCHandler) Register(ctx context.Context, req *authv1.RegisterRequest) (*authv1.RegisterResponse, error) {

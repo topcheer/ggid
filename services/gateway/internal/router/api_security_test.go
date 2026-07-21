@@ -328,7 +328,7 @@ func TestAPISecurity_InvalidToken_GarbageJWT(t *testing.T) {
 func TestAPISecurity_PublicPaths_Login(t *testing.T) {
 	gw := newSecurityTestGateway(t)
 	handler := gw.Handler()
-	req := httptest.NewRequest(http.MethodPost, "/api/v1/auth/login", nil)
+	req := httptest.NewRequest(http.MethodPost, "/api/v1/auth/verify", nil)
 	rr := httptest.NewRecorder()
 	handler.ServeHTTP(rr, req)
 	// Should not get 401 for login (public path). May get 400/422 for empty body.
@@ -414,7 +414,7 @@ func TestAPISecurity_WrongMethod_Login(t *testing.T) {
 	gw := newSecurityTestGateway(t)
 	handler := gw.Handler()
 	// Login with GET instead of POST - should not be treated as login
-	req := httptest.NewRequest(http.MethodGet, "/api/v1/auth/login", nil)
+	req := httptest.NewRequest(http.MethodGet, "/api/v1/auth/verify", nil)
 	rr := httptest.NewRecorder()
 	handler.ServeHTTP(rr, req)
 	// Public path may still accept it or return error, but not 401
@@ -682,7 +682,7 @@ func TestAPISecurity_RateLimiting_PublicEndpoint(t *testing.T) {
 func TestAPISecurity_InvalidJSON_CreateUser(t *testing.T) {
 	gw := newSecurityTestGateway(t)
 	handler := gw.Handler()
-	req := httptest.NewRequest(http.MethodPost, "/api/v1/auth/login", bytes.NewBufferString("{invalid json}"))
+	req := httptest.NewRequest(http.MethodPost, "/api/v1/auth/verify", bytes.NewBufferString("{invalid json}"))
 	req.Header.Set("Content-Type", "application/json")
 	rr := httptest.NewRecorder()
 	handler.ServeHTTP(rr, req)
@@ -707,7 +707,7 @@ func TestAPISecurity_InvalidJSON_Register(t *testing.T) {
 func TestAPISecurity_EmptyBody_Login(t *testing.T) {
 	gw := newSecurityTestGateway(t)
 	handler := gw.Handler()
-	req := httptest.NewRequest(http.MethodPost, "/api/v1/auth/login", nil)
+	req := httptest.NewRequest(http.MethodPost, "/api/v1/auth/verify", nil)
 	req.Header.Set("Content-Type", "application/json")
 	rr := httptest.NewRecorder()
 	handler.ServeHTTP(rr, req)
@@ -733,7 +733,7 @@ func TestAPISecurity_JSONInjection_Login(t *testing.T) {
 	handler := gw.Handler()
 	// Attempt JSON injection in username — gateway should proxy this without crashing
 	malicious := `{"username":"admin\" \"$ne\":null","password":"x"}`
-	req := httptest.NewRequest(http.MethodPost, "/api/v1/auth/login", bytes.NewBufferString(malicious))
+	req := httptest.NewRequest(http.MethodPost, "/api/v1/auth/verify", bytes.NewBufferString(malicious))
 	req.Header.Set("Content-Type", "application/json")
 	rr := httptest.NewRecorder()
 	handler.ServeHTTP(rr, req)
@@ -802,7 +802,7 @@ func TestAPISecurity_OversizedBody_Login(t *testing.T) {
 	largeBody := bytes.Repeat([]byte("x"), 200)
 	// Public path — body size check may or may not trigger before proxy
 	// At minimum, should not return 200
-	req := httptest.NewRequest(http.MethodPost, "/api/v1/auth/login", bytes.NewBuffer(largeBody))
+	req := httptest.NewRequest(http.MethodPost, "/api/v1/auth/verify", bytes.NewBuffer(largeBody))
 	req.Header.Set("Content-Type", "application/json")
 	rr := httptest.NewRecorder()
 	handler.ServeHTTP(rr, req)
