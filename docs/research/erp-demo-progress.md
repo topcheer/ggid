@@ -36,13 +36,12 @@
 - C#: WithJwks() path fixed to /.well-known/jwks.json
 - Java: manual jwksUrl (acceptable)
 
-## Next Target: Stable — monitoring for regressions, all 7 SDKs auto-discover JWKS
+## Next Target: Stable — monitoring for regressions
 
-All 7 SDKs now auto-derive JWKS URL from base URL:
-- Go: WithDiscovery() from OIDC discovery document
-- Node: auto-derive from gatewayUrl
-- Python/Ruby/Rust: auto-derive from base_url
-- C#: WithJwks() fixed path
-- Java: JwtVerifier(baseURL) auto-derives (NEW)
-
-Last verification: 8/8 HTTP 200, 0 hacks, stable.
+#### Round 17 verification (core change check):
+- New commits since last: a7584a360 (Console Settings), 633a2f401 (JWT scopes/roles fix), edea85e7c (RBAC ADR)
+- Unstaged WIP: pkg/saml assertion signing refactor + OAuth trust chain validator (arch working)
+- Core endpoints: OIDC discovery ✅, JWT claims ✅ (iss/aud/perms/roles), JWKS 2 keys ✅
+- OIDC grant_types now includes `password` ✅
+- **Impact on SDK/Demo: NONE** — SAML internal refactor + Console UI fixes
+- 8/8 demos HTTP 200, 0 hacks confirmed
