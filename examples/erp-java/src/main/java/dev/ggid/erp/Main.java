@@ -28,14 +28,15 @@ public class Main {
         seedData();
 
         com.sun.net.httpserver.HttpServer server = com.sun.net.httpserver.HttpServer.create(new java.net.InetSocketAddress(port), 0);
-        server.createContext("/auth", new AuthHandler());
-        server.createContext("/users", new UsersHandler());
-        server.createContext("/roles", new RolesHandler());
-        server.createContext("/orgs", new OrgsHandler());
-        server.createContext("/inventory", new InventoryHandler());
-        server.createContext("/orders", new OrdersHandler());
-        server.createContext("/audit", new AuditHandler());
-        server.createContext("/", new DashboardHandler());
+        server.createContext("/api/auth", new AuthHandler());
+        server.createContext("/api/users", new UsersHandler());
+        server.createContext("/api/roles", new RolesHandler());
+        server.createContext("/api/orgs", new OrgsHandler());
+        server.createContext("/api/inventory", new InventoryHandler());
+        server.createContext("/api/orders", new OrdersHandler());
+        server.createContext("/api/audit", new AuditHandler());
+        server.createContext("/api/dashboard", new DashboardHandler());
+        server.createContext("/health", new DashboardHandler());
         server.setExecutor(java.util.concurrent.Executors.newFixedThreadPool(10));
         server.start();
         System.out.println("ERP Java Demo on port " + port + " (GGID: " + GGID_URL + ")");
@@ -85,19 +86,10 @@ public class Main {
             user.email = (String) claims.get("email");
             user.username = (String) claims.getOrDefault("name", claims.get("sub"));
 
-            // Parse scopes from space-delimited string
-            String scope = (String) claims.get("scope");
-            List<String> perms = new ArrayList<>();
-            if (scope != null) {
-                for (String s : scope.split(" ")) {
-                    if (!s.isEmpty()) perms.add(s);
-                }
-            }
-            // Also check "scopes" array
+            // Parse permissions from JWT "permissions" claim
             @SuppressWarnings("unchecked")
-            List<String> scopesArr = (List<String>) claims.get("scopes");
-            if (scopesArr != null) perms.addAll(scopesArr);
-            user.permissions = perms.toArray(new String[0]);
+            List<String> permList = (List<String>) claims.get("permissions");
+            user.permissions = permList != null ? permList.toArray(new String[0]) : new String[0];
 
             @SuppressWarnings("unchecked")
             List<String> rolesList = (List<String>) claims.get("roles");
