@@ -28,6 +28,7 @@ type Client struct {
 	httpClient *http.Client
 	apiKey     string
 	jwksURL    string
+	useDiscovery bool
 
 	// JWKS cache for JWT signature verification.
 	jwksMu      sync.RWMutex
@@ -55,6 +56,36 @@ func WithJWKS(ttl time.Duration) Option {
 	return func(c *Client) {
 		c.jwksURL = "/.well-known/jwks.json"
 		c.jwksTTL = ttl
+	}
+}
+
+// OIDCDiscovery holds the OpenID Connect discovery document.
+type OIDCDiscovery struct {
+	Issuer                 string   `json:"issuer"`
+	AuthorizationEndpoint  string   `json:"authorization_endpoint"`
+	TokenEndpoint          string   `json:"token_endpoint"`
+	UserInfoEndpoint       string   `json:"userinfo_endpoint"`
+	JwksURI                string   `json:"jwks_uri"`
+	IntrospectionEndpoint  string   `json:"introspection_endpoint"`
+	DeviceAuthEndpoint     string   `json:"device_authorization_endpoint,omitempty"`
+	GrantTypesSupported    []string `json:"grant_types_supported"`
+}
+
+// GetDiscovery fetches the OIDC discovery document.
+func (c *Client) GetDiscovery(ctx context.Context) (*OIDCDiscovery, error) {
+	var d OIDCDiscovery
+	if err := c.get(ctx, "/.well-known/openid-configuration", nil, &d); err != nil {
+		return nil, err
+	}
+	return &d, nil
+}
+
+// WithDiscovery auto-configures from OIDC discovery — no hardcoded URLs needed.
+// The SDK fetches /.well-known/openid-configuration on first use to get
+// jwks_uri, issuer, token_endpoint, etc. Just provide baseURL.
+func WithDiscovery() Option {
+	return func(c *Client) {
+		c.useDiscovery = true
 	}
 }
 
@@ -378,8 +409,26 @@ func (c *Client) RefreshToken(ctx context.Context, refreshToken string) (*TokenS
 // Requires JWKS to be configured via WithJWKS(). Without JWKS, signature
 // verification is impossible and the call returns an error.
 func (c *Client) VerifyToken(ctx context.Context, accessToken string) (*UserInfo, error) {
+	// Auto-configure from OIDC discovery if enabled
+	if c.useDiscovery && c.jwksURL == "" {
+		disc, err := c.GetDiscovery(ctx)
+		if err != nil {
+			return nil, fmt.Errorf("OIDC discovery failed: %w", err)
+		}
+		if disc.JwksURI != "" {
+			// Convert absolute URL to relative path for c.get()
+			if strings.HasPrefix(disc.JwksURI, c.baseURL) {
+				c.jwksURL = strings.TrimPrefix(disc.JwksURI, c.baseURL)
+			} else {
+				c.jwksURL = disc.JwksURI
+			}
+		}
+		if c.jwksTTL == 0 {
+			c.jwksTTL = 15 * time.Minute
+		}
+	}
 	if c.jwksURL == "" {
-		return nil, fmt.Errorf("JWKS not configured: call WithJWKS() to enable token verification")
+		return nil, fmt.Errorf("JWKS not configured: call WithJWKS() or WithDiscovery() to enable")
 	}
 	return c.verifyTokenOnline(ctx, accessToken)
 }

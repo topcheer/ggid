@@ -26,7 +26,7 @@ type ctxKey string
 const userKey ctxKey = "user"
 
 func main() {
-	ggidClient = ggid.New(ggidURL, ggid.WithJWKS(15*time.Minute))
+	ggidClient = ggid.New(ggidURL, ggid.WithDiscovery())
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("/api/auth/login", handleLogin)
