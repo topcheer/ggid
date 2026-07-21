@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	stderrors "errors"
 	"fmt"
+	"strings"
 	"time"
 
 	ggiderrors "github.com/ggid/ggid/pkg/errors"
@@ -354,10 +355,12 @@ func (r *pgIDTokenRepo) GetRefreshToken(ctx context.Context, tenantID uuid.UUID,
 		WHERE tenant_id = $1 AND token_hash = $2`,
 		tenantID, tokenHash)
 	var rec domain.RefreshTokenRecord
-	err := row.Scan(&rec.ID, &rec.TenantID, &rec.UserID, &rec.ClientID, &rec.TokenHash, &rec.Scope, &rec.ExpiresAt, &rec.Revoked, &rec.Used, &rec.FamilyID, &rec.CreatedAt)
+	var scopeStr string
+	err := row.Scan(&rec.ID, &rec.TenantID, &rec.UserID, &rec.ClientID, &rec.TokenHash, &scopeStr, &rec.ExpiresAt, &rec.Revoked, &rec.Used, &rec.FamilyID, &rec.CreatedAt)
 	if err != nil {
 		return nil, ggiderrors.Wrap(ggiderrors.ErrNotFound, "refresh token not found", err)
 	}
+	rec.Scope = strings.Fields(scopeStr)
 	return &rec, nil
 }
 
@@ -374,7 +377,7 @@ func (r *pgIDTokenRepo) StoreRefreshToken(ctx context.Context, record *domain.Re
 		INSERT INTO oidc_refresh_tokens (id, tenant_id, user_id, client_id, token_hash, scope, expires_at, revoked, used, created_at, family_id)
 		VALUES ($1, $2, $3, $4, $5, $6, $7, false, false, $8, NULLIF($9, ''))`,
 		record.ID, record.TenantID, record.UserID, record.ClientID, record.TokenHash,
-		record.Scope, record.ExpiresAt, record.CreatedAt, record.FamilyID)
+		strings.Join(record.Scope, " "), record.ExpiresAt, record.CreatedAt, record.FamilyID)
 	if err != nil {
 		return ggiderrors.Wrap(ggiderrors.ErrInternal, "store refresh token", err)
 	}
