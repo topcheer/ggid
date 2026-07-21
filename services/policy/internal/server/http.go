@@ -1014,12 +1014,14 @@ func (s *HTTPServer) handleRolePermissions(w http.ResponseWriter, r *http.Reques
 	case http.MethodPost:
 		var req struct {
 			PermissionIDs []string `json:"permission_ids"`
+			Permissions   []string `json:"permissions"`
 		}
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 			writeJSONError(w, http.StatusBadRequest, "invalid JSON body")
 			return
 		}
-		permIDs := make([]uuid.UUID, 0, len(req.PermissionIDs))
+		permIDs := make([]uuid.UUID, 0, len(req.PermissionIDs)+len(req.Permissions))
+		// Accept permission_ids as UUIDs
 		for _, idStr := range req.PermissionIDs {
 			pid, err := uuid.Parse(idStr)
 			if err != nil {
@@ -1027,6 +1029,22 @@ func (s *HTTPServer) handleRolePermissions(w http.ResponseWriter, r *http.Reques
 				return
 			}
 			permIDs = append(permIDs, pid)
+		}
+		// Also accept permissions as string keys (e.g. "users:read") — resolve to UUIDs
+		if len(req.Permissions) > 0 && s.pool != nil {
+			for _, key := range req.Permissions {
+				var pid uuid.UUID
+				err := s.pool.QueryRow(r.Context(), `SELECT id FROM permissions WHERE key = $1`, key).Scan(&pid)
+				if err != nil {
+					writeJSONError(w, http.StatusBadRequest, "unknown permission: "+key)
+					return
+				}
+				permIDs = append(permIDs, pid)
+			}
+		}
+		if len(permIDs) == 0 {
+			writeJSONError(w, http.StatusBadRequest, "no permissions specified")
+			return
 		}
 		if err := s.roleSvc.GrantPermissionsToRole(r.Context(), roleID, permIDs); err != nil {
 			writeServiceError(w, err)
