@@ -174,8 +174,10 @@ USAGE:
   ggid <command> [subcommand] [flags]
 
 AUTHENTICATION:
-  The CLI uses Dynamic Client Registration (RFC 7591) to register itself
-  in the console tenant, then exchanges client credentials for tokens.
+  The CLI uses Dynamic Client Registration (RFC 7591) to register a public
+  client in the console tenant, then authenticates via Device Authorization
+  flow (RFC 8628) — the user opens a browser, enters a code, and logs in
+  with their admin credentials. No stored secrets, proper audit trail.
 
   Run 'ggid login' to authenticate. Credentials are stored in ~/.ggid/config.json
 

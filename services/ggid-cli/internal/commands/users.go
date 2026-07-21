@@ -1,7 +1,6 @@
 package commands
 
 import (
-	"encoding/json"
 	"flag"
 	"fmt"
 	"os"
@@ -266,45 +265,4 @@ func usersUnlock(ctx *Context, args []string) {
 		os.Exit(1)
 	}
 	output.PrintSuccess("User unlocked: %s", args[0])
-}
-
-// --- helpers ---
-
-func isJSON(ctx *Context) bool {
-	return ctx.OutputFormat == "json"
-}
-
-// extractList extracts a list of objects from a response map.
-func extractList(result map[string]any, keys ...string) []map[string]any {
-	for _, key := range keys {
-		if raw, ok := result[key]; ok {
-			if arr, ok := raw.([]any); ok {
-				list := make([]map[string]any, 0, len(arr))
-				for _, item := range arr {
-					if m, ok := item.(map[string]any); ok {
-						list = append(list, m)
-					}
-				}
-				return list
-			}
-		}
-	}
-	return nil
-}
-
-// getStr safely extracts a string value from a map.
-func getStr(m map[string]any, key string) string {
-	if v, ok := m[key]; ok {
-		switch s := v.(type) {
-		case string:
-			return s
-		case float64:
-			return fmt.Sprintf("%v", s)
-		case json.Number:
-			return s.String()
-		default:
-			return fmt.Sprintf("%v", v)
-		}
-	}
-	return ""
 }

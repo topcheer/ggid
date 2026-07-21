@@ -14,13 +14,11 @@ type Config struct {
 	ServerURL string `json:"server_url"`
 	// ConsoleTenantID is the console (default) tenant UUID used for DCR.
 	ConsoleTenantID string `json:"console_tenant_id"`
-	// ClientID is the DCR-registered client ID.
+	// ClientID is the DCR-registered public client ID (no secret needed).
 	ClientID string `json:"client_id,omitempty"`
-	// ClientSecret is the DCR-registered client secret.
-	ClientSecret string `json:"client_secret,omitempty"`
-	// AccessToken is the cached M2M access token.
+	// AccessToken is the cached user access token (from device_code flow).
 	AccessToken string `json:"access_token,omitempty"`
-	// RefreshToken is the cached refresh token (if applicable).
+	// RefreshToken is the cached refresh token for automatic renewal.
 	RefreshToken string `json:"refresh_token,omitempty"`
 	// ExpiresAt is the token expiry timestamp (Unix seconds).
 	ExpiresAt int64 `json:"expires_at,omitempty"`
