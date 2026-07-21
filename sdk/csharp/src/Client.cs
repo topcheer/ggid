@@ -47,8 +47,19 @@ public class GGIDClient
     /// </summary>
     public async Task<TokenResponse> LoginAsync(string username, string password, CancellationToken ct = default)
     {
-        var body = new { username, password };
-        return await PostAsync<TokenResponse>("/api/v1/auth/login", body, token: null, ct);
+        var form = new FormUrlEncodedContent(new Dictionary<string, string>
+        {
+            ["grant_type"] = "password",
+            ["username"] = username,
+            ["password"] = password,
+        });
+        _http.DefaultRequestHeaders.Remove("X-Tenant-ID");
+        _http.DefaultRequestHeaders.Add("X-Tenant-ID", _tenantId);
+        var resp = await _http.PostAsync($"{_baseUrl}/api/v1/oauth/token", form, ct);
+        var json = await resp.Content.ReadAsStringAsync(ct);
+        if (!resp.IsSuccessStatusCode)
+            throw new GGIDException((int)resp.StatusCode, json);
+        return JsonSerializer.Deserialize<TokenResponse>(json) ?? throw new GGIDException(500, "empty response");
     }
 
     /// <summary>

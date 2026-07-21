@@ -81,9 +81,12 @@ class GGIDClient:
         })
 
     def login(self, username: str, password: str) -> dict:
-        return self._request("POST", "/api/v1/auth/login", {
-            "username": username, "password": password,
-        })
+        """Login via OAuth2 password grant."""
+        import urllib.parse
+        form = urllib.parse.urlencode({"grant_type": "password", "username": username, "password": password})
+        resp = self._session.post(f"{self._config.base_url}/api/v1/oauth/token", data=form, headers={"Content-Type": "application/x-www-form-urlencoded", "X-Tenant-ID": self._config.tenant_id}, timeout=self._config.timeout)
+        resp.raise_for_status()
+        return resp.json()
 
     def get_user(self, token: str, user_id: str) -> dict:
         return self._request("GET", f"/api/v1/users/{user_id}", token=token)

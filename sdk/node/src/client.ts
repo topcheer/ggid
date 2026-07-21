@@ -70,7 +70,17 @@ export class GGIDClient {
 
   /** Authenticate with username/password. */
   async login(input: LoginInput): Promise<TokenSet> {
-    return this.request<TokenSet>('POST', '/api/v1/auth/login', input);
+    const form = new URLSearchParams();
+    form.set('grant_type', 'password');
+    form.set('username', input.username);
+    form.set('password', input.password);
+    const resp = await fetch(`${this.config.gatewayUrl}/api/v1/oauth/token`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'X-Tenant-ID': this.config.tenantId || '' },
+      body: form,
+    });
+    if (!resp.ok) throw new GGIDError(resp.status, (await resp.text()) || 'login failed');
+    return resp.json();
   }
 
   /** Register a new user. */

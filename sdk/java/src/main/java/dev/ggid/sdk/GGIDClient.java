@@ -39,8 +39,18 @@ public class GGIDClient {
     // -----------------------------------------------------------------------
 
     public TokenSet login(String username, String password) throws GGIDException, IOException {
-        return post("/api/v1/auth/login", Map.of("username", username, "password", password),
-                TokenSet.class);
+        FormBody formBody = new FormBody.Builder()
+                .add("grant_type", "password")
+                .add("username", username)
+                .add("password", password)
+                .build();
+        Request request = new Request.Builder()
+                .url(gatewayUrl + "/api/v1/oauth/token")
+                .header("X-Tenant-ID", tenantId)
+                .header("Content-Type", "application/x-www-form-urlencoded")
+                .post(formBody)
+                .build();
+        return execute(request, TokenSet.class);
     }
 
     public TokenSet refreshToken(String refreshToken) throws GGIDException, IOException {

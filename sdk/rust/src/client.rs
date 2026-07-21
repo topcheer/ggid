@@ -177,7 +177,7 @@ impl GGIDClient {
 
     /// Login with username/password and get tokens.
     ///
-    /// Uses the /api/v1/auth/login endpoint.
+    /// Login via OAuth2 password grant to /api/v1/oauth/token.
     pub async fn login(
         &self,
         username: &str,
