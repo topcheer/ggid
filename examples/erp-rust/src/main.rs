@@ -34,21 +34,26 @@ struct AppState {
 
 #[derive(Clone, Serialize, Deserialize)]
 struct Product {
+    #[serde(skip_deserializing, default)]
     id: String,
     name: String,
     sku: String,
     price: f64,
     stock: u32,
+    #[serde(default)]
     category: String,
 }
 
 #[derive(Clone, Serialize, Deserialize)]
 struct Order {
+    #[serde(skip_deserializing, default)]
     id: String,
     customer: String,
     quantity: u32,
     amount: f64,
+    #[serde(skip_deserializing, default)]
     status: String,
+    #[serde(skip_deserializing, default)]
     created_by: String,
 }
 
@@ -193,10 +198,12 @@ async fn token_exchange(State(state): State<Store>, Json(req): Json<ExchangeRequ
         return Err(StatusCode::from_u16(status.as_u16()).unwrap_or(StatusCode::BAD_GATEWAY));
     }
     let mut s = state.write().await;
+    let next_id = s.audit_log.len() + 1;
+    let actor = body.get("sub").and_then(|v| v.as_str()).unwrap_or("unknown").to_string();
     s.audit_log.push(AuditEntry {
-        id: format!("AUD-{}", s.audit_log.len()+1),
+        id: format!("AUD-{}", next_id),
         action: "auth.token_exchange".into(), resource: "token".into(),
-        result: "success".into(), actor_id: body.get("sub").and_then(|v| v.as_str()).unwrap_or("unknown").into(),
+        result: "success".into(), actor_id: actor,
     });
     Ok(Json(body))
 }
