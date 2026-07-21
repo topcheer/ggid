@@ -149,8 +149,17 @@ func (c *AuthorizationCode) ValidatePKCE(verifier string) bool {
 	if c.CodeChallenge == "" {
 		return true // PKCE not required for this code
 	}
-	if verifier == "" {
+	// RFC 7636 §4.1: code_verifier = 43*128unreserved — length 43..128,
+	// characters [A-Z] [a-z] [0-9] "-" "." "_" "~".
+	if len(verifier) < 43 || len(verifier) > 128 {
 		return false
+	}
+	for i := 0; i < len(verifier); i++ {
+		ch := verifier[i]
+		if !(ch >= 'a' && ch <= 'z' || ch >= 'A' && ch <= 'Z' || ch >= '0' && ch <= '9' ||
+			ch == '-' || ch == '.' || ch == '_' || ch == '~') {
+			return false
+		}
 	}
 	switch c.CodeChallengeMethod {
 	case "plain", "":

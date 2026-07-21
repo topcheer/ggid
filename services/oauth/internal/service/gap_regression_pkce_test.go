@@ -9,6 +9,7 @@ package service
 import (
 	"context"
 	"crypto/sha256"
+	"strings"
 	"encoding/base64"
 	"encoding/hex"
 	"testing"
@@ -166,8 +167,9 @@ func TestPKCE_PlainMethod(t *testing.T) {
 		Enabled:          true,
 	}
 
-	// For plain method, challenge == verifier
-	verifier := "plain-verifier-value-1234567890"
+	// For plain method, challenge == verifier.
+	// RFC 7636 §4.1: code_verifier length MUST be 43-128 chars.
+	verifier := strings.Repeat("a", 43)
 	challenge := verifier // plain: challenge equals verifier
 
 	plaintextCode, err := svc.CreateAuthorizationCode(context.Background(), &AuthorizeRequest{

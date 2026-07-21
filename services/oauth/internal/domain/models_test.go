@@ -3,6 +3,7 @@ package domain
 import (
 	"crypto/sha256"
 	"encoding/base64"
+	"strings"
 	"testing"
 	"time"
 )
@@ -167,17 +168,18 @@ func TestAuthorizationCode_ValidatePKCE(t *testing.T) {
 		t.Error("no challenge should accept any verifier")
 	}
 
-	// Plain method
-	code = &AuthorizationCode{CodeChallenge: "myverifier", CodeChallengeMethod: "plain"}
-	if !code.ValidatePKCE("myverifier") {
+	// Plain method — RFC 7636 §4.1 requires 43-128 chars
+	plainVer := strings.Repeat("a", 43)
+	code = &AuthorizationCode{CodeChallenge: plainVer, CodeChallengeMethod: "plain"}
+	if !code.ValidatePKCE(plainVer) {
 		t.Error("plain method: matching verifier should pass")
 	}
-	if code.ValidatePKCE("wrong") {
+	if code.ValidatePKCE(strings.Repeat("b", 43)) {
 		t.Error("plain method: non-matching verifier should fail")
 	}
 
-	// Empty verifier with challenge
-	code = &AuthorizationCode{CodeChallenge: "abc123", CodeChallengeMethod: "plain"}
+	// Empty verifier with challenge (also fails length check)
+	code = &AuthorizationCode{CodeChallenge: plainVer, CodeChallengeMethod: "plain"}
 	if code.ValidatePKCE("") {
 		t.Error("empty verifier with challenge should fail")
 	}

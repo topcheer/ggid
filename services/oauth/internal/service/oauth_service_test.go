@@ -9,6 +9,7 @@ import (
 	"encoding/base64"
 	"fmt"
 	"math/big"
+	"strings"
 	"sync"
 	"testing"
 	"time"
@@ -384,15 +385,17 @@ func TestPKCE_Validate_S256(t *testing.T) {
 }
 
 func TestPKCE_Validate_Plain(t *testing.T) {
+	// RFC 7636 §4.1: code_verifier length MUST be 43-128 chars.
+	challenge := strings.Repeat("a", 43)
 	code := &domain.AuthorizationCode{
-		CodeChallenge:       "my-challenge",
+		CodeChallenge:       challenge,
 		CodeChallengeMethod: "plain",
 	}
 
-	if !code.ValidatePKCE("my-challenge") {
+	if !code.ValidatePKCE(challenge) {
 		t.Error("PKCE plain validation should succeed")
 	}
-	if code.ValidatePKCE("wrong") {
+	if code.ValidatePKCE(strings.Repeat("b", 43)) {
 		t.Error("PKCE plain validation should fail with wrong verifier")
 	}
 }
