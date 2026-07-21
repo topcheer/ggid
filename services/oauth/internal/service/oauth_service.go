@@ -172,6 +172,28 @@ func (s *OAuthService) GetClient(ctx context.Context, clientID string) (*domain.
 	return s.clientRepo.GetClientByID(ctx, tc.TenantID, clientID)
 }
 
+// AuthenticateClient verifies a client_id + client_secret pair against the
+// registry (RFC 7662 §2.1 introspection authentication, RFC 6749 §2.3).
+// Returns nil on success; Unauthenticated on any failure (no oracle leaks).
+func (s *OAuthService) AuthenticateClient(ctx context.Context, clientID, clientSecret string) error {
+	client, err := s.GetClient(ctx, clientID)
+	if err != nil || client == nil {
+		return errors.Unauthenticated("invalid client credentials")
+	}
+	if !client.Enabled {
+		return errors.Unauthenticated("invalid client credentials")
+	}
+	if !client.IsConfidential() {
+		// Public clients have no secret and cannot authenticate this way.
+		return errors.Unauthenticated("invalid client credentials")
+	}
+	ok, _ := pkgcrypto.VerifyPassword(clientSecret, client.ClientSecretHash)
+	if !ok {
+		return errors.Unauthenticated("invalid client credentials")
+	}
+	return nil
+}
+
 // ListClients returns a paginated list of OAuth clients.
 func (s *OAuthService) ListClients(ctx context.Context, pageSize, offset int) ([]*domain.OAuthClient, int, error) {
 	tc, err := tenant.FromContext(ctx)

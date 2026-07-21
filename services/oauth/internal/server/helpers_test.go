@@ -1,10 +1,15 @@
 package server
 
 import (
+	"encoding/base64"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
+
+	pkgcrypto "github.com/ggid/ggid/pkg/crypto"
+	"github.com/ggid/ggid/services/oauth/internal/domain"
+	"github.com/google/uuid"
 )
 
 func TestExtractBearerToken(t *testing.T) {
@@ -52,28 +57,53 @@ func TestShouldOverrideIssuer(t *testing.T) {
 	}
 }
 
-func TestIsClientAuthenticated(t *testing.T) {
+func TestIntrospectRequestAuthenticated(t *testing.T) {
+	tenantID := uuid.New()
+	secretHash, err := pkgcrypto.HashPassword("s3cret")
+	if err != nil {
+		t.Fatalf("hash: %v", err)
+	}
+	svc := newTestOAuthService([]*domain.OAuthClient{{
+		ClientID:         "rs-client",
+		ClientSecretHash: secretHash,
+		TenantID:         tenantID,
+		Type:             domain.ClientTypeConfidential,
+		Enabled:          true,
+	}})
+
+	newReq := func(auth, body string, withTenant bool) *http.Request {
+		req := httptest.NewRequest(http.MethodPost, "/oauth/introspect", strings.NewReader(body))
+		req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+		if auth != "" {
+			req.Header.Set("Authorization", auth)
+		}
+		if withTenant {
+			req.Header.Set("X-Tenant-ID", tenantID.String())
+		}
+		return req
+	}
+
 	cases := []struct {
-		name string
-		auth string
-		body string
-		want bool
+		name       string
+		auth       string
+		body       string
+		withTenant bool
+		want       bool
 	}{
-		{"basic auth", "Basic Y2xpZW50OnNlY3JldA==", "", true},
-		{"bearer token", "Bearer abc123", "", true},
-		{"form credentials", "", "client_id=client&client_secret=secret", true},
-		{"no auth", "", "", false},
+		{"valid basic creds", "Basic " + base64.StdEncoding.EncodeToString([]byte("rs-client:s3cret")), "", true, true},
+		{"wrong secret", "Basic " + base64.StdEncoding.EncodeToString([]byte("rs-client:wrong")), "", true, false},
+		{"unknown client", "Basic " + base64.StdEncoding.EncodeToString([]byte("ghost:s3cret")), "", true, false},
+		{"basic creds without tenant header", "Basic " + base64.StdEncoding.EncodeToString([]byte("rs-client:s3cret")), "", false, false},
+		{"valid form creds", "", "client_id=rs-client&client_secret=s3cret", true, true},
+		{"form creds wrong secret", "", "client_id=rs-client&client_secret=wrong", true, false},
+		{"garbage bearer token", "Bearer not-a-real-token", "", false, false},
+		{"no auth", "", "", false, false},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			req := httptest.NewRequest(http.MethodPost, "/oauth/introspect", strings.NewReader(tc.body))
-			req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-			if tc.auth != "" {
-				req.Header.Set("Authorization", tc.auth)
-			}
-			got := isClientAuthenticated(req)
+			got := introspectRequestAuthenticated(svc, newReq(tc.auth, tc.body, tc.withTenant))
 			if got != tc.want {
-				t.Fatalf("isClientAuthenticated: got %v, want %v", got, tc.want)
+				t.Fatalf("introspectRequestAuthenticated: got %v, want %v", got, tc.want)
 			}
 		})
 	}

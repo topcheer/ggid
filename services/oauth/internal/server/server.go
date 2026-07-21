@@ -954,9 +954,9 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 		_ = r.ParseForm()
 
 		// RFC 7662 §2.1: introspection endpoint MUST require client authentication.
-		// Supported methods: HTTP Basic, form-encoded client credentials,
-		// or Bearer token (RFC 6750) as an alternative.
-		if !isClientAuthenticated(r) {
+		// Client credentials are verified against the registry; a Bearer token
+		// must itself be an active token (resource-server pattern).
+		if !introspectRequestAuthenticated(oauthSvc, r) {
 			writeJSON(w, http.StatusUnauthorized, map[string]string{"error": "invalid_client"})
 			return
 		}
@@ -978,9 +978,9 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 		_ = r.ParseForm()
 
 		// RFC 7662 §2.1: introspection endpoint MUST require client authentication.
-		// Supported methods: HTTP Basic, form-encoded client credentials,
-		// or Bearer token (RFC 6750) as an alternative.
-		if !isClientAuthenticated(r) {
+		// Client credentials are verified against the registry; a Bearer token
+		// must itself be an active token (resource-server pattern).
+		if !introspectRequestAuthenticated(oauthSvc, r) {
 			writeJSON(w, http.StatusUnauthorized, map[string]string{"error": "invalid_client"})
 			return
 		}
@@ -2138,41 +2138,50 @@ func injectTenantContext(r *http.Request) (context.Context, error) {
 	return tenant.WithContext(r.Context(), &tenant.Context{TenantID: tenantID}), nil
 }
 
-// isClientAuthenticated checks whether the request provides valid client
-// authentication per RFC 7662 §2.1. Supported methods:
-//  1. HTTP Basic auth (client_id:client_secret)
-//  2. Form-encoded client_id + client_secret in the POST body
-//  3. Bearer token in the Authorization header (RFC 6750)
+// introspectRequestAuthenticated verifies RFC 7662 §2.1 client authentication
+// for the introspection endpoint:
+//  1. HTTP Basic auth (client_id:client_secret) — verified against the registry
+//  2. Form-encoded client_id + client_secret — verified against the registry
+//  3. Bearer token — must itself be an active token (resource servers may
+//     introspect using their own access token without a registered client)
 //
-// If any of these methods provides credentials, the request is considered
-// authenticated. This allows resource servers to introspect tokens using
-// their own access token without needing to register a client.
-func isClientAuthenticated(r *http.Request) bool {
+// Credential-based methods require the X-Tenant-ID header so the client can be
+// looked up in its tenant. Previously this only checked credential *presence*,
+// which let any non-empty client_id/client_secret pair through.
+func introspectRequestAuthenticated(oauthSvc *service.OAuthService, r *http.Request) bool {
 	// Method 1: HTTP Basic auth
-	clientID, clientSecret, ok := r.BasicAuth()
-	if ok && clientID != "" && clientSecret != "" {
-		return true
+	if clientID, clientSecret, ok := r.BasicAuth(); ok && clientID != "" && clientSecret != "" {
+		return authenticateIntrospectClient(oauthSvc, r, clientID, clientSecret)
 	}
 
 	// Method 2: Form-encoded client credentials
-	formClientID := r.FormValue("client_id")
-	formClientSecret := r.FormValue("client_secret")
-	if formClientID != "" && formClientSecret != "" {
-		return true
+	if clientID, clientSecret := r.FormValue("client_id"), r.FormValue("client_secret"); clientID != "" && clientSecret != "" {
+		return authenticateIntrospectClient(oauthSvc, r, clientID, clientSecret)
 	}
 
-	// Method 3: Bearer token (RFC 6750)
-	// The presence of a valid Bearer token in the Authorization header
-	// satisfies the client authentication requirement.
+	// Method 3: Bearer token (RFC 6750) — must be an active token.
 	authHeader := r.Header.Get("Authorization")
 	if strings.HasPrefix(authHeader, "Bearer ") {
 		token := strings.TrimSpace(strings.TrimPrefix(authHeader, "Bearer "))
-		if token != "" {
-			return true
+		if token == "" {
+			return false
 		}
+		resp := oauthSvc.IntrospectToken(token)
+		return resp != nil && resp.Active
 	}
 
 	return false
+}
+
+// authenticateIntrospectClient verifies client credentials against the client
+// registry in the tenant identified by the X-Tenant-ID header.
+func authenticateIntrospectClient(oauthSvc *service.OAuthService, r *http.Request, clientID, clientSecret string) bool {
+	tenantID, err := uuid.Parse(r.Header.Get("X-Tenant-ID"))
+	if err != nil || tenantID == uuid.Nil {
+		return false
+	}
+	ctx := tenant.WithContext(r.Context(), &tenant.Context{TenantID: tenantID})
+	return oauthSvc.AuthenticateClient(ctx, clientID, clientSecret) == nil
 }
 
 // overrideDiscoveryIssuer replaces the internal issuer URL in the OIDC discovery
