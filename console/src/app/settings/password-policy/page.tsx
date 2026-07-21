@@ -109,17 +109,36 @@ export default function PasswordPolicyPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Load from localStorage or API
+  // Load from API (fallback to localStorage for offline)
   useEffect(() => {
-    const stored = typeof window !== "undefined" ? localStorage.getItem(STORAGE_KEY) : null;
-    if (stored) {
+    let cancelled = false;
+    (async () => {
       try {
-        setConfig({ ...defaultConfig, ...JSON.parse(stored) });
+        const data = await apiFetch<any>(`/api/v1/auth/password/policy`);
+        if (!cancelled && data) {
+          // Map backend fields to frontend config
+          setConfig({
+            min_length: data.min_length ?? data.MinLength ?? defaultConfig.min_length,
+            require_uppercase: data.require_uppercase ?? data.require_upper ?? data.RequireUpper ?? defaultConfig.require_uppercase,
+            require_lowercase: data.require_lowercase ?? data.require_lower ?? data.RequireLower ?? defaultConfig.require_lowercase,
+            require_digit: data.require_digit ?? data.RequireDigit ?? defaultConfig.require_digit,
+            require_special: data.require_special ?? data.RequireSpecial ?? defaultConfig.require_special,
+            prevent_username: data.prevent_username ?? defaultConfig.prevent_username,
+            prevent_common: data.prevent_common ?? (data.Blacklist?.length > 0) ?? defaultConfig.prevent_common,
+            history_count: data.history_count ?? data.HistoryCount ?? defaultConfig.history_count,
+            expiry_days: data.expiry_days ?? data.max_age_days ?? data.MaxAgeDays ?? defaultConfig.expiry_days,
+          });
+        }
       } catch {
-        // ignore
+        // Fallback to localStorage if API unavailable
+        const stored = typeof window !== "undefined" ? localStorage.getItem(STORAGE_KEY) : null;
+        if (stored) {
+          try { setConfig({ ...defaultConfig, ...JSON.parse(stored) }); } catch { /* ignore */ }
+        }
       }
-    }
-    setLoading(false); // loaded from localStorage or use defaults
+      if (!cancelled) setLoading(false);
+    })();
+    return () => { cancelled = true; };
   }, []);
 
   useEffect(() => {
@@ -132,14 +151,40 @@ export default function PasswordPolicyPage() {
   const handleSave = async () => {
     setSaving(true);
     try {
-      await apiFetch(`/api/v1/tenants/${TENANT_ID}/password-policy`, {
-        method: "PUT",
-        body: JSON.stringify(config),
+      // Use the password-policy config endpoint (POST /api/v1/auth/password-policy)
+      await apiFetch(`/api/v1/auth/password-policy`, {
+        method: "POST",
+        body: JSON.stringify({
+          min_length: config.min_length,
+          require_uppercase: config.require_uppercase,
+          require_lowercase: config.require_lowercase,
+          require_digit: config.require_digit,
+          require_special: config.require_special,
+          blacklist: config.prevent_common ? COMMON_PASSWORDS : [],
+        }),
       });
       setMsg(t("passwordPolicy.policySaved"));
     } catch {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(config));
-      setMsg(t("settings.endpointUnavailable"));
+      // Fallback: also try the security/password-policy PUT endpoint
+      try {
+        await apiFetch(`/api/v1/security/password-policy`, {
+          method: "PUT",
+          body: JSON.stringify({
+            min_length: config.min_length,
+            require_upper: config.require_uppercase,
+            require_lower: config.require_lowercase,
+            require_digit: config.require_digit,
+            require_special: config.require_special,
+            history_count: config.history_count,
+            blacklist: config.prevent_common ? COMMON_PASSWORDS : [],
+          }),
+        });
+        setMsg(t("passwordPolicy.policySaved"));
+      } catch {
+        // Last resort: save to localStorage
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(config));
+        setMsg(t("settings.endpointUnavailable"));
+      }
     } finally {
       setSaving(false);
     }
