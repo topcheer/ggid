@@ -1,14 +1,24 @@
 # Cross-Board ERP Demo Progress Tracker
 
-> **Last Updated**: 2026-07-21 07:30 (Round 3 — Go demo complete)
-> **Status: Go demo SDK integration COMPLETE. Next: Node demo.**
+> **Last Updated**: 2026-07-21 07:50 (Round 4 — Node demo complete)
+> **Status: Go+Node SDK integration COMPLETE. Next: C# demo.**
 
-## Overall: Deploy 8/8 | CRUD 8/8 | **SDK Usage: 4/8** | **Sig Verify: 4/8** | **IAM Issues: 3**
+## Overall: Deploy 8/8 | CRUD 8/8 | **SDK Usage: 5/8** | **Sig Verify: 5/8** | **Core GAPs: 2**
 
-### Next Target: Node demo (score 0/4 — most urgent)
-Node demo doesn't import SDK at all. Uses manual JWKS+crypto in middleware/auth.ts.
-Node SDK already has: verifyToken(), clientCredentials(), introspectToken().
+### Completed (SDK integration done)
+- **Go demo**: 6/6 SDK usage — GetAuthorizeURL, ExchangeCode, VerifyToken, Login, Refresh all via SDK
+- **Node demo**: 4/4 SDK usage — verifyToken, clientCredentials via SDK, zero scope fallback
+- **Ruby demo**: 3/4 — verify_token + has_permission via SDK (device code still raw HTTP)
+- **Rust demo**: 2/4 — verify_token via SDK (token exchange + perms still raw)
+
+### Next Target: C# demo (score 0/4)
+C# demo doesn't import SDK. Uses inline base64 decode + raw http.PostAsync.
+C# SDK already has: LoginAsync(), VerifyTokenAsync(), GetAuthorizeUrl(), ExchangeCodeAsync().
 Need: demo rewrite to import and use SDK methods.
+
+### Core GAPs (notified arch)
+1. **M2M JWT permissions empty** — client_credentials grant returns permissions:[] and roles:[]
+2. **OIDC discovery** — device_authorization_endpoint + grant types (arch fixing)
 
 ---
 
