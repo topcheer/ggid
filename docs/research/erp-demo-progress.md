@@ -1,21 +1,19 @@
 # Cross-Board ERP Demo Progress Tracker
 
-> **Last Updated**: 2026-07-21 10:00 (Round 8 — Ruby demo complete)
-> **Status: Go+Node+C#+Java+Python+Ruby DONE. Next: Rust demo.**
+> **Last Updated**: 2026-07-21 10:30 (Round 9 — Rust demo complete)
+> **Status: Go+Node+C#+Java+Python+Ruby+Rust DONE. Next: React SPA.**
 
-## Overall: **SDK Usage: 7/8** | **Sig Verify: 8/8** | **Core GAPs: 0**
+## Overall: **SDK Usage: 8/8** | **Sig Verify: 8/8** | **Core GAPs: 0**
 
-### Completed
-- **Go**: 6/6 — PKCE via SDK ✅
-- **Node**: 4/4 — M2M via SDK ✅
-- **C#**: 4/4 — Password Grant via SDK ✅
-- **Java**: 4/5 — Verify via SDK ✅, SAML ACS raw (SDK gap)
-- **Python**: 4/5 — Verify via SDK ✅, SAML ACS raw (SDK gap)
-- **Ruby**: 5/5 — Device Code + Verify + Perms all via SDK ✅ ZERO HACK
+### Completed — All token verify + auth flows via SDK
+- **Go**: 6/6 ✅ | **Node**: 4/4 ✅ | **C#**: 4/4 ✅
+- **Java**: 4/5 (SAML ACS raw — SDK gap) | **Python**: 4/5 (SAML ACS raw — SDK gap)
+- **Ruby**: 5/5 ZERO HACK ✅ | **Rust**: 4/5 ✅ (exchange_token via SDK)
 
-### Next Target: Rust demo (score 2/4)
-Rust demo uses SDK verify_token ✅ but token exchange uses raw HTTP.
-Rust SDK needs token_exchange method.
+### Next Target: React SPA (score 1/4)
+React is a client-side SPA — cannot do JWKS verify in browser.
+Must use backend (Node) SDK for token verification.
+Frontend should call backend API which uses Node SDK.
 
 ---
 
