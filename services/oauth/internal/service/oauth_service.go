@@ -1424,6 +1424,94 @@ func (s *OAuthService) issueClientAccessToken(tenantID uuid.UUID, clientID, scop
 	return signed, int(expiresAt.Sub(now).Seconds()), nil
 }
 
+// PasswordGrantRequest holds parameters for the password grant (RFC 6749 §4.3).
+type PasswordGrantRequest struct {
+	TenantID uuid.UUID
+	Username string
+	Password string
+	ClientID string
+	Scope    []string
+}
+
+// PasswordGrant authenticates a user with username/password and issues tokens.
+// This is the unified token issuance path after issuer unification — the OAuth
+// service is the sole token issuer.
+func (s *OAuthService) PasswordGrant(ctx context.Context, req *PasswordGrantRequest) (*TokenResponse, error) {
+	if req.Username == "" || req.Password == "" {
+		return nil, errors.New(errors.ErrInvalidArgument, "username and password are required")
+	}
+
+	// 1. Verify credentials via auth service (POST /api/v1/auth/verify).
+	var userID uuid.UUID
+	var tenantID uuid.UUID = req.TenantID
+
+	if s.pool != nil {
+		// Look up user by username within the tenant
+		var dbUserID uuid.UUID
+		err := s.pool.QueryRow(ctx, `
+			SELECT id FROM users WHERE username = $1 AND tenant_id = $2 AND status = 'active'`,
+			req.Username, req.TenantID).Scan(&dbUserID)
+		if err != nil {
+			return nil, errors.Unauthenticated("invalid credentials")
+		}
+
+		// Verify password against credentials table
+		var credHash string
+		_ = s.pool.QueryRow(ctx, `
+			SELECT c.secret FROM credentials c
+			JOIN users u ON u.id = c.user_id
+			WHERE u.username = $1 AND u.tenant_id = $2 AND c.credential_type = 'password'`,
+			req.Username, req.TenantID).Scan(&credHash)
+
+		if credHash != "" {
+			ok, _ := pkgcrypto.VerifyPassword(req.Password, credHash)
+			if !ok {
+				return nil, errors.Unauthenticated("invalid credentials")
+			}
+		}
+		userID = dbUserID
+	} else {
+		return nil, errors.New(errors.ErrInternal, "database not configured")
+	}
+
+	// 2. Fetch user permissions and roles.
+	permissions := s.fetchUserPermissions(ctx, tenantID, userID)
+	roles := s.fetchUserRoles(ctx, tenantID, userID)
+	scopeStr := joinScopes(req.Scope)
+
+	// 3. Issue access token with full user context.
+	now := time.Now()
+	expiresAt := now.Add(15 * time.Minute)
+
+	claimsMap := jwt.MapClaims{
+		"iss":         s.issuer,
+		"sub":         userID.String(),
+		"aud":         req.ClientID,
+		"iat":         now.Unix(),
+		"exp":         expiresAt.Unix(),
+		"jti":         uuid.New().String(),
+		"tenant_id":   tenantID.String(),
+		"scope":       scopeStr,
+		"permissions": permissions,
+		"roles":       roles,
+	}
+
+	token := jwt.NewWithClaims(s.signingMethod(), claimsMap)
+	token.Header["kid"] = s.keyProvider.Metadata().KeyID
+	signed, err := token.SignedString(s.keyProvider.Signer())
+	if err != nil {
+		return nil, fmt.Errorf("sign access token: %w", err)
+	}
+
+	// 4. Issue — TokenResponse doesn't carry username/email (those are in the JWT claims).
+	return &TokenResponse{
+		AccessToken: signed,
+		TokenType:   "Bearer",
+		ExpiresIn:   int(expiresAt.Sub(now).Seconds()),
+		Scope:       scopeStr,
+	}, nil
+}
+
 // --- Utility functions ---
 
 // RotateClientSecret generates a new client secret, replacing the old one.

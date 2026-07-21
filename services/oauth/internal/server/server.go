@@ -660,6 +660,17 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 				ClientSecret: clientSecret,
 				Scope:        scopes,
 			})
+		case "password":
+			// RFC 6749 §4.3: Resource Owner Password Credentials Grant.
+			// The OAuth service verifies credentials via the auth service,
+			// then issues its own token (unified issuer model).
+			resp, tokenErr = oauthSvc.PasswordGrant(ctx, &service.PasswordGrantRequest{
+				TenantID:     tenantID,
+				Username:     r.FormValue("username"),
+				Password:     r.FormValue("password"),
+				ClientID:     clientID,
+				Scope:        scopes,
+			})
 		case "urn:ietf:params:oauth:grant-type:device_code":
 			resp, tokenErr = oauthSvc.PollDeviceToken(ctx, r.FormValue("device_code"), clientID)
 			if tokenErr != nil {

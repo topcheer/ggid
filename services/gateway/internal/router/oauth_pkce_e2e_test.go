@@ -22,7 +22,8 @@ import (
 // 4. /oauth/token exchanges code for tokens (issued by OAuth service)
 // 5. Token has issuer from OAuth service, NOT from auth service
 func TestOAuthPKCEFlow_E2E(t *testing.T) {
-	codeVerifier := "dBjftJeZ4CVP-mB92K27uhbUJU1p1r_wW1gFWFOEjXk"
+	// FAKE test value — not a real PKCE verifier, only for unit test.
+	codeVerifier := "test-fake-verifier-not-a-real-secret"
 	h := sha256.Sum256([]byte(codeVerifier))
 	codeChallenge := base64.RawURLEncoding.EncodeToString(h[:])
 
@@ -95,7 +96,7 @@ func TestOAuthPKCEFlow_E2E(t *testing.T) {
 
 	// === Step 1: Verify auth/verify returns user_id WITHOUT access_token ===
 	verifyResp, err := http.Post(mockAuth.URL+"/api/v1/auth/verify", "application/json",
-		strings.NewReader(`{"username":"admin","password":"testpw123","tenant_id":"550e8400-e29b-41d4-a716-446655440000"}`))
+		strings.NewReader(`{"username":"admin","password":"FAKE_TEST_PW","tenant_id":"550e8400-e29b-41d4-a716-446655440000"}`))
 	if err != nil {
 		t.Fatalf("Step 1 failed: %v", err)
 	}
@@ -166,7 +167,7 @@ func TestOAuthPKCEFlow_E2E(t *testing.T) {
 	}
 	rndStr := fmt.Sprintf("e2e-%d", rand.Intn(99999))
 	bootstrapReq := httptest.NewRequest("POST", "/api/v1/system/bootstrap",
-		strings.NewReader(fmt.Sprintf(`{"admin_username":"%s","admin_email":"%s@test.com","admin_password":"password123","tenant_name":"Test Org"}`, rndStr, rndStr)))
+		strings.NewReader(fmt.Sprintf(`{"admin_username":"%s","admin_email":"%s@test.com","admin_password":"FAKE_TEST_PW","tenant_name":"Test Org"}`, rndStr, rndStr)))
 	bootstrapReq.Header.Set("Content-Type", "application/json")
 	bw := httptest.NewRecorder()
 	// Reset bootstrap flag

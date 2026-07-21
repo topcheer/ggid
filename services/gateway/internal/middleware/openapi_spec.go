@@ -215,7 +215,6 @@ func addAuthPaths(m map[string]OpenAPIPath) {
 	m["/api/v1/auth/mfa/factors"] = OpenAPIPath{Post: op([]string{"Auth"}, "V1 Auth Mfa Factors")}
 	m["/api/v1/auth/mfa/factors/"] = OpenAPIPath{Post: op([]string{"Auth"}, "V1 Auth Mfa Factors")}
 	m["/api/v1/auth/mfa/jit-enroll"] = OpenAPIPath{Post: op([]string{"Auth"}, "V1 Auth Mfa Jit Enroll")}
-	m["/api/v1/auth/mfa/login"] = OpenAPIPath{Post: op([]string{"Auth"}, "V1 Auth Mfa Login")}
 	m["/api/v1/auth/mfa/setup"] = OpenAPIPath{Post: op([]string{"Auth"}, "V1 Auth Mfa Setup")}
 	m["/api/v1/auth/mfa/status"] = OpenAPIPath{Post: op([]string{"Auth"}, "V1 Auth Mfa Status")}
 	m["/api/v1/auth/mfa/verify"] = OpenAPIPath{Post: op([]string{"MFA"}, "Verify MFA code")}
