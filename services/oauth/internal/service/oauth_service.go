@@ -473,6 +473,32 @@ func (s *OAuthService) ExchangeAuthorizationCode(ctx context.Context, req *Token
 		resp.IDToken = idToken
 	}
 
+	// 9. Issue a refresh token when the client requested offline_access and
+	// is allowed the refresh_token grant. The token roots a new rotation
+	// family (RFC 6749 §10.4) — without this, web clients can never reach
+	// the refresh_token grant at all.
+	if contains(code.Scope, "offline_access") && client.SupportsGrantType("refresh_token") {
+		refreshPlain, err := pkgcrypto.GenerateRandomToken(32)
+		if err != nil {
+			return nil, errors.Internal("generate refresh token", err)
+		}
+		rec := &domain.RefreshTokenRecord{
+			ID:        uuid.New(),
+			TenantID:  code.TenantID,
+			ClientID:  client.ID,
+			UserID:    code.UserID,
+			TokenHash: hashTokenSHA256(refreshPlain),
+			Scope:     code.Scope,
+			ExpiresAt: time.Now().Add(30 * 24 * time.Hour), // 30 days
+			CreatedAt: time.Now(),
+		}
+		rec.FamilyID = rec.ID.String() // family root
+		if err := s.tokenRepo.StoreRefreshToken(ctx, rec); err != nil {
+			return nil, errors.Internal("store refresh token", err)
+		}
+		resp.RefreshToken = refreshPlain
+	}
+
 	return resp, nil
 }
 
