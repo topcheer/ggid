@@ -24,12 +24,26 @@ func NewAuditRepository(db *pgxpool.Pool) *AuditRepository {
 
 // Insert writes a single audit event to the database.
 // It computes the hash chain link using the previous event's hash.
+// The event ID and CreatedAt are assigned here (before hashing) so the
+// stored hash is reproducible from the persisted column values.
 func (r *AuditRepository) Insert(ctx context.Context, e *domain.AuditEvent) error {
 	metaJSON, _ := json.Marshal(e.Metadata)
 	var ipAddr any
 	if e.IPAddress != "" {
 		ipAddr = e.IPAddress
 	}
+
+	// Assign ID and timestamp in Go (before hashing) instead of relying on
+	// DB defaults — the hash chain must be computed over the exact values
+	// that get persisted. Truncate to microseconds: timestamptz stores µs
+	// precision, and verification recomputes the hash from DB values.
+	if e.ID == uuid.Nil {
+		e.ID = uuid.New()
+	}
+	if e.CreatedAt.IsZero() {
+		e.CreatedAt = time.Now().UTC()
+	}
+	e.CreatedAt = e.CreatedAt.UTC().Truncate(time.Microsecond)
 
 	// Get the previous event's hash for the chain.
 	// We query the most recent event for this tenant to get the prev_hash.
@@ -38,7 +52,7 @@ func (r *AuditRepository) Insert(ctx context.Context, e *domain.AuditEvent) erro
 		var ph string
 		r.db.QueryRow(ctx,
 			`SELECT COALESCE(hash, '') FROM audit_events
-			 WHERE tenant_id = $1 ORDER BY created_at DESC LIMIT 1`,
+			 WHERE tenant_id = $1 ORDER BY created_at DESC, id DESC LIMIT 1`,
 			e.TenantID,
 		).Scan(&ph)
 		prevHash = ph
@@ -47,17 +61,17 @@ func (r *AuditRepository) Insert(ctx context.Context, e *domain.AuditEvent) erro
 	}
 
 	query := `
-		INSERT INTO audit_events (tenant_id, actor_type, actor_id, actor_name, action,
+		INSERT INTO audit_events (id, tenant_id, actor_type, actor_id, actor_name, action,
 		    resource_type, resource_id, resource_name, result, ip_address,
-		    user_agent, request_id, metadata, prev_hash, hash)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10::inet, $11, $12, $13, $14, $15)
-		RETURNING id, created_at`
-	return r.db.QueryRow(ctx, query,
-		e.TenantID, e.ActorType, e.ActorID, nullableStr(e.ActorName), e.Action,
+		    user_agent, request_id, metadata, prev_hash, hash, created_at)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11::inet, $12, $13, $14, $15, $16, $17)`
+	_, err := r.db.Exec(ctx, query,
+		e.ID, e.TenantID, e.ActorType, e.ActorID, nullableStr(e.ActorName), e.Action,
 		nullableStr(e.ResourceType), e.ResourceID, nullableStr(e.ResourceName), e.Result, ipAddr,
 		nullableStr(e.UserAgent), nullableStr(e.RequestID), metaJSON,
-		e.PrevHash, e.Hash,
-	).Scan(&e.ID, &e.CreatedAt)
+		e.PrevHash, e.Hash, e.CreatedAt,
+	)
+	return err
 }
 
 // nullableStr returns nil for empty strings so PostgreSQL stores NULL.
@@ -307,14 +321,27 @@ func (r *AuditRepository) GetStats(ctx context.Context, tenantID uuid.UUID, sinc
 }
 
 // DeleteOlderThan deletes audit events older than the given time.
-// Returns the number of deleted rows.
+// Returns the number of deleted rows. Authorized retention deletions set the
+// app.allow_audit_mutation GUC to bypass the WORM trigger inside the tx.
 func (r *AuditRepository) DeleteOlderThan(ctx context.Context, before time.Time) (int64, error) {
-	tag, err := r.db.Exec(ctx,
+	tx, err := r.db.Begin(ctx)
+	if err != nil {
+		return 0, fmt.Errorf("begin retention tx: %w", err)
+	}
+	defer func() { _ = tx.Rollback(ctx) }()
+
+	if _, err := tx.Exec(ctx, `SET LOCAL app.allow_audit_mutation = 'on'`); err != nil {
+		return 0, fmt.Errorf("allow audit mutation: %w", err)
+	}
+	tag, err := tx.Exec(ctx,
 		`DELETE FROM audit_events WHERE created_at < $1`,
 		before,
 	)
 	if err != nil {
 		return 0, fmt.Errorf("delete old audit events: %w", err)
+	}
+	if err := tx.Commit(ctx); err != nil {
+		return 0, fmt.Errorf("commit retention tx: %w", err)
 	}
 	return tag.RowsAffected(), nil
 }
