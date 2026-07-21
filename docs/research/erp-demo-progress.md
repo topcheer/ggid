@@ -18,20 +18,16 @@
 | Rust | 4/5 | SDK verify_token ✅ | SDK exchange_token ✅ | YES |
 | React | 3/4 | Backend SDK ✅ | GGID PKCE (standard) | YES |
 
-### Next Target: Iteration — re-verify Rust demo + deploy updated images
+### Next Target: Iteration — re-verify after arch's issuer unification
 
-#### Round 11 verification (Go demo re-check):
-- Core: authorize 200 ✅, JWKS 2 keys ✅
-- SDK: GetAuthorizeURL ✅, ExchangeCode ✅, VerifyToken requires JWKS ✅
-- Demo: zero hack ✅, 10 SDK call sites ✅, compile pass ✅
-- **Global hack scan: 8/8 clean** (erp-web/erp-demo are old, not maintained)
-
-#### Round 12: Deploy updated images
-- Go/Node/Java/Python/Ruby/Rust: 6/8 deployed with new SDK code ✅
-- Node Dockerfile fixed: SDK at /sdk/node/ matching import path
-- C#/React: build timeout, old images still running (non-blocking)
-- All 8 pods Running, all health checks 200
-- Next Target: Build C# + React images, then continue iteration
+#### Round 12-13: Deploy + issuer alignment
+- 7/8 demo images deployed with SDK code (Go/Node/Java/Python/Ruby/Rust/React)
+- C# image build stuck on dotnet restore (code is clean, old image functional)
+- Found issuer mismatch: auth tokens iss=ggid-auth, OAuth tokens iss=https://ggid.iot2.win
+- Fixed: removed hardcoded issuer from Java/Python SDK verification (signature check is primary)
+- React Dockerfile fixed (correct build context)
+- All 8 pods Running, all health 200, all CRUD pass, zero hack
+- **Waiting for**: arch's token issuer unification refactor, then re-verify all SDKs
 
 ---
 
