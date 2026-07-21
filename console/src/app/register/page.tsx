@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, UserPlus } from "lucide-react";
+import { ArrowLeft, UserPlus, Eye, EyeOff } from "lucide-react";
 import { API_BASE_URL, DEFAULT_TENANT_ID } from "@/lib/api-config";
 import { useTranslations } from "@/lib/i18n";
 import { authHeader, isAuthenticated } from "@/lib/auth-helpers";
@@ -15,6 +15,8 @@ export default function RegisterPage() {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [pwFeedback, setPwFeedback] = useState("");
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -66,7 +68,21 @@ export default function RegisterPage() {
           </div>
           <div className="mb-6">
             <label className="mb-1 block text-sm font-medium dark:text-gray-300">{t("register.password")}</label>
-            <input autoComplete="new-password" value={password} onChange={(e) => setPassword(e.target.value)} type="password" required className={inputCls} placeholder="••••••••" />
+            <div className="relative">
+              <input autoComplete="new-password" value={password} onChange={(e) => {
+                const pw = e.target.value; setPassword(pw);
+                if (pw.length === 0) setPwFeedback("");
+                else if (pw.length < 12) setPwFeedback("Minimum 12 characters required");
+                else if (!/[A-Z]/.test(pw) || !/[0-9]/.test(pw)) setPwFeedback("Add uppercase letters and numbers for stronger security");
+                else setPwFeedback("Strong password");
+              }} type={showPassword ? "text" : "password"} required className={inputCls + " pr-10"} placeholder="••••••••" />
+              <button type="button" onClick={() => setShowPassword(!showPassword)} aria-label={showPassword ? "Hide password" : "Show password"} className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
+                {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+              </button>
+            </div>
+            {pwFeedback && (
+              <p className={`mt-1 text-xs ${pwFeedback === "Strong password" ? "text-green-600 dark:text-green-400" : "text-amber-600 dark:text-amber-400"}`}>{pwFeedback}</p>
+            )}
           </div>
 
           <button type="submit" disabled={loading} className="flex w-full items-center justify-center gap-2 rounded-lg bg-brand-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-brand-700 disabled:opacity-50" aria-label="UserPlus">
