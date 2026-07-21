@@ -227,3 +227,11 @@ Each demo accepts any valid GGID token regardless of tenant.
 All 6 dimensions verified twice, no regressions, stable.
 
 ### Next Dimension: 1 — Authentication (Cycle 3)
+
+## Dimension 1 C3: Auth Completeness (Round 35)
+- Password grant: 5/5 PASS (Bearer:900) ✅
+- M2M: PASS ✅
+- Token usable: 6/6 HTTP 200 ✅
+- 0 hacks
+
+### Next Dimension: 2 — Authorization Boundaries
