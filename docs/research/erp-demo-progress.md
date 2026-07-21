@@ -67,3 +67,17 @@
 3. Node/Python/Java have seeded data (items=2-3), others don't
 
 ### Next Dimension: 2 — Authorization Boundaries (role + permission testing)
+
+## Dimension 2: Authorization Boundaries (Round 24)
+- Admin permissions: 9 items (inventory CRUD + orders CRUD + audit + dashboard) ✅
+- Admin access inventory/orders: 200 ✅
+- Fake token: 401 ✅
+- Cross-demo admin permissions consistent: all 200 ✅
+- C# my-permissions returns correct perms matching JWT ✅
+
+### Issues Found
+1. Go demo missing /api/my-permissions endpoint (other demos have it)
+2. Go demo order approve uses PUT (other demos use POST) — API inconsistency
+3. No viewer-level user to test 403 denial (all test users are admin)
+
+### Next Dimension: 3 — Demo Functional Completeness
