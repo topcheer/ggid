@@ -1,104 +1,68 @@
 # Cross-Board ERP Demo Progress Tracker
 
-> **Last Updated**: 2026-07-21 05:50
-> **Status: 8/8 FULLY VERIFIED — Code, Auth, Deploy, CRUD ALL PASS**
+> **Last Updated**: 2026-07-21 06:30
+> **Status: 8/8 Deployed & CRUD Verified, BUT SDK Integration Has Critical Gaps**
 
-## Overall: Code 8/8 | Auth 8/8 | Deploy 8/8 | CRUD 8/8 | Tenant Isolation VERIFIED
+## Overall: Deploy 8/8 | CRUD 8/8 | **SDK Usage: 3/8** | **Signature Verification: 2/8**
 
-| # | Lang | Tenant | Auth Method | Auth Code | Auth Endpoint | k8s | CRUD | Verified |
-|---|------|--------|-------------|-----------|---------------|-----|------|----------|
-| 1 | Go | 0001 | OAuth2 Auth Code + PKCE | DONE | Redirect to GGID authorize with PKCE + tenant_id | Running | inv+ord+dash+audit | PASS |
-| 2 | Node | 0002 | OAuth2 Client Credentials (M2M) | DONE | /api/auth/token → GGID token endpoint | Running | inv+ord+audit | PASS |
-| 3 | React | 0003 | OAuth2 Auth Code + PKCE (SPA) | DONE | "Sign in with GGID (OAuth2 + PKCE)" | Running | via Node backend | PASS |
-| 4 | Python | 0004 | SAML 2.0 SSO | DONE | /login → GGID SAML SSO redirect | Running | inv+ord+audit | PASS |
-| 5 | C# | 0005 | OAuth2 Password Grant | DONE | /api/auth/login → JWT token | Running | inv+ord | PASS |
-| 6 | Java | 0006 | SAML 2.0 SSO | DONE | /api/auth/saml/login → SAML config | Running | inv+ord+dash+audit | PASS |
-| 7 | Ruby | 0007 | OAuth2 Device Code Flow | DONE | /api/auth/device/start + poll | Running | inv+ord+dash+audit | PASS |
-| 8 | Rust | 0008 | OAuth2 Token Exchange (RFC 8693) | DONE | /api/auth/exchange → GGID token endpoint | Running | inv+ord+dash+audit | PASS |
+## Critical Finding: Demos Don't Actually Use SDKs
 
-## Auth Method Verification — 8/8 PASS
+The demos "work" at the HTTP level, but most bypass the SDK entirely with inline JWT decoding and raw HTTP calls. This means the demos do NOT validate GGID's SDK capabilities.
 
-| Demo | Required | Endpoint Test | Result |
-|------|----------|---------------|--------|
-| Go | PKCE (OIDC) | `/api/auth/oauth/login` redirects to GGID authorize with `code_challenge` (S256) + `tenant_id` | PASS |
-| Node | Client Credentials | GGID `/api/v1/oauth/token` returns access_token for `erp-node-m2m` client | PASS |
-| React | SPA PKCE | Browser: login page shows "Sign in with GGID (OAuth2 + PKCE)" | PASS |
-| Python | SAML SSO | `/login` returns 302 redirect to GGID SAML SSO; `/saml/metadata` returns 200 | PASS |
-| C# | Password Grant | `/api/auth/login` with username/password returns JWT access_token | PASS |
-| Java | SAML SSO | `/api/auth/saml/login` returns SAML SSO configuration JSON | PASS |
-| Ruby | Device Code | GGID `/api/v1/oauth/device_authorize` returns device_code + user_code + verification_uri; poll returns `authorization_pending` | PASS |
-| Rust | Token Exchange | GGID `/api/v1/oauth/token` with `grant_type=urn:ietf:params:oauth:grant-type:token-exchange` returns new access_token | PASS |
+### Demo SDK Integration Audit
 
-## CRUD Verification (All 8 via API)
+| Demo | SDK Imported | Token Verify | Permission Check | Auth Flow | HACKS |
+|------|:-----------:|:------------:|:----------------:|:---------:|-------|
+| Go | YES | **ParseUnverified** (no sig check!) | Missing in demo | Manual HTTP for PKCE | auth.go builds authorize URL manually, exchanges code manually |
+| Node | **NO** | Manual JWKS+crypto | Manual jwt.decode | Manual HTTP | middleware/auth.ts does NOT import SDK; reimplements verify from scratch |
+| React | **NO** | atob() inline | atob() inline | N/A (SPA) | auth.ts decodes JWT with atob() — no SDK, no verification |
+| Python | YES (import) | **Inline base64** | Inline base64 | Manual HTTP SAML | Imports GGIDClient but verify_token bypasses jwt_verifier.py |
+| C# | **NO** | **Inline base64** | Inline base64 | Manual HTTP | Program.cs uses raw http.PostAsync; C# SDK HAS LoginAsync() + VerifyTokenAsync() but unused |
+| Java | PARTIAL | **Inline base64** | GGIDUser.hasPermission() | Manual HTTP | Main.java splits JWT manually; AuthHandler uses HttpURLConnection |
+| Ruby | YES | **SDK verify_token** ✅ | SDK has_permission? ✅ | Manual HTTP device | SDK used for verify, but device code flow is raw Net::HTTP |
+| Rust | YES | **SDK verify_token** ✅ | Missing in demo | Manual HTTP exchange | SDK used for verify, but token exchange is raw HTTP |
 
-| Demo | GET Inventory | POST Inventory | GET Orders | POST Orders | Dashboard | Audit |
-|------|:---:|:---:|:---:|:---:|:---:|:---:|
-| Go | 2+ items | OK | OK | OK | OK (stats) | OK |
-| Node | 5+ items | OK | OK | OK | Missing | OK |
-| React | via Node | via Node | via Node | via Node | via Node | via Node |
-| Python | 6+ items | OK | OK | OK | Missing | OK |
-| C# | 5+ items | OK | OK | OK | Missing | Missing |
-| Java | 4+ items | OK | 3 orders | OK (customerName) | OK (user+stats) | OK |
-| Ruby | 1+ items | OK | OK | OK | OK (counts) | OK |
-| Rust | 4+ items | OK (sku+stock) | OK | OK | OK (counts) | OK |
+### SDK OAuth2 Flow Coverage Matrix
 
-## Tenant Isolation — VERIFIED
+| Flow | Go | Node | Python | Ruby | Rust | C# | Java |
+|------|:--:|:----:|:------:|:----:|:----:|:--:|:----:|
+| Auth Code + PKCE | Missing method | Missing method | Missing | YES | YES | YES (GetAuthorizeUrl) | YES |
+| Client Credentials | **MISSING** | **MISSING** | **MISSING** | **MISSING** | **MISSING** | **MISSING** | **MISSING** |
+| Device Code | YES (ref only) | YES (ref only) | Missing | Missing | Missing | Missing | YES |
+| Token Exchange | YES (agent) | YES (agent) | YES (agent) | YES (agent) | YES (agent) | YES (agent) | YES (agent) |
+| Password Grant | Missing | YES (login) | YES (login) | YES (login) | YES (login) | YES (login) | YES (login) |
+| SAML | YES | Missing | YES | Missing | Missing | YES | Missing |
 
-- Created unique product in Go tenant (0001): visible in Go, NOT visible in Rust tenant (0008)
-- Each tenant admin JWT contains correct `tenant_id` claim
-- JWT claims properly separated: `permissions` array + `roles` array (no scope fallback)
+**Critical Gap**: NO SDK has a `clientCredentials()` method — all 7 SDKs are missing M2M support.
 
-## JWT Claims Example (Java admin)
+### Security Issues
 
-```json
-{
-  "permissions": ["audit:read", "dashboard:read", "inventory:delete", "inventory:read",
-                  "inventory:write", "orders:approve", "orders:read", "orders:read:all", "orders:write"],
-  "roles": ["ERP Admin", "Tenant Administrator"],
-  "tenant_id": "00000006-0000-0000-0000-000000000001"
-}
-```
+1. **Go SDK `verifyTokenOffline`** (sdk/go/client.go:251): Uses `jwt.ParseUnverified()` — accepts any token without signature verification. If JWKS URL not configured (default path), Go SDK is completely insecure.
+2. **6/8 demos decode JWT without signature verification**: Node, React, Python, C#, Java, Go all decode JWT payload without verifying the RS256 signature.
+3. **4/8 demos don't import the SDK at all**: Node, React, C#, Python (imports but doesn't use verify).
 
-## OAuth2 Client Registration
+## Action Items (Priority Order)
 
-| Client ID | Tenant | Grant Types | Auth Method |
-|-----------|--------|-------------|-------------|
-| erp-go-demo | 0001 | authorization_code | none (public PKCE) |
-| erp-node-m2m | 0002 | client_credentials | client_secret_post |
-| erp-react-pkce | 0003 | authorization_code | none (public SPA) |
-| erp-ruby-demo | 0007 | device_code | none (public) |
-| erp-rust-exchange | 0008 | token-exchange | none (public) |
+### P0: SDK Signature Verification
+1. **Go SDK**: Fix `verifyTokenOffline` to require JWKS by default, fail closed if unavailable
+2. **C# demo**: Replace inline base64 decode with `GGIDClient.VerifyTokenAsync()`
+3. **Java demo**: Replace `Main.verifyToken()` inline decode with `GGIDClient.verifyUser()`
+4. **Node demo**: Replace manual JWKS+crypto with `GGIDClient.verifyToken()`
+5. **Python demo**: Use `jwt_verifier.verify()` instead of inline base64
+6. **React demo**: Use SDK's `verifyToken()` for token validation
 
-## Infrastructure
+### P1: SDK OAuth2 Flow Methods
+1. Add `ClientCredentials(clientID, clientSecret)` to ALL 7 SDKs (currently 0/7)
+2. Add `DeviceCode(clientID)` + `PollDeviceToken(deviceCode)` to Python, Ruby, Rust, C# SDKs
+3. Add `GetAuthorizeURL()` + `ExchangeCode()` to Go SDK
+4. Add SAML SSO helper to Node, Ruby, Rust, Java SDKs
 
-### 8/8 Pods Running, 8/8 Ingress Configured
-- All demos accessible via http(s)://erp-{lang}.iot2.win
-- All tenant IDs correctly configured in k8s deployments
-- OAuth service deployed with Device Code Flow (RFC 8628) support
+### P2: Demo Rewrite to Use SDK
+1. Each demo must call SDK methods for ALL auth operations
+2. No inline JWT decode, no raw HTTP to GGID API, no manual JWKS
+3. Demos serve as SDK integration tests — if SDK has a gap, fix the SDK, don't hack the demo
 
-### Platform Support
-- Device Authorize endpoint: POST `/api/v1/oauth/device_authorize` (RFC 8628)
-- Token Exchange: POST `/api/v1/oauth/token` with `grant_type=urn:ietf:params:oauth:grant-type:token-exchange` (RFC 8693)
-- Client Credentials: POST `/api/v1/oauth/token` with `grant_type=client_credentials`
-- Authorization Code + PKCE: GET `/api/v1/oauth/authorize` with `code_challenge` + `code_challenge_method=S256`
-- SAML SSO: `/saml/sso` + `/saml/metadata`
-- Password Grant: `/api/v1/auth/login`
-
-## Key Fixes
-1. **JWT permissions/scope separation** — auth service returns independent `permissions` + `roles` claims
-2. **All SDK fallback removed** — no scope-as-permission logic anywhere
-3. **Go PKCE** — full OAuth2 Auth Code + PKCE with `tenant_id` in authorize URL
-4. **Node M2M** — Client Credentials with correct `client_secret` hash (argon2id)
-5. **React SPA** — OAuth2 PKCE login page
-6. **Python SAML** — SAML 2.0 SSO with metadata + ACS
-7. **C# Password Grant** — `/api/auth/login` proxies to GGID
-8. **Java SAML** — SAML SSO config + HealthHandler (no auth for /health)
-9. **Ruby Device Code** — Device Code Flow start + poll
-10. **Rust Token Exchange** — RFC 8693 token exchange
-11. **Device Authorize endpoint** — GGID OAuth service now supports RFC 8628
-12. **OAuth2 client registration** — 5 custom clients registered with correct secret hashes
-
-## Minor Remaining Items (Optional)
-1. **Node/Python/C# missing /api/dashboard** — Optional endpoint, core CRUD works
-2. **C# missing /api/audit** — Optional endpoint
-3. **Python SAML relay_state uses localhost:9100** — Should use public URL in production
+### P3: IAM Platform Compliance
+1. Token introspection endpoint should be used by resource servers
+2. JWKS rotation should be transparent to SDK consumers
+3. Permission checks should go through SDK's `checkPermission()` (PDP call) not just JWT claim read
