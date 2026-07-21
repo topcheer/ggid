@@ -677,6 +677,15 @@ func (gw *Gateway) checkRouteScope(w http.ResponseWriter, r *http.Request) bool 
 	// or as role names/keys in the roles claim (OAuth-issued JWT, OAuth 2.1
 	// style where scope = openid/profile/email only). Check both so either
 	// token style grants admin routes.
+	//
+	// Security: role names and loose scope strings are forgeable by tenant
+	// admins (they can create a role named "Administrator" in their own
+	// tenant). Platform-level grants therefore only apply when the token
+	// belongs to the platform tenant; tenant-level grants apply within the
+	// caller's own tenant, where tenant admins are already sovereign.
+	const platformTenantID = "00000000-0000-0000-0000-000000000001"
+	isPlatformTenant := claims.TenantID == platformTenantID
+
 	hasPlatform := false
 	hasTenant := false
 	adminIndicators := append(append([]string{}, claims.Scopes...), claims.Roles...)
@@ -684,7 +693,9 @@ func (gw *Gateway) checkRouteScope(w http.ResponseWriter, r *http.Request) bool 
 		scl := strings.ToLower(sc)
 		if scl == "platform:admin" || scl == "admin" || scl == "superadmin" ||
 			scl == "platform administrator" || scl == "administrator" {
-			hasPlatform = true
+			if isPlatformTenant {
+				hasPlatform = true
+			}
 			hasTenant = true
 		}
 		if scl == "tenant:admin" || scl == "manager" || scl == "tenant administrator" {

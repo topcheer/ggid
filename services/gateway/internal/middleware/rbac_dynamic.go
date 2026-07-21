@@ -19,7 +19,7 @@ import (
 // warm-start fallback, and hardcoded-prefix fallback when neither is available.
 
 const (
-	rbacCacheKey     = "rbac:routes:all"
+	rbacCacheKey     = "rbac:routes:v2:all"
 	rbacCacheTTL     = 60 * time.Second
 	rbacMemCacheTTL  = 60 * time.Second
 	rbacQueryTimeout = 3 * time.Second
@@ -31,6 +31,11 @@ type routePermRow struct {
 	RoleKey  string `json:"role_key"`
 	Prefix   string `json:"route_prefix"`
 	Level    string `json:"permission_level"`
+	// TenantID scopes the rule to the tenant that owns the role. Grant
+	// decisions only match rows of the caller's own tenant — otherwise a
+	// role named "Administrator" created in tenant B would inherit the
+	// platform tenant's Administrator grants (privilege escalation).
+	TenantID string `json:"tenant_id"`
 }
 
 // permLevelRank orders permission levels: read < write < admin.
@@ -229,7 +234,7 @@ func (r *RBACResolver) loadFromDB(ctx context.Context) ([]routePermRow, error) {
 	qctx, cancel := context.WithTimeout(ctx, rbacQueryTimeout)
 	defer cancel()
 	rows, err := pool.Query(qctx, `
-		SELECT r.name, r.key, rrp.route_prefix, rrp.permission_level
+		SELECT r.name, r.key, rrp.route_prefix, rrp.permission_level, r.tenant_id::text
 		FROM role_route_permissions rrp
 		JOIN roles r ON r.id = rrp.role_id
 	`)
@@ -241,7 +246,7 @@ func (r *RBACResolver) loadFromDB(ctx context.Context) ([]routePermRow, error) {
 	skipped := 0
 	for rows.Next() {
 		var row routePermRow
-		if err := rows.Scan(&row.RoleName, &row.RoleKey, &row.Prefix, &row.Level); err != nil {
+		if err := rows.Scan(&row.RoleName, &row.RoleKey, &row.Prefix, &row.Level, &row.TenantID); err != nil {
 			continue
 		}
 		if row.Prefix == "" || !strings.HasPrefix(row.Prefix, "/api/") {
@@ -292,6 +297,13 @@ func (r *RBACResolver) CheckAccess(ctx context.Context, path, method string, cla
 
 	grant := 0
 	for _, row := range rows {
+		// Tenant isolation: rules only apply to the caller's own tenant.
+		// Rows without a tenant (legacy cache entries) match no one except
+		// token-less tenant claims, which cannot occur for authenticated
+		// requests.
+		if row.TenantID != claims.TenantID {
+			continue
+		}
 		// Ignore non-API prefixes (console navigation routes like /dashboard)
 		// and empty prefixes — they must never gate API traffic.
 		if row.Prefix == "" || !strings.HasPrefix(row.Prefix, "/api/") {
