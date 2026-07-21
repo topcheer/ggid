@@ -1,9 +1,11 @@
 package commands
 
 import (
+	"bufio"
 	"flag"
 	"fmt"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/ggid/ggid/services/ggid-cli/internal/client"
@@ -28,18 +30,56 @@ import (
 //   - MFA enforcement → follows tenant security policy
 func Login(ctx *Context, args []string) {
 	fs := flag.NewFlagSet("login", flag.ExitOnError)
-	serverURL := fs.String("server", "", "Gateway URL (default: http://localhost:8080)")
+	serverURL := fs.String("server", "", "Gateway URL (e.g. https://auth.ggid.dev)")
 	tenantID := fs.String("tenant", client.ConsoleTenantID, "Console tenant ID")
 	clientName := fs.String("name", "ggid-cli", "DCR client name")
 	noBrowser := fs.Bool("no-browser", false, "Don't auto-open browser; print URL only")
 	fs.Parse(args)
 
+	// Resolve server URL in priority order:
+	// 1. --server flag (explicit override)
+	// 2. GGID_SERVER_URL env var (already loaded into ctx.ServerURL)
+	// 3. Saved config value (ctx.Config.ServerURL)
+	// 4. Interactive prompt (first-time setup) → persist to config
 	url := *serverURL
 	if url == "" {
 		url = ctx.ServerURL
 	}
 	if url == "" {
-		url = "http://localhost:8080"
+		// First-time setup: prompt the user for the server URL.
+		fmt.Println("No server URL configured.")
+		fmt.Println("Please provide your GGID Gateway URL.")
+		fmt.Println("Examples: https://auth.ggid.dev  |  http://10.0.1.5:8080")
+		fmt.Println()
+		fmt.Print("Gateway URL: ")
+		reader := bufio.NewReader(os.Stdin)
+		input, err := reader.ReadString('\n')
+		if err != nil {
+			output.PrintError("cannot read input: %v", err)
+			os.Exit(1)
+		}
+		url = strings.TrimSpace(input)
+		if url == "" {
+			output.PrintError("server URL is required. Use --server flag or set GGID_SERVER_URL env var.")
+			os.Exit(1)
+		}
+		// Basic validation: must have scheme.
+		if !strings.HasPrefix(url, "http://") && !strings.HasPrefix(url, "https://") {
+			url = "https://" + url
+		}
+		// Strip trailing slash.
+		url = strings.TrimRight(url, "/")
+		// Persist the server URL so the user doesn't need to enter it again.
+		ctx.Config.ServerURL = url
+		ctx.Config.ConsoleTenantID = *tenantID
+		if ctx.Config.OutputFormat == "" {
+			ctx.Config.OutputFormat = "table"
+		}
+		if err := config.Save(ctx.Config); err != nil {
+			output.PrintError("cannot save config: %v", err)
+			os.Exit(1)
+		}
+		fmt.Printf("Server URL saved: %s\n", url)
 	}
 
 	// Reuse existing DCR registration if available.

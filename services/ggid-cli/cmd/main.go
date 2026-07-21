@@ -21,7 +21,7 @@ const version = "1.0.0"
 func main() {
 	if len(os.Args) < 2 {
 		usage()
-		os.Exit(1)
+		os.Exit(0)
 	}
 
 	// Load config (may not exist yet for login).
@@ -184,7 +184,7 @@ AUTHENTICATION:
 COMMANDS:
 
   AUTH:
-    login              Authenticate via DCR (register + token exchange)
+    login              Authenticate via device code flow (interactive)
     logout             Clear stored credentials
     whoami             Show current identity and token info
     version            Show CLI version
@@ -269,7 +269,7 @@ COMMANDS:
     monitoring activity  Activity log
 
 GLOBAL FLAGS:
-  --server URL    Gateway URL (or GGID_SERVER_URL env)
+  --server URL    Gateway URL (first run prompts; saved to config)
   --json          Force JSON output
   --table         Force table output (default)
 
