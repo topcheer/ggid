@@ -1,7 +1,6 @@
-# Multi-stage build for Go ERP demo
 FROM golang:1.25-alpine AS builder
 WORKDIR /app
-COPY go.mod ./
+COPY go.mod go.sum ./
 RUN go mod download
 COPY . .
 RUN cd examples/erp-go && CGO_ENABLED=0 go build -o /erp-go .

@@ -8,7 +8,7 @@ export const GGID_URL = process.env.NEXT_PUBLIC_GGID_URL || 'https://ggid.iot2.w
 export const CLIENT_ID = process.env.NEXT_PUBLIC_CLIENT_ID || '';
 export const REDIRECT_URI = process.env.NEXT_PUBLIC_REDIRECT_URI || 'http://localhost:3300/callback';
 export const API_BASE = process.env.NEXT_PUBLIC_API_BASE || 'http://localhost:3200';
-const TENANT = '00000000-0000-0000-0000-000000000003';
+const TENANT = '00000003-0000-0000-0000-000000000001';
 
 export interface ERPUser {
   user_id: string;

@@ -15,7 +15,7 @@ import (
 
 var (
 	ggidURL    = getEnv("GGID_URL", "http://localhost:8080")
-	tenantID   = getEnv("GGID_TENANT_ID", "00000000-0000-0000-0000-000000000001")
+	tenantID   = getEnv("GGID_TENANT_ID", "00000001-0000-0000-0000-000000000001")
 	listenAddr = getEnv("ERP_LISTEN", ":9090")
 	ggidClient *ggid.Client
 )
@@ -31,6 +31,8 @@ func main() {
 	mux.HandleFunc("/api/auth/login", handleLogin)
 	mux.HandleFunc("/api/auth/refresh", handleRefresh)
 	mux.HandleFunc("/api/auth/verify", handleVerify)
+	mux.HandleFunc("/api/auth/oauth/login", handleOAuthLogin)
+	mux.HandleFunc("/api/auth/callback", handleOAuthCallback)
 	mux.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, 200, map[string]string{"status": "ok"})
 	})

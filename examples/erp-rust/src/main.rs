@@ -17,8 +17,8 @@ use std::time::{SystemTime, UNIX_EPOCH};
 use tokio::sync::RwLock;
 
 // --- GGID config ---
-const GGID_URL: &str = "http://localhost:8080";
-const TENANT_ID: &str = "00000000-0000-0000-0000-000000000001";
+const GGID_URL: &str = match option_env!("GGID_URL") { Some(v) => v, None => "http://localhost:8080" };
+const TENANT_ID: &str = match option_env!("TENANT_ID") { Some(v) => v, None => "00000000-0000-0000-0000-000000000001" };
 
 // --- State ---
 type Store = Arc<RwLock<AppState>>;
@@ -166,6 +166,41 @@ async fn health() -> Json<Value> {
     Json(json!({ "status": "ok" }))
 }
 
+/// POST /api/auth/exchange — RFC 8693 Token Exchange
+#[derive(Deserialize)]
+struct ExchangeRequest {
+    subject_token: String,
+    subject_token_type: Option<String>,
+    #[serde(default = "default_tenant")]
+    tenant_id: String,
+}
+fn default_tenant() -> String { TENANT_ID.to_string() }
+
+async fn token_exchange(State(state): State<Store>, Json(req): Json<ExchangeRequest>) -> Result<Json<Value>, StatusCode> {
+    let client = reqwest::Client::new();
+    let token_url = format!("{}/api/v1/oauth/token", GGID_URL);
+    let stt = req.subject_token_type.unwrap_or_else(|| "urn:ietf:params:oauth:token-type:access_token".into());
+    let form = vec![
+        ("grant_type", "urn:ietf:params:oauth:grant-type:token-exchange".to_string()),
+        ("subject_token", req.subject_token.clone()),
+        ("subject_token_type", stt),
+        ("tenant_id", req.tenant_id.clone()),
+    ];
+    let resp = client.post(&token_url).form(&form).send().await.map_err(|_| StatusCode::BAD_GATEWAY)?;
+    let status = resp.status();
+    let body: Value = resp.json().await.map_err(|_| StatusCode::BAD_GATEWAY)?;
+    if !status.is_success() {
+        return Err(StatusCode::from_u16(status.as_u16()).unwrap_or(StatusCode::BAD_GATEWAY));
+    }
+    let mut s = state.write().await;
+    s.audit_log.push(AuditEntry {
+        id: format!("AUD-{}", s.audit_log.len()+1),
+        action: "auth.token_exchange".into(), resource: "token".into(),
+        result: "success".into(), actor_id: body.get("sub").and_then(|v| v.as_str()).unwrap_or("unknown").into(),
+    });
+    Ok(Json(body))
+}
+
 #[tokio::main]
 async fn main() {
     let state: Store = Arc::new(RwLock::new(AppState {
@@ -176,9 +211,10 @@ async fn main() {
 
     let app = Router::new()
         .route("/health", get(health))
+        .route("/api/auth/exchange", post(token_exchange))
         .route("/api/inventory", get(list_inventory).post(create_inventory))
         .route("/api/orders", get(list_orders).post(create_order))
-        .route("/api/orders/:id/approve", put(approve_order))
+        .route("/api/orders/{id}/approve", put(approve_order))
         .route("/api/audit", get(get_audit))
         .route("/api/dashboard", get(dashboard))
         .with_state(state);
