@@ -11,6 +11,8 @@ export interface JWTClaims {
   name?: string;
   tenant_id?: string;
   roles?: string[];
+  permissions?: string[];
+  aud?: string | string[];
   exp?: number;
   iat?: number;
   iss?: string;

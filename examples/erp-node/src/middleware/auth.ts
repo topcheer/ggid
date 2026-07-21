@@ -37,10 +37,10 @@ export async function verifyToken(token: string): Promise<ERPUser | null> {
     const user: ERPUser = {
       user_id: claims.sub || '',
       username: (claims as any).username || (claims as any).preferred_username || claims.sub || 'user',
-      email: (claims as any).email || '',
-      tenant_id: (claims as any).tenant_id || TENANT,
-      roles: (claims as any).roles || [],
-      permissions: (claims as any).permissions || (claims as any).scope?.split(' ') || [],
+      email: claims.email || '',
+      tenant_id: claims.tenant_id || TENANT,
+      roles: claims.roles || [],
+      permissions: claims.permissions || [],
     };
 
     tokenCache.set(token, user);

@@ -52,8 +52,8 @@ authRoutes.post('/introspect', async (req, res) => {
       active: true,
       sub: claims.sub,
       username: (claims as any).username,
-      email: (claims as any).email,
-      permissions: (claims as any).permissions || (claims as any).scope?.split(' ') || [],
+      email: claims.email,
+      permissions: claims.permissions || [],
       exp: claims.exp,
     });
   } catch {
