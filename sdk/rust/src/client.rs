@@ -205,6 +205,43 @@ impl GGIDClient {
 
     // --- OAuth Introspect ---
 
+    /// Exchange a token using RFC 8693 Token Exchange.
+    ///
+    /// Trades a subject token (e.g., access token) for a new access token
+    /// with potentially different audience/scope. Used for delegation.
+    pub async fn exchange_token(
+        &self,
+        client_id: &str,
+        subject_token: &str,
+        subject_token_type: &str,
+        scope: Option<&str>,
+    ) -> Result<TokenResponse, GGIDError> {
+        let mut form = vec![
+            ("grant_type", "urn:ietf:params:oauth:grant-type:token-exchange".to_string()),
+            ("client_id", client_id.to_string()),
+            ("subject_token", subject_token.to_string()),
+            ("subject_token_type", subject_token_type.to_string()),
+        ];
+        if let Some(s) = scope {
+            form.push(("scope", s.to_string()));
+        }
+
+        let resp = self
+            .http
+            .post(format!("{}/api/v1/oauth/token", self.base_url))
+            .header("X-Tenant-ID", &self.tenant_id)
+            .form(&form)
+            .send()
+            .await?;
+
+        if !resp.status().is_success() {
+            let status = resp.status().as_u16();
+            let body = resp.text().await.unwrap_or_default();
+            return Err(GGIDError::Api { status, body });
+        }
+        Ok(resp.json().await?)
+    }
+
     /// Introspect a token to check its status.
     ///
     /// Returns token metadata including active status, expiry, and scope.
@@ -708,6 +745,28 @@ impl GGIDClient {
     ) -> Result<PolicyCheckResult, GGIDError> {
         ABACService::new(self.clone()).check_policy(token, request).await
     }
+
+    /// Obtain a token using OAuth2 client_credentials grant (M2M).
+    pub async fn client_credentials(&self, client_id: &str, client_secret: &str, scope: &str) -> Result<TokenResponse, GGIDError> {
+        let form = vec![
+            ("grant_type", "client_credentials"),
+            ("client_id", client_id),
+            ("client_secret", client_secret),
+            ("scope", scope),
+        ];
+        let resp = self.http
+            .post(format!("{}/api/v1/oauth/token", self.base_url))
+            .header("X-Tenant-ID", &self.tenant_id)
+            .form(&form)
+            .send()
+            .await?;
+        if !resp.status().is_success() {
+            let status = resp.status().as_u16();
+            let body = resp.text().await.unwrap_or_default();
+            return Err(GGIDError::Api { status, body });
+        }
+        Ok(resp.json().await?)
+    }
 }
 
 /// Standalone helper: parse HTTP response to JSON or error.
@@ -763,14 +822,3 @@ impl GGIDClientBuilder {
         })
     }
 }
-
-    pub async fn client_credentials(&self, client_id: &str, client_secret: &str, scope: &str) -> Result<Value, Box<dyn std::error::Error + Send + Sync>> {
-        let form = vec![
-            ("grant_type", "client_credentials"),
-            ("client_id", client_id),
-            ("client_secret", client_secret),
-            ("scope", scope),
-        ];
-        let resp = self.http.post(format!("{}/api/v1/oauth/token", self.base_url)).form(&form).send().await?;
-        Ok(resp.json().await?)
-    }

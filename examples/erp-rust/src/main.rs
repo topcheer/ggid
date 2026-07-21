@@ -181,28 +181,23 @@ struct ExchangeRequest {
 fn default_tenant() -> String { tenant_id() }
 
 async fn token_exchange(State(state): State<Store>, Json(req): Json<ExchangeRequest>) -> Result<Json<Value>, StatusCode> {
-    let client = reqwest::Client::new();
-    let token_url = format!("{}/api/v1/oauth/token", ggid_url());
     let stt = req.subject_token_type.unwrap_or_else(|| "urn:ietf:params:oauth:token-type:access_token".into());
-    let form = vec![
-        ("grant_type", "urn:ietf:params:oauth:grant-type:token-exchange".to_string()),
-        ("subject_token", req.subject_token.clone()),
-        ("subject_token_type", stt),
-        ("tenant_id", req.tenant_id.clone()),
-    ];
-    let resp = client.post(&token_url).form(&form).send().await.map_err(|_| StatusCode::BAD_GATEWAY)?;
-    let status = resp.status();
-    let body: Value = resp.json().await.map_err(|_| StatusCode::BAD_GATEWAY)?;
-    if !status.is_success() {
-        return Err(StatusCode::from_u16(status.as_u16()).unwrap_or(StatusCode::BAD_GATEWAY));
-    }
+    let client_id = std::env::var("OAUTH_CLIENT_ID").unwrap_or_else(|_| "erp-rust-exchange".into());
+    let ggid_client = ggid::GGIDClient::new(&ggid_url(), &req.tenant_id);
+    let resp = ggid_client.exchange_token(&client_id, &req.subject_token, &stt, None)
+        .await
+        .map_err(|_| StatusCode::BAD_GATEWAY)?;
+    let body = json!({
+        "access_token": resp.access_token,
+        "token_type": resp.token_type,
+        "expires_in": resp.expires_in,
+    });
     let mut s = state.write().await;
     let next_id = s.audit_log.len() + 1;
-    let actor = body.get("sub").and_then(|v| v.as_str()).unwrap_or("unknown").to_string();
     s.audit_log.push(AuditEntry {
         id: format!("AUD-{}", next_id),
         action: "auth.token_exchange".into(), resource: "token".into(),
-        result: "success".into(), actor_id: actor,
+        result: "success".into(), actor_id: "exchange".into(),
     });
     Ok(Json(body))
 }
