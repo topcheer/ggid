@@ -2174,10 +2174,11 @@ func overrideDiscoveryIssuer(config *domain.OIDCDiscoveryConfig, r *http.Request
 	publicURL := scheme + "://" + host
 	originalIssuer := config.Issuer
 
-	// Only override if the current issuer looks like an internal address.
-	// (localhost, private IP ranges, or raw port numbers without a domain)
-	if !shouldOverrideIssuer(originalIssuer) {
-		return
+	// Always override: trust X-Forwarded-Host from the reverse proxy/gateway.
+	// This ensures correct issuer URLs regardless of OAUTH_ISSUER env config,
+	// supporting multi-domain deployments and zero-config domain adaptation.
+	if publicURL == originalIssuer {
+		return // already correct
 	}
 
 	config.Issuer = publicURL
