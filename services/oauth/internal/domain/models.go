@@ -194,6 +194,7 @@ type OIDCDiscoveryConfig struct {
 	CheckSessionIFrame                string   `json:"check_session_iframe,omitempty"`
 	BackchannelLogoutSupported        bool     `json:"backchannel_logout_supported"`
 	EndSessionEndpoint                string   `json:"end_session_endpoint,omitempty"`
+	DeviceAuthorizationEndpoint       string   `json:"device_authorization_endpoint,omitempty"`
 }
 
 // JWKSKey represents a single key in a JWKS response.

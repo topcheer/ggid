@@ -489,7 +489,7 @@ func (s *OAuthService) GetDiscoveryConfig() *domain.OIDCDiscoveryConfig {
 		RevocationEndpoint:                base + "/oauth/revoke",
 		IntrospectionEndpoint:             base + "/oauth/introspect",
 		ResponseTypesSupported:            []string{"code", "token", "id_token"},
-		GrantTypesSupported:               []string{"authorization_code", "refresh_token", "client_credentials"},
+		GrantTypesSupported:               []string{"authorization_code", "refresh_token", "client_credentials", "urn:ietf:params:oauth:grant-type:device_code", "urn:ietf:params:oauth:grant-type:token-exchange", "urn:ietf:params:oauth:grant-type:jwt-bearer"},
 		SubjectTypesSupported:             []string{"public"},
 		IDTokenSigningAlgValues:           []string{"RS256"},
 		ScopesSupported:                   []string{"openid", "profile", "email", "offline_access"},
@@ -499,6 +499,7 @@ func (s *OAuthService) GetDiscoveryConfig() *domain.OIDCDiscoveryConfig {
 		CheckSessionIFrame:                base + "/oauth/check_session",
 		BackchannelLogoutSupported:        true,
 		EndSessionEndpoint:                base + "/oauth/logout",
+		DeviceAuthorizationEndpoint:       base + "/api/v1/oauth/device_authorize",
 	}
 }
 
