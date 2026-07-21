@@ -47,3 +47,5 @@
 - OIDC grant_types now includes `password` ✅
 - **Impact on SDK/Demo: NONE** — SAML internal refactor + Console UI fixes
 - 8/8 demos HTTP 200, 0 hacks confirmed
+
+#### Round 19: 6 core commits (RBAC+refresh rotation+audit WORM), 8/8 stable
