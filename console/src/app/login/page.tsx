@@ -159,100 +159,13 @@ export default function LoginPage() {
     setLoading(true);
     setError("");
 
-    try {
-      if (useBackupCode) {
-        const resp = await fetch(`${API_BASE}/api/v1/auth/mfa/login`, {
-          method: "POST",
-          headers: { ...authHeader(), "Content-Type": "application/json", "X-Tenant-ID": resolvedTenantId },
-          body: JSON.stringify({ mfa_token: mfaToken, backup_code: backupCode.trim() }),
-        });
-        const data = await resp.json();
-        if (!resp.ok) {
-          setError(data.error?.message || data.error || data.message || "Invalid backup code");
-          return;
-        }
-        if (data.access_token) {
-          if (typeof window !== "undefined") {
-            localStorage.setItem("ggid_access_token", data.access_token);
-            localStorage.setItem("ggid_refresh_token", data.refresh_token || "");
-          }
-          router.push("/dashboard");
-          // Force hard navigation after localStorage write
-          if (typeof window !== "undefined") window.location.href = "/dashboard";
-          return;
-        }
-      }
-
-      const resp = await fetch(`${API_BASE}/api/v1/auth/mfa/verify`, {
-        method: "POST",
-        headers: { ...authHeader(), "Content-Type": "application/json", "X-Tenant-ID": resolvedTenantId },
-        body: JSON.stringify({ mfa_token: mfaToken, code: totpCode }),
-      });
-      const data = await resp.json();
-
-      if (!resp.ok) {
-        const errMsg = typeof data.error === 'string'
-          ? data.error
-          : data.error?.message || data.error?.code || data.message || "Invalid verification code";
-        setError(errMsg);
-        return;
-      }
-
-      if (data.access_token) {
-        if (typeof window !== "undefined") {
-          localStorage.setItem("ggid_access_token", data.access_token);
-          localStorage.setItem("ggid_refresh_token", data.refresh_token || "");
-
-          // Extract user info from JWT
-          try {
-            const payload = JSON.parse(atob(data.access_token.split(".")[1]));
-            if (payload.tenant_id) localStorage.setItem("ggid_tenant_id", payload.tenant_id);
-            if (payload.sub) localStorage.setItem("ggid_user_id", payload.sub);
-            if (payload.username) localStorage.setItem("ggid_user_name", payload.username);
-            if (payload.email) localStorage.setItem("ggid_user_email", payload.email);
-          } catch {}
-
-          // If redirect_to is set (OAuth flow), redirect back to authorize with user_id
-          const params = new URLSearchParams(window.location.search);
-          const redirectTo = params.get("redirect_to");
-          if (redirectTo) {
-            try {
-              const payload = JSON.parse(atob(data.access_token.split(".")[1]));
-              const url = new URL(redirectTo);
-              url.searchParams.set("user_id", payload.sub);
-              window.location.href = url.toString();
-              return;
-            } catch {
-              window.location.href = redirectTo;
-              return;
-            }
-          }
-        }
-        if (typeof window !== "undefined") window.location.href = "/dashboard";
-      }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Verification failed");
-    } finally {
-      setLoading(false);
-    }
+    // MFA is handled by the OAuth authorize endpoint's inline login page.
+    // The Console login page no longer processes MFA directly.
+    setError("MFA verification is handled during the OAuth login flow. Please restart the login process.");
+    setLoading(false);
   };
 
-  const handleSocialLogin = async (provider: string) => {
-    setError("");
-    try {
-      const resp = await fetch(`${API_BASE}/api/v1/auth/social/${provider}?redirect_uri=/`, {
-        headers: { ...authHeader(), "X-Tenant-ID": resolvedTenantId },
-      });
-      const data = await resp.json();
-      if (data.auth_url) {
-        window.location.href = data.auth_url;
-      } else {
-        setError(`${provider} login not configured`);
-      }
-    } catch {
-      setError(`${provider} login not available`);
-    }
-  };
+  // Social login is handled via OAuth authorize flow, not direct API calls.
 
   // Only show social login buttons that are configured via API
   const socialButtons = connectorsLoaded && connectors.length > 0 ? connectors : [];

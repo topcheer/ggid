@@ -224,7 +224,6 @@ func TestHandler_MultiplePublicPaths(t *testing.T) {
 	publicPaths := []string{
 		"/api/v1/auth/verify",
 		"/api/v1/auth/register",
-		"/api/v1/auth/refresh",
 		"/api/v1/auth/password/forgot",
 		"/api/v1/auth/password/reset",
 		"/.well-known/jwks.json",

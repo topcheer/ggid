@@ -29,7 +29,6 @@ import (
 var publicPaths = []string{
 	"/api/v1/auth/verify",
 	"/api/v1/auth/register",
-	"/api/v1/auth/refresh",
 	"/api/v1/auth/password/forgot",
 	"/api/v1/auth/password/reset",
 	"/api/v1/auth/password/strength",
@@ -38,7 +37,6 @@ var publicPaths = []string{
 	"/api/v1/auth/mfa/radius/verify",
 	"/api/v1/auth/mfa/yubikey/verify",
 	"/api/v1/auth/mfa/methods",
-	"/api/v1/auth/social/",
 	"/api/v1/healthz",
 	"/healthz",
 	"/api/v1/identity/healthz",
