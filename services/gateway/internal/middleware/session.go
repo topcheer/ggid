@@ -201,10 +201,8 @@ func isPublicPath(path string) bool {
 var publicPathPrefixes = []string{
 	"/api/v1/auth/verify",
 	"/api/v1/auth/register",
-	"/api/v1/auth/refresh",
 	"/api/v1/auth/password/forgot",
 	"/api/v1/auth/password/reset",
-	"/api/v1/auth/social/",
 	"/oauth/",
 	"/api/v1/oauth/register",
 	"/saml/",

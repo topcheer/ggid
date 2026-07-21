@@ -153,7 +153,6 @@ async function doMfa(){
 }
 
 function socialLogin(p){
-  fetch("/api/v1/auth/social/"+p+"?redirect_uri="+encodeURIComponent(redirectUri),{headers:{"X-Tenant-ID":T}})
     .then(r=>r.json()).then(d=>{if(d.auth_url)window.location.href=d.auth_url}).catch(()=>showErr(p+" login not configured"));
 }
 </script>

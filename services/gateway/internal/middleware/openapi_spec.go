@@ -260,7 +260,6 @@ func addAuthPaths(m map[string]OpenAPIPath) {
 	m["/api/v1/auth/privilege-escalation/detect"] = OpenAPIPath{Get: op([]string{"Auth"}, "V1 Auth Privilege Escalation Detect")}
 	m["/api/v1/auth/profile"] = OpenAPIPath{Get: op([]string{"Auth"}, "Get current user profile"), Put: op([]string{"Auth"}, "Update own profile")}
 	m["/api/v1/auth/rate-limits"] = OpenAPIPath{Get: op([]string{"Auth"}, "V1 Auth Rate Limits")}
-	m["/api/v1/auth/refresh"] = OpenAPIPath{Post: op([]string{"Auth"}, "Refresh access token using refresh token")}
 	m["/api/v1/auth/register"] = OpenAPIPath{Post: op([]string{"Auth"}, "Self-service user registration")}
 	m["/api/v1/auth/replay-check"] = OpenAPIPath{Get: op([]string{"Auth"}, "V1 Auth Replay Check")}
 	m["/api/v1/auth/reset-password"] = OpenAPIPath{Get: op([]string{"Auth"}, "V1 Auth Reset Password")}
@@ -291,7 +290,6 @@ func addAuthPaths(m map[string]OpenAPIPath) {
 	m["/api/v1/auth/sessions/termination-reasons"] = OpenAPIPath{Get: op([]string{"Auth"}, "V1 Auth Sessions Termination Reasons")}
 	m["/api/v1/auth/sessions/unbind-device"] = OpenAPIPath{Get: op([]string{"Auth"}, "V1 Auth Sessions Unbind Device")}
 	m["/api/v1/auth/sessions/{id}"] = OpenAPIPath{Delete: op([]string{"Sessions"}, "Revoke a session by ID")}
-	m["/api/v1/auth/social/"] = OpenAPIPath{Get: op([]string{"Auth"}, "V1 Auth Social")}
 	m["/api/v1/auth/stats/credential-stuffing"] = OpenAPIPath{Get: op([]string{"Auth"}, "V1 Auth Stats Credential Stuffing")}
 	m["/api/v1/auth/stats/social-providers"] = OpenAPIPath{Get: op([]string{"Auth"}, "V1 Auth Stats Social Providers")}
 	m["/api/v1/auth/step-up"] = OpenAPIPath{Get: op([]string{"Auth"}, "V1 Auth Step Up")}

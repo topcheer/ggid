@@ -30,16 +30,6 @@ func enhanceAuthPaths(m map[string]OpenAPIPath) {
 			Done(),
 	}
 
-	// POST /api/v1/auth/refresh
-	m["/api/v1/auth/refresh"] = OpenAPIPath{
-		Post: enhancedOp([]string{"Auth"}, "Refresh access token",
-			"Exchange a valid refresh token for a new access token pair.").
-			WithBody("RefreshRequest", "Refresh token", true).
-			WithOK("TokenResponse", "New token pair").
-			With401().
-			Done(),
-	}
-
 	// POST /api/v1/auth/register
 	m["/api/v1/auth/register"] = OpenAPIPath{
 		Post: enhancedOp([]string{"Auth"}, "Register new user",

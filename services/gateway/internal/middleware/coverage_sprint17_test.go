@@ -649,7 +649,7 @@ func TestIsPublicPath_C17(t *testing.T) {
 		{"/healthz", true},
 		{"/.well-known/jwks.json", true},
 		{"/api/v1/auth/verify", true},
-		{"/api/v1/auth/social/google", true},
+		{"/api/v1/auth/social/google", false},
 		{"/oauth/authorize", true},
 		{"/saml/login", true},
 		{"/.well-known/openid-configuration", true},
