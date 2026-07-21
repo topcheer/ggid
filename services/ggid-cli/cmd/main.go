@@ -150,6 +150,10 @@ func main() {
 	case "monitoring":
 		commands.Monitoring(ctx, args)
 
+	// Shell completion
+	case "completion":
+		commands.Completion(ctx, args)
+
 	default:
 		fmt.Fprintf(os.Stderr, "unknown command: %s\n\n", cmd)
 		usage()
