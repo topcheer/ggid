@@ -6,8 +6,6 @@ require_relative '../../sdk/ruby/lib/ggid'
 
 GGID_URL_VAL = ENV.fetch('GGID_URL', 'http://localhost:8080')
 TENANT_ID = ENV.fetch('GGID_TENANT_ID', '00000007-0000-0000-0000-000000000001')
-GGID_DEVICE_AUTH = ENV.fetch('GGID_DEVICE_AUTH_URL', "#{GGID_URL_VAL}/api/v1/oauth/device_authorize")
-GGID_TOKEN_URL = ENV.fetch('GGID_TOKEN_URL', "#{GGID_URL_VAL}/api/v1/oauth/token")
 CLIENT_ID = ENV.fetch('OAUTH_CLIENT_ID', 'erp-ruby-demo')
 
 $ggid = GGID::Client.new(base_url: GGID_URL_VAL, tenant_id: TENANT_ID)
@@ -57,20 +55,9 @@ class ERPApp < Sinatra::Base
     { status: 'ok', lang: 'ruby', tenant: TENANT_ID }.to_json
   end
 
-  # OAuth2 Device Code Flow — start device authorization
+  # OAuth2 Device Code Flow — start device authorization (via SDK)
   post '/api/auth/device/start' do
-    require 'net/http'
-    require 'uri'
-    uri = URI(GGID_DEVICE_AUTH)
-    req = Net::HTTP::Post.new(uri)
-    req.set_form_data(
-      'client_id' => CLIENT_ID,
-      'tenant_id' => TENANT_ID,
-      'scope' => 'openid profile email'
-    )
-    req['X-Tenant-ID'] = TENANT_ID
-    resp = Net::HTTP.start(uri.hostname, uri.port, use_ssl: uri.scheme == 'https') { |http| http.request(req) }
-    body = JSON.parse(resp.body || '{}')
+    body = $ggid.start_device_flow(client_id: CLIENT_ID, scope: 'openid profile email')
     {
       device_code: body['device_code'],
       user_code: body['user_code'],
@@ -81,30 +68,18 @@ class ERPApp < Sinatra::Base
     }.to_json
   end
 
-  # OAuth2 Device Code Flow — poll for token
+  # OAuth2 Device Code Flow — poll for token (via SDK)
   post '/api/auth/device/poll' do
-    require 'net/http'
-    require 'uri'
     data = JSON.parse(request.body.read)
-    uri = URI(GGID_TOKEN_URL)
-    req = Net::HTTP::Post.new(uri)
-    req.set_form_data(
-      'grant_type' => 'urn:ietf:params:oauth:grant-type:device_code',
-      'device_code' => data['device_code'],
-      'client_id' => CLIENT_ID,
-      'tenant_id' => TENANT_ID
-    )
-    req['X-Tenant-ID'] = TENANT_ID
-    resp = Net::HTTP.start(uri.hostname, uri.port, use_ssl: uri.scheme == 'https') { |http| http.request(req) }
-    body = JSON.parse(resp.body || '{}')
-    if resp.code == '200'
+    body = $ggid.poll_device_token(device_code: data['device_code'], client_id: CLIENT_ID)
+    if body['access_token']
       { access_token: body['access_token'], token_type: body['token_type'], expires_in: body['expires_in'] }.to_json
     elsif body['error'] == 'authorization_pending'
       { error: 'authorization_pending', error_description: body['error_description'] }.to_json
     elsif body['error'] == 'slow_down'
       { error: 'slow_down', error_description: body['error_description'], interval: 10 }.to_json
     else
-      status resp.code.to_i
+      status 400
       body.to_json
     end
   end

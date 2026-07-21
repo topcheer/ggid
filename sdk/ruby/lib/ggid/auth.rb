@@ -177,9 +177,52 @@ module GGID
     rescue JSON::ParserError
       raise InvalidTokenError, "Invalid token header encoding"
     end
+
+    # OAuth2 Client Credentials grant (M2M).
+    def client_credentials(client_id:, client_secret:, scope: "")
+      form_post("/api/v1/oauth/token",
+                grant_type: "client_credentials",
+                client_id: client_id,
+                client_secret: client_secret,
+                scope: scope)
+    end
+
+    # OAuth2 Device Code Flow (RFC 8628) — Step 1: Request device authorization.
+    #
+    # @param client_id [String] OAuth2 client ID
+    # @param scope [String] Space-delimited scopes
+    # @return [Hash] { device_code, user_code, verification_uri, ... }
+    def start_device_flow(client_id:, scope: "openid profile email")
+      form_post("/api/v1/oauth/device_authorize",
+                client_id: client_id,
+                scope: scope,
+                tenant_id: tenant_id)
+    end
+
+    # OAuth2 Device Code Flow (RFC 8628) — Step 2: Poll for token.
+    #
+    # @param device_code [String] Device code from start_device_flow
+    # @param client_id [String] OAuth2 client ID
+    # @return [Hash] { access_token, ... } on success,
+    #   or { error: "authorization_pending" } / { error: "slow_down" } while waiting
+    def poll_device_token(device_code:, client_id:)
+      form_post("/api/v1/oauth/token",
+                grant_type: "urn:ietf:params:oauth:grant-type:device_code",
+                device_code: device_code,
+                client_id: client_id)
+    end
+
+    # POST with form-urlencoded body (for OAuth2 token endpoints).
+    def form_post(path, **params)
+      require "httparty"
+      url = "#{base_url}#{path}"
+      options = {
+        headers: { "Content-Type" => "application/x-www-form-urlencoded", "X-Tenant-ID" => tenant_id },
+        body: URI.encode_www_form(params),
+        timeout: @timeout,
+      }
+      resp = HTTParty.post(url, options)
+      JSON.parse(resp.body || "{}")
+    end
   end
 end
-
-    def client_credentials(client_id:, client_secret:, scope: "")
-      post("/oauth/token", grant_type: "client_credentials", client_id: client_id, client_secret: client_secret, scope: scope)
-    end
