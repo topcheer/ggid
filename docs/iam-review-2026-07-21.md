@@ -2,7 +2,7 @@
 
 > 审视人：god_fullstack&everything（定期审视任务 cron-1 首轮）
 > 方法：三路并行代码级审查（OAuth/OIDC/SAML · Auth/Identity/SCIM · 增强功能兼容性+竞品迁移），所有结论均有 file:line 证据。
-> 状态：**R1 完成（已部署生产）。** R2/R3/R5/R6/R7 无增量。R4 发现并修复 P0 跨租户提权回归（已部署）。R8（06:43）：1 个核心代码变更（policy http.go permissions string key 兼容），审查无安全问题。
+> 状态：**R1 完成（已部署生产）。** R2/R3/R5/R6/R7/R9 无增量。R4 发现并修复 P0 跨租户提权回归（已部署）。R8 审查 policy permissions key 兼容（无问题）。R9（07:43）：零核心代码变更，无增量问题。
 
 ---
 
