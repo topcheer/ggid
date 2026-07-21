@@ -22,7 +22,7 @@ spec:
         - containerPort: 9090
         env:
         - name: GGID_URL
-          value: "http://ggid-gateway.ggid.svc.cluster.local:8080"
+          value: "https://ggid.iot2.win"
         - name: GGID_TENANT_ID
           value: "00000001-0000-0000-0000-000000000001"
         - name: ERP_LISTEN
