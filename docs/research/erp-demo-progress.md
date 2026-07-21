@@ -204,3 +204,14 @@ Each demo accepts any valid GGID token regardless of tenant.
 - 0 hacks
 
 ### Next Dimension: 5 — SDK Cross-language Consistency
+
+## Dimension 5 R2: SDK Consistency (Round 33)
+- Token field names: snake_case across all 7 SDKs ✅
+- verifyToken: all return permissions ✅
+- All 7 SDKs use /api/v1/oauth/token ✅
+- Removed stale sdk/go/ggid/ (parallel old SDK package, used /api/v1/auth/login)
+- Removed sdk/go/examples/ (old oauth demo)
+- auth/login refs: cleaned (only comments remain in Java filter)
+- 0 hacks
+
+### Next Dimension: 6 — End-to-end User Experience
