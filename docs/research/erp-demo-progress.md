@@ -1,24 +1,22 @@
 # Cross-Board ERP Demo Progress Tracker
 
-> **Last Updated**: 2026-07-21 07:50 (Round 4 — Node demo complete)
-> **Status: Go+Node SDK integration COMPLETE. Next: C# demo.**
+> **Last Updated**: 2026-07-21 08:20 (Round 5 — C# demo complete)
+> **Status: Go+Node+C# SDK integration COMPLETE. Next: Java demo.**
 
-## Overall: Deploy 8/8 | CRUD 8/8 | **SDK Usage: 5/8** | **Sig Verify: 5/8** | **Core GAPs: 2**
+## Overall: Deploy 8/8 | CRUD 8/8 | **SDK Usage: 6/8** | **Sig Verify: 6/8** | **Core GAPs: 0 (all fixed)**
 
 ### Completed (SDK integration done)
-- **Go demo**: 6/6 SDK usage — GetAuthorizeURL, ExchangeCode, VerifyToken, Login, Refresh all via SDK
-- **Node demo**: 4/4 SDK usage — verifyToken, clientCredentials via SDK, zero scope fallback
+- **Go demo**: 6/6 — GetAuthorizeURL, ExchangeCode, VerifyToken, Login, Refresh via SDK
+- **Node demo**: 4/4 — verifyToken, clientCredentials via SDK, zero scope fallback
+- **C# demo**: 4/4 — LoginAsync, VerifyTokenAsync via SDK; SDK Claims adds Permissions field
 - **Ruby demo**: 3/4 — verify_token + has_permission via SDK (device code still raw HTTP)
 - **Rust demo**: 2/4 — verify_token via SDK (token exchange + perms still raw)
 
-### Next Target: C# demo (score 0/4)
-C# demo doesn't import SDK. Uses inline base64 decode + raw http.PostAsync.
-C# SDK already has: LoginAsync(), VerifyTokenAsync(), GetAuthorizeUrl(), ExchangeCodeAsync().
-Need: demo rewrite to import and use SDK methods.
-
-### Core GAPs (notified arch)
-1. **M2M JWT permissions empty** — client_credentials grant returns permissions:[] and roles:[]
-2. **OIDC discovery** — device_authorization_endpoint + grant types (arch fixing)
+### Next Target: Java demo (score 2/4)
+Java demo uses SDK GGIDUser for permissions but:
+- Main.verifyToken() does raw HttpURLConnection to introspect (should use SDK JwtVerifier)
+- AuthHandler uses raw HttpURLConnection for SAML + token exchange
+- Needs: import SDK properly, use JwtVerifier.verifyUser() for token verify
 
 ---
 
