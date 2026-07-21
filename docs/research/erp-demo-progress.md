@@ -38,6 +38,8 @@
 
 ## Next Target: Stable — monitoring for regressions
 
+#### Round 18: dynamic RBAC commit (a0ab6ea19), 8/8 stable, no impact
+
 #### Round 17 verification (core change check):
 - New commits since last: a7584a360 (Console Settings), 633a2f401 (JWT scopes/roles fix), edea85e7c (RBAC ADR)
 - Unstaged WIP: pkg/saml assertion signing refactor + OAuth trust chain validator (arch working)
