@@ -89,7 +89,7 @@ func TestBootstrap_ShortPassword(t *testing.T) {
 
 // TestBootstrap_WithMockAuthService tests the full bootstrap flow with a mock auth service.
 func TestBootstrap_WithMockAuthService(t *testing.T) {
-	// Create a mock auth service that handles register + login
+	// Create a mock auth service that handles register + verify
 	mockAuth := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path == "/api/v1/auth/register" {
 			w.Header().Set("Content-Type", "application/json")
@@ -97,13 +97,20 @@ func TestBootstrap_WithMockAuthService(t *testing.T) {
 			w.Write([]byte(`{"user_id":"test-user-id-123"}`))
 			return
 		}
-		if r.URL.Path == "/api/v1/auth/login" {
+		if r.URL.Path == "/api/v1/auth/verify" {
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusOK)
-			w.Write([]byte(`{"access_token":"test-jwt-token","refresh_token":"test-refresh-token"}`))
+			w.Write([]byte(`{"user_id":"test-user-id-123","tenant_id":"00000000-0000-0000-0000-000000000001","username":"admin","mfa_required":false}`))
 			return
 		}
-		w.WriteHeader(http.StatusNotFound)
+		if r.URL.Path == "/api/v1/oauth/register" {
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusCreated)
+			w.Write([]byte(`{"client_id":"ggid-console-test"}`))
+			return
+		}
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte(`{}`))
 	}))
 	defer mockAuth.Close()
 
@@ -124,7 +131,8 @@ func TestBootstrap_WithMockAuthService(t *testing.T) {
 	if resp["status"] != "bootstrapped" {
 		t.Errorf("expected bootstrapped, got %v", resp["status"])
 	}
-	if resp["access_token"] != "test-jwt-token" {
-		t.Errorf("expected access_token, got %v", resp["access_token"])
+	// Bootstrap no longer returns access_token — users authenticate via OAuth flow.
+	if resp["access_token"] != nil {
+		t.Errorf("bootstrap should not return access_token, got %v", resp["access_token"])
 	}
 }

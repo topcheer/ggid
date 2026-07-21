@@ -134,12 +134,13 @@ func (gw *Gateway) handleWebhookCatalog(w http.ResponseWriter, _ *http.Request) 
 
 // BootstrapRequest is the body for POST /api/v1/system/bootstrap.
 type BootstrapRequest struct {
-	AdminUsername   string `json:"admin_username"`
-	AdminEmail      string `json:"admin_email"`
-	AdminPassword   string `json:"admin_password"`
-	TenantName      string `json:"tenant_name"`
-	WebAuthnRPID    string `json:"webauthn_rp_id"`    // e.g. "ggid-console.iot2.win"
-	WebAuthnOrigins string `json:"webauthn_origins"`  // comma-separated, e.g. "https://ggid-console.iot2.win"
+	AdminUsername     string `json:"admin_username"`
+	AdminEmail        string `json:"admin_email"`
+	AdminPassword     string `json:"admin_password"`
+	TenantName        string `json:"tenant_name"`
+	WebAuthnRPID      string `json:"webauthn_rp_id"`
+	WebAuthnOrigins   string `json:"webauthn_origins"`
+	ConsoleRedirectURI string `json:"console_redirect_uri"`
 }
 
 // serviceURL returns the backend URL for a given service prefix.
@@ -321,7 +322,65 @@ func (gw *Gateway) handleSystemBootstrap(w http.ResponseWriter, r *http.Request)
 
 	log.Printf("bootstrap: admin user %s registered, login status: %d", req.AdminUsername, loginResp.StatusCode)
 
-	// Mark system as initialized for /api/v1/system/status
+	// Step 3: Register Console as an OAuth client (Authorization Code + PKCE).
+	// This is the ONLY way to authenticate to the Console after bootstrap.
+	consoleRedirectURI := "/auth/callback"
+	if req.ConsoleRedirectURI != "" {
+		consoleRedirectURI = req.ConsoleRedirectURI
+	}
+	oauthURL := gw.serviceURL("/api/v1/oauth")
+	dcrBody, _ := json.Marshal(map[string]any{
+		"client_name":                "GGID Console",
+		"grant_types":                []string{"authorization_code", "refresh_token"},
+		"response_types":             []string{"code"},
+		"token_endpoint_auth_method": "none", // public client (SPA with PKCE)
+		"redirect_uris":              []string{consoleRedirectURI},
+		"scope":                      "openid profile email offline_access",
+	})
+	dcrReq, _ := http.NewRequestWithContext(r.Context(), "POST", oauthURL+"/api/v1/oauth/register", bytes.NewReader(dcrBody))
+	dcrReq.Header.Set("Content-Type", "application/json")
+	dcrReq.Header.Set("X-Tenant-ID", tenantID.String())
+	dcrResp, err := client.Do(dcrReq)
+	if err != nil {
+		log.Printf("bootstrap: DCR registration failed (non-fatal): %v", err)
+	} else {
+		dcrRespBody, _ := io.ReadAll(dcrResp.Body)
+		dcrResp.Body.Close()
+		var dcrResult map[string]any
+		json.Unmarshal(dcrRespBody, &dcrResult)
+		consoleClientID, _ := dcrResult["client_id"].(string)
+		if consoleClientID != "" {
+			log.Printf("bootstrap: Console registered as OAuth client %s", consoleClientID)
+		} else {
+			log.Printf("bootstrap: DCR returned status %d: %s", dcrResp.StatusCode, string(dcrRespBody))
+		}
+	}
+
+	// Step 4: Verify admin credentials via /api/v1/auth/verify (no token issuance).
+	verifyBody, _ := json.Marshal(map[string]string{
+		"username":  req.AdminUsername,
+		"password":  req.AdminPassword,
+		"tenant_id": tenantID.String(),
+	})
+	verifyReq, _ := http.NewRequestWithContext(r.Context(), "POST", authURL+"/api/v1/auth/verify", bytes.NewReader(verifyBody))
+	verifyReq.Header.Set("Content-Type", "application/json")
+	verifyReq.Header.Set("X-Tenant-ID", tenantID.String())
+	verifyResp, err := client.Do(verifyReq)
+	if err != nil {
+		writeGatewayJSONError(w, http.StatusBadGateway, "credential verification failed: "+err.Error())
+		return
+	}
+	verifyRespBody, _ := io.ReadAll(verifyResp.Body)
+	verifyResp.Body.Close()
+	var verifyResult map[string]any
+	json.Unmarshal(verifyRespBody, &verifyResult)
+	if adminUserID == "" {
+		adminUserID, _ = verifyResult["user_id"].(string)
+	}
+
+	log.Printf("bootstrap: admin user %s verified, status: %d", req.AdminUsername, verifyResp.StatusCode)
+
+	// Mark system as initialized.
 	quickstartInitialized = true
 
 	// Save WebAuthn config to DB (if provided)
@@ -355,17 +414,15 @@ func (gw *Gateway) handleSystemBootstrap(w http.ResponseWriter, r *http.Request)
 	}
 
 	writeGatewayJSON(w, http.StatusCreated, map[string]any{
-		"status":          "bootstrapped",
-		"tenant_id":       tenantID.String(),
-		"tenant_name":     req.TenantName,
-		"admin_user_id":   adminUserID,
-		"admin_username":  req.AdminUsername,
-		"access_token":    loginResult["access_token"],
-		"refresh_token":   loginResult["refresh_token"],
-		"message":         "System initialized successfully.",
+		"status":         "bootstrapped",
+		"tenant_id":      tenantID.String(),
+		"tenant_name":    req.TenantName,
+		"admin_user_id":  adminUserID,
+		"admin_username": req.AdminUsername,
+		"message":        "System initialized successfully. Use the Console login page to authenticate via OAuth.",
 		"next_steps": []string{
-			"POST /api/v1/users to create more users",
-			"POST /api/v1/users/{id}/roles to assign roles",
+			"Navigate to the Console login page to authenticate",
+			"POST /api/v1/users to create more users (requires Console login)",
 			"GET /api/v1/system/health to check system status",
 		},
 	})

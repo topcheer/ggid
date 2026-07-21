@@ -461,19 +461,18 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 	  btn.disabled = true; btn.textContent = '登录中...';
 	  errDiv.style.display = 'none';
 	  try {
-    const resp = await fetch('%s/api/v1/auth/login', {
+    const resp = await fetch('%s/api/v1/auth/verify', {
       method: 'POST',
       headers: {'Content-Type': 'application/json', 'X-Tenant-ID': '%s'},
       body: JSON.stringify({username: document.getElementById('username').value, password: document.getElementById('password').value, tenant_id: '%s'})
     });
 	    const data = await resp.json();
-	    if (!resp.ok) { errDiv.textContent = data.error?.message || data.error || '登录失败'; errDiv.style.display = 'block'; btn.disabled = false; btn.textContent = '登录'; return; }
-	    // Extract user_id from JWT and redirect back to authorize
-	    const payload = JSON.parse(atob(data.access_token.split('.')[1]));
-	    const url = new URL(window.location.href);
+		    if (!resp.ok) { errDiv.textContent = data.error?.message || data.error || '登录失败'; errDiv.style.display = 'block'; btn.disabled = false; btn.textContent = '登录'; return; }
+		    // Redirect back to authorize with verified user_id
+		    const url = new URL(window.location.href);
 	    const authorizeURL = url.pathname + url.search;
 	    const sep = authorizeURL.includes('?') ? '&' : '?';
-	    window.location.href = authorizeURL + sep + 'user_id=' + payload.sub;
+		    window.location.href = authorizeURL + sep + 'user_id=' + data.user_id;
 	  } catch (err) {
 	    errDiv.textContent = '网络错误，请重试'; errDiv.style.display = 'block';
 	    btn.disabled = false; btn.textContent = '登录';

@@ -240,6 +240,57 @@ func (s *AuthService) Login(ctx context.Context, username, password, ip, userAge
 	}, nil
 }
 
+// VerifyCredentials authenticates a user WITHOUT issuing tokens.
+// Returns userID and whether MFA is required. Used by OAuth authorize flow.
+func (s *AuthService) VerifyCredentials(ctx context.Context, username, password, ip string) (userID uuid.UUID, mfaRequired bool, err error) {
+	tc, err := tenant.FromContext(ctx)
+	if err != nil {
+		return uuid.Nil, false, fmt.Errorf("tenant context required: %w", err)
+	}
+
+	// Rate limit.
+	rlKey := fmt.Sprintf("login:%s", ip)
+	if err := s.rateLimiter.CheckAndIncrement(ctx, rlKey, s.cfg.RateLimit.LoginPerMinute); err != nil {
+		return uuid.Nil, false, err
+	}
+
+	// Authenticate via provider chain.
+	authCtx := authprovider.WithTenantContext(ctx, tc.TenantID)
+	result, err := s.chain.Authenticate(authCtx, authprovider.Credentials{
+		Username: username,
+		Password: password,
+	})
+	if err != nil {
+		return uuid.Nil, false, ErrInvalidCredentials
+	}
+
+	// Resolve user ID.
+	if result.LinkedUser == nil {
+		email, _ := result.Attributes["email"].(string)
+		if email == "" {
+			email = username + "@ldap.local"
+		}
+		name, _ := result.Attributes["displayName"].(string)
+		if name == "" {
+			name = username
+		}
+		newUser, err := s.identityClient.CreateUserFromSocial(ctx, tc.TenantID, username, email, name, string(result.Provider), result.ExternalID, result.Attributes)
+		if err != nil {
+			return uuid.Nil, false, fmt.Errorf("auto-provision failed: %w", err)
+		}
+		uid := newUser.ID
+		result.LinkedUser = &uid
+	}
+	userID = *result.LinkedUser
+
+	// Check MFA.
+	if s.mfaService != nil && s.mfaService.HasMFAEnabled(ctx, tc.TenantID, userID) {
+		return userID, true, nil
+	}
+
+	return userID, false, nil
+}
+
 // Logout revokes the session and all associated refresh tokens.
 func (s *AuthService) Logout(ctx context.Context, refreshToken string) error {
 	return s.tokenService.RevokeRefreshToken(ctx, refreshToken)

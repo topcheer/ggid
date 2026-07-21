@@ -127,11 +127,12 @@ async function doLogin(){
   const btn=document.getElementById("login-btn");
   btn.disabled=true;btn.textContent="Signing in...";
   try{
-    const r=await fetch("/api/v1/auth/login",{method:"POST",headers:{"Content-Type":"application/json","X-Tenant-ID":T},body:JSON.stringify({username:u,password:p})});
+    const r=await fetch("/api/v1/auth/verify",{method:"POST",headers:{"Content-Type":"application/json","X-Tenant-ID":T},body:JSON.stringify({username:u,password:p})});
     const d=await r.json();
     if(!r.ok){showErr(d.error||"Login failed");return}
-    if(d.mfa_required){document.getElementById("login-form").style.display="none";document.getElementById("mfa-form").style.display="block";document.getElementById("subtitle").textContent="Enter your verification code";window._session=d.session_id;return}
-    localStorage.setItem("ggid_access_token",d.access_token);
+    if(d.mfa_required){showErr("MFA required — use the admin console to log in.");return}
+    localStorage.setItem("ggid_user_id",d.user_id);
+    localStorage.setItem("ggid_tenant_id",d.tenant_id);
     localStorage.setItem("ggid_refresh_token",d.refresh_token);
     showOk("Success! Redirecting...");
     setTimeout(()=>window.location.href=redirectUri,500);
@@ -288,7 +289,6 @@ const hostedDeviceApproveHTML = `<!DOCTYPE html>
 <script>
 const T="00000000-0000-0000-0000-000000000001";
 const params=new URLSearchParams(location.search);
-var token=localStorage.getItem("ggid_access_token");
 
 function showErr(m){const e=document.getElementById("err");e.textContent=m;e.style.display="block";setTimeout(()=>e.style.display="none",5000)}
 function showOk(m){const e=document.getElementById("ok");e.textContent=m;e.style.display="block"}
@@ -298,12 +298,8 @@ if(params.get("user_code")){
   document.getElementById("user-code").value=params.get("user_code");
 }
 
-// Check if already logged in
-if(token){
-  showApproveForm();
-} else {
-  document.getElementById("login-form").style.display="block";
-}
+// Show login form by default.
+document.getElementById("login-form").style.display="block";
 
 function showApproveForm(){
   document.getElementById("login-form").style.display="none";
@@ -318,13 +314,15 @@ async function doLogin(){
   const btn=document.getElementById("login-btn");
   btn.disabled=true;btn.textContent="Signing in...";
   try{
-    const r=await fetch("/api/v1/auth/login",{method:"POST",headers:{"Content-Type":"application/json","X-Tenant-ID":T},body:JSON.stringify({username:u,password:p})});
+    const r=await fetch("/api/v1/auth/verify",{method:"POST",headers:{"Content-Type":"application/json","X-Tenant-ID":T},body:JSON.stringify({username:u,password:p})});
     const d=await r.json();
     if(!r.ok){showErr(d.error||d.detail||"Login failed");return}
     if(d.mfa_required){
-      document.getElementById("login-form").style.display="none";
-      document.getElementById("mfa-form").style.display="block";
-      window._session=d.session_id;
+      showErr("MFA required — use the admin console to log in.");
+      return;
+    }
+    // Store user identity for device approval
+    window._userId=d.user_id;
       return;
     }
     token=d.access_token;
@@ -352,12 +350,7 @@ async function doApprove(){
   const btn=document.getElementById("approve-btn");
   btn.disabled=true;btn.textContent="Authorizing...";
   try{
-    // Decode JWT to get user_id for the approve endpoint
-    var userId="";
-    try{
-      const payload=JSON.parse(atob(token.split(".")[1]));
-      userId=payload.sub||"";
-    }catch(e){}
+    var userId=window._userId||"";
     const r=await fetch("/api/v1/oauth/device/approve",{
       method:"POST",
       headers:{"Content-Type":"application/x-www-form-urlencoded","X-Tenant-ID":T,"X-User-ID":userId},

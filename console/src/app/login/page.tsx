@@ -129,132 +129,27 @@ export default function LoginPage() {
     setError("");
 
     try {
-      const resp = await fetch(`${API_BASE}/api/v1/auth/login`, {
-        method: "POST",
-        headers: { ...authHeader(), "Content-Type": "application/json", "X-Tenant-ID": resolvedTenantId },
-        body: JSON.stringify({ username, password }),
-      });
-      const data = await resp.json();
-
-      if (!resp.ok) {
-        const rawErr = typeof data.error === 'string'
-          ? data.error
-          : data.error?.code || data.error?.message || data.message || "login_failed";
-
-        // Translate known error codes to user-friendly messages
-        const errorMessages: Record<string, string> = {
-          unauthenticated: "Invalid username or password.",
-          too_many_login_attempts: "Too many login attempts. Please try again later.",
-          rate_limited: "Too many login attempts. Please try again later.",
-          invalid_credentials: "Invalid username or password.",
-          account_locked: "Your account has been locked. Please contact your administrator.",
-          account_disabled: "Your account has been disabled.",
-          password_expired: "Your password has expired. Please reset it.",
-          tenant_not_found: "Organization not found. Please check your tenant.",
-        };
-        setError(errorMessages[rawErr] || rawErr);
-
-        // Start countdown for rate limit errors
-        if (rawErr === 'too_many_login_attempts' || rawErr === 'rate_limited') {
-          const retryAfter = parseInt(resp.headers.get('Retry-After') || '30', 10);
-          setRateLimitSeconds(retryAfter);
-        }
-        return;
-      }
-
-      // Check if MFA is required
-      if (data.mfa_required || data.mfa_token) {
-        setMfaToken(data.mfa_token || "");
-        setStep("mfa");
-        return;
-      }
-
-      // Success — store token and check for OAuth redirect
-      localStorage.setItem("ggid_access_token", data.access_token);
-      localStorage.setItem("ggid_refresh_token", data.refresh_token || "");
-      if (data.session_id) {
-        localStorage.setItem("ggid_session_id", data.session_id);
-      }
-
-      // Extract user info from JWT for pages that need it
-      try {
-        const payload = JSON.parse(atob(data.access_token.split(".")[1]));
-        if (payload.tenant_id) localStorage.setItem("ggid_tenant_id", payload.tenant_id);
-        if (payload.sub) localStorage.setItem("ggid_user_id", payload.sub);
-        if (payload.username) localStorage.setItem("ggid_user_name", payload.username);
-        if (payload.email) localStorage.setItem("ggid_user_email", payload.email);
-        // Extract scopes for role-driven navigation
-        const scopes = payload.scopes || payload.roles || ["user"];
-        if (Array.isArray(scopes)) {
-          localStorage.setItem("ggid_user_scopes", JSON.stringify(scopes));
-        } else {
-          localStorage.setItem("ggid_user_scopes", JSON.stringify([scopes]));
-        }
-      } catch {}
-
-      // Fetch dynamic permissions for sidebar (non-blocking, cached in localStorage)
-      fetch(`${API_BASE}/api/v1/me/permissions`, {
-        headers: { Authorization: `Bearer ${data.access_token}`, "X-Tenant-ID": resolvedTenantId },
-      })
-        .then(r => r.ok ? r.json() : null)
-        .then(d => {
-          if (d) {
-            const perms = d.permissions || d.items || d;
-            if (Array.isArray(perms)) localStorage.setItem("ggid_user_permissions", JSON.stringify(perms));
-          }
-        })
-        .catch(() => {}); // Non-blocking — sidebar falls back to scope-based filtering
-
-      // If redirect_to is set (OAuth flow), redirect back to authorize with user_id
+      // Initiate OAuth Authorization Code + PKCE flow.
+      // The actual credential verification happens on the OAuth authorize
+      // page's inline login form, NOT here. Console never touches credentials.
+      const { initOAuthFlow } = await import("@/lib/oauth-pkce");
+      const redirectUri = `${window.location.origin}/auth/callback`;
+      const authUrl = await initOAuthFlow(
+        `${API_BASE}/oauth/authorize`,
+        "ggid-console",
+        redirectUri,
+        resolvedTenantId,
+      );
+      // Save redirect target for after callback
       const params = new URLSearchParams(window.location.search);
       const redirectTo = params.get("redirect_to");
       if (redirectTo) {
-        // Extract user_id from JWT
-        const token = data.access_token;
-        try {
-          const payload = JSON.parse(atob(token.split(".")[1]));
-          const userId = payload.sub;
-          const url = new URL(redirectTo);
-          url.searchParams.set("user_id", userId);
-          window.location.href = url.toString();
-          return;
-        } catch {
-          // fallback: just redirect without user_id
-          window.location.href = redirectTo;
-          return;
-        }
+        sessionStorage.setItem("ggid_redirect_after_login", redirectTo);
       }
-
-      // Conditional Create: offer passkey upgrade after password login (non-blocking)
-      // Browser auto-prompts user to create passkey if supported (FIDO L3 silent migration)
-      try {
-        const userId = localStorage.getItem("ggid_user_id") || "";
-        if (userId) {
-          await offerPasskeyUpgrade({ accessToken: data.access_token, userId });
-        }
-      } catch {
-        // Non-blocking: login proceeds regardless of passkey creation outcome
-      }
-
-      // Signal API: sync browser passkey list (remove stale credentials)
-      // Re-enabled — backend valid-ids now queries DB store (commit 4a5bff9c)
-      syncSignalAfterLogin().catch(() => {});
-
-      // No MFA needed — redirect based on role
-      // Non-admin users go to /profile, admin users go to /dashboard
-      const userScopes = JSON.parse(localStorage.getItem("ggid_user_scopes") || "[\"user\"]");
-      const isAdmin = userScopes.some((s: string) => {
-        const ls = s.toLowerCase();
-        return ls === "admin" || ls === "platform:admin" || ls === "platform_admin" ||
-               ls === "tenant:admin" || ls === "tenant_admin" ||
-               ls === "administrator" || ls === "platform administrator" || ls === "tenant administrator";
-      });
-      // Use window.location.href for hard navigation — router.push can silently fail
-      // when localStorage was just written (AuthGuard needs fresh page load)
-      window.location.href = isAdmin ? "/dashboard" : "/profile";
+      // Redirect browser to OAuth authorize endpoint
+      window.location.href = authUrl;
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Network error — is the API running?");
-    } finally {
+      setError(err instanceof Error ? err.message : "OAuth initialization failed");
       setLoading(false);
     }
   };
@@ -596,33 +491,6 @@ export default function LoginPage() {
             </div>
             </>
             )}
-
-            {/* OAuth SSO Entry */}
-            <div className="mt-4 border-t border-gray-100 pt-4 dark:border-gray-700">
-              <p className="mb-2 text-center text-xs text-gray-400">or sign in with</p>
-              <button
-                type="button"
-                onClick={async () => {
-                  try {
-                    const { initOAuthFlow } = await import("@/lib/oauth-pkce");
-                    const redirectUri = `${window.location.origin}/auth/callback`;
-                    const authUrl = await initOAuthFlow(
-                      `${API_BASE}/oauth/authorize`,
-                      "ggid-console",
-                      redirectUri,
-                    );
-                    window.location.href = authUrl;
-                  } catch (err) {
-                    setError(err instanceof Error ? err.message : "OAuth initialization failed");
-                  }
-                }}
-                aria-label="Sign in with OAuth SSO"
-                className="flex w-full items-center justify-center gap-2 rounded-lg border border-gray-300 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:text-gray-200 dark:hover:bg-gray-950"
-              >
-                <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 2L2 7v10c0 5.55 3.84 9.74 9 11 5.16-1.26 9-5.45 9-11V7l-10-5z" /></svg>
-                Sign in with GGID SSO
-              </button>
-            </div>
 
             <p className="mt-4 text-center text-sm text-gray-500 dark:text-gray-400">
               {t("login.noAccount")}{" "}

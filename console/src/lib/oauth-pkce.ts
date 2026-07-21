@@ -57,7 +57,8 @@ export async function initOAuthFlow(
   authorizeUrl: string,
   clientId: string,
   redirectUri: string,
-  scope: string = "openid profile email admin",
+  tenantId: string,
+  scope: string = "openid profile email offline_access",
 ): Promise<string> {
   const code_verifier = generateCodeVerifier();
   const code_challenge = await generateCodeChallenge(code_verifier);
@@ -81,6 +82,7 @@ export async function initOAuthFlow(
     state,
     code_challenge,
     code_challenge_method: "S256",
+    tenant_id: tenantId,
   });
 
   return `${authorizeUrl}?${params.toString()}`;

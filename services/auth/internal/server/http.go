@@ -165,6 +165,7 @@ func (h *Handler) registerRoutes() {
 	h.mux.HandleFunc("/readyz", h.readyz)
 	h.mux.Handle("/metrics", promhttp.Handler())
 	h.mux.HandleFunc("/api/v1/auth/login", h.login)
+	h.mux.HandleFunc("/api/v1/auth/verify", h.verifyCredentials) // OAuth login flow credential check (no token)
 	h.mux.HandleFunc("/api/v1/auth/register", h.register)
 	h.mux.HandleFunc("/api/v1/auth/logout", h.logout)
 	h.mux.HandleFunc("/api/v1/auth/refresh", h.refresh)
@@ -801,7 +802,93 @@ func (h *Handler) login(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, tokens)
 }
 
-// --- Register ---
+// verifyCredentials verifies username/password WITHOUT issuing tokens.
+// Used by OAuth authorize endpoint's inline login page and the hosted
+// /login page. Returns user identity info for the OAuth flow.
+//
+// This is the ONLY credential verification endpoint. Tokens are issued
+// exclusively by the OAuth service.
+func (h *Handler) verifyCredentials(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+		return
+	}
+
+	var req loginRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		writeError(w, http.StatusBadRequest, "invalid request body")
+		return
+	}
+
+	ip := clientIP(r)
+	userAgent := r.Header.Get("User-Agent")
+
+	// Inject tenant context from body.
+	if _, err := ggidtenant.FromContext(r.Context()); err != nil && req.TenantID != "" {
+		if tid, perr := uuid.Parse(req.TenantID); perr == nil {
+			tc := &ggidtenant.Context{
+				TenantID:       tid,
+				IsolationLevel: ggidtenant.IsolationShared,
+			}
+			r = r.WithContext(ggidtenant.WithContext(r.Context(), tc))
+		}
+	}
+	if _, err := ggidtenant.FromContext(r.Context()); err != nil && req.TenantSlug != "" {
+		if tid := h.resolveTenantBySlug(r.Context(), req.TenantSlug); tid != uuid.Nil {
+			tc := &ggidtenant.Context{
+				TenantID:       tid,
+				IsolationLevel: ggidtenant.IsolationShared,
+			}
+			r = r.WithContext(ggidtenant.WithContext(r.Context(), tc))
+		}
+	}
+
+	// Brute force protection.
+	if tc, err := ggidtenant.FromContext(r.Context()); err == nil {
+		if err := h.authSvc.CheckBruteForce(r.Context(), tc.TenantID, ip, req.Username); err != nil {
+			writeError(w, http.StatusTooManyRequests, "too many login attempts")
+			return
+		}
+		if h.authSvc.IsAccountLocked(r.Context(), tc.TenantID, req.Username) {
+			writeError(w, http.StatusLocked, "account locked")
+			return
+		}
+	}
+
+	userID, mfaRequired, err := h.authSvc.VerifyCredentials(r.Context(), req.Username, req.Password, ip)
+	if err != nil {
+		if tc, terr := ggidtenant.FromContext(r.Context()); terr == nil {
+			_ = h.authSvc.RecordFailedLogin(r.Context(), tc.TenantID, req.Username)
+		}
+		h.authSvc.RecordLoginAttempt(r.Context(), req.Username, ip, userAgent, false, err.Error())
+		writeError(w, http.StatusUnauthorized, "invalid credentials")
+		return
+	}
+
+	// Reset failed login counter on success.
+	if tc, err := ggidtenant.FromContext(r.Context()); err == nil {
+		h.authSvc.ResetFailedLogins(r.Context(), tc.TenantID, req.Username)
+	}
+	h.authSvc.RecordLoginAttempt(r.Context(), req.Username, ip, userAgent, true, "")
+
+	// Audit.
+	if tc, err := ggidtenant.FromContext(r.Context()); err == nil {
+		event := audit.NewEvent("user.verify", "success", tc.TenantID, userID)
+		event.ActorName = req.Username
+		event.IPAddress = ip
+		event.UserAgent = userAgent
+		h.auditPublisher.PublishAsync(event)
+
+		writeJSON(w, http.StatusOK, map[string]any{
+			"user_id":      userID.String(),
+			"tenant_id":    tc.TenantID.String(),
+			"username":     req.Username,
+			"mfa_required": mfaRequired,
+		})
+		return
+	}
+	writeError(w, http.StatusBadRequest, "tenant context required")
+}
 
 type registerRequest struct {
 	Username string `json:"username"`
