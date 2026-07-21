@@ -36,7 +36,7 @@ public class GGIDClient
     /// </summary>
     public GGIDClient WithJwks(string? jwksUrl = null)
     {
-        _verifier = new JwtVerifier(jwksUrl ?? $"{_baseUrl}/oauth/jwks", _http, _tenantId);
+        _verifier = new JwtVerifier(jwksUrl ?? $"{_baseUrl}/.well-known/jwks.json", _http, _tenantId);
         return this;
     }
 
