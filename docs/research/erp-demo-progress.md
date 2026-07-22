@@ -317,3 +317,18 @@ Zero regressions from DB reset recovery.
 - Inventory: 3 items correct fields ✅ | POST id=p004 ✅ | Perms: 9p inv+ord ✅ | 7/7 demo 200 ✅ | 0 hacks
 
 ### Next Dimension: 4 — Multi-tenant Isolation
+
+## Dimension 4 C4: Tenant Isolation + Permission Escalation (Round 45)
+### NEW: Permission escalation test with viewer user
+- Created viewer_go user with ERP Viewer role (4 read-only perms)
+- Viewer GET inventory: 200 PASS ✅
+- Viewer POST inventory: 403 PASS (denied) ✅ — ESCALATION PREVENTED
+- Viewer GET orders: 200 PASS ✅
+- Admin POST inventory: 201 PASS ✅
+
+### Multi-tenant isolation
+- Cross-tenant Go→Java: 401 ✅
+- Cross-tenant Java→Go: 401 ✅
+- 0 hacks
+
+### Next Dimension: 5 — SDK Cross-language Consistency
