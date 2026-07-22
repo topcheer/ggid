@@ -669,7 +669,11 @@ func (gw *Gateway) checkRouteScope(w http.ResponseWriter, r *http.Request) bool 
 
 	// Get scopes from JWT claims
 	claims := middleware.ExtractJWTClaims(r)
-	if len(claims.Scopes) == 0 && len(claims.Roles) == 0 {
+	// If there's no JWT subject at all, let auth middleware handle (401).
+	// But if there IS a JWT (subject present) with empty roles/scope, the
+	// user is authenticated but has no admin privileges — must still go
+	// through RBAC checks below. Only completely anonymous requests skip.
+	if claims.Subject == "" {
 		return true // no JWT — let auth middleware handle
 	}
 
