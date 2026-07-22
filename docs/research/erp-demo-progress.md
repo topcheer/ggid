@@ -438,3 +438,7 @@ Consistent results: viewer escalation prevented, cross-tenant rejected, all demo
 - 5/5 password grant + M2M OK ✅ | 7/7 demo 200 ✅ | 0 hacks
 
 ### Next Dimension: 2 — Authorization Boundaries
+## Dimension 2 C7: AuthZ (Round 61)
+- Admin: read(200)+create(201) ✅ | Viewer: read(200)+create DENIED(403) ✅ | Fake: 401 ✅ | 0 hacks
+
+### Next Dimension: 3 — Demo Functional Completeness
