@@ -1018,3 +1018,22 @@ Auth build: ✅ | Hacks: 0 ✅
 Hacks: 0 ✅ — **Seventh consecutive zero-fix cycle.**
 
 ### Next Dimension: 1 — Cycle 16
+
+## Cycle 16: Post-IdP-Configs-Migration (Rounds 114-119)
+
+**Core Change**: `b6f558389` fix(R1-02): add tenant_idp_configs migration for social login — new table, no modification to existing schema.
+
+**All 6 dimensions pass, zero issues**:
+
+| Dim | Result |
+|-----|--------|
+| D1 | 7/7 password grant, M2M OK ✅ |
+| D2 | admin 200/201, viewer 200/403 ✅ |
+| D3 | 12 items, all fields present ✅ |
+| D4 | Go→Go 200, Node→Go 403, Fake 401 ✅ |
+| D5 | 7/7 SDK consistent ✅ |
+| D6 | refresh OK, no-token 401 ✅ |
+
+Hacks: 0 ✅ — **Eighth consecutive zero-fix cycle.**
+
+### Next Dimension: 1 — Cycle 17
