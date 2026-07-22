@@ -336,9 +336,74 @@ func (r *RBACResolver) CheckAccess(ctx context.Context, path, method string, cla
 		}
 	}
 
+	// Permission-key fallback: if role-based grant did not suffice, check
+	// whether the JWT permissions claim contains a fine-grained permission
+	// (e.g. "users:read") that maps to this route's resource. This bridges
+	// the gap between the permissions system (role_permissions -> JWT
+	// permissions array) and the route-based RBAC system
+	// (role_route_permissions).
+	if grant < required {
+		if HasPermissionForRoute(path, method, claims.Permissions) {
+			grant = required
+		}
+	}
+
 	if bestLen < 0 {
 		// No dynamic rule for this path — caller applies static logic.
 		return false, false
 	}
 	return grant >= required, true
+}
+
+// routePermissionResource maps API route prefixes to the permission resource
+// type used in the permissions table (e.g. "/api/v1/users" -> "users").
+// Longest-prefix match wins. This bridges fine-grained JWT permissions
+// ("users:read") to route-level access decisions.
+var routePermissionResource = map[string]string{
+	"/api/v1/users":              "users",
+	"/api/v1/roles":              "roles",
+	"/api/v1/audit/":             "audit",
+	"/api/v1/policies":           "policies",
+	"/api/v1/webhooks":           "webhooks",
+	"/api/v1/oauth/clients":      "oauth",
+	"/api/v1/settings/":          "settings",
+	"/api/v1/identity/dashboard": "dashboard",
+	"/api/v1/inventory":          "inventory",
+	"/api/v1/security":           "security",
+	"/api/v1/orders":             "orders",
+}
+
+// HasPermissionForRoute checks whether the JWT permissions array contains a
+// key (e.g. "users:read") that grants access to the route's resource for the
+// given HTTP method. GET/HEAD/OPTIONS require "resource:read"; all other
+// methods require "resource:write". A "resource:admin" key grants all actions.
+func HasPermissionForRoute(path, method string, perms []string) bool {
+	if len(perms) == 0 {
+		return false
+	}
+	// Longest-prefix match to find the resource type.
+	resource := ""
+	bestLen := 0
+	for prefix, res := range routePermissionResource {
+		if strings.HasPrefix(path, prefix) && len(prefix) > bestLen {
+			resource = res
+			bestLen = len(prefix)
+		}
+	}
+	if resource == "" {
+		return false
+	}
+	action := "write"
+	if method == http.MethodGet || method == http.MethodHead || method == http.MethodOptions {
+		action = "read"
+	}
+	required := resource + ":" + action
+	adminKey := resource + ":admin"
+	for _, p := range perms {
+		pl := strings.ToLower(p)
+		if pl == required || pl == adminKey {
+			return true
+		}
+	}
+	return false
 }

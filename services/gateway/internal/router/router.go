@@ -751,6 +751,13 @@ func (gw *Gateway) checkRouteScope(w http.ResponseWriter, r *http.Request) bool 
 			if strings.HasPrefix(path, "/api/v1/tenants/resolve") {
 				continue
 			}
+			// Permission-key bypass: a non-admin user with a fine-grained
+			// permission (e.g. "users:read") that maps to this route is
+			// allowed through; the dynamic RBAC middleware or backend
+			// service will enforce the exact permission.
+			if middleware.HasPermissionForRoute(path, r.Method, claims.Permissions) {
+				continue
+			}
 			writeGatewayJSONError(w, http.StatusForbidden, "admin access required")
 			return false
 		}
