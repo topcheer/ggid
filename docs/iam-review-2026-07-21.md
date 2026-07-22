@@ -2,7 +2,7 @@
 
 > 审视人：god_fullstack&everything（定期审视任务 cron-1 首轮）
 > 方法：三路并行代码级审查（OAuth/OIDC/SAML · Auth/Identity/SCIM · 增强功能兼容性+竞品迁移），所有结论均有 file:line 证据。
-> 状态：**R1 完成（已部署生产）。** R4/R10/R11 安全修复已部署。R12-R17 RBAC 逐步收紧审查通过。R18-R21 无增量/RFC 审查通过。R22（00:43）：11 个核心变更审查通过——6 项安全修复（revokedToken DB 持久化、TOTP AES-256-GCM 加密、dev fallback 移除、硬编码 secret 清理、hash chain 版本化+canonical、raw role-name admin 匹配消除）+ 3 项 R1-01 onboarding 编排 + 1 项 R1-03 org tree routes + 1 项 policy bugfix。构建测试全绿，无安全问题。
+> 状态：**R1 完成（已部署生产）。** R4/R10/R11 安全修复已部署。R12-R17 RBAC 逐步收紧审查通过。R18-R22 审查通过。R23（01:43）：2 个 social login publicPaths 路由注册审查通过（R1-02 前置），构建全绿，无安全问题。R1-02 social login handler 实现进行中。
 
 ---
 
