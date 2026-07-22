@@ -272,10 +272,10 @@ func (r *RBACResolver) loadFromDB(ctx context.Context) ([]routePermRow, error) {
 //     role name or key) holds a level >= required for the matched prefix.
 func (r *RBACResolver) CheckAccess(ctx context.Context, path, method string, claims JWTCClaims) (allow, handled bool) {
 	// 0. Self-service endpoints bypass dynamic RBAC — every authenticated
-	// user can view/edit their own profile. Only exempt exact path and
-	// immediate sub-paths, not deep sub-resources like /users/me/settings
-	// which may have different permission requirements.
-	if path == "/api/v1/users/me" ||
+	// user can view/edit their own profile. Only the whitelisted exact
+	// paths are exempt (see SelfServicePaths). Deep sub-resources like
+	// /users/me/settings are NOT exempt and must match a dynamic rule.
+	if SelfServicePaths[path] ||
 		strings.HasPrefix(path, "/api/v1/tenants/resolve") {
 		return false, false // not handled → static fallback
 	}

@@ -45,12 +45,20 @@ var defaultAdminPrefixes = []string{
 	"/api/v1/impersonate",     // Impersonation (platform admin only)
 }
 
+// SelfServicePaths are /users/me sub-paths exempt from admin checks.
+// Only the exact profile path and explicitly listed sub-paths are exempt
+// — deep sub-resources like /users/me/settings are NOT exempt.
+var SelfServicePaths = map[string]bool{
+	"/api/v1/users/me":             true,
+	"/api/v1/users/me/permissions": true, // read-only permission listing
+}
+
 // isAdminEndpoint returns true for endpoints that require admin scope.
 func isAdminEndpoint(path string) bool {
 	for _, prefix := range defaultAdminPrefixes {
 		if strings.HasPrefix(path, prefix) {
-			// Allow /api/v1/users/me for self-service
-			if path == "/api/v1/users/me" || strings.HasPrefix(path, "/api/v1/users/me/") {
+			// Allow whitelisted self-service paths (exact match only)
+			if SelfServicePaths[path] {
 				return false
 			}
 			// Allow tenant resolve (public lookup)

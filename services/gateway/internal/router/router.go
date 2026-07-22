@@ -743,8 +743,8 @@ func (gw *Gateway) checkRouteScope(w http.ResponseWriter, r *http.Request) bool 
 		// Check tenant-admin paths (but allow self-service endpoints)
 	for _, prefix := range adminOnlyPaths {
 		if strings.HasPrefix(path, prefix) && !hasTenant {
-			// Allow /api/v1/users/me for self-service
-			if path == "/api/v1/users/me" || strings.HasPrefix(path, "/api/v1/users/me/") {
+			// Allow whitelisted self-service paths (exact match only)
+			if middleware.SelfServicePaths[path] {
 				continue
 			}
 			// Allow /api/v1/tenants/resolve (public lookup)
