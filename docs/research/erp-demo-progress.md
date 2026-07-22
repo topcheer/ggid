@@ -360,3 +360,9 @@ All 6 dimensions verified, now including viewer/admin role escalation test.
 - 5/5 password grant + M2M OK ✅ | 7/7 demo 200 ✅ | 0 hacks
 
 ### Next Dimension: 2 — Authorization Boundaries
+
+## Dimension 2 C5: AuthZ (Round 49)
+- Admin: read(200)+create(201) ✅ | Viewer: read(200)+create DENIED(403) ✅ | Fake: 401 ✅
+- 7/7 demo 200 ✅ | 0 hacks
+
+### Next Dimension: 3 — Demo Functional Completeness
