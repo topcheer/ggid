@@ -15,7 +15,8 @@ type ConditionalAccessPolicy struct {
 	TenantID   string         `json:"tenant_id"`
 	Name       string         `json:"name"`
 	Conditions map[string]any `json:"conditions"`
-	Actions    map[string]any `json:"actions"`
+	Actions    map[string]any `json:"actions,omitempty"`
+	Action     string         `json:"action"` // top-level convenience: value of actions["action"]
 	Enabled    bool           `json:"enabled"`
 	Priority   int            `json:"priority"`
 	CreatedAt  time.Time      `json:"created_at"`
@@ -33,6 +34,7 @@ func (s *HTTPServer) handleConditionalAccess(w http.ResponseWriter, r *http.Requ
 			Name       string         `json:"name"`
 			Conditions map[string]any `json:"conditions"`
 			Actions    map[string]any `json:"actions"`
+			Action     string         `json:"action"` // singular convenience: "block" / "require_mfa" / "deny"
 			Enabled    *bool          `json:"enabled"`
 			Priority   int            `json:"priority"`
 		}
@@ -48,16 +50,26 @@ func (s *HTTPServer) handleConditionalAccess(w http.ResponseWriter, r *http.Requ
 			req.Conditions = map[string]any{}
 		}
 		if req.Actions == nil {
-			req.Actions = map[string]any{"action": "deny"}
+			if req.Action != "" {
+				req.Actions = map[string]any{"action": req.Action}
+			} else {
+				req.Actions = map[string]any{"action": "deny"}
+			}
 		}
 		enabled := true
 		if req.Enabled != nil {
 			enabled = *req.Enabled
 		}
 		now := time.Now().UTC()
+		actionStr := req.Action
+		if actionStr == "" {
+			if a, ok := req.Actions["action"].(string); ok {
+				actionStr = a
+			}
+		}
 		p := &ConditionalAccessPolicy{
 			ID: uuid.New().String(), TenantID: req.TenantID, Name: req.Name,
-			Conditions: req.Conditions, Actions: req.Actions,
+			Conditions: req.Conditions, Actions: req.Actions, Action: actionStr,
 			Enabled: enabled, Priority: req.Priority, CreatedAt: now, UpdatedAt: now,
 		}
 		if s.policyMap != nil {
@@ -78,6 +90,11 @@ func (s *HTTPServer) handleConditionalAccess(w http.ResponseWriter, r *http.Requ
 					ID: pmGetString(row, "id"), TenantID: pmGetString(row, "tenant_id"),
 					Name: pmGetString(row, "name"), Conditions: pmGetMap(row, "conditions"),
 					Actions: pmGetMap(row, "actions"), Enabled: pmGetBool(row, "enabled"),
+				}
+				if acts := pmGetMap(row, "actions"); acts != nil {
+					if a, ok := acts["action"].(string); ok {
+						p.Action = a
+					}
 				}
 				if id != "" && p.ID != id {
 					continue
