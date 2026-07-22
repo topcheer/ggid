@@ -366,3 +366,9 @@ All 6 dimensions verified, now including viewer/admin role escalation test.
 - 7/7 demo 200 ✅ | 0 hacks
 
 ### Next Dimension: 3 — Demo Functional Completeness
+
+## Dimension 3 C5: Functional (Round 50)
+- Inv: 4 items correct fields ✅ | POST id=p005 ✅ | Verify found ✅ | Perms: 9p inv+ord ✅
+- 7/7 demo 200 ✅ | 0 hacks
+
+### Next Dimension: 4 — Multi-tenant Isolation
