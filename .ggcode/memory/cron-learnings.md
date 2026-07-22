@@ -40,6 +40,10 @@
 - [2026-07-23] **已验证: Tenant resolve API** — GET /api/v1/tenants/resolve?slug=default 返回 tenant_id+name+slug。Gateway 已有 EnhancedTenantResolver 中间件支持 subdomain→tenant 解析。R1-01 onboarding 路由基础设施已就绪
 - [2026-07-23] **P1 安全修复已部署**: auth(S1-S4,S6,S7) + identity(S1) + audit(S3,CORS) + oauth(introspection,dedup,scope交集) + gateway(CORS fail-closed) + policy(CAE action)。5 个服务全部重建部署
 - [2026-07-23] **govulncheck 结果**: 1 vulnerability (GO-2026-5856 crypto/tls ECH privacy leak, fixed in go1.26.5)。需升级 Go 版本修复
+- [2026-07-23] **P1: Console conditional-access 设置页 API 端点错误** — 调用 `/api/v1/auth/conditional-access/policies` (不存在) 而非 `/api/v1/policies/conditional-access` (正确)。返回空→静默回退到 mock 数据。已修复 (commit 97d07e904)，Console 已重建部署
+- [2026-07-23] **已验证: review-schedules API** — `/api/v1/identity/review-schedules` 返回 200 + 空数组 (正确)。Identity 服务已注册路由
+- [2026-07-23] **R1-02 Social Login 已部署验证**: Gateway publicPaths 放行 + auth handler 部署。`GET /api/v1/auth/social/google` 返回 503 (无 IdP 配置，正确业务错误)。需在 tenant_idp_configs 配置 Google OAuth 才能端到端
+- [2026-07-23] **admin 密码 cred sync race**: auth pod 重启后密码 hash 被 bootstrap 覆盖。手动用 crypto.HashPassword 生成新 hash 更新 DB。密码: q7Rf9Xk2Lm3pW8zB (无尾A)。PASSWORD_PEPPER 环境变量未设置 (S6 修复仅 warning 不 fail)
 
 - [2026-07-21] auth-guard.tsx scope 匹配：JWT roles 存的是显示名（如 "Platform Administrator"），不是 scope key（如 "platform:admin"）。匹配逻辑必须大小写不敏感 + 包含显示名变体
 - [2026-07-21] Go SDK verifyTokenOffline 用 ParseUnverified 接受伪造 JWT。已移除，VerifyToken 强制要求 WithJWKS()
