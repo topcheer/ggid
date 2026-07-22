@@ -648,11 +648,15 @@ func (gw *Gateway) Handler() http.Handler {
 // maxBodySize returns the configured maximum request body size.
 
 // adminOnlyPaths are paths that require tenant:admin or platform:admin scope.
+// Both /api/v1/* and bare /oauth/* variants are listed because the gateway
+// proxies some OAuth service routes without the /api/v1 prefix.
 var adminOnlyPaths = []string{
 	"/api/v1/users", "/api/v1/roles", "/api/v1/audit/events",
 	"/api/v1/policies", "/api/v1/webhooks", "/api/v1/oauth/clients",
 	"/api/v1/settings/", "/api/v1/admin/", "/api/v1/identity/dashboard",
 	"/api/v1/tenants",
+	// Bare OAuth management endpoints (no /api/v1 prefix in proxy route)
+	"/oauth/clients",
 }
 
 // platformOnlyPaths require platform:admin scope.

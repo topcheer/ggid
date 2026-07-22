@@ -27,6 +27,30 @@ func checkScopeRequest(t *testing.T, path, authHeader string) *httptest.Response
 	return rec
 }
 
+// TestCheckRouteScope_EmptyRolesDeniedOnAdminPaths: P0 regression — a
+// newly registered user with roles=[] and only OIDC scopes must be denied
+// on admin-only paths including the bare /oauth/clients route (which the
+// gateway proxies without the /api/v1 prefix).
+func TestCheckRouteScope_EmptyRolesDeniedOnAdminPaths(t *testing.T) {
+	token := mkTestJWT(map[string]any{
+		"sub":   "newuser",
+		"scope": "openid profile email",
+		"roles": []string{},
+	})
+
+	for _, path := range []string{
+		"/api/v1/oauth/clients",
+		"/oauth/clients",
+		"/api/v1/users",
+		"/api/v1/users/123e4567-e89b-12d3-a456-426614174000",
+	} {
+		rec := checkScopeRequest(t, path, token)
+		if rec.Code != http.StatusForbidden {
+			t.Errorf("path %s: expected 403 for empty-roles user, got %d", path, rec.Code)
+		}
+	}
+}
+
 func TestCheckRouteScope_OAuthRolesClaim(t *testing.T) {
 	// OAuth-issued token with platform:admin in both scope and roles.
 	// Platform access requires the scope-style key, not the display name.
