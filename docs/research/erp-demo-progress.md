@@ -412,3 +412,8 @@ Consistent results: viewer escalation prevented, cross-tenant rejected, all demo
 - Inv: 5 items correct fields ✅ | POST id=p006 ✅ | Perms: 9p inv+ord ✅ | 7/7 demo 200 ✅ | 0 hacks
 
 ### Next Dimension: 4 — Multi-tenant Isolation
+
+## Dimension 4 C6: Tenant Isolation (Round 57)
+- Go→Java: 401 ✅ | Java→Go: 401 ✅ | Viewer create: 403 ✅ | Viewer read: 200 ✅ | 0 hacks
+
+### Next Dimension: 5 — SDK Cross-language Consistency
