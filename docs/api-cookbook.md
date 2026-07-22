@@ -13,7 +13,7 @@
 ```bash
 # Set these once per session
 export GGID=http://localhost:8080
-export TENANT=00000000-0000-0000-0000-000000000001
+export TENANT=28d6fe98-adeb-4c0c-b49b-20c6695bbca6
 ```
 
 ---
@@ -25,7 +25,7 @@ curl -sS -X POST "$GGID/api/v1/auth/register" \
   -H "Content-Type: application/json" \
   -H "X-Tenant-ID: $TENANT" \
   -d '{
-    "username": "alice",
+    grant_type=password&username= "alice",
     "email": "alice@example.com",
     "password": "Str0ng#Pass2024!"
   }'
@@ -34,19 +34,16 @@ curl -sS -X POST "$GGID/api/v1/auth/register" \
 ## 2. Login (Get JWT Tokens)
 
 ```bash
-curl -sS -X POST "$GGID/api/v1/auth/login" \
-  -H "Content-Type: application/json" \
+curl -sS -X POST "$GGID/oauth/token" \
+  -H "Content-Type: application/x-www-form-urlencoded" \
   -H "X-Tenant-ID: $TENANT" \
-  -d '{
-    "username": "alice",
-    "password": "Str0ng#Pass2024!"
-  }'
+  -d 'grant_type=password&username=alice&password=Str0ng%23Pass2024!&client_id=YOUR_CLIENT_ID&scope=openid profile email offline_access'
 
 # Save the token:
-export TOKEN=$(curl -sS -X POST "$GGID/api/v1/auth/login" \
-  -H "Content-Type: application/json" \
+export TOKEN=$(curl -sS -X POST "$GGID/oauth/token" \
+  -H "Content-Type: application/x-www-form-urlencoded" \
   -H "X-Tenant-ID: $TENANT" \
-  -d '{"username":"alice","password":"Str0ng#Pass2024!"}' | jq -r .access_token)
+  -d 'grant_type=password&username=alice&password=Str0ng%23Pass2024!&client_id=YOUR_CLIENT_ID&scope=openid profile email offline_access' | jq -r .access_token)
 ```
 
 ## 3. Refresh Access Token
@@ -65,7 +62,7 @@ curl -sS -X POST "$GGID/api/v1/users" \
   -H "Authorization: Bearer $TOKEN" \
   -H "X-Tenant-ID: $TENANT" \
   -d '{
-    "username": "bob",
+    grant_type=password&username= "bob",
     "email": "bob@example.com",
     "first_name": "Bob",
     "last_name": "Smith",

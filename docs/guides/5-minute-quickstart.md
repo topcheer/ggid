@@ -15,7 +15,7 @@ curl http://localhost:8080/healthz  # Should return {"status":"ok"}
 ## Step 2: Register a User (10 seconds)
 
 ```bash
-TENANT="00000000-0000-0000-0000-000000000001"
+TENANT="28d6fe98-adeb-4c0c-b49b-20c6695bbca6"
 
 curl -s -X POST http://localhost:8080/api/v1/auth/register \
   -H "Content-Type: application/json" \
@@ -26,7 +26,7 @@ curl -s -X POST http://localhost:8080/api/v1/auth/register \
 ## Step 3: Login & Get JWT (10 seconds)
 
 ```bash
-JWT=$(curl -s -X POST http://localhost:8080/api/v1/auth/login \
+JWT=$(curl -s -X POST http://localhost:8080/oauth/token \
   -H "Content-Type: application/json" \
   -H "X-Tenant-ID: $TENANT" \
   -d '{"username":"alice","password":"Secure123!"}' | jq -r .access_token)

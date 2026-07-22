@@ -103,9 +103,9 @@ cd console && npm install && npm run dev
 
 ```bash
 # Login and extract token
-TOKEN=$(curl -s -X POST http://localhost:8080/api/v1/auth/login \
+TOKEN=$(curl -s -X POST http://localhost:8080/oauth/token \
   -H "Content-Type: application/json" \
-  -H "X-Tenant-ID: 00000000-0000-0000-0000-000000000001" \
+  -H "X-Tenant-ID: 28d6fe98-adeb-4c0c-b49b-20c6695bbca6" \
   -d '{"username":"admin","password":"Admin@123456"}' | jq -r .access_token)
 
 echo "Token: ${TOKEN:0:50}..."
@@ -128,7 +128,7 @@ All API calls go through the Gateway at port **8080**. The Gateway routes to bac
 curl -s -X POST http://localhost:8080/api/v1/users \
   -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json" \
-  -H "X-Tenant-ID: 00000000-0000-0000-0000-000000000001" \
+  -H "X-Tenant-ID: 28d6fe98-adeb-4c0c-b49b-20c6695bbca6" \
   -d '{
     "email": "john@corp.com",
     "password": "SecurePass@123",
@@ -142,7 +142,7 @@ curl -s -X POST http://localhost:8080/api/v1/users \
 ```bash
 curl -s http://localhost:8080/api/v1/users \
   -H "Authorization: Bearer $TOKEN" \
-  -H "X-Tenant-ID: 00000000-0000-0000-0000-000000000001" | jq '.users | length'
+  -H "X-Tenant-ID: 28d6fe98-adeb-4c0c-b49b-20c6695bbca6" | jq '.users | length'
 ```
 
 ### 3. Create a Role
@@ -151,7 +151,7 @@ curl -s http://localhost:8080/api/v1/users \
 curl -s -X POST http://localhost:8080/api/v1/roles \
   -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json" \
-  -H "X-Tenant-ID: 00000000-0000-0000-0000-000000000001" \
+  -H "X-Tenant-ID: 28d6fe98-adeb-4c0c-b49b-20c6695bbca6" \
   -d '{
     "key": "developer",
     "name": "Developer",
@@ -165,7 +165,7 @@ curl -s -X POST http://localhost:8080/api/v1/roles \
 curl -s -X POST http://localhost:8080/api/v1/oauth/clients \
   -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json" \
-  -H "X-Tenant-ID: 00000000-0000-0000-0000-000000000001" \
+  -H "X-Tenant-ID: 28d6fe98-adeb-4c0c-b49b-20c6695bbca6" \
   -d '{
     "client_name": "My App",
     "redirect_uris": ["http://localhost:3000/callback"],
@@ -181,7 +181,7 @@ curl -s -X POST http://localhost:8080/api/v1/oauth/clients \
 ```bash
 curl -s "http://localhost:8080/api/v1/audit/events?limit=10" \
   -H "Authorization: Bearer $TOKEN" \
-  -H "X-Tenant-ID: 00000000-0000-0000-0000-000000000001" | jq .
+  -H "X-Tenant-ID: 28d6fe98-adeb-4c0c-b49b-20c6695bbca6" | jq .
 ```
 
 ## OAuth 2.1 Authorization Flow
@@ -224,7 +224,7 @@ Key variables:
 | `CONSOLE_PORT` | `3000` | Console port |
 | `JWT_SIGNING_KEY_PATH` | `/app/configs/rsa_private.pem` | RSA private key for JWT |
 | `INTERNAL_AUTH_SECRET` | `change-me-in-production` | Inter-service auth secret |
-| `NEXT_PUBLIC_TENANT_ID` | `00000000-0000-0000-0000-000000000001` | Default tenant |
+| `NEXT_PUBLIC_TENANT_ID` | `28d6fe98-adeb-4c0c-b49b-20c6695bbca6` | Default tenant |
 
 ### RSA Key Generation
 
@@ -274,7 +274,7 @@ make migrate-up
 
 - Verify you're using `username` field (not `email`) in the API
 - Default credentials: username=`admin`, password=`Admin@123456`
-- Ensure `X-Tenant-ID: 00000000-0000-0000-0000-000000000001` header is set
+- Ensure `X-Tenant-ID: 28d6fe98-adeb-4c0c-b49b-20c6695bbca6` header is set
 
 ### 404 on API calls
 

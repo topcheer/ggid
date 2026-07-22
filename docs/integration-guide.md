@@ -57,7 +57,7 @@ for everything.
 Every GGID deployment has at least one tenant. The default tenant is:
 
 ```
-00000000-0000-0000-0000-000000000001
+28d6fe98-adeb-4c0c-b49b-20c6695bbca6
 ```
 
 For multi-tenant setups, contact your GGID administrator to create a tenant
@@ -94,7 +94,7 @@ import { GGIDClient } from '@ggid/node';
 const client = new GGIDClient({
   gatewayUrl: 'https://iam.example.com',
   jwksUrl: 'https://iam.example.com/.well-known/jwks.json',
-  tenantId: '00000000-0000-0000-0000-000000000001',
+  tenantId: '28d6fe98-adeb-4c0c-b49b-20c6695bbca6',
   issuer: 'ggid',
 });
 ```
@@ -102,10 +102,10 @@ const client = new GGIDClient({
 ### Direct HTTP (curl)
 
 ```bash
-curl -X POST https://iam.example.com/api/v1/auth/login \
+curl -X POST https://iam.example.com/oauth/token \
   -H "Content-Type: application/json" \
-  -H "X-Tenant-ID: 00000000-0000-0000-0000-000000000001" \
-  -d '{"username":"demo","password":"SecurePass@123"}'
+  -H "X-Tenant-ID: 28d6fe98-adeb-4c0c-b49b-20c6695bbca6" \
+  -d '{grant_type=password&username="demo","password":"SecurePass@123"}'
 ```
 
 ## Step 3: Authentication Flow
@@ -113,15 +113,15 @@ curl -X POST https://iam.example.com/api/v1/auth/login \
 ### Password Login (Resource Owner Password Credentials)
 
 ```
-Client ──POST /api/v1/auth/login──► GGID
+Client ──POST /oauth/token──► GGID
        ◄──{ access_token, refresh_token }──
 ```
 
 ```bash
-RESPONSE=$(curl -s -X POST https://iam.example.com/api/v1/auth/login \
+RESPONSE=$(curl -s -X POST https://iam.example.com/oauth/token \
   -H "Content-Type: application/json" \
-  -H "X-Tenant-ID: 00000000-0000-0000-0000-000000000001" \
-  -d '{"username":"demo","password":"SecurePass@123"}')
+  -H "X-Tenant-ID: 28d6fe98-adeb-4c0c-b49b-20c6695bbca6" \
+  -d '{grant_type=password&username="demo","password":"SecurePass@123"}')
 
 ACCESS_TOKEN=$(echo $RESPONSE | jq -r .access_token)
 REFRESH_TOKEN=$(echo $RESPONSE | jq -r .refresh_token)
@@ -249,7 +249,7 @@ mux.HandleFunc("/api/admin", adminHandler)
 // Wrap with GGID JWT verification
 handler := client.Middleware(mux, ggid.MiddlewareConfig{
     PublicPaths: []string{"/healthz", "/public"},
-    TenantID:    "00000000-0000-0000-0000-000000000001",
+    TenantID:    "28d6fe98-adeb-4c0c-b49b-20c6695bbca6",
 })
 
 http.ListenAndServe(":8080", handler)
@@ -266,7 +266,7 @@ func profileHandler(w http.ResponseWriter, r *http.Request) {
     }
     json.NewEncoder(w).Encode(map[string]any{
         "user_id":  user.UserID,
-        "username": user.Username,
+        grant_type=password&username= user.Username,
         "email":    user.Email,
         "roles":    user.Roles,
     })
@@ -327,7 +327,7 @@ If your app serves one tenant, hardcode the tenant ID:
 client := ggid.New("https://iam.example.com",
     ggid.WithAPIKey("key"),
 ).Middleware(mux, ggid.MiddlewareConfig{
-    TenantID: "00000000-0000-0000-0000-000000000001",
+    TenantID: "28d6fe98-adeb-4c0c-b49b-20c6695bbca6",
 })
 ```
 
@@ -494,7 +494,7 @@ protectedHandler := client.Middleware(
         ),
     ),
     ggid.MiddlewareConfig{
-        TenantID: "00000000-0000-0000-0000-000000000001",
+        TenantID: "28d6fe98-adeb-4c0c-b49b-20c6695bbca6",
     },
 )
 ```

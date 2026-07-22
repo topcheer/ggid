@@ -58,7 +58,7 @@ Common issues:
 
 ```bash
 export GW="http://localhost:8080"
-export TENANT="00000000-0000-0000-0000-000000000001"
+export TENANT="28d6fe98-adeb-4c0c-b49b-20c6695bbca6"
 
 curl -sX POST "$GW/api/v1/auth/register" \
   -H "Content-Type: application/json" \
@@ -88,7 +88,7 @@ Expected response (201 Created):
 ## Step 3: Login and Get JWT (10 sec)
 
 ```bash
-export TOKEN=$(curl -sX POST "$GW/api/v1/auth/login" \
+export TOKEN=$(curl -sX POST "$GW/oauth/token" \
   -H "Content-Type: application/json" \
   -H "X-Tenant-ID: $TENANT" \
   -d '{
@@ -196,7 +196,7 @@ import (
 )
 
 func main() {
-    client := ggid.NewClient("http://localhost:8080", ggid.WithTenantID("00000000-0000-0000-0000-000000000001"))
+    client := ggid.NewClient("http://localhost:8080", ggid.WithTenantID("28d6fe98-adeb-4c0c-b49b-20c6695bbca6"))
 
     // Login
     resp, err := client.Auth.Login(context.Background(), &ggid.LoginRequest{
@@ -232,7 +232,7 @@ import { GGIDClient } from '@ggid/sdk';
 
 const client = new GGIDClient({
   baseURL: 'http://localhost:8080',
-  tenantID: '00000000-0000-0000-0000-000000000001',
+  tenantID: '28d6fe98-adeb-4c0c-b49b-20c6695bbca6',
 });
 
 // Login
@@ -251,7 +251,7 @@ console.log(users);
 ```bash
 # Set variables
 export GW="http://localhost:8080"
-export TENANT="00000000-0000-0000-0000-000000000001"
+export TENANT="28d6fe98-adeb-4c0c-b49b-20c6695bbca6"
 
 # Register
 curl -sX POST "$GW/api/v1/auth/register" \
@@ -260,7 +260,7 @@ curl -sX POST "$GW/api/v1/auth/register" \
   -d '{"username":"testuser","email":"test@test.com","password":"Test1234!"}' | jq .
 
 # Login
-export TOKEN=$(curl -sX POST "$GW/api/v1/auth/login" \
+export TOKEN=$(curl -sX POST "$GW/oauth/token" \
   -H "Content-Type: application/json" \
   -H "X-Tenant-ID: $TENANT" \
   -d '{"username":"testuser","password":"Test1234!"}' | jq -r .access_token)

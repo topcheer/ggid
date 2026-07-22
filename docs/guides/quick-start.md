@@ -8,7 +8,7 @@
 
 - GGID Gateway running at `http://localhost:8080`
 - A user JWT with admin or agent-owner scope
-- Default tenant: `00000000-0000-0000-0000-000000000001`
+- Default tenant: `28d6fe98-adeb-4c0c-b49b-20c6695bbca6`
 
 ---
 

@@ -42,7 +42,7 @@ curl -s http://localhost:8080/healthz | jq .
 
 All requests require a tenant ID. The default tenant is:
 ```
-00000000-0000-0000-0000-000000000001
+28d6fe98-adeb-4c0c-b49b-20c6695bbca6
 ```
 
 ---
@@ -52,9 +52,9 @@ All requests require a tenant ID. The default tenant is:
 ```bash
 curl -s -X POST http://localhost:8080/api/v1/auth/register \
   -H "Content-Type: application/json" \
-  -H "X-Tenant-ID: 00000000-0000-0000-0000-000000000001" \
+  -H "X-Tenant-ID: 28d6fe98-adeb-4c0c-b49b-20c6695bbca6" \
   -d '{
-    "username": "alice",
+    grant_type=password&username= "alice",
     "email": "alice@example.com",
     "password": "SecurePass123!"
   }' | jq .
@@ -64,7 +64,7 @@ curl -s -X POST http://localhost:8080/api/v1/auth/register \
 ```json
 {
   "id": "550e8400-e29b-41d4-a716-446655440000",
-  "username": "alice",
+  grant_type=password&username= "alice",
   "email": "alice@example.com",
   "status": "active"
 }
@@ -76,11 +76,11 @@ curl -s -X POST http://localhost:8080/api/v1/auth/register \
 
 ```bash
 # Login and save JWT
-JWT=$(curl -s -X POST http://localhost:8080/api/v1/auth/login \
+JWT=$(curl -s -X POST http://localhost:8080/oauth/token \
   -H "Content-Type: application/json" \
-  -H "X-Tenant-ID: 00000000-0000-0000-0000-000000000001" \
+  -H "X-Tenant-ID: 28d6fe98-adeb-4c0c-b49b-20c6695bbca6" \
   -d '{
-    "username": "alice",
+    grant_type=password&username= "alice",
     "password": "SecurePass123!"
   }' | jq -r '.access_token')
 
@@ -97,14 +97,14 @@ echo "JWT (first 30): ${JWT:0:30}..."
 # List users (requires JWT)
 curl -s http://localhost:8080/api/v1/users \
   -H "Authorization: Bearer $JWT" \
-  -H "X-Tenant-ID: 00000000-0000-0000-0000-000000000001" | jq .
+  -H "X-Tenant-ID: 28d6fe98-adeb-4c0c-b49b-20c6695bbca6" | jq .
 ```
 
 ### Without JWT (should get 401)
 
 ```bash
 curl -s http://localhost:8080/api/v1/users \
-  -H "X-Tenant-ID: 00000000-0000-0000-0000-000000000001"
+  -H "X-Tenant-ID: 28d6fe98-adeb-4c0c-b49b-20c6695bbca6"
 # Expected: 401 Unauthorized
 ```
 
@@ -116,7 +116,7 @@ curl -s http://localhost:8080/api/v1/users \
 # Create admin role
 curl -s -X POST http://localhost:8080/api/v1/roles \
   -H "Authorization: Bearer $JWT" \
-  -H "X-Tenant-ID: 00000000-0000-0000-0000-000000000001" \
+  -H "X-Tenant-ID: 28d6fe98-adeb-4c0c-b49b-20c6695bbca6" \
   -d '{
     "key": "editor",
     "name": "Editor",
@@ -126,7 +126,7 @@ curl -s -X POST http://localhost:8080/api/v1/roles \
 # List roles
 curl -s http://localhost:8080/api/v1/roles \
   -H "Authorization: Bearer $JWT" \
-  -H "X-Tenant-ID: 00000000-0000-0000-0000-000000000001" | jq .
+  -H "X-Tenant-ID: 28d6fe98-adeb-4c0c-b49b-20c6695bbca6" | jq .
 ```
 
 ---
@@ -140,7 +140,7 @@ curl -s http://localhost:8080/api/v1/roles \
 | Logs | `docker logs ggid-gateway -f` |
 | Health | `curl localhost:8080/healthz` |
 | Register | `POST /api/v1/auth/register` |
-| Login | `POST /api/v1/auth/login` |
+| Login | `POST /oauth/token (grant_type=password)` |
 | Refresh | `POST /api/v1/auth/refresh` |
 | List Users | `GET /api/v1/users` |
 
@@ -319,7 +319,7 @@ client := ggid.NewClient("http://localhost:8080", "your-jwt-token")
 
 // List users
 users, err := client.Users.List(ctx, &ggid.ListUsersRequest{
-    TenantID: "00000000-0000-0000-0000-000000000001",
+    TenantID: "28d6fe98-adeb-4c0c-b49b-20c6695bbca6",
     Page:     1,
     PerPage:  20,
 })
@@ -344,7 +344,7 @@ const client = new GGIDClient({
 
 // List users
 const users = await client.users.list({
-  tenantId: '00000000-0000-0000-0000-000000000001'
+  tenantId: '28d6fe98-adeb-4c0c-b49b-20c6695bbca6'
 });
 
 // Create role

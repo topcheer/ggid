@@ -72,7 +72,7 @@ import "github.com/ggid/sdk-go/client"
 
 client := client.New(
     client.WithBaseURL("https://iam.example.com"),
-    client.WithTenantID("00000000-0000-0000-0000-000000000001"),
+    client.WithTenantID("28d6fe98-adeb-4c0c-b49b-20c6695bbca6"),
     client.WithAPIKey("ggid-key-..."), // for service accounts
     client.WithTimeout(30*time.Second),
 )
@@ -85,7 +85,7 @@ import { GGIDClient } from '@ggid/sdk';
 
 const client = new GGIDClient({
     baseURL: 'https://iam.example.com',
-    tenantID: '00000000-0000-0000-0000-000000000001',
+    tenantID: '28d6fe98-adeb-4c0c-b49b-20c6695bbca6',
     apiKey: process.env.GGID_API_KEY, // for server-side
     timeout: 30000,
 });
@@ -98,7 +98,7 @@ import dev.ggid.sdk.GGIDClient;
 
 GGIDClient client = GGIDClient.builder()
     .baseURL("https://iam.example.com")
-    .tenantID("00000000-0000-0000-0000-000000000001")
+    .tenantID("28d6fe98-adeb-4c0c-b49b-20c6695bbca6")
     .apiKey(System.getenv("GGID_API_KEY"))
     .timeout(Duration.ofSeconds(30))
     .build();

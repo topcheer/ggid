@@ -311,7 +311,7 @@ curl https://iam.example.com/api/v1/admin/tenant \
 
 ```json
 {
-  "id": "00000000-0000-0000-0000-000000000001",
+  "id": "28d6fe98-adeb-4c0c-b49b-20c6695bbca6",
   "name": "Acme Corp",
   "status": "active",
   "settings": {
