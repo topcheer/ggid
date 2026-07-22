@@ -250,3 +250,25 @@ All 6 dimensions verified twice, no regressions, stable.
 - 0 hacks, no regression
 
 ### Next Dimension: 4 — Multi-tenant Isolation
+
+## DB Reset Recovery (Round 38)
+After arch's DB reset (a6649d2e5), recreated all demo data:
+- 8 demo tenants (new random UUIDs)
+- 7 demo users (admin_go/python/csharp/java/ruby/rust + platform admin)
+- 8 OAuth clients (erp-go-demo, erp-node-m2m, erp-python-demo, etc)
+- ERP Admin role + 9 permissions per tenant
+- Role assignments with global scope
+
+### New Tenant IDs
+- Go: 1effd2c4-fc5a-4b2e-85b7-307bb4978bad
+- Node: b1a2329f-223f-43bb-8cd1-4cdfa3d88570
+- React: 1e198aaf-2712-4481-b821-6953f9a081af
+- Python: c2bab17d-e3ce-4a6b-bd48-c3be1e62cf8e
+- C#: 536a18c2-dc0b-4889-853e-48f5e39356bd
+- Java: 8aa627c3-d760-4976-a7db-3309cdce41b4
+- Ruby: a9a252cf-014f-4272-b2d5-5bcbc6b0126e
+- Rust: d8cc70a0-60dc-4bac-afc6-0c539d95931d
+
+8/8 demos HTTP 200 after recovery.
+
+### Next Dimension: 4 — Multi-tenant Isolation
