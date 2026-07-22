@@ -9,10 +9,10 @@
 
 | 严重度 | 总数 | 已分配 | 进行中 | 已完成 | 未分配 |
 |--------|------|--------|--------|--------|--------|
-| P1（安全阻塞） | 7 | 7 | 7 | 0 | 0 |
-| P2（企业交付前） | 15 | 7 | 0 | 0 | 8 |
+| P1（安全阻塞） | 7 | 7 | 3 | 4 | 0 |
+| P2（企业交付前） | 15 | 10 | 0 | 0 | 5 |
 | P3（后续迭代） | 8 | 0 | 0 | 0 | 8 |
-| **合计** | **30** | **14** | **7** | **0** | **16** |
+| **合计** | **30** | **17** | **3** | **4** | **13** |
 
 ---
 
@@ -20,10 +20,10 @@
 
 | # | 维度 | 问题 | 负责人 | 状态 | 预估 |
 |---|------|------|--------|------|------|
-| S1 | 授权 | B1: platform:admin scope 签发侧无租户过滤 | guardian | 进行中 | 2h |
-| S2 | 认证 | A2: GGID_INTERNAL_SECRET dev fallback | guardian | 进行中 | 30min |
-| S3 | 审计 | F1: HMAC secret 缺失时静默禁用 | guardian | 进行中 | 30min |
-| S4 | 加密 | A1/D1: LDAP InsecureSkipVerify=true | guardian | 进行中 | 1h |
+| S1 | 授权 | B1: platform:admin scope 签发侧无租户过滤 | guardian | **完成** (787270449) | 2h |
+| S2 | 认证 | A2: GGID_INTERNAL_SECRET dev fallback | guardian | **完成** (787270449) | 30min |
+| S3 | 审计 | F1: HMAC secret 缺失时静默禁用 | guardian | **完成** (787270449) | 30min |
+| S4 | 加密 | A1/D1: LDAP InsecureSkipVerify=true | guardian | **完成** (787270449) | 1h |
 | S5 | 会话 | C1: revokedTokens/stateStore sync.Map 内存态 | backend | 进行中 | 4h |
 | S6 | 认证 | A3: PASSWORD_PEPPER 未强制配置 | backend | 进行中 | 15min |
 | S7 | 授权 | B2+B3: CORS fallback `*` + OAuth scope 未交集 | backend | 进行中 | 1h |
