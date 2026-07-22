@@ -846,3 +846,44 @@ Admin: 9 perms (ERP Admin), Viewer: 4 perms (ERP Viewer, read-only). Zero regres
 | Hacks | 0 | ✅ |
 
 ### Next Dimension: 4 — Cycle 9 (Multi-tenant Isolation)
+
+## Dimension 4 C9: Multi-tenant Isolation (Round 75)
+Go→Go: 200 ✅ | Node→Go: 403 ✅ | Fake→Go: 401 ✅ | JWT tenant_id match: YES ✅
+
+## Dimension 5 C9: SDK Consistency (Round 76)
+- login(): 7 SDKs all have client_id param ✅
+- verifyToken: All return tenant_id+roles+permissions ✅
+- clientCredentials: 7/7 SDKs present ✅
+- TokenSet: id_token+scope consistent ✅
+
+## Dimension 6 C9: End-to-End (Round 77)
+| Step | Result | Status |
+|------|--------|--------|
+| No token | 401 | ✅ |
+| Login (password+offline_access) | AT+RT | ✅ |
+| GET inventory | 200 | ✅ |
+| POST inventory | 201 | ✅ |
+| Order create+approve | ORD-0004→200 | ✅ |
+| Viewer write | 403 | ✅ |
+| Token refresh | OK | ✅ |
+| 7/7 health checks | All 200 | ✅ |
+| Hack patterns | 0 | ✅ |
+
+---
+
+## Cycle 9 Complete (Rounds 72-77)
+
+**6/6 dimensions × 1 cycle = 6 deep validations. Zero issues. Zero fixes needed.**
+
+| Dim | Focus | Issues | Status |
+|-----|-------|--------|--------|
+| D1 C9 | Auth | 0 | ✅ 7/7 |
+| D2 C9 | AuthZ | 0 | ✅ 10/10 |
+| D3 C9 | Functional | 0 | ✅ 5/5 |
+| D4 C9 | Tenant isolation | 0 | ✅ 4/4 |
+| D5 C9 | SDK consistency | 0 | ✅ 7/7 aligned |
+| D6 C9 | E2E | 0 | ✅ 9/9 |
+
+**First zero-fix cycle.** All prior fixes (C7: client_id+tenant isolation+TokenSet, C8: tenant IDs+Java clientCredentials) are stable. Security fixes (CORS/PEPPER/scope/dev secrets) show zero downstream regression.
+
+### Next Dimension: 1 — Cycle 10 (Authentication Completeness)
