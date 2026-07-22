@@ -307,3 +307,8 @@ Zero regressions from DB reset recovery.
 - 5/5 password grant PASS + M2M OK ✅ | 7/7 demo 200 ✅ | 0 hacks
 
 ### Next Dimension: 2 — Authorization Boundaries
+
+## Dimension 2 C4: AuthZ (Round 43)
+- Perms: 9p/1r ✅ | Cross-tenant: 401 ✅ | Fake: 401 ✅ | 7/7 demo 200 ✅ | 0 hacks
+
+### Next Dimension: 3 — Demo Functional Completeness
