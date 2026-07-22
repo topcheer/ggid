@@ -105,8 +105,8 @@ func (h *HTTPHandler) handleSelfRegister(w http.ResponseWriter, r *http.Request)
 	}
 	var tenantIDStr string
 	err := pool.QueryRow(ctx,
-		`INSERT INTO tenants (name, slug, status, plan)
-		 VALUES ($1, $2, 'active', 'starter')
+		 `INSERT INTO tenants (name, slug, status, plan)
+		 VALUES ($1, $2, 'active', 'free')
 		 ON CONFLICT (slug) DO UPDATE SET name = EXCLUDED.name
 		 RETURNING id::text`,
 		req.OrgName, slug).Scan(&tenantIDStr)
