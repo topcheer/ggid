@@ -1302,19 +1302,49 @@ func (s *OAuthService) RevokeToken(tokenStr string, tokenTypeHint ...string) err
 	if err != nil {
 		// RFC 7009: invalid token → still return 200, but store hash
 		// so IsTokenRevoked can report it as revoked.
+		// Try Redis first (for HA/multi-instance).
+		if s.rdb != nil {
+			if e := s.rdb.Set(context.Background(), "oauth:revoked:"+tokenHash, "0", 0); e == nil {
+				return nil
+			}
+		}
 		revokedTokens.Store(tokenHash, int64(0))
 		return nil
 	}
 
 	exp := getInt64Claim(claims, "exp")
+	// Calculate TTL: revoke until token expiry (no point keeping it longer).
+	var ttl time.Duration
+	if exp > 0 {
+		ttl = time.Until(time.Unix(exp, 0))
+		if ttl <= 0 {
+			ttl = 0 // already expired, no TTL needed
+		}
+	}
+	// Try Redis first (for HA/multi-instance).
+	if s.rdb != nil {
+		if e := s.rdb.Set(context.Background(), "oauth:revoked:"+tokenHash, strconv.FormatInt(exp, 10), ttl); e == nil {
+			return nil
+		}
+	}
 	revokedTokens.Store(tokenHash, exp)
 
 	return nil
 }
 
 // IsTokenRevoked checks if a token has been revoked.
+// Checks Redis first (for HA/multi-instance), then falls back to sync.Map.
 func (s *OAuthService) IsTokenRevoked(tokenStr string) bool {
 	tokenHash := hashTokenSHA256(tokenStr)
+
+	// Try Redis first (for HA/multi-instance).
+	if s.rdb != nil {
+		if _, err := s.rdb.Get(context.Background(), "oauth:revoked:"+tokenHash); err == nil {
+			return true
+		}
+		// Redis miss or error — fall through to in-memory check
+	}
+
 	_, ok := revokedTokens.Load(tokenHash)
 	return ok
 }
@@ -1508,12 +1538,16 @@ func (s *OAuthService) ClientCredentials(ctx context.Context, req *ClientCredent
 
 	// 4. Issue access token (no user — machine-to-machine).
 	// For M2M, the client's configured scopes serve as the permissions claim.
+	// Security: requested scopes must be intersected with client's allowed
+	// scopes to prevent scope escalation (e.g. client requests "platform:admin"
+	// when only "audit:read" is configured).
 	clientPermissions := client.Scopes
+	finalScopes := client.Scopes
 	if len(req.Scope) > 0 {
-		// If the caller requested specific scopes, use those (intersected with client scopes).
-		clientPermissions = req.Scope
+		finalScopes = intersectScopes(req.Scope, client.Scopes)
+		clientPermissions = finalScopes
 	}
-	accessToken, expiresIn, err := s.issueClientAccessToken(req.TenantID, resolveAudience(req.Audience, client.ClientID), client.ClientID, joinScopes(req.Scope), clientPermissions)
+	accessToken, expiresIn, err := s.issueClientAccessToken(req.TenantID, resolveAudience(req.Audience, client.ClientID), client.ClientID, joinScopes(finalScopes), clientPermissions)
 	if err != nil {
 		return nil, err
 	}
@@ -1736,6 +1770,34 @@ func joinScopes(scopes []string) string {
 
 func splitScopes(s string) []string {
 	return strings.Fields(s)
+}
+
+// intersectScopes returns the intersection of requested and allowed scopes,
+// preserving the order of the allowed list. If requested contains a scope
+// not in allowed, it is silently dropped (OAuth 2.1 §3.3 — server MAY grant
+// a reduced scope set without erroring).
+func intersectScopes(requested, allowed []string) []string {
+	allowedSet := make(map[string]bool, len(allowed))
+	for _, s := range allowed {
+		allowedSet[s] = true
+	}
+	var result []string
+	for _, s := range allowed {
+		if allowedSet[s] {
+			// Check if this allowed scope was requested
+			for _, r := range requested {
+				if r == s {
+					result = append(result, s)
+					break
+				}
+			}
+		}
+	}
+	// If nothing matched, fall back to allowed (default behavior)
+	if len(result) == 0 {
+		return allowed
+	}
+	return result
 }
 
 func defaultIfEmpty(val, def string) string {

@@ -102,7 +102,13 @@ func main() {
 
 	// 5. Build auth provider chain (local + optional LDAP)
 	// Wire password pepper from env var (security hardening, P0).
-	if pepper := os.Getenv("PASSWORD_PEPPER"); pepper != "" {
+	// PASSWORD_PEPPER must be set in all environments — missing pepper means
+	// passwords are hashed without the HMAC pre-hash step, making them more
+	// vulnerable to rainbow-table and precomputation attacks.
+	pepper := os.Getenv("PASSWORD_PEPPER")
+	if pepper == "" {
+		log.Printf("⚠️  SECURITY WARNING: PASSWORD_PEPPER is not set! Password hashing runs without HMAC-SHA256 pre-hash. Set PASSWORD_PEPPER environment variable to strengthen password storage.")
+	} else {
 		crypto.SetPepper(pepper)
 		log.Printf("Password pepper enabled (HMAC-SHA256 pre-hash)")
 	}

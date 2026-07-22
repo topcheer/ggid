@@ -707,12 +707,17 @@ func (s *HTTPServer) handleStream(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/event-stream")
 	w.Header().Set("Cache-Control", "no-cache")
 	w.Header().Set("Connection", "keep-alive")
-	// Echo Origin header instead of wildcard for CORS security.
+	// CORS: fail-closed — only echo origin if it matches the allowed list.
+	// Setting ACAO to an arbitrary origin with Allow-Credentials:true is a
+	// CORS reflection attack vector (CVE class). When no origin is configured,
+	// omit ACAO entirely rather than defaulting to "*".
 	if origin := r.Header.Get("Origin"); origin != "" {
-		w.Header().Set("Access-Control-Allow-Origin", origin)
-		w.Header().Set("Access-Control-Allow-Credentials", "true")
-	} else {
-		w.Header().Set("Access-Control-Allow-Origin", "*")
+		// Only echo known-good origins. In production, this should check
+		// against a per-tenant allowed origins list.
+		if isAllowedOrigin(origin) {
+			w.Header().Set("Access-Control-Allow-Origin", origin)
+			w.Header().Set("Access-Control-Allow-Credentials", "true")
+		}
 	}
 
 	// Send initial connection confirmation
@@ -1842,4 +1847,19 @@ func httpStatusToCode(status int) string {
 	default:
 		return string(errors.ErrInternal)
 	}
+}
+
+// allowedSSEOrigins is the allowlist for CORS on the SSE endpoint.
+// localhost variants are allowed for dev; production domains should be added
+// via environment configuration. This prevents CORS reflection attacks where
+// any origin would be echoed with Allow-Credentials:true.
+var allowedSSEOrigins = map[string]bool{
+	"http://localhost:3000":  true,
+	"http://localhost:8080":  true,
+	"https://ggid.iot2.win":  true,
+}
+
+// isAllowedOrigin checks whether the given origin is in the SSE allowlist.
+func isAllowedOrigin(origin string) bool {
+	return allowedSSEOrigins[origin]
 }

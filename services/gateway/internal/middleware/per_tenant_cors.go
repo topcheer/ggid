@@ -89,9 +89,9 @@ func PerTenantCORS(store *TenantCORSStore, allowCredentials bool) func(http.Hand
 					} else {
 						w.Header().Set("Access-Control-Allow-Origin", "*")
 					}
-				} else {
-					w.Header().Set("Access-Control-Allow-Origin", "*")
 				}
+				// When origin is empty (same-origin/non-browser), omit ACAO
+				// entirely — do not default to "*". This is fail-closed.
 			}
 
 			w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, PATCH, DELETE, OPTIONS")
