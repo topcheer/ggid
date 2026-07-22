@@ -281,3 +281,12 @@ Post-DB-reset with new tenant UUIDs:
 - 0 hacks
 
 ### Next Dimension: 5 — SDK Cross-language Consistency
+
+## Dimension 5 C3: SDK Consistency (Round 40)
+- Endpoints: 7/7 use /api/v1/oauth/token ✅
+- Token fields: 7/7 snake_case ✅
+- auth/login refs: 2 (test files only, no runtime impact)
+- 7/7 demos HTTP 200 ✅ (RBAC fix 235612680 no impact)
+- 0 hacks
+
+### Next Dimension: 6 — End-to-end User Experience
