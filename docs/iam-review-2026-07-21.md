@@ -2,7 +2,31 @@
 
 > 审视人：god_fullstack&everything（定期审视任务 cron-1 首轮）
 > 方法：三路并行代码级审查（OAuth/OIDC/SAML · Auth/Identity/SCIM · 增强功能兼容性+竞品迁移），所有结论均有 file:line 证据。
-> 状态：**R1 完成（已部署生产）。** R2/R3/R5/R6/R7/R9 无增量。R4 发现并修复 P0 跨租户提权回归（已部署）。R8 审查 policy permissions key 兼容（无问题）。R9（07:43）：零核心代码变更，无增量问题。
+> 状态：**R1 完成（已部署生产）。** R2/R3/R5/R6/R7/R9 无增量。R4 发现并修复 P0 跨租户提权回归（已部署）。R8 审查 policy permissions key 兼容（无问题）。R10（08:43）：arch_pm DB reset 后发现 20+ 处残留硬编码旧 tenant UUID — MCP+CLI 已修复（79bdd1a95），oauth/identity/auth/audit 残留分配团队协调修复中。
+
+---
+
+## 八、R10 增量审视（2026-07-22 08:43 CST）
+
+### 发现：arch_pm DB reset 后大量残留硬编码 tenant UUID
+
+arch_pm commit a6649d2e5 移除了 gateway/console 硬编码，但 20+ 处运行时代码仍引用旧 UUID `00000000-0000-0000-0000-000000000001`。
+
+### 已修复（79bdd1a95）
+- MCP `ggid_client.go` — `New()` 新增 tenantID 参数，从 `GGID_TENANT_ID` 环境变量获取
+- MCP `audit.go` — 移除硬编码 tenant_id 查询参数
+- CLI `auth.go` — `ConsoleTenantID` 从 const 改为 var（环境变量）
+
+### 残留清单（已通知团队分配修复）
+- oauth grpc_handler.go ×2
+- identity grpc_handler.go ×2 + tenant_handlers.go + p0_handlers.go + profile_diff_handler.go + user_roles_handler.go
+- auth grpc_handler.go ×2 + admin_config.go + saml_handler.go + passkey_handler.go
+- audit compliance_mapping_repo.go ×3 + itdr_handler.go ×2 + compliance_mapping_handler.go + cert_export_handler.go
+- policy migration 000003 seed（arch_pm 同步）
+
+### Review
+
+> 待团队修复完成后统一 review。
 
 ---
 
