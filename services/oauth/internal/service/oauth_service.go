@@ -754,6 +754,34 @@ func (s *OAuthService) fetchUserRoles(ctx context.Context, tenantID, userID uuid
 	return roles
 }
 
+// fetchUserRoleKeys returns the role keys (e.g. "platform:admin") for a user.
+// Unlike fetchUserRoles which returns display names, this returns the stable
+// key field used for RBAC scope detection.
+func (s *OAuthService) fetchUserRoleKeys(ctx context.Context, tenantID, userID uuid.UUID) []string {
+	if s.pool == nil {
+		return nil
+	}
+	rows, err := s.pool.Query(ctx, `
+		SELECT r.key
+		FROM user_roles ur
+		JOIN roles r ON r.id = ur.role_id
+		WHERE ur.user_id = $1`,
+		userID)
+	if err != nil {
+		return nil
+	}
+	defer rows.Close()
+	keys := []string{}
+	for rows.Next() {
+		var key string
+		if err := rows.Scan(&key); err != nil {
+			continue
+		}
+		keys = append(keys, key)
+	}
+	return keys
+}
+
 // issueAccessTokenWithAMR issues a JWT with optional AMR/ACR claims.
 // The `scope` claim contains ONLY OAuth scopes (openid, profile, email).
 // Fine-grained permissions are in the `permissions` claim (string array).
@@ -1579,6 +1607,12 @@ func (s *OAuthService) PasswordGrant(ctx context.Context, req *PasswordGrantRequ
 	permissions := s.fetchUserPermissions(ctx, tenantID, userID)
 	roles := s.fetchUserRoles(ctx, tenantID, userID)
 	scopeStr := joinScopes(req.Scope)
+	// Append role keys (e.g. "platform:admin") to scope claim so gateway
+	// RBAC can detect platform admin via scope, not forgeable role names.
+	roleKeys := s.fetchUserRoleKeys(ctx, tenantID, userID)
+	if len(roleKeys) > 0 {
+		scopeStr = strings.TrimSpace(scopeStr + " " + strings.Join(roleKeys, " "))
+	}
 
 	// 3. Issue access token with full user context.
 	now := time.Now()
