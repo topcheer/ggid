@@ -407,3 +407,8 @@ Consistent results: viewer escalation prevented, cross-tenant rejected, all demo
 - 0 hacks | No demo impact from RBAC changes
 
 ### Next Dimension: 3 — Demo Functional Completeness
+
+## Dimension 3 C6: Functional (Round 56)
+- Inv: 5 items correct fields ✅ | POST id=p006 ✅ | Perms: 9p inv+ord ✅ | 7/7 demo 200 ✅ | 0 hacks
+
+### Next Dimension: 4 — Multi-tenant Isolation
