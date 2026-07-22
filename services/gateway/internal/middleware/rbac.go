@@ -79,9 +79,9 @@ func RequireAdminScope(next http.Handler) http.Handler {
 		// reused for both the dynamic and the fallback path.
 		claims := ExtractJWTClaims(r)
 		if res := getRBACResolver(); res != nil && res.Available() {
-			// No JWT at all → let JWTAuth produce the 401 (same contract as
+			// No JWT subject → let JWTAuth produce the 401 (same contract as
 			// the static path); never 403 anonymous requests here.
-			if len(claims.Scopes) == 0 && len(claims.Roles) == 0 {
+			if claims.Subject == "" {
 				next.ServeHTTP(w, r)
 				return
 			}
@@ -101,9 +101,9 @@ func RequireAdminScope(next http.Handler) http.Handler {
 			return
 		}
 
-		// Admin endpoint: check scope
-		if len(claims.Scopes) == 0 && len(claims.Roles) == 0 {
-			// No JWT on a protected path — let JWTAuth handle the 401
+		// Admin endpoint: check scope.
+		// No JWT subject → let JWTAuth handle the 401.
+		if claims.Subject == "" {
 			next.ServeHTTP(w, r)
 			return
 		}
