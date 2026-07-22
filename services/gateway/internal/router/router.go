@@ -38,7 +38,6 @@ var publicPaths = []string{
 	"/api/v1/auth/mfa/yubikey/verify",
 	"/api/v1/auth/mfa/methods",
 	"/api/v1/identity/tenants/self-register", // B2B onboarding (R1-01)
-	"/api/v1/auth/social/",                   // Social login init + callback (R1-02)
 	"/api/v1/auth/social/",                   // Social login OAuth flow (R1-02)
 	"/api/v1/healthz",
 	"/healthz",
