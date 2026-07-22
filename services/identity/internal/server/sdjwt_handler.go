@@ -7,6 +7,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"log/slog"
 	"net/http"
 	"os"
 	"strings"
@@ -54,7 +55,8 @@ type SDJWTVerifyResponse struct {
 func getSDJWTSecret() []byte {
 	secret := os.Getenv("GGID_INTERNAL_SECRET")
 	if secret == "" {
-		secret = "dev-sdjwt-secret"
+		slog.Error("GGID_INTERNAL_SECRET not set — SDJWT handler refuses to operate with insecure default")
+		return nil // nil key → hmac.New produces invalid signatures → fail-closed
 	}
 	return []byte(secret)
 }

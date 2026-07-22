@@ -63,7 +63,7 @@ func handleTokenExchangeDelegation(w http.ResponseWriter, r *http.Request) {
 
 	// Return a simulated token response with delegation info.
 	writeJSON(w, http.StatusOK, map[string]any{
-		"access_token":      "dev-delegation-token",
+		"access_token":      "", // no dev tokens in production code,
 		"token_type":        "Bearer",
 		"expires_in":        3600,
 		"scope":             req.Scope,
