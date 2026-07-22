@@ -77,6 +77,11 @@ async fn extract_auth(headers: &HeaderMap, client: &ggid::GGIDClient) -> Option<
     let auth = headers.get("authorization")?.to_str().ok()?;
     let token = auth.strip_prefix("Bearer ")?;
     let claims = client.verify_token(token).await.ok()?;
+    // Enforce tenant isolation: reject tokens from different tenants
+    let expected_tenant = tenant_id();
+    if !claims.tenant_id.is_empty() && claims.tenant_id != expected_tenant {
+        return None;
+    }
     Some(AuthContext {
         user_id: claims.sub.clone(),
         permissions: claims.permissions.clone(),

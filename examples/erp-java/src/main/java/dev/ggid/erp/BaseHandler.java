@@ -50,6 +50,12 @@ public abstract class BaseHandler implements HttpHandler {
         GGIDUser user = Main.verifyToken(token);
         if (user == null) {
             sendJson(exchange, 401, err("Unauthorized — valid Bearer token required"));
+            return null;
+        }
+        // Enforce tenant isolation
+        if (user.tenantId != null && !user.tenantId.isEmpty() && !user.tenantId.equals(Main.TENANT_ID)) {
+            sendJson(exchange, 401, err("tenant mismatch"));
+            return null;
         }
         return user;
     }

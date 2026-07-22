@@ -65,6 +65,11 @@ export function requireAuth() {
     const user = await verifyToken(token);
     if (!user) return res.status(401).json({ error: { code: 'unauthenticated', message: 'Invalid token' } });
 
+    // Enforce tenant isolation: reject tokens from different tenants
+    if (user.tenant_id && user.tenant_id !== TENANT) {
+      return res.status(401).json({ error: { code: 'tenant_mismatch', message: 'Token tenant does not match this service' } });
+    }
+
     (req as any).user = user;
     next();
   };

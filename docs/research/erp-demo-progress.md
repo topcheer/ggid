@@ -467,3 +467,24 @@ Consistent results: viewer escalation prevented, cross-tenant rejected, all demo
 - Without X-Tenant-ID: invalid_request ❌
 
 **D3 C7 Status**: SDK login() gap found and fixed across 6 SDKs + 3 demos. Zero hacks.
+
+## Dimension 4 C7: Multi-tenant Isolation (Round 63)
+
+**Finding**: 5 demos (Go, Node, C#, Java, Rust) verified JWT signatures but did NOT enforce tenant_id matching at the application level. Cross-tenant tokens could access resources.
+
+**Fixes Applied (5 files)**:
+- Go demo `main.go`: withAuth checks `info.TenantID != tenantID` → 401
+- Node demo `auth.ts`: requireAuth checks `user.tenant_id !== TENANT` → 401
+- Java demo `BaseHandler.java`: requireAuth checks `user.tenantId != Main.TENANT_ID` → 401
+- C# demo `Program.cs`: checks `claims.TenantId != tenantId` → 401
+- Rust demo `main.rs`: extract_auth checks `claims.tenant_id != tenant_id()` → None (401)
+
+**Verification**:
+- Node→Go cross-tenant: 401 ✅ (already enforced by gateway)
+- Go→Node cross-tenant: was 200, now fixed with app-level check
+- JWT tenant_id matches X-Tenant-ID: YES ✅
+- Go inventory data: 7 items, first=D6C5 ✅
+- Hack patterns: 0 ✅
+- Go build: ✅ | Rust cargo check: ✅
+
+**D4 C7 Status**: App-level tenant isolation added to 5 demos. Defense in depth with gateway enforcement.

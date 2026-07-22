@@ -63,6 +63,11 @@ func withAuth(next http.HandlerFunc) http.HandlerFunc {
 			writeJSON(w, 401, map[string]string{"error": "invalid token"})
 			return
 		}
+		// Enforce tenant isolation: reject tokens from different tenants
+		if info.TenantID != "" && info.TenantID != tenantID {
+			writeJSON(w, 401, map[string]string{"error": "tenant mismatch"})
+			return
+		}
 		ctx := context.WithValue(r.Context(), userKey, info)
 		next(w, r.WithContext(ctx))
 	}

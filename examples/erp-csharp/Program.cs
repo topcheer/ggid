@@ -83,6 +83,12 @@ class Program
             Json(ctx.Response, 401, new { error = "invalid token" });
             return;
         }
+        // Enforce tenant isolation: reject tokens from different tenants
+        if (!string.IsNullOrEmpty(claims.TenantId) && claims.TenantId != tenantId)
+        {
+            Json(ctx.Response, 401, new { error = "tenant mismatch" });
+            return;
+        }
         var perms = claims.Permissions;
 
         if (path == "/api/inventory" && method == "GET") { if (!HasPerm(perms, "inventory:read")) { Forbid(ctx, "inventory:read"); return; } Json(ctx.Response, 200, new { items = inventory, count = inventory.Count }); return; }
