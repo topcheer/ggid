@@ -1037,3 +1037,22 @@ Hacks: 0 ✅ — **Seventh consecutive zero-fix cycle.**
 Hacks: 0 ✅ — **Eighth consecutive zero-fix cycle.**
 
 ### Next Dimension: 1 — Cycle 17
+
+## Cycle 17: Stability Check (Rounds 120-125)
+
+**Core Changes**: None since C16.
+
+**All 6 dimensions pass, zero issues**:
+
+| Dim | Result |
+|-----|--------|
+| D1 | 7/7 password grant, M2M OK ✅ |
+| D2 | admin 200/201, viewer 200/403 ✅ |
+| D3 | 13 items ✅ |
+| D4 | Go→Go 200, Node→Go 403, Fake 401 ✅ |
+| D5 | 7/7 SDK consistent ✅ |
+| D6 | refresh OK, no-token 401 ✅ |
+
+Hacks: 0 ✅ — **Ninth consecutive zero-fix cycle.**
+
+### Next Dimension: 1 — Cycle 18
