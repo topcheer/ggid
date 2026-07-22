@@ -8,7 +8,7 @@ import {
 import { authHeader } from "@/lib/auth-helpers";
 import { useTranslations } from "@/lib/i18n";
 
-const TENANT_ID = "00000000-0000-0000-0000-000000000001";
+const TENANT_ID = "";
 
 interface ChainStatus { head_hash: string; chain_length: number; last_verified: string; gaps: number; integrity_pct: number; }
 interface VerificationRun { id: string; blocks_checked: number; anomalies: number; status: string; duration_ms: number; timestamp: string; }

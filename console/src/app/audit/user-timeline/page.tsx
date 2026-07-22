@@ -8,7 +8,7 @@ import {
 import { authHeader } from "@/lib/auth-helpers";
 import { useTranslations } from "@/lib/i18n";
 
-const TENANT_ID = "00000000-0000-0000-0000-000000000001";
+const TENANT_ID = "";
 
 interface AuditEvent { id: string; action: string; actor: string; resource: string; ip: string; timestamp: string; result: "success" | "denied" | "error"; details: Record<string, unknown>; }
 

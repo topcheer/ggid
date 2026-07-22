@@ -75,7 +75,7 @@ export default function PasskeyManagementPage() {
 
   useEffect(() => {
     fetch('/api/v1/auth/passkeys/status', {
-      headers: { ...authHeader(), 'Content-Type': 'application/json', 'X-Tenant-ID': '00000000-0000-0000-0000-000000000001' },
+      headers: { ...authHeader(), 'Content-Type': 'application/json', 'X-Tenant-ID': localStorage.getItem('ggid_tenant_id') || '' },
     })
       .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
       .then(data => {

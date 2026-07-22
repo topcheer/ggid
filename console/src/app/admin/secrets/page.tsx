@@ -8,7 +8,7 @@ import {
 import { authHeader } from "@/lib/auth-helpers";
 import { useTranslations } from "@/lib/i18n";
 
-const TENANT_ID = "00000000-0000-0000-0000-000000000001";
+const TENANT_ID = "";
 
 interface SecretRef { name: string; provider: string; path: string; last_rotated: string; interval_days: number; }
 interface RotationHistory { id: string; secret: string; timestamp: string; success: boolean; duration_ms: number; }

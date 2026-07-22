@@ -42,7 +42,7 @@ export default function UserReassignmentPage() {
   const fetchUsers = useCallback(async () => {
     setLoading(true); setError("");
     try {
-      const res = await fetch("/api/v1/identity/users", { headers: { ...authHeader(), "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
+      const res = await fetch("/api/v1/identity/users", { headers: { ...authHeader(), "X-Tenant-ID": localStorage.getItem("ggid_tenant_id") || "" } });
       if (res.ok) {
         const data = await res.json();
         setUsers(data.users || data || []);
@@ -69,7 +69,7 @@ export default function UserReassignmentPage() {
     try {
       const res = await fetch("/api/v1/identity/reassignment/preview", {
         method: "POST",
-        headers: { ...authHeader(), "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" },
+        headers: { ...authHeader(), "Content-Type": "application/json", "X-Tenant-ID": localStorage.getItem("ggid_tenant_id") || "" },
         body: JSON.stringify({ user_id: selectedUser.user_id, new_org: newOrg, new_role: newRole, new_manager: newManager }),
       });
       if (res.ok) {
@@ -90,7 +90,7 @@ export default function UserReassignmentPage() {
     try {
       const res = await fetch("/api/v1/identity/reassignment/execute", {
         method: "POST",
-        headers: { ...authHeader(), "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" },
+        headers: { ...authHeader(), "Content-Type": "application/json", "X-Tenant-ID": localStorage.getItem("ggid_tenant_id") || "" },
         body: JSON.stringify({ user_id: selectedUser.user_id, new_org: newOrg, new_role: newRole, new_manager: newManager }),
       });
       if (!res.ok) return null;

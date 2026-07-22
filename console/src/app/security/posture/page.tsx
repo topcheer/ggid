@@ -57,7 +57,7 @@ interface ZTPosture {
   last_calculated?: string;
 }
 
-const TENANT_ID = "00000000-0000-0000-0000-000000000001";
+const TENANT_ID = localStorage.getItem("ggid_tenant_id") || "";
 
 const sevColors: Record<string, string> = {
   critical: "text-red-600 bg-red-100 dark:bg-red-900/30 dark:text-red-400",

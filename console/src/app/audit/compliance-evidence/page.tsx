@@ -8,7 +8,7 @@ import {
 import { authHeader } from "@/lib/auth-helpers";
 import { useTranslations } from "@/lib/i18n";
 
-const TENANT_ID = "00000000-0000-0000-0000-000000000001";
+const TENANT_ID = "";
 
 interface Framework { id: string; name: string; controls_total: number; controls_pass: number; controls_fail: number; last_assessed: string; coverage: number; }
 interface EvidenceItem { id: string; control_id: string; framework: string; artifact_type: string; collected_by: string; collected_at: string; hash: string; notes: string; }

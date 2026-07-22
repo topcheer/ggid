@@ -38,7 +38,7 @@ export default function AuditExportPage() {
         blob = await resp.blob();
       } else {
         // Use apiFetch which returns parsed JSON - for binary we need fetch directly
-        const tenantId = typeof window !== "undefined" ? localStorage.getItem("ggid_tenant_id") || "00000000-0000-0000-0000-000000000001" : "";
+        const tenantId = typeof window !== "undefined" ? localStorage.getItem("ggid_tenant_id") || "" : "";
         const token = typeof window !== "undefined" ? localStorage.getItem("ggid_access_token") || "" : "";
         const apiBase = typeof window !== "undefined" ? window.location.origin : "";
         const r = await fetch(`${apiBase}/api/v1/audit/export?${params.toString()}`, {

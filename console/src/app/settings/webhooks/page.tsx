@@ -7,7 +7,7 @@ import {
 import { authHeader } from "@/lib/auth-helpers";
 import { useTranslations } from "@/lib/i18n";
 
-const TENANT_ID = "00000000-0000-0000-0000-000000000001";
+const TENANT_ID = localStorage.getItem("ggid_tenant_id") || "";
 
 interface WebhookEndpoint { id: string; url: string; events: string[]; secret: string; status: "active" | "disabled"; last_delivery?: string; }
 interface Delivery { id: string; endpoint: string; event: string; status: string; attempts: number; response_code: number; timestamp: string; }

@@ -97,7 +97,7 @@ export default function AccessRequestsPage() {
 
   const handleApprove = async (req: AccessRequest) => {
     // Use current user ID as approver (in production this comes from JWT)
-    const approverId = localStorage.getItem("ggid_user_id") || "00000000-0000-0000-0000-000000000001";
+    const approverId = localStorage.getItem("ggid_user_id") || "";
     try {
       await apiFetch(`/api/v1/access-requests/${req.id}/approve`, {
         method: "POST",
@@ -112,7 +112,7 @@ export default function AccessRequestsPage() {
 
   const handleDeny = async (req: AccessRequest) => {
     const denialReason = prompt("Reason for denial? (optional)") || "";
-    const approverId = localStorage.getItem("ggid_user_id") || "00000000-0000-0000-0000-000000000001";
+    const approverId = localStorage.getItem("ggid_user_id") || "";
     try {
       await apiFetch(`/api/v1/access-requests/${req.id}/deny`, {
         method: "POST",

@@ -8,7 +8,7 @@ import {
 import { authHeader } from "@/lib/auth-helpers";
 import { useTranslations } from "@/lib/i18n";
 
-const TENANT_ID = "00000000-0000-0000-0000-000000000001";
+const TENANT_ID = "";
 
 type Tab = "merkle" | "worm" | "alerts";
 

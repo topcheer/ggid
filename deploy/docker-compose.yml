@@ -38,7 +38,7 @@ services:
       - AUDIT_SERVICE_URL=http://localhost:8072
       # Console
       - NEXT_PUBLIC_API_URL=
-      - NEXT_PUBLIC_TENANT_ID=00000000-0000-0000-0000-000000000001
+      - NEXT_PUBLIC_TENANT_ID=
       # Security (change in production!)
       - INTERNAL_AUTH_SECRET=${INTERNAL_AUTH_SECRET:-change-me-in-production}
       # Optional: External SMTP

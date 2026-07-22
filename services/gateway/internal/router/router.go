@@ -683,8 +683,24 @@ func (gw *Gateway) checkRouteScope(w http.ResponseWriter, r *http.Request) bool 
 	// tenant). Platform-level grants therefore only apply when the token
 	// belongs to the platform tenant; tenant-level grants apply within the
 	// caller's own tenant, where tenant admins are already sovereign.
-	const platformTenantID = "00000000-0000-0000-0000-000000000001"
-	isPlatformTenant := claims.TenantID == platformTenantID
+	// Dynamic: detect platform tenant by checking if JWT has platform:admin scope
+	// rather than comparing against a hardcoded tenant UUID.
+	isPlatformTenant := false
+	for _, sc := range claims.Scopes {
+		if strings.EqualFold(sc, "platform:admin") {
+			isPlatformTenant = true
+			break
+		}
+	}
+	// Also check roles claim for platform:admin
+	if !isPlatformTenant {
+		for _, role := range claims.Roles {
+			if strings.EqualFold(role, "platform:admin") {
+				isPlatformTenant = true
+				break
+			}
+		}
+	}
 
 	hasPlatform := false
 	hasTenant := false

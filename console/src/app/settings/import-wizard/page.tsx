@@ -9,7 +9,7 @@ import {
 } from "lucide-react";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "";
-const TENANT_ID = typeof window !== "undefined" ? localStorage.getItem("ggid_tenant_id") || "00000000-0000-0000-0000-000000000001" : "00000000-0000-0000-0000-000000000001";
+const TENANT_ID = typeof window !== "undefined" ? localStorage.getItem("ggid_tenant_id") || "" : "";
 
 interface ImportRow {
   row: number;

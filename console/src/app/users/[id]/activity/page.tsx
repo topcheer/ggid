@@ -54,7 +54,7 @@ export default function UserActivityPage({ params }: { params: { id: string } })
 
   useEffect(() => {
     setLoading(true); setError("");
-    fetch(`/api/v1/identity/users/${params.id}/activity`, { headers: { ...authHeader(), "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } })
+    fetch(`/api/v1/identity/users/${params.id}/activity`, { headers: { ...authHeader(), "X-Tenant-ID": localStorage.getItem("ggid_tenant_id") || "" } })
       .then(async (res) => {
         if (res.ok) { const data = await res.json(); setEvents(Array.isArray(data.events) ? data.events : Array.isArray(data) ? data : []); }
         else { setError(`Failed to load activity: HTTP ${res.status}`); }

@@ -72,9 +72,9 @@ export default function LdapSyncConfigPage() {
     setLoading(true); setError(null);
     try {
       const [configRes, statusRes, historyRes] = await Promise.all([
-        fetch("/api/v1/identity/ldap/sync-config", { headers: { ...authHeader(), "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } }).catch(() => null),
-        fetch("/api/v1/identity/ldap/sync-status", { headers: { ...authHeader(), "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } }).catch(() => null),
-        fetch("/api/v1/identity/ldap/sync-history", { headers: { ...authHeader(), "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } }).catch(() => null),
+        fetch("/api/v1/identity/ldap/sync-config", { headers: { ...authHeader(), "X-Tenant-ID": localStorage.getItem("ggid_tenant_id") || "" } }).catch(() => null),
+        fetch("/api/v1/identity/ldap/sync-status", { headers: { ...authHeader(), "X-Tenant-ID": localStorage.getItem("ggid_tenant_id") || "" } }).catch(() => null),
+        fetch("/api/v1/identity/ldap/sync-history", { headers: { ...authHeader(), "X-Tenant-ID": localStorage.getItem("ggid_tenant_id") || "" } }).catch(() => null),
       ]);
       if (configRes?.ok) { const d = await configRes.json(); const c = d.config || d; if (c) {
         // Ensure attribute_mapping is always an array of {ldap_attr, local_attr}
@@ -95,7 +95,7 @@ export default function LdapSyncConfigPage() {
     setSaving(true); setSaved(false);
     try {
       const res = await fetch("/api/v1/identity/ldap/sync-config", {
-        method: "PUT", headers: { ...authHeader(), "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" },
+        method: "PUT", headers: { ...authHeader(), "Content-Type": "application/json", "X-Tenant-ID": localStorage.getItem("ggid_tenant_id") || "" },
         body: JSON.stringify({ config }),
       });
       if (res.ok) setSaved(true);
@@ -106,7 +106,7 @@ export default function LdapSyncConfigPage() {
     setTesting(true); setTestResult(null);
     try {
       const res = await fetch("/api/v1/identity/ldap/sync-config/test", {
-        method: "POST", headers: { ...authHeader(), "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" },
+        method: "POST", headers: { ...authHeader(), "Content-Type": "application/json", "X-Tenant-ID": localStorage.getItem("ggid_tenant_id") || "" },
         body: JSON.stringify({ config }),
       });
       if (res.ok) { const d = await res.json(); setTestResult(d); }
@@ -119,7 +119,7 @@ export default function LdapSyncConfigPage() {
     setSyncing(true);
     try {
       const res = await fetch("/api/v1/identity/ldap/sync", {
-        method: "POST", headers: { ...authHeader(), "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" },
+        method: "POST", headers: { ...authHeader(), "X-Tenant-ID": localStorage.getItem("ggid_tenant_id") || "" },
       });
       if (res.ok) { setSyncStatus({ status: "syncing", last_sync: null }); setTimeout(() => loadData(), 3000); }
     } catch { /* noop */ } finally { setSyncing(false); }

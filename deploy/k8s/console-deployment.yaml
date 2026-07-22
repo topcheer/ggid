@@ -47,7 +47,7 @@ spec:
             - name: NEXT_PUBLIC_API_URL
               value: "https://ggid.iot2.win"
             - name: NEXT_PUBLIC_TENANT_ID
-              value: "00000000-0000-0000-0000-000000000001"
+              value: ""
             - name: NODE_ENV
               value: "production"
             - name: HOSTNAME

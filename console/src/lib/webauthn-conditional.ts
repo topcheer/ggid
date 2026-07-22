@@ -10,7 +10,7 @@
 
 import { authHeader } from "./auth-helpers";
 
-const TENANT_ID = "00000000-0000-0000-0000-000000000001";
+const TENANT_ID = "";
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "";
 
 /** Check if conditional mediation is supported in this browser. */

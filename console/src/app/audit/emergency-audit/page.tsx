@@ -35,7 +35,7 @@ export default function EmergencyAccessAuditPage() {
     setLoading(true);
     try {
       const params = startDate && endDate ? `?start=${startDate}&end=${endDate}` : "";
-      const res = await fetch(`/api/v1/audit/emergency-access${params}`, { headers: { ...authHeader(), "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
+      const res = await fetch(`/api/v1/audit/emergency-access${params}`, { headers: { ...authHeader(), "X-Tenant-ID": localStorage.getItem("ggid_tenant_id") || "" } });
       if (res.ok) {
         const data = await res.json();
         setRecords(data.records || data || []);

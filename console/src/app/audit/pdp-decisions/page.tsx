@@ -8,7 +8,7 @@ import {
 import { authHeader } from "@/lib/auth-helpers";
 import { useTranslations } from "@/lib/i18n";
 
-const TENANT_ID = "00000000-0000-0000-0000-000000000001";
+const TENANT_ID = "";
 
 interface PDPDecision { id: string; subject: string; resource: string; action: string; decision: "allow" | "deny" | "step_up"; deny_reason?: string; risk_score: number; latency_ms: number; cache_hit: boolean; timestamp: string; }
 

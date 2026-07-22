@@ -83,7 +83,7 @@ export default function ComplianceReportPage() {
       const dlRes = await fetch(apiUrl, {
         headers: {
           "Content-Type": "application/json",
-          "X-Tenant-ID": localStorage.getItem("ggid_tenant_id") || "00000000-0000-0000-0000-000000000001",
+          "X-Tenant-ID": localStorage.getItem("ggid_tenant_id") || "",
         },
       });
       if (!dlRes.ok) throw new Error("download failed");

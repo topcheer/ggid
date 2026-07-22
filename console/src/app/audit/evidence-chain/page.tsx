@@ -52,7 +52,7 @@ export default function EvidenceChainPage() {
     if (!controlId) return;
     setLoading(true);
     try {
-      const res = await fetch(`/api/v1/audit/evidence-chain?control_id=${encodeURIComponent(controlId)}`, { headers: { ...authHeader(), "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
+      const res = await fetch(`/api/v1/audit/evidence-chain?control_id=${encodeURIComponent(controlId)}`, { headers: { ...authHeader(), "X-Tenant-ID": localStorage.getItem("ggid_tenant_id") || "" } });
       if (res.ok) {
         const json = await res.json();
         setData(json);
@@ -74,7 +74,7 @@ export default function EvidenceChainPage() {
     try {
       await fetch(`/api/v1/audit/evidence-chain/${entryId}/verify`, {
         method: "POST",
-        headers: { ...authHeader(), "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" },
+        headers: { ...authHeader(), "X-Tenant-ID": localStorage.getItem("ggid_tenant_id") || "" },
       });
       if (data) {
         setData({

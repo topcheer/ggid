@@ -44,7 +44,7 @@ export default function ComplianceGapsPage() {
   const fetchGaps = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch("/api/v1/audit/compliance-gaps", { headers: { ...authHeader(), "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
+      const res = await fetch("/api/v1/audit/compliance-gaps", { headers: { ...authHeader(), "X-Tenant-ID": localStorage.getItem("ggid_tenant_id") || "" } });
       if (res.ok) {
         const data = await res.json();
         setGaps(data.gaps || data || []);
@@ -65,7 +65,7 @@ export default function ComplianceGapsPage() {
     try {
       await fetch(`/api/v1/audit/compliance-gaps/${updateGap.id}`, {
         method: "PATCH",
-        headers: { ...authHeader(), "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" },
+        headers: { ...authHeader(), "Content-Type": "application/json", "X-Tenant-ID": localStorage.getItem("ggid_tenant_id") || "" },
         body: JSON.stringify({ status: newStatus }),
       });
       setGaps((prev) => prev.map((g: any) => g.id === updateGap.id ? { ...g, status: newStatus as ComplianceGap["status"] } : g));

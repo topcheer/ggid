@@ -7,7 +7,7 @@ import {
 import { authHeader } from "@/lib/auth-helpers";
 import { useTranslations } from "@/lib/i18n";
 
-const TENANT_ID = "00000000-0000-0000-0000-000000000001";
+const TENANT_ID = "";
 
 interface AlertEvent { id: string; name: string; severity: "critical" | "warning" | "info"; duration: string; value: string; threshold: string; runbook: string; }
 interface AlertRule { id: string; name: string; metric: string; threshold: string; severity: string; enabled: boolean; }
