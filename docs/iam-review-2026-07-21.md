@@ -2,7 +2,7 @@
 
 > 审视人：god_fullstack&everything（定期审视任务 cron-1 首轮）
 > 方法：三路并行代码级审查（OAuth/OIDC/SAML · Auth/Identity/SCIM · 增强功能兼容性+竞品迁移），所有结论均有 file:line 证据。
-> 状态：**R1 完成（已部署生产）。** R4/R10/R11 安全修复已部署。R12 RBAC path 对齐审查通过。R13-R15 无增量。R16 webhook+API key P1 修复审查通过。R17（15:43）：零核心代码变更，无增量问题。
+> 状态：**R1 完成（已部署生产）。** R4/R10/R11 安全修复已部署。R12-R17 RBAC 逐步收紧审查通过。R18（16:43）：零核心代码变更，无增量问题。
 
 ---
 
