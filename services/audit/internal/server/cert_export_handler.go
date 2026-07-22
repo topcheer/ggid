@@ -31,7 +31,7 @@ func (s *HTTPServer) handleCertExport(w http.ResponseWriter, r *http.Request) {
 		"format":       format,
 		"organization": map[string]any{
 			"name":          "GGID Inc.",
-			"tenant_id":     "00000000-0000-0000-0000-000000000001",
+			"tenant_id":     r.Header.Get("X-Tenant-ID"),
 			"reporting_period": map[string]string{
 				"start": now.Add(-90 * 24 * time.Hour).Format("2006-01-02"),
 				"end":   now.Format("2006-01-02"),

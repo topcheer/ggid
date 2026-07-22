@@ -42,7 +42,7 @@ func (r *ComplianceMappingRepository) EnsureSchema(ctx context.Context) error {
 	_, err := r.pool.Exec(ctx, `
 		CREATE TABLE IF NOT EXISTS compliance_mappings (
 			id             UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-			tenant_id      UUID NOT NULL DEFAULT '00000000-0000-0000-0000-000000000001',
+			tenant_id      UUID,
 			framework      TEXT NOT NULL,
 			trust_category TEXT NOT NULL DEFAULT '',
 			control_id     TEXT NOT NULL,
@@ -74,7 +74,7 @@ func (r *ComplianceMappingRepository) ListByFramework(ctx context.Context, tenan
 		       ggid_feature, status, evidence_query, ccm_control_id, description,
 		       created_at, updated_at
 		FROM compliance_mappings
-		WHERE framework = $1 AND (tenant_id = $2 OR tenant_id = '00000000-0000-0000-0000-000000000001')
+		WHERE framework = $1 AND (tenant_id = $2 OR tenant_id IS NULL)
 		ORDER BY control_id
 	`, framework, tenantID)
 	if err != nil {
@@ -106,7 +106,7 @@ func (r *ComplianceMappingRepository) ListAll(ctx context.Context, tenantID uuid
 		       ggid_feature, status, evidence_query, ccm_control_id, description,
 		       created_at, updated_at
 		FROM compliance_mappings
-		WHERE tenant_id = $1 OR tenant_id = '00000000-0000-0000-0000-000000000001'
+		WHERE tenant_id = $1 OR tenant_id IS NULL
 		ORDER BY framework, control_id
 	`, tenantID)
 	if err != nil {

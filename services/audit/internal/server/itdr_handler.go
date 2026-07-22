@@ -203,11 +203,11 @@ func (s *HTTPServer) handleITDRRuleByID(w http.ResponseWriter, r *http.Request) 
 func getTenantID(r *http.Request) uuid.UUID {
 	idStr := r.Header.Get("X-Tenant-ID")
 	if idStr == "" {
-		return uuid.MustParse("00000000-0000-0000-0000-000000000001")
+		return uuid.Nil
 	}
 	id, err := uuid.Parse(idStr)
 	if err != nil {
-		return uuid.MustParse("00000000-0000-0000-0000-000000000001")
+		return uuid.Nil
 	}
 	return id
 }
