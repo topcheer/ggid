@@ -395,3 +395,8 @@ All 6 dimensions verified 5th time. 30 total dimension checks in cycles 1-5.
 Consistent results: viewer escalation prevented, cross-tenant rejected, all demos functional.
 
 ### Next Dimension: 1 — Authentication (Cycle 6)
+
+## Dimension 1 C6: Auth (Round 54)
+- 5/5 password grant + M2M OK ✅ | 7/7 demo 200 ✅ | 0 hacks
+
+### Next Dimension: 2 — Authorization Boundaries
