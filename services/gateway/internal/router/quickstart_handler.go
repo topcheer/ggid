@@ -1,6 +1,7 @@
 package router
 
 import (
+	"context"
 	"encoding/json"
 	"io"
 	"net/http"
@@ -8,6 +9,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5"
 )
 
 // QuickstartRequest is the body for POST /api/v1/system/quickstart.
@@ -159,11 +161,14 @@ func (gw *Gateway) handleSystemStatus(w http.ResponseWriter, r *http.Request) {
 	if !initialized {
 		authURL := gw.serviceURL("/api/v1/auth")
 		client := &http.Client{Timeout: 3 * time.Second}
-		tenantID := uuid.MustParse("00000000-0000-0000-0000-000000000001")
+		// Probe first tenant (system init check) — query tenants table.
+		probeTenantID := gw.firstTenantID()
 		loginBody := `{"username":"__setup_probe__","password":"__nonexistent__"}`
 		req, _ := http.NewRequest("POST", authURL+"/api/v1/auth/verify", strings.NewReader(loginBody))
 		req.Header.Set("Content-Type", "application/json")
-		req.Header.Set("X-Tenant-ID", tenantID.String())
+		if probeTenantID != "" {
+			req.Header.Set("X-Tenant-ID", probeTenantID)
+		}
 		if resp, err := client.Do(req); err == nil {
 			body, _ := io.ReadAll(resp.Body)
 			resp.Body.Close()
@@ -208,3 +213,21 @@ func (gw *Gateway) handleSystemStatus(w http.ResponseWriter, r *http.Request) {
 
 // ensure strings import is used.
 var _ = strings.Contains
+
+// firstTenantID returns the first tenant UUID from the DB (for init probing).
+// Returns empty string if no tenant exists or DB is unavailable.
+func (gw *Gateway) firstTenantID() string {
+	dbURL := gw.cfg.DatabaseURL
+	if dbURL == "" {
+		return ""
+	}
+	conn, err := pgx.Connect(context.Background(), dbURL)
+	if err != nil {
+		return ""
+	}
+	defer conn.Close(context.Background())
+	var id string
+	_ = conn.QueryRow(context.Background(),
+		`SELECT id::text FROM tenants ORDER BY created_at LIMIT 1`).Scan(&id)
+	return id
+}
