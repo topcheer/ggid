@@ -312,3 +312,8 @@ Zero regressions from DB reset recovery.
 - Perms: 9p/1r ✅ | Cross-tenant: 401 ✅ | Fake: 401 ✅ | 7/7 demo 200 ✅ | 0 hacks
 
 ### Next Dimension: 3 — Demo Functional Completeness
+
+## Dimension 3 C4: Functional (Round 44)
+- Inventory: 3 items correct fields ✅ | POST id=p004 ✅ | Perms: 9p inv+ord ✅ | 7/7 demo 200 ✅ | 0 hacks
+
+### Next Dimension: 4 — Multi-tenant Isolation
