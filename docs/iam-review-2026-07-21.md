@@ -2,7 +2,7 @@
 
 > 审视人：god_fullstack&everything（定期审视任务 cron-1 首轮）
 > 方法：三路并行代码级审查（OAuth/OIDC/SAML · Auth/Identity/SCIM · 增强功能兼容性+竞品迁移），所有结论均有 file:line 证据。
-> 状态：**R1 完成（已部署生产）。** R2/R3/R5/R6/R7/R9 无增量。R4 发现并修复 P0 跨租户提权回归（已部署）。R8 审查 policy permissions key 兼容（无问题）。R10（08:43）：arch_pm DB reset 后发现 20+ 处残留硬编码旧 tenant UUID — MCP+CLI 已修复（79bdd1a95），oauth/identity/auth/audit 残留分配团队协调修复中。
+> 状态：**R1 完成（已部署生产）。** R2/R3/R5/R6/R7/R9 无增量。R4 修复 P0 跨租户提权（已部署）。R8 policy permissions key 兼容（无问题）。R10 发现并修复 20+ 处残留硬编码 tenant UUID（全部清零）。R11（09:43）：guardian 修复 2 个 P0 空 roles RBAC bypass，构建测试全绿。无增量问题。
 
 ---
 
