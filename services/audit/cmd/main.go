@@ -265,10 +265,24 @@ func main() {
 		log.Printf("Audit Service: SIEM forwarder started (provider=%s, endpoint=%s)", siemProvider, siemEndpoint)
 	}
 
-	// Alert Engine — real-time alerting on audit events via NATS subscription.
-	// Reads alert rules from ALERT_RULES_CONFIG (JSON file path).
+	// Alert Engine — real-time alerting on audit events.
+	// Rules loaded from ALERT_RULES_CONFIG (JSON file) + alert_rules table (DB).
 	var alertEngine *alerting.AlertEngine
 	var alertNc *nats.Conn
+
+	// Load rules from DB first (if available).
+	var allRules []*alerting.AlertRule
+	if db != nil {
+		dbRules, err := alerting.LoadAlertRulesFromDB(ctx, db)
+		if err != nil {
+			log.Printf("Audit Service: failed to load alert rules from DB: %v", err)
+		} else if len(dbRules) > 0 {
+			allRules = append(allRules, dbRules...)
+			log.Printf("Audit Service: loaded %d alert rules from DB", len(dbRules))
+		}
+	}
+
+	// Merge file-based rules.
 	if alertConfigPath := os.Getenv("ALERT_RULES_CONFIG"); alertConfigPath != "" {
 		rulesData, err := os.ReadFile(alertConfigPath)
 		if err != nil {
@@ -278,6 +292,8 @@ func main() {
 			if err := json.Unmarshal(rulesData, &rules); err != nil {
 				log.Printf("Audit Service: failed to parse alert rules config: %v", err)
 			} else {
+				allRules = append(allRules, rules...)
+				log.Printf("Audit Service: loaded %d alert rules from file", len(rules))
 				var notifier alerting.Notifier
 				if webhookURL := os.Getenv("ALERT_WEBHOOK_URL"); webhookURL != "" {
 					notifier = &alerting.WebhookNotifier{
@@ -286,7 +302,7 @@ func main() {
 					}
 				}
 				alertEngine = alerting.NewAlertEngine(notifier)
-				for _, rule := range rules {
+				for _, rule := range allRules {
 					alertEngine.AddRule(rule)
 				}
 
@@ -320,7 +336,7 @@ func main() {
 					if err != nil {
 						log.Printf("Audit Service: failed to subscribe for alerting: %v", err)
 					} else {
-						log.Printf("Audit Service: alert engine started (%d rules loaded, subject=%s)", len(rules), subject)
+						log.Printf("Audit Service: alert engine started (%d rules loaded (DB+file), subject=%s)", len(rules), subject)
 					}
 				}
 			}
