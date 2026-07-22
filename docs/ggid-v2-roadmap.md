@@ -20,6 +20,12 @@
 让 GGID 从"技术完备"变成"客户可以上手使用的产品"。
 
 ### R1-01: B2B 自助 Onboarding 流程
+- **状态**: 进行中
+- **认领**: arch_pm（流程设计+子域名路由 ✅）+ frontend（UI ✅）+ backend（API 编排，待确认）
+- **进度**:
+  - frontend: `/onboarding` 5 步向导已完成（连接 self-register API）
+  - arch_pm: 子域名→tenant 解析设计中
+  - backend: API 编排待认领
 - **目标**: 访客 → 注册租户 → 自动配置 → 首个 admin 引导 → 开始使用
 - **范围**:
   - 租户注册页（公司名 + admin 信息 + 邮箱验证）
@@ -27,7 +33,6 @@
   - Bootstrap 向导（品牌化 / SCIM / 密码策略引导配置）
   - 子域名路由（tenant.ggid.iot2.win）
 - **API 依赖**: org/CreateTenant + identity/CreateUser + policy/SeedRoles
-- **负责人**: arch_pm（流程设计）+ frontend（UI）+ backend（API 编排）
 - **验收**: 完整 onboarding 5 分钟内完成，新租户可登录 Console
 
 ### R1-02: Social Login 连接器
@@ -42,25 +47,17 @@
 - **验收**: Google 登录端到端可用
 
 ### R1-03: 组织树管理 UI
+- **状态**: 前端已完成，待 backend API 验证
+- **认领**: frontend ✅ + backend（API 验证，待确认）
+- **进度**: `/organizations/tree` 760 行完整实现（树形+拖拽+CRUD+搜索+右键菜单+成员计数）
 - **目标**: Console 中可视化组织树 + 拖拽移动 + 成员分配
-- **范围**:
-  - 树形组件（后端 ltree 已就绪）
-  - 创建/编辑/删除组织节点
-  - 拖拽移动子树（restructure handler 已有）
-  - 成员分配/移除（org_role_binding handler 已有）
-  - 访问矩阵视图（access_matrix handler 已有）
-- **API 依赖**: org/GetSubTree + restructure + role_bindings
-- **负责人**: frontend（UI）+ backend（API 验证）
 - **验收**: 组织树 CRUD + 拖拽 + 成员分配端到端
 
 ### R1-04: Console 信息架构重构
+- **状态**: 进行中（~60%）
+- **认领**: frontend ✅ + QA ✅
+- **进度**: Ctrl+K CommandPalette 已集成（40+ 命令），三套角色导航 requiredScope 过滤已有，Dashboard 首页优化中
 - **目标**: 当前 125 个页面按角色分 dashboard，减少认知负荷
-- **范围**:
-  - 平台 admin / 租户 admin / 普通用户 三套导航
-  - Dashboard 首页（角色相关 KPI + 快捷操作）
-  - 侧边栏分组优化（Identity / Security / Compliance / Settings）
-  - 全局搜索（Ctrl+K command palette）
-- **负责人**: frontend（UI）+ QA（UX 审查对照）
 - **验收**: 3 种角色登录后看到不同 dashboard，关键操作 ≤3 次点击
 
 ---
