@@ -37,6 +37,7 @@ var publicPaths = []string{
 	"/api/v1/auth/mfa/radius/verify",
 	"/api/v1/auth/mfa/yubikey/verify",
 	"/api/v1/auth/mfa/methods",
+	"/api/v1/identity/tenants/self-register", // B2B onboarding (R1-01)
 	"/api/v1/healthz",
 	"/healthz",
 	"/api/v1/identity/healthz",
