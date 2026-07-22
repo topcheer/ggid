@@ -1584,19 +1584,21 @@ func (s *OAuthService) PasswordGrant(ctx context.Context, req *PasswordGrantRequ
 			return nil, errors.Unauthenticated("invalid credentials")
 		}
 
-		// Verify password against credentials table
+		// Verify password against credentials table. A lookup failure or
+		// missing credential MUST fail closed — never skip verification.
 		var credHash string
-		_ = s.pool.QueryRow(ctx, `
+		scanErr := s.pool.QueryRow(ctx, `
 			SELECT c.secret FROM credentials c
 			JOIN users u ON u.id = c.user_id
-			WHERE u.username = $1 AND u.tenant_id = $2 AND c.credential_type = 'password'`,
+			WHERE u.username = $1 AND u.tenant_id = $2 AND c.type = 'password'`,
 			req.Username, req.TenantID).Scan(&credHash)
+		if scanErr != nil || credHash == "" {
+			return nil, errors.Unauthenticated("invalid credentials")
+		}
 
-		if credHash != "" {
-			ok, _ := pkgcrypto.VerifyPassword(req.Password, credHash)
-			if !ok {
-				return nil, errors.Unauthenticated("invalid credentials")
-			}
+		ok, _ := pkgcrypto.VerifyPassword(req.Password, credHash)
+		if !ok {
+			return nil, errors.Unauthenticated("invalid credentials")
 		}
 		userID = dbUserID
 	} else {

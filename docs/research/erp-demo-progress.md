@@ -290,3 +290,15 @@ Post-DB-reset with new tenant UUIDs:
 - 0 hacks
 
 ### Next Dimension: 6 — End-to-end User Experience
+
+## Dimension 6 C3: E2E User Experience (Round 41)
+- Login→Perms(9)→Read(2)→Create(p003)→Order(o003 pending) ALL PASS ✅
+- No-token: 7/7 return 401 ✅
+- Invalid token: 403 ✅
+- 0 hacks
+
+### CYCLE 3 COMPLETE (Rounds 35-41, post-DB-reset)
+All 6 dimensions verified in cycle 3 with new random tenant UUIDs.
+Zero regressions from DB reset recovery.
+
+### Next Dimension: 1 — Authentication (Cycle 4)

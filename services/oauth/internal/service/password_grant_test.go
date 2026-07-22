@@ -147,3 +147,23 @@ func TestPasswordGrant_WrongPassword(t *testing.T) {
 		t.Error("wrong password must fail")
 	}
 }
+
+// TestPasswordGrant_NoCredential_FailsClosed is the regression test for the
+// P0 auth bypass: when the credentials lookup errors or returns no row, the
+// grant must REJECT — never skip verification.
+func TestPasswordGrant_NoCredential_FailsClosed(t *testing.T) {
+	svc, _, _, _ := newTestOAuthService()
+	// credHash empty → credentials query "returns no row".
+	svc.SetPool(&fakePool{userID: uuid.New(), credHash: ""})
+
+	_, err := svc.PasswordGrant(context.Background(), &PasswordGrantRequest{
+		TenantID: testTenantID,
+		Username: "admin",
+		Password: "anything",
+		ClientID: "ggid-console",
+		Scope:    []string{"openid"},
+	})
+	if err == nil {
+		t.Fatal("missing credential must fail closed, not skip verification")
+	}
+}

@@ -755,6 +755,15 @@ func (h *Handler) register(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Validate against the configured password policy BEFORE creating any
+	// records — otherwise a policy rejection leaves an orphaned user behind.
+	if ps := h.authSvc.GetPasswordService(); ps != nil {
+		if err := ps.Validate(req.Password); err != nil {
+			writeAuthError(w, err)
+			return
+		}
+	}
+
 	// Create user in Identity Service
 	user, err := h.authSvc.IdentityClient().CreateUserFromSocial(r.Context(), tc.TenantID, req.Username, req.Email, req.Username, "local", userID.String(), nil)
 	if err != nil {
