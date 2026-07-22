@@ -1119,7 +1119,9 @@ type IntrospectionResponse struct {
 	TenantID   string `json:"tenant_id,omitempty"`
 	SessionID  string `json:"session_id,omitempty"`
 	DeviceID   string `json:"device_id,omitempty"`
-	RiskScore  int    `json:"risk_score,omitempty"`
+	RiskScore   int      `json:"risk_score,omitempty"`
+	Roles       []string `json:"roles,omitempty"`
+	Permissions []string `json:"permissions,omitempty"`
 }
 
 // IntrospectToken validates a token and returns introspection data.
@@ -1154,6 +1156,8 @@ func (s *OAuthService) IntrospectToken(tokenStr string) *IntrospectionResponse {
 			resp.Scope = s
 		}
 	}
+	resp.Roles = getStringSliceClaim(claims, "roles")
+	resp.Permissions = getStringSliceClaim(claims, "permissions")
 	return resp
 }
 
