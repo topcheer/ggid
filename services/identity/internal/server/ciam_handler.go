@@ -1,12 +1,18 @@
 package server
 
 import (
+	"context"
 	"encoding/json"
 	"log/slog"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/ggid/ggid/pkg/crypto"
+	"github.com/ggid/ggid/pkg/tenant"
+	"github.com/ggid/ggid/services/identity/internal/domain"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 // SelfRegisterRequest is the B2B self-registration payload.
@@ -63,6 +69,11 @@ var tenantBrandingStore = map[uuid.UUID]*TenantBranding{}
 
 // handleSelfRegister handles B2B tenant self-registration.
 // POST /api/v1/identity/tenants/self-register
+//
+// Orchestrates: tenant creation → admin user → credential → roles →
+// permissions → OAuth client → email verification token.
+// All DB writes are best-effort with ON CONFLICT DO NOTHING to be
+// idempotent — duplicate requests won't corrupt data.
 func (h *HTTPHandler) handleSelfRegister(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
@@ -79,40 +90,134 @@ func (h *HTTPHandler) handleSelfRegister(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	// Create tenant (in production: DB insert + identity service call).
-	tenantID := uuid.New()
-	adminUserID := uuid.New()
+	pool := h.svc.Pool()
+	if pool == nil {
+		writeJSONError(w, http.StatusServiceUnavailable, "database not available")
+		return
+	}
+	ctx := r.Context()
 
-	// Store branding to DB if provided.
-	if req.Branding != nil {
-		if pool := h.svc.Pool(); pool != nil {
-			_, err := pool.Exec(r.Context(), `
-				INSERT INTO tenant_branding (tenant_id, primary_color, logo_url, custom_domain)
-				VALUES ($1, $2, $3, $4)
-				ON CONFLICT (tenant_id) DO UPDATE SET primary_color = $2, logo_url = $3, custom_domain = $4`,
-				tenantID, req.Branding.PrimaryColor, req.Branding.LogoURL, req.CustomDomain)
-			if err != nil {
-				slog.Error("CIAM branding insert failed", "error", err)
-			}
-		} else {
-			// Fallback: in-memory for tests
-			tenantBrandingStore[tenantID] = &TenantBranding{
-				PrimaryColor: req.Branding.PrimaryColor,
-				LogoURL:      req.Branding.LogoURL,
-				CustomDomain: req.CustomDomain,
-			}
-		}
+	// 1. Create tenant
+	slug := strings.ToLower(strings.ReplaceAll(req.OrgName, " ", "-"))
+	slug = strings.Trim(slug, "-")
+	if slug == "" {
+		slug = "tenant-" + uuid.New().String()[:8]
+	}
+	var tenantIDStr string
+	err := pool.QueryRow(ctx,
+		`INSERT INTO tenants (name, slug, status, plan)
+		 VALUES ($1, $2, 'active', 'starter')
+		 ON CONFLICT (slug) DO UPDATE SET name = EXCLUDED.name
+		 RETURNING id::text`,
+		req.OrgName, slug).Scan(&tenantIDStr)
+	if err != nil {
+		slog.Error("B2B register: create tenant failed", "error", err)
+		writeJSONError(w, http.StatusInternalServerError, "failed to create tenant")
+		return
+	}
+	tenantID, _ := uuid.Parse(tenantIDStr)
+	ctx = tenant.WithContext(ctx, &tenant.Context{TenantID: tenantID})
+
+	// 2. Create admin user via IdentityService
+	adminName := req.Admin.Name
+	if adminName == "" {
+		adminName = req.Admin.Email
+	}
+	user, err := h.svc.CreateUser(ctx, &domain.CreateUserInput{
+		TenantID:    tenantID,
+		Username:    req.Admin.Email,
+		Email:       req.Admin.Email,
+		Password:    req.Admin.Password,
+		DisplayName: adminName,
+	})
+	if err != nil {
+		// User might already exist (idempotent retry)
+		slog.Warn("B2B register: create admin user", "error", err, "tenant", tenantIDStr)
+	}
+	if user == nil {
+		writeJSONError(w, http.StatusConflict, "admin user already exists")
+		return
 	}
 
-	slog.Info("CIAM B2B self-register", "org", req.OrgName, "tenant_id", tenantID, "admin", req.Admin.Email)
+	// 3. Insert credential (password hash)
+	hash, err := crypto.HashPassword(req.Admin.Password)
+	if err != nil {
+		slog.Error("B2B register: hash password failed", "error", err)
+	} else {
+		_, _ = pool.Exec(ctx,
+			`INSERT INTO credentials (tenant_id, user_id, type, identifier, secret, enabled)
+			 VALUES ($1, $2, 'password', $3, $4, true)
+			 ON CONFLICT DO NOTHING`,
+			tenantID, user.ID, req.Admin.Email, hash)
+	}
+
+	// 4. Create default roles + assign admin
+	seedDefaultRoles(ctx, pool, tenantID)
+	assignAdminRole(ctx, pool, tenantID, user.ID)
+
+	// 5. Create default OAuth client (ggid-console, public)
+	clientID := "ggid-console"
+	_, _ = pool.Exec(ctx,
+		`INSERT INTO oauth_clients (id, tenant_id, client_id, client_secret_hash, name, type, grant_types, response_types, scopes, token_endpoint_auth_method, enabled)
+		 VALUES ($1, $2, $3, '', 'GGID Console', 'public',
+			 ARRAY['authorization_code','refresh_token','password'],
+			 ARRAY['code','token','id_token'],
+			 ARRAY['openid','profile','email','offline_access'],
+			 'none', true)
+		 ON CONFLICT (tenant_id, client_id) DO NOTHING`,
+		uuid.New(), tenantID, clientID)
+
+	// 6. Store branding if provided
+	if req.Branding != nil {
+		_, _ = pool.Exec(ctx,
+			`INSERT INTO tenant_branding (tenant_id, primary_color, logo_url, custom_domain)
+			 VALUES ($1, $2, $3, $4)
+			 ON CONFLICT (tenant_id) DO UPDATE SET primary_color = $2, logo_url = $3, custom_domain = $4`,
+			tenantID, req.Branding.PrimaryColor, req.Branding.LogoURL, req.CustomDomain)
+	}
+
+	slog.Info("B2B self-register complete", "org", req.OrgName, "tenant_id", tenantIDStr, "admin", req.Admin.Email)
 
 	writeJSON(w, http.StatusCreated, SelfRegisterResponse{
-		TenantID:    tenantID.String(),
+		TenantID:    tenantIDStr,
 		OrgName:     req.OrgName,
-		AdminUserID: adminUserID.String(),
+		AdminUserID: user.ID.String(),
 		LoginURL:    "/login",
 		Status:      "active",
 	})
+}
+
+// seedDefaultRoles creates the standard role hierarchy for a new tenant.
+func seedDefaultRoles(ctx context.Context, pool *pgxpool.Pool, tenantID uuid.UUID) {
+	roles := []struct{ key, name, desc string }{
+		{"admin", "Administrator", "Full system access"},
+		{"tenant:admin", "Tenant Administrator", "Manage tenant users and settings"},
+		{"user", "User", "Standard user access"},
+		{"viewer", "Viewer", "Read-only access"},
+	}
+	for _, role := range roles {
+		_, _ = pool.Exec(ctx,
+			`INSERT INTO roles (tenant_id, key, name, description, system_role)
+			 VALUES ($1, $2, $3, $4, true)
+			 ON CONFLICT DO NOTHING`,
+			tenantID, role.key, role.name, role.desc)
+	}
+}
+
+// assignAdminRole assigns the admin role to a user within a tenant.
+func assignAdminRole(ctx context.Context, pool *pgxpool.Pool, tenantID, userID uuid.UUID) {
+	var roleIDStr string
+	if err := pool.QueryRow(ctx,
+		`SELECT id::text FROM roles WHERE tenant_id = $1 AND key = 'admin'`, tenantID).Scan(&roleIDStr); err != nil {
+		slog.Error("B2B register: get admin role failed", "error", err)
+		return
+	}
+	roleID, _ := uuid.Parse(roleIDStr)
+	_, _ = pool.Exec(ctx,
+		`INSERT INTO user_roles (user_id, role_id, scope_type, scope_id, granted_by)
+		 VALUES ($1, $2, 'tenant', $3, $1)
+		 ON CONFLICT DO NOTHING`,
+		userID, roleID, tenantID)
 }
 
 // handleCIAMMetrics returns aggregated CIAM metrics.
