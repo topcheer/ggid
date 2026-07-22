@@ -271,6 +271,13 @@ func (r *RBACResolver) loadFromDB(ctx context.Context) ([]routePermRow, error) {
 //  4. Access granted if any of the user's roles (JWT roles claim, matched on
 //     role name or key) holds a level >= required for the matched prefix.
 func (r *RBACResolver) CheckAccess(ctx context.Context, path, method string, claims JWTCClaims) (allow, handled bool) {
+	// 0. Self-service endpoints always bypass dynamic RBAC — every
+	// authenticated user can access their own profile.
+	if path == "/api/v1/users/me" || strings.HasPrefix(path, "/api/v1/users/me/") ||
+		strings.HasPrefix(path, "/api/v1/tenants/resolve") {
+		return false, false // not handled → static fallback (which also exempts)
+	}
+
 	// 1. Superuser bypass — scopes claim ONLY. Role display names must never
 	// grant superuser access: a tenant admin can create a role named
 	// "Administrator" and would otherwise escalate to platform admin.
