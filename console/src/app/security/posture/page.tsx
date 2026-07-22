@@ -308,7 +308,7 @@ export default function SecurityPosturePage() {
             <ShieldCheck className="mx-auto h-12 w-12 text-gray-300" />
             <p className="mt-4 text-sm text-gray-400">No posture data available.</p>
             <p className="mt-1 text-xs text-gray-400">
-              Zero Trust endpoint (/api/v1/zt/posture) may not be implemented yet.
+              Posture data is being collected. This feature requires device trust and MFA enrollment data to generate insights.
             </p>
           </div>
         </div>
