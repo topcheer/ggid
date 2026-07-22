@@ -417,3 +417,8 @@ Consistent results: viewer escalation prevented, cross-tenant rejected, all demo
 - Go→Java: 401 ✅ | Java→Go: 401 ✅ | Viewer create: 403 ✅ | Viewer read: 200 ✅ | 0 hacks
 
 ### Next Dimension: 5 — SDK Cross-language Consistency
+
+## Dimension 5 C6: SDK Consistency (Round 58)
+- Endpoints: 7/7 ✅ | Token fields: 7/7 ✅ | 7/7 demo 200 ✅ | 0 hacks
+
+### Next Dimension: 6 — End-to-end User Experience
