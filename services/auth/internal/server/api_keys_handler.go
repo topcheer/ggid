@@ -1,6 +1,8 @@
 package server
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -8,6 +10,7 @@ import (
 	"sync"
 	"time"
 
+	ggidcrypto "github.com/ggid/ggid/pkg/crypto"
 	ggidtenant "github.com/ggid/ggid/pkg/tenant"
 	"github.com/google/uuid"
 )
@@ -22,6 +25,10 @@ type APIKey struct {
 	LastUsed   *time.Time `json:"last_used"`
 	Status     string    `json:"status"` // active, expired, revoked
 	UsageCount int       `json:"usage_count"`
+	// Key is the plaintext secret, returned ONLY in the creation response.
+	Key        string    `json:"key,omitempty"`
+	// KeyHash is the stored SHA-256 of the secret (never serialized).
+	KeyHash    string    `json:"-"`
 }
 
 var (
@@ -50,12 +57,20 @@ func (h *Handler) handleAPIKeys(w http.ResponseWriter, r *http.Request) {
 			writeError(w, http.StatusBadRequest, "invalid request body")
 			return
 		}
+		plain, err := ggidcrypto.GenerateRandomToken(24)
+		if err != nil {
+			writeError(w, http.StatusInternalServerError, "failed to generate api key")
+			return
+		}
+		secret := "ggid_sk_" + plain
+		sum := sha256.Sum256([]byte(secret))
 		key := APIKey{
 			ID:        fmt.Sprintf("key-%d", time.Now().UnixNano()),
 			Name:      req.Name,
 			Scopes:    req.Scopes,
 			CreatedAt: time.Now(),
 			Status:    "active",
+			KeyHash:   hex.EncodeToString(sum[:]),
 		}
 		if req.ExpiresAt != "" {
 			t, err := time.Parse(time.RFC3339, req.ExpiresAt)
@@ -72,6 +87,8 @@ func (h *Handler) handleAPIKeys(w http.ResponseWriter, r *http.Request) {
 			h.publishAuditEvent("api_key.create", "success", tc.TenantID, uuid.Nil)
 		}
 
+		// Return the plaintext secret exactly once — it cannot be retrieved later.
+		key.Key = secret
 		writeJSON(w, http.StatusCreated, key)
 
 	case strings.HasPrefix(r.URL.Path, "/api/v1/auth/api-keys/") && r.Method == http.MethodPost:

@@ -12,6 +12,19 @@ import (
 func (s *HTTPServer) handleWebhooksList(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case http.MethodGet:
+		// DB-backed when available (Task-C pattern); memory fallback.
+		if s.memMapRepo2 != nil {
+			if rows, err := s.memMapRepo2.ListJSON(r.Context(), "audit_webhook_configs"); err == nil {
+				if rows == nil {
+					rows = []map[string]any{}
+				}
+				writeJSON(w, http.StatusOK, map[string]any{
+					"webhooks": rows,
+					"count":    len(rows),
+				})
+				return
+			}
+		}
 		globalAlertWebhooks.mu.RLock()
 		result := make([]map[string]any, len(globalAlertWebhooks.webhooks))
 		copy(result, globalAlertWebhooks.webhooks)
@@ -22,6 +35,7 @@ func (s *HTTPServer) handleWebhooksList(w http.ResponseWriter, r *http.Request) 
 	})
 	case http.MethodPost:
 		var req struct {
+			Name    string   `json:"name"`
 			URL     string   `json:"url"`
 			Events  []string `json:"events"`
 			Active  bool     `json:"active"`
@@ -30,15 +44,24 @@ func (s *HTTPServer) handleWebhooksList(w http.ResponseWriter, r *http.Request) 
 			writeJSONError(w, http.StatusBadRequest, "invalid request body")
 			return
 		}
+		if req.Name == "" {
+			req.Name = req.URL
+		}
 		webhook := map[string]any{
 			"id":     fmt.Sprintf("whk_%d", time.Now().UnixNano()),
+			"name":   req.Name,
 			"url":    req.URL,
 			"events": req.Events,
 			"active": req.Active,
+			"created_at": time.Now().UTC().Format(time.RFC3339),
 		}
 		globalAlertWebhooks.mu.Lock()
 		globalAlertWebhooks.webhooks = append(globalAlertWebhooks.webhooks, webhook)
 		globalAlertWebhooks.mu.Unlock()
+		// Persist so webhooks survive restarts and are shared across replicas.
+		if s.memMapRepo2 != nil {
+			_ = s.memMapRepo2.StoreJSON(r.Context(), "audit_webhook_configs", webhook["id"].(string), webhook)
+		}
 		writeJSON(w, http.StatusCreated, webhook)
 	case http.MethodDelete:
 		// Extract webhook ID from path: /api/v1/webhooks/{id}
@@ -57,6 +80,9 @@ func (s *HTTPServer) handleWebhooksList(w http.ResponseWriter, r *http.Request) 
 			}
 			globalAlertWebhooks.webhooks = filtered
 			globalAlertWebhooks.mu.Unlock()
+			if s.memMapRepo2 != nil {
+				_ = s.memMapRepo2.DeleteJSON(r.Context(), "audit_webhook_configs", whID)
+			}
 		}
 		writeJSON(w, http.StatusOK, map[string]any{"status": "deleted", "id": whID})
 	default:
