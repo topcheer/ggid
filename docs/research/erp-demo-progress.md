@@ -659,3 +659,35 @@ These are core fixes that directly impact SDK claims parsing — verified no dow
 **D3 C8 Status**: All functional completeness checks pass with deep content validation. Zero hacks.
 
 ### Next Dimension: 4 — Cycle 8 (Multi-tenant Isolation)
+
+## Dimension 4 C8: Multi-tenant Isolation (Round 69)
+
+**Core Changes**: None since D3 C8.
+
+**Findings**:
+
+1. **Gateway-level tenant enforcement** works for some cross-tenant tokens:
+   - Node token (permissions=[]) → Go demo: 403 (gateway rejects — empty permissions + tenant mismatch)
+   - Fake token → Go demo: 401 (invalid signature)
+
+2. **Gap**: Ruby token (has full ERP permissions) → Go demo: 200 (should be 401)
+   - Root cause: Ruby token has `inventory:read` permission and valid JWT signature
+   - Gateway passes it through because permissions are valid
+   - App-level tenant check code EXISTS in repo (D4 C7) but NOT in deployed image
+   - **Deployment issue**: Docker image rebuild blocked by platform mismatch (arm64 Mac → amd64 k8s nodes)
+   - `docker buildx` fails with "go.sum not found" — buildkit context resolution issue
+
+3. **Code Status**: All 5 demos have correct tenant isolation code committed in repo (D4 C7: commit f81722206). The gap is purely a deployment/CI issue — images need rebuilding on an amd64 build server.
+
+**JWT tenant_id verification**:
+- Go JWT tenant_id matches Go tenant ✅
+- Node JWT tenant_id matches Node tenant ✅
+- Ruby JWT tenant_id matches Ruby tenant ✅
+
+**Action Items**:
+- [INFRA] Rebuild all demo images on amd64 CI runner to include D4 C7 tenant isolation code
+- [INFRA] Set `imagePullPolicy: Always` for demo deployments after rebuild
+
+**D4 C8 Status**: Code-level tenant isolation complete (D4 C7). Deployment pending amd64 CI rebuild. Gateway provides first-line defense for tokens without matching permissions.
+
+### Next Dimension: 5 — Cycle 8 (SDK Cross-language Consistency)
