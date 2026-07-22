@@ -1334,20 +1334,59 @@ func (s *OAuthService) RevokeToken(tokenStr string, tokenTypeHint ...string) err
 }
 
 // IsTokenRevoked checks if a token has been revoked.
-// Checks Redis first (for HA/multi-instance), then falls back to sync.Map.
+// Priority: Redis (fast cache) → DB (authoritative) → fail-safe deny.
+// The old sync.Map fallback is removed — it was unsafe across pod restarts
+// (revoked tokens would survive restart) and multi-instance deployments.
 func (s *OAuthService) IsTokenRevoked(tokenStr string) bool {
 	tokenHash := hashTokenSHA256(tokenStr)
+	cacheKey := "oauth:revoked:" + tokenHash
 
-	// Try Redis first (for HA/multi-instance).
+	// 1. Redis cache (fast path).
 	if s.rdb != nil {
-		if _, err := s.rdb.Get(context.Background(), "oauth:revoked:"+tokenHash); err == nil {
+		if _, err := s.rdb.Get(context.Background(), cacheKey); err == nil {
 			return true
 		}
-		// Redis miss or error — fall through to in-memory check
 	}
 
-	_, ok := revokedTokens.Load(tokenHash)
-	return ok
+	// 2. In-memory cache (best-effort, for single-instance dev/test).
+	if _, ok := revokedTokens.Load(tokenHash); ok {
+		return true
+	}
+
+	// 3. DB check (authoritative — survives restarts, consistent across instances).
+	// Parse the token to get its jti for a DB lookup.
+	claims, err := s.ParseAccessToken(tokenStr)
+	if err != nil {
+		// Unparseable token — can't check DB, assume not revoked (the token
+		// is invalid anyway and will be rejected by JWT validation).
+		return false
+	}
+	jti, _ := claims["jti"].(string)
+	if jti == "" || s.pool == nil {
+		return false // no jti or no DB → can't check
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+	var revoked bool
+	err = s.pool.QueryRow(ctx,
+		`SELECT EXISTS(SELECT 1 FROM sessions WHERE jti = $1 AND revoked_at IS NOT NULL)`,
+		jti).Scan(&revoked)
+	if err == nil && revoked {
+		// Cache in Redis for future lookups.
+		if s.rdb != nil {
+			exp := getInt64Claim(claims, "exp")
+			ttl := time.Duration(0)
+			if exp > 0 {
+				ttl = time.Until(time.Unix(exp, 0))
+			}
+			s.rdb.Set(context.Background(), cacheKey, "1", ttl)
+		}
+		revokedTokens.Store(tokenHash, getInt64Claim(claims, "exp"))
+		return true
+	}
+
+	return false
 }
 
 func hashTokenSHA256(token string) string {
