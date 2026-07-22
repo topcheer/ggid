@@ -271,11 +271,13 @@ func (r *RBACResolver) loadFromDB(ctx context.Context) ([]routePermRow, error) {
 //  4. Access granted if any of the user's roles (JWT roles claim, matched on
 //     role name or key) holds a level >= required for the matched prefix.
 func (r *RBACResolver) CheckAccess(ctx context.Context, path, method string, claims JWTCClaims) (allow, handled bool) {
-	// 0. Self-service endpoints always bypass dynamic RBAC — every
-	// authenticated user can access their own profile.
-	if path == "/api/v1/users/me" || strings.HasPrefix(path, "/api/v1/users/me/") ||
+	// 0. Self-service endpoints bypass dynamic RBAC — every authenticated
+	// user can view/edit their own profile. Only exempt exact path and
+	// immediate sub-paths, not deep sub-resources like /users/me/settings
+	// which may have different permission requirements.
+	if path == "/api/v1/users/me" ||
 		strings.HasPrefix(path, "/api/v1/tenants/resolve") {
-		return false, false // not handled → static fallback (which also exempts)
+		return false, false // not handled → static fallback
 	}
 
 	// 1. Superuser bypass — scopes claim ONLY. Role display names must never
