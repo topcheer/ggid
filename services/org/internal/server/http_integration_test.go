@@ -139,7 +139,8 @@ func (m *mockMemberRepo) Create(_ context.Context, mem *domain.Membership) error
 	if mem.ID == uuid.Nil {
 		mem.ID = uuid.New()
 	}
-	mem.JoinedAt = time.Now()
+	t := time.Now()
+		mem.JoinedAt = &t
 	m.members[mem.ID] = mem
 	return nil
 }
