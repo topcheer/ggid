@@ -61,6 +61,34 @@ public class GGIDClient {
     }
 
     /**
+     * Exchange client credentials for an access token (RFC 6749 §4.4).
+     * Used for machine-to-machine (M2M) authentication.
+     *
+     * @param clientId     OAuth2 client ID
+     * @param clientSecret OAuth2 client secret
+     * @param scope        Optional space-delimited scopes
+     * @return TokenSet with access_token
+     */
+    public TokenSet clientCredentials(String clientId, String clientSecret, String scope)
+            throws GGIDException, IOException {
+        FormBody.Builder fb = new FormBody.Builder()
+                .add("grant_type", "client_credentials")
+                .add("client_id", clientId)
+                .add("client_secret", clientSecret);
+        if (scope != null && !scope.isEmpty()) {
+            fb.add("scope", scope);
+        }
+        FormBody formBody = fb.build();
+        Request request = new Request.Builder()
+                .url(gatewayUrl + "/api/v1/oauth/token")
+                .header("X-Tenant-ID", tenantId)
+                .header("Content-Type", "application/x-www-form-urlencoded")
+                .post(formBody)
+                .build();
+        return execute(request, TokenSet.class);
+    }
+
+    /**
      * Exchange a SAML assertion for an access token using OAuth2 SAML2-bearer grant
      * (RFC 7522). Used by Service Providers after receiving a SAMLResponse from the IdP.
      *
