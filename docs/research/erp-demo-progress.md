@@ -887,3 +887,31 @@ Go→Go: 200 ✅ | Node→Go: 403 ✅ | Fake→Go: 401 ✅ | JWT tenant_id match
 **First zero-fix cycle.** All prior fixes (C7: client_id+tenant isolation+TokenSet, C8: tenant IDs+Java clientCredentials) are stable. Security fixes (CORS/PEPPER/scope/dev secrets) show zero downstream regression.
 
 ### Next Dimension: 1 — Cycle 10 (Authentication Completeness)
+
+## Cycle 10: Post-Security-Fix Verification (Rounds 78-83)
+
+**Core Changes Since C9** (7 commits — critical security + v2 features):
+- `0b2cd2a48` C1: revokedTokens DB-backed (survives pod restart)
+- `63ed9054f` P2-6+P2-7: HMAC versioning + canonicalization
+- `f1920ce55` P2-1: TOTP secret encryption (AES-256-GCM)
+- `7bc8c4572` P2-8/9/10: eliminate raw role-name admin matching (**RBAC critical**)
+- `0019da671` R1-03: org tree routes (new API)
+- `b0dc1c2d2` R1-01: self-register publicPaths
+- `4d1da80f9` R1-01: tenant_plan enum fix
+
+**Verification Results — All 6 dimensions pass, zero issues**:
+
+| Dim | Checks | Result |
+|-----|--------|--------|
+| D1 Auth | 7/7 password grant + M2M | ✅ All AT=True EI=900 |
+| D2 AuthZ | Admin full, viewer 403, fake 401 | ✅ RBAC role-name fix stable |
+| D3 Functional | Inv fields, order lifecycle, perms match | ✅ 5 items, ORD→200, verify=jwt=9 |
+| D4 Tenant | Go→Go 200, Node→Go 403, JWT match | ✅ |
+| D5 SDK | login/verify/clientCredentials 7/7 | ✅ |
+| D6 E2E | 8/8 flow steps | ✅ No token→401, refresh OK, 7/7 health |
+
+**Critical Finding**: RBAC role-name fix (`7bc8c4572`) — which replaced raw role-name string matching with permission-based checks — shows **zero regression**. Admin still gets full access (9 perms), viewer still blocked from writes (403).
+
+**Cycle 10 Status**: Second consecutive zero-fix cycle. All core security changes (TOTP encryption, HMAC versioning, DB-backed revocation, RBAC role-name fix) are downstream-compatible.
+
+### Next Dimension: 1 — Cycle 11 (Authentication Completeness)
