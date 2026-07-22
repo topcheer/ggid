@@ -78,28 +78,25 @@ func TestCheckRouteScope_ForgedAdminRoleDenied(t *testing.T) {
 		"roles":     []string{"Administrator"},
 		"tenant_id": "00000007-0000-0000-0000-000000000001",
 	})
-	// Tenant-level paths still work (tenant admins are sovereign in their tenant).
-	if rec := checkScopeRequest(t, "/api/v1/users", token); rec.Code == http.StatusForbidden {
-		t.Error("tenant-local Administrator role should still access tenant admin paths")
+	// Non-platform tenant with only a role name — no admin access at all.
+	if rec := checkScopeRequest(t, "/api/v1/users", token); rec.Code != http.StatusForbidden {
+		t.Error("forged Administrator role without admin scope must NOT access admin paths")
 	}
-	// Platform-only paths must be denied.
 	if rec := checkScopeRequest(t, "/api/v1/system/config", token); rec.Code != http.StatusForbidden {
-		t.Error("forged Administrator role in non-platform tenant must NOT access /api/v1/system/")
+		t.Error("forged Administrator role must NOT access platform paths")
 	}
 }
 
 func TestCheckRouteScope_TenantAdminRole(t *testing.T) {
 	token := mkTestJWT(map[string]any{
 		"sub":   "u2",
-		"scope": "openid profile email",
-		"roles": []string{"Tenant Administrator"},
+		"scope": "openid profile email tenant:admin",
 	})
 	if rec := checkScopeRequest(t, "/api/v1/users", token); rec.Code == http.StatusForbidden {
-		t.Error("Tenant Administrator must access /api/v1/users")
+		t.Error("tenant:admin scope must access /api/v1/users")
 	}
-	// But not platform-only paths.
 	if rec := checkScopeRequest(t, "/api/v1/system/config", token); rec.Code != http.StatusForbidden {
-		t.Error("Tenant Administrator must NOT access /api/v1/system/")
+		t.Error("tenant:admin must NOT access platform-only paths")
 	}
 }
 

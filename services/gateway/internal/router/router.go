@@ -720,14 +720,13 @@ func (gw *Gateway) checkRouteScope(w http.ResponseWriter, r *http.Request) bool 
 	adminIndicators := append(append([]string{}, claims.Scopes...), claims.Roles...)
 	for _, sc := range adminIndicators {
 		scl := strings.ToLower(sc)
-		if scl == "platform:admin" || scl == "admin" || scl == "superadmin" ||
-			scl == "platform administrator" || scl == "administrator" {
+		if scl == "platform:admin" {
 			if isPlatformTenant {
 				hasPlatform = true
 			}
 			hasTenant = true
 		}
-		if scl == "tenant:admin" || scl == "manager" || scl == "tenant administrator" {
+		if scl == "tenant:admin" {
 			hasTenant = true
 		}
 	}
@@ -983,7 +982,7 @@ type BackendStats struct {
 func (gw *Gateway) hasAdminScope(r *http.Request) bool {
 	claims := middleware.ExtractJWTClaims(r)
 	for _, s := range claims.Scopes {
-		if s == "admin" || s == "ggid:admin" {
+		if s == "platform:admin" || s == "tenant:admin" {
 			return true
 		}
 	}

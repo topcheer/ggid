@@ -53,33 +53,35 @@ func makeRequestWithScopeString(t *testing.T, scopeStr string) *http.Request {
 
 // ========== GAP #14: hasAdminScope — Dedicated Unit Tests ==========
 
-// TestHasAdminScope_AdminScopePresent verifies that "admin" scope grants access.
-func TestHasAdminScope_AdminScopePresent(t *testing.T) {
+// TestHasAdminScope_PlatformAdmin verifies that "platform:admin" scope grants access.
+func TestHasAdminScope_PlatformAdmin(t *testing.T) {
 	gw := &Gateway{}
-	req := makeRequestWithScopes(t, []string{"read", "write", "admin"})
+	req := makeRequestWithScopes(t, []string{"read", "write", "platform:admin"})
 
 	if !gw.hasAdminScope(req) {
-		t.Error("hasAdminScope should return true when 'admin' scope is present")
+		t.Error("hasAdminScope should return true when 'platform:admin' scope is present")
 	}
 }
 
-// TestHasAdminScope_GgidAdminScopePresent verifies that "ggid:admin" scope grants access.
-func TestHasAdminScope_GgidAdminScopePresent(t *testing.T) {
+// TestHasAdminScope_TenantAdmin verifies that "tenant:admin" scope grants access.
+func TestHasAdminScope_TenantAdmin(t *testing.T) {
 	gw := &Gateway{}
-	req := makeRequestWithScopes(t, []string{"read", "ggid:admin"})
+	req := makeRequestWithScopes(t, []string{"read", "tenant:admin"})
 
 	if !gw.hasAdminScope(req) {
-		t.Error("hasAdminScope should return true when 'ggid:admin' scope is present")
+		t.Error("hasAdminScope should return true when 'tenant:admin' scope is present")
 	}
 }
 
-// TestHasAdminScope_NonAdminScope verifies that non-admin scopes are rejected.
-func TestHasAdminScope_NonAdminScope(t *testing.T) {
+// TestHasAdminScope_ForgeableNamesRejected verifies that raw role names
+// like "admin"/"administrator" do NOT grant access (privilege escalation).
+func TestHasAdminScope_ForgeableNamesRejected(t *testing.T) {
 	gw := &Gateway{}
-	req := makeRequestWithScopes(t, []string{"read", "write", "delete"})
-
-	if gw.hasAdminScope(req) {
-		t.Error("hasAdminScope should return false for non-admin scopes")
+	for _, scope := range []string{"admin", "administrator", "ggid:admin", "superadmin", "*"} {
+		req := makeRequestWithScopes(t, []string{scope})
+		if gw.hasAdminScope(req) {
+			t.Errorf("hasAdminScope should reject forgeable scope %q", scope)
+		}
 	}
 }
 
@@ -107,10 +109,10 @@ func TestHasAdminScope_EmptyScopes(t *testing.T) {
 // TestHasAdminScope_ScopeString verifies that scopes as a space-delimited string work.
 func TestHasAdminScope_ScopeString(t *testing.T) {
 	gw := &Gateway{}
-	req := makeRequestWithScopeString(t, "read write admin delete")
+	req := makeRequestWithScopeString(t, "read write platform:admin delete")
 
 	if !gw.hasAdminScope(req) {
-		t.Error("hasAdminScope should return true when 'admin' is in scope string")
+		t.Error("hasAdminScope should return true when 'platform:admin' is in scope string")
 	}
 }
 
@@ -126,24 +128,22 @@ func TestHasAdminScope_MalformedJWT(t *testing.T) {
 }
 
 // TestHasAdminScope_WildcardNotAdmin verifies that "*" wildcard does NOT
-// bypass the admin scope check (hasAdminScope is strict — requires explicit admin).
+// bypass the admin scope check.
 func TestHasAdminScope_WildcardNotAdmin(t *testing.T) {
 	gw := &Gateway{}
 	req := makeRequestWithScopes(t, []string{"*"})
 
-	// hasAdminScope checks for literal "admin" or "ggid:admin" — not "*"
-	// This is correct behavior: admin scope must be explicitly granted.
 	if gw.hasAdminScope(req) {
-		t.Error("hasAdminScope should NOT return true for wildcard '*' scope — admin must be explicit")
+		t.Error("hasAdminScope should NOT return true for wildcard '*' scope")
 	}
 }
 
 // TestHasAdminScope_AdminAmongManyScopes verifies admin works even with many scopes.
 func TestHasAdminScope_AdminAmongManyScopes(t *testing.T) {
 	gw := &Gateway{}
-	req := makeRequestWithScopeString(t, "read write delete users:create users:read roles:manage admin organizations:read settings:write audit:read")
+	req := makeRequestWithScopeString(t, "read write delete users:create users:read roles:manage platform:admin organizations:read settings:write audit:read")
 
 	if !gw.hasAdminScope(req) {
-		t.Error("hasAdminScope should find 'admin' among 10+ scopes")
+		t.Error("hasAdminScope should find 'platform:admin' among 10+ scopes")
 	}
 }
