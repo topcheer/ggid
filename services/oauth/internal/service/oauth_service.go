@@ -694,7 +694,7 @@ func (s *OAuthService) fetchUserPermissions(ctx context.Context, tenantID, userI
 		return nil
 	}
 	rows, err := s.pool.Query(ctx, `
-		SELECT p.key
+		SELECT DISTINCT p.key
 		FROM role_permissions rp
 		JOIN permissions p ON p.id = rp.permission_id
 		JOIN user_roles ur ON ur.role_id = rp.role_id
