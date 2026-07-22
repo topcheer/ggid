@@ -2,7 +2,7 @@
 
 > 审视人：god_fullstack&everything（定期审视任务 cron-1 首轮）
 > 方法：三路并行代码级审查（OAuth/OIDC/SAML · Auth/Identity/SCIM · 增强功能兼容性+竞品迁移），所有结论均有 file:line 证据。
-> 状态：**R1 完成（已部署生产）。** R4/R10/R11 安全修复已部署。R12-R17 RBAC 逐步收紧审查通过。R18-R19 无增量。R20（18:43）：3 个核心变更（JWT permissions RBAC 门控 + introspection 含 roles/permissions + 多角色去重），构建测试全绿，无安全问题。
+> 状态：**R1 完成（已部署生产）。** R4/R10/R11 安全修复已部署。R12-R17 RBAC 逐步收紧审查通过。R18-R19 无增量。R20 JWT permissions RBAC+introspection 审查通过。R21（19:43）：OAuth client 创建返回明文 secret（RFC 7591 正确行为），构建测试全绿，无安全问题。
 
 ---
 

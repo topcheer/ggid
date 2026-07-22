@@ -32,6 +32,8 @@
 - [2026-07-22] **已验证: RBAC 全链路** — create role→assign permissions(string keys)→assign to user→login→JWT 含 permissions→GET /users 200 (users:read)→POST /users 403 (需 write)→GET /roles 403 (无 roles:read)→GET /users/me 200 (self-service)。QA agent 独立验证 6/6 PASS
 - [2026-07-22] **已验证: Permission matrix API** — grant (POST /roles/{id}/permissions {"permissions":["audit:read"]}) → 200 "granted"；revoke (DELETE) → 200 "revoked"；验证 DB 计数正确变化
 - [2026-07-22] **已验证: Token introspection** — Bearer 方式返回完整 roles + permissions 数组。resource server 可直接用于权限检查
+- [2026-07-22] **P2: JWT permissions 数组重复** — 用户有多个角色且角色共享相同权限时，permissions 数组含重复项（admin: 26项仅13 unique）。修复：fetchUserPermissions SQL 加 `SELECT DISTINCT`。commit c24a19645。验证：13 total, 0 duplicates
+- [2026-07-22] **安全验证: 无角色用户** — JWT permissions=[]+roles=[] 的用户正确被 403 拦截所有 admin 路径，/users/me 仍 200。HasPermissionForRoute 空数组返回 false，无过度授权风险
 
 - [2026-07-21] auth-guard.tsx scope 匹配：JWT roles 存的是显示名（如 "Platform Administrator"），不是 scope key（如 "platform:admin"）。匹配逻辑必须大小写不敏感 + 包含显示名变体
 - [2026-07-21] Go SDK verifyTokenOffline 用 ParseUnverified 接受伪造 JWT。已移除，VerifyToken 强制要求 WithJWKS()
