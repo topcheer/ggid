@@ -6,9 +6,15 @@
 package alerting
 
 import (
+	"bytes"
 	"context"
+	"crypto/hmac"
+	"crypto/sha256"
+	"encoding/hex"
+	"encoding/json"
 	"fmt"
 	"log/slog"
+	"net/http"
 	"sync"
 	"time"
 )
@@ -64,13 +70,61 @@ type Notifier interface {
 	Notify(ctx context.Context, alert *Alert, actions []AlertAction) error
 }
 
-// WebhookNotifier sends alerts via HTTP webhook.
+// WebhookNotifier sends alerts via HTTP POST with HMAC-SHA256 signature.
+// The signature header X-GGID-Signature allows receivers to verify authenticity.
 type WebhookNotifier struct {
-	URL string
+	URL    string
+	Secret string // HMAC signing secret (from ALERT_WEBHOOK_SECRET env)
+	client *http.Client
 }
 
-func (w *WebhookNotifier) Notify(_ context.Context, alert *Alert, _ []AlertAction) error {
-	slog.Info("webhook alert sent", "rule", alert.RuleName, "url", w.URL, "count", alert.Count)
+func (w *WebhookNotifier) Notify(ctx context.Context, alert *Alert, actions []AlertAction) error {
+	if w.URL == "" {
+		return nil
+	}
+	if w.client == nil {
+		w.client = &http.Client{Timeout: 10 * time.Second}
+	}
+
+	payload := map[string]any{
+		"rule_id":   alert.RuleID,
+		"rule_name": alert.RuleName,
+		"tenant_id": alert.TenantID,
+		"trigger":   alert.Trigger,
+		"count":     alert.Count,
+		"fired_at":  alert.FiredAt.Format(time.RFC3339),
+	}
+	body, err := json.Marshal(payload)
+	if err != nil {
+		return fmt.Errorf("marshal alert: %w", err)
+	}
+
+	req, err := http.NewRequestWithContext(ctx, "POST", w.URL, bytes.NewReader(body))
+	if err != nil {
+		return fmt.Errorf("create webhook request: %w", err)
+	}
+	req.Header.Set("Content-Type", "application/json")
+
+	// HMAC-SHA256 signature for webhook verification.
+	if w.Secret != "" {
+		mac := hmac.New(sha256.New, []byte(w.Secret))
+		mac.Write(body)
+		sig := hex.EncodeToString(mac.Sum(nil))
+		req.Header.Set("X-GGID-Signature", "sha256="+sig)
+	}
+
+	resp, err := w.client.Do(req)
+	if err != nil {
+		slog.Error("webhook alert failed", "url", w.URL, "error", err)
+		return err
+	}
+	resp.Body.Close()
+
+	if resp.StatusCode >= 400 {
+		slog.Warn("webhook returned error status", "url", w.URL, "status", resp.StatusCode)
+	} else {
+		slog.Info("webhook alert sent", "rule", alert.RuleName, "url", w.URL, "status", resp.StatusCode)
+	}
 	return nil
 }
 

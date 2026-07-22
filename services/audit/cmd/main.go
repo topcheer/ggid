@@ -88,6 +88,7 @@ func main() {
 	// Initialize repository and service
 	repo := repository.NewAuditRepository(db)
 	auditSvc := service.NewAuditService(repo)
+	var detEngine *detection.Engine // function-scoped for alert callback
 
 	if *migrateOnly {
 		log.Println("Audit Service: migration mode, skipping server start")
@@ -121,9 +122,9 @@ func main() {
 				log.Println("Audit Service: ITDR using MemStateStore (single-replica only)")
 			}
 
-			engine := detection.NewEngine(engineRepo, stateStore)
-			detection.RegisterKB192Rules(engine.Registry())
-			nc.SetEngine(engine)
+			detEngine = detection.NewEngine(engineRepo, stateStore)
+			detection.RegisterKB192Rules(detEngine.Registry())
+			nc.SetEngine(detEngine)
 			log.Println("Audit Service: ITDR detection engine enabled")
 		}
 
@@ -279,7 +280,10 @@ func main() {
 			} else {
 				var notifier alerting.Notifier
 				if webhookURL := os.Getenv("ALERT_WEBHOOK_URL"); webhookURL != "" {
-					notifier = &alerting.WebhookNotifier{URL: webhookURL}
+					notifier = &alerting.WebhookNotifier{
+						URL:    webhookURL,
+						Secret: os.Getenv("ALERT_WEBHOOK_SECRET"),
+					}
 				}
 				alertEngine = alerting.NewAlertEngine(notifier)
 				for _, rule := range rules {
@@ -321,6 +325,33 @@ func main() {
 				}
 			}
 		}
+	}
+
+	// Wire ITDR detection → alert engine: when the detection engine fires,
+	// forward critical detections as alert events for notification.
+	if detEngine != nil && alertEngine != nil {
+		detEngine.SetCallback(func(ctx context.Context, det *domain.Detection) {
+			sev := string(det.Severity)
+			if sev == "critical" || sev == "high" {
+				userID := ""
+				if det.ActorID != nil {
+					userID = det.ActorID.String()
+				}
+				alertEngine.Evaluate(ctx, &alerting.AlertEvent{
+					TenantID:  det.TenantID.String(),
+					Action:    "itdr." + det.RuleID,
+					UserID:    userID,
+					Timestamp: time.Now(),
+					Fields: map[string]any{
+						"detection_id": det.ID,
+						"rule_id":      det.RuleID,
+						"severity":     sev,
+						"title":        det.Title,
+					},
+				})
+			}
+		})
+		log.Println("Audit Service: ITDR→Alert callback wired (critical+high detections)")
 	}
 
 	go func() {
