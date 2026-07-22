@@ -75,6 +75,7 @@ export interface ListOptions {
 export interface LoginInput {
   username: string;
   password: string;
+  clientId?: string;
 }
 
 export interface CreateUserInput {

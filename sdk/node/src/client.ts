@@ -75,6 +75,7 @@ export class GGIDClient {
     form.set('grant_type', 'password');
     form.set('username', input.username);
     form.set('password', input.password);
+    if (input.clientId) form.set('client_id', input.clientId);
     const resp = await fetch(`${this.config.gatewayUrl}/api/v1/oauth/token`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'X-Tenant-ID': this.config.tenantId || '' },

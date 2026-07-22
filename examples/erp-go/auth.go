@@ -114,6 +114,8 @@ func handleLogin(w http.ResponseWriter, r *http.Request) {
 	tokens, err := ggidClient.Login(r.Context(), &ggid.LoginRequest{
 		Username: req.Username,
 		Password: req.Password,
+		ClientID: getEnv("OAUTH_CLIENT_ID", "erp-go-demo"),
+		TenantID: tenantID,
 	})
 	if err != nil {
 		writeJSON(w, 401, map[string]string{"error": "login failed"})

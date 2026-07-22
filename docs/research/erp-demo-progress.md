@@ -442,3 +442,28 @@ Consistent results: viewer escalation prevented, cross-tenant rejected, all demo
 - Admin: read(200)+create(201) ✅ | Viewer: read(200)+create DENIED(403) ✅ | Fake: 401 ✅ | 0 hacks
 
 ### Next Dimension: 3 — Demo Functional Completeness
+
+## Dimension 3 C7: Functional (Round 62)
+
+**Finding**: All 7 SDK `login()` methods (Go, Node, Python, C#, Java, Rust) were missing `client_id` in the OAuth2 password grant request. GGID requires both `client_id` and `X-Tenant-ID` for password grant authentication.
+
+**Fixes Applied (10 files)**:
+- Go SDK: LoginRequest adds ClientID field; Login() sends client_id + X-Tenant-ID header
+- Node SDK: LoginInput adds clientId; login() sends client_id
+- Python SDK: login() adds client_id parameter
+- C# SDK: LoginAsync adds optional clientId parameter
+- Java SDK: login() adds clientId parameter
+- Rust SDK: login() adds client_id parameter
+- Go demo: passes OAUTH_CLIENT_ID + tenantID to Login()
+- Java demo: passes OAUTH_CLIENT_ID to login()
+- C# demo: passes OAUTH_CLIENT_ID to LoginAsync()
+
+**Verification**:
+- Go SDK + demo: compile ✅
+- Rust SDK: cargo check ✅
+- Python SDK: import + signature check ✅
+- Password grant with client_id + X-Tenant-ID: returns valid token ✅
+- Without client_id: invalid_client ❌ (confirms fix is needed)
+- Without X-Tenant-ID: invalid_request ❌
+
+**D3 C7 Status**: SDK login() gap found and fixed across 6 SDKs + 3 demos. Zero hacks.

@@ -38,12 +38,14 @@ public class GGIDClient {
     // Auth
     // -----------------------------------------------------------------------
 
-    public TokenSet login(String username, String password) throws GGIDException, IOException {
-        FormBody formBody = new FormBody.Builder()
+    public TokenSet login(String username, String password, String clientId) throws GGIDException, IOException {
+        FormBody.Builder fb = new FormBody.Builder()
                 .add("grant_type", "password")
                 .add("username", username)
-                .add("password", password)
-                .build();
+                .add("password", password);
+        if (clientId != null && !clientId.isEmpty())
+            fb.add("client_id", clientId);
+        FormBody formBody = fb.build();
         Request request = new Request.Builder()
                 .url(gatewayUrl + "/api/v1/oauth/token")
                 .header("X-Tenant-ID", tenantId)

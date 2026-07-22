@@ -182,6 +182,7 @@ impl GGIDClient {
         &self,
         username: &str,
         password: &str,
+        client_id: &str,
     ) -> Result<TokenResponse, GGIDError> {
         let resp = self
             .http
@@ -191,6 +192,7 @@ impl GGIDClient {
                 ("grant_type", "password"),
                 ("username", username),
                 ("password", password),
+                ("client_id", client_id),
             ])
             .send()
             .await?;

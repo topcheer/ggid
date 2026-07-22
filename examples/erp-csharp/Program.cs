@@ -57,7 +57,8 @@ class Program
             {
                 var tokenResp = ggidClient.LoginAsync(
                     body.GetValueOrDefault("username")?.ToString() ?? "",
-                    body.GetValueOrDefault("password")?.ToString() ?? ""
+                    body.GetValueOrDefault("password")?.ToString() ?? "",
+                    Environment.GetEnvironmentVariable("OAUTH_CLIENT_ID") ?? "erp-csharp-demo"
                 ).Result;
                 Json(ctx.Response, 200, tokenResp);
             }

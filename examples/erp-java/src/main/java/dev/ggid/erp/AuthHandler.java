@@ -131,7 +131,7 @@ public class AuthHandler extends BaseHandler {
             Map<String, String> body = Main.mapper.readValue(exchange.getRequestBody(),
                 new com.fasterxml.jackson.core.type.TypeReference<>() {});
             try {
-                TokenSet tokens = Main.ggid.login(body.get("username"), body.get("password"));
+                TokenSet tokens = Main.ggid.login(body.get("username"), body.get("password"), System.getenv().getOrDefault("OAUTH_CLIENT_ID", "erp-java-demo"));
                 Main.audit(body.get("username"), "auth.password", "Password login (fallback)");
                 sendJson(exchange, 200, Main.mapper.writeValueAsString(tokens));
             } catch (Exception e) {

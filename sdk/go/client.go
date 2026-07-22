@@ -214,9 +214,9 @@ type TokenSet struct {
 type LoginRequest struct {
 	Username   string `json:"username"`
 	Password   string `json:"password"`
+	ClientID   string `json:"client_id,omitempty"`
 	TenantID   string `json:"tenant_id,omitempty"`
-	TenantSlug string `json:"tenant_slug,omitempty"`
-}
+	TenantSlug string `json:"tenant_slug,omitempty"`}
 
 // APIError represents a structured error returned by the GGID API.
 type APIError struct {
@@ -258,6 +258,7 @@ func (c *Client) Login(ctx context.Context, req *LoginRequest) (*TokenSet, error
 		"grant_type": {"password"},
 		"username":  {req.Username},
 		"password":  {req.Password},
+		"client_id": {req.ClientID},
 	}
 	postReq, err := http.NewRequestWithContext(ctx, http.MethodPost,
 		c.baseURL+"/api/v1/oauth/token", strings.NewReader(form.Encode()))
@@ -265,6 +266,9 @@ func (c *Client) Login(ctx context.Context, req *LoginRequest) (*TokenSet, error
 		return nil, err
 	}
 	postReq.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	if req.TenantID != "" {
+		postReq.Header.Set("X-Tenant-ID", req.TenantID)
+	}
 	var ts TokenSet
 	if err := c.do(postReq, &ts); err != nil {
 		return nil, err

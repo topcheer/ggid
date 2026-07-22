@@ -45,14 +45,17 @@ public class GGIDClient
     /// <summary>
     /// Login with username/password and receive tokens.
     /// </summary>
-    public async Task<TokenResponse> LoginAsync(string username, string password, CancellationToken ct = default)
+    public async Task<TokenResponse> LoginAsync(string username, string password, string? clientId = null, CancellationToken ct = default)
     {
-        var form = new FormUrlEncodedContent(new Dictionary<string, string>
+        var dict = new Dictionary<string, string>
         {
             ["grant_type"] = "password",
             ["username"] = username,
             ["password"] = password,
-        });
+        };
+        if (!string.IsNullOrEmpty(clientId))
+            dict["client_id"] = clientId;
+        var form = new FormUrlEncodedContent(dict);
         _http.DefaultRequestHeaders.Remove("X-Tenant-ID");
         _http.DefaultRequestHeaders.Add("X-Tenant-ID", _tenantId);
         var resp = await _http.PostAsync($"{_baseUrl}/api/v1/oauth/token", form, ct);
