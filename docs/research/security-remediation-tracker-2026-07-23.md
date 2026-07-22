@@ -10,10 +10,10 @@
 
 | 严重度 | 总数 | 已分配 | 进行中 | 已完成 | 未分配 |
 |--------|------|--------|--------|--------|--------|
-| P1（安全阻塞） | 7 | 7 | 0 | 4 | 0 |
+| P1（安全阻塞） | 7 | 7 | 0 | 7 | 0 |
 | P2（企业交付前） | 14 | 5 | 0 | 0 | 9 |
 | P3（后续迭代） | 7 | 0 | 0 | 0 | 7 |
-| **合计** | **28** | **12** | **0** | **4** | **16** |
+| **合计** | **28** | **12** | **0** | **7** | **16** |
 
 > **审计范围说明**：审计报告覆盖 7 个维度共 29 个薄弱点（A1/D1 为同一问题跨维度重复）+ 32 个已落实控制项 = 61 个检查点。guardian 报告中"40+ 发现项"为近似值。本追踪表覆盖全部 28 个待修复行动项（B2/B3 从 P2 提升至 P1 合入 S7）。
 
@@ -66,9 +66,9 @@
 | S2 | 认证 | A2: GGID_INTERNAL_SECRET dev fallback | guardian | **完成** (787270449) | 30min |
 | S3 | 审计 | F1: HMAC secret 缺失时静默禁用 | guardian | **完成** (787270449) | 30min |
 | S4 | 加密 | A1/D1: LDAP InsecureSkipVerify=true | guardian | **完成** (787270449) | 1h |
-| S5 | 会话 | C1: revokedTokens/stateStore sync.Map 内存态 | backend | 已分配，待确认 | 4h |
-| S6 | 认证 | A3: PASSWORD_PEPPER 未强制配置 | backend | 已分配，待确认 | 15min |
-| S7 | 授权 | B2+B3: CORS fallback `*` + OAuth scope 未交集 | backend | 已分配，待确认 | 1h |
+| S5 | 会话 | C1: revokedTokens/stateStore sync.Map 内存态 | backend | **完成** (83809081e) | 4h |
+| S6 | 认证 | A3: PASSWORD_PEPPER 未强制配置 | backend | **完成** (83809081e) | 15min |
+| S7 | 授权 | B2+B3: CORS fallback `*` + OAuth scope 未交集 | backend | **完成** (83809081e) | 1h |
 
 > backend 之前确认过 S5/S6/S7（上一会话），当前会话已发送确认请求，等待回复。
 
