@@ -3,8 +3,12 @@ package server
 import (
 	"context"
 	"crypto/tls"
+	"crypto/x509"
 	"fmt"
 	"log/slog"
+	"net/url"
+	"os"
+	"strings"
 
 	"github.com/go-ldap/ldap/v3"
 	"github.com/ggid/ggid/pkg/authprovider"
@@ -120,7 +124,28 @@ func dialLDAP(cfg *LDAPSyncConfig) (*ldap.Conn, error) {
 	}
 
 	if cfg.StartTLS {
-		if err := conn.StartTLS(&tls.Config{InsecureSkipVerify: true}); err != nil {
+		tlsConfig := &tls.Config{}
+		// Load CA certificate from env if configured; otherwise use system roots.
+		// InsecureSkipVerify is NEVER true in production — it would allow MITM.
+		if caPath := os.Getenv("LDAP_CA_CERT_PATH"); caPath != "" {
+			caCert, err := os.ReadFile(caPath)
+			if err != nil {
+				conn.Close()
+				return nil, fmt.Errorf("read LDAP CA cert: %w", err)
+			}
+			certPool := x509.NewCertPool()
+			if !certPool.AppendCertsFromPEM(caCert) {
+				conn.Close()
+				return nil, fmt.Errorf("invalid LDAP CA cert at %s", caPath)
+			}
+			tlsConfig.RootCAs = certPool
+			slog.Info("LDAP StartTLS: using configured CA cert", "path", caPath)
+		}
+		// Set ServerName for SNI / certificate validation from the URL.
+		if u, err := url.Parse(cfg.ServerURL); err == nil && u.Host != "" {
+			tlsConfig.ServerName = strings.Split(u.Host, ":")[0]
+		}
+		if err := conn.StartTLS(tlsConfig); err != nil {
 			conn.Close()
 			return nil, fmt.Errorf("starttls: %w", err)
 		}

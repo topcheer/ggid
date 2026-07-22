@@ -8,6 +8,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"log/slog"
 	"net/http"
 	"os"
 	"strings"
@@ -246,7 +247,8 @@ func signCredential(nonce string, targetID uuid.UUID, userID string, expiresAt t
 func getBrokerSecret() string {
 	secret := os.Getenv("GGID_INTERNAL_SECRET")
 	if secret == "" {
-		secret = "dev-broker-secret"
+		slog.Error("GGID_INTERNAL_SECRET not set — secret broker refuses to operate with insecure default")
+		return "" // empty secret → signatures invalid → fail-closed
 	}
 	return secret
 }

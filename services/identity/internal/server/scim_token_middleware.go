@@ -80,7 +80,8 @@ func (h *HTTPHandler) scimTokenAuth(next http.Handler) http.Handler {
 func hashSCIMToken(plaintext string) string {
 	secret := os.Getenv("GGID_INTERNAL_SECRET")
 	if secret == "" {
-		secret = "dev-internal-secret"
+		slog.Error("GGID_INTERNAL_SECRET not set — SCIM token hashing refuses to operate with insecure default")
+		return "" // empty hash → lookup will never match → fail-closed
 	}
 	mac := hmac.New(sha256.New, []byte(secret))
 	mac.Write([]byte(plaintext))

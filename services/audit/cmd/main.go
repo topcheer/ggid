@@ -78,10 +78,11 @@ func main() {
 
 	// Initialize hash chain for tamper-evident audit events
 	if cfg.HashChainSecret != "" {
-		domain.SetHashChainSecret([]byte(cfg.HashChainSecret))
+			domain.SetHashChainSecret([]byte(cfg.HashChainSecret))
 		log.Println("Audit Service: hash chain enabled")
 	} else {
-		log.Println("Audit Service: WARNING — hash chain disabled (set AUDIT_HASH_CHAIN_SECRET to enable)")
+		log.Println("Audit Service: ERROR — AUDIT_HASH_CHAIN_SECRET not set, hash chain disabled")
+		log.Println("Audit Service: WARNING — audit events will NOT be tamper-evident. Set AUDIT_HASH_CHAIN_SECRET in production.")
 	}
 
 	// Initialize repository and service

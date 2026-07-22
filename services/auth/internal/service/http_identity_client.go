@@ -5,7 +5,10 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log/slog"
 	"net/http"
+	"os"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -149,15 +152,44 @@ func (c *HTTPIdentityClient) GetUserRoles(ctx context.Context, tenantID, userID 
 	if len(result.Roles) == 0 {
 		return []string{"user"}, nil
 	}
-	scopes := make([]string, 0, len(result.Roles))
+	scopes := make([]string, 0, len(result.Roles)+1)
+
+	// Platform-reserved scope strings that must NEVER be derived from
+	// tenant-controlled role names. A tenant admin can create a role named
+	// "platform:admin" — if that string leaks into the JWT scope claim, it
+	// grants platform-level access. Only the platform tenant (ID checked
+	// by the caller via X-Tenant-ID) may legitimately hold these roles.
+	platformReservedScopes := map[string]bool{
+		"platform:admin":     true,
+		"platform administrator": true,
+		"tenant:admin":       true,
+		"tenant administrator":   true,
+	}
+
+	// The platform tenant ID — the only tenant whose roles may legitimately
+	// produce platform:admin / tenant:admin scopes.
+	// In production this comes from config; the env override allows testing.
+	platformTenantID := os.Getenv("GGID_PLATFORM_TENANT_ID")
+	if platformTenantID == "" {
+		platformTenantID = os.Getenv("GGID_TENANT_ID")
+	}
+	isPlatformTenant := platformTenantID != "" && tenantID.String() == platformTenantID
+
 	for _, r := range result.Roles {
 		key := r.RoleName
 		if key == "" {
 			key = r.RoleID
 		}
-		if key != "" {
-			scopes = append(scopes, key)
+		if key == "" {
+			continue
 		}
+		// Drop reserved platform scopes from non-platform tenants.
+		if !isPlatformTenant && platformReservedScopes[strings.ToLower(key)] {
+			slog.Warn("scope generation: dropping platform-reserved scope from non-platform tenant role",
+				"scope", key, "tenant_id", tenantID.String(), "role_id", r.RoleID)
+			continue
+		}
+		scopes = append(scopes, key)
 	}
 	if len(scopes) == 0 {
 		return []string{"user"}, nil
