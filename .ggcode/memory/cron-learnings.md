@@ -34,6 +34,12 @@
 - [2026-07-22] **已验证: Token introspection** — Bearer 方式返回完整 roles + permissions 数组。resource server 可直接用于权限检查
 - [2026-07-22] **P2: JWT permissions 数组重复** — 用户有多个角色且角色共享相同权限时，permissions 数组含重复项（admin: 26项仅13 unique）。修复：fetchUserPermissions SQL 加 `SELECT DISTINCT`。commit c24a19645。验证：13 total, 0 duplicates
 - [2026-07-22] **安全验证: 无角色用户** — JWT permissions=[]+roles=[] 的用户正确被 403 拦截所有 admin 路径，/users/me 仍 200。HasPermissionForRoute 空数组返回 false，无过度授权风险
+- [2026-07-23] **P1: CAE action 字段持久化失败** — Console/API 发 `action` (单数字符串), handler 只读 `actions` (复数 map)。action 被 JSON decode 忽略。修复：handler 同时接受 `action` string 和 `actions` map，struct 新增顶层 `action` 字段。commit 684eb084c
+- [2026-07-23] **已验证: OAuth Client 全生命周期** — create (auto-gen client_id `gcid_*`, secret `gcs_*`) → list → M2M token (scope+permissions 正确) → disable → M2M blocked → re-enable → update redirect URIs → delete。全链路 PASS
+- [2026-07-23] **已验证: Users API 数据完整性** — search 工作正常 (8 results for "admin"), roles 嵌入在 user 对象中 (role_name + role_id), 分页参数 limit 生效 (50 default)。display_name 是标准字段（无 first_name/last_name）
+- [2026-07-23] **已验证: Tenant resolve API** — GET /api/v1/tenants/resolve?slug=default 返回 tenant_id+name+slug。Gateway 已有 EnhancedTenantResolver 中间件支持 subdomain→tenant 解析。R1-01 onboarding 路由基础设施已就绪
+- [2026-07-23] **P1 安全修复已部署**: auth(S1-S4,S6,S7) + identity(S1) + audit(S3,CORS) + oauth(introspection,dedup,scope交集) + gateway(CORS fail-closed) + policy(CAE action)。5 个服务全部重建部署
+- [2026-07-23] **govulncheck 结果**: 1 vulnerability (GO-2026-5856 crypto/tls ECH privacy leak, fixed in go1.26.5)。需升级 Go 版本修复
 
 - [2026-07-21] auth-guard.tsx scope 匹配：JWT roles 存的是显示名（如 "Platform Administrator"），不是 scope key（如 "platform:admin"）。匹配逻辑必须大小写不敏感 + 包含显示名变体
 - [2026-07-21] Go SDK verifyTokenOffline 用 ParseUnverified 接受伪造 JWT。已移除，VerifyToken 强制要求 WithJWKS()
