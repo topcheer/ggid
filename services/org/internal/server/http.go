@@ -258,6 +258,18 @@ func (s *HTTPServer) handleOrgByID(w http.ResponseWriter, r *http.Request) {
 			s.handleOrgTree(w, r, id)
 			return
 		}
+		if subPath == "subtree" {
+			s.handleOrgSubtree(w, r, id)
+			return
+		}
+		if subPath == "restructure" {
+			s.handleOrgRestructure(w, r)
+			return
+		}
+		if subPath == "access-matrix" {
+			s.handleOrgAccessMatrix(w, r, id)
+			return
+		}
 		writeJSONError(w, http.StatusNotFound, "unknown sub-path")
 		return
 	}
@@ -394,6 +406,69 @@ func (s *HTTPServer) handleOrgTree(w http.ResponseWriter, r *http.Request, orgID
 	writeJSON(w, http.StatusOK, map[string]any{
 		"organizations": orgs,
 		"departments":   departments,
+	})
+}
+
+// handleOrgSubtree returns all descendants of an org node.
+// GET /api/v1/orgs/{id}/subtree
+func (s *HTTPServer) handleOrgSubtree(w http.ResponseWriter, r *http.Request, orgID uuid.UUID) {
+	if r.Method != http.MethodGet {
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
+		return
+	}
+	tenantIDStr := r.URL.Query().Get("tenant_id")
+	if tenantIDStr == "" {
+		writeJSONError(w, http.StatusBadRequest, "tenant_id required")
+		return
+	}
+	tenantID, err := uuid.Parse(tenantIDStr)
+	if err != nil {
+		writeJSONError(w, http.StatusBadRequest, "invalid tenant_id")
+		return
+	}
+	subTree, err := s.orgSvc.GetSubTree(r.Context(), tenantID, orgID)
+	if err != nil {
+		writeServiceError(w, err)
+		return
+	}
+	orgs := make([]map[string]any, len(subTree))
+	for i, o := range subTree {
+		orgs[i] = orgToJSON(o)
+	}
+	writeJSON(w, http.StatusOK, map[string]any{
+		"root_id":       orgID.String(),
+		"organizations": orgs,
+		"count":         len(orgs),
+	})
+}
+
+// handleOrgRestructure moved an org node to a new parent.
+// Uses existing implementation in restructure_handler.go.
+
+// handleOrgAccessMatrix returns the access matrix for an org node.
+// GET /api/v1/orgs/{id}/access-matrix
+func (s *HTTPServer) handleOrgAccessMatrix(w http.ResponseWriter, r *http.Request, orgID uuid.UUID) {
+	if r.Method != http.MethodGet {
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
+		return
+	}
+	org, err := s.orgSvc.Get(r.Context(), orgID)
+	if err != nil {
+		writeServiceError(w, err)
+		return
+	}
+	// Return org info + member count for now. Full matrix needs org_members table.
+	orgs, err := s.orgSvc.GetSubTree(r.Context(), org.TenantID, orgID)
+	if err != nil {
+		writeJSONError(w, http.StatusInternalServerError, fmt.Sprintf("access matrix failed: %v", err))
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]any{
+		"org_id":         orgID.String(),
+		"tenant_id":      org.TenantID.String(),
+		"org_name":       org.Name,
+		"subtree_count":  len(orgs),
+		"subtree":        orgs,
 	})
 }
 

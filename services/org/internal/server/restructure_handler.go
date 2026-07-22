@@ -43,12 +43,12 @@ func (s *HTTPServer) handleOrgRestructure(w http.ResponseWriter, r *http.Request
 	}
 
 	writeJSON(w, http.StatusOK, map[string]any{
-		"status":         "completed",
-		"org_id":         orgID,
-		"moved_dept":     req.DepartmentID,
-		"new_parent":     req.NewParentID,
+		"status":          "completed",
+		"org_id":          orgID,
+		"moved_dept":      req.DepartmentID,
+		"new_parent":      req.NewParentID,
 		"cascade_updates": "all child departments path updated",
-		"cycle_check":    "passed",
-		"updated_at":     time.Now().UTC().Format(time.RFC3339),
+		"cycle_check":     "passed",
+		"updated_at":      time.Now().UTC().Format(time.RFC3339),
 	})
 }
