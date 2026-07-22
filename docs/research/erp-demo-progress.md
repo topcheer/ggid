@@ -272,3 +272,12 @@ After arch's DB reset (a6649d2e5), recreated all demo data:
 8/8 demos HTTP 200 after recovery.
 
 ### Next Dimension: 4 — Multi-tenant Isolation
+
+## Dimension 4 C3: Multi-tenant Isolation (Round 39)
+Post-DB-reset with new tenant UUIDs:
+- Cross-tenant Go→Java: 401 ✅
+- Cross-tenant Java→Go: 401 ✅
+- 7/7 demos HTTP 200 ✅ (Node M2M fixed by 4b6431a9e)
+- 0 hacks
+
+### Next Dimension: 5 — SDK Cross-language Consistency
