@@ -794,3 +794,22 @@ These are core fixes that directly impact SDK claims parsing — verified no dow
 **Total Cycle 8 fixes: 1 SDK + 5 k8s configs + 1 security fix. Zero hacks.**
 
 ### Next Dimension: 1 — Cycle 9 (Authentication Completeness)
+
+## Dimension 1 C9: Authentication Completeness (Round 72)
+
+**Core Changes**: Only docs since D6 C8 (v2.0 roadmap). No code changes to services/auth, services/oauth, or services/gateway.
+
+**Results**: All checks pass, zero issues found.
+
+| Check | Result |
+|-------|--------|
+| Password grant × 7 tenants | 7/7 AT=True, EI=900, TT=Bearer ✅ |
+| M2M client_credentials (Node) | AT=True, EI=900 ✅ |
+| Token → API (Go demo) | 200 ✅ |
+| Token refresh (offline_access) | OK ✅ |
+| JWT claims | sub+tenant_id+roles[1]+permissions[9]+scope+iss+aud+exp ✅ |
+| Hack patterns | 0 ✅ |
+
+**D1 C9 Status**: 7/7 auth pass, zero regressions from security fixes (CORS/PEPPER/scope/dev secrets).
+
+### Next Dimension: 2 — Cycle 9 (Authorization Boundaries)
