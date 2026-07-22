@@ -61,7 +61,9 @@ func (h *OAuthGRPCHandler) CreateClient(ctx context.Context, req *oauthv1.Create
 		slog.Error("gRPC CreateClient error", "err", err)
 		return nil, status.Error(codes.Internal, fmt.Sprintf("failed to create client: %v", err))
 	}
-	return domainToPbClient(result.Client), nil
+	pbClient := domainToPbClient(result.Client)
+	pbClient.ClientSecret = result.ClientSecret // plaintext secret — only returned on create
+	return pbClient, nil
 }
 
 func (h *OAuthGRPCHandler) GetClient(ctx context.Context, req *oauthv1.GetClientRequest) (*oauthv1.OAuthClient, error) {
