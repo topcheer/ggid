@@ -393,6 +393,31 @@ func (s *AuthService) CleanupExpired(ctx context.Context) (int64, error) {
 // and then issues the full token set.
 func (s *AuthService) MFAService() *MFAService { return s.mfaService }
 
+// KeyProvider returns the JWT signing key provider.
+func (s *AuthService) KeyProvider() crypto.KeyProvider {
+	return s.tokenService.Provider()
+}
+
+// JWTIssuer returns the JWT issuer claim value.
+func (s *AuthService) JWTIssuer() string {
+	return s.tokenService.jwtIssuer
+}
+
+// JWTAudience returns the JWT audience claim value.
+func (s *AuthService) JWTAudience() string {
+	return s.tokenService.jwtAudience
+}
+
+// JWTTTL returns the access token time-to-live.
+func (s *AuthService) JWTTTL() time.Duration {
+	return s.tokenService.jwtTTL
+}
+
+// GetUserScopesAndPermissions returns role names and fine-grained permissions for a user.
+func (s *AuthService) GetUserScopesAndPermissions(ctx context.Context, tenantID, userID uuid.UUID) (roles []string, permissions []string) {
+	return s.getUserScopesAndPermissions(ctx, tenantID, userID)
+}
+
 // LoginWithBackupCode authenticates a user with password + backup code (alternative MFA factor).
 // The backup code is consumed (single-use) upon successful verification.
 func (s *AuthService) LookupUser(ctx context.Context, tenantID uuid.UUID, identifier string) (*UserInfo, error) {
