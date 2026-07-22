@@ -338,3 +338,20 @@ Zero regressions from DB reset recovery.
 - auth/login refs: 2 (login-attempts admin API, legitimate)
 
 ### Next Dimension: 6 — End-to-end User Experience
+
+## Dimension 6 C4: E2E (Round 47)
+### Admin flow: login→read(1)→create(201) ALL PASS ✅
+### Viewer flow: login→read(200)→create DENIED(403) ALL PASS ✅
+### Security: no-token(401), fake(401) ✅
+### 0 hacks
+
+### CYCLE 4 COMPLETE (Rounds 42-47)
+All 6 dimensions verified, now including viewer/admin role escalation test.
+- D1: 7/7 auth ✅
+- D2: cross-tenant 401, fake 401 ✅
+- D3: inventory+POST+perms verified ✅
+- D4: viewer POST 403 (escalation prevented), cross-tenant 401 ✅
+- D5: 7/7 SDK endpoints consistent ✅
+- D6: admin+viewer dual E2E, security checks ✅
+
+### Next Dimension: 1 — Authentication (Cycle 5)
