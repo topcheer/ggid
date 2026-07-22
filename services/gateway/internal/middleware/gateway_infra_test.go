@@ -296,8 +296,10 @@ func TestPerTenantCORS_NoOrigin(t *testing.T) {
 	if rr.Code != http.StatusOK {
 		t.Errorf("No origin: want 200, got %d", rr.Code)
 	}
-	if rr.Header().Get("Access-Control-Allow-Origin") != "*" {
-		t.Errorf("Should default to wildcard: got '%s'", rr.Header().Get("Access-Control-Allow-Origin"))
+	// S7 fail-closed: no ACAO header when Origin is empty (same-origin/non-browser).
+	// Previously defaulted to "*" — removed to prevent permissive CORS.
+	if got := rr.Header().Get("Access-Control-Allow-Origin"); got != "" {
+		t.Errorf("Should omit ACAO when no Origin header (fail-closed): got '%s'", got)
 	}
 }
 
