@@ -332,3 +332,9 @@ Zero regressions from DB reset recovery.
 - 0 hacks
 
 ### Next Dimension: 5 — SDK Cross-language Consistency
+
+## Dimension 5 C4: SDK Consistency (Round 46)
+- Endpoints: 7/7 ✅ | Token fields: 7/7 snake_case ✅ | 7/7 demo 200 ✅ | 0 hacks
+- auth/login refs: 2 (login-attempts admin API, legitimate)
+
+### Next Dimension: 6 — End-to-end User Experience
