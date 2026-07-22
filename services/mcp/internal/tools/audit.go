@@ -21,7 +21,9 @@ var auditTools = []Tool{
 		RequiredScopes: []string{"audit:read"},
 		Handler: func(ctx context.Context, c *client.Client, args map[string]any) (any, error) {
 			limit := argInt(args, "limit", 50)
-			path := fmt.Sprintf("/api/v1/audit/events?tenant_id=00000000-0000-0000-0000-000000000001&page_size=%d", limit)
+			// tenant_id is resolved by the gateway from X-Tenant-ID header;
+			// no need to pass it as a query parameter.
+			path := fmt.Sprintf("/api/v1/audit/events?page_size=%d", limit)
 			if action := argStr(args, "action"); action != "" {
 				path += "&action=" + action
 			}

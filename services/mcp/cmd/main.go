@@ -23,7 +23,7 @@ func main() {
 		log.Println("Warning: GGID_ACCESS_TOKEN not set — tools will fail until authenticated")
 	}
 
-	cli := client.New(gatewayURL, token)
+	cli := client.New(gatewayURL, token, os.Getenv("GGID_TENANT_ID"))
 	srv := server.New(cli)
 
 	addr := ":" + port

@@ -8,21 +8,28 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"os"
 	"time"
 )
 
 // Client wraps HTTP calls to the GGID Gateway.
 type Client struct {
-	baseURL string
-	token   string
-	http    *http.Client
+	baseURL  string
+	token    string
+	tenantID string
+	http     *http.Client
 }
 
-// New creates a new GGID Gateway client.
-func New(baseURL, token string) *Client {
+// New creates a new GGID Gateway client. tenantID is resolved from the
+// GGID_TENANT_ID env var or the JWT claim at runtime — never hardcoded.
+func New(baseURL, token, tenantID string) *Client {
+	if tenantID == "" {
+		tenantID = os.Getenv("GGID_TENANT_ID")
+	}
 	return &Client{
-		baseURL: baseURL,
-		token:   token,
+		baseURL:  baseURL,
+		token:    token,
+		tenantID: tenantID,
 		http: &http.Client{
 			Timeout: 30 * time.Second,
 		},
@@ -67,7 +74,7 @@ func (c *Client) do(ctx context.Context, method, path string, body, result any) 
 		req.Header.Set("Authorization", "Bearer "+c.token)
 	}
 	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("X-Tenant-ID", "00000000-0000-0000-0000-000000000001")
+	req.Header.Set("X-Tenant-ID", c.tenantID)
 
 	resp, err := c.http.Do(req)
 	if err != nil {

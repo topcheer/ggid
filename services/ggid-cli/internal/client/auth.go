@@ -3,11 +3,14 @@ package client
 import (
 	"fmt"
 	"net/url"
+	"os"
 	"time"
 )
 
-// ConsoleTenantID is the default console tenant UUID used for DCR.
-const ConsoleTenantID = "00000000-0000-0000-0000-000000000001"
+// ConsoleTenantID is the fallback default tenant UUID used for DCR when
+// neither the config file nor GGID_TENANT_ID env var provides one.
+// The real value should always come from runtime config or JWT claims.
+var ConsoleTenantID = os.Getenv("GGID_TENANT_ID")
 
 // DCRRequest represents a Dynamic Client Registration request (RFC 7591).
 type DCRRequest struct {
