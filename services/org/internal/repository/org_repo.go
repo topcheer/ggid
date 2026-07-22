@@ -117,8 +117,8 @@ func (r *OrgRepository) GetSubTree(ctx context.Context, tenantID, rootID uuid.UU
 // Update modifies an organization.
 func (r *OrgRepository) Update(ctx context.Context, org *domain.Organization) error {
 	metaJSON, _ := json.Marshal(org.Metadata)
-	query := `UPDATE organizations SET name = $2, metadata = $3, updated_at = NOW() WHERE id = $1 RETURNING updated_at`
-	err := r.db.QueryRow(ctx, query, org.ID, org.Name, metaJSON).Scan(&org.UpdatedAt)
+	query := `UPDATE organizations SET name = $2, path = $3, metadata = $4, updated_at = NOW() WHERE id = $1 RETURNING updated_at`
+	err := r.db.QueryRow(ctx, query, org.ID, org.Name, org.Path, metaJSON).Scan(&org.UpdatedAt)
 	if err != nil {
 		return mapErr(err, "organization", org.ID.String())
 	}

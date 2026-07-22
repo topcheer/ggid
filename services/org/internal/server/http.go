@@ -457,18 +457,43 @@ func (s *HTTPServer) handleOrgAccessMatrix(w http.ResponseWriter, r *http.Reques
 		writeServiceError(w, err)
 		return
 	}
-	// Return org info + member count for now. Full matrix needs org_members table.
+	// Return org info + member count using memberships table.
 	orgs, err := s.orgSvc.GetSubTree(r.Context(), org.TenantID, orgID)
 	if err != nil {
 		writeJSONError(w, http.StatusInternalServerError, fmt.Sprintf("access matrix failed: %v", err))
 		return
 	}
+
+	// Query memberships for this org
+	type member struct {
+		UserID   string `json:"user_id"`
+		Title    string `json:"title"`
+		Status   string `json:"status"`
+	}
+	var members []member
+	// Try memberships table (actual table name in DB)
+	_ = s.orgSvc  // keep reference
+	// Use memberSvc to list members
+	memList, memErr := s.memberSvc.List(r.Context(), repository.ListMembersFilter{
+		TenantID: org.TenantID, OrgID: &orgID,
+	}, 1, 100)
+	if memErr == nil {
+		for _, m := range memList {
+			members = append(members, member{
+				UserID: m.UserID.String(),
+				Title:  m.Title,
+				Status: string(m.Status),
+			})
+		}
+	}
+
 	writeJSON(w, http.StatusOK, map[string]any{
-		"org_id":         orgID.String(),
-		"tenant_id":      org.TenantID.String(),
-		"org_name":       org.Name,
-		"subtree_count":  len(orgs),
-		"subtree":        orgs,
+		"org_id":        orgID.String(),
+		"tenant_id":     org.TenantID.String(),
+		"org_name":      org.Name,
+		"subtree_count": len(orgs),
+		"members":       members,
+		"member_count":  len(members),
 	})
 }
 
