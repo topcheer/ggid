@@ -305,6 +305,7 @@ func (r *RBACResolver) CheckAccess(ctx context.Context, path, method string, cla
 	}
 
 	grant := 0
+	adminProtected := false // true if any role has "admin" level on the best-match prefix
 	for _, row := range rows {
 		// Tenant isolation: rules only apply to the caller's own tenant.
 		// Rows without a tenant (legacy cache entries) match no one except
@@ -327,6 +328,11 @@ func (r *RBACResolver) CheckAccess(ctx context.Context, path, method string, cla
 		if len(row.Prefix) > bestLen {
 			bestLen = len(row.Prefix)
 			grant = 0
+			adminProtected = false // reset on new longest prefix
+		}
+		// Track whether this prefix is admin-protected by any role.
+		if permLevelRank(row.Level) >= permLevelRank("admin") {
+			adminProtected = true
 		}
 		// Same longest prefix: keep the highest grant among the user's roles.
 		if userRoles[strings.ToLower(row.RoleName)] || userRoles[strings.ToLower(row.RoleKey)] {
@@ -342,7 +348,13 @@ func (r *RBACResolver) CheckAccess(ctx context.Context, path, method string, cla
 	// the gap between the permissions system (role_permissions -> JWT
 	// permissions array) and the route-based RBAC system
 	// (role_route_permissions).
-	if grant < required {
+	//
+	// Security boundary: this fallback is NOT applied when the matched
+	// route prefix is admin-protected (any role has "admin" level on the
+	// same prefix). Without this guard, a viewer with "users:read" could
+	// access GET /api/v1/users (the admin user-listing endpoint) — the
+	// permission was intended for /api/v1/users/me self-service only.
+	if grant < required && !adminProtected {
 		if HasPermissionForRoute(path, method, claims.Permissions) {
 			grant = required
 		}
