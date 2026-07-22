@@ -372,3 +372,9 @@ All 6 dimensions verified, now including viewer/admin role escalation test.
 - 7/7 demo 200 ✅ | 0 hacks
 
 ### Next Dimension: 4 — Multi-tenant Isolation
+
+## Dimension 4 C5: Tenant Isolation (Round 51)
+- Cross-tenant Go→Java: 401 ✅ | Java→Go: 401 ✅
+- Viewer create: 403 ✅ | Viewer read: 200 ✅ | 0 hacks
+
+### Next Dimension: 5 — SDK Cross-language Consistency
