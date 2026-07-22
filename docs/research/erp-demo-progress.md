@@ -1124,3 +1124,20 @@ Hacks: 0 ✅ — **Twelfth consecutive zero-fix cycle.**
 Hacks: 0 ✅ — **Thirteenth consecutive zero-fix cycle.**
 
 ### Next Dimension: 1 — Cycle 22
+
+## Cycle 22: Post-Org-Restructure-Fix (Rounds 150-155)
+
+**Core Changes**: `e0ee8e485` R1-03 org restructure ltree cast + `a21625f8b` test fix. Org service only, no auth/oauth/gateway changes.
+
+| Dim | Result |
+|-----|--------|
+| D1 | 7/7 password grant, M2M OK ✅ |
+| D2 | admin 200/201, viewer 200/403 ✅ |
+| D3 | 18 items, all fields ✅ |
+| D4 | Go→Go 200, Node→Go 403, Fake 401 ✅ |
+| D5 | 7/7 SDK consistent ✅ |
+| D6 | refresh OK, no-token 401 ✅ |
+
+Org build: ✅ | Hacks: 0 ✅ — **Fourteenth consecutive zero-fix cycle.**
+
+### Next Dimension: 1 — Cycle 23
