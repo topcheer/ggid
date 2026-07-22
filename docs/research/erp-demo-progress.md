@@ -242,3 +242,11 @@ All 6 dimensions verified twice, no regressions, stable.
 - 0 hacks
 
 ### Next Dimension: 3 — Demo Functional Completeness
+
+## Dimension 3 C3: Functional Completeness (Round 37)
+- Go: 0 items (known empty), Node: 3 items ✅
+- POST create: id=p007 ✅
+- my-permissions: 9 perms, inv_read+ord_approve correct ✅
+- 0 hacks, no regression
+
+### Next Dimension: 4 — Multi-tenant Isolation
