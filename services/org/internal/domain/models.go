@@ -91,6 +91,6 @@ type Membership struct {
 	TeamID    *uuid.UUID
 	Title     string
 	Status    MembershipStatus
-	JoinedAt  time.Time
+	JoinedAt  *time.Time
 	Metadata  map[string]any
 }
