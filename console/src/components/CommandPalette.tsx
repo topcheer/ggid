@@ -149,6 +149,7 @@ export function CommandPalette() {
     return (
       <button
         onClick={() => setOpen(true)}
+        aria-label="Open quick navigation (Ctrl+K)"
         className="hidden md:flex items-center gap-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 px-3 py-1.5 text-xs text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition"
         title="Quick navigation (Ctrl+K)"
       >
@@ -176,6 +177,10 @@ export function CommandPalette() {
             <input
               ref={inputRef}
               type="text"
+              aria-label="Search pages and settings"
+              role="combobox"
+              aria-expanded="true"
+              aria-controls="command-palette-results"
               value={query}
               onChange={(e) => { setQuery(e.target.value); setSelected(0); }}
               onKeyDown={handleKeyDown}
