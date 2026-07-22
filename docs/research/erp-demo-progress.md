@@ -302,3 +302,8 @@ All 6 dimensions verified in cycle 3 with new random tenant UUIDs.
 Zero regressions from DB reset recovery.
 
 ### Next Dimension: 1 — Authentication (Cycle 4)
+
+## Dimension 1 C4: Auth (Round 42)
+- 5/5 password grant PASS + M2M OK ✅ | 7/7 demo 200 ✅ | 0 hacks
+
+### Next Dimension: 2 — Authorization Boundaries
