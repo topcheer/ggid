@@ -2,7 +2,7 @@
 
 > 审视人：god_fullstack&everything（定期审视任务 cron-1 首轮）
 > 方法：三路并行代码级审查（OAuth/OIDC/SAML · Auth/Identity/SCIM · 增强功能兼容性+竞品迁移），所有结论均有 file:line 证据。
-> 状态：**R1 完成（已部署生产）。** R4/R10/R11 安全修复已部署。R12（10:43）：guardian 修复 RBAC path list 对齐 + Subject-based bypass 收紧（235612680），构建测试全绿。无增量问题。
+> 状态：**R1 完成（已部署生产）。** R4/R10/R11 安全修复已部署。R12 RBAC path 对齐审查通过。R13（11:43）：零核心代码变更，无增量问题。
 
 ---
 
