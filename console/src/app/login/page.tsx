@@ -247,6 +247,16 @@ export default function LoginPage() {
   };
 
   // Social login is handled via OAuth authorize flow, not direct API calls.
+  // Redirect to backend social login endpoint which will redirect to IdP.
+
+  const handleSocialLogin = (provider: string) => {
+    const redirectUri = `${window.location.origin}/auth/callback`;
+    const params = new URLSearchParams({
+      tenant_id: resolvedTenantId,
+      redirect_uri: redirectUri,
+    });
+    window.location.href = `${API_BASE}/api/v1/auth/social/${provider}?${params.toString()}`;
+  };
 
   // Only show social login buttons that are configured via API
   const socialButtons = connectorsLoaded && connectors.length > 0 ? connectors : [];

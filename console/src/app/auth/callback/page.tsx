@@ -10,6 +10,40 @@ function CallbackContent() {
   const [error, setError] = useState("");
 
   useEffect(() => {
+    // Check for social login callback (token in URL fragment: #access_token=xxx)
+    if (typeof window !== "undefined") {
+      const hash = window.location.hash.substring(1); // Remove leading #
+      const hashParams = new URLSearchParams(hash);
+      const accessToken = hashParams.get("access_token");
+
+      if (accessToken) {
+        // Social login callback — token already issued by backend
+        localStorage.setItem("ggid_access_token", accessToken);
+
+        // Try to get refresh_token if present
+        const refreshToken = hashParams.get("refresh_token");
+        if (refreshToken) {
+          localStorage.setItem("ggid_refresh_token", refreshToken);
+        }
+
+        // Extract tenant_id and scopes from JWT
+        try {
+          const payload = JSON.parse(atob(accessToken.split(".")[1]));
+          if (payload.tenant_id) localStorage.setItem("ggid_tenant_id", payload.tenant_id);
+          if (payload.sub) localStorage.setItem("ggid_user_id", payload.sub);
+          const scopes = payload.scopes || payload.roles || ["user"];
+          localStorage.setItem("ggid_user_scopes", JSON.stringify(Array.isArray(scopes) ? scopes : [scopes]));
+        } catch {}
+
+        // Redirect to dashboard
+        const redirectTo = sessionStorage.getItem("ggid_redirect_after_login") || "/dashboard";
+        sessionStorage.removeItem("ggid_redirect_after_login");
+        router.replace(redirectTo);
+        return;
+      }
+    }
+
+    // Standard OAuth authorization_code + PKCE flow
     const code = params.get("code");
     const state = params.get("state");
 
