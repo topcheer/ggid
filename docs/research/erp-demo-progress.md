@@ -753,3 +753,44 @@ These are core fixes that directly impact SDK claims parsing — verified no dow
 **D5 C8 Status**: All 7 SDKs now have consistent login/verifyToken/clientCredentials methods. Java clientCredentials gap fixed.
 
 ### Next Dimension: 6 — Cycle 8 (End-to-End User Experience)
+
+## Dimension 6 C8: End-to-End User Experience (Round 71)
+
+**Complete user flow verified (Go demo)**:
+
+| Step | Action | Expected | Actual | Status |
+|------|--------|----------|--------|--------|
+| 1 | No token → GET inventory | 401 | 401 | ✅ |
+| 2 | Login (password grant + offline_access) | AT + RT + exp | AT+RT+900s | ✅ |
+| 3 | GET /api/inventory | items array | 0 items (pod restart) | ✅ |
+| 4 | POST /api/inventory | 201 created | PROD-0001 D6C8-E2E | ✅ |
+| 5 | GET verify creation | item present | found=1, total=1 | ✅ |
+| 6 | POST /api/orders | order created | ORD-0001 | ✅ |
+| 7 | PUT /api/orders/{id}/approve | 200 | 200 | ✅ |
+| 8 | Viewer read inventory | 200 | 200 | ✅ |
+| 9 | Viewer write inventory | 403 | 403 | ✅ |
+| 10 | Fake token | 401 | 401 | ✅ |
+| 11 | Token refresh (offline_access) | New valid token | RT→new AT→200 | ✅ |
+| 12 | 7/7 demo health checks | All 200 | All 200 | ✅ |
+| 13 | Hack pattern search | 0 | 0 | ✅ |
+
+**D6 C8 Status**: Full E2E user flow passes. 13/13 checks green. Token refresh works with offline_access scope.
+
+---
+
+## Cycle 8 Complete (Rounds 66-71)
+
+**6/6 dimensions × 1 cycle = 6 deep validations.**
+
+| Dim | Focus | Issues Found | Files Fixed |
+|-----|-------|-------------|-------------|
+| D1 C8 | Auth completeness | 5 stale tenant IDs | 5 k8s env vars |
+| D2 C8 | Authorization boundaries | 0 (RBAC correct) | 0 |
+| D3 C8 | Functional completeness | 0 (content verified) | 0 |
+| D4 C8 | Multi-tenant isolation | Deployment stale (code correct) | 0 (pending amd64 CI) |
+| D5 C8 | SDK consistency | Java missing clientCredentials | 1 file |
+| D6 C8 | End-to-end UX | 0 (13/13 pass) | 0 |
+
+**Total Cycle 8 fixes: 1 SDK + 5 k8s configs + 1 security fix. Zero hacks.**
+
+### Next Dimension: 1 — Cycle 9 (Authentication Completeness)
