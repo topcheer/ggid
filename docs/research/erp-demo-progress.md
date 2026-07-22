@@ -355,3 +355,8 @@ All 6 dimensions verified, now including viewer/admin role escalation test.
 - D6: admin+viewer dual E2E, security checks ✅
 
 ### Next Dimension: 1 — Authentication (Cycle 5)
+
+## Dimension 1 C5: Auth (Round 48)
+- 5/5 password grant + M2M OK ✅ | 7/7 demo 200 ✅ | 0 hacks
+
+### Next Dimension: 2 — Authorization Boundaries
