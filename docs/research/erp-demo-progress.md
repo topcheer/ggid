@@ -915,3 +915,24 @@ Go→Go: 200 ✅ | Node→Go: 403 ✅ | Fake→Go: 401 ✅ | JWT tenant_id match
 **Cycle 10 Status**: Second consecutive zero-fix cycle. All core security changes (TOTP encryption, HMAC versioning, DB-backed revocation, RBAC role-name fix) are downstream-compatible.
 
 ### Next Dimension: 1 — Cycle 11 (Authentication Completeness)
+
+## Cycle 11: Post-Social-Login Routes (Rounds 84-89)
+
+**Core Change**: `472127016` feat(R1-02): add social login routes to publicPaths — pure additive (2 new routes), no modification to existing auth/oauth/gateway.
+
+**All 6 dimensions pass, zero issues**:
+
+| Dim | Key Checks | Result |
+|-----|-----------|--------|
+| D1 Auth | 7/7 password grant, M2M OK | ✅ |
+| D2 AuthZ | Admin 200/201, Viewer 403 | ✅ |
+| D3 Functional | 7 items, order approve 200 | ✅ |
+| D4 Tenant | Go→Go 200, Node→Go 403, Fake 401 | ✅ |
+| D5 SDK | 7/7 consistent (static) | ✅ |
+| D6 E2E | Refresh OK, no-token 401 | ✅ |
+
+Auth build: ✅ | Hacks: 0 ✅
+
+**Third consecutive zero-fix cycle.** Social login routes (R1-02) are purely additive and don't affect existing auth flows.
+
+### Next Dimension: 1 — Cycle 12
