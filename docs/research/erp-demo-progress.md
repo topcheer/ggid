@@ -609,3 +609,33 @@ These are core fixes that directly impact SDK claims parsing — verified no dow
 | Java | 8aa627c3-d760-4976-a7db-3309cdce41b4 | admin_java |
 | Ruby | a9a252cf-014f-4272-b2d5-5bcbc6b0126e | admin_ruby |
 | Rust | d8cc70a0-60dc-4bac-afc6-0c539d95931d | admin_rust |
+
+## Dimension 2 C8: Authorization Boundaries (Round 67)
+
+**Verification Results**:
+
+| Check | Expected | Actual | Status |
+|-------|----------|--------|--------|
+| Admin: GET /api/inventory | 200 | 200 | ✅ |
+| Admin: POST /api/inventory | 201 | 201 | ✅ |
+| Admin: POST /api/orders | 201 | ORD-0003 created | ✅ |
+| Admin: PUT /api/orders/{id}/approve | 200 | 200 | ✅ |
+| Admin: GET /api/users | 403 | 403 | ✅ (correct — erp_admin lacks users:read) |
+| Admin: GET /api/roles | 403 | 403 | ✅ (correct — erp_admin lacks roles:read) |
+| Viewer: GET /api/inventory | 200 | 200 | ✅ |
+| Viewer: POST /api/inventory | 403 | 403 | ✅ |
+| Viewer: POST /api/orders | 403 | 403 | ✅ |
+| Viewer: PUT /api/orders/{id}/approve | 403 | 403 | ✅ |
+| Fake token | 401 | 401 | ✅ |
+| No token | 401 | 401 | ✅ |
+| Hack patterns | 0 | 0 | ✅ |
+
+**JWT Permissions Verified**:
+- Admin (ERP Admin): audit:read, dashboard:read, inventory:delete/read/write, orders:approve/read/read:all/write (9 perms)
+- Viewer (ERP Viewer): audit:read, dashboard:read, inventory:read, orders:read (4 perms, read-only)
+
+**Key Insight**: Admin GET /api/users=403 and /api/roles=403 is CORRECT behavior. The `erp_admin` role is scoped to ERP operations only. User/role management requires platform-level permissions (`users:read`, `roles:read`). This demonstrates proper least-privilege RBAC — an ERP admin can manage inventory and orders but cannot escalate to user management.
+
+**D2 C8 Status**: All authorization boundaries verified. RBAC working correctly with proper permission scoping. Zero hacks.
+
+### Next Dimension: 3 — Cycle 8 (Demo Functional Completeness)
