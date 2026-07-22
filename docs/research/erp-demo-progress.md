@@ -488,3 +488,38 @@ Consistent results: viewer escalation prevented, cross-tenant rejected, all demo
 - Go build: ✅ | Rust cargo check: ✅
 
 **D4 C7 Status**: App-level tenant isolation added to 5 demos. Defense in depth with gateway enforcement.
+
+## Dimension 5 C7: SDK Cross-language Consistency (Round 64)
+
+**Core Changes Since Last Check**: 
+- `c24a19645` fix(oauth): deduplicate JWT permissions for multi-role users
+- `8448423a3` fix(oauth): introspection response now includes roles+permissions
+- `6a31a7ba5` fix(rbac): JWT permissions array now gates route access (P1)
+
+These are core fixes that directly impact SDK claims parsing — verified no downstream breakage.
+
+**SDK TokenSet Consistency Matrix**:
+
+| Field | Go | Node | C# | Java | Rust | Python | Ruby |
+|-------|-----|------|-----|------|------|--------|------|
+| access_token | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| refresh_token | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| id_token | **FIXED** | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| expires_in | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| token_type | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| scope | **FIXED** | — | — | — | — | ✅ | ✅ |
+
+**Fix Applied (1 file)**:
+- Go SDK `client.go` line 206: TokenSet adds `IDToken` and `Scope` fields for cross-language parity
+
+**Claims Consistency**: All 7 SDKs expose sub, tenant_id, roles[], permissions[], scope/scopes ✅
+
+**Method Naming**: Follows language conventions (Go=PascalCase, JS/Python/Ruby=camelCase/snake_case, C#=Async suffix) — idiomatic, not a defect.
+
+**Verification**:
+- Go SDK + demo compile: ✅
+- JWT permissions: 9 permissions correctly populated (audit:read, inventory:read/write, orders:read/write/approve, etc.)
+- Go inventory: 7 items, fields=[id, name, sku, price, stock, category, created_at, updated_at] ✅
+- Hack patterns: 0 ✅
+
+**D5 C7 Status**: Go TokenSet gap fixed. All 7 SDKs now have consistent TokenSet + Claims structures.

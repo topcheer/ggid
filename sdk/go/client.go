@@ -206,8 +206,10 @@ type ListOptions struct {
 type TokenSet struct {
 	AccessToken  string `json:"access_token"`
 	RefreshToken string `json:"refresh_token"`
+	IDToken      string `json:"id_token,omitempty"`
 	ExpiresIn    int    `json:"expires_in"`
 	TokenType    string `json:"token_type"`
+	Scope        string `json:"scope,omitempty"`
 }
 
 // LoginRequest holds credentials for password login.
