@@ -936,3 +936,24 @@ Auth build: ✅ | Hacks: 0 ✅
 **Third consecutive zero-fix cycle.** Social login routes (R1-02) are purely additive and don't affect existing auth flows.
 
 ### Next Dimension: 1 — Cycle 12
+
+## Cycle 12: Post-Gateway-Dedup (Rounds 90-95)
+
+**Core Change**: `8e95c7758` fix(gateway): remove duplicate social login publicPath entry — gateway routing cleanup, no functional impact.
+
+**All 6 dimensions pass, zero issues**:
+
+| Dim | Key Results | Status |
+|-----|------------|--------|
+| D1 | 7/7 password grant Y, M2M OK | ✅ |
+| D2 | Admin 200/201, Viewer 200/403 | ✅ |
+| D3 | 8 items all fields, order approve 200 | ✅ |
+| D4 | Go→Go 200, Node→Go 403, Fake 401 | ✅ |
+| D5 | 7/7 login+verify+clientCredentials | ✅ |
+| D6 | Refresh OK, no-token 401 | ✅ |
+
+Gateway build: ✅ | Hacks: 0 ✅
+
+**Fourth consecutive zero-fix cycle.**
+
+### Next Dimension: 1 — Cycle 13
