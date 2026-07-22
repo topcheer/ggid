@@ -566,3 +566,46 @@ These are core fixes that directly impact SDK claims parsing — verified no dow
 **Total Cycle 7 fixes: 16 files across 3 issues. Zero hacks. Production-grade.**
 
 ### Next Dimension: 1 — Cycle 8 (Authentication Completeness)
+
+## Dimension 1 C8: Authentication Completeness (Round 66)
+
+**Finding**: 5 demo deployments (Node, Python, C#, Java, Rust) had stale numeric tenant IDs (`00000002...`, `00000004...`, etc.) that didn't match the actual UUID-format tenant IDs in the DB after the last DB rebuild. Only Go (`1effd2c4...`) and Ruby (`a9a252cf...`) had correct tenant IDs.
+
+**Root Cause**: DB was rebuilt with UUID-format tenant IDs, but k8s deployment env vars for 5 demos were not updated.
+
+**Fix Applied (k8s, not code)**:
+- erp-node: `00000002-0000-0000-0000-000000000001` → `b1a2329f-223f-43bb-8cd1-4cdfa3d88570`
+- erp-python: `00000004-0000-0000-0000-000000000001` → `c2bab17d-e3ce-4a6b-bd48-c3be1e62cf8e`
+- erp-csharp: `00000005-0000-0000-0000-000000000001` → `536a18c2-dc0b-4889-853e-48f5e39356bd`
+- erp-java: `00000006-0000-0000-0000-000000000001` → `8aa627c3-d760-4976-a7db-3309cdce41b4`
+- erp-rust: `00000008-0000-0000-0000-000000000001` → `d8cc70a0-60dc-4bac-afc6-0c539d95931d`
+
+**Post-Fix Verification**:
+| Demo | Password Grant | Token Structure | Usable |
+|------|---------------|-----------------|--------|
+| Go | ✅ AT+TT+EI+scope | Bearer 900s | 200 ✅ |
+| Node | ✅ AT+TT+EI | Bearer 900s | M2M 200 ✅ |
+| Python | ✅ AT+TT+EI | Bearer 900s | — |
+| C# | ✅ AT+TT+EI | Bearer 900s | — |
+| Java | ✅ AT+TT+EI | Bearer 900s | — |
+| Ruby | ✅ AT+TT+EI | Bearer 900s | — |
+| Rust | ✅ AT+TT+EI | Bearer 900s | — |
+
+- OIDC Discovery: issuer + jwks + token endpoint all correct ✅
+- M2M client_credentials for Node: working ✅
+- Hack patterns: 0 ✅
+
+**D1 C8 Status**: 7/7 password grant pass, tenant IDs corrected. Zero regressions.
+
+### Next Dimension: 2 — Cycle 8 (Authorization Boundaries)
+
+**Updated Tenant ID Table**:
+| Demo | Tenant ID (UUID) | Admin User |
+|------|------------------|-----------|
+| Go | 1effd2c4-fc5a-4b2e-85b7-307bb4978bad | admin_go |
+| Node | b1a2329f-223f-43bb-8cd1-4cdfa3d88570 | admin_node |
+| Python | c2bab17d-e3ce-4a6b-bd48-c3be1e62cf8e | admin_python |
+| C# | 536a18c2-dc0b-4889-853e-48f5e39356bd | admin_csharp |
+| Java | 8aa627c3-d760-4976-a7db-3309cdce41b4 | admin_java |
+| Ruby | a9a252cf-014f-4272-b2d5-5bcbc6b0126e | admin_ruby |
+| Rust | d8cc70a0-60dc-4bac-afc6-0c539d95931d | admin_rust |
