@@ -55,7 +55,7 @@ export default function ConditionalAccessPage() {
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch(`${API_BASE}/api/v1/auth/conditional-access/policies`, { headers: { ...authHeader() } });
+      const res = await fetch(`${API_BASE}/api/v1/policies/conditional-access`, { headers: { ...authHeader() } });
       if (res.ok) { const d = await res.json(); setPolicies(d.policies || d || []); return; }
     } catch { /* mock */ }
     setPolicies([
