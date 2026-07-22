@@ -19,6 +19,7 @@ import { useI18n } from "@/lib/i18n";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { checkApiHealthDetailed, type HealthResult } from "@/lib/api-config";
 import { useUserRole, useUserPermissions, NAV_PERMISSION_MAP } from "@/lib/api";
+import { CommandPalette } from "@/components/CommandPalette";
 
 type LucideIcon = typeof Shield;
 
@@ -171,8 +172,8 @@ export function Sidebar() {
           <button onClick={() => setMobileOpen(false)} className="ml-auto md:hidden text-gray-400"><X className="h-5 w-5" /></button>
         </div>
 
-        {/* Search */}
-        <div className="p-3 border-b border-gray-100 dark:border-gray-800">
+        {/* Search + Command Palette */}
+        <div className="p-3 border-b border-gray-100 dark:border-gray-800 space-y-2">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
             <input type="text" value={search} onChange={(e) => setSearch(e.target.value)} placeholder={t("nav.searchPlaceholder")}
@@ -180,6 +181,7 @@ export function Sidebar() {
               role="searchbox"
               className="w-full pl-9 pr-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-sm text-gray-900 dark:text-white" />
           </div>
+          <CommandPalette />
         </div>
 
         {/* Nav */}
