@@ -813,3 +813,23 @@ These are core fixes that directly impact SDK claims parsing — verified no dow
 **D1 C9 Status**: 7/7 auth pass, zero regressions from security fixes (CORS/PEPPER/scope/dev secrets).
 
 ### Next Dimension: 2 — Cycle 9 (Authorization Boundaries)
+
+## Dimension 2 C9: Authorization Boundaries (Round 73)
+
+| Check | Expected | Actual | Status |
+|-------|----------|--------|--------|
+| Admin GET inventory | 200 | 200 | ✅ |
+| Admin POST inventory | 201 | 201 | ✅ |
+| Admin POST order | 201 | ORD-0002 | ✅ |
+| Admin PUT approve | 200 | 200 | ✅ |
+| Viewer GET inventory | 200 | 200 | ✅ |
+| Viewer POST inventory | 403 | 403 | ✅ |
+| Viewer POST order | 403 | 403 | ✅ |
+| Viewer PUT approve | 403 | 403 | ✅ |
+| Fake token | 401 | 401 | ✅ |
+| No token | 401 | 401 | ✅ |
+| Hacks | 0 | 0 | ✅ |
+
+Admin: 9 perms (ERP Admin), Viewer: 4 perms (ERP Viewer, read-only). Zero regressions.
+
+### Next Dimension: 3 — Cycle 9 (Demo Functional Completeness)
