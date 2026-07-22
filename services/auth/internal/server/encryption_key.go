@@ -4,7 +4,7 @@ import (
 	"context"
 	"crypto/sha256"
 	"encoding/hex"
-	"fmt"
+	"log/slog"
 	"os"
 	"sync"
 )
@@ -41,22 +41,14 @@ func loadEncryptionKey(envVar string) []byte {
 
 	val := os.Getenv(envVar)
 	if val == "" {
-		// Derive a deterministic development key so tests/dev work without
-		// configuration. Production deployments MUST set the env var.
-		fmt.Fprintf(os.Stderr,
-			"WARNING: %s environment variable not set — using derived dev key. "+
-				"Set %s=<hex> in production (openssl rand -hex 32).\n",
-			envVar, envVar)
-		h := sha256.Sum256([]byte("dev-fallback-key:" + envVar))
-		encKeys[envVar] = h[:]
-		// PG write-through
-		if globalMemMapRepo != nil {
-			globalMemMapRepo.StoreJSON(context.Background(), "auth_encryption_keys_json", envVar, map[string]any{
-				"key_name": envVar, "key_hex": hex.EncodeToString(h[:]),
-				"algorithm": "AES-256-GCM",
-			})
-		}
-		return h[:]
+		// Production safety: refuse to derive a predictable key.
+		// If GGID_ENCRYPTION_KEY is not set, return nil → callers that
+		// attempt encryption/decryption will fail rather than using a
+		// predictable key that an attacker could reproduce.
+		slog.Error("encryption key not set",
+			"env_var", envVar,
+			"hint", "Set "+envVar+"=<hex> (openssl rand -hex 32)")
+		return nil
 	}
 
 	// Try hex decode first (preferred: raw 32 bytes)
