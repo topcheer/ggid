@@ -24,7 +24,7 @@ func TestClientGet(t *testing.T) {
 	}))
 	defer srv.Close()
 
-	c := New(srv.URL, "test-token")
+	c := New(srv.URL, "test-token", "test-tenant")
 	var result map[string]any
 	if err := c.Get(context.Background(), "/api/v1/users", &result); err != nil {
 		t.Fatalf("Get failed: %v", err)
@@ -51,7 +51,7 @@ func TestClientPost(t *testing.T) {
 	}))
 	defer srv.Close()
 
-	c := New(srv.URL, "test-token")
+	c := New(srv.URL, "test-token", "test-tenant")
 	var result map[string]any
 	err := c.Post(context.Background(), "/api/v1/users", map[string]any{
 		"name": "test-user",
@@ -74,7 +74,7 @@ func TestClientPut(t *testing.T) {
 	}))
 	defer srv.Close()
 
-	c := New(srv.URL, "")
+	c := New(srv.URL, "", "test-tenant")
 	var result map[string]any
 	err := c.Put(context.Background(), "/api/v1/users/123", map[string]any{"name": "updated"}, &result)
 	if err != nil {
@@ -94,7 +94,7 @@ func TestClientDelete(t *testing.T) {
 	}))
 	defer srv.Close()
 
-	c := New(srv.URL, "test-token")
+	c := New(srv.URL, "test-token", "test-tenant")
 	err := c.Delete(context.Background(), "/api/v1/users/123", nil)
 	if err != nil {
 		t.Fatalf("Delete failed: %v", err)
@@ -108,7 +108,7 @@ func TestClientErrorStatus(t *testing.T) {
 	}))
 	defer srv.Close()
 
-	c := New(srv.URL, "test-token")
+	c := New(srv.URL, "test-token", "test-tenant")
 	err := c.Get(context.Background(), "/api/v1/nonexistent", nil)
 	if err == nil {
 		t.Fatal("expected error for 404")
@@ -125,7 +125,7 @@ func TestClientNoToken(t *testing.T) {
 	}))
 	defer srv.Close()
 
-	c := New(srv.URL, "")
+	c := New(srv.URL, "", "test-tenant")
 	var result map[string]any
 	if err := c.Get(context.Background(), "/test", &result); err != nil {
 		t.Fatalf("Get failed: %v", err)
@@ -142,7 +142,7 @@ func TestClientContextCanceled(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	cancel() // cancel immediately
 
-	c := New(srv.URL, "test-token")
+	c := New(srv.URL, "test-token", "test-tenant")
 	err := c.Get(ctx, "/api/v1/test", nil)
 	if err == nil {
 		t.Fatal("expected error for canceled context")

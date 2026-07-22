@@ -14,7 +14,7 @@ import (
 func newTestServer(t *testing.T) *Server {
 	t.Helper()
 	// Use a dummy base URL — we won't make real calls in unit tests.
-	cli := client.New("http://localhost:0", "test-token")
+	cli := client.New("http://localhost:0", "test-token", "")
 	return New(cli)
 }
 
