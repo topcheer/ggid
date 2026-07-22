@@ -299,13 +299,15 @@ func (h *IdentityGRPCHandler) UnlinkExternalIdentity(ctx context.Context, req *i
 // --- helpers ---
 
 func defaultTenantID() uuid.UUID {
-	s := os.Getenv("DEFAULT_TENANT_ID")
+	// Configured via GGID_TENANT_ID (preferred) or DEFAULT_TENANT_ID;
+	// uuid.Nil when unset — never a hardcoded tenant UUID.
+	s := os.Getenv("GGID_TENANT_ID")
 	if s == "" {
-		s = "00000000-0000-0000-0000-000000000001"
+		s = os.Getenv("DEFAULT_TENANT_ID")
 	}
 	id, err := uuid.Parse(s)
 	if err != nil {
-		return uuid.MustParse("00000000-0000-0000-0000-000000000001")
+		return uuid.Nil
 	}
 	return id
 }

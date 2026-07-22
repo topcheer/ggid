@@ -23,8 +23,8 @@ func (h *HTTPHandler) handleTenantSuspendActivate(w http.ResponseWriter, r *http
 		newStatus = "active"
 	}
 
-	// Prevent suspending the default tenant
-	if tenantID == "00000000-0000-0000-0000-000000000001" || tenantID == "default" {
+	// Prevent suspending the default (bootstrap) tenant
+	if tenantID == "default" || tenantID == defaultTenantID().String() {
 		if action == "suspend" {
 			writeJSON(w, http.StatusForbidden, map[string]string{"error": "cannot suspend default tenant"})
 			return

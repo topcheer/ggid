@@ -23,7 +23,7 @@ const swaggerHTML = `<!DOCTYPE html>
         presets:[SwaggerUIBundle.presets.apis],
         layout:'BaseLayout',
         requestInterceptor:function(req){
-          req.headers['X-Tenant-ID']='00000000-0000-0000-0000-000000000001';
+          req.headers['X-Tenant-ID']='__TENANT_ID__';
           return req;
         }
       })
@@ -113,7 +113,7 @@ const hostedLoginHTML = `<!DOCTYPE html>
 </div>
 
 <script>
-const T="00000000-0000-0000-0000-000000000001";
+const T="__TENANT_ID__";
 const params=new URLSearchParams(location.search);
 const redirectUri=params.get("redirect_uri")||"/";
 
@@ -173,7 +173,7 @@ const hostedRegisterHTML = `<!DOCTYPE html>
 <button class="btn" id="btn" onclick="doRegister()">Create Account</button>
 <div class="footer">Already have an account? <a href="/login">Sign in</a></div>
 </div><script>
-const T="00000000-0000-0000-0000-000000000001";
+const T="__TENANT_ID__";
 function showErr(m){const e=document.getElementById("err");e.textContent=m;e.style.display="block";setTimeout(()=>e.style.display="none",5000)}
 function showOk(m){const e=document.getElementById("ok");e.textContent=m;e.style.display="block"}
 async function doRegister(){
@@ -202,7 +202,7 @@ const hostedForgotPasswordHTML = `<!DOCTYPE html>
 <button class="btn" onclick="doReset()">Send Reset Link</button>
 <div class="footer"><a href="/login">Back to sign in</a></div>
 </div><script>
-const T="00000000-0000-0000-0000-000000000001";
+const T="__TENANT_ID__";
 function showOk(m){const e=document.getElementById("ok");e.textContent=m;e.style.display="block"}
 async function doReset(){
   const e=document.getElementById("email").value;
@@ -286,7 +286,7 @@ const hostedDeviceApproveHTML = `<!DOCTYPE html>
 </div>
 
 <script>
-const T="00000000-0000-0000-0000-000000000001";
+const T="__TENANT_ID__";
 const params=new URLSearchParams(location.search);
 
 function showErr(m){const e=document.getElementById("err");e.textContent=m;e.style.display="block";setTimeout(()=>e.style.display="none",5000)}

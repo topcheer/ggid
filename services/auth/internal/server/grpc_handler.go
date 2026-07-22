@@ -136,13 +136,17 @@ func domainToPbSessionInfo(s *domain.Session) *authv1.SessionInfo {
 }
 
 func defaultAuthTenantID() uuid.UUID {
-	s := os.Getenv("DEFAULT_TENANT_ID")
+	s := os.Getenv("GGID_TENANT_ID")
 	if s == "" {
-		s = "00000000-0000-0000-0000-000000000001"
+		s = os.Getenv("DEFAULT_TENANT_ID") // backward compat
+	}
+	if s == "" {
+		// Query first tenant from DB at call time if available
+		return uuid.Nil
 	}
 	id, err := uuid.Parse(s)
 	if err != nil {
-		return uuid.MustParse("00000000-0000-0000-0000-000000000001")
+		return uuid.Nil
 	}
 	return id
 }

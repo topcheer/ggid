@@ -28,21 +28,19 @@ func checkScopeRequest(t *testing.T, path, authHeader string) *httptest.Response
 }
 
 func TestCheckRouteScope_OAuthRolesClaim(t *testing.T) {
-	// OAuth-issued token: scope contains only OIDC scopes; admin role is in
-	// the roles claim. Platform-level role names only grant platform access
-	// when the token belongs to the platform tenant (role names are
-	// forgeable by tenant admins in other tenants).
+	// OAuth-issued token with platform:admin in both scope and roles.
+	// Platform access requires the scope-style key, not the display name.
 	token := mkTestJWT(map[string]any{
 		"sub":       "u1",
-		"scope":     "openid profile email",
-		"roles":     []string{"Administrator"},
+		"scope":     "openid profile email platform:admin",
+		"roles":     []string{"platform:admin"},
 		"tenant_id": "00000000-0000-0000-0000-000000000001",
 	})
 	if rec := checkScopeRequest(t, "/api/v1/users", token); rec.Code == http.StatusForbidden {
-		t.Error("OAuth token with roles=[Administrator] must access /api/v1/users")
+		t.Error("OAuth token with platform:admin must access /api/v1/users")
 	}
 	if rec := checkScopeRequest(t, "/api/v1/system/config", token); rec.Code == http.StatusForbidden {
-		t.Error("Administrator (platform-level) must access /api/v1/system/")
+		t.Error("platform:admin scope must access /api/v1/system/")
 	}
 }
 

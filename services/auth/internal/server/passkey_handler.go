@@ -201,7 +201,7 @@ func (h *Handler) handlePasskeyRegisterFinish(w http.ResponseWriter, r *http.Req
 	if h.pool != nil {
 		tenantID := r.Header.Get("X-Tenant-ID")
 		if tenantID == "" {
-			tenantID = "00000000-0000-0000-0000-000000000001"
+			tenantID = os.Getenv("GGID_TENANT_ID")
 		}
 		transportsJSON, _ := json.Marshal(req.Credential.Transports)
 		_, dbErr := h.pool.Exec(r.Context(), `

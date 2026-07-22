@@ -30,7 +30,7 @@ var webhookEventCatalog = []WebhookEventCatalogEntry{
 		Description: "Fired when a new user is created",
 		PayloadExample: map[string]any{
 			"event":   "user.created",
-			"tenant_id": "00000000-0000-0000-0000-000000000001",
+			"tenant_id": "example-tenant-id",
 			"user_id":   "550e8400-e29b-41d4-a716-446655440000",
 			"username":  "john.doe",
 			"email":     "john@example.com",
@@ -42,7 +42,7 @@ var webhookEventCatalog = []WebhookEventCatalogEntry{
 		Description: "Fired when a user is deleted",
 		PayloadExample: map[string]any{
 			"event":     "user.deleted",
-			"tenant_id": "00000000-0000-0000-0000-000000000001",
+			"tenant_id": "example-tenant-id",
 			"user_id":   "550e8400-e29b-41d4-a716-446655440000",
 			"timestamp": "2026-01-15T10:30:00Z",
 		},
@@ -52,7 +52,7 @@ var webhookEventCatalog = []WebhookEventCatalogEntry{
 		Description: "Fired on successful user login",
 		PayloadExample: map[string]any{
 			"event":      "auth.login.success",
-			"tenant_id":  "00000000-0000-0000-0000-000000000001",
+			"tenant_id":  "example-tenant-id",
 			"user_id":    "550e8400-e29b-41d4-a716-446655440000",
 			"ip_address": "192.168.1.100",
 			"timestamp":  "2026-01-15T10:30:00Z",
@@ -63,7 +63,7 @@ var webhookEventCatalog = []WebhookEventCatalogEntry{
 		Description: "Fired on failed login attempt",
 		PayloadExample: map[string]any{
 			"event":      "auth.login.failed",
-			"tenant_id":  "00000000-0000-0000-0000-000000000001",
+			"tenant_id":  "example-tenant-id",
 			"username":   "john.doe",
 			"ip_address": "192.168.1.100",
 			"reason":     "invalid_credentials",
@@ -75,7 +75,7 @@ var webhookEventCatalog = []WebhookEventCatalogEntry{
 		Description: "Fired when a session is revoked (admin, password change, posture drop)",
 		PayloadExample: map[string]any{
 			"event":      "session.revoked",
-			"tenant_id":  "00000000-0000-0000-0000-000000000001",
+			"tenant_id":  "example-tenant-id",
 			"user_id":    "550e8400-e29b-41d4-a716-446655440000",
 			"reason":     "password_change",
 			"timestamp":  "2026-01-15T10:30:00Z",
@@ -86,7 +86,7 @@ var webhookEventCatalog = []WebhookEventCatalogEntry{
 		Description: "Fired when a role is assigned to a user",
 		PayloadExample: map[string]any{
 			"event":      "role.assigned",
-			"tenant_id":  "00000000-0000-0000-0000-000000000001",
+			"tenant_id":  "example-tenant-id",
 			"user_id":    "550e8400-e29b-41d4-a716-446655440000",
 			"role":       "admin",
 			"assigned_by":"550e8400-e29b-41d4-a716-446655440001",
@@ -98,7 +98,7 @@ var webhookEventCatalog = []WebhookEventCatalogEntry{
 		Description: "Fired when a policy violation is detected (SoD, CAE, privilege creep)",
 		PayloadExample: map[string]any{
 			"event":      "policy.violation",
-			"tenant_id":  "00000000-0000-0000-0000-000000000001",
+			"tenant_id":  "example-tenant-id",
 			"type":       "sod_violation",
 			"user_id":    "550e8400-e29b-41d4-a716-446655440000",
 			"severity":   "high",
@@ -111,7 +111,7 @@ var webhookEventCatalog = []WebhookEventCatalogEntry{
 		Description: "Fired when a user delegates permissions to another user",
 		PayloadExample: map[string]any{
 			"event":        "delegation.created",
-			"tenant_id":    "00000000-0000-0000-0000-000000000001",
+			"tenant_id":    "example-tenant-id",
 			"delegator_id": "550e8400-e29b-41d4-a716-446655440000",
 			"delegatee_id": "550e8400-e29b-41d4-a716-446655440001",
 			"scopes":       []string{"read", "write"},
@@ -491,7 +491,7 @@ func (gw *Gateway) handleTenantCreate(w http.ResponseWriter, r *http.Request) {
 		log.Printf("tenant create: failed to connect DB: %v", err)
 	} else {
 		defer conn.Close(r.Context())
-		_, _ = conn.Exec(r.Context(), `SET app.tenant_id = '00000000-0000-0000-0000-000000000001'`) // bypass RLS for tenant management
+		_, _ = conn.Exec(r.Context(), `SET app.tenant_id = $1`, r.Header.Get("X-Tenant-ID")) // set RLS context from admin's tenant
 		_, err := conn.Exec(r.Context(),
 			`INSERT INTO tenants (id, name, slug, plan, status, max_users) VALUES ($1, $2, $3, $4, 'active', 50)`,
 			tenantID, req.Name, req.Slug, req.Plan)
@@ -531,7 +531,7 @@ func (gw *Gateway) handleTenantList(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	defer conn.Close(r.Context())
-	_, _ = conn.Exec(r.Context(), `SET app.tenant_id = '00000000-0000-0000-0000-000000000001'`) // bypass RLS
+	_, _ = conn.Exec(r.Context(), `SET app.tenant_id = $1`, r.Header.Get("X-Tenant-ID")) // set RLS context
 
 	rows, err := conn.Query(r.Context(),
 		`SELECT id::text, name, slug, plan, status, max_users, created_at FROM tenants ORDER BY created_at DESC`)
@@ -584,7 +584,7 @@ func (gw *Gateway) handleTenantDetail(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	defer conn.Close(r.Context())
-	_, _ = conn.Exec(r.Context(), `SET app.tenant_id = '00000000-0000-0000-0000-000000000001'`)
+	_, _ = conn.Exec(r.Context(), `SET app.tenant_id = $1`, r.Header.Get("X-Tenant-ID"))
 
 	if r.Method == http.MethodDelete {
 		_, err := conn.Exec(r.Context(), `DELETE FROM tenants WHERE id::text = $1 OR slug = $1`, tenantIDStr)

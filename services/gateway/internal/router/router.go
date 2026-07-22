@@ -697,8 +697,10 @@ func (gw *Gateway) checkRouteScope(w http.ResponseWriter, r *http.Request) bool 
 	}
 	if !isPlatformTenant {
 		for _, role := range claims.Roles {
-			lr := strings.ToLower(role)
-			if lr == "platform:admin" || lr == "administrator" {
+			// Only accept the exact scope-style key "platform:admin" from
+			// the roles claim — NOT display names like "Administrator" which
+			// are forgeable by tenant admins.
+			if strings.EqualFold(role, "platform:admin") {
 				isPlatformTenant = true
 				break
 			}

@@ -49,10 +49,11 @@ func CheckConsent(dbURL string) func(http.Handler) http.Handler {
 				return
 			}
 
-			// Check if user is platform admin
+			// Check if user is platform admin — scope only, not raw role
+			// names (tenant admins can forge role names like "Administrator").
 			isPlatformAdmin := false
 			for _, sc := range claims.Scopes {
-				if sc == "platform:admin" || sc == "Platform Administrator" || sc == "admin" || sc == "Administrator" {
+				if sc == "platform:admin" {
 					isPlatformAdmin = true
 					break
 				}
@@ -64,9 +65,10 @@ func CheckConsent(dbURL string) func(http.Handler) http.Handler {
 				return
 			}
 
-			// Platform admin: check if accessing their own tenant (default tenant)
-			// Platform admins belong to the default tenant — accessing it is fine
-			if tenantID == "00000000-0000-0000-0000-000000000001" {
+			// Platform admin: check if accessing their own tenant.
+			// Use JWT tenant_id (authoritative) rather than a hardcoded UUID.
+			jwtTenant := claims.TenantID
+			if jwtTenant != "" && tenantID == jwtTenant {
 				next.ServeHTTP(w, r)
 				return
 			}

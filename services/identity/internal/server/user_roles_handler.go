@@ -81,9 +81,11 @@ func (h *HTTPHandler) handleUserRoles(ctx context.Context, userID uuid.UUID, w h
 			return
 		}
 
-		// Get role name from roles table if not provided
-		if req.RoleName == "" {
-			_ = pool.QueryRow(ctx, `SELECT name FROM roles WHERE id = $1`, roleUUID).Scan(&req.RoleName)
+		// Get role name and tenant from roles table if not provided
+		roleTenant := uuid.Nil
+		_ = pool.QueryRow(ctx, `SELECT name, tenant_id FROM roles WHERE id = $1`, roleUUID).Scan(&req.RoleName, &roleTenant)
+		if roleTenant == uuid.Nil {
+			roleTenant = defaultTenantID()
 		}
 
 		// Get authenticated user ID from gateway header
@@ -105,9 +107,9 @@ func (h *HTTPHandler) handleUserRoles(ctx context.Context, userID uuid.UUID, w h
 		// Insert into user_roles table (ON CONFLICT DO NOTHING for idempotency)
 		_, err = pool.Exec(ctx, `
 			INSERT INTO user_roles (user_id, role_id, scope_type, scope_id, granted_by)
-			VALUES ($1, $2, 'global', '00000000-0000-0000-0000-000000000001', $3)
+			VALUES ($1, $2, 'global', $3, $4)
 			ON CONFLICT DO NOTHING
-		`, userID, roleUUID, grantedBy)
+		`, userID, roleUUID, roleTenant, grantedBy)
 		if err != nil {
 			writeJSONError(w, http.StatusInternalServerError, "failed to assign role: "+err.Error())
 			return

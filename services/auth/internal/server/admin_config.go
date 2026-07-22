@@ -3,6 +3,7 @@ package server
 import (
 	"encoding/json"
 	"net/http"
+	"os"
 	"strings"
 
 	"github.com/ggid/ggid/pkg/sysconfig"
@@ -91,14 +92,12 @@ func (h *Handler) handleAdminConfig(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusMethodNotAllowed, map[string]string{"error": "method not allowed"})
 }
 
-// tenantIDFromRequest extracts the tenant ID from the request context
-// or falls back to the X-Tenant-ID header.
+// tenantIDFromRequest extracts the tenant ID from the X-Tenant-ID header
+// or GGID_TENANT_ID env. No hardcoded fallback — callers must handle empty.
 func tenantIDFromRequest(r *http.Request) string {
-	// Try header first
 	tenantID := r.Header.Get("X-Tenant-ID")
 	if tenantID != "" {
 		return tenantID
 	}
-	// Default tenant for admin operations
-	return "00000000-0000-0000-0000-000000000001"
+	return os.Getenv("GGID_TENANT_ID")
 }

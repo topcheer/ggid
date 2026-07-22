@@ -217,6 +217,9 @@ var _ = strings.Contains
 // firstTenantID returns the first tenant UUID from the DB (for init probing).
 // Returns empty string if no tenant exists or DB is unavailable.
 func (gw *Gateway) firstTenantID() string {
+	if gw.cfg == nil {
+		return ""
+	}
 	dbURL := gw.cfg.DatabaseURL
 	if dbURL == "" {
 		return ""

@@ -4,7 +4,6 @@ import (
 	"net/http"
 	"strings"
 	"sync"
-	"time"
 )
 
 // profileVersion stores a snapshot of a user's profile at a point in time.
@@ -18,13 +17,7 @@ type profileVersion struct {
 var profileVersionStore = struct {
 	sync.RWMutex
 	data map[string][]profileVersion // userID → versions
-}{data: map[string][]profileVersion{
-	"00000000-0000-0000-0000-000000000001": {
-		{Version: 1, Timestamp: time.Now().UTC().Add(-30*24*time.Hour).Format(time.RFC3339), ChangedBy: "system", Fields: map[string]string{"email": "alice@old.com", "department": "Sales", "role": "viewer", "status": "active"}},
-		{Version: 2, Timestamp: time.Now().UTC().Add(-15*24*time.Hour).Format(time.RFC3339), ChangedBy: "hr-admin", Fields: map[string]string{"email": "alice@new.com", "department": "Sales", "role": "viewer", "status": "active"}},
-		{Version: 3, Timestamp: time.Now().UTC().Add(-5*24*time.Hour).Format(time.RFC3339), ChangedBy: "sec-admin", Fields: map[string]string{"email": "alice@new.com", "department": "Engineering", "role": "editor", "status": "active"}},
-	},
-}}
+}{data: map[string][]profileVersion{}}
 
 // GET /api/v1/users/{id}/profile-diff?version_a=1&version_b=3
 func (h *HTTPHandler) handleProfileDiff(w http.ResponseWriter, r *http.Request) {

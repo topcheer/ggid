@@ -184,13 +184,15 @@ func domainToPbClient(c *domain.OAuthClient) *oauthv1.OAuthClient {
 
 func tenantIDFromContext(_ context.Context) uuid.UUID {
 	// Default tenant for gRPC calls without explicit tenant context.
-	tenantStr := os.Getenv("DEFAULT_TENANT_ID")
+	// Configured via GGID_TENANT_ID (preferred) or DEFAULT_TENANT_ID;
+	// uuid.Nil when unset — never a hardcoded tenant UUID.
+	tenantStr := os.Getenv("GGID_TENANT_ID")
 	if tenantStr == "" {
-		tenantStr = "00000000-0000-0000-0000-000000000001"
+		tenantStr = os.Getenv("DEFAULT_TENANT_ID")
 	}
 	id, err := uuid.Parse(tenantStr)
 	if err != nil {
-		id = uuid.MustParse("00000000-0000-0000-0000-000000000001")
+		return uuid.Nil
 	}
 	return id
 }

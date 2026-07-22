@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
+	"os"
 	"strings"
 
 	ggidSAML "github.com/ggid/ggid/pkg/saml"
@@ -125,7 +126,7 @@ func (h *Handler) handleSAMLACS(w http.ResponseWriter, r *http.Request) {
 	// Issue JWT for the authenticated user
 	tenantID := r.Header.Get("X-Tenant-ID")
 	if tenantID == "" {
-		tenantID = "00000000-0000-0000-0000-000000000001"
+		tenantID = os.Getenv("GGID_TENANT_ID")
 	}
 
 	// Generate session token (reuse auth token mechanism)

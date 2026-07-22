@@ -395,8 +395,8 @@ func (h *HTTPHandler) tenantDetail(w http.ResponseWriter, r *http.Request, tenan
 }
 
 func (h *HTTPHandler) tenantDelete(w http.ResponseWriter, r *http.Request, tenantID string) {
-	// Prevent deleting the default tenant
-	if tenantID == "00000000-0000-0000-0000-000000000001" || tenantID == "default" {
+	// Prevent deleting the default (bootstrap) tenant
+	if tenantID == "default" || tenantID == defaultTenantID().String() {
 		writeJSON(w, http.StatusForbidden, map[string]string{"error": "cannot delete default tenant"})
 		return
 	}
