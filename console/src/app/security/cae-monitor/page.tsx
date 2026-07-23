@@ -73,7 +73,7 @@ function StatusTab() {
   useEffect(() => {
     const load = async () => {
       try {
-        const res = await fetch("/api/v1/security/cae/status", { headers: { ...authHeader(), "X-Tenant-ID": localStorage.getItem("ggid_tenant_id") || "" } });
+        const res = await fetch("/api/v1/auth/cae/status", { headers: { ...authHeader(), "X-Tenant-ID": localStorage.getItem("ggid_tenant_id") || "" } });
         if (res.ok) {
           const data = await res.json();
           setStats({ active: data.active ?? 0, evaluated: data.evaluated ?? 0, revoked: data.revoked ?? 0, avgMs: data.avg_ms ?? 0, running: data.running ?? false, lastEval: data.last_eval ?? "", streamActive: data.stream_active ?? false });
@@ -133,7 +133,7 @@ function LogsTab() {
   useEffect(() => {
     const load = async () => {
       try {
-        const res = await fetch("/api/v1/security/cae/events", { headers: { ...authHeader(), "X-Tenant-ID": localStorage.getItem("ggid_tenant_id") || "" } });
+        const res = await fetch("/api/v1/auth/cae/log", { headers: { ...authHeader(), "X-Tenant-ID": localStorage.getItem("ggid_tenant_id") || "" } });
         if (res.ok) {
           const data = await res.json();
           setLogs(data.events || data.items || []);

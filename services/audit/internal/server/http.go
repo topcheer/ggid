@@ -199,6 +199,7 @@ func (s *HTTPServer) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("/api/v1/audit/gdpr-forget", s.handleGDPRForgetV2)
 	mux.HandleFunc("/api/v1/audit/gdpr-forget/", s.handleGDPRForgetV2)
 	mux.HandleFunc("/api/v1/security/dashboard", s.handleSecurityDashboard)
+	mux.HandleFunc("/api/v1/security/overview", s.handleSecurityDashboard) // alias for frontend
 	mux.HandleFunc("/api/v1/security/threats", func(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusOK, map[string]interface{}{"threats": []interface{}{}, "total": 0, "level": "low"})
 	})
