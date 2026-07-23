@@ -1454,3 +1454,15 @@ D1:7/7 ✅ | D2:admin=200 viewer=403 ✅ | Hacks:0 ✅ — 34th clean cycle.
 D1:7/7 ✅ | D2:admin=200 viewer=403 ✅ | Hacks:0 ✅ — 35th clean cycle.
 
 ### Next Dimension: 1 — Cycle 45
+
+## Cycle 45: Post-SDK-Submodule-Extraction (Round 214)
+
+**Core Changes**: `d7210372e` refactor: extract Node.js and Python SDKs to top-level repos + `3f6f507be` add as submodules + `b60a07e74` update submodule refs with CI/trusted publishing.
+
+**SDK Structure Change**: Node SDK and Python SDK now live in separate repos (ggid-sdk-node, ggid-sdk-python) as git submodules. Local paths still resolve correctly.
+
+D1:7/7 ✅ | D2:admin=200 viewer=403 ✅ | Hacks:0 ✅ — 36th clean cycle.
+
+Node demo import path `../../../sdk/node/src/client` still resolves ✅. SDK submodule status: both `sdk/node` and `sdk/python` checked out at heads/main.
+
+### Next Dimension: 1 — Cycle 46
