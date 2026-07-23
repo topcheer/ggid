@@ -163,3 +163,15 @@ func (s *HTTPServer) handleUsageQuery(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(result)
 }
+
+// handleUsageDispatch routes GET to query and POST to ingest.
+func (s *HTTPServer) handleUsageDispatch(w http.ResponseWriter, r *http.Request) {
+	switch r.Method {
+	case http.MethodGet:
+		s.handleUsageQuery(w, r)
+	case http.MethodPost:
+		s.handleUsageIngest(w, r)
+	default:
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
+	}
+}

@@ -280,6 +280,7 @@ func (s *HTTPServer) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("/api/v1/audit/alert-evaluation/config", s.handleAlertEvaluationConfig)
 	mux.HandleFunc("/api/v1/audit/sbom", s.handleSBOM)
 	mux.HandleFunc("/api/v1/audit/sbom/", s.handleSBOMComponent)
+	mux.HandleFunc("/api/v1/audit/usage", s.handleUsageDispatch)
 	mux.HandleFunc("/api/v1/audit", s.handleEvents)
 
 	// Missing handler routes — aliased paths for console compatibility
