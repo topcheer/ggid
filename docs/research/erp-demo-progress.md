@@ -1739,3 +1739,9 @@ Admin(9p): inv 200/201, audit 200, users 403 ✅ | Viewer(4p): inv 200, write 40
 Go inv PASS fields ✅ | POST→GET PASS ✅ | Order approve 200 ✅ | Perms verify=9=JWT PASS ✅ | Node M2M PASS ✅ | Hacks:0 ✅ — 56th clean cycle.
 
 ### Next Dimension: 4 — Cycle 66
+## Cycle 66: D4 Tenant Isolation post-reseed (Round 240)
+Admin 9 perms ✅ | Go→Go 200 ✅ | Node→Go 403 ✅ | Fake 401 ✅ | Admin POST 201 ✅ | Viewer write 403 ✅ | Hacks:0 ✅ — 57th clean cycle.
+
+Note: New password ErpDemo@2026Sec, role names ERP Administrator/ERP Viewer.
+
+### Next Dimension: 5 — Cycle 67
