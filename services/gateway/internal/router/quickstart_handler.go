@@ -3,7 +3,6 @@ package router
 import (
 	"context"
 	"encoding/json"
-	"io"
 	"net/http"
 	"strings"
 	"time"
@@ -154,28 +153,14 @@ func (gw *Gateway) handleSystemStatus(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Determine initialization state by probing auth service.
-	// If a login attempt returns "invalid credentials" (not "no tenant context"),
-	// it means users exist → system is initialized.
+	// Determine initialization state: check if any tenant exists in DB.
 	initialized := quickstartInitialized
 	if !initialized {
-		authURL := gw.serviceURL("/api/v1/auth")
-		client := &http.Client{Timeout: 3 * time.Second}
-		// Probe first tenant (system init check) — query tenants table.
-		probeTenantID := gw.firstTenantID()
-		loginBody := `{"username":"__setup_probe__","password":"__nonexistent__"}`
-		req, _ := http.NewRequest("POST", authURL+"/api/v1/auth/verify", strings.NewReader(loginBody))
-		req.Header.Set("Content-Type", "application/json")
-		if probeTenantID != "" {
-			req.Header.Set("X-Tenant-ID", probeTenantID)
-		}
-		if resp, err := client.Do(req); err == nil {
-			body, _ := io.ReadAll(resp.Body)
-			resp.Body.Close()
-			// "invalid credentials" = users exist in DB = initialized
-			if resp.StatusCode == 401 && strings.Contains(string(body), "invalid") {
-				initialized = true
-			}
+		// Direct DB check: if tenants table is empty, system is not initialized.
+		tenantID := gw.firstTenantID()
+		if tenantID != "" {
+			initialized = true
+			quickstartInitialized = true
 		}
 	}
 
