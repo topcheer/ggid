@@ -11,7 +11,7 @@
 | D2 | API Breaking Change detection CI | P1 | ✅ Done | ggcxf_cli |
 | D3 | Console API Explorer (Try-it-now) | P2 | ✅ Done | shen_frontend |
 | D4 | Frontend SDK tree-shaking optimization | P3 | ⬜ Deferred (14 SDKs are server-side) | — |
-| D5 | Webhook payload signature verification SDK helper | P2 | ✅ Done | ggcxf_cli |
+| D5 | Webhook payload signature verification SDK helper | P2 | ✅ Done | ggcxf_cli (Go pkg) + backend (Node/Python SDK) |
 
 ## Admin (A1-A4)
 
@@ -37,7 +37,7 @@
 | ID | Title | Priority | Status | Owner |
 |----|-------|----------|--------|-------|
 | S1 | SOC2/ISO27001 control mapping | P2 | ✅ Done | ggcxf_cli + guardian |
-| S2 | Data residency policy enforcement | P3 | ✅ Done (design doc + migration plan) | ggcxf_cli |
+| S2 | Data residency policy enforcement | P3 | ✅ Done (Go pkg + design doc + tenant-scoped geofence DB persistence) | ggcxf_cli + backend |
 | S3 | Automated penetration testing scripts | P3 | ✅ Done | ggcxf_cli |
 
 ## Product (P1-P4)
