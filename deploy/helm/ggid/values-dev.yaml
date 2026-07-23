@@ -1,0 +1,114 @@
+# GGID Helm Values — Development Environment
+# Lightweight: single replicas, minimal resources, no TLS
+# Usage: helm install ggid ./deploy/helm/ggid -f deploy/helm/ggid/values-dev.yaml
+
+global:
+  imageRegistry: ""
+  storageClass: ""
+
+# Single replicas for cost
+gateway:
+  replicaCount: 1
+  autoscaling:
+    enabled: false
+  resources:
+    limits:
+      cpu: 250m
+      memory: 128Mi
+    requests:
+      cpu: 50m
+      memory: 64Mi
+
+identity:
+  replicaCount: 1
+  resources:
+    limits:
+      cpu: 250m
+      memory: 128Mi
+    requests:
+      cpu: 50m
+      memory: 64Mi
+
+auth:
+  replicaCount: 1
+  resources:
+    limits:
+      cpu: 250m
+      memory: 128Mi
+    requests:
+      cpu: 50m
+      memory: 64Mi
+
+oauth:
+  replicaCount: 1
+  resources:
+    limits:
+      cpu: 250m
+      memory: 128Mi
+    requests:
+      cpu: 50m
+      memory: 64Mi
+
+policy:
+  replicaCount: 1
+  resources:
+    limits:
+      cpu: 250m
+      memory: 128Mi
+    requests:
+      cpu: 50m
+      memory: 64Mi
+
+org:
+  replicaCount: 1
+  resources:
+    limits:
+      cpu: 250m
+      memory: 128Mi
+    requests:
+      cpu: 50m
+      memory: 64Mi
+
+audit:
+  replicaCount: 1
+  resources:
+    limits:
+      cpu: 250m
+      memory: 128Mi
+    requests:
+      cpu: 50m
+      memory: 64Mi
+
+# Dev: small storage
+postgresql:
+  primary:
+    persistence:
+      size: 5Gi
+
+redis:
+  master:
+    persistence:
+      size: 1Gi
+
+# Dev: ingress without TLS
+console:
+  enabled: true
+  replicaCount: 1
+  ingress:
+    enabled: true
+    className: nginx
+    hosts:
+      - host: ggid.local
+        paths:
+          - path: /
+            pathType: Prefix
+
+# Dev: relaxed security
+networkPolicy:
+  enabled: false
+
+podDisruptionBudget:
+  enabled: false
+
+config:
+  logLevel: debug

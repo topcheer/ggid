@@ -1,0 +1,166 @@
+# GGID Helm Values — Production Environment
+# High availability, TLS, autoscaling, strict network policies
+# Usage: helm install ggid ./deploy/helm/ggid -f deploy/helm/ggid/values-prod.yaml
+#
+# CRITICAL: Set the following before deploying:
+#   --set jwt.secret=$(openssl rand -hex 32)
+#   --set postgresql.auth.password=$(openssl rand -hex 16)
+#   --set config.passwordPepper=$(openssl rand -hex 32)
+#   --set config.auditHashSecret=$(openssl rand -hex 32)
+
+global:
+  imageRegistry: "registry.iot2.win"
+  imagePullSecrets:
+    - name: registry-creds
+  storageClass: "fast-ssd"
+
+# Production: 3 replicas minimum for true HA
+gateway:
+  replicaCount: 3
+  image:
+    pullPolicy: IfNotPresent
+  autoscaling:
+    enabled: true
+    minReplicas: 3
+    maxReplicas: 20
+    targetCPUUtilizationPercentage: 60
+  resources:
+    limits:
+      cpu: 1000m
+      memory: 512Mi
+    requests:
+      cpu: 200m
+      memory: 256Mi
+
+identity:
+  replicaCount: 3
+  autoscaling:
+    enabled: true
+    minReplicas: 3
+    maxReplicas: 15
+    targetCPUUtilizationPercentage: 65
+  resources:
+    limits:
+      cpu: 1000m
+      memory: 512Mi
+    requests:
+      cpu: 200m
+      memory: 256Mi
+
+auth:
+  replicaCount: 3
+  autoscaling:
+    enabled: true
+    minReplicas: 3
+    maxReplicas: 15
+    targetCPUUtilizationPercentage: 65
+  resources:
+    limits:
+      cpu: 1000m
+      memory: 512Mi
+    requests:
+      cpu: 200m
+      memory: 256Mi
+
+oauth:
+  replicaCount: 3
+  autoscaling:
+    enabled: true
+    minReplicas: 3
+    maxReplicas: 15
+    targetCPUUtilizationPercentage: 65
+  resources:
+    limits:
+      cpu: 1000m
+      memory: 512Mi
+    requests:
+      cpu: 200m
+      memory: 256Mi
+
+policy:
+  replicaCount: 3
+  resources:
+    limits:
+      cpu: 750m
+      memory: 384Mi
+    requests:
+      cpu: 150m
+      memory: 192Mi
+
+org:
+  replicaCount: 2
+  resources:
+    limits:
+      cpu: 500m
+      memory: 256Mi
+    requests:
+      cpu: 100m
+      memory: 128Mi
+
+audit:
+  replicaCount: 3
+  autoscaling:
+    enabled: true
+    minReplicas: 3
+    maxReplicas: 10
+    targetCPUUtilizationPercentage: 70
+  resources:
+    limits:
+      cpu: 750m
+      memory: 384Mi
+    requests:
+      cpu: 150m
+      memory: 192Mi
+
+# Production: large storage
+postgresql:
+  primary:
+    persistence:
+      size: 100Gi
+  params:
+    - max_connections=500
+    - shared_buffers=1GB
+    - effective_cache_size=3GB
+    - work_mem=16MB
+
+redis:
+  auth:
+    enabled: true
+  master:
+    persistence:
+      size: 10Gi
+
+console:
+  enabled: true
+  replicaCount: 3
+  ingress:
+    enabled: true
+    className: nginx
+    annotations:
+      cert-manager.io/cluster-issuer: letsencrypt-prod
+      nginx.ingress.kubernetes.io/rate-limit: "100"
+      nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    hosts:
+      - host: ggid.iot2.win
+        paths:
+          - path: /
+            pathType: Prefix
+    tls:
+      - secretName: ggid-console-tls
+        hosts:
+          - ggid.iot2.win
+
+# Production: strict security
+networkPolicy:
+  enabled: true
+
+podDisruptionBudget:
+  enabled: true
+  minAvailable: 2
+
+config:
+  logLevel: warn
+  # Production secrets — MUST be set via --set or sealed-secrets
+  passwordPepper: ""
+  auditHashSecret: ""
+  internalSecret: ""

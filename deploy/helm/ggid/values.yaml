@@ -215,8 +215,11 @@ jwt:
 
 # Global config
 config:
-  defaultTenantId: "00000000-0000-0000-0000-000000000001"
+  defaultTenantId: ""
   logLevel: info
+  passwordPepper: ""
+  auditHashSecret: ""
+  internalSecret: ""
 
 # External databases (used when postgresql/redis/nats.enabled=false)
 externalDatabase:

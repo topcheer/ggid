@@ -1,0 +1,124 @@
+# GGID Helm Values — Staging Environment
+# Production-like but smaller scale, TLS enabled, moderate resources
+# Usage: helm install ggid ./deploy/helm/ggid -f deploy/helm/ggid/values-staging.yaml
+
+global:
+  imageRegistry: "registry.iot2.win"
+  imagePullSecrets:
+    - name: registry-creds
+  storageClass: ""
+
+# 2 replicas for HA testing
+gateway:
+  replicaCount: 2
+  autoscaling:
+    enabled: true
+    minReplicas: 2
+    maxReplicas: 5
+    targetCPUUtilizationPercentage: 70
+  resources:
+    limits:
+      cpu: 500m
+      memory: 256Mi
+    requests:
+      cpu: 100m
+      memory: 128Mi
+
+identity:
+  replicaCount: 2
+  resources:
+    limits:
+      cpu: 500m
+      memory: 256Mi
+    requests:
+      cpu: 100m
+      memory: 128Mi
+
+auth:
+  replicaCount: 2
+  resources:
+    limits:
+      cpu: 500m
+      memory: 256Mi
+    requests:
+      cpu: 100m
+      memory: 128Mi
+
+oauth:
+  replicaCount: 2
+  resources:
+    limits:
+      cpu: 500m
+      memory: 256Mi
+    requests:
+      cpu: 100m
+      memory: 128Mi
+
+policy:
+  replicaCount: 2
+  resources:
+    limits:
+      cpu: 500m
+      memory: 256Mi
+    requests:
+      cpu: 100m
+      memory: 128Mi
+
+org:
+  replicaCount: 1
+  resources:
+    limits:
+      cpu: 300m
+      memory: 192Mi
+    requests:
+      cpu: 50m
+      memory: 96Mi
+
+audit:
+  replicaCount: 2
+  resources:
+    limits:
+      cpu: 500m
+      memory: 256Mi
+    requests:
+      cpu: 100m
+      memory: 128Mi
+
+# Staging: moderate storage
+postgresql:
+  primary:
+    persistence:
+      size: 20Gi
+
+redis:
+  master:
+    persistence:
+      size: 5Gi
+
+console:
+  enabled: true
+  replicaCount: 2
+  ingress:
+    enabled: true
+    className: nginx
+    annotations:
+      cert-manager.io/cluster-issuer: letsencrypt-staging
+    hosts:
+      - host: staging.ggid.iot2.win
+        paths:
+          - path: /
+            pathType: Prefix
+    tls:
+      - secretName: ggid-console-tls
+        hosts:
+          - staging.ggid.iot2.win
+
+networkPolicy:
+  enabled: true
+
+podDisruptionBudget:
+  enabled: true
+  minAvailable: 1
+
+config:
+  logLevel: info
