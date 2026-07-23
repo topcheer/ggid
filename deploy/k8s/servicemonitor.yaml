@@ -1,0 +1,22 @@
+# GGID ServiceMonitor — Prometheus Operator integration
+# Deploy: kubectl apply -f deploy/k8s/servicemonitor.yaml
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: ggid-services
+  namespace: ggid
+  labels:
+    app.kubernetes.io/name: ggid
+    release: prometheus  # Match your Prometheus release name
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: ggid
+  endpoints:
+    - port: http
+      path: /metrics
+      interval: 15s
+      scrapeTimeout: 10s
+  namespaceSelector:
+    matchNames:
+      - ggid
