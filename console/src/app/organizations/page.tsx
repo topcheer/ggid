@@ -477,7 +477,7 @@ export default function OrganizationsPage() {
       {/* Org Filter for Depts/Teams tabs */}
       {(tab === "depts" || tab === "teams") && (
         <div className="mb-4 flex items-center gap-3">
-          <label className="text-sm font-medium text-gray-600">{t("orgs.filterByOrg")}</label>
+          <label className="text-sm font-medium text-gray-600 dark:text-gray-300">{t("orgs.filterByOrg")}</label>
           <select
             value={selectedOrgId || ""}
             onChange={(e) => setSelectedOrgId(e.target.value || null)}
@@ -496,7 +496,7 @@ export default function OrganizationsPage() {
       {/* Tree root selector */}
       {tab === "tree" && (
         <div className="mb-4 flex items-center gap-3">
-          <label className="text-sm font-medium text-gray-600">{t("orgs.rootOrg")}</label>
+          <label className="text-sm font-medium text-gray-600 dark:text-gray-300">{t("orgs.rootOrg")}</label>
           <select
             value={treeRootId || ""}
             onChange={(e) => setTreeRootId(e.target.value || null)}
@@ -513,7 +513,7 @@ export default function OrganizationsPage() {
       )}
 
       {/* Tabs */}
-      <div className="mb-4 flex gap-2 border-b border-gray-200">
+      <div className="mb-4 flex gap-2 border-b border-gray-200 dark:border-gray-700">
         <TabButton active={tab === "orgs"} onClick={() => setTab("orgs")} icon={Building2} label={`${t("orgs.title")} (${orgs.length})`} />
         <TabButton active={tab === "depts"} onClick={() => setTab("depts")} icon={Network} label={`${t("orgs.department")} (${depts.length})`} />
         <TabButton active={tab === "teams"} onClick={() => setTab("teams")} icon={Users} label={`${t("orgs.members")} (${teams.length})`} />
@@ -523,7 +523,7 @@ export default function OrganizationsPage() {
 
       {/* Content */}
       {loading ? (
-        <p className="text-gray-500">{t("common.loading")}</p>
+        <p className="text-gray-500 dark:text-gray-400">{t("common.loading")}</p>
       ) : tab === "orgs" ? (
         /* ===== Organizations Tree View ===== */
         orgs.length === 0 ? (
@@ -553,11 +553,11 @@ export default function OrganizationsPage() {
         ) : (
           <div className="overflow-x-auto rounded-xl border border-gray-200 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-900">
             <table className="w-full">
-              <thead className="border-b border-gray-200 bg-gray-50">
+              <thead className="border-b border-gray-200 bg-gray-50 dark:bg-gray-800">
                 <tr>
-                  <th scope="col" className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">{t("orgs.department")}</th>
-                  <th scope="col" className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">{t("orgs.path")}</th>
-                  <th scope="col" className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">{t("common.actions")}</th>
+                  <th scope="col" className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500 dark:text-gray-400">{t("orgs.department")}</th>
+                  <th scope="col" className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500 dark:text-gray-400">{t("orgs.path")}</th>
+                  <th scope="col" className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500 dark:text-gray-400">{t("common.actions")}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
@@ -574,7 +574,7 @@ export default function OrganizationsPage() {
                         )}
                       </div>
                     </td>
-                    <td className="px-4 py-3 font-mono text-xs text-gray-500">{d.path || "-"}</td>
+                    <td className="px-4 py-3 font-mono text-xs text-gray-500 dark:text-gray-400">{d.path || "-"}</td>
                     <td className="px-4 py-3">
                       <button
                         onClick={() => handleDeleteDept(d.id)}
@@ -607,7 +607,7 @@ export default function OrganizationsPage() {
                     <div>
                       <h3 className="font-semibold">{t.name}</h3>
                       {t.description && (
-                        <p className="text-xs text-gray-500">{t.description}</p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">{t.description}</p>
                       )}
                     </div>
                   </div>
@@ -630,7 +630,7 @@ export default function OrganizationsPage() {
         !treeRootId ? (
           <EmptyState icon={Layers} title={t("orgs.selectRootOrg")} subtitle={t("orgs.chooseOrgForHierarchy")} />
         ) : treeLoading ? (
-          <p className="text-gray-500">{t("orgs.loadingTree")}</p>
+          <p className="text-gray-500 dark:text-gray-400">{t("orgs.loadingTree")}</p>
         ) : !treeData || treeData.organizations.length === 0 ? (
           <EmptyState icon={Layers} title={t("orgs.noTreeData")} subtitle="Failed to load or empty tree" />
         ) : (
@@ -687,30 +687,30 @@ function MembersDetail({
       case "active": return "bg-green-100 text-green-700";
       case "invited": return "bg-blue-100 text-blue-700";
       case "suspended": return "bg-red-100 text-red-700";
-      default: return "bg-gray-100 text-gray-600";
+      default: return "bg-gray-100 text-gray-600 dark:text-gray-300";
     }
   };
 
   return (
-    <div className="rounded-xl border border-gray-200 bg-white shadow-sm">
+    <div className="rounded-xl border border-gray-200 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-800">
       <div className="border-b border-gray-200 p-4">
         <h3 className="text-sm font-semibold">
           {t("orgs.membersOf")} {orgName} ({members.length})
         </h3>
       </div>
       {loading ? (
-        <p className="p-8 text-center text-gray-500">{t("common.loading")}</p>
+        <p className="p-8 text-center text-gray-500 dark:text-gray-400">{t("common.loading")}</p>
       ) : members.length === 0 ? (
-        <p className="p-8 text-center text-gray-500">{t("orgs.noMembers")}</p>
+        <p className="p-8 text-center text-gray-500 dark:text-gray-400">{t("orgs.noMembers")}</p>
       ) : (
         <div className="overflow-x-auto">
         <table className="w-full">
-          <thead className="border-b border-gray-100 dark:border-gray-700 bg-gray-50">
+          <thead className="border-b border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
             <tr>
-              <th scope="col" className="px-4 py-2 text-left text-xs font-medium uppercase text-gray-500">User ID</th>
-              <th scope="col" className="px-4 py-2 text-left text-xs font-medium uppercase text-gray-500">Title</th>
-              <th scope="col" className="px-4 py-2 text-left text-xs font-medium uppercase text-gray-500">Status</th>
-              <th scope="col" className="px-4 py-2 text-left text-xs font-medium uppercase text-gray-500">Department</th>
+              <th scope="col" className="px-4 py-2 text-left text-xs font-medium uppercase text-gray-500 dark:text-gray-400">User ID</th>
+              <th scope="col" className="px-4 py-2 text-left text-xs font-medium uppercase text-gray-500 dark:text-gray-400">Title</th>
+              <th scope="col" className="px-4 py-2 text-left text-xs font-medium uppercase text-gray-500 dark:text-gray-400">Status</th>
+              <th scope="col" className="px-4 py-2 text-left text-xs font-medium uppercase text-gray-500 dark:text-gray-400">Department</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100">
@@ -727,7 +727,7 @@ function MembersDetail({
                     {m.status}
                   </span>
                 </td>
-                <td className="px-4 py-2 text-sm text-gray-500">
+                <td className="px-4 py-2 text-sm text-gray-500 dark:text-gray-400">
                   {m.dept_id ? m.dept_id.slice(0, 8) + "..." : "-"}
                 </td>
               </tr>
@@ -779,7 +779,7 @@ function UnifiedTreeView({
   }, [orgTree, expandedNodes.size]);
 
   return (
-    <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
+    <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-800">
       <h3 className="mb-3 flex items-center gap-2 text-sm font-semibold">
         <Layers className="h-4 w-4 text-brand-600" />
         Organization Structure
@@ -1145,9 +1145,9 @@ function EmptyState({
   subtitle: string;
 }) {
   return (
-    <div className="rounded-xl border border-gray-200 bg-white p-12 text-center shadow-sm">
+    <div className="rounded-xl border border-gray-200 bg-white p-12 text-center shadow-sm dark:border-gray-700 dark:bg-gray-800">
       <Icon className="mx-auto mb-4 h-12 w-12 text-gray-300" />
-      <p className="text-gray-500">{title}</p>
+      <p className="text-gray-500 dark:text-gray-400">{title}</p>
       <p className="mt-1 text-xs text-gray-400">{subtitle}</p>
     </div>
   );

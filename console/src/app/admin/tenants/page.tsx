@@ -138,7 +138,7 @@ function TenantList({ tenants, onDelete }: { tenants: Tenant[]; onDelete: (t: Te
   const t = useTranslations();
 
   if (tenants.length === 0) {
-    return <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-12 text-center"><Building2 className="w-12 h-12 mx-auto mb-3 text-gray-300" /><p className="text-sm text-gray-500">{t("tenants.list.noTenants")}</p></div>;
+    return <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-12 text-center"><Building2 className="w-12 h-12 mx-auto mb-3 text-gray-300" /><p className="text-sm text-gray-500 dark:text-gray-400">{t("tenants.list.noTenants")}</p></div>;
   }
 
   return (
@@ -177,7 +177,7 @@ function TenantList({ tenants, onDelete }: { tenants: Tenant[]; onDelete: (t: Te
                 <td className="py-3 px-4">
                   <span className={`px-2 py-0.5 text-xs rounded-full ${statusColors[t_item.status] || statusColors.active}`}>{t(`tenants.list.status${t_item.status.replace(/^./, (m: any) => m.toUpperCase())}`)}</span>
                 </td>
-                <td className="py-3 px-4 text-xs text-gray-500">{t_item.created ? new Date(t_item.created).toLocaleDateString() : "—"}</td>
+                <td className="py-3 px-4 text-xs text-gray-500 dark:text-gray-400">{t_item.created ? new Date(t_item.created).toLocaleDateString() : "—"}</td>
                 <td className="py-3 px-4 text-right">
                   <button onClick={() => onDelete(t_item)} className="rounded p-1.5 text-gray-400 hover:bg-red-50 hover:text-red-600" title={t("common.delete")}>
                     <Trash2 className="h-4 w-4" />

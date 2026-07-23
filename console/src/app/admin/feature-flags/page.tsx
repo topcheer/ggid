@@ -111,7 +111,13 @@ export default function FeatureFlagsPage() {
 
       {/* LIST */}
       {tab === "list" && (
-        <div className="space-y-3">{flags.map(f => (
+        <div className="space-y-3">{flags.length === 0 ? (
+          <div className={`${card} text-center py-12`}>
+            <Flag className="mx-auto h-10 w-10 text-gray-300 dark:text-gray-600" />
+            <p className="mt-3 text-sm text-gray-500 dark:text-gray-400">No feature flags configured.</p>
+            <p className="mt-1 text-xs text-gray-400">Switch to "Create" tab to add your first flag.</p>
+          </div>
+        ) : flags.map(f => (
           <div key={f.key} className={`${card} flex items-center justify-between !p-3`}>
             <div className="flex items-center gap-3 flex-1 min-w-0"><div className="flex h-9 w-9 items-center justify-center rounded-lg bg-indigo-100 dark:bg-indigo-900/30"><Flag className="h-4 w-4 text-indigo-500" /></div><div className="min-w-0"><div className="flex items-center gap-2"><code className="text-sm font-mono text-indigo-500">{f.key}</code><span className={`px-1.5 py-0.5 rounded text-xs font-medium ${f.enabled ? "bg-green-100 dark:bg-green-900/30 text-green-600" : "bg-gray-100 dark:bg-gray-800 text-gray-400"}`}>{f.enabled ? "on" : "off"}</span></div><p className="text-xs text-gray-400 truncate">{f.desc}</p><div className="flex items-center gap-2 mt-1"><span className="flex items-center gap-1 text-xs text-gray-400"><Percent className="h-2.5 w-2.5" />{f.rollout}%</span><span className="flex items-center gap-1 text-xs text-gray-400"><Globe className="h-2.5 w-2.5" />{Object.keys(f.tenants).length} {t("flags.tenants")}</span></div></div></div>
             <div className="flex items-center gap-2"><button onClick={() => startEdit(f)} aria-label={"Edit " + f.key} className="rounded p-1.5 text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700"><Edit className="h-3.5 w-3.5" /></button><button onClick={() => toggleFlag(f.key)} aria-pressed={f.enabled} className={`relative h-6 w-11 rounded-full transition ${f.enabled ? "bg-green-500" : "bg-gray-300 dark:bg-gray-700"}`}><span className={`absolute top-0.5 h-5 w-5 rounded-full bg-white transition ${f.enabled ? "left-5" : "left-0.5"}`} /></button></div>
