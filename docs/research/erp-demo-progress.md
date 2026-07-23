@@ -1289,3 +1289,28 @@ API key DB-backed auth + Argon2id + redirect_uri allowlist are additive/hardenin
 Gateway+Identity+Audit build: ✅ | Hacks: 0 ✅ — **Twenty-first consecutive zero-fix cycle.**
 
 ### Next Dimension: 1 — Cycle 30
+
+## R3-01 SDK Audit (Round 198)
+
+**SDK Method Coverage Audit** — checked all 7 SDKs for 10+ critical auth methods.
+
+### Findings
+
+| SDK | Missing Methods | Status |
+|-----|----------------|--------|
+| Go | ExchangeAgentToken, ExchangeSAMLToken | 2 gaps |
+| Node | introspectToken | 1 gap |
+| Python | refresh_token (no explicit method) | 1 gap |
+| C# | (RevokeTokenAsync covers logout) | 0 gaps |
+| Java | verifyUser only in JwtVerifier, not GGIDClient | 1 gap |
+| Ruby | (revoke_token covers logout) | 0 gaps |
+| Rust | — | 0 gaps (most complete) |
+
+### Next Steps
+- Fix Go: add ExchangeAgentToken + ExchangeSAMLToken
+- Fix Node: add introspectToken
+- Fix Python: add refresh_token
+- Fix Java: add verifyUser convenience to GGIDClient
+- Then: version tags + changelogs + publish prep
+
+### Next Dimension: 1 — Cycle 30
