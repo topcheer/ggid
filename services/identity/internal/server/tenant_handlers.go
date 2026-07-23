@@ -185,7 +185,7 @@ func (h *HTTPHandler) handleSystemBootstrap(w http.ResponseWriter, r *http.Reque
 	// 4. Assign admin role via direct SQL (creates role if not exists).
 	_, err = h.svc.Pool().Exec(ctx,
 		`INSERT INTO roles (tenant_id, key, name, description, system_role)
-		 VALUES ($1, 'admin', 'Administrator', 'Full system access', true)
+		 VALUES ($1, 'tenant:admin', 'Administrator', 'Full system access', true)
 		 ON CONFLICT DO NOTHING`,
 		tenantID)
 	if err != nil {
@@ -194,7 +194,7 @@ func (h *HTTPHandler) handleSystemBootstrap(w http.ResponseWriter, r *http.Reque
 
 	var roleIDStr string
 	if err := h.svc.Pool().QueryRow(ctx,
-		`SELECT id::text FROM roles WHERE tenant_id = $1 AND key = 'admin'`, tenantID).Scan(&roleIDStr); err != nil {
+		`SELECT id::text FROM roles WHERE tenant_id = $1 AND key = 'tenant:admin'`, tenantID).Scan(&roleIDStr); err != nil {
 		slog.Error("bootstrap: failed to get admin role ID", "error", err)
 	}
 
