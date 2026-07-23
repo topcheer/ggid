@@ -181,3 +181,77 @@ jobs:
           VERSION=${GITHUB_REF#refs/tags/v}
           git tag sdk/ruby/v${VERSION}
           git push origin sdk/ruby/v${VERSION}
+
+  # ── Pre-release test gate ──
+  test-gate:
+    name: Build & Test Gate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: true
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - name: Build all services
+        run: go build ./...
+
+      - name: Run tests
+        run: go test ./... -count=1 -timeout 300s
+
+  # ── GitHub Release with auto-generated notes ──
+  github-release:
+    name: Create GitHub Release
+    runs-on: ubuntu-latest
+    needs: [docker, sdk-tags, test-gate]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Generate release notes
+        id: notes
+        run: |
+          PREV_TAG=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo "")
+          if [ -z "$PREV_TAG" ]; then
+            NOTES=$(git log --pretty=format:"- %s (%h)" HEAD~30..HEAD)
+          else
+            NOTES=$(git log --pretty=format:"- %s (%h)" ${PREV_TAG}..HEAD)
+          fi
+
+          FEATURES=$(echo "$NOTES" | grep -iE "^- feat" || true)
+          FIXES=$(echo "$NOTES" | grep -iE "^- fix" || true)
+          DOCS=$(echo "$NOTES" | grep -iE "^- docs" || true)
+          OTHER=$(echo "$NOTES" | grep -ivE "^- feat|^- fix|^- docs" || true)
+
+          cat > /tmp/release-notes.md <<RN
+          ## What's New
+
+          ### Features
+          ${FEATURES}
+
+          ### Fixes
+          ${FIXES}
+
+          ### Documentation
+          ${DOCS}
+
+          ### Other Changes
+          ${OTHER}
+
+          ---
+
+          **Docker images**: \`ghcr.io/${{ github.repository_owner }}/ggid-{service}:${{ github.ref_name }}\`
+          **Helm chart**: \`deploy/helm/ggid/\`
+          **SDKs**: Node \`@ggid/sdk\`, Python \`ggid\`
+          RN
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          body_path: /tmp/release-notes.md
+          draft: false
+          prerelease: ${{ contains(github.ref_name, '-rc') || contains(github.ref_name, '-beta') }}

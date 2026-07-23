@@ -85,6 +85,16 @@ func NewEngine(pool *pgxpool.Pool) *Engine {
 	}
 }
 
+// NewEngineWithSeed creates a UEBA engine with a deterministic RNG seed.
+// Used in tests to avoid flaky results from random isolation forest construction.
+func NewEngineWithSeed(pool *pgxpool.Pool, seed int64) *Engine {
+	return &Engine{
+		pool:      pool,
+		baselines: make(map[string]*BehavioralBaseline),
+		rng:       rand.New(rand.NewSource(seed)),
+	}
+}
+
 // EnsureSchema creates the user_behavioral_baselines table.
 func (e *Engine) EnsureSchema(ctx context.Context) error {
 	if e.pool == nil {

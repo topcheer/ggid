@@ -7,7 +7,7 @@ import (
 )
 
 func TestIsolationForest_NormalBehavior_LowScore(t *testing.T) {
-	engine := NewEngine(nil)
+	engine := NewEngineWithSeed(nil, 42) // Fixed seed for deterministic test
 	tenantID := uuid.New()
 	userID := uuid.New()
 
@@ -37,7 +37,7 @@ func TestIsolationForest_NormalBehavior_LowScore(t *testing.T) {
 }
 
 func TestIsolationForest_AnomalousBehavior_HighScore(t *testing.T) {
-	engine := NewEngine(nil)
+	engine := NewEngineWithSeed(nil, 42) // Fixed seed for deterministic test
 	tenantID := uuid.New()
 	userID := uuid.New()
 
