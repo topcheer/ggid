@@ -1,178 +1,165 @@
+// Package httpserver — Tenant API usage query endpoint.
+// Returns aggregated usage metrics per tenant for Console dashboards.
 package httpserver
 
 import (
-	"fmt"
+	"encoding/json"
 	"net/http"
 	"strconv"
-	"strings"
 	"time"
 )
 
-// usageSummary represents per-tenant aggregated API usage.
-type usageSummary struct {
-	TenantID       string `json:"tenant_id"`
-	TotalRequests  int    `json:"total_requests"`
-	ErrorCount     int    `json:"error_count"`
-	AvgLatencyMs   int    `json:"avg_latency_ms"`
-	MaxLatencyMs   int    `json:"max_latency_ms"`
-	UniquePaths    int    `json:"unique_paths"`
+// UsageSummary represents aggregated API usage for a tenant.
+type UsageSummary struct {
+	TenantID     string  `json:"tenant_id"`
+	TotalRequests int64  `json:"total_requests"`
+	TotalErrors   int64  `json:"total_errors"`
+	AvgLatencyMs float64 `json:"avg_latency_ms"`
+	TopEndpoints []EndpointUsage `json:"top_endpoints,omitempty"`
 }
 
-// pathUsage represents per-path usage within a tenant.
-type pathUsage struct {
-	Path          string `json:"path"`
-	Method        string `json:"method"`
-	Count         int    `json:"count"`
-	AvgLatencyMs  int    `json:"avg_latency_ms"`
-	ErrorCount    int    `json:"error_count"`
+// EndpointUsage shows per-endpoint breakdown.
+type EndpointUsage struct {
+	Path        string `json:"path"`
+	Method      string `json:"method"`
+	Requests    int64  `json:"requests"`
+	Errors      int64  `json:"errors"`
+	AvgLatency  float64 `json:"avg_latency_ms"`
 }
 
-// handleUsage handles GET /api/v1/audit/usage — returns aggregated API
-// usage metrics per tenant, with optional filters.
-//
-// Query params:
-//   tenant_id  — filter to a specific tenant (platform admin only for cross-tenant)
-//   hours      — time window in hours (default 24, max 168/7d)
-//   detail     — if "paths", return per-path breakdown instead of per-tenant summary
-func (s *HTTPServer) handleUsage(w http.ResponseWriter, r *http.Request) {
+// In-memory usage store (production would use PG).
+// The gateway flushes batches here via POST /api/v1/audit/usage.
+var (
+	usageStore = newUsageStore()
+)
+
+type usageStoreType struct {
+	records []UsageRecord
+	maxSize int
+}
+
+type UsageRecord struct {
+	TenantID  string    `json:"tenant_id"`
+	Method    string    `json:"method"`
+	Path      string    `json:"path"`
+	Status    int       `json:"status"`
+	Duration  float64   `json:"duration_ms"`
+	Timestamp time.Time `json:"timestamp"`
+}
+
+func newUsageStore() *usageStoreType {
+	return &usageStoreType{maxSize: 100000}
+}
+
+func (s *usageStoreType) Add(batch []UsageRecord) {
+	s.records = append(s.records, batch...)
+	// Trim if too large (ring buffer behavior)
+	if len(s.records) > s.maxSize {
+		s.records = s.records[len(s.records)-s.maxSize:]
+	}
+}
+
+// handleUsageIngest handles POST /api/v1/audit/usage from gateway.
+func (s *HTTPServer) handleUsageIngest(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	var payload struct {
+		Events []UsageRecord `json:"events"`
+		Type   string        `json:"type"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
+		http.Error(w, "invalid JSON", http.StatusBadRequest)
+		return
+	}
+
+	usageStore.Add(payload.Events)
+	w.WriteHeader(http.StatusAccepted)
+}
+
+// handleUsageQuery handles GET /api/v1/audit/usage?tenant_id=xxx&days=30
+func (s *HTTPServer) handleUsageQuery(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
-		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
+		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
 		return
 	}
 
-	if s.pool == nil {
-		writeJSONError(w, http.StatusServiceUnavailable, "database not configured")
-		return
-	}
-
-	ctx := r.Context()
-
-	// Parse query params.
 	tenantID := r.URL.Query().Get("tenant_id")
-	hours := 24
-	if h := r.URL.Query().Get("hours"); h != "" {
-		if v, err := strconv.Atoi(h); err == nil && v > 0 && v <= 168 {
-			hours = v
-		}
+	daysStr := r.URL.Query().Get("days")
+	if daysStr == "" {
+		daysStr = "30"
 	}
-	detail := r.URL.Query().Get("detail") == "paths"
-
-	since := time.Now().Add(-time.Duration(hours) * time.Hour)
-
-	if detail {
-		// Per-path breakdown for a specific tenant.
-		if tenantID == "" {
-			writeJSONError(w, http.StatusBadRequest, "tenant_id is required when detail=paths")
-			return
-		}
-		query := `
-			SELECT path, method, COUNT(*) AS count,
-			       COALESCE(AVG(latency_ms)::int, 0) AS avg_latency,
-			       COUNT(*) FILTER (WHERE status_code >= 400) AS error_count
-			FROM api_usage_log
-			WHERE tenant_id = $1 AND created_at >= $2
-			GROUP BY path, method
-			ORDER BY count DESC
-			LIMIT 100`
-		rows, err := s.pool.Query(ctx, query, tenantID, since)
-		if err != nil {
-			writeJSONError(w, http.StatusInternalServerError, fmt.Sprintf("query failed: %v", err))
-			return
-		}
-		defer rows.Close()
-
-		results := make([]pathUsage, 0)
-		for rows.Next() {
-			var pu pathUsage
-			if err := rows.Scan(&pu.Path, &pu.Method, &pu.Count, &pu.AvgLatencyMs, &pu.ErrorCount); err != nil {
-				continue
-			}
-			results = append(results, pu)
-		}
-
-		writeJSON(w, http.StatusOK, map[string]any{
-			"tenant_id": tenantID,
-			"hours":     hours,
-			"paths":     results,
-			"total":     len(results),
-		})
-		return
+	days, err := strconv.Atoi(daysStr)
+	if err != nil || days <= 0 || days > 365 {
+		days = 30
 	}
 
-	// Per-tenant summary (optionally filtered to one tenant).
-	if tenantID != "" {
-		query := `
-			SELECT tenant_id,
-			       COUNT(*) AS total,
-			       COUNT(*) FILTER (WHERE status_code >= 400) AS errors,
-			       COALESCE(AVG(latency_ms)::int, 0) AS avg_lat,
-			       COALESCE(MAX(latency_ms), 0) AS max_lat,
-			       COUNT(DISTINCT path) AS paths
-			FROM api_usage_log
-			WHERE tenant_id = $1 AND created_at >= $2
-			GROUP BY tenant_id`
-		rows, err := s.pool.Query(ctx, query, tenantID, since)
-		if err != nil {
-			writeJSONError(w, http.StatusInternalServerError, fmt.Sprintf("query failed: %v", err))
-			return
-		}
-		defer rows.Close()
+	cutoff := time.Now().AddDate(0, 0, -days)
 
-		summaries := make([]usageSummary, 0)
-		for rows.Next() {
-			var us usageSummary
-			if err := rows.Scan(&us.TenantID, &us.TotalRequests, &us.ErrorCount, &us.AvgLatencyMs, &us.MaxLatencyMs, &us.UniquePaths); err != nil {
-				continue
-			}
-			summaries = append(summaries, us)
-		}
-
-		writeJSON(w, http.StatusOK, map[string]any{
-			"hours":  hours,
-			"usage":  summaries,
-			"total":  len(summaries),
-		})
-		return
+	// Aggregate from in-memory store
+	type aggKey struct {
+		tenant, path, method string
 	}
+	aggregates := make(map[aggKey]*EndpointUsage)
+	tenantCounts := make(map[string]*UsageSummary)
 
-	// All tenants summary.
-	query := `
-		SELECT tenant_id,
-		       COUNT(*) AS total,
-		       COUNT(*) FILTER (WHERE status_code >= 400) AS errors,
-		       COALESCE(AVG(latency_ms)::int, 0) AS avg_lat,
-		       COALESCE(MAX(latency_ms), 0) AS max_lat,
-		       COUNT(DISTINCT path) AS paths
-		FROM api_usage_log
-		WHERE created_at >= $1
-		GROUP BY tenant_id
-		ORDER BY total DESC`
-	rows, err := s.pool.Query(ctx, query, since)
-	if err != nil {
-		writeJSONError(w, http.StatusInternalServerError, fmt.Sprintf("query failed: %v", err))
-		return
-	}
-	defer rows.Close()
-
-	summaries := make([]usageSummary, 0)
-	for rows.Next() {
-		var us usageSummary
-		if err := rows.Scan(&us.TenantID, &us.TotalRequests, &us.ErrorCount, &us.AvgLatencyMs, &us.MaxLatencyMs, &us.UniquePaths); err != nil {
+	for _, rec := range usageStore.records {
+		if rec.Timestamp.Before(cutoff) {
 			continue
 		}
-		// Mask tenant IDs that are empty (unauthenticated requests).
-		if us.TenantID == "" {
-			us.TenantID = "(anonymous)"
+		if tenantID != "" && rec.TenantID != tenantID {
+			continue
 		}
-		summaries = append(summaries, us)
+
+		// Per-endpoint aggregation
+		key := aggKey{rec.TenantID, rec.Path, rec.Method}
+		if _, ok := aggregates[key]; !ok {
+			aggregates[key] = &EndpointUsage{Path: rec.Path, Method: rec.Method}
+		}
+		aggregates[key].Requests++
+		if rec.Status >= 500 {
+			aggregates[key].Errors++
+		}
+		aggregates[key].AvgLatency = (aggregates[key].AvgLatency*float64(aggregates[key].Requests-1) + rec.Duration) / float64(aggregates[key].Requests)
+
+		// Per-tenant aggregation
+		if _, ok := tenantCounts[rec.TenantID]; !ok {
+			tenantCounts[rec.TenantID] = &UsageSummary{TenantID: rec.TenantID}
+		}
+		tc := tenantCounts[rec.TenantID]
+		tc.TotalRequests++
+		if rec.Status >= 500 {
+			tc.TotalErrors++
+		}
+		tc.AvgLatencyMs = (tc.AvgLatencyMs*float64(tc.TotalRequests-1) + rec.Duration) / float64(tc.TotalRequests)
 	}
 
-	writeJSON(w, http.StatusOK, map[string]any{
-		"hours": hours,
-		"usage": summaries,
-		"total": len(summaries),
-	})
-}
+	// Build response
+	result := make(map[string]interface{})
+	if tenantID != "" {
+		// Single tenant — include endpoint breakdown
+		summary := tenantCounts[tenantID]
+		if summary == nil {
+			summary = &UsageSummary{TenantID: tenantID}
+		}
+		for _, a := range aggregates {
+			if a != nil && (tenantID == "" || true) {
+				summary.TopEndpoints = append(summary.TopEndpoints, *a)
+			}
+		}
+		result["tenant"] = summary
+	} else {
+		// All tenants — summary list
+		summaries := make([]UsageSummary, 0, len(tenantCounts))
+		for _, tc := range tenantCounts {
+			summaries = append(summaries, *tc)
+		}
+		result["tenants"] = summaries
+	}
+	result["days"] = days
 
-// Suppress unused import warnings — strings may be used in future filtering.
-var _ = strings.ToLower
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(result)
+}
