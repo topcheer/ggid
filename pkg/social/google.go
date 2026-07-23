@@ -72,12 +72,13 @@ func (g *googleConnector) HandleCallback(ctx context.Context, code, _, redirectU
 	_ = json.Unmarshal(body, &rawClaims)
 
 	return &UserInfo{
-		Provider:   "google",
-		ExternalID: claims.ID,
-		Email:      claims.Email,
-		Name:       claims.Name,
-		AvatarURL:  claims.Picture,
-		RawClaims:  rawClaims,
+		Provider:      "google",
+		ExternalID:     claims.ID,
+		Email:         claims.Email,
+		Name:          claims.Name,
+		AvatarURL:      claims.Picture,
+		EmailVerified:  claims.Verified,
+		RawClaims:      rawClaims,
 	}, nil
 }
 

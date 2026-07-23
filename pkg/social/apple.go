@@ -82,10 +82,11 @@ func (c *appleConnector) HandleCallback(ctx context.Context, code, state, redire
 	}
 
 	return &UserInfo{
-		Provider:   "apple",
-		ExternalID: profile.Sub,
-		Email:      profile.Email,
-		Name:       profile.Name,
+		Provider:      "apple",
+		ExternalID:     profile.Sub,
+		Email:         profile.Email,
+		Name:          profile.Name,
+		EmailVerified:  profile.EmailVerified == "true",
 	}, nil
 }
 

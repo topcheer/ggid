@@ -10,12 +10,13 @@ import (
 
 // UserInfo represents the normalized user profile returned by a social provider.
 type UserInfo struct {
-	Provider    string // "google", "github", etc.
-	ExternalID  string // unique ID from the provider
-	Email       string
-	Name        string
-	AvatarURL   string
-	RawClaims   map[string]any // full claims from the IdP
+	Provider      string // "google", "github", etc.
+	ExternalID    string // unique ID from the provider
+	Email         string
+	Name          string
+	AvatarURL     string
+	EmailVerified bool            // whether the IdP has verified the email
+	RawClaims     map[string]any // full claims from the IdP
 }
 
 // Connector defines the interface every social login provider must implement.
