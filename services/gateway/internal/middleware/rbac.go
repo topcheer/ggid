@@ -121,6 +121,13 @@ func RequireAdminScope(next http.Handler) http.Handler {
 			return
 		}
 
+		// M2M tokens (client_credentials) carry permissions but no admin scope.
+		// If the token has the required permission for this route, allow it.
+		if HasPermissionForRoute(r.URL.Path, r.Method, claims.Permissions) {
+			next.ServeHTTP(w, r)
+			return
+		}
+
 		writeAdminForbidden(w)
 	})
 }
