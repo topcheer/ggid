@@ -2,8 +2,6 @@ package service
 
 import (
 	"context"
-	"crypto/sha256"
-	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"sort"
@@ -120,24 +118,21 @@ func (s *AuditService) CleanupOldEvents(ctx context.Context, retentionDays int) 
 	return s.repo.DeleteOlderThan(ctx, before)
 }
 
-// computeHashChain computes the SHA-256 hash chain for an event.
-// Each event's hash = SHA256(prev_hash + canonical_event_data).
-// The prev_hash is tracked per-tenant in memory.
+// computeHashChain delegates to the domain layer's ComputeHash which uses
+// HMAC-SHA256 with length-prefix canonicalization (P2-6/P2-7). The old
+// inline implementation used plain SHA256 with pipe-delimiters — a different
+// hash that tamper-check (domain.VerifyHash) could never verify.
 func (s *AuditService) computeHashChain(event *domain.AuditEvent) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-
-	if s.prevHash == nil {
-		s.prevHash = make(map[uuid.UUID]string)
+	if !domain.IsHashChainEnabled() {
+		return
 	}
-
-	prev := s.prevHash[event.TenantID]
-	event.PrevHash = prev
-
-	data := canonicalEventData(event)
-	h := sha256.Sum256(append([]byte(prev), data...))
-	event.Hash = hex.EncodeToString(h[:])
-	s.prevHash[event.TenantID] = event.Hash
+	// Domain ComputeHash queries the DB for the previous hash and computes
+	// the HMAC correctly. The service layer just ensures the event has
+	// CreatedAt set (needed for canonical) and delegates.
+	if event.CreatedAt.IsZero() {
+		event.CreatedAt = time.Now().UTC()
+	}
+	event.Hash = event.ComputeHash(event.PrevHash)
 }
 
 // canonicalEventData produces a deterministic byte representation of an event
@@ -198,10 +193,7 @@ func (s *AuditService) VerifyIntegrity(ctx context.Context, tenantID uuid.UUID) 
 			return fmt.Errorf("hash chain broken at event %d (id=%s): prev_hash mismatch", i, e.ID)
 		}
 
-		data := canonicalEventData(e)
-		h := sha256.Sum256(append([]byte(prevHash), data...))
-		expected := hex.EncodeToString(h[:])
-		if e.Hash != expected {
+		if !e.VerifyHash(prevHash) {
 			return fmt.Errorf("hash chain broken at event %d (id=%s): hash mismatch (tampered)", i, e.ID)
 		}
 		prevHash = e.Hash
