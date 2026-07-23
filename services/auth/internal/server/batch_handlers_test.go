@@ -60,63 +60,25 @@ func TestLoginPolicyHandler(t *testing.T) {
 	}
 }
 
-// TestAPIKeysHandler tests GET/POST /api/v1/auth/api-keys
+// TestAPIKeysHandler tests that the API keys handler requires DB pool.
+// Full CRUD tests require a live PostgreSQL instance (integration test).
 func TestAPIKeysHandler(t *testing.T) {
-	h := &Handler{}
+	h := &Handler{} // nil pool
 
-	// Reset global state
-	apiKeysMu.Lock()
-	apiKeys = []APIKey{}
-	apiKeysMu.Unlock()
-
-	// Create key
-	body := `{"name":"test-key","scopes":["read","write"],"expires_at":""}`
-	req := httptest.NewRequest("POST", "/api/v1/auth/api-keys", strings.NewReader(body))
+	// Without DB pool, API key operations should return 503.
+	req := httptest.NewRequest("GET", "/api/v1/auth/api-keys", nil)
 	w := httptest.NewRecorder()
 	h.handleAPIKeys(w, req)
-	if w.Code != http.StatusCreated {
-		t.Fatalf("POST: expected 201, got %d: %s", w.Code, w.Body.String())
-	}
-	var key APIKey
-	json.Unmarshal(w.Body.Bytes(), &key)
-	if key.Name != "test-key" {
-		t.Errorf("expected name=test-key, got %s", key.Name)
-	}
-	if key.Status != "active" {
-		t.Errorf("expected status=active, got %s", key.Status)
+	if w.Code != http.StatusServiceUnavailable {
+		t.Errorf("expected 503 (no DB), got %d: %s", w.Code, w.Body.String())
 	}
 
-	// List keys
-	req = httptest.NewRequest("GET", "/api/v1/auth/api-keys", nil)
+	body := `{"name":"test-key","scopes":["read","write"],"expires_at":""}`
+	req = httptest.NewRequest("POST", "/api/v1/auth/api-keys", strings.NewReader(body))
 	w = httptest.NewRecorder()
 	h.handleAPIKeys(w, req)
-	if w.Code != http.StatusOK {
-		t.Fatalf("GET: expected 200, got %d", w.Code)
-	}
-	var keys []APIKey
-	json.Unmarshal(w.Body.Bytes(), &keys)
-	if len(keys) != 1 {
-		t.Errorf("expected 1 key, got %d", len(keys))
-	}
-
-	// Rotate key
-	req = httptest.NewRequest("POST", "/api/v1/auth/api-keys/", nil)
-	req.URL.Path = "/api/v1/auth/api-keys/" + key.ID + "/rotate"
-	w = httptest.NewRecorder()
-	h.handleAPIKeys(w, req)
-	if w.Code != http.StatusOK {
-		t.Errorf("rotate: expected 200, got %d", w.Code)
-	}
-	// Rotation changes the key ID, get the new one
-	json.Unmarshal(w.Body.Bytes(), &key)
-
-	// Delete key
-	req = httptest.NewRequest("DELETE", "/api/v1/auth/api-keys/", nil)
-	req.URL.Path = "/api/v1/auth/api-keys/" + key.ID
-	w = httptest.NewRecorder()
-	h.handleAPIKeys(w, req)
-	if w.Code != http.StatusOK {
-		t.Errorf("delete: expected 200, got %d: %s", w.Code, w.Body.String())
+	if w.Code != http.StatusServiceUnavailable {
+		t.Errorf("POST expected 503 (no DB), got %d: %s", w.Code, w.Body.String())
 	}
 }
 

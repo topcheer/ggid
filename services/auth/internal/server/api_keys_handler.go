@@ -1,13 +1,10 @@
 package server
 
 import (
-	"crypto/sha256"
-	"encoding/hex"
 	"encoding/json"
-	"fmt"
+	"log/slog"
 	"net/http"
 	"strings"
-	"sync"
 	"time"
 
 	ggidcrypto "github.com/ggid/ggid/pkg/crypto"
@@ -15,38 +12,63 @@ import (
 	"github.com/google/uuid"
 )
 
-// APIKey represents an API key for programmatic access.
+// APIKey represents an API key for programmatic access (API response DTO).
 type APIKey struct {
-	ID         string    `json:"id"`
-	Name       string    `json:"name"`
-	Scopes     []string  `json:"scopes"`
-	CreatedAt  time.Time `json:"created_at"`
-	ExpiresAt  time.Time `json:"expires_at"`
-	LastUsed   *time.Time `json:"last_used"`
-	Status     string    `json:"status"` // active, expired, revoked
-	UsageCount int       `json:"usage_count"`
+	ID        string     `json:"id"`
+	Name      string     `json:"name"`
+	Scopes    []string   `json:"scopes"`
+	CreatedAt time.Time  `json:"created_at"`
+	ExpiresAt *time.Time `json:"expires_at,omitempty"`
+	LastUsed  *time.Time `json:"last_used,omitempty"`
+	Status    string     `json:"status"`
 	// Key is the plaintext secret, returned ONLY in the creation response.
-	Key        string    `json:"key,omitempty"`
-	// KeyHash is the stored SHA-256 of the secret (never serialized).
-	KeyHash    string    `json:"-"`
+	Key string `json:"key,omitempty"`
 }
 
-var (
-	apiKeysMu sync.RWMutex
-	apiKeys   = []APIKey{}
-)
+// toAPIKey converts a DB record to the API response DTO (without key_hash).
+func (r *APIKeyRecord) toAPIKey() APIKey {
+	return APIKey{
+		ID:        r.ID.String(),
+		Name:      r.Name,
+		Scopes:    r.Scopes,
+		CreatedAt: r.CreatedAt,
+		ExpiresAt: r.ExpiresAt,
+		LastUsed:  r.LastUsedAt,
+		Status:    r.Status,
+	}
+}
 
-// GET/POST /api/v1/auth/api-keys
-// GET/POST/DELETE /api/v1/auth/api-keys/{id}
+// handleAPIKeys handles GET/POST /api/v1/auth/api-keys and sub-paths.
 func (h *Handler) handleAPIKeys(w http.ResponseWriter, r *http.Request) {
+	// All API key operations require a DB pool.
+	if h.pool == nil {
+		writeError(w, http.StatusServiceUnavailable, "database not available")
+		return
+	}
+	repo := newAPIKeyRepo(h.pool)
+
+	tc, err := ggidtenant.FromContext(r.Context())
+	if err != nil {
+		writeError(w, http.StatusBadRequest, "missing tenant context")
+		return
+	}
+
 	switch {
+	// --- List ---
 	case r.URL.Path == "/api/v1/auth/api-keys" && r.Method == http.MethodGet:
-		apiKeysMu.RLock()
-		keys := make([]APIKey, len(apiKeys))
-		copy(keys, apiKeys)
-		apiKeysMu.RUnlock()
+		records, err := repo.ListByTenant(r.Context(), tc.TenantID)
+		if err != nil {
+			slog.Error("api_keys: list failed", "error", err)
+			writeError(w, http.StatusInternalServerError, "failed to list api keys")
+			return
+		}
+		keys := make([]APIKey, 0, len(records))
+		for i := range records {
+			keys = append(keys, records[i].toAPIKey())
+		}
 		writeJSON(w, http.StatusOK, keys)
 
+	// --- Create ---
 	case r.URL.Path == "/api/v1/auth/api-keys" && r.Method == http.MethodPost:
 		var req struct {
 			Name      string   `json:"name"`
@@ -57,76 +79,102 @@ func (h *Handler) handleAPIKeys(w http.ResponseWriter, r *http.Request) {
 			writeError(w, http.StatusBadRequest, "invalid request body")
 			return
 		}
+		if req.Name == "" {
+			writeError(w, http.StatusBadRequest, "name is required")
+			return
+		}
+
 		plain, err := ggidcrypto.GenerateRandomToken(24)
 		if err != nil {
 			writeError(w, http.StatusInternalServerError, "failed to generate api key")
 			return
 		}
 		secret := "ggid_sk_" + plain
-		sum := sha256.Sum256([]byte(secret))
-		key := APIKey{
-			ID:        fmt.Sprintf("key-%d", time.Now().UnixNano()),
-			Name:      req.Name,
-			Scopes:    req.Scopes,
-			CreatedAt: time.Now(),
-			Status:    "active",
-			KeyHash:   hex.EncodeToString(sum[:]),
-		}
+
+		var expiresAt *time.Time
 		if req.ExpiresAt != "" {
-			t, err := time.Parse(time.RFC3339, req.ExpiresAt)
-			if err == nil {
-				key.ExpiresAt = t
+			t, perr := time.Parse(time.RFC3339, req.ExpiresAt)
+			if perr != nil {
+				writeError(w, http.StatusBadRequest, "invalid expires_at format, expected RFC3339")
+				return
 			}
+			expiresAt = &t
 		}
-		apiKeysMu.Lock()
-		apiKeys = append(apiKeys, key)
-		apiKeysMu.Unlock()
+
+		rec, err := repo.Create(r.Context(), tc.TenantID, req.Name, secret, req.Scopes, expiresAt)
+		if err != nil {
+			slog.Error("api_keys: create failed", "error", err)
+			writeError(w, http.StatusInternalServerError, "failed to create api key")
+			return
+		}
 
 		// Audit: API key created
-		if tc, err := ggidtenant.FromContext(r.Context()); err == nil {
-			h.publishAuditEvent("api_key.create", "success", tc.TenantID, uuid.Nil)
-		}
+		h.publishAuditEvent("api_key.create", "success", tc.TenantID, uuid.Nil)
 
 		// Return the plaintext secret exactly once — it cannot be retrieved later.
-		key.Key = secret
-		writeJSON(w, http.StatusCreated, key)
+		resp := rec.toAPIKey()
+		resp.Key = secret
+		writeJSON(w, http.StatusCreated, resp)
 
+	// --- Rotate: POST /api/v1/auth/api-keys/{id}/rotate ---
 	case strings.HasPrefix(r.URL.Path, "/api/v1/auth/api-keys/") && r.Method == http.MethodPost:
-		// Handle /api/v1/auth/api-keys/{id}/rotate
 		parts := splitPath(r.URL.Path)
 		if len(parts) >= 6 && parts[5] == "rotate" {
-			apiKeysMu.Lock()
-			defer apiKeysMu.Unlock()
-			for i := range apiKeys {
-				if apiKeys[i].ID == parts[4] {
-					apiKeys[i].ID = fmt.Sprintf("key-%d", time.Now().UnixNano())
-					writeJSON(w, http.StatusOK, apiKeys[i])
-					return
-				}
+			keyID, perr := uuid.Parse(parts[4])
+			if perr != nil {
+				writeError(w, http.StatusBadRequest, "invalid api key id")
+				return
 			}
-			writeError(w, http.StatusNotFound, "API key not found")
+
+			plain, err := ggidcrypto.GenerateRandomToken(24)
+			if err != nil {
+				writeError(w, http.StatusInternalServerError, "failed to generate api key")
+				return
+			}
+			secret := "ggid_sk_" + plain
+
+			if err := repo.Rotate(r.Context(), tc.TenantID, keyID, secret); err != nil {
+				slog.Error("api_keys: rotate failed", "error", err)
+				writeError(w, http.StatusInternalServerError, "failed to rotate api key")
+				return
+			}
+
+			// Fetch the updated record for the response.
+			rec, err := repo.GetByID(r.Context(), tc.TenantID, keyID)
+			if err != nil || rec == nil {
+				writeError(w, http.StatusNotFound, "API key not found")
+				return
+			}
+			resp := rec.toAPIKey()
+			resp.Key = secret
+			writeJSON(w, http.StatusOK, resp)
 			return
 		}
 		writeError(w, http.StatusNotFound, "unknown path")
 
+	// --- Delete (revoke): DELETE /api/v1/auth/api-keys/{id} ---
 	case strings.HasPrefix(r.URL.Path, "/api/v1/auth/api-keys/") && r.Method == http.MethodDelete:
 		parts := splitPath(r.URL.Path)
-		if len(parts) >= 5 {
-			apiKeysMu.Lock()
-			defer apiKeysMu.Unlock()
-			for i := range apiKeys {
-				if apiKeys[i].ID == parts[4] {
-				apiKeys[i].Status = "revoked"
-				// Audit: API key revoked
-				if tc, err := ggidtenant.FromContext(r.Context()); err == nil {
-					h.publishAuditEvent("api_key.delete", "success", tc.TenantID, uuid.Nil)
-				}
-				writeJSON(w, http.StatusOK, map[string]string{"status": "revoked"})
-					return
-				}
-			}
+		if len(parts) < 5 {
+			writeError(w, http.StatusBadRequest, "api key id is required")
+			return
 		}
-		writeError(w, http.StatusNotFound, "API key not found")
+		keyID, perr := uuid.Parse(parts[4])
+		if perr != nil {
+			writeError(w, http.StatusBadRequest, "invalid api key id")
+			return
+		}
+
+		if err := repo.UpdateStatus(r.Context(), tc.TenantID, keyID, "revoked"); err != nil {
+			slog.Error("api_keys: revoke failed", "error", err)
+			writeError(w, http.StatusInternalServerError, "failed to revoke api key")
+			return
+		}
+
+		// Audit: API key revoked
+		h.publishAuditEvent("api_key.delete", "success", tc.TenantID, uuid.Nil)
+
+		writeJSON(w, http.StatusOK, map[string]string{"status": "revoked"})
 
 	default:
 		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
@@ -143,3 +191,5 @@ func splitPath(path string) []string {
 	}
 	return parts
 }
+
+

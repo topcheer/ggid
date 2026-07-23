@@ -99,6 +99,13 @@ func main() {
 	go rbacResolver.WarmStart(ctx)
 	log.Println("Gateway: dynamic RBAC resolver enabled (hardcoded fallback active)")
 
+	// DB-backed API key validation
+	apiKeyValidator := middleware.NewDBAPIKeyValidator(ctx, cfg.DatabaseURL)
+	if apiKeyValidator != nil {
+		gw.SetAPIKeyValidator(apiKeyValidator)
+		log.Println("Gateway: API key authentication enabled (DB-backed)")
+	}
+
 	gw.PrintRoutes()
 
 	// HTTP server

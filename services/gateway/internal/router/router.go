@@ -96,7 +96,13 @@ type Gateway struct {
 	caeCheck       func(http.Handler) http.Handler
 	appRouter      *ProtectedAppRouter
 	circuitRegistry *middleware.CircuitRegistry
-	mu             sync.RWMutex
+	apiKeyValidator *middleware.DBAPIKeyValidator
+	mu              sync.RWMutex
+}
+
+// SetAPIKeyValidator injects the DB-backed API key validator.
+func (gw *Gateway) SetAPIKeyValidator(v *middleware.DBAPIKeyValidator) {
+	gw.apiKeyValidator = v
 }
 
 // SetCAECheck injects the CAE (Continuous Access Evaluation) middleware.
@@ -606,6 +612,9 @@ func (gw *Gateway) Handler() http.Handler {
 			if gw.caeCheck != nil {
 				h = gw.caeCheck(h)
 			}
+			if gw.apiKeyValidator != nil {
+				h = middleware.WithDBAPIKeyAuth(gw.apiKeyValidator)(h)
+			}
 			h = jwtMW(h)
 			if gw.sessionMgr != nil {
 				h = gw.sessionMgr.SessionTimeoutMiddleware(middleware.DefaultSessionTimeoutConfig())(h)
@@ -619,6 +628,9 @@ func (gw *Gateway) Handler() http.Handler {
 			// CAE: check jti blocklist AFTER JWTAuth (needs jti in context)
 			if gw.caeCheck != nil {
 				h = gw.caeCheck(h)
+			}
+			if gw.apiKeyValidator != nil {
+				h = middleware.WithDBAPIKeyAuth(gw.apiKeyValidator)(h)
 			}
 			h = jwtMW(h)
 			if gw.sessionMgr != nil {
