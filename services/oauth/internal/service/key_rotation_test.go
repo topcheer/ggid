@@ -157,9 +157,10 @@ func TestStartAutoRotation_RotatesWhenOld(t *testing.T) {
 	var mu sync.Mutex
 	var auditCalls []struct{ old, new string }
 
-	// maxAge = 1ms, checkInterval = 10ms — should rotate quickly
+	// maxAge = 5ms, checkInterval = 10ms — should rotate quickly
+	// (5ms gives enough headroom for slow CI runners to exceed maxAge)
 	rotated := make(chan struct{}, 4)
-	stop := kp.StartAutoRotation(10*time.Millisecond, 1*time.Millisecond, func(old, new string) {
+	stop := kp.StartAutoRotation(10*time.Millisecond, 5*time.Millisecond, func(old, new string) {
 		mu.Lock()
 		auditCalls = append(auditCalls, struct{ old, new string }{old, new})
 		mu.Unlock()
