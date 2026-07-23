@@ -1782,3 +1782,7 @@ no_tok=401 ✅ | login=AT+RT ✅ | GET=200 ✅ | POST=201 ✅ | viewer_write=403
 D1:7/7 ✅ | M2M:OK ✅ | API:200 ✅ | Hacks:0 ✅ — 65th clean cycle.
 
 ### Next Dimension: 2 — Cycle 76
+## Cycle 76: D2 AuthZ (Round 250)
+Admin(9p): inv 200/201 audit 200 users 403 ✅ | Viewer(4p): inv 200 write 403 ✅ | Fake 401 None 401 ✅ | Hacks:0 ✅ — 66th clean cycle.
+
+### Next Dimension: 3 — Cycle 77
