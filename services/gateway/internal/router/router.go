@@ -641,7 +641,7 @@ func (gw *Gateway) Handler() http.Handler {
 		}
 	})
 
-	// Apply outer middleware: PanicRecovery → SecurityHeaders → CORS → RequestID → StructuredLogging → RateLimit → BotDetect → TenantResolver → Timeout → MaxBodySize → inner
+	// Apply outer middleware: PanicRecovery → SecurityHeaders → CORS → RequestID → StructuredLogging → RateLimit → BotDetect → TenantResolver → Timeout → MaxBodySize → Metering → inner
 	logger := middleware.NewStructuredLogger("ggid-gateway")
 	handler := middleware.MaxBodySize(gw.maxBodySize())(inner)
 	handler = middleware.TimeoutMiddleware(middleware.DefaultTimeoutConfig())(handler)
@@ -650,6 +650,10 @@ func (gw *Gateway) Handler() http.Handler {
 	handler = gw.rateLimiter.Middleware(handler)
 	handler = middleware.ContentTypeValidator(handler)
 	handler = middleware.RequestLogger(logger)(handler)
+	// API metering: record per-tenant API count + latency (async batch insert).
+	if gw.cfg.DatabaseURL != "" {
+		handler = middleware.APIMetering(gw.cfg.DatabaseURL, middleware.DefaultMeteringConfig())(handler)
+	}
 	handler = middleware.RequestID(handler)
 	handler = middleware.Gzip(handler)
 	handler = middleware.CORS(handler)
