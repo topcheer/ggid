@@ -1635,3 +1635,40 @@ PW grant:7/7 ✅ | M2M=OK ✅ | Token→API=200 ✅ | Hacks:0 ✅ — 48th clean
 50th consecutive zero-fix cycle.
 
 ### Next Dimension: 4 — Cycle 60 (Multi-tenant Isolation)
+
+## Cycle 60: D4 Multi-tenant Isolation (Round 234)
+
+### JWT tenant_id Verification
+- Go: 1effd2c4-fc5a ✅
+- Node: b1a2329f-223f ✅
+- Ruby: a9a252cf-014f ✅
+
+### Cross-tenant Access Matrix
+
+| Path | Expected | Actual | Status |
+|------|----------|--------|--------|
+| Go→Go (same tenant) | 200 | 200 | ✅ |
+| Node→Go (cross-tenant) | 401/403 | 403 | ✅ (gateway blocks — Node has no inventory perms) |
+| Ruby→Go (cross-tenant) | 401/403 | 200 | ⚠️ KNOWN ISSUE (D4 C8) |
+| Fake→Go | 401 | 401 | ✅ |
+| None→Go | 401 | 401 | ✅ |
+
+### Known Issue: Ruby→Go 200 (carried from D4 C8)
+- **Root cause**: D4 C7 tenant isolation code (commit f81722206) exists in repo but deployed Go demo Docker image is stale (arm64→amd64 cross-compile blocker)
+- **Gateway defense**: Works for tokens without matching permissions (Node=403), but Ruby token has full ERP permissions so gateway passes it through
+- **Code fix**: Already committed — `info.TenantID != tenantID → 401` in Go/Node/Java/C#/Rust demos
+- **Resolution**: Requires amd64 CI rebuild of demo images
+
+### Three-Layer Alignment
+| Layer | Status |
+|-------|--------|
+| Core (JWT tenant_id) | Correct — 3/3 tokens have matching tenant_id ✅ |
+| SDK (parse tenant_id) | All 7 SDKs expose tenant_id from JWT ✅ |
+| Demo (app-level check) | Code correct, deployment stale ⚠️ |
+| Gateway (first-line) | Blocks tokens without matching perms ✅ |
+
+Hack patterns: 0 ✅
+
+51st consecutive zero-fix cycle (code-level; deployment issue tracked separately).
+
+### Next Dimension: 5 — Cycle 61 (SDK Cross-language Consistency)
