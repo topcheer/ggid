@@ -162,3 +162,15 @@ echo "=== Done ==="
 echo "Admin login:  admin / $ADMIN_PASS"
 echo "ERP demo password: $ERP_PASS"
 echo "Tenant ID: $TENANT_ID"
+
+# ── Console OAuth client (if identity bootstrap was used) ──
+echo "[bonus] Creating console OAuth client..."
+kubectl exec -n $NAMESPACE $PGPOD -- psql -U ggid -d ggid -c "
+INSERT INTO oauth_clients (tenant_id, client_id, client_secret_hash, name, type, grant_types, response_types, redirect_uris, scopes, token_endpoint_auth_method, enabled)
+SELECT '$TENANT_ID', 'gcid-console', '', 'GGID Console', 'public',
+  ARRAY['password','authorization_code','refresh_token'],
+  ARRAY['code','token'], ARRAY[]::text[],
+  ARRAY['admin','openid','profile','email','offline_access'],
+  'none', true
+WHERE NOT EXISTS (SELECT 1 FROM oauth_clients WHERE tenant_id='$TENANT_ID')
+ON CONFLICT DO NOTHING;" 2>&1 | grep -v "^$" || true
