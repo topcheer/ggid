@@ -14,6 +14,8 @@ import {
   Unlock,
   Trash2,
   UserPlus,
+  UserCheck,
+  UserX,
   ChevronLeft,
   ChevronRight,
   Shield,
@@ -257,6 +259,38 @@ export default function UsersPage() {
       setBatchRole("");
     } catch (err) {
       console.error(err instanceof Error ? err.message : t("users.batchAssignFailed"));
+    }
+  };
+
+  const handleBatchActivate = async () => {
+    if (selected.size === 0) return;
+    try {
+      await Promise.all(
+        [...selected].map((id: any) =>
+          apiFetch(`/api/v1/users/${id}/activate`, { method: "POST" }),
+        ),
+      );
+      setMsg(`${selected.size} users activated`);
+      setSelected(new Set());
+      loadUsers();
+    } catch (err) {
+      setMsg(err instanceof Error ? err.message : "Batch activate failed");
+    }
+  };
+
+  const handleBatchDeactivate = async () => {
+    if (selected.size === 0) return;
+    try {
+      await Promise.all(
+        [...selected].map((id: any) =>
+          apiFetch(`/api/v1/users/${id}/deactivate`, { method: "POST" }),
+        ),
+      );
+      setMsg(`${selected.size} users deactivated`);
+      setSelected(new Set());
+      loadUsers();
+    } catch (err) {
+      setMsg(err instanceof Error ? err.message : "Batch deactivate failed");
     }
   };
 
@@ -847,6 +881,12 @@ export default function UsersPage() {
             </select>
             <button onClick={handleBatchAssignRole} disabled={!batchRole} className="flex items-center gap-1 rounded bg-brand-600 px-2 py-1 text-xs text-white disabled:opacity-50" aria-label="Shield">
               <Shield className="h-3 w-3" /> {t("users.assign")}
+            </button>
+            <button onClick={handleBatchActivate} className="flex items-center gap-1 rounded bg-green-600 px-2 py-1 text-xs text-white" aria-label="UserCheck">
+              <UserCheck className="h-3 w-3" /> Activate
+            </button>
+            <button onClick={handleBatchDeactivate} className="flex items-center gap-1 rounded bg-amber-600 px-2 py-1 text-xs text-white" aria-label="UserX">
+              <UserX className="h-3 w-3" /> Deactivate
             </button>
             <button onClick={handleBatchDelete} className="flex items-center gap-1 rounded bg-red-600 px-2 py-1 text-xs text-white" aria-label="Trash2">
               <Trash2 className="h-3 w-3" /> {t("common.delete")}

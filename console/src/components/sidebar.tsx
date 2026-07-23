@@ -101,6 +101,8 @@ export function Sidebar() {
         { href: "/api-keys", label: "API Keys", icon: KeyRound },
         { href: "/settings/scim", label: "SCIM", icon: BookOpen },
         { href: "/settings/ldap-config", label: "LDAP", icon: Network },
+        { href: "/settings/rate-limits", label: "Rate Limits", icon: Gauge },
+        { href: "/api-explorer", label: "API Explorer", icon: Terminal },
       ],
     },
     {

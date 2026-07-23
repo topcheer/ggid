@@ -49,6 +49,8 @@ const ALL_COMMANDS: CommandItem[] = [
   { id: "webhooks", label: "Webhooks", href: "/webhooks", group: "Applications" },
   { id: "scim", label: "SCIM Configuration", href: "/settings/scim", group: "Applications" },
   { id: "ldap", label: "LDAP Configuration", href: "/settings/ldap-config", group: "Applications" },
+  { id: "rate-limits", label: "Rate Limits", href: "/settings/rate-limits", group: "Applications" },
+  { id: "api-explorer", label: "API Explorer", href: "/api-explorer", group: "Applications" },
   { id: "saml", label: "SAML Configuration", href: "/settings/saml-config", group: "Applications" },
   // Settings
   { id: "settings", label: "All Settings", href: "/settings", group: "Settings" },
