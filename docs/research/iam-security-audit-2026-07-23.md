@@ -450,3 +450,8 @@ S1 scope filter 在 binary 中未检出（fresh boot 后可能重部署了旧版
 全部历史项不变：裸角色名 0, 硬编码 0, 错误吞噬 28, sync.Map 13, 匿名 401, RBAC 测试全绿。
 近期 commit `2cb2ae717` fix(rbac): M2M tokens with matching permissions bypass admin scope check — 需关注是否放宽了检查。
 无新 P0/P1，静默记录。
+
+### 巡航 #16+#17 | 维度 3+4: 会话/令牌 + 传输/加密（第三循环） | 2026-07-24
+
+全部历史项不变。C1 ✅ FIXED (DB-backed), C2/C4 ❌ OPEN (P2 sync.Map), PKCE ✅, LDAP TLS ✅, HMAC versioning ✅, TOTP encrypt ✅, TLS 1.2+ ✅ (7处), 硬编码 0, InsecureSkipVerify 0, 错误吞噬 28, 匿名 401, HSTS ✅.
+近期 commit: ERP stability cycles only — 无安全回归。无新 P0/P1，静默记录。
