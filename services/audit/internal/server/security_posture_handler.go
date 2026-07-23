@@ -101,7 +101,8 @@ func (s *HTTPServer) calculatePostureDimensions(tenantID uuid.UUID) postureDimen
 	if s.pool == nil {
 		return d
 	}
-	ctx := contextWithTimeout(5 * time.Second)
+	ctx, cancel := contextWithTimeout(5 * time.Second)
+	defer cancel()
 
 	// --- Identity dimension ---
 	var totalUsers, mfaUsers, inactiveUsers int
@@ -215,21 +216,24 @@ func (s *HTTPServer) savePostureHistory(tenantID uuid.UUID, overall int, d postu
 	recsJSON, _ := json.Marshal(recs)
 	// Throttle: only save if last entry is > 1 hour ago
 	var lastEval time.Time
-	_ = s.pool.QueryRow(contextWithTimeout(3*time.Second),
+	ctx2, cancel2 := contextWithTimeout(3 * time.Second)
+	defer cancel2()
+	_ = s.pool.QueryRow(ctx2,
 		`SELECT evaluated_at FROM zt_posture_history WHERE tenant_id = $1 ORDER BY evaluated_at DESC LIMIT 1`,
 		tenantID).Scan(&lastEval)
 	if time.Since(lastEval) < time.Hour {
 		return // already have a recent entry
 	}
-	s.pool.Exec(contextWithTimeout(3*time.Second),
+	ctx3, cancel3 := contextWithTimeout(3 * time.Second)
+	defer cancel3()
+	s.pool.Exec(ctx3,
 		`INSERT INTO zt_posture_history (tenant_id, overall_score, identity_score, device_score, network_score, data_score, workload_score, grade, findings, recommendations)
 		 VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)`,
 		tenantID, overall, d.Identity, d.Device, d.Network, d.Data, d.Workload, grade, string(findingsJSON), string(recsJSON))
 }
 
-func contextWithTimeout(d time.Duration) context.Context {
-	ctx, _ := context.WithTimeout(context.Background(), d)
-	return ctx
+func contextWithTimeout(d time.Duration) (context.Context, context.CancelFunc) {
+	return context.WithTimeout(context.Background(), d)
 }
 func clampScore(v int) int { if v < 0 { return 0 }; if v > 100 { return 100 }; return v }
 func itoa(i int) string { return string(rune('0'+i/10)) + string(rune('0'+i%10)) }
