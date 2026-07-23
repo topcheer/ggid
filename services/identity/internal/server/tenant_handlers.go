@@ -182,10 +182,13 @@ func (h *HTTPHandler) handleSystemBootstrap(w http.ResponseWriter, r *http.Reque
 		// Non-fatal — user is created, credential can be set via password reset.
 	}
 
-	// 4. Assign admin role via direct SQL (creates role if not exists).
+	// 4. Create default roles + assign admin role via direct SQL.
 	_, err = h.svc.Pool().Exec(ctx,
 		`INSERT INTO roles (tenant_id, key, name, description, system_role)
-		 VALUES ($1, 'tenant:admin', 'Administrator', 'Full system access', true)
+		 VALUES
+		   ($1, 'tenant:admin', 'Administrator', 'Full system access', true),
+		   ($1, 'viewer', 'Viewer', 'Read-only access to resources', true),
+		   ($1, 'user', 'User', 'Standard user with self-service access', true)
 		 ON CONFLICT DO NOTHING`,
 		tenantID)
 	if err != nil {
