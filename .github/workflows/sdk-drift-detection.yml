@@ -1,0 +1,205 @@
+name: SDK OpenAPI Drift Detection
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'deploy/openapi.yaml'
+      - 'docs/openapi.yaml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'deploy/openapi.yaml'
+      - 'docs/openapi.yaml'
+      - 'sdk/**'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  detect-drift:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: |
+          npm install -g @redocly/cli@latest
+          pip install pyyaml
+
+      - name: Extract OpenAPI endpoints
+        id: extract
+        run: |
+          python3 -c "
+          import yaml, json, sys
+
+          with open('deploy/openapi.yaml') as f:
+              spec = yaml.safe_load(f)
+
+          endpoints = []
+          for path, methods in (spec.get('paths') or {}).items():
+              for method, details in methods.items():
+                  if method.upper() in ('GET','POST','PUT','DELETE','PATCH'):
+                      op_id = details.get('operationId', f'{method}_{path}')
+                      endpoints.append({
+                          'method': method.upper(),
+                          'path': path,
+                          'operationId': op_id,
+                          'tag': (details.get('tags') or ['unknown'])[0]
+                      })
+
+          with open('/tmp/openapi-endpoints.json', 'w') as f:
+              json.dump(endpoints, f, indent=2)
+
+          print(f'Found {len(endpoints)} endpoints in OpenAPI spec')
+          "
+
+      - name: Check Node SDK drift
+        id: node-drift
+        run: |
+          python3 << 'PYEOF'
+          import json, re, os
+
+          with open('/tmp/openapi-endpoints.json') as f:
+              spec_endpoints = json.load(f)
+
+          spec_paths = set(e['path'] for e in spec_endpoints)
+          spec_ops = set(f\"{e['method']} {e['path']}\" for e in spec_endpoints)
+
+          # Parse Node SDK for API paths
+          sdk_paths = set()
+          sdk_file = 'sdk/node/src/client.ts'
+          if os.path.exists(sdk_file):
+              with open(sdk_file) as f:
+                  content = f.read()
+              # Find all URL path patterns
+              for m in re.finditer(r'[`\x27\"](\/api\/v1\/[^`\x27\"]+)[`\x27\"]', content):
+                  sdk_paths.add(m.group(1))
+              for m in re.finditer(r'[`\x27\"](\/oauth\/[^`\x27\"]+)[`\x27\"]', content):
+                  sdk_paths.add(m.group(1))
+
+          # Find drift
+          in_spec_not_sdk = spec_paths - sdk_paths
+          in_sdk_not_spec = sdk_paths - spec_paths
+
+          drift = False
+          report = []
+          if in_spec_not_sdk:
+              drift = True
+              report.append(f'### In OpenAPI but missing from Node SDK ({len(in_spec_not_sdk)})\n')
+              for p in sorted(in_spec_not_sdk)[:20]:
+                  report.append(f'- \`{p}\`')
+          if in_sdk_not_spec:
+              drift = True
+              report.append(f'\n### In Node SDK but not in OpenAPI ({len(in_sdk_not_spec)})\n')
+              for p in sorted(in_sdk_not_spec)[:20]:
+                  report.append(f'- \`{p}\`')
+
+          if drift:
+              print('::warning::SDK drift detected')
+              with open('/tmp/node-drift-report.md', 'w') as f:
+                  f.write('\n'.join(report))
+          else:
+              print('Node SDK: no drift detected')
+
+          with open('/tmp/node-drift-status.txt', 'w') as f:
+              f.write('drift' if drift else 'ok')
+          PYEOF
+
+      - name: Check Python SDK drift
+        id: python-drift
+        run: |
+          python3 << 'PYEOF'
+          import json, re, os
+
+          with open('/tmp/openapi-endpoints.json') as f:
+              spec_endpoints = json.load(f)
+
+          spec_paths = set(e['path'] for e in spec_endpoints)
+
+          sdk_paths = set()
+          sdk_file = 'sdk/python/ggid/client.py'
+          if os.path.exists(sdk_file):
+              with open(sdk_file) as f:
+                  content = f.read()
+              for m in re.finditer(r'["\x27](/api/v1/[^"\x27]+)["\x27]', content):
+                  sdk_paths.add(m.group(1))
+              for m in re.finditer(r'["\x27](/oauth/[^"\x27]+)["\x27]', content):
+                  sdk_paths.add(m.group(1))
+
+          in_spec_not_sdk = spec_paths - sdk_paths
+          in_sdk_not_spec = sdk_paths - spec_paths
+
+          drift = False
+          report = []
+          if in_spec_not_sdk:
+              drift = True
+              report.append(f'### In OpenAPI but missing from Python SDK ({len(in_spec_not_sdk)})\n')
+              for p in sorted(in_spec_not_sdk)[:20]:
+                  report.append(f'- \`{p}\`')
+          if in_sdk_not_spec:
+              drift = True
+              report.append(f'\n### In Python SDK but not in OpenAPI ({len(in_sdk_not_spec)})\n')
+              for p in sorted(in_sdk_not_spec)[:20]:
+                  report.append(f'- \`{p}\`')
+
+          if drift:
+              print('::warning::Python SDK drift detected')
+              with open('/tmp/python-drift-report.md', 'w') as f:
+                  f.write('\n'.join(report))
+          else:
+              print('Python SDK: no drift detected')
+
+          with open('/tmp/python-drift-status.txt', 'w') as f:
+              f.write('drift' if drift else 'ok')
+          PYEOF
+
+      - name: Comment on PR
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            let body = '## SDK Drift Detection Report\n\n';
+
+            try {
+              const status = fs.readFileSync('/tmp/node-drift-status.txt', 'utf8').trim();
+              if (status === 'drift') {
+                body += '### ⚠️ Node SDK Drift\n\n' + fs.readFileSync('/tmp/node-drift-report.md', 'utf8') + '\n\n';
+              } else {
+                body += '### ✅ Node SDK — No Drift\n\n';
+              }
+            } catch(e) { body += '### ⏭️ Node SDK — Skipped\n\n'; }
+
+            try {
+              const status = fs.readFileSync('/tmp/python-drift-status.txt', 'utf8').trim();
+              if (status === 'drift') {
+                body += '### ⚠️ Python SDK Drift\n\n' + fs.readFileSync('/tmp/python-drift-report.md', 'utf8') + '\n\n';
+              } else {
+                body += '### ✅ Python SDK — No Drift\n\n';
+              }
+            } catch(e) { body += '### ⏭️ Python SDK — Skipped\n\n'; }
+
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+            const existing = comments.find(c => c.user.type === 'Bot' && c.body.includes('SDK Drift Detection'));
+            if (existing) {
+              await github.rest.issues.updateComment({ owner: context.repo.owner, repo: context.repo.repo, comment_id: existing.id, body });
+            } else {
+              await github.rest.issues.createComment({ owner: context.repo.owner, repo: context.repo.repo, issue_number: context.issue.number, body });
+            }
