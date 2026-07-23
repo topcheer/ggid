@@ -1484,3 +1484,23 @@ D1:7/7 ✅ | D2:admin=200 viewer=403 ✅ | Hacks:0 ✅ — 38th clean cycle.
 D1:7/7 ✅ | D2:admin=200 viewer=403 ✅ | Hacks:0 ✅ — 39th clean cycle.
 
 ### Next Dimension: 1 — Cycle 49
+
+## Cycle 49: D1 Authentication Completeness (Round 218)
+
+**Core Changes**: `b32afdd20` audit hash unify + `08ce1d251` R3-03 HA + `17872d3b3` R3-04 MCP AI agent. Audit build: ✅.
+
+### D1 Results
+
+| Check | Result |
+|-------|--------|
+| Password grant × 7 tenants | 7/7 AT=Y TT=Bearer EI=900 ✅ |
+| M2M client_credentials (Node) | AT=True EI=900 ✅ |
+| Token → API (Go inventory) | 27 items ✅ |
+| JWT claims | sub+tenant_id+roles+permissions+scope+iss+aud+exp+jti ✅ |
+| Token refresh (offline_access) | RT present → new token OK ✅ |
+| SDK login() structure | 7 SDKs consistent (access_token+token_type+expires_in) ✅ |
+| Hack patterns | 0 ✅ |
+
+**Note**: Node tenant scope=none (expected — M2M client_credentials has different scope handling). Other 6 tenants return scope=erp_admin.
+
+### Next Dimension: 2 — Authorization Boundaries
