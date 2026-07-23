@@ -155,6 +155,7 @@ export default function ITDRDashboardPage() {
         <button
           onClick={() => loadData(true)}
           disabled={refreshing}
+          aria-label="Refresh ITDR data"
           className="flex items-center gap-2 rounded-lg border border-gray-300 dark:border-gray-600 px-3 py-2 text-sm hover:bg-gray-50 dark:hover:bg-gray-700"
         >
           <RefreshCw className={`h-4 w-4 ${refreshing ? "animate-spin" : ""}`} /> Refresh
@@ -354,7 +355,7 @@ export default function ITDRDashboardPage() {
                   <div className="mt-2 text-xs text-gray-400">Trigger: {pb.trigger}</div>
                   {pb.actions?.length > 0 && (
                     <div className="mt-2 flex flex-wrap gap-1">
-                      {pb.actions.map((action, i) => (
+                      {(pb.actions || []).map((action, i) => (
                         <span key={i} className="rounded bg-gray-100 dark:bg-gray-700 px-2 py-0.5 text-xs text-gray-600 dark:text-gray-300">
                           {action}
                         </span>
