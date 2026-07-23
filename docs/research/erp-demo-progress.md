@@ -1569,3 +1569,38 @@ no_token=401 ✅ | login=AT+RT ✅ | GET=200 ✅ | POST=201 ✅ | viewer_write=4
 PW grant:7/7 ✅ | M2M=OK ✅ | Token→API=200 ✅ | Hacks:0 ✅ — 48th clean cycle.
 
 ### Next Dimension: 2 — Cycle 58
+
+## Cycle 58: D2 Authorization Boundaries (Round 232)
+
+### JWT Claims
+- Admin: roles=['ERP Admin'] perms(9)=audit:read,dashboard:read,inventory:delete/read/write,orders:approve/read/read:all/write
+- Viewer: roles=['ERP Viewer'] perms(4)=audit:read,dashboard:read,inventory:read,orders:read
+
+### RBAC Boundary Results
+
+| Check | Expected | Actual | Status |
+|-------|----------|--------|--------|
+| Admin GET inventory | 200 | 200 | ✅ |
+| Admin POST inventory | 201 | 201 | ✅ |
+| Admin POST order | 201 | ORD-0009 | ✅ |
+| Admin PUT approve | 200 | 200 | ✅ |
+| Admin GET audit | 200 | 200 | ✅ |
+| Admin GET users | 403 | 403 | ✅ (least privilege — erp_admin lacks users:read) |
+| Viewer GET inventory | 200 | 200 | ✅ |
+| Viewer POST inventory | 403 | 403 | ✅ |
+| Viewer POST order | 403 | 403 | ✅ |
+| Viewer PUT approve | 403 | 403 | ✅ |
+| Fake token | 401 | 401 | ✅ |
+| No token | 401 | 401 | ✅ |
+| Hack patterns | 0 | 0 | ✅ |
+
+**Three-Layer Alignment:**
+| Layer | Status |
+|-------|--------|
+| Core (JWT permissions claim) | 9 admin / 4 viewer — correct ✅ |
+| SDK (verifyToken parses permissions) | All 7 SDKs expose permissions[] ✅ |
+| Demo (requirePerm checks) | inventory:read/write, orders:read/write/approve, audit:read — enforced ✅ |
+
+49th consecutive zero-fix cycle.
+
+### Next Dimension: 3 — Cycle 59 (Demo Functional Completeness)
