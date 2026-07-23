@@ -51,6 +51,11 @@
 - [2026-07-23] **已修复: ITDR 端点 404** — threat-heatmap, kill-chain, incident-timeline 在 audit http.go 已注册但 deployed image 过旧。重建部署后全部 200。Console security 页面 ITDR 功能可用
 - [2026-07-23] **R3-02 Helm Chart v1.0.0** — values-dev/staging/prod 分层 + RUNBOOK.md (install/rollback/scaling/troubleshoot/backup). commit 42e16af45
 - [2026-07-23] **R3-03 HA 设计** — 多区域架构文档 (CNPG PG 复制, Redis sentinel, GeoDNS 故障转移). commit d0e76c864
+- [2026-07-23] **P1: SCIM 2.0 被 Gateway JWTAuth 拦截** — `/scim/v2/` 路径不在 publicPaths 中，SCIM bearer token 无法通过 JWT 验证。修复：加入 publicPaths。commit 3e2833bda
+- [2026-07-23] **P2: Console password settings 页面 API 端点错误** — `settings/password/page.tsx` PUT 到 `/api/v1/tenants/{id}/password-policy` (404)。修复为 `/api/v1/auth/password-policy` (200)。commit 1eb958486
+- [2026-07-23] **已验证: Password Policy API** — `/api/v1/auth/password-policy` GET 返回 MinLength:12 + complexity rules。`/api/v1/auth/password-policy/config` 返回 per-role override + breach check 配置
+- [2026-07-23] **已验证: api_keys DB schema** — id 必须是 UUID 类型 (非 TEXT), 列名 last_used_at (非 last_used)。backend repo 期望 UUID scan + last_used_at 列名
+- [2026-07-23] **已修复: CI build** — EmailVerified 字段未提交 + context leak in vet。commits 6856bf8b5, 85e03b3a8
 
 - [2026-07-21] auth-guard.tsx scope 匹配：JWT roles 存的是显示名（如 "Platform Administrator"），不是 scope key（如 "platform:admin"）。匹配逻辑必须大小写不敏感 + 包含显示名变体
 - [2026-07-21] Go SDK verifyTokenOffline 用 ParseUnverified 接受伪造 JWT。已移除，VerifyToken 强制要求 WithJWKS()
