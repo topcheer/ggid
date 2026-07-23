@@ -1233,3 +1233,29 @@ Hacks: 0 ✅ — **Eighteenth consecutive zero-fix cycle.**
 Org build: ✅ | Hacks: 0 ✅ — **Nineteenth consecutive zero-fix cycle.**
 
 ### Next Dimension: 1 — Cycle 28
+
+## Cycle 28: Post-API-Key-DB-Auth (Rounds 186-191)
+
+**Core Changes** (3 new commits — security hardening):
+- `4183b84e4` feat(gateway): DB-backed API key authentication (P1)
+- `2c298a0fc` fix: P2-13 email-verified gate + P2-11 redirect_uri allowlist
+- `a00664831` fix(api-keys): Argon2id integration — embed keyID in secret for O(1) lookup
+
+**Gateway auth changed** — API key path now uses DB+Argon2id instead of in-memory. JWT Bearer auth path unchanged.
+
+**All 6 dimensions pass, zero issues**:
+
+| Dim | Result |
+|-----|--------|
+| D1 | 7/7 password grant, M2M OK ✅ |
+| D2 | admin 200/201, viewer 200/403 ✅ |
+| D3 | 24 items, all fields ✅ |
+| D4 | Go→Go 200, Node→Go 403, Fake 401 ✅ |
+| D5 | 7/7 SDK consistent ✅ |
+| D6 | refresh OK, no-token 401 ✅ |
+
+Gateway+Auth build: ✅ | Hacks: 0 ✅ — **Twentieth consecutive zero-fix cycle.**
+
+API key DB-backed auth + Argon2id + redirect_uri allowlist are additive/hardening — JWT Bearer auth path (used by all demos) unaffected.
+
+### Next Dimension: 1 — Cycle 29
