@@ -22,6 +22,7 @@ public class GGIDClient {
     private final String tenantId;
     private final String apiKey;
     private final OkHttpClient httpClient;
+    private final JwtVerifier jwtVerifier;
 
     public GGIDClient(Config config) {
         this.gatewayUrl = config.gatewayUrl.replaceAll("/$", "");
@@ -32,6 +33,22 @@ public class GGIDClient {
                 .readTimeout(Duration.ofSeconds(30))
                 .writeTimeout(Duration.ofSeconds(10))
                 .build();
+        this.jwtVerifier = new JwtVerifier(gatewayUrl, null, 30);
+    }
+
+    /**
+     * Verify a JWT token and return the authenticated user.
+     * Uses JWKS + RS256 signature verification via JwtVerifier.
+     *
+     * @param token the JWT access token to verify
+     * @return the authenticated user, or null if verification fails
+     */
+    public GGIDUser verifyUser(String token) {
+        try {
+            return jwtVerifier.verifyUser(token);
+        } catch (Exception e) {
+            return null;
+        }
     }
 
     // -----------------------------------------------------------------------
