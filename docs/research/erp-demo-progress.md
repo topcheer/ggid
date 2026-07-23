@@ -1216,3 +1216,20 @@ Hacks: 0 ✅ — **Seventeenth consecutive zero-fix cycle.**
 Hacks: 0 ✅ — **Eighteenth consecutive zero-fix cycle.**
 
 ### Next Dimension: 1 — Cycle 27
+
+## Cycle 27: Post-Org-Restructure-Handler (Rounds 180-185)
+
+**Core Change**: `2d67dc4e9` R1-03 org restructure handler — replace stub with real DeptService calls. Org service only.
+
+| Dim | Result |
+|-----|--------|
+| D1 | 7/7 password grant, M2M OK ✅ |
+| D2 | admin 200/201, viewer 200/403 ✅ |
+| D3 | 23 items, all fields ✅ |
+| D4 | Go→Go 200, Node→Go 403, Fake 401 ✅ |
+| D5 | 7/7 SDK consistent ✅ |
+| D6 | refresh OK, no-token 401 ✅ |
+
+Org build: ✅ | Hacks: 0 ✅ — **Nineteenth consecutive zero-fix cycle.**
+
+### Next Dimension: 1 — Cycle 28
