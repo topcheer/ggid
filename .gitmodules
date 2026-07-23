@@ -1,0 +1,6 @@
+[submodule "sdk/node"]
+	path = sdk/node
+	url = https://github.com/topcheer/ggid-sdk-node.git
+[submodule "sdk/python"]
+	path = sdk/python
+	url = https://github.com/topcheer/ggid-sdk-python.git
