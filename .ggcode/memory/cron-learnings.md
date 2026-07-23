@@ -47,6 +47,10 @@
 - [2026-07-23] **P1: API Keys 完全不可用** — 两层断裂：(1) api_keys_handler.go 用内存 `apiKeys = []APIKey{}` 存储 (pod 重启丢失) (2) Gateway `APIKeyAuth` 中间件存在但从未 wire 进 middleware chain (cmd/main.go 无调用)。用户创建 key 得到 `ggid_sk_*` 但 X-API-Key 调 API 返回 401。已 DM backend 认领
 - [2026-07-23] **已验证: Webhook 生命周期** — create (返回 name+url+events+id) → list → update (PUT) → delete → verify gone。全链路 PASS
 - [2026-07-23] **已验证: API Key 创建** — POST /api/v1/api-keys 返回 `{"key":"ggid_sk_*"}` 格式正确，但 key 不可用于认证（见上）
+- [2026-07-23] **已修复: API Key 认证完整闭环** — DBAPIKeyValidator (Argon2id) 接入 gateway middleware chain。根因 1: middleware 顺序 (APIKey 必须 wrap JWTAuth)。根因 2: COALESCE(expires_at,'epoch') 把 NULL 当 1970 过期。commits: 4183b84e4, 693f5597b, 0130c87f0
+- [2026-07-23] **已修复: ITDR 端点 404** — threat-heatmap, kill-chain, incident-timeline 在 audit http.go 已注册但 deployed image 过旧。重建部署后全部 200。Console security 页面 ITDR 功能可用
+- [2026-07-23] **R3-02 Helm Chart v1.0.0** — values-dev/staging/prod 分层 + RUNBOOK.md (install/rollback/scaling/troubleshoot/backup). commit 42e16af45
+- [2026-07-23] **R3-03 HA 设计** — 多区域架构文档 (CNPG PG 复制, Redis sentinel, GeoDNS 故障转移). commit d0e76c864
 
 - [2026-07-21] auth-guard.tsx scope 匹配：JWT roles 存的是显示名（如 "Platform Administrator"），不是 scope key（如 "platform:admin"）。匹配逻辑必须大小写不敏感 + 包含显示名变体
 - [2026-07-21] Go SDK verifyTokenOffline 用 ParseUnverified 接受伪造 JWT。已移除，VerifyToken 强制要求 WithJWKS()
