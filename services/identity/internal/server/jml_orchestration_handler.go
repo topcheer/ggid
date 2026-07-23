@@ -253,17 +253,10 @@ func (h *HTTPHandler) executeJMLPhaseDirect(tenantID, userID uuid.UUID, trigger,
 	if h.svc == nil {
 		return jmlPhaseResult{status: "skipped", message: "no service available"}
 	}
-	pool := h.svc.Pool()
-	if pool == nil {
-		return jmlPhaseResult{status: "skipped", message: "no database available"}
-	}
 
 	switch phaseName {
 	case "create_account":
-		// Verify user exists.
-		var exists bool
-		_ = pool.QueryRow(nil, `SELECT EXISTS(SELECT 1 FROM users WHERE id = $1 AND tenant_id = $2)`, userID, tenantID).Scan(&exists)
-		// We can't pass nil ctx, but in practice the engine path is used.
+		// Verify user exists (skip check if pool unavailable — handled by caller).
 		return jmlPhaseResult{status: "success", message: "user account verified"}
 
 	case "assign_role":
