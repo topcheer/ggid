@@ -118,7 +118,9 @@ export default function LdapConfigPage() {
         <table className="w-full text-sm">
           <thead className="bg-gray-50 dark:bg-gray-800"><tr className="text-left"><th className="p-3">LDAP Attribute</th><th className="p-3">Local Attribute</th><th className="p-3">Action</th></tr></thead>
           <tbody>
-            {attrMapping.map((m: any, idx: number) => (
+            {attrMapping.length === 0 ? (
+              <tr><td colSpan={3} className="p-6 text-center text-gray-400 text-sm">No attribute mappings configured. Add mappings below (e.g., <code className="font-mono text-xs">uid → username</code>) to sync LDAP attributes.</td></tr>
+            ) : attrMapping.map((m: any, idx: number) => (
               <tr key={idx} className="border-b"><td className="p-3 font-mono text-xs">{m.ldap}</td><td className="p-3 font-mono text-xs">{m.local}</td><td className="p-3"><button onClick={() => removeMapping(idx)} className="text-red-600 text-xs hover:underline">Remove</button></td></tr>
             ))}
           </tbody>

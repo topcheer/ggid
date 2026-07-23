@@ -162,7 +162,17 @@ export default function PasskeyManagementPage() {
             </tr>
           </thead>
           <tbody>
-            {passkeys.map(p => (
+            {passkeys.length === 0 ? (
+              <tr>
+                <td colSpan={8} className="p-8 text-center text-gray-500">
+                  <div className="flex flex-col items-center gap-2">
+                    <svg className="w-12 h-12 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 7a4 4 0 11-8 0 4 4 0 018 0zM12 14v7m-3-3h6" /></svg>
+                    <p className="text-sm font-medium">No passkeys registered yet</p>
+                    <p className="text-xs text-gray-400">Click "Register Passkey" above to add your first passkey device.</p>
+                  </div>
+                </td>
+              </tr>
+            ) : passkeys.map(p => (
               <tr key={p.id} className="border-b hover:bg-gray-50 dark:hover:bg-gray-700 dark:bg-gray-800">
                 <td className="p-3 font-medium">{p.deviceName}</td>
                 <td className="p-3"><span className={`px-2 py-0.5 rounded text-xs ${platformColor(p.platform)}`}>{p.platform}</span></td>
