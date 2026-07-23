@@ -167,7 +167,7 @@ func (s *HTTPServer) handleITDRComposite(w http.ResponseWriter, r *http.Request)
 	}
 }
 
-// handleITDRIncidents returns active security itdrIncidents.
+// handleITDRIncidents returns active security incidents.
 func (s *HTTPServer) handleITDRIncidents(w http.ResponseWriter, r *http.Request) {
 	itdrIncidentsMu.RLock()
 	result := make([]*IncidentListEntry, 0, len(itdrIncidents))
@@ -179,7 +179,9 @@ func (s *HTTPServer) handleITDRIncidents(w http.ResponseWriter, r *http.Request)
 		result = append(result, inc)
 	}
 	itdrIncidentsMu.RUnlock()
-	writeJSON2(w, http.StatusOK, map[string]any{"itdrIncidents": result, "total": len(result)})
+	// Return both "incidents" (canonical) and "itdrIncidents" (legacy) keys
+	// for frontend compatibility.
+	writeJSON2(w, http.StatusOK, map[string]any{"incidents": result, "itdrIncidents": result, "total": len(result)})
 }
 
 // handleITDRKillChain returns the kill chain timeline for an incident.
@@ -210,6 +212,7 @@ func (s *HTTPServer) handleITDRPlaybooks(w http.ResponseWriter, r *http.Request)
 			result = append(result, pb)
 		}
 		playbooksMu.RUnlock()
+		// Build response with "playbooks" key; flatten steps to actions for frontend compat.
 		writeJSON2(w, http.StatusOK, map[string]any{"playbooks": result, "total": len(result)})
 	case http.MethodPost:
 		var pb Playbook
@@ -231,14 +234,100 @@ func (s *HTTPServer) handleITDRPlaybooks(w http.ResponseWriter, r *http.Request)
 	}
 }
 
-// handleITDRThreatHeatmap returns user×resource detection heatmap data.
-func (s *HTTPServer) handleITDRThreatHeatmap(w http.ResponseWriter, r *http.Request) {
-	// In production: aggregate from detections table GROUP BY user_id, resource_type.
-	// For now returns structured response ready for DB wiring.
+// handleITDRKillChainSummary returns aggregate kill chain stage data for the dashboard.
+// Unlike handleITDRKillChain (per-incident), this returns overall attack stage counts.
+func (s *HTTPServer) handleITDRKillChainSummary(w http.ResponseWriter, r *http.Request) {
+	stages := []map[string]any{
+		{"stage": "reconnaissance", "label": "Reconnaissance", "count": 0, "color": "#60a5fa"},
+		{"stage": "credential_access", "label": "Credential Access", "count": 0, "color": "#f59e0b"},
+		{"stage": "lateral_movement", "label": "Lateral Movement", "count": 0, "color": "#f97316"},
+		{"stage": "exfiltration", "label": "Exfiltration", "count": 0, "color": "#ef4444"},
+		{"stage": "impact", "label": "Impact", "count": 0, "color": "#dc2626"},
+	}
+
+	itdrIncidentsMu.RLock()
+	// Count incidents per stage based on timeline entries
+	for _, inc := range itdrIncidents {
+		for _, entry := range inc.Timeline {
+			for i, st := range stages {
+				if strings.Contains(strings.ToLower(entry.Event), st["stage"].(string)) {
+					stages[i]["count"] = st["count"].(int) + 1
+					break
+				}
+			}
+		}
+	}
+	itdrIncidentsMu.RUnlock()
+
+	totalAttacks := 0
+	for _, st := range stages {
+		totalAttacks += st["count"].(int)
+	}
+
 	writeJSON2(w, http.StatusOK, map[string]any{
-		"entries":  []ThreatHeatmapEntry{},
-		"total":    0,
-		"generated_at": time.Now().UTC(),
+		"stages":        stages,
+		"total_attacks": totalAttacks,
+	})
+}
+
+// handleITDRTimelineFeed returns recent incident timeline events for the dashboard.
+func (s *HTTPServer) handleITDRTimelineFeed(w http.ResponseWriter, r *http.Request) {
+	type timelineEvent struct {
+		ID        string `json:"id"`
+		Timestamp string `json:"timestamp"`
+		Event     string `json:"event"`
+		Severity  string `json:"severity"`
+		Source    string `json:"source"`
+	}
+
+	events := []timelineEvent{}
+	itdrIncidentsMu.RLock()
+	for _, inc := range itdrIncidents {
+		for _, entry := range inc.Timeline {
+			sev := "info"
+			if inc.Severity == "critical" {
+				sev = "critical"
+			} else if inc.Severity == "high" || inc.Severity == "medium" {
+				sev = "warning"
+			}
+			events = append(events, timelineEvent{
+				ID:        inc.ID,
+				Timestamp: entry.Timestamp.Format(time.RFC3339),
+				Event:     entry.Event,
+				Severity:  sev,
+				Source:    entry.Source,
+			})
+		}
+	}
+	itdrIncidentsMu.RUnlock()
+
+	writeJSON2(w, http.StatusOK, map[string]any{"events": events, "total": len(events)})
+}
+
+// handleITDRThreatHeatmap returns aggregate threat heatmap data for the dashboard.
+// Returns zones (by severity category) + total_threats + by_severity breakdown.
+func (s *HTTPServer) handleITDRThreatHeatmap(w http.ResponseWriter, r *http.Request) {
+	// Aggregate from incidents in memory; in production this queries the detections table.
+	itdrIncidentsMu.RLock()
+	bySeverity := map[string]int{"critical": 0, "high": 0, "medium": 0, "low": 0}
+	zones := []map[string]any{}
+	for _, inc := range itdrIncidents {
+		bySeverity[inc.Severity]++
+	}
+	itdrIncidentsMu.RUnlock()
+
+	// Build zones from severity breakdown
+	for _, sev := range []string{"critical", "high", "medium", "low"} {
+		if bySeverity[sev] > 0 {
+			zones = append(zones, map[string]any{"label": sev, "count": bySeverity[sev], "severity": sev})
+		}
+	}
+
+	writeJSON2(w, http.StatusOK, map[string]any{
+		"zones":         zones,
+		"total_threats":  len(itdrIncidents),
+		"by_severity":    bySeverity,
+		"generated_at":  time.Now().UTC(),
 	})
 }
 

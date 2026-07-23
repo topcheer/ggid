@@ -32,17 +32,29 @@ interface Incident {
   title: string;
   status: "open" | "investigating" | "contained" | "resolved";
   severity: "low" | "medium" | "high" | "critical";
-  created_at: string;
+  first_detected?: string;
+  last_updated?: string;
+  created_at?: string;
   assigned_to?: string;
   description?: string;
   kill_chain_stage?: string;
+  triggered_rules?: string[];
+  detection_count?: number;
+}
+
+interface PlaybookStep {
+  order: number;
+  action: string;
+  target: string;
+  delay_seconds?: number;
 }
 
 interface Playbook {
   id: string;
   name: string;
   trigger: string;
-  actions: string[];
+  steps?: PlaybookStep[];
+  actions?: string[]; // frontend convenience: extracted from steps
   enabled: boolean;
 }
 
@@ -98,7 +110,12 @@ export default function ITDRDashboardPage() {
       }
       if (pb.status === "fulfilled") {
         const val = pb.value;
-        setPlaybooks(Array.isArray(val) ? val : (val?.playbooks || []));
+        const rawPlaybooks = Array.isArray(val) ? val : (val?.playbooks || []);
+        // Transform steps → actions for frontend display
+        setPlaybooks(rawPlaybooks.map((pb: Playbook) => ({
+          ...pb,
+          actions: pb.actions || (pb.steps?.map(s => s.action) || []),
+        })));
       }
     } catch (e) {
       setError(e instanceof Error ? e.message : "Failed to load ITDR data");
@@ -294,7 +311,7 @@ export default function ITDRDashboardPage() {
                     <div>
                       <div className="text-sm font-medium text-gray-900 dark:text-white">{inc.title}</div>
                       <div className="text-xs text-gray-400">
-                        {new Date(inc.created_at).toLocaleString()}
+                        {new Date(inc.first_detected || inc.created_at || "").toLocaleString()}
                         {inc.assigned_to && ` · Assigned: ${inc.assigned_to}`}
                       </div>
                     </div>
@@ -400,8 +417,8 @@ export default function ITDRDashboardPage() {
                 )}
               </div>
               <div>
-                <span className="text-gray-400">Created:</span>
-                <span className="ml-2 text-gray-700 dark:text-gray-300">{new Date(selectedIncident.created_at).toLocaleString()}</span>
+                <span className="text-gray-400">Detected:</span>
+                <span className="ml-2 text-gray-700 dark:text-gray-300">{new Date(selectedIncident.first_detected || selectedIncident.created_at || "").toLocaleString()}</span>
               </div>
               {selectedIncident.assigned_to && (
                 <div>

@@ -299,6 +299,10 @@ func (s *HTTPServer) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("/api/v1/soar/playbooks/", s.handleSOARRoute)
 	mux.HandleFunc("/api/v1/soar/executions", s.handleSOARRoute)
 	mux.HandleFunc("/api/v1/audit/itdr/threat-heatmap", s.handleITDRThreatHeatmap)
+	// Dashboard aliases — frontend calls these paths without /itdr/ prefix.
+	mux.HandleFunc("/api/v1/audit/threat-heatmap", s.handleITDRThreatHeatmap)
+	mux.HandleFunc("/api/v1/audit/kill-chain", s.handleITDRKillChainSummary)
+	mux.HandleFunc("/api/v1/audit/incident-timeline", s.handleITDRTimelineFeed)
 	mux.HandleFunc("/api/v1/audit/ccm/results", s.handleCCM)
 	mux.HandleFunc("/api/v1/audit/ccm/latest", s.handleCCM) // alias for results
 	mux.HandleFunc("/api/v1/audit/ccm/history", s.handleCCM)
