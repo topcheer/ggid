@@ -1404,3 +1404,11 @@ D1:7/7 ✅ | D2:admin=200 viewer=403 ✅ | D4:403 ✅ | Hacks:0 ✅ — 26th cle
 D1:7/7 ✅ | D2:admin=200 viewer=403 ✅ | D4:403 ✅ | Hacks:0 ✅ — 27th clean cycle.
 
 ### Next Dimension: 1 — Cycle 37
+
+## Cycle 37: Post-RBAC-Identity-Fixes (Round 206)
+
+**Core Changes**: `851bd8a01` RBAC gate /api-keys behind admin + `f5f169fc4` identity password hash sync + `642c97f70` ZT posture flat fields.
+
+D1:7/7 ✅ | D2:admin=200 viewer=403 ✅ | D4:403 ✅ | Hacks:0 ✅ — 28th clean cycle.
+
+### Next Dimension: 1 — Cycle 38
