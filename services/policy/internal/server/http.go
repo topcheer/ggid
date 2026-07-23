@@ -65,6 +65,7 @@ func (s *HTTPServer) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("/api/v1/policies/", s.handlePolicyByID)
 	mux.HandleFunc("/api/v1/policy-versions", s.handlePolicyVersions)
 	mux.HandleFunc("/api/v1/policies/check", s.handleCheck)
+	mux.HandleFunc("/api/v1/policies/matrix", s.handleCoverageMatrix)
 	mux.HandleFunc("/api/v1/policies/evaluate", s.handleEvaluate)
 	mux.HandleFunc("/api/v1/policies/export", s.handlePolicyExport)
 	mux.HandleFunc("/api/v1/policies/resource-acl", s.handleResourceACL)
@@ -910,9 +911,13 @@ func (s *HTTPServer) handleCheck(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// If user_id not provided, try to extract from X-User-ID header (set by JWT middleware).
+	if req.UserID == "" {
+		req.UserID = r.Header.Get("X-User-ID")
+	}
 	userID, err := uuid.Parse(req.UserID)
 	if err != nil {
-		writeJSONError(w, http.StatusBadRequest, "invalid user_id")
+		writeJSONError(w, http.StatusBadRequest, "invalid or missing user_id (required: UUID, or ensure Bearer token sets X-User-ID)")
 		return
 	}
 
