@@ -178,20 +178,22 @@ export default function PoliciesPage() {
       refresh();
       resetEditor();
     } catch (err) {
-      console.error(err instanceof Error ? err.message : "Failed to create policy");
+      setError(err instanceof Error ? err.message : "Failed to create policy");
     }
   };
 
-  const handleDeletePolicy = async (id: string, name: string) => {
-    if (!window.confirm(`Delete policy "${name}"?`)) return;
+  const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null);
+
+  const handleDeletePolicy = async (id: string) => {
     try {
       await apiFetch(`/api/v1/policies/${id}`, { method: "DELETE" });
       setMsg("Policy deleted");
       refresh();
       if (selectedPolicy?.id === id) resetEditor();
     } catch (err) {
-      console.error(err instanceof Error ? err.message : "Failed to delete policy");
+      setError(err instanceof Error ? err.message : "Failed to delete policy");
     }
+    setDeleteTarget(null);
   };
 
   const handleDryRun = async () => {
@@ -240,7 +242,7 @@ export default function PoliciesPage() {
       setPolicyName(parsed.name || policyName);
       setMsg("JSON parsed and synced to rules");
     } catch (err) {
-      alert("Invalid JSON: " + (err instanceof Error ? err.message : "parse error"));
+      setError("Invalid JSON: " + (err instanceof Error ? err.message : "parse error"));
     }
   };
 
@@ -311,7 +313,7 @@ export default function PoliciesPage() {
         }
         setMsg("Policy imported successfully");
       } catch (err) {
-        alert("Failed to parse JSON file: " + (err instanceof Error ? err.message : "unknown error"));
+        setError("Failed to parse JSON file: " + (err instanceof Error ? err.message : "unknown error"));
       }
     };
     reader.readAsText(file);
@@ -489,7 +491,7 @@ export default function PoliciesPage() {
                       </button>
                       {p.id && (
                         <button
-                          onClick={() => handleDeletePolicy(p.id!, p.name)}
+                          onClick={() => setDeleteTarget({ id: p.id!, name: p.name })}
                           className="rounded p-1 text-gray-400 opacity-0 hover:bg-red-50 hover:text-red-600 group-hover:opacity-100"
                           title={t("common.delete")}
                         >
@@ -946,6 +948,21 @@ export default function PoliciesPage() {
           </div>
         </div>
       </div>
+
+      {deleteTarget && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={() => setDeleteTarget(null)}>
+          <div role="dialog" aria-modal="true" className="bg-white dark:bg-gray-800 dark:bg-gray-900 rounded-lg shadow-xl max-w-sm w-full mx-4" onClick={(e) => e.stopPropagation()}>
+            <div className="px-6 py-4">
+              <h3 className="font-semibold text-lg">Delete Policy</h3>
+              <p className="text-sm text-gray-500 mt-2">Are you sure you want to delete &quot;{deleteTarget.name}&quot;? This action cannot be undone.</p>
+            </div>
+            <div className="flex justify-end gap-2 px-6 py-4 border-t dark:border-gray-700">
+              <button onClick={() => setDeleteTarget(null)} className="px-4 py-2 rounded-lg border dark:border-gray-600 text-sm">Cancel</button>
+              <button onClick={() => handleDeletePolicy(deleteTarget.id)} className="px-4 py-2 rounded-lg bg-red-600 text-white text-sm font-medium">Delete</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
