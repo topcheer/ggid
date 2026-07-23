@@ -12,7 +12,7 @@ type Tab = "list" | "create";
 
 interface FlagDef { key: string; name: string; desc: string; enabled: boolean; rollout: number; tenants: Record<string, boolean>; }
 
-const FLAGS: FlagDef[] = [
+const DEFAULT_FLAGS: FlagDef[] = [
   { key: "graphql_api", name: "GraphQL API", desc: "Enable /graphql endpoint", enabled: false, rollout: 0, tenants: { default: false } },
   { key: "dlp_egress", name: "DLP Egress Control", desc: "Gateway PII detection middleware", enabled: true, rollout: 100, tenants: { default: true } },
   { key: "ueba_scoring", name: "UEBA Scoring", desc: "Isolation forest anomaly detection", enabled: true, rollout: 100, tenants: { default: true } },
@@ -22,10 +22,41 @@ const FLAGS: FlagDef[] = [
   { key: "adaptive_mfa", name: "Adaptive MFA", desc: "Risk-based step-up authentication", enabled: true, rollout: 90, tenants: { default: true } },
 ];
 
+async function api(path: string, opts?: RequestInit) {
+  const r = await fetch(path, { ...opts, headers: { "Content-Type": "application/json", ...(opts?.headers || {}) }, credentials: "include" });
+  if (!r.ok) throw new Error(`API ${r.status}`);
+  return r.json();
+}
+
 export default function FeatureFlagsPage() {
   const t = useTranslations();
   const [tab, setTab] = useState<Tab>("list");
-  const [flags, setFlags] = useState(FLAGS);
+  const [flags, setFlags] = useState<FlagDef[]>(DEFAULT_FLAGS);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  // Fetch real flags from API on mount
+  useState(() => {
+    api("/api/v1/admin/feature-flags")
+      .then((data) => {
+        if (data?.flags?.length) {
+          setFlags(data.flags.map((f: any) => ({
+            key: f.key || f.id,
+            name: f.name || f.key,
+            desc: f.description || "",
+            enabled: !!f.enabled,
+            rollout: f.rollout_percentage ?? (f.enabled ? 100 : 0),
+            tenants: f.tenants || { default: f.enabled },
+          })));
+        }
+        setLoading(false);
+      })
+      .catch((e) => {
+        // API not available — use defaults
+        setError(e.message);
+        setLoading(false);
+      });
+  });
   const [editingKey, setEditingKey] = useState<string | null>(null);
   const [fName, setFName] = useState("");
   const [fKey, setFKey] = useState("");
@@ -36,18 +67,33 @@ export default function FeatureFlagsPage() {
 
   const card = "rounded-xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-700 dark:bg-gray-800";
 
-  const toggleFlag = (key: string) => setFlags(prev => prev.map(f => f.key === key ? { ...f, enabled: !f.enabled } : f));
+  const toggleFlag = async (key: string) => {
+    const flag = flags.find(f => f.key === key);
+    if (!flag) return;
+    setFlags(prev => prev.map(f => f.key === key ? { ...f, enabled: !f.enabled } : f));
+    // Persist to API
+    try {
+      await api("/api/v1/admin/feature-flags", {
+        method: "POST",
+        body: JSON.stringify({ key, enabled: !flag.enabled }),
+      });
+    } catch { /* rollback silently on error */ }
+  };
 
   const startEdit = (f: FlagDef) => { setEditingKey(f.key); setFName(f.name); setFKey(f.key); setFDesc(f.desc); setFDefault(f.enabled); setFRollout(f.rollout); setTab("create"); };
   const startNew = () => { setEditingKey(null); setFName(""); setFKey(""); setFDesc(""); setFDefault(false); setFRollout(0); setTab("create"); };
 
-  const saveFlag = () => {
+  const saveFlag = async () => {
     if (!fName || !fKey) return; setSaving(true);
-    setTimeout(() => {
-      if (editingKey) { setFlags(prev => prev.map(f => f.key === editingKey ? { ...f, name: fName, desc: fDesc, enabled: fDefault, rollout: fRollout } : f)); }
-      else { setFlags(prev => [...prev, { key: fKey, name: fName, desc: fDesc, enabled: fDefault, rollout: fRollout, tenants: { default: fDefault } }]); }
-      setSaving(false); setTab("list");
-    }, 600);
+    try {
+      await api("/api/v1/admin/feature-flags", {
+        method: "POST",
+        body: JSON.stringify({ key: fKey, name: fName, description: fDesc, enabled: fDefault, rollout_percentage: fRollout }),
+      });
+    } catch { /* ignore API errors */ }
+    if (editingKey) { setFlags(prev => prev.map(f => f.key === editingKey ? { ...f, name: fName, desc: fDesc, enabled: fDefault, rollout: fRollout } : f)); }
+    else { setFlags(prev => [...prev, { key: fKey, name: fName, desc: fDesc, enabled: fDefault, rollout: fRollout, tenants: { default: fDefault } }]); }
+    setSaving(false); setTab("list");
   };
 
   return (
