@@ -52,6 +52,12 @@ func NewDBAPIKeyValidator(ctx context.Context, dbURL string) *DBAPIKeyValidator 
 // Validate implements APIKeyValidator. It extracts the key ID from the
 // plaintext key, looks up the stored Argon2id hash, and verifies the secret.
 func (v *DBAPIKeyValidator) Validate(ctx context.Context, key string) (string, string, []string, error) {
+	// Guard against nil pool — should never happen (NewDBAPIKeyValidator returns
+	// nil if dbURL is empty), but defend against direct struct construction.
+	if v.pool == nil {
+		return "", "", nil, fmt.Errorf("api key validator not configured")
+	}
+
 	// Parse key format: ggid_sk_<uuid>_<random_secret>
 	keyID, ok := parseAPIKeyID(key)
 	if !ok {

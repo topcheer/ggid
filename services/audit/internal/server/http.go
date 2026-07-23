@@ -186,6 +186,7 @@ func (s *HTTPServer) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("/api/v1/audit/security-posture", s.handleSecurityPosture)
 	mux.HandleFunc("/api/v1/audit/security-posture/history", s.handleSecurityPostureHistory)
 	mux.HandleFunc("/api/v1/audit/threat-feed", s.handleThreatFeed)
+	mux.HandleFunc("/api/v1/audit/threat-feed/stream", s.handleThreatFeedStream)
 	mux.HandleFunc("/api/v1/audit/threat-intel/sources", s.handleThreatIntel)
 	mux.HandleFunc("/api/v1/audit/threat-intel/sources/", s.handleThreatIntel)
 	mux.HandleFunc("/api/v1/audit/threat-intel/indicators", s.handleThreatIntel)
@@ -1404,7 +1405,8 @@ func (s *HTTPServer) dispatchAlert(alert map[string]any) {
 	// Fire webhook (async, non-blocking)
 	if webhookURL != "" {
 		go func() {
-			resp, err := http.Post(webhookURL, "application/json", strings.NewReader(string(payload)))
+			client := &http.Client{Timeout: 10 * time.Second}
+			resp, err := client.Post(webhookURL, "application/json", strings.NewReader(string(payload)))
 			if err != nil {
 				return
 			}
