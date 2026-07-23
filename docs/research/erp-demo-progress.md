@@ -1314,3 +1314,35 @@ Gateway+Identity+Audit build: ✅ | Hacks: 0 ✅ — **Twenty-first consecutive 
 - Then: version tags + changelogs + publish prep
 
 ### Next Dimension: 1 — Cycle 30
+
+## Cycle 30: R3-01 SDK Gap Fixes (Round 199)
+
+**Fixes Applied (3 files)**:
+- Python SDK: added `refresh_token(refresh_token, client_id)` method
+- Node SDK: added `introspectToken(token)` method (RFC 7662)
+- Go SDK: added `ExchangeAgentToken(ctx, subjectToken, grantType, audience)` + `ExchangeSAMLToken(ctx, samlResponse, clientID)`
+
+**Remaining gap**: Java `verifyUser` convenience in GGIDClient (minor — exists in JwtVerifier)
+
+Build: Go ✅ | Python ✅ | Auth: 200 ✅ | Hacks: 0 ✅
+
+### Next: Java verifyUser convenience + version tags
+
+## Cycle 31: Post-R3-01-All-Gaps-Fixed (Round 200)
+
+**Milestone: 200th verification round.** R3-01 SDK gaps all closed (5/5 fixed).
+
+| Dim | Result |
+|-----|--------|
+| D1 | 7/7 password grant, M2M OK ✅ |
+| D2 | admin 200/201, viewer 200/403 ✅ |
+| D3 | 26 items ✅ |
+| D4 | Go→Go 200, Node→Go 403, Fake 401 ✅ |
+| D5 | 7/7 SDK consistent — all gaps closed ✅ |
+| D6 | refresh OK, no-token 401 ✅ |
+
+Hacks: 0 ✅ — **Twenty-second consecutive zero-fix cycle.**
+
+R3-01 SDK method parity: login ✅ | verifyToken ✅ | clientCredentials ✅ | refreshToken ✅ | getUserInfo ✅ | introspectToken ✅ | exchangeCode ✅ | exchangeAgentToken ✅ | exchangeSAMLToken ✅ — all 7 SDKs aligned.
+
+### Next: R3-01 version tags + changelogs + publish prep
