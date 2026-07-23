@@ -196,3 +196,51 @@ func TestServer_ComplianceReportV2WithDateRange(t *testing.T) {
 		t.Error("response should contain sections")
 	}
 }
+
+func TestServer_EvidencePackageSOC2(t *testing.T) {
+	mux := newIntegrationTestMux()
+
+	req := httptest.NewRequest(http.MethodGet, "/api/v1/audit/compliance/evidence-package?framework=soc2&tenant_id=550e8400-e29b-41d4-a716-446655440000", nil)
+	rr := httptest.NewRecorder()
+	mux.ServeHTTP(rr, req)
+
+	if rr.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d: %s", rr.Code, rr.Body.String())
+	}
+	if !strings.Contains(rr.Body.String(), "soc2") {
+		t.Error("response should contain soc2 framework")
+	}
+	if !strings.Contains(rr.Body.String(), "controls") {
+		t.Error("response should contain controls array")
+	}
+	if !strings.Contains(rr.Body.String(), "evidence") {
+		t.Error("response should contain evidence section")
+	}
+}
+
+func TestServer_EvidencePackageInvalidFramework(t *testing.T) {
+	mux := newIntegrationTestMux()
+
+	req := httptest.NewRequest(http.MethodGet, "/api/v1/audit/compliance/evidence-package?framework=invalid", nil)
+	rr := httptest.NewRecorder()
+	mux.ServeHTTP(rr, req)
+
+	if rr.Code != http.StatusBadRequest {
+		t.Fatalf("expected 400, got %d: %s", rr.Code, rr.Body.String())
+	}
+}
+
+func TestServer_EvidencePackageGDPR(t *testing.T) {
+	mux := newIntegrationTestMux()
+
+	req := httptest.NewRequest(http.MethodGet, "/api/v1/audit/compliance/evidence-package?framework=gdpr&tenant_id=550e8400-e29b-41d4-a716-446655440000", nil)
+	rr := httptest.NewRecorder()
+	mux.ServeHTTP(rr, req)
+
+	if rr.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d: %s", rr.Code, rr.Body.String())
+	}
+	if !strings.Contains(rr.Body.String(), "gdpr") {
+		t.Error("response should contain gdpr framework")
+	}
+}

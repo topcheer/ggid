@@ -264,6 +264,7 @@ func (s *HTTPServer) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("/api/v1/audit/compliance/drift", s.handleComplianceDrift)
 	mux.HandleFunc("/api/v1/audit/compliance/remediation-progress", s.handleRemediationProgress)
 	mux.HandleFunc("/api/v1/audit/compliance/cert-export", s.handleCertExport)
+	mux.HandleFunc("/api/v1/audit/compliance/evidence-package", s.handleEvidencePackage)
 	mux.HandleFunc("/api/v1/audit/siem/health-check", s.handleSIEMHealthCheck)
 	mux.HandleFunc("/api/v1/audit/framework-coverage", s.handleFrameworkCoverage)
 	mux.HandleFunc("/api/v1/audit/events/deduplicate", s.handleEventDeduplicate)
