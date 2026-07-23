@@ -2,12 +2,20 @@ package service
 
 import (
 	"context"
+	"os"
 	"testing"
 	"time"
 
 	"github.com/ggid/ggid/services/audit/internal/domain"
 	"github.com/google/uuid"
 )
+
+// TestMain sets a hash chain secret so that IsHashChainEnabled() returns true
+// during tests, allowing ComputeHash/VerifyHash to work correctly.
+func TestMain(m *testing.M) {
+	domain.SetHashChainSecret([]byte("test-hash-chain-secret"))
+	os.Exit(m.Run())
+}
 
 // hashChainTestRepo is a minimal in-memory repo for hash chain tests.
 type hashChainTestRepo struct {

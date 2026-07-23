@@ -207,8 +207,14 @@ func (m *mockTenantRepo) Delete(_ context.Context, id uuid.UUID) error {
 }
 
 func newTestOrgServer() *HTTPServer {
+	// Pre-populate the test org used by coverage_round15 tests
+	testOrgID := uuid.MustParse("550e8400-e29b-41d4-a716-446655440001")
+	testTenantID := uuid.MustParse("550e8400-e29b-41d4-a716-446655440000")
+	orgs := map[uuid.UUID]*domain.Organization{
+		testOrgID: {ID: testOrgID, Name: "Test Org", TenantID: testTenantID},
+	}
 	return NewHTTPServer(
-		service.NewOrgService(&mockOrgRepo{orgs: make(map[uuid.UUID]*domain.Organization)}),
+		service.NewOrgService(&mockOrgRepo{orgs: orgs}),
 		service.NewDeptService(&mockDeptRepo{depts: make(map[uuid.UUID]*domain.Department)}),
 		service.NewTeamService(&mockTeamRepo{teams: make(map[uuid.UUID]*domain.Team)}),
 		service.NewMembershipService(&mockMemberRepo{members: make(map[uuid.UUID]*domain.Membership)}),

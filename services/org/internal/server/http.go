@@ -454,7 +454,8 @@ func (s *HTTPServer) handleOrgAccessMatrix(w http.ResponseWriter, r *http.Reques
 	}
 	org, err := s.orgSvc.Get(r.Context(), orgID)
 	if err != nil {
-		writeServiceError(w, err)
+		// Return 404 for not-found instead of leaking 500 to client
+		writeJSONError(w, http.StatusNotFound, fmt.Sprintf("organization not found: %s", orgID))
 		return
 	}
 	// Return org info + member count using memberships table.

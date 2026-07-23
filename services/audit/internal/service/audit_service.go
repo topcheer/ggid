@@ -126,13 +126,15 @@ func (s *AuditService) computeHashChain(event *domain.AuditEvent) {
 	if !domain.IsHashChainEnabled() {
 		return
 	}
-	// Domain ComputeHash queries the DB for the previous hash and computes
-	// the HMAC correctly. The service layer just ensures the event has
-	// CreatedAt set (needed for canonical) and delegates.
 	if event.CreatedAt.IsZero() {
 		event.CreatedAt = time.Now().UTC()
 	}
+	// Set PrevHash from the in-memory chain state for this tenant.
+	// First event for a tenant gets empty PrevHash (genesis).
+	event.PrevHash = s.prevHash[event.TenantID]
 	event.Hash = event.ComputeHash(event.PrevHash)
+	// Update chain state for the next event.
+	s.prevHash[event.TenantID] = event.Hash
 }
 
 // canonicalEventData produces a deterministic byte representation of an event
