@@ -64,6 +64,7 @@ var publicPaths = []string{
 	"/api/v1/oauth/backchannel",
 	"/api/v1/oauth/userinfo",
 	"/api/v1/auth/saml/",
+	"/scim/v2/",                  // SCIM 2.0 uses its own bearer token, not JWT
 	"/oauth/",
 	"/saml/",
 	"/.well-known/",
