@@ -91,6 +91,17 @@ class GGIDClient:
         resp.raise_for_status()
         return resp.json()
 
+    def refresh_token(self, refresh_token: str, client_id: str = "") -> dict:
+        """Refresh an access token using a refresh token."""
+        import urllib.parse
+        data = {"grant_type": "refresh_token", "refresh_token": refresh_token}
+        if client_id:
+            data["client_id"] = client_id
+        form = urllib.parse.urlencode(data)
+        resp = self._session.post(f"{self._config.base_url}/api/v1/oauth/token", data=form, headers={"Content-Type": "application/x-www-form-urlencoded", "X-Tenant-ID": self._config.tenant_id}, timeout=self._config.timeout)
+        resp.raise_for_status()
+        return resp.json()
+
     def get_user(self, token: str, user_id: str) -> dict:
         return self._request("GET", f"/api/v1/users/{user_id}", token=token)
 

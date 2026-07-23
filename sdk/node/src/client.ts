@@ -296,6 +296,18 @@ export class GGIDClient {
     return this.request('POST', '/api/v1/oauth/revoke', { token });
   }
 
+  /** Introspect a token (RFC 7662). */
+  async introspectToken(token: string): Promise<{ active: boolean; [key: string]: unknown }> {
+    const body = new URLSearchParams({ token });
+    const resp = await fetch(`${this.config.gatewayUrl}/api/v1/oauth/introspect`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body,
+    });
+    if (!resp.ok) throw new GGIDError(resp.status, (await resp.text()) || 'introspect failed');
+    return resp.json();
+  }
+
   /** Initiate device authorization flow (RFC 8628). */
   async deviceAuthorization(clientId: string, scope: string): Promise<{
     device_code: string;

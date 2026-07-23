@@ -283,6 +283,50 @@ func (c *Client) Logout(ctx context.Context, accessToken string) error {
 	return c.post(ctx, "/api/v1/auth/logout", map[string]string{"access_token": accessToken}, nil)
 }
 
+// ExchangeAgentToken exchanges a subject token for an agent token (RFC 8693).
+func (c *Client) ExchangeAgentToken(ctx context.Context, subjectToken, grantType, audience string) (*TokenSet, error) {
+	form := url.Values{
+		"grant_type":    {grantType},
+		"subject_token": {subjectToken},
+	}
+	if audience != "" {
+		form.Set("audience", audience)
+	}
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost,
+		c.baseURL+"/api/v1/oauth/token", strings.NewReader(form.Encode()))
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	var ts TokenSet
+	if err := c.do(req, &ts); err != nil {
+		return nil, err
+	}
+	return &ts, nil
+}
+
+// ExchangeSAMLToken exchanges a SAML assertion for an access token (RFC 7522).
+func (c *Client) ExchangeSAMLToken(ctx context.Context, samlResponse, clientID string) (*TokenSet, error) {
+	form := url.Values{
+		"grant_type": {"urn:ietf:params:oauth:grant-type:saml2-bearer"},
+		"assertion": {samlResponse},
+	}
+	if clientID != "" {
+		form.Set("client_id", clientID)
+	}
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost,
+		c.baseURL+"/api/v1/oauth/token", strings.NewReader(form.Encode()))
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	var ts TokenSet
+	if err := c.do(req, &ts); err != nil {
+		return nil, err
+	}
+	return &ts, nil
+}
+
 // ClientCredentials exchanges client credentials for an access token (RFC 6749 §4.4).
 // Used for machine-to-machine (M2M) authentication.
 func (c *Client) ClientCredentials(ctx context.Context, clientID, clientSecret, tenantID string, scopes []string) (*TokenSet, error) {
