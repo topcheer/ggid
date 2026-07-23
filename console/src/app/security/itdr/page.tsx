@@ -209,10 +209,13 @@ export default function ITDRDashboardPage() {
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-1 border-b border-gray-200 dark:border-gray-700">
+      <div className="flex gap-1 border-b border-gray-200 dark:border-gray-700" role="tablist">
         {(["overview", "incidents", "playbooks", "timeline"] as const).map(tab => (
           <button
             key={tab}
+            role="tab"
+            aria-selected={activeTab === tab}
+            aria-label={`${tab} tab`}
             onClick={() => setActiveTab(tab)}
             className={`px-4 py-2 text-sm font-medium capitalize transition ${
               activeTab === tab
@@ -353,7 +356,7 @@ export default function ITDRDashboardPage() {
                     </span>
                   </div>
                   <div className="mt-2 text-xs text-gray-400">Trigger: {pb.trigger}</div>
-                  {pb.actions?.length > 0 && (
+                  {(pb.actions ?? []).length > 0 && (
                     <div className="mt-2 flex flex-wrap gap-1">
                       {(pb.actions || []).map((action, i) => (
                         <span key={i} className="rounded bg-gray-100 dark:bg-gray-700 px-2 py-0.5 text-xs text-gray-600 dark:text-gray-300">
