@@ -152,10 +152,10 @@ export function CommandPalette() {
         onClick={() => setOpen(true)}
         aria-label="Open quick navigation (Ctrl+K)"
         className="hidden md:flex items-center gap-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 px-3 py-1.5 text-xs text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition"
-        title="Quick navigation (Ctrl+K)"
+        title={t("cmd.quickJump")}
       >
         <Command className="h-3.5 w-3.5" />
-        <span>Quick Jump</span>
+        <span>{t("cmd.quickJump")}</span>
         <kbd className="rounded border border-gray-300 dark:border-gray-600 px-1 py-0.5 font-mono text-[10px]">⌘K</kbd>
       </button>
     );
@@ -185,7 +185,7 @@ export function CommandPalette() {
               value={query}
               onChange={(e) => { setQuery(e.target.value); setSelected(0); }}
               onKeyDown={handleKeyDown}
-              placeholder="Search pages, settings, tools..."
+              placeholder={t("cmd.searchPlaceholder")}
               className="flex-1 bg-transparent text-sm text-gray-900 dark:text-white placeholder:text-gray-400 focus:outline-none"
             />
             <kbd className="rounded border border-gray-300 dark:border-gray-600 px-1.5 py-0.5 font-mono text-[10px] text-gray-400">ESC</kbd>
@@ -194,7 +194,7 @@ export function CommandPalette() {
           {/* Results */}
           <div className="max-h-96 overflow-y-auto p-2">
             {flatList.length === 0 && (
-              <div className="py-8 text-center text-sm text-gray-400">No results found</div>
+              <div className="py-8 text-center text-sm text-gray-400">{t("cmd.noResults")}</div>
             )}
             {Object.entries(grouped).map(([group, items]) => (
               <div key={group}>
@@ -229,10 +229,10 @@ export function CommandPalette() {
           {/* Footer */}
           <div className="flex items-center justify-between border-t border-gray-200 px-4 py-2 dark:border-gray-700">
             <div className="flex items-center gap-3 text-xs text-gray-400">
-              <span className="flex items-center gap-1"><ArrowUp className="h-3 w-3" /><ArrowDown className="h-3 w-3" /> Navigate</span>
-              <span className="flex items-center gap-1"><CornerDownLeft className="h-3 w-3" /> Open</span>
+              <span className="flex items-center gap-1"><ArrowUp className="h-3 w-3" /><ArrowDown className="h-3 w-3" /> {t("cmd.navigate")}</span>
+              <span className="flex items-center gap-1"><CornerDownLeft className="h-3 w-3" /> {t("cmd.open")}</span>
             </div>
-            <span className="text-xs text-gray-400">{flatList.length} results</span>
+            <span className="text-xs text-gray-400">{flatList.length} {t("cmd.results")}</span>
           </div>
         </div>
       </div>

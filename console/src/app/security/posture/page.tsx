@@ -170,8 +170,9 @@ function PostureRadar({ dimensions }: { dimensions: { identity: number; device: 
 
 /** Trend sparkline chart (SVG, no dependency) */
 function PostureTrendChart({ history }: { history: PostureHistoryEntry[] }) {
+  const { t } = useI18n();
   if (history.length < 2) {
-    return <p className="py-8 text-center text-sm text-gray-400">Insufficient data for trend analysis</p>;
+    return <p className="py-8 text-center text-sm text-gray-400">{t("posture.insufficientData")}</p>;
   }
   const w = 500, h = 120, pad = 20;
   const scores = history.map(e => e.score);
@@ -195,8 +196,8 @@ function PostureTrendChart({ history }: { history: PostureHistoryEntry[] }) {
   return (
     <div>
       <div className="mb-2 flex items-center justify-between">
-        <span className="text-xs text-gray-400">{history.length} data points</span>
-        <span className={`text-sm font-medium ${trendColor}`}>{trendIcon} {trend}</span>
+        <span className="text-xs text-gray-400">{history.length} {t("posture.dataPoints")}</span>
+        <span className={`text-sm font-medium ${trendColor}`}>{trendIcon} {trend === "improving" ? t("posture.improving") : trend === "declining" ? t("posture.declining") : t("posture.stable")}</span>
       </div>
       <svg width="100%" height={h} viewBox={`0 0 ${w} ${h}`} className="overflow-visible">
         {/* Grid lines */}
@@ -372,14 +373,14 @@ export default function SecurityPosturePage() {
             <div className={cardCls}>
               <div className="mb-4 flex items-center gap-2">
                 <Activity className="h-4 w-4 text-emerald-500" />
-                <span className="text-xs font-semibold uppercase text-gray-400">NIST 800-207 Posture Dimensions</span>
+                <span className="text-xs font-semibold uppercase text-gray-400">{t("posture.dimensions")}</span>
               </div>
               {ztPosture?.dimensions ? (
                 <PostureRadar dimensions={ztPosture.dimensions} />
               ) : (
                 <div className="py-8 text-center">
-                  <p className="text-sm text-gray-400">Dimension breakdown not available</p>
-                  <p className="mt-1 text-xs text-gray-400">Requires ZT posture data with 5-dimension scoring</p>
+                  <p className="text-sm text-gray-400">{t("posture.dimensionsNA")}</p>
+                  <p className="mt-1 text-xs text-gray-400">{t("posture.dimensionsHint")}</p>
                 </div>
               )}
             </div>
@@ -388,7 +389,7 @@ export default function SecurityPosturePage() {
             <div className={cardCls}>
               <div className="mb-4 flex items-center gap-2">
                 <TrendingUp className="h-4 w-4 text-emerald-500" />
-                <span className="text-xs font-semibold uppercase text-gray-400">Score History (30 days)</span>
+                <span className="text-xs font-semibold uppercase text-gray-400">{t("posture.scoreHistory")}</span>
               </div>
               <PostureTrendChart history={history} />
             </div>

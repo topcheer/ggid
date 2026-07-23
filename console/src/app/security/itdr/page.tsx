@@ -6,6 +6,7 @@ import {
   Loader2, RefreshCw, Filter, ChevronRight, Play, Eye, X,
 } from "lucide-react";
 import { useApi } from "@/lib/api";
+import { useTranslations } from "@/lib/i18n";
 
 // ---- Types ----
 interface ThreatHeatmapData {
@@ -74,6 +75,7 @@ const severityColors: Record<string, string> = {
 
 export default function ITDRDashboardPage() {
   const { apiFetch } = useApi();
+  const t = useTranslations();
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [activeTab, setActiveTab] = useState<"overview" | "incidents" | "playbooks" | "timeline">("overview");
@@ -118,7 +120,7 @@ export default function ITDRDashboardPage() {
         })));
       }
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Failed to load ITDR data");
+      setError(e instanceof Error ? e.message : t("itdr.loadError"));
     }
     if (isRefresh) setRefreshing(false); else setLoading(false);
   }, [apiFetch]);
@@ -135,7 +137,7 @@ export default function ITDRDashboardPage() {
     return (
       <div className="flex items-center justify-center py-12">
         <Loader2 className="h-6 w-6 animate-spin text-brand-500" />
-        <span className="ml-2 text-sm text-gray-500">Loading ITDR dashboard...</span>
+        <span className="ml-2 text-sm text-gray-500">{t("itdr.loading")}</span>
       </div>
     );
   }
@@ -146,10 +148,10 @@ export default function ITDRDashboardPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="flex items-center gap-2 text-2xl font-bold text-gray-900 dark:text-white">
-            <Shield className="h-6 w-6 text-red-500" /> ITDR Dashboard
+            <Shield className="h-6 w-6 text-red-500" /> {t("itdr.title")}
           </h1>
           <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-            Identity Threat Detection & Response — real-time monitoring and response
+            {t("itdr.subtitle")}
           </p>
         </div>
         <button
@@ -173,7 +175,7 @@ export default function ITDRDashboardPage() {
         <div className={`${card} border-l-4 border-l-red-500`}>
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-xs uppercase text-gray-400">Open Incidents</p>
+              <p className="text-xs uppercase text-gray-400">{t("itdr.openIncidents")}</p>
               <p className="mt-1 text-2xl font-bold text-gray-900 dark:text-white">{openIncidents.length}</p>
             </div>
             <AlertTriangle className="h-8 w-8 text-red-400" />
@@ -182,7 +184,7 @@ export default function ITDRDashboardPage() {
         <div className={`${card} border-l-4 border-l-orange-500`}>
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-xs uppercase text-gray-400">Critical</p>
+              <p className="text-xs uppercase text-gray-400">{t("itdr.critical")}</p>
               <p className="mt-1 text-2xl font-bold text-gray-900 dark:text-white">{criticalIncidents.length}</p>
             </div>
             <Zap className="h-8 w-8 text-orange-400" />
@@ -191,7 +193,7 @@ export default function ITDRDashboardPage() {
         <div className={`${card} border-l-4 border-l-amber-500`}>
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-xs uppercase text-gray-400">Total Threats</p>
+              <p className="text-xs uppercase text-gray-400">{t("itdr.totalThreats")}</p>
               <p className="mt-1 text-2xl font-bold text-gray-900 dark:text-white">{totalThreats}</p>
             </div>
             <TrendingDown className="h-8 w-8 text-amber-400" />
@@ -200,7 +202,7 @@ export default function ITDRDashboardPage() {
         <div className={`${card} border-l-4 border-l-blue-500`}>
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-xs uppercase text-gray-400">Attack Patterns</p>
+              <p className="text-xs uppercase text-gray-400">{t("itdr.attackPatterns")}</p>
               <p className="mt-1 text-2xl font-bold text-gray-900 dark:text-white">{totalAttacks}</p>
             </div>
             <Activity className="h-8 w-8 text-blue-400" />
@@ -223,7 +225,10 @@ export default function ITDRDashboardPage() {
                 : "text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
             }`}
           >
-            {tab}
+            {tab === "overview" && t("itdr.tab.overview")}
+            {tab === "incidents" && t("itdr.tab.incidents")}
+            {tab === "playbooks" && t("itdr.tab.playbooks")}
+            {tab === "timeline" && t("itdr.tab.timeline")}
           </button>
         ))}
       </div>
@@ -234,7 +239,7 @@ export default function ITDRDashboardPage() {
           {/* Threat Heatmap */}
           <div className={card}>
             <h3 className="mb-4 flex items-center gap-2 text-sm font-semibold uppercase text-gray-400">
-              <AlertTriangle className="h-4 w-4" /> Threat Heatmap
+              <AlertTriangle className="h-4 w-4" /> {t("itdr.heatmap")}
             </h3>
             {heatmap?.zones?.length ? (
               <div className="space-y-2">
@@ -258,14 +263,14 @@ export default function ITDRDashboardPage() {
                 ))}
               </div>
             ) : (
-              <p className="py-8 text-center text-sm text-gray-400">No threat data available</p>
+              <p className="py-8 text-center text-sm text-gray-400">{t("itdr.noHeatmapData")}</p>
             )}
           </div>
 
           {/* Kill Chain */}
           <div className={card}>
             <h3 className="mb-4 flex items-center gap-2 text-sm font-semibold uppercase text-gray-400">
-              <Activity className="h-4 w-4" /> Attack Kill Chain
+              <Activity className="h-4 w-4" /> {t("itdr.killChain")}
             </h3>
             {killChain?.stages?.length ? (
               <div className="space-y-3">
@@ -283,7 +288,7 @@ export default function ITDRDashboardPage() {
                 ))}
               </div>
             ) : (
-              <p className="py-8 text-center text-sm text-gray-400">No kill chain data available</p>
+              <p className="py-8 text-center text-sm text-gray-400">{t("itdr.noKillChainData")}</p>
             )}
           </div>
         </div>
@@ -293,11 +298,11 @@ export default function ITDRDashboardPage() {
       {activeTab === "incidents" && (
         <div className={card}>
           <div className="mb-4 flex items-center justify-between">
-            <h3 className="text-sm font-semibold uppercase text-gray-400">Incidents</h3>
-            <span className="text-xs text-gray-400">{incidents.length} total</span>
+            <h3 className="text-sm font-semibold uppercase text-gray-400">{t("itdr.incidents")}</h3>
+            <span className="text-xs text-gray-400">{incidents.length} {t("cmd.results")}</span>
           </div>
           {incidents.length === 0 ? (
-            <p className="py-8 text-center text-sm text-gray-400">No incidents detected</p>
+            <p className="py-8 text-center text-sm text-gray-400">{t("itdr.noIncidents")}</p>
           ) : (
             <div className="space-y-2">
               {incidents.map(inc => (
@@ -316,7 +321,7 @@ export default function ITDRDashboardPage() {
                       <div className="text-sm font-medium text-gray-900 dark:text-white">{inc.title}</div>
                       <div className="text-xs text-gray-400">
                         {new Date(inc.first_detected || inc.created_at || "").toLocaleString()}
-                        {inc.assigned_to && ` · Assigned: ${inc.assigned_to}`}
+                        {inc.assigned_to && ` · ${t("itdr.assignedTo")}: ${inc.assigned_to}`}
                       </div>
                     </div>
                   </div>
@@ -339,9 +344,9 @@ export default function ITDRDashboardPage() {
       {/* Tab: Playbooks */}
       {activeTab === "playbooks" && (
         <div className={card}>
-          <h3 className="mb-4 text-sm font-semibold uppercase text-gray-400">Response Playbooks</h3>
+          <h3 className="mb-4 text-sm font-semibold uppercase text-gray-400">{t("itdr.playbooks")}</h3>
           {playbooks.length === 0 ? (
-            <p className="py-8 text-center text-sm text-gray-400">No playbooks configured</p>
+            <p className="py-8 text-center text-sm text-gray-400">{t("itdr.noPlaybooks")}</p>
           ) : (
             <div className="space-y-3">
               {playbooks.map(pb => (
@@ -352,10 +357,10 @@ export default function ITDRDashboardPage() {
                       <span className="text-sm font-medium text-gray-900 dark:text-white">{pb.name}</span>
                     </div>
                     <span className={`rounded-full px-2 py-0.5 text-xs ${pb.enabled ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400" : "bg-gray-100 text-gray-500 dark:bg-gray-700 dark:text-gray-400"}`}>
-                      {pb.enabled ? "Enabled" : "Disabled"}
+                      {pb.enabled ? t("itdr.enabled") : t("itdr.disabled")}
                     </span>
                   </div>
-                  <div className="mt-2 text-xs text-gray-400">Trigger: {pb.trigger}</div>
+                  <div className="mt-2 text-xs text-gray-400">{t("itdr.trigger")}: {pb.trigger}</div>
                   {(pb.actions ?? []).length > 0 && (
                     <div className="mt-2 flex flex-wrap gap-1">
                       {(pb.actions || []).map((action, i) => (
@@ -376,10 +381,10 @@ export default function ITDRDashboardPage() {
       {activeTab === "timeline" && (
         <div className={card}>
           <h3 className="mb-4 flex items-center gap-2 text-sm font-semibold uppercase text-gray-400">
-            <Clock className="h-4 w-4" /> Incident Timeline
+            <Clock className="h-4 w-4" /> {t("itdr.timeline")}
           </h3>
           {timeline.length === 0 ? (
-            <p className="py-8 text-center text-sm text-gray-400">No timeline events</p>
+            <p className="py-8 text-center text-sm text-gray-400">{t("itdr.noTimeline")}</p>
           ) : (
             <div className="relative space-y-4 pl-6">
               <div className="absolute left-2 top-0 h-full w-px bg-gray-200 dark:bg-gray-700" />
