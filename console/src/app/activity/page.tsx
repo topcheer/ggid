@@ -175,7 +175,7 @@ export default function ActivityLogPage() {
         <div className="flex gap-2">
           <button
             onClick={loadEvents}
-            className="flex items-center gap-1.5 rounded-lg border border-gray-300 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+            className="flex items-center gap-1.5 rounded-lg border border-gray-300 dark:border-gray-600 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 dark:bg-gray-800"
           >
             <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
             Refresh
@@ -192,8 +192,8 @@ export default function ActivityLogPage() {
       </div>
 
       {/* Filters */}
-      <div className="mb-4 rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
-        <div className="mb-3 flex items-center gap-1.5 text-sm font-medium text-gray-600">
+      <div className="mb-4 rounded-xl border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800 p-4 shadow-sm">
+        <div className="mb-3 flex items-center gap-1.5 text-sm font-medium text-gray-600 dark:text-gray-300">
           <Filter className="h-4 w-4" /> Filters
         </div>
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
@@ -203,7 +203,7 @@ export default function ActivityLogPage() {
               type="date"
               value={dateFrom}
               onChange={(e) => setDateFrom(e.target.value)}
-              className="w-full rounded-lg border border-gray-300 px-3 py-1.5 text-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
+              className="w-full rounded-lg border border-gray-300 dark:border-gray-600 px-3 py-1.5 text-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
             />
           </div>
           <div>
@@ -212,7 +212,7 @@ export default function ActivityLogPage() {
               type="date"
               value={dateTo}
               onChange={(e) => setDateTo(e.target.value)}
-              className="w-full rounded-lg border border-gray-300 px-3 py-1.5 text-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
+              className="w-full rounded-lg border border-gray-300 dark:border-gray-600 px-3 py-1.5 text-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
             />
           </div>
           <div>
@@ -220,7 +220,7 @@ export default function ActivityLogPage() {
             <select
               value={eventTypeFilter}
               onChange={(e) => setEventTypeFilter(e.target.value)}
-              className="w-full rounded-lg border border-gray-300 px-3 py-1.5 text-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
+              className="w-full rounded-lg border border-gray-300 dark:border-gray-600 px-3 py-1.5 text-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
             >
               <option value="">{t("activity.allEvents")}</option>
               {EVENT_TYPES.map((t: any) => (
@@ -235,7 +235,7 @@ export default function ActivityLogPage() {
             <select
               value={resultFilter}
               onChange={(e) => setResultFilter(e.target.value)}
-              className="w-full rounded-lg border border-gray-300 px-3 py-1.5 text-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
+              className="w-full rounded-lg border border-gray-300 dark:border-gray-600 px-3 py-1.5 text-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
             >
               <option value="">{t("activity.allResults")}</option>
               <option value="success">{t("activity.success")}</option>
@@ -260,10 +260,10 @@ export default function ActivityLogPage() {
       )}
 
       {/* Table */}
-      <div className="overflow-x-auto overflow-hidden rounded-xl border border-gray-200 bg-white shadow dark:border-gray-700 dark:bg-gray-800-sm dark:border-gray-700 dark:bg-gray-900">
+      <div className="overflow-x-auto overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800 shadow dark:border-gray-700 dark:bg-gray-800-sm dark:border-gray-700 dark:bg-gray-900">
         <table className="w-full">
           <thead>
-            <tr className="border-b border-gray-200 bg-gray-50 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
+            <tr className="border-b border-gray-200 bg-gray-50 text-left text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
               <th scope="col" className="px-4 py-3">{t("activity.timestamp")}</th>
               <th scope="col" className="px-4 py-3">{t("activity.eventType")}</th>
               <th scope="col" className="px-4 py-3">{t("activity.ipAddress")}</th>
@@ -289,16 +289,16 @@ export default function ActivityLogPage() {
             )}
             {!loading &&
               paginatedEvents.map((event: any) => (
-                <tr key={event.id} className="hover:bg-gray-50">
-                  <td className="whitespace-nowrap px-4 py-3 text-sm text-gray-600">
+                <tr key={event.id} className="hover:bg-gray-50 dark:hover:bg-gray-700 dark:bg-gray-800">
+                  <td className="whitespace-nowrap px-4 py-3 text-sm text-gray-600 dark:text-gray-300">
                     {new Date(event.timestamp).toLocaleString()}
                   </td>
                   <td className="px-4 py-3">
-                    <span className="inline-flex rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-600">
+                    <span className="inline-flex rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-600 dark:text-gray-300">
                       {eventTypeLabel(event.event_type)}
                     </span>
                   </td>
-                  <td className="whitespace-nowrap px-4 py-3 text-sm font-mono text-gray-600">
+                  <td className="whitespace-nowrap px-4 py-3 text-sm font-mono text-gray-600 dark:text-gray-300">
                     {event.ip_address || "—"}
                   </td>
                   <td className="hidden max-w-xs truncate px-4 py-3 text-sm text-gray-500 lg:table-cell">
@@ -324,7 +324,7 @@ export default function ActivityLogPage() {
       {/* Pagination */}
       {filteredEvents.length > 0 && (
         <div className="mt-4 flex items-center justify-between">
-          <p className="text-sm text-gray-500">
+          <p className="text-sm text-gray-500 dark:text-gray-400">
             Showing {(currentPage - 1) * PAGE_SIZE + 1}–
             {Math.min(currentPage * PAGE_SIZE, filteredEvents.length)} of{" "}
             {filteredEvents.length} events
@@ -333,17 +333,17 @@ export default function ActivityLogPage() {
             <button
               onClick={() => setPage(Math.max(1, currentPage - 1))}
               disabled={currentPage <= 1}
-              className="flex items-center gap-1 rounded-lg border border-gray-300 px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+              className="flex items-center gap-1 rounded-lg border border-gray-300 dark:border-gray-600 px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50"
             >
               <ChevronLeft className="h-4 w-4" /> Prev
             </button>
-            <span className="text-sm text-gray-600">
+            <span className="text-sm text-gray-600 dark:text-gray-300">
               Page {currentPage} of {totalPages}
             </span>
             <button
               onClick={() => setPage(Math.min(totalPages, currentPage + 1))}
               disabled={currentPage >= totalPages}
-              className="flex items-center gap-1 rounded-lg border border-gray-300 px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+              className="flex items-center gap-1 rounded-lg border border-gray-300 dark:border-gray-600 px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50"
             >
               Next <ChevronRight className="h-4 w-4" />
             </button>

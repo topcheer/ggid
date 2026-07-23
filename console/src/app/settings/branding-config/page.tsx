@@ -21,7 +21,7 @@ export default function BrandingConfigPage() {
   const [customCss, setCustomCss] = useState("");
   const [msg, setMsg] = useState<string | null>(null);
 
-  const card = "rounded-xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-700 dark:bg-gray-800";
+  const card = "rounded-xl border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800 p-5 shadow-sm dark:border-gray-700 dark:bg-gray-800";
   const fonts = ["Inter", "Roboto", "Open Sans", "Lato", "Poppins", "Noto Sans SC"];
 
   useEffect(() => {

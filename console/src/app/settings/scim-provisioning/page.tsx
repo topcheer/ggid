@@ -31,7 +31,7 @@ export default function SCIMProvisioningPage() {
   const [msg, setMsg] = useState<string | null>(null);
   const [testStatus, setTestStatus] = useState<"idle" | "testing" | "ok" | "fail">("idle");
 
-  const card = "rounded-xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-700 dark:bg-gray-800";
+  const card = "rounded-xl border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800 p-5 shadow-sm dark:border-gray-700 dark:bg-gray-800";
 
   useEffect(() => {
     apiFetch<SCIMConfig>(`/api/v1/tenants/${TENANT_ID}/scim-config`)

@@ -94,7 +94,7 @@ export default function MonitoringPage() {
         <button
           onClick={loadData}
           disabled={loading}
-          className="flex items-center gap-2 rounded-lg border border-gray-300 px-3 py-2 text-sm hover:bg-gray-50 disabled:opacity-50"
+          className="flex items-center gap-2 rounded-lg border border-gray-300 dark:border-gray-600 px-3 py-2 text-sm hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50"
         >
           <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
           Refresh
@@ -134,7 +134,7 @@ export default function MonitoringPage() {
       </div>
 
       {/* Service health table */}
-      <div className="mt-6 rounded-xl border border-gray-200 bg-white shadow-sm">
+      <div className="mt-6 rounded-xl border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800 shadow-sm">
         <div className="border-b border-gray-200 p-4">
           <h2 className="text-sm font-semibold">Service Health</h2>
         </div>
@@ -142,15 +142,15 @@ export default function MonitoringPage() {
         <table className="w-full">
           <thead className="border-b border-gray-100 bg-gray-50 dark:border-gray-800 dark:bg-gray-800">
             <tr>
-              <th scope="col" className="px-4 py-2 text-left text-xs font-medium uppercase text-gray-500">Service</th>
-              <th scope="col" className="px-4 py-2 text-left text-xs font-medium uppercase text-gray-500">Status</th>
-              <th scope="col" className="px-4 py-2 text-left text-xs font-medium uppercase text-gray-500">Latency</th>
-              <th scope="col" className="px-4 py-2 text-left text-xs font-medium uppercase text-gray-500">URL</th>
+              <th scope="col" className="px-4 py-2 text-left text-xs font-medium uppercase text-gray-500 dark:text-gray-400">Service</th>
+              <th scope="col" className="px-4 py-2 text-left text-xs font-medium uppercase text-gray-500 dark:text-gray-400">Status</th>
+              <th scope="col" className="px-4 py-2 text-left text-xs font-medium uppercase text-gray-500 dark:text-gray-400">Latency</th>
+              <th scope="col" className="px-4 py-2 text-left text-xs font-medium uppercase text-gray-500 dark:text-gray-400">URL</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100">
             {(services.length > 0 ? services : SERVICES.map((s: any) => ({ ...s, status: "checking" as const }))).map((svc: any) => (
-              <tr key={svc.name} className="hover:bg-gray-50">
+              <tr key={svc.name} className="hover:bg-gray-50 dark:hover:bg-gray-700 dark:bg-gray-800">
                 <td className="px-4 py-3 text-sm font-medium">{svc.name}</td>
                 <td className="px-4 py-3">
                   <span className={`flex items-center gap-1.5 text-xs font-medium ${
@@ -166,7 +166,7 @@ export default function MonitoringPage() {
                     {svc.status === "healthy" ? t("monitoring.healthy") : svc.status === "checking" ? t("monitoring.checking") : t("monitoring.unhealthy")}
                   </span>
                 </td>
-                <td className="px-4 py-3 text-sm text-gray-500">
+                <td className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">
                   {svc.latency != null ? `${svc.latency}ms` : "-"}
                 </td>
                 <td className="px-4 py-3 font-mono text-xs text-gray-400">{svc.url}</td>
@@ -179,21 +179,21 @@ export default function MonitoringPage() {
 
       {/* Route stats */}
       {gwStats?.routes && Object.keys(gwStats.routes).length > 0 && (
-        <div className="mt-6 rounded-xl border border-gray-200 bg-white shadow-sm">
+        <div className="mt-6 rounded-xl border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800 shadow-sm">
           <div className="border-b border-gray-200 p-4">
             <h2 className="text-sm font-semibold">Route Statistics</h2>
           </div>
           <table className="w-full">
-            <thead className="border-b border-gray-100 bg-gray-50">
+            <thead className="border-b border-gray-100 bg-gray-50 dark:bg-gray-800">
               <tr>
-                <th scope="col" className="px-4 py-2 text-left text-xs font-medium uppercase text-gray-500">Route</th>
-                <th scope="col" className="px-4 py-2 text-left text-xs font-medium uppercase text-gray-500">Requests</th>
-                <th scope="col" className="px-4 py-2 text-left text-xs font-medium uppercase text-gray-500">Errors</th>
+                <th scope="col" className="px-4 py-2 text-left text-xs font-medium uppercase text-gray-500 dark:text-gray-400">Route</th>
+                <th scope="col" className="px-4 py-2 text-left text-xs font-medium uppercase text-gray-500 dark:text-gray-400">Requests</th>
+                <th scope="col" className="px-4 py-2 text-left text-xs font-medium uppercase text-gray-500 dark:text-gray-400">Errors</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
               {Object.entries(gwStats.routes).map(([route, stats]: any[]) => (
-                <tr key={route} className="hover:bg-gray-50">
+                <tr key={route} className="hover:bg-gray-50 dark:hover:bg-gray-700 dark:bg-gray-800">
                   <td className="px-4 py-3 font-mono text-xs">{route}</td>
                   <td className="px-4 py-3 text-sm">{stats.requests || 0}</td>
                   <td className="px-4 py-3 text-sm text-red-600">{stats.errors || 0}</td>
@@ -226,14 +226,14 @@ function OverviewCard({
   };
   const c = colorMap[color];
   return (
-    <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
+    <div className="rounded-xl border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800 p-5 shadow-sm">
       <div className="flex items-center gap-3">
         <div className={`flex h-10 w-10 items-center justify-center rounded-lg ${c.bg}`}>
           <Icon className={`h-5 w-5 ${c.text}`} />
         </div>
         <div>
           <p className="text-2xl font-bold">{value}</p>
-          <p className="text-xs text-gray-500">{label}</p>
+          <p className="text-xs text-gray-500 dark:text-gray-400">{label}</p>
         </div>
       </div>
     </div>
