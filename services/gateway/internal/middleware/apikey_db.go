@@ -91,7 +91,7 @@ func (v *DBAPIKeyValidator) Validate(ctx context.Context, key string) (string, s
 	if status != "active" {
 		return "", "", nil, fmt.Errorf("api key is %s", status)
 	}
-	if !expiresAt.IsZero() && time.Now().After(expiresAt) {
+	if !expiresAt.IsZero() && expiresAt.Year() > 1970 && time.Now().After(expiresAt) {
 		return "", "", nil, fmt.Errorf("api key expired")
 	}
 
