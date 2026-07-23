@@ -1,50 +1,57 @@
-# GGID Helm Values — Development Environment
-# Lightweight: single replicas, minimal resources, no TLS
-# Usage: helm install ggid ./deploy/helm/ggid -f deploy/helm/ggid/values-dev.yaml
+# Development environment — minimal resources, single replica, no HA
+# Usage: helm install ggid deploy/helm/ggid/ -f deploy/helm/ggid/values-dev.yaml
+#
+# This is a fast-start profile for local development (k3s/minikube/Docker Desktop).
 
 global:
-  imageRegistry: ""
-  storageClass: ""
+  imageRegistry: ""  # Use local builds
+  storageClass: ""   # Use default
 
-# Single replicas for cost
+# Single replicas for all services
 gateway:
   replicaCount: 1
   autoscaling:
     enabled: false
   resources:
     limits:
-      cpu: 250m
-      memory: 128Mi
+      cpu: 500m
+      memory: 256Mi
     requests:
       cpu: 50m
       memory: 64Mi
 
 identity:
   replicaCount: 1
+  autoscaling:
+    enabled: false
   resources:
     limits:
-      cpu: 250m
-      memory: 128Mi
+      cpu: 500m
+      memory: 256Mi
     requests:
       cpu: 50m
       memory: 64Mi
 
 auth:
   replicaCount: 1
+  autoscaling:
+    enabled: false
   resources:
     limits:
-      cpu: 250m
-      memory: 128Mi
+      cpu: 500m
+      memory: 256Mi
     requests:
       cpu: 50m
       memory: 64Mi
 
 oauth:
   replicaCount: 1
+  autoscaling:
+    enabled: false
   resources:
     limits:
-      cpu: 250m
-      memory: 128Mi
+      cpu: 500m
+      memory: 256Mi
     requests:
       cpu: 50m
       memory: 64Mi
@@ -53,62 +60,72 @@ policy:
   replicaCount: 1
   resources:
     limits:
-      cpu: 250m
+      cpu: 300m
       memory: 128Mi
     requests:
-      cpu: 50m
-      memory: 64Mi
+      cpu: 25m
+      memory: 32Mi
 
 org:
   replicaCount: 1
   resources:
     limits:
-      cpu: 250m
+      cpu: 300m
       memory: 128Mi
     requests:
-      cpu: 50m
-      memory: 64Mi
+      cpu: 25m
+      memory: 32Mi
 
 audit:
   replicaCount: 1
+  autoscaling:
+    enabled: false
   resources:
     limits:
-      cpu: 250m
+      cpu: 300m
       memory: 128Mi
     requests:
-      cpu: 50m
-      memory: 64Mi
+      cpu: 25m
+      memory: 32Mi
 
-# Dev: small storage
+# Minimal PostgreSQL
 postgresql:
   primary:
     persistence:
       size: 5Gi
+  auth:
+    password: "dev"  # Dev only — never use in production!
 
+# Minimal Redis (no auth for dev convenience)
 redis:
+  auth:
+    enabled: false
   master:
     persistence:
       size: 1Gi
 
-# Dev: ingress without TLS
+# NATS minimal
+nats:
+  replicaCount: 1
+
+# Console enabled with node port for easy access
 console:
   enabled: true
   replicaCount: 1
   ingress:
-    enabled: true
-    className: nginx
-    hosts:
-      - host: ggid.local
-        paths:
-          - path: /
-            pathType: Prefix
+    enabled: false  # Use port-forward instead
 
-# Dev: relaxed security
+# No network policies in dev
 networkPolicy:
   enabled: false
 
+# No PDB in dev
 podDisruptionBudget:
   enabled: false
 
+# Dev config
 config:
   logLevel: debug
+  passwordPepper: "dev-pepper"
+  auditHashSecret: "dev-secret"
+  internalSecret: "dev-internal"

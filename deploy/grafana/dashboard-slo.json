@@ -1,0 +1,134 @@
+# GGID Service Level Objectives (SLO)
+
+> Defines reliability targets for the GGID platform based on industry best practices.
+
+## Service Level Indicators (SLIs)
+
+| SLI | Metric | Source | Query |
+|-----|--------|--------|-------|
+| Availability | % of successful requests (non-5xx) | Prometheus | `1 - (sum(rate(ggid_requests_total{status=~"5.."}[5m])) / sum(rate(ggid_requests_total[5m])))` |
+| Latency (p99) | 99th percentile request duration | Prometheus | `histogram_quantile(0.99, rate(ggid_request_duration_seconds_bucket[5m]))` |
+| Latency (p95) | 95th percentile request duration | Prometheus | `histogram_quantile(0.95, rate(ggid_request_duration_seconds_bucket[5m]))` |
+| Auth Success Rate | % successful authentications | Prometheus | `rate(ggid_auth_attempts_total{result="success"}[5m]) / rate(ggid_auth_attempts_total[5m])` |
+| Token Issue Rate | Tokens issued per second | Prometheus | `rate(ggid_token_issued_total[5m])` |
+
+## Service Level Objectives (SLOs)
+
+| Service | Availability | p99 Latency | p95 Latency | Error Budget |
+|---------|-------------|-------------|-------------|--------------|
+| Gateway | 99.9% | 500ms | 200ms | 43m/month downtime |
+| Identity | 99.9% | 300ms | 150ms | 43m/month |
+| Auth | 99.95% | 500ms | 200ms | 22m/month |
+| OAuth | 99.9% | 300ms | 150ms | 43m/month |
+| Policy | 99.9% | 200ms | 100ms | 43m/month |
+| Org | 99.5% | 300ms | 150ms | 3.6h/month |
+| Audit | 99.9% | 500ms | 200ms | 43m/month |
+| MCP | 99.5% | 1s | 500ms | 3.6h/month |
+
+## Error Budget Calculation
+
+For 99.9% SLO over 30 days (43200 minutes):
+- **Total budget**: 0.1% × 43200 = 43.2 minutes of allowed downtime/errors
+- **Burn rate alerts**:
+  - **Page** (fast burn): 14.4x budget burn over 1h → 2% of monthly budget in 1h
+  - **Ticket** (slow burn): 3x budget burn over 6h → systematic degradation
+
+## Prometheus Recording Rules
+
+```yaml
+groups:
+  - name: ggid-slo
+    rules:
+      # Availability (5m window)
+      - record: ggid:availability_5m
+        expr: |
+          1 - (
+            sum(rate(ggid_requests_total{status=~"5.."}[5m])) by (service)
+            /
+            sum(rate(ggid_requests_total[5m])) by (service)
+          )
+
+      # Error rate
+      - record: ggid:error_rate_5m
+        expr: |
+          sum(rate(ggid_requests_total{status=~"5.."}[5m])) by (service)
+          /
+          sum(rate(ggid_requests_total[5m])) by (service)
+
+      # Latency p99
+      - record: ggid:latency_p99_5m
+        expr: |
+          histogram_quantile(0.99,
+            sum(rate(ggid_request_duration_seconds_bucket[5m])) by (service, le)
+          )
+
+      # Latency p95
+      - record: ggid:latency_p95_5m
+        expr: |
+          histogram_quantile(0.95,
+            sum(rate(ggid_request_duration_seconds_bucket[5m])) by (service, le)
+          )
+
+      # Error budget burn rate (fast: 1h)
+      - record: ggid:error_budget_burn_1h
+        expr: |
+          (
+            sum(rate(ggid_requests_total{status=~"5.."}[1h])) by (service)
+            /
+            sum(rate(ggid_requests_total[1h])) by (service)
+          ) > 0.001  # 0.1% threshold for 99.9% SLO
+
+      # Error budget burn rate (slow: 6h)
+      - record: ggid:error_budget_burn_6h
+        expr: |
+          (
+            sum(rate(ggid_requests_total{status=~"5.."}[6h])) by (service)
+            /
+            sum(rate(ggid_requests_total[6h])) by (service)
+          ) > 0.001
+```
+
+## Alerting Rules
+
+```yaml
+groups:
+  - name: ggid-slo-alerts
+    rules:
+      # Fast burn — page immediately
+      - alert: GgidErrorBudgetFastBurn
+        expr: ggid:error_budget_burn_1h > 14.4
+        for: 2m
+        labels:
+          severity: page
+        annotations:
+          summary: "Error budget burning fast for {{ $labels.service }}"
+          description: "Service {{ $labels.service }} is burning error budget at >14.4x rate"
+
+      # Slow burn — create ticket
+      - alert: GgidErrorBudgetSlowBurn
+        expr: ggid:error_budget_burn_6h > 3
+        for: 15m
+        labels:
+          severity: ticket
+        annotations:
+          summary: "Error budget burning slowly for {{ $labels.service }}"
+
+      # Latency SLO violation
+      - alert: GgidLatencyP99High
+        expr: ggid:latency_p99_5m > 0.5
+        for: 10m
+        labels:
+          severity: ticket
+        annotations:
+          summary: "p99 latency > 500ms for {{ $labels.service }}"
+```
+
+## Grafana Dashboard
+
+Create a dashboard with these panels:
+1. **SLO Overview**: Gauge per service showing availability % vs target
+2. **Error Budget Remaining**: Bar chart per service
+3. **Latency Percentiles**: p50/p95/p99 time series per service
+4. **Error Rate**: 5xx rate per service
+5. **Request Rate**: QPS per service
+6. **Auth Metrics**: Success/failure rate, token issuance rate
