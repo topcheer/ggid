@@ -1730,3 +1730,8 @@ no_token=401 ✅ | login=AT+RT ✅ | GET=200 ✅ | POST=201 ✅ | approve=200 �
 PW:7/7 ✅ | M2M=OK ✅ | API=200 ✅ | JWT tid+9perms+ERP Admin ✅ | Hacks:0 ✅ — 54th clean cycle.
 
 ### Next Dimension: 2 — Cycle 64
+## Cycle 64: D2 AuthZ (Round 238)
+Core: metering singleton + geofencing + SDK v2.1.0 + release pipeline. Build ✅.
+Admin(9p): inv 200/201, audit 200, users 403 ✅ | Viewer(4p): inv 200, write 403 ✅ | Fake=401 None=401 ✅ | Hacks:0 ✅ — 55th clean cycle.
+
+### Next Dimension: 3 — Cycle 65
