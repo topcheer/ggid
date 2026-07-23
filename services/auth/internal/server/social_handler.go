@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
+	"net/url"
 	"strings"
 	"sync"
 	"time"
@@ -37,6 +38,24 @@ type socialStateEntry struct {
 }
 
 var socialStates = &socialStateStore{entries: make(map[string]socialStateEntry)}
+
+// isAllowedRedirectURI validates that the redirect_uri is a safe destination.
+// Prevents open redirect attacks (P2-11).
+func isAllowedRedirectURI(uri string) bool {
+	parsed, err := url.Parse(uri)
+	if err != nil {
+		return false
+	}
+	if parsed.Scheme != "https" {
+		if parsed.Host != "localhost" && !strings.HasPrefix(parsed.Host, "localhost:") {
+			return false
+		}
+	}
+	if parsed.Host == "" {
+		return false
+	}
+	return true
+}
 
 func (s *socialStateStore) Set(key string, val *socialState, ttl time.Duration) {
 	s.mu.Lock()
@@ -117,6 +136,12 @@ func (h *Handler) handleSocialLogin(w http.ResponseWriter, r *http.Request) {
 			scheme = "http"
 		}
 		callbackURI = fmt.Sprintf("%s://%s/api/v1/auth/social/%s/callback", scheme, r.Host, provider)
+	}
+
+	// P2-11 fix: Validate redirect_uri against allowlist to prevent open redirect.
+	if redirectURI != "" && !isAllowedRedirectURI(redirectURI) {
+		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "redirect_uri not allowed"})
+		return
 	}
 
 	// Store state for CSRF protection (5 min TTL).
@@ -251,7 +276,10 @@ func (h *Handler) jitProvisionUser(ctx context.Context, tenantID uuid.UUID, info
 	}
 
 	// 2. Check if email matches an existing user in the tenant.
-	if h.pool != nil && info.Email != "" {
+	// P2-13 fix: Only merge by email when the IdP has verified the email ownership.
+	// Without this, an attacker can register a social account with a victim's email
+	// and gain access to the victim's existing account (account takeover).
+	if h.pool != nil && info.Email != "" && info.EmailVerified {
 		var userIDStr string
 		err := h.pool.QueryRow(ctx,
 			`SELECT id::text FROM users WHERE email = $1 AND tenant_id = $2`,
@@ -261,6 +289,13 @@ func (h *Handler) jitProvisionUser(ctx context.Context, tenantID uuid.UUID, info
 			h.linkExternalIdentity(ctx, tenantID, userID, info)
 			return userID, nil
 		}
+	}
+
+	// If email is not verified and matches no external identity, create a new
+	// account instead of merging — prevents account takeover via unverified email.
+	if !info.EmailVerified && info.Email != "" {
+		slog.Warn("social JIT: email not verified by IdP, creating new account instead of merging",
+			"provider", info.Provider, "email", info.Email)
 	}
 
 	// 3. Create new user via identity client (JIT provisioning).
