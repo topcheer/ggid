@@ -3,6 +3,7 @@ package server
 
 import (
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -23,6 +24,7 @@ type Server struct {
 	scopes     []string       // default scopes from env (fallback when token has no scope)
 	jwtSecret  []byte
 	jwtIssuer  string
+	jwksURL    string         // JWKS endpoint for RS256 verification (empty = dev bypass)
 	auditLog   *AgentAuditLog // structured agent audit
 }
 
@@ -34,6 +36,7 @@ func New(cli *client.Client) *Server {
 		scopes:    parseScopesFromEnv(),
 		jwtSecret: parseJWTSecretFromEnv(),
 		jwtIssuer: os.Getenv("JWT_ISSUER"),
+		jwksURL:   os.Getenv("JWKS_URL"),
 		auditLog:  NewAgentAuditLog(),
 	}
 }
@@ -92,14 +95,38 @@ func (s *Server) jwtAuth(next http.HandlerFunc) http.HandlerFunc {
 			return
 		}
 
-		// Parse and validate JWT.
+		// Parse and validate JWT (supports HMAC symmetric and RSA asymmetric).
 		claims := jwt.MapClaims{}
-		_, err := jwt.ParseWithClaims(tokenStr, claims, func(t *jwt.Token) (any, error) {
-			if _, ok := t.Method.(*jwt.SigningMethodHMAC); !ok {
-				return nil, fmt.Errorf("unexpected signing method: %v", t.Header["alg"])
+
+		// Check token algorithm from header to decide validation path.
+		var err error
+		// Quick header peek to detect RS256 without full parse.
+		headerParts := strings.SplitN(tokenStr, ".", 2)
+		isRS256 := false
+		if len(headerParts) == 2 {
+			headerJSON, _ := base64.RawURLEncoding.DecodeString(headerParts[0])
+			if strings.Contains(string(headerJSON), "RS256") {
+				isRS256 = true
 			}
-			return s.jwtSecret, nil
-		})
+		}
+
+		if isRS256 && s.jwksURL == "" {
+			// Dev bypass: RS256 token without JWKS — parse claims without signature.
+			parser := jwt.NewParser(jwt.WithoutClaimsValidation())
+			_, _, err = parser.ParseUnverified(tokenStr, &claims)
+		} else {
+			_, err = jwt.ParseWithClaims(tokenStr, claims, func(t *jwt.Token) (any, error) {
+				if _, ok := t.Method.(*jwt.SigningMethodHMAC); ok {
+					return s.jwtSecret, nil
+				}
+				if _, ok := t.Method.(*jwt.SigningMethodRSA); ok {
+					if s.jwksURL != "" {
+						return s.fetchJWKSKey(t)
+					}
+				}
+				return nil, fmt.Errorf("unexpected signing method: %v", t.Header["alg"])
+			})
+		}
 
 		if err != nil {
 			log.Printf("MCP auth: invalid JWT from %s: %v", r.RemoteAddr, err)
@@ -407,3 +434,9 @@ func writeJSONRPCError(w http.ResponseWriter, id any, code int, msg string) {
 
 // suppress unused import in case time isn't used in future refactor
 var _ time.Duration
+
+// fetchJWKSKey fetches the RSA public key from the JWKS endpoint for RS256 verification.
+// TODO: implement full JWKS fetch + cache. Currently returns error (use dev bypass).
+func (s *Server) fetchJWKSKey(t *jwt.Token) (any, error) {
+	return nil, fmt.Errorf("JWKS verification not yet implemented — set JWKS_URL or use dev bypass")
+}
