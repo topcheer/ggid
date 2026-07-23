@@ -135,7 +135,7 @@ export default function LoginPage() {
         grant_type: "password",
         username,
         password,
-        client_id: "ggid-console",
+        client_id: "gcid-console",
         scope: "openid profile email offline_access",
       });
 
@@ -206,7 +206,7 @@ export default function LoginPage() {
         grant_type: "password",
         username,
         password,
-        client_id: "ggid-console",
+        client_id: "gcid-console",
         scope: "openid profile email offline_access",
         mfa_code: useBackupCode ? "" : totpCode,
         backup_code: useBackupCode ? backupCode : "",
