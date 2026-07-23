@@ -1838,3 +1838,7 @@ Admin(9p): inv 200/201 audit 200 users 403 ✅ | Viewer(4p): inv 200 write 403 �
 Go inv PASS ✅ | POST→GET PASS ✅ | Order approve 200 ✅ | Perms verify=9 PASS ✅ | Hacks:0 ✅ — 79th clean cycle.
 
 ### Next Dimension: 4 — Cycle 90
+## Cycle 90: D4 Tenant Isolation (Round 264)
+Go→Go=200 ✅ | Node→Go=403 ✅ | Fake=401 ✅ | JWT=YES ✅ | Hacks:0 ✅ — 80th clean cycle.
+
+### Next Dimension: 5 — Cycle 91
