@@ -84,12 +84,16 @@ func (h *Handler) handleAPIKeys(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
+		// Generate the key ID first so we can embed it in the secret.
+		keyID := uuid.New()
 		plain, err := ggidcrypto.GenerateRandomToken(24)
 		if err != nil {
 			writeError(w, http.StatusInternalServerError, "failed to generate api key")
 			return
 		}
-		secret := "ggid_sk_" + plain
+		// Format: ggid_sk_<keyID_hex>_<random_secret>
+		// The keyID enables O(1) DB lookup; the random part is verified via Argon2id.
+		secret := "ggid_sk_" + keyID.String() + "_" + plain
 
 		var expiresAt *time.Time
 		if req.ExpiresAt != "" {
@@ -101,7 +105,7 @@ func (h *Handler) handleAPIKeys(w http.ResponseWriter, r *http.Request) {
 			expiresAt = &t
 		}
 
-		rec, err := repo.Create(r.Context(), tc.TenantID, req.Name, secret, req.Scopes, expiresAt)
+		rec, err := repo.CreateWithID(r.Context(), tc.TenantID, keyID, req.Name, secret, req.Scopes, expiresAt)
 		if err != nil {
 			slog.Error("api_keys: create failed", "error", err)
 			writeError(w, http.StatusInternalServerError, "failed to create api key")
@@ -131,7 +135,7 @@ func (h *Handler) handleAPIKeys(w http.ResponseWriter, r *http.Request) {
 				writeError(w, http.StatusInternalServerError, "failed to generate api key")
 				return
 			}
-			secret := "ggid_sk_" + plain
+			secret := "ggid_sk_" + keyID.String() + "_" + plain
 
 			if err := repo.Rotate(r.Context(), tc.TenantID, keyID, secret); err != nil {
 				slog.Error("api_keys: rotate failed", "error", err)

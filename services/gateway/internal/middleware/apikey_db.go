@@ -2,33 +2,35 @@ package middleware
 
 import (
 	"context"
-	"crypto/sha256"
-	"encoding/hex"
 	"fmt"
 	"net/http"
 	"strings"
 	"sync"
 	"time"
 
+	ggidcrypto "github.com/ggid/ggid/pkg/crypto"
+	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 // DBAPIKeyValidator validates API keys against the api_keys database table.
-// Keys are stored as SHA-256 hashes. The validator caches lookups for 30s
-// per key hash to reduce DB load.
+// Keys are stored as Argon2id hashes. The key format embeds a UUID for O(1)
+// lookup: ggid_sk_<uuid>_<random_secret>. The validator extracts the UUID,
+// fetches the stored hash, and verifies the full secret via Argon2id.
+//
+// Results are cached for 30s per key ID to reduce DB load.
 type DBAPIKeyValidator struct {
-	pool   *pgxpool.Pool
-	cache  sync.Map // keyHash → *cachedKey
-	ttl    time.Duration
+	pool  *pgxpool.Pool
+	cache sync.Map // keyID string → *cachedKey
+	ttl   time.Duration
 }
 
 type cachedKey struct {
-	tenantID  string
-	userID    string
-	scopes    []string
-	expiresAt time.Time
-	status    string
-	cachedAt  time.Time
+	tenantID string
+	scopes   []string
+	status   string
+	cachedAt time.Time
 }
 
 // NewDBAPIKeyValidator creates a DB-backed API key validator.
@@ -47,58 +49,44 @@ func NewDBAPIKeyValidator(ctx context.Context, dbURL string) *DBAPIKeyValidator 
 	}
 }
 
-// Validate implements APIKeyValidator. It hashes the incoming key with SHA-256
-// and looks up the hash in the api_keys table.
+// Validate implements APIKeyValidator. It extracts the key ID from the
+// plaintext key, looks up the stored Argon2id hash, and verifies the secret.
 func (v *DBAPIKeyValidator) Validate(ctx context.Context, key string) (string, string, []string, error) {
-	// Hash the key
-	sum := sha256.Sum256([]byte(key))
-	keyHash := hex.EncodeToString(sum[:])
+	// Parse key format: ggid_sk_<uuid>_<random_secret>
+	keyID, ok := parseAPIKeyID(key)
+	if !ok {
+		return "", "", nil, fmt.Errorf("invalid api key format")
+	}
 
 	// Check cache first
-	if cached, ok := v.cache.Load(keyHash); ok {
+	if cached, ok := v.cache.Load(keyID); ok {
 		ck := cached.(*cachedKey)
 		if time.Since(ck.cachedAt) < v.ttl {
 			if ck.status != "active" {
 				return "", "", nil, fmt.Errorf("api key is %s", ck.status)
 			}
-			if !ck.expiresAt.IsZero() && time.Now().After(ck.expiresAt) {
-				return "", "", nil, fmt.Errorf("api key expired")
-			}
-			return ck.tenantID, ck.userID, ck.scopes, nil
+			return ck.tenantID, "", ck.scopes, nil
 		}
 	}
 
-	// Query DB
-	row := v.pool.QueryRow(ctx, `
-		SELECT tenant_id, COALESCE(user_id::text, ''), scopes, status, expires_at
-		FROM api_keys
-		WHERE key_hash = $1`,
-		keyHash)
-
-	var tenantID, userID, status string
+	// Query DB for the stored hash + metadata
+	var tenantID, keyHash, status string
 	var scopes []string
 	var expiresAt time.Time
 
-	if err := row.Scan(&tenantID, &userID, &scopes, &status, &expiresAt); err != nil {
+	err := v.pool.QueryRow(ctx, `
+		SELECT tenant_id::text, key_hash, scopes, status, COALESCE(expires_at, 'epoch')
+		FROM api_keys
+		WHERE id = $1`,
+		keyID,
+	).Scan(&tenantID, &keyHash, &scopes, &status, &expiresAt)
+
+	if err == pgx.ErrNoRows {
 		return "", "", nil, fmt.Errorf("invalid api key")
 	}
-
-	// Cache the result
-	v.cache.Store(keyHash, &cachedKey{
-		tenantID:  tenantID,
-		userID:    userID,
-		scopes:    scopes,
-		expiresAt: expiresAt,
-		status:    status,
-		cachedAt:  time.Now(),
-	})
-
-	// Async: update last_used + usage_count
-	go func() {
-		v.pool.Exec(context.Background(),
-			`UPDATE api_keys SET last_used = NOW(), usage_count = usage_count + 1 WHERE key_hash = $1`,
-			keyHash)
-	}()
+	if err != nil {
+		return "", "", nil, fmt.Errorf("api key lookup failed: %w", err)
+	}
 
 	if status != "active" {
 		return "", "", nil, fmt.Errorf("api key is %s", status)
@@ -107,7 +95,51 @@ func (v *DBAPIKeyValidator) Validate(ctx context.Context, key string) (string, s
 		return "", "", nil, fmt.Errorf("api key expired")
 	}
 
-	return tenantID, userID, scopes, nil
+	// Verify the full secret against the stored Argon2id hash.
+	match, err := ggidcrypto.VerifyPassword(key, keyHash)
+	if err != nil || !match {
+		return "", "", nil, fmt.Errorf("invalid api key")
+	}
+
+	// Cache the result (key verified)
+	v.cache.Store(keyID, &cachedKey{
+		tenantID: tenantID,
+		scopes:   scopes,
+		status:   status,
+		cachedAt: time.Now(),
+	})
+
+	// Async: update last_used_at (best-effort)
+	go func() {
+		v.pool.Exec(context.Background(),
+			`UPDATE api_keys SET last_used_at = NOW() WHERE id = $1`,
+			keyID)
+	}()
+
+	return tenantID, "", scopes, nil
+}
+
+// parseAPIKeyID extracts the UUID from a key of format: ggid_sk_<uuid>_<rest>
+func parseAPIKeyID(key string) (string, bool) {
+	// Expected: ggid_sk_<uuid>_<random>
+	if !strings.HasPrefix(key, "ggid_sk_") {
+		return "", false
+	}
+	rest := key[len("ggid_sk_"):]
+	// UUID is 36 chars (with dashes); followed by underscore + random
+	if len(rest) < 38 { // 36 (uuid) + 1 (_) + at least 1 char
+		return "", false
+	}
+	// Try to parse the first 36 chars as UUID
+	uuidStr := rest[:36]
+	if _, err := uuid.Parse(uuidStr); err != nil {
+		return "", false
+	}
+	// Must be followed by underscore
+	if rest[36] != '_' {
+		return "", false
+	}
+	return uuidStr, true
 }
 
 // WithDBAPIKeyAuth wraps the given handler with DB-backed API key authentication.

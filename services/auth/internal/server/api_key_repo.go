@@ -38,13 +38,19 @@ func newAPIKeyRepo(pool *pgxpool.Pool) *apiKeyRepo {
 // Create inserts a new API key. The secret is hashed with Argon2id before storage.
 // Returns the created record (without the plaintext secret).
 func (r *apiKeyRepo) Create(ctx context.Context, tenantID uuid.UUID, name, plaintextSecret string, scopes []string, expiresAt *time.Time) (*APIKeyRecord, error) {
+	return r.CreateWithID(ctx, tenantID, uuid.New(), name, plaintextSecret, scopes, expiresAt)
+}
+
+// CreateWithID is like Create but uses a caller-provided UUID (needed when the
+// ID is embedded in the plaintext key for lookup).
+func (r *apiKeyRepo) CreateWithID(ctx context.Context, tenantID, keyID uuid.UUID, name, plaintextSecret string, scopes []string, expiresAt *time.Time) (*APIKeyRecord, error) {
 	keyHash, err := ggidcrypto.HashPassword(plaintextSecret)
 	if err != nil {
 		return nil, fmt.Errorf("hash api key: %w", err)
 	}
 
 	rec := &APIKeyRecord{
-		ID:        uuid.New(),
+		ID:        keyID,
 		TenantID:  tenantID,
 		Name:      name,
 		KeyHash:   keyHash,
@@ -101,14 +107,30 @@ func (r *apiKeyRepo) GetByID(ctx context.Context, tenantID, id uuid.UUID) (*APIK
 	return scanAPIKeyPublic(row)
 }
 
-// GetKeyHash retrieves only the key_hash for verification (used by Gateway validator).
-func (r *apiKeyRepo) GetKeyHash(ctx context.Context, id uuid.UUID) (string, error) {
-	var keyHash string
-	err := r.pool.QueryRow(ctx, `SELECT key_hash FROM api_keys WHERE id = $1 AND status = 'active'`, id).Scan(&keyHash)
+// FindForKeyValidation retrieves everything the gateway needs to validate an API key.
+// The gateway calls this with the keyID extracted from the plaintext key, then
+// verifies the full secret against key_hash using Argon2id.
+func (r *apiKeyRepo) FindForKeyValidation(ctx context.Context, id uuid.UUID) (*APIKeyRecord, error) {
+	var rec APIKeyRecord
+	var expiresAt, lastUsedAt sql.NullTime
+	err := r.pool.QueryRow(ctx, `
+		SELECT id, tenant_id, name, key_hash, scopes, status, created_at, expires_at, last_used_at
+		FROM api_keys
+		WHERE id = $1`, id,
+	).Scan(&rec.ID, &rec.TenantID, &rec.Name, &rec.KeyHash, &rec.Scopes, &rec.Status, &rec.CreatedAt, &expiresAt, &lastUsedAt)
 	if err == pgx.ErrNoRows {
-		return "", nil
+		return nil, nil
 	}
-	return keyHash, err
+	if err != nil {
+		return nil, err
+	}
+	if expiresAt.Valid {
+		rec.ExpiresAt = &expiresAt.Time
+	}
+	if lastUsedAt.Valid {
+		rec.LastUsedAt = &lastUsedAt.Time
+	}
+	return &rec, nil
 }
 
 // UpdateStatus sets the status of an API key (e.g. "revoked", "active").
