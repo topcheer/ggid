@@ -50,7 +50,7 @@ func (r *Registry) FilterByScopes(scopes []string) []Tool {
 	for _, s := range scopes {
 		scopeSet[s] = true
 	}
-	if scopeSet["admin"] {
+	if scopeSet["admin"] || scopeSet["tenant:admin"] || scopeSet["platform:admin"] {
 		return r.tools
 	}
 	var available []Tool

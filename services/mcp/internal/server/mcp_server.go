@@ -143,6 +143,16 @@ func (s *Server) jwtAuth(next http.HandlerFunc) http.HandlerFunc {
 		ctx = context.WithValue(ctx, ctxKeyUserID{}, claims["sub"])
 		ctx = context.WithValue(ctx, ctxKeyTenantID{}, claims["tenant_id"])
 		ctx = context.WithValue(ctx, ctxKeyScopes{}, claims["scope"])
+		// Also extract permissions array for tool filtering (M2M/role-based tokens).
+		if perms, ok := claims["permissions"].([]any); ok {
+			permStrs := make([]string, 0, len(perms))
+			for _, p := range perms {
+				if ps, ok := p.(string); ok {
+					permStrs = append(permStrs, ps)
+				}
+			}
+			ctx = context.WithValue(ctx, ctxKeyPerms{}, permStrs)
+		}
 
 		// Agent identity: extract agent-specific claims for scope enforcement + audit.
 		if isAgent, ok := claims["is_agent_token"].(bool); ok && isAgent {
@@ -184,6 +194,7 @@ func (s *Server) jwtAuth(next http.HandlerFunc) http.HandlerFunc {
 type ctxKeyUserID struct{}
 type ctxKeyTenantID struct{}
 type ctxKeyScopes struct{}
+type ctxKeyPerms struct{}
 type ctxKeyAgentID struct{}
 type ctxKeyAgentType struct{}
 type ctxKeyActorSub struct{}
@@ -213,11 +224,18 @@ func getAgentFromContext(ctx context.Context) (agentID, agentType, actorSub stri
 	return
 }
 
-// scopesFromContext extracts the token's scope claim as a []string.
+// scopesFromContext extracts the token's scope claim + permissions as []string.
 // Falls back to server's default scopes from env.
 func (s *Server) scopesFromContext(ctx context.Context) []string {
+	var all []string
 	if scopeStr, ok := ctx.Value(ctxKeyScopes{}).(string); ok && scopeStr != "" {
-		return strings.Fields(scopeStr)
+		all = append(all, strings.Fields(scopeStr)...)
+	}
+	if perms, ok := ctx.Value(ctxKeyPerms{}).([]string); ok {
+		all = append(all, perms...)
+	}
+	if len(all) > 0 {
+		return all
 	}
 	return s.scopes
 }
