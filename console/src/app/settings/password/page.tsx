@@ -191,7 +191,7 @@ export default function PasswordPolicyEnhancedPage() {
   const handleSave = async () => {
     setSaving(true);
     try {
-      await apiFetch(`/api/v1/tenants/${TENANT_ID}/password-policy`, {
+      await apiFetch(`/api/v1/auth/password-policy`, {
         method: "PUT",
         body: JSON.stringify(config),
       });
