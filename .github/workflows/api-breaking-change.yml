@@ -1,0 +1,146 @@
+name: API Breaking Change Detection
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'deploy/openapi.yaml'
+      - 'docs/openapi.yaml'
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  detect-breaking-changes:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.23'
+
+      - name: Install oasdiff
+        run: go install github.com/Tufin/oasdiff@latest
+
+      - name: Detect breaking changes (deploy/openapi.yaml)
+        id: oasdiff-deploy
+        continue-on-error: true
+        run: |
+          # Get the base version of the spec from the target branch
+          BASE_REF="${{ github.event.pull_request.base.sha }}"
+          git show ${BASE_REF}:deploy/openapi.yaml > /tmp/openapi-base.yaml 2>/dev/null || {
+            echo "No previous version of deploy/openapi.yaml found — skipping"
+            echo "breaking=false" >> $GITHUB_OUTPUT
+            exit 0
+          }
+
+          echo "Comparing breaking changes..."
+          oasdiff breaking /tmp/openapi-base.yaml deploy/openapi.yaml > /tmp/oasdiff-result.txt 2>&1 || true
+
+          if [ -s /tmp/oasdiff-result.txt ] && grep -q "error\|breaking\|removed\|changed\|required" /tmp/oasdiff-result.txt; then
+            echo "breaking=true" >> $GITHUB_OUTPUT
+            echo "::error::Breaking API changes detected in deploy/openapi.yaml"
+            cat /tmp/oasdiff-result.txt
+          else
+            echo "breaking=false" >> $GITHUB_OUTPUT
+            echo "No breaking changes detected"
+          fi
+
+      - name: Detect breaking changes (docs/openapi.yaml)
+        id: oasdiff-docs
+        continue-on-error: true
+        run: |
+          BASE_REF="${{ github.event.pull_request.base.sha }}"
+          git show ${BASE_REF}:docs/openapi.yaml > /tmp/openapi-docs-base.yaml 2>/dev/null || {
+            echo "No previous version of docs/openapi.yaml found — skipping"
+            echo "breaking=false" >> $GITHUB_OUTPUT
+            exit 0
+          }
+
+          oasdiff breaking /tmp/openapi-docs-base.yaml docs/openapi.yaml > /tmp/oasdiff-docs-result.txt 2>&1 || true
+
+          if [ -s /tmp/oasdiff-docs-result.txt ] && grep -q "error\|breaking\|removed\|changed\|required" /tmp/oasdiff-docs-result.txt; then
+            echo "breaking=true" >> $GITHUB_OUTPUT
+            echo "::error::Breaking API changes detected in docs/openapi.yaml"
+            cat /tmp/oasdiff-docs-result.txt
+          else
+            echo "breaking=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Comment on PR
+        if: always()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const deployBreaking = '${{ steps.oasdiff-deploy.outputs.breaking }}' === 'true';
+            const docsBreaking = '${{ steps.oasdiff-docs.outputs.breaking }}' === 'true';
+            const fs = require('fs');
+
+            let body = '## API Breaking Change Report\n\n';
+
+            try {
+              const deployResult = fs.readFileSync('/tmp/oasdiff-result.txt', 'utf8');
+              if (deployBreaking) {
+                body += '### ❌ deploy/openapi.yaml — Breaking Changes Found\n\n```\n' + deployResult + '\n```\n\n';
+              } else {
+                body += '### ✅ deploy/openapi.yaml — No Breaking Changes\n\n';
+              }
+            } catch(e) {
+              body += '### ⏭️ deploy/openapi.yaml — Skipped (no previous version)\n\n';
+            }
+
+            try {
+              const docsResult = fs.readFileSync('/tmp/oasdiff-docs-result.txt', 'utf8');
+              if (docsBreaking) {
+                body += '### ❌ docs/openapi.yaml — Breaking Changes Found\n\n```\n' + docsResult + '\n```\n';
+              } else {
+                body += '### ✅ docs/openapi.yaml — No Breaking Changes\n\n';
+              }
+            } catch(e) {
+              body += '### ⏭️ docs/openapi.yaml — Skipped (no previous version)\n\n';
+            }
+
+            const hasBreaking = deployBreaking || docsBreaking;
+            if (hasBreaking) {
+              body += '\n---\n⚠️ **This PR introduces breaking API changes.** Review the changes above before merging.';
+            } else {
+              body += '\n---\n✅ **Safe to merge** — no breaking API changes detected.';
+            }
+
+            // Find existing comment
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+
+            const botComment = comments.find(c =>
+              c.user.type === 'Bot' && c.body.includes('API Breaking Change Report')
+            );
+
+            if (botComment) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: botComment.id,
+                body,
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body,
+              });
+            }
+
+      - name: Fail on breaking changes
+        if: steps.oasdiff-deploy.outputs.breaking == 'true' || steps.oasdiff-docs.outputs.breaking == 'true'
+        run: |
+          echo "Breaking changes detected — failing CI"
+          exit 1
