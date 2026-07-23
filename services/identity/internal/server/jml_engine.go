@@ -50,6 +50,11 @@ type natsConn interface {
 	Publish(subject string, data []byte) error
 }
 
+// jmlHTTPClient is the shared HTTP client for JML outbound calls (policy service,
+// webhooks). The 10s timeout prevents goroutine leaks when downstream services
+// are slow or unresponsive.
+var jmlHTTPClient = &http.Client{Timeout: 10 * time.Second}
+
 func newJMLEngine(repo *lifecycleRepo) *JMLEngine {
 	return &JMLEngine{repo: repo}
 }
@@ -194,7 +199,7 @@ func (e *JMLEngine) callPolicyAssignRole(tenantID, userID uuid.UUID, roleIDStr s
 		"tenant_id":  tenantID.String(),
 		"scope_type": "global",
 	})
-	resp, err := http.Post(e.policyURL+"/api/v1/policies/roles/assign", "application/json", bytes.NewReader(body))
+	resp, err := jmlHTTPClient.Post(e.policyURL+"/api/v1/policies/roles/assign", "application/json", bytes.NewReader(body))
 	if err != nil {
 		return err
 	}
@@ -214,7 +219,7 @@ func (e *JMLEngine) callPolicyRevokeAll(tenantID, userID uuid.UUID) error {
 		"user_id":   userID.String(),
 		"tenant_id": tenantID.String(),
 	})
-	resp, err := http.Post(e.policyURL+"/api/v1/policies/roles/revoke-all", "application/json", bytes.NewReader(body))
+	resp, err := jmlHTTPClient.Post(e.policyURL+"/api/v1/policies/roles/revoke-all", "application/json", bytes.NewReader(body))
 	if err != nil {
 		return err
 	}
@@ -231,7 +236,7 @@ func (e *JMLEngine) sendWebhook(url string, event LifecycleEvent, action Lifecyc
 		"params":    action.Params,
 		"timestamp": time.Now().UTC(),
 	})
-	resp, err := http.Post(url, "application/json", bytes.NewReader(payload))
+	resp, err := jmlHTTPClient.Post(url, "application/json", bytes.NewReader(payload))
 	if err != nil {
 		return err
 	}

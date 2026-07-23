@@ -86,7 +86,9 @@ func (r *DIDResolver) ResolveDID(did string) (*DIDDocument, error) {
 func (r *DIDResolver) resolveDIDWeb(suffix string) (*DIDDocument, error) {
 	domain := strings.ReplaceAll(suffix, "/", "/.well-known/")
 	url := fmt.Sprintf("https://%s/.well-known/did.json", strings.SplitN(domain, "/", 2)[0])
-	resp, err := http.Get(url)
+	var didHTTPClient = &http.Client{Timeout: 10 * time.Second}
+
+	resp, err := didHTTPClient.Get(url)
 	if err != nil {
 		return nil, fmt.Errorf("did:web fetch failed: %w", err)
 	}

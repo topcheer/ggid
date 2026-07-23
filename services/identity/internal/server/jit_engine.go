@@ -325,8 +325,10 @@ func (h *HTTPHandler) provisionUserViaHTTP(tenantID uuid.UUID, email, username s
 		"status":   "active",
 	})
 
+	var jitHTTPClient = &http.Client{Timeout: 10 * time.Second}
+
 	// Check if user exists first (GET by email).
-	checkResp, err := http.Get(identityURL + "/api/v1/users?email=" + url.QueryEscape(email))
+	checkResp, err := jitHTTPClient.Get(identityURL + "/api/v1/users?email=" + url.QueryEscape(email))
 	if err == nil && checkResp != nil {
 		defer checkResp.Body.Close()
 		if checkResp.StatusCode == http.StatusOK {
@@ -337,7 +339,7 @@ func (h *HTTPHandler) provisionUserViaHTTP(tenantID uuid.UUID, email, username s
 			if json.NewDecoder(checkResp.Body).Decode(&existing) == nil && existing.ID != "" {
 				req, _ := http.NewRequest(http.MethodPut, identityURL+"/api/v1/users/"+existing.ID, bytes.NewReader(body))
 				req.Header.Set("Content-Type", "application/json")
-				resp, err := http.DefaultClient.Do(req)
+				resp, err := jitHTTPClient.Do(req)
 				if err == nil {
 					resp.Body.Close()
 				}
@@ -347,7 +349,7 @@ func (h *HTTPHandler) provisionUserViaHTTP(tenantID uuid.UUID, email, username s
 	}
 
 	// User doesn't exist → POST create.
-	resp, err := http.Post(identityURL+"/api/v1/users", "application/json", bytes.NewReader(body))
+	resp, err := jitHTTPClient.Post(identityURL+"/api/v1/users", "application/json", bytes.NewReader(body))
 	if err != nil {
 		return "", "error"
 	}
