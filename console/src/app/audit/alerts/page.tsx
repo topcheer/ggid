@@ -203,7 +203,9 @@ export default function AuditAlertsPage() {
                     </tr>
                   </thead>
                   <tbody>
-                    {filteredHistory.map((entry: any) => (
+                    {filteredHistory.length === 0 ? (
+                      <tr><td colSpan={7} className="px-4 py-8 text-center text-sm text-gray-400">No alert history yet. Alerts will appear here when rules trigger.</td></tr>
+                    ) : filteredHistory.map((entry: any) => (
                       <tr key={entry.id} className="border-b border-gray-100 dark:border-gray-700/50">
                         <td className="px-4 py-3 font-medium text-gray-800 dark:text-gray-200">{entry.rule_name}</td>
                         <td className="px-4 py-3"><code className="rounded bg-gray-100 px-1.5 py-0.5 text-xs dark:bg-gray-700">{entry.metric}</code></td>
