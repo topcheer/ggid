@@ -3,6 +3,7 @@
 package httpserver
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
 	"strconv"
@@ -60,6 +61,8 @@ func (s *usageStoreType) Add(batch []UsageRecord) {
 }
 
 // handleUsageIngest handles POST /api/v1/audit/usage from gateway.
+// Writes to both in-memory store (for fallback queries) and PostgreSQL
+// api_usage_log table (for persistent metering queries).
 func (s *HTTPServer) handleUsageIngest(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
@@ -75,11 +78,33 @@ func (s *HTTPServer) handleUsageIngest(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Keep in-memory store for backward compatibility.
 	usageStore.Add(payload.Events)
+
+	// Persist to PostgreSQL api_usage_log table.
+	if s.pool != nil && len(payload.Events) > 0 {
+		ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
+		defer cancel()
+
+		tx, err := s.pool.Begin(ctx)
+		if err == nil {
+			defer tx.Rollback(ctx) //nolint:errcheck
+
+			for _, rec := range payload.Events {
+				_, _ = tx.Exec(ctx, `
+					INSERT INTO api_usage_log (tenant_id, method, path, status_code, latency_ms)
+					VALUES ($1, $2, $3, $4, $5)`,
+					rec.TenantID, rec.Method, rec.Path, rec.Status, int(rec.Duration))
+			}
+			_ = tx.Commit(ctx)
+		}
+	}
+
 	w.WriteHeader(http.StatusAccepted)
 }
 
 // handleUsageQuery handles GET /api/v1/audit/usage?tenant_id=xxx&days=30
+// Queries from the api_usage_log table (populated by gateway metering middleware).
 func (s *HTTPServer) handleUsageQuery(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
 		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
@@ -96,9 +121,91 @@ func (s *HTTPServer) handleUsageQuery(w http.ResponseWriter, r *http.Request) {
 		days = 30
 	}
 
-	cutoff := time.Now().AddDate(0, 0, -days)
+	result := make(map[string]interface{})
+	result["days"] = days
 
-	// Aggregate from in-memory store
+	// If pool is available, query from PostgreSQL api_usage_log table.
+	if s.pool != nil {
+		cutoff := time.Now().AddDate(0, 0, -days)
+
+		if tenantID != "" {
+			// Single tenant — include endpoint breakdown.
+			query := `
+				SELECT path, method, COUNT(*) AS requests,
+				       COUNT(*) FILTER (WHERE status_code >= 500) AS errors,
+				       COALESCE(AVG(latency_ms), 0) AS avg_lat
+				FROM api_usage_log
+				WHERE tenant_id = $1 AND created_at >= $2
+				GROUP BY path, method
+				ORDER BY requests DESC
+				LIMIT 50`
+			rows, qErr := s.pool.Query(r.Context(), query, tenantID, cutoff)
+			if qErr == nil {
+				defer rows.Close()
+				var endpoints []EndpointUsage
+				var totalReq, totalErr int64
+				var sumLat float64
+				var latCount int64
+				for rows.Next() {
+					var eu EndpointUsage
+					if err := rows.Scan(&eu.Path, &eu.Method, &eu.Requests, &eu.Errors, &eu.AvgLatency); err != nil {
+						continue
+					}
+					endpoints = append(endpoints, eu)
+					totalReq += eu.Requests
+					totalErr += eu.Errors
+					sumLat += eu.AvgLatency * float64(eu.Requests)
+					latCount += eu.Requests
+				}
+				summary := &UsageSummary{
+					TenantID:      tenantID,
+					TotalRequests: totalReq,
+					TotalErrors:   totalErr,
+					TopEndpoints:  endpoints,
+				}
+				if latCount > 0 {
+					summary.AvgLatencyMs = sumLat / float64(latCount)
+				}
+				result["tenant"] = summary
+				w.Header().Set("Content-Type", "application/json")
+				json.NewEncoder(w).Encode(result)
+				return
+			}
+		} else {
+			// All tenants — summary list.
+			query := `
+				SELECT tenant_id,
+				       COUNT(*) AS total,
+				       COUNT(*) FILTER (WHERE status_code >= 500) AS errors,
+				       COALESCE(AVG(latency_ms), 0) AS avg_lat
+				FROM api_usage_log
+				WHERE created_at >= $1
+				GROUP BY tenant_id
+				ORDER BY total DESC`
+			rows, qErr := s.pool.Query(r.Context(), query, cutoff)
+			if qErr == nil {
+				defer rows.Close()
+				var summaries []UsageSummary
+				for rows.Next() {
+					var us UsageSummary
+					if err := rows.Scan(&us.TenantID, &us.TotalRequests, &us.TotalErrors, &us.AvgLatencyMs); err != nil {
+						continue
+					}
+					if us.TenantID == "" {
+						us.TenantID = "(anonymous)"
+					}
+					summaries = append(summaries, us)
+				}
+				result["tenants"] = summaries
+				w.Header().Set("Content-Type", "application/json")
+				json.NewEncoder(w).Encode(result)
+				return
+			}
+		}
+	}
+
+	// Fallback: query in-memory store if pool unavailable.
+	cutoff := time.Now().AddDate(0, 0, -days)
 	type aggKey struct {
 		tenant, path, method string
 	}
@@ -113,7 +220,6 @@ func (s *HTTPServer) handleUsageQuery(w http.ResponseWriter, r *http.Request) {
 			continue
 		}
 
-		// Per-endpoint aggregation
 		key := aggKey{rec.TenantID, rec.Path, rec.Method}
 		if _, ok := aggregates[key]; !ok {
 			aggregates[key] = &EndpointUsage{Path: rec.Path, Method: rec.Method}
@@ -124,7 +230,6 @@ func (s *HTTPServer) handleUsageQuery(w http.ResponseWriter, r *http.Request) {
 		}
 		aggregates[key].AvgLatency = (aggregates[key].AvgLatency*float64(aggregates[key].Requests-1) + rec.Duration) / float64(aggregates[key].Requests)
 
-		// Per-tenant aggregation
 		if _, ok := tenantCounts[rec.TenantID]; !ok {
 			tenantCounts[rec.TenantID] = &UsageSummary{TenantID: rec.TenantID}
 		}
@@ -136,29 +241,24 @@ func (s *HTTPServer) handleUsageQuery(w http.ResponseWriter, r *http.Request) {
 		tc.AvgLatencyMs = (tc.AvgLatencyMs*float64(tc.TotalRequests-1) + rec.Duration) / float64(tc.TotalRequests)
 	}
 
-	// Build response
-	result := make(map[string]interface{})
 	if tenantID != "" {
-		// Single tenant — include endpoint breakdown
 		summary := tenantCounts[tenantID]
 		if summary == nil {
 			summary = &UsageSummary{TenantID: tenantID}
 		}
 		for _, a := range aggregates {
-			if a != nil && (tenantID == "" || true) {
+			if a != nil {
 				summary.TopEndpoints = append(summary.TopEndpoints, *a)
 			}
 		}
 		result["tenant"] = summary
 	} else {
-		// All tenants — summary list
 		summaries := make([]UsageSummary, 0, len(tenantCounts))
 		for _, tc := range tenantCounts {
 			summaries = append(summaries, *tc)
 		}
 		result["tenants"] = summaries
 	}
-	result["days"] = days
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(result)
