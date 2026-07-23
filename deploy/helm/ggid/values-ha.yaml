@@ -1,0 +1,56 @@
+# 多区域 HA 配置层
+# Usage: helm install ggid deploy/helm/ggid/ -f values-prod.yaml -f values-ha.yaml
+
+postgresql:
+  enabled: false
+
+externalDatabase:
+  host: "pg-primary.ap-east-1.internal"
+  replicaHost: "pg-replica.ap-northeast-1.internal"
+  port: 5432
+  username: "ggid"
+  password: ""
+  database: "ggid"
+
+redis:
+  enabled: false
+
+externalRedis:
+  host: ""
+  port: 6379
+  password: ""
+  sentinel:
+    enabled: true
+    master: "ggid"
+    nodes: "sentinel-0:26379,sentinel-1:26379,sentinel-2:26379"
+
+externalNats:
+  url: "nats://nats-cluster.internal:4222"
+
+affinity:
+  podAntiAffinity:
+    preferredDuringSchedulingIgnoredDuringExecution:
+      - weight: 100
+        podAffinityTerm:
+          labelSelector:
+            matchLabels:
+              app.kubernetes.io/name: ggid
+          topologyKey: kubernetes.io/hostname
+      - weight: 50
+        podAffinityTerm:
+          labelSelector:
+            matchLabels:
+              app.kubernetes.io/name: ggid
+          topologyKey: topology.kubernetes.io/zone
+
+topologySpreadConstraints:
+  - maxSkew: 1
+    topologyKey: topology.kubernetes.io/zone
+    whenUnsatisfiable: ScheduleAnyway
+    labelSelector:
+      matchLabels:
+        app.kubernetes.io/name: ggid
+
+podDisruptionBudget:
+  enabled: true
+  minAvailable: 2
