@@ -332,7 +332,15 @@ export default function ApiKeysPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
-              {keys.map((key: any) => {
+              {keys.length === 0 ? (
+                <tr>
+                  <td colSpan={6} className="px-4 py-12 text-center">
+                    <Key className="mx-auto h-10 w-10 text-gray-300" />
+                    <p className="mt-3 text-sm font-medium text-gray-500 dark:text-gray-400">No API keys yet</p>
+                    <p className="mt-1 text-xs text-gray-400">Create an API key to authenticate programmatic access to the GGID API.</p>
+                  </td>
+                </tr>
+              ) : keys.map((key: any) => {
                 const expired = isExpired(key.expires_at);
                 return (
                   <tr key={key.id} className="hover:bg-gray-50 dark:hover:bg-gray-900">

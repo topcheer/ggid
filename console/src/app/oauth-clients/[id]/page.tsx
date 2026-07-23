@@ -154,8 +154,8 @@ export default function OAuthClientDetailPage({ params }: { params: { id: string
 
       <div className="space-y-4">
         {/* Client info */}
-        <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
-          <h3 className="mb-4 text-sm font-semibold">{t("oauthClients.clientInfo")}</h3>
+        <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800">
+          <h3 className="mb-4 text-sm font-semibold dark:text-gray-200">{t("oauthClients.clientInfo")}</h3>
           <div className="grid gap-3 sm:grid-cols-2">
             <InfoRow label="Type" value={client.type} />
             <InfoRow label="Created" value={client.created_at ? new Date(client.created_at).toLocaleString() : "-"} />
@@ -165,19 +165,19 @@ export default function OAuthClientDetailPage({ params }: { params: { id: string
         </div>
 
         {/* Scopes */}
-        <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
-          <h3 className="mb-3 text-sm font-semibold">{t("oauthClients.scopes")}</h3>
+        <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800">
+          <h3 className="mb-3 text-sm font-semibold dark:text-gray-200">{t("oauthClients.scopes")}</h3>
           <div className="flex flex-wrap gap-2">
             {(client.scopes || []).map((scope: any, i: any) => (
-              <span key={i} className="rounded-full bg-purple-50 px-3 py-1 text-xs text-purple-700">{scope}</span>
+              <span key={i} className="rounded-full bg-purple-50 px-3 py-1 text-xs text-purple-700 dark:bg-purple-900/30 dark:text-purple-400">{scope}</span>
             ))}
           </div>
         </div>
 
         {/* Redirect URIs */}
-        <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
+        <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800">
           <div className="mb-3 flex items-center justify-between">
-            <h3 className="text-sm font-semibold">{t("oauthClients.redirectUris")}</h3>
+            <h3 className="text-sm font-semibold dark:text-gray-200">{t("oauthClients.redirectUris")}</h3>
             {!editingURIs ? (
               <button onClick={() => setEditingURIs(true)} className="text-xs text-brand-600 hover:underline">{t("common.edit")}</button>
             ) : (

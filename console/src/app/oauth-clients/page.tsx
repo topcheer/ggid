@@ -237,13 +237,29 @@ export default function OAuthClientsPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
-                {clients.filter((c: OAuthClient) => {
-                  if (!search.trim()) return true;
-                  const q = search.toLowerCase();
-                  return c.client_name?.toLowerCase().includes(q) ||
-                         c.client_id?.toLowerCase().includes(q) ||
-                         c.redirect_uris?.some((u: string) => u.toLowerCase().includes(q));
-                }).slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE).map((c: any) => (
+                {(() => {
+                  const filtered = clients.filter((c: OAuthClient) => {
+                    if (!search.trim()) return true;
+                    const q = search.toLowerCase();
+                    return c.client_name?.toLowerCase().includes(q) ||
+                           c.client_id?.toLowerCase().includes(q) ||
+                           c.redirect_uris?.some((u: string) => u.toLowerCase().includes(q));
+                  });
+                  if (filtered.length === 0) {
+                    return (
+                      <tr>
+                        <td colSpan={5} className="px-4 py-12 text-center">
+                          <p className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                            {search.trim() ? "No OAuth clients match your search." : "No OAuth clients yet."}
+                          </p>
+                          {!search.trim() && (
+                            <p className="mt-1 text-xs text-gray-400">Click "New Client" above to create your first OAuth application.</p>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  }
+                  return filtered.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE).map((c: any) => (
                   <tr key={c.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/50">
                     <td className="px-4 py-3">
                       <div className="font-medium text-gray-800 dark:text-gray-200">{c.client_name || c.client_id.substring(0, 8)}</div>
@@ -280,7 +296,8 @@ export default function OAuthClientsPage() {
                       </div>
                     </td>
                   </tr>
-                ))}
+                  ));
+                })()}
               </tbody>
             </table>
           </div>
