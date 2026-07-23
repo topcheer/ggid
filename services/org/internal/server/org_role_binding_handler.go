@@ -25,13 +25,14 @@ var orgRoleBindings sync.Map // key: binding ID, value: *OrgRoleBinding
 // POST /api/v1/organizations/{id}/role-bindings — bind role to user at org level.
 // GET /api/v1/organizations/{id}/role-bindings — list org role bindings.
 func (s *HTTPServer) handleOrgRoleBindings(w http.ResponseWriter, r *http.Request) {
-	// If the path after /api/v1/organizations/ is a bare UUID, delegate to handleOrgByID
+	// If the path after /api/v1/organizations/ starts with a UUID, delegate to handleOrgByID
+	// which handles all sub-paths (tree, subtree, members, etc.)
 	pathAfter := strings.TrimPrefix(r.URL.Path, "/api/v1/organizations/")
 	parts := strings.SplitN(pathAfter, "/", 2)
-	if len(parts) == 1 && parts[0] != "" {
+	if len(parts) >= 1 && parts[0] != "" {
 		if _, err := uuid.Parse(parts[0]); err == nil {
-			// It's a UUID — route to org CRUD handler
-			r.URL.Path = "/api/v1/orgs/" + parts[0]
+			// It's a UUID — route to org CRUD handler (handles sub-paths too)
+			r.URL.Path = "/api/v1/orgs/" + pathAfter
 			s.handleOrgByID(w, r)
 			return
 		}
