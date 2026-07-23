@@ -22,11 +22,8 @@ type APIKeyValidator interface {
 func APIKeyAuth(validator APIKeyValidator) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			// Extract API key from header or query param
-			apiKey := r.Header.Get("X-API-Key")
-			if apiKey == "" {
-				apiKey = r.URL.Query().Get("api_key")
-			}
+			// Extract API key from X-API-Key header, query param, or Authorization: ApiKey
+			apiKey := extractAPIKeyFromRequest(r)
 
 			// No API key → pass through to JWT auth
 			if apiKey == "" {
@@ -53,7 +50,12 @@ func APIKeyAuth(validator APIKeyValidator) func(http.Handler) http.Handler {
 
 // IsAPIKeyRequest checks if the request carries an API key.
 func IsAPIKeyRequest(r *http.Request) bool {
-	return r.Header.Get("X-API-Key") != "" || r.URL.Query().Get("api_key") != ""
+	if r.Header.Get("X-API-Key") != "" || r.URL.Query().Get("api_key") != "" {
+		return true
+	}
+	// Also detect Authorization: ApiKey ggid_sk_*
+	auth := r.Header.Get("Authorization")
+	return strings.HasPrefix(auth, "ApiKey ")
 }
 
 // HasScope checks if the request context contains a specific API key scope.

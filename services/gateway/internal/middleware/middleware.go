@@ -590,6 +590,11 @@ func (c *JWKSClient) ETag() string {
 func JWTAuth(jwks *JWKSClient, required bool, issuer, audience string) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			// If API key already authenticated the request, skip JWT requirement.
+			if IsAPIKeyRequest(r) && r.Context().Value(APIKeyScopesKey) != nil {
+				next.ServeHTTP(w, r)
+				return
+			}
 			authHeader := r.Header.Get("Authorization")
 			if authHeader == "" {
 				if required {

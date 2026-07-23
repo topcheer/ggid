@@ -612,10 +612,10 @@ func (gw *Gateway) Handler() http.Handler {
 			if gw.caeCheck != nil {
 				h = gw.caeCheck(h)
 			}
+			h = jwtMW(h) // JWT auth layer
 			if gw.apiKeyValidator != nil {
-				h = middleware.WithDBAPIKeyAuth(gw.apiKeyValidator)(h)
+				h = middleware.WithDBAPIKeyAuth(gw.apiKeyValidator)(h) // API key wraps JWT (runs first)
 			}
-			h = jwtMW(h)
 			if gw.sessionMgr != nil {
 				h = gw.sessionMgr.SessionTimeoutMiddleware(middleware.DefaultSessionTimeoutConfig())(h)
 			}
@@ -629,10 +629,10 @@ func (gw *Gateway) Handler() http.Handler {
 			if gw.caeCheck != nil {
 				h = gw.caeCheck(h)
 			}
+			h = jwtMW(h) // JWT auth layer
 			if gw.apiKeyValidator != nil {
-				h = middleware.WithDBAPIKeyAuth(gw.apiKeyValidator)(h)
+				h = middleware.WithDBAPIKeyAuth(gw.apiKeyValidator)(h) // API key wraps JWT (runs first)
 			}
-			h = jwtMW(h)
 			if gw.sessionMgr != nil {
 				h = gw.sessionMgr.SessionTimeoutMiddleware(middleware.DefaultSessionTimeoutConfig())(h)
 			}
