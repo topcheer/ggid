@@ -55,7 +55,10 @@
 - [2026-07-23] **P2: Console password settings 页面 API 端点错误** — `settings/password/page.tsx` PUT 到 `/api/v1/tenants/{id}/password-policy` (404)。修复为 `/api/v1/auth/password-policy` (200)。commit 1eb958486
 - [2026-07-23] **已验证: Password Policy API** — `/api/v1/auth/password-policy` GET 返回 MinLength:12 + complexity rules。`/api/v1/auth/password-policy/config` 返回 per-role override + breach check 配置
 - [2026-07-23] **已验证: api_keys DB schema** — id 必须是 UUID 类型 (非 TEXT), 列名 last_used_at (非 last_used)。backend repo 期望 UUID scan + last_used_at 列名
-- [2026-07-23] **已修复: CI build** — EmailVerified 字段未提交 + context leak in vet。commits 6856bf8b5, 85e03b3a8
+- [2026-07-23] **P0: admin role key='admin' instead of 'tenant:admin'** — bootstrap creates role with key='admin' but gateway hasAdminScope() only accepts platform:admin/tenant:admin. Fresh bootstrap → admin gets 403 everywhere. Fixed: key='tenant:admin'. commit 050d74139
+- [2026-07-23] **P1: bootstrap only creates Administrator role** — No Viewer/User roles seeded. Role assignment fails for non-admin users. Fixed: added viewer+user system roles. commit 7fba0504b
+- [2026-07-23] **已验证: 用户全生命周期 PASS** — create→assign Viewer→login→JWT roles:[Viewer] perms:4→GET /users=403→/users/me=200→POST=403→delete=200
+- [2026-07-23] **MCP 服务部署** — ggid-mcp pod Running, port 9060, JWT auth + SSE endpoint. commit 63150e958
 
 - [2026-07-21] auth-guard.tsx scope 匹配：JWT roles 存的是显示名（如 "Platform Administrator"），不是 scope key（如 "platform:admin"）。匹配逻辑必须大小写不敏感 + 包含显示名变体
 - [2026-07-21] Go SDK verifyTokenOffline 用 ParseUnverified 接受伪造 JWT。已移除，VerifyToken 强制要求 WithJWKS()
