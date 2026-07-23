@@ -1,118 +1,235 @@
 package httpserver
 
 import (
+	"context"
+	"encoding/json"
 	"net/http"
 	"time"
+
+	"github.com/google/uuid"
 )
 
-// GET /api/v1/audit/security-posture — comprehensive security posture score.
+// NIST 800-207 Zero-Trust posture dimensions.
+// Each dimension is scored 0-100 (higher = better posture).
+
+// GET /api/v1/audit/security-posture — zero-trust posture score (NIST 800-207)
 func (s *HTTPServer) handleSecurityPosture(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
 		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 
-	// Calculate posture score from multiple dimensions
-	mfaAdoption := 72 // % of users with MFA
-	weakPasswords := 14
-	inactiveUsers := 8
-	exposedSessions := 2
-	missingAccessReviews := 5
+	tenantID := tenantIDFromRequest(r)
 
-	// Score calculation (0-100, higher is better)
-	mfaScore := mfaAdoption // 72 points max from MFA
-	weakPenalty := weakPasswords * 2
-	inactivePenalty := inactiveUsers
-	exposedPenalty := exposedSessions * 5
-	reviewPenalty := missingAccessReviews * 2
+	dimensions := s.calculatePostureDimensions(tenantID)
+	overall := weightedScore(dimensions)
+	grade := scoreToGrade(overall)
+	recs := generateRecommendations(dimensions)
+	findings := generateFindings(dimensions)
 
-	score := float64(100) - float64(100-mfaScore)*0.3 - float64(weakPenalty+inactivePenalty+exposedPenalty+reviewPenalty)
-	if score < 0 {
-		score = 0
-	}
-
-	// Generate recommendations
-	var recs []map[string]string
-	if mfaAdoption < 90 {
-		recs = append(recs, map[string]string{
-			"area":     "MFA",
-			"priority": "high",
-			"action":   "Enforce MFA for all users — current adoption at " + itoa(mfaAdoption) + "%",
-		})
-	}
-	if weakPasswords > 0 {
-		recs = append(recs, map[string]string{
-			"area":     "Passwords",
-			"priority": "high",
-			"action":   itoa(weakPasswords) + " users have weak passwords — require password reset",
-		})
-	}
-	if inactiveUsers > 0 {
-		recs = append(recs, map[string]string{
-			"area":     "Inactive Users",
-			"priority": "medium",
-			"action":   itoa(inactiveUsers) + " users inactive >90 days — review and deactivate",
-		})
-	}
-	if exposedSessions > 0 {
-		recs = append(recs, map[string]string{
-			"area":     "Sessions",
-			"priority": "critical",
-			"action":   itoa(exposedSessions) + " potentially compromised sessions — revoke immediately",
-		})
-	}
-	if missingAccessReviews > 0 {
-		recs = append(recs, map[string]string{
-			"area":     "Access Reviews",
-			"priority": "medium",
-			"action":   itoa(missingAccessReviews) + " pending access reviews — schedule campaigns",
-		})
-	}
-
-	// Determine grade
-	grade := "F"
-	switch {
-	case score >= 90:
-		grade = "A"
-	case score >= 80:
-		grade = "B"
-	case score >= 70:
-		grade = "C"
-	case score >= 60:
-		grade = "D"
+	// Persist to history table for trend tracking.
+	if s.pool != nil {
+		s.savePostureHistory(tenantID, overall, dimensions, grade, findings, recs)
 	}
 
 	writeJSON(w, http.StatusOK, map[string]any{
-		"score":       int(score),
-		"grade":       grade,
-		"assessed_at": time.Now().UTC().Format(time.RFC3339),
-		"metrics": map[string]int{
-			"mfa_adoption_pct":       mfaAdoption,
-			"weak_passwords":         weakPasswords,
-			"inactive_users":         inactiveUsers,
-			"exposed_sessions":       exposedSessions,
-			"missing_access_reviews": missingAccessReviews,
-		},
+		"score":          overall,
+		"grade":          grade,
+		"model":          "NIST 800-207",
+		"dimensions":     dimensions,
+		"findings":       findings,
 		"recommendations": recs,
+		"evaluated_at":   time.Now().UTC().Format(time.RFC3339),
 	})
 }
 
-func itoa(n int) string {
-	if n == 0 {
-		return "0"
+// GET /api/v1/audit/security-posture/history
+func (s *HTTPServer) handleSecurityPostureHistory(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
+		return
 	}
-	neg := false
-	if n < 0 {
-		neg = true
-		n = -n
+	tenantID := tenantIDFromRequest(r)
+	if s.pool == nil {
+		writeJSON(w, http.StatusOK, map[string]any{"history": []any{}})
+		return
 	}
-	buf := make([]byte, 0, 10)
-	for n > 0 {
-		buf = append([]byte{byte('0' + n%10)}, buf...)
-		n /= 10
+
+	limit := 30
+	rows, err := s.pool.Query(r.Context(), `
+		SELECT overall_score, identity_score, device_score, network_score,
+		       data_score, workload_score, grade, evaluated_at
+		FROM zt_posture_history
+		WHERE tenant_id = $1 OR $1 = '00000000-0000-0000-0000-000000000000'
+		ORDER BY evaluated_at DESC LIMIT $2`, tenantID, limit)
+	if err != nil {
+		writeJSON(w, http.StatusOK, map[string]any{"history": []any{}})
+		return
 	}
-	if neg {
-		buf = append([]byte{'-'}, buf...)
+	defer rows.Close()
+
+	type entry struct {
+		Overall   int       `json:"overall"`
+		Identity  int       `json:"identity"`
+		Device    int       `json:"device"`
+		Network   int       `json:"network"`
+		Data      int       `json:"data"`
+		Workload  int       `json:"workload"`
+		Grade     string    `json:"grade"`
+		Evaluated time.Time `json:"evaluated_at"`
 	}
-	return string(buf)
+	var history []entry
+	for rows.Next() {
+		var e entry
+		rows.Scan(&e.Overall, &e.Identity, &e.Device, &e.Network, &e.Data, &e.Workload, &e.Grade, &e.Evaluated)
+		history = append(history, e)
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"history": history})
 }
+
+type postureDimensions struct {
+	Identity int `json:"identity_score"`
+	Device   int `json:"device_score"`
+	Network  int `json:"network_score"`
+	Data     int `json:"data_score"`
+	Workload int `json:"workload_score"`
+}
+
+func (s *HTTPServer) calculatePostureDimensions(tenantID uuid.UUID) postureDimensions {
+	d := postureDimensions{Identity: 100, Device: 100, Network: 100, Data: 100, Workload: 100}
+
+	if s.pool == nil {
+		return d
+	}
+	ctx := contextWithTimeout(5 * time.Second)
+
+	// --- Identity dimension ---
+	var totalUsers, mfaUsers, inactiveUsers int
+	s.pool.QueryRow(ctx, `SELECT count(*) FROM users WHERE deleted_at IS NULL`).Scan(&totalUsers)
+	s.pool.QueryRow(ctx, `SELECT count(DISTINCT user_id) FROM mfa_devices WHERE enabled=true`).Scan(&mfaUsers)
+	s.pool.QueryRow(ctx, `SELECT count(*) FROM users WHERE deleted_at IS NULL AND last_login_at < now() - interval '90 days' OR last_login_at IS NULL`).Scan(&inactiveUsers)
+
+	if totalUsers > 0 {
+		mfaPct := mfaUsers * 100 / totalUsers
+		inactivePct := inactiveUsers * 100 / totalUsers
+		d.Identity = clampScore(100 - (100-mfaPct)*2/3 - inactivePct/2)
+	}
+
+	// --- Device dimension ---
+	var activeSessions, revokedToday int
+	s.pool.QueryRow(ctx, `SELECT count(*) FROM sessions WHERE revoked_at IS NULL AND expires_at > now()`).Scan(&activeSessions)
+	s.pool.QueryRow(ctx, `SELECT count(*) FROM sessions WHERE revoked_at IS NOT NULL AND revoked_at > now() - interval '24 hours'`).Scan(&revokedToday)
+	d.Device = clampScore(100 - revokedToday*3)
+
+	// --- Network dimension ---
+	var failedLogins, uniqueIPs int
+	s.pool.QueryRow(ctx, `SELECT count(*) FROM audit_events WHERE action LIKE '%login%failed%' AND created_at > now() - interval '24 hours'`).Scan(&failedLogins)
+	s.pool.QueryRow(ctx, `SELECT count(DISTINCT ip_address) FROM audit_events WHERE created_at > now() - interval '24 hours' AND ip_address IS NOT NULL`).Scan(&uniqueIPs)
+	if failedLogins > 10 {
+		d.Network = clampScore(100 - (failedLogins-10)*2)
+	}
+	if uniqueIPs > 50 {
+		d.Network -= 5
+	}
+
+	// --- Data dimension ---
+	var tamperIssues int
+	s.pool.QueryRow(ctx, `SELECT count(*) FROM audit_incidents WHERE data->>'type' = 'tamper_detected' AND data->>'status' = 'open'`).Scan(&tamperIssues)
+	d.Data = clampScore(100 - tamperIssues*10)
+
+	// --- Workload dimension ---
+	var openIncidents, highSeverityThreats int
+	s.pool.QueryRow(ctx, `SELECT count(*) FROM audit_incidents WHERE data->>'status' IN ('open','investigating')`).Scan(&openIncidents)
+	s.pool.QueryRow(ctx, `SELECT count(*) FROM audit_incidents WHERE data->>'severity' = 'critical' AND data->>'status' = 'open'`).Scan(&highSeverityThreats)
+	d.Workload = clampScore(100 - openIncidents*5 - highSeverityThreats*10)
+
+	return d
+}
+
+func weightedScore(d postureDimensions) int {
+	// NIST 800-207 weights: Identity 30%, Device 20%, Network 20%, Data 15%, Workload 15%
+	return (d.Identity*30 + d.Device*20 + d.Network*20 + d.Data*15 + d.Workload*15) / 100
+}
+
+func scoreToGrade(score int) string {
+	switch {
+	case score >= 90: return "A"
+	case score >= 80: return "B"
+	case score >= 70: return "C"
+	case score >= 60: return "D"
+	default: return "F"
+	}
+}
+
+type finding struct {
+	Dimension string `json:"dimension"`
+	Score     int    `json:"score"`
+	Status    string `json:"status"`
+	Detail    string `json:"detail"`
+}
+
+func generateFindings(d postureDimensions) []finding {
+	findings := []finding{}
+	for _, dim := range []struct{ name string; score int }{
+		{"identity", d.Identity}, {"device", d.Device},
+		{"network", d.Network}, {"data", d.Data}, {"workload", d.Workload},
+	} {
+		status := "healthy"
+		if dim.score < 50 { status = "critical" } else if dim.score < 70 { status = "warning" }
+		findings = append(findings, finding{
+			Dimension: dim.name, Score: dim.score, Status: status,
+			Detail: dim.name + " posture score: " + itoa(dim.score) + "/100",
+		})
+	}
+	return findings
+}
+
+type recommendation struct {
+	Dimension string `json:"dimension"`
+	Priority  string `json:"priority"`
+	Action    string `json:"action"`
+}
+
+func generateRecommendations(d postureDimensions) []recommendation {
+	var recs []recommendation
+	if d.Identity < 90 {
+		recs = append(recs, recommendation{"identity", "high", "Increase MFA adoption — enforce for all users"})
+	}
+	if d.Device < 70 {
+		recs = append(recs, recommendation{"device", "medium", "Review recent session revocations — investigate compromised sessions"})
+	}
+	if d.Network < 70 {
+		recs = append(recs, recommendation{"network", "high", "High failed login rate — consider rate limiting or IP blocking"})
+	}
+	if d.Data < 70 {
+		recs = append(recs, recommendation{"data", "critical", "Audit tamper incidents detected — investigate immediately"})
+	}
+	if d.Workload < 70 {
+		recs = append(recs, recommendation{"workload", "high", "Open security incidents — prioritize remediation"})
+	}
+	return recs
+}
+
+func (s *HTTPServer) savePostureHistory(tenantID uuid.UUID, overall int, d postureDimensions, grade string, findings []finding, recs []recommendation) {
+	findingsJSON, _ := json.Marshal(findings)
+	recsJSON, _ := json.Marshal(recs)
+	// Throttle: only save if last entry is > 1 hour ago
+	var lastEval time.Time
+	_ = s.pool.QueryRow(contextWithTimeout(3*time.Second),
+		`SELECT evaluated_at FROM zt_posture_history WHERE tenant_id = $1 ORDER BY evaluated_at DESC LIMIT 1`,
+		tenantID).Scan(&lastEval)
+	if time.Since(lastEval) < time.Hour {
+		return // already have a recent entry
+	}
+	s.pool.Exec(contextWithTimeout(3*time.Second),
+		`INSERT INTO zt_posture_history (tenant_id, overall_score, identity_score, device_score, network_score, data_score, workload_score, grade, findings, recommendations)
+		 VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)`,
+		tenantID, overall, d.Identity, d.Device, d.Network, d.Data, d.Workload, grade, string(findingsJSON), string(recsJSON))
+}
+
+func contextWithTimeout(d time.Duration) context.Context {
+	ctx, _ := context.WithTimeout(context.Background(), d)
+	return ctx
+}
+func clampScore(v int) int { if v < 0 { return 0 }; if v > 100 { return 100 }; return v }
+func itoa(i int) string { return string(rune('0'+i/10)) + string(rune('0'+i%10)) }

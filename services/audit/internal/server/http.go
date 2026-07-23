@@ -184,6 +184,7 @@ func (s *HTTPServer) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("/api/v1/audit/compliance-mapping", s.handleComplianceMapping) // KB-337 canonical path
 	mux.HandleFunc("/api/v1/audit/isolation-check", s.handleIsolationCheck)
 	mux.HandleFunc("/api/v1/audit/security-posture", s.handleSecurityPosture)
+	mux.HandleFunc("/api/v1/audit/security-posture/history", s.handleSecurityPostureHistory)
 	mux.HandleFunc("/api/v1/audit/threat-feed", s.handleThreatFeed)
 	mux.HandleFunc("/api/v1/audit/threat-intel/sources", s.handleThreatIntel)
 	mux.HandleFunc("/api/v1/audit/threat-intel/sources/", s.handleThreatIntel)
