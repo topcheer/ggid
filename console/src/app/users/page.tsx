@@ -272,7 +272,7 @@ export default function UsersPage() {
       );
       setMsg(`${selected.size} users activated`);
       setSelected(new Set());
-      loadUsers();
+      refresh();
     } catch (err) {
       setMsg(err instanceof Error ? err.message : "Batch activate failed");
     }
@@ -288,7 +288,7 @@ export default function UsersPage() {
       );
       setMsg(`${selected.size} users deactivated`);
       setSelected(new Set());
-      loadUsers();
+      refresh();
     } catch (err) {
       setMsg(err instanceof Error ? err.message : "Batch deactivate failed");
     }
