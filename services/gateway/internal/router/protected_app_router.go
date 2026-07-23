@@ -14,6 +14,9 @@ import (
 	"github.com/ggid/ggid/services/gateway/internal/middleware"
 )
 
+// postureHTTPClient is used for identity service device posture lookups.
+var postureHTTPClient = &http.Client{Timeout: 10 * time.Second}
+
 // ProtectedApp represents a ZTNA-protected application loaded into the gateway.
 type ProtectedApp struct {
 	ID            string                   `json:"id"`
@@ -300,7 +303,7 @@ func (r *ProtectedAppRouter) resolveDevicePosture(tenantID, deviceID string) *De
 	url := "http://localhost:8081/api/v1/identity/devices/" + deviceID + "/posture"
 	httpReq, _ := http.NewRequest("GET", url, nil)
 	httpReq.Header.Set("X-Tenant-ID", tenantID)
-	resp, err := http.DefaultClient.Do(httpReq)
+	resp, err := postureHTTPClient.Do(httpReq)
 	if err != nil || resp == nil {
 		return nil
 	}

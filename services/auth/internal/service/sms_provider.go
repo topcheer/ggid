@@ -9,7 +9,11 @@ import (
 	"net/url"
 	"os"
 	"strings"
+	"time"
 )
+
+// smsHTTPClient is used for Twilio API calls.
+var smsHTTPClient = &http.Client{Timeout: 10 * time.Second}
 
 // --- LogSMSSender (dev mode, logs to stdout) ---
 
@@ -57,7 +61,7 @@ func (s *TwilioSMSSender) SendSMS(to, message string) error {
 	req.SetBasicAuth(s.accountSID, s.authToken)
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 
-	resp, err := http.DefaultClient.Do(req)
+	resp, err := smsHTTPClient.Do(req)
 	if err != nil {
 		return fmt.Errorf("twilio API error: %w", err)
 	}
