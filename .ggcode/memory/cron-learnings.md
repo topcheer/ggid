@@ -44,6 +44,9 @@
 - [2026-07-23] **已验证: review-schedules API** — `/api/v1/identity/review-schedules` 返回 200 + 空数组 (正确)。Identity 服务已注册路由
 - [2026-07-23] **R1-02 Social Login 已部署验证**: Gateway publicPaths 放行 + auth handler 部署。`GET /api/v1/auth/social/google` 返回 503 (无 IdP 配置，正确业务错误)。需在 tenant_idp_configs 配置 Google OAuth 才能端到端
 - [2026-07-23] **admin 密码 cred sync race**: auth pod 重启后密码 hash 被 bootstrap 覆盖。手动用 crypto.HashPassword 生成新 hash 更新 DB。密码: q7Rf9Xk2Lm3pW8zB (无尾A)。PASSWORD_PEPPER 环境变量未设置 (S6 修复仅 warning 不 fail)
+- [2026-07-23] **P1: API Keys 完全不可用** — 两层断裂：(1) api_keys_handler.go 用内存 `apiKeys = []APIKey{}` 存储 (pod 重启丢失) (2) Gateway `APIKeyAuth` 中间件存在但从未 wire 进 middleware chain (cmd/main.go 无调用)。用户创建 key 得到 `ggid_sk_*` 但 X-API-Key 调 API 返回 401。已 DM backend 认领
+- [2026-07-23] **已验证: Webhook 生命周期** — create (返回 name+url+events+id) → list → update (PUT) → delete → verify gone。全链路 PASS
+- [2026-07-23] **已验证: API Key 创建** — POST /api/v1/api-keys 返回 `{"key":"ggid_sk_*"}` 格式正确，但 key 不可用于认证（见上）
 
 - [2026-07-21] auth-guard.tsx scope 匹配：JWT roles 存的是显示名（如 "Platform Administrator"），不是 scope key（如 "platform:admin"）。匹配逻辑必须大小写不敏感 + 包含显示名变体
 - [2026-07-21] Go SDK verifyTokenOffline 用 ParseUnverified 接受伪造 JWT。已移除，VerifyToken 强制要求 WithJWKS()
