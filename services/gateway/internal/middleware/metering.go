@@ -61,14 +61,28 @@ type usageAggregator struct {
 // APIMetering creates a middleware that records per-tenant API usage.
 // dbURL is the PostgreSQL connection string (currently used to derive audit URL).
 // config controls batching behavior.
+//
+// Uses a package-level singleton aggregator so the flush goroutine persists
+// across requests (ServeHTTP is called per-request, so creating a new
+// aggregator each time would cause the flush loop to be GC'd before firing).
+var (
+	meteringAggOnce sync.Once
+	meteringAgg     *usageAggregator
+)
+
 func APIMetering(dbURL string, config MeteringConfig) func(http.Handler) http.Handler {
-	agg := &usageAggregator{
-		buffer: make([]usageRecord, 0, config.MaxBufferSize),
-		config: config,
-		client: &http.Client{Timeout: 10 * time.Second},
-		stopCh: make(chan struct{}),
-	}
-	go agg.flushLoop()
+	meteringAggOnce.Do(func() {
+		meteringAgg = &usageAggregator{
+			buffer: make([]usageRecord, 0, config.MaxBufferSize),
+			config: config,
+			client: &http.Client{Timeout: 10 * time.Second},
+			stopCh: make(chan struct{}),
+		}
+		go meteringAgg.flushLoop()
+		log.Printf("[metering] initialized (audit_url=%s, flush=%s, buffer=%d)",
+			config.AuditURL, config.FlushInterval, config.MaxBufferSize)
+	})
+	agg := meteringAgg
 
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
