@@ -20,9 +20,10 @@ import (
 type Server struct {
 	cli        *client.Client
 	registry   *tools.Registry
-	scopes     []string
+	scopes     []string       // default scopes from env (fallback when token has no scope)
 	jwtSecret  []byte
 	jwtIssuer  string
+	auditLog   *AgentAuditLog // structured agent audit
 }
 
 // New creates an MCP server with the given Gateway client.
@@ -33,6 +34,7 @@ func New(cli *client.Client) *Server {
 		scopes:    parseScopesFromEnv(),
 		jwtSecret: parseJWTSecretFromEnv(),
 		jwtIssuer: os.Getenv("JWT_ISSUER"),
+		auditLog:  NewAgentAuditLog(),
 	}
 }
 
@@ -40,6 +42,7 @@ func New(cli *client.Client) *Server {
 func (s *Server) ListenAndServe(addr string) error {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/mcp", s.jwtAuth(s.handleMCP))
+	mux.HandleFunc("/mcp/audit", s.jwtAuth(s.HandleAuditQuery))
 	mux.HandleFunc("/healthz", func(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusOK, map[string]any{"status": "ok"})
 	})
@@ -108,11 +111,43 @@ func (s *Server) jwtAuth(next http.HandlerFunc) http.HandlerFunc {
 			return
 		}
 
-		// Inject user info into request context for audit logging.
+		// Inject identity info into request context.
 		ctx := r.Context()
 		ctx = context.WithValue(ctx, ctxKeyUserID{}, claims["sub"])
 		ctx = context.WithValue(ctx, ctxKeyTenantID{}, claims["tenant_id"])
 		ctx = context.WithValue(ctx, ctxKeyScopes{}, claims["scope"])
+
+		// Agent identity: extract agent-specific claims for scope enforcement + audit.
+		if isAgent, ok := claims["is_agent_token"].(bool); ok && isAgent {
+			agentID, _ := claims["agent_id"].(string)
+			agentType, _ := claims["agent_type"].(string)
+			actSub, _ := claims["act_sub"].(string)
+			ctx = context.WithValue(ctx, ctxKeyAgentID{}, agentID)
+			ctx = context.WithValue(ctx, ctxKeyAgentType{}, agentType)
+			ctx = context.WithValue(ctx, ctxKeyActorSub{}, actSub)
+
+			// MCP server authorization: if token has mcp_servers claim, verify this server is allowed.
+			if mcpServers, ok := claims["mcp_servers"].([]any); ok && len(mcpServers) > 0 {
+				allowed := false
+				for _, s := range mcpServers {
+					if fmt.Sprintf("%v", s) == r.Host || fmt.Sprintf("%v", s) == "*" {
+						allowed = true
+						break
+					}
+				}
+				if !allowed {
+					log.Printf("MCP auth: agent %s not authorized for this MCP server", agentID)
+					writeJSON(w, http.StatusForbidden, map[string]any{
+						"jsonrpc": "2.0", "error": map[string]any{
+							"code": -32002, "message": "agent not authorized for this MCP server",
+						},
+					})
+					return
+				}
+			}
+
+			log.Printf("MCP auth: agent token accepted agent_id=%s type=%s delegated_by=%s", agentID, agentType, actSub)
+		}
 
 		next(w, r.WithContext(ctx))
 	}
@@ -122,6 +157,9 @@ func (s *Server) jwtAuth(next http.HandlerFunc) http.HandlerFunc {
 type ctxKeyUserID struct{}
 type ctxKeyTenantID struct{}
 type ctxKeyScopes struct{}
+type ctxKeyAgentID struct{}
+type ctxKeyAgentType struct{}
+type ctxKeyActorSub struct{}
 
 // getUserFromContext extracts authenticated user info from request context.
 func getUserFromContext(ctx context.Context) (userID, tenantID string) {
@@ -134,15 +172,60 @@ func getUserFromContext(ctx context.Context) (userID, tenantID string) {
 	return
 }
 
+// getAgentFromContext extracts agent identity info. Returns agentID="" if not an agent token.
+func getAgentFromContext(ctx context.Context) (agentID, agentType, actorSub string) {
+	if v, ok := ctx.Value(ctxKeyAgentID{}).(string); ok {
+		agentID = v
+	}
+	if v, ok := ctx.Value(ctxKeyAgentType{}).(string); ok {
+		agentType = v
+	}
+	if v, ok := ctx.Value(ctxKeyActorSub{}).(string); ok {
+		actorSub = v
+	}
+	return
+}
+
+// scopesFromContext extracts the token's scope claim as a []string.
+// Falls back to server's default scopes from env.
+func (s *Server) scopesFromContext(ctx context.Context) []string {
+	if scopeStr, ok := ctx.Value(ctxKeyScopes{}).(string); ok && scopeStr != "" {
+		return strings.Fields(scopeStr)
+	}
+	return s.scopes
+}
+
 // auditToolCall logs an MCP tool invocation for security audit.
+// Captures agent identity when the caller is an AI agent token.
 func (s *Server) auditToolCall(ctx context.Context, toolName string, args map[string]any, result any, err error) {
 	userID, tenantID := getUserFromContext(ctx)
+	agentID, agentType, actorSub := getAgentFromContext(ctx)
 	status := "success"
 	if err != nil {
 		status = "error"
 	}
-	log.Printf("MCP audit: tool=%s user=%s tenant=%s status=%s args=%v result_len=%d",
-		toolName, userID, tenantID, status, args, len(fmt.Sprintf("%v", result)))
+
+	// Structured audit entry.
+	entry := &AgentAuditEntry{
+		Timestamp: time.Now().UTC(),
+		Tool:      toolName,
+		Status:    status,
+		UserID:    userID,
+		TenantID:  tenantID,
+		AgentID:   agentID,
+		AgentType: agentType,
+		ActorSub:  actorSub,
+		Args:      args,
+	}
+	s.auditLog.Append(entry)
+
+	if agentID != "" {
+		log.Printf("MCP audit: tool=%s AGENT id=%s type=%s delegated_by=%s tenant=%s status=%s",
+			toolName, agentID, agentType, actorSub, tenantID, status)
+	} else {
+		log.Printf("MCP audit: tool=%s user=%s tenant=%s status=%s",
+			toolName, userID, tenantID, status)
+	}
 }
 
 // handleMCP processes JSON-RPC 2.0 requests over HTTP POST.
@@ -178,7 +261,7 @@ func (s *Server) handleMCP(w http.ResponseWriter, r *http.Request) {
 			},
 		})
 	case "tools/list":
-		available := s.registry.FilterByScopes(s.scopes)
+		available := s.registry.FilterByScopes(s.scopesFromContext(r.Context()))
 		toolList := make([]map[string]any, len(available))
 		for i, t := range available {
 			toolList[i] = map[string]any{
@@ -212,8 +295,9 @@ func (s *Server) handleToolCall(w http.ResponseWriter, r *http.Request, req *jso
 		return
 	}
 
-	// Scope check
-	available := s.registry.FilterByScopes(s.scopes)
+	// Scope check: use token scopes (agent-scoped) instead of server default.
+	tokenScopes := s.scopesFromContext(r.Context())
+	available := s.registry.FilterByScopes(tokenScopes)
 	found := false
 	for _, t := range available {
 		if t.Name == params.Name {
