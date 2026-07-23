@@ -227,27 +227,27 @@ jobs:
           DOCS=$(echo "$NOTES" | grep -iE "^- docs" || true)
           OTHER=$(echo "$NOTES" | grep -ivE "^- feat|^- fix|^- docs" || true)
 
-          cat > /tmp/release-notes.md <<RN
-          ## What's New
-
-          ### Features
-          ${FEATURES}
-
-          ### Fixes
-          ${FIXES}
-
-          ### Documentation
-          ${DOCS}
-
-          ### Other Changes
-          ${OTHER}
-
-          ---
-
-          **Docker images**: \`ghcr.io/${{ github.repository_owner }}/ggid-{service}:${{ github.ref_name }}\`
-          **Helm chart**: \`deploy/helm/ggid/\`
-          **SDKs**: Node \`@ggid/sdk\`, Python \`ggid\`
-          RN
+          {
+            echo "## What's New"
+            echo ""
+            echo "### Features"
+            echo "$FEATURES"
+            echo ""
+            echo "### Fixes"
+            echo "$FIXES"
+            echo ""
+            echo "### Documentation"
+            echo "$DOCS"
+            echo ""
+            echo "### Other Changes"
+            echo "$OTHER"
+            echo ""
+            echo "---"
+            echo ""
+            echo "**Docker images**: ghcr.io/${{ github.repository_owner }}/ggid-{service}:${{ github.ref_name }}"
+            echo "**Helm chart**: deploy/helm/ggid/"
+            echo "**SDKs**: Node @ggid/sdk, Python ggid"
+          } > /tmp/release-notes.md
 
       - name: Create Release
         uses: softprops/action-gh-release@v2
