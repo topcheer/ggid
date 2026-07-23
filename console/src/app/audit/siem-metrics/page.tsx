@@ -127,7 +127,9 @@ export default function SIEMMetricsPage() {
                 </tr>
               </thead>
               <tbody className="divide-y dark:divide-gray-800">
-                {data.destinations.map((d: any) => (
+                {data.destinations.length === 0 ? (
+                  <tr><td colSpan={4} className="px-4 py-8 text-center text-sm text-gray-400">No SIEM destinations configured.</td></tr>
+                ) : data.destinations.map((d: any) => (
                   <tr key={d.id} className="hover:bg-gray-50 dark:hover:bg-gray-900/30">
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-2">
