@@ -87,7 +87,7 @@ jobs:
   release:
     name: Create GitHub Release
     runs-on: ubuntu-latest
-    needs: [docker]
+    needs: [docker, test-gate]
     steps:
       - uses: actions/checkout@v4
 
@@ -201,57 +201,3 @@ jobs:
 
       - name: Run tests
         run: go test ./... -count=1 -timeout 300s
-
-  # ── GitHub Release with auto-generated notes ──
-  github-release:
-    name: Create GitHub Release
-    runs-on: ubuntu-latest
-    needs: [docker, sdk-tags, test-gate]
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Generate release notes
-        id: notes
-        run: |
-          PREV_TAG=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo "")
-          if [ -z "$PREV_TAG" ]; then
-            NOTES=$(git log --pretty=format:"- %s (%h)" HEAD~30..HEAD)
-          else
-            NOTES=$(git log --pretty=format:"- %s (%h)" ${PREV_TAG}..HEAD)
-          fi
-
-          FEATURES=$(echo "$NOTES" | grep -iE "^- feat" || true)
-          FIXES=$(echo "$NOTES" | grep -iE "^- fix" || true)
-          DOCS=$(echo "$NOTES" | grep -iE "^- docs" || true)
-          OTHER=$(echo "$NOTES" | grep -ivE "^- feat|^- fix|^- docs" || true)
-
-          {
-            echo "## What's New"
-            echo ""
-            echo "### Features"
-            echo "$FEATURES"
-            echo ""
-            echo "### Fixes"
-            echo "$FIXES"
-            echo ""
-            echo "### Documentation"
-            echo "$DOCS"
-            echo ""
-            echo "### Other Changes"
-            echo "$OTHER"
-            echo ""
-            echo "---"
-            echo ""
-            echo "**Docker images**: ghcr.io/${{ github.repository_owner }}/ggid-{service}:${{ github.ref_name }}"
-            echo "**Helm chart**: deploy/helm/ggid/"
-            echo "**SDKs**: Node @ggid/sdk, Python ggid"
-          } > /tmp/release-notes.md
-
-      - name: Create Release
-        uses: softprops/action-gh-release@v2
-        with:
-          body_path: /tmp/release-notes.md
-          draft: false
-          prerelease: ${{ contains(github.ref_name, '-rc') || contains(github.ref_name, '-beta') }}
