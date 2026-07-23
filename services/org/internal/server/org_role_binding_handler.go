@@ -25,21 +25,9 @@ var orgRoleBindings sync.Map // key: binding ID, value: *OrgRoleBinding
 // POST /api/v1/organizations/{id}/role-bindings — bind role to user at org level.
 // GET /api/v1/organizations/{id}/role-bindings — list org role bindings.
 func (s *HTTPServer) handleOrgRoleBindings(w http.ResponseWriter, r *http.Request) {
-	// If the path after /api/v1/organizations/ starts with a UUID, delegate to handleOrgByID
-	// which handles all sub-paths (tree, subtree, members, etc.)
-	pathAfter := strings.TrimPrefix(r.URL.Path, "/api/v1/organizations/")
-	parts := strings.SplitN(pathAfter, "/", 2)
-	if len(parts) >= 1 && parts[0] != "" {
-		if _, err := uuid.Parse(parts[0]); err == nil {
-			// It's a UUID — route to org CRUD handler (handles sub-paths too)
-			r.URL.Path = "/api/v1/orgs/" + pathAfter
-			s.handleOrgByID(w, r)
-			return
-		}
-	}
-	// Route budget paths to budget handler
-	if strings.Contains(r.URL.Path, "budget-summary") || strings.Contains(r.URL.Path, "/budget") {
-		s.handleOrgBudget(w, r)
+	// Check for special sub-paths BEFORE UUID delegation
+	if strings.HasSuffix(r.URL.Path, "/access-matrix") {
+		s.handleAccessMatrix(w, r)
 		return
 	}
 	if strings.HasSuffix(r.URL.Path, "/access-report") {
@@ -50,6 +38,22 @@ func (s *HTTPServer) handleOrgRoleBindings(w http.ResponseWriter, r *http.Reques
 		s.handleOrgRestructure(w, r)
 		return
 	}
+	if strings.Contains(r.URL.Path, "/teams/export") {
+		s.handleTeamsExport(w, r)
+		return
+	}
+	// If the path after /api/v1/organizations/ starts with a UUID, delegate to handleOrgByID
+	// which handles sub-paths (tree, subtree, members, etc.)
+	pathAfter := strings.TrimPrefix(r.URL.Path, "/api/v1/organizations/")
+	parts := strings.SplitN(pathAfter, "/", 2)
+	if len(parts) >= 1 && parts[0] != "" {
+		if _, err := uuid.Parse(parts[0]); err == nil {
+			// It's a UUID — route to org CRUD handler (handles sub-paths too)
+			r.URL.Path = "/api/v1/orgs/" + pathAfter
+			s.handleOrgByID(w, r)
+			return
+		}
+	}
 	if strings.HasSuffix(r.URL.Path, "/members") {
 		pathParts := strings.Split(strings.Trim(r.URL.Path, "/"), "/")
 		orgUID, _ := uuid.Parse(pathParts[3])
@@ -58,10 +62,6 @@ func (s *HTTPServer) handleOrgRoleBindings(w http.ResponseWriter, r *http.Reques
 	}
 	if strings.HasSuffix(r.URL.Path, "/access-matrix") {
 		s.handleAccessMatrix(w, r)
-		return
-	}
-	if strings.Contains(r.URL.Path, "/teams/export") {
-		s.handleTeamsExport(w, r)
 		return
 	}
 
