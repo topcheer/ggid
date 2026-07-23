@@ -328,6 +328,8 @@ func (h *HTTPHandler) registerRoutes() {
 	h.mux.HandleFunc("/api/v1/identity/lifecycle/rules", h.handleJML)
 	h.mux.HandleFunc("/api/v1/identity/lifecycle/events", h.handleJML)
 	h.mux.HandleFunc("/api/v1/identity/lifecycle/executions", h.handleJML)
+	h.mux.HandleFunc("/api/v1/identity/lifecycle/orchestrate", h.handleJMLOrchestrate)
+	h.mux.HandleFunc("/api/v1/identity/lifecycle/orchestrate/", h.handleJMLOrchestrate)
 
 	// Data governance + compliance engine.
 	h.mux.HandleFunc("/api/v1/identity/data-governance/classifications", h.handleDataGovernance)
