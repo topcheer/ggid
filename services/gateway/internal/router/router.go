@@ -669,6 +669,7 @@ var adminOnlyPaths = []string{
 	"/api/v1/policies", "/api/v1/webhooks", "/api/v1/oauth/clients",
 	"/api/v1/settings/", "/api/v1/admin/", "/api/v1/identity/dashboard",
 	"/api/v1/tenants", "/api/v1/impersonate",
+	"/api/v1/api-keys", "/api/v1/access-keys",
 	// Bare OAuth management endpoints (no /api/v1 prefix in proxy route)
 	"/oauth/clients",
 }
