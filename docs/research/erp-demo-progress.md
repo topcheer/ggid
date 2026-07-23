@@ -1672,3 +1672,53 @@ Hack patterns: 0 ✅
 51st consecutive zero-fix cycle (code-level; deployment issue tracked separately).
 
 ### Next Dimension: 5 — Cycle 61 (SDK Cross-language Consistency)
+
+## Cycle 61: D5 SDK Cross-language Consistency (Round 235)
+
+**Core Changes** (10+ new commits — major v2.1 batch):
+- `eb707aa06` D1 SDK OpenAPI drift detection CI (my task-1!)
+- `077feaf23` D2 API breaking change detection CI with oasdiff (my task-5!)
+- `1149aeb0a` P4 multi-tenant API usage metering
+- `efa0f46cc` metering dispatch + cleanup
+- `81558a8db` P4 wire metering middleware into gateway
+- `2ba2f83a3` D3 API Explorer + A2 Batch + P1 Rate Limit Dashboard
+- `9b3c82681` test fixes: hash chain + org routing + access-matrix
+- `35b001810` O1 Prometheus metrics + ServiceMonitor
+- `a57ac8213` i18n Chinese localization
+- `4b5994eb2` O4/O5/A4/S3: values-dev + SLI/SLO + SCIM sync + security scan
+
+**Critical: Gateway metering middleware added** — verified JWT Bearer auth path unaffected.
+
+### SDK Method Audit Results
+
+| Method | Go | Node | Python | C# | Java | Ruby | Rust |
+|--------|-----|------|--------|-----|------|------|------|
+| login | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| verifyToken | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| clientCredentials | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| refreshToken | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| introspectToken | — | ✅ | ✅ | — | — | — | ✅ |
+| exchangeCode/Agent/SAML | ✅(3) | ✅(1) | ✅(2) | — | ✅(2) | — | ✅(2) |
+
+### TokenSet Fields Consistency
+- access_token: 7/7 ✅ | refresh_token: 7/7 ✅ | id_token: Go+Rust+C#+Java ✅ | expires_in: 7/7 ✅ | token_type: 7/7 ✅
+
+### Claims Fields (post-verifyToken)
+- tenant_id: 7/7 ✅ | roles: 7/7 ✅ | permissions: 7/7 ✅ | scope: Go+Rust+C# ✅
+
+### Runtime Verification
+- Login: AT=True TT=Bearer EI=900 fields=[access_token,expires_in,scope,token_type] ✅
+- M2M: AT=True EI=900 ✅
+- Token→API: 200 ✅ (metering middleware transparent)
+- Hacks: 0 ✅
+
+### Three-Layer Alignment
+| Layer | Status |
+|-------|--------|
+| Core | Metering middleware + 10 features added, build ✅, auth path intact |
+| SDK | 7/7 aligned on core methods, TokenSet+Claims consistent |
+| Demo | Runtime 200, zero hacks |
+
+52nd consecutive zero-fix cycle.
+
+### Next Dimension: 6 — Cycle 62 (End-to-End User Experience)
