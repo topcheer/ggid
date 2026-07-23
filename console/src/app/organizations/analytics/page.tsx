@@ -176,10 +176,10 @@ export default function OrgAnalyticsPage() {
       </div>
 
       {stats.members_by_org.length === 0 && stats.role_distribution.length === 0 && (
-        <div className="rounded-xl border border-gray-200 bg-white p-12 text-center shadow-sm">
-          <Building2 className="mx-auto mb-4 h-12 w-12 text-gray-300" />
-          <p className="text-gray-500">{t("orgAnalytics.noDataYet")}</p>
-          <p className="mt-1 text-xs text-gray-400">
+        <div className="rounded-xl border border-gray-200 bg-white p-12 text-center shadow-sm dark:border-gray-700 dark:bg-gray-800">
+          <Building2 className="mx-auto mb-4 h-12 w-12 text-gray-300 dark:text-gray-600" />
+          <p className="text-gray-500 dark:text-gray-400">{t("orgAnalytics.noDataYet")}</p>
+          <p className="mt-1 text-xs text-gray-400 dark:text-gray-500">
             {t("orgAnalytics.dataWillPopulate")}
           </p>
         </div>
@@ -202,14 +202,14 @@ function StatCard({
   };
   const c = colorMap[color];
   return (
-    <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
+    <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-700 dark:bg-gray-800">
       <div className="flex items-center gap-3">
         <div className={`flex h-10 w-10 items-center justify-center rounded-lg ${c.bg}`}>
           <Icon className={`h-5 w-5 ${c.text}`} />
         </div>
         <div>
-          <p className="text-2xl font-bold">{value.toLocaleString()}</p>
-          <p className="text-xs text-gray-500">{label}</p>
+          <p className="text-2xl font-bold dark:text-white">{value.toLocaleString()}</p>
+          <p className="text-xs text-gray-500 dark:text-gray-400">{label}</p>
         </div>
       </div>
     </div>
