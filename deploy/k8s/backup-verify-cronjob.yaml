@@ -1,0 +1,54 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: ggid-backup-verify
+  namespace: ggid
+  labels:
+    app.kubernetes.io/name: ggid
+    app.kubernetes.io/component: backup-verify
+spec:
+  schedule: "0 2 * * *"  # Daily at 2AM
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 7
+  failedJobsHistoryLimit: 7
+  jobTemplate:
+    spec:
+      backoffLimit: 1
+      template:
+        spec:
+          restartPolicy: OnFailure
+          containers:
+            - name: backup-verify
+              image: postgres:16-alpine
+              env:
+                - name: PG_PASSWORD
+                  valueFrom:
+                    secretKeyRef:
+                      name: ggid-postgres
+                      key: password
+                - name: SLACK_WEBHOOK
+                  valueFrom:
+                    secretKeyRef:
+                      name: ggid-alerts
+                      key: slack-webhook-url
+                      optional: true
+              command:
+                - /bin/sh
+                - /scripts/backup-verify.sh
+                - --source-host
+                - ggid-postgresql-primary.ggid.svc.cluster.local
+                - --target-host
+                - ggid-postgres-verify-temp.ggid.svc.cluster.local
+                - --db-user
+                - ggid
+                - --db-name
+                - ggid
+              volumeMounts:
+                - name: scripts
+                  mountPath: /scripts
+                  readOnly: true
+          volumes:
+            - name: scripts
+              configMap:
+                name: ggid-backup-verify-script
+                defaultMode: 0755

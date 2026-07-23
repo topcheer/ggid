@@ -1,0 +1,82 @@
+# Blue/Green deployment — instant switch between two environments
+# Usage: helm upgrade ggid deploy/helm/ggid/ -f values-prod.yaml -f values-bluegreen.yaml
+# Requires: Argo Rollouts with bluegreen strategy
+
+# Blue/Green: two full sets of replicas, switch via selector
+gateway:
+  replicaCount: 3
+  rollout:
+    enabled: true
+    strategy: blueGreen
+    blueGreen:
+      activeService: ggid-gateway-active
+      previewService: ggid-gateway-preview
+      autoPromotionEnabled: false  # Manual promotion for safety
+      autoPromotionSeconds: 300    # Auto-promote after 5 min if health checks pass
+      scaleDownDelaySeconds: 60
+
+identity:
+  replicaCount: 3
+  rollout:
+    enabled: true
+    strategy: blueGreen
+    blueGreen:
+      activeService: ggid-identity-active
+      previewService: ggid-identity-preview
+      autoPromotionEnabled: false
+      scaleDownDelaySeconds: 60
+
+auth:
+  replicaCount: 3
+  rollout:
+    enabled: true
+    strategy: blueGreen
+    blueGreen:
+      activeService: ggid-auth-active
+      previewService: ggid-auth-preview
+      autoPromotionEnabled: false
+      scaleDownDelaySeconds: 60
+
+oauth:
+  replicaCount: 3
+  rollout:
+    enabled: true
+    strategy: blueGreen
+    blueGreen:
+      activeService: ggid-oauth-active
+      previewService: ggid-oauth-preview
+      autoPromotionEnabled: false
+      scaleDownDelaySeconds: 60
+
+policy:
+  replicaCount: 2
+  rollout:
+    enabled: true
+    strategy: blueGreen
+    blueGreen:
+      activeService: ggid-policy-active
+      previewService: ggid-policy-preview
+      autoPromotionEnabled: false
+      scaleDownDelaySeconds: 60
+
+org:
+  replicaCount: 2
+  rollout:
+    enabled: true
+    strategy: blueGreen
+    blueGreen:
+      activeService: ggid-org-active
+      previewService: ggid-org-preview
+      autoPromotionEnabled: false
+      scaleDownDelaySeconds: 60
+
+audit:
+  replicaCount: 3
+  rollout:
+    enabled: true
+    strategy: blueGreen
+    blueGreen:
+      activeService: ggid-audit-active
+      previewService: ggid-audit-preview
+      autoPromotionEnabled: false
+      scaleDownDelaySeconds: 60

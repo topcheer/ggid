@@ -1,0 +1,79 @@
+# Canary deployment — progressive traffic shift 10%→50%→100%
+# Usage: helm upgrade ggid deploy/helm/ggid/ -f values-prod.yaml -f values-canary.yaml
+# Requires: Argo Rollouts or Flagger installed in cluster
+
+# Reduce replicas for canary (traffic controlled by rollout controller)
+gateway:
+  replicaCount: 2
+  rollout:
+    enabled: true
+    strategy: canary
+    canary:
+      steps:
+        - setWeight: 10
+        - pause: { duration: 5m }
+        - setWeight: 50
+        - pause: { duration: 10m }
+        - setWeight: 100
+      analysis:
+        enabled: true
+        metrics:
+          - name: error-rate
+            threshold: 5  # % error rate threshold
+            query: rate(http_requests_total{status=~"5.."}[2m]) / rate(http_requests_total[2m]) * 100
+
+identity:
+  replicaCount: 2
+  rollout:
+    enabled: true
+    strategy: canary
+    canary:
+      steps:
+        - setWeight: 20
+        - pause: { duration: 5m }
+        - setWeight: 100
+
+auth:
+  replicaCount: 2
+  rollout:
+    enabled: true
+    strategy: canary
+    canary:
+      steps:
+        - setWeight: 20
+        - pause: { duration: 5m }
+        - setWeight: 100
+
+# Services with lower traffic can use faster rollout
+oauth:
+  replicaCount: 2
+  rollout:
+    enabled: true
+    strategy: canary
+    canary:
+      steps:
+        - setWeight: 30
+        - pause: { duration: 3m }
+        - setWeight: 100
+
+policy:
+  replicaCount: 1
+  rollout:
+    enabled: true
+    strategy: canary
+    canary:
+      steps:
+        - setWeight: 50
+        - pause: { duration: 3m }
+        - setWeight: 100
+
+audit:
+  replicaCount: 2
+  rollout:
+    enabled: true
+    strategy: canary
+    canary:
+      steps:
+        - setWeight: 25
+        - pause: { duration: 5m }
+        - setWeight: 100
