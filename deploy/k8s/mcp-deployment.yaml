@@ -1,0 +1,76 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ggid-mcp
+  labels:
+    app: ggid-mcp
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ggid-mcp
+  template:
+    metadata:
+      labels:
+        app: ggid-mcp
+    spec:
+      initContainers:
+        - name: copy-keys
+          image: busybox
+          command: ['sh', '-c', 'cp /keys/* /deploy/keys/ 2>/dev/null || true']
+          volumeMounts:
+            - name: keys
+              mountPath: /keys
+            - name: deploy-keys
+              mountPath: /deploy/keys
+      containers:
+        - name: mcp
+          image: registry.iot2.win/ggid/mcp:latest
+          ports:
+            - containerPort: 9060
+          env:
+            - name: GGID_MCP_PORT
+              value: "9060"
+            - name: GGID_GATEWAY_URL
+              value: "http://ggid-gateway:8080"
+            - name: JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: ggid-jwt-secret
+                  key: secret
+            - name: JWT_ISSUER
+              value: "https://ggid.iot2.win"
+            - name: GGID_TENANT_ID
+              value: "fb44ca98-2a8a-498b-a9b2-00fc014524ce"
+            - name: DEFAULT_SCOPES
+              value: "users:read,roles:read,audit:read"
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 9060
+            initialDelaySeconds: 5
+            periodSeconds: 30
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: 9060
+            initialDelaySeconds: 3
+            periodSeconds: 10
+      volumes:
+        - name: keys
+          secret:
+            secretName: ggid-jwt-keys
+            optional: true
+        - name: deploy-keys
+          emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ggid-mcp
+spec:
+  selector:
+    app: ggid-mcp
+  ports:
+    - port: 9060
+      targetPort: 9060
