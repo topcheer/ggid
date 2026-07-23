@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	stderrors "errors"
 	"fmt"
+	"log/slog"
 	"net/netip"
 	"strings"
 	"time"
@@ -424,6 +425,19 @@ func (r *pgRepo) UpdatePassword(ctx context.Context, tenantID, id uuid.UUID, pas
 	}
 	if tag.RowsAffected() == 0 {
 		return ggiderrors.NotFound("user", id.String())
+	}
+
+	// Sync credentials.secret so the auth service LocalProvider can verify
+	// the new password. Without this, users.password_hash and
+	// credentials.secret diverge, breaking login after a password change
+	// performed through the identity service.
+	if _, err := tx.Exec(ctx, `
+		UPDATE credentials SET secret = $3, failed_attempts = 0, locked_until = NULL, updated_at = NOW()
+		WHERE identifier = (SELECT username FROM users WHERE id = $2 AND tenant_id = $1)
+		  AND type = 'password' AND tenant_id = $1`,
+		tenantID, id, passwordHash); err != nil {
+		// Non-fatal: users table is already updated. Log but don't fail.
+		slog.Warn("UpdatePassword: failed to sync credentials.secret", "user_id", id, "error", err)
 	}
 
 	return tx.Commit(ctx)
