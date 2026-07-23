@@ -630,7 +630,7 @@ func TestHandlePermissions_InvalidTenant(t *testing.T) {
 }
 
 func TestHandlePermissions_MethodNotAllowed(t *testing.T) {
-	w := doReq("POST", "/api/v1/permissions", "")
+	w := doReq("DELETE", "/api/v1/permissions", "")
 	assertStatus(t, w, http.StatusMethodNotAllowed)
 }
 
