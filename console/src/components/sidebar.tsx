@@ -77,6 +77,7 @@ export function Sidebar() {
     },
     {
       label: "Security", icon: ShieldCheck, requiredScope: "manager", items: [
+        { href: "/security/itdr", label: "ITDR Dashboard", icon: Shield },
         { href: "/security/session-detail", label: "Sessions", icon: Monitor },
         { href: "/security/cae-monitor", label: "CAE Monitor", icon: Activity },
         { href: "/security/risk-score", label: "Risk Score", icon: Gauge },

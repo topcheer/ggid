@@ -28,6 +28,7 @@ const ALL_COMMANDS: CommandItem[] = [
   { id: "api-keys", label: "API Keys", href: "/api-keys", group: "Identity" },
   { id: "import", label: "Import Users", href: "/settings/import-wizard", group: "Identity" },
   // Security
+  { id: "itdr", label: "ITDR Dashboard", href: "/security/itdr", group: "Security" },
   { id: "security-sessions", label: "Security → Sessions", href: "/security/session-detail", group: "Security" },
   { id: "risk-score", label: "Risk Score", href: "/security/risk-score", group: "Security" },
   { id: "posture", label: "Security Posture", href: "/security/posture", group: "Security" },
