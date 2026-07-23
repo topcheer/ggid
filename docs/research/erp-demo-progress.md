@@ -1259,3 +1259,33 @@ Gateway+Auth build: ✅ | Hacks: 0 ✅ — **Twentieth consecutive zero-fix cycl
 API key DB-backed auth + Argon2id + redirect_uri allowlist are additive/hardening — JWT Bearer auth path (used by all demos) unaffected.
 
 ### Next Dimension: 1 — Cycle 29
+
+## Cycle 29: Post-R2-Batch (Rounds 192-197)
+
+**Core Changes** (9 new commits — R2 phase features + fixes):
+- `e4e55384a` R2-01 ITDR Dashboard (threat heatmap + kill chain)
+- `d8baa4d58` R2-02 SOC2/GDPR evidence package generation (audit)
+- `693f5597b` R2-04 zero-trust posture scoring (NIST 800-207)
+- `b97863e05` R2-04 posture radar chart + historical trend
+- `3f4e3fe9d` R2-03 JML orchestration endpoint (identity)
+- `693f5597b` Gateway: API key middleware order fix (must wrap JWTAuth)
+- `b3f229ebf` Gateway: API key validation tests + cleanup
+- `0130c87f0` Gateway: API key expires_at epoch bug fix
+- `ecec693c2` Identity: nil context in JML fix
+
+**Critical: Gateway middleware order changed** — API key middleware now wraps JWTAuth (outermost). JWT Bearer path verified still works correctly.
+
+**All 6 dimensions pass, zero issues**:
+
+| Dim | Result |
+|-----|--------|
+| D1 | 7/7 password grant, M2M OK ✅ |
+| D2 | admin 200/201, viewer 200/403 ✅ |
+| D3 | 25 items, all fields ✅ |
+| D4 | Go→Go 200, Node→Go 403, Fake 401 ✅ |
+| D5 | 7/7 SDK consistent ✅ |
+| D6 | refresh OK, no-token 401 ✅ |
+
+Gateway+Identity+Audit build: ✅ | Hacks: 0 ✅ — **Twenty-first consecutive zero-fix cycle.**
+
+### Next Dimension: 1 — Cycle 30
