@@ -631,9 +631,57 @@ func (s *HTTPServer) handlePermissions(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case http.MethodGet:
 		s.listPermissions(w, r)
+	case http.MethodPost:
+		s.createPermission(w, r)
 	default:
 		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 	}
+}
+
+func (s *HTTPServer) createPermission(w http.ResponseWriter, r *http.Request) {
+	tenantIDStr := r.URL.Query().Get("tenant_id")
+	if tenantIDStr == "" {
+		writeJSONError(w, http.StatusBadRequest, "tenant_id query parameter is required")
+		return
+	}
+	tenantID, err := uuid.Parse(tenantIDStr)
+	if err != nil {
+		writeJSONError(w, http.StatusBadRequest, "invalid tenant_id")
+		return
+	}
+
+	var req struct {
+		Key          string `json:"key"`
+		Name         string `json:"name"`
+		ResourceType string `json:"resource_type"`
+		Action       string `json:"action"`
+		Description  string `json:"description"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		writeJSONError(w, http.StatusBadRequest, "invalid JSON body")
+		return
+	}
+	if req.Key == "" || req.Name == "" {
+		writeJSONError(w, http.StatusBadRequest, "key and name are required")
+		return
+	}
+
+	perm := &domain.Permission{
+		ID:           uuid.New(),
+		TenantID:     tenantID,
+		Key:          req.Key,
+		Name:         req.Name,
+		ResourceType: req.ResourceType,
+		Action:       req.Action,
+		Description:  req.Description,
+		SystemPerm:   false,
+	}
+
+	if _, err := s.roleSvc.CreatePermission(r.Context(), perm); err != nil {
+		writeServiceError(w, err)
+		return
+	}
+	writeJSON(w, http.StatusCreated, permissionToJSON(perm))
 }
 
 func (s *HTTPServer) listPermissions(w http.ResponseWriter, r *http.Request) {
