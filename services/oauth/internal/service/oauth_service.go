@@ -1729,14 +1729,12 @@ func (s *OAuthService) PasswordGrant(ctx context.Context, req *PasswordGrantRequ
 	var tenantID uuid.UUID = req.TenantID
 
 	if s.pool != nil {
-		// Set RLS context so queries on RLS-protected tables (users) work
-		// Use SET (session-level) not SET LOCAL because pool.QueryRow uses autocommit (no tx)
-		_, _ = s.pool.Exec(ctx, fmt.Sprintf("SET app.tenant_id = '%s'", req.TenantID.String()))
-
 		// Look up user by username within the tenant
+		// Use set_config() inline to satisfy RLS on the users table
 		var dbUserID uuid.UUID
 		err := s.pool.QueryRow(ctx, `
-			SELECT id FROM users WHERE username = $1 AND tenant_id = $2 AND status = 'active'`,
+			SELECT id FROM users WHERE username = $1 AND tenant_id = $2 AND status = 'active'
+			  AND set_config('app.tenant_id', $2::text, true) IS NOT NULL`,
 			req.Username, req.TenantID).Scan(&dbUserID)
 		if err != nil {
 			return nil, errors.Unauthenticated("invalid credentials")
