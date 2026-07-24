@@ -70,7 +70,7 @@ function Toggle({
         type="button"
         onClick={() => onChange(!checked)}
         className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors ${
-          checked ? "bg-brand-600" : "bg-gray-300 dark:bg-gray-600"
+          checked ? "bg-blue-600" : "bg-gray-300 dark:bg-gray-600"
         }`}
       >
         <span
@@ -221,7 +221,7 @@ export default function PasswordPolicyPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <Loader2 className="h-6 w-6 animate-spin text-brand-500" />
+        <Loader2 className="h-6 w-6 animate-spin text-blue-500" />
         <span className="ml-2 text-sm text-gray-500">Loading password policy...</span>
       </div>
     );
@@ -239,7 +239,7 @@ export default function PasswordPolicyPage() {
   return (
     <div className="max-w-3xl">
       <div className="mb-6 flex items-center gap-3">
-        <ShieldCheck className="h-7 w-7 text-brand-600" />
+        <ShieldCheck className="h-7 w-7 text-blue-600" />
         <div>
           <h1 className="text-2xl font-bold dark:text-gray-100">{t("passwordPolicy.title")}</h1>
           <p className="text-sm text-gray-500">
@@ -258,7 +258,7 @@ export default function PasswordPolicyPage() {
         {/* Min Length */}
         <div className="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800">
           <h2 className="mb-4 flex items-center gap-2 text-sm font-semibold text-gray-700 dark:text-gray-300 dark:text-gray-300">
-            <KeyRound className="h-4 w-4 text-brand-600" /> Minimum Length
+            <KeyRound className="h-4 w-4 text-blue-600" /> Minimum Length
           </h2>
           <div className="flex items-center gap-4">
             <input
@@ -270,7 +270,7 @@ export default function PasswordPolicyPage() {
                 const v = Math.max(8, Math.min(128, Number(e.target.value) || 8));
                 setConfig({ ...config, min_length: v });
               }}
-              className="w-24 rounded-lg border border-gray-300 dark:border-gray-600 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500 dark:border-gray-600 dark:bg-gray-900 dark:text-gray-100"
+              className="w-24 rounded-lg border border-gray-300 dark:border-gray-600 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-900 dark:text-gray-100"
             />
             <span className="text-sm text-gray-400">characters</span>
           </div>
@@ -280,7 +280,7 @@ export default function PasswordPolicyPage() {
             max={128}
             value={config.min_length}
             onChange={(e) => setConfig({ ...config, min_length: Number(e.target.value) })}
-            className="mt-3 w-full accent-brand-600"
+            className="mt-3 w-full accent-blue-600"
           />
           <div className="mt-1 flex justify-between text-xs text-gray-400">
             <span>8</span>
@@ -336,7 +336,7 @@ export default function PasswordPolicyPage() {
         {/* Password History */}
         <div className="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800">
           <h2 className="mb-4 flex items-center gap-2 text-sm font-semibold text-gray-700 dark:text-gray-300 dark:text-gray-300">
-            <History className="h-4 w-4 text-brand-600" /> Password History
+            <History className="h-4 w-4 text-blue-600" /> Password History
           </h2>
           <label className="mb-1 block text-xs font-medium text-gray-500">
             Prevent reuse of last N passwords (0 = disabled)
@@ -351,7 +351,7 @@ export default function PasswordPolicyPage() {
                 const v = Math.max(0, Math.min(24, Number(e.target.value) || 0));
                 setConfig({ ...config, history_count: v });
               }}
-              className="w-24 rounded-lg border border-gray-300 dark:border-gray-600 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500 dark:border-gray-600 dark:bg-gray-900 dark:text-gray-100"
+              className="w-24 rounded-lg border border-gray-300 dark:border-gray-600 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-900 dark:text-gray-100"
             />
             <span className="text-sm text-gray-400">passwords</span>
           </div>
@@ -361,7 +361,7 @@ export default function PasswordPolicyPage() {
             max={24}
             value={config.history_count}
             onChange={(e) => setConfig({ ...config, history_count: Number(e.target.value) })}
-            className="mt-3 w-full accent-brand-600"
+            className="mt-3 w-full accent-blue-600"
           />
           <div className="mt-1 flex justify-between text-xs text-gray-400">
             <span>0</span>
@@ -372,7 +372,7 @@ export default function PasswordPolicyPage() {
         {/* Password Expiry */}
         <div className="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800">
           <h2 className="mb-4 flex items-center gap-2 text-sm font-semibold text-gray-700 dark:text-gray-300 dark:text-gray-300">
-            <Clock className="h-4 w-4 text-brand-600" /> Password Expiry
+            <Clock className="h-4 w-4 text-blue-600" /> Password Expiry
           </h2>
           <label className="mb-1 block text-xs font-medium text-gray-500">
             Days until forced change (0 = never)
@@ -387,7 +387,7 @@ export default function PasswordPolicyPage() {
                 const v = Math.max(0, Math.min(365, Number(e.target.value) || 0));
                 setConfig({ ...config, expiry_days: v });
               }}
-              className="w-24 rounded-lg border border-gray-300 dark:border-gray-600 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500 dark:border-gray-600 dark:bg-gray-900 dark:text-gray-100"
+              className="w-24 rounded-lg border border-gray-300 dark:border-gray-600 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-900 dark:text-gray-100"
             />
             <span className="text-sm text-gray-400">days</span>
           </div>
@@ -397,7 +397,7 @@ export default function PasswordPolicyPage() {
             max={365}
             value={config.expiry_days}
             onChange={(e) => setConfig({ ...config, expiry_days: Number(e.target.value) })}
-            className="mt-3 w-full accent-brand-600"
+            className="mt-3 w-full accent-blue-600"
           />
           <div className="mt-1 flex justify-between text-xs text-gray-400">
             <span>0 (never)</span>
@@ -408,7 +408,7 @@ export default function PasswordPolicyPage() {
         {/* Live Preview */}
         <div className="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800">
           <h2 className="mb-4 flex items-center gap-2 text-sm font-semibold text-gray-700 dark:text-gray-300 dark:text-gray-300">
-            <ShieldCheck className="h-4 w-4 text-brand-600" /> Live Password Preview
+            <ShieldCheck className="h-4 w-4 text-blue-600" /> Live Password Preview
           </h2>
           <p className="mb-3 text-xs text-gray-400">
             Type a test password to see which rules it passes or fails against the current policy.
@@ -419,7 +419,7 @@ export default function PasswordPolicyPage() {
               value={testUsername}
               onChange={(e) => setTestUsername(e.target.value)}
               placeholder={t("settings.testUsername")}
-              className="mb-2 w-full rounded-lg border border-gray-300 dark:border-gray-600 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500 dark:border-gray-600 dark:bg-gray-900 dark:text-gray-100"
+              className="mb-2 w-full rounded-lg border border-gray-300 dark:border-gray-600 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-900 dark:text-gray-100"
             />
           )}
           <input
@@ -427,7 +427,7 @@ export default function PasswordPolicyPage() {
             value={testPw}
             onChange={(e) => setTestPw(e.target.value)}
             placeholder={t("settings.testPassword")}
-            className="w-full rounded-lg border border-gray-300 dark:border-gray-600 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500 dark:border-gray-600 dark:bg-gray-900 dark:text-gray-100"
+            className="w-full rounded-lg border border-gray-300 dark:border-gray-600 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-900 dark:text-gray-100"
           />
           {testPw && (
             <div className="mt-3 space-y-0.5">
@@ -463,7 +463,7 @@ export default function PasswordPolicyPage() {
           <button
             onClick={handleSave}
             disabled={saving}
-            className="flex items-center gap-1.5 rounded-lg bg-brand-600 px-6 py-2.5 text-sm font-medium text-white hover:bg-brand-700 disabled:opacity-50"
+            className="flex items-center gap-1.5 rounded-lg bg-blue-600 px-6 py-2.5 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
           >
             {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
             Save Policy
