@@ -102,21 +102,74 @@ export default function ConditionalAccessPage() {
           <PoliciesList policies={policies} loading={loading}
             onEdit={(p) => { setEditing(p); setTab("editor"); }}
             onAdd={() => { setEditing(null); setTab("editor"); }}
-            onToggle={(id) => setPolicies(policies.map((p: any) => p.id === id ? { ...p, enabled: !p.enabled } : p))}
+            onToggle={async (id) => {
+              const p = policies.find((x: any) => x.id === id);
+              if (!p) return;
+              try {
+                await fetch(`${API_BASE}/api/v1/policies/conditional-access?id=${id}`, {
+                  method: "PUT",
+                  headers: { "Content-Type": "application/json", ...authHeader() },
+                  body: JSON.stringify({ enabled: !p.enabled }),
+                });
+                load();
+              } catch {
+                setPolicies(policies.map((x: any) => x.id === id ? { ...x, enabled: !x.enabled } : x));
+              }
+            }}
             onMove={(id, dir) => {
               const idx = policies.findIndex((p) => p.id === id);
               const next = [...policies];
               const target = dir === "up" ? idx - 1 : idx + 1;
               if (target >= 0 && target < next.length) { [next[idx], next[target]] = [next[target], next[idx]]; setPolicies(next); }
             }}
-            onDelete={(id) => { setPolicies(policies.filter((p: any) => p.id !== id)); }}
+            onDelete={async (id) => {
+              try {
+                await fetch(`${API_BASE}/api/v1/policies/conditional-access?id=${id}`, {
+                  method: "DELETE",
+                  headers: { ...authHeader() },
+                });
+                load();
+              } catch {
+                setPolicies(policies.filter((p: any) => p.id !== id));
+              }
+            }}
           />
         )}
         {tab === "editor" && (
           <PolicyEditor editing={editing}
-            onSave={(p) => {
-              if (editing) { setPolicies(policies.map((x: any) => x.id === p.id ? p : x)); }
-              else { setPolicies([...policies, { ...p, id: `p${Date.now()}` }]); }
+            onSave={async (p) => {
+              try {
+                // Convert conditions array to map format expected by backend
+                const conditionsMap: Record<string, unknown> = {};
+                for (const c of p.conditions) {
+                  conditionsMap[c.operand] = isNaN(Number(c.value)) ? c.value : Number(c.value);
+                }
+                const body = {
+                  name: p.name,
+                  priority: p.priority,
+                  enabled: p.enabled,
+                  action: p.action,
+                  conditions: conditionsMap,
+                };
+                if (editing && editing.id) {
+                  await fetch(`${API_BASE}/api/v1/policies/conditional-access?id=${editing.id}`, {
+                    method: "PUT",
+                    headers: { "Content-Type": "application/json", ...authHeader() },
+                    body: JSON.stringify(body),
+                  });
+                } else {
+                  await fetch(`${API_BASE}/api/v1/policies/conditional-access`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json", ...authHeader() },
+                    body: JSON.stringify(body),
+                  });
+                }
+                load(); // reload from backend
+              } catch {
+                // fallback to local state update
+                if (editing) { setPolicies(policies.map((x: any) => x.id === p.id ? p : x)); }
+                else { setPolicies([...policies, { ...p, id: `p${Date.now()}` }]); }
+              }
               setTab("policies");
             }}
             onCancel={() => setTab("policies")}
