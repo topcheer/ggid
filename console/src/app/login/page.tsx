@@ -237,8 +237,9 @@ export default function LoginPage() {
         localStorage.setItem("ggid_user_scopes", JSON.stringify(Array.isArray(userScopes) ? userScopes : [userScopes]));
       } catch {}
 
-      const redirectTo = sessionStorage.getItem("ggid_redirect_after_login") || "/";
-      sessionStorage.removeItem("ggid_redirect_after_login");
+      // Read redirect target from URL params (consistent with credentials step)
+      const params = new URLSearchParams(window.location.search);
+      const redirectTo = params.get("redirect_to") || "/";
       router.replace(redirectTo);
     } catch (err) {
       setError(err instanceof Error ? err.message : "MFA verification failed");
@@ -341,7 +342,7 @@ export default function LoginPage() {
               <div className="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-800 dark:bg-red-950 dark:text-red-400">
                 {error}
                 {rateLimitSeconds > 0 && (
-                  <div className="mt-2 flex items-center gap-2 text-xs">
+                  <div className="mt-2 flex items-center gap-2 text-xs" role="timer" aria-live="polite" aria-label={`${rateLimitSeconds} seconds until retry allowed`}>
                     <div className="w-6 h-6 rounded-full border-2 border-red-400 flex items-center justify-center font-bold text-red-500">
                       {rateLimitSeconds}
                     </div>
@@ -441,7 +442,7 @@ export default function LoginPage() {
               type="submit"
               disabled={loading || rateLimitSeconds > 0}
               aria-label={loading ? t("login.signingIn") : t("login.signIn")}
-              className="w-full rounded-lg bg-brand-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-brand-700 disabled:opacity-50"
+              className="w-full rounded-lg bg-brand-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-brand-700 disabled:opacity-50 focus:ring-2 focus:ring-brand-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800"
             >
               {loading ? t("login.signingIn") : t("login.signIn")}
             </button>
@@ -462,7 +463,7 @@ export default function LoginPage() {
                 const usernameInput = document.getElementById("username") as HTMLInputElement;
                 if (usernameInput) { usernameInput.focus(); }
               }}
-              className="w-full flex items-center justify-center gap-2 rounded-xl border border-gray-300 px-4 py-2.5 text-sm font-medium text-gray-700 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-600"
+              className="w-full flex items-center justify-center gap-2 rounded-xl border border-gray-300 px-4 py-2.5 text-sm font-medium text-gray-700 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-600 focus:ring-2 focus:ring-brand-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800"
             >
               <Fingerprint className="h-4 w-4" />
               {t("loginEnhanced.passkeyButton")}
@@ -486,7 +487,7 @@ export default function LoginPage() {
                   type="button"
                   onClick={() => handleSocialLogin(conn.provider)}
                   aria-label={`Sign in with ${conn.name}`}
-                  className="flex items-center justify-center gap-1.5 rounded-lg border border-gray-300 px-3 py-2 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:bg-gray-950"
+                  className="flex items-center justify-center gap-1.5 rounded-lg border border-gray-300 px-3 py-2 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:ring-2 focus:ring-brand-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800"
                 >
                   <SocialIcon provider={conn.provider} />
                   {conn.name}
@@ -507,7 +508,7 @@ export default function LoginPage() {
           /* ===== Step 2: MFA Verification ===== */
           <form onSubmit={handleMfa} className="rounded-xl border border-gray-200 bg-white p-8 shadow-sm dark:border-gray-700 dark:bg-gray-800">
             <div className="mb-6 text-center">
-              <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-brand-100">
+              <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-brand-100 dark:bg-brand-900/30">
                 <Shield className="h-6 w-6 text-brand-600" />
               </div>
               <h2 className="text-lg font-semibold">{t("login.twoFactor")}</h2>
@@ -567,7 +568,7 @@ export default function LoginPage() {
               type="submit"
               disabled={loading || (!useBackupCode ? totpCode.length !== 6 : !backupCode.trim())}
               aria-label={loading ? t("login.verifying") : t("login.verifySignIn")}
-              className="w-full rounded-lg bg-brand-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-brand-700 disabled:opacity-50"
+              className="w-full rounded-lg bg-brand-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-brand-700 disabled:opacity-50 focus:ring-2 focus:ring-brand-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800"
             >
               {loading ? t("login.verifying") : t("login.verifySignIn")}
             </button>
@@ -575,7 +576,7 @@ export default function LoginPage() {
             <button
               type="button"
               onClick={() => { setUseBackupCode(!useBackupCode); setError(""); }}
-              className="mt-3 w-full text-center text-xs text-gray-500 hover:text-gray-700"
+              className="mt-3 w-full text-center text-xs text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
             >
               {useBackupCode ? "Use authenticator app instead" : "Use backup code instead"}
             </button>
@@ -584,7 +585,7 @@ export default function LoginPage() {
               type="button"
               onClick={() => { setStep("credentials"); setError(""); setTotpCode(""); }}
               aria-label={t("login.backToLogin")}
-              className="mt-3 flex w-full items-center justify-center gap-1 text-sm text-gray-500 hover:text-gray-700"
+              className="mt-3 flex w-full items-center justify-center gap-1 text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
             >
               <ArrowLeft className="h-4 w-4" /> {t("login.backToLogin")}
             </button>
