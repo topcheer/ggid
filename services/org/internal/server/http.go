@@ -191,6 +191,11 @@ func (s *HTTPServer) handleOrgs(w http.ResponseWriter, r *http.Request) {
 
 func (s *HTTPServer) handleOrgByID(w http.ResponseWriter, r *http.Request) {
 	idStr := strings.TrimPrefix(r.URL.Path, "/api/v1/orgs/")
+	// Special case: /api/v1/orgs/departments (not an org ID)
+	if idStr == "departments" || strings.HasPrefix(idStr, "departments/") {
+		s.handleDepartments(w, r)
+		return
+	}
 	// Sub-paths: /api/v1/orgs/{id}/members, /api/v1/orgs/{id}/tree
 	parts := strings.SplitN(idStr, "/", 2)
 	orgIDStr := parts[0]
