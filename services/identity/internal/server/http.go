@@ -675,24 +675,60 @@ func (h *HTTPHandler) createUser(ctx context.Context, w http.ResponseWriter, r *
 		return
 	}
 
-	// Password strength validation (min 8 chars, at least 1 letter + 1 digit)
-	if len(req.Password) < 8 {
-		writeJSONError(w, http.StatusBadRequest, "password must be at least 8 characters")
-		return
+	// Password strength validation using tenant's password policy from DB
+	var policyTenantID uuid.UUID
+	if tc, e := ggidtenant.FromContext(ctx); e == nil {
+		policyTenantID = tc.TenantID
 	}
-	hasLetter := false
-	hasDigit := false
-	for _, c := range req.Password {
-		switch {
-		case (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z'):
-			hasLetter = true
-		case c >= '0' && c <= '9':
-			hasDigit = true
+	if pool := h.svc.Pool(); pool != nil && policyTenantID != (uuid.UUID{}) {
+		minLen := 8
+		requireUpper, requireLower, requireDigit, requireSpecial := true, true, true, false
+		row := pool.QueryRow(ctx, `
+			SELECT min_length, require_uppercase, require_lowercase, require_digit, require_special
+			FROM password_policies WHERE tenant_id = $1 LIMIT 1`, policyTenantID)
+		var dbMinLen int
+		if err := row.Scan(&dbMinLen, &requireUpper, &requireLower, &requireDigit, &requireSpecial); err == nil && dbMinLen > 0 {
+			minLen = dbMinLen
 		}
-	}
-	if !hasLetter || !hasDigit {
-		writeJSONError(w, http.StatusBadRequest, "password must contain at least one letter and one digit")
-		return
+		if len(req.Password) < minLen {
+			writeJSONError(w, http.StatusBadRequest, fmt.Sprintf("password must be at least %d characters", minLen))
+			return
+		}
+		hasUpper, hasLower, hasDigit, hasSpecial := false, false, false, false
+		for _, c := range req.Password {
+			switch {
+			case c >= 'A' && c <= 'Z':
+				hasUpper = true
+			case c >= 'a' && c <= 'z':
+				hasLower = true
+			case c >= '0' && c <= '9':
+				hasDigit = true
+			case (c >= '!' && c <= '/') || (c >= ':' && c <= '@') || (c >= '[' && c <= '`') || (c >= '{' && c <= '~'):
+				hasSpecial = true
+			}
+		}
+		if requireUpper && !hasUpper {
+			writeJSONError(w, http.StatusBadRequest, "password must contain at least one uppercase letter")
+			return
+		}
+		if requireLower && !hasLower {
+			writeJSONError(w, http.StatusBadRequest, "password must contain at least one lowercase letter")
+			return
+		}
+		if requireDigit && !hasDigit {
+			writeJSONError(w, http.StatusBadRequest, "password must contain at least one digit")
+			return
+		}
+		if requireSpecial && !hasSpecial {
+			writeJSONError(w, http.StatusBadRequest, "password must contain at least one special character")
+			return
+		}
+	} else {
+		// Fallback: basic validation if no DB pool
+		if len(req.Password) < 8 {
+			writeJSONError(w, http.StatusBadRequest, "password must be at least 8 characters")
+			return
+		}
 	}
 
 	user, err := h.svc.CreateUser(ctx, &domain.CreateUserInput{
