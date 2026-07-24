@@ -46,8 +46,8 @@ export default function CAEMonitorPage() {
 
         <div className="flex gap-1 mb-6 bg-gray-200 dark:bg-gray-800 rounded-lg p-1">
           {tabs.map(({ id, label, icon: Icon }) => (
-            <button key={id} onClick={() => setTab(id)}
-              className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+            <button key={id} onClick={() => setTab(id)} aria-label={label}
+              className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 dark:focus:ring-offset-gray-900 ${
                 tab === id ? "bg-white dark:bg-gray-700 text-blue-600 dark:text-blue-400 shadow-sm" : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
               }`}>
               <Icon className="w-4 h-4" />{label}
@@ -212,7 +212,7 @@ function TriggersTab() {
           <h3 className="text-sm font-semibold text-gray-900 dark:text-white">{t("caeMonitor.triggers.title")}</h3>
           <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{t("caeMonitor.triggers.description")}</p>
         </div>
-        <button onClick={() => setShowForm(!showForm)} className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium">
+        <button onClick={() => setShowForm(!showForm)} aria-label={t("caeMonitor.triggers.addTrigger")} className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900">
           <Plus className="w-4 h-4" />{t("caeMonitor.triggers.addTrigger")}
         </button>
       </div>
@@ -253,12 +253,12 @@ function TriggerForm({ onAdd, onCancel }: { onAdd: (t: Trigger) => void; onCance
   return (
     <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 space-y-3 bg-gray-50 dark:bg-gray-800/50">
       <div className="grid grid-cols-3 gap-3">
-        <select value={event} onChange={(e) => setEvent(e.target.value)} className="px-2 py-1.5 rounded border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-xs text-gray-900 dark:text-white">
+        <select aria-label="Trigger event" value={event} onChange={(e) => setEvent(e.target.value)} className="px-2 py-1.5 rounded border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-xs text-gray-900 dark:text-white">
           {TRIGGER_EVENTS.map((e: any) => <option key={e} value={e}>{e}</option>)}
         </select>
-        <input type="text" value={condition} onChange={(e) => setCondition(e.target.value)} placeholder="condition"
+        <input type="text" aria-label="Trigger condition" value={condition} onChange={(e) => setCondition(e.target.value)} placeholder="condition"
           className="px-2 py-1.5 rounded border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-xs text-gray-900 dark:text-white" />
-        <select value={action} onChange={(e) => setAction(e.target.value)} className="px-2 py-1.5 rounded border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-xs text-gray-900 dark:text-white">
+        <select aria-label="Trigger action" value={action} onChange={(e) => setAction(e.target.value)} className="px-2 py-1.5 rounded border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-xs text-gray-900 dark:text-white">
           {TRIGGER_ACTIONS.map((a: any) => <option key={a} value={a}>{a}</option>)}
         </select>
       </div>

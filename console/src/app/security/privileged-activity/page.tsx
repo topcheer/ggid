@@ -98,8 +98,8 @@ export default function PrivilegedActivityPage() {
 
         <div className="flex gap-1 mb-6 bg-gray-200 dark:bg-gray-800 rounded-lg p-1">
           {tabs.map(({ id, label, icon: Icon }) => (
-            <button key={id} onClick={() => setTab(id)}
-              className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+            <button key={id} onClick={() => setTab(id)} aria-label={label}
+              className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 dark:focus:ring-offset-gray-900 ${
                 tab === id ? "bg-white dark:bg-gray-700 text-blue-600 dark:text-blue-400 shadow-sm" : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
               }`}>
               <Icon className="w-4 h-4" />{label}
@@ -135,18 +135,18 @@ function TimelineTab({ ops, loading, search, setSearch, filterAction, setFilterA
         <div className="flex flex-wrap items-center gap-3">
           <div className="relative flex-1 min-w-[200px]">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-            <input type="text" value={search} onChange={(e) => setSearch(e.target.value)}
+            <input type="text" aria-label={t("privilegedActivity.timeline.searchPlaceholder")} value={search} onChange={(e) => setSearch(e.target.value)}
               placeholder={t("privilegedActivity.timeline.searchPlaceholder")}
               className="w-full pl-9 pr-3 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-sm text-gray-900 dark:text-white" />
           </div>
-          <select value={filterAction} onChange={(e) => setFilterAction(e.target.value)}
+          <select aria-label="Filter by action" value={filterAction} onChange={(e) => setFilterAction(e.target.value)}
             className="px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-sm text-gray-900 dark:text-white">
             <option value="all">{t("privilegedActivity.timeline.filterAction")}</option>
             {Object.keys(ACTION_LABELS).map((a: any) => (
               <option key={a} value={a}>{t(`privilegedActivity.timeline.${ACTION_LABELS[a]}`)}</option>
             ))}
           </select>
-          <select value={filterRange} onChange={(e) => setFilterRange(e.target.value)}
+          <select aria-label="Filter by time range" value={filterRange} onChange={(e) => setFilterRange(e.target.value)}
             className="px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-sm text-gray-900 dark:text-white">
             <option value="1h">{t("privilegedActivity.timeline.range1h")}</option>
             <option value="24h">{t("privilegedActivity.timeline.range24h")}</option>

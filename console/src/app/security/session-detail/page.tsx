@@ -117,13 +117,13 @@ export default function SessionDetailPage() {
         <div className="flex gap-2 mb-6">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-            <input type="text" value={query} onChange={(e) => setQuery(e.target.value)}
+            <input type="text" aria-label={t("sessionDetail.searchPlaceholder")} value={query} onChange={(e) => setQuery(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && search()}
               placeholder={t("sessionDetail.searchPlaceholder")}
               className="w-full pl-9 pr-3 py-2.5 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-sm font-mono text-gray-900 dark:text-white" />
           </div>
-          <button onClick={search} disabled={loading || !query.trim()}
-            className="flex items-center gap-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white rounded-lg text-sm font-medium">
+          <button onClick={search} disabled={loading || !query.trim()} aria-label={t("sessionDetail.search")}
+            className="flex items-center gap-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white rounded-lg text-sm font-medium focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900">
             {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}
             {loading ? t("sessionDetail.searching") : t("sessionDetail.search")}
           </button>
@@ -202,8 +202,8 @@ export default function SessionDetailPage() {
 
               {/* Revoke Button */}
               {session.status === "active" && (
-                <button onClick={revoke} disabled={revoking}
-                  className="mt-4 flex items-center gap-2 px-5 py-2 bg-red-600 hover:bg-red-700 disabled:opacity-50 text-white rounded-lg text-sm font-medium">
+                <button onClick={revoke} disabled={revoking} aria-label={t("sessionDetail.actions.revoke")}
+                  className="mt-4 flex items-center gap-2 px-5 py-2 bg-red-600 hover:bg-red-700 disabled:opacity-50 text-white rounded-lg text-sm font-medium focus:ring-2 focus:ring-red-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900">
                   {revoking ? <Loader2 className="w-4 h-4 animate-spin" /> : <Ban className="w-4 h-4" />}
                   {t("sessionDetail.actions.revoke")}
                 </button>
