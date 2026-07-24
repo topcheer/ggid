@@ -58,6 +58,7 @@ export default function EnrollmentCampaignPage() {
       }
     } catch { /* empty state */ }
     setCampaigns([]);
+    setLoading(false);
   }, []);
 
   useEffect(() => { load(); }, [load]);

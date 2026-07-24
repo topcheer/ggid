@@ -43,10 +43,11 @@ export default function ReviewSchedulesPage() {
     setLoading(true);
     try {
       const res = await fetch(`${API_BASE}/api/v1/identity/review-schedules`, { headers: { ...authHeader() } });
-      if (res.ok) { const d = await res.json(); setSchedules(d.schedules || d || []); return; }
-    } catch { /* empty state */ }
-    setSchedules([]);
+      if (res.ok) { const d = await res.json(); setSchedules(d.schedules || d || []); }
+      else { setSchedules([]); }
+    } catch { setSchedules([]); }
     setHistory([]);
+    setLoading(false);
   }, []);
 
   useEffect(() => { load(); }, [load]);
