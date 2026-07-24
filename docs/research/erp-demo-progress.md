@@ -2239,3 +2239,7 @@ Admin POST=201 GET=200 | Node M2M POST=403 ✅ — 144th clean cycle.
 Inv=79 Ord=32 POST=201 Hacks:0 ✅ — 145th clean cycle.
 
 ### Next Dimension: 4 — Cycle 156
+## Cycle 156: D4 Tenant Isolation (Round 330)
+Go→Go=200 Node→Go=403 Fake=401 JWT=YES ✅ — 146th clean cycle.
+
+### Next Dimension: 5 — Cycle 157
