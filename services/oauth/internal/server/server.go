@@ -2283,6 +2283,10 @@ func (a *redisAdapter) Del(ctx context.Context, key string) error {
 	return a.rdb.Del(ctx, key).Err()
 }
 
+func (a *redisAdapter) ZAdd(ctx context.Context, key string, score float64, member string) error {
+	return a.rdb.ZAdd(ctx, key, redis.Z{Score: score, Member: member}).Err()
+}
+
 func writeJSON(w http.ResponseWriter, code int, v any) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(code)

@@ -68,6 +68,14 @@ func (m *mockRedisStateStore) Del(_ context.Context, key string) error {
 	return nil
 }
 
+func (m *mockRedisStateStore) ZAdd(_ context.Context, key string, score float64, member string) error {
+	if m.err != nil {
+		return m.err
+	}
+	m.data[key+":"+member] = fmt.Sprintf("%f", score)
+	return nil
+}
+
 // ========== State Store Redis Migration Tests ==========
 
 // TestRedisStateStore_StoreAndValidate verifies the normal store→validate lifecycle

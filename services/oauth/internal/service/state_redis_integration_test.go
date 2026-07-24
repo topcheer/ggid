@@ -29,6 +29,10 @@ func (f *failingRedis) GetDel(_ context.Context, _ string) (string, error) {
 	return "", errors.New("redis: connection refused")
 }
 
+func (f *failingRedis) ZAdd(_ context.Context, _ string, _ float64, _ string) error {
+	return errors.New("redis: connection refused")
+}
+
 func (f *failingRedis) Del(_ context.Context, _ string) error {
 	return errors.New("redis: connection refused")
 }
@@ -62,6 +66,15 @@ func (s *slowRedis) Get(ctx context.Context, _ string) (string, error) {
 		return "", errors.New("redis: key not found")
 	case <-ctx.Done():
 		return "", ctx.Err()
+	}
+}
+
+func (s *slowRedis) ZAdd(ctx context.Context, _ string, _ float64, _ string) error {
+	select {
+	case <-time.After(s.delay):
+		return nil
+	case <-ctx.Done():
+		return ctx.Err()
 	}
 }
 

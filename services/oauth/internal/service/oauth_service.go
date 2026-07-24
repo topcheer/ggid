@@ -55,6 +55,7 @@ type RedisCmdable interface {
 	Get(ctx context.Context, key string) (string, error)
 	GetDel(ctx context.Context, key string) (string, error)
 	Del(ctx context.Context, key string) error
+	ZAdd(ctx context.Context, key string, score float64, member string) error
 }
 
 // SetRedisClient wires a Redis client for distributed state storage.
@@ -1389,6 +1390,11 @@ func (s *OAuthService) RevokeToken(tokenStr string, tokenTypeHint ...string) err
 	// Try Redis first (for HA/multi-instance).
 	if s.rdb != nil {
 		if e := s.rdb.Set(context.Background(), "oauth:revoked:"+tokenHash, strconv.FormatInt(exp, 10), ttl); e == nil {
+			// Also add JTI to the Gateway CAE blocklist ZSET so the gateway
+			// can reject revoked tokens on every request (continuous access evaluation).
+			if jti := getStringClaim(claims, "jti"); jti != "" && exp > 0 {
+				s.rdb.ZAdd(context.Background(), "ggid:revoked_jti", float64(exp), jti)
+			}
 			return nil
 		}
 	}
