@@ -44,7 +44,28 @@ export default function PasskeyManagementPage() {
         body: JSON.stringify({ device_name: enrollDevice || 'New Device' }),
       });
       if (!beginResp.ok) throw new Error(`Registration begin failed: ${beginResp.status}`);
-      const publicKey = await beginResp.json();
+      const rawKey = await beginResp.json();
+
+      // Decode base64url fields to ArrayBuffer for WebAuthn API
+      const b64urlToBuf = (val: unknown): ArrayBuffer => {
+        if (val instanceof ArrayBuffer || val instanceof Uint8Array) return val as ArrayBuffer;
+        if (typeof val !== 'string') return new ArrayBuffer(0);
+        const b64 = val.replace(/-/g, '+').replace(/_/g, '/');
+        const padded = b64 + '='.repeat((4 - b64.length % 4) % 4);
+        const bin = atob(padded);
+        const buf = new Uint8Array(bin.length);
+        for (let i = 0; i < bin.length; i++) buf[i] = bin.charCodeAt(i);
+        return buf.buffer;
+      };
+
+      const publicKey: PublicKeyCredentialCreationOptions = {
+        ...rawKey,
+        challenge: b64urlToBuf(rawKey.challenge),
+        user: rawKey.user ? { ...rawKey.user, id: b64urlToBuf(rawKey.user.id) } : undefined,
+        excludeCredentials: Array.isArray(rawKey.excludeCredentials)
+          ? rawKey.excludeCredentials.map((c: any) => ({ ...c, id: b64urlToBuf(c.id) }))
+          : [],
+      };
 
       // Use WebAuthn API to create credential
       const credential = await navigator.credentials.create({ publicKey });
