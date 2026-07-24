@@ -216,7 +216,7 @@ export function getUserRole(): UserRole {
   const scopes = getUserScopes();
   const isPlatform = scopes.some((s) => {
     const ls = s.toLowerCase();
-    return ls === "platform:admin" || ls === "admin" || ls === "platform administrator" || ls === "platform_admin";
+    return ls === "platform:admin" || ls === "admin" || ls === "administrator" || ls === "platform administrator" || ls === "platform_admin" || ls === "tenant:admin";
   });
   if (isPlatform) return "platform_admin";
   const isTenant = scopes.some((s) => {
@@ -237,11 +237,10 @@ export function useUserRole(): { role: UserRole; scopes: string[]; isPlatformAdm
   const lowerScopes = scopes.map((s) => s.toLowerCase());
   const hasRole = (...keys: string[]) => keys.some((k) => {
     if (scopes.includes(k)) return true;
-    // Also check normalized forms: "platform:admin" matches "Platform Administrator"
     const normalized = k.replace(/[:_]/g, " ").toLowerCase();
-    return lowerScopes.some((ls) => ls === normalized || ls === k.toLowerCase() || ls.includes(k.split(":").pop()!.toLowerCase()));
+    return lowerScopes.some((ls) => ls === normalized || ls === k.toLowerCase() || ls.includes(k.split(":").pop()!.toLowerCase()) || (k === "admin" && ls === "administrator"));
   });
-  const role: UserRole = hasRole("platform:admin", "admin")
+  const role: UserRole = hasRole("platform:admin", "admin", "tenant:admin")
     ? "platform_admin"
     : hasRole("tenant:admin", "manager")
     ? "tenant_admin"
@@ -259,17 +258,31 @@ export function useUserRole(): { role: UserRole; scopes: string[]; isPlatformAdm
 // ===== Dynamic Permission System =====
 
 export async function fetchUserPermissions(): Promise<string[] | null> {
+  // Failure cache — if API returned 404/error recently, don't retry for 60s
+  if (typeof window !== "undefined") {
+    const failTs = (window as any).__permissionsFailTs || 0;
+    if (Date.now() - failTs < 60000) return null;
+  }
   try {
     const token = getAuthToken();
     if (!token) return null;
     const res = await fetch(`${API_BASE_URL}/api/v1/me/permissions`, {
       headers: { Authorization: `Bearer ${token}`, "X-Tenant-ID": DEFAULT_TENANT_ID },
     });
-    if (!res.ok) return null;
+    if (!res.ok) {
+      // Cache failure to prevent infinite refetch on 404
+      if (typeof window !== "undefined") {
+        (window as any).__permissionsFailTs = Date.now();
+      }
+      return null;
+    }
     const data = await res.json();
     const perms = data.permissions || data.items || data;
     return Array.isArray(perms) ? perms : null;
   } catch {
+    if (typeof window !== "undefined") {
+      (window as any).__permissionsFailTs = Date.now();
+    }
     return null;
   }
 }

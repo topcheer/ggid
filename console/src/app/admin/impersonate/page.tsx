@@ -129,7 +129,12 @@ export default function ImpersonatePage() {
 
       if (data) {
         const list = Array.isArray(data) ? data : data.users || data.items || [];
-        setSearchResults(list);
+        // Ensure each result has a safe roles array (API may return null/undefined)
+        const safeList = list.map((u: any) => ({
+          ...u,
+          roles: Array.isArray(u.roles) ? u.roles : (u.roles ? [String(u.roles)] : []),
+        }));
+        setSearchResults(safeList);
       } else {
         setSearchResults([]);
       }
@@ -402,7 +407,7 @@ export default function ImpersonatePage() {
                     </div>
                   ) : (
                     <ul className="max-h-72 overflow-y-auto py-1">
-                      {searchResults.map((user: any) => (
+                      {(Array.isArray(searchResults) ? searchResults : []).map((user: any) => (
                         <li key={user.id}>
                           <button
                             onClick={() => handleSelectUser(user)}
