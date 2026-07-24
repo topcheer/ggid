@@ -1395,12 +1395,12 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 				Scopes                  []string `json:"scopes"`
 				TokenEndpointAuthMethod string   `json:"token_endpoint_auth_method"`
 			}
-			if body.Name == "" {
-				body.Name = body.AltName
-			}
 			if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
 				writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid request body"})
 				return
+			}
+			if body.Name == "" {
+				body.Name = body.AltName
 			}
 
 			clientType := domain.ClientType(body.Type)
