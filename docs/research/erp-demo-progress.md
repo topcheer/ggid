@@ -2562,3 +2562,7 @@ UPSTREAM: 57a5a7592 (identity: DB password policy) — COMPAT OK
 ✅ — 223rd clean cycle.
 
 ### Next Dimension: 4 — Cycle 234
+## Cycle 234: D4 Tenant Isolation DEEP (Round 408)
+Go→Go=200 Node→Go=403 Fake=401 JWT=YES NodeTID=b1a2329f ✅ — 224th clean cycle.
+
+### Next Dimension: 5 — Cycle 235
