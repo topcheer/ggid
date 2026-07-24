@@ -90,6 +90,7 @@ func Default() *Config {
 			"/api/v1/webauthn":        envOrDefault("AUTH_SERVICE_URL", "http://localhost:9001"),
 			"/api/v1/rate-limits":     envOrDefault("POLICY_SERVICE_URL", "http://localhost:8070"),
 			"/api/v1/sod":             envOrDefault("POLICY_SERVICE_URL", "http://localhost:8070"),
+			"/api/v1/me":              envOrDefault("USERS_SERVICE_URL", "http://localhost:8081"),
 			"/api/v1/consent":         envOrDefault("AUTH_SERVICE_URL", "http://localhost:9001"),
 			"/api/v1/mfa":             envOrDefault("AUTH_SERVICE_URL", "http://localhost:9001"),
 			"/api/v1/tokens":          envOrDefault("AUTH_SERVICE_URL", "http://localhost:9001"),
