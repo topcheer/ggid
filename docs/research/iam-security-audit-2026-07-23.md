@@ -455,3 +455,6 @@ S1 scope filter 在 binary 中未检出（fresh boot 后可能重部署了旧版
 
 全部历史项不变。C1 ✅ FIXED (DB-backed), C2/C4 ❌ OPEN (P2 sync.Map), PKCE ✅, LDAP TLS ✅, HMAC versioning ✅, TOTP encrypt ✅, TLS 1.2+ ✅ (7处), 硬编码 0, InsecureSkipVerify 0, 错误吞噬 28, 匿名 401, HSTS ✅.
 近期 commit: ERP stability cycles only — 无安全回归。无新 P0/P1，静默记录。
+
+### 巡航 #18+#19 | 维度 5+6: 输入验证+审计可观测（第三循环） | 2026-07-24
+全部历史项不变。E1 32, E2 19, 错误吞噬 28, 硬编码 0, InsecureSkipVerify 0, XSS username 验证仍缺失(P2), body size 6. 近期 commit: login a11y + ERP cycles — 无安全回归. 无新 P0/P1，静默记录。
