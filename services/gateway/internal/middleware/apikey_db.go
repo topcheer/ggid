@@ -185,3 +185,79 @@ func extractAPIKeyFromRequest(r *http.Request) string {
 	}
 	return key
 }
+
+// APIKeyCacheInvalidator intercepts successful DELETE requests to
+// /api/v1/auth/api-keys/{id} and /api/v1/api-keys/{id} and invalidates
+// the corresponding cache entry in the DBAPIKeyValidator. This ensures
+// that revoked keys are immediately rejected on the next request,
+// without waiting for the cache TTL to expire.
+//
+// Must be placed in the middleware chain AFTER the reverse proxy so it
+// can inspect the response status code.
+func APIKeyCacheInvalidator(validator *DBAPIKeyValidator) func(http.Handler) http.Handler {
+	if validator == nil {
+		return func(next http.Handler) http.Handler { return next }
+	}
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			// Fast path: only intercept DELETE on api-keys paths.
+			if r.Method != http.MethodDelete {
+				next.ServeHTTP(w, r)
+				return
+			}
+			keyID := extractKeyIDFromPath(r.URL.Path)
+			if keyID == "" {
+				next.ServeHTTP(w, r)
+				return
+			}
+
+			// Wrap ResponseWriter to capture status code.
+			rw := &statusCaptureWriter{ResponseWriter: w, status: 0}
+			next.ServeHTTP(rw, r)
+
+			// If the delete succeeded, invalidate the cache entry.
+			if rw.status >= 200 && rw.status < 300 {
+				validator.Invalidate(keyID)
+			}
+		})
+	}
+}
+
+// extractKeyIDFromPath parses the API key UUID from paths like:
+//   /api/v1/auth/api-keys/{uuid}
+//   /api/v1/api-keys/{uuid}
+//   /api/v1/access-keys/{uuid}
+// Returns empty string if the path doesn't match or the ID is not a valid UUID.
+func extractKeyIDFromPath(path string) string {
+	parts := strings.Split(path, "/")
+	if len(parts) < 2 {
+		return ""
+	}
+	last := parts[len(parts)-1]
+	if _, err := uuid.Parse(last); err != nil {
+		return ""
+	}
+	// Verify this is an api-keys path
+	parent := parts[len(parts)-2]
+	if parent != "api-keys" && parent != "access-keys" {
+		return ""
+	}
+	return last
+}
+
+// statusCaptureWriter wraps http.ResponseWriter to capture the status code.
+type statusCaptureWriter struct {
+	http.ResponseWriter
+	status int
+}
+
+func (w *statusCaptureWriter) WriteHeader(code int) {
+	w.status = code
+	w.ResponseWriter.WriteHeader(code)
+}
+
+func (w *statusCaptureWriter) Flush() {
+	if f, ok := w.ResponseWriter.(http.Flusher); ok {
+		f.Flush()
+	}
+}

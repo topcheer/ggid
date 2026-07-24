@@ -563,6 +563,12 @@ func (gw *Gateway) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 	// Wrap with circuit breaker: fail-fast 503 if backend is down
 	h := middleware.CircuitMiddleware(prefix, gw.circuitRegistry, backend)
+	// If this is an API key deletion, intercept the response to invalidate
+	// the gateway's API key cache so revoked keys are rejected immediately.
+	if gw.apiKeyValidator != nil && r.Method == http.MethodDelete &&
+		(strings.Contains(r.URL.Path, "/api-keys/") || strings.Contains(r.URL.Path, "/access-keys/")) {
+		h = middleware.APIKeyCacheInvalidator(gw.apiKeyValidator)(h)
+	}
 	h.ServeHTTP(w, r)
 }
 
