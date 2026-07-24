@@ -36,6 +36,11 @@ func New(baseURL, token, tenantID string) *Client {
 	}
 }
 
+// GatewayURL returns the base gateway URL.
+func (c *Client) GatewayURL() string {
+	return c.baseURL
+}
+
 // Get performs a GET request and unmarshals JSON response.
 func (c *Client) Get(ctx context.Context, path string, result any) error {
 	return c.do(ctx, http.MethodGet, path, nil, result)

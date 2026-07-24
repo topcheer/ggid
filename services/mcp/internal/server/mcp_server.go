@@ -140,6 +140,7 @@ func (s *Server) jwtAuth(next http.HandlerFunc) http.HandlerFunc {
 
 		// Inject identity info into request context.
 		ctx := r.Context()
+		ctx = context.WithValue(ctx, ctxKeyToken{}, tokenStr)
 		ctx = context.WithValue(ctx, ctxKeyUserID{}, claims["sub"])
 		ctx = context.WithValue(ctx, ctxKeyTenantID{}, claims["tenant_id"])
 		ctx = context.WithValue(ctx, ctxKeyScopes{}, claims["scope"])
@@ -198,6 +199,7 @@ type ctxKeyPerms struct{}
 type ctxKeyAgentID struct{}
 type ctxKeyAgentType struct{}
 type ctxKeyActorSub struct{}
+type ctxKeyToken struct{}
 
 // getUserFromContext extracts authenticated user info from request context.
 func getUserFromContext(ctx context.Context) (userID, tenantID string) {
@@ -355,7 +357,13 @@ func (s *Server) handleToolCall(w http.ResponseWriter, r *http.Request, req *jso
 		return
 	}
 
-	result, err := tool.Handler(r.Context(), s.cli, params.Args)
+	// Use per-request client with caller's JWT if available (falls back to shared static token).
+	reqClient := s.cli
+	if token, ok := r.Context().Value(ctxKeyToken{}).(string); ok && token != "" {
+		_, tid := getUserFromContext(r.Context())
+		reqClient = client.New(s.cli.GatewayURL(), token, tid)
+	}
+	result, err := tool.Handler(r.Context(), reqClient, params.Args)
 
 	// Audit: log every tool call with user identity.
 	s.auditToolCall(r.Context(), params.Name, params.Args, result, err)
