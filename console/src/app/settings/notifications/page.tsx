@@ -20,7 +20,7 @@ export default function NotificationPreferencesPage() {
   const load = useCallback(async () => {
     setLoading(true); setError("");
     try {
-      const res = await fetch(`${API_BASE}/api/v1/notification/preferences`, { headers: { ...authHeader() } });
+      const res = await fetch(`${API_BASE}/api/v1/auth/notification-preferences`, { headers: { ...authHeader() } });
       if (res.ok) { const d = await res.json(); setPrefs({ ...prefs, ...d }); }
     } catch { /* use defaults */ }
     setLoading(false);
@@ -31,7 +31,7 @@ export default function NotificationPreferencesPage() {
   const handleSave = async () => {
     setSaving(true); setError(""); setSuccess(false);
     try {
-      const res = await fetch(`${API_BASE}/api/v1/notification/preferences`, { method: "PUT", headers: { "Content-Type": "application/json", ...authHeader() }, body: JSON.stringify(prefs) });
+      const res = await fetch(`${API_BASE}/api/v1/auth/notification-preferences`, { method: "PUT", headers: { "Content-Type": "application/json", ...authHeader() }, body: JSON.stringify(prefs) });
       if (res.ok) { setSuccess(true); setTimeout(() => setSuccess(false), 3000); } else { setError("Failed to save preferences"); }
     } catch { setError("Network error"); }
     setSaving(false);
