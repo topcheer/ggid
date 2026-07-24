@@ -45,7 +45,7 @@ func NewDBAPIKeyValidator(ctx context.Context, dbURL string) *DBAPIKeyValidator 
 	}
 	return &DBAPIKeyValidator{
 		pool: pool,
-		ttl:  30 * time.Second,
+		ttl:  5 * time.Second,
 	}
 }
 
@@ -123,6 +123,21 @@ func (v *DBAPIKeyValidator) Validate(ctx context.Context, key string) (string, s
 	}()
 
 	return tenantID, "", scopes, nil
+}
+
+// Invalidate removes a cached API key entry. Call this when a key is revoked
+// or its scopes change to ensure the next Validate() hits the DB.
+func (v *DBAPIKeyValidator) Invalidate(keyID string) {
+	v.cache.Delete(keyID)
+}
+
+// InvalidateAll clears all cached API key entries. Call this when the gateway
+// needs to force-refresh all keys (e.g., after a security incident).
+func (v *DBAPIKeyValidator) InvalidateAll() {
+	v.cache.Range(func(key, _ any) bool {
+		v.cache.Delete(key)
+		return true
+	})
 }
 
 // parseAPIKeyID extracts the UUID from a key of format: ggid_sk_<uuid>_<rest>
