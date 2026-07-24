@@ -21,6 +21,15 @@ func (h *HTTPHandler) handleBranding(w http.ResponseWriter, r *http.Request) {
 		h.handleIdPConfig(w, r)
 		return
 	}
+	if len(parts) >= 5 && parts[4] == "scim-config" {
+		h.handleSCIMConfig(w, r)
+		return
+	}
+	if len(parts) >= 5 && parts[4] == "saml-config" {
+		// SAML config is stored as system config, redirect to system handler
+		h.handleSystemConfig(w, r)
+		return
+	}
 	if len(parts) < 5 || parts[0] != "api" || parts[1] != "v1" || parts[2] != "tenants" || parts[4] != "branding" {
 		writeJSONError(w, http.StatusBadRequest, "invalid branding path")
 		return
