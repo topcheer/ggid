@@ -2566,3 +2566,7 @@ UPSTREAM: 57a5a7592 (identity: DB password policy) — COMPAT OK
 Go→Go=200 Node→Go=403 Fake=401 JWT=YES NodeTID=b1a2329f ✅ — 224th clean cycle.
 
 ### Next Dimension: 5 — Cycle 235
+## Cycle 235: D5 SDK Consistency (Round 409)
+Go=6 Node=13 Py=4 Java=7 CS=5 Rb=4 Rs=1 ✅ — 225th clean cycle.
+
+### Next Dimension: 6 — Cycle 236
