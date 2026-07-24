@@ -476,3 +476,6 @@ secrets 0, swallow 28, anon 401, tamper clean (691 verified). 近期: social con
 
 ### 巡航 #28 | 第五循环 | 2026-07-25
 secrets 0, swallow 28, anon 401, tamper clean (756). 近期: API key scope-based ACL (P0 fix, 正面安全改进) + a11y fixes. 无新 P0/P1，静默记录。
+
+### 巡航 #29-30 | 第五循环 | 2026-07-25
+secrets 0, swallow 28, anon 401, tamper clean (834 verified). ERP stability cycles only. 无新 P0/P1，静默记录。
