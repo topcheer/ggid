@@ -2667,3 +2667,7 @@ JWT=[ERP Admin:9perms] Inv=200 OrdApprove=405 PlatUsers=403(exp403) PlatRoles=40
 Inv=79(id+name+price+sku+stock) Ord=81 Post=201(has_id) Perms(API= vs JWT=9) Hacks:0 ✅ — 247th clean cycle.
 
 ### Next Dimension: 4 — Cycle 258
+## Cycle 258: D4 Multi-Tenant Isolation DEEP (Round 432)
+GoJWT=MATCH GoSelf=200 Cross(NodeTok→Go)=403 Cross(GoTok→Node)=200 NoTok=401 Hacks:0 ✅ — 248th clean cycle.
+
+### Next Dimension: 5 — Cycle 259
