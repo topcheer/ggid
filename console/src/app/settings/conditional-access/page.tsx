@@ -167,8 +167,8 @@ function PoliciesList({ policies, loading, onEdit, onAdd, onToggle, onMove, onDe
                 <div className="flex-1 min-w-0">
                   <div className="text-sm font-medium text-gray-900 dark:text-white dark:text-white">{p.name}</div>
                   <div className="flex flex-wrap gap-1 mt-1">
-                    {p.conditions.map((c: any, ci: number) => (
-                      <span key={c.id} className="text-xs text-gray-500 dark:text-gray-400">
+                    {Array.isArray(p.conditions) && p.conditions.map((c: any, ci: number) => (
+                      <span key={c.id || ci} className="text-xs text-gray-500 dark:text-gray-400">
                         {ci > 0 && <span className="mx-1 font-medium text-blue-500">{p.logic}</span>}
                         {c.operand} {c.operator} {c.value}
                       </span>
@@ -176,7 +176,7 @@ function PoliciesList({ policies, loading, onEdit, onAdd, onToggle, onMove, onDe
                   </div>
                 </div>
                 {/* Action */}
-                <span className={`px-2.5 py-0.5 text-xs rounded-full ${actionCfg?.color || ""}`}>{p.action.replace(/_/g, " ")}</span>
+                <span className={`px-2.5 py-0.5 text-xs rounded-full ${actionCfg?.color || ""}`}>{(p.action || "").replace(/_/g, " ")}</span>
                 {/* Enabled toggle */}
                 <button onClick={() => onToggle(p.id)}
                   className={`relative w-10 h-6 rounded-full transition-colors ${p.enabled ? "bg-blue-600" : "bg-gray-300 dark:bg-gray-600"}`}>

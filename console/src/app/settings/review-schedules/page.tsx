@@ -116,7 +116,7 @@ function SchedulesTab({ schedules, setSchedules }: { schedules: Schedule[]; setS
             </div>
             <div className="flex items-center gap-3">
               <span className={`px-2 py-0.5 text-xs rounded-full ${freqColors[s.frequency] || freqColors.monthly}`}>
-                {t(`reviewSchedules.schedules.frequency${s.frequency.replace(/^./, (m: any) => m.toUpperCase())}`)}
+                {t(`reviewSchedules.schedules.frequency${(s.frequency || "monthly").replace(/^./, (m: any) => m.toUpperCase())}`)}
               </span>
               <button onClick={() => toggle(s.id)} className={`relative w-10 h-6 rounded-full transition-colors ${s.enabled ? "bg-blue-600" : "bg-gray-300 dark:bg-gray-600"}`}>
                 <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full transition-transform ${s.enabled ? "translate-x-4" : ""}`} />
