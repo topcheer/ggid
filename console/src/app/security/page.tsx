@@ -115,11 +115,11 @@ export default function SecurityCenterPage() {
     );
   }
 
-  const overview = data!.overview;
-  const heatmap = data!.heatmap;
-  const anomalies = data!.anomalies.filter((a: any) => !dismissedAnomalies.has(a.id));
-  const allowlist = data!.ip_allowlist;
-  const denylist = data!.ip_denylist;
+  const overview = data?.overview;
+  const heatmap = data?.heatmap;
+  const anomalies = Array.isArray(data?.anomalies) ? data!.anomalies.filter((a: any) => !dismissedAnomalies.has(a.id)) : [];
+  const allowlist = data?.ip_allowlist || [];
+  const denylist = data?.ip_denylist || [];
   const recommendations = data!.recommendations;
 
   const cardCls =

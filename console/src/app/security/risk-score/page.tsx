@@ -92,7 +92,7 @@ export default function RiskScorePage() {
   };
 
   const cardCls = "rounded-xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-700 dark:bg-gray-800";
-  const highRiskUsers = users.filter((u: any) => u.level === "high" || u.level === "critical");
+  const highRiskUsers = (Array.isArray(users) ? users : []).filter((u: any) => u.level === "high" || u.level === "critical");
 
   return (
     <div className="space-y-6">

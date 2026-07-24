@@ -5,7 +5,7 @@ import {
   ShieldCheck, Loader2, AlertCircle, X, TrendingUp, KeyRound, Users,
   Lightbulb, ArrowRight, Smartphone, Lock, AlertTriangle, Activity,
 } from "lucide-react";
-import { useTranslations } from "@/lib/i18n";
+import { useI18n } from "@/lib/i18n";
 import { authHeader } from "@/lib/auth-helpers";
 
 interface Recommendation {
@@ -170,7 +170,7 @@ function PostureRadar({ dimensions }: { dimensions: { identity: number; device: 
 
 /** Trend sparkline chart (SVG, no dependency) */
 function PostureTrendChart({ history }: { history: PostureHistoryEntry[] }) {
-  const { t } = useI18n();
+  const t = useTranslations();
   if (history.length < 2) {
     return <p className="py-8 text-center text-sm text-gray-400">{t("posture.insufficientData")}</p>;
   }
