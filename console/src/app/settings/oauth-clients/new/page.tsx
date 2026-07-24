@@ -74,7 +74,7 @@ export default function OAuthClientNewPage() {
       const scopes = [...selectedScopes];
       if (customScopes.trim()) scopes.push(...customScopes.trim().split(/\s+/));
       const body: Record<string, unknown> = {
-        name: clientName,
+        client_name: clientName,
         redirect_uris: redirectUris.split("\n").map((u: any) => u.trim()).filter(Boolean),
         grant_types: appType === "m2m" ? ["client_credentials"] : ["authorization_code"],
         response_types: appType === "m2m" ? ["token"] : ["code"],
