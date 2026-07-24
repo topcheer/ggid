@@ -131,6 +131,7 @@ func (s *HTTPServer) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("/api/v1/policies/access-reviews/campaigns", s.handleReviewCampaigns)
 	mux.HandleFunc("/api/v1/policies/roles/", s.handleRoleHierarchy)
 	mux.HandleFunc("/api/v1/policies/conditional-access", s.handleConditionalAccess)
+	mux.HandleFunc("/api/v1/policies/conditional-access/evaluate", s.handleConditionalAccessEvaluate)
 	mux.HandleFunc("/api/v1/policies/sod/rules", s.handleSoDRules)
 	mux.HandleFunc("/api/v1/policies/risk-score", s.handleRiskScore)
 	mux.HandleFunc("/api/v1/policies/abac/export", s.handleABACExportImport)
