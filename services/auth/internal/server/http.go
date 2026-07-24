@@ -480,6 +480,7 @@ func (h *Handler) registerRoutes() {
 	h.mux.HandleFunc("/api/v1/dlp/scan", h.handleDLPScan)
 	h.mux.HandleFunc("/api/v1/auth/stats/social-providers", h.handleSocialProvidersStats)
 	// Social login OAuth flow — public (pre-auth) endpoints.
+	h.mux.HandleFunc("/api/v1/auth/social/connectors", h.listSocialConnectors) // must be before /social/
 	h.mux.HandleFunc("/api/v1/auth/social/", h.handleSocialLogin)
 	h.mux.HandleFunc("/api/v1/auth/anomaly/detect", h.handleAnomalyDetect)
 	h.mux.HandleFunc("/api/v1/auth/brute-force/config", h.handleBruteForceConfig)
