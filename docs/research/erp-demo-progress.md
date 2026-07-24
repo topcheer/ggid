@@ -2226,3 +2226,8 @@ Go=6 Node=13 Py=4 Java=7 CS=5 Rb=4 Rs=1 ✅ — 141st clean cycle.
 Login=994ch Inv=200 Ord=200 Post=201 ✅ — 142nd clean cycle.
 
 ### Next Dimension: 1 — Cycle 153
+## Cycle 153: D1 Password Grant + Consent Cascade Compat (Round 327)
+Consent cascade fix (e7775af00) verified compatible. Token=994ch Inv=200 Ord=200.
+WithdrawCascade now wired to DELETE handler — no regression. ✅ — 143rd clean cycle.
+
+### Next Dimension: 2 — Cycle 154
