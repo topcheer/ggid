@@ -2231,3 +2231,7 @@ Consent cascade fix (e7775af00) verified compatible. Token=994ch Inv=200 Ord=200
 WithdrawCascade now wired to DELETE handler — no regression. ✅ — 143rd clean cycle.
 
 ### Next Dimension: 2 — Cycle 154
+## Cycle 154: D2 RBAC (Round 328)
+Admin POST=201 GET=200 | Node M2M POST=403 ✅ — 144th clean cycle.
+
+### Next Dimension: 3 — Cycle 155
