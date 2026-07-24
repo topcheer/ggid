@@ -1,6 +1,7 @@
 package httpserver
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -157,6 +158,80 @@ func (s *HTTPServer) handleConditionalAccess(w http.ResponseWriter, r *http.Requ
 	default:
 		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 	}
+}
+
+// POST /api/v1/policies/conditional-access/evaluate
+// Evaluates all enabled CAE policies against the given context.
+// Request: { "tenant_id": "...", "context": { "username": "...", "ip": "...", ... } }
+// Response: { "action": "allow|block|deny|require_mfa", "matched_policy": "..." }
+func (s *HTTPServer) handleConditionalAccessEvaluate(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
+		return
+	}
+	var req struct {
+		TenantID string         `json:"tenant_id"`
+		Context  map[string]any `json:"context"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		writeJSONError(w, http.StatusBadRequest, "invalid JSON body")
+		return
+	}
+	action, matched := s.EvaluateConditionalAccess(req.TenantID, req.Context)
+	resp := map[string]any{"action": action}
+	if matched != nil {
+		resp["matched_policy"] = matched.Name
+		resp["policy_id"] = matched.ID
+	}
+	writeJSON(w, http.StatusOK, resp)
+}
+
+// EvaluateConditionalAccess (method on HTTPServer) checks all enabled policies
+// against the given context. Returns the first matching policy's action or "allow".
+func (s *HTTPServer) EvaluateConditionalAccess(tenantID string, ctxMap map[string]any) (action string, matchedPolicy *ConditionalAccessPolicy) {
+	if s.policyMap == nil {
+		return "allow", nil
+	}
+	rows, _ := s.policyMap.List(context.Background(), "conditional_access_store")
+	for _, row := range rows {
+		enabled := pmGetBool(row, "enabled")
+		if !enabled {
+			continue
+		}
+		pTenantID := pmGetString(row, "tenant_id")
+		if tenantID != "" && pTenantID != "" && pTenantID != tenantID {
+			continue
+		}
+		actStr := ""
+		if acts := pmGetMap(row, "actions"); acts != nil {
+			if a, ok := acts["action"].(string); ok {
+				actStr = a
+			}
+		}
+		conds := pmGetMap(row, "conditions")
+		if len(conds) == 0 {
+			return actStr, &ConditionalAccessPolicy{
+				ID: pmGetString(row, "id"), TenantID: pTenantID,
+				Name: pmGetString(row, "name"), Action: actStr,
+			}
+		}
+		matched := true
+		for k, v := range conds {
+			if ctxVal, ok := ctxMap[k]; ok {
+				if fmt.Sprintf("%v", v) != fmt.Sprintf("%v", ctxVal) {
+					matched = false
+					break
+				}
+			}
+		}
+		if matched {
+			return actStr, &ConditionalAccessPolicy{
+				ID: pmGetString(row, "id"), TenantID: pTenantID,
+				Name: pmGetString(row, "name"), Action: actStr,
+			}
+		}
+	}
+	return "allow", nil
 }
 
 // EvaluateConditionalAccess checks all enabled policies against the given context.

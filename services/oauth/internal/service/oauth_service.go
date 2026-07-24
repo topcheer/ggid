@@ -783,6 +783,70 @@ func (s *OAuthService) fetchUserRoleKeys(ctx context.Context, tenantID, userID u
 	return keys
 }
 
+// evaluateConditionalAccess loads enabled conditional access policies from the DB
+// and evaluates them against the login context. Returns the action ("allow",
+// "block", "deny", "require_mfa") and the matching policy name.
+func (s *OAuthService) evaluateConditionalAccess(ctx context.Context, tenantID, userID uuid.UUID, username string) (action string, policyName string) {
+	if s.pool == nil {
+		return "allow", ""
+	}
+	rows, err := s.pool.Query(ctx, `
+		SELECT data FROM conditional_access_store
+		WHERE (data->>'enabled')::bool = true
+		ORDER BY (data->>'priority')::int ASC NULLS LAST`)
+	if err != nil {
+		return "allow", ""
+	}
+	defer rows.Close()
+	for rows.Next() {
+		var data []byte
+		if err := rows.Scan(&data); err != nil {
+			continue
+		}
+		var p struct {
+			Name       string         `json:"name"`
+			Conditions map[string]any `json:"conditions"`
+			Actions    map[string]any `json:"actions"`
+			Action     string         `json:"action"`
+			Enabled    bool           `json:"enabled"`
+		}
+		if json.Unmarshal(data, &p) != nil {
+			continue
+		}
+		if !p.Enabled {
+			continue
+		}
+		act := p.Action
+		if act == "" {
+			if a, ok := p.Actions["action"].(string); ok {
+				act = a
+			}
+		}
+		matched := true
+		if len(p.Conditions) > 0 {
+			for k, v := range p.Conditions {
+				switch k {
+				case "username":
+					if sv, ok := v.(string); ok && sv != "" && username != sv {
+						matched = false
+					}
+				case "user_id":
+					if sv, ok := v.(string); ok && sv != "" && userID.String() != sv {
+						matched = false
+					}
+				}
+			}
+		}
+		if matched {
+			if act == "block" || act == "deny" {
+				return act, p.Name
+			}
+			return "allow", ""
+		}
+	}
+	return "allow", ""
+}
+
 // issueAccessTokenWithAMR issues a JWT with optional AMR/ACR claims.
 // The `scope` claim contains ONLY OAuth scopes (openid, profile, email).
 // Fine-grained permissions are in the `permissions` claim (string array).
@@ -1681,6 +1745,11 @@ func (s *OAuthService) PasswordGrant(ctx context.Context, req *PasswordGrantRequ
 		userID = dbUserID
 	} else {
 		return nil, errors.New(errors.ErrInternal, "database not configured")
+	}
+
+	// 1b. Evaluate conditional access policies (block/deny).
+	if action, policyName := s.evaluateConditionalAccess(ctx, tenantID, userID, req.Username); action == "block" || action == "deny" {
+		return nil, errors.Unauthenticated(fmt.Sprintf("access denied by policy: %s", policyName))
 	}
 
 	// 2. Fetch user permissions and roles.
