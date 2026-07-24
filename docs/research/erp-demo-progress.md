@@ -2635,3 +2635,11 @@ PW_fields=access_token+token_type+expires_in PW_API=200 CC_fields=access_token+t
 Users=403 Roles=403 JWT_perms=9 FakeToken=401 Hacks:0 ✅ — 240th clean cycle.
 
 ### Next Dimension: 3 — Cycle 251
+## Cycle 251: D3 Demo Functional DEEP (Round 425)
+Inv=79(id+name+price+sku+stock) Ord=79 Post=201(has_id) jwt_perms=9 Hacks:0 ✅ — 241st clean cycle.
+
+### Investigation Notes
+- Ruby SDK Rb=0: FALSE POSITIVE — login() is in client.rb:51, not auth.rb. Check script grepped wrong file.
+- C250 Users=403: CORRECT — admin_go is ERP Admin (scope=erp_admin), 403 on platform admin endpoints is expected.
+
+### Next Dimension: 4 — Cycle 252
