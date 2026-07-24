@@ -32,6 +32,7 @@ import (
 	"github.com/ggid/ggid/pkg/saml"
 	"github.com/ggid/ggid/pkg/tenant"
 	"github.com/ggid/ggid/services/oauth/internal/conf"
+	"github.com/ggid/ggid/services/oauth/internal/consent"
 	"github.com/ggid/ggid/services/oauth/internal/domain"
 	"github.com/ggid/ggid/services/oauth/internal/repository"
 	"github.com/ggid/ggid/services/oauth/internal/service"
@@ -1718,7 +1719,46 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 			writeJSON(w, http.StatusMethodNotAllowed, map[string]string{"error": "method not allowed"})
 			return
 		}
-		writeJSON(w, http.StatusOK, map[string]string{"status": "revoked"})
+		// Parse consent ID from path: /api/v1/oauth/consent/{id}
+		parts := strings.Split(strings.TrimSuffix(r.URL.Path, "/"), "/")
+		if len(parts) < 1 {
+			writeJSON(w, http.StatusBadRequest, map[string]string{"error": "consent id required"})
+			return
+		}
+		consentID := parts[len(parts)-1]
+
+		// Delete the consent record from the store.
+		if mapRepoVar != nil {
+			if err := mapRepoVar.Delete(r.Context(), "oauth_consents", consentID); err != nil {
+				slog.Warn("consent delete failed", "error", err, "consent_id", consentID)
+			}
+		}
+
+		// Run consent cascade: revoke tokens/sessions for the affected scope.
+		// Extract user_id, tenant_id, scope from request query params or body.
+		userID := r.URL.Query().Get("user_id")
+		tenantID := r.URL.Query().Get("tenant_id")
+		scope := r.URL.Query().Get("scope")
+
+		var cascadeResult map[string]any
+		if pool != nil && userID != "" && scope != "" {
+			engine := consent.NewEngine(pool)
+			result, err := engine.WithdrawCascade(r.Context(), userID, tenantID, scope)
+			if err != nil {
+				slog.Warn("consent cascade failed", "error", err, "user_id", userID, "scope", scope)
+				cascadeResult = map[string]any{"status": "revoked", "cascade": "failed"}
+			} else {
+				cascadeResult = map[string]any{
+					"status":            "revoked",
+					"cascade":           "completed",
+					"affected_tokens":   result.AffectedTokens,
+					"affected_sessions": result.AffectedSessions,
+				}
+			}
+		} else {
+			cascadeResult = map[string]any{"status": "revoked"}
+		}
+		writeJSON(w, http.StatusOK, cascadeResult)
 	})
 
 	// Introspection cache config
