@@ -664,7 +664,7 @@ export default function UserDetailPage() {
                     ) : (
                       userRoles.map((role: any) => (
                         <span key={role.id} className="rounded-full bg-brand-50 px-2.5 py-0.5 text-xs font-medium text-brand-700">
-                          {role.name || role.key}
+                          {role.role_name || role.name || role.key || role.role_id}
                         </span>
                       ))
                     )}

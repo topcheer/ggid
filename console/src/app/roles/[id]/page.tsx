@@ -117,7 +117,7 @@ export default function RoleDetailPage() {
     try {
       await apiFetch(`/api/v1/roles/${roleId}/permissions`, {
         method: "POST",
-        body: JSON.stringify({ permission_id: permId }),
+        body: JSON.stringify({ permission_ids: [permId] }),
       });
       const perm = allPermissions.find((p: any) => p.id === permId);
       if (perm) setPermissions([...permissions, perm]);
