@@ -176,9 +176,10 @@ export default function UsersPage() {
           return;
         }
       }
-      setFormSuccess(`User "${username}" created successfully${role ? ` and assigned ${role} role` : ""}.`);
+      setFormSuccess(`User "${username}" created successfully${role ? ` and assigned role` : ""}.`);
       setShowCreate(false);
-      setTimeout(() => { setFormSuccess(""); refresh(); }, 200);
+      refresh();
+      setTimeout(() => { setFormSuccess(""); }, 4000);
     } catch (err) {
       setFormError(err instanceof Error ? err.message : "Failed to create user");
     } finally {
