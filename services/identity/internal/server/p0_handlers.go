@@ -39,11 +39,6 @@ func (h *HTTPHandler) handleTenantSuspendActivate(w http.ResponseWriter, r *http
 
 	tag, err := pool.Exec(r.Context(), `
 		UPDATE tenants SET status = $1, updated_at = NOW()
-		WHERE id::text = $1_status AND $2 = 'placeholder'`, newStatus, tenantID)
-	_ = tag
-	// Use simpler query to avoid SQL injection
-	tag, err = pool.Exec(r.Context(), `
-		UPDATE tenants SET status = $1, updated_at = NOW()
 		WHERE id::text = $2 OR slug = $2`, newStatus, tenantID)
 	if err != nil {
 		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "failed to update tenant status"})

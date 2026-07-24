@@ -250,9 +250,9 @@ func (e *Engine) revokeTokensForScope(ctx context.Context, userID, scope string)
 		slog.Info("consent cascade: revoke tokens for scope (dev mode)", "user", userID, "scope", scope)
 		return []string{"tok_mock_1", "tok_mock_2"}
 	}
-	// Query and revoke tokens containing the scope.
+	// Revoke refresh tokens containing the scope.
 	rows, err := e.pool.Query(ctx,
-		`UPDATE oauth_tokens SET revoked = TRUE, revoked_at = now() WHERE user_id = $1 AND scopes @> $2::text[] RETURNING id`,
+		`UPDATE refresh_tokens SET revoked = TRUE, revoked_at = now() WHERE user_id = $1 AND scope @> $2::text[] RETURNING id::text`,
 		userID, []string{scope})
 	if err != nil {
 		return nil
@@ -272,8 +272,8 @@ func (e *Engine) invalidateSessions(ctx context.Context, userID, scope string) [
 		return []string{"sess_mock_1"}
 	}
 	rows, err := e.pool.Query(ctx,
-		`UPDATE auth_sessions SET active = FALSE WHERE user_id = $1 AND scopes @> $2::text[] RETURNING id`,
-		userID, []string{scope})
+		`UPDATE sessions SET revoked_at = now() WHERE user_id = $1 AND metadata->'scopes' @> $2::jsonb RETURNING id::text`,
+		userID, []byte(`["`+scope+`"]`))
 	if err != nil {
 		return nil
 	}
@@ -296,7 +296,7 @@ func (e *Engine) revokeAllTokens(ctx context.Context, userID string) []string {
 	if e.pool == nil {
 		return []string{"all_tokens_revoked"}
 	}
-	ct, err := e.pool.Exec(ctx, `UPDATE oauth_tokens SET revoked = TRUE WHERE user_id = $1`, userID)
+	ct, err := e.pool.Exec(ctx, `UPDATE refresh_tokens SET revoked = TRUE WHERE user_id = $1`, userID)
 	if err != nil {
 		return nil
 	}
@@ -308,7 +308,7 @@ func (e *Engine) revokeAllSessions(ctx context.Context, userID string) []string 
 	if e.pool == nil {
 		return []string{"all_sessions_revoked"}
 	}
-	ct, err := e.pool.Exec(ctx, `UPDATE auth_sessions SET active = FALSE WHERE user_id = $1`, userID)
+	ct, err := e.pool.Exec(ctx, `UPDATE sessions SET revoked_at = now() WHERE user_id = $1 AND revoked_at IS NULL`, userID)
 	if err != nil {
 		return nil
 	}
