@@ -68,13 +68,6 @@ const DEFAULT_LOCKOUT: LockoutPolicy = {
 
 export default function SecurityPolicyPage() {
   const t = useTranslations();
-  const confirmCtx = useConfirm();
-  const confirm: (opts: {
-    title: string;
-    description?: string;
-    variant?: "danger" | "warning" | "info";
-    onConfirm: () => void | Promise<void>;
-  }) => void = confirmCtx.confirm;
   const [activeTab, setActiveTab] = useState<TabId>("passwordPolicy");
 
   const tabs: { id: TabId; label: string; icon: typeof Shield }[] = [
@@ -439,6 +432,7 @@ function LockoutPolicyTab() {
 
 function MethodPoliciesTab() {
   const t = useTranslations();
+  const { confirm: showConfirm } = useConfirm();
   const [policies, setPolicies] = useState<MethodPolicy[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
@@ -465,10 +459,10 @@ function MethodPoliciesTab() {
   useEffect(() => { load(); }, [load]);
 
   const handleDelete = async (id: string) => {
-    confirm({
+    showConfirm({
       title: t("securityPolicy.methodPolicies.deletePolicy"),
       description: t("securityPolicy.methodPolicies.confirmDelete"),
-      variant: "danger",
+      variant: "danger" as const,
       onConfirm: async () => {
         await fetch(`${API_BASE}/api/v1/auth/method-policies/${id}`, {
           method: "DELETE",
