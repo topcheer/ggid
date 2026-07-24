@@ -2358,3 +2358,12 @@ Login=994ch Inv=200 Ord=200 Post=201 ✅ — 172nd clean cycle.
 Admin POST=201 GET=200 Scope=erp_admin | Node M2M POST=403 ✅ — 174th clean cycle.
 
 ### Next Dimension: 3 — Cycle 185
+## Cycle 185: D3 Functional DEEP (Round 359)
+Inv=79(2/2 required(id,name) keys=['category', 'created_at', 'id', 'name', 'price', 'sku']) Ord=47(keys=['amount', 'created_at', 'created_by', 'customer', 'group_id', 'id']) POST=201 Perms=9 Hacks:0 ✅ — 175th clean cycle.
+Console fixes deployed (d3d05319e,1a81d02cc) — COMPAT OK.
+
+### Next Dimension: 4 — Cycle 186
+## Cycle 186: D4 Tenant Isolation DEEP (Round 360)
+Go→Go=200 Node→Go=403 Fake=401 JWT=YES NodeTID=b1a2329f ✅ — 176th clean cycle.
+
+### Next Dimension: 5 — Cycle 187
