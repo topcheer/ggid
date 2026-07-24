@@ -103,7 +103,20 @@ export default function ReviewSchedulesPage() {
 function SchedulesTab({ schedules, setSchedules }: { schedules: Schedule[]; setSchedules: (s: Schedule[]) => void }) {
   const t = useTranslations();
 
-  const toggle = (id: string) => setSchedules(schedules.map((s: any) => s.id === id ? { ...s, enabled: !s.enabled } : s));
+  const toggle = async (id: string) => {
+    const s = schedules.find((x: any) => x.id === id);
+    if (!s) return;
+    try {
+      await fetch(`${API_BASE}/api/v1/identity/review-schedules/${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json", ...authHeader() },
+        body: JSON.stringify({ enabled: !s.enabled }),
+      });
+      load();
+    } catch {
+      setSchedules(schedules.map((s: any) => s.id === id ? { ...s, enabled: !s.enabled } : s));
+    }
+  };
 
   if (schedules.length === 0) {
     return <div className="bg-white dark:bg-gray-800 dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 dark:border-gray-800 p-12 text-center"><CalendarClock className="w-12 h-12 mx-auto mb-3 text-gray-300" /><p className="text-sm text-gray-500">{t("reviewSchedules.schedules.noSchedules")}</p></div>;
