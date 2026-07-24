@@ -681,14 +681,17 @@ func (h *HTTPHandler) createUser(ctx context.Context, w http.ResponseWriter, r *
 		policyTenantID = tc.TenantID
 	}
 	if pool := h.svc.Pool(); pool != nil && policyTenantID != (uuid.UUID{}) {
-		minLen := 8
+		// Try to load from DB; fall back to defaults matching auth service config
+		minLen := 12
 		requireUpper, requireLower, requireDigit, requireSpecial := true, true, true, false
 		row := pool.QueryRow(ctx, `
 			SELECT min_length, require_uppercase, require_lowercase, require_digit, require_special
 			FROM password_policies WHERE tenant_id = $1 LIMIT 1`, policyTenantID)
 		var dbMinLen int
-		if err := row.Scan(&dbMinLen, &requireUpper, &requireLower, &requireDigit, &requireSpecial); err == nil && dbMinLen > 0 {
+		var dbUp, dbLow, dbDig, dbSpec bool
+		if err := row.Scan(&dbMinLen, &dbUp, &dbLow, &dbDig, &dbSpec); err == nil && dbMinLen > 0 {
 			minLen = dbMinLen
+			requireUpper, requireLower, requireDigit, requireSpecial = dbUp, dbLow, dbDig, dbSpec
 		}
 		if len(req.Password) < minLen {
 			writeJSONError(w, http.StatusBadRequest, fmt.Sprintf("password must be at least %d characters", minLen))
