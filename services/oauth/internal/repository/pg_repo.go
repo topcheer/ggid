@@ -129,7 +129,7 @@ func (r *pgClientRepo) GetClientByID(ctx context.Context, tenantID uuid.UUID, cl
 		return nil, err
 	}
 
-	query := fmt.Sprintf(`SELECT %s FROM oauth_clients WHERE client_id = $1 AND enabled = true`, clientColumns)
+	query := fmt.Sprintf(`SELECT %s FROM oauth_clients WHERE client_id = $1`, clientColumns)
 	row := tx.QueryRow(ctx, query, clientID)
 	client, err := scanClient(row)
 	if err != nil {
