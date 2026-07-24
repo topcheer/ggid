@@ -224,13 +224,15 @@ function CreateTenant({ onCreated }: { onCreated: () => void }) {
         setMsg(t("tenants.create.created"));
         setTimeout(() => { setName(""); setSlug(""); setAdminEmail(""); setMsg(null); onCreated(); }, 1500);
         return;
+      } else {
+        const d = await res.json().catch(() => ({}));
+        setError(d.error?.message || d.error || d.detail || `Failed to create tenant (HTTP ${res.status})`);
       }
     } catch {
-      setMsg(null);
-      setSubmitting(false);
       setError("Network error — failed to create tenant");
-      return;
     }
+    setMsg(null);
+    setSubmitting(false);
   };
 
   // Auto-generate slug from name (lowercase, hyphenated)

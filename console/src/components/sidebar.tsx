@@ -20,6 +20,7 @@ import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { checkApiHealthDetailed, type HealthResult } from "@/lib/api-config";
 import { useUserRole, useUserPermissions, NAV_PERMISSION_MAP } from "@/lib/api";
 import { CommandPalette } from "@/components/CommandPalette";
+import { TenantSwitcher } from "@/components/TenantSwitcher";
 
 type LucideIcon = typeof Shield;
 
@@ -107,7 +108,7 @@ export function Sidebar() {
     },
     {
       label: "Platform", icon: Building, requiredScope: "admin", items: [
-        { href: "/admin", label: "Tenants", icon: Building2 },
+        { href: "/admin/tenants", label: "Tenants", icon: Building2 },
         { href: "/admin/audit/global", label: "Global Audit", icon: FileText },
         { href: "/admin/threats", label: "Threat Dashboard", icon: Shield },
         { href: "/settings/branding", label: "Branding", icon: Globe },
@@ -229,6 +230,7 @@ export function Sidebar() {
               {mode === "light" ? <Sun className="h-4 w-4" /> : mode === "dark" ? <Moon className="h-4 w-4" /> : <Monitor className="h-4 w-4" />}
             </button>
             <LanguageSwitcher compact />
+            {isPlatformAdmin && <TenantSwitcher />}
             <div className="flex-1" />
             {/* Help dropdown */}
             <HelpDropdown t={t} />
