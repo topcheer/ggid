@@ -1386,12 +1386,17 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 		case http.MethodPost:
 			// Register a new OAuth client.
 			var body struct {
-				Name          string   `json:"client_name"`
-				Type          string   `json:"type"`
-				GrantTypes    []string `json:"grant_types"`
-				ResponseTypes []string `json:"response_types"`
-				RedirectURIs  []string `json:"redirect_uris"`
-				Scopes        []string `json:"scopes"`
+				Name                    string   `json:"client_name"`
+				AltName                 string   `json:"name"` // fallback: many clients send "name" not "client_name"
+				Type                    string   `json:"type"`
+				GrantTypes              []string `json:"grant_types"`
+				ResponseTypes           []string `json:"response_types"`
+				RedirectURIs            []string `json:"redirect_uris"`
+				Scopes                  []string `json:"scopes"`
+				TokenEndpointAuthMethod string   `json:"token_endpoint_auth_method"`
+			}
+			if body.Name == "" {
+				body.Name = body.AltName
 			}
 			if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
 				writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid request body"})
@@ -1408,13 +1413,14 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 			}
 
 			result, err := oauthSvc.CreateClient(ctx, &service.CreateClientInput{
-				TenantID:      tenantID,
-				Name:          body.Name,
-				Type:          clientType,
-				GrantTypes:    body.GrantTypes,
-				ResponseTypes: body.ResponseTypes,
-				RedirectURIs:  body.RedirectURIs,
-				Scopes:        body.Scopes,
+				TenantID:                tenantID,
+				Name:                    body.Name,
+				Type:                    clientType,
+				GrantTypes:              body.GrantTypes,
+				ResponseTypes:           body.ResponseTypes,
+				RedirectURIs:            body.RedirectURIs,
+				Scopes:                  body.Scopes,
+				TokenEndpointAuthMethod: body.TokenEndpointAuthMethod,
 			})
 			if err != nil {
 				writeInternalError(w, "CreateClient", err)
