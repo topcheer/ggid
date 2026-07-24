@@ -64,6 +64,7 @@ export default function ForgotPasswordPage() {
             <div className="mb-6">
               <label className="mb-1 block text-sm font-medium dark:text-gray-300">{t("forgotPassword.emailLabel")}</label>
               <input
+                aria-label={t("forgotPassword.emailLabel")}
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
@@ -73,10 +74,10 @@ export default function ForgotPasswordPage() {
                 placeholder={t("forgotPassword.emailPlaceholder")}
               />
             </div>
-            <button type="submit" disabled={loading} className="w-full rounded-lg bg-brand-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-brand-700 disabled:opacity-50" aria-label="Action">
+            <button type="submit" disabled={loading} className="w-full rounded-lg bg-brand-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-brand-700 disabled:opacity-50 focus:ring-2 focus:ring-brand-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800" aria-label={t("forgotPassword.sendResetLink")}>
               {loading ? t("forgotPassword.sending") : t("forgotPassword.sendResetLink")}
             </button>
-            <a href="/login" className="mt-4 flex items-center justify-center gap-1 text-sm text-gray-500 hover:text-gray-700">
+            <a href="/login" className="mt-4 flex items-center justify-center gap-1 text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300">
               <ArrowLeft className="h-4 w-4" /> {t("forgotPassword.backToLogin")}
             </a>
           </form>

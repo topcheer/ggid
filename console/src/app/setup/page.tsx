@@ -11,6 +11,7 @@ export default function SetupPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [strength, setStrength] = useState<{score: number; warnings: string[]}>({score: 0, warnings: []});
+  const [showPassword, setShowPassword] = useState(false);
 
   const [form, setForm] = useState({
     adminUsername: "",
@@ -115,7 +116,7 @@ export default function SetupPage() {
         {/* Progress */}
         <div className="flex items-center justify-center gap-2 mb-8">
           {[1, 2, 3, 4].map((s) => (
-            <div key={s} className={`h-2 w-12 rounded-full transition-colors ${
+            <div key={s} role="progressbar" aria-valuenow={step} aria-valuemax={4} aria-label={`Step ${s} of 4`} className={`h-2 w-12 rounded-full transition-colors ${
               s <= step ? "bg-brand-600" : "bg-slate-200 dark:bg-slate-700"
             }`} />
           ))}
@@ -135,6 +136,7 @@ export default function SetupPage() {
               <div>
                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">Organization Name</label>
                 <input
+                  aria-label="Organization name"
                   type="text" value={form.orgName} onChange={(e) => update("orgName", e.target.value)}
                   placeholder="Acme Corporation"
                   className="w-full rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 px-4 py-2.5 text-sm text-slate-900 dark:text-white focus:ring-2 focus:ring-brand-500 focus:border-transparent"
@@ -151,6 +153,7 @@ export default function SetupPage() {
               <div>
                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">Username</label>
                 <input
+                  aria-label="Admin username"
                   type="text" value={form.adminUsername} onChange={(e) => update("adminUsername", e.target.value)}
                   placeholder="superadmin"
                   className="w-full rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 px-4 py-2.5 text-sm text-slate-900 dark:text-white focus:ring-2 focus:ring-brand-500 focus:border-transparent"
@@ -160,6 +163,7 @@ export default function SetupPage() {
               <div>
                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">Email</label>
                 <input
+                  aria-label="Admin email"
                   type="email" value={form.adminEmail} onChange={(e) => update("adminEmail", e.target.value)}
                   placeholder="admin@acme.com"
                   className="w-full rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 px-4 py-2.5 text-sm text-slate-900 dark:text-white focus:ring-2 focus:ring-brand-500 focus:border-transparent"
@@ -174,11 +178,17 @@ export default function SetupPage() {
               <p className="text-sm text-slate-500 dark:text-slate-400">Choose a strong password for the admin account.</p>
               <div>
                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">Password</label>
-                <input
-                  type="password" value={form.adminPassword} onChange={(e) => update("adminPassword", e.target.value)}
-                  className="w-full rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 px-4 py-2.5 text-sm text-slate-900 dark:text-white focus:ring-2 focus:ring-brand-500 focus:border-transparent"
-                  autoFocus
-                />
+                <div className="relative">
+                  <input
+                    aria-label="Admin password"
+                    type={showPassword ? "text" : "password"} value={form.adminPassword} onChange={(e) => update("adminPassword", e.target.value)}
+                    className="w-full rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 px-4 py-2.5 pr-10 text-sm text-slate-900 dark:text-white focus:ring-2 focus:ring-brand-500 focus:border-transparent"
+                    autoFocus
+                  />
+                  <button type="button" onClick={() => setShowPassword(!showPassword)} aria-label={showPassword ? "Hide password" : "Show password"} className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300">
+                    {showPassword ? <span className="text-xs">HIDE</span> : <span className="text-xs">SHOW</span>}
+                  </button>
+                </div>
               </div>
               {/* Password strength meter — real zxcvbn score from backend */}
               {form.adminPassword && (
@@ -209,7 +219,8 @@ export default function SetupPage() {
               <div>
                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">Confirm Password</label>
                 <input
-                  type="password" value={form.confirmPassword} onChange={(e) => update("confirmPassword", e.target.value)}
+                  aria-label="Confirm password"
+                  type={showPassword ? "text" : "password"} value={form.confirmPassword} onChange={(e) => update("confirmPassword", e.target.value)}
                   className={`w-full rounded-lg border px-4 py-2.5 text-sm focus:ring-2 focus:ring-brand-500 focus:border-transparent ${
                     form.confirmPassword && form.confirmPassword !== form.adminPassword
                       ? "border-red-400 dark:border-red-800 bg-red-50 dark:bg-red-900/20 text-slate-900 dark:text-white"

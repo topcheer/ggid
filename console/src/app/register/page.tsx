@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, UserPlus, Eye, EyeOff } from "lucide-react";
+import { UserPlus, Eye, EyeOff } from "lucide-react";
 import { API_BASE_URL, DEFAULT_TENANT_ID } from "@/lib/api-config";
 import { useTranslations } from "@/lib/i18n";
 import { authHeader, isAuthenticated } from "@/lib/auth-helpers";
@@ -60,11 +60,11 @@ export default function RegisterPage() {
 
           <div className="mb-4">
             <label className="mb-1 block text-sm font-medium dark:text-gray-300">{t("register.username")}</label>
-            <input aria-label="johndoe" value={username} onChange={(e) => setUsername(e.target.value)} required autoFocus className={inputCls} placeholder="johndoe" />
+            <input aria-label={t("register.username")} value={username} onChange={(e) => setUsername(e.target.value)} required autoFocus className={inputCls} placeholder="johndoe" />
           </div>
           <div className="mb-4">
             <label className="mb-1 block text-sm font-medium dark:text-gray-300">{t("register.email")}</label>
-            <input autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} type="email" required className={inputCls} placeholder="you@example.com" />
+            <input aria-label={t("register.email")} autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} type="email" required className={inputCls} placeholder="you@example.com" />
           </div>
           <div className="mb-6">
             <label className="mb-1 block text-sm font-medium dark:text-gray-300">{t("register.password")}</label>
@@ -85,7 +85,7 @@ export default function RegisterPage() {
             )}
           </div>
 
-          <button type="submit" disabled={loading} className="flex w-full items-center justify-center gap-2 rounded-lg bg-brand-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-brand-700 disabled:opacity-50" aria-label="UserPlus">
+          <button type="submit" disabled={loading} className="flex w-full items-center justify-center gap-2 rounded-lg bg-brand-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-brand-700 disabled:opacity-50 focus:ring-2 focus:ring-brand-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800">
             {loading ? t("register.creating") : <><UserPlus className="h-4 w-4" /> {t("register.createAccount")}</>}
           </button>
 
