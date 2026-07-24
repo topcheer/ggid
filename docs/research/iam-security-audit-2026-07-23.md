@@ -470,3 +470,6 @@ S1 scope filter 在 binary 中未检出（fresh boot 后可能重部署了旧版
 
 ### 巡航 #26 | 维度 6+7 | 第四循环 | 2026-07-24
 全部不变。secrets 0, swallow 28, sync.Map 13, anon 401, tamper clean (615 verified). 近期: bulk import + alias route — 无安全回归. 无新 P0/P1，静默记录。
+
+### 巡航 #27 | 第五循环 | 2026-07-25
+secrets 0, swallow 28, anon 401, tamper clean (691 verified). 近期: social connectors route + ERP cycles. 无新 P0/P1，静默记录。
