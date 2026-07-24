@@ -509,6 +509,7 @@ export default function AuditPage() {
         <>
           <div className="mb-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-6">
             <select
+              aria-label="Filter by action"
               value={actionFilter}
               onChange={(e) => setActionFilter(e.target.value)}
               className="rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200"
@@ -529,6 +530,7 @@ export default function AuditPage() {
             </select>
             <input
               type="text"
+              aria-label="Filter by actor"
               placeholder={t("audit.actorPlaceholder")}
               value={actorFilter}
               onChange={(e) => setActorFilter(e.target.value)}

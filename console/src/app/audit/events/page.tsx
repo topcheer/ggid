@@ -194,6 +194,7 @@ export default function AuditEventsPage() {
         </div>
         <div className="grid grid-cols-1 gap-3 md:grid-cols-3 lg:grid-cols-6">
           <select
+            aria-label="Filter by action"
             className={selectCls}
             value={actionFilter}
             onChange={(e) => { setActionFilter(e.target.value); setPage(1); }}
@@ -204,6 +205,7 @@ export default function AuditEventsPage() {
             ))}
           </select>
           <select
+            aria-label="Filter by resource type"
             className={selectCls}
             value={resourceFilter}
             onChange={(e) => { setResourceFilter(e.target.value); setPage(1); }}
@@ -214,6 +216,7 @@ export default function AuditEventsPage() {
             ))}
           </select>
           <input
+            aria-label="Filter by actor ID"
             className={inputCls}
             placeholder="Actor ID..."
             value={actorFilter}

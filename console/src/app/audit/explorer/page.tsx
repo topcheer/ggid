@@ -104,21 +104,21 @@ export default function AuditExplorerPage() {
               <div className="flex flex-wrap items-center gap-3">
                 <div className="relative flex-1 min-w-[200px]">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                  <input type="text" value={search} onChange={(e) => setSearch(e.target.value)}
+                  <input type="text" aria-label="Search events" value={search} onChange={(e) => setSearch(e.target.value)}
                     placeholder={t("auditExplorer.events.search")}
                     className="w-full pl-9 pr-3 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-sm text-gray-900 dark:text-white" />
                 </div>
-                <select value={filterType} onChange={(e) => setFilterType(e.target.value)}
+                <select aria-label="Filter by type" value={filterType} onChange={(e) => setFilterType(e.target.value)}
                   className="px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-sm text-gray-900 dark:text-white">
                   <option value="all">{t("auditExplorer.events.allTypes")}</option>
                   {EVENT_TYPES.map((tp: any) => <option key={tp} value={tp}>{tp}</option>)}
                 </select>
-                <select value={filterSeverity} onChange={(e) => setFilterSeverity(e.target.value)}
+                <select aria-label="Filter by severity" value={filterSeverity} onChange={(e) => setFilterSeverity(e.target.value)}
                   className="px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-sm text-gray-900 dark:text-white">
                   <option value="all">{t("auditExplorer.events.allSeverities")}</option>
                   {["info", "warning", "error", "critical"].map((s: any) => <option key={s} value={s}>{t(`auditExplorer.events.severity${s.replace(/^./, (m: any) => m.toUpperCase())}`)}</option>)}
                 </select>
-                <select value={filterRange} onChange={(e) => setFilterRange(e.target.value)}
+                <select aria-label="Filter by time range" value={filterRange} onChange={(e) => setFilterRange(e.target.value)}
                   className="px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-sm text-gray-900 dark:text-white">
                   <option value="1h">{t("auditExplorer.events.range1h")}</option>
                   <option value="24h">{t("auditExplorer.events.range24h")}</option>
