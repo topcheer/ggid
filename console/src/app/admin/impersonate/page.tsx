@@ -124,7 +124,7 @@ export default function ImpersonatePage() {
     }
     try {
       const data = await apiFetch<{ users?: SearchResult[]; items?: SearchResult[] } | SearchResult[]>(
-        `/api/v1/users?q=${encodeURIComponent(query)}&limit=10`,
+        `/api/v1/users?search=${encodeURIComponent(query)}&page_size=10`,
       ).catch(() => null);
 
       if (data) {
