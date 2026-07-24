@@ -48,7 +48,7 @@ export default function DepartmentsPage() {
       };
       extractDepts(orgs);
       const data = { departments: allDepts };
-      const depts = data?.departments ?? data?.items ?? [];
+      const depts = allDepts;
       setDepartments(depts);
       setExpanded(new Set(depts.filter((d: any) => d.children?.length > 0).map((d: any) => d.id)));
     } catch {
