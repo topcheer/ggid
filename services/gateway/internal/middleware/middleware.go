@@ -595,7 +595,11 @@ func JWTAuth(jwks *JWKSClient, required bool, issuer, audience string) func(http
 				// Enforce API key scopes: read-only keys cannot perform write operations.
 				scopes, _ := r.Context().Value(APIKeyScopesKey).([]string)
 				if !apiKeyHasWriteAccess(r.Method, scopes) {
-					writeUnauthorized(w, "API key lacks write scope for this operation")
+					w.Header().Set("Content-Type", "application/json")
+					w.WriteHeader(http.StatusForbidden)
+					json.NewEncoder(w).Encode(map[string]any{
+						"error": "API key lacks write scope for this operation",
+					})
 					return
 				}
 				next.ServeHTTP(w, r)
