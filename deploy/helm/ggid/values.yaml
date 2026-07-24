@@ -1,5 +1,12 @@
 # GGID Helm Values
 
+# Database migration — runs as a Helm post-install/post-upgrade hook
+migration:
+  enabled: true
+  image:
+    repository: postgres
+    tag: "16-alpine"
+
 # Global
 global:
   imageRegistry: ""

@@ -1,0 +1,52 @@
+{{- if .Values.migration.enabled }}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ include "ggid.fullname" . }}-db-migrate
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "ggid.labels" . | nindent 4 }}
+  annotations:
+    "helm.sh/hook": post-install,post-upgrade
+    "helm.sh/hook-weight": "-5"
+    "helm.sh/hook-delete-policy": before-hook-creation
+spec:
+  ttlSecondsAfterFinished: 86400
+  template:
+    metadata:
+      labels:
+        {{- include "ggid.labels" . | nindent 8 }}
+    spec:
+      restartPolicy: OnFailure
+      containers:
+      - name: migrate
+        image: "{{ .Values.migration.image.repository }}:{{ .Values.migration.image.tag }}"
+        env:
+        - name: PGPASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: {{ include "ggid.fullname" . }}-postgresql
+              key: password
+              optional: true
+        - name: DATABASE_URL
+          value: "postgres://{{ .Values.postgresql.auth.username }}:{{ .Values.postgresql.auth.password }}@{{ include "ggid.fullname" . }}-postgresql:5432/{{ .Values.postgresql.auth.database }}?sslmode=disable"
+        command:
+        - sh
+        - -c
+        - |
+          set -e
+          echo "Running GGID database migrations..."
+          for f in /migrations/*.sql; do
+            echo "Applying $(basename $f)..."
+            psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -q -f "$f" || echo "  (skipped, may already exist)"
+          done
+          echo "Migrations complete."
+        volumeMounts:
+        - name: migrations
+          mountPath: /migrations
+          readOnly: true
+      volumes:
+      - name: migrations
+        configMap:
+          name: {{ include "ggid.fullname" . }}-migrations
+{{- end }}
