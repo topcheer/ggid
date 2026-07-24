@@ -35,7 +35,19 @@ export default function DepartmentsPage() {
     setLoading(true);
     setError(null);
     try {
-      const data = await apiFetch<{ departments?: Department[]; items?: Department[] }>("/api/v1/orgs/departments").catch(() => null);
+      const tid = typeof window !== 'undefined' ? (localStorage.getItem("ggid_tenant_id") || "fb44ca98-2a8a-498b-a9b2-00fc014524ce") : "fb44ca98-2a8a-498b-a9b2-00fc014524ce";
+      const treeData = await apiFetch<{ tree?: any[]; departments?: any[] }>(`/api/v1/orgs/tree?tenant_id=${tid}`).catch(() => null);
+      // Extract departments from org tree
+      const orgs = treeData?.tree ?? [];
+      const allDepts: any[] = [];
+      const extractDepts = (orgs: any[]) => {
+        for (const org of orgs) {
+          if (Array.isArray(org.departments)) allDepts.push(...org.departments);
+          if (Array.isArray(org.children)) extractDepts(org.children);
+        }
+      };
+      extractDepts(orgs);
+      const data = { departments: allDepts };
       const depts = data?.departments ?? data?.items ?? [];
       setDepartments(depts);
       setExpanded(new Set(depts.filter((d: any) => d.children?.length > 0).map((d: any) => d.id)));
