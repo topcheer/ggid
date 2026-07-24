@@ -1,0 +1,47 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: ggid-db-migrate
+  namespace: ggid
+spec:
+  ttlSecondsAfterFinished: 86400
+  template:
+    spec:
+      restartPolicy: OnFailure
+      containers:
+      - name: migrate
+        image: postgres:16-alpine
+        env:
+        - name: PGPASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: ggid-postgresql
+              key: password
+              optional: true
+        command:
+        - sh
+        - -c
+        - |
+          set -e
+          echo "Running GGID database migrations..."
+          for f in /migrations/*.sql; do
+            echo "Applying $(basename $f)..."
+            psql -h ggid-postgresql -U ggid -d ggid -v ON_ERROR_STOP=1 -q -f "$f" || echo "  (skipped, may already exist)"
+          done
+          echo "Migrations complete."
+        volumeMounts:
+        - name: migrations
+          mountPath: /migrations
+          readOnly: true
+      volumes:
+      - name: migrations
+        configMap:
+          name: ggid-migrations
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ggid-migrations
+  namespace: ggid
+  annotations:
+    ggid.io/migration-version: "050"
