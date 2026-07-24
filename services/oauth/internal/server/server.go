@@ -1552,11 +1552,6 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 				writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid request body"})
 				return
 			}
-			client, err := oauthSvc.GetClient(ctx, clientID)
-			if err != nil {
-				writeJSON(w, http.StatusNotFound, map[string]string{"error": "client not found"})
-				return
-			}
 			upd := &service.ClientMetadataUpdate{
 				Name: update.Name,
 				TokenEndpointAuthMethod: update.TokenEndpointAuthMethod,
