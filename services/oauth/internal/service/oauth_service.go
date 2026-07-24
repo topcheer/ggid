@@ -1729,16 +1729,17 @@ func (s *OAuthService) PasswordGrant(ctx context.Context, req *PasswordGrantRequ
 	var tenantID uuid.UUID = req.TenantID
 
 	if s.pool != nil {
-		// Single query: look up user + credential hash in one go.
-		// Uses set_config() to satisfy RLS on the users table within this statement.
+		// Set RLS context for this connection (session-level SET persists on the connection)
+		_, _ = s.pool.Exec(ctx, fmt.Sprintf("SET app.tenant_id = '%s'", req.TenantID.String()))
+
+		// Single query: look up user + credential hash in one go
 		var dbUserID uuid.UUID
 		var credHash string
 		err := s.pool.QueryRow(ctx, `
 			SELECT u.id, c.secret
 			FROM users u
 			JOIN credentials c ON c.user_id = u.id AND c.type = 'password'
-			WHERE u.username = $1 AND u.tenant_id = $2 AND u.status = 'active'
-			  AND set_config('app.tenant_id', $2::text, true) IS NOT NULL`,
+			WHERE u.username = $1 AND u.tenant_id = $2 AND u.status = 'active'`,
 			req.Username, req.TenantID).Scan(&dbUserID, &credHash)
 		if err != nil {
 			return nil, errors.Unauthenticated("invalid credentials")
