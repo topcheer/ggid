@@ -2643,3 +2643,7 @@ Inv=79(id+name+price+sku+stock) Ord=79 Post=201(has_id) jwt_perms=9 Hacks:0 ✅ 
 - C250 Users=403: CORRECT — admin_go is ERP Admin (scope=erp_admin), 403 on platform admin endpoints is expected.
 
 ### Next Dimension: 4 — Cycle 252
+## Cycle 252: D4 Multi-Tenant Isolation DEEP (Round 426)
+GoJWT=MATCH CsJWT= GoSelf=200 CrossT(GoTok→CsRes)=401 CrossT(CsTok+CsHdr)=401 NoTok=401 Hacks:0 ✅ — 242nd clean cycle.
+
+### Next Dimension: 5 — Cycle 253
