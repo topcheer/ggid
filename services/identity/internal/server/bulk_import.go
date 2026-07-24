@@ -15,14 +15,15 @@ import (
 
 // BulkImportUser represents a single user in the import payload.
 type BulkImportUser struct {
-	Email     string `json:"email"`
-	Username  string `json:"username"`
-	Password  string `json:"password_hash"` // pre-hashed from source system
-	HashType  string `json:"hash_type"`     // argon2id, bcrypt, pbkdf2, scrypt, ssha, plaintext
-	FirstName string `json:"first_name"`
-	LastName  string `json:"last_name"`
-	Phone     string `json:"phone"`
-	RoleID    string `json:"role_id,omitempty"`
+	Email        string `json:"email"`
+	Username     string `json:"username"`
+	Password     string `json:"password"`       // plaintext password (will be hashed)
+	PasswordHash string `json:"password_hash"`  // pre-hashed from source system
+	HashType     string `json:"hash_type"`      // argon2id, bcrypt, pbkdf2, scrypt, ssha, plaintext
+	FirstName    string `json:"first_name"`
+	LastName     string `json:"last_name"`
+	Phone        string `json:"phone"`
+	RoleID       string `json:"role_id,omitempty"`
 }
 
 // BulkImportRequest is the bulk import payload.
@@ -93,32 +94,22 @@ func (h *HTTPHandler) handleBulkImport(w http.ResponseWriter, r *http.Request) {
 			continue
 		}
 
-		// Validate password hash.
-		if user.Password == "" {
-			result.Failed++
-			result.Errors = append(result.Errors, ImportError{Email: user.Email, Reason: "password_hash is required"})
-			continue
+		// Use password_hash if provided, otherwise hash plaintext password.
+		secretHash := user.PasswordHash
+		if secretHash == "" && user.Password != "" {
+			// Plaintext password: hash it with argon2id.
+			h, err := ggidcrypto.HashPassword(user.Password)
+			if err != nil {
+				result.Failed++
+				result.Errors = append(result.Errors, ImportError{Email: user.Email, Reason: "failed to hash password"})
+				continue
+			}
+			secretHash = h
 		}
-
-		// Detect and validate hash type.
-		hashType := DetectHashType(user.Password, user.HashType)
-		if hashType == "unknown" {
+		if secretHash == "" {
 			result.Failed++
-			result.Errors = append(result.Errors, ImportError{Email: user.Email, Reason: "unrecognized password hash format"})
+			result.Errors = append(result.Errors, ImportError{Email: user.Email, Reason: "password or password_hash is required"})
 			continue
-		}
-
-		if hashType == "plaintext" {
-			result.Failed++
-			result.Errors = append(result.Errors, ImportError{Email: user.Email, Reason: "plaintext passwords not accepted — hash before import"})
-			continue
-		}
-
-		// Normalize hash: if not argon2id, mark for transparent re-hash.
-		normalizedHash := user.Password
-		if hashType != "argon2id" {
-			// Store original hash with type prefix for multi-hash verifier.
-			normalizedHash = fmt.Sprintf("{%s}%s", hashType, user.Password)
 		}
 
 		if req.DryRun {
@@ -128,9 +119,9 @@ func (h *HTTPHandler) handleBulkImport(w http.ResponseWriter, r *http.Request) {
 
 		// In production: batch INSERT via pgx.CopyFrom for performance.
 		// For now, structured result ready for DB wiring.
-		_ = normalizedHash
+		_ = secretHash
 		_ = tc.TenantID
-		slog.Info("bulk import user", "email", user.Email, "hash_type", hashType, "role", user.RoleID)
+		slog.Info("bulk import user", "email", user.Email, "role", user.RoleID)
 		result.Imported++
 	}
 
