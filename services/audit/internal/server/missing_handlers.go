@@ -85,7 +85,40 @@ func (s *HTTPServer) handleWebhooksList(w http.ResponseWriter, r *http.Request) 
 			}
 		}
 		writeJSON(w, http.StatusOK, map[string]any{"status": "deleted", "id": whID})
-	default:
+	case http.MethodPut, http.MethodPatch:
+		// Extract webhook ID from path: /api/v1/webhooks/{id}
+		pathParts := strings.Split(r.URL.Path, "/")
+		whID := ""
+		if len(pathParts) > 0 {
+			whID = pathParts[len(pathParts)-1]
+		}
+		var update struct {
+			Name   *string  `json:"name"`
+			URL    *string  `json:"url"`
+			Events *[]string `json:"events"`
+			Active *bool    `json:"active"`
+		}
+		if err := json.NewDecoder(r.Body).Decode(&update); err != nil {
+			writeJSONError(w, http.StatusBadRequest, "invalid request body")
+			return
+		}
+		globalAlertWebhooks.mu.Lock()
+		for _, wh := range globalAlertWebhooks.webhooks {
+			if wh["id"] == whID {
+				if update.Name != nil { wh["name"] = *update.Name }
+				if update.URL != nil { wh["url"] = *update.URL }
+				if update.Events != nil { wh["events"] = *update.Events }
+				if update.Active != nil { wh["active"] = *update.Active }
+				if s.memMapRepo2 != nil {
+					_ = s.memMapRepo2.StoreJSON(r.Context(), "audit_webhook_configs", whID, wh)
+				}
+				globalAlertWebhooks.mu.Unlock()
+				writeJSON(w, http.StatusOK, wh)
+				return
+			}
+		}
+		globalAlertWebhooks.mu.Unlock()
+		writeJSONError(w, http.StatusNotFound, "webhook not found")
 		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 	}
 }
