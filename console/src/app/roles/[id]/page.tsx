@@ -226,6 +226,7 @@ export default function RoleDetailPage() {
               <div>
                 <label className="mb-1 block text-xs font-medium text-gray-500">Name</label>
                 <input
+                  aria-label="Role name"
                   className={inputCls}
                   value={editName}
                   onChange={(e) => setEditName(e.target.value)}
@@ -235,6 +236,7 @@ export default function RoleDetailPage() {
               <div>
                 <label className="mb-1 block text-xs font-medium text-gray-500">Description</label>
                 <textarea
+                  aria-label="Role description"
                   className={inputCls}
                   rows={2}
                   value={editDesc}
@@ -246,7 +248,8 @@ export default function RoleDetailPage() {
                 <button
                   onClick={handleSaveRole}
                   disabled={saving}
-                  className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50"
+                  aria-label="Save role changes"
+                  className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800"
                 >
                   {saving ? <Loader2 className="mr-1 inline h-4 w-4 animate-spin" /> : <Save className="mr-1 inline h-4 w-4" />}
                   Save Changes
@@ -264,7 +267,8 @@ export default function RoleDetailPage() {
               {!role.system_role && (
                 <button
                   onClick={() => setShowAddPerm(!showAddPerm)}
-                  className="rounded-lg border border-gray-300 px-3 py-1.5 text-xs font-medium text-gray-600 hover:bg-gray-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700"
+                  aria-label="Add permission to role"
+                  className="rounded-lg border border-gray-300 px-3 py-1.5 text-xs font-medium text-gray-600 hover:bg-gray-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700 focus:ring-2 focus:ring-brand-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800"
                 >
                   <Plus className="mr-1 inline h-3.5 w-3.5" /> Add Permission
                 </button>

@@ -492,6 +492,7 @@ export default function UserImportPage() {
               <p className="mt-1 text-xs text-gray-400">{t("userImport.supportsCsv")}</p>
               <input
                 ref={fileInputRef}
+                aria-label="Upload CSV file"
                 type="file"
                 accept=".csv"
                 onChange={handleFileInput}
@@ -509,7 +510,8 @@ export default function UserImportPage() {
                 </div>
                 <button
                   onClick={(e) => { e.stopPropagation(); reset(); }}
-                  className="text-gray-400 hover:text-red-500"
+                  aria-label="Remove file"
+                  className="text-gray-400 hover:text-red-500 focus:ring-2 focus:ring-red-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800 rounded"
                 >
                   <X className="h-5 w-5" />
                 </button>
@@ -529,6 +531,7 @@ export default function UserImportPage() {
                 Paste CSV Content
               </label>
               <textarea
+                aria-label="Paste CSV content"
                 value={pasteText}
                 onChange={(e) => setPasteText(e.target.value)}
                 placeholder={"email,display_name,phone\njohn@example.com,John Doe,+1234567890"}
@@ -538,7 +541,8 @@ export default function UserImportPage() {
               {pasteText.trim() && (
                 <button
                   onClick={handlePasteSubmit}
-                  className="mt-2 flex items-center gap-1.5 rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700"
+                  aria-label="Parse and continue"
+                  className="mt-2 flex items-center gap-1.5 rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700 focus:ring-2 focus:ring-brand-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800"
                 >
                   Parse & Continue <ArrowRight className="h-4 w-4" />
                 </button>
