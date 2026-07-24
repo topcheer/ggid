@@ -284,13 +284,29 @@ export default function LoginPage() {
     if (!slug || slug === DEFAULT_TENANT_ID) {
       setTenantError("");
       setTenantResolved(false);
+      setResolvedTenantId(DEFAULT_TENANT_ID);
+      return;
+    }
+    // If input looks like a UUID, use it directly as tenant ID
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    if (uuidRegex.test(slug)) {
+      setTenantError("");
+      setTenantResolved(true);
+      setResolvedTenantId(slug);
+      localStorage.setItem("ggid_tenant_id", slug);
       return;
     }
     try {
       const res = await fetch(`${API_BASE_URL}/api/v1/tenants/resolve?slug=${encodeURIComponent(slug)}`);
       if (res.ok) {
+        const data = await res.json();
+        const tid = data.id || data.tenant_id || data.tenantId;
         setTenantError("");
         setTenantResolved(true);
+        if (tid) {
+          setResolvedTenantId(tid);
+          localStorage.setItem("ggid_tenant_id", tid);
+        }
       } else {
         setTenantError("Organization not found");
         setTenantResolved(false);
