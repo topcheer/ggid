@@ -1958,3 +1958,44 @@ no_tok=401 ✅ | login=AT+RT ✅ | GET=200 ✅ | POST=201 ✅ | vw=403 ✅ | ref
 PW:7/7 ✅ | M2M:OK ✅ | Token→API:200 ✅ | JWT:9perms+ERP Admin ✅ | Hacks:0 ✅ — 89th clean cycle.
 
 ### Next Dimension: 2 — Cycle 100
+
+## Cycle 100: D2 Authorization Boundaries (Round 274) — MILESTONE
+
+**100th verification cycle.** No new core changes since C99.
+
+### JWT Permissions (exact claim values)
+- Admin: 9 perms = [audit:read, dashboard:read, inventory:delete, inventory:read, inventory:write, orders:approve, orders:read, orders:read:all, orders:write]
+- Viewer: 4 perms = [audit:read, dashboard:read, inventory:read, orders:read]
+
+### RBAC Boundary Matrix
+
+| Principal | inv R | inv W | audit | users | order approve |
+|-----------|-------|-------|-------|-------|---------------|
+| Admin (9p) | 200 | 201 | 200 | **403** | **200** |
+| Viewer (4p) | 200 | **403** | — | — | **403** |
+| Fake | 401 | — | — | — | — |
+| None | 401 | — | — | — | — |
+
+### JWT→API Enforcement Mapping (verified)
+| JWT Permission | API Endpoint | Admin | Viewer |
+|---------------|-------------|-------|--------|
+| inventory:read | GET /api/inventory | 200 | 200 |
+| inventory:write | POST /api/inventory | 201 | 403 |
+| orders:approve | PUT /api/orders/{id}/approve | 200 | 403 |
+| audit:read | GET /api/audit | 200 | — |
+| (no users:read) | GET /api/users | 403 | — |
+
+**Least-privilege confirmed**: ERP Admin has no `users:read` → correctly 403 on platform admin endpoint.
+
+Hacks: 0 ✅
+
+### Three-Layer Alignment
+| Layer | Status |
+|-------|--------|
+| Core | JWT issues 9/4 perms correctly, CAE enforcement active ✅ |
+| SDK | verifyToken in all 7 SDKs exposes permissions[] ✅ |
+| Demo | requirePerm() enforces: read=200, write=201/403, approve=200/403 ✅ |
+
+90th consecutive zero-fix cycle.
+
+### Next Dimension: 3 — Cycle 101 (Demo Functional Completeness)
