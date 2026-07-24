@@ -148,18 +148,33 @@ export default function UsersPage() {
 
     setCreating(true);
     try {
-      await apiFetch("/api/v1/users", {
+      const resp = await apiFetch<{ id?: string; user_id?: string }>("/api/v1/users", {
         method: "POST",
         body: JSON.stringify({ username, email, password, display_name: displayName || undefined }),
       });
-      // Assign role if selected
+      // Assign role if selected — use user_id from response + role_id (UUID) from dropdown
       if (role) {
-        try {
-          await apiFetch(`/api/v1/users/${username}/roles`, {
-            method: "POST",
-            body: JSON.stringify({ role }),
-          });
-        } catch { /* role assignment is best-effort */ }
+        const newUserId = resp.id || resp.user_id;
+        if (newUserId) {
+          try {
+            await apiFetch(`/api/v1/users/${newUserId}/roles`, {
+              method: "POST",
+              body: JSON.stringify({ role_id: role }),
+            });
+          } catch (roleErr) {
+            // Surface role assignment failure — user is created but has no role
+            const roleErrMsg = roleErr instanceof Error ? roleErr.message : "Role assignment failed";
+            setFormSuccess(`User "${username}" created, but role assignment failed: ${roleErrMsg}. Please assign role manually.`);
+            setShowCreate(false);
+            setTimeout(() => { setFormSuccess(""); refresh(); }, 4000);
+            return;
+          }
+        } else {
+          setFormSuccess(`User "${username}" created, but user ID not returned — please assign role manually.`);
+          setShowCreate(false);
+          setTimeout(() => { setFormSuccess(""); refresh(); }, 4000);
+          return;
+        }
       }
       setFormSuccess(`User "${username}" created successfully${role ? ` and assigned ${role} role` : ""}.`);
       setShowCreate(false);
@@ -787,9 +802,9 @@ export default function UsersPage() {
                 defaultValue=""
               >
                 <option value="">— Select role (optional) —</option>
-                <option value="admin">Admin (platform administrator)</option>
-                <option value="manager">Manager (tenant administrator)</option>
-                <option value="user">User (standard access)</option>
+                {roles.filter(r => !/^Test Role/i.test(r.name)).map(r => (
+                  <option key={r.id} value={r.id}>{r.name} ({r.key})</option>
+                ))}
               </select>
             </div>
             <div className="col-span-2">
