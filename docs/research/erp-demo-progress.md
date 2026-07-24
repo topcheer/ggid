@@ -2214,3 +2214,7 @@ Admin POST=201 GET=200 Scope=erp_admin | Node(cross-tenant) POST=403 GET=403 ✅
 Inv=79 Ord=29 POST=201 Perms=9 Hacks:0 ✅ — 139th clean cycle.
 
 ### Next Dimension: 4 — Cycle 150
+## Cycle 150: D4 Tenant Isolation (Round 324)
+Go→Go=200 Node→Go=403 Fake=401 JWT=YES ✅ — 140th clean cycle.
+
+### Next Dimension: 5 — Cycle 151
