@@ -5,7 +5,7 @@ import {
   ShieldCheck, Loader2, AlertCircle, X, TrendingUp, KeyRound, Users,
   Lightbulb, ArrowRight, Smartphone, Lock, AlertTriangle, Activity,
 } from "lucide-react";
-import { useI18n } from "@/lib/i18n";
+import { useTranslations } from "@/lib/i18n";
 import { authHeader } from "@/lib/auth-helpers";
 
 interface Recommendation {
