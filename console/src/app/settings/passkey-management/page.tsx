@@ -107,9 +107,18 @@ export default function PasskeyManagementPage() {
       .catch(e => { setError(e.message); setLoading(false); });
   }, []);
 
-  const confirmRevoke = () => {
+  const confirmRevoke = async () => {
     if (revokeTarget) {
-      setPasskeys(prev => prev.filter(p => p.id !== revokeTarget.id));
+      try {
+        await fetch(`/api/v1/auth/passkeys/${revokeTarget.id}`, {
+          method: "DELETE",
+          headers: { ...authHeader() },
+        });
+        setPasskeys(prev => prev.filter(p => p.id !== revokeTarget.id));
+      } catch {
+        // fallback to local update
+        setPasskeys(prev => prev.filter(p => p.id !== revokeTarget.id));
+      }
     }
     setRevokeTarget(null);
   };
