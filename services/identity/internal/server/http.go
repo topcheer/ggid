@@ -775,6 +775,10 @@ func (h *HTTPHandler) listUsers(ctx context.Context, w http.ResponseWriter, r *h
 	if s := q.Get("search"); s != "" {
 		filter.Search = s
 	}
+	// Console uses ?q= alias for search
+	if s := q.Get("q"); s != "" && filter.Search == "" {
+		filter.Search = s
+	}
 	if ps := q.Get("page_size"); ps != "" {
 		var n int
 		fmt.Sscanf(ps, "%d", &n)
