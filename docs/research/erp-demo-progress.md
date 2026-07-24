@@ -2574,3 +2574,9 @@ Go=6 Node=13 Py=4 Java=7 CS=5 Rb=4 Rs=1 ✅ — 225th clean cycle.
 Login=994ch Inv=200 Ord=200 Post=201 NoToken(401 check)=401 ✅ — 226th clean cycle.
 
 ### Next Dimension: 1 — Cycle 237
+## Cycle 237: D1 Auth DEEP (Round 411)
+5/5 pw 5/5 struct M2M=200
+UPSTREAM: 49175ef71 (SET not SET LOCAL for RLS) — COMPAT OK
+✅ — 227th clean cycle.
+
+### Next Dimension: 2 — Cycle 238
