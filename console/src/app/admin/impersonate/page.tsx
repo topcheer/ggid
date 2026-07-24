@@ -129,11 +129,18 @@ export default function ImpersonatePage() {
 
       if (data) {
         const list = Array.isArray(data) ? data : data.users || data.items || [];
-        // Ensure each result has a safe roles array (API may return null/undefined)
-        const safeList = list.map((u: any) => ({
-          ...u,
-          roles: Array.isArray(u.roles) ? u.roles : (u.roles ? [String(u.roles)] : []),
-        }));
+        // Normalize roles: API returns objects {role_id, role_name} not strings
+        const safeList = list.map((u: any) => {
+          let roles: string[] = [];
+          if (Array.isArray(u.roles)) {
+            roles = u.roles.map((r: any) =>
+              typeof r === "string" ? r : (r?.role_name || r?.name || r?.key || "")
+            ).filter(Boolean);
+          } else if (typeof u.roles === "string") {
+            roles = [u.roles];
+          }
+          return { ...u, roles };
+        });
         setSearchResults(safeList);
       } else {
         setSearchResults([]);
