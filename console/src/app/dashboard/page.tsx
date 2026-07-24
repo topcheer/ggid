@@ -116,7 +116,7 @@ export default function DashboardPage() {
           <div className="space-y-4">
             {/* Security alert banner for high failed logins */}
             {kpi.failedLogins24h > 100 && (
-              <a href="/audit?result=failure" className="block rounded-xl border-2 border-red-500 bg-red-50 dark:bg-red-950/50 p-4 transition hover:bg-red-100 dark:hover:bg-red-950">
+              <a href="/audit?result=failure" role="alert" aria-label={`Security alert: ${kpi.failedLogins24h} failed login attempts in last 24 hours. Click to investigate.`} className="block rounded-xl border-2 border-red-500 bg-red-50 dark:bg-red-950/50 p-4 transition hover:bg-red-100 dark:hover:bg-red-950 focus:ring-2 focus:ring-red-500 focus:ring-offset-2 dark:focus:ring-offset-gray-950">
                 <div className="flex items-center gap-3">
                   <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-red-600 text-white animate-pulse">
                     <AlertTriangle className="h-6 w-6" />
@@ -146,7 +146,7 @@ export default function DashboardPage() {
             {/* Secondary stats */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <KPICard icon={TrendingUp} label={t("dashboardEnhanced.kpi.newUsers")} value={kpi.newUsers7d} color="text-blue-600" />
-              <button onClick={() => window.location.href = '/audit?result=failure'} className="text-left">
+              <button onClick={() => window.location.href = '/audit?result=failure'} aria-label={`${kpi.failedLogins24h} failed logins in 24 hours`} className="text-left focus:ring-2 focus:ring-red-500 focus:ring-offset-2 dark:focus:ring-offset-gray-950 rounded-xl">
                 <div className={`bg-white dark:bg-gray-900 rounded-xl border p-4 ${kpi.failedLogins24h > 50 ? 'border-red-400 dark:border-red-600 ring-1 ring-red-200 dark:ring-red-900' : 'border-gray-200 dark:border-gray-800'}`}>
                   <div className="flex items-center gap-2 mb-2">
                     <AlertTriangle className={`w-5 h-5 ${kpi.failedLogins24h > 50 ? 'text-red-600 animate-pulse' : 'text-red-500'}`} />
@@ -164,13 +164,13 @@ export default function DashboardPage() {
 
         {/* Quick Actions — high-frequency admin operations */}
         <div className="flex flex-wrap gap-2">
-          <button onClick={() => window.location.href = '/users'} className="flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 transition-colors">
+          <button onClick={() => window.location.href = '/users'} aria-label={t("dashboardEnhanced.welcome.createUser")} className="flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 transition-colors focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-gray-950">
             <UserPlus className="h-4 w-4" /> {t("dashboardEnhanced.welcome.createUser")}
           </button>
-          <button onClick={() => window.location.href = '/oauth-clients'} className="flex items-center gap-2 rounded-lg border border-gray-300 dark:border-gray-700 px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+          <button onClick={() => window.location.href = '/oauth-clients'} aria-label={t("dashboardEnhanced.welcome.createOAuth")} className="flex items-center gap-2 rounded-lg border border-gray-300 dark:border-gray-700 px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors focus:ring-2 focus:ring-brand-500 focus:ring-offset-2 dark:focus:ring-offset-gray-950">
             <Globe className="h-4 w-4" /> {t("dashboardEnhanced.welcome.createOAuth")}
           </button>
-          <button onClick={() => window.location.href = '/audit'} className="flex items-center gap-2 rounded-lg border border-gray-300 dark:border-gray-700 px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+          <button onClick={() => window.location.href = '/audit'} aria-label="View audit log" className="flex items-center gap-2 rounded-lg border border-gray-300 dark:border-gray-700 px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors focus:ring-2 focus:ring-brand-500 focus:ring-offset-2 dark:focus:ring-offset-gray-950">
             <Activity className="h-4 w-4" /> View Audit Log
           </button>
         </div>
