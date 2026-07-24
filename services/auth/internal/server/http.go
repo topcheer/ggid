@@ -536,6 +536,8 @@ func (h *Handler) registerRoutes() {
 	h.mux.HandleFunc("/api/v1/auth/password-deprecation", h.handlePasswordDeprecation)
 	h.mux.HandleFunc("/api/v1/auth/enrollment/nudge/", h.handleEnrollmentNudge)
 	h.mux.HandleFunc("/api/v1/auth/enrollment/dismiss", h.handleEnrollmentDismiss)
+	h.mux.HandleFunc("/api/v1/auth/enrollment/campaigns", h.handleEnrollmentCampaigns)
+	h.mux.HandleFunc("/api/v1/auth/enrollment/campaigns/", h.handleEnrollmentCampaigns)
 	h.mux.HandleFunc("/api/v1/auth/webauthn/aaguid", h.handleAAGUIDAllowlist)
 	h.mux.HandleFunc("/api/v1/auth/webauthn/aaguid/", h.handleAAGUIDAllowlist)
 	h.mux.HandleFunc("/api/v1/auth/tap", h.handleTAP)
