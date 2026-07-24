@@ -565,13 +565,13 @@ export default function WebhooksPage() {
               <label className="mb-1 block text-xs font-medium text-gray-500">HMAC Secret</label>
               <div className="flex items-center gap-2">
                 <code className="flex-1 overflow-x-auto rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 font-mono text-sm dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300">{newSecret}</code>
-                <button onClick={copySecret} className="flex shrink-0 items-center gap-1.5 rounded-lg border border-gray-300 px-3 py-2 text-sm hover:bg-gray-50 dark:border-gray-600 dark:hover:bg-gray-700" aria-label="Check">
+                <button onClick={copySecret} className="flex shrink-0 items-center gap-1.5 rounded-lg border border-gray-300 px-3 py-2 text-sm hover:bg-gray-50 dark:border-gray-600 dark:hover:bg-gray-700" aria-label="Copy webhook secret">
                   {secretCopied ? <Check className="h-4 w-4 text-green-600" /> : <Copy className="h-4 w-4" />}{secretCopied ? "Copied!" : "Copy"}
                 </button>
               </div>
             </div>
             <label className="mb-4 flex cursor-pointer items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
-              <input aria-label="Saved ack" type="checkbox" checked={savedAck} onChange={(e) => setSavedAck(e.target.checked)} className="h-4 w-4 rounded border-gray-300 text-brand-600 focus:ring-brand-500" />
+              <input aria-label="I have safely stored the webhook secret" type="checkbox" checked={savedAck} onChange={(e) => setSavedAck(e.target.checked)} className="h-4 w-4 rounded border-gray-300 text-brand-600 focus:ring-brand-500" />
               {"I've saved it"}
             </label>
             <div className="flex justify-end">

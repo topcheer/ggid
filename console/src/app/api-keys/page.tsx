@@ -197,7 +197,7 @@ export default function ApiKeysPage() {
           <button
             onClick={loadKeys}
             className="flex items-center gap-2 rounded-lg border border-gray-300 px-3 py-2 text-sm hover:bg-gray-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700"
-           aria-label="RefreshCw">
+           aria-label="Refresh API keys">
             <RefreshCw className="h-4 w-4" /> {t("common.refresh")}
           </button>
           <button
@@ -287,7 +287,7 @@ export default function ApiKeysPage() {
                 onClick={handleCreate}
                 disabled={creating || !keyName.trim()}
                 className="flex items-center gap-2 rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700 disabled:opacity-50"
-               aria-label="Loader2">
+               aria-label="Create API key">
                 {creating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Key className="h-4 w-4" />}
                 {t("apiKeys.generateKey")}
               </button>
@@ -449,7 +449,7 @@ export default function ApiKeysPage() {
                 <button
                   onClick={copyNewKey}
                   className="flex shrink-0 items-center gap-1.5 rounded-lg border border-gray-300 px-3 py-2 text-sm hover:bg-gray-50 dark:border-gray-600 dark:hover:bg-gray-700"
-                 aria-label="Check">
+                 aria-label="Copy API key">
                   {keyCopied ? <Check className="h-4 w-4 text-green-600" /> : <Copy className="h-4 w-4" />}
                   {keyCopied ? t("apiKeys.copied") : t("apiKeys.copy")}
                 </button>
