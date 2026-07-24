@@ -1007,7 +1007,11 @@ func (h *Handler) handleSessions(w http.ResponseWriter, r *http.Request) {
 
 	userIDStr := r.URL.Query().Get("user_id")
 	if userIDStr == "" {
-		// Extract user_id from JWT token in Authorization header
+		// Gateway JWTAuth middleware already validated the token and injected X-User-ID.
+		userIDStr = r.Header.Get("X-User-ID")
+	}
+	if userIDStr == "" {
+		// Fallback: extract user_id from JWT token (direct service-to-service calls without gateway).
 		authHeader := r.Header.Get("Authorization")
 		tokenStr := strings.TrimPrefix(authHeader, "Bearer ")
 		claims := jwt.MapClaims{}
