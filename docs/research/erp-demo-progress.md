@@ -2655,3 +2655,7 @@ All 7 SDKs verified: login/verifyToken/introspectToken/getUserInfo present. Ruby
 Inv=200 Post=201 Ord=200 Perms= Refresh=NO_RT ErrToken=401 Hacks:0 ✅ — 244th clean cycle. Rotation D1-D6 complete.
 
 ### Next Dimension: 1 — Cycle 255
+## Cycle 255: D1 Auth Completeness DEEP (Round 429)
+PW=access_token+token_type+expires_in(api=200) CC=access_token+token_type+expires_in(api=403) SDK_fields:Go=3 Node=2 Py=5 Rb=2 Hacks:0 ✅ — 245th clean cycle.
+
+### Next Dimension: 2 — Cycle 256
