@@ -45,13 +45,14 @@ export default function TenantsPage() {
       if (res.ok) {
         const d = await res.json();
         setTenants(d.tenants || d.items || (Array.isArray(d) ? d : []));
-        return;
+      } else {
+        setError("Failed to load tenants");
       }
-      setError("Failed to load tenants");
     } catch {
       setError("Network error");
     }
-    setTenants([]);
+    setTenants(prev => prev);
+    setLoading(false);
   }, []);
 
   const handleDelete = async (tenant: Tenant) => {
