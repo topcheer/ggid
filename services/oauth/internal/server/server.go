@@ -1539,6 +1539,45 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 			}
 			writeJSON(w, http.StatusOK, client)
 
+		case http.MethodPut, http.MethodPatch:
+			var update struct {
+				Name                    *string   `json:"name"`
+				RedirectURIs           *[]string `json:"redirect_uris"`
+				GrantTypes             *[]string `json:"grant_types"`
+				Scopes                 *[]string `json:"scopes"`
+				Enabled                *bool     `json:"enabled"`
+				TokenEndpointAuthMethod *string  `json:"token_endpoint_auth_method"`
+			}
+			if err := json.NewDecoder(r.Body).Decode(&update); err != nil {
+				writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid request body"})
+				return
+			}
+			client, err := oauthSvc.GetClient(ctx, clientID)
+			if err != nil {
+				writeJSON(w, http.StatusNotFound, map[string]string{"error": "client not found"})
+				return
+			}
+			upd := &service.ClientMetadataUpdate{
+				Name: update.Name,
+				TokenEndpointAuthMethod: update.TokenEndpointAuthMethod,
+				Enabled: update.Enabled,
+			}
+			if update.RedirectURIs != nil { upd.RedirectURIs = *update.RedirectURIs }
+			if update.GrantTypes != nil { upd.GrantTypes = *update.GrantTypes }
+			if update.Scopes != nil { upd.Scopes = *update.Scopes }
+			updated, err := oauthSvc.UpdateClientMetadata(ctx, clientID, upd)
+			if err != nil {
+				writeInternalError(w, "UpdateClient", err)
+				return
+			}
+			if auditPub != nil {
+				actorID, _ := uuid.Parse(r.Header.Get("X-User-ID"))
+				ev := audit.NewEvent("oauth_client.update", "success", tenantID, actorID)
+				ev.ResourceType = "oauth_client"
+				auditPub.PublishAsync(ev)
+			}
+			writeJSON(w, http.StatusOK, updated)
+
 		case http.MethodDelete:
 			if err := oauthSvc.DeleteClient(ctx, clientID); err != nil {
 				writeInternalError(w, "DeleteClient", err)

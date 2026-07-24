@@ -254,6 +254,9 @@ func (s *OAuthService) UpdateClientMetadata(ctx context.Context, clientID string
 	if updates.TokenEndpointAuthMethod != nil {
 		client.TokenEndpointAuthMethod = *updates.TokenEndpointAuthMethod
 	}
+	if updates.Enabled != nil {
+		client.Enabled = *updates.Enabled
+	}
 	if updates.Metadata != nil {
 		if client.Metadata == nil {
 			client.Metadata = make(map[string]any)
@@ -275,6 +278,7 @@ type ClientMetadataUpdate struct {
 	ResponseTypes             []string         `json:"response_types,omitempty"`
 	Scopes                    []string         `json:"scope,omitempty"`
 	TokenEndpointAuthMethod   *string          `json:"token_endpoint_auth_method,omitempty"`
+	Enabled                   *bool            `json:"enabled,omitempty"`
 	Metadata                  map[string]any   `json:"metadata,omitempty"`
 }
 
