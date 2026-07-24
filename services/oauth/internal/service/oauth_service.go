@@ -28,6 +28,7 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgconn"
 )
 
 // OAuthService implements OAuth2 client management and the authorization code flow.
@@ -46,6 +47,7 @@ type OAuthService struct {
 type PoolQuerier interface {
 	QueryRow(ctx context.Context, sql string, args ...any) pgx.Row
 	Query(ctx context.Context, sql string, args ...any) (pgx.Rows, error)
+	Exec(ctx context.Context, sql string, args ...any) (pgconn.CommandTag, error)
 }
 
 // RedisCmdable is the minimal subset of go-redis used by the state store.
@@ -1727,6 +1729,9 @@ func (s *OAuthService) PasswordGrant(ctx context.Context, req *PasswordGrantRequ
 	var tenantID uuid.UUID = req.TenantID
 
 	if s.pool != nil {
+		// Set RLS context so queries on RLS-protected tables (users) work
+		_, _ = s.pool.Exec(ctx, fmt.Sprintf("SET LOCAL app.tenant_id = '%s'", req.TenantID.String()))
+
 		// Look up user by username within the tenant
 		var dbUserID uuid.UUID
 		err := s.pool.QueryRow(ctx, `

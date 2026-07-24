@@ -10,6 +10,7 @@ import (
 	"github.com/ggid/ggid/services/oauth/internal/domain"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgconn"
 )
 
 // --- PasswordGrant pool fakes ---
@@ -56,6 +57,10 @@ func (p *fakePool) QueryRow(_ context.Context, sql string, _ ...any) pgx.Row {
 
 func (p *fakePool) Query(_ context.Context, _ string, _ ...any) (pgx.Rows, error) {
 	return nil, errors.New("not implemented")
+}
+
+func (p *fakePool) Exec(_ context.Context, _ string, _ ...any) (pgconn.CommandTag, error) {
+	return pgconn.NewCommandTag(""), nil
 }
 
 // --- Tests ---
