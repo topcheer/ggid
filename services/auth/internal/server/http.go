@@ -494,6 +494,7 @@ func (h *Handler) registerRoutes() {
 	h.mux.HandleFunc("/api/v1/auth/lockout-policy/config", h.handleLockoutPolicyConfig)
 	h.mux.HandleFunc("/api/v1/auth/email-template/config", h.handleEmailTemplateConfig)
 	h.mux.HandleFunc("/api/v1/auth/notification-preferences", h.handleNotificationPreferences)
+	h.mux.HandleFunc("/api/v1/notification/preferences", h.handleNotificationPreferences) // alias for Console
 	h.mux.HandleFunc("/api/v1/auth/session-binding/config", h.handleSessionBindingConfig)
 	h.mux.HandleFunc("/api/v1/auth/mfa/config", h.handleMFAConfig)
 	h.mux.HandleFunc("/api/v1/auth/impersonation/config", h.handleImpersonationConfig)
