@@ -31,8 +31,19 @@ type fakePool struct {
 
 func (p *fakePool) QueryRow(_ context.Context, sql string, _ ...any) pgx.Row {
 	switch {
-	case strings.Contains(sql, "FROM users WHERE username"):
+	case strings.Contains(sql, "FROM users") && strings.Contains(sql, "username"):
 		return fakeRow{scanFn: func(dest ...any) error {
+			// Combined query: SELECT u.id, c.secret (2 dest values)
+			if len(dest) == 2 {
+				if idp, ok := dest[0].(*uuid.UUID); ok {
+					*idp = p.userID
+				}
+				if sp, ok := dest[1].(*string); ok {
+					*sp = p.credHash
+				}
+				return nil
+			}
+			// Fallback: single dest (old format)
 			if len(dest) == 1 {
 				if idp, ok := dest[0].(*uuid.UUID); ok {
 					*idp = p.userID

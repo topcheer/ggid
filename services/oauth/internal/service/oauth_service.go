@@ -1729,26 +1729,21 @@ func (s *OAuthService) PasswordGrant(ctx context.Context, req *PasswordGrantRequ
 	var tenantID uuid.UUID = req.TenantID
 
 	if s.pool != nil {
-		// Look up user by username within the tenant
-		// Use set_config() inline to satisfy RLS on the users table
+		// Single query: look up user + credential hash in one go.
+		// Uses set_config() to satisfy RLS on the users table within this statement.
 		var dbUserID uuid.UUID
+		var credHash string
 		err := s.pool.QueryRow(ctx, `
-			SELECT id FROM users WHERE username = $1 AND tenant_id = $2 AND status = 'active'
+			SELECT u.id, c.secret
+			FROM users u
+			JOIN credentials c ON c.user_id = u.id AND c.type = 'password'
+			WHERE u.username = $1 AND u.tenant_id = $2 AND u.status = 'active'
 			  AND set_config('app.tenant_id', $2::text, true) IS NOT NULL`,
-			req.Username, req.TenantID).Scan(&dbUserID)
+			req.Username, req.TenantID).Scan(&dbUserID, &credHash)
 		if err != nil {
 			return nil, errors.Unauthenticated("invalid credentials")
 		}
-
-		// Verify password against credentials table. A lookup failure or
-		// missing credential MUST fail closed — never skip verification.
-		var credHash string
-		scanErr := s.pool.QueryRow(ctx, `
-			SELECT c.secret FROM credentials c
-			JOIN users u ON u.id = c.user_id
-			WHERE u.username = $1 AND u.tenant_id = $2 AND c.type = 'password'`,
-			req.Username, req.TenantID).Scan(&credHash)
-		if scanErr != nil || credHash == "" {
+		if credHash == "" {
 			return nil, errors.Unauthenticated("invalid credentials")
 		}
 
