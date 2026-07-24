@@ -2659,3 +2659,7 @@ Inv=200 Post=201 Ord=200 Perms= Refresh=NO_RT ErrToken=401 Hacks:0 ✅ — 244th
 PW=access_token+token_type+expires_in(api=200) CC=access_token+token_type+expires_in(api=403) SDK_fields:Go=3 Node=2 Py=5 Rb=2 Hacks:0 ✅ — 245th clean cycle.
 
 ### Next Dimension: 2 — Cycle 256
+## Cycle 256: D2 RBAC Boundary DEEP (Round 430)
+JWT=[ERP Admin:9perms] Inv=200 OrdApprove=405 PlatUsers=403(exp403) PlatRoles=403(exp403) Fake=401(exp401) Hacks:0 ✅ — 246th clean cycle.
+
+### Next Dimension: 3 — Cycle 257
