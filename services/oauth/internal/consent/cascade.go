@@ -252,7 +252,7 @@ func (e *Engine) revokeTokensForScope(ctx context.Context, userID, scope string)
 	}
 	// Revoke refresh tokens containing the scope.
 	rows, err := e.pool.Query(ctx,
-		`UPDATE refresh_tokens SET revoked = TRUE, revoked_at = now() WHERE user_id = $1 AND scope @> $2::text[] RETURNING id::text`,
+		`UPDATE refresh_tokens SET revoked_at = now() WHERE revoked_at IS NULL AND user_id = $1 AND scope @> $2::text[] RETURNING id::text`,
 		userID, []string{scope})
 	if err != nil {
 		return nil
@@ -296,7 +296,7 @@ func (e *Engine) revokeAllTokens(ctx context.Context, userID string) []string {
 	if e.pool == nil {
 		return []string{"all_tokens_revoked"}
 	}
-	ct, err := e.pool.Exec(ctx, `UPDATE refresh_tokens SET revoked = TRUE WHERE user_id = $1`, userID)
+	ct, err := e.pool.Exec(ctx, `UPDATE refresh_tokens SET revoked_at = now() WHERE revoked_at IS NULL AND user_id = $1`, userID)
 	if err != nil {
 		return nil
 	}

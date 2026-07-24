@@ -51,7 +51,7 @@ func (s *pgConsentStore) EnsureSchema(ctx context.Context) error {
 		return nil
 	}
 	_, err := s.pool.Exec(ctx, `
-		CREATE TABLE IF NOT EXISTS oauth_consent_records (
+		CREATE TABLE IF NOT EXISTS consent_records (
 			id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
 			tenant_id UUID NOT NULL,
 			user_id UUID NOT NULL,
@@ -62,7 +62,7 @@ func (s *pgConsentStore) EnsureSchema(ctx context.Context) error {
 			withdrawn BOOLEAN DEFAULT FALSE,
 			withdrawn_at TIMESTAMPTZ
 		);
-		CREATE INDEX IF NOT EXISTS idx_oauth_consent_key ON oauth_consent_records(tenant_id, user_id, client_id, withdrawn);
+		CREATE INDEX IF NOT EXISTS idx_oauth_consent_key ON consent_records(tenant_id, user_id, client_id, status);
 	`)
 	return err
 }
@@ -76,9 +76,8 @@ func (s *pgConsentStore) Get(ctx context.Context, tenantID uuid.UUID, userID uui
 	var withdrawn bool
 	err := s.pool.QueryRow(ctx, `
 		SELECT id, tenant_id, user_id, client_id, scopes, granted_at, expires_at
-		FROM oauth_consent_records
-		WHERE tenant_id=$1 AND user_id=$2 AND client_id=$3 AND withdrawn=FALSE
-		AND (expires_at IS NULL OR expires_at > now())
+		FROM consent_records
+			WHERE tenant_id=$1 AND user_id=$2 AND client_id=$3 AND status='active'
 		ORDER BY granted_at DESC LIMIT 1`, tenantID, userID, clientID,
 	).Scan(&rec.ID, &rec.TenantID, &rec.UserID, &rec.ClientID, &scopes, &rec.GrantedAt, &rec.ExpiresAt)
 	if err != nil {
@@ -98,8 +97,8 @@ func (s *pgConsentStore) Save(ctx context.Context, record *ConsentRecord) error 
 	}
 	record.GrantedAt = time.Now().UTC()
 	_, err := s.pool.Exec(ctx, `
-		INSERT INTO oauth_consent_records (id, tenant_id, user_id, client_id, scopes, granted_at, expires_at)
-		VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+		INSERT INTO consent_records (id, tenant_id, user_id, client_id, scopes, granted_at, expires_at, status)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, 'active')`,
 		record.ID, record.TenantID, record.UserID, record.ClientID,
 		record.Scopes, record.GrantedAt, record.ExpiresAt)
 	return err
@@ -110,8 +109,8 @@ func (s *pgConsentStore) Delete(ctx context.Context, tenantID uuid.UUID, userID 
 		return nil
 	}
 	_, err := s.pool.Exec(ctx, `
-		UPDATE oauth_consent_records SET withdrawn=TRUE, withdrawn_at=now()
-		WHERE tenant_id=$1 AND user_id=$2 AND client_id=$3 AND withdrawn=FALSE`,
+		UPDATE consent_records SET status='withdrawn', withdrawn_at=now()
+		WHERE tenant_id=$1 AND user_id=$2 AND client_id=$3 AND status='active'`,
 		tenantID, userID, clientID)
 	return err
 }
