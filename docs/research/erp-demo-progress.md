@@ -2183,3 +2183,7 @@ no_tok=401 ✅ | login=AT+RT ✅ | GET=200 ✅ | POST=201 ✅ | approve=200 ✅ 
 PW:7/7 ✅ | M2M:OK ✅ | API:200 ✅ | JWT:9p+erp_admin ✅ | Hacks:0 ✅ — 131st clean cycle.
 
 ### Next Dimension: 2 — Cycle 142
+## Cycle 142: D2 AuthZ (Round 316)
+Admin(9p): inv 200/201 audit 200 users 403 ✅ | Viewer(4p): inv 200 write 403 ✅ | Fake 401 None 401 ✅ | Hacks:0 ✅ — 132nd clean cycle.
+
+### Next Dimension: 3 — Cycle 143
