@@ -1888,3 +1888,36 @@ no_tok=401 ✅ | login=AT+RT ✅ | GET=200 ✅ | POST=201 ✅ | order approve=20
 PW:7/7 ✅ | M2M:OK ✅ | API:200 ✅ | Hacks:0 ✅ — 83rd clean cycle.
 
 ### Next Dimension: 2 — Cycle 94
+
+## Cycle 94: D2 Authorization Boundaries (Round 268)
+
+**Core Change**: `58d222d57` feat: implement conditional access policy enforcement in login flow — auth service change, additive (policy checks during login).
+
+### RBAC Boundary Results
+
+| Principal | Perms | Inventory R/W | Audit | Users | Order Approve |
+|-----------|-------|--------------|-------|-------|---------------|
+| Admin (ERP Admin) | 9 | 200/201 | 200 | 403 (least-priv) | 200 |
+| Viewer (ERP Viewer) | 4 | 200/403 | — | — | 403 |
+| Fake token | 0 | 401 | — | — | — |
+| No token | 0 | 401 | — | — | — |
+
+**JWT Permissions → API Enforcement Mapping:**
+- `inventory:read` → GET /api/inventory (200)
+- `inventory:write` → POST /api/inventory (201 admin, 403 viewer)
+- `orders:approve` → PUT /api/orders/{id}/approve (200 admin, 403 viewer)
+- `audit:read` → GET /api/audit (200 admin)
+- No `users:read` in ERP scope → GET /api/users = 403 (correct least-privilege)
+
+Hacks: 0 ✅
+
+84th consecutive zero-fix cycle. Conditional access policy verified compatible.
+
+### Three-Layer Alignment
+| Layer | Status |
+|-------|--------|
+| Core | JWT 9 admin / 4 viewer perms + conditional access policy ✅ |
+| SDK | verifyToken parses permissions[] correctly ✅ |
+| Demo | requirePerm enforces: read=200, write=201/403, approve=200/403 ✅ |
+
+### Next Dimension: 3 — Cycle 95 (Demo Functional Completeness)
