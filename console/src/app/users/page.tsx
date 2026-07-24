@@ -178,8 +178,8 @@ export default function UsersPage() {
       }
       setFormSuccess(`User "${username}" created successfully${role ? ` and assigned role` : ""}.`);
       setShowCreate(false);
-      refresh();
-      setTimeout(() => { setFormSuccess(""); }, 4000);
+      setTimeout(() => { refresh(); }, 500);
+      setTimeout(() => { setFormSuccess(""); }, 5000);
     } catch (err) {
       setFormError(err instanceof Error ? err.message : "Failed to create user");
     } finally {
