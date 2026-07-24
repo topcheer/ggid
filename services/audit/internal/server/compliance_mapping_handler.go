@@ -37,7 +37,7 @@ var enhancedFrameworkMappings = map[string][]ComplianceControlMapping{
 		// Security (CC6.x)
 		{"CC6.1", "Logical and Physical Access Controls", "Security", "Auth + MFA + Password Policy", "covered", "SELECT count(*) FROM users WHERE mfa_enabled = true", "password_policy_compliance", "GGID enforces MFA, password complexity, and RBAC"},
 		{"CC6.2", "User Authentication Credentials", "Security", "Auth + Password History + Breach Check", "covered", "SELECT count(*) FROM password_history WHERE created_at > now() - interval '7 days'", "password_history_check", "Password rotation, breach detection, pepper rotation"},
-		{"CC6.3", "Authorization Controls for Access", "Security", "RBAC + ABAC + Policy Engine", "covered", "SELECT count(*) FROM role_assignments WHERE active = true", "rbac_coverage", "Role-based + attribute-based access control via unified PDP"},
+		{"CC6.3", "Authorization Controls for Access", "Security", "RBAC + ABAC + Policy Engine", "covered", "SELECT count(*) FROM user_roles", "rbac_coverage", "Role-based + attribute-based access control via unified PDP"},
 		{"CC6.6", "Logical Access Security Measures", "Security", "JWT + Session Timeout + Revocation", "covered", "SELECT count(*) FROM sessions WHERE expires_at > now()", "session_timeout_compliance", "JWT sessions with configurable timeout and instant revocation"},
 		// Availability (A1.x)
 		{"A1.1", "System Monitoring and Health", "Availability", "Health Check + K8s Probes + Backup", "covered", "SELECT count(*) FROM health_checks WHERE status = 'healthy' AND checked_at > now() - interval '1 hour'", "system_availability", "Kubernetes liveness/readiness probes, PostgreSQL backups, Redis HA"},
@@ -60,7 +60,7 @@ var enhancedFrameworkMappings = map[string][]ComplianceControlMapping{
 		// A.5 Organizational
 		{"A.5.1", "Policies for Information Security", "A.5", "Security Policy + Hardening Docs", "covered", "SELECT count(*) FROM security_policies WHERE active = true", "policy_docs", "Documented information security policies, hardening guides, production deployment docs"},
 		// A.6 People
-		{"A.6.1.1", "Information Security Roles and Responsibilities", "A.6", "RBAC + Admin Roles + SoD", "covered", "SELECT count(*) FROM role_assignments WHERE role_name LIKE '%admin%'", "admin_access", "Role-based admin access with separation of duties checks"},
+		{"A.6.1.1", "Information Security Roles and Responsibilities", "A.6", "RBAC + Admin Roles + SoD", "covered", "SELECT count(*) FROM user_roles ur JOIN roles r ON r.id = ur.role_id WHERE r.key LIKE '%admin%'", "admin_access", "Role-based admin access with separation of duties checks"},
 		// A.8 Asset Management
 		{"A.8.1.1", "Inventory of Assets", "A.8", "NHI Registry + Device Mgmt", "partial", "SELECT count(*) FROM non_human_identities WHERE active = true", "asset_inventory", "Non-human identity registry with risk scoring, device registration and tracking"},
 		{"A.8.2.1", "Classification of Information", "A.8", "Data Classification + PII Tags", "partial", "SELECT count(*) FROM pii_fields WHERE classified = true", "data_classification", "PII field tagging, data classification metadata, field-level encryption"},

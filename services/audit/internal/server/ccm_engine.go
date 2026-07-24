@@ -234,7 +234,7 @@ func (e *CCMEngine) queryAuditChainIntegrity(ctx context.Context) int {
 
 func (e *CCMEngine) queryAdminAccounts(ctx context.Context) int {
 	v := e.queryScalarFloat(ctx, `
-		SELECT count(DISTINCT user_id) FROM role_assignments
+		SELECT count(DISTINCT user_id) FROM user_roles
 		WHERE role_name LIKE '%admin%' AND active = true
 	`)
 	if v < 0 {
