@@ -464,3 +464,6 @@ S1 scope filter 在 binary 中未检出（fresh boot 后可能重部署了旧版
 
 ### 巡航 #21+#22 | 维度 1+2: 认证+授权（第四循环） | 2026-07-24
 全部不变。S1 scope filter 在源码中存在（binary strings 未检出可能因编译优化），硬编码 0, LDAP TLS ✅, TOTP encrypt ✅, 错误吞噬 28, 匿名 401. 近期 commit: UX a11y + ERP cycles — 无安全回归. 无新 P0/P1，静默记录。
+
+### 巡航 #23-25 | 维度 3-5 | 第四循环 | 2026-07-24
+全部不变。revoke DB-backed ✅, dpopCache ❌ OPEN, stateStore ❌ OPEN, PKCE ✅, TLS 1.2+ ✅(7), 硬编码 0, 错误吞噬 28, 匿名 401. ERP stability cycles only. 无新 P0/P1，静默记录。
