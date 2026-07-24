@@ -2691,3 +2691,7 @@ JWT=[ERP Admin:9p] Inv=200 PlatU=403(exp403) PlatR=403(exp403) Fake=401(exp401) 
 Inv=79(id+name+price+sku+stock) Ord=83 Post=201(has_id) JWT_perms=9 Hacks:0 ✅ — 253rd clean.
 
 ### Next Dimension: 4 — Cycle 264
+## Cycle 264: D4 Tenant Isolation (Round 438)
+GoJWT=MATCH GoSelf=200 Cross(NodeTok→Go)=403 NoTok=401 Hacks:0 ✅ — 254th clean.
+
+### Next Dimension: 5 — Cycle 265
