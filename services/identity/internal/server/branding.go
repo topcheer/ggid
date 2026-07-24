@@ -26,7 +26,6 @@ func (h *HTTPHandler) handleBranding(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if len(parts) >= 5 && parts[4] == "saml-config" {
-		// SAML config is stored as system config, redirect to system handler
 		h.handleSystemConfig(w, r)
 		return
 	}
@@ -66,4 +65,14 @@ func (h *HTTPHandler) handleBranding(w http.ResponseWriter, r *http.Request) {
 	default:
 		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 	}
+}
+
+// handleTenantImport handles tenant import sub-path (stub — not yet implemented).
+func (h *HTTPHandler) handleTenantImport(w http.ResponseWriter, r *http.Request) {
+	writeJSONError(w, http.StatusNotFound, "tenant import not implemented")
+}
+
+// handleTenantSessionPolicy handles tenant session-policy sub-path (stub — not yet implemented).
+func (h *HTTPHandler) handleTenantSessionPolicy(w http.ResponseWriter, r *http.Request) {
+	writeJSONError(w, http.StatusNotFound, "tenant session policy not implemented")
 }
