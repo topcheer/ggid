@@ -663,11 +663,40 @@ export default function UserDetailPage() {
                       <span className="text-xs text-gray-400">{t("userDetail.noRoles")}</span>
                     ) : (
                       userRoles.map((role: any) => (
-                        <span key={role.id} className="rounded-full bg-brand-50 px-2.5 py-0.5 text-xs font-medium text-brand-700">
+                        <span key={role.id} className="inline-flex items-center gap-1 rounded-full bg-brand-50 px-2.5 py-0.5 text-xs font-medium text-brand-700">
                           {role.role_name || role.name || role.key || role.role_id}
+                          <button
+                            onClick={() => handleRevokeRole(role.role_id || role.id)}
+                            className="ml-0.5 text-brand-400 hover:text-red-500"
+                            title="Remove role"
+                          >
+                            <X className="h-3 w-3" />
+                          </button>
                         </span>
                       ))
                     )}
+                  </div>
+                  {/* Assign role dropdown */}
+                  <div className="mt-2 flex items-center gap-2">
+                    <select
+                      id="roleSelect"
+                      className="rounded-lg border border-gray-300 px-2 py-1 text-xs dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200"
+                      defaultValue=""
+                    >
+                      <option value="" disabled>Assign role...</option>
+                      {roles.filter((r: any) => !userRoles.some((ur: any) => (ur.role_id || ur.id) === r.id)).map((r: any) => (
+                        <option key={r.id} value={r.id}>{r.name}</option>
+                      ))}
+                    </select>
+                    <button
+                      onClick={() => {
+                        const sel = document.getElementById("roleSelect") as HTMLSelectElement;
+                        if (sel && sel.value) handleAssignRole(sel.value);
+                      }}
+                      className="rounded-lg bg-blue-600 px-3 py-1 text-xs font-medium text-white hover:bg-blue-700"
+                    >
+                      Add
+                    </button>
                   </div>
                 </div>
                 <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-800">
