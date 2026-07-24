@@ -136,6 +136,8 @@ func (h *HTTPHandler) registerRoutes() {
 	h.mux.Handle("/metrics", promhttp.Handler())
 	// Public endpoints (no JWT required) for onboarding/login flow
 	h.mux.HandleFunc("/api/v1/tenants/resolve", h.handleTenantResolve)
+	h.mux.HandleFunc("/api/v1/me/permissions", h.handleMePermissionsWrapper)
+	h.mux.HandleFunc("/api/v1/me", h.handleMeWrapper)
 	h.mux.HandleFunc("/api/v1/system/initialized", h.handleSystemInitialized)
 	h.mux.HandleFunc("/api/v1/system/bootstrap", h.handleSystemBootstrap)
 	h.mux.HandleFunc("/api/v1/system/config", h.handleSystemConfig)
@@ -586,6 +588,11 @@ func (h *HTTPHandler) handleUserByID(w http.ResponseWriter, r *http.Request) {
 		h.handleProfileCompleteness(ctx, userID, w, r)
 	case action == "management-chain" && r.Method == http.MethodGet:
 		h.handleManagementChain(ctx, userID, w, r)
+	case action == "credentials" || action == "sessions" || action == "scim" ||
+		action == "social" || action == "impersonate" || action == "devices":
+		// Return empty state for sub-resources not yet implemented as full endpoints.
+		// Console expects 200 with empty array, not 405.
+		writeJSON(w, http.StatusOK, map[string]any{action: []any{}})
 	default:
 		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 	}
@@ -1434,4 +1441,14 @@ func (h *HTTPHandler) handleUserPermissions(ctx context.Context, userID uuid.UUI
 		perms = append(perms, p)
 	}
 	writeJSON(w, http.StatusOK, map[string]any{"permissions": perms, "total": len(perms)})
+}
+
+// handleMePermissionsWrapper adapts the internal handler to http.HandlerFunc.
+func (h *HTTPHandler) handleMePermissionsWrapper(w http.ResponseWriter, r *http.Request) {
+	h.handleMePermissions(r.Context(), w, r)
+}
+
+// handleMeWrapper adapts the internal handler to http.HandlerFunc.
+func (h *HTTPHandler) handleMeWrapper(w http.ResponseWriter, r *http.Request) {
+	h.handleMe(r.Context(), w, r)
 }

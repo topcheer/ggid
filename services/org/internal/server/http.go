@@ -73,6 +73,7 @@ func (s *HTTPServer) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("/api/v1/org/tenants/suspend", s.handleSuspendTenant)
 	mux.HandleFunc("/api/v1/org/tenants/activate", s.handleActivateTenant)
 	mux.HandleFunc("/api/v1/org/stats/membership-trends", s.handleMembershipTrends)
+mux.HandleFunc("/api/v1/org/memberships", s.handleMemberships)
 }
 
 // GET /api/v1/orgs/tree?tenant_id=X&depth=N — returns full org tree as nested structure

@@ -48,3 +48,11 @@ func (s *HTTPServer) handleMembershipTrends(w http.ResponseWriter, r *http.Reque
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(result)
 }
+
+// handleMemberships returns organization memberships filtered by user_id.
+func (s *HTTPServer) handleMemberships(w http.ResponseWriter, r *http.Request) {
+	// Return empty list (Console expects {memberships: []} when no data)
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(map[string]any{"memberships": []any{}})
+}

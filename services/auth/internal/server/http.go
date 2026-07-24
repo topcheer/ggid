@@ -202,6 +202,7 @@ func (h *Handler) registerRoutes() {
 	h.mux.HandleFunc("/api/v1/auth/mfa/backup-codes", h.backupCodesRemaining) // GET alias
 	h.mux.HandleFunc("/api/v1/auth/mfa/backup-codes/generate", h.backupCodesGenerate)
 	h.mux.HandleFunc("/api/v1/auth/mfa/backup-codes/remaining", h.backupCodesRemaining)
+h.mux.HandleFunc("/api/v1/auth/mfa/backup", h.backupCodesGenerate) // Console alias
 
 	// Password policy config endpoint
 	h.mux.HandleFunc("/api/v1/auth/password/policy", h.passwordPolicy)
