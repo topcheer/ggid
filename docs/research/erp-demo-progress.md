@@ -2300,3 +2300,7 @@ Login=994ch Inv=200 Ord=200 Post=201 ✅ — 160th clean cycle.
 UPSTREAM: 5cd6bd208 — conditional-access/review-schedules null crash fix — COMPAT OK
 
 ### Next Dimension: 1 — Cycle 171
+## Cycle 171: D1 Password Grant (Round 345)
+5/5 demos authenticated ✅ — 161st clean cycle.
+
+### Next Dimension: 2 — Cycle 172
