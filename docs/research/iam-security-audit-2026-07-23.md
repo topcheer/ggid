@@ -479,3 +479,19 @@ secrets 0, swallow 28, anon 401, tamper clean (756). 近期: API key scope-based
 
 ### 巡航 #29-30 | 第五循环 | 2026-07-25
 secrets 0, swallow 28, anon 401, tamper clean (834 verified). ERP stability cycles only. 无新 P0/P1，静默记录。
+
+### 巡航 #31 | arch_pm 20+ commits 安全影响评估 | 2026-07-25
+
+**正面安全改进确认**：
+- ✅ CAE 条件访问策略执行（之前 stub，现在登录拦截）
+- ✅ API Key scope 强制执行（middleware.go:595 — read-only key 不能写）
+- ✅ Consent cascade 修复（21处正确表引用 refresh_tokens + sessions）
+- ✅ 硬编码密钥 0（稳定）
+- ✅ Tamper clean (898 verified)
+
+**安全关注项**：
+- Bulk import 支持 plaintext 密码 — 需确认导入后是否触发 re-hash（P2）
+- impersonate crash 修复（31dae9639）— roles API 返回类型变化，需确认不引入提权面（观察）
+- Migration 050 创建 30+ 表 — 无安全风险（DDL only）
+
+**全部指标稳定**：secrets 0, swallow 28, sync.Map 13, anon 401. 无新 P0/P1.
