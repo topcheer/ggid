@@ -183,7 +183,7 @@ export default function LoginPage() {
       } catch {}
 
       // Sync WebAuthn signal if passkey support is available
-      syncSignalAfterLogin(data.access_token).catch(() => {});
+      syncSignalAfterLogin().catch(() => {});
 
       // Save redirect target
       const params = new URLSearchParams(window.location.search);

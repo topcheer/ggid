@@ -68,7 +68,13 @@ const DEFAULT_LOCKOUT: LockoutPolicy = {
 
 export default function SecurityPolicyPage() {
   const t = useTranslations();
-  const { confirm } = useConfirm();
+  const confirmCtx = useConfirm();
+  const confirm: (opts: {
+    title: string;
+    description?: string;
+    variant?: "danger" | "warning" | "info";
+    onConfirm: () => void | Promise<void>;
+  }) => void = confirmCtx.confirm;
   const [activeTab, setActiveTab] = useState<TabId>("passwordPolicy");
 
   const tabs: { id: TabId; label: string; icon: typeof Shield }[] = [

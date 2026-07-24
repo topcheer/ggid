@@ -90,7 +90,7 @@ export default function UsersPage() {
         if (!u.username.toLowerCase().includes(q) && !u.email.toLowerCase().includes(q)) return false;
       }
       if (roleFilter) {
-        const userRoles = (u.roles as any[]) || [];
+        const userRoles = ((u as any).roles as any[]) || [];
         if (!userRoles.some((r: any) => {
           const name = typeof r === "string" ? r : (r.role_name || r.name || r.key || "");
           return name.toLowerCase().includes(roleFilter.toLowerCase());
@@ -247,7 +247,7 @@ export default function UsersPage() {
     try {
       await Promise.all(ids.map((id) => apiFetch(`/api/v1/users/${id}`, { method: "DELETE" })));
       const deletedIds = new Set(ids);
-      setUsers(prev => prev.filter((u: any) => !deletedIds.has(u.id)));
+      refresh();
       setSelected(new Set());
       setFormSuccess(`${ids.length === 1 ? `User "${label}"` : `${ids.length} users`} deleted.`);
       setTimeout(() => setFormSuccess(""), 3000);

@@ -124,7 +124,7 @@ export default function PasswordPolicyPage() {
             require_digit: data.require_digit ?? data.RequireDigit ?? defaultConfig.require_digit,
             require_special: data.require_special ?? data.RequireSpecial ?? defaultConfig.require_special,
             prevent_username: data.prevent_username ?? defaultConfig.prevent_username,
-            prevent_common: data.prevent_common ?? (data.Blacklist?.length > 0) ?? defaultConfig.prevent_common,
+            prevent_common: data.prevent_common || (data.Blacklist?.length ? true : false) || defaultConfig.prevent_common,
             history_count: data.history_count ?? data.HistoryCount ?? defaultConfig.history_count,
             expiry_days: data.expiry_days ?? data.max_age_days ?? data.MaxAgeDays ?? defaultConfig.expiry_days,
           });

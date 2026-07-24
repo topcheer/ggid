@@ -294,7 +294,7 @@ export default function WebhooksPage() {
       setSavedAck(false);
       loadWebhooks();
     } catch {
-      setError("Failed to create webhook");
+      setMsg({ type: "error", text: "Failed to rotate secret" });
       setSecretCopied(false);
       setSavedAck(false);
     }

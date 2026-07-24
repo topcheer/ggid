@@ -54,7 +54,7 @@ export default function PasswordMigrationPage() {
   const t = useTranslations();
   const [activeTab, setActiveTab] = useState<TabId>("overview");
 
-  const tabs: { id: TabId; label: string; icon: typeof KeyRound }[] = [
+  const tabs: { id: TabId; label: string; icon: any }[] = [
     { id: "overview", label: t("passwordMigration.tabs.overview"), icon: PieChart },
     { id: "config", label: t("passwordMigration.tabs.config"), icon: Settings },
     { id: "users", label: t("passwordMigration.tabs.users"), icon: Users },
@@ -132,7 +132,7 @@ function OverviewTab() {
           deprecation_level: data.deprecation_level ?? "read_only",
         });
       } else {
-        setStats({ total_users: 0, passwordless_users: 0, pending_users: 0, nudged_users: 0 });
+        setStats({ total_users: 0, passwordless_users: 0, pending_users: 0, nudged_users: 0, migration_rate: 0, deprecation_level: "off" });
       }
     } catch {
       setStats(null);
@@ -398,7 +398,7 @@ function ConfigTab() {
                 </div>
                 <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
 // @ts-ignore
-                  {levelDescriptions[lvl.value]}
+                  {(levelDescriptions as Record<string, string>)[lvl.value]}
                 </div>
               </button>
             );

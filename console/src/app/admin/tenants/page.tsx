@@ -12,8 +12,7 @@ const API_BASE = process.env.NEXT_PUBLIC_API_URL || "";
 type TabId = "list" | "create";
 
 interface Tenant {
-  id: string; name: string; plan: string; user_count: number;
-  name: string; slug?: string; plan: string; user_count: number; status: string; created: string; demo?: boolean;
+  id: string; name: string; slug?: string; plan: string; user_count: number; status: string; created: string; demo?: boolean;
 }
 
 const planColors: Record<string, string> = {

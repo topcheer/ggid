@@ -338,14 +338,14 @@ function CreateCampaign({ onLaunched }: { onLaunched: () => void }) {
       {/* Navigation */}
       <div className="flex items-center justify-between mt-6 pt-4 border-t border-gray-200 dark:border-gray-700 dark:border-gray-800">
         {step > 0 ? (
-          <button onClick={() => setStep(step - 1)} className="flex items-center gap-1.5 px-4 py-2 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 dark:text-gray-300 rounded-lg text-sm font-medium">
+          <button onClick={() => setStep((step - 1) as CreateStep)} className="flex items-center gap-1.5 px-4 py-2 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 dark:text-gray-300 rounded-lg text-sm font-medium">
             <ChevronLeft className="w-4 h-4" />
             {t("enrollmentCampaign.create.back")}
           </button>
         ) : <div />}
 
         {step < 3 ? (
-          <button onClick={() => setStep(step + 1)} disabled={!canNext()}
+          <button onClick={() => setStep((step + 1) as CreateStep)} disabled={!canNext()}
             className="flex items-center gap-1.5 px-6 py-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white rounded-lg text-sm font-medium">
             {t("enrollmentCampaign.create.next")}
             <ChevronRight className="w-4 h-4" />

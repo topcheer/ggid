@@ -43,7 +43,11 @@ export default function ReviewSchedulesPage() {
     setLoading(true);
     try {
       const res = await fetch(`${API_BASE}/api/v1/identity/review-schedules`, { headers: { ...authHeader() } });
-      if (res.ok) { const d = await res.json(); setSchedules(d.schedules || d || []); }
+      if (res.ok) {
+        const d = await res.json();
+        const raw = d?.schedules ?? d?.items ?? d ?? [];
+        setSchedules(Array.isArray(raw) ? raw : []);
+      }
       else { setSchedules([]); }
     } catch { setSchedules([]); }
     setHistory([]);
@@ -125,7 +129,7 @@ function SchedulesTab({ schedules, setSchedules }: { schedules: Schedule[]; setS
           </div>
           <div className="flex flex-wrap items-center gap-4 text-xs text-gray-500">
             <span><Shield className="w-3 h-3 inline mr-1" />{t("reviewSchedules.schedules.scope")}: <span className="text-gray-700 dark:text-gray-300 dark:text-gray-300">{s.scope}</span></span>
-            <span><Clock className="w-3 h-3 inline mr-1" />{t("reviewSchedules.schedules.nextRun")}: <span className="text-gray-700 dark:text-gray-300 dark:text-gray-300">{new Date(s.next_run).toLocaleDateString()}</span></span>
+            <span><Clock className="w-3 h-3 inline mr-1" />{t("reviewSchedules.schedules.nextRun")}: <span className="text-gray-700 dark:text-gray-300 dark:text-gray-300">{s.next_run ? new Date(s.next_run).toLocaleDateString() : "—"}</span></span>
             <span><Users className="w-3 h-3 inline mr-1" />{t("reviewSchedules.schedules.reviewer")}: <span className="text-gray-700 dark:text-gray-300 dark:text-gray-300">{s.reviewer}</span></span>
           </div>
         </div>

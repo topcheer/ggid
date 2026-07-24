@@ -149,7 +149,7 @@ export default function SecurityCenterPage() {
   // Heatmap helpers
   const days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
   const hours = Array.from({ length: 24 }, (_, i) => i);
-  const maxCount = Math.max(1, ...heatmap.map((c: any) => c.count));
+  const maxCount = Math.max(1, ...(heatmap || []).map((c: any) => c.count));
   const heatColor = (count: number) => {
     const ratio = count / maxCount;
     if (ratio === 0) return "bg-gray-100 dark:bg-gray-700";
@@ -159,7 +159,7 @@ export default function SecurityCenterPage() {
     return "bg-red-500 dark:bg-red-600";
   };
   const getCell = (day: string, hour: number) =>
-    heatmap.find((c: any) => c.day === day && c.hour === hour)?.count ?? 0;
+    (heatmap || []).find((c: any) => c.day === day && c.hour === hour)?.count ?? 0;
 
   const addAllow = () => {
     if (!allowInput.trim()) return;
@@ -217,25 +217,25 @@ export default function SecurityCenterPage() {
         <ThreatCard
           icon={AlertTriangle}
           label="Failed Logins (24h)"
-          value={overview.failed_logins_24h}
+          value={overview?.failed_logins_24h ?? 0}
           color="amber"
         />
         <ThreatCard
           icon={Lock}
           label="Locked Accounts"
-          value={overview.locked_accounts}
+          value={overview?.locked_accounts ?? 0}
           color="red"
         />
         <ThreatCard
           icon={Ban}
           label="Suspicious IPs"
-          value={overview.suspicious_ips}
+          value={overview?.suspicious_ips ?? 0}
           color="orange"
         />
         <ThreatCard
           icon={ShieldAlert}
           label="Active Threats"
-          value={overview.active_threats}
+          value={overview?.active_threats ?? 0}
           color="red"
         />
       </div>

@@ -91,8 +91,8 @@ export default function ImpersonatePage() {
       ).catch(() => null);
 
       if (data) {
-        const list = Array.isArray(data) ? data : data.sessions || data.items || [];
-        setHistory(list);
+        const raw = Array.isArray(data) ? data : data.sessions || data.items || [];
+        setHistory(Array.isArray(raw) ? raw : []);
       }
     } catch {
       // Silent fail — history is best-effort
@@ -443,9 +443,9 @@ export default function ImpersonatePage() {
                                 </p>
                               )}
                             </div>
-                            {user.roles && user.roles.length > 0 && (
+                            {Array.isArray(user.roles) && user.roles.length > 0 && (
                               <div className="flex flex-shrink-0 flex-wrap justify-end gap-1">
-                                {user.roles.slice(0, 2).map((r: any) => (
+                                {(user.roles).slice(0, 2).map((r: any) => (
                                   <span key={r} className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${roleBadgeColor(r)}`}>
                                     {r}
                                   </span>
@@ -508,9 +508,9 @@ export default function ImpersonatePage() {
                     <KeyRound className="h-3.5 w-3.5 text-brand-600" />
                     Current Permissions Summary
                   </p>
-                  {selectedUser.roles && selectedUser.roles.length > 0 ? (
+                  {Array.isArray(selectedUser.roles) && selectedUser.roles.length > 0 ? (
                     <div className="flex flex-wrap gap-1.5">
-                      {selectedUser.roles.map((r: any) => (
+                      {(selectedUser.roles).map((r: any) => (
                         <span key={r} className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${roleBadgeColor(r)}`}>
                           {r}
                         </span>

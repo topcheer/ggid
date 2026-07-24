@@ -308,11 +308,11 @@ export default function OAuthClientNewPage() {
           {step < 3 && (
             <div className="flex items-center justify-between mt-6 pt-4 border-t border-gray-200 dark:border-gray-700 dark:border-gray-800">
               {step > 0 ? (
-                <button onClick={() => setStep(step - 1)} className="flex items-center gap-1.5 px-4 py-2 bg-gray-100 dark:bg-gray-700 dark:bg-gray-800 text-gray-600 dark:text-gray-400 dark:text-gray-400 rounded-lg text-sm font-medium">
+                <button onClick={() => setStep((step - 1) as Step)} className="flex items-center gap-1.5 px-4 py-2 bg-gray-100 dark:bg-gray-700 dark:bg-gray-800 text-gray-600 dark:text-gray-400 dark:text-gray-400 rounded-lg text-sm font-medium">
                   <ChevronLeft className="w-4 h-4" />{t("oauthWizard.nav.back")}
                 </button>
               ) : <div />}
-              <button onClick={() => setStep(step + 1)} disabled={!canNext()}
+              <button onClick={() => setStep((step + 1) as Step)} disabled={!canNext()}
                 className="flex items-center gap-1.5 px-6 py-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white rounded-lg text-sm font-medium">
                 {t("oauthWizard.nav.next")}<ChevronRight className="w-4 h-4" />
               </button>

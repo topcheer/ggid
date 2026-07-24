@@ -335,7 +335,7 @@ function PolicyTester({ policies }: { policies: Policy[] }) {
       let matched: Policy | undefined;
       for (const p of [...policies].sort((a: any, b: any) => a.priority - b.priority)) {
         if (!p.enabled) continue;
-        const results = p.conditions.map((c: any) => {
+        const results = (Array.isArray(p.conditions) ? p.conditions : []).map((c: any) => {
           const inputVal = (input as Record<string, unknown>)[c.operand];
           const numVal = typeof inputVal === "number" ? inputVal : parseFloat(String(inputVal)) || 0;
           const condVal = parseFloat(c.value) || 0;
