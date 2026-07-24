@@ -2647,3 +2647,7 @@ Inv=79(id+name+price+sku+stock) Ord=79 Post=201(has_id) jwt_perms=9 Hacks:0 ✅ 
 GoJWT=MATCH CsJWT= GoSelf=200 CrossT(GoTok→CsRes)=401 CrossT(CsTok+CsHdr)=401 NoTok=401 Hacks:0 ✅ — 242nd clean cycle.
 
 ### Next Dimension: 5 — Cycle 253
+## Cycle 253: D5 SDK Consistency DEEP (Round 427)
+All 7 SDKs verified: login/verifyToken/introspectToken/getUserInfo present. Ruby login=client.rb:51 ✅. Hacks:0 ✅ — 243rd clean cycle.
+
+### Next Dimension: 6 — Cycle 254
