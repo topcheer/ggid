@@ -2119,3 +2119,7 @@ Admin(9p): inv 200/201 audit 200 users 403 ✅ | Viewer(4p): inv 200 write 403 �
 Go inv PASS ✅ | orders PASS ✅ | POST→GET PASS ✅ | Perms verify=9 PASS ✅ | Node M2M PASS ✅ | Hacks:0 ✅ — 115th clean cycle.
 
 ### Next Dimension: 4 — Cycle 126
+## Cycle 126: D4 Tenant Isolation (Round 300)
+Go→Go=200 ✅ | Node→Go=403 ✅ | Fake=401 ✅ | None=401 ✅ | JWT=YES ✅ | Hacks:0 ✅ — 116th clean cycle.
+
+### Next Dimension: 5 — Cycle 127
