@@ -99,7 +99,7 @@ export default function SIEMMetricsPage() {
             <div className="rounded-lg border dark:border-gray-800 p-4">
               <h3 className="font-semibold mb-3">Error Breakdown</h3>
               <div className="space-y-2">
-                {data.error_breakdown.map((e: any, i: any) => (
+                {(Array.isArray(data.error_breakdown) ? data.error_breakdown : []).map((e: any, i: any) => (
                   <div key={i} className="flex items-center gap-3">
                     <span className="text-xs text-gray-500 w-48 truncate">{e.error_type}</span>
                     <div className="flex-1 h-6 rounded bg-gray-100 dark:bg-gray-800 overflow-hidden">

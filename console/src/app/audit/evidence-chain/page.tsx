@@ -125,7 +125,7 @@ export default function EvidenceChainPage() {
               <h3 className="font-semibold">Chain of Custody ({data.entries.length} entries)</h3>
             </div>
             <div className="relative">
-              {data.entries.map((entry: any, i: any) => {
+              {(Array.isArray(data.entries) ? data.entries : []).map((entry: any, i: any) => {
                 const StatusIcon = statusIcons[entry.status] || AlertCircle;
                 return (
                   <div key={entry.id} className="relative flex gap-4 px-4 py-4">

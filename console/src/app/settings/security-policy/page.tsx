@@ -558,7 +558,7 @@ function MethodPoliciesTab() {
                   <td className="py-3 px-3 font-medium text-gray-900 dark:text-white dark:text-white">{p.group}</td>
                   <td className="py-3 px-3">
                     <div className="flex flex-wrap gap-1">
-                      {p.required_methods.map((m: any) => (
+                      {(Array.isArray(p.required_methods) ? p.required_methods : []).map((m: any) => (
                         <span key={m} className="px-2 py-0.5 text-xs bg-green-100 text-green-700 dark:bg-green-950 dark:text-green-300 rounded">
                           {t(`securityPolicy.methodPolicies.${m}`)}
                         </span>
@@ -567,7 +567,7 @@ function MethodPoliciesTab() {
                   </td>
                   <td className="py-3 px-3">
                     <div className="flex flex-wrap gap-1">
-                      {p.forbidden_methods.map((m: any) => (
+                      {(Array.isArray(p.forbidden_methods) ? p.forbidden_methods : []).map((m: any) => (
                         <span key={m} className="px-2 py-0.5 text-xs bg-red-100 text-red-700 dark:bg-red-950 dark:text-red-300 rounded">
                           {t(`securityPolicy.methodPolicies.${m}`)}
                         </span>

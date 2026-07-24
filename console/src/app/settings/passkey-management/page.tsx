@@ -199,7 +199,7 @@ export default function PasskeyManagementPage() {
                 <td className="p-3"><span className={`px-2 py-0.5 rounded text-xs ${platformColor(p.platform)}`}>{p.platform}</span></td>
                 <td className="p-3 text-gray-500">{p.created}</td>
                 <td className="p-3 text-gray-500">{p.lastUsed}</td>
-                <td className="p-3"><div className="flex flex-wrap gap-1">{p.transports.map(t => <span key={t} className="px-1.5 py-0.5 bg-gray-100 dark:bg-gray-700 rounded text-xs font-mono">{t}</span>)}</div></td>
+                <td className="p-3"><div className="flex flex-wrap gap-1">{(Array.isArray(p.transports) ? p.transports : []).map(t => <span key={t} className="px-1.5 py-0.5 bg-gray-100 dark:bg-gray-700 rounded text-xs font-mono">{t}</span>)}</div></td>
                 <td className="p-3"><span className={`px-2 py-0.5 rounded text-xs capitalize ${syncColor(p.syncStatus)}`}>{p.syncStatus.replace('-', ' ')}</span></td>
                 <td className="p-3">{p.backupEligible ? <span className="text-green-600 text-xs">Eligible</span> : <span className="text-gray-400 text-xs">N/A</span>}</td>
                 <td className="p-3"><button onClick={() => setRevokeTarget(p)} className="text-red-600 text-xs hover:underline">Revoke</button></td>

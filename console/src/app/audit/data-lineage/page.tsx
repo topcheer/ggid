@@ -150,7 +150,7 @@ export default function DataLineagePage() {
               <h3 className="font-semibold flex items-center gap-2"><GitBranch className="w-4 h-4" /> Lineage Graph</h3>
             </div>
             <div className="p-4">
-              {data.nodes.map((node: any) => {
+              {(Array.isArray(data.nodes) ? data.nodes : []).map((node: any) => {
                 const Icon = typeIcons[node.type] || FileText;
                 return (
                   <div key={node.id} className="flex items-center gap-3 mb-2 last:mb-0">
@@ -175,7 +175,7 @@ export default function DataLineagePage() {
               <h3 className="font-semibold flex items-center gap-2"><FileText className="w-4 h-4" /> Access Events</h3>
             </div>
             <div className="divide-y dark:divide-gray-800 max-h-48 overflow-y-auto">
-              {data.access_events.map((evt: any, i: any) => (
+              {(Array.isArray(data.access_events) ? data.access_events : []).map((evt: any, i: any) => (
                 <div key={i} className="px-4 py-2 flex items-center justify-between text-sm">
                   <div className="flex items-center gap-3">
                     <span className="font-medium">{evt.actor}</span>
@@ -197,7 +197,7 @@ export default function DataLineagePage() {
               <h3 className="font-semibold flex items-center gap-2"><Download className="w-4 h-4" /> Downstream Consumers</h3>
             </div>
             <div className="divide-y dark:divide-gray-800">
-              {data.downstream_consumers.map((c: any, i: any) => (
+              {(Array.isArray(data.downstream_consumers) ? data.downstream_consumers : []).map((c: any, i: any) => (
                 <div key={i} className="px-4 py-2 flex items-center justify-between text-sm">
                   <div className="flex items-center gap-2">
                     <span className="font-medium">{c.name}</span>

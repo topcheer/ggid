@@ -194,7 +194,7 @@ function TesterTab() {
         {pw && result.patterns.length > 0 && (
           <div className="mt-3 flex items-center gap-2 flex-wrap">
             <span className="text-xs text-gray-500">{t("passwordStrength.tester.patternDetected")}:</span>
-            {result.patterns.map((p: any, i: number) => (
+            {(Array.isArray(result.patterns) ? result.patterns : []).map((p: any, i: number) => (
               <span key={i} className="px-2 py-0.5 text-xs bg-red-100 text-red-700 dark:bg-red-950 dark:text-red-300 rounded">{p}</span>
             ))}
           </div>
@@ -213,7 +213,7 @@ function TesterTab() {
               </div>
             ) : (
               <ul className="space-y-1">
-                {result.suggestions.map((s: any, i: number) => (
+                {(Array.isArray(result.suggestions) ? result.suggestions : []).map((s: any, i: number) => (
                   <li key={i} className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300 dark:text-gray-300">
                     <X className="w-3 h-3 text-red-400" />{s}
                   </li>

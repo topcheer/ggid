@@ -226,7 +226,7 @@ export default function DeprovisioningPage() {
           <div className={cardCls}>
             <h3 className="mb-3 text-sm font-semibold uppercase text-gray-500">Action Results</h3>
             <div className="space-y-2">
-              {result.actions.map((a: any, i: any) => (
+              {(Array.isArray(result.actions) ? result.actions : []).map((a: any, i: any) => (
                 <div key={i} className="flex items-center justify-between rounded-lg border border-gray-200 p-3 dark:border-gray-700">
                   <span className="text-sm text-gray-700 dark:text-gray-300">{a.name}</span>
                   <div className="flex items-center gap-2">

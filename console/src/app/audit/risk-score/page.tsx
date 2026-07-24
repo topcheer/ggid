@@ -150,7 +150,7 @@ export default function RiskScorePage() {
             <p className="py-6 text-center text-sm text-gray-400">No significant risk factors detected.</p>
           ) : (
             <div className="space-y-3">
-              {data.factors.map((f: any, i: any) => {
+              {(Array.isArray(data.factors) ? data.factors : []).map((f: any, i: any) => {
                 const colors = SEVERITY_COLOR[f.severity as keyof typeof SEVERITY_COLOR];
                 return (
                   <div key={i} className="space-y-1">
@@ -181,7 +181,7 @@ export default function RiskScorePage() {
             <p className="py-6 text-center text-sm text-gray-400">No recommendations at this time.</p>
           ) : (
             <div className="space-y-3">
-              {data.recommendations.map((r: any, i: any) => (
+              {(Array.isArray(data.recommendations) ? data.recommendations : []).map((r: any, i: any) => (
                 <div key={i} className="rounded-lg border border-gray-200 p-3 dark:border-gray-700">
                   <div className="flex items-center justify-between">
                     <span className="text-sm font-medium text-gray-700 dark:text-gray-300">{r.title}</span>
