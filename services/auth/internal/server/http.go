@@ -554,6 +554,7 @@ h.mux.HandleFunc("/api/v1/auth/mfa/backup", h.backupCodesGenerate) // Console al
 	h.mux.HandleFunc("/api/v1/auth/cae/status", h.handleCAE)
 	h.mux.HandleFunc("/api/v1/auth/cae/run", h.handleCAE)
 	h.mux.HandleFunc("/api/v1/auth/cae/log", h.handleCAE)
+	h.mux.HandleFunc("/api/v1/auth/cae/triggers", h.handleCAE)
 
 	// Batch 3C: 14 additional auth endpoints
 	h.registerBatch3CRoutes()

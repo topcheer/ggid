@@ -197,6 +197,62 @@ function TriggersTab() {
   const t = useTranslations();
   const [triggers, setTriggers] = useState<Trigger[]>([]);
   const [showForm, setShowForm] = useState(false);
+  const [loading, setLoading] = useState(true);
+
+  const loadTriggers = useCallback(async () => {
+    try {
+      const res = await fetch("/api/v1/auth/cae/triggers", { headers: { ...authHeader(), "X-Tenant-ID": localStorage.getItem("ggid_tenant_id") || "" } });
+      if (res.ok) {
+        const data = await res.json();
+        const raw = data?.triggers ?? data ?? [];
+        setTriggers(Array.isArray(raw) ? raw : []);
+      } else { setTriggers([]); }
+    } catch { setTriggers([]); }
+    setLoading(false);
+  }, []);
+
+  useEffect(() => { loadTriggers(); }, [loadTriggers]);
+
+  const toggleTrigger = async (id: string) => {
+    const tr = triggers.find((x) => x.id === id);
+    if (!tr) return;
+    const updated = { ...tr, enabled: !tr.enabled };
+    setTriggers(triggers.map((x) => x.id === id ? updated : x));
+    try {
+      await fetch(`/api/v1/auth/cae/triggers?id=${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json", ...authHeader(), "X-Tenant-ID": localStorage.getItem("ggid_tenant_id") || "" },
+        body: JSON.stringify({ event: tr.event, condition: tr.condition, action: tr.action, enabled: !tr.enabled }),
+      });
+    } catch { /* optimistic update, revert on error */ loadTriggers(); }
+  };
+
+  const deleteTrigger = async (id: string) => {
+    if (!confirm(t("caeMonitor.triggers.confirmDelete"))) return;
+    setTriggers(triggers.filter((x) => x.id !== id));
+    try {
+      await fetch(`/api/v1/auth/cae/triggers?id=${id}`, {
+        method: "DELETE",
+        headers: { ...authHeader(), "X-Tenant-ID": localStorage.getItem("ggid_tenant_id") || "" },
+      });
+    } catch { loadTriggers(); }
+  };
+
+  const addTrigger = async (tr: Trigger) => {
+    setShowForm(false);
+    try {
+      const res = await fetch("/api/v1/auth/cae/triggers", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", ...authHeader(), "X-Tenant-ID": localStorage.getItem("ggid_tenant_id") || "" },
+        body: JSON.stringify({ event: tr.event, condition: tr.condition, action: tr.action }),
+      });
+      if (res.ok) {
+        await loadTriggers();
+        return;
+      }
+    } catch {}
+    setTriggers([...triggers, tr]);
+  };
 
   const resultColors: Record<string, string> = {
     revoke: "bg-red-100 text-red-700 dark:bg-red-950 dark:text-red-300",
@@ -204,6 +260,8 @@ function TriggersTab() {
     challenge: "bg-purple-100 text-purple-700 dark:bg-purple-950 dark:text-purple-300",
     continue: "bg-green-100 text-green-700 dark:bg-green-950 dark:text-green-300",
   };
+
+  if (loading) return <Spinner />;
 
   return (
     <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-6">
@@ -218,7 +276,7 @@ function TriggersTab() {
       </div>
 
       {showForm && (
-        <TriggerForm onAdd={(tr) => { setTriggers([...triggers, tr]); setShowForm(false); }} onCancel={() => setShowForm(false)} />
+        <TriggerForm onAdd={addTrigger} onCancel={() => setShowForm(false)} />
       )}
 
       <div className="space-y-2">
@@ -231,11 +289,11 @@ function TriggersTab() {
               </div>
             </div>
             <span className={`px-2 py-0.5 text-xs rounded-full ${resultColors[tr.action]}`}>{tr.action.replace(/_/g, " ")}</span>
-            <button onClick={() => setTriggers(triggers.map((x: any) => x.id === tr.id ? { ...x, enabled: !x.enabled } : x))}
+            <button onClick={() => toggleTrigger(tr.id)}
               className={`relative w-10 h-6 rounded-full transition-colors ${tr.enabled ? "bg-blue-600" : "bg-gray-300 dark:bg-gray-600"}`}>
               <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full transition-transform ${tr.enabled ? "translate-x-4" : ""}`} />
             </button>
-            <button onClick={() => { if (confirm(t("caeMonitor.triggers.confirmDelete"))) setTriggers(triggers.filter((x: any) => x.id !== tr.id)); }}
+            <button onClick={() => deleteTrigger(tr.id)}
               className="p-1.5 hover:bg-red-50 dark:hover:bg-red-950 rounded"><Trash2 className="w-4 h-4 text-red-500" /></button>
           </div>
         ))}

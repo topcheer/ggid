@@ -2,11 +2,23 @@ package repository
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
+
+// CAETrigger represents a runtime CAE monitoring trigger rule.
+type CAETrigger struct {
+	ID        uuid.UUID `json:"id"`
+	TenantID  uuid.UUID `json:"tenant_id"`
+	Event     string    `json:"event"`
+	Condition string    `json:"condition"`
+	Action    string    `json:"action"`
+	Enabled   bool      `json:"enabled"`
+	CreatedAt time.Time `json:"created_at"`
+}
 
 // CAEEvaluation represents a single continuous access evaluation result.
 type CAEEvaluation struct {
@@ -48,6 +60,16 @@ func (r *CAERepository) EnsureSchema(ctx context.Context) error {
 		);
 		CREATE INDEX IF NOT EXISTS idx_cae_tenant_time ON cae_evaluations (tenant_id, evaluated_at DESC);
 		CREATE INDEX IF NOT EXISTS idx_cae_session ON cae_evaluations (session_id);
+		CREATE TABLE IF NOT EXISTS cae_triggers (
+			id         UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+			tenant_id  UUID NOT NULL,
+			event      TEXT NOT NULL,
+			condition  TEXT DEFAULT '',
+			action     TEXT NOT NULL,
+			enabled    BOOLEAN NOT NULL DEFAULT true,
+			created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+		);
+		CREATE INDEX IF NOT EXISTS idx_cae_triggers_tenant ON cae_triggers(tenant_id);
 	`)
 	return err
 }
@@ -139,4 +161,73 @@ func (r *CAERepository) CountByAction(ctx context.Context, tenantID uuid.UUID, m
 		result[action] = count
 	}
 	return result, nil
+}
+
+// --- CAE Trigger CRUD ---
+
+// ListTriggers returns all CAE triggers for a tenant.
+func (r *CAERepository) ListTriggers(ctx context.Context, tenantID uuid.UUID) ([]*CAETrigger, error) {
+	if r.pool == nil {
+		return []*CAETrigger{}, nil
+	}
+	rows, err := r.pool.Query(ctx,
+		`SELECT id, event, condition, action, enabled, created_at FROM cae_triggers WHERE tenant_id = $1 ORDER BY created_at DESC`,
+		tenantID,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var triggers []*CAETrigger
+	for rows.Next() {
+		t := &CAETrigger{TenantID: tenantID}
+		if err := rows.Scan(&t.ID, &t.Event, &t.Condition, &t.Action, &t.Enabled, &t.CreatedAt); err != nil {
+			continue
+		}
+		triggers = append(triggers, t)
+	}
+	return triggers, nil
+}
+
+// CreateTrigger creates a new CAE trigger.
+func (r *CAERepository) CreateTrigger(ctx context.Context, t *CAETrigger) error {
+	if r.pool == nil {
+		return nil
+	}
+	_, err := r.pool.Exec(ctx,
+		`INSERT INTO cae_triggers (id, tenant_id, event, condition, action, enabled) VALUES ($1, $2, $3, $4, $5, $6)`,
+		t.ID, t.TenantID, t.Event, t.Condition, t.Action, t.Enabled,
+	)
+	return err
+}
+
+// UpdateTrigger updates a CAE trigger's enabled status and fields.
+func (r *CAERepository) UpdateTrigger(ctx context.Context, tenantID, id uuid.UUID, event, condition, action string, enabled bool) error {
+	if r.pool == nil {
+		return nil
+	}
+	ct, err := r.pool.Exec(ctx,
+		`UPDATE cae_triggers SET event = $1, condition = $2, action = $3, enabled = $4 WHERE id = $5 AND tenant_id = $6`,
+		event, condition, action, enabled, id, tenantID,
+	)
+	if err != nil {
+		return err
+	}
+	if ct.RowsAffected() == 0 {
+		return fmt.Errorf("trigger not found")
+	}
+	return nil
+}
+
+// DeleteTrigger removes a CAE trigger.
+func (r *CAERepository) DeleteTrigger(ctx context.Context, tenantID, id uuid.UUID) error {
+	if r.pool == nil {
+		return nil
+	}
+	_, err := r.pool.Exec(ctx,
+		`DELETE FROM cae_triggers WHERE id = $1 AND tenant_id = $2`,
+		id, tenantID,
+	)
+	return err
 }

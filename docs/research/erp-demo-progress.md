@@ -2590,3 +2590,8 @@ UPSTREAM: eadd97780(API key 403)+af4df858f(org depts)+58b39d2e7(RLS) — COMPAT 
 ✅ — 229th clean cycle.
 
 ### Next Dimension: 4 — Cycle 240
+## Cycle 240: D4 Tenant Isolation DEEP (Round 414)
+Go→Go=200 Node→Go=403 Fake=401 JWT=YES ✅ — 230th clean cycle.
+arch_pm audit: all core IAM flows verified E2E.
+
+### Next Dimension: 5 — Cycle 241

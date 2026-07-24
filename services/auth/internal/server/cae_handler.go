@@ -1,7 +1,9 @@
 package server
 
 import (
+	"encoding/json"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/ggid/ggid/pkg/errors"
@@ -14,8 +16,13 @@ func (h *Handler) SetCAERepo(repo *repository.CAERepository) {
 	h.caeRepo = repo
 }
 
-// handleCAE handles GET /cae/status, POST /cae/run, GET /cae/log.
+// handleCAE handles GET /cae/status, POST /cae/run, GET /cae/log, and trigger CRUD.
 func (h *Handler) handleCAE(w http.ResponseWriter, r *http.Request) {
+	// Route to trigger management if path matches.
+	if strings.HasPrefix(r.URL.Path, "/api/v1/auth/cae/triggers") {
+		h.caeTriggers(w, r)
+		return
+	}
 	switch {
 	case r.URL.Path == "/api/v1/auth/cae/status" && r.Method == http.MethodGet:
 		h.caeStatus(w, r)
@@ -23,6 +30,119 @@ func (h *Handler) handleCAE(w http.ResponseWriter, r *http.Request) {
 		h.caeRun(w, r)
 	case r.URL.Path == "/api/v1/auth/cae/log" && r.Method == http.MethodGet:
 		h.caeLog(w, r)
+	default:
+		errors.WriteSimpleAPIError(w, http.StatusMethodNotAllowed, "METHOD_NOT_ALLOWED", "method not allowed")
+	}
+}
+
+// caeTriggers handles CRUD for CAE monitoring triggers.
+func (h *Handler) caeTriggers(w http.ResponseWriter, r *http.Request) {
+	tc, err := tenant.FromContext(r.Context())
+	if err != nil {
+		errors.WriteSimpleAPIError(w, http.StatusUnauthorized, "UNAUTHORIZED", "tenant context required")
+		return
+	}
+
+	switch r.Method {
+	case http.MethodGet:
+		if h.caeRepo == nil {
+			writeJSON(w, http.StatusOK, map[string]any{"triggers": []any{}})
+			return
+		}
+		triggers, err := h.caeRepo.ListTriggers(r.Context(), tc.TenantID)
+		if err != nil {
+			errors.WriteSimpleAPIError(w, http.StatusInternalServerError, "INTERNAL", "failed to list triggers")
+			return
+		}
+		writeJSON(w, http.StatusOK, map[string]any{"triggers": triggers})
+
+	case http.MethodPost:
+		var req struct {
+			Event     string `json:"event"`
+			Condition string `json:"condition"`
+			Action    string `json:"action"`
+			Enabled   *bool  `json:"enabled"`
+		}
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			errors.WriteSimpleAPIError(w, http.StatusBadRequest, "BAD_REQUEST", "invalid JSON")
+			return
+		}
+		if req.Event == "" || req.Action == "" {
+			errors.WriteSimpleAPIError(w, http.StatusBadRequest, "BAD_REQUEST", "event and action required")
+			return
+		}
+		enabled := true
+		if req.Enabled != nil {
+			enabled = *req.Enabled
+		}
+		trigger := &repository.CAETrigger{
+			ID:        uuid.New(),
+			TenantID:  tc.TenantID,
+			Event:     req.Event,
+			Condition: req.Condition,
+			Action:    req.Action,
+			Enabled:   enabled,
+		}
+		if h.caeRepo != nil {
+			if err := h.caeRepo.CreateTrigger(r.Context(), trigger); err != nil {
+				errors.WriteSimpleAPIError(w, http.StatusInternalServerError, "INTERNAL", "failed to create trigger")
+				return
+			}
+		}
+		writeJSON(w, http.StatusCreated, trigger)
+
+	case http.MethodPut:
+		triggerIDStr := r.URL.Query().Get("id")
+		if triggerIDStr == "" {
+			errors.WriteSimpleAPIError(w, http.StatusBadRequest, "BAD_REQUEST", "id query param required")
+			return
+		}
+		triggerID, parseErr := uuid.Parse(triggerIDStr)
+		if parseErr != nil {
+			errors.WriteSimpleAPIError(w, http.StatusBadRequest, "BAD_REQUEST", "invalid trigger id")
+			return
+		}
+		var req struct {
+			Event     string `json:"event"`
+			Condition string `json:"condition"`
+			Action    string `json:"action"`
+			Enabled   *bool  `json:"enabled"`
+		}
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			errors.WriteSimpleAPIError(w, http.StatusBadRequest, "BAD_REQUEST", "invalid JSON")
+			return
+		}
+		enabled := true
+		if req.Enabled != nil {
+			enabled = *req.Enabled
+		}
+		if h.caeRepo != nil {
+			if err := h.caeRepo.UpdateTrigger(r.Context(), tc.TenantID, triggerID, req.Event, req.Condition, req.Action, enabled); err != nil {
+				errors.WriteSimpleAPIError(w, http.StatusInternalServerError, "INTERNAL", "failed to update trigger")
+				return
+			}
+		}
+		writeJSON(w, http.StatusOK, map[string]string{"status": "updated"})
+
+	case http.MethodDelete:
+		triggerIDStr := r.URL.Query().Get("id")
+		if triggerIDStr == "" {
+			errors.WriteSimpleAPIError(w, http.StatusBadRequest, "BAD_REQUEST", "id query param required")
+			return
+		}
+		triggerID, parseErr := uuid.Parse(triggerIDStr)
+		if parseErr != nil {
+			errors.WriteSimpleAPIError(w, http.StatusBadRequest, "BAD_REQUEST", "invalid trigger id")
+			return
+		}
+		if h.caeRepo != nil {
+			if err := h.caeRepo.DeleteTrigger(r.Context(), tc.TenantID, triggerID); err != nil {
+				errors.WriteSimpleAPIError(w, http.StatusInternalServerError, "INTERNAL", "failed to delete trigger")
+				return
+			}
+		}
+		writeJSON(w, http.StatusOK, map[string]string{"status": "deleted"})
+
 	default:
 		errors.WriteSimpleAPIError(w, http.StatusMethodNotAllowed, "METHOD_NOT_ALLOWED", "method not allowed")
 	}
