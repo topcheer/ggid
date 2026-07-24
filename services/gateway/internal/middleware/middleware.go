@@ -592,6 +592,12 @@ func JWTAuth(jwks *JWKSClient, required bool, issuer, audience string) func(http
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			// If API key already authenticated the request, skip JWT requirement.
 			if IsAPIKeyRequest(r) && r.Context().Value(APIKeyScopesKey) != nil {
+				// Enforce API key scopes: read-only keys cannot perform write operations.
+				scopes, _ := r.Context().Value(APIKeyScopesKey).([]string)
+				if !apiKeyHasWriteAccess(r.Method, scopes) {
+					writeUnauthorized(w, "API key lacks write scope for this operation")
+					return
+				}
 				next.ServeHTTP(w, r)
 				return
 			}
@@ -823,4 +829,34 @@ func jwkToRSAPublicKey(nStr, eStr string) (*rsa.PublicKey, error) {
 	n := new(big.Int).SetBytes(nBytes)
 	e := new(big.Int).SetBytes(eBytes)
 	return &rsa.PublicKey{N: n, E: int(e.Int64())}, nil
+}
+
+// apiKeyHasWriteAccess checks if the API key's scopes permit the HTTP method.
+// GET/HEAD/OPTIONS require a ":read" scope. All other methods require ":write".
+// A wildcard "*" scope grants all access.
+func apiKeyHasWriteAccess(method string, scopes []string) bool {
+	if len(scopes) == 0 {
+		return true // no scopes defined = full access (backward compat)
+	}
+	for _, s := range scopes {
+		if s == "*" || s == "admin" {
+			return true
+		}
+	}
+	// Read-only methods need any ":read" scope
+	if method == http.MethodGet || method == http.MethodHead || method == http.MethodOptions {
+		for _, s := range scopes {
+			if strings.HasSuffix(s, ":read") || strings.HasSuffix(s, ":admin") {
+				return true
+			}
+		}
+		return false
+	}
+	// Write methods need explicit ":write" or ":admin" scope
+	for _, s := range scopes {
+		if strings.HasSuffix(s, ":write") || strings.HasSuffix(s, ":admin") {
+			return true
+		}
+	}
+	return false
 }
