@@ -495,3 +495,4 @@ secrets 0, swallow 28, anon 401, tamper clean (834 verified). ERP stability cycl
 - Migration 050 创建 30+ 表 — 无安全风险（DDL only）
 
 **全部指标稳定**：secrets 0, swallow 28, sync.Map 13, anon 401. 无新 P0/P1.
+PATROL32: all stable, tamper clean 1030, no P0/P1
