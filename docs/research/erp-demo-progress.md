@@ -1942,3 +1942,7 @@ Consent cascade fix (P1) verified compatible — OAuth login/token flow unaffect
 85th consecutive zero-fix cycle.
 
 ### Next Dimension: 4 — Cycle 96 (Multi-tenant Isolation)
+## Cycle 96: D4 Tenant Isolation (Round 270)
+JWT tids: Go/Node/Ruby distinct ✅ | Go→Go=200 ✅ | Node→Go=403 ✅ | Ruby→Go=403 ✅ | Fake=401 ✅ | None=401 ✅ | Hacks:0 ✅ — 86th clean cycle.
+
+### Next Dimension: 5 — Cycle 97
