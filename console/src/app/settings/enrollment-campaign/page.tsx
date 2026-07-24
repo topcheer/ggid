@@ -55,14 +55,9 @@ export default function EnrollmentCampaignPage() {
       if (res.ok) {
         const data = await res.json();
         setCampaigns(Array.isArray(data) ? data : (data.campaigns || []));
-        return;
       }
-    } catch { /* fall through */ }
-    setCampaigns([
-      { id: "c1", name: "Q3 Passkey Rollout", target_group: "no_passkey", method: "passkey", deadline: "2025-08-15", enrolled: 42, target: 58, status: "active", created_at: "2025-07-01" },
-      { id: "c2", name: "Admin Security Keys", target_group: "admins", method: "webauthn", deadline: "2025-07-30", enrolled: 8, target: 10, status: "active", created_at: "2025-06-15" },
-      { id: "c3", name: "Spring Migration", target_group: "all", method: "both", deadline: "2025-05-01", enrolled: 150, target: 150, status: "completed", created_at: "2025-03-01" },
-    ]);
+    } catch { /* empty state */ }
+    setCampaigns([]);
   }, []);
 
   useEffect(() => { load(); }, [load]);

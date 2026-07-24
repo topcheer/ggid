@@ -57,21 +57,8 @@ export default function ConditionalAccessPage() {
     try {
       const res = await fetch(`${API_BASE}/api/v1/policies/conditional-access`, { headers: { ...authHeader() } });
       if (res.ok) { const d = await res.json(); setPolicies(d.policies || d || []); return; }
-    } catch { /* mock */ }
-    setPolicies([
-      { id: "p1", name: "High Risk MFA Required", priority: 1, enabled: true, action: "require_mfa", logic: "OR",
-        conditions: [
-          { id: "c1", operand: "device_posture", operator: "<", value: "70" },
-          { id: "c2", operand: "risk_score", operator: ">", value: "60" },
-        ] },
-      { id: "p2", name: "Block Suspicious IPs", priority: 2, enabled: true, action: "block", logic: "OR",
-        conditions: [{ id: "c3", operand: "ip_range", operator: "in", value: "10.0.0.0/8,192.168.0.0/16" }] },
-      { id: "p3", name: "Off-Hours Step-Up", priority: 3, enabled: false, action: "require_step_up", logic: "AND",
-        conditions: [
-          { id: "c4", operand: "time_of_day", operator: "<", value: "8" },
-          { id: "c5", operand: "time_of_day", operator: ">", value: "18" },
-        ] },
-    ]);
+    } catch { /* empty state */ }
+    setPolicies([]);
   }, []);
 
   useEffect(() => { load(); }, [load]);

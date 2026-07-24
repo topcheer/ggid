@@ -44,19 +44,9 @@ export default function ReviewSchedulesPage() {
     try {
       const res = await fetch(`${API_BASE}/api/v1/identity/review-schedules`, { headers: { ...authHeader() } });
       if (res.ok) { const d = await res.json(); setSchedules(d.schedules || d || []); return; }
-    } catch { /* mock */ }
-    setSchedules([
-      { id: "s1", name: "Engineering Access Review", scope: "by_department:Engineering", frequency: "quarterly", next_run: "2025-09-01", reviewer: "eng-manager@company.com", enabled: true },
-      { id: "s2", name: "Admin Privilege Review", scope: "by_role:admin", frequency: "monthly", next_run: "2025-08-01", reviewer: "sec-team@company.com", enabled: true },
-      { id: "s3", name: "Service Account Audit", scope: "service_accounts", frequency: "monthly", next_run: "2025-08-01", reviewer: "devops@company.com", enabled: true },
-      { id: "s4", name: "Annual Full Review", scope: "all_users", frequency: "annual", next_run: "2025-12-01", reviewer: "compliance@company.com", enabled: false },
-    ]);
-    setHistory([
-      { id: "h1", name: "Engineering Access Review", period: "2025-Q2", reviewer: "eng-manager@company.com", reviewed: 85, certified: 78, revoked: 7, status: "complete" },
-      { id: "h2", name: "Admin Privilege Review", period: "2025-06", reviewer: "sec-team@company.com", reviewed: 12, certified: 10, revoked: 2, status: "complete" },
-      { id: "h3", name: "Service Account Audit", period: "2025-06", reviewer: "devops@company.com", reviewed: 30, certified: 25, revoked: 5, status: "complete" },
-      { id: "h4", name: "Engineering Access Review", period: "2025-Q1", reviewer: "eng-manager@company.com", reviewed: 80, certified: 75, revoked: 5, status: "partial" },
-    ]);
+    } catch { /* empty state */ }
+    setSchedules([]);
+    setHistory([]);
   }, []);
 
   useEffect(() => { load(); }, [load]);
