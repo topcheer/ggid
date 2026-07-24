@@ -2035,3 +2035,7 @@ JWT tids: Go/Node/Ruby all distinct ✅ | Go→Go=200 ✅ | Node→Go=403 ✅ | 
 no_tok=401 ✅ | login=AT+RT ✅ | GET=200 ✅ | POST=201 ✅ | order approve=200 ✅ | vw=403 ✅ | refresh=OK ✅ | health=7×200 ✅ | Hacks:0 ✅ — 94th clean cycle.
 
 ### Next Dimension: 1 — Cycle 105
+## Cycle 105: D1 Auth (Round 279)
+PW:7/7 ✅ | M2M:OK ✅ | API:200 ✅ | JWT:9perms+erp_admin ✅ | Hacks:0 ✅ — 95th clean cycle.
+
+### Next Dimension: 2 — Cycle 106
