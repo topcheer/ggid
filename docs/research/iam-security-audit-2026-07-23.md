@@ -458,3 +458,6 @@ S1 scope filter 在 binary 中未检出（fresh boot 后可能重部署了旧版
 
 ### 巡航 #18+#19 | 维度 5+6: 输入验证+审计可观测（第三循环） | 2026-07-24
 全部历史项不变。E1 32, E2 19, 错误吞噬 28, 硬编码 0, InsecureSkipVerify 0, XSS username 验证仍缺失(P2), body size 6. 近期 commit: login a11y + ERP cycles — 无安全回归. 无新 P0/P1，静默记录。
+
+### 巡航 #20 | 维度 7: 架构与运维（第三循环） | 2026-07-24
+全部不变：G1 mTLS ❌, G2 DB creds 6 (↓from 10, arch_pm 清理了4处), 硬编码 0, sync.Map 13, 错误吞噬 28. CAE 执行 ✅ (arch_pm P0修复). Consent cascade ✅ (21处正确表引用). Tamper clean ✅ (404 verified). Helm migration Job 新增 ✅. 无新 P0/P1，静默记录。
