@@ -2663,3 +2663,7 @@ PW=access_token+token_type+expires_in(api=200) CC=access_token+token_type+expire
 JWT=[ERP Admin:9perms] Inv=200 OrdApprove=405 PlatUsers=403(exp403) PlatRoles=403(exp403) Fake=401(exp401) Hacks:0 ✅ — 246th clean cycle.
 
 ### Next Dimension: 3 — Cycle 257
+## Cycle 257: D3 Demo Functional DEEP (Round 431)
+Inv=79(id+name+price+sku+stock) Ord=81 Post=201(has_id) Perms(API= vs JWT=9) Hacks:0 ✅ — 247th clean cycle.
+
+### Next Dimension: 4 — Cycle 258
