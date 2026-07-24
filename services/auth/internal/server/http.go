@@ -1355,7 +1355,7 @@ func (h *Handler) passwordPolicy(w http.ResponseWriter, r *http.Request) {
 	case http.MethodGet:
 		policy := h.authSvc.PasswordPolicy()
 		writeJSON(w, http.StatusOK, policy)
-	case http.MethodPost:
+	case http.MethodPost, http.MethodPut:
 		var req PasswordPolicyConfigRequest
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 			writeError(w, http.StatusBadRequest, "invalid request body")
