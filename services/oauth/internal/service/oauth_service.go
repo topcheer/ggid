@@ -1730,7 +1730,8 @@ func (s *OAuthService) PasswordGrant(ctx context.Context, req *PasswordGrantRequ
 
 	if s.pool != nil {
 		// Set RLS context so queries on RLS-protected tables (users) work
-		_, _ = s.pool.Exec(ctx, fmt.Sprintf("SET LOCAL app.tenant_id = '%s'", req.TenantID.String()))
+		// Use SET (session-level) not SET LOCAL because pool.QueryRow uses autocommit (no tx)
+		_, _ = s.pool.Exec(ctx, fmt.Sprintf("SET app.tenant_id = '%s'", req.TenantID.String()))
 
 		// Look up user by username within the tenant
 		var dbUserID uuid.UUID
