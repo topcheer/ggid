@@ -748,6 +748,13 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 		}
 
 		if tokenErr != nil {
+			if r.FormValue("grant_type") == "password" && auditPub != nil {
+				ev := audit.NewEvent("user.login", "failure", tenantID, uuid.Nil)
+				ev.ResourceType = "auth"
+				ev.IPAddress = r.RemoteAddr
+				ev.Metadata = map[string]any{"username": r.FormValue("username"), "error": tokenErr.Error()}
+				auditPub.PublishAsync(ev)
+			}
 			writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid_grant", "error_description": tokenErr.Error()})
 			return
 		}
