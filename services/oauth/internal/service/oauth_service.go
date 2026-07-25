@@ -1823,9 +1823,10 @@ func (s *OAuthService) PasswordGrant(ctx context.Context, req *PasswordGrantRequ
 	if s.pool != nil {
 		sessionID := uuid.New()
 		_, sessionErr := s.pool.Exec(ctx, `
-			INSERT INTO sessions (id, tenant_id, user_id, ip_address, user_agent, expires_at, created_at)
-			VALUES ($1, $2, $3, NULLIF($4, '')::inet, $5, $6, NOW())`,
+			INSERT INTO sessions (id, tenant_id, user_id, token_hash, ip_address, user_agent, expires_at, created_at)
+			VALUES ($1, $2, $3, $4, NULLIF($5, '')::inet, $6, $7, NOW())`,
 			sessionID, tenantID, userID,
+			"jwt:"+signed[:min(64, len(signed))],
 			ctxIP(ctx), ctxUserAgent(ctx),
 			expiresAt)
 		if sessionErr != nil {

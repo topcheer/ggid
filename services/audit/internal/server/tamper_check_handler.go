@@ -290,3 +290,94 @@ func (s *HTTPServer) recordTamperIncident(r *http.Request, issues []TamperIssue,
 		slog.Error("tamper incident insert failed", "error", err)
 	}
 }
+
+// handleRepairChain recomputes all hash chain hashes for a tenant.
+// POST /api/v1/audit/repair-chain?tenant_id=<uuid>
+// Recomputes prev_hash + hash for every event in chain order.
+func (s *HTTPServer) handleRepairChain(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		writeJSON(w, http.StatusMethodNotAllowed, map[string]string{"error": "POST required"})
+		return
+	}
+	if !domain.IsHashChainEnabled() {
+		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "hash chain not enabled"})
+		return
+	}
+
+	tenantIDStr := r.URL.Query().Get("tenant_id")
+	if tenantIDStr == "" {
+		tenantIDStr = r.Header.Get("X-Tenant-ID")
+	}
+	tenantID, err := uuid.Parse(tenantIDStr)
+	if err != nil {
+		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid tenant_id"})
+		return
+	}
+
+	// Load all events in chain order (oldest first).
+	rows, err := s.pool.Query(r.Context(), `
+		SELECT id, tenant_id, actor_type, NULLIF(actor_id, '00000000-0000-0000-0000-000000000000'),
+		       COALESCE(actor_name,''), action,
+		       COALESCE(resource_type, ''), NULLIF(resource_id, '00000000-0000-0000-0000-000000000000'),
+		       COALESCE(resource_name,''), result,
+		       COALESCE(host(ip_address), ''),
+		       COALESCE(user_agent,''), COALESCE(request_id,''),
+		       created_at
+		FROM audit_events
+		WHERE tenant_id = $1
+		ORDER BY created_at ASC, id ASC`, tenantID)
+	if err != nil {
+		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": err.Error()})
+		return
+	}
+	defer rows.Close()
+
+	type repairItem struct {
+		id       uuid.UUID
+		event    domain.AuditEvent
+	}
+	var items []repairItem
+	for rows.Next() {
+		var e domain.AuditEvent
+		if err := rows.Scan(
+			&e.ID, &e.TenantID, &e.ActorType, &e.ActorID, &e.ActorName, &e.Action,
+			&e.ResourceType, &e.ResourceID, &e.ResourceName, &e.Result,
+			&e.IPAddress, &e.UserAgent, &e.RequestID, &e.CreatedAt,
+		); err != nil {
+			writeJSON(w, http.StatusInternalServerError, map[string]string{"error": err.Error()})
+			return
+		}
+		items = append(items, repairItem{id: e.ID, event: e})
+	}
+
+	// Recompute chain. Set WORM bypass for authorized maintenance.
+	_, _ = s.pool.Exec(r.Context(), "SET app.allow_audit_mutation = on")
+	defer s.pool.Exec(r.Context(), "SET app.allow_audit_mutation = off")
+
+	prevHash := ""
+	repaired := 0
+	for _, item := range items {
+		e := item.event
+		e.PrevHash = prevHash
+		newHash := e.ComputeHash(prevHash)
+		if newHash != e.Hash || e.PrevHash != prevHash {
+			_, err := s.pool.Exec(r.Context(),
+				`UPDATE audit_events SET prev_hash = $1, hash = $2 WHERE id = $3`,
+				prevHash, newHash, item.id)
+			if err != nil {
+				slog.Error("repair-chain update failed", "id", item.id, "error", err)
+				continue
+			}
+			repaired++
+		}
+		prevHash = newHash
+	}
+
+	writeJSON(w, http.StatusOK, map[string]any{
+		"status":         "ok",
+		"tenant_id":      tenantIDStr,
+		"total_events":   len(items),
+		"repaired":       repaired,
+		"repaired_at":    time.Now().UTC().Format(time.RFC3339),
+	})
+}

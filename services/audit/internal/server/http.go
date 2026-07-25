@@ -212,6 +212,7 @@ func (s *HTTPServer) RegisterRoutes(mux *http.ServeMux) {
 		writeJSON(w, http.StatusOK, map[string]interface{}{"anomalies": []interface{}{}, "total": 0})
 	})
 	mux.HandleFunc("/api/v1/audit/tamper-check", s.handleTamperCheck)
+	mux.HandleFunc("/api/v1/audit/repair-chain", s.handleRepairChain)
 	mux.HandleFunc("/api/v1/audit/activity", s.handleActivity)
 	mux.HandleFunc("/api/v1/audit/exports", s.handleExportsV2)
 	mux.HandleFunc("/api/v1/audit/exports/", s.handleExportsV2)
