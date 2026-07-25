@@ -51,6 +51,9 @@ func (s *HTTPServer) handleAccessReviews(w http.ResponseWriter, r *http.Request)
 	case http.MethodGet:
 		managerID := r.URL.Query().Get("manager_id")
 		pending := service.ListPendingAccessReviews(parseUUID(managerID))
+		if pending == nil {
+			pending = []*service.AccessReview{}
+		}
 		writeJSON(w, http.StatusOK, map[string]any{"reviews": pending})
 
 	default:
