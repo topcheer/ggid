@@ -681,6 +681,7 @@ var adminOnlyPaths = []string{
 	"/api/v1/settings/", "/api/v1/admin/", "/api/v1/identity/dashboard",
 	"/api/v1/tenants", "/api/v1/impersonate",
 	"/api/v1/api-keys", "/api/v1/access-keys",
+	"/api/v1/admin/secrets", "/api/v1/admin/key-rotation", "/api/v1/admin/backup",
 	// Bare OAuth management endpoints (no /api/v1 prefix in proxy route)
 	"/oauth/clients",
 }
@@ -750,7 +751,8 @@ func (gw *Gateway) checkRouteScope(w http.ResponseWriter, r *http.Request) bool 
 			if isPlatformTenant {
 				hasPlatform = true
 			}
-			hasTenant = true
+			// Platform admin does NOT auto-inherit tenant admin.
+			// Tenant access requires explicit tenant:admin role.
 		}
 		if scl == "tenant:admin" {
 			hasTenant = true

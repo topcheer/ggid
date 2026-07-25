@@ -52,19 +52,38 @@ func TestCheckRouteScope_EmptyRolesDeniedOnAdminPaths(t *testing.T) {
 }
 
 func TestCheckRouteScope_OAuthRolesClaim(t *testing.T) {
-	// OAuth-issued token with platform:admin in both scope and roles.
-	// Platform access requires the scope-style key, not the display name.
+	// OAuth-issued token with BOTH platform:admin AND tenant:admin.
+	// Setup wizard assigns both roles to bootstrap admin users.
 	token := mkTestJWT(map[string]any{
 		"sub":       "u1",
+		"scope":     "openid profile email platform:admin tenant:admin",
+		"roles":     []string{"platform:admin", "tenant:admin"},
+		"tenant_id": "00000000-0000-0000-0000-000000000001",
+	})
+	if rec := checkScopeRequest(t, "/api/v1/users", token); rec.Code == http.StatusForbidden {
+		t.Error("OAuth token with platform:admin + tenant:admin must access /api/v1/users")
+	}
+	if rec := checkScopeRequest(t, "/api/v1/system/config", token); rec.Code == http.StatusForbidden {
+		t.Error("platform:admin scope must access /api/v1/system/")
+	}
+}
+
+// TestCheckRouteScope_PlatformOnlyWithoutTenantDenied: platform:admin
+// WITHOUT tenant:admin must NOT access tenant-level admin paths.
+func TestCheckRouteScope_PlatformOnlyWithoutTenantDenied(t *testing.T) {
+	token := mkTestJWT(map[string]any{
+		"sub":       "u5",
 		"scope":     "openid profile email platform:admin",
 		"roles":     []string{"platform:admin"},
 		"tenant_id": "00000000-0000-0000-0000-000000000001",
 	})
-	if rec := checkScopeRequest(t, "/api/v1/users", token); rec.Code == http.StatusForbidden {
-		t.Error("OAuth token with platform:admin must access /api/v1/users")
-	}
+	// Platform paths still accessible
 	if rec := checkScopeRequest(t, "/api/v1/system/config", token); rec.Code == http.StatusForbidden {
-		t.Error("platform:admin scope must access /api/v1/system/")
+		t.Error("platform:admin must access platform-only paths")
+	}
+	// Tenant admin paths now DENIED (no auto-inheritance)
+	if rec := checkScopeRequest(t, "/api/v1/users", token); rec.Code != http.StatusForbidden {
+		t.Error("platform:admin WITHOUT tenant:admin must be denied /api/v1/users")
 	}
 }
 
@@ -101,12 +120,14 @@ func TestCheckRouteScope_TenantAdminRole(t *testing.T) {
 }
 
 func TestCheckRouteScope_LegacyScopeStillWorks(t *testing.T) {
+	// Legacy platform:admin scope still works for platform-only paths.
+	// But tenant paths now require explicit tenant:admin (role separation).
 	token := mkTestJWT(map[string]any{
 		"sub":   "u3",
 		"scope": "platform:admin",
 	})
-	if rec := checkScopeRequest(t, "/api/v1/users", token); rec.Code == http.StatusForbidden {
-		t.Error("legacy platform:admin scope must still work")
+	if rec := checkScopeRequest(t, "/api/v1/system/config", token); rec.Code == http.StatusForbidden {
+		t.Error("legacy platform:admin scope must access platform-only paths")
 	}
 }
 
