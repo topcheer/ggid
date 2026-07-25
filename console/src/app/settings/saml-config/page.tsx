@@ -10,6 +10,7 @@ import { authHeader } from "@/lib/auth-helpers";
 import { API_BASE_URL } from "@/lib/api-config";
 
 const API_BASE = API_BASE_URL;
+const TENANT_ID = typeof window !== "undefined" ? localStorage.getItem("ggid_tenant_id") || "" : "";
 
 export default function SAMLConfigPage() {
   usePageTitle("SAML Configuration");
@@ -33,7 +34,7 @@ export default function SAMLConfigPage() {
     (async () => {
       try {
         const [configRes, spRes] = await Promise.all([
-          fetch(`${API_BASE}/api/v1/system/config?key=saml_config`, { headers: { ...authHeader() } }),
+          fetch(`${API_BASE}/api/v1/tenants/${TENANT_ID}/saml-config`, { headers: { ...authHeader() } }),
           fetch(`${API_BASE}/saml/metadata`, { headers: { ...authHeader() } }).catch(() => null),
         ]);
 
@@ -64,17 +65,14 @@ export default function SAMLConfigPage() {
     setError("");
     setSuccess("");
     try {
-      const res = await fetch(`${API_BASE}/api/v1/system/config`, {
+      const res = await fetch(`${API_BASE}/api/v1/tenants/${TENANT_ID}/saml-config`, {
         method: "PUT",
         headers: { "Content-Type": "application/json", ...authHeader() },
         body: JSON.stringify({
-          key: "saml_config",
-          value: {
-            entity_id: entityId,
-            acs_url: acsUrl,
-            idp_metadata_xml: idpMetadataXml,
-            idp_metadata_url: idpMetadataUrl,
-          },
+          entity_id: entityId,
+          acs_url: acsUrl,
+          idp_metadata_xml: idpMetadataXml,
+          idp_metadata_url: idpMetadataUrl,
         }),
       });
       if (res.ok) {
