@@ -58,7 +58,7 @@ export default function WebhooksPage() {
   const createEndpoint = async () => {
     if (!fUrl) return;
     setActionLoading("create");
-    try { await fetch("/api/v1/webhooks", { method: "POST", headers: H, body: JSON.stringify({ url: fUrl, events: fEvents, secret: `whsec_${Date.now()}` }) }); setShowForm(false); setFUrl(""); setFEvents([]); loadData(); }
+    try { await fetch("/api/v1/webhooks", { method: "POST", headers: H, body: JSON.stringify({ url: fUrl, events: fEvents }) }); setShowForm(false); setFUrl(""); setFEvents([]); loadData(); }
     catch { setError(t("webhooks.createError")); }
     finally { setActionLoading(null); }
   };
