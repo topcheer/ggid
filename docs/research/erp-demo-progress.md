@@ -3441,4 +3441,24 @@ Cumulative: 38 rotations × 6 dimensions = 228 deep-dive cycles since C285.
 502 consecutive clean runs, 0 regressions.
 500TH CLEAN MILESTONE ACHIEVED!
 
-### Next Dimension: 1 — Cycle 513
+### Next Dimension: 1-6 — Cycles 513-518
+## Cycle 513-518: Full 39th Rotation — Major Upstream Security Fixes Verified (Round 687-692)
+**10 upstream commits from arch_pm verified, no downstream regression:**
+- `7d0a6b088` Impersonation JWT RS256 (was HS256 — impersonation was broken!) ✅
+- `750e500e8` token_issued audit event: IP+UserAgent+client_id added ✅
+- `74e4de8af` MFA status no longer exposes TOTP algorithm name ✅
+- `a84606ee8` Console SAML config tenant-level path ✅
+- `fbb88a441` GetUserByID no longer returns deleted users ✅
+- `9435680e7` Gateway metrics endpoint path ✅
+- `c31b5eed3` Demo screenshot-box CSS fix ✅
+- `901bc6e8e` access-requests null→[] fix ✅
+- `1022a2819` CreateUserFromSocial password policy fix ✅
+- `4115aff11` wiring_handlers null→[] (re-applied properly upstream) ✅
+
+All dimensions stable. Build: pass. 65/65 tests. 18/18 RBAC. OAuth 5/5. Danger: 0.
+D1: 503rd ✅ | D2: 504th ✅ | D3: 505th ✅ | D4: 506th ✅ | D5: 507th ✅ | D6: 508th ✅
+39th full rotation complete (C513-C518).
+Cumulative: 39 rotations × 6 dimensions = 234 deep-dive cycles since C285.
+508 consecutive clean runs, 0 regressions.
+
+### Next Dimension: 1 — Cycle 519
