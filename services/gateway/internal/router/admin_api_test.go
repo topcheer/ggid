@@ -12,7 +12,7 @@ import (
 var adminAuthHeader = func() string {
 	payload, _ := json.Marshal(map[string]any{
 		"sub":    "admin-user",
-		"scopes": []string{"platform:admin"},
+		"scopes": []string{"platform:admin", "tenant:admin"},
 	})
 	return "Bearer eyJhbGciOiJSUzI1NiJ9." + base64.RawURLEncoding.EncodeToString(payload) + ".sig"
 }()
