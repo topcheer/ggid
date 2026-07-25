@@ -2855,3 +2855,10 @@ GAP NOTED: Node/Java/Ruby/Rust still missing /api/my-permissions — track for f
 Main build: pass. ERP Go build: pass. Danger: 0. Hacks:0 ✅ — 283rd clean.
 
 ### Next Dimension: 4 — Cycle 294
+## Cycle 294: D4 Tenant Isolation — Deep Cross-Tenant Verify (Round 468)
+Gateway injects JWT tenant_id → X-Tenant-ID header (only if not already set).
+Cross-tenant rejection confirmed: Go=401, Node=401(tenant_mismatch), Rust=None→skip, C#=401.
+Java/Ruby/Python rely on SDK verifier tenant scoping.
+65/65 pass. Danger: 0. Hacks:0 ✅ — 284th clean.
+
+### Next Dimension: 5 — Cycle 295
