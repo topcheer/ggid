@@ -2840,3 +2840,10 @@ PasswordGrant (L1723) + ClientCredentials (L1631) flows verified in OAuth servic
 SDK Go const-before-import fix pending push (notified ggcxf_cli). Danger: 0. Hacks:0 ✅ — 281st clean.
 
 ### Next Dimension: 2 — Cycle 292
+## Cycle 292: D2 RBAC Fine-Grained Permissions (Round 466)
+18/18 RBAC tests pass (incl. ForgedAdminRoleDenied, EmptyRolesDenied, PlatformOnlyWithoutTenantDenied).
+HasPermissionForRoute: longest-prefix match → resource:read/write/admin permission check.
+JWT permissions claim maps to route enforcement. 7/7 gateway pkgs pass. 65/65 total.
+Danger: 0. Hacks:0 ✅ — 282nd clean.
+
+### Next Dimension: 3 — Cycle 293
