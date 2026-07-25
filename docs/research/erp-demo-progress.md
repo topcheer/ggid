@@ -3421,4 +3421,15 @@ Cumulative: 36 rotations × 6 dimensions = 216 deep-dive cycles since C285.
 490 consecutive clean runs, 0 regressions.
 500th clean milestone approaching (at C495 next rotation).
 
-### Next Dimension: 1 — Cycle 501
+### Next Dimension: 1-6 — Cycles 501-506
+## Cycle 501-506: Full 37th Rotation (Round 675-680) — 500TH CLEAN MILESTONE! 🏁🏁
+Resolved: cron-learnings.md merge conflict (kept both Session 10+11).
+Reverted: unnecessary wiring_handlers.go local change (upstream already correct).
+ggcxf_cli fix 23dbee168: auth-guard platform role fuzzy matching removed.
+All dimensions stable. Build: pass. 65/65 tests. Danger: 0.
+D1: 491st ✅ | D2: 492nd ✅ | D3: 493rd ✅ | D4: 494th ✅ | D5: 495th ✅ | D6: 496th ✅
+37th full rotation complete (C501-C506).
+Cumulative: 37 rotations × 6 dimensions = 222 deep-dive cycles since C285.
+496 consecutive clean runs, 0 regressions.
+
+### Next Dimension: 1 — Cycle 507

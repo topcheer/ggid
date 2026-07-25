@@ -129,3 +129,32 @@ Commits: 9c99c59da, e4e18463e, 57bf6bb3b
 - Gateway does NOT validate imp=true claim — impersonation tokens have full permissions
 - Should restrict: no security changes, no user deletion, read-only by default
 - JWT_SECRET must not be shared with Console frontend (currently only backend)
+
+### Session 10: RSA Key Mismatch + Final Status
+
+**P1: OAuth and Auth services use different RSA keys**
+- Root cause: OAuth mounts emptyDir (auto-generated keys), Auth mounts ggid-rsa-keys secret
+- Secret has two pairs: public.pem/private.pem (OAuth) vs rsa_public.pem/rsa_private.pem (Auth)
+- Fix: Auth env changed to JWT_PUBLIC_KEY_PATH=/configs/public.pem (ggcxf_backend)
+- Impact: All Auth endpoints (MFA, sessions, password) returned 401 "invalid token signature"
+
+**Final Platform Status (all verified):**
+- Login: ✅ (RLS fix, RSA key alignment)
+- RBAC: ✅ (create→assign→login→enforce)
+- OAuth CRUD: ✅ (create→edit→disable→re-enable→delete)
+- CAE Policies: ✅ (persisted via API)
+- Password Policy: ✅ (min 12, upper/lower/digit enforced)
+- User Search: ✅ (q= alias)
+- Webhooks: ✅ (test/deliveries/rotate)
+- API Keys: ✅ (scope enforced, 403 on write)
+- Audit Chain: ✅ (4-layer fix: publish→sanitize IP→inet DB→dashboard tenant)
+- Security Dashboard: ✅ (failed_logins=6, total_events=664)
+- MFA/Auth endpoints: ✅ (RSA key fix)
+- Org CRUD: ✅
+- User Lifecycle: ✅ (activate/deactivate/delete)
+- Import: ✅
+
+**Remaining known items:**
+- globalDeptRoles in-memory (architecture debt)
+- Helm chart RSA key naming inconsistency (cosmetic)
+- CAE login enforcement only matches username/user_id conditions (functional gap)
