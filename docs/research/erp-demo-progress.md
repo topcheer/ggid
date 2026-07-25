@@ -3926,3 +3926,12 @@ Cumulative: 124 rotations × 6 dimensions = 744 deep-dive cycles since C285.
 1019 consecutive clean runs, 0 regressions.
 
 ### Next Dimension: 1 — Cycle 1030
+## Cycle 1030-1041: Full 125th-126th Rotations (Round 1204-1215)
+Upstream 038fc4f77: pagination offset/page params fix in listUsers. Verified, no regression.
+All dimensions stable. Build: pass. 65/65 tests. Danger: 0.
+C1030-1035: D1-6 (1020th-1025th) ✅ | C1036-1041: D1-6 (1026th-1031st) ✅
+125th-126th full rotations complete (C1030-C1041).
+Cumulative: 126 rotations × 6 dimensions = 756 deep-dive cycles since C285.
+1031 consecutive clean runs, 0 regressions.
+
+### Next Dimension: 1 — Cycle 1042
