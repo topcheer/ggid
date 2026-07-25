@@ -3741,3 +3741,11 @@ Cumulative: 84 rotations × 6 dimensions = 504 deep-dive cycles since C285.
 779 consecutive clean runs, 0 regressions.
 
 ### Next Dimension: 1 — Cycle 790
+## Cycle 790-801: Full 85th-86th Rotations (Round 964-975)
+All dimensions stable. Build: pass. 65/65 tests. Danger: 0.
+C790-795: D1-6 (780th-785th) ✅ | C796-801: D1-6 (786th-791st) ✅
+85th-86th full rotations complete (C790-C801).
+Cumulative: 86 rotations × 6 dimensions = 516 deep-dive cycles since C285.
+791 consecutive clean runs, 0 regressions.
+
+### Next Dimension: 1 — Cycle 802
