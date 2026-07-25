@@ -2797,3 +2797,10 @@ PW=access_token+token_type+expires_in(api=200) CC=access_token+token_type+expire
 Platform/Tenant role separation complete: 65/65 tests pass, RBAC 8/8, admin works.
 
 ### Next Dimension: 2 — Cycle 286
+## Cycle 286: D2 RBAC Authorization Boundaries (Round 460)
+RBAC: 9/9 scope tests pass (incl. ForgeableNamesRejected). Platform/tenant decoupled.
+Admin token has both platform:admin+tenant:admin. platformOnlyPaths=6, adminOnlyPaths=17.
+8/8 demos have auth handling. Danger patterns: 0. 65/65 packages pass. Hacks:0 ✅ — 276th clean.
+NOTE: Deploy rules changed — no autonomous push. Local commit only.
+
+### Next Dimension: 3 — Cycle 287
