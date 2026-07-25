@@ -241,7 +241,11 @@ func (c *HTTPIdentityClient) LinkExternalIdentity(ctx context.Context, tenantID,
 
 func (c *HTTPIdentityClient) CreateUserFromSocial(ctx context.Context, tenantID uuid.UUID, username, email, displayName, provider, externalID string, metadata map[string]any) (*UserInfo, error) {
 	// Generate a random password — LDAP users authenticate via LDAP, not local password
-	randomPass := fmt.Sprintf("ldap-%s-%d", externalID[:8], time.Now().UnixNano())
+	// Generate a password that satisfies all common password policy requirements
+	// (uppercase, lowercase, digit, special char) since identity service enforces
+	// DB-driven policy. This password is a placeholder — real credential is set
+	// separately by the auth service's Register method.
+	randomPass := fmt.Sprintf("Xq-Lp-%s-%d!Z", externalID[:8], time.Now().UnixNano())
 	body, _ := json.Marshal(map[string]string{
 		"username":      username,
 		"email":         email,
