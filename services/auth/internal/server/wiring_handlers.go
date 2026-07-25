@@ -3,10 +3,12 @@ package server
 import (
 	"encoding/json"
 	"net/http"
+	"os"
 	"time"
 
 	"github.com/ggid/ggid/services/auth/internal/service"
 	"github.com/ggid/ggid/services/auth/internal/webauthn"
+	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
 )
 
@@ -42,7 +44,37 @@ func (h *Handler) handleImpersonate(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusBadRequest, map[string]string{"error": err.Error()})
 		return
 	}
-	writeJSON(w, http.StatusCreated, tok)
+	// Sign an impersonation JWT using the shared JWT_SECRET (HS256)
+	now := time.Now().UTC()
+	claims := jwt.MapClaims{
+		"sub":         req.TargetUserID,
+		"tenant_id":   req.TenantID,
+		"impersonator": req.ImpersonatorID,
+		"imp":         true,
+		"jti":         tok.TokenID.String(),
+		"iat":         now.Unix(),
+		"exp":         tok.ExpiresAt.Unix(),
+		"iss":         "ggid-auth",
+	}
+	jwtToken := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	jwtSecret := os.Getenv("JWT_SECRET")
+	if jwtSecret == "" {
+		jwtSecret = "k3s-jwt-dev-secret"
+	}
+	signedToken, signErr := jwtToken.SignedString([]byte(jwtSecret))
+	if signErr != nil {
+		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "failed to sign impersonation token"})
+		return
+	}
+	writeJSON(w, http.StatusCreated, map[string]any{
+		"token_id":      tok.TokenID,
+		"access_token":  signedToken,
+		"token_type":    "Bearer",
+		"expires_in":    900,
+		"impersonator":  req.ImpersonatorID,
+		"target_user":   req.TargetUserID,
+		"reason":        req.Reason,
+	})
 }
 
 func (h *Handler) handleImpersonateRevoke(w http.ResponseWriter, r *http.Request) {
