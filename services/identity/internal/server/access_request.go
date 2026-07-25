@@ -92,6 +92,9 @@ func (h *HTTPHandler) listAccessRequests(w http.ResponseWriter, r *http.Request)
 		writeServiceError(w, err)
 		return
 	}
+	if requests == nil {
+		requests = []*domain.AccessRequest{}
+	}
 
 	writeJSON(w, http.StatusOK, map[string]any{
 		"requests": requests,
