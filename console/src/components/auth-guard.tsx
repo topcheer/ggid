@@ -41,7 +41,6 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
           setChecked(true);
         })
         .catch(() => {
-          // Fetch failed — still go to login as fallback
           router.push(`/login?redirect_to=${encodeURIComponent(window.location.pathname)}`);
           setChecked(true);
         });
@@ -56,57 +55,81 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
     }
 
     if (token) {
-      setIsAuthenticated(true);
-
-      // Route-level permission check: block direct URL access to admin pages
-      const ADMIN_PREFIXES: Record<string, string> = {
-        "/users": "tenant", "/roles": "tenant", "/audit": "tenant",
-        "/organizations": "tenant", "/sessions": "user",
-        "/settings": "tenant", "/api-keys": "tenant", "/oauth-clients": "tenant",
-        "/webhooks": "tenant", "/policies": "tenant", "/security/": "tenant",
-        "/access-requests": "user", "/analytics/": "tenant", "/monitoring/": "tenant",
-        // Platform-only admin paths
-        "/admin/tenants": "platform",
-        "/admin/audit": "platform",
-        "/admin/threats": "platform",
-        // Tenant admin paths (managers can access)
-        "/admin/impersonate": "tenant",
-        "/admin/secrets": "tenant",
-        "/admin/key-rotation": "tenant",
-        "/admin/backup": "tenant",
-        "/admin/settings": "tenant",
-        "/admin/feature-flags": "tenant",
-        "/admin/health": "tenant",
-      };
-      const userScopes = JSON.parse(localStorage.getItem("ggid_user_scopes") || '["user:self"]');
-      const isPlatform = userScopes.some((s: string) => {
-        const ls = s.toLowerCase();
-        return ls === "platform:admin" || ls === "platform administrator" || ls === "platform_admin";
-      });
-      const isTenant = userScopes.some((s: string) => {
-        const ls = s.toLowerCase();
-        return ls === "tenant:admin" || ls === "manager" || ls === "tenant administrator" || ls === "tenant_admin" || isPlatform;
-      });
-      for (const [prefix, scope] of Object.entries(ADMIN_PREFIXES)) {
-        if (pathname.startsWith(prefix)) {
-          if (scope === "tenant" && !isTenant) {
-            router.replace("/dashboard");
+      // Validate token before trusting it — prevents stale/expired tokens
+      // from rendering the dashboard and flooding it with 401 errors.
+      (async () => {
+        try {
+          const verifyResp = await fetch("/api/v1/users/me", {
+            headers: { Authorization: `Bearer ${token}` },
+          });
+          if (verifyResp.status === 401) {
+            // Token is invalid/expired — clear and redirect to login
+            localStorage.removeItem("ggid_access_token");
+            localStorage.removeItem("ggid_refresh_token");
+            localStorage.removeItem("ggid_session_id");
+            localStorage.removeItem("ggid_user_scopes");
+            localStorage.removeItem("ggid_user_id");
+            setIsAuthenticated(false);
+            setChecked(true);
+            if (!isPublic) {
+              router.push(`/login?redirect_to=${encodeURIComponent(pathname)}`);
+            }
             return;
           }
-          if (scope === "platform" && !isPlatform) {
-            router.replace("/dashboard");
-            return;
-          }
-          break;
+        } catch {
+          // Network error — fail open, let the 401 handler deal with it later
         }
-      }
+
+        setIsAuthenticated(true);
+
+        // Route-level permission check: block direct URL access to admin pages
+        const ADMIN_PREFIXES: Record<string, string> = {
+          "/users": "tenant", "/roles": "tenant", "/audit": "tenant",
+          "/organizations": "tenant", "/sessions": "user",
+          "/settings": "tenant", "/api-keys": "tenant", "/oauth-clients": "tenant",
+          "/webhooks": "tenant", "/policies": "tenant", "/security/": "tenant",
+          "/access-requests": "user", "/analytics/": "tenant", "/monitoring/": "tenant",
+          "/admin/tenants": "platform",
+          "/admin/audit": "platform",
+          "/admin/threats": "platform",
+          "/admin/impersonate": "tenant",
+          "/admin/secrets": "tenant",
+          "/admin/key-rotation": "tenant",
+          "/admin/backup": "tenant",
+          "/admin/settings": "tenant",
+          "/admin/feature-flags": "tenant",
+          "/admin/health": "tenant",
+        };
+        const userScopes = JSON.parse(localStorage.getItem("ggid_user_scopes") || '["user:self"]');
+        const isPlatform = userScopes.some((s: string) => {
+          const ls = s.toLowerCase();
+          return ls === "platform:admin" || ls === "platform administrator" || ls === "platform_admin";
+        });
+        const isTenant = userScopes.some((s: string) => {
+          const ls = s.toLowerCase();
+          return ls === "tenant:admin" || ls === "manager" || ls === "tenant administrator" || ls === "tenant_admin" || isPlatform;
+        });
+        for (const [prefix, scope] of Object.entries(ADMIN_PREFIXES)) {
+          if (pathname.startsWith(prefix)) {
+            if (scope === "tenant" && !isTenant) {
+              router.replace("/dashboard");
+              setChecked(true);
+              return;
+            }
+            if (scope === "platform" && !isPlatform) {
+              router.replace("/dashboard");
+              setChecked(true);
+              return;
+            }
+            break;
+          }
+        }
+        setChecked(true);
+      })();
     } else {
       setIsAuthenticated(false);
-      if (!isPublic) {
-        router.push(`/login?redirect_to=${encodeURIComponent(pathname)}`);
-      }
+      setChecked(true);
     }
-    setChecked(true);
   }, [pathname, router]);
 
   // Listen for 401 events from api.ts to force logout without page reload
@@ -137,8 +160,18 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
   const isPublic = PUBLIC_PATHS.some((p) => pathname === p || pathname.startsWith(p));
 
   // Public pages (login, register, etc.) render full-screen without sidebar
-  if (isPublic || !isAuthenticated) {
+  if (isPublic) {
     return <main className="min-h-screen dark:bg-gray-950">{children}</main>;
+  }
+
+  // Not authenticated and not on a public path — show spinner while
+  // redirecting to login. Do NOT render children (avoids 401 flood).
+  if (!isAuthenticated) {
+    return (
+      <div className="flex h-screen items-center justify-center bg-gray-50 dark:bg-gray-950">
+        <div className="w-8 h-8 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
   }
 
   // Authenticated pages render with sidebar layout
