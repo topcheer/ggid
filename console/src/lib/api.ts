@@ -388,9 +388,9 @@ export function useUserPermissions(): {
     });
   }, []);
 
-  const { isPlatformAdmin } = useUserRole();
+  const { isPlatformAdmin, isTenantAdmin } = useUserRole();
   const hasPermission = (key: string): boolean => {
-    if (isPlatformAdmin) return true;
+    if (isPlatformAdmin || isTenantAdmin) return true;
     return permissions.includes(key);
   };
 

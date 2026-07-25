@@ -2969,3 +2969,10 @@ Build: pass. 65/65 tests. Danger: 0. Hacks:0 ✅ — 298th clean.
 4th full rotation complete (C303-C308).
 
 ### Next Dimension: 1 — Cycle 309
+## Cycle 309: D1 Auth — Revocation + Key Rotation Infrastructure (Round 483)
+Token revocation (RFC 7009): /oauth/revoke + /api/v1/oauth/revoke endpoints.
+JWKS with RotatingKeyProvider: auto key rotation (max age + 24h grace + 1h check).
+OIDC discovery includes all endpoints. 6 grant types supported.
+Danger: 0. Hacks:0 ✅ — 299th clean.
+
+### Next Dimension: 2 — Cycle 310
