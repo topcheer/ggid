@@ -153,7 +153,7 @@ func (r *pgRepo) GetUserByID(ctx context.Context, tenantID, id uuid.UUID) (*doma
 		return nil, err
 	}
 
-	row := tx.QueryRow(ctx, fmt.Sprintf(`SELECT %s FROM users WHERE id = $1`, userColumns), id)
+	row := tx.QueryRow(ctx, fmt.Sprintf(`SELECT %s FROM users WHERE id = $1 AND deleted_at IS NULL`, userColumns), id)
 	user, err := scanUser(row)
 	if err != nil {
 		if isNoRows(err) {
