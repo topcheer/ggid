@@ -2886,3 +2886,9 @@ All SDK WithDiscovery() consumes this. Core TokenResponse matches all SDK TokenS
 Danger: 0. Hacks:0 ✅ — 287th clean.
 
 ### Next Dimension: 2 — Cycle 298
+## Cycle 298: D2 RBAC — Viewer vs Admin Permission Enforcement (Round 472)
+Go demo orders.go: POST requires orders:write, PUT /approve requires orders:approve.
+Viewer without these perms gets denied at requirePerm level.
+18/18 RBAC scope tests pass. Gateway router pkg ok. Danger: 0. Hacks:0 ✅ — 288th clean.
+
+### Next Dimension: 3 — Cycle 299
