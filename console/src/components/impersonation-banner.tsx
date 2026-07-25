@@ -1,29 +1,36 @@
 "use client";
 import { useEffect, useState } from "react";
 import { ShieldAlert, X } from "lucide-react";
-import { authHeader } from "@/lib/auth-helpers";
-import { API_BASE_URL } from "@/lib/api-config";
-
-const API_BASE = API_BASE_URL;
+import { useApi } from "@/lib/api";
 
 /**
  * Impersonation Banner — shows a red banner at the top when the current
  * session is an impersonation session. Provides a quick "End Session" button.
+ *
+ * Reads from ggid_impersonation_state (written by /admin/impersonate page):
+ * { userId, username, email, reason, startedAt, tokenId }
  */
 export function ImpersonationBanner() {
+  const { apiFetch } = useApi();
   const [active, setActive] = useState(false);
-  const [tenantName, setTenantName] = useState("");
-  const [sessionId, setSessionId] = useState("");
+  const [username, setUsername] = useState("");
+  const [email, setEmail] = useState("");
+  const [reason, setReason] = useState("");
+  const [tokenId, setTokenId] = useState("");
   const [ending, setEnding] = useState(false);
 
   useEffect(() => {
-    const raw = localStorage.getItem("ggid_impersonation");
+    const raw = localStorage.getItem("ggid_impersonation_state");
     if (raw) {
       try {
         const imp = JSON.parse(raw);
-        setActive(true);
-        setTenantName(imp.tenant_name || "unknown tenant");
-        setSessionId(imp.session_id || "");
+        if (imp && imp.userId) {
+          setActive(true);
+          setUsername(imp.username || "unknown user");
+          setEmail(imp.email || "");
+          setReason(imp.reason || "");
+          setTokenId(imp.tokenId || "");
+        }
       } catch { /* ignore */ }
     }
   }, []);
@@ -31,13 +38,13 @@ export function ImpersonationBanner() {
   const handleEnd = async () => {
     setEnding(true);
     try {
-      await fetch(`${API_BASE}/api/v1/impersonate/end`, {
+      await apiFetch("/api/v1/auth/impersonate/revoke", {
         method: "POST",
-        headers: { "Content-Type": "application/json", ...authHeader() },
-        body: JSON.stringify({ session_id: sessionId }),
-      });
+        body: JSON.stringify({ token_id: tokenId }),
+      }).catch(() => null);
     } catch { /* ignore */ }
-    localStorage.removeItem("ggid_impersonation");
+    localStorage.removeItem("ggid_impersonation_state");
+    localStorage.removeItem("ggid_impersonation_token");
     setActive(false);
     window.location.reload();
   };
@@ -48,7 +55,8 @@ export function ImpersonationBanner() {
     <div className="sticky top-0 z-50 flex items-center justify-center gap-3 bg-red-600 px-4 py-2 text-white shadow-md">
       <ShieldAlert className="h-5 w-5 shrink-0" />
       <span className="text-sm font-medium">
-        You are operating as <strong>{tenantName}</strong> administrator
+        Impersonating <strong>{username}</strong>{email ? ` (${email})` : ""}
+        {reason && <span className="text-white/70"> — {reason}</span>}
       </span>
       <button
         onClick={handleEnd}
