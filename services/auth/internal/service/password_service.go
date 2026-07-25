@@ -47,8 +47,9 @@ func NewPasswordService(
 
 // Validate checks a plaintext password against the configured policy.
 func (ps *PasswordService) Validate(password string) error {
+	var missing []string
 	if len(password) < ps.policy.MinLength {
-		return ErrPasswordTooShort
+		return fmt.Errorf("password must be at least %d characters long", ps.policy.MinLength)
 	}
 
 	var hasUpper, hasLower, hasDigit, hasSpecial bool
@@ -66,16 +67,20 @@ func (ps *PasswordService) Validate(password string) error {
 	}
 
 	if ps.policy.RequireUpper && !hasUpper {
-		return ErrPasswordTooWeak
+		missing = append(missing, "an uppercase letter")
 	}
 	if ps.policy.RequireLower && !hasLower {
-		return ErrPasswordTooWeak
+		missing = append(missing, "a lowercase letter")
 	}
 	if ps.policy.RequireDigit && !hasDigit {
-		return ErrPasswordTooWeak
+		missing = append(missing, "a digit")
 	}
 	if ps.policy.RequireSpecial && !hasSpecial {
-		return ErrPasswordTooWeak
+		missing = append(missing, "a special character")
+	}
+
+	if len(missing) > 0 {
+		return fmt.Errorf("password must contain %s", strings.Join(missing, ", "))
 	}
 
 	// Check against blacklist of common weak passwords.

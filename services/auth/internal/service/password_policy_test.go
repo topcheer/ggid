@@ -8,8 +8,8 @@ import (
 
 func TestPasswordPolicy_Validate_MinLength(t *testing.T) {
 	svc := NewPasswordService(conf.PasswordPolicy{MinLength: 8}, nil, nil)
-	if err := svc.Validate("short"); err != ErrPasswordTooShort {
-		t.Errorf("expected ErrPasswordTooShort, got %v", err)
+	if err := svc.Validate("short"); err == nil {
+		t.Error("expected error for too-short password")
 	}
 	if err := svc.Validate("longenough"); err != nil {
 		t.Errorf("expected nil for valid length, got %v", err)
