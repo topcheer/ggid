@@ -2952,3 +2952,12 @@ Java demo: SDK jwtVerifier.verifyUser() with TENANT_ID scope.
 65/65 pass. Danger: 0. Hacks:0 ✅ — 296th clean.
 
 ### Next Dimension: 5 — Cycle 307
+## Cycle 307: D5 SDK — Specialized Grant Coverage Matrix (Round 481)
+Core 5 methods (login/verifyToken/getUserInfo/introspectToken/refreshToken): 7/7 SDKs ✅
+Specialized grants (correctly demo-scoped):
+  device_code: Go+Node+Ruby+Java (Ruby demo uses it) ✅
+  exchange_token (RFC 8693): Go+Node+Rust+C# (Rust demo uses it) ✅
+Each demo's grant type is supported by its own SDK. Architecture correct.
+Build: pass. Danger: 0. Hacks:0 ✅ — 297th clean.
+
+### Next Dimension: 6 — Cycle 308
