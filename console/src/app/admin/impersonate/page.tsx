@@ -87,7 +87,7 @@ export default function ImpersonatePage() {
     setLoadingHistory(true);
     try {
       const data = await apiFetch<{ sessions?: HistoryEntry[]; items?: HistoryEntry[] } | HistoryEntry[]>(
-        "/api/v1/admin/impersonate/history?limit=20",
+        "/api/v1/audit/impersonation?limit=20",
       ).catch(() => null);
 
       if (data) {
@@ -203,10 +203,10 @@ export default function ImpersonatePage() {
     setSubmitting(true);
     setReasonError(null);
     try {
-      await apiFetch("/api/v1/admin/impersonate", {
+      const impResp = await apiFetch<{ access_token?: string; token?: string }>("/api/v1/auth/impersonate", {
         method: "POST",
         body: JSON.stringify({
-          user_id: selectedUser.id,
+          target_user_id: selectedUser.id,
           reason: reason.trim(),
         }),
       }).catch(() => null);
@@ -247,8 +247,9 @@ export default function ImpersonatePage() {
   const handleEndImpersonation = async () => {
     setSubmitting(true);
     try {
-      await apiFetch("/api/v1/admin/impersonate/end", {
+      await apiFetch("/api/v1/auth/impersonate/revoke", {
         method: "POST",
+        body: JSON.stringify({ token_id: impersonating?.token || "" }),
       }).catch(() => null);
 
       const prevUser = impersonating?.username || "user";
