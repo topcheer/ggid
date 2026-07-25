@@ -25,6 +25,7 @@ interface ImpersonationState {
   email: string;
   reason: string;
   startedAt: string;
+  tokenId?: string;
 }
 
 interface HistoryEntry {
@@ -206,19 +207,40 @@ export default function ImpersonatePage() {
       const impResp = await apiFetch<{ access_token?: string; token?: string }>("/api/v1/auth/impersonate", {
         method: "POST",
         body: JSON.stringify({
+          impersonator_id: localStorage.getItem("ggid_user_id") || "",
           target_user_id: selectedUser.id,
+          tenant_id: localStorage.getItem("ggid_tenant_id") || "",
           reason: reason.trim(),
         }),
       }).catch(() => null);
 
-      const newSession: ImpersonationState = {
-        userId: selectedUser.id,
-        username: selectedUser.username,
-        email: selectedUser.email,
-        reason: reason.trim(),
-        startedAt: new Date().toISOString(),
-      };
-      persistImpersonation(newSession);
+      if (impResp && (impResp.access_token || impResp.token)) {
+        const token = impResp.access_token || impResp.token || "";
+        // Store impersonation token
+        localStorage.setItem("ggid_impersonation_token", token);
+        // Extract token_id from JWT if present
+        let tokenId = "";
+        try { tokenId = JSON.parse(atob(token.split(".")[1])).jti || ""; } catch {}
+        const newSession: ImpersonationState = {
+          userId: selectedUser.id,
+          username: selectedUser.username,
+          email: selectedUser.email,
+          reason: reason.trim(),
+          startedAt: new Date().toISOString(),
+          tokenId,
+        };
+        persistImpersonation(newSession);
+      } else {
+        // API failed — still update local state for UI feedback
+        const newSession: ImpersonationState = {
+          userId: selectedUser.id,
+          username: selectedUser.username,
+          email: selectedUser.email,
+          reason: reason.trim(),
+          startedAt: new Date().toISOString(),
+        };
+        persistImpersonation(newSession);
+      }
 
       // Add to history optimistically
       const entry: HistoryEntry = {
@@ -249,8 +271,11 @@ export default function ImpersonatePage() {
     try {
       await apiFetch("/api/v1/auth/impersonate/revoke", {
         method: "POST",
-        body: JSON.stringify({ token_id: impersonating?.token || "" }),
+        body: JSON.stringify({ token_id: impersonating?.tokenId || "" }),
       }).catch(() => null);
+
+      // Clear impersonation token from localStorage
+      localStorage.removeItem("ggid_impersonation_token");
 
       const prevUser = impersonating?.username || "user";
 
