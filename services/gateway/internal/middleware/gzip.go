@@ -19,9 +19,9 @@ func Gzip(next http.Handler) http.Handler {
 	}
 
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// Skip gzip for API endpoints — Next.js rewrite proxy doesn't handle
-		// compressed responses correctly, causing empty body in browser fetch()
-		if strings.HasPrefix(r.URL.Path, "/api/") || strings.HasPrefix(r.URL.Path, "/oauth/") || strings.HasPrefix(r.URL.Path, "/saml/") {
+		// Skip gzip for API endpoints and discovery — these must return
+		// uncompressed responses with exact Content-Length for HTTP/2 compatibility.
+		if strings.HasPrefix(r.URL.Path, "/api/") || strings.HasPrefix(r.URL.Path, "/oauth/") || strings.HasPrefix(r.URL.Path, "/saml/") || strings.HasPrefix(r.URL.Path, "/.well-known/") {
 			next.ServeHTTP(w, r)
 			return
 		}

@@ -3,6 +3,7 @@ package middleware
 import (
 	"context"
 	"net/http"
+	"strings"
 	"sync"
 	"time"
 )
@@ -74,8 +75,8 @@ func TimeoutMiddleware(cfg *TimeoutConfig) func(http.Handler) http.Handler {
 			}
 			}
 
-			// Skip timeout for health checks and WebSocket upgrades
-			if r.URL.Path == "/healthz" || isWebSocketUpgrade(r) {
+			// Skip timeout for health checks, well-known discovery, and WebSocket upgrades
+			if r.URL.Path == "/healthz" || strings.HasPrefix(r.URL.Path, "/.well-known/") || isWebSocketUpgrade(r) {
 				next.ServeHTTP(w, r)
 				return
 			}

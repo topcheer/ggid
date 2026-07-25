@@ -110,10 +110,13 @@ func main() {
 
 	// HTTP server
 	srv := &http.Server{
-		Addr:         cfg.Addr,
-		Handler:      gw.Handler(),
-		ReadTimeout:  cfg.ReadTimeout,
-		WriteTimeout: cfg.WriteTimeout,
+		Addr:              cfg.Addr,
+		Handler:           gw.Handler(),
+		ReadHeaderTimeout: 10 * time.Second,
+		// ReadTimeout/WriteTimeout intentionally omitted — Go 1.25 http.Server
+		// uses them as hard deadlines that force Connection: close, causing
+		// HTTP/2 INTERNAL_ERROR. Per-route timeouts handled by TimeoutMiddleware.
+		IdleTimeout: cfg.IdleTimeout,
 	}
 
 	go func() {

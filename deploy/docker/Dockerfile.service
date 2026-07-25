@@ -23,6 +23,7 @@ COPY ${BINARY} /app/service
 RUN chmod +x /app/service
 
 WORKDIR /app
+RUN mkdir -p /app/configs && ln -s /configs/rsa_public.pem /app/configs/rsa_public.pem && ln -s /configs/rsa_private.pem /app/configs/rsa_private.pem || true
 EXPOSE 8080
 
 HEALTHCHECK --interval=30s --timeout=5s --retries=3 --start-period=10s \

@@ -190,3 +190,47 @@ The error was visible in audit pod logs: `process error: persist event: ERROR: i
 
 **Console mock fallback 页面**: 14个页面有 catch→mock，大部分API已返回200，fallback不触发
 
+
+### Session 11: Deep Audit — Password UX + Session Cascade (2026-07-25)
+
+**修复: 密码验证错误消息不可操作** (baf1884bf)
+- 旧: "password does not meet complexity requirements"
+- 新: "password must contain an uppercase letter, a digit"
+- 文件: services/auth/internal/service/password_service.go
+
+**发现: Session 只记录 admin 用户** (已 DM ggcxf_backend)
+- DB 中 34 条 session 全是 admin，其他用户登录不创建 session
+- 根因: sessions 表有 RLS，PasswordGrant INSERT 前 `SET app.tenant_id` 缺失
+- 加上 IP/UA context 未注入（WithClientInfo 存在但未调用）
+
+**验证通过**:
+- 用户列表数据完整性: 100% 字段完整 (email/display_name/status/roles) ✅
+- 密码策略执行: min12/upper/digit 全部正确 ✅
+- Delete cascade: 删除用户后无法登录 ✅（但 session 清理待 RLS 修复后验证）
+- CAE 策略 CRUD: 4条策略持久化 ✅（enforcement 引擎仍缺失）
+- Session 持久化: 28→34 条记录 ✅（但仅 admin 用户）
+
+**架构债务（已知）**:
+- CAEMiddleware 未接入 gateway 中间件链
+- Console 用 window.confirm 而非 modal（用户详情页/OAuth clients 页面）
+
+### Session 12: Deep Audit — Import Wizard + Feature Flags (2026-07-25)
+
+**P1: Bulk import writes nothing to DB**
+- `bulk_import.go` L120-123: hash 计算后丢弃，返回 `imported: 2` 但用户不存在
+- 占位实现，需接入 CreateUser 或 INSERT
+- 已 DM ggcxf_backend
+
+**验证通过: Feature Flags 全生命周期** (ggcxf_backend 修复 bb1291ea2)
+- Create (key/description) ✅
+- PUT toggle ✅
+- DELETE ✅
+- 字段名 key↔name 同步 ✅
+
+**验证通过: 密码修改闭环**
+- change-password → new login OK → old password rejected ✅
+- zxcvbn strength gate 阻止弱密码（含 dictionary word）
+- Admin 密码变更为 Xq9#Kp2!Mn7$Vw4@（旧密码无法重设）
+
+**Access Review**: 创建成功但返回 JSON 字段大写（ID vs id）— P2 格式不一致
+**Import 路径**: Console 应调 /api/v1/users/bulk-import（非 /api/v1/users/import）

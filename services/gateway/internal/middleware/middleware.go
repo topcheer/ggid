@@ -62,8 +62,25 @@ type statusRecorder struct {
 	size   int
 }
 
+// Flush passes through to the underlying ResponseWriter for HTTP/2 streaming support.
+// Without this, Go's HTTP/2 server cannot detect the Flusher interface and
+// may close streams with INTERNAL_ERROR.
+func (sr *statusRecorder) Flush() {
+	if f, ok := sr.ResponseWriter.(http.Flusher); ok {
+		f.Flush()
+	}
+}
+
+// Unwrap returns the underlying ResponseWriter for HTTP/2 interface detection.
+func (sr *statusRecorder) Unwrap() http.ResponseWriter {
+	return sr.ResponseWriter
+}
+
 func (sr *statusRecorder) WriteHeader(code int) {
 	sr.status = code
+	// Prevent Go http.Server from setting Connection: close on responses.
+	// Multiple middleware wrappers can trigger this, causing HTTP/2 stream errors.
+	sr.ResponseWriter.Header().Del("Connection")
 	sr.ResponseWriter.WriteHeader(code)
 }
 

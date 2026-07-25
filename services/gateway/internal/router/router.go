@@ -240,6 +240,12 @@ func (gw *Gateway) buildProxies() {
 			w.WriteHeader(http.StatusBadGateway)
 			_ = json.NewEncoder(w).Encode(map[string]string{"error": "backend service unavailable"})
 		}
+		proxy.ModifyResponse = func(resp *http.Response) error {
+			if resp.ContentLength > 0 && resp.Header.Get("Content-Length") == "" {
+				resp.Header.Set("Content-Length", strconv.FormatInt(resp.ContentLength, 10))
+			}
+			return nil
+		}
 		gw.proxies[prefix] = proxy
 		// Store per-route read timeout for context-based timeout in ServeHTTP
 		if to.Read > 0 {
@@ -1181,6 +1187,14 @@ func (gw *Gateway) buildProxiesLocked() {
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusBadGateway)
 			_ = json.NewEncoder(w).Encode(map[string]string{"error": "backend service unavailable"})
+		}
+		// Preserve Content-Length from backend response so HTTP/2 clients
+		// know exactly how many bytes to expect (prevents INTERNAL_ERROR on stream close).
+		proxy.ModifyResponse = func(resp *http.Response) error {
+			if resp.ContentLength > 0 && resp.Header.Get("Content-Length") == "" {
+				resp.Header.Set("Content-Length", strconv.FormatInt(resp.ContentLength, 10))
+			}
+			return nil
 		}
 		gw.proxies[prefix] = proxy
 		if to.Read > 0 {

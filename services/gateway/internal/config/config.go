@@ -34,6 +34,7 @@ type Config struct {
 	RouteConfigs    map[string]RouteConfig `yaml:"route_configs"` // per-route advanced config
 	ReadTimeout     time.Duration       `yaml:"read_timeout"`
 	WriteTimeout    time.Duration       `yaml:"write_timeout"`
+	IdleTimeout     time.Duration       `yaml:"idle_timeout"`
 	UpstreamTimeout time.Duration       `yaml:"upstream_timeout"`
 	MaxBodySize     int64               `yaml:"max_body_size"`
 	AllowedHosts    []string            `yaml:"allowed_hosts"`
@@ -152,7 +153,8 @@ func Default() *Config {
 			},
 		},
 		ReadTimeout:     15 * time.Second,
-		WriteTimeout:    15 * time.Second,
+		WriteTimeout:    30 * time.Second,
+		IdleTimeout:     120 * time.Second,
 		UpstreamTimeout: upstreamTimeout,
 	}
 }
