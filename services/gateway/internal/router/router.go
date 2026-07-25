@@ -193,7 +193,7 @@ func (gw *Gateway) buildProxies() {
 				Timeout:   to.Dial,
 				KeepAlive: 30 * time.Second,
 			}).DialContext,
-			ForceAttemptHTTP2:     true,
+			ForceAttemptHTTP2:     false,
 			TLSHandshakeTimeout:   5 * time.Second,
 			ExpectContinueTimeout: 1 * time.Second,
 		}
@@ -1151,7 +1151,7 @@ func (gw *Gateway) buildProxiesLocked() {
 				Timeout:   to.Dial,
 				KeepAlive: 30 * time.Second,
 			}).DialContext,
-			ForceAttemptHTTP2:     true,
+			ForceAttemptHTTP2:     false,
 			TLSHandshakeTimeout:   5 * time.Second,
 			ExpectContinueTimeout: 1 * time.Second,
 		}

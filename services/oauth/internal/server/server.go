@@ -2399,9 +2399,17 @@ func (a *redisAdapter) ZAdd(ctx context.Context, key string, score float64, memb
 }
 
 func writeJSON(w http.ResponseWriter, code int, v any) {
+	data, err := json.Marshal(v)
+	if err != nil {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(`{"error":"marshal failed"}`))
+		return
+	}
 	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("Content-Length", strconv.Itoa(len(data)))
 	w.WriteHeader(code)
-	_ = json.NewEncoder(w).Encode(v)
+	w.Write(data)
 }
 
 // writeInternalError logs the actual error and returns a sanitized 500 response.
