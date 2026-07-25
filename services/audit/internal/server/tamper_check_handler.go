@@ -139,14 +139,15 @@ func (s *HTTPServer) handleTamperCheck(w http.ResponseWriter, r *http.Request) {
 // tenant and returns them in chain order (oldest first).
 func (s *HTTPServer) loadChainEvents(r *http.Request, tenantID uuid.UUID, limit int) ([]*auditChainRow, error) {
 	rows, err := s.pool.Query(r.Context(), `
-		SELECT id, tenant_id, actor_type, actor_id, action,
-		       COALESCE(resource_type, ''), resource_id, result,
+		SELECT id, tenant_id, actor_type, actor_id, COALESCE(actor_name,''), action,
+		       COALESCE(resource_type, ''), resource_id, COALESCE(resource_name,''), result,
 		       COALESCE(ip_address::text, ''),
+		       COALESCE(user_agent,''), COALESCE(request_id,''),
 		       COALESCE(prev_hash, ''), COALESCE(hash, ''),
 		       created_at, COALESCE(metadata, '{}')
 		FROM audit_events
 		WHERE tenant_id = $1
-		ORDER BY created_at DESC, id DESC
+		ORDER BY created_at ASC, id ASC
 		LIMIT $2`, tenantID, limit)
 	if err != nil {
 		return nil, err
@@ -158,9 +159,10 @@ func (s *HTTPServer) loadChainEvents(r *http.Request, tenantID uuid.UUID, limit 
 		e := domain.AuditEvent{}
 		var metaBytes []byte
 		if err := rows.Scan(
-			&e.ID, &e.TenantID, &e.ActorType, &e.ActorID, &e.Action,
-			&e.ResourceType, &e.ResourceID, &e.Result,
-			&e.IPAddress, &e.PrevHash, &e.Hash, &e.CreatedAt, &metaBytes,
+			&e.ID, &e.TenantID, &e.ActorType, &e.ActorID, &e.ActorName, &e.Action,
+			&e.ResourceType, &e.ResourceID, &e.ResourceName, &e.Result,
+			&e.IPAddress, &e.UserAgent, &e.RequestID,
+			&e.PrevHash, &e.Hash, &e.CreatedAt, &metaBytes,
 		); err != nil {
 			return nil, err
 		}
@@ -168,6 +170,7 @@ func (s *HTTPServer) loadChainEvents(r *http.Request, tenantID uuid.UUID, limit 
 		if len(metaBytes) > 0 {
 			var meta map[string]any
 			if json.Unmarshal(metaBytes, &meta) == nil {
+				e.Metadata = meta // populate for hash verification
 				if v, ok := meta["pii_redacted"].(bool); ok && v {
 					row.piiRedacted = true
 				}
@@ -177,10 +180,6 @@ func (s *HTTPServer) loadChainEvents(r *http.Request, tenantID uuid.UUID, limit 
 	}
 	if err := rows.Err(); err != nil {
 		return nil, err
-	}
-	// Reverse into chain order (oldest first) for sequential verification.
-	for i, j := 0, len(out)-1; i < j; i, j = i+1, j-1 {
-		out[i], out[j] = out[j], out[i]
 	}
 	return out, nil
 }
