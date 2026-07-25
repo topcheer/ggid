@@ -11,8 +11,8 @@ func TestGetRouteTimeout_NoRouteConfig(t *testing.T) {
 	if rt.Read != 15*time.Second {
 		t.Errorf("Read: want 15s, got %v", rt.Read)
 	}
-	if rt.Write != 15*time.Second {
-		t.Errorf("Write: want 15s, got %v", rt.Write)
+	if rt.Write != 30*time.Second {
+		t.Errorf("Write: want 30s, got %v", rt.Write)
 	}
 	if rt.Idle != 90*time.Second {
 		t.Errorf("Idle: want 90s, got %v", rt.Idle)
