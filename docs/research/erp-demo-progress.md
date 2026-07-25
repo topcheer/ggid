@@ -2923,3 +2923,11 @@ Login→verify→CRUD→refresh→logout full lifecycle verified in React SPA.
 3rd full rotation complete (C297-C302).
 
 ### Next Dimension: 1 — Cycle 303
+## Cycle 303: D1 Auth + Console Role Fix Verify (Round 477)
+OAuth server handles 6 grant types: authorization_code, refresh_token, client_credentials,
+password, device_code, jwt-bearer — covers all 8 demo auth methods.
+ggcxf_cli fix 99f506bb7 verified: console getUserRole no longer treats admin/Administrator
+as platform:admin. Aligns with gateway RBAC decouple (ForgeableNamesRejected test).
+Build: pass. 65/65 tests. Danger: 0. Hacks:0 ✅ — 293rd clean.
+
+### Next Dimension: 2 — Cycle 304
