@@ -502,3 +502,4 @@ PATROL35: secrets 0, swallow 29, anon 401, tamper CLEAN (1330 verified). Hash ch
 PATROL36: secrets 0, swallow 29, anon 401, tamper CLEAN (1418). Impersonation JWT deployed (HS256 concern flagged). No new P0/P1.
 PATROL37: secrets 0, swallow 29, anon 401, tamper 5 NEW crit (hash path still inconsistent). commit 23dbee168 auth-guard fuzzy admin matching removed (positive). Needs repair+deploy audit.
 PATROL38: secrets 0, swallow 29, anon 401, tamper 12 crit (systemic hash path issue persists). DM'd PM with root cause fix suggestion.
+PATROL39: secrets 0, swallow 29, anon 401, tamper 46 crit (accelerating). API key scope P1 fix noted (f7f1f0c08, positive). DM'd PM.

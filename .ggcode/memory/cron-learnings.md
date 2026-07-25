@@ -165,3 +165,28 @@ if idx := strings.LastIndex(ip, ":"); idx > 0 && !strings.Contains(ip[idx+1:], "
 
 **Lesson:** Always check DB error logs when async event pipelines appear broken.
 The error was visible in audit pod logs: `process error: persist event: ERROR: invalid input syntax for type inet`
+
+### Session 10: Deep Functional Audit (2026-07-25)
+
+**P1 安全修复: API Key scope 不在资源级别强制执行**
+- API key scope=`users:read` 能 GET /audit/events（应该403）
+- 根因: `apiKeyHasWriteAccess` 只检查方法级别 (GET=任意:read)，不检查资源类型
+- 修复: 用 `HasPermissionForRoute(path, method, scopes)` 做资源级别检查
+- commit f7f1f0c08
+
+**已验证: OAuth Client 全生命周期 PASS**
+- Create (返回 client_id=gcid_xxx + client_secret=gcs_xxx)
+- M2M token (client_credentials grant) → 200
+- Disable (PUT enabled=false) → M2M 被拒 "client is disabled"
+- Re-enable → M2M 恢复
+- Delete → 404
+- 注意: PUT/DELETE 必须用 client_id (gcid_xxx) 不是 DB UUID
+
+**已验证: API Key 认证闭环 PASS** (scope 修复前)
+- Create → X-API-Key 调 API → 200
+- Scope 写限制: users:read key POST /users → 403
+- 吊销 → 401
+- BUG (已修复): users:read key GET /audit/events → 200 (应为403)
+
+**Console mock fallback 页面**: 14个页面有 catch→mock，大部分API已返回200，fallback不触发
+
