@@ -3656,3 +3656,15 @@ Cumulative: 66 rotations × 6 dimensions = 396 deep-dive cycles since C285.
 671 consecutive clean runs, 0 regressions.
 
 ### Next Dimension: 1 — Cycle 682
+## Cycle 682-693: Full 67th-68th Rotations — Hash Chain + API Key Fix (Round 856-867)
+**3 upstream fixes verified, no regression:**
+- `70db81d41` Hash chain false positive: SQL missing actor_id/resource_id/metadata fields → VerifyHash always failed. Fixed, last 100 events is_clean=True.
+- `f7f1f0c08` API key scope not enforced at resource level (P1). RBAC tests pass.
+- `5df746fa8` Docs update.
+All dimensions stable. Build: pass. 65/65 tests. 18/18 RBAC. Audit: pass. Danger: 0.
+C682-687: D1-6 (672nd-677th) ✅ | C688-693: D1-6 (678th-683rd) ✅
+67th-68th full rotations complete (C682-C693).
+Cumulative: 68 rotations × 6 dimensions = 408 deep-dive cycles since C285.
+683 consecutive clean runs, 0 regressions.
+
+### Next Dimension: 1 — Cycle 694
