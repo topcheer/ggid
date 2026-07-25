@@ -3718,3 +3718,16 @@ Cumulative: 80 rotations × 6 dimensions = 480 deep-dive cycles since C285.
 755 consecutive clean runs, 0 regressions.
 
 ### Next Dimension: 1 — Cycle 766
+## Cycle 766-777: Full 81st-82nd Rotations — Hash Chain Complete Fix (Round 940-951)
+**Audit hash chain 3-layer root cause fixed (a67472c22 + 8d39f3266):**
+- inet::text IP/32 suffix → host() strips suffix
+- pgx nil *uuid.UUID → nullableUUID() ensures NULL not uuid.Nil
+- repair-chain endpoint: recomputes all historical hashes (WORM bypass)
+- Result: 1198/1198 events is_clean=True, critical=0
+All dimensions stable. Build: pass. 65/65 tests. Audit 5/5. Danger: 0.
+C766-771: D1-6 (756th-761st) ✅ | C772-777: D1-6 (762nd-767th) ✅
+81st-82nd full rotations complete (C766-C777).
+Cumulative: 82 rotations × 6 dimensions = 492 deep-dive cycles since C285.
+767 consecutive clean runs, 0 regressions.
+
+### Next Dimension: 1 — Cycle 778
