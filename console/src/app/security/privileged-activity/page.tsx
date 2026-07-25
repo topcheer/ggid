@@ -243,7 +243,12 @@ function SessionsTab({ ops, loading }: { ops: PrivilegedOp[]; loading: boolean }
 
   return (
     <div className="space-y-2">
-      {sessionList.map((s: any) => (
+      {sessionList.length === 0 ? (
+        <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-8 text-center">
+          <p className="text-sm text-gray-500 dark:text-gray-400">{t("privilegedActivity.timeline.noData") || "No privileged activity recorded yet."}</p>
+          <p className="mt-1 text-xs text-gray-400">Privileged operations will appear here when detected.</p>
+        </div>
+      ) : sessionList.map((s: any) => (
         <div key={s.session_id} className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 overflow-hidden">
           <button onClick={() => setExpanded(expanded === s.session_id ? null : s.session_id)}
             className="w-full flex items-center gap-3 p-4 hover:bg-gray-50 dark:hover:bg-gray-800/30">
