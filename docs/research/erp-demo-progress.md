@@ -3194,3 +3194,17 @@ Cumulative: 11 rotations × 6 dimensions = 66 deep-dive cycles since C285.
 340 consecutive clean runs, 0 regressions.
 
 ### Next Dimension: 1 — Cycle 351
+## Cycle 351: D1 Auth — Ruby Device Code Flow Deep Verify (Round 525)
+Ruby demo: POST /api/auth/device/start → SDK start_device_flow → device_code+user_code+verification_uri.
+POST /api/auth/device/poll → SDK poll_device_token. Matches OAuth device_code grant type.
+65/65 pass. Danger: 0. Hacks:0 ✅ — 341st clean.
+
+### Next Dimension: 2-6 — Cycles 352-356
+## Cycle 352-356: D2-D6 12th Rotation Complete (Round 526-530)
+All dimensions stable. Build: pass. 65/65 tests. Danger: 0.
+D2: 342nd ✅ | D3: 343rd ✅ | D4: 344th ✅ | D5: 345th ✅ | D6: 346th ✅
+12th full rotation complete (C351-C356).
+Cumulative: 12 rotations × 6 dimensions = 72 deep-dive cycles since C285.
+346 consecutive clean runs, 0 regressions.
+
+### Next Dimension: 1 — Cycle 357
