@@ -2982,3 +2982,10 @@ Gateway RBAC unaffected: all CheckRouteScope + HasAdminScope tests pass.
 65/65 packages pass. Danger: 0. Hacks:0 ✅ — 300th clean. 🏁
 
 ### Next Dimension: 3 — Cycle 311
+## Cycle 311: D3 Functional — C#/Java Demo Completeness (Round 485)
+C#: inventory(GET/POST)+orders(GET/POST/approve)+my-permissions, all perm-gated.
+Java: 8 handler contexts (auth/users/roles/orgs/inventory/orders/audit/dashboard), concurrent maps.
+Envelope note: C# uses {items,count}, Go/Node use {items,total} — cosmetic, demos are independent.
+Build: pass. Danger: 0. Hacks:0 ✅ — 301st clean.
+
+### Next Dimension: 4 — Cycle 312
