@@ -90,8 +90,8 @@ export default function TenantsPage() {
 
         <div className="flex gap-1 mb-6 bg-gray-200 dark:bg-gray-800 rounded-lg p-1">
           {tabs.map(({ id, label, icon: Icon }) => (
-            <button key={id} onClick={() => setTab(id)}
-              className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+            <button key={id} onClick={() => setTab(id)} aria-label={label}
+              className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 dark:focus:ring-offset-gray-900 ${
                 tab === id ? "bg-white dark:bg-gray-700 text-blue-600 dark:text-blue-400 shadow-sm" : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
               }`}>
               <Icon className="w-4 h-4" />{label}
@@ -250,7 +250,7 @@ function CreateTenant({ onCreated }: { onCreated: () => void }) {
 
       <div>
         <label className="block text-sm font-medium text-gray-900 dark:text-white mb-1">{t("tenants.create.name")}</label>
-        <input type="text" value={name} onChange={(e) => handleNameChange(e.target.value)} placeholder={t("tenants.create.namePlaceholder")} autoFocus
+        <input type="text" aria-label={t("tenants.create.name")} value={name} onChange={(e) => handleNameChange(e.target.value)} placeholder={t("tenants.create.namePlaceholder")} autoFocus
           className="w-full px-4 py-2.5 rounded-lg border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-sm text-gray-900 dark:text-white" />
       </div>
 
@@ -258,7 +258,7 @@ function CreateTenant({ onCreated }: { onCreated: () => void }) {
         <label className="block text-sm font-medium text-gray-900 dark:text-white mb-1">子域名 (Subdomain)</label>
         <p className="text-xs text-gray-500 mb-2">从组织名自动生成，可自定义修改。仅限小写字母、数字和连字符。</p>
         <div className="flex items-center gap-2">
-          <input type="text" value={slug} onChange={(e) => setSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ""))}
+          <input type="text" aria-label="Subdomain" value={slug} onChange={(e) => setSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ""))}
             placeholder="acme"
             className="flex-1 px-4 py-2.5 rounded-lg border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-sm text-gray-900 dark:text-white font-mono" />
           <span className="text-sm text-gray-500 whitespace-nowrap">.ggid-console.iot2.win</span>
@@ -293,7 +293,7 @@ function CreateTenant({ onCreated }: { onCreated: () => void }) {
       <div>
         <label className="block text-sm font-medium text-gray-900 dark:text-white mb-1">{t("tenants.create.adminEmail")}</label>
         <p className="text-xs text-gray-500 mb-1">{t("tenants.create.adminEmailDesc")}</p>
-        <input type="email" value={adminEmail} onChange={(e) => setAdminEmail(e.target.value)} placeholder={t("tenants.create.adminEmailPlaceholder")}
+        <input type="email" aria-label={t("tenants.create.adminEmailPlaceholder")} value={adminEmail} onChange={(e) => setAdminEmail(e.target.value)} placeholder={t("tenants.create.adminEmailPlaceholder")}
           className="w-full px-4 py-2.5 rounded-lg border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-sm text-gray-900 dark:text-white" />
       </div>
 
@@ -301,6 +301,7 @@ function CreateTenant({ onCreated }: { onCreated: () => void }) {
       {msg && <div className="flex items-center gap-2 px-4 py-2 rounded-lg bg-green-50 text-green-700 dark:bg-green-950 dark:text-green-300 text-sm">{submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}{msg}</div>}
 
       <button onClick={submit} disabled={submitting || !name}
+        aria-label={t("tenants.create.submit") || "Create tenant"}
         className="flex items-center gap-2 px-6 py-2.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white rounded-lg font-medium text-sm">
         {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
         {t("tenants.create.submit")}
