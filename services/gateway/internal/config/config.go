@@ -128,7 +128,8 @@ func Default() *Config {
 			// Provisioning service handled by gateway stub (no separate service exists)
 			"/oauth":                              envOrDefault("OAUTH_SERVICE_URL", "http://localhost:9005"),
 			"/saml":                               envOrDefault("OAUTH_SERVICE_URL", "http://localhost:9005"),
-			"/.well-known/openid-configuration":   envOrDefault("OAUTH_SERVICE_URL", "http://localhost:9005"),
+			"/.well-known/openid-configuration":            envOrDefault("OAUTH_SERVICE_URL", "http://localhost:9005"),
+			"/.well-known/oauth-authorization-server":       envOrDefault("OAUTH_SERVICE_URL", "http://localhost:9005"),
 		},
 		RouteConfigs: map[string]RouteConfig{
 			// Auth needs short timeouts for fast failure on rate-limited requests

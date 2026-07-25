@@ -319,6 +319,12 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 		overrideDiscoveryIssuer(config, r)
 		writeJSON(w, http.StatusOK, config)
 	})
+	// RFC 8414: OAuth 2.0 Authorization Server Metadata
+	mux.HandleFunc("/.well-known/oauth-authorization-server", func(w http.ResponseWriter, r *http.Request) {
+		config := oauthSvc.GetDiscoveryConfig()
+		overrideDiscoveryIssuer(config, r)
+		writeJSON(w, http.StatusOK, config)
+	})
 	mux.HandleFunc("/api/v1/oauth/.well-known/openid-configuration", func(w http.ResponseWriter, r *http.Request) {
 		config := oauthSvc.GetDiscoveryConfig()
 		overrideDiscoveryIssuer(config, r)
@@ -1035,6 +1041,10 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 		if err != nil {
 			writeJSON(w, http.StatusBadRequest, map[string]string{"error": err.Error()})
 			return
+		}
+		// RFC 7591: public clients (token_endpoint_auth_method=none) must not receive a client_secret.
+		if req.TokenEndpointAuthMethod == "none" {
+			result.ClientSecret = ""
 		}
 		writeJSON(w, http.StatusCreated, result)
 	})
