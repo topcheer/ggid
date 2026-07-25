@@ -10,6 +10,7 @@ import (
 
 	ggidcrypto "github.com/ggid/ggid/pkg/crypto"
 	ggidtenant "github.com/ggid/ggid/pkg/tenant"
+	"github.com/ggid/ggid/services/identity/internal/domain"
 	"github.com/google/uuid"
 )
 
@@ -118,10 +119,41 @@ func (h *HTTPHandler) handleBulkImport(w http.ResponseWriter, r *http.Request) {
 		}
 
 		// In production: batch INSERT via pgx.CopyFrom for performance.
-		// For now, structured result ready for DB wiring.
-		_ = secretHash
-		_ = tc.TenantID
-		slog.Info("bulk import user", "email", user.Email, "role", user.RoleID)
+		// For now, use CreateUser for each user (correct, just not bulk-optimized).
+		username := user.Username
+		if username == "" {
+			username = strings.Split(user.Email, "@")[0]
+		}
+		input := &domain.CreateUserInput{
+			TenantID:    tc.TenantID,
+			Username:    username,
+			Email:       user.Email,
+			Phone:       user.Phone,
+			Password:    user.Password, // CreateUser hashes it internally
+			DisplayName: strings.TrimSpace(user.FirstName + " " + user.LastName),
+		}
+		createdUser, err := h.svc.CreateUser(r.Context(), input)
+		if err != nil {
+			result.Failed++
+			result.Errors = append(result.Errors, ImportError{Email: user.Email, Reason: fmt.Sprintf("create user failed: %v", err)})
+			slog.Warn("bulk import: CreateUser failed", "email", user.Email, "error", err)
+			continue
+		}
+		// If password_hash was provided (pre-hashed), store it directly in credentials.
+		if user.Password == "" && secretHash != "" && h.svc.Pool() != nil {
+			_, _ = h.svc.Pool().Exec(r.Context(),
+				`UPDATE credentials SET secret = $1 WHERE user_id = $2 AND type = 'password'`,
+				secretHash, createdUser.ID)
+		}
+		// Assign role if specified.
+		if user.RoleID != "" {
+			if roleUUID, err := uuid.Parse(user.RoleID); err == nil && h.svc.Pool() != nil {
+				_, _ = h.svc.Pool().Exec(r.Context(),
+					`INSERT INTO user_roles (user_id, role_id) VALUES ($1, $2) ON CONFLICT DO NOTHING`,
+					createdUser.ID, roleUUID)
+			}
+		}
+		slog.Info("bulk import user created", "email", user.Email, "user_id", createdUser.ID, "role", user.RoleID)
 		result.Imported++
 	}
 
