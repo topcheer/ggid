@@ -15,6 +15,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"math/big"
+	"net"
 	"log/slog"
 	"strconv"
 	"strings"
@@ -1822,6 +1823,8 @@ func (s *OAuthService) PasswordGrant(ctx context.Context, req *PasswordGrantRequ
 	// 5. Persist session record so auth service can list/revoke active sessions.
 	if s.pool != nil {
 		sessionID := uuid.New()
+		// Set RLS context before INSERT (sessions table has FORCED RLS).
+		_, _ = s.pool.Exec(ctx, fmt.Sprintf("SET app.tenant_id = '%s'", tenantID.String()))
 		_, sessionErr := s.pool.Exec(ctx, `
 			INSERT INTO sessions (id, tenant_id, user_id, token_hash, ip_address, user_agent, expires_at, created_at)
 			VALUES ($1, $2, $3, $4, NULLIF($5, '')::inet, $6, $7, NOW())`,
@@ -1839,10 +1842,21 @@ func (s *OAuthService) PasswordGrant(ctx context.Context, req *PasswordGrantRequ
 	return resp, nil
 }
 
+// WithClientInfo injects client IP and User-Agent into context for session tracking.
+// Strips port from RemoteAddr ("ip:port") for inet column compatibility.
+func WithClientInfo(ctx context.Context, ip, userAgent string) context.Context {
+	if h, _, err := net.SplitHostPort(ip); err == nil {
+		ip = h
+	}
+	ctx = context.WithValue(ctx, CtxKeyClientIP{}, ip)
+	ctx = context.WithValue(ctx, CtxKeyUserAgent{}, userAgent)
+	return ctx
+}
+
 // ctxIP extracts the client IP from context metadata (set by gateway proxy).
 // Returns empty string if not available — the inet cast handles NULL safely.
 func ctxIP(ctx context.Context) string {
-	if v, ok := ctx.Value(ctxKeyClientIP{}).(string); ok {
+	if v, ok := ctx.Value(CtxKeyClientIP{}).(string); ok {
 		return v
 	}
 	return ""
@@ -1850,14 +1864,14 @@ func ctxIP(ctx context.Context) string {
 
 // ctxUserAgent extracts the User-Agent from context metadata.
 func ctxUserAgent(ctx context.Context) string {
-	if v, ok := ctx.Value(ctxKeyUserAgent{}).(string); ok {
+	if v, ok := ctx.Value(CtxKeyUserAgent{}).(string); ok {
 		return v
 	}
 	return ""
 }
 
-type ctxKeyClientIP struct{}
-type ctxKeyUserAgent struct{}
+type CtxKeyClientIP struct{}
+type CtxKeyUserAgent struct{}
 
 // --- Utility functions ---
 
