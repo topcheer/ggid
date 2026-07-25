@@ -3075,3 +3075,10 @@ Cumulative: 7 rotations × 6 dimensions = 42 deep-dive cycles since C285.
 316 consecutive clean runs, 0 regressions.
 
 ### Next Dimension: 1 — Cycle 327
+## Cycle 327: D1 Auth — PKCE Flow Deep Verify (Round 501)
+OAuth authorize endpoint: code_challenge + code_challenge_method validation.
+S256 + plain methods supported. PKCE mandatory for public clients (RequirePKCE).
+Go demo (Auth Code+PKCE) and React demo (SPA PKCE) both use this flow.
+65/65 pass. Danger: 0. Hacks:0 ✅ — 317th clean.
+
+### Next Dimension: 2 — Cycle 328
