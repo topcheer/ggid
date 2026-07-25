@@ -2878,3 +2878,11 @@ Login→verify→CRUD→dashboard flow verified. Session guards on React pages.
 2nd full rotation complete (C291-C296). Improvements: my-permissions added to Go, IntrospectToken added to Go SDK.
 
 ### Next Dimension: 1 — Cycle 297
+## Cycle 297: D1 Auth — OIDC Discovery Deep Verify (Round 471)
+OIDCDiscoveryConfig has 22 fields: issuer, auth/token/userinfo/jwks/introspection/revocation
+endpoints, device_auth_endpoint, PAR endpoint, grant_types, code_challenge_methods, etc.
+Served at /.well-known/openid-configuration + /api/v1/oauth/.well-known/openid-configuration.
+All SDK WithDiscovery() consumes this. Core TokenResponse matches all SDK TokenSet.
+Danger: 0. Hacks:0 ✅ — 287th clean.
+
+### Next Dimension: 2 — Cycle 298
