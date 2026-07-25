@@ -706,8 +706,9 @@ func (s *OAuthService) fetchUserPermissions(ctx context.Context, tenantID, userI
 		FROM role_permissions rp
 		JOIN permissions p ON p.id = rp.permission_id
 		JOIN user_roles ur ON ur.role_id = rp.role_id
-		WHERE ur.user_id = $1`,
-		userID)
+		JOIN roles r ON r.id = ur.role_id
+		WHERE ur.user_id = $1 AND r.tenant_id = $2`,
+		userID, tenantID)
 	if err != nil {
 		return nil
 	}
@@ -745,8 +746,8 @@ func (s *OAuthService) fetchUserRoles(ctx context.Context, tenantID, userID uuid
 		SELECT r.name
 		FROM user_roles ur
 		JOIN roles r ON r.id = ur.role_id
-		WHERE ur.user_id = $1`,
-		userID)
+		WHERE ur.user_id = $1 AND r.tenant_id = $2`,
+		userID, tenantID)
 	if err != nil {
 		return nil
 	}
@@ -773,8 +774,8 @@ func (s *OAuthService) fetchUserRoleKeys(ctx context.Context, tenantID, userID u
 		SELECT r.key
 		FROM user_roles ur
 		JOIN roles r ON r.id = ur.role_id
-		WHERE ur.user_id = $1`,
-		userID)
+		WHERE ur.user_id = $1 AND r.tenant_id = $2`,
+		userID, tenantID)
 	if err != nil {
 		return nil
 	}
