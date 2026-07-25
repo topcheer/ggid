@@ -81,7 +81,7 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
       const userScopes = JSON.parse(localStorage.getItem("ggid_user_scopes") || '["user:self"]');
       const isPlatform = userScopes.some((s: string) => {
         const ls = s.toLowerCase();
-        return ls === "platform:admin" || ls === "admin" || ls === "platform administrator" || ls === "platform_admin";
+        return ls === "platform:admin" || ls === "platform administrator" || ls === "platform_admin";
       });
       const isTenant = userScopes.some((s: string) => {
         const ls = s.toLowerCase();
