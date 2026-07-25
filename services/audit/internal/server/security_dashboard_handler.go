@@ -35,12 +35,21 @@ func (s *HTTPServer) handleSecurityDashboard(w http.ResponseWriter, r *http.Requ
 	// Aggregate from audit events if service available
 	if s.svc != nil {
 		ctx := r.Context()
-		// Count failed logins from audit events
 		since := time.Now().Add(-24 * time.Hour)
-		filter := domain.ListFilter{Action: "login", Result: "failure", StartTime: &since}
-		if _, count, err := s.svc.ListEvents(ctx, filter, 1, 1); err == nil {
-			resp["failed_logins_24h"] = count
+		// Try multiple action names used across services for failed logins
+		totalFailed := 0
+		for _, actionName := range []string{"login", "user.login", "token_issued"} {
+			filter := domain.ListFilter{Action: actionName, Result: "failure", StartTime: &since}
+			if _, count, err := s.svc.ListEvents(ctx, filter, 1, 1); err == nil {
+				totalFailed += count
+			}
 		}
+		// Also count total events for activity
+		totalFilter := domain.ListFilter{StartTime: &since}
+		if _, count, err := s.svc.ListEvents(ctx, totalFilter, 1, 1); err == nil {
+			resp["total_events_24h"] = count
+		}
+		resp["failed_logins_24h"] = totalFailed
 	}
 
 	writeJSON(w, http.StatusOK, resp)
