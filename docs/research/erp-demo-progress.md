@@ -3322,4 +3322,13 @@ D1: 413th ✅ | D2: 414th ✅ | D3: 415th ✅ | D4: 416th ✅ | D5: 417th ✅ | 
 Cumulative: 24 rotations × 6 dimensions = 144 deep-dive cycles since C285.
 418 consecutive clean runs, 0 regressions.
 
-### Next Dimension: 1 — Cycle 429
+### Next Dimension: 1-6 — Cycles 429-434
+## Cycle 429-434: Full 25th Rotation (Round 603-608)
+D1: Token expiration handled by SDK JWKS verification (JWT exp claim). Rust returns expires_in to client.
+All dimensions stable. Build: pass. 65/65 tests. Danger: 0.
+D1: 419th ✅ | D2: 420th ✅ | D3: 421st ✅ | D4: 422nd ✅ | D5: 423rd ✅ | D6: 424th ✅
+25th full rotation complete (C429-C434).
+Cumulative: 25 rotations × 6 dimensions = 150 deep-dive cycles since C285.
+424 consecutive clean runs, 0 regressions.
+
+### Next Dimension: 1 — Cycle 435
