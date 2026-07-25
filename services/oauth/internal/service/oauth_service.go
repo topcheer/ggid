@@ -15,6 +15,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"math/big"
+	"log/slog"
 	"strconv"
 	"strings"
 	"sync"
@@ -1818,9 +1819,44 @@ func (s *OAuthService) PasswordGrant(ctx context.Context, req *PasswordGrantRequ
 		}
 	}
 
-	// 5. Issue — TokenResponse doesn't carry username/email (those are in the JWT claims).
+	// 5. Persist session record so auth service can list/revoke active sessions.
+	if s.pool != nil {
+		sessionID := uuid.New()
+		_, sessionErr := s.pool.Exec(ctx, `
+			INSERT INTO sessions (id, tenant_id, user_id, ip_address, user_agent, expires_at, created_at)
+			VALUES ($1, $2, $3, NULLIF($4, '')::inet, $5, $6, NOW())`,
+			sessionID, tenantID, userID,
+			ctxIP(ctx), ctxUserAgent(ctx),
+			expiresAt)
+		if sessionErr != nil {
+			// Log but don't fail the login — session tracking is best-effort.
+			slog.Warn("password grant: failed to create session record", "error", sessionErr, "user_id", userID)
+		}
+	}
+
+	// 6. Issue — TokenResponse doesn't carry username/email (those are in the JWT claims).
 	return resp, nil
 }
+
+// ctxIP extracts the client IP from context metadata (set by gateway proxy).
+// Returns empty string if not available — the inet cast handles NULL safely.
+func ctxIP(ctx context.Context) string {
+	if v, ok := ctx.Value(ctxKeyClientIP{}).(string); ok {
+		return v
+	}
+	return ""
+}
+
+// ctxUserAgent extracts the User-Agent from context metadata.
+func ctxUserAgent(ctx context.Context) string {
+	if v, ok := ctx.Value(ctxKeyUserAgent{}).(string); ok {
+		return v
+	}
+	return ""
+}
+
+type ctxKeyClientIP struct{}
+type ctxKeyUserAgent struct{}
 
 // --- Utility functions ---
 
