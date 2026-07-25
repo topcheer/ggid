@@ -2847,3 +2847,11 @@ JWT permissions claim maps to route enforcement. 7/7 gateway pkgs pass. 65/65 to
 Danger: 0. Hacks:0 ✅ — 282nd clean.
 
 ### Next Dimension: 3 — Cycle 293
+## Cycle 293: D3 Functional — Added /api/my-permissions to Go Demo (Round 467)
+Found gap: /api/my-permissions only existed in C#+Python. Added to Go demo (main.go).
+Go inventory: GET returns {items:[]Product, total}, POST requires inventory:write perm.
+requirePerm checks permissions+scopes with admin override. Dashboard returns metrics.
+GAP NOTED: Node/Java/Ruby/Rust still missing /api/my-permissions — track for future.
+Main build: pass. ERP Go build: pass. Danger: 0. Hacks:0 ✅ — 283rd clean.
+
+### Next Dimension: 4 — Cycle 294

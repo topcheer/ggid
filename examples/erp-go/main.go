@@ -46,9 +46,42 @@ func main() {
 	mux.HandleFunc("/api/orders/", withAuth(handleOrderByID))
 	mux.HandleFunc("/api/audit", withAuth(handleAudit))
 	mux.HandleFunc("/api/dashboard", withAuth(handleDashboard))
+	mux.HandleFunc("/api/my-permissions", withAuth(handleMyPermissions))
 
 	fmt.Printf("ERP Go Demo on %s | GGID: %s\n", listenAddr, ggidURL)
 	log.Fatal(http.ListenAndServe(listenAddr, mux))
+}
+
+// handleMyPermissions — GET returns the caller's permissions from JWT claims.
+func handleMyPermissions(w http.ResponseWriter, r *http.Request) {
+	info := getUser(r.Context())
+	if info == nil {
+		writeJSON(w, 401, map[string]string{"error": "unauthorized"})
+		return
+	}
+	writeJSON(w, 200, map[string]any{
+		"permissions":       info.Permissions,
+		"can_write_orders":  hasPermission(info, "orders:write"),
+		"can_approve":       hasPermission(info, "orders:approve"),
+	})
+}
+
+// hasPermission checks whether the user has a specific permission.
+func hasPermission(info *ggid.UserInfo, perm string) bool {
+	if info == nil {
+		return false
+	}
+	for _, p := range info.Permissions {
+		if p == perm || p == "admin" {
+			return true
+		}
+	}
+	for _, s := range info.Scopes {
+		if s == perm || s == "admin" {
+			return true
+		}
+	}
+	return false
 }
 
 func withAuth(next http.HandlerFunc) http.HandlerFunc {
