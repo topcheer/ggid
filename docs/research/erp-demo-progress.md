@@ -2769,3 +2769,8 @@ PW=access_token+token_type+expires_in(api=200) CC=access_token+token_type+expire
 - Security Dashboard: failed_logins_24h=14, total=643, Score=75 ✅
 
 ### Next Dimension: 2 — Cycle 280
+## Cycle 280: D2 RBAC + Impersonate Fix Verify (Round 454)
+JWT=[ERP Admin:9p] Inv=200 PlatU=403(exp403) Hacks:0 ✅ — 270th clean.
+arch_pm impersonate 3-layer fix (9c99c59da): routes aligned /auth/impersonate + target_user_id.
+
+### Next Dimension: 3 — Cycle 281
