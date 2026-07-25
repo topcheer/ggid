@@ -2804,3 +2804,9 @@ Admin token has both platform:admin+tenant:admin. platformOnlyPaths=6, adminOnly
 NOTE: Deploy rules changed — no autonomous push. Local commit only.
 
 ### Next Dimension: 3 — Cycle 287
+## Cycle 287: D3 Functional + SDK Go Build Fix (Round 461)
+Models: Product(8f) Order(11f) Audit(5f). 7/7 server demos have Product+Order.
+React: inventory+orders+dashboard pages. Fixed sdk/go/client.go const-before-import (commit 66ae0e55d regression).
+Danger patterns: 0. Hacks:0 ✅ — 277th clean.
+
+### Next Dimension: 4 — Cycle 288

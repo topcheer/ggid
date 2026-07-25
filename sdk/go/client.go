@@ -4,9 +4,6 @@
 // and client-side authentication helpers (JWT verification, middleware).
 package ggid
 
-// Version is the current SDK version.
-const Version = "1.0.0"
-
 import (
 	"bytes"
 	"context"
@@ -24,6 +21,9 @@ import (
 
 	"github.com/golang-jwt/jwt/v5"
 )
+
+// Version is the current SDK version.
+const Version = "1.0.0"
 
 // Client is the GGID SDK client.
 type Client struct {
