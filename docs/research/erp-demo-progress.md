@@ -2937,3 +2937,10 @@ Aligns with gateway ForgeableNamesRejected test. No RBAC regression.
 20/20 RBAC tests pass. 65/65 total. Danger: 0. Hacks:0 ✅ — 294th clean.
 
 ### Next Dimension: 3 — Cycle 305
+## Cycle 305: D3 Functional — Order Lifecycle + Audit Trail (Round 479)
+Node demo order lifecycle: POST (pending) → POST /:id/approve (approved), state-guarded.
+Node audit: GET → {events:[], total}, perm-gated (audit:read).
+Go demo: orders:write for create/update, orders:approve for approve, audit entries created on actions.
+Build: pass. Danger: 0. Hacks:0 ✅ — 295th clean.
+
+### Next Dimension: 4 — Cycle 306
