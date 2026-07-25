@@ -3638,3 +3638,12 @@ Cumulative: 62 rotations × 6 dimensions = 372 deep-dive cycles since C285.
 647 consecutive clean runs, 0 regressions.
 
 ### Next Dimension: 1 — Cycle 658
+## Cycle 658-669: Full 63rd-64th Rotations (Round 832-843)
+Upstream: ed2c7e6b3 subdomain login tenant input locked + 87b76163a i18n tenantLocked (15 langs). Console-only, no Go impact.
+All dimensions stable. Build: pass. 65/65 tests. Danger: 0.
+C658-663: D1-6 (648th-653rd) ✅ | C664-669: D1-6 (654th-659th) ✅
+63rd-64th full rotations complete (C658-C669).
+Cumulative: 64 rotations × 6 dimensions = 384 deep-dive cycles since C285.
+659 consecutive clean runs, 0 regressions.
+
+### Next Dimension: 1 — Cycle 670
