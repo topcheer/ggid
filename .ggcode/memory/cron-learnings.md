@@ -113,48 +113,55 @@
 - [2026-07-21] auth CAE scanner nil context panic 导致 pod 每 ~15min 重启一次。k8s 自动恢复，不影响功能。需修复 cae_scanner.go 的 ListByTenant nil context 问题
 - [2026-07-21] OAuth Clients 列表固定显示 20 条，无分页控件 → 已修复（QA commit c2a52b589），Console 已部署
 
-### Session 11: Impersonation Complete Fix
+### Session 8: Security Dashboard + Failed Login Audit
 
-**P1: Impersonation completely non-functional (5-layer fix)**
-1. API path: /admin/impersonate → /auth/impersonate
-2. Params: user_id → target_user_id
-3. impersonator_id: fallback to X-User-ID header
-4. History: → /audit/impersonation
-5. JWT signing: now returns access_token (HS256, 15min TTL, imp=true claim)
+**P1: Security dashboard shows all zeros (partially fixed)**
+- Handler queried action='login' but events use 'token_issued'
+- Fixed to try multiple action names: login, user.login, token_issued
+- Added total_events_24h field
+- commit 598775b17, audit:latest deployed
 
-Commits: 9c99c59da, e4e18463e, 57bf6bb3b
+**P1: Failed login attempts not recorded in audit trail**
+- OAuth PasswordGrant returned 400 on failed login but published no audit event
+- Added audit.NewEvent("user.login", "failure") in token error handler
+- commit f9e050092, oauth:v2 deployed
+- NOTE: Verification pending — NATS async publish may have processing delay
+- The audit code is in place but events haven't appeared in audit query yet
+- Possible cause: NATS consumer not processing, or audit query filtering excludes them
 
-**P2 Security Gap (noted by guardian):**
-- impersonation token uses HS256 while main JWT uses RS256
-- Gateway does NOT validate imp=true claim — impersonation tokens have full permissions
-- Should restrict: no security changes, no user deletion, read-only by default
-- JWT_SECRET must not be shared with Console frontend (currently only backend)
+**Architecture Debt Found:**
+- globalDeptRoles: in-memory map for dept RBAC (data lost on restart)
+- globalTTLCache: acceptable (cache by design)
+- globalRateLimits: config map (acceptable for now)
 
-### Session 10: RSA Key Mismatch + Final Status
+**Console Fix:**
+- Departments page now uses /orgs/tree?tenant_id=X instead of missing org_id
+- commit 98f0de6ab, 55d90e359
 
-**P1: OAuth and Auth services use different RSA keys**
-- Root cause: OAuth mounts emptyDir (auto-generated keys), Auth mounts ggid-rsa-keys secret
-- Secret has two pairs: public.pem/private.pem (OAuth) vs rsa_public.pem/rsa_private.pem (Auth)
-- Fix: Auth env changed to JWT_PUBLIC_KEY_PATH=/configs/public.pem (ggcxf_backend)
-- Impact: All Auth endpoints (MFA, sessions, password) returned 401 "invalid token signature"
+### Session 9: CRITICAL — Audit Chain Root Cause (inet type)
 
-**Final Platform Status (all verified):**
-- Login: ✅ (RLS fix, RSA key alignment)
-- RBAC: ✅ (create→assign→login→enforce)
-- OAuth CRUD: ✅ (create→edit→disable→re-enable→delete)
-- CAE Policies: ✅ (persisted via API)
-- Password Policy: ✅ (min 12, upper/lower/digit enforced)
-- User Search: ✅ (q= alias)
-- Webhooks: ✅ (test/deliveries/rotate)
-- API Keys: ✅ (scope enforced, 403 on write)
-- Audit Chain: ✅ (4-layer fix: publish→sanitize IP→inet DB→dashboard tenant)
-- Security Dashboard: ✅ (failed_logins=6, total_events=664)
-- MFA/Auth endpoints: ✅ (RSA key fix)
-- Org CRUD: ✅
-- User Lifecycle: ✅ (activate/deactivate/delete)
-- Import: ✅
+**P0 ROOT CAUSE FOUND: All audit events with IP addresses silently dropped**
 
-**Remaining known items:**
-- globalDeptRoles in-memory (architecture debt)
-- Helm chart RSA key naming inconsistency (cosmetic)
-- CAE login enforcement only matches username/user_id conditions (functional gap)
+PostgreSQL `inet` column rejects `IP:PORT` format. HTTP `RemoteAddr` includes
+port (e.g. `10.42.0.83:39820`), causing audit event persistence to fail:
+`ERROR: invalid input syntax for type inet: "10.42.0.83:39820"`
+
+This meant ALL events with non-empty IP addresses were silently lost,
+including failed login attempts. Only events with empty IP (like some
+token_issued events) were persisted.
+
+**Fix:** Strip port from IP before storing (commit 4e5b0193f)
+```go
+if idx := strings.LastIndex(ip, ":"); idx > 0 && !strings.Contains(ip[idx+1:], ":") {
+    ip = ip[:idx]  // IPv4:port → IPv4
+}
+```
+
+**Full audit chain now working:**
+1. OAuth publishes `user.login:failure` event to NATS ✅ (commit f9e050092)
+2. Audit consumer receives from NATS ✅
+3. Audit repo writes to DB ✅ (inet fix)
+4. Verified: `user.login:failure` appears in audit query ✅
+
+**Lesson:** Always check DB error logs when async event pipelines appear broken.
+The error was visible in audit pod logs: `process error: persist event: ERROR: invalid input syntax for type inet`

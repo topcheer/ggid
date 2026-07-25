@@ -135,6 +135,12 @@ func LoadFromEnv(cfg *Config) *Config {
 	if v := os.Getenv("JWT_PUBLIC_KEY_PATH"); v != "" {
 		cfg.JWT.PublicKeyPath = v
 	}
+	if v := os.Getenv("JWT_ISSUER"); v != "" {
+		cfg.JWT.Issuer = v
+	}
+	if v := os.Getenv("JWT_AUDIENCE"); v != "" {
+		cfg.JWT.Audience = v
+	}
 	// Account lockout configuration
 	if v := os.Getenv("AUTH_MAX_ATTEMPTS"); v != "" {
 		if n, err := parseIntDefault(v, cfg.Password.MaxAttempts); err == nil {
