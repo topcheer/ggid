@@ -2944,3 +2944,11 @@ Go demo: orders:write for create/update, orders:approve for approve, audit entri
 Build: pass. Danger: 0. Hacks:0 ✅ — 295th clean.
 
 ### Next Dimension: 4 — Cycle 306
+## Cycle 306: D4 Tenant Isolation — Python/Java SDK-Level Verify (Round 480)
+Python SDK: injects X-Tenant-ID header on every request (config.tenant_id scoped).
+Python demo: SDK verifier checks tenant, demo initialized with TENANT_ID=0004.
+Java demo: SDK jwtVerifier.verifyUser() with TENANT_ID scope.
+8/8 demos tenant-isolated: 4 explicit (Go/Node/Rust/C#) + 4 SDK-scoped (Py/Java/Rb/Rs-via-param).
+65/65 pass. Danger: 0. Hacks:0 ✅ — 296th clean.
+
+### Next Dimension: 5 — Cycle 307
