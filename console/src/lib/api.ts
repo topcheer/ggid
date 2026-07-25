@@ -239,7 +239,7 @@ export function useUserRole(): { role: UserRole; scopes: string[]; isPlatformAdm
   const hasRole = (...keys: string[]) => keys.some((k) => {
     if (scopes.includes(k)) return true;
     const normalized = k.replace(/[:_]/g, " ").toLowerCase();
-    return lowerScopes.some((ls) => ls === normalized || ls === k.toLowerCase() || ls.includes(k.split(":").pop()!.toLowerCase()) || (k === "admin" && ls === "administrator"));
+    return lowerScopes.some((ls) => ls === normalized || ls === k.toLowerCase() || (k === "platform administrator" && ls === "platform:admin"));
   });
   const role: UserRole = hasRole("platform:admin", "platform administrator")
     ? "platform_admin"
