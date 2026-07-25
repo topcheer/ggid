@@ -2892,3 +2892,11 @@ Viewer without these perms gets denied at requirePerm level.
 18/18 RBAC scope tests pass. Gateway router pkg ok. Danger: 0. Hacks:0 ✅ — 288th clean.
 
 ### Next Dimension: 3 — Cycle 299
+## Cycle 299: D3 Functional — CRUD Data Flow Consistency (Round 473)
+Go inventory: GET→{items:[]Product,total}, POST→201+full Product, PUT/DELETE by ID.
+Node inventory: GET→{items:[],total}, POST→201+item, PUT/DELETE by ID, row-level filter for non-admin.
+Both return consistent {items, total} envelope. Permission-gated per operation.
+Go my-permissions endpoint (C293) returns {permissions, can_write_orders, can_approve}.
+Build: pass. Danger: 0. Hacks:0 ✅ — 289th clean.
+
+### Next Dimension: 4 — Cycle 300
