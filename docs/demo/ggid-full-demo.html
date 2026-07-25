@@ -61,7 +61,7 @@
 
 <!-- ============ SLIDE 1: Cover ============ -->
 <div class="slide cover active">
-  <div style="font-size: 80px; margin-bottom: 20px;">🛡️</div>
+  <img src="screenshots/01-admin-dashboard.png" style="max-width:600px;border-radius:12px;box-shadow:0 8px 32px rgba(0,0,0,0.3);margin-bottom:20px;">
   <h1>GGID IAM Suite</h1>
   <div class="subtitle">全功能演示 · Full Feature Showcase</div>
   <div class="meta">
@@ -123,49 +123,7 @@
   <div class="role-grid">
     <div class="role-card platform">
       <h3>Instance Admin</h3>
-      <div class="screenshot-placeholder">
-        <a href="https://ggid-console.iot2.win/dashboard" target="_blank">查看完整 Sidebar →</a>
-        <p style="margin-top:8px;">OVERVIEW + IDENTITY + SECURITY + AUDIT + APPLICATIONS + ADMINISTRATION + <b style="color:#f87171;">PLATFORM</b></p>
-      </div>
-    </div>
-    <div class="role-card tenant">
-      <h3>Tenant Admin</h3>
-      <div class="screenshot-placeholder">
-        <p>OVERVIEW + IDENTITY + SECURITY + AUDIT + APPLICATIONS + ADMINISTRATION</p>
-        <p style="color:#f87171;margin-top:8px;">❌ 无 PLATFORM 组</p>
-      </div>
-    </div>
-    <div class="role-card user">
-      <h3>Regular User</h3>
-      <div class="screenshot-placeholder">
-        <p><b>OVERVIEW</b> (Dashboard + Sessions + Access Requests)</p>
-        <p style="color:#f87171;margin-top:8px;">❌ 无 IDENTITY / SECURITY / APPLICATIONS / PLATFORM</p>
-      </div>
-    </div>
-  </div>
-  <div class="details">
-    <h3>技术实现</h3>
-    <p>Sidebar 通过 requiredScope ("platform" / "manager" / "admin") + NAV_PERMISSION_MAP 动态过滤。AuthGuard 按 URL 前缀检查 scope，拒绝越权访问。</p>
-    <div class="tech">sidebar.tsx hasScope() · auth-guard.tsx ADMIN_PREFIXES · api.ts getUserRole()</div>
-  </div>
-</div>
-
-<!-- ============ CHAPTER 1: Identity Management ============ -->
-<div class="slide chapter-cover">
-  <div class="chapter-num">01</div>
-  <h2>身份管理 Identity Management</h2>
-  <div class="desc">用户 · 角色 · 组织 · 导入 · 访问审查</div>
-</div>
-
-<!-- SLIDE: Users List -->
-<div class="slide content">
-  <h2>用户管理 Users</h2>
-  <span class="tag tenant">Tenant Admin</span>
-  <div class="screenshot-box">
-    <div class="screenshot-placeholder">
-      <a href="https://ggid-console.iot2.win/users" target="_blank">查看用户列表页面 →</a>
-      <p>显示所有用户（ID/邮箱/角色徽章/状态），支持搜索、分页、创建</p>
-    </div>
+      <img src="screenshots/02-admin-users.png" alt="Screenshot" style="max-width:100%;max-height:100%;object-fit:contain;border-radius:8px;">
   </div>
   <div class="details">
     <h3>功能亮点</h3>
@@ -180,10 +138,7 @@
   <h2>用户详情 User Detail</h2>
   <span class="tag tenant">Tenant Admin</span>
   <div class="screenshot-box">
-    <div class="screenshot-placeholder">
-      <a href="https://ggid-console.iot2.win/users" target="_blank">点击任意用户查看详情 →</a>
-      <p>用户信息 + 角色徽章 + 凭据管理 + 会话 + 活动时间线</p>
-    </div>
+    <img src="screenshots/02-admin-users.png" alt="Screenshot" style="max-width:100%;max-height:100%;object-fit:contain;border-radius:8px;">
   </div>
   <div class="details">
     <h3>功能亮点</h3>
@@ -198,10 +153,7 @@
   <h2>角色管理 Roles & Permissions</h2>
   <span class="tag tenant">Tenant Admin</span>
   <div class="screenshot-box">
-    <div class="screenshot-placeholder">
-      <a href="https://ggid-console.iot2.win/roles" target="_blank">查看角色管理 →</a>
-      <p>角色 CRUD + 权限矩阵 + 层级管理 + ABAC Builder</p>
-    </div>
+    <img src="screenshots/03-admin-roles.png" alt="Screenshot" style="max-width:100%;max-height:100%;object-fit:contain;border-radius:8px;">
   </div>
   <div class="details">
     <h3>功能亮点</h3>
@@ -216,10 +168,7 @@
   <h2>组织管理 Organizations</h2>
   <span class="tag tenant">Tenant Admin</span>
   <div class="screenshot-box">
-    <div class="screenshot-placeholder">
-      <a href="https://ggid-console.iot2.win/organizations" target="_blank">查看组织管理 →</a>
-      <p>组织树 · 部门结构 · 成员管理 · 分析</p>
-    </div>
+    <img src="screenshots/04-admin-organizations.png" alt="Screenshot" style="max-width:100%;max-height:100%;object-fit:contain;border-radius:8px;">
   </div>
   <div class="details">
     <h3>功能亮点</h3>
@@ -240,10 +189,7 @@
   <h2>条件访问 Conditional Access (CAE)</h2>
   <span class="tag tenant">Tenant Admin</span>
   <div class="screenshot-box">
-    <div class="screenshot-placeholder">
-      <a href="https://ggid-console.iot2.win/settings/conditional-access" target="_blank">查看 CAE 配置 →</a>
-      <p>IF-THEN 策略 CRUD · 条件编辑器 · 测试评估器</p>
-    </div>
+    <img src="screenshots/06-admin-cae.png" alt="Screenshot" style="max-width:100%;max-height:100%;object-fit:contain;border-radius:8px;">
   </div>
   <div class="details">
     <h3>功能亮点</h3>
@@ -258,10 +204,7 @@
   <h2>多因素认证 MFA</h2>
   <span class="tag all">所有用户可设置</span>
   <div class="screenshot-box">
-    <div class="screenshot-placeholder">
-      <a href="https://ggid-console.iot2.win/settings/mfa" target="_blank">查看 MFA 设置 →</a>
-      <p>TOTP 二维码 · WebAuthn/Passkey · SMS/Email 备份</p>
-    </div>
+    <img src="screenshots/19-admin-mfa.png" alt="Screenshot" style="max-width:100%;max-height:100%;object-fit:contain;border-radius:8px;">
   </div>
   <div class="details">
     <h3>功能亮点</h3>
@@ -276,10 +219,7 @@
   <h2>ITDR 威胁检测 Identity Threat Detection</h2>
   <span class="tag tenant">Tenant Admin</span>
   <div class="screenshot-box">
-    <div class="screenshot-placeholder">
-      <a href="https://ggid-console.iot2.win/security/itdr" target="_blank">查看 ITDR →</a>
-      <p>威胁事件 · MITRE 覆盖 · SOAR Playbooks · 自动响应</p>
-    </div>
+    <img src="screenshots/05-admin-itdr.png" alt="Screenshot" style="max-width:100%;max-height:100%;object-fit:contain;border-radius:8px;">
   </div>
   <div class="details">
     <h3>功能亮点</h3>
@@ -293,10 +233,7 @@
   <h2>安全态势 Security Posture</h2>
   <span class="tag tenant">Tenant Admin</span>
   <div class="screenshot-box">
-    <div class="screenshot-placeholder">
-      <a href="https://ggid-console.iot2.win/security/posture" target="_blank">查看安全态势 →</a>
-      <p>综合评分 · ITDR 覆盖 · DLP 合规 · MITRE 矩阵</p>
-    </div>
+    <img src="screenshots/07-admin-posture.png" alt="Screenshot" style="max-width:100%;max-height:100%;object-fit:contain;border-radius:8px;">
   </div>
   <div class="details">
     <h3>功能亮点</h3>
@@ -317,10 +254,7 @@
   <h2>审计日志 Audit Log</h2>
   <span class="tag tenant">Tenant Admin</span>
   <div class="screenshot-box">
-    <div class="screenshot-placeholder">
-      <a href="https://ggid-console.iot2.win/audit" target="_blank">查看审计日志 →</a>
-      <p>事件查询 · Hash Chain 防篡改 · 时间线</p>
-    </div>
+    <img src="screenshots/09-admin-audit.png" alt="Screenshot" style="max-width:100%;max-height:100%;object-fit:contain;border-radius:8px;">
   </div>
   <div class="details">
     <h3>功能亮点</h3>
@@ -334,10 +268,7 @@
   <h2>全局审计 Global Audit</h2>
   <span class="tag platform">仅 Instance Admin</span>
   <div class="screenshot-box">
-    <div class="screenshot-placeholder">
-      <a href="https://ggid-console.iot2.win/admin/audit/global" target="_blank">查看全局审计 →</a>
-      <p>跨租户审计 · 全局事件统计</p>
-    </div>
+    <img src="screenshots/17-admin-global-audit.png" alt="Screenshot" style="max-width:100%;max-height:100%;object-fit:contain;border-radius:8px;">
   </div>
   <div class="details">
     <h3>功能亮点</h3>
@@ -351,10 +282,7 @@
   <h2>威胁仪表盘 Threat Dashboard</h2>
   <span class="tag platform">仅 Instance Admin</span>
   <div class="screenshot-box">
-    <div class="screenshot-placeholder">
-      <a href="https://ggid-console.iot2.win/admin/threats" target="_blank">查看威胁仪表盘 →</a>
-      <p>活跃威胁(24h) · Critical/High/Medium/Low 分布</p>
-    </div>
+    <img src="screenshots/18-admin-threats.png" alt="Screenshot" style="max-width:100%;max-height:100%;object-fit:contain;border-radius:8px;">
   </div>
   <div class="details">
     <h3>功能亮点</h3>
@@ -375,10 +303,7 @@
   <h2>OAuth Client 管理</h2>
   <span class="tag tenant">Tenant Admin</span>
   <div class="screenshot-box">
-    <div class="screenshot-placeholder">
-      <a href="https://ggid-console.iot2.win/oauth-clients" target="_blank">查看 OAuth Clients →</a>
-      <p>创建/编辑/禁用/启用/删除 全生命周期</p>
-    </div>
+    <img src="screenshots/10-admin-oauth.png" alt="Screenshot" style="max-width:100%;max-height:100%;object-fit:contain;border-radius:8px;">
   </div>
   <div class="details">
     <h3>功能亮点</h3>
@@ -392,10 +317,7 @@
   <h2>Webhook 管理</h2>
   <span class="tag tenant">Tenant Admin</span>
   <div class="screenshot-box">
-    <div class="screenshot-placeholder">
-      <a href="https://ggid-console.iot2.win/webhooks" target="_blank">查看 Webhooks →</a>
-      <p>端点管理 · 测试 · 交付历史 · 密钥轮换</p>
-    </div>
+    <img src="screenshots/11-admin-webhooks.png" alt="Screenshot" style="max-width:100%;max-height:100%;object-fit:contain;border-radius:8px;">
   </div>
   <div class="details">
     <h3>功能亮点</h3>
@@ -409,10 +331,7 @@
   <h2>API Key 管理</h2>
   <span class="tag tenant">Tenant Admin</span>
   <div class="screenshot-box">
-    <div class="screenshot-placeholder">
-      <a href="https://ggid-console.iot2.win/api-keys" target="_blank">查看 API Keys →</a>
-      <p>密钥管理 · Scope 强制执行</p>
-    </div>
+    <img src="screenshots/12-admin-api-keys.png" alt="Screenshot" style="max-width:100%;max-height:100%;object-fit:contain;border-radius:8px;">
   </div>
   <div class="details">
     <h3>功能亮点</h3>
@@ -426,10 +345,7 @@
   <h2>SAML SSO 配置</h2>
   <span class="tag tenant">Tenant Admin</span>
   <div class="screenshot-box">
-    <div class="screenshot-placeholder">
-      <a href="https://ggid-console.iot2.win/settings/saml-config" target="_blank">查看 SAML 配置 →</a>
-      <p>SP Metadata · IdP 集成 · 属性映射</p>
-    </div>
+    <img src="screenshots/22-admin-saml.png" alt="Screenshot" style="max-width:100%;max-height:100%;object-fit:contain;border-radius:8px;">
   </div>
   <div class="details">
     <h3>功能亮点</h3>
@@ -450,10 +366,7 @@
   <h2>用户模拟 Impersonation</h2>
   <span class="tag tenant">Tenant Admin</span>
   <div class="screenshot-box">
-    <div class="screenshot-placeholder">
-      <a href="https://ggid-console.iot2.win/admin/impersonate" target="_blank">查看 Impersonation →</a>
-      <p>搜索用户 → 输入理由 → 模拟 → Banner → 审计 → 撤销</p>
-    </div>
+    <img src="screenshots/13-admin-impersonate.png" alt="Screenshot" style="max-width:100%;max-height:100%;object-fit:contain;border-radius:8px;">
   </div>
   <div class="details">
     <h3>功能亮点</h3>
@@ -468,10 +381,7 @@
   <h2>Secrets 管理</h2>
   <span class="tag tenant">Tenant Admin</span>
   <div class="screenshot-box">
-    <div class="screenshot-placeholder">
-      <a href="https://ggid-console.iot2.win/admin/secrets" target="_blank">查看 Secrets →</a>
-      <p>密钥查看 · 轮换管理</p>
-    </div>
+    <img src="screenshots/14-admin-secrets.png" alt="Screenshot" style="max-width:100%;max-height:100%;object-fit:contain;border-radius:8px;">
   </div>
   <div class="details">
     <h3>功能亮点</h3>
@@ -485,10 +395,7 @@
   <h2>备份与灾难恢复 Backup & DR</h2>
   <span class="tag tenant">Tenant Admin</span>
   <div class="screenshot-box">
-    <div class="screenshot-placeholder">
-      <a href="https://ggid-console.iot2.win/admin/backup" target="_blank">查看 Backup →</a>
-      <p>手动备份 · 恢复 · 灾难恢复策略</p>
-    </div>
+    <img src="screenshots/15-admin-backup.png" alt="Screenshot" style="max-width:100%;max-height:100%;object-fit:contain;border-radius:8px;">
   </div>
   <div class="details">
     <h3>功能亮点</h3>
@@ -509,10 +416,7 @@
   <h2>租户管理 Tenant Management</h2>
   <span class="tag platform">仅 Instance Admin</span>
   <div class="screenshot-box">
-    <div class="screenshot-placeholder">
-      <a href="https://ggid-console.iot2.win/admin/tenants" target="_blank">查看租户管理 →</a>
-      <p>创建 · 暂停 · 激活 · 配额管理</p>
-    </div>
+    <img src="screenshots/16-admin-tenants.png" alt="Screenshot" style="max-width:100%;max-height:100%;object-fit:contain;border-radius:8px;">
   </div>
   <div class="details">
     <h3>功能亮点</h3>
@@ -526,10 +430,7 @@
   <h2>白标定制 Branding</h2>
   <span class="tag tenant">Tenant Admin</span>
   <div class="screenshot-box">
-    <div class="screenshot-placeholder">
-      <a href="https://ggid-console.iot2.win/settings/branding" target="_blank">查看 Branding →</a>
-      <p>主题色 · Logo · 自定义域名</p>
-    </div>
+    <img src="screenshots/20-admin-branding.png" alt="Screenshot" style="max-width:100%;max-height:100%;object-fit:contain;border-radius:8px;">
   </div>
   <div class="details">
     <h3>功能亮点</h3>
@@ -543,10 +444,7 @@
   <h2>功能开关 Feature Flags</h2>
   <span class="tag tenant">Tenant Admin</span>
   <div class="screenshot-box">
-    <div class="screenshot-placeholder">
-      <a href="https://ggid-console.iot2.win/settings/feature-flags" target="_blank">查看 Feature Flags →</a>
-      <p>按租户启用/禁用功能模块</p>
-    </div>
+    <img src="screenshots/21-admin-feature-flags.png" alt="Screenshot" style="max-width:100%;max-height:100%;object-fit:contain;border-radius:8px;">
   </div>
   <div class="details">
     <h3>功能亮点</h3>
