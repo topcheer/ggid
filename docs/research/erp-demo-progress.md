@@ -3871,3 +3871,12 @@ Cumulative: 114 rotations × 6 dimensions = 684 deep-dive cycles since C285.
 959 consecutive clean runs, 0 regressions.
 
 ### Next Dimension: 1 — Cycle 970
+## Cycle 970-981: Full 115th-116th Rotations (Round 1144-1155)
+Upstream aa214b510: RFC 8414 oauth-authorization-server metadata + DCR none (no secret). No Go pipeline impact.
+All dimensions stable. Build: pass. 65/65 tests. Danger: 0.
+C970-975: D1-6 (960th-965th) ✅ | C976-981: D1-6 (966th-971st) ✅
+115th-116th full rotations complete (C970-C981).
+Cumulative: 116 rotations × 6 dimensions = 696 deep-dive cycles since C285.
+971 consecutive clean runs, 0 regressions.
+
+### Next Dimension: 1 — Cycle 982
