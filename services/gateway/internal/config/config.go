@@ -71,7 +71,7 @@ func Default() *Config {
 			"/api/v1/orgs":        envOrDefault("ORG_SERVICE_URL", "http://localhost:8071"),
 			"/api/v1/audit":       envOrDefault("AUDIT_SERVICE_URL", "http://localhost:8072"),
 			"/api/v1/access-requests": envOrDefault("USERS_SERVICE_URL", "http://localhost:8081"),
-			"/api/v1/departments":  envOrDefault("USERS_SERVICE_URL", "http://localhost:8081"),
+			"/api/v1/departments":  envOrDefault("ORG_SERVICE_URL", "http://localhost:8071"),
 			"/api/v1/teams":       envOrDefault("ORG_SERVICE_URL", "http://localhost:8071"),
 			"/api/v1/tenants":     envOrDefault("USERS_SERVICE_URL", "http://localhost:8081"),
 			"/api/v1/impersonate": envOrDefault("USERS_SERVICE_URL", "http://localhost:8081"),
