@@ -795,6 +795,9 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 			actorID, _ := uuid.Parse(r.Header.Get("X-User-ID"))
 			event := audit.NewEvent("token_issued", "success", tenantID, actorID)
 			event.ResourceType = "oauth_token"
+			event.IPAddress = r.RemoteAddr
+			event.UserAgent = r.UserAgent()
+			event.Metadata = map[string]any{"client_id": r.FormValue("client_id"), "grant_type": r.FormValue("grant_type")}
 			auditPub.PublishAsync(event)
 		}
 
