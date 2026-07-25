@@ -2961,3 +2961,11 @@ Each demo's grant type is supported by its own SDK. Architecture correct.
 Build: pass. Danger: 0. Hacks:0 ✅ — 297th clean.
 
 ### Next Dimension: 6 — Cycle 308
+## Cycle 308: D6 E2E — 4th Rotation Complete (Round 482)
+Full lifecycle verified: login(OAuth)→verify(JWT)→CRUD(perm-gated)→refresh→logout(session clear).
+401 no-token: Go+Node+Rust enforce. Tenant mismatch: 4 demos explicit reject.
+ggcxf_cli console fix: isTenantAdmin added to permission bypass (useUserPermissions).
+Build: pass. 65/65 tests. Danger: 0. Hacks:0 ✅ — 298th clean.
+4th full rotation complete (C303-C308).
+
+### Next Dimension: 1 — Cycle 309
