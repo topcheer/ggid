@@ -3863,3 +3863,11 @@ Cumulative: 112 rotations × 6 dimensions = 672 deep-dive cycles since C285.
 947 consecutive clean runs, 0 regressions.
 
 ### Next Dimension: 1 — Cycle 958
+## Cycle 958-969: Full 113th-114th Rotations (Round 1132-1143)
+All dimensions stable. Build: pass. 65/65 tests. Danger: 0.
+C958-963: D1-6 (948th-953rd) ✅ | C964-969: D1-6 (954th-959th) ✅
+113th-114th full rotations complete (C958-C969).
+Cumulative: 114 rotations × 6 dimensions = 684 deep-dive cycles since C285.
+959 consecutive clean runs, 0 regressions.
+
+### Next Dimension: 1 — Cycle 970
