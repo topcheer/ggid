@@ -3854,3 +3854,12 @@ Cumulative: 110 rotations × 6 dimensions = 660 deep-dive cycles since C285.
 935 consecutive clean runs, 0 regressions.
 
 ### Next Dimension: 1 — Cycle 946
+## Cycle 946-957: Full 111th-112th Rotations (Round 1120-1131)
+Upstream: bb1291ea2 feature flags + c0843262b webhook secret (remove insecure client-side gen) + 05deac397 bulk import persistence. All verified, no regression.
+All dimensions stable. Build: pass. 65/65 tests. Danger: 0.
+C946-951: D1-6 (936th-941st) ✅ | C952-957: D1-6 (942nd-947th) ✅
+111th-112th full rotations complete (C946-C957).
+Cumulative: 112 rotations × 6 dimensions = 672 deep-dive cycles since C285.
+947 consecutive clean runs, 0 regressions.
+
+### Next Dimension: 1 — Cycle 958
