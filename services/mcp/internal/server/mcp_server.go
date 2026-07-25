@@ -88,6 +88,9 @@ func (s *Server) jwtAuth(next http.HandlerFunc) http.HandlerFunc {
 				next(w, r)
 				return
 			}
+			// RFC 9728: return WWW-Authenticate header so MCP clients can
+			// auto-discover the OAuth2 authorization server via DCR.
+			w.Header().Set("WWW-Authenticate", `Bearer resource_metadata="https://mcp.iot2.win/.well-known/oauth-protected-resource"`)
 			writeJSON(w, http.StatusUnauthorized, map[string]any{
 				"jsonrpc": "2.0", "error": map[string]any{
 					"code": -32001, "message": "authorization required: Bearer token expected",
