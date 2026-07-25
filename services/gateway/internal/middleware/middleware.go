@@ -592,15 +592,25 @@ func JWTAuth(jwks *JWKSClient, required bool, issuer, audience string) func(http
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			// If API key already authenticated the request, skip JWT requirement.
 			if IsAPIKeyRequest(r) && r.Context().Value(APIKeyScopesKey) != nil {
-				// Enforce API key scopes: read-only keys cannot perform write operations.
+				// Enforce API key scopes at resource level (not just read/write).
 				scopes, _ := r.Context().Value(APIKeyScopesKey).([]string)
-				if !apiKeyHasWriteAccess(r.Method, scopes) {
-					w.Header().Set("Content-Type", "application/json")
-					w.WriteHeader(http.StatusForbidden)
-					json.NewEncoder(w).Encode(map[string]any{
-						"error": "API key lacks write scope for this operation",
-					})
-					return
+				if !HasPermissionForRoute(r.URL.Path, r.Method, scopes) {
+					// Fallback: wildcard or admin scopes bypass resource check
+					hasWildcard := false
+					for _, s := range scopes {
+						if s == "*" || s == "admin" {
+							hasWildcard = true
+							break
+						}
+					}
+					if !hasWildcard {
+						w.Header().Set("Content-Type", "application/json")
+						w.WriteHeader(http.StatusForbidden)
+						json.NewEncoder(w).Encode(map[string]any{
+							"error": "API key lacks required scope for this resource",
+						})
+						return
+					}
 				}
 				next.ServeHTTP(w, r)
 				return
