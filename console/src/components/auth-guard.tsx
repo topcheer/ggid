@@ -62,8 +62,8 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
       const ADMIN_PREFIXES: Record<string, string> = {
         "/users": "tenant", "/roles": "tenant", "/audit": "tenant",
         "/organizations": "tenant", "/sessions": "user",
-        "/settings": "tenant", "/api-keys": "platform", "/oauth-clients": "tenant",
-        "/webhooks": "platform", "/policies": "tenant", "/security/": "tenant",
+        "/settings": "tenant", "/api-keys": "tenant", "/oauth-clients": "tenant",
+        "/webhooks": "tenant", "/policies": "tenant", "/security/": "tenant",
         "/access-requests": "user", "/analytics/": "tenant", "/monitoring/": "tenant",
         // Platform-only admin paths
         "/admin/tenants": "platform",
