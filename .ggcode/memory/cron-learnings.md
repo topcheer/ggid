@@ -112,3 +112,20 @@
 - [2026-07-22] Roles 页面显示 0 行但 API 返回 29 roles — 可能是前端数据映射问题（API 返回数组但页面期望 {roles:[]}）。待 frontend 排查
 - [2026-07-21] auth CAE scanner nil context panic 导致 pod 每 ~15min 重启一次。k8s 自动恢复，不影响功能。需修复 cae_scanner.go 的 ListByTenant nil context 问题
 - [2026-07-21] OAuth Clients 列表固定显示 20 条，无分页控件 → 已修复（QA commit c2a52b589），Console 已部署
+
+### Session 11: Impersonation Complete Fix
+
+**P1: Impersonation completely non-functional (5-layer fix)**
+1. API path: /admin/impersonate → /auth/impersonate
+2. Params: user_id → target_user_id
+3. impersonator_id: fallback to X-User-ID header
+4. History: → /audit/impersonation
+5. JWT signing: now returns access_token (HS256, 15min TTL, imp=true claim)
+
+Commits: 9c99c59da, e4e18463e, 57bf6bb3b
+
+**P2 Security Gap (noted by guardian):**
+- impersonation token uses HS256 while main JWT uses RS256
+- Gateway does NOT validate imp=true claim — impersonation tokens have full permissions
+- Should restrict: no security changes, no user deletion, read-only by default
+- JWT_SECRET must not be shared with Console frontend (currently only backend)
