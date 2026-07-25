@@ -72,8 +72,8 @@ func (r *AuditRepository) Insert(ctx context.Context, e *domain.AuditEvent) erro
 		    user_agent, request_id, metadata, prev_hash, hash, created_at)
 		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11::inet, $12, $13, $14, $15, $16, $17)`
 	_, err := r.db.Exec(ctx, query,
-		e.ID, e.TenantID, e.ActorType, e.ActorID, nullableStr(e.ActorName), e.Action,
-		nullableStr(e.ResourceType), e.ResourceID, nullableStr(e.ResourceName), e.Result, ipAddr,
+		e.ID, e.TenantID, e.ActorType, nullableUUID(e.ActorID), nullableStr(e.ActorName), e.Action,
+		nullableStr(e.ResourceType), nullableUUID(e.ResourceID), nullableStr(e.ResourceName), e.Result, ipAddr,
 		nullableStr(e.UserAgent), nullableStr(e.RequestID), metaJSON,
 		e.PrevHash, e.Hash, e.CreatedAt,
 	)
@@ -86,6 +86,14 @@ func nullableStr(s string) any {
 		return nil
 	}
 	return s
+}
+
+// nullableUUID returns nil for nil pointers and uuid.Nil so PostgreSQL stores NULL.
+func nullableUUID(u *uuid.UUID) any {
+	if u == nil || *u == uuid.Nil {
+		return nil
+	}
+	return u
 }
 
 // GetByID retrieves a single audit event by ID.

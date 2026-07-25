@@ -139,9 +139,11 @@ func (s *HTTPServer) handleTamperCheck(w http.ResponseWriter, r *http.Request) {
 // tenant and returns them in chain order (oldest first).
 func (s *HTTPServer) loadChainEvents(r *http.Request, tenantID uuid.UUID, limit int) ([]*auditChainRow, error) {
 	rows, err := s.pool.Query(r.Context(), `
-		SELECT id, tenant_id, actor_type, actor_id, COALESCE(actor_name,''), action,
-		       COALESCE(resource_type, ''), resource_id, COALESCE(resource_name,''), result,
-		       COALESCE(ip_address::text, ''),
+		SELECT id, tenant_id, actor_type, NULLIF(actor_id, '00000000-0000-0000-0000-000000000000'),
+		       COALESCE(actor_name,''), action,
+		       COALESCE(resource_type, ''), NULLIF(resource_id, '00000000-0000-0000-0000-000000000000'),
+		       COALESCE(resource_name,''), result,
+		       COALESCE(host(ip_address), ''),
 		       COALESCE(user_agent,''), COALESCE(request_id,''),
 		       COALESCE(prev_hash, ''), COALESCE(hash, ''),
 		       created_at, COALESCE(metadata, '{}')
@@ -184,6 +186,13 @@ func (s *HTTPServer) loadChainEvents(r *http.Request, tenantID uuid.UUID, limit 
 	return out, nil
 }
 
+func uuidToStr(u *uuid.UUID) string {
+	if u == nil {
+		return ""
+	}
+	return u.String()
+}
+
 // verifyEventChain runs all integrity checks over one tenant's chain.
 // Returns (verified, unhashed, redacted, issues).
 func verifyEventChain(rows []*auditChainRow) (int, int, int, []TamperIssue) {
@@ -218,9 +227,11 @@ func verifyEventChain(rows []*auditChainRow) (int, int, int, []TamperIssue) {
 			redacted++
 		} else if domain.IsHashChainEnabled() {
 			if !e.VerifyHash(e.PrevHash) {
+				// Debug: compute expected hash to identify field mismatch
+				expected := e.ComputeHash(e.PrevHash)
 				issues = append(issues, TamperIssue{
 					Type:        "hash_chain_break",
-					Description: fmt.Sprintf("event %s stored hash does not match recomputed content hash — possible tampering", e.ID),
+					Description: fmt.Sprintf("event %s hash mismatch — stored=%s expected=%s action=%s ip=[%s] actorType=[%s] result=[%s] actorID=[%s] resType=[%s] resID=[%s] created=%d", e.ID, e.Hash[:12], expected[:12], e.Action, e.IPAddress, e.ActorType, e.Result, uuidToStr(e.ActorID), e.ResourceType, uuidToStr(e.ResourceID), e.CreatedAt.UnixNano()),
 					EventID:     e.ID.String(),
 					Severity:    "critical",
 				})
