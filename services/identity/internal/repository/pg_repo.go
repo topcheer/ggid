@@ -259,6 +259,19 @@ func (r *pgRepo) DeleteUser(ctx context.Context, tenantID, id uuid.UUID) error {
 		return ggiderrors.NotFound("user", id.String())
 	}
 
+	// Cascade cleanup: remove orphaned credentials and role assignments.
+	// These tables lack ON DELETE CASCADE FK constraints, so we clean them
+	// explicitly within the same transaction to prevent security-relevant
+	// orphan data (password hashes, permission bindings) from persisting.
+	for _, cleanup := range []struct{ name, sql string }{
+		{"credentials", `DELETE FROM credentials WHERE user_id = $1`},
+		{"user_roles", `DELETE FROM user_roles WHERE user_id = $1`},
+	} {
+		if _, err := tx.Exec(ctx, cleanup.sql, id); err != nil {
+			return ggiderrors.Wrap(ggiderrors.ErrInternal, "cascade cleanup "+cleanup.name, err)
+		}
+	}
+
 	return tx.Commit(ctx)
 }
 
