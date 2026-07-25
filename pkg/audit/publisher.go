@@ -7,7 +7,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -98,9 +97,6 @@ func (p *Publisher) Publish(ctx context.Context, event Event) error {
 	if event.CreatedAt.IsZero() {
 		event.CreatedAt = time.Now()
 	}
-	// Sanitize IP address: strip port (e.g. "10.42.0.83:39820" → "10.42.0.83")
-	// PostgreSQL inet type rejects IP:PORT format.
-	event.IPAddress = sanitizeIPAddress(event.IPAddress)
 
 	data, err := json.Marshal(event)
 	if err != nil {
@@ -149,26 +145,6 @@ func (p *Publisher) Close() {
 	if p.nc != nil {
 		p.nc.Close()
 	}
-}
-
-// sanitizeIPAddress strips the port from an IP address string.
-// PostgreSQL inet type rejects "IP:PORT" format (e.g. "10.42.0.83:39820").
-// For IPv6 addresses like "[::1]:8080", it extracts the address inside brackets.
-func sanitizeIPAddress(ip string) string {
-	if ip == "" {
-		return ""
-	}
-	// Handle IPv6 with brackets: [::1]:8080
-	if strings.HasPrefix(ip, "[") {
-		if end := strings.Index(ip, "]"); end > 0 {
-			return ip[1:end]
-		}
-	}
-	// Strip port for IPv4: 10.42.0.83:39820
-	if idx := strings.LastIndex(ip, ":"); idx > 0 {
-		return ip[:idx]
-	}
-	return ip
 }
 
 // NewEvent is a convenience function to create an audit event with defaults.

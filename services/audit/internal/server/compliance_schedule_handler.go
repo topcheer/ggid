@@ -2,6 +2,7 @@ package httpserver
 
 import (
 	"net/http"
+	"time"
 )
 
 // GET /api/v1/audit/compliance/schedules — list compliance scheduler status
@@ -10,9 +11,11 @@ func (s *HTTPServer) handleComplianceSchedules(w http.ResponseWriter, r *http.Re
 	switch r.Method {
 	case http.MethodGet:
 		writeJSON(w, http.StatusOK, map[string]any{
-			"status":   "active",
-			"interval": "weekly",
-			"types":    []string{"soc2", "hipaa", "gdpr"},
+			"schedules": []map[string]any{
+				{"id": "cs-001", "type": "soc2", "interval": "weekly", "status": "active", "next_run": time.Now().UTC().Add(24 * time.Hour)},
+				{"id": "cs-002", "type": "hipaa", "interval": "monthly", "status": "active", "next_run": time.Now().UTC().Add(7 * 24 * time.Hour)},
+				{"id": "cs-003", "type": "gdpr", "interval": "quarterly", "status": "active", "next_run": time.Now().UTC().Add(30 * 24 * time.Hour)},
+			},
 		})
 	case http.MethodPost:
 		writeJSON(w, http.StatusOK, map[string]any{
