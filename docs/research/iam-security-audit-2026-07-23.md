@@ -500,3 +500,4 @@ PATROL33: secrets 0, swallow 29, sync.Map 13, anon 401, tamper still 2 crit (unr
 PATROL34: secrets 0, swallow 29, anon 401, tamper still 2 crit (same unrepaired events), ERP cycles only. No new P0/P1.
 PATROL35: secrets 0, swallow 29, anon 401, tamper CLEAN (1330 verified). Hash chain fully repaired. No new P0/P1.
 PATROL36: secrets 0, swallow 29, anon 401, tamper CLEAN (1418). Impersonation JWT deployed (HS256 concern flagged). No new P0/P1.
+PATROL37: secrets 0, swallow 29, anon 401, tamper 5 NEW crit (hash path still inconsistent). commit 23dbee168 auth-guard fuzzy admin matching removed (positive). Needs repair+deploy audit.
