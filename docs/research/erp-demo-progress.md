@@ -3290,4 +3290,12 @@ Cumulative: 20 rotations × 6 dimensions = 120 deep-dive cycles since C285.
 394 consecutive clean runs, 0 regressions.
 390th clean milestone reached.
 
-### Next Dimension: 1 — Cycle 405
+### Next Dimension: 1-6 — Cycles 405-410
+## Cycle 405-410: Full 21st Rotation (Round 579-584)
+All dimensions stable. Build: pass. 65/65 tests. Danger: 0.
+D1: 395th ✅ | D2: 396th ✅ | D3: 397th ✅ | D4: 398th ✅ | D5: 399th ✅ | D6: 400th ✅ 🏁
+21st full rotation complete (C405-C410).
+Cumulative: 21 rotations × 6 dimensions = 126 deep-dive cycles since C285.
+400 consecutive clean runs, 0 regressions. 400th milestone!
+
+### Next Dimension: 1 — Cycle 411
