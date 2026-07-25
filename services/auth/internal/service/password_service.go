@@ -49,7 +49,7 @@ func NewPasswordService(
 func (ps *PasswordService) Validate(password string) error {
 	var missing []string
 	if len(password) < ps.policy.MinLength {
-		return fmt.Errorf("password must be at least %d characters long", ps.policy.MinLength)
+		return fmt.Errorf("%w: must be at least %d characters", ErrPasswordTooShort, ps.policy.MinLength)
 	}
 
 	var hasUpper, hasLower, hasDigit, hasSpecial bool
@@ -80,7 +80,7 @@ func (ps *PasswordService) Validate(password string) error {
 	}
 
 	if len(missing) > 0 {
-		return fmt.Errorf("password must contain %s", strings.Join(missing, ", "))
+		return fmt.Errorf("%w: must contain %s", ErrPasswordTooWeak, strings.Join(missing, ", "))
 	}
 
 	// Check against blacklist of common weak passwords.
