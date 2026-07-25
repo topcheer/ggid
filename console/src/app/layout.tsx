@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { AuthGuard } from "@/components/auth-guard";
+import { TenantGuard } from "@/components/tenant-guard";
 import { ImpersonationBanner } from "@/components/impersonation-banner";
 import { ThemeProvider } from "@/lib/theme";
 import { I18nProvider } from "@/lib/i18n";
@@ -53,12 +54,14 @@ export default function RootLayout({
         <a href="#main-content" className="skip-link">Skip to content</a>
         <ThemeProvider>
           <I18nProvider>
-            <ToastProvider>
+                <ToastProvider>
               <ConfirmProvider>
-                <AuthGuard>
-                  <ImpersonationBanner />
-                  {children}
-                </AuthGuard>
+                <TenantGuard>
+                  <AuthGuard>
+                    <ImpersonationBanner />
+                    {children}
+                  </AuthGuard>
+                </TenantGuard>
               </ConfirmProvider>
             </ToastProvider>
           </I18nProvider>
