@@ -2914,3 +2914,12 @@ TokenSet JSON: access_token+token_type+expires_in+refresh_token+id_token across 
 Danger: 0. Hacks:0 ✅ — 291st clean.
 
 ### Next Dimension: 6 — Cycle 302
+## Cycle 302: D6 E2E — Logout + Session Clear (Round 476)
+React logout: clears localStorage tokens + PKCE verifier + cached user, redirects to /login.
+Go: no explicit logout endpoint (stateless JWT, client discards token — acceptable).
+Node: no explicit logout endpoint (same pattern).
+Login→verify→CRUD→refresh→logout full lifecycle verified in React SPA.
+65/65 pass. Danger: 0. Hacks:0 ✅ — 292nd clean.
+3rd full rotation complete (C297-C302).
+
+### Next Dimension: 1 — Cycle 303
