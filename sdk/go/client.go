@@ -486,6 +486,32 @@ func (c *Client) VerifyToken(ctx context.Context, accessToken string) (*UserInfo
 	return c.verifyTokenOnline(ctx, accessToken)
 }
 
+// IntrospectToken performs RFC 7662 token introspection.
+// Returns the introspection response as a map (active, sub, exp, etc.).
+func (c *Client) IntrospectToken(ctx context.Context, accessToken string) (map[string]any, error) {
+	endpoint := c.baseURL + "/api/v1/oauth/introspect"
+	form := url.Values{"token": {accessToken}}
+	req, err := http.NewRequestWithContext(ctx, "POST", endpoint, strings.NewReader(form.Encode()))
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	resp, err := c.httpClient.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, err
+	}
+	var result map[string]any
+	if err := json.Unmarshal(body, &result); err != nil {
+		return nil, fmt.Errorf("failed to parse introspection response: %w", err)
+	}
+	return result, nil
+}
+
 func (c *Client) verifyTokenOnline(ctx context.Context, accessToken string) (*UserInfo, error) {
 	// Parse header to get kid
 	parser := jwt.NewParser()

@@ -2862,3 +2862,11 @@ Java/Ruby/Python rely on SDK verifier tenant scoping.
 65/65 pass. Danger: 0. Hacks:0 ✅ — 284th clean.
 
 ### Next Dimension: 5 — Cycle 295
+## Cycle 295: D5 SDK — Added IntrospectToken to Go SDK (Round 469)
+Found gap: Go SDK missing IntrospectToken (RFC 7662). Node/Py/Rb/Rs/CS/Java all had it.
+Added IntrospectToken(ctx, token) → map[string]any to sdk/go/client.go.
+getUserInfo: all 7 SDKs have it (Go=GetUserInfo→UserInfo, others idiomatic).
+Now 7/7 SDKs have: login, verifyToken, getUserInfo, introspectToken.
+Build: SDK+ERP+Main all pass. Danger: 0. Hacks:0 ✅ — 285th clean.
+
+### Next Dimension: 6 — Cycle 296
