@@ -25,6 +25,7 @@ type Server struct {
 	jwtSecret  []byte
 	jwtIssuer  string
 	jwksURL    string         // JWKS endpoint for RS256 verification (empty = dev bypass)
+	apiKey     string         // static API key for service-to-service auth (no JWT)
 	auditLog   *AgentAuditLog // structured agent audit
 }
 
@@ -37,6 +38,7 @@ func New(cli *client.Client) *Server {
 		jwtSecret: parseJWTSecretFromEnv(),
 		jwtIssuer: os.Getenv("JWT_ISSUER"),
 		jwksURL:   os.Getenv("JWKS_URL"),
+		apiKey:    os.Getenv("MCP_API_KEY"),
 		auditLog:  NewAgentAuditLog(),
 	}
 }
@@ -46,6 +48,7 @@ func (s *Server) ListenAndServe(addr string) error {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/mcp", s.jwtAuth(s.handleMCP))
 	mux.HandleFunc("/mcp/audit", s.jwtAuth(s.HandleAuditQuery))
+	mux.HandleFunc("/.well-known/oauth-protected-resource", s.handleProtectedResource)
 	mux.HandleFunc("/healthz", func(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusOK, map[string]any{"status": "ok"})
 	})
@@ -71,6 +74,13 @@ func (s *Server) jwtAuth(next http.HandlerFunc) http.HandlerFunc {
 
 		// Extract Bearer token.
 		authHeader := r.Header.Get("Authorization")
+
+		// Static API key check (for service-to-service / MCP clients without JWT).
+		if s.apiKey != "" && authHeader == "Bearer "+s.apiKey {
+			next(w, r)
+			return
+		}
+
 		if !strings.HasPrefix(authHeader, "Bearer ") {
 			// In dev mode without secret configured, allow without JWT (with warning).
 			if len(s.jwtSecret) == 0 {
@@ -465,4 +475,29 @@ var _ time.Duration
 // TODO: implement full JWKS fetch + cache. Currently returns error (use dev bypass).
 func (s *Server) fetchJWKSKey(t *jwt.Token) (any, error) {
 	return nil, fmt.Errorf("JWKS verification not yet implemented — set JWKS_URL or use dev bypass")
+}
+
+// handleProtectedResource returns OAuth2 protected resource metadata per
+// MCP 2025-03-26 spec. This lets MCP clients auto-discover the authorization
+// server and perform DCR + token flow without manual configuration.
+//
+// GET /.well-known/oauth-protected-resource
+func (s *Server) handleProtectedResource(w http.ResponseWriter, r *http.Request) {
+	// Determine the base URL from the request or gateway env.
+	baseURL := os.Getenv("OAUTH_ISSUER_URL")
+	if baseURL == "" {
+		// Derive from Host header
+		scheme := "https"
+		if r.TLS == nil && r.Header.Get("X-Forwarded-Proto") == "" {
+			scheme = "http"
+		}
+		baseURL = scheme + "://" + r.Host
+	}
+
+	writeJSON(w, http.StatusOK, map[string]any{
+		"resource":             baseURL,
+		"authorization_servers": []string{baseURL},
+		"bearer_methods":       []string{"header"},
+		"resource_documentation": baseURL + "/docs",
+	})
 }
