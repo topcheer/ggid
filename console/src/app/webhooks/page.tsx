@@ -288,8 +288,10 @@ export default function WebhooksPage() {
   const handleRotateSecret = async (id: string) => {
     try {
       const data = await apiFetch<{ secret?: string }>(`/api/v1/webhooks/${id}/rotate-secret`, { method: "POST" });
-      const secret = data.secret || ("whsec_" + Array.from({ length: 32 }, () => "abcdefghijklmnopqrstuvwxyz0123456789"[Math.floor(Math.random() * 36)]).join(""));
-      setNewSecret(secret);
+      if (!data.secret) {
+        throw new Error("Server did not return a secret");
+      }
+      setNewSecret(data.secret);
       setSecretCopied(false);
       setSavedAck(false);
       loadWebhooks();
