@@ -2707,3 +2707,11 @@ Inv=200 Post=201 Ord=200 NoTok(401)=401 Hacks:0 ✅ — 256th clean. Rotation co
 PW=access_token+token_type+expires_in(api=200) CC=access_token+token_type+expires_in Hacks:0 ✅ — 257th clean.
 
 ### Next Dimension: 2 — Cycle 268
+## Cycle 268: D2 RBAC + Core Change Verification (Round 442)
+**Upstream core changes verified:**
+- 598775b17 fix(audit): dashboard action names
+- f9e050092 feat(oauth): failed login audit
+- 4ecebcc20 docs(security): tamper clean
+FailedLogin=400(exp401) AuthOK=200(exp200) Hacks:0 ✅ — 258th clean.
+
+### Next Dimension: 3 — Cycle 269
