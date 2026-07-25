@@ -2834,3 +2834,9 @@ Rust: explicit cross-tenant reject (L80-82). C#: explicit reject (L86-89).
 Full 6-dimension rotation complete (D1-D6, C285-C290). Next rotation starts D1.
 
 ### Next Dimension: 1 — Cycle 291
+## Cycle 291: D1 Auth Completeness (Round 465)
+Core TokenResponse: access_token+token_type+expires_in+refresh_token+id_token+scope — matches all 7 SDK TokenSet.
+PasswordGrant (L1723) + ClientCredentials (L1631) flows verified in OAuth service.
+SDK Go const-before-import fix pending push (notified ggcxf_cli). Danger: 0. Hacks:0 ✅ — 281st clean.
+
+### Next Dimension: 2 — Cycle 292
