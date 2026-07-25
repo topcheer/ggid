@@ -3023,3 +3023,9 @@ Gateway HasPermissionForRoute: longest-prefix match → resource:read/write/admi
 18/18 RBAC tests pass. 65/65 total. Danger: 0. Hacks:0 ✅ — 306th clean.
 
 ### Next Dimension: 3 — Cycle 317
+## Cycle 317: D3 Functional — Python SAML Flow (Round 491)
+Python demo SAML 2.0 SSO: /login→IdP SSO→/saml/acs (SAMLResponse)→JWT exchange.
+Inventory+orders data present. SAML entity ID + ACS URL configured.
+Danger: 0. Hacks:0 ✅ — 307th clean.
+
+### Next Dimension: 4 — Cycle 318
