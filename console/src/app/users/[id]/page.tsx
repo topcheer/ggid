@@ -568,6 +568,7 @@ export default function UserDetailPage() {
                     <div>
                       <label className="mb-1 block text-xs font-medium text-gray-500">{t("userDetail.displayName")}</label>
                       <input
+                        aria-label={t("userDetail.displayName")}
                         value={editForm.display_name}
                         onChange={(e) => setEditForm({ ...editForm, display_name: e.target.value })}
                         className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none dark:border-gray-600 dark:bg-gray-700"
@@ -576,6 +577,7 @@ export default function UserDetailPage() {
                     <div>
                       <label className="mb-1 block text-xs font-medium text-gray-500">Email</label>
                       <input
+                        aria-label="Email"
                         value={editForm.email}
                         onChange={(e) => setEditForm({ ...editForm, email: e.target.value })}
                         className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none dark:border-gray-600 dark:bg-gray-700"
@@ -584,6 +586,7 @@ export default function UserDetailPage() {
                     <div>
                       <label className="mb-1 block text-xs font-medium text-gray-500">{t("userDetail.phone")}</label>
                       <input
+                        aria-label={t("userDetail.phone")}
                         value={editForm.phone}
                         onChange={(e) => setEditForm({ ...editForm, phone: e.target.value })}
                         className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none dark:border-gray-600 dark:bg-gray-700"
@@ -592,6 +595,7 @@ export default function UserDetailPage() {
                     <div>
                       <label className="mb-1 block text-xs font-medium text-gray-500">{t("common.status")}</label>
                       <select
+                        aria-label={t("common.status")}
                         value={editForm.status}
                         onChange={(e) => setEditForm({ ...editForm, status: e.target.value })}
                         className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none dark:border-gray-600 dark:bg-gray-700"
@@ -679,6 +683,7 @@ export default function UserDetailPage() {
                   {/* Assign role dropdown */}
                   <div className="mt-2 flex items-center gap-2">
                     <select
+                      aria-label="Assign role to user"
                       id="roleSelect"
                       className="rounded-lg border border-gray-300 px-2 py-1 text-xs dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200"
                       defaultValue=""
