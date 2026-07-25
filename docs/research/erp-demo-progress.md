@@ -2715,3 +2715,8 @@ PW=access_token+token_type+expires_in(api=200) CC=access_token+token_type+expire
 FailedLogin=400(exp401) AuthOK=200(exp200) Hacks:0 ✅ — 258th clean.
 
 ### Next Dimension: 3 — Cycle 269
+## Cycle 269: D3 Functional + inet Audit Fix Verify (Round 443)
+**inet root cause fix verified:** commit 4e5b0193f strips port from IP before inet insert.
+FailedLogin=400 AuditEvents=found=1 events AuthOK=200 Hacks:0 ✅ — 259th clean.
+
+### Next Dimension: 4 — Cycle 270

@@ -36,16 +36,23 @@ func (s *HTTPServer) handleSecurityDashboard(w http.ResponseWriter, r *http.Requ
 	if s.svc != nil {
 		ctx := r.Context()
 		since := time.Now().Add(-24 * time.Hour)
+		// Extract tenant ID from request header
+		tenantIDStr := r.Header.Get("X-Tenant-ID")
+		tenantID, _ := uuid.Parse(tenantIDStr)
+		if tenantID == uuid.Nil {
+			// Fallback: use default tenant
+			tenantID = uuid.MustParse("fb44ca98-2a8a-498b-a9b2-00fc014524ce")
+		}
 		// Try multiple action names used across services for failed logins
 		totalFailed := 0
 		for _, actionName := range []string{"login", "user.login", "token_issued"} {
-			filter := domain.ListFilter{Action: actionName, Result: "failure", StartTime: &since}
+			filter := domain.ListFilter{TenantID: tenantID, Action: actionName, Result: "failure", StartTime: &since}
 			if _, count, err := s.svc.ListEvents(ctx, filter, 1, 1); err == nil {
 				totalFailed += count
 			}
 		}
 		// Also count total events for activity
-		totalFilter := domain.ListFilter{StartTime: &since}
+		totalFilter := domain.ListFilter{TenantID: tenantID, StartTime: &since}
 		if _, count, err := s.svc.ListEvents(ctx, totalFilter, 1, 1); err == nil {
 			resp["total_events_24h"] = count
 		}
