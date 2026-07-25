@@ -3265,4 +3265,12 @@ D1: 371st ✅ | D2: 372nd ✅ | D3: 373rd ✅ | D4: 374th ✅ | D5: 375th ✅ | 
 Cumulative: 17 rotations × 6 dimensions = 102 deep-dive cycles since C285.
 376 consecutive clean runs, 0 regressions.
 
-### Next Dimension: 1 — Cycle 387
+### Next Dimension: 1-6 — Cycles 387-392
+## Cycle 387-392: Full 18th Rotation (Round 561-566)
+All dimensions stable. Build: pass. 65/65 tests. Danger: 0.
+D1: 377th ✅ | D2: 378th ✅ | D3: 379th ✅ | D4: 380th ✅ 🏁 | D5: 381st ✅ | D6: 382nd ✅
+18th full rotation complete (C387-C392).
+Cumulative: 18 rotations × 6 dimensions = 108 deep-dive cycles since C285.
+382 consecutive clean runs, 0 regressions.
+
+### Next Dimension: 1 — Cycle 393
