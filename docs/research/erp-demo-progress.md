@@ -2792,3 +2792,8 @@ Inv=200 Post=201 Ord=200 NoTok=401 PlatU=403 Hacks:0 ✅ — 274th clean.
 arch_pm Gateway RBAC decouple (0ea833300): platform:admin no longer auto-inherits tenant perms. Admin still works (has both roles).
 
 ### Next Dimension: 1 — Cycle 285
+## Cycle 285: D1 Auth + Platform/Tenant Role Separation Verified (Round 459)
+PW=access_token+token_type+expires_in(api=200) CC=access_token+token_type+expires_in Hacks:0 ✅ — 275th clean.
+Platform/Tenant role separation complete: 65/65 tests pass, RBAC 8/8, admin works.
+
+### Next Dimension: 2 — Cycle 286
