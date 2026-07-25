@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Shield, ArrowLeft, KeyRound, Building2, AlertCircle, CheckCircle2, Loader2, Fingerprint, Eye, EyeOff } from "lucide-react";
+import { Shield, ArrowLeft, KeyRound, Building2, AlertCircle, CheckCircle2, Loader2, Fingerprint, Eye, EyeOff, Lock } from "lucide-react";
+import { getTenantSlugFromSubdomain } from "@/lib/api-config";
 import { API_BASE_URL, DEFAULT_TENANT_ID, getEffectiveTenantSlug, resolveTenantSlug } from "@/lib/api-config";
 import { useTranslations } from "@/lib/i18n";
 import { authHeader, isAuthenticated } from "@/lib/auth-helpers";
@@ -38,6 +39,7 @@ export default function LoginPage() {
   const [connectorsLoaded, setConnectorsLoaded] = useState(false);
   const [passkeySupported, setPasskeySupported] = useState(false);
   const [tenantSlug, setTenantSlug] = useState(getEffectiveTenantSlug());
+  const tenantLocked = !!getTenantSlugFromSubdomain();
   const [resolvedTenantId, setResolvedTenantId] = useState(DEFAULT_TENANT_ID);
   const [pwFeedback, setPwFeedback] = useState("");
   const [systemInitialized, setSystemInitialized] = useState<boolean | null>(null);
@@ -381,16 +383,21 @@ export default function LoginPage() {
                   value={tenantSlug}
                   onChange={(e) => { setTenantSlug(e.target.value); setTenantResolved(false); setTenantError(""); }}
                   onBlur={(e) => resolveTenant(e.target.value)}
-                  className={`w-full rounded-lg border py-2 pl-9 pr-9 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 focus:outline-none focus:ring-1 ${
-                    tenantError ? "border-red-400 focus:border-red-500 focus:ring-red-500"
+                  readOnly={tenantLocked}
+                  className={`w-full rounded-lg border py-2 pl-9 ${tenantLocked ? "pr-9" : "pr-9"} text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 focus:outline-none focus:ring-1 ${
+                    tenantLocked ? "border-gray-300 bg-gray-50 dark:bg-gray-800 dark:border-gray-600 cursor-not-allowed"
+                    : tenantError ? "border-red-400 focus:border-red-500 focus:ring-red-500"
                     : tenantResolved ? "border-green-400 focus:border-green-500 focus:ring-green-500"
                     : "border-gray-300 focus:border-brand-500 focus:ring-brand-500"
                   }`}
                   placeholder={t("login.tenantPlaceholder")}
                 />
-                {tenantResolved && <CheckCircle2 className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-green-500" />}
-                {tenantError && <AlertCircle className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-red-500" />}
+                {tenantLocked ? <Lock className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+                : tenantResolved ? <CheckCircle2 className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-green-500" />
+                : tenantError ? <AlertCircle className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-red-500" />
+                : null}
               </div>
+              {tenantLocked && <p className="mt-1 text-xs text-gray-400">{t("login.tenantLocked") || "Tenant is determined by subdomain"}</p>}
               {tenantError && <p className="mt-1 text-xs text-red-500">{tenantError}</p>}
             </div>
             )}
