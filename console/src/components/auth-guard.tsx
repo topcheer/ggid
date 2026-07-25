@@ -65,7 +65,18 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
         "/settings": "tenant", "/api-keys": "platform", "/oauth-clients": "tenant",
         "/webhooks": "platform", "/policies": "tenant", "/security/": "tenant",
         "/access-requests": "user", "/analytics/": "tenant", "/monitoring/": "tenant",
-        "/admin": "platform",
+        // Platform-only admin paths
+        "/admin/tenants": "platform",
+        "/admin/audit": "platform",
+        "/admin/threats": "platform",
+        // Tenant admin paths (managers can access)
+        "/admin/impersonate": "tenant",
+        "/admin/secrets": "tenant",
+        "/admin/key-rotation": "tenant",
+        "/admin/backup": "tenant",
+        "/admin/settings": "tenant",
+        "/admin/feature-flags": "tenant",
+        "/admin/health": "tenant",
       };
       const userScopes = JSON.parse(localStorage.getItem("ggid_user_scopes") || '["user:self"]');
       const isPlatform = userScopes.some((s: string) => {

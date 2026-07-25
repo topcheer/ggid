@@ -250,8 +250,8 @@ export function useUserRole(): { role: UserRole; scopes: string[]; isPlatformAdm
     role,
     scopes,
     isPlatformAdmin: role === "platform_admin",
-    isTenantAdmin: role === "tenant_admin" || role === "platform_admin",
-    isAdmin: role === "platform_admin",
+    isTenantAdmin: role === "tenant_admin",
+    isAdmin: role === "platform_admin" || role === "tenant_admin",
   };
 }
 

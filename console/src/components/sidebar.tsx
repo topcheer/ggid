@@ -104,15 +104,24 @@ export function Sidebar() {
         { href: "/settings/ldap-config", label: "LDAP", icon: Network },
         { href: "/settings/rate-limits", label: "Rate Limits", icon: Gauge },
         { href: "/api-explorer", label: "API Explorer", icon: Terminal },
+        { href: "/settings/branding", label: "Branding", icon: Globe },
+        { href: "/settings/feature-flags", label: "Feature Flags", icon: Zap },
       ],
     },
     {
-      label: "Platform", icon: Building, requiredScope: "admin", items: [
+      label: "Administration", icon: ShieldCheck, requiredScope: "manager", items: [
+        { href: "/admin/impersonate", label: "Impersonation", icon: Shield },
+        { href: "/admin/secrets", label: "Secrets", icon: KeyRound },
+        { href: "/admin/key-rotation", label: "Key Rotation", icon: KeyRound },
+        { href: "/admin/backup", label: "Backup & DR", icon: Database },
+        { href: "/admin/health", label: "System Health", icon: Activity },
+      ],
+    },
+    {
+      label: "Platform", icon: Building, requiredScope: "platform", items: [
         { href: "/admin/tenants", label: "Tenants", icon: Building2 },
         { href: "/admin/audit/global", label: "Global Audit", icon: FileText },
         { href: "/admin/threats", label: "Threat Dashboard", icon: Shield },
-        { href: "/settings/branding", label: "Branding", icon: Globe },
-        { href: "/settings/feature-flags", label: "Feature Flags", icon: Zap },
       ],
     },
   ], [t]);
@@ -122,8 +131,9 @@ export function Sidebar() {
     const hasScope = (required?: string) => {
       if (!required) return true;
       if (isPlatformAdmin) return true;
+      if (required === "platform") return false; // only platform admins
       if (required === "manager") return isTenantAdmin;
-      if (required === "admin") return false;
+      if (required === "admin") return isPlatformAdmin || isTenantAdmin;
       return scopes.includes(required);
     };
 
