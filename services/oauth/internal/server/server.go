@@ -596,9 +596,12 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 		}
 		_ = r.ParseForm()
 
-		// Resolve tenant ID from X-Tenant-ID header first (for non-auth-code flows).
+		// Resolve tenant ID from X-Tenant-ID header, or tenant_id query param.
 		// For authorization_code grant, fall back to tenant stored in the auth code.
 		tenantIDStr := r.Header.Get("X-Tenant-ID")
+		if tenantIDStr == "" {
+			tenantIDStr = r.URL.Query().Get("tenant_id")
+		}
 		tenantID, _ := uuid.Parse(tenantIDStr)
 
 		grantType := r.FormValue("grant_type")
@@ -675,6 +678,8 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 			// RFC 6749 §4.3: Resource Owner Password Credentials Grant.
 			// The OAuth service verifies credentials via the auth service,
 			// then issues its own token (unified issuer model).
+			// Inject client IP and User-Agent for session audit tracking.
+			ctx = service.WithClientInfo(ctx, r.RemoteAddr, r.UserAgent())
 			resp, tokenErr = oauthSvc.PasswordGrant(ctx, &service.PasswordGrantRequest{
 				TenantID:     tenantID,
 				Username:     r.FormValue("username"),

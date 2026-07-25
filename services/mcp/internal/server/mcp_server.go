@@ -494,10 +494,18 @@ func (s *Server) handleProtectedResource(w http.ResponseWriter, r *http.Request)
 		baseURL = scheme + "://" + r.Host
 	}
 
+	// Build auth server URL with tenant_id embedded so MCP clients can
+	// auto-configure DCR + token without manual X-Tenant-ID header.
+	authURL := baseURL
+	tenantID := os.Getenv("GGID_TENANT_ID")
+	if tenantID != "" {
+		authURL = baseURL + "?tenant_id=" + tenantID
+	}
+
 	writeJSON(w, http.StatusOK, map[string]any{
-		"resource":             baseURL,
-		"authorization_servers": []string{baseURL},
-		"bearer_methods":       []string{"header"},
+		"resource":               "https://mcp.iot2.win",
+		"authorization_servers":  []string{authURL},
+		"bearer_methods":         []string{"header"},
 		"resource_documentation": baseURL + "/docs",
 	})
 }
