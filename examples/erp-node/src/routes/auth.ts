@@ -60,3 +60,21 @@ authRoutes.post('/introspect', async (req, res) => {
     res.json({ active: false });
   }
 });
+
+// My permissions — returns the caller's permissions from JWT claims
+authRoutes.get('/my-permissions', async (req, res) => {
+  const token = req.headers.authorization?.replace(/^Bearer\s+/i, '');
+  if (!token) return res.status(401).json({ error: { code: 'unauthenticated', message: 'Missing token' } });
+  try {
+    const claims = await ggidClient.verifyToken(token);
+    const perms = (claims as any).permissions || [];
+    const hasPerm = (p: string) => perms.includes(p) || perms.includes('admin');
+    res.json({
+      permissions: perms,
+      can_write_orders: hasPerm('orders:write'),
+      can_approve: hasPerm('orders:approve'),
+    });
+  } catch (e: any) {
+    res.status(401).json({ error: { code: 'unauthenticated', message: 'Invalid token' } });
+  }
+});

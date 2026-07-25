@@ -3106,3 +3106,10 @@ Cumulative: 8 rotations × 6 dimensions = 48 deep-dive cycles since C285.
 322 consecutive clean runs, 0 regressions.
 
 ### Next Dimension: 1 — Cycle 333
+## Cycle 333: D1 Auth — Added my-permissions to Node Demo (Round 507)
+Found gap: /api/auth/my-permissions only in Go+C#+Python. Added to Node demo.
+Node: GET /api/auth/my-permissions → {permissions, can_write_orders, can_approve}.
+GAP REMAINING: Java/Ruby/Rust still missing — track for future.
+TSC: pass. Danger: 0. Hacks:0 ✅ — 323rd clean.
+
+### Next Dimension: 2 — Cycle 334
