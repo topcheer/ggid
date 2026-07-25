@@ -30,6 +30,10 @@ func (h *Handler) handleImpersonate(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid JSON"})
 		return
 	}
+	// Fallback: if impersonator_id not in body, use X-User-ID header from gateway
+	if req.ImpersonatorID == "" {
+		req.ImpersonatorID = r.Header.Get("X-User-ID")
+	}
 	tok, err := service.IssueImpersonationToken(
 		parseUUIDSafe(req.ImpersonatorID), parseUUIDSafe(req.TargetUserID),
 		parseUUIDSafe(req.TenantID), req.Reason,
