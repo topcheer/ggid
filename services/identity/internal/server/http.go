@@ -786,6 +786,20 @@ func (h *HTTPHandler) listUsers(ctx context.Context, w http.ResponseWriter, r *h
 			filter.PageSize = n
 		}
 	}
+	if off := q.Get("offset"); off != "" {
+		var n int
+		fmt.Sscanf(off, "%d", &n)
+		if n >= 0 {
+			filter.Offset = n
+		}
+	}
+	if pg := q.Get("page"); pg != "" {
+		var n int
+		fmt.Sscanf(pg, "%d", &n)
+		if n > 0 && filter.PageSize > 0 {
+			filter.Offset = (n - 1) * filter.PageSize
+		}
+	}
 
 	// Multi-criteria filtering.
 	if st := q.Get("status"); st != "" {
