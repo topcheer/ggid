@@ -30,7 +30,12 @@ func (r *AuditRepository) Insert(ctx context.Context, e *domain.AuditEvent) erro
 	metaJSON, _ := json.Marshal(e.Metadata)
 	var ipAddr any
 	if e.IPAddress != "" {
-		ipAddr = e.IPAddress
+		// Strip port if present (inet type doesn't accept IP:PORT format)
+		ip := e.IPAddress
+		if idx := strings.LastIndex(ip, ":"); idx > 0 && !strings.Contains(ip[idx+1:], ":") {
+			ip = ip[:idx] // IPv4:port → IPv4
+		}
+		ipAddr = ip
 	}
 
 	// Assign ID and timestamp in Go (before hashing) instead of relying on
