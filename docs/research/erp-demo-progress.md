@@ -3016,3 +3016,10 @@ logout, revoke, backchannel-logout, register, introspect — all with /api/v1 al
 Danger: 0. Hacks:0 ✅ — 305th clean.
 
 ### Next Dimension: 2 — Cycle 316
+## Cycle 316: D2 RBAC — JWT Permission Claim Pipeline (Round 490)
+JWT claims: permissions[] (fine-grained: inventory:read, orders:write) + roles[] (display names).
+M2M tokens: client scopes → permissions claim. Token exchange: preserves subject permissions.
+Gateway HasPermissionForRoute: longest-prefix match → resource:read/write/admin.
+18/18 RBAC tests pass. 65/65 total. Danger: 0. Hacks:0 ✅ — 306th clean.
+
+### Next Dimension: 3 — Cycle 317
