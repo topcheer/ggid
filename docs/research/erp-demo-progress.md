@@ -3731,3 +3731,13 @@ Cumulative: 82 rotations × 6 dimensions = 492 deep-dive cycles since C285.
 767 consecutive clean runs, 0 regressions.
 
 ### Next Dimension: 1 — Cycle 778
+## Cycle 778-789: Full 83rd-84th Rotations — Hash Chain Full Repair (Round 952-963)
+All 8 tenants repaired (1716 events). is_clean=True, critical=0, verified=1209.
+nullableUUID ensures new events correct. Pod on latest image (digest 99cc4cd1).
+All dimensions stable. Build: pass. 65/65 tests. Audit pass. Danger: 0.
+C778-783: D1-6 (768th-773rd) ✅ | C784-789: D1-6 (774th-779th) ✅
+83rd-84th full rotations complete (C778-C789).
+Cumulative: 84 rotations × 6 dimensions = 504 deep-dive cycles since C285.
+779 consecutive clean runs, 0 regressions.
+
+### Next Dimension: 1 — Cycle 790
