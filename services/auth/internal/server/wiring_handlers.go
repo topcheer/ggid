@@ -3,7 +3,6 @@ package server
 import (
 	"encoding/json"
 	"net/http"
-	"os"
 	"time"
 
 	"github.com/ggid/ggid/services/auth/internal/service"
@@ -44,24 +43,28 @@ func (h *Handler) handleImpersonate(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusBadRequest, map[string]string{"error": err.Error()})
 		return
 	}
-	// Sign an impersonation JWT using the shared JWT_SECRET (HS256)
+	// Sign an impersonation JWT using RS256 (same keypair as OAuth tokens)
+	// so the gateway JWT middleware can validate it.
 	now := time.Now().UTC()
 	claims := jwt.MapClaims{
-		"sub":         req.TargetUserID,
-		"tenant_id":   req.TenantID,
+		"sub":          req.TargetUserID,
+		"tenant_id":    req.TenantID,
 		"impersonator": req.ImpersonatorID,
-		"imp":         true,
-		"jti":         tok.TokenID.String(),
-		"iat":         now.Unix(),
-		"exp":         tok.ExpiresAt.Unix(),
-		"iss":         "ggid-auth",
+		"imp":          true,
+		"jti":          tok.TokenID.String(),
+		"iat":          now.Unix(),
+		"exp":          tok.ExpiresAt.Unix(),
+		"iss":          h.authSvc.JWTIssuer(),
+		"aud":          h.authSvc.JWTAudience(),
 	}
-	jwtToken := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	jwtSecret := os.Getenv("JWT_SECRET")
-	if jwtSecret == "" {
-		jwtSecret = "k3s-jwt-dev-secret"
+	jwtToken := jwt.NewWithClaims(jwt.SigningMethodRS256, claims)
+	kp := h.authSvc.KeyProvider()
+	if kp == nil {
+		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "key provider not configured"})
+		return
 	}
-	signedToken, signErr := jwtToken.SignedString([]byte(jwtSecret))
+	jwtToken.Header["kid"] = kp.Metadata().KeyID
+	signedToken, signErr := jwtToken.SignedString(kp.Signer())
 	if signErr != nil {
 		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "failed to sign impersonation token"})
 		return
