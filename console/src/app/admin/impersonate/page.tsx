@@ -88,7 +88,7 @@ export default function ImpersonatePage() {
     setLoadingHistory(true);
     try {
       const data = await apiFetch<{ sessions?: HistoryEntry[]; items?: HistoryEntry[] } | HistoryEntry[]>(
-        "/api/v1/audit/impersonation?limit=20",
+        "/api/v1/impersonate/active?limit=20",
       ).catch(() => null);
 
       if (data) {
