@@ -104,9 +104,9 @@ func (r *AuditRepository) GetByID(ctx context.Context, id uuid.UUID) (*domain.Au
 	query := `
 		SELECT id, tenant_id, actor_type, actor_id, actor_name, action,
 		    resource_type, resource_id, resource_name, result,
-		    ip_address::text, user_agent, request_id, metadata,
-		    COALESCE(prev_hash, ''), COALESCE(hash, ''),
-		    created_at
+			    host(ip_address), user_agent, request_id, metadata,
+			    COALESCE(prev_hash, ''), COALESCE(hash, ''),
+			    created_at
 		FROM audit_events WHERE id = $1`
 	err := r.db.QueryRow(ctx, query, id).Scan(
 		&event.ID, &event.TenantID, &event.ActorType, &event.ActorID, &actorName,
@@ -196,7 +196,7 @@ func (r *AuditRepository) List(ctx context.Context, filter domain.ListFilter, li
 	query := fmt.Sprintf(`
 		SELECT id, tenant_id, actor_type, actor_id, actor_name, action,
 		    resource_type, resource_id, resource_name, result,
-		    ip_address::text, user_agent, request_id, metadata, created_at
+			    host(ip_address), user_agent, request_id, metadata, created_at
 		FROM audit_events %s
 		ORDER BY %s %s LIMIT $%d OFFSET $%d`,
 		where, orderCol, orderDir, n, n+1)
