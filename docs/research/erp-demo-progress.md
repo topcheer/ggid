@@ -2817,3 +2817,11 @@ Java=relies on SDK verifier (no explicit check — noted, not blocking)
 All gateway tests pass (7 pkgs). Danger patterns: 0. Hacks:0 ✅ — 278th clean.
 
 ### Next Dimension: 5 — Cycle 289
+## Cycle 289: D5 SDK Cross-Language Consistency (Round 463)
+TokenSet JSON wire format consistent: access_token+token_type+expires_in+refresh_token+id_token across all 7 SDKs.
+verifyToken: Go=VerifyToken→UserInfo Node=verifyToken→Claims Py=verify_token→dict Rb=verify_token→claims
+Rs=verify_token→Claims CS=VerifyTokenAsync→Claims Java=verifyUser→GGIDUser.
+Idiomatic naming per language (PascalCase/camelCase/snake_case), wire format identical.
+Danger patterns: 0. Hacks:0 ✅ — 279th clean.
+
+### Next Dimension: 6 — Cycle 290
