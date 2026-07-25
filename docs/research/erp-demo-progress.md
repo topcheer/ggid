@@ -2900,3 +2900,10 @@ Go my-permissions endpoint (C293) returns {permissions, can_write_orders, can_ap
 Build: pass. Danger: 0. Hacks:0 ✅ — 289th clean.
 
 ### Next Dimension: 4 — Cycle 300
+## Cycle 300: D4 Tenant Isolation — Multi-Layer Verify (Round 474) 🏁 MILESTONE
+Layer 1 (Gateway): CheckConsent middleware blocks platform admin from tenant data without consent.
+Layer 2 (Gateway): JWT tenant_id → X-Tenant-ID header injection (only if not pre-set).
+Layer 3 (Demo): Go/Node/Rust/C# explicitly reject tenant mismatch (401).
+13 tenant tests pass. 65/65 total. Danger: 0. Hacks:0 ✅ — 290th clean.
+
+### Next Dimension: 5 — Cycle 301
