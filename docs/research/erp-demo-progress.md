@@ -3010,3 +3010,9 @@ Build: pass. 65/65 tests. 0 failures. ERP Go: pass. Danger: 0. Hacks:0 ✅ — 3
 Cumulative: 5 rotations × 6 dimensions = 30 deep-dive cycles since C285.
 
 ### Next Dimension: 1 — Cycle 315
+## Cycle 315: D1 Auth — Complete Endpoint Suite (Round 489)
+OAuth server endpoints: discovery, jwks, authorize, token(6 grants), userinfo,
+logout, revoke, backchannel-logout, register, introspect — all with /api/v1 aliases.
+Danger: 0. Hacks:0 ✅ — 305th clean.
+
+### Next Dimension: 2 — Cycle 316
