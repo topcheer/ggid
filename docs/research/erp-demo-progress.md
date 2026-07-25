@@ -3540,3 +3540,12 @@ Cumulative: 48 rotations × 6 dimensions = 288 deep-dive cycles since C285.
 563 consecutive clean runs, 0 regressions.
 
 ### Next Dimension: 1 — Cycle 574
+## Cycle 574-579: Full 49th Rotation (Round 748-753)
+Upstream: ced597117 demo HTML block layout rewrite (CSS only, no pipeline impact).
+All dimensions stable. Build: pass. 65/65 tests. Danger: 0.
+D1: 564th ✅ | D2: 565th ✅ | D3: 566th ✅ | D4: 567th ✅ | D5: 568th ✅ | D6: 569th ✅
+49th full rotation complete (C574-C579).
+Cumulative: 49 rotations × 6 dimensions = 294 deep-dive cycles since C285.
+569 consecutive clean runs, 0 regressions.
+
+### Next Dimension: 1 — Cycle 580
