@@ -190,6 +190,7 @@ export default function AuditTimelinePage() {
           <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
           <input
             type="text"
+            aria-label="Search by user"
             placeholder="Search user..."
             value={userSearch}
             onChange={(e) => setUserSearch(e.target.value)}
@@ -197,6 +198,7 @@ export default function AuditTimelinePage() {
           />
         </div>
         <select
+          aria-label="Filter by service"
           value={serviceFilter}
           onChange={(e) => setServiceFilter(e.target.value)}
           className={inputCls}
@@ -209,6 +211,7 @@ export default function AuditTimelinePage() {
           <option value="audit">Audit</option>
         </select>
         <select
+          aria-label="Filter by severity"
           value={severityFilter}
           onChange={(e) => setSeverityFilter(e.target.value)}
           className={inputCls}

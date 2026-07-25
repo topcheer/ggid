@@ -173,6 +173,7 @@ export default function ComplianceReportPage() {
             Framework
           </label>
           <select
+            aria-label="Filter by compliance framework"
             className={inputCls}
             value={selectedFramework}
             onChange={(e) => setSelectedFramework(e.target.value)}

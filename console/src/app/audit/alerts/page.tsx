@@ -172,6 +172,7 @@ export default function AuditAlertsPage() {
           <div className="flex items-center gap-3">
             <Filter className="h-4 w-4 text-gray-400" />
             <select
+              aria-label="Filter by status"
               className="rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200"
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
