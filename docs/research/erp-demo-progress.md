@@ -2738,3 +2738,7 @@ Inv=200 Post=201 Ord=200 NoTok=401 Hacks:0 ✅ — 262nd clean.
 PW=access_token+token_type+expires_in CC=access_token+token_type+expires_in Hacks:0 ✅ — 263rd clean.
 
 ### Next Dimension: 2 — Cycle 274
+## Cycle 274: D2 RBAC (Round 448)
+JWT=[ERP Admin:9p] Inv=200 PlatU=403(exp403) PlatR=403(exp403) Fake=401(exp401) Hacks:0 ✅ — 264th clean.
+
+### Next Dimension: 3 — Cycle 275
