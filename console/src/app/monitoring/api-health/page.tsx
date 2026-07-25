@@ -73,7 +73,7 @@ function EndpointsTab() {
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch(`${API_BASE}/api/v1/gateway/metrics`, { headers: { ...authHeader() } });
+      const res = await fetch(`${API_BASE}/api/v1/gateway/stats`, { headers: { ...authHeader() } });
       if (res.ok) { const d = await res.json(); if (d.endpoints) { setEndpoints(d.endpoints); return; } }
     } catch { /* mock */ }
     setEndpoints([
