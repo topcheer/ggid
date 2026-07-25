@@ -748,6 +748,7 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 		}
 
 		if tokenErr != nil {
+			// Audit: failed login attempt (security requirement)
 			if r.FormValue("grant_type") == "password" && auditPub != nil {
 				ev := audit.NewEvent("user.login", "failure", tenantID, uuid.Nil)
 				ev.ResourceType = "auth"
