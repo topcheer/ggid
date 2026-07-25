@@ -597,10 +597,13 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 		_ = r.ParseForm()
 
 		// Resolve tenant ID from X-Tenant-ID header, or tenant_id query param.
-		// For authorization_code grant, fall back to tenant stored in the auth code.
+		// Fallback to default tenant for DCR flows (MCP clients don't send headers).
 		tenantIDStr := r.Header.Get("X-Tenant-ID")
 		if tenantIDStr == "" {
 			tenantIDStr = r.URL.Query().Get("tenant_id")
+		}
+		if tenantIDStr == "" {
+			tenantIDStr = os.Getenv("DEFAULT_TENANT_ID")
 		}
 		tenantID, _ := uuid.Parse(tenantIDStr)
 
@@ -2224,8 +2227,10 @@ func injectTenantContext(r *http.Request) (context.Context, error) {
 	if tenantIDStr == "" {
 		tenantIDStr = r.URL.Query().Get("tenant_id")
 	}
+	// Fallback to default tenant for DCR flows where MCP clients
+	// don't send X-Tenant-ID header (RFC 7591 DCR is tenant-agnostic).
 	if tenantIDStr == "" {
-		return nil, fmt.Errorf("valid X-Tenant-ID header or tenant_id query param required")
+		tenantIDStr = os.Getenv("DEFAULT_TENANT_ID")
 	}
 	tenantID, err := uuid.Parse(tenantIDStr)
 	if err != nil {

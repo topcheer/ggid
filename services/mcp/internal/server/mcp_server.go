@@ -90,7 +90,7 @@ func (s *Server) jwtAuth(next http.HandlerFunc) http.HandlerFunc {
 			}
 			// RFC 9728: return WWW-Authenticate header so MCP clients can
 			// auto-discover the OAuth2 authorization server via DCR.
-			w.Header().Set("WWW-Authenticate", `Bearer resource_metadata="https://mcp.iot2.win/.well-known/oauth-protected-resource"`)
+			w.Header().Set("WWW-Authenticate", `Bearer realm="OAuth", resource_metadata="https://mcp.iot2.win/.well-known/oauth-protected-resource", error="invalid_token", error_description="Missing or invalid access token"`)
 			writeJSON(w, http.StatusUnauthorized, map[string]any{
 				"jsonrpc": "2.0", "error": map[string]any{
 					"code": -32001, "message": "authorization required: Bearer token expected",
@@ -497,18 +497,11 @@ func (s *Server) handleProtectedResource(w http.ResponseWriter, r *http.Request)
 		baseURL = scheme + "://" + r.Host
 	}
 
-	// Build auth server URL with tenant_id embedded so MCP clients can
-	// auto-configure DCR + token without manual X-Tenant-ID header.
-	authURL := baseURL
-	tenantID := os.Getenv("GGID_TENANT_ID")
-	if tenantID != "" {
-		authURL = baseURL + "?tenant_id=" + tenantID
-	}
-
 	writeJSON(w, http.StatusOK, map[string]any{
-		"resource":               "https://mcp.iot2.win",
-		"authorization_servers":  []string{authURL},
-		"bearer_methods":         []string{"header"},
-		"resource_documentation": baseURL + "/docs",
+		"resource":                  "https://mcp.iot2.win/mcp",
+		"authorization_servers":     []string{"https://ggid.iot2.win"},
+		"bearer_methods_supported":  []string{"header"},
+		"resource_name":             "GGID IAM MCP Server",
+		"resource_documentation":    "https://ggid.iot2.win/docs",
 	})
 }
