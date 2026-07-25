@@ -3046,3 +3046,9 @@ Cumulative: 6 rotations × 6 dimensions = 36 deep-dive cycles since C285.
 310 consecutive clean runs, 0 regressions.
 
 ### Next Dimension: 1 — Cycle 321
+## Cycle 321: D1 Auth — Failed Login Audit (Round 495)
+OAuth server publishes audit event on failed login (L752: user.login/failure).
+Security: failed attempts audited for brute-force detection.
+Danger: 0. Hacks:0 ✅ — 311th clean.
+
+### Next Dimension: 2 — Cycle 322
