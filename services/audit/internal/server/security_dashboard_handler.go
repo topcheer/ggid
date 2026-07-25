@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/ggid/ggid/services/audit/internal/domain"
+	"github.com/google/uuid"
 )
 
 // GET /api/v1/security/dashboard
