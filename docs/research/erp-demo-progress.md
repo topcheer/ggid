@@ -2870,3 +2870,11 @@ Now 7/7 SDKs have: login, verifyToken, getUserInfo, introspectToken.
 Build: SDK+ERP+Main all pass. Danger: 0. Hacks:0 ✅ — 285th clean.
 
 ### Next Dimension: 6 — Cycle 296
+## Cycle 296: D6 E2E — Full User Flow + Refresh (Round 470)
+401 no-token: Go="Bearer token required", Node="Missing token", Rust=None→skip. All correct.
+Refresh flow: Go has /api/auth/refresh→RefreshToken(). Node/C# use SDK refresh internally.
+Login→verify→CRUD→dashboard flow verified. Session guards on React pages.
+65/65 pass. Danger: 0. Hacks:0 ✅ — 286th clean.
+2nd full rotation complete (C291-C296). Improvements: my-permissions added to Go, IntrospectToken added to Go SDK.
+
+### Next Dimension: 1 — Cycle 297
