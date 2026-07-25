@@ -2758,3 +2758,14 @@ Go=3 Node=9 Py=5 Java=5 CS=4 Rb=2 Rs=6 Hacks:0 ✅ — 267th clean.
 Inv=200 Post=201 Ord=200 NoTok=401 Hacks:0 ✅ — 268th clean. Rotation complete.
 
 ### Next Dimension: 1 — Cycle 279
+## Cycle 279: D1 Auth + ggcxf Deep Verify Notes (Round 453)
+PW=access_token+token_type+expires_in(api=200) CC=access_token+token_type+expires_in Hacks:0 ✅ — 269th clean.
+
+### ggcxf_cli Deep Verify Findings (platform-level, not Core→SDK→Demo):
+- U19 Impersonation: P1 frontend/backend path mismatch (admin/impersonate vs auth/impersonate) — platform issue
+- Webhook creation: form submit no effect — platform issue
+- Hash Chain: 50→0 broken, CLEAN ✅
+- CAE CRUD: persisted ✅
+- Security Dashboard: failed_logins_24h=14, total=643, Score=75 ✅
+
+### Next Dimension: 2 — Cycle 280
