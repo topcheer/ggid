@@ -2931,3 +2931,9 @@ as platform:admin. Aligns with gateway RBAC decouple (ForgeableNamesRejected tes
 Build: pass. 65/65 tests. Danger: 0. Hacks:0 ✅ — 293rd clean.
 
 ### Next Dimension: 2 — Cycle 304
+## Cycle 304: D2 RBAC — Console Role Fix Regression Check (Round 478)
+Console getUserRole: platform:admin requires explicit scope (not admin/Administrator name).
+Aligns with gateway ForgeableNamesRejected test. No RBAC regression.
+20/20 RBAC tests pass. 65/65 total. Danger: 0. Hacks:0 ✅ — 294th clean.
+
+### Next Dimension: 3 — Cycle 305
