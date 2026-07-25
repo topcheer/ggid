@@ -214,14 +214,15 @@ export function getUserScopes(): string[] {
 
 export function getUserRole(): UserRole {
   const scopes = getUserScopes();
+  // platform:admin requires explicit platform scope — "admin" or "tenant:admin" alone do NOT qualify
   const isPlatform = scopes.some((s) => {
     const ls = s.toLowerCase();
-    return ls === "platform:admin" || ls === "admin" || ls === "administrator" || ls === "platform administrator" || ls === "platform_admin" || ls === "tenant:admin";
+    return ls === "platform:admin" || ls === "platform administrator" || ls === "platform_admin";
   });
   if (isPlatform) return "platform_admin";
   const isTenant = scopes.some((s) => {
     const ls = s.toLowerCase();
-    return ls === "tenant:admin" || ls === "manager" || ls === "tenant administrator" || ls === "tenant_admin";
+    return ls === "tenant:admin" || ls === "manager" || ls === "tenant administrator" || ls === "tenant_admin" || ls === "administrator";
   });
   if (isTenant) return "tenant_admin";
   return "user";
@@ -240,9 +241,9 @@ export function useUserRole(): { role: UserRole; scopes: string[]; isPlatformAdm
     const normalized = k.replace(/[:_]/g, " ").toLowerCase();
     return lowerScopes.some((ls) => ls === normalized || ls === k.toLowerCase() || ls.includes(k.split(":").pop()!.toLowerCase()) || (k === "admin" && ls === "administrator"));
   });
-  const role: UserRole = hasRole("platform:admin", "admin", "tenant:admin")
+  const role: UserRole = hasRole("platform:admin", "platform administrator")
     ? "platform_admin"
-    : hasRole("tenant:admin", "manager")
+    : hasRole("tenant:admin", "manager", "administrator")
     ? "tenant_admin"
     : "user";
 

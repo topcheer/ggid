@@ -130,8 +130,7 @@ export function Sidebar() {
   const roleFilteredGroups = useMemo(() => {
     const hasScope = (required?: string) => {
       if (!required) return true;
-      if (isPlatformAdmin) return true;
-      if (required === "platform") return false; // only platform admins
+      if (required === "platform") return isPlatformAdmin;
       if (required === "manager") return isTenantAdmin;
       if (required === "admin") return isPlatformAdmin || isTenantAdmin;
       return scopes.includes(required);
