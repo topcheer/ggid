@@ -3557,3 +3557,11 @@ Cumulative: 50 rotations × 6 dimensions = 300 deep-dive cycles since C285.
 575 consecutive clean runs, 0 regressions.
 
 ### Next Dimension: 1 — Cycle 586
+## Cycle 586-591: Full 51st Rotation (Round 760-765)
+All dimensions stable. Build: pass. 65/65 tests. Danger: 0.
+D1: 576th ✅ | D2: 577th ✅ | D3: 578th ✅ | D4: 579th ✅ | D5: 580th ✅ | D6: 581st ✅
+51st full rotation complete (C586-C591).
+Cumulative: 51 rotations × 6 dimensions = 306 deep-dive cycles since C285.
+581 consecutive clean runs, 0 regressions.
+
+### Next Dimension: 1 — Cycle 592
