@@ -258,9 +258,9 @@ export default function EnhancedProfilePage() {
           <div className={card}>
             <h3 className="mb-4 text-sm font-semibold uppercase text-gray-400">{t("profile.personalInfo")}</h3>
             <div className="space-y-3">
-              <div><label className="text-sm font-medium">{t("profile.fullName")}</label><input type="text" value={name} onChange={e => setName(e.target.value)} placeholder={!profileLoaded ? "Loading..." : "Enter your name"} className="mt-1 w-full rounded-lg border dark:border-gray-700 dark:bg-gray-900 px-3 py-2 text-sm disabled:opacity-50" disabled={!profileLoaded} /></div>
-              <div><label className="text-sm font-medium">{t("profile.email")}</label><div className="mt-1 flex gap-2"><div className="relative flex-1"><Mail className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" /><input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder={!profileLoaded ? "Loading..." : "you@example.com"} className="w-full rounded-lg border dark:border-gray-700 dark:bg-gray-900 pl-9 pr-3 py-2 text-sm disabled:opacity-50" disabled={!profileLoaded} /></div>{email && <span className="flex items-center gap-1 px-2 py-1 rounded text-xs bg-green-100 dark:bg-green-900/30 text-green-600"><CheckCircle2 className="h-3 w-3" /> {t("profile.verified")}</span>}</div></div>
-              <div><label className="text-sm font-medium">{t("profile.phone")}</label><div className="mt-1 flex gap-2"><div className="relative flex-1"><Phone className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" /><input type="tel" value={phone} onChange={e => setPhone(e.target.value)} className="w-full rounded-lg border dark:border-gray-700 dark:bg-gray-900 pl-9 pr-3 py-2 text-sm" /></div>{phoneVerified ? <span className="flex items-center gap-1 px-2 py-1 rounded text-xs bg-green-100 dark:bg-green-900/30 text-green-600"><CheckCircle2 className="h-3 w-3" /> {t("profile.verified")}</span> : <button className="px-2 py-1 rounded text-xs bg-blue-600 text-white">{t("profile.verify")}</button>}</div></div>
+              <div><label className="text-sm font-medium">{t("profile.fullName")}</label><input type="text" aria-label="Full name" value={name} onChange={e => setName(e.target.value)} placeholder={!profileLoaded ? "Loading..." : "Enter your name"} className="mt-1 w-full rounded-lg border dark:border-gray-700 dark:bg-gray-900 px-3 py-2 text-sm disabled:opacity-50" disabled={!profileLoaded} /></div>
+              <div><label className="text-sm font-medium">{t("profile.email")}</label><div className="mt-1 flex gap-2"><div className="relative flex-1"><Mail className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" /><input type="email" aria-label="Email address" value={email} onChange={e => setEmail(e.target.value)} placeholder={!profileLoaded ? "Loading..." : "you@example.com"} className="w-full rounded-lg border dark:border-gray-700 dark:bg-gray-900 pl-9 pr-3 py-2 text-sm disabled:opacity-50" disabled={!profileLoaded} /></div>{email && <span className="flex items-center gap-1 px-2 py-1 rounded text-xs bg-green-100 dark:bg-green-900/30 text-green-600"><CheckCircle2 className="h-3 w-3" /> {t("profile.verified")}</span>}</div></div>
+              <div><label className="text-sm font-medium">{t("profile.phone")}</label><div className="mt-1 flex gap-2"><div className="relative flex-1"><Phone className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" /><input type="tel" aria-label="Phone number" value={phone} onChange={e => setPhone(e.target.value)} className="w-full rounded-lg border dark:border-gray-700 dark:bg-gray-900 pl-9 pr-3 py-2 text-sm" /></div>{phoneVerified ? <span className="flex items-center gap-1 px-2 py-1 rounded text-xs bg-green-100 dark:bg-green-900/30 text-green-600"><CheckCircle2 className="h-3 w-3" /> {t("profile.verified")}</span> : <button className="px-2 py-1 rounded text-xs bg-blue-600 text-white">{t("profile.verify")}</button>}</div></div>
               {profileSaved && <span className="flex items-center gap-1 text-xs text-green-600"><Check className="h-3 w-3" /> Saved</span>}
               <button onClick={saveProfile} disabled={saving || !profileLoaded} className="flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50">{saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />} {t("profile.save")}</button>
             </div>
@@ -283,12 +283,12 @@ export default function EnhancedProfilePage() {
               <form onSubmit={handleChangePassword} className="space-y-3">
                 <div>
                   <label className="text-xs font-medium text-gray-500">Current Password</label>
-                  <input type={showPw ? "text" : "password"} value={curPw} onChange={(e) => setCurPw(e.target.value)} required className="mt-1 w-full rounded-lg border border-gray-300 dark:border-gray-700 dark:bg-gray-900 px-3 py-2 text-sm" placeholder="••••••••" />
+                  <input type={showPw ? "text" : "password"} aria-label="Current password" value={curPw} onChange={(e) => setCurPw(e.target.value)} required className="mt-1 w-full rounded-lg border border-gray-300 dark:border-gray-700 dark:bg-gray-900 px-3 py-2 text-sm" placeholder="••••••••" />
                 </div>
                 <div>
                   <label className="text-xs font-medium text-gray-500">New Password</label>
                   <div className="relative">
-                    <input type={showPw ? "text" : "password"} value={newPw} onChange={(e) => { setNewPw(e.target.value); checkPwStrength(e.target.value); }} required className="mt-1 w-full rounded-lg border border-gray-300 dark:border-gray-700 dark:bg-gray-900 px-3 py-2 pr-9 text-sm" placeholder="At least 12 characters" />
+                    <input type={showPw ? "text" : "password"} aria-label="New password" value={newPw} onChange={(e) => { setNewPw(e.target.value); checkPwStrength(e.target.value); }} required className="mt-1 w-full rounded-lg border border-gray-300 dark:border-gray-700 dark:bg-gray-900 px-3 py-2 pr-9 text-sm" placeholder="At least 12 characters" />
                     <button type="button" onClick={() => setShowPw(!showPw)} className="absolute right-3 top-3 text-gray-400">{showPw ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}</button>
                   </div>
                   {pwScore > 0 && (
@@ -299,7 +299,7 @@ export default function EnhancedProfilePage() {
                 </div>
                 <div>
                   <label className="text-xs font-medium text-gray-500">Confirm New Password</label>
-                  <input type={showPw ? "text" : "password"} value={confirmPw} onChange={(e) => setConfirmPw(e.target.value)} required className="mt-1 w-full rounded-lg border border-gray-300 dark:border-gray-700 dark:bg-gray-900 px-3 py-2 text-sm" placeholder="••••••••" />
+                  <input type={showPw ? "text" : "password"} aria-label="Confirm new password" value={confirmPw} onChange={(e) => setConfirmPw(e.target.value)} required className="mt-1 w-full rounded-lg border border-gray-300 dark:border-gray-700 dark:bg-gray-900 px-3 py-2 text-sm" placeholder="••••••••" />
                 </div>
                 <div className="flex gap-2">
                   <button type="submit" disabled={changingPw} className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50">{changingPw ? <Loader2 className="h-4 w-4 animate-spin" /> : "Change Password"}</button>
@@ -333,7 +333,7 @@ export default function EnhancedProfilePage() {
                   </div>
                 )}
                 <div className="mt-3">
-                  <input type="text" maxLength={6} value={totpCode} onChange={(e) => setTotpCode(e.target.value)} placeholder="Enter 6-digit code" className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-700 text-center text-lg font-mono tracking-widest" />
+                  <input type="text" aria-label="TOTP verification code" maxLength={6} value={totpCode} onChange={(e) => setTotpCode(e.target.value)} placeholder="Enter 6-digit code" className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-700 text-center text-lg font-mono tracking-widest" />
                 </div>
                 <div className="mt-2 flex gap-2">
                   <button onClick={verifyTotp} disabled={totpCode.length !== 6 || verifying} className="flex-1 rounded-lg bg-blue-600 px-3 py-1.5 text-sm font-medium text-white disabled:opacity-50">
