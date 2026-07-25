@@ -2778,3 +2778,7 @@ arch_pm impersonate 3-layer fix (9c99c59da): routes aligned /auth/impersonate + 
 Inv=79(id+name+price+sku+stock) Ord=88 Post=201(has_id) Hacks:0 ✅ — 271st clean.
 
 ### Next Dimension: 4 — Cycle 282
+## Cycle 282: D4 Tenant Isolation (Round 456)
+GoJWT=MATCH GoSelf=200 Cross=403 NoTok=401 Hacks:0 ✅ — 272nd clean.
+
+### Next Dimension: 5 — Cycle 283
