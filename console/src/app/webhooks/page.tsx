@@ -169,7 +169,7 @@ export default function WebhooksPage() {
     try {
       await apiFetch("/api/v1/webhooks", {
         method: "POST",
-        body: JSON.stringify({ url: urlInput.trim(), description: descInput.trim(), events: [...selectedEvents] }),
+        body: JSON.stringify({ name: descInput.trim() || urlInput.trim(), url: urlInput.trim(), events: [...selectedEvents], active: true }),
       });
       setMsg({ type: "success", text: "Webhook registered successfully" });
       setUrlInput(""); setDescInput(""); setSelectedEvents(new Set()); setShowForm(false);
