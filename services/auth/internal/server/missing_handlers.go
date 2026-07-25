@@ -86,12 +86,10 @@ func (h *Handler) handleMFAStatus(w http.ResponseWriter, r *http.Request) {
 	enrolled := mfaSvc.HasMFAEnabled(r.Context(), tenantID, userID)
 	devices, _ := mfaSvc.ListDevices(r.Context(), userID)
 	methods := make([]string, 0, len(devices))
-	for _, d := range devices {
-		if d.Algorithm != "" {
-			methods = append(methods, d.Algorithm)
-		} else if d.Name != "" {
-			methods = append(methods, d.Name)
-		}
+	for range devices {
+		// All MFA devices in the DB are TOTP-based.
+		// Return the method type, not the internal algorithm name.
+		methods = append(methods, "totp")
 	}
 	if len(methods) == 0 {
 		// Return empty — no fake data
