@@ -2989,3 +2989,10 @@ Envelope note: C# uses {items,count}, Go/Node use {items,total} — cosmetic, de
 Build: pass. Danger: 0. Hacks:0 ✅ — 301st clean.
 
 ### Next Dimension: 4 — Cycle 312
+## Cycle 312: D4 Tenant Isolation — Ruby/Rust Final Check (Round 486)
+Ruby: SDK scoped with tenant_id=0007, 401 for missing/invalid token.
+Rust: explicit cross-tenant reject at L80-82 (returns None→401).
+Pattern summary: Go/Node/Rust/C# explicit reject, Python/Java/Ruby SDK-scoped, all effective.
+Danger: 0. Hacks:0 ✅ — 302nd clean.
+
+### Next Dimension: 5 — Cycle 313
