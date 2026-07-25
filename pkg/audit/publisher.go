@@ -182,26 +182,3 @@ func NewEvent(action string, result string, tenantID uuid.UUID, actorID uuid.UUI
 		CreatedAt: time.Now(),
 	}
 }
-
-// sanitizeIPAddress strips the port from an IP address.
-// PostgreSQL inet type rejects IP:PORT format (e.g. "10.42.0.83:39820" → "10.42.0.83").
-func sanitizeIPAddress(ip string) string {
-	if ip == "" {
-		return ip
-	}
-	// Handle IPv6 with brackets: [::1]:12345
-	if ip[0] == '[' {
-		if idx := strings.LastIndex(ip, "]"); idx > 0 {
-			return ip[1:idx]
-		}
-	}
-	// Strip port from IPv4 or plain IPv6
-	if idx := strings.LastIndex(ip, ":"); idx > 0 {
-		// Avoid mangling bare IPv6 (e.g. "::1" has colons but no port)
-		// Only strip if there's exactly one colon and it looks like IPv4:port
-		if strings.Count(ip, ":") == 1 {
-			return ip[:idx]
-		}
-	}
-	return ip
-}
