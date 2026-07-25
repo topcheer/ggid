@@ -2907,3 +2907,10 @@ Layer 3 (Demo): Go/Node/Rust/C# explicitly reject tenant mismatch (401).
 13 tenant tests pass. 65/65 total. Danger: 0. Hacks:0 ✅ — 290th clean.
 
 ### Next Dimension: 5 — Cycle 301
+## Cycle 301: D5 SDK — Full API Surface Parity (Round 475)
+All 7 SDKs now have 5 core methods: login, verifyToken, getUserInfo, introspectToken, refreshToken.
+Go SDK gaps closed (C293 my-permissions, C295 IntrospectToken). Wire format consistent.
+TokenSet JSON: access_token+token_type+expires_in+refresh_token+id_token across all.
+Danger: 0. Hacks:0 ✅ — 291st clean.
+
+### Next Dimension: 6 — Cycle 302
