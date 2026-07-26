@@ -2,7 +2,7 @@
 
 > 审视人：god_fullstack&everything（定期审视任务 cron-1 首轮）
 > 方法：三路并行代码级审查（OAuth/OIDC/SAML · Auth/Identity/SCIM · 增强功能兼容性+竞品迁移），所有结论均有 file:line 证据。
-> 状态：**R1 完成（已部署生产）。** R4/R10/R11 安全修复已部署。R12-R24 审查通过。R25（04:20）：R24 后 5 个 commit 均为 OAuth MCP RFC 9728 兼容修复（tenant_id 自动解析 + Basic auth 解析 + token_endpoint_auth_method=none 跳过 secret），已验证完整 PKCE 流程通过。无新增安全问题。阶段一 4/4 完成。
+> 状态：**R1 完成（已部署生产）。** R4/R10/R11 安全修复已部署。R12-R25 审查通过。R26（05:10）：R25 后 6 个 commit 均为 MCP 工具扩展（13→50 个工具）+ bug 修复（create_user 缺 password、assign_role role_id 查找、create_policy 缺 actions/resources、revoke_session 参数名、roles:manage→roles:write、password_policy/departments/teams 端点路径）。全部已验证。无新增安全问题。
 
 ---
 
