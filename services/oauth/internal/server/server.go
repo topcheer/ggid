@@ -2228,9 +2228,6 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 		}
 	})
 	mux.HandleFunc("/api/v1/oauth/token-lifetime/analytics", handleTokenLifetimeAnalytics)
-	mux.HandleFunc("/api/v1/oauth/revoke-cascade", handleRevokeCascade)
-	mux.HandleFunc("/api/v1/oauth/token/downscope", handleTokenDownscope(oauthSvc))
-	mux.HandleFunc("/api/v1/oauth/clients/dependency-graph", handleDependencyGraph)
 	mux.HandleFunc("/api/v1/oauth/audience-mismatches", handleAudienceMismatches)
 	mux.HandleFunc("/api/v1/oauth/token-scope-diff", handleTokenScopeDiff)
 	mux.HandleFunc("/api/v1/oauth/consents/history", handleConsentsHistory)
