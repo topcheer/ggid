@@ -152,7 +152,7 @@ func TestPKCE_VerifierMismatch_Rejected(t *testing.T) {
 	}
 }
 
-// TestPKCE_PlainMethod verifies the "plain" code challenge method.
+// TestPKCE_PlainMethod verifies that plain PKCE is rejected per OAuth 2.1.
 func TestPKCE_PlainMethod(t *testing.T) {
 	svc, clientRepo, _, _ := newTestOAuthService()
 
@@ -168,7 +168,6 @@ func TestPKCE_PlainMethod(t *testing.T) {
 	}
 
 	// For plain method, challenge == verifier.
-	// RFC 7636 §4.1: code_verifier length MUST be 43-128 chars.
 	verifier := strings.Repeat("a", 43)
 	challenge := verifier // plain: challenge equals verifier
 
@@ -187,8 +186,8 @@ func TestPKCE_PlainMethod(t *testing.T) {
 		t.Fatalf("CreateAuthorizationCode: %v", err)
 	}
 
-	// Exchange with correct verifier (same as challenge for plain)
-	resp, err := svc.ExchangeAuthorizationCode(context.Background(), &TokenExchangeRequest{
+	// Exchange with correct verifier — should FAIL because plain is rejected per OAuth 2.1
+	_, err = svc.ExchangeAuthorizationCode(context.Background(), &TokenExchangeRequest{
 		TenantID:     testTenantID,
 		GrantType:    "authorization_code",
 		Code:         plaintextCode,
@@ -198,11 +197,8 @@ func TestPKCE_PlainMethod(t *testing.T) {
 		CodeVerifier: verifier,
 		State:        "state-plain",
 	})
-	if err != nil {
-		t.Fatalf("plain PKCE exchange should succeed: %v", err)
-	}
-	if resp.AccessToken == "" {
-		t.Error("access_token should be issued with plain PKCE")
+	if err == nil {
+		t.Error("plain PKCE exchange should fail per OAuth 2.1 (S256 only)")
 	}
 }
 

@@ -385,19 +385,16 @@ func TestPKCE_Validate_S256(t *testing.T) {
 	}
 }
 
-func TestPKCE_Validate_Plain(t *testing.T) {
-	// RFC 7636 §4.1: code_verifier length MUST be 43-128 chars.
+func TestPKCE_Validate_PlainRejected(t *testing.T) {
+	// OAuth 2.1: plain method is no longer supported, should always fail
 	challenge := strings.Repeat("a", 43)
 	code := &domain.AuthorizationCode{
 		CodeChallenge:       challenge,
 		CodeChallengeMethod: "plain",
 	}
 
-	if !code.ValidatePKCE(challenge) {
-		t.Error("PKCE plain validation should succeed")
-	}
-	if code.ValidatePKCE(strings.Repeat("b", 43)) {
-		t.Error("PKCE plain validation should fail with wrong verifier")
+	if code.ValidatePKCE(challenge) {
+		t.Error("PKCE plain should be rejected per OAuth 2.1")
 	}
 }
 

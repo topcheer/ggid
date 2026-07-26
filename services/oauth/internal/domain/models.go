@@ -162,13 +162,13 @@ func (c *AuthorizationCode) ValidatePKCE(verifier string) bool {
 		}
 	}
 	switch c.CodeChallengeMethod {
-	case "plain", "":
-		return verifier == c.CodeChallenge
-	case "S256":
+	case "", "S256":
+		// OAuth 2.1: S256 is the only supported method. Empty defaults to S256.
 		h := sha256.Sum256([]byte(verifier))
 		encoded := base64.RawURLEncoding.EncodeToString(h[:])
 		return encoded == c.CodeChallenge
 	default:
+		// "plain" and any other methods are not supported per OAuth 2.1
 		return false
 	}
 }

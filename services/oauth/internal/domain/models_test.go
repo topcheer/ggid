@@ -168,18 +168,15 @@ func TestAuthorizationCode_ValidatePKCE(t *testing.T) {
 		t.Error("no challenge should accept any verifier")
 	}
 
-	// Plain method — RFC 7636 §4.1 requires 43-128 chars
+	// Plain method — no longer supported per OAuth 2.1
 	plainVer := strings.Repeat("a", 43)
 	code = &AuthorizationCode{CodeChallenge: plainVer, CodeChallengeMethod: "plain"}
-	if !code.ValidatePKCE(plainVer) {
-		t.Error("plain method: matching verifier should pass")
-	}
-	if code.ValidatePKCE(strings.Repeat("b", 43)) {
-		t.Error("plain method: non-matching verifier should fail")
+	if code.ValidatePKCE(plainVer) {
+		t.Error("plain method should be rejected per OAuth 2.1")
 	}
 
-	// Empty verifier with challenge (also fails length check)
-	code = &AuthorizationCode{CodeChallenge: plainVer, CodeChallengeMethod: "plain"}
+	// Empty verifier with challenge (fails length check)
+	code = &AuthorizationCode{CodeChallenge: plainVer, CodeChallengeMethod: "S256"}
 	if code.ValidatePKCE("") {
 		t.Error("empty verifier with challenge should fail")
 	}
