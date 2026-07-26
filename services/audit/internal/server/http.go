@@ -870,6 +870,48 @@ var auditWebhooks = struct {
 func (s *HTTPServer) handleAuditWebhooks(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case http.MethodGet:
+		// DB-backed: query audit_webhooks table.
+		if s.pool != nil {
+			tenantID := r.URL.Query().Get("tenant_id")
+			if tenantID == "" {
+				tenantID = r.Header.Get("X-Tenant-ID")
+			}
+			query := `SELECT id, url, events, secret, enabled, created_at FROM audit_webhooks`
+			args := []any{}
+			if tenantID != "" {
+				query += ` WHERE tenant_id = $1 ORDER BY created_at DESC`
+				args = append(args, tenantID)
+			} else {
+				query += ` ORDER BY created_at DESC`
+			}
+			rows, err := s.pool.Query(r.Context(), query, args...)
+			if err == nil {
+				defer rows.Close()
+				result := []map[string]any{}
+				for rows.Next() {
+					var id, url, secret string
+					var events []string
+					var enabled bool
+					var createdAt time.Time
+					if err := rows.Scan(&id, &url, &events, &secret, &enabled, &createdAt); err != nil {
+						continue
+					}
+					result = append(result, map[string]any{
+						"id":         id,
+						"url":        url,
+						"events":     events,
+						"event_types": events,
+						"secret":     secret,
+						"active":     enabled,
+						"enabled":    enabled,
+						"created_at": createdAt,
+					})
+				}
+				writeJSON(w, http.StatusOK, map[string]any{"webhooks": result, "count": len(result)})
+				return
+			}
+		}
+		// Memory fallback
 		tenantID := r.URL.Query().Get("tenant_id")
 		auditWebhooks.RLock()
 		result := []map[string]any{}
@@ -884,10 +926,13 @@ func (s *HTTPServer) handleAuditWebhooks(w http.ResponseWriter, r *http.Request)
 
 	case http.MethodPost:
 		var req struct {
-			TenantID         string   `json:"tenant_id"`
-			URL              string   `json:"url"`
-			EventTypes       []string `json:"event_types"`
-			SeverityThreshold string  `json:"severity_threshold"`
+			TenantID          string   `json:"tenant_id"`
+			URL               string   `json:"url"`
+			Events            []string `json:"events"`
+			EventTypes        []string `json:"event_types"` // alias
+			Secret            string   `json:"secret"`
+			SeverityThreshold string   `json:"severity_threshold"`
+			Active            *bool    `json:"active"`
 		}
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 			writeJSONError(w, http.StatusBadRequest, "invalid JSON body")
@@ -900,11 +945,54 @@ func (s *HTTPServer) handleAuditWebhooks(w http.ResponseWriter, r *http.Request)
 		if req.SeverityThreshold == "" {
 			req.SeverityThreshold = "warning"
 		}
+		// Accept both "events" and "event_types" field names
+		events := req.Events
+		if len(events) == 0 {
+			events = req.EventTypes
+		}
+		isActive := true
+		if req.Active != nil {
+			isActive = *req.Active
+		}
+		// Auto-detect tenant_id from header if not in body
+		if req.TenantID == "" {
+			req.TenantID = r.Header.Get("X-Tenant-ID")
+		}
+		// Persist to DB
+		if s.pool != nil {
+			var dbID string
+			err := s.pool.QueryRow(r.Context(), `
+				INSERT INTO audit_webhooks (tenant_id, url, events, secret, enabled)
+				VALUES ($1, $2, $3, $4, $5)
+				RETURNING id::text, created_at`,
+				req.TenantID, req.URL, events, req.Secret, isActive).Scan(&dbID)
+			if err == nil {
+				cfg := map[string]any{
+					"id":                dbID,
+					"tenant_id":         req.TenantID,
+					"url":               req.URL,
+					"events":            events,
+					"event_types":       events,
+					"secret":            req.Secret,
+					"active":            isActive,
+					"enabled":           isActive,
+					"severity_threshold": req.SeverityThreshold,
+					"created_at":        time.Now().UTC().Format(time.RFC3339),
+				}
+				writeJSON(w, http.StatusCreated, cfg)
+				return
+			}
+		}
+		// Memory fallback
 		cfg := map[string]any{
 			"id":                uuid.New().String(),
 			"tenant_id":         req.TenantID,
 			"url":               req.URL,
-			"event_types":       req.EventTypes,
+			"events":            events,
+			"event_types":       events,
+			"secret":            req.Secret,
+			"active":            isActive,
+			"enabled":           isActive,
 			"severity_threshold": req.SeverityThreshold,
 			"created_at":        time.Now().UTC().Format(time.RFC3339),
 		}
