@@ -108,7 +108,7 @@ export default function OrgChartPage() {
           {orgs.map((o: any) => (<option key={o.id} value={o.id}>{o.name}</option>
           ))}
         </select>
-        {tree && <span className="text-xs text-gray-500">{countNodes(tree)} {t("organizationsOrgChart.people")}</span>}
+        {tree && <span className="text-xs text-gray-500 dark:text-gray-400">{countNodes(tree)} {t("organizationsOrgChart.people")}</span>}
         <div className="relative flex-1 max-w-xs ml-auto">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
           <input type="text" placeholder={t("organizationsOrgChart.searchPerson")} value={search} onChange={(e) => setSearch(e.target.value)} aria-label="Search person" className="w-full pl-9 pr-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-900 text-sm" />
@@ -125,7 +125,7 @@ export default function OrgChartPage() {
           </div>
         )}
       </div>
-      {loading && <div className="rounded-lg border dark:border-gray-800 p-8 text-center"><div className="inline-block w-5 h-5 border-2 border-current border-t-transparent rounded-full animate-spin text-blue-600 mb-2" /><div className="text-sm text-gray-500">Loading org chart...</div></div>}
+      {loading && <div className="rounded-lg border dark:border-gray-800 p-8 text-center"><div className="inline-block w-5 h-5 border-2 border-current border-t-transparent rounded-full animate-spin text-blue-600 mb-2" /><div className="text-sm text-gray-500 dark:text-gray-400">Loading org chart...</div></div>}
       {tree && !loading && (
         <div className="rounded-lg border dark:border-gray-800 p-2 max-h-[600px] overflow-y-auto">
           <TreeNode node={tree} depth={0} collapsedIds={collapsedIds} toggleNode={toggleNode} highlight={search} />
