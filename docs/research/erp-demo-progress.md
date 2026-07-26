@@ -4933,3 +4933,15 @@ Remaining P1: P1-2 (Go SDK iss), P1-3 (MCP JWKS), P1-6 (JWKS rotation), P1-9 (TO
 - Viewer blocked: `orders:approve` requires perm ✅
 
 ### Next Dimension: 3 — Demo Functional Completeness (Cycle 1414) — Rotation 4
+
+## Cycle 1414: D3 Demo R4 + god R36 — All Clean (Round 1479)
+god R36: 4 new P2 (id_token verify, gRPC auth, SAML ephemeral key, Redis refresh binding). P1-7 confirmed fixed. P1-10 still open.
+Build: PASS. `make test`: EXIT=0, 65/65. Danger: 0.
+
+### D3 Demo Functional (Rotation 4) — No Regressions
+- Inventory `{items, total}` + `stock`: Go, Node, Java ✅
+- Orders `{items, total}`: Go, Node ✅
+- CRUD create→return: Go ✅
+- my-permissions: Go, Node, Java ✅
+
+### Next Dimension: 4 — Multi-Tenant Isolation (Cycle 1420) — Rotation 4
