@@ -134,9 +134,34 @@ func (h *Handler) handlePasskeyRegisterBegin(w http.ResponseWriter, r *http.Requ
 	pkRegSessions[sess.SessionID] = sess
 	pkMu.Unlock()
 
+	// Build WebAuthn-standard registration options with tenant-scoped userHandle.
+	// userHandle encodes "tenant_id:user_id" so the passkey carries tenant info.
+	tenantID := r.Header.Get("X-Tenant-ID")
+	userHandle := req.UserID
+	if tenantID != "" {
+		userHandle = tenantID + ":" + req.UserID
+	}
+
+	// Query existing credentials for excludeCredentials (prevent duplicate registration).
+	var excludeCreds []map[string]string
+	if h.pool != nil && tenantID != "" {
+		rows, qErr := h.pool.Query(r.Context(),
+			`SELECT credential_id FROM auth_passkey_credentials WHERE tenant_id = $1 AND user_id = $2 AND revoked = false`,
+			tenantID, req.UserID)
+		if qErr == nil {
+			for rows.Next() {
+				var credID string
+				rows.Scan(&credID)
+				excludeCreds = append(excludeCreds, map[string]string{"type": "public-key", "id": credID})
+			}
+			rows.Close()
+		}
+	}
+
 	// PG write-through
 	if h.memMapRepo != nil {
-		h.memMapRepo.StoreJSON(r.Context(), "auth_passkey_json", "reg:"+sess.SessionID, map[string]any{
+		memMapRepo := h.memMapRepo
+		memMapRepo.StoreJSON(r.Context(), "auth_passkey_json", "reg:"+sess.SessionID, map[string]any{
 			"session_id": sess.SessionID, "user_id": sess.UserID,
 			"challenge": sess.Challenge, "rp_id": sess.RPID,
 			"created_at": sess.CreatedAt, "status": sess.Status,
@@ -145,7 +170,22 @@ func (h *Handler) handlePasskeyRegisterBegin(w http.ResponseWriter, r *http.Requ
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(sess)
+	json.NewEncoder(w).Encode(map[string]any{
+		"session_id": sess.SessionID,
+		"challenge":  sess.Challenge,
+		"rp_id":      sess.RPID,
+		"user": map[string]string{
+			"id":           userHandle, // tenant_id:user_id encoding
+			"name":         req.UserID,
+			"displayName":  req.UserID,
+		},
+		"excludeCredentials": excludeCreds,
+		"authenticatorSelection": map[string]string{
+			"residentKey":      "preferred",
+			"userVerification": "preferred",
+		},
+		"timeout": 300000,
+	})
 }
 
 func (h *Handler) handlePasskeyRegisterFinish(w http.ResponseWriter, r *http.Request) {
@@ -339,6 +379,23 @@ func (h *Handler) handlePasskeyAuthFinish(w http.ResponseWriter, r *http.Request
 		writeError(w, http.StatusUnauthorized, "credential not found or revoked")
 		return
 	}
+
+	// P0 Security: verify credential belongs to the requesting tenant.
+	// Prevents cross-tenant passkey authentication.
+	if h.pool != nil {
+		tenantID := r.Header.Get("X-Tenant-ID")
+		if tenantID != "" {
+			var credTenant string
+			h.pool.QueryRow(r.Context(),
+				`SELECT tenant_id::text FROM auth_passkey_credentials WHERE credential_id = $1`,
+				req.CredentialID).Scan(&credTenant)
+			if credTenant != "" && credTenant != tenantID {
+				writeError(w, http.StatusForbidden, "passkey does not belong to this tenant")
+				return
+			}
+		}
+	}
+
 	cred.Counter++
 	sess.Status = "verified"
 	w.Header().Set("Content-Type", "application/json")

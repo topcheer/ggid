@@ -768,8 +768,10 @@ func TestBuildWebAuthnUser_NilStore(t *testing.T) {
 	if u == nil {
 		t.Fatal("user is nil")
 	}
-	if u.WebAuthnName() != uid.String() {
-		t.Errorf("username = %q, want %q", u.WebAuthnName(), uid.String())
+	// userHandle now encodes tenant_id:user_id for multi-tenant isolation
+	expectedName := testTenantIDStr + ":" + uid.String()
+	if u.WebAuthnName() != expectedName {
+		t.Errorf("username = %q, want %q", u.WebAuthnName(), expectedName)
 	}
 	if len(u.WebAuthnCredentials()) != 0 {
 		t.Errorf("expected 0 credentials, got %d", len(u.WebAuthnCredentials()))
