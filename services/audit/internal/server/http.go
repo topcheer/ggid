@@ -13,6 +13,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"os"
 	"strconv"
 	"strings"
 	"sync"
@@ -1866,15 +1867,23 @@ func httpStatusToCode(status int) string {
 
 // allowedSSEOrigins is the allowlist for CORS on the SSE endpoint.
 // localhost variants are allowed for dev; production domains should be added
-// via environment configuration. This prevents CORS reflection attacks where
-// any origin would be echoed with Allow-Credentials:true.
+// via the SSE_ALLOWED_ORIGINS env var (comma-separated). This prevents CORS
+// reflection attacks where any origin would be echoed with Allow-Credentials:true.
 var allowedSSEOrigins = map[string]bool{
-	"http://localhost:3000":  true,
-	"http://localhost:8080":  true,
-	"https://ggid.iot2.win":  true,
+	"http://localhost:3000": true,
+	"http://localhost:8080": true,
 }
 
 // isAllowedOrigin checks whether the given origin is in the SSE allowlist.
 func isAllowedOrigin(origin string) bool {
+	// Check env var first for production overrides.
+	if envOrigins := os.Getenv("SSE_ALLOWED_ORIGINS"); envOrigins != "" {
+		for _, o := range strings.Split(envOrigins, ",") {
+			if strings.TrimSpace(o) == origin {
+				return true
+			}
+		}
+		return false
+	}
 	return allowedSSEOrigins[origin]
 }

@@ -339,8 +339,11 @@ func (gw *Gateway) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		if tid, ok := middleware.TenantIDFromRequest(r); ok {
 			return tid
 		}
-		// 3. default fallback
-		return "fb44ca98-2a8a-498b-a9b2-00fc014524ce"
+		// 3. default fallback (configurable via env, no hardcoded tenant)
+		if tid := os.Getenv("GGID_DEFAULT_TENANT_ID"); tid != "" {
+			return tid
+		}
+		return ""
 	}
 
 	// Hosted login page (served by Gateway — any app can redirect here)
