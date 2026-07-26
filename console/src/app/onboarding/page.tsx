@@ -173,17 +173,17 @@ export default function OnboardingPage() {
               </div>
               <div>
                 <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">{t("onboarding.orgName")}</label>
-                <input value={form.orgName} onChange={(e) => update("orgName", e.target.value)} autoFocus className={inputCls} placeholder="Acme Corp" />
+                <input aria-label="Organization name" value={form.orgName} onChange={(e) => update("orgName", e.target.value)} autoFocus className={inputCls} placeholder="Acme Corp" />
               </div>
               <div>
                 <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">{t("onboarding.orgSize")}</label>
-                <select value={form.orgSize} onChange={(e) => update("orgSize", e.target.value)} className={inputCls}>
+                <select aria-label="Organization size" value={form.orgSize} onChange={(e) => update("orgSize", e.target.value)} className={inputCls}>
                   {ORG_SIZES.map(s => <option key={s} value={s}>{s} {t("onboarding.employees")}</option>)}
                 </select>
               </div>
               <div>
                 <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">{t("onboarding.industry")}</label>
-                <select value={form.industry} onChange={(e) => update("industry", e.target.value)} className={inputCls}>
+                <select aria-label="Industry" value={form.industry} onChange={(e) => update("industry", e.target.value)} className={inputCls}>
                   {INDUSTRIES.map(i => <option key={i} value={i}>{i}</option>)}
                 </select>
               </div>
@@ -199,13 +199,13 @@ export default function OnboardingPage() {
               <p className="text-sm text-gray-500 dark:text-gray-400">{t("onboarding.adminHint")}</p>
               <div>
                 <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">{t("onboarding.adminName")}</label>
-                <input value={form.adminName} onChange={(e) => update("adminName", e.target.value)} autoFocus className={inputCls} placeholder="Jane Doe" />
+                <input aria-label="Admin name" value={form.adminName} onChange={(e) => update("adminName", e.target.value)} autoFocus className={inputCls} placeholder="Jane Doe" />
               </div>
               <div>
                 <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">{t("onboarding.adminEmail")}</label>
                 <div className="relative">
                   <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-                  <input value={form.adminEmail} onChange={(e) => update("adminEmail", e.target.value)} type="email" className={inputCls + " pl-10"} placeholder="jane@acme.com" />
+                  <input aria-label="Admin email" value={form.adminEmail} onChange={(e) => update("adminEmail", e.target.value)} type="email" className={inputCls + " pl-10"} placeholder="jane@acme.com" />
                 </div>
               </div>
             </div>

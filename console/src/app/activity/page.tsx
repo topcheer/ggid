@@ -175,6 +175,7 @@ export default function ActivityLogPage() {
         <div className="flex gap-2">
           <button
             onClick={loadEvents}
+            aria-label="Refresh activity feed"
             className="flex items-center gap-1.5 rounded-lg border border-gray-300 dark:border-gray-600 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 dark:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
             <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
@@ -182,6 +183,7 @@ export default function ActivityLogPage() {
           </button>
           <button
             onClick={handleExportCSV}
+            aria-label="Export activity as CSV"
             disabled={filteredEvents.length === 0}
             className="flex items-center gap-1.5 rounded-lg bg-brand-600 px-3 py-2 text-sm font-medium text-white hover:bg-brand-700 disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
@@ -201,6 +203,7 @@ export default function ActivityLogPage() {
             <label className="mb-1 block text-xs text-gray-400">{t("activity.fromDate")}</label>
             <input
               type="date"
+              aria-label="Filter from date"
               value={dateFrom}
               onChange={(e) => setDateFrom(e.target.value)}
               className="w-full rounded-lg border border-gray-300 dark:border-gray-600 px-3 py-1.5 text-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
@@ -210,6 +213,7 @@ export default function ActivityLogPage() {
             <label className="mb-1 block text-xs text-gray-400">{t("activity.toDate")}</label>
             <input
               type="date"
+              aria-label="Filter to date"
               value={dateTo}
               onChange={(e) => setDateTo(e.target.value)}
               className="w-full rounded-lg border border-gray-300 dark:border-gray-600 px-3 py-1.5 text-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
@@ -218,6 +222,7 @@ export default function ActivityLogPage() {
           <div>
             <label className="mb-1 block text-xs text-gray-400">{t("activity.eventType")}</label>
             <select
+              aria-label="Filter by event type"
               value={eventTypeFilter}
               onChange={(e) => setEventTypeFilter(e.target.value)}
               className="w-full rounded-lg border border-gray-300 dark:border-gray-600 px-3 py-1.5 text-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"

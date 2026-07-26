@@ -103,7 +103,7 @@ function EndpointsTab() {
     <div className="space-y-3">
       <div className="flex items-center justify-between">
         <h3 className="text-sm font-semibold text-gray-900 dark:text-white">{t("apiHealth.endpoints.title")}</h3>
-        <button onClick={load} className="flex items-center gap-1.5 px-3 py-1.5 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-xs hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500">
+        <button aria-label="Refresh API health" onClick={load} className="flex items-center gap-1.5 px-3 py-1.5 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-xs hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500">
           <RefreshCw className="w-3 h-3" />
           {t("apiHealth.endpoints.refresh")}
         </button>
@@ -273,7 +273,7 @@ function AlertsTab() {
 
       <div>
         <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">{t("apiHealth.alerts.webhookUrl")}</label>
-        <input type="text" value={config.webhook_url} onChange={(e) => setConfig({ ...config, webhook_url: e.target.value })}
+        <input type="text" aria-label="Webhook URL" value={config.webhook_url} onChange={(e) => setConfig({ ...config, webhook_url: e.target.value })}
           placeholder={t("apiHealth.alerts.webhookPlaceholder")}
           className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-sm text-gray-900 dark:text-white" />
       </div>

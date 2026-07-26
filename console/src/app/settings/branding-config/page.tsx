@@ -90,32 +90,32 @@ export default function BrandingConfigPage() {
             <div>
               <label className="text-sm font-medium">Primary Color</label>
               <div className="mt-1 flex items-center gap-3">
-                <input type="color" value={primaryColor} onChange={e => setPrimaryColor(e.target.value)} className="h-10 w-16 rounded cursor-pointer" />
+                <input type="color" aria-label="Primary color" value={primaryColor} onChange={e => setPrimaryColor(e.target.value)} className="h-10 w-16 rounded cursor-pointer" />
                 <code className="text-xs font-mono">{primaryColor}</code>
               </div>
             </div>
             <div>
               <label className="text-sm font-medium">Accent Color</label>
               <div className="mt-1 flex items-center gap-3">
-                <input type="color" value={accentColor} onChange={e => setAccentColor(e.target.value)} className="h-10 w-16 rounded cursor-pointer" />
+                <input type="color" aria-label="Accent color" value={accentColor} onChange={e => setAccentColor(e.target.value)} className="h-10 w-16 rounded cursor-pointer" />
                 <code className="text-xs font-mono">{accentColor}</code>
               </div>
             </div>
             <div>
               <label className="text-sm font-medium">Font Family</label>
-              <select value={fontFamily} onChange={e => setFontFamily(e.target.value)} className="mt-1 block w-full rounded-lg border dark:border-gray-700 dark:bg-gray-900 px-3 py-2 text-sm">
+              <select aria-label="Font family" value={fontFamily} onChange={e => setFontFamily(e.target.value)} className="mt-1 block w-full rounded-lg border dark:border-gray-700 dark:bg-gray-900 px-3 py-2 text-sm">
                 {fonts.map(f => <option key={f} value={f}>{f}</option>)}
               </select>
             </div>
             <div>
               <label className="text-sm font-medium">Border Radius</label>
               <div className="mt-1 flex items-center gap-3">
-                <input type="range" min={0} max={20} value={borderRadius} onChange={e => setBorderRadius(parseInt(e.target.value))} className="flex-1 accent-pink-500" />
+                <input type="range" aria-label="Border radius" min={0} max={20} value={borderRadius} onChange={e => setBorderRadius(parseInt(e.target.value))} className="flex-1 accent-pink-500" />
                 <span className="text-sm font-mono w-8">{borderRadius}px</span>
               </div>
             </div>
           </div>
-          <button onClick={save} disabled={saving} className="mt-4 flex items-center gap-2 rounded-lg bg-pink-600 px-4 py-2 text-sm font-medium text-white hover:bg-pink-700 disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-blue-500">
+          <button aria-label="Save branding config" onClick={save} disabled={saving} className="mt-4 flex items-center gap-2 rounded-lg bg-pink-600 px-4 py-2 text-sm font-medium text-white hover:bg-pink-700 disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-blue-500">
             {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />} Save Theme
           </button>
           {msg && <p className="mt-2 text-sm text-green-600">{msg}</p>}
