@@ -49,7 +49,7 @@ export default function HealthPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div><h1 className="flex items-center gap-2 text-2xl font-bold text-gray-900 dark:text-white"><Activity className="h-6 w-6 text-green-500" /> {t("health.title")}</h1><p className="mt-1 text-sm text-gray-500 dark:text-gray-400">{t("health.subtitle")}</p></div>
-        <button aria-label="Refresh" className="rounded-lg border border-gray-300 p-2 dark:border-gray-700"><RefreshCw className="h-4 w-4" /></button>
+        <button aria-label="Refresh" className="rounded-lg border border-gray-300 p-2 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"><RefreshCw className="h-4 w-4" /></button>
       </div>
 
       {error && (<div role="alert" className="flex items-center gap-2 rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700 dark:bg-red-900/20 dark:text-red-400"><AlertCircle className="h-4 w-4 shrink-0" />{error}<button onClick={() => setError(null)} aria-label="Dismiss" className="ml-auto"><X className="h-4 w-4" /></button></div>)}

@@ -553,7 +553,9 @@ export default function OrganizationTreePage() {
           {/* Expand/collapse toggle */}
           <button
             onClick={() => toggleExpand(node.id)}
-            className={`flex h-6 w-6 items-center justify-center rounded text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 ${
+            aria-label={isExpanded ? `Collapse ${node.name || node.id}` : `Expand ${node.name || node.id}`}
+            aria-expanded={isExpanded}
+            className={`flex h-6 w-6 items-center justify-center rounded text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 ${
               hasChildren ? "" : "invisible"
             }`}
           >
@@ -664,6 +666,7 @@ export default function OrganizationTreePage() {
           {search && (
             <button
               onClick={() => setSearch("")}
+              aria-label="Clear search"
               className="absolute right-2 top-1/2 -translate-y-1/2 rounded p-1 text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               <X className="h-4 w-4" />

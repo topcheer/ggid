@@ -122,8 +122,8 @@ export default function TenantsPage() {
               Delete tenant <strong>{deleteTarget.name}</strong>? This action cannot be undone.
             </p>
             <div className="flex justify-end gap-2">
-              <button onClick={() => setDeleteTarget(null)} className="rounded-lg border border-gray-300 dark:border-gray-700 px-4 py-2 text-sm">{t("common.cancel")}</button>
-              <button onClick={() => handleDelete(deleteTarget)} className="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-blue-500">{t("common.delete")}</button>
+              <button onClick={() => setDeleteTarget(null)} aria-label="Cancel deletion" className="rounded-lg border border-gray-300 dark:border-gray-700 px-4 py-2 text-sm">{t("common.cancel")}</button>
+              <button onClick={() => handleDelete(deleteTarget)} aria-label="Confirm delete tenant" className="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-blue-500">{t("common.delete")}</button>
             </div>
           </div>
         </div>
@@ -179,7 +179,7 @@ function TenantList({ tenants, onDelete }: { tenants: Tenant[]; onDelete: (t: Te
                 </td>
                 <td className="py-3 px-4 text-xs text-gray-500 dark:text-gray-400">{t_item.created ? new Date(t_item.created).toLocaleDateString() : "—"}</td>
                 <td className="py-3 px-4 text-right">
-                  <button onClick={() => onDelete(t_item)} className="rounded p-1.5 text-gray-400 hover:bg-red-50 hover:text-red-600 focus:outline-none focus:ring-2 focus:ring-blue-500" title={t("common.delete")}>
+                  <button onClick={() => onDelete(t_item)} aria-label={`Delete tenant ${t_item.name}`} className="rounded p-1.5 text-gray-400 hover:bg-red-50 hover:text-red-600 focus:outline-none focus:ring-2 focus:ring-blue-500" title={t("common.delete")}>
                     <Trash2 className="h-4 w-4" />
                   </button>
                 </td>
