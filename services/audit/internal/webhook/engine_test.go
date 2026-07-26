@@ -7,6 +7,7 @@ import (
 	"encoding/hex"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"testing"
 )
 
@@ -60,6 +61,8 @@ func TestIsSubscribed(t *testing.T) {
 }
 
 func TestSend_DeliverySuccess(t *testing.T) {
+	os.Setenv("GGID_DEV_MODE", "true")
+	defer os.Unsetenv("GGID_DEV_MODE")
 	received := false
 	var receivedSig string
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
