@@ -6,18 +6,18 @@ import (
 	"crypto"
 	"crypto/ecdsa"
 	"crypto/elliptic"
-	"crypto/rsa"
 	crand "crypto/rand"
+	"crypto/rsa"
 	"crypto/sha256"
 	"crypto/x509"
 	"encoding/base64"
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
-	"math/big"
-	"net"
 	"log"
 	"log/slog"
+	"math/big"
+	"net"
 	"strconv"
 	"strings"
 	"sync"
@@ -38,13 +38,13 @@ import (
 
 // OAuthService implements OAuth2 client management and the authorization code flow.
 type OAuthService struct {
-	clientRepo  repository.ClientRepository
-	codeRepo    repository.AuthorizationCodeRepository
-	tokenRepo   repository.IDTokenRepository
-	keyProvider pkgcrypto.KeyProvider
-	issuer      string
-	rdb         RedisCmdable // optional Redis client for distributed state
-	pool        PoolQuerier  // optional DB pool for user profile queries
+	clientRepo       repository.ClientRepository
+	codeRepo         repository.AuthorizationCodeRepository
+	tokenRepo        repository.IDTokenRepository
+	keyProvider      pkgcrypto.KeyProvider
+	issuer           string
+	rdb              RedisCmdable     // optional Redis client for distributed state
+	pool             PoolQuerier      // optional DB pool for user profile queries
 	tokenFamilyStore TokenFamilyStore // optional: RFC 6749 §10.4 family registry
 }
 
@@ -148,7 +148,7 @@ func (s *OAuthService) CreateClient(ctx context.Context, input *CreateClientInpu
 	var plaintextSecret string
 	if client.IsConfidential() {
 		plaintextSecret = generateClientSecret()
-		hash, err :=pkgcrypto.HashPassword(plaintextSecret)
+		hash, err := pkgcrypto.HashPassword(plaintextSecret)
 		if err != nil {
 			return nil, errors.Internal("hash client secret", err)
 		}
@@ -279,34 +279,34 @@ func (s *OAuthService) UpdateClientMetadata(ctx context.Context, clientID string
 // ClientMetadataUpdate holds optional metadata fields for RFC 7592 PATCH.
 // Nil fields are not updated; non-nil fields replace the existing value.
 type ClientMetadataUpdate struct {
-	Name                      *string          `json:"client_name,omitempty"`
-	RedirectURIs              []string         `json:"redirect_uris,omitempty"`
-	GrantTypes                []string         `json:"grant_types,omitempty"`
-	ResponseTypes             []string         `json:"response_types,omitempty"`
-	Scopes                    []string         `json:"scope,omitempty"`
-	TokenEndpointAuthMethod   *string          `json:"token_endpoint_auth_method,omitempty"`
-	Enabled                   *bool            `json:"enabled,omitempty"`
-	Metadata                  map[string]any   `json:"metadata,omitempty"`
+	Name                    *string        `json:"client_name,omitempty"`
+	RedirectURIs            []string       `json:"redirect_uris,omitempty"`
+	GrantTypes              []string       `json:"grant_types,omitempty"`
+	ResponseTypes           []string       `json:"response_types,omitempty"`
+	Scopes                  []string       `json:"scope,omitempty"`
+	TokenEndpointAuthMethod *string        `json:"token_endpoint_auth_method,omitempty"`
+	Enabled                 *bool          `json:"enabled,omitempty"`
+	Metadata                map[string]any `json:"metadata,omitempty"`
 }
 
 // --- Authorization Code Flow ---
 
 // AuthorizeRequest holds parameters for the /oauth/authorize endpoint.
 type AuthorizeRequest struct {
-	TenantID            uuid.UUID
-	ClientID            string
-	RedirectURI         string
-	ResponseType        string // "code"
-	Scope               []string
-	State               string
-	Nonce               string
-	CodeChallenge       string // PKCE
-	CodeChallengeMethod string // "S256" or "plain"
-	UserID              uuid.UUID // the authenticated user
+	TenantID             uuid.UUID
+	ClientID             string
+	RedirectURI          string
+	ResponseType         string // "code"
+	Scope                []string
+	State                string
+	Nonce                string
+	CodeChallenge        string          // PKCE
+	CodeChallengeMethod  string          // "S256" or "plain"
+	UserID               uuid.UUID       // the authenticated user
 	AuthorizationDetails json.RawMessage // RAR authorization_details (RFC 9396)
 	// NIST 800-63B AAL/AMR
-	AuthMethods []string // methods used during auth (password, totp, webauthn)
-	RequestedACR string  // acr_values param from /authorize
+	AuthMethods  []string // methods used during auth (password, totp, webauthn)
+	RequestedACR string   // acr_values param from /authorize
 }
 
 // CreateAuthorizationCode creates a short-lived authorization code.
@@ -355,7 +355,7 @@ func (s *OAuthService) CreateAuthorizationCode(ctx context.Context, req *Authori
 		codeChallengeMethod = "S256"
 	}
 
-	plaintextCode, err :=pkgcrypto.GenerateRandomToken(32)
+	plaintextCode, err := pkgcrypto.GenerateRandomToken(32)
 	if err != nil {
 		return "", errors.Internal("generate auth code", err)
 	}
@@ -373,9 +373,9 @@ func (s *OAuthService) CreateAuthorizationCode(ctx context.Context, req *Authori
 		Nonce:               req.Nonce,
 		ExpiresAt:           time.Now().Add(10 * time.Minute),
 		// NIST 800-63B: store auth context for token exchange.
-		AMR:         computeAMR(req.AuthMethods),
-		ACR:         computeACR(req.AuthMethods),
-		AuthTime:    time.Now(),
+		AMR:          computeAMR(req.AuthMethods),
+		ACR:          computeACR(req.AuthMethods),
+		AuthTime:     time.Now(),
 		RequestedACR: req.RequestedACR,
 	}
 
@@ -411,15 +411,15 @@ func (s *OAuthService) CreateAuthorizationCode(ctx context.Context, req *Authori
 
 // TokenExchangeRequest holds parameters for the /oauth/token endpoint.
 type TokenExchangeRequest struct {
-	TenantID       uuid.UUID
-	GrantType      string // "authorization_code"
-	Code           string // the plaintext authorization code
-	RedirectURI    string
-	ClientID       string
-	ClientSecret   string // for confidential clients
-	CodeVerifier   string // PKCE code_verifier
-	State          string // OAuth state parameter for CSRF validation
-	Audience       string // optional RFC 8707/Auth0-style target audience for the access token
+	TenantID     uuid.UUID
+	GrantType    string // "authorization_code"
+	Code         string // the plaintext authorization code
+	RedirectURI  string
+	ClientID     string
+	ClientSecret string // for confidential clients
+	CodeVerifier string // PKCE code_verifier
+	State        string // OAuth state parameter for CSRF validation
+	Audience     string // optional RFC 8707/Auth0-style target audience for the access token
 }
 
 // TokenResponse is the standard OAuth2 token endpoint response.
@@ -443,7 +443,7 @@ func (s *OAuthService) ExchangeAuthorizationCode(ctx context.Context, req *Token
 
 	// 2. Verify client secret for confidential clients.
 	if client.IsConfidential() {
-		ok, _ :=pkgcrypto.VerifyPassword(req.ClientSecret, client.ClientSecretHash)
+		ok, _ := pkgcrypto.VerifyPassword(req.ClientSecret, client.ClientSecretHash)
 		if !ok {
 			return nil, errors.Unauthenticated("invalid client credentials")
 		}
@@ -559,18 +559,18 @@ func (s *OAuthService) issueRefreshTokenRecord(ctx context.Context, tenantID, cl
 func (s *OAuthService) GetDiscoveryConfig() *domain.OIDCDiscoveryConfig {
 	base := s.issuer
 	return &domain.OIDCDiscoveryConfig{
-		Issuer:                            s.issuer,
-		AuthorizationEndpoint:             base + "/oauth/authorize",
-		TokenEndpoint:                     base + "/oauth/token",
-		UserInfoEndpoint:                  base + "/oauth/userinfo",
-		JwksURI:                           base + "/oauth/jwks",
-		RevocationEndpoint:                base + "/oauth/revoke",
-		IntrospectionEndpoint:             base + "/oauth/introspect",
+		Issuer:                s.issuer,
+		AuthorizationEndpoint: base + "/oauth/authorize",
+		TokenEndpoint:         base + "/oauth/token",
+		UserInfoEndpoint:      base + "/oauth/userinfo",
+		JwksURI:               base + "/oauth/jwks",
+		RevocationEndpoint:    base + "/oauth/revoke",
+		IntrospectionEndpoint: base + "/oauth/introspect",
 		// Only the authorization code flow is implemented (OAuth 2.1 direction);
 		// implicit/hybrid response types (token, id_token) are NOT issued, so
 		// they must not be advertised or standard clients will attempt them.
 		ResponseTypesSupported:            []string{"code"},
-		GrantTypesSupported: []string{"authorization_code", "refresh_token", "client_credentials", "password", "urn:ietf:params:oauth:grant-type:device_code", "urn:ietf:params:oauth:grant-type:token-exchange", "urn:ietf:params:oauth:grant-type:jwt-bearer"},
+		GrantTypesSupported:               []string{"authorization_code", "refresh_token", "client_credentials", "password", "urn:ietf:params:oauth:grant-type:device_code", "urn:ietf:params:oauth:grant-type:token-exchange", "urn:ietf:params:oauth:grant-type:jwt-bearer"},
 		SubjectTypesSupported:             []string{"public"},
 		IDTokenSigningAlgValues:           []string{"RS256"},
 		ScopesSupported:                   []string{"openid", "profile", "email", "offline_access"},
@@ -581,8 +581,8 @@ func (s *OAuthService) GetDiscoveryConfig() *domain.OIDCDiscoveryConfig {
 		FrontchannelLogoutSupported:       true,
 		EndSessionEndpoint:                base + "/oauth/logout",
 		// Must match the actual registered route (server.go: /api/v1/oauth/device_authorize).
-		DeviceAuthorizationEndpoint:       base + "/api/v1/oauth/device_authorize",
-		RegistrationEndpoint:              base + "/oauth/register",
+		DeviceAuthorizationEndpoint:        base + "/api/v1/oauth/device_authorize",
+		RegistrationEndpoint:               base + "/oauth/register",
 		PushedAuthorizationRequestEndpoint: base + "/oauth/par",
 	}
 }
@@ -916,7 +916,7 @@ func (s *OAuthService) issueAccessTokenWithAMR(userID, tenantID uuid.UUID, audie
 		"exp":         expiresAt.Unix(),
 		"jti":         uuid.New().String(),
 		"tenant_id":   tenantID.String(),
-		"scope":       scope, // OAuth scopes only (openid profile email)
+		"scope":       scope,       // OAuth scopes only (openid profile email)
 		"permissions": permissions, // Fine-grained: ["inventory:read", "orders:write"]
 		"roles":       roles,       // Role names: ["ERP Manager", "Viewer"]
 	}
@@ -1057,7 +1057,7 @@ func (s *OAuthService) ExchangeTokenRFC8693(ctx context.Context, req *RFC8693Exc
 		"exp":         expiresAt.Unix(),
 		"jti":         uuid.New().String(),
 		"tenant_id":   req.TenantID.String(),
-		"scope":       scopeStr, // OAuth scopes only
+		"scope":       scopeStr,     // OAuth scopes only
 		"permissions": subjectPerms, // Carry forward fine-grained permissions
 		"roles":       subjectRoles, // Carry forward role names
 	}
@@ -1074,10 +1074,10 @@ func (s *OAuthService) ExchangeTokenRFC8693(ctx context.Context, req *RFC8693Exc
 	}
 
 	return &TokenResponse{
-		AccessToken:      signed,
-		TokenType:        "Bearer",
-		ExpiresIn:        int(expiresAt.Sub(now).Seconds()),
-		Scope:            scopeStr,
+		AccessToken: signed,
+		TokenType:   "Bearer",
+		ExpiresIn:   int(expiresAt.Sub(now).Seconds()),
+		Scope:       scopeStr,
 	}, nil
 }
 
@@ -1097,6 +1097,7 @@ func (s *OAuthService) parseAndValidateJWT(raw string) (jwt.MapClaims, error) {
 	}
 	return claims, nil
 }
+
 type IDTokenOptions struct {
 	AMR      []string // authentication methods references (e.g. ["pwd","otp"])
 	ACR      string   // authentication context class reference
@@ -1168,12 +1169,12 @@ func isSupportedSigningMethod(method jwt.SigningMethod) bool {
 // UserInfoResponse holds the standard OIDC UserInfo claims.
 // Enhanced (KB-295) with roles, groups, permissions, and risk level.
 type UserInfoResponse struct {
-	Sub           string   `json:"sub"`
-	Name          string   `json:"name,omitempty"`
-	Email         string   `json:"email,omitempty"`
-	EmailVerified bool     `json:"email_verified,omitempty"`
-	Picture       string   `json:"picture,omitempty"`
-	TenantID      string   `json:"tenant_id,omitempty"`
+	Sub           string `json:"sub"`
+	Name          string `json:"name,omitempty"`
+	Email         string `json:"email,omitempty"`
+	EmailVerified bool   `json:"email_verified,omitempty"`
+	Picture       string `json:"picture,omitempty"`
+	TenantID      string `json:"tenant_id,omitempty"`
 	// KB-295: Extended fields for downstream applications.
 	Roles       []string `json:"roles,omitempty"`
 	Groups      []string `json:"groups,omitempty"`
@@ -1210,17 +1211,17 @@ type IntrospectionResponse struct {
 	Scope     string `json:"scope,omitempty"`
 	ClientID  string `json:"client_id,omitempty"`
 	Username  string `json:"username,omitempty"`
-	 TokenType string `json:"token_type,omitempty"`
+	TokenType string `json:"token_type,omitempty"`
 	Exp       int64  `json:"exp,omitempty"`
 	Iat       int64  `json:"iat,omitempty"`
 	Sub       string `json:"sub,omitempty"`
 	Aud       string `json:"aud,omitempty"`
 	Iss       string `json:"iss,omitempty"`
 	// KB-295: Extended fields for downstream apps.
-	UserID     string `json:"user_id,omitempty"`
-	TenantID   string `json:"tenant_id,omitempty"`
-	SessionID  string `json:"session_id,omitempty"`
-	DeviceID   string `json:"device_id,omitempty"`
+	UserID      string   `json:"user_id,omitempty"`
+	TenantID    string   `json:"tenant_id,omitempty"`
+	SessionID   string   `json:"session_id,omitempty"`
+	DeviceID    string   `json:"device_id,omitempty"`
 	RiskScore   int      `json:"risk_score,omitempty"`
 	Roles       []string `json:"roles,omitempty"`
 	Permissions []string `json:"permissions,omitempty"`
@@ -1331,7 +1332,7 @@ var stateStore sync.Map // stateKey -> expiry time
 // Per RFC 6749 §10.14, the iss parameter identifies the authorization server.
 func (s *OAuthService) BuildAuthorizeRedirectURL(redirectURI, code, state string) string {
 	u := redirectURI
-sep := "?"
+	sep := "?"
 	if containsQS(redirectURI) {
 		sep = "&"
 	}
@@ -1353,6 +1354,7 @@ func containsQS(s string) bool {
 	}
 	return false
 }
+
 // Used for CSRF protection per OAuth 2.0 RFC 6749 §10.12.
 func (s *OAuthService) ValidateState(clientID, state string) bool {
 	if state == "" {
@@ -1544,7 +1546,7 @@ func (s *OAuthService) RefreshToken(ctx context.Context, req *RefreshTokenReques
 
 	// 2. Verify client secret for confidential clients.
 	if client.IsConfidential() {
-		ok, _ :=pkgcrypto.VerifyPassword(req.ClientSecret, client.ClientSecretHash)
+		ok, _ := pkgcrypto.VerifyPassword(req.ClientSecret, client.ClientSecretHash)
 		if !ok {
 			return nil, errors.Unauthenticated("invalid client credentials")
 		}
@@ -1610,7 +1612,7 @@ func (s *OAuthService) RefreshToken(ctx context.Context, req *RefreshTokenReques
 	}
 
 	// 9. Issue new refresh token (rotation).
-	newRefreshToken, err :=pkgcrypto.GenerateRandomToken(32)
+	newRefreshToken, err := pkgcrypto.GenerateRandomToken(32)
 	if err != nil {
 		return nil, errors.Internal("generate refresh token", err)
 	}
@@ -1691,7 +1693,7 @@ func (s *OAuthService) ClientCredentials(ctx context.Context, req *ClientCredent
 
 	// 2. Verify client secret.
 	if client.IsConfidential() {
-		ok, _ :=pkgcrypto.VerifyPassword(req.ClientSecret, client.ClientSecretHash)
+		ok, _ := pkgcrypto.VerifyPassword(req.ClientSecret, client.ClientSecretHash)
 		if !ok {
 			return nil, errors.Unauthenticated("invalid client credentials")
 		}
@@ -1981,7 +1983,7 @@ func (s *OAuthService) RotateClientSecret(ctx context.Context, tenantID uuid.UUI
 
 	// 2. Verify old secret for confidential clients.
 	if client.IsConfidential() {
-		ok, _ :=pkgcrypto.VerifyPassword(oldSecret, client.ClientSecretHash)
+		ok, _ := pkgcrypto.VerifyPassword(oldSecret, client.ClientSecretHash)
 		if !ok {
 			return "", errors.Unauthenticated("invalid client credentials — old secret does not match")
 		}
@@ -1989,7 +1991,7 @@ func (s *OAuthService) RotateClientSecret(ctx context.Context, tenantID uuid.UUI
 
 	// 3. Generate new secret.
 	newSecret := generateClientSecret()
-	hash, err :=pkgcrypto.HashPassword(newSecret)
+	hash, err := pkgcrypto.HashPassword(newSecret)
 	if err != nil {
 		return "", errors.Internal("hash client secret", err)
 	}
@@ -2006,12 +2008,12 @@ func (s *OAuthService) RotateClientSecret(ctx context.Context, tenantID uuid.UUI
 
 // generateClientID generates a public client identifier.
 func generateClientID() string {
-	id, _ :=pkgcrypto.GenerateRandomToken(16)
+	id, _ := pkgcrypto.GenerateRandomToken(16)
 	return "gcid_" + id
 }
 
 func generateClientSecret() string {
-	secret, _ :=pkgcrypto.GenerateRandomToken(32)
+	secret, _ := pkgcrypto.GenerateRandomToken(32)
 	return "gcs_" + secret
 }
 
@@ -2174,20 +2176,20 @@ func getBoolClaim(claims jwt.MapClaims, key string) bool {
 
 // DynamicRegistrationRequest represents a RFC 7591 client registration request.
 type DynamicRegistrationRequest struct {
-	ClientName              string            `json:"client_name"`
-	RedirectURIs           []string          `json:"redirect_uris"`
-	GrantTypes             []string          `json:"grant_types"`
-	ResponseTypes          []string          `json:"response_types"`
-	TokenEndpointAuthMethod string           `json:"token_endpoint_auth_method"`
-	Scope                  string            `json:"scope"`
+	ClientName              string   `json:"client_name"`
+	RedirectURIs            []string `json:"redirect_uris"`
+	GrantTypes              []string `json:"grant_types"`
+	ResponseTypes           []string `json:"response_types"`
+	TokenEndpointAuthMethod string   `json:"token_endpoint_auth_method"`
+	Scope                   string   `json:"scope"`
 	// Optional fields per RFC 7591 Section 2:
-	ClientURI              string            `json:"client_uri,omitempty"`
-	LogoURI                string            `json:"logo_uri,omitempty"`
-	PolicyURI              string            `json:"policy_uri,omitempty"`
-	TosURI                 string            `json:"tos_uri,omitempty"`
-	JwksURI                string            `json:"jwks_uri,omitempty"`
-	SoftwareID             string            `json:"software_id,omitempty"`
-	SoftwareVersion        string            `json:"software_version,omitempty"`
+	ClientURI       string `json:"client_uri,omitempty"`
+	LogoURI         string `json:"logo_uri,omitempty"`
+	PolicyURI       string `json:"policy_uri,omitempty"`
+	TosURI          string `json:"tos_uri,omitempty"`
+	JwksURI         string `json:"jwks_uri,omitempty"`
+	SoftwareID      string `json:"software_id,omitempty"`
+	SoftwareVersion string `json:"software_version,omitempty"`
 }
 
 // DynamicRegistrationResponse is the RFC 7591 registration response.
@@ -2197,11 +2199,11 @@ type DynamicRegistrationResponse struct {
 	ClientIDIssuedAt        int64    `json:"client_id_issued_at"`
 	ClientSecretExpiresAt   int64    `json:"client_secret_expires_at,omitempty"`
 	ClientName              string   `json:"client_name"`
-	RedirectURIs           []string `json:"redirect_uris"`
-	GrantTypes             []string `json:"grant_types"`
-	ResponseTypes          []string `json:"response_types"`
+	RedirectURIs            []string `json:"redirect_uris"`
+	GrantTypes              []string `json:"grant_types"`
+	ResponseTypes           []string `json:"response_types"`
 	TokenEndpointAuthMethod string   `json:"token_endpoint_auth_method"`
-	Scope                  string   `json:"scope"`
+	Scope                   string   `json:"scope"`
 }
 
 // DynamicClientRegister implements RFC 7591 dynamic client registration.
@@ -2267,7 +2269,7 @@ func (s *OAuthService) DynamicClientRegister(ctx context.Context, req *DynamicRe
 	var plaintextSecret string
 	if client.IsConfidential() {
 		plaintextSecret = generateClientSecret()
-		hash, err :=pkgcrypto.HashPassword(plaintextSecret)
+		hash, err := pkgcrypto.HashPassword(plaintextSecret)
 		if err != nil {
 			return nil, errors.Internal("hash client secret", err)
 		}
@@ -2284,11 +2286,11 @@ func (s *OAuthService) DynamicClientRegister(ctx context.Context, req *DynamicRe
 		ClientSecret:            plaintextSecret,
 		ClientIDIssuedAt:        now.Unix(),
 		ClientName:              client.Name,
-		RedirectURIs:           req.RedirectURIs,
-		GrantTypes:             req.GrantTypes,
-		ResponseTypes:          req.ResponseTypes,
+		RedirectURIs:            req.RedirectURIs,
+		GrantTypes:              req.GrantTypes,
+		ResponseTypes:           req.ResponseTypes,
 		TokenEndpointAuthMethod: req.TokenEndpointAuthMethod,
-		Scope:                  req.Scope,
+		Scope:                   req.Scope,
 	}, nil
 }
 
@@ -2349,10 +2351,10 @@ func defaultIfEmpty2(s, def string) string {
 
 // DeviceAuthorizationRequest holds the parameters for POST /device_authorization.
 type DeviceAuthorizationRequest struct {
-	TenantID    uuid.UUID
-	ClientID    string
-	Scope       []string
-	Issuer      string
+	TenantID uuid.UUID
+	ClientID string
+	Scope    []string
+	Issuer   string
 }
 
 // DeviceAuthorizationResponse is the RFC 8628 §3.2 response.

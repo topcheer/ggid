@@ -100,8 +100,8 @@ func (r *policyMapRepo) List(ctx context.Context, table string) ([]map[string]an
 		}
 		var m map[string]any
 		if err := json.Unmarshal(data, &m); err != nil {
-				continue
-			}
+			continue
+		}
 		m["id"] = id
 		m["created_at"] = created
 		result = append(result, m)
