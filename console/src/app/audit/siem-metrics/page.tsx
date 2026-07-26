@@ -35,7 +35,7 @@ export default function SIEMMetricsPage() {
     setLoading(true);
     try {
       const params = startDate && endDate ? `?start=${startDate}&end=${endDate}` : "";
-      const res = await fetch(`/api/v1/audit/siem-metrics${params}`, { headers: { ...authHeader(), "X-Tenant-ID": localStorage.getItem("ggid_tenant_id") || "" } });
+      const res = await fetch(`/api/v1/audit/siem/metrics${params}`, { headers: { ...authHeader(), "X-Tenant-ID": localStorage.getItem("ggid_tenant_id") || "" } });
       if (res.ok) setData(await res.json());
     } catch { /* noop */ }
     finally { setLoading(false); }
