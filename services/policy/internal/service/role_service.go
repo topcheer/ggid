@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"strings"
 	"time"
 
 	"github.com/ggid/ggid/pkg/errors"
@@ -52,6 +53,20 @@ func NewRoleService(
 
 // CreateRole creates a new role in a tenant.
 func (s *RoleService) CreateRole(ctx context.Context, tenantID uuid.UUID, key, name, description string, parentRoleID *uuid.UUID) (*domain.Role, error) {
+	// Prevent tenant admins from creating roles with reserved system role keys.
+	// A tenant admin could otherwise create a role named "platform:admin",
+	// assign it to themselves, and the gateway's cross-tenant check trusts
+	// the roles claim — resulting in privilege escalation.
+	reservedSystemRoles := map[string]bool{
+		"platform:admin":  true,
+		"tenant:admin":    true,
+		"tenant:auditor":  true,
+		"user:self":       true,
+	}
+	if reservedSystemRoles[strings.ToLower(strings.TrimSpace(key))] {
+		return nil, errors.New(errors.ErrInvalidArgument, "role key is reserved for system roles")
+	}
+
 	role := &domain.Role{
 		TenantID:     tenantID,
 		Key:          key,
