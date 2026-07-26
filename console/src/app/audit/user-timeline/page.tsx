@@ -72,15 +72,15 @@ export default function UserTimelinePage() {
 
       {/* Filters */}
       <div className="flex items-center gap-3 flex-wrap">
-        <div className="relative flex-1 min-w-xs max-w-xs"><Search className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" /><input type="text" value={searchUser} onChange={e => setSearchUser(e.target.value)} placeholder={t("userTimeline.searchUser")} className="w-full rounded-lg border dark:border-gray-700 dark:bg-gray-900 pl-9 pr-3 py-1.5 text-sm" /></div>
+        <div className="relative flex-1 min-w-xs max-w-xs"><Search className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" /><input type="text" aria-label="Search user" value={searchUser} onChange={e => setSearchUser(e.target.value)} placeholder={t("userTimeline.searchUser")} className="w-full rounded-lg border dark:border-gray-700 dark:bg-gray-900 pl-9 pr-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" /></div>
         <div className="flex items-center gap-1">
           {(["all", "login", "mfa", "token", "policy", "risk", "session"] as EventType[]).map(typ => (
-            <button key={typ} onClick={() => setFilterType(typ)} aria-pressed={filterType === typ} className={`rounded-lg px-2.5 py-1 text-xs font-medium transition ${filterType === typ ? "bg-blue-600 text-white" : "bg-gray-100 dark:bg-gray-800 text-gray-500"}`}>
+            <button key={typ} onClick={() => setFilterType(typ)} aria-pressed={filterType === typ} className={`rounded-lg px-2.5 py-1 text-xs font-medium transition focus:outline-none focus:ring-2 focus:ring-blue-500 ${filterType === typ ? "bg-blue-600 text-white" : "bg-gray-100 dark:bg-gray-800 text-gray-500"}`}>
               {typ === "all" ? t("userTimeline.allTypes") : typ}{typ !== "all" && eventTypeCounts[typ] ? ` (${eventTypeCounts[typ]})` : ""}
             </button>
           ))}
         </div>
-        <button onClick={loadData} aria-label="Refresh" className="rounded-lg border border-gray-300 p-1.5 dark:border-gray-700"><RefreshCw className="h-3.5 w-3.5" /></button>
+        <button onClick={loadData} aria-label="Refresh" className="rounded-lg border border-gray-300 p-1.5 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"><RefreshCw className="h-3.5 w-3.5" /></button>
       </div>
 
       {/* Timeline */}

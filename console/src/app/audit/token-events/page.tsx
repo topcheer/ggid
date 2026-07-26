@@ -89,8 +89,8 @@ export default function TokenEventsPage() {
             <Radio className={`h-4 w-4 ${connected ? "text-green-500" : "text-gray-400"}`} />
             <span className="text-xs text-gray-400">{connected ? "Live" : "Disconnected"}</span>
           </div>
-          <button onClick={togglePause} aria-label={paused ? "Resume stream" : "Pause stream"} aria-pressed={paused} className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium ${paused ? "bg-green-600 text-white hover:bg-green-700" : "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30"}`}>{paused ? <><Play className="h-4 w-4" /> Resume</> : <><Pause className="h-4 w-4" /> Pause</>}</button>
-          <button onClick={clearEvents} aria-label="Clear event log" className="flex items-center gap-2 rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-600 hover:bg-gray-50 dark:border-gray-600 dark:text-gray-300"><Trash2 className="h-4 w-4" /> Clear</button>
+          <button onClick={togglePause} aria-label={paused ? "Resume stream" : "Pause stream"} aria-pressed={paused} className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500 ${paused ? "bg-green-600 text-white hover:bg-green-700" : "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30"}`}>{paused ? <><Play className="h-4 w-4" /> Resume</> : <><Pause className="h-4 w-4" /> Pause</>}</button>
+          <button onClick={clearEvents} aria-label="Clear event log" className="flex items-center gap-2 rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-600 hover:bg-gray-50 dark:border-gray-600 dark:text-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"><Trash2 className="h-4 w-4" /> Clear</button>
         </div>
       </div>
 
@@ -99,7 +99,7 @@ export default function TokenEventsPage() {
       {/* Filter tabs */}
       <div className="flex gap-2">
         {["all", "issued", "refreshed", "revoked", "expired", "introspected", "exchanged"].map((f: any) => (
-          <button key={f} onClick={() => setFilter(f)} aria-label={`Filter by ${f}`} aria-pressed={filter === f} className={`rounded-lg px-3 py-1.5 text-xs font-medium ${filter === f ? "bg-indigo-600 text-white" : "bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400"}`}>{f}</button>
+          <button key={f} onClick={() => setFilter(f)} aria-label={`Filter by ${f}`} aria-pressed={filter === f} className={`rounded-lg px-3 py-1.5 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-blue-500 ${filter === f ? "bg-indigo-600 text-white" : "bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400"}`}>{f}</button>
         ))}
       </div>
 

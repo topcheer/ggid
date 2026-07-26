@@ -293,7 +293,7 @@ export default function AuditVisualizationPage() {
   };
 
   const inputCls =
-    "w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200";
+    "w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500";
 
   return (
     <div>
@@ -320,7 +320,9 @@ export default function AuditVisualizationPage() {
           )}
           <button
             onClick={() => setIsLive(!isLive)}
-            className={`flex items-center gap-1.5 rounded-lg border px-3 py-2 text-sm transition-colors ${
+            aria-label={isLive ? "Pause live stream" : "Resume live stream"}
+            aria-pressed={isLive}
+            className={`flex items-center gap-1.5 rounded-lg border px-3 py-2 text-sm transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 ${
               isLive
                 ? "border-yellow-300 bg-yellow-50 text-yellow-700 hover:bg-yellow-100 dark:border-yellow-700 dark:bg-yellow-900/20 dark:text-yellow-400"
                 : "border-green-300 bg-green-50 text-green-700 hover:bg-green-100 dark:border-green-700 dark:bg-green-900/20 dark:text-green-400"
@@ -338,13 +340,15 @@ export default function AuditVisualizationPage() {
           </button>
           <button
             onClick={handleExportCSV}
-            className="flex items-center gap-1.5 rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-600"
+            aria-label="Export visualization as CSV"
+            className="flex items-center gap-1.5 rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
             <Download className="h-4 w-4" /> CSV
           </button>
           <button
             onClick={loadEvents}
-            className="flex items-center gap-1.5 rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-600"
+            aria-label="Refresh visualization data"
+            className="flex items-center gap-1.5 rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
             <RefreshCw className="h-4 w-4" /> Refresh
           </button>
