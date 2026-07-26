@@ -182,3 +182,86 @@ R29 后 2 个新 commit：
 | P1-16 | PKCE plain 方法应拒绝/降级为 S256 | P1 |
 | P2-14 | SCIM 缺 /Me 端点 | P2 |
 | P2-15 | JWT access token 缺 aud 运行时验证 | P2 |
+
+## R31 补充 — RFC 合规性逐条检查 + 竞品迁移成本
+
+### 1. RFC 标准符合性
+
+| RFC | 功能 | 端点 | 状态 | 差距 |
+|-----|------|------|------|------|
+| RFC 6749 | OAuth 2.0 authorize | /oauth/authorize | PASS | — |
+| RFC 6749 | OAuth 2.0 token | /oauth/token | PASS | — |
+| RFC 6749 | password grant | 在 /oauth/token | PASS | 保留（第一方 Console 登录，arch_pm 确认） |
+| RFC 6749 | client_credentials | 在 /oauth/token | PASS | — |
+| RFC 6749 | refresh_token | 在 /oauth/token | PASS | — |
+| RFC 6749 | token revocation | /oauth/revoke | PASS | P0-14 已修复（加 client 认证） |
+| RFC 7009 | Revocation client auth | /oauth/revoke | PASS | 已修复 |
+| RFC 7662 | Token introspection | /oauth/introspect | PASS | client 认证 + 标准字段 |
+| RFC 7636 | PKCE | /oauth/authorize | **不一致** | **P1-16: 实际支持 plain 但 discovery 只声明 S256** |
+| RFC 8628 | Device flow | /api/v1/oauth/device_authorize | PASS | — |
+| RFC 7591 | DCR | /oauth/register | PASS | — |
+| RFC 9126 | PAR | /oauth/par | PASS | — |
+| OIDC Core | Discovery | /.well-known/openid-configuration | PASS | — |
+| OIDC Core | UserInfo | /oauth/userinfo | PASS | — |
+| OIDC Core | JWKS | /oauth/jwks | PASS | — |
+| OIDC Core | end_session_endpoint | /oauth/logout | **PASS** | **P1-15 误报修正：discovery 已包含 EndSessionEndpoint** |
+| OIDC Core | id_token RS256 | /oauth/token | PASS | — |
+| OIDC Core | backchannel logout | /api/v1/oauth/backchannel-logout | PASS | — |
+| RFC 8414 | OAuth server metadata | /.well-known/oauth-authorization-server | PASS | — |
+| SAML 2.0 | Metadata | /saml/metadata | PASS | — |
+| SAML 2.0 | SSO/ACS | /saml/sso, /saml/acs | PASS | — |
+| SCIM 7643 | /Users | /scim/v2/Users | PASS | — |
+| SCIM 7643 | /Groups | /scim/v2/Groups | PASS | — |
+| SCIM 7643 | /Bulk | /scim/v2/Bulk | PASS | — |
+| SCIM 7643 | /ServiceProviderConfig | /scim/v2/ServiceProviderConfig | PASS | — |
+| SCIM 7643 | /ResourceTypes | /scim/v2/ResourceTypes | PASS | — |
+| SCIM 7643 | /Schemas | /scim/v2/Schemas | PASS | — |
+| SCIM 7644 | PATCH | /scim/v2/Users/{id} | PASS | — |
+| SCIM 7643 | ETag | — | PASS | — |
+| SCIM 7643 | /Me | — | **缺失** | **P2-14: 无 /scim/v2/Me 端点** |
+| WebAuthn | register | /api/v1/auth/webauthn/register/begin+finish | PASS | — |
+| WebAuthn | passwordless | /api/v1/auth/webauthn/passwordless/begin+finish | PASS | — |
+| WebAuthn | autofill | /api/v1/auth/webauthn/autofill | PASS | — |
+| RFC 7517 | JWK | /oauth/jwks | PASS | RSA key, kid, RS256 |
+| RFC 7519 | JWT | access token + id token | **不一致** | **P2-15: token 签发含 aud/iss 但 ParseAccessToken 不验证 aud** |
+
+### 2. 竞品迁移成本评估
+
+| 维度 | 状态 | 说明 |
+|------|------|------|
+| OIDC discovery | PASS | 标准端点，含 issuer/auth/token/userinfo/jwks/revoke/introspect/end_session/device/register/par |
+| OAuth server metadata | PASS | RFC 8414 /.well-known/oauth-authorization-server |
+| SCIM 2.0 | 基本PASS | Users/Groups/Bulk/PATCH/ETag 齐全，缺 /Me |
+| SDK | PASS | 13 种语言 SDK (Go/Java/Python/Node/Ruby/Rust/C#/Dart/PHP/React/ReactNative/curl) |
+| DCR | PASS | RFC 7591 /oauth/register |
+| PAR | PASS | RFC 9126 /oauth/par |
+| Device flow | PASS | RFC 8628 |
+| SAML 2.0 | PASS | metadata + SSO + ACS |
+| WebAuthn | PASS | register + passwordless + autofill |
+| **迁移差距** | | 1. SCIM /Me 缺失 2. JWT aud 运行时验证缺失 3. PKCE plain 支持与 discovery 声明不一致 |
+
+### 3. 安全扫描结果
+
+| 检查项 | 结果 |
+|--------|------|
+| SQL injection | PASS — 所有查询参数化 |
+| 时序攻击 | PASS — argon2id/bcrypt |
+| CORS | PASS — per-tenant，非通配符 |
+| Rate limiting | PASS — login lockout + OTP 3/h |
+| JWT alg:none | PASS — 强制 RSA |
+| JWT expiry | PASS — exp 验证 |
+| redirect_uri | PASS — 精确匹配 |
+| PKCE 强制 | PASS — 公开客户端强制 |
+| Refresh token reuse | PASS — family registry |
+| /oauth/revoke auth | PASS — P0-14 已修复 |
+
+### 4. 代码质量 — 最近 commit
+
+- 41f960400 SetUserStatus active 清理 deleted_at — 正确修复数据完整性问题
+- 62c2551eb gateway 403 request_id — 正确
+- 62fa77ff2 audit repair-chain NULLIF/COALESCE — 正确
+
+### 修正
+
+- **P1-15 误报修正**：OIDC discovery **已包含** end_session_endpoint，无需修复
+- **P1-16 降级为 P2-16**：discovery 声明 S256 only，但代码接受 plain — 不影响互操作（客户端按 discovery 走 S256 没问题），仅是内部不一致
