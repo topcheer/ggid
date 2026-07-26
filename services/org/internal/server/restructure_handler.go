@@ -96,6 +96,14 @@ func (s *HTTPServer) handleOrgRestructure(w http.ResponseWriter, r *http.Request
 		return
 	}
 
+	// Cascade: update paths for all child departments
+	oldPathPrefix := dept.Path
+	newPathPrefix := newParent.Path + "." + deptID.String()
+	if err := s.deptSvc.UpdateChildPaths(r.Context(), oldPathPrefix, newPathPrefix); err != nil {
+		writeServiceError(w, err)
+		return
+	}
+
 	writeJSON(w, http.StatusOK, map[string]any{
 		"status":          "completed",
 		"org_id":          orgIDStr,

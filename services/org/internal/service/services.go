@@ -3,6 +3,7 @@ package service
 
 import (
 	"context"
+	"strings"
 
 	"github.com/ggid/ggid/pkg/errors"
 	"github.com/ggid/ggid/services/org/internal/domain"
@@ -36,6 +37,7 @@ type DeptRepo interface {
 	Create(ctx context.Context, dept *domain.Department) error
 	GetByID(ctx context.Context, id uuid.UUID) (*domain.Department, error)
 	ListByOrg(ctx context.Context, orgID uuid.UUID) ([]*domain.Department, error)
+	ListByPathPrefix(ctx context.Context, prefix string) ([]*domain.Department, error)
 	Update(ctx context.Context, dept *domain.Department) error
 	Delete(ctx context.Context, id uuid.UUID) error
 }
@@ -215,6 +217,21 @@ func (s *DeptService) Update(ctx context.Context, dept *domain.Department) (*dom
 		return nil, err
 	}
 	return dept, nil
+}
+
+// UpdateChildPaths cascades path prefix changes to all descendant departments.
+func (s *DeptService) UpdateChildPaths(ctx context.Context, oldPrefix, newPrefix string) error {
+	children, err := s.repo.ListByPathPrefix(ctx, oldPrefix+".")
+	if err != nil {
+		return err
+	}
+	for _, child := range children {
+		child.Path = strings.Replace(child.Path, oldPrefix, newPrefix, 1)
+		if err := s.repo.Update(ctx, child); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func (s *DeptService) Delete(ctx context.Context, id uuid.UUID) error {

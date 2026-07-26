@@ -191,6 +191,10 @@ func (m *mockDeptRepo) ListByOrg(_ context.Context, _ uuid.UUID) ([]*domain.Depa
 	return result, nil
 }
 
+func (m *mockDeptRepo) ListByPathPrefix(_ context.Context, _ string) ([]*domain.Department, error) {
+	return nil, nil
+}
+
 func (m *mockDeptRepo) Update(_ context.Context, dept *domain.Department) error {
 	if m.updateErr != nil {
 		return m.updateErr

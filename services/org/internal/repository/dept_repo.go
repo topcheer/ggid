@@ -90,12 +90,25 @@ func (r *DeptRepository) ListByOrg(ctx context.Context, orgID uuid.UUID) ([]*dom
 // Update modifies a department.
 func (r *DeptRepository) Update(ctx context.Context, dept *domain.Department) error {
 	metadataJSON, _ := json.Marshal(dept.Metadata)
-	query := `UPDATE departments SET name = $2, manager_id = $3, metadata = $4 WHERE id = $1`
-	_, err := r.db.Exec(ctx, query, dept.ID, dept.Name, dept.ManagerID, metadataJSON)
+	query := `UPDATE departments SET name = $2, parent_id = $3, path = $4, manager_id = $5, metadata = $6 WHERE id = $1`
+	_, err := r.db.Exec(ctx, query, dept.ID, dept.Name, dept.ParentID, dept.Path, dept.ManagerID, metadataJSON)
 	if err != nil {
 		return mapErr(err, "department", dept.ID.String())
 	}
 	return nil
+}
+
+// ListByPathPrefix returns all departments whose path starts with the given prefix.
+func (r *DeptRepository) ListByPathPrefix(ctx context.Context, prefix string) ([]*domain.Department, error) {
+	query := `
+		SELECT id, org_id, parent_id, name, path::text, manager_id, metadata, created_at
+		FROM departments WHERE path <@ $1 || '.*'::ltree ORDER BY path`
+	rows, err := r.db.Query(ctx, query, prefix)
+	if err != nil {
+		return nil, fmt.Errorf("list child departments: %w", err)
+	}
+	defer rows.Close()
+	return scanDepts(rows)
 }
 
 // Delete removes a department.
