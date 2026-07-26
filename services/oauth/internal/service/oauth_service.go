@@ -227,6 +227,21 @@ func (s *OAuthService) DeleteClient(ctx context.Context, clientID string) error 
 	return s.clientRepo.DeleteClient(ctx, tc.TenantID, clientID)
 }
 
+// ResolveClientTenant finds the tenant_id for an OAuth client by client_id.
+// This bypasses RLS because it's a cross-tenant lookup needed for the authorize
+// endpoint when MCP clients (RFC 9728) don't send tenant_id.
+func (s *OAuthService) ResolveClientTenant(ctx context.Context, clientID string) (uuid.UUID, error) {
+	if s.pool == nil {
+		return uuid.Nil, fmt.Errorf("database not configured")
+	}
+	var tenantID uuid.UUID
+	err := s.pool.QueryRow(ctx, `SELECT tenant_id FROM oauth_clients WHERE client_id = $1`, clientID).Scan(&tenantID)
+	if err != nil {
+		return uuid.Nil, err
+	}
+	return tenantID, nil
+}
+
 // --- RFC 7592: OAuth 2.0 Dynamic Client Management ---
 
 // UpdateClientMetadata updates a client's metadata fields (RFC 7592 §2.2).
@@ -1445,7 +1460,6 @@ func (s *OAuthService) RevokeToken(tokenStr string, tokenTypeHint ...string) err
 					userID, _ := uuid.Parse(subStr)
 					if tenantID != uuid.Nil && userID != uuid.Nil {
 						ctx := context.Background()
-						_, _ = s.pool.Exec(ctx, fmt.Sprintf("SET app.tenant_id = '%s'", tenantID))
 						_, _ = s.pool.Exec(ctx,
 							`UPDATE oidc_refresh_tokens SET revoked = true WHERE tenant_id = $1 AND user_id = $2 AND revoked = false`,
 							tenantID, userID)
@@ -1729,7 +1743,7 @@ func (s *OAuthService) ClientCredentials(ctx context.Context, req *ClientCredent
 		AccessToken: accessToken,
 		TokenType:   "Bearer",
 		ExpiresIn:   expiresIn,
-		Scope:       joinScopes(req.Scope),
+		Scope:       joinScopes(finalScopes), // FIX: Return granted scopes, not requested
 	}, nil
 }
 
@@ -1782,15 +1796,23 @@ func (s *OAuthService) PasswordGrant(ctx context.Context, req *PasswordGrantRequ
 		return nil, errors.New(errors.ErrInvalidArgument, "username and password are required")
 	}
 
-	// 1. Verify credentials via auth service (POST /api/v1/auth/verify).
-	var userID uuid.UUID
 	var tenantID uuid.UUID = req.TenantID
 
-	if s.pool != nil {
-		// Set RLS context for this connection (session-level SET persists on the connection)
-		_, _ = s.pool.Exec(ctx, fmt.Sprintf("SET app.tenant_id = '%s'", req.TenantID.String()))
+	// 1. Verify the client exists and supports password grant (RFC 6749 §4.3).
+	// This check comes BEFORE credential lookup to prevent unauthorized clients
+	// from probing valid usernames via timing differences.
+	client, clientErr := s.clientRepo.GetClientByID(ctx, tenantID, req.ClientID)
+	if clientErr != nil {
+		return nil, errors.Unauthenticated("client not found")
+	}
+	if !client.SupportsGrantType("password") {
+		return nil, errors.InvalidArgument("client does not support password grant")
+	}
 
-		// Single query: look up user + credential hash in one go
+	// 2. Verify credentials via database lookup.
+	var userID uuid.UUID
+
+	if s.pool != nil {
 		var dbUserID uuid.UUID
 		var credHash string
 		err := s.pool.QueryRow(ctx, `
@@ -2074,32 +2096,22 @@ func splitScopes(s string) []string {
 	return strings.Fields(s)
 }
 
-// intersectScopes returns the intersection of requested and allowed scopes,
-// preserving the order of the allowed list. If requested contains a scope
-// not in allowed, it is silently dropped (OAuth 2.1 §3.3 — server MAY grant
-// a reduced scope set without erroring).
+// intersectScopes returns the intersection of requested and allowed scopes.
+// Only scopes present in BOTH requested AND allowed are returned.
+// If requested contains a scope not in allowed, it is silently dropped.
+// Returns empty if no requested scopes are in the allowed set.
 func intersectScopes(requested, allowed []string) []string {
 	allowedSet := make(map[string]bool, len(allowed))
 	for _, s := range allowed {
 		allowedSet[s] = true
 	}
 	var result []string
-	for _, s := range allowed {
-		if allowedSet[s] {
-			// Check if this allowed scope was requested
-			for _, r := range requested {
-				if r == s {
-					result = append(result, s)
-					break
-				}
-			}
+	for _, r := range requested {
+		if allowedSet[r] {
+			result = append(result, r)
 		}
 	}
-	// If nothing matched, fall back to allowed (default behavior)
-	if len(result) == 0 {
-		return allowed
-	}
-	return result
+	return result // FIX: Return only the intersection, not a fallback to all allowed
 }
 
 func defaultIfEmpty(val, def string) string {

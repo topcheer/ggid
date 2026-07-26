@@ -408,6 +408,15 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 		if tenantIDStr == "" {
 			tenantIDStr = r.URL.Query().Get("tenant_id")
 		}
+
+		// If tenant_id not provided, try to resolve from the OAuth client's tenant.
+		// This is critical for MCP clients (RFC 9728 DCR flow) that don't send tenant_id.
+		if tenantIDStr == "" {
+			if resolvedTID, err := oauthSvc.ResolveClientTenant(r.Context(), clientID); err == nil {
+				tenantIDStr = resolvedTID.String()
+			}
+		}
+
 		tenantID, err := uuid.Parse(tenantIDStr)
 		if err != nil {
 			writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid_request", "error_description": "valid X-Tenant-ID header or tenant_id query param required"})
@@ -607,6 +616,14 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 		tenantIDStr := r.Header.Get("X-Tenant-ID")
 		if tenantIDStr == "" {
 			tenantIDStr = r.URL.Query().Get("tenant_id")
+		}
+		if tenantIDStr == "" {
+			// Try to resolve from client_id (for MCP RFC 9728 DCR clients)
+			if cid := r.FormValue("client_id"); cid != "" {
+				if resolvedTID, err := oauthSvc.ResolveClientTenant(r.Context(), cid); err == nil {
+					tenantIDStr = resolvedTID.String()
+				}
+			}
 		}
 		if tenantIDStr == "" {
 			tenantIDStr = os.Getenv("DEFAULT_TENANT_ID")
