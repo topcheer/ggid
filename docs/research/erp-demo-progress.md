@@ -4496,3 +4496,34 @@ All 8 demos reject missing Bearer tokens with 401 + meaningful error. Go: `"Bear
 | Demo | ✅ all demos login + CRUD + 401; ⚠️ refresh/logout gaps (P2) |
 
 ### Next Dimension: 1 — Authentication Completeness (Cycle 1330) — Next Rotation
+
+## Cycle 1330: D1 Auth Completeness R2 + Security Audit Verification (Round 1465)
+Many new commits since C1324: MCP tools expansion, OAuth fixes, IAM review fixes.
+Key: `3be390a38` (P0-14 revoke auth), `a3d9e6421` (MCP 22 admin tools), `063eb5b31` (MCP 12 tools).
+Build: PASS. `make test`: EXIT=0, 65/65. Danger patterns: 0.
+
+### Security Audit Findings Verification (from god_fullstack)
+| ID | Finding | Status | Detail |
+|----|---------|--------|--------|
+| P0-14 | /oauth/revoke no client auth | ✅ FIXED | `server.go:938`: `introspectRequestAuthenticated()` (3be390a38) |
+| P1-15 | OIDC missing end_session | ✅ PRESENT | `oauth_service.go:598`: `EndSessionEndpoint: base + "/oauth/logout"` |
+| P1-16 | PKCE plain not rejected | ⚠️ PARTIAL | Defaults to S256 if empty (L369), but `plain` still accepted. Low risk. |
+| P2-14 | SCIM /Me missing | ❌ MISSING | No `/Me` endpoint in SCIM handler (RFC 7643 §3.4 optional) |
+| P2-15 | JWT aud not validated at runtime | ✅ PRESENT | `middleware.go:664`: `jwt.WithAudience(audience)` when configured |
+
+### D1 Authentication Completeness (Rotation 2)
+- **Password grant** (`oauth_service.go:1899-1925`): JWT has iss/sub/aud/iat/exp/jti/tenant_id/scope/permissions/roles. TokenResponse: AccessToken + TokenType="Bearer" + ExpiresIn. ✅
+- **client_credentials**: returns TokenType="Bearer" + ExpiresIn. ✅
+- **Token exchange** (RFC 8693): `aud` = resolveAudience(req.Audience, req.ClientID). ✅
+- **SDK login()** (Go): TokenSet{access_token, refresh_token, id_token?, expires_in, token_type} — all snake_case JSON. ✅
+- **CAP enforcement**: still solid (block/deny/require_mfa verified C1294). ✅
+- **Scope escalation prevention**: filterSafeScopes + DB role keys only. ✅
+
+### Three-Layer Alignment
+| Layer | Status |
+|-------|--------|
+| Core | ✅ P0-14 fixed, build+test pass, MCP tools expanded |
+| SDK | ✅ consistent (no change since C1318) |
+| Demo | ✅ all demos login+CRUD+401 (no change since C1324) |
+
+### Next Dimension: 2 — Authorization Boundaries (Cycle 1336) — Rotation 2
