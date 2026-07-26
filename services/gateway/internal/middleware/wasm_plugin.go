@@ -409,8 +409,12 @@ func flattenHeaders(headers http.Header) map[string]string {
 func (h *WasmPluginHost) verifyPluginSignature(wasmBytes []byte, providedSig, wasmPath string) error {
 	secret := os.Getenv("GGID_INTERNAL_SECRET")
 	if secret == "" {
-		// In dev mode without a secret, skip verification but log a warning.
-		return nil
+		// SECURITY (P2-58): fail-closed in production. If no secret is configured,
+		// reject unsigned plugins rather than silently accepting them.
+		if os.Getenv("GGID_DEV_MODE") != "true" {
+			return fmt.Errorf("WASM plugin signature verification required: GGID_INTERNAL_SECRET not set")
+		}
+		return nil // dev mode: skip verification
 	}
 
 	sig := providedSig
