@@ -431,6 +431,21 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 			}
 		}
 
+		// SECURITY: Early redirect_uri validation — verify the redirect_uri is registered
+		// for this client BEFORE rendering the login page. Without this, an attacker could
+		// use the authorize endpoint to display a legitimate-looking login page with an
+		// attacker-controlled redirect target (phishing vector).
+		authCtx := tenant.WithContext(r.Context(), &tenant.Context{TenantID: tenantID, IsolationLevel: tenant.IsolationShared})
+		earlyClient, earlyErr := oauthSvc.GetClient(authCtx, clientID)
+		if earlyErr != nil {
+			writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid_client", "error_description": "client not found"})
+			return
+		}
+		if !earlyClient.ValidateRedirectURI(redirectURI) {
+			writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid_request", "error_description": "redirect_uri not registered for this client"})
+			return
+		}
+
 		// The user must be authenticated (via JWT).
 		userIDStr := r.URL.Query().Get("user_id")
 		if userIDStr == "" {
