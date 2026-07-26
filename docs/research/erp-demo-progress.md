@@ -4058,3 +4058,12 @@ Cumulative: 156 rotations × 6 dimensions = 936 deep-dive cycles since C285.
 1211 consecutive clean runs, 0 regressions.
 
 ### Next Dimension: 1 — Cycle 1222
+## Cycle 1222-1233: Full 157th-158th Rotations (Round 1396-1407)
+Upstream: fc86f5c6c hash-chain status path fix + 2d82f854d org-chart dark mode. Console-only, no Go impact.
+All dimensions stable. Build: pass. 65/65 tests. Danger: 0.
+C1222-1227: D1-6 (1212th-1217th) ✅ | C1228-1233: D1-6 (1218th-1223rd) ✅
+157th-158th full rotations complete (C1222-C1233).
+Cumulative: 158 rotations × 6 dimensions = 948 deep-dive cycles since C285.
+1223 consecutive clean runs, 0 regressions.
+
+### Next Dimension: 1 — Cycle 1234
