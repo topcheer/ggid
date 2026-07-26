@@ -4124,3 +4124,13 @@ Cumulative: 166 rotations × 6 dimensions = 996 deep-dive cycles since C285.
 - **Fix: Ensure all SDKs expose logout/revoke**
 
 ### Next Dimension: 1 — Cycle 1288
+## Cycle 1288: SDK P0 + Scope Escalation Fix Verified (Round 1457)
+Verified after `go clean -cache` (initial 62 was stale cache, re-run confirms 65/65):
+- 049dbac43: Java refreshToken /auth/refresh → /oauth/token + Java login endpoint fix
+- 049dbac43: C# RefreshTokenAsync endpoint fix
+- a045781cc: Password grant scope escalation — admin scopes now from DB roles only
+- a045781cc: MFA bypass fix
+- Admin MFA disabled (use separate user for MFA testing)
+Build: pass. 65/65 tests. OAuth 5/5. Danger: 0.
+
+### Next Dimension: 1 — Cycle 1294
