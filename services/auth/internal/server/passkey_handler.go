@@ -94,6 +94,28 @@ func (h *Handler) handlePasskeyRegisterBegin(w http.ResponseWriter, r *http.Requ
 		writeError(w, http.StatusBadRequest, "invalid request body")
 		return
 	}
+
+	// P0 Security: use authenticated user from gateway JWT, not client-supplied user_id.
+	// The gateway sets X-User-ID after JWT validation. If the request body's user_id
+	// differs from the authenticated identity, reject unless caller has admin scope.
+	authUserID := r.Header.Get("X-User-ID")
+	if authUserID != "" {
+		if req.UserID != "" && req.UserID != authUserID {
+			// Only platform/tenant admins can register passkeys for other users.
+			if !hasAdminScope(r) {
+				writeError(w, http.StatusForbidden, "cannot register passkey for another user")
+				return
+			}
+		}
+		if req.UserID == "" {
+			req.UserID = authUserID
+		}
+	}
+	if req.UserID == "" {
+		writeError(w, http.StatusUnauthorized, "authentication required")
+		return
+	}
+
 	pkMu.Lock()
 	pkSeq++
 	rpID, err := resolveWebAuthnRPID(h)
@@ -174,6 +196,15 @@ func (h *Handler) handlePasskeyRegisterFinish(w http.ResponseWriter, r *http.Req
 		UserID:    sess.UserID,
 		PublicKey: req.Credential.PublicKey,
 		CreatedAt: time.Now(),
+	}
+
+	// P0 Security: verify the authenticated user matches the session's user.
+	authUserID := r.Header.Get("X-User-ID")
+	if authUserID != "" && sess.UserID != authUserID {
+		if !hasAdminScope(r) {
+			writeError(w, http.StatusForbidden, "cannot complete passkey registration for another user")
+			return
+		}
 	}
 
 	// KB-078: AAGUID allowlist enforcement — check if the authenticator is approved.
@@ -477,4 +508,16 @@ func generateChallenge() string {
 		return base64.StdEncoding.EncodeToString([]byte(uuid.New().String()))
 	}
 	return base64.RawURLEncoding.EncodeToString(b)
+}
+
+// hasAdminScope checks if the request has platform:admin or tenant:admin scope.
+// The gateway injects X-Is-Admin header after JWT validation for admin users.
+func hasAdminScope(r *http.Request) bool {
+	// X-Is-Admin is set by gateway JWTAuth middleware for platform/tenant admins
+	if r.Header.Get("X-Is-Admin") == "true" {
+		return true
+	}
+	// Fallback: check X-User-Role header (also set by gateway)
+	role := r.Header.Get("X-User-Role")
+	return role == "platform:admin" || role == "tenant:admin"
 }
