@@ -37,6 +37,19 @@ func APIKeyAuth(validator APIKeyValidator) func(http.Handler) http.Handler {
 				return
 			}
 
+			// SECURITY: verify the X-Tenant-ID header matches the API key's tenant.
+			// Without this, an attacker with tenant A's API key can access tenant B's
+			// data by sending a different X-Tenant-ID header.
+			headerTenant := r.Header.Get("X-Tenant-ID")
+			if headerTenant != "" && headerTenant != tenantID {
+				writeAPIKeyError(w, "API key tenant mismatch")
+				return
+			}
+			// If no X-Tenant-ID header, set it from the API key's tenant
+			if headerTenant == "" {
+				r.Header.Set("X-Tenant-ID", tenantID)
+			}
+
 			// Inject identity into context
 			ctx := r.Context()
 			ctx = context.WithValue(ctx, TenantIDKey, tenantID)
