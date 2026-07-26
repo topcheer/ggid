@@ -57,18 +57,18 @@ func (m *mockRepo) GetUserByID(_ context.Context, _ uuid.UUID, id uuid.UUID) (*d
 	return u, nil
 }
 
-func (m *mockRepo) GetUserByUsername(_ context.Context, _ uuid.UUID, username string) (*domain.User, error) {
+func (m *mockRepo) GetUserByUsername(_ context.Context, tenantID uuid.UUID, username string) (*domain.User, error) {
 	for _, u := range m.users {
-		if u.Username == username {
+		if u.Username == username && u.TenantID == tenantID {
 			return u, nil
 		}
 	}
 	return nil, gerr.NotFound("user", username)
 }
 
-func (m *mockRepo) GetUserByEmail(_ context.Context, _ uuid.UUID, email string) (*domain.User, error) {
+func (m *mockRepo) GetUserByEmail(_ context.Context, tenantID uuid.UUID, email string) (*domain.User, error) {
 	for _, u := range m.users {
-		if u.Email == email {
+		if u.Email == email && u.TenantID == tenantID {
 			return u, nil
 		}
 	}
@@ -342,7 +342,10 @@ func TestCreateUser_DuplicateUsername(t *testing.T) {
 	svc := NewIdentityService(repo)
 
 	// Pre-create a user.
-	repo.users[uuid.New()] = &domain.User{
+	existingID := uuid.New()
+	repo.users[existingID] = &domain.User{
+		ID:       existingID,
+		TenantID: testTenantID,
 		Username: "existing",
 		Email:    "existing@example.com",
 	}
@@ -371,7 +374,10 @@ func TestCreateUser_DuplicateEmail(t *testing.T) {
 	repo := newMockRepo()
 	svc := NewIdentityService(repo)
 
-	repo.users[uuid.New()] = &domain.User{
+	existingID := uuid.New()
+	repo.users[existingID] = &domain.User{
+		ID:       existingID,
+		TenantID: testTenantID,
 		Username: "someone",
 		Email:    "taken@example.com",
 	}
@@ -549,7 +555,10 @@ func TestRegisterUser_DuplicateFails(t *testing.T) {
 	repo := newMockRepo()
 	svc := NewIdentityService(repo)
 
-	repo.users[uuid.New()] = &domain.User{
+	existingID := uuid.New()
+	repo.users[existingID] = &domain.User{
+		ID:       existingID,
+		TenantID: testTenantID,
 		Username: "existing",
 		Email:    "existing@example.com",
 	}
