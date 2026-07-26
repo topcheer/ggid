@@ -67,6 +67,9 @@ func (s *AuditService) ListEvents(ctx context.Context, filter domain.ListFilter,
 // hash = SHA256(prev_hash + canonical_event_data).
 func (s *AuditService) InsertEvent(ctx context.Context, event *domain.AuditEvent) error {
 	obfuscateEventPII(event)
+	// Compute an initial hash using in-memory chain state (for tests/mocks).
+	// repo.Insert will override with the authoritative DB-backed hash using
+	// a FOR UPDATE transaction to prevent race conditions.
 	s.computeHashChain(event)
 	if err := s.repo.Insert(ctx, event); err != nil {
 		return errors.Wrap(errors.ErrInternal, "insert audit event", err)

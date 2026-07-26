@@ -96,3 +96,36 @@
 - P1 sysconfig broadcast 无错误处理 → ggcxf_backend
 
 **make test 全部通过。**
+
+## 深度审视 2026-07-26 06:00 — R27 增量审查
+
+### 上次审视后 4 个新 commit
+
+1. **bf1bf6f08** fix(auth): JWT alg:none bypass 修复 — 检查所有 JWT 解析路径强制 RSA 签名。审计通过。
+2. **6314e8306** fix(security): 10 bugs fixed across 7 packages — bcrypt/argon2id 编码不一致修复。审计通过。
+3. **511604f77** fix(auth): WebAuthn sessionStore 后台清理 — P0 修复（arch_pm 分派）。审计通过。
+4. **c04db04dd** docs: passkey fix verified。
+
+### 新发现问题
+
+无。3 个安全修复 commit 均为之前已识别问题的正确修复，无新引入漏洞。
+
+### 验证结果
+
+- `go build ./...` — PASS
+- `go test ./services/auth/...` — PASS
+- `go test ./services/oauth/...` — PASS
+- `go test ./pkg/crypto/...` — PASS
+- `go test ./pkg/auth/multihash/...` — 超时（30s），make test 10m 超时下通过（已知计算密集型）
+
+### 上轮未修复问题状态
+
+| 编号 | 问题 | 状态 |
+|------|------|------|
+| P0-14 | /oauth/revoke 无 client 认证 | **已修复已部署** |
+| P1-15 | OIDC discovery 缺 end_session_endpoint | 待修复 |
+| P1-16 | PKCE plain 方法 | 待修复 |
+| P2-14 | SCIM 缺 /Me 端点 | 待修复 |
+| P2-15 | JWT aud 运行时验证 | 待修复 |
+| P0 WebAuthn sessionStore TTL | **已修复** (511604f77) |
+| P1 JWT alg:none bypass | **已修复** (bf1bf6f08) |

@@ -51,19 +51,28 @@ func (r *AuditRepository) Insert(ctx context.Context, e *domain.AuditEvent) erro
 	}
 	e.CreatedAt = e.CreatedAt.UTC().Truncate(time.Microsecond)
 
-	// Get the previous event's hash for the chain.
-	// We query the most recent event for this tenant to get the prev_hash.
-	prevHash := ""
+	// Use a transaction with FOR UPDATE to prevent the TOCTOU race condition:
+	// without a lock, two concurrent inserts can read the same PrevHash,
+	// producing a broken chain link.
+	tx, txErr := r.db.Begin(ctx)
+	if txErr != nil {
+		return fmt.Errorf("begin tx: %w", txErr)
+	}
+	defer tx.Rollback(ctx)
+
 	if domain.IsHashChainEnabled() {
 		var ph string
-		r.db.QueryRow(ctx,
+		// FOR UPDATE locks the row, serializing chain appends per tenant.
+		err := tx.QueryRow(ctx,
 			`SELECT COALESCE(hash, '') FROM audit_events
-			 WHERE tenant_id = $1 ORDER BY created_at DESC, id DESC LIMIT 1`,
+			 WHERE tenant_id = $1 ORDER BY created_at DESC, id DESC LIMIT 1 FOR UPDATE`,
 			e.TenantID,
 		).Scan(&ph)
-		prevHash = ph
-		e.PrevHash = prevHash
-		e.Hash = e.ComputeHash(prevHash)
+		if err != nil && err != pgx.ErrNoRows {
+			return fmt.Errorf("query prev hash: %w", err)
+		}
+		e.PrevHash = ph
+		e.Hash = e.ComputeHash(ph)
 	}
 
 	query := `
@@ -71,13 +80,16 @@ func (r *AuditRepository) Insert(ctx context.Context, e *domain.AuditEvent) erro
 		    resource_type, resource_id, resource_name, result, ip_address,
 		    user_agent, request_id, metadata, prev_hash, hash, created_at)
 		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11::inet, $12, $13, $14, $15, $16, $17)`
-	_, err := r.db.Exec(ctx, query,
+	_, err := tx.Exec(ctx, query,
 		e.ID, e.TenantID, e.ActorType, nullableUUID(e.ActorID), nullableStr(e.ActorName), e.Action,
 		nullableStr(e.ResourceType), nullableUUID(e.ResourceID), nullableStr(e.ResourceName), e.Result, ipAddr,
 		nullableStr(e.UserAgent), nullableStr(e.RequestID), metaJSON,
 		e.PrevHash, e.Hash, e.CreatedAt,
 	)
-	return err
+	if err != nil {
+		return fmt.Errorf("insert audit event: %w", err)
+	}
+	return tx.Commit(ctx)
 }
 
 // nullableStr returns nil for empty strings so PostgreSQL stores NULL.
