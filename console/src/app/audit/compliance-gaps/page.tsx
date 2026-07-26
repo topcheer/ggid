@@ -44,7 +44,7 @@ export default function ComplianceGapsPage() {
   const fetchGaps = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch("/api/v1/audit/compliance-gaps", { headers: { ...authHeader(), "X-Tenant-ID": localStorage.getItem("ggid_tenant_id") || "" } });
+      const res = await fetch("/api/v1/audit/compliance/gaps", { headers: { ...authHeader(), "X-Tenant-ID": localStorage.getItem("ggid_tenant_id") || "" } });
       if (res.ok) {
         const data = await res.json();
         setGaps(data.gaps || data || []);
@@ -63,7 +63,7 @@ export default function ComplianceGapsPage() {
   const handleUpdate = async () => {
     if (!updateGap || !newStatus) return;
     try {
-      await fetch(`/api/v1/audit/compliance-gaps/${updateGap.id}`, {
+      await fetch(`/api/v1/audit/compliance/gaps/${updateGap.id}`, {
         method: "PATCH",
         headers: { ...authHeader(), "Content-Type": "application/json", "X-Tenant-ID": localStorage.getItem("ggid_tenant_id") || "" },
         body: JSON.stringify({ status: newStatus }),
