@@ -4823,3 +4823,26 @@ New commits: `0f12fef38` (public client revocation), `5dc202146` (R31 final E2E 
 | Demo | ✅ all functional checks pass |
 
 ### Next Dimension: 4 — Multi-Tenant Isolation (Cycle 1384) — Rotation 3
+
+## Cycle 1384: D4 Multi-Tenant Isolation R3 — All Secure Post-Deployment (Round 1474)
+No new commits since C1378. Build: PASS. `make test`: EXIT=0, 65/65. Danger: 0.
+
+### D4 Multi-Tenant Isolation (Rotation 3) — All Layers Verified Post-Deployment
+| Layer | Check | Status |
+|-------|-------|--------|
+| Gateway | JWT tenant_id vs X-Tenant-ID → 401 | ✅ |
+| RBAC | row.TenantID != claims.TenantID → skip | ✅ |
+| OAuth | tenant_id = $2 in 5 queries (user, perms, roles, CAP) | ✅ |
+| RLS | SET LOCAL app.tenant_id | ✅ |
+| API Key | cross-tenant access fix deployed (cc541a47b) | ✅ |
+| Demo Go | tenant mismatch → 401 | ✅ |
+| Demo Node | tenant_id !== TENANT → 401 | ✅ |
+| Demo Python | tenant mismatch → 401 | ✅ |
+| Demo Ruby | tenant mismatch → halt 401 | ✅ |
+| Demo Rust | tenant_id != expected → None | ✅ |
+| Demo C# | tenant mismatch → 401 | ✅ |
+| Demo Java | tenant mismatch → 401 | ✅ |
+
+All P0/P1 fixes (SCIM BOLA, X-User-ID spoofing, API Key cross-tenant) deployed and verified. No regressions.
+
+### Next Dimension: 5 — SDK Cross-Language Consistency (Cycle 1390) — Rotation 3
