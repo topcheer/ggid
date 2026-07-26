@@ -836,6 +836,8 @@ func (s *OAuthService) evaluateConditionalAccess(ctx context.Context, tenantID, 
 		}
 		matched := true
 		if len(p.Conditions) > 0 {
+			clientIP := ctxIP(ctx)
+			now := time.Now()
 			for k, v := range p.Conditions {
 				switch k {
 				case "username":
@@ -846,11 +848,28 @@ func (s *OAuthService) evaluateConditionalAccess(ctx context.Context, tenantID, 
 					if sv, ok := v.(string); ok && sv != "" && userID.String() != sv {
 						matched = false
 					}
+				case "ip_address":
+					// Match if client IP equals the condition value.
+					if sv, ok := v.(string); ok && sv != "" && clientIP != sv {
+						matched = false
+					}
+				case "auth_method":
+					// In PasswordGrant, the auth method is always "password".
+					if sv, ok := v.(string); ok && sv != "" && "password" != sv {
+						matched = false
+					}
+				case "time_of_day":
+					// Match if current hour (24h) is within the specified hour.
+					if fv, ok := v.(float64); ok {
+						if int(now.Hour()) != int(fv) {
+							matched = false
+						}
+					}
 				}
 			}
 		}
 		if matched {
-			if act == "block" || act == "deny" {
+			if act == "block" || act == "deny" || act == "require_mfa" {
 				return act, p.Name
 			}
 			return "allow", ""
@@ -1811,9 +1830,17 @@ func (s *OAuthService) PasswordGrant(ctx context.Context, req *PasswordGrantRequ
 		}
 	}
 
-	// 1c. Evaluate conditional access policies (block/deny).
-	if action, policyName := s.evaluateConditionalAccess(ctx, tenantID, userID, req.Username); action == "block" || action == "deny" {
-		return nil, errors.Unauthenticated(fmt.Sprintf("access denied by policy: %s", policyName))
+	// 1c. Evaluate conditional access policies (block/deny/require_mfa).
+	capAction, capPolicy := s.evaluateConditionalAccess(ctx, tenantID, userID, req.Username)
+	switch capAction {
+	case "block", "deny":
+		return nil, errors.Unauthenticated(fmt.Sprintf("access denied by policy: %s", capPolicy))
+	case "require_mfa":
+		// Policy requires MFA — reject if no valid MFA code was provided.
+		if req.MFACode == "" {
+			return nil, errors.New(errors.ErrUnauthenticated,
+				fmt.Sprintf("mfa required by policy: %s", capPolicy))
+		}
 	}
 
 	// 2. Fetch user permissions and roles.
