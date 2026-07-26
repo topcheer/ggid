@@ -31,6 +31,7 @@ type Client struct {
 	httpClient *http.Client
 	apiKey     string
 	jwksURL    string
+	issuer     string
 	useDiscovery bool
 
 	// JWKS cache for JWT signature verification.
@@ -60,6 +61,12 @@ func WithJWKS(ttl time.Duration) Option {
 		c.jwksURL = "/.well-known/jwks.json"
 		c.jwksTTL = ttl
 	}
+}
+
+// WithIssuer sets the expected issuer (iss) claim for token verification.
+// When set, verifyTokenOnline rejects tokens from other issuers.
+func WithIssuer(issuer string) Option {
+	return func(c *Client) { c.issuer = issuer }
 }
 
 // OIDCDiscovery holds the OpenID Connect discovery document.
@@ -543,6 +550,19 @@ func (c *Client) verifyTokenOnline(ctx context.Context, accessToken string) (*Us
 	}
 	if !token.Valid {
 		return nil, fmt.Errorf("invalid token")
+	}
+
+	// Verify iss claim matches expected issuer (P1-2 security fix)
+	claims, ok := token.Claims.(jwt.MapClaims)
+	if !ok {
+		return nil, fmt.Errorf("invalid token claims")
+	}
+	iss, _ := claims["iss"].(string)
+	if iss == "" {
+		return nil, fmt.Errorf("token missing iss claim")
+	}
+	if c.issuer != "" && iss != c.issuer {
+		return nil, fmt.Errorf("token issuer mismatch: expected %q, got %q", c.issuer, iss)
 	}
 
 	return claimsToUserInfo(token)
