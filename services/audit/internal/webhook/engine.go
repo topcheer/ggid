@@ -9,7 +9,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"log/slog"
+	"net"
 	"net/http"
+	"net/url"
+	"os"
 	"sync"
 	"time"
 
@@ -243,6 +246,11 @@ func (e *Engine) deliver(ctx context.Context, ep *Endpoint, eventType string, pa
 
 // sendHTTP sends a single HTTP POST with HMAC signature.
 func (e *Engine) sendHTTP(ctx context.Context, ep *Endpoint, eventType string, payload []byte) (int, error) {
+	// SSRF protection: block requests to internal/private IPs and localhost.
+	if err := validateWebhookURL(ep.URL); err != nil {
+		return 0, err
+	}
+
 	// Wrap payload in event envelope.
 	envelope := map[string]any{
 		"event_type": eventType,
@@ -368,4 +376,41 @@ func (e *Engine) persistDelivery(ctx context.Context, d *Delivery) {
 	if err != nil {
 		slog.Warn("webhook delivery persist failed", "error", err)
 	}
+}
+
+// validateWebhookURL blocks SSRF attacks by rejecting requests to
+// private/internal IPs, localhost, and link-local addresses.
+// In dev mode (GGID_DEV_MODE=true), the check is skipped for testing.
+func validateWebhookURL(rawURL string) error {
+	u, err := url.Parse(rawURL)
+	if err != nil {
+		return fmt.Errorf("invalid webhook URL")
+	}
+	// Only allow http/https
+	if u.Scheme != "http" && u.Scheme != "https" {
+		return fmt.Errorf("webhook URL must use http or https")
+	}
+	host := u.Hostname()
+	if host == "" {
+		return fmt.Errorf("webhook URL missing host")
+	}
+	// Dev mode: skip IP validation (allows localhost for testing)
+	if os.Getenv("GGID_DEV_MODE") == "true" {
+		return nil
+	}
+	// Block obvious localhost
+	if host == "localhost" || host == "127.0.0.1" || host == "::1" || host == "0.0.0.0" {
+		return fmt.Errorf("webhook URL must not point to localhost")
+	}
+	// Resolve and check for private/internal IPs
+	ips, err := net.LookupIP(host)
+	if err != nil {
+		return nil
+	}
+	for _, ip := range ips {
+		if ip.IsLoopback() || ip.IsPrivate() || ip.IsLinkLocalUnicast() || ip.IsUnspecified() {
+			return fmt.Errorf("webhook URL resolves to internal address %s", ip.String())
+		}
+	}
+	return nil
 }
