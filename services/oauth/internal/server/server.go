@@ -652,6 +652,25 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 
 		clientID := r.FormValue("client_id")
 		clientSecret := r.FormValue("client_secret")
+
+		// RFC 6749 §2.3.1: If client_id/client_secret not in form body,
+		// try HTTP Basic auth header (client_secret_basic method).
+		if clientID == "" || clientSecret == "" {
+			if authHeader := r.Header.Get("Authorization"); strings.HasPrefix(authHeader, "Basic ") {
+				if decoded, err := base64.StdEncoding.DecodeString(strings.TrimPrefix(authHeader, "Basic ")); err == nil {
+					parts := strings.SplitN(string(decoded), ":", 2)
+					if len(parts) == 2 {
+						if clientID == "" {
+							clientID = parts[0]
+						}
+						if clientSecret == "" {
+							clientSecret = parts[1]
+						}
+					}
+				}
+			}
+		}
+
 		scopeParam := r.FormValue("scope")
 		scopes := []string{}
 		if scopeParam != "" {
