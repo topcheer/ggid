@@ -491,7 +491,7 @@ func (s *OAuthService) ExchangeAuthorizationCode(ctx context.Context, req *Token
 	userAttrs := s.fetchUserClaims(ctx, code.TenantID, code.UserID)
 	// OAuth scopes only (openid, profile, email). Permissions/roles are separate claims.
 	oauthScopes := s.mergeOAuthScopes(ctx, code.TenantID, code.UserID, joinScopes(code.Scope))
-	audience := s.resolveAudienceMulti(req.Audience, client.ClientID)
+	audience := resolveAudience(req.Audience, client.ClientID)
 	accessToken, expiresIn, err := s.issueAccessTokenWithAMR(code.UserID, code.TenantID, audience, oauthScopes, code.AMR, code.ACR, code.AuthTime, userAttrs)
 	if err != nil {
 		return nil, err
@@ -691,21 +691,6 @@ func resolveAudience(requested, fallback string) string {
 		return requested
 	}
 	return fallback
-}
-
-// resolveAudienceMulti returns the audience for a token. When no explicit
-// audience is requested, defaults to the issuer URL (not the client_id).
-// This ensures all tokens share a common audience that the gateway can
-// validate (GATEWAY_JWT_AUDIENCE=issuer).
-func (s *OAuthService) resolveAudienceMulti(requested, clientID string) string {
-	if requested != "" {
-		return requested
-	}
-	// Default to issuer so gateway can validate with a single config.
-	if s.issuer != "" {
-		return s.issuer
-	}
-	return clientID
 }
 
 func (s *OAuthService) issueAccessToken(userID, tenantID uuid.UUID, audience, scope string) (string, int, error) {
@@ -1210,6 +1195,9 @@ func (s *OAuthService) ParseAccessTokenWithAudience(tokenStr, expectedAudience s
 		return nil, fmt.Errorf("token issuer mismatch: expected %q, got %q", s.issuer, tokenIss)
 	}
 	// RFC 7519 §4.1.3: verify audience if expected audience is provided.
+	// Tokens issued by this server have aud = client_id (default) or
+	// aud = issuer (when resolveAudience falls back to s.issuer).
+	// Accept both: check if tokenAud matches expectedAudience OR s.issuer.
 	if expectedAudience != "" {
 		tokenAud, _ := claims["aud"].(string)
 		if tokenAud == "" {
@@ -1218,8 +1206,8 @@ func (s *OAuthService) ParseAccessTokenWithAudience(tokenStr, expectedAudience s
 				tokenAud, _ = audArr[0].(string)
 			}
 		}
-		if tokenAud != expectedAudience {
-			return nil, fmt.Errorf("token audience mismatch: expected %q, got %q", expectedAudience, tokenAud)
+		if tokenAud != expectedAudience && tokenAud != s.issuer {
+			return nil, fmt.Errorf("token audience mismatch: expected %q or %q, got %q", expectedAudience, s.issuer, tokenAud)
 		}
 	}
 	return claims, nil
@@ -1684,7 +1672,7 @@ func (s *OAuthService) RefreshToken(ctx context.Context, req *RefreshTokenReques
 	safeScopes := filterSafeScopes(req.Scope)
 	roleKeys := s.fetchUserRoleKeys(ctx, req.TenantID, record.UserID)
 	accessTokenScope := strings.TrimSpace(joinScopes(safeScopes) + " " + strings.Join(roleKeys, " "))
-	accessToken, expiresIn, err := s.issueAccessToken(record.UserID, req.TenantID, s.resolveAudienceMulti(req.Audience, client.ClientID), accessTokenScope)
+	accessToken, expiresIn, err := s.issueAccessToken(record.UserID, req.TenantID, resolveAudience(req.Audience, client.ClientID), accessTokenScope)
 	if err != nil {
 		return nil, err
 	}
@@ -1798,7 +1786,7 @@ func (s *OAuthService) ClientCredentials(ctx context.Context, req *ClientCredent
 		finalScopes = intersectScopes(req.Scope, client.Scopes)
 		clientPermissions = finalScopes
 	}
-	accessToken, expiresIn, err := s.issueClientAccessToken(req.TenantID, s.resolveAudienceMulti(req.Audience, client.ClientID), client.ClientID, joinScopes(finalScopes), clientPermissions)
+	accessToken, expiresIn, err := s.issueClientAccessToken(req.TenantID, resolveAudience(req.Audience, client.ClientID), client.ClientID, joinScopes(finalScopes), clientPermissions)
 	if err != nil {
 		return nil, err
 	}
@@ -1965,7 +1953,7 @@ func (s *OAuthService) PasswordGrant(ctx context.Context, req *PasswordGrantRequ
 	claimsMap := jwt.MapClaims{
 		"iss":         s.issuer,
 		"sub":         userID.String(),
-		"aud":         s.resolveAudienceMulti(req.Audience, req.ClientID),
+		"aud":         resolveAudience(req.Audience, req.ClientID),
 		"iat":         now.Unix(),
 		"exp":         expiresAt.Unix(),
 		"jti":         uuid.New().String(),
