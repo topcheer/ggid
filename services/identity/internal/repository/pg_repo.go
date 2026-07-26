@@ -389,7 +389,16 @@ func (r *pgRepo) SetUserStatus(ctx context.Context, tenantID, id uuid.UUID, stat
 		return nil, err
 	}
 
+	// When restoring to active, also clear deleted_at so the user is fully
+	// un-deleted. Without this, status=active + deleted_at!=NULL causes
+	// cleanup scripts to delete their credentials again.
 	query := fmt.Sprintf(setUserStatusSQL, userColumns)
+	if status == domain.UserStatusActive {
+		query = fmt.Sprintf(`
+UPDATE users SET status = $3, updated_at = NOW(), deleted_at = NULL
+WHERE id = $2 AND tenant_id = $1
+RETURNING %s`, userColumns)
+	}
 	row := tx.QueryRow(ctx, query, tenantID, id, string(status))
 	user, err := scanUser(row)
 	if err != nil {
