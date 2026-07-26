@@ -206,8 +206,12 @@ func (gw *Gateway) buildProxies() {
 				req.Header.Set("X-Request-ID", requestID)
 				pkgmiddleware.SignInternalRequest(req, "gateway", gw.internalSecret)
 			}
+			// Security: always overwrite X-User-ID — set verified value from JWT,
+			// or clear any client-supplied value to prevent spoofing.
 			if userID, ok := middleware.UserIDFromRequest(req); ok {
 				req.Header.Set("X-User-ID", userID.String())
+			} else {
+				req.Header.Del("X-User-ID")
 			}
 			// Forward JWT scopes so backend services can check admin authorization.
 			jwtClaims := middleware.ExtractJWTClaims(req)
@@ -1198,8 +1202,12 @@ func (gw *Gateway) buildProxiesLocked() {
 				req.Header.Set("X-Request-ID", requestID)
 				pkgmiddleware.SignInternalRequest(req, "gateway", gw.internalSecret)
 			}
+			// Security: always overwrite X-User-ID — set verified value from JWT,
+			// or clear any client-supplied value to prevent spoofing.
 			if userID, ok := middleware.UserIDFromRequest(req); ok {
 				req.Header.Set("X-User-ID", userID.String())
+			} else {
+				req.Header.Del("X-User-ID")
 			}
 			if tenantID, ok := middleware.TenantIDFromRequest(req); ok {
 				req.Header.Set("X-Tenant-ID", tenantID)

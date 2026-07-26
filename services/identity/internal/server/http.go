@@ -921,11 +921,44 @@ func (h *HTTPHandler) updateUser(ctx context.Context, userID uuid.UUID, w http.R
 		DisplayName *string `json:"display_name"`
 		Locale      *string `json:"locale"`
 		Timezone    *string `json:"timezone"`
+		Status      *string `json:"status"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		writeJSONError(w, http.StatusBadRequest, "invalid JSON body")
 		return
 	}
+
+	// Handle status change via dedicated endpoints.
+	if req.Status != nil {
+		statusStr := *req.Status
+		// Map common API aliases to DB-accepted values.
+		switch statusStr {
+		case "suspended":
+			statusStr = "locked" // "suspended" in UI = "locked" in DB
+		case "inactive":
+			statusStr = "disabled"
+		}
+
+		validStatuses := map[string]bool{"active": true, "locked": true, "disabled": true, "deleted": true}
+		if !validStatuses[statusStr] {
+			writeJSONError(w, http.StatusBadRequest, fmt.Sprintf("invalid status: %s (accepted: active, locked, disabled, suspended)", *req.Status))
+			return
+		}
+
+		userStatus := domain.UserStatus(statusStr)
+		user, err := h.svc.SetUserStatus(ctx, userID, userStatus)
+		if err != nil {
+			writeServiceError(w, err)
+			return
+		}
+		if tc, e := ggidtenant.FromContext(ctx); e == nil {
+			actorID, _ := uuid.Parse(r.Header.Get("X-User-ID"))
+			h.publishAuditEvent("user.status_change", "success", "user", userID, tc.TenantID, actorID)
+		}
+		writeJSON(w, http.StatusOK, userToJSON(user))
+		return
+	}
+
 	user, err := h.svc.UpdateUser(ctx, userID, &domain.UpdateUserInput{
 		Phone:       req.Phone,
 		DisplayName: req.DisplayName,
