@@ -32,8 +32,8 @@ func TestTransparentRehash(t *testing.T) {
 
 	provider := NewLocalProvider(store)
 	provider.SetRehashCallback(func(ctx context.Context, userID uuid.UUID, plainPw, oldHash string) {
-		atomic.StoreInt32(&rehashCalled, 1)
 		capturedUserID.Store(userID)
+		atomic.StoreInt32(&rehashCalled, 1)
 		// Generate new Argon2id hash (simulating DB update).
 		_, _ = crypto.HashPassword(plainPw)
 	})
@@ -56,6 +56,9 @@ func TestTransparentRehash(t *testing.T) {
 
 	if atomic.LoadInt32(&rehashCalled) != 1 {
 		t.Error("rehash callback was not invoked for legacy bcrypt hash")
+	}
+	if capturedUserID.Load() == nil {
+		t.Fatal("capturedUserID was never stored")
 	}
 	if capturedUserID.Load().(uuid.UUID) != store.credential.UserID {
 		t.Error("rehash callback received wrong user ID")

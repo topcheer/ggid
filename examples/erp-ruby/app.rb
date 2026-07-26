@@ -33,6 +33,9 @@ class ERPApp < Sinatra::Base
     halt 401, { error: 'Bearer token required' }.to_json if token.empty?
     begin
       @claims = $ggid.verify_token(token)
+      # Defense-in-depth: reject tokens from other tenants.
+      token_tenant = @claims.respond_to?(:tenant_id) ? @claims.tenant_id : nil
+      halt 401, { error: 'tenant mismatch' }.to_json if token_tenant && token_tenant != TENANT_ID
       $stderr.puts "[ERP] verify OK: user=#{@claims.user_id} perms=#{@claims.permissions.inspect}"
     rescue => e
       $stderr.puts "[ERP] verify FAILED: #{e.class}: #{e.message}"

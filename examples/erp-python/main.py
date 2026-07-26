@@ -71,6 +71,15 @@ def extract_permissions_from_jwt(token):
         return []
 
 
+def extract_tenant_from_jwt(token):
+    """Verify token and return the tenant_id claim for isolation checks."""
+    try:
+        claims = _jwt_verifier.verify(token)
+        return getattr(claims, 'tenant_id', None)
+    except Exception:
+        return None
+
+
 class ERPHandler(BaseHTTPRequestHandler):
     def _send_json(self, code, data):
         self.send_response(code)
@@ -102,6 +111,11 @@ class ERPHandler(BaseHTTPRequestHandler):
         token = self._get_session_token()
         if not token:
             self._send_json(401, {"error": "not authenticated", "saml_login": f"{PUBLIC_URL}/login"})
+            return None
+        # Defense-in-depth: reject tokens from other tenants.
+        token_tenant = extract_tenant_from_jwt(token)
+        if token_tenant and token_tenant != TENANT_ID:
+            self._send_json(401, {"error": "tenant mismatch"})
             return None
         perms = extract_permissions_from_jwt(token)
         if "admin" in perms or perm in perms:
