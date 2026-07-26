@@ -49,16 +49,16 @@ type JWTConfig struct {
 }
 
 type PasswordPolicy struct {
-	MinLength      int           `yaml:"min_length"`
-	RequireUpper   bool          `yaml:"require_upper"`
-	RequireLower   bool          `yaml:"require_lower"`
-	RequireDigit   bool          `yaml:"require_digit"`
-	RequireSpecial bool          `yaml:"require_special"`
-	Blacklist      []string      `yaml:"blacklist"`
-	HistoryCount   int           `yaml:"history_count"`
-	MaxAttempts    int           `yaml:"max_attempts"`
-	LockDuration   time.Duration `yaml:"lock_duration"`
-	MaxAgeDays     int           `yaml:"max_age_days"`
+	MinLength      int           `json:"min_length" yaml:"min_length"`
+	RequireUpper   bool          `json:"require_upper" yaml:"require_upper"`
+	RequireLower   bool          `json:"require_lower" yaml:"require_lower"`
+	RequireDigit   bool          `json:"require_digit" yaml:"require_digit"`
+	RequireSpecial bool          `json:"require_special" yaml:"require_special"`
+	Blacklist      []string      `json:"blacklist,omitempty" yaml:"blacklist"`
+	HistoryCount   int           `json:"history_count" yaml:"history_count"`
+	MaxAttempts    int           `json:"max_attempts" yaml:"max_attempts"`
+	LockDuration   time.Duration `json:"lock_duration,omitempty" yaml:"lock_duration"`
+	MaxAgeDays     int           `json:"max_age_days" yaml:"max_age_days"`
 }
 
 type RateLimitConfig struct {
