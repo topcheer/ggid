@@ -12,6 +12,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/golang-jwt/jwt/v5"
 	ggidtenant "github.com/ggid/ggid/pkg/tenant"
 	"github.com/google/uuid"
 )
@@ -102,6 +103,19 @@ func (h *Handler) handlePasskeyRevoke(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Extract user ID from JWT for ownership verification
+	userID := ""
+	authHeader := r.Header.Get("Authorization")
+	if tokenStr := strings.TrimPrefix(authHeader, "Bearer "); tokenStr != authHeader {
+		claims := jwt.MapClaims{}
+		_, parseErr := jwt.ParseWithClaims(tokenStr, claims, func(tok *jwt.Token) (any, error) {
+			return h.authSvc.PublicKey(), nil
+		})
+		if parseErr == nil {
+			userID, _ = claims["sub"].(string)
+		}
+	}
+
 	// Revoke in DB - must verify tenant ownership
 	if h.pool != nil {
 		tag, err := h.pool.Exec(r.Context(), `
@@ -117,14 +131,14 @@ func (h *Handler) handlePasskeyRevoke(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	} else {
-		// In-memory fallback - also check tenant
+		// In-memory fallback - verify ownership by user ID from JWT
 		pkMu.Lock()
 		defer pkMu.Unlock()
 		cred, ok := pkCredentials[id]
-		if !ok || cred.UserID != tc.TenantID.String() {
+		if !ok || cred.UserID != userID {
 			writeError(w, http.StatusNotFound, "passkey not found")
 			return
-		}
+			}
 		cred.Revoked = true
 	}
 	w.Header().Set("Content-Type", "application/json")
