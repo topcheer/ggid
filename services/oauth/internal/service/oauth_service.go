@@ -1766,13 +1766,27 @@ func (s *OAuthService) RefreshToken(ctx context.Context, req *RefreshTokenReques
 		_ = s.tokenFamilyStore.RegisterRotation(ctx, familyID, record.ID.String(), newRecord.ID.String())
 	}
 
-	return &TokenResponse{
+	resp := &TokenResponse{
 		AccessToken:  accessToken,
 		TokenType:    "Bearer",
 		ExpiresIn:    expiresIn,
 		RefreshToken: newRefreshToken,
 		Scope:        accessTokenScope,
-	}, nil
+	}
+
+	// OIDC Core §12: issue a fresh id_token on refresh when openid scope present.
+	if contains(safeScopes, "openid") {
+		accessTokenHash := sha256.Sum256([]byte(accessToken))
+		atHash := base64.RawURLEncoding.EncodeToString(accessTokenHash[:16])
+		idToken, err := s.issueIDToken(record.UserID, req.TenantID, client.ClientID, "", &IDTokenOptions{
+			AtHash: atHash,
+		})
+		if err == nil {
+			resp.IDToken = idToken
+		}
+	}
+
+	return resp, nil
 }
 
 // lookupAuthRefreshToken checks the Auth service's Redis store for a refresh
