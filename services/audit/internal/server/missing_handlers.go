@@ -61,7 +61,8 @@ func (s *HTTPServer) handleWebhooksList(w http.ResponseWriter, r *http.Request) 
 			Name    string   `json:"name"`
 			URL     string   `json:"url"`
 			Events  []string `json:"events"`
-			Active  bool     `json:"active"`
+			Secret  string   `json:"secret"`
+			Active  *bool    `json:"active"`
 		}
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 			writeJSONError(w, http.StatusBadRequest, "invalid request body")
@@ -70,12 +71,17 @@ func (s *HTTPServer) handleWebhooksList(w http.ResponseWriter, r *http.Request) 
 		if req.Name == "" {
 			req.Name = req.URL
 		}
+		isActive := true // default to active
+		if req.Active != nil {
+			isActive = *req.Active
+		}
 		webhook := map[string]any{
 			"id":     fmt.Sprintf("whk_%d", time.Now().UnixNano()),
 			"name":   req.Name,
 			"url":    req.URL,
 			"events": req.Events,
-			"active": req.Active,
+			"secret": req.Secret,
+			"active": isActive,
 			"created_at": time.Now().UTC().Format(time.RFC3339),
 		}
 		globalAlertWebhooks.mu.Lock()

@@ -376,8 +376,28 @@ func (s *HTTPServer) handleEvents(w http.ResponseWriter, r *http.Request) {
 			pageSize = n
 		}
 	}
+	// Also accept "limit" as an alias for page_size (Console convention)
+	if ps := r.URL.Query().Get("limit"); ps != "" {
+		if n, err := strconv.Atoi(ps); err == nil && n > 0 && n <= 500 {
+			pageSize = n
+		}
+	}
 
-	events, total, err := s.svc.ListEvents(r.Context(), filter, 1, pageSize)
+	// Parse page number (1-based) or offset
+	page := 1
+	if pg := r.URL.Query().Get("page"); pg != "" {
+		if n, err := strconv.Atoi(pg); err == nil && n > 0 {
+			page = n
+		}
+	}
+	// "offset" as direct row offset (alternative to page)
+	if off := r.URL.Query().Get("offset"); off != "" {
+		if n, err := strconv.Atoi(off); err == nil && n >= 0 {
+			page = (n / pageSize) + 1
+		}
+	}
+
+	events, total, err := s.svc.ListEvents(r.Context(), filter, page, pageSize)
 	if err != nil {
 		writeServiceError(w, err)
 		return
