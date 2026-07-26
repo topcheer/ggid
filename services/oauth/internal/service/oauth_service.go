@@ -897,9 +897,12 @@ func (s *OAuthService) evaluateConditionalAccess(ctx context.Context, tenantID, 
 						matched = false
 					}
 				case "ip_address":
-					// Match if client IP equals the condition value.
-					if sv, ok := v.(string); ok && sv != "" && clientIP != sv {
-						matched = false
+					// Match if client IP is within the condition CIDR range.
+					// Supports both exact IP and CIDR notation (e.g. 203.0.113.0/24).
+					if sv, ok := v.(string); ok && sv != "" {
+						if !ipMatchesCIDR(clientIP, sv) {
+							matched = false
+						}
 					}
 				case "auth_method":
 					// In PasswordGrant, the auth method is always "password".
@@ -2189,6 +2192,26 @@ func ctxUserAgent(ctx context.Context) string {
 
 type CtxKeyClientIP struct{}
 type CtxKeyUserAgent struct{}
+
+// ipMatchesCIDR checks if an IP address matches a CIDR range or exact IP.
+func ipMatchesCIDR(ip, cidr string) bool {
+	if ip == "" {
+		return false
+	}
+	// If no / in cidr, do exact match.
+	if !strings.Contains(cidr, "/") {
+		return ip == cidr
+	}
+	_, network, err := net.ParseCIDR(cidr)
+	if err != nil {
+		return ip == cidr // fallback to exact match
+	}
+	parsedIP := net.ParseIP(ip)
+	if parsedIP == nil {
+		return false
+	}
+	return network.Contains(parsedIP)
+}
 
 // --- Utility functions ---
 
