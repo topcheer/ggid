@@ -804,8 +804,8 @@ func (s *OAuthService) evaluateConditionalAccess(ctx context.Context, tenantID, 
 	}
 	rows, err := s.pool.Query(ctx, `
 		SELECT data FROM conditional_access_store
-		WHERE tenant_id = $1 AND (data->>'enabled')::bool = true
-		ORDER BY (data->>'priority')::int ASC NULLS LAST`, tenantID)
+		WHERE data->>'tenant_id' = $1 AND (data->>'enabled')::bool = true
+		ORDER BY (data->>'priority')::int ASC NULLS LAST`, tenantID.String())
 	if err != nil {
 		return "allow", ""
 	}

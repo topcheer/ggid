@@ -400,6 +400,31 @@ func getTenantAndUser(r *http.Request) (context.Context, uuid.UUID, uuid.UUID, e
 	return ctx, tenantID, userID, nil
 }
 
+// encodeUserHandle creates a tenant-scoped userHandle for WebAuthn.
+// Format: "tenantID:userID" — allows discoverable credential login to
+// extract tenant identity from the passkey itself.
+func encodeUserHandle(tenantID, userID uuid.UUID) []byte {
+	return []byte(tenantID.String() + ":" + userID.String())
+}
+
+// parseUserHandle extracts tenantID and userID from a WebAuthn userHandle.
+// Returns error if the format is invalid (e.g. legacy passkeys without tenant).
+func parseUserHandle(handle []byte) (uuid.UUID, uuid.UUID, error) {
+	parts := strings.SplitN(string(handle), ":", 2)
+	if len(parts) != 2 {
+		return uuid.Nil, uuid.Nil, fmt.Errorf("invalid userHandle format")
+	}
+	tenantID, err := uuid.Parse(parts[0])
+	if err != nil {
+		return uuid.Nil, uuid.Nil, fmt.Errorf("invalid tenant_id in userHandle")
+	}
+	userID, err := uuid.Parse(parts[1])
+	if err != nil {
+		return uuid.Nil, uuid.Nil, fmt.Errorf("invalid user_id in userHandle")
+	}
+	return tenantID, userID, nil
+}
+
 func (h *Handler) buildWebAuthnUser(ctx context.Context, tenantID, userID uuid.UUID) (*webAuthnUser, error) {
 	var wcreds []webauthn.Credential
 
@@ -431,10 +456,13 @@ func (h *Handler) buildWebAuthnUser(ctx context.Context, tenantID, userID uuid.U
 		}
 	}
 
+	// Encode tenant_id:user_id as userHandle so the passkey carries tenant info.
+	// This enables discoverable credential login to resolve the tenant from
+	// the passkey itself, without requiring a separate tenant selection step.
 	return &webAuthnUser{
 		id:          userID,
-		username:    userID.String(),
-		displayName: userID.String(),
+		username:    tenantID.String() + ":" + userID.String(),
+		displayName: userID.String(), // Display user UUID in authenticator prompt
 		credentials: wcreds,
 	}, nil
 }
@@ -704,6 +732,16 @@ func (h *Handler) finishAuthentication(w http.ResponseWriter, r *http.Request) {
 	if h.creds != nil {
 		cred, err := h.creds.GetCredentialByID(ctx, tenantID, parsedResponse.RawID)
 		if err == nil && cred != nil {
+			// P0 Security: verify credential belongs to the requesting tenant.
+			// The assertion response may include a userHandle from a discoverable
+			// credential — parse it to extract the original tenant, and reject
+			// if it doesn't match the current request's X-Tenant-ID.
+			if cred.TenantID != uuid.Nil && cred.TenantID != tenantID {
+				writeJSON(w, http.StatusForbidden, map[string]any{
+					"error": "passkey does not belong to this tenant",
+				})
+				return
+			}
 			user, _ = h.buildWebAuthnUser(ctx, tenantID, cred.UserID)
 		}
 	}
