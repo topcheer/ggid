@@ -109,7 +109,7 @@ func (h *Handler) handlePasskeyRevoke(w http.ResponseWriter, r *http.Request) {
 	if tokenStr := strings.TrimPrefix(authHeader, "Bearer "); tokenStr != authHeader {
 		claims := jwt.MapClaims{}
 		_, parseErr := jwt.ParseWithClaims(tokenStr, claims, func(tok *jwt.Token) (any, error) {
-			return h.authSvc.PublicKey(), nil
+			if _, ok := tok.Method.(*jwt.SigningMethodRSA); !ok { return nil, fmt.Errorf("unexpected signing method: %s", tok.Header["alg"]) }; return h.authSvc.PublicKey(), nil
 		})
 		if parseErr == nil {
 			userID, _ = claims["sub"].(string)

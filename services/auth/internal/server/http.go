@@ -978,7 +978,7 @@ func (h *Handler) changePassword(w http.ResponseWriter, r *http.Request) {
 		tokenStr := strings.TrimPrefix(authHeader, "Bearer ")
 		claims := jwt.MapClaims{}
 		_, err := jwt.ParseWithClaims(tokenStr, claims, func(tok *jwt.Token) (any, error) {
-			return h.authSvc.PublicKey(), nil
+			if _, ok := tok.Method.(*jwt.SigningMethodRSA); !ok { return nil, fmt.Errorf("unexpected signing method: %s", tok.Header["alg"]) }; return h.authSvc.PublicKey(), nil
 		})
 		if err != nil {
 			writeError(w, http.StatusUnauthorized, "invalid token")
@@ -1038,7 +1038,7 @@ func (h *Handler) handleSessions(w http.ResponseWriter, r *http.Request) {
 		tokenStr := strings.TrimPrefix(authHeader, "Bearer ")
 		claims := jwt.MapClaims{}
 		_, parseErr := jwt.ParseWithClaims(tokenStr, claims, func(tok *jwt.Token) (any, error) {
-			return h.authSvc.PublicKey(), nil
+			if _, ok := tok.Method.(*jwt.SigningMethodRSA); !ok { return nil, fmt.Errorf("unexpected signing method: %s", tok.Header["alg"]) }; return h.authSvc.PublicKey(), nil
 		})
 		if parseErr != nil {
 			writeError(w, http.StatusUnauthorized, "invalid token")
@@ -1138,7 +1138,7 @@ func (h *Handler) mfaSetup(w http.ResponseWriter, r *http.Request) {
 		tokenStr := strings.TrimPrefix(authHeader, "Bearer ")
 		claims := jwt.MapClaims{}
 		_, err := jwt.ParseWithClaims(tokenStr, claims, func(tok *jwt.Token) (any, error) {
-			return h.authSvc.PublicKey(), nil
+			if _, ok := tok.Method.(*jwt.SigningMethodRSA); !ok { return nil, fmt.Errorf("unexpected signing method: %s", tok.Header["alg"]) }; return h.authSvc.PublicKey(), nil
 		})
 		if err != nil {
 			writeError(w, http.StatusUnauthorized, "invalid token")
