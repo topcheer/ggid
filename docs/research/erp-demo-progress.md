@@ -4909,3 +4909,27 @@ startIndex 1-based, count max 100 (Users), sortBy whitelist (SQL injection safe)
 | Demo | ✅ no change this cycle |
 
 ### Next Dimension: 2 — Authorization Boundaries (Cycle 1408) — Rotation 4
+
+## Cycle 1408: D2 Authz R4 — 4 P1 Fixes Verified (Round 1478)
+New commits: `c6d65ab9b` (P1-1 refresh binding + P1-4 PII), `3a56c3c78` (P1-4/P1-5 redact), `5296599d0` (P1-7 post_logout redirect), `1ed1d931e` (E2E test), `e1277960a` (R35 complete).
+Build: PASS. `make test`: EXIT=0, 65/65. Danger: 0.
+
+### P1 Fixes Verified ✅
+| ID | Fix | Verification |
+|----|-----|-------------|
+| P1-1 | Refresh token client binding | `oauth_service.go:1654,1676`: `record.ClientID != client.ID` → reject ✅ |
+| P1-4 | ForgotPassword email redaction | commit `3a56c3c78` redacts PII in logs ✅ |
+| P1-5 | CAP username redaction | same commit, log.Printf replaced with masked values ✅ |
+| P1-7 | post_logout_redirect_uri validation | `logout.go:31`: validates against registered URIs ✅ |
+
+### god R35 Final: 54 active issues (P0:0/P1:6/P2:48)
+Remaining P1: P1-2 (Go SDK iss), P1-3 (MCP JWKS), P1-6 (JWKS rotation), P1-9 (TOTP plaintext), P1-10 (role impersonation).
+4 fixed, 2 withdrawn. 8 domains code-level verified.
+
+### D2 Authorization R4 — All Clean
+- Admin paths: 17 prefixes ✅
+- Tenant scope: `row.TenantID != claims.TenantID` ✅
+- Permission route: `HasPermissionForRoute` longest-prefix ✅
+- Viewer blocked: `orders:approve` requires perm ✅
+
+### Next Dimension: 3 — Demo Functional Completeness (Cycle 1414) — Rotation 4
