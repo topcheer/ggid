@@ -1920,11 +1920,16 @@ func (s *OAuthService) PasswordGrant(ctx context.Context, req *PasswordGrantRequ
 	if s.pool != nil {
 		var dbUserID uuid.UUID
 		var credHash string
+		// SECURITY: check locked_until and enabled to prevent brute-force bypass.
+		// The auth service tracks failed_attempts and locked_until — without
+		// these checks here, the OAuth PasswordGrant bypasses account lockout.
 		err := s.pool.QueryRow(ctx, `
 			SELECT u.id, c.secret
 			FROM users u
 			JOIN credentials c ON c.user_id = u.id AND c.type = 'password'
-			WHERE u.username = $1 AND u.tenant_id = $2 AND u.status = 'active'`,
+			WHERE u.username = $1 AND u.tenant_id = $2 AND u.status = 'active'
+			  AND c.enabled = true
+			  AND (c.locked_until IS NULL OR c.locked_until < NOW())`,
 			req.Username, req.TenantID).Scan(&dbUserID, &credHash)
 		if err != nil {
 			return nil, errors.Unauthenticated("invalid credentials")
@@ -1935,8 +1940,24 @@ func (s *OAuthService) PasswordGrant(ctx context.Context, req *PasswordGrantRequ
 
 		ok, _ := pkgcrypto.VerifyPassword(req.Password, credHash)
 		if !ok {
+			// SECURITY: increment failed_attempts and lock if threshold exceeded.
+			_, _ = s.pool.Exec(ctx, `
+				UPDATE credentials
+				SET failed_attempts = failed_attempts + 1,
+				    locked_until = CASE
+				      WHEN failed_attempts >= 4 THEN NOW() + INTERVAL '15 minutes'
+				      ELSE locked_until END,
+				    updated_at = NOW()
+				WHERE user_id = $1 AND tenant_id = $2 AND type = 'password'`,
+				dbUserID, req.TenantID)
 			return nil, errors.Unauthenticated("invalid credentials")
 		}
+		// Reset failed attempts on successful login.
+		_, _ = s.pool.Exec(ctx, `
+			UPDATE credentials
+			SET failed_attempts = 0, locked_until = NULL, last_used_at = NOW(), updated_at = NOW()
+			WHERE user_id = $1 AND tenant_id = $2 AND type = 'password'`,
+			dbUserID, req.TenantID)
 		userID = dbUserID
 	} else {
 		return nil, errors.New(errors.ErrInternal, "database not configured")
