@@ -20,7 +20,7 @@ var (
 )
 
 // getKey resolves the AES-256 encryption key from GGID_ENCRYPTION_KEY env.
-// Returns nil if not set (fail-closed).
+// Returns nil if not set (caller must handle — EncryptTOTPSecret is fail-closed).
 func getKey() []byte {
 	keyCacheMu.Lock()
 	defer keyCacheMu.Unlock()
@@ -45,11 +45,11 @@ func getKey() []byte {
 }
 
 // EncryptTOTPSecret encrypts using AES-256-GCM. Returns base64(nonce+ciphertext).
-// If no key configured, returns plaintext (backward compat during migration).
+// SECURITY: Returns error if no encryption key is configured (fail-closed).
 func EncryptTOTPSecret(plaintext string) (string, error) {
 	key := getKey()
 	if key == nil {
-		return plaintext, nil
+		return "", fmt.Errorf("GGID_ENCRYPTION_KEY not set — refusing to store TOTP secret as plaintext")
 	}
 	block, err := aes.NewCipher(key)
 	if err != nil {
