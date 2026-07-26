@@ -33,6 +33,7 @@ func NewRegistry() *Registry {
 	r.register(policyTools...)
 	r.register(auditTools...)
 	r.register(adminTools...)
+	r.register(extendedAdminTools...)
 	return r
 }
 
