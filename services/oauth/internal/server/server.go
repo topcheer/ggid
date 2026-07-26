@@ -386,15 +386,6 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 			return
 		}
 
-		// PKCE enforcement: if RequirePKCE is enabled, or the client is public
-		// (no client_secret), code_challenge is mandatory.
-		if cfg.RequirePKCE && codeChallenge == "" {
-			writeJSON(w, http.StatusBadRequest, map[string]string{
-				"error":             "invalid_request",
-				"error_description": "PKCE is required: code_challenge parameter is mandatory",
-			})
-			return
-		}
 		// Validate S256 method is used when challenge is provided (OAuth 2.1: S256 only).
 		if codeChallenge != "" && codeChallengeMethod != "" && codeChallengeMethod != "S256" {
 			writeJSON(w, http.StatusBadRequest, map[string]string{
@@ -433,9 +424,7 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 		}
 
 		// SECURITY: Early redirect_uri validation — verify the redirect_uri is registered
-		// for this client BEFORE rendering the login page. Without this, an attacker could
-		// use the authorize endpoint to display a legitimate-looking login page with an
-		// attacker-controlled redirect target (phishing vector).
+		// for this client BEFORE rendering the login page.
 		authCtx := tenant.WithContext(r.Context(), &tenant.Context{TenantID: tenantID, IsolationLevel: tenant.IsolationShared})
 		earlyClient, earlyErr := oauthSvc.GetClient(authCtx, clientID)
 		if earlyErr != nil {
@@ -444,6 +433,18 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 		}
 		if !earlyClient.ValidateRedirectURI(redirectURI) {
 			writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid_request", "error_description": "redirect_uri not registered for this client"})
+			return
+		}
+
+		// PKCE enforcement: mandatory when RequirePKCE is enabled OR the
+		// client is public (no client_secret). RFC 7636 §4 and OAuth 2.1
+		// require PKCE for all authorization code flows.
+		isPublicClient := !earlyClient.IsConfidential()
+		if (cfg.RequirePKCE || isPublicClient) && codeChallenge == "" {
+			writeJSON(w, http.StatusBadRequest, map[string]string{
+				"error":             "invalid_request",
+				"error_description": "PKCE is required: code_challenge parameter is mandatory",
+			})
 			return
 		}
 
