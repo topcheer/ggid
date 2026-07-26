@@ -709,6 +709,13 @@ var adminOnlyPaths = []string{
 	"/api/v1/tenants", "/api/v1/impersonate",
 	"/api/v1/api-keys", "/api/v1/access-keys",
 	"/api/v1/admin/secrets", "/api/v1/admin/key-rotation", "/api/v1/admin/backup",
+	// Admin-level management endpoints (self-service MFA setup/verify are in publicPaths)
+	"/api/v1/auth/mfa/factors",          // MFA factor configuration (admin)
+	"/api/v1/auth/mfa/admin/",           // Admin MFA management for other users
+	"/api/v1/auth/credentials/",         // Credential vault (admin access)
+	"/api/v1/auth/credential-stuffing/", // Credential stuffing config (admin)
+	"/api/v1/mdm/devices",               // MDM device management
+	"/api/v1/identity/devices/",         // Device posture management
 	// Bare OAuth management endpoints (no /api/v1 prefix in proxy route)
 	"/oauth/clients",
 }
@@ -771,8 +778,9 @@ func (gw *Gateway) checkRouteScope(w http.ResponseWriter, r *http.Request) bool 
 
 	hasPlatform := false
 	hasTenant := false
-	adminIndicators := append(append([]string{}, claims.Scopes...), claims.Roles...)
-	for _, sc := range adminIndicators {
+	// SECURITY: Only check scopes for platform:admin, not roles.
+	// Roles are tenant-controlled and can be forged.
+	for _, sc := range claims.Scopes {
 		scl := strings.ToLower(sc)
 		if scl == "platform:admin" {
 			if isPlatformTenant {

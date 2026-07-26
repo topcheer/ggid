@@ -43,6 +43,13 @@ var defaultAdminPrefixes = []string{
 	"/api/v1/system/",         // System management
 	"/api/v1/tenants",         // Tenant management (except resolve which is public)
 	"/api/v1/impersonate",     // Impersonation (platform admin only)
+	// Admin-level management endpoints (self-service variants are in publicPaths)
+	"/api/v1/auth/mfa/factors",          // MFA factor configuration
+	"/api/v1/auth/mfa/admin/",           // Admin MFA management for other users
+	"/api/v1/auth/credentials/",         // Credential vault
+	"/api/v1/auth/credential-stuffing/", // Credential stuffing config
+	"/api/v1/mdm/devices",               // MDM device management
+	"/api/v1/identity/devices/",         // Device posture management
 }
 
 // SelfServicePaths are /users/me sub-paths exempt from admin checks.
@@ -148,6 +155,18 @@ func hasAdminScope(scopes []string) bool {
 	for _, sc := range scopes {
 		switch strings.ToLower(sc) {
 		case "platform:admin", "tenant:admin":
+			return true
+		}
+	}
+	return false
+}
+
+// hasPlatformAdminScope checks if the user has platform:admin scope.
+// This is stricter than hasAdminScope - it only accepts platform:admin, not tenant:admin.
+// Use this for platform-only operations that should not be accessible to tenant admins.
+func hasPlatformAdminScope(scopes []string) bool {
+	for _, sc := range scopes {
+		if strings.EqualFold(sc, "platform:admin") {
 			return true
 		}
 	}
