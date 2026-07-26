@@ -69,7 +69,7 @@ export default function SecretsPage() {
 
       <div className="flex gap-1 border-b border-gray-200 dark:border-gray-700 overflow-x-auto">
         {([["references", t("secrets.references"), KeyRound], ["rotation", t("secrets.rotation"), RotateCw], ["health", t("secrets.providerHealth"), Shield]] as const).map(([id, label, Icon]) => (
-          <button key={id} onClick={() => setTab(id as Tab)} aria-pressed={tab === id} className={`flex items-center gap-1.5 border-b-2 px-4 py-2 text-sm font-medium transition whitespace-nowrap ${tab === id ? "border-amber-600 text-amber-600 dark:text-amber-400" : "border-transparent text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"} focus:outline-none focus:ring-2 focus:ring-blue-500} focus:outline-none focus:ring-2 focus:ring-blue-500}`}><Icon className="h-4 w-4" /> {label}</button>
+          <button key={id} onClick={() => setTab(id as Tab)} aria-pressed={tab === id} className={`flex items-center gap-1.5 border-b-2 px-4 py-2 text-sm font-medium transition whitespace-nowrap ${tab === id ? "border-amber-600 text-amber-600 dark:text-amber-400" : "border-transparent text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"} focus:outline-none focus:ring-2 focus:ring-blue-500}`}><Icon className="h-4 w-4" /> {label}</button>
         ))}
       </div>
 
@@ -82,13 +82,13 @@ export default function SecretsPage() {
           <tbody className="divide-y dark:divide-gray-800">{SECRETS.map(s => {
             const days = daysUntilRotation(s.last_rotated, s.interval_days);
             return (
-              <tr key={s.name} className="hover:bg-gray-50 dark:hover:bg-gray-900/30 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500">
+              <tr key={s.name} className="hover:bg-gray-50 dark:hover:bg-gray-900/30 focus:outline-none focus:ring-2 focus:ring-blue-500">
                 <td className="px-3 py-3"><code className="text-xs font-mono text-amber-500">{s.name}</code></td>
                 <td className="px-3 py-3 text-center"><span className={`px-1.5 py-0.5 rounded text-xs font-mono bg-gray-100 dark:bg-gray-700 ${PROVIDER_COLORS[s.provider]}`}>{s.provider}</span></td>
                 <td className="px-3 py-3"><code className="text-xs font-mono text-gray-500 truncate block max-w-xs">{s.path}</code></td>
                 <td className="px-3 py-3 text-center text-xs">{new Date(s.last_rotated).toLocaleDateString()}</td>
                 <td className="px-3 py-3 text-center"><span className={`text-xs font-mono ${days < 0 ? "text-red-600 font-bold" : days < 7 ? "text-orange-600" : "text-gray-400"}`}>{days < 0 ? `${Math.abs(days)}d overdue` : `${days}d left`}</span></td>
-                <td className="px-3 py-3 text-right"><button onClick={() => rotateSecret(s.name)} disabled={rotating === s.name} aria-label={"Rotate " + s.name} className="rounded-lg p-1.5 text-amber-500 hover:bg-amber-50 dark:hover:bg-amber-900/20 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500">{rotating === s.name ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RotateCw className="h-3.5 w-3.5" />}</button></td>
+                <td className="px-3 py-3 text-right"><button onClick={() => rotateSecret(s.name)} disabled={rotating === s.name} aria-label={"Rotate " + s.name} className="rounded-lg p-1.5 text-amber-500 hover:bg-amber-50 dark:hover:bg-amber-900/20 focus:outline-none focus:ring-2 focus:ring-blue-500">{rotating === s.name ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RotateCw className="h-3.5 w-3.5" />}</button></td>
               </tr>
             );
           })}</tbody>
@@ -103,7 +103,7 @@ export default function SecretsPage() {
             <div className="space-y-2">{upcoming.map(s => (
               <div key={s.name} className="flex items-center justify-between rounded-lg border p-3 dark:border-gray-700">
                 <div className="flex items-center gap-3"><div className={`flex h-8 w-8 items-center justify-center rounded-lg ${s.daysLeft < 0 ? "bg-red-100 dark:bg-red-900/30" : s.daysLeft < 7 ? "bg-orange-100 dark:bg-orange-900/30" : "bg-green-100 dark:bg-green-900/30"}`}><Lock className={`h-4 w-4 ${s.daysLeft < 0 ? "text-red-500" : s.daysLeft < 7 ? "text-orange-500" : "text-green-500"}`} /></div><div><span className="text-sm font-medium">{s.name}</span><p className="text-xs text-gray-400">{t("secrets.interval")}: {s.interval_days}d · {s.provider}</p></div></div>
-                <div className="text-right"><span className={`text-sm font-bold ${s.daysLeft < 0 ? "text-red-600" : s.daysLeft < 7 ? "text-orange-600" : "text-gray-500"}`}>{s.daysLeft < 0 ? `${Math.abs(s.daysLeft)}d overdue` : `${s.daysLeft}d`}</span><button onClick={() => rotateSecret(s.name)} disabled={rotating === s.name} className="ml-3 rounded-lg bg-amber-600 px-2 py-1 text-xs font-medium text-white hover:bg-amber-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500">{rotating === s.name ? "..." : t("secrets.rotateNow")}</button></div>
+                <div className="text-right"><span className={`text-sm font-bold ${s.daysLeft < 0 ? "text-red-600" : s.daysLeft < 7 ? "text-orange-600" : "text-gray-500"}`}>{s.daysLeft < 0 ? `${Math.abs(s.daysLeft)}d overdue` : `${s.daysLeft}d`}</span><button onClick={() => rotateSecret(s.name)} disabled={rotating === s.name} className="ml-3 rounded-lg bg-amber-600 px-2 py-1 text-xs font-medium text-white hover:bg-amber-700 focus:outline-none focus:ring-2 focus:ring-blue-500">{rotating === s.name ? "..." : t("secrets.rotateNow")}</button></div>
               </div>
             ))}</div>
           </div>

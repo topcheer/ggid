@@ -123,7 +123,7 @@ export default function TenantsPage() {
             </p>
             <div className="flex justify-end gap-2">
               <button onClick={() => setDeleteTarget(null)} className="rounded-lg border border-gray-300 dark:border-gray-700 px-4 py-2 text-sm">{t("common.cancel")}</button>
-              <button onClick={() => handleDelete(deleteTarget)} className="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500">{t("common.delete")}</button>
+              <button onClick={() => handleDelete(deleteTarget)} className="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-blue-500">{t("common.delete")}</button>
             </div>
           </div>
         </div>
@@ -156,7 +156,7 @@ function TenantList({ tenants, onDelete }: { tenants: Tenant[]; onDelete: (t: Te
           </tr></thead>
           <tbody>
             {tenants.map((t_item) => (
-              <tr key={t_item.id} className="border-b border-gray-100 dark:border-gray-800/50 hover:bg-gray-50 dark:hover:bg-gray-800/30 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500">
+              <tr key={t_item.id} className="border-b border-gray-100 dark:border-gray-800/50 hover:bg-gray-50 dark:hover:bg-gray-800/30 focus:outline-none focus:ring-2 focus:ring-blue-500">
                 <td className="py-3 px-4">
                   <div className="flex items-center gap-2">
                     <span className="font-medium text-gray-900 dark:text-white">{t_item.name}</span>
@@ -164,7 +164,7 @@ function TenantList({ tenants, onDelete }: { tenants: Tenant[]; onDelete: (t: Te
                   </div>
                   {t_item.slug && (
                     <a href={`https://${t_item.slug}.ggid-console.iot2.win`} target="_blank" rel="noopener noreferrer"
-                       className="text-xs text-blue-500 hover:underline font-mono focus:outline-none focus:ring-2 focus:ring-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500">{t_item.slug}.ggid-console.iot2.win</a>
+                       className="text-xs text-blue-500 hover:underline font-mono focus:outline-none focus:ring-2 focus:ring-blue-500">{t_item.slug}.ggid-console.iot2.win</a>
                   )}
                 </td>
                 <td className="py-3 px-4"><code className="text-xs text-gray-400 font-mono">{t_item.id}</code></td>
@@ -179,7 +179,7 @@ function TenantList({ tenants, onDelete }: { tenants: Tenant[]; onDelete: (t: Te
                 </td>
                 <td className="py-3 px-4 text-xs text-gray-500 dark:text-gray-400">{t_item.created ? new Date(t_item.created).toLocaleDateString() : "—"}</td>
                 <td className="py-3 px-4 text-right">
-                  <button onClick={() => onDelete(t_item)} className="rounded p-1.5 text-gray-400 hover:bg-red-50 hover:text-red-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500" title={t("common.delete")}>
+                  <button onClick={() => onDelete(t_item)} className="rounded p-1.5 text-gray-400 hover:bg-red-50 hover:text-red-600 focus:outline-none focus:ring-2 focus:ring-blue-500" title={t("common.delete")}>
                     <Trash2 className="h-4 w-4" />
                   </button>
                 </td>
@@ -280,7 +280,7 @@ function CreateTenant({ onCreated }: { onCreated: () => void }) {
             const selected = plan === p.id;
             return (
               <button key={p.id} onClick={() => setPlan(p.id)}
-                className={`flex flex-col items-start gap-1 p-4 rounded-xl border-2 text-left transition-all ${selected ? "border-blue-500 bg-blue-50 dark:bg-blue-950/20" : "border-gray-200 dark:border-gray-700 hover:border-gray-300"} focus:outline-none focus:ring-2 focus:ring-blue-500} focus:outline-none focus:ring-2 focus:ring-blue-500}`}>
+                className={`flex flex-col items-start gap-1 p-4 rounded-xl border-2 text-left transition-all ${selected ? "border-blue-500 bg-blue-50 dark:bg-blue-950/20" : "border-gray-200 dark:border-gray-700 hover:border-gray-300"} focus:outline-none focus:ring-2 focus:ring-blue-500}`}>
                 <Icon className={`w-5 h-5 ${selected ? "text-blue-600" : "text-gray-400"}`} />
                 <span className="text-sm font-bold text-gray-900 dark:text-white">{t(`tenants.create.plan${p.id.replace(/^./, (m: any) => m.toUpperCase())}`)}</span>
                 <span className="text-xs text-gray-400">{p.desc}</span>
@@ -302,7 +302,7 @@ function CreateTenant({ onCreated }: { onCreated: () => void }) {
 
       <button onClick={submit} disabled={submitting || !name}
         aria-label={t("tenants.create.submit") || "Create tenant"}
-        className="flex items-center gap-2 px-6 py-2.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white rounded-lg font-medium text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500">
+        className="flex items-center gap-2 px-6 py-2.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white rounded-lg font-medium text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
         {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
         {t("tenants.create.submit")}
       </button>

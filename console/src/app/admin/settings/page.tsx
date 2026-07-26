@@ -69,7 +69,7 @@ export default function AdminSettingsPage() {
 
       <div className="flex gap-1 border-b border-gray-200 dark:border-gray-700 overflow-x-auto">
         {([["security", t("adminSettings.security"), Shield], ["shutdown", t("adminSettings.shutdown"), Power], ["flags", t("adminSettings.featureFlags"), ToggleLeft]] as const).map(([id, label, Icon]) => (
-          <button key={id} onClick={() => setTab(id as Tab)} aria-pressed={tab === id} className={`flex items-center gap-1.5 border-b-2 px-4 py-2 text-sm font-medium transition whitespace-nowrap ${tab === id ? "border-gray-600 text-gray-600 dark:text-gray-300" : "border-transparent text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"} focus:outline-none focus:ring-2 focus:ring-blue-500} focus:outline-none focus:ring-2 focus:ring-blue-500} focus:outline-none focus:ring-2 focus:ring-blue-500}`}><Icon className="h-4 w-4" /> {label}</button>
+          <button key={id} onClick={() => setTab(id as Tab)} aria-pressed={tab === id} className={`flex items-center gap-1.5 border-b-2 px-4 py-2 text-sm font-medium transition whitespace-nowrap ${tab === id ? "border-gray-600 text-gray-600 dark:text-gray-300" : "border-transparent text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"} focus:outline-none focus:ring-2 focus:ring-blue-500} focus:outline-none focus:ring-2 focus:ring-blue-500}`}><Icon className="h-4 w-4" /> {label}</button>
         ))}
       </div>
 
@@ -97,7 +97,7 @@ export default function AdminSettingsPage() {
               <div key={h.header} className="flex items-center justify-between rounded-lg border p-2 dark:border-gray-700"><div className="flex items-center gap-2 min-w-0"><CheckCircle2 className="h-4 w-4 text-green-500 shrink-0" /><code className="text-xs font-mono text-gray-500 shrink-0">{h.header}</code><code className="text-xs font-mono text-gray-400 truncate">{h.value}</code></div></div>
             ))}</div>
           </div>
-          <button onClick={saveConfig} disabled={saving} className="flex items-center gap-2 rounded-lg bg-gray-700 px-4 py-2 text-sm font-medium text-white hover:bg-gray-800 disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500">{saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />} {t("adminSettings.save")}</button>
+          <button onClick={saveConfig} disabled={saving} className="flex items-center gap-2 rounded-lg bg-gray-700 px-4 py-2 text-sm font-medium text-white hover:bg-gray-800 disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500">{saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />} {t("adminSettings.save")}</button>
         </div>
       )}
 
@@ -110,7 +110,7 @@ export default function AdminSettingsPage() {
             {draining ? (
               <div><div className="mb-2 flex items-center justify-between"><span className="text-sm">{t("adminSettings.draining")}</span><span className="text-sm font-mono">{shutdownProgress}%</span></div><div className="h-3 overflow-hidden rounded-full bg-gray-200 dark:bg-gray-700"><div className="h-full rounded-full bg-yellow-500 transition-all" style={{ width: `${shutdownProgress}%` }} /></div></div>
             ) : (
-              <button onClick={triggerDrain} className="flex items-center gap-2 rounded-lg bg-yellow-600 px-4 py-2 text-sm font-medium text-white hover:bg-yellow-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"><Power className="h-4 w-4" /> {t("adminSettings.triggerDrain")}</button>
+              <button onClick={triggerDrain} className="flex items-center gap-2 rounded-lg bg-yellow-600 px-4 py-2 text-sm font-medium text-white hover:bg-yellow-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"><Power className="h-4 w-4" /> {t("adminSettings.triggerDrain")}</button>
             )}
           </div>
           <div className={card}>
@@ -134,7 +134,7 @@ export default function AdminSettingsPage() {
               <button onClick={() => setFlags(prev => prev.map(x => x.key === f.key ? { ...x, enabled: !x.enabled } : x))} aria-pressed={f.enabled} aria-label={f.label} className={`relative h-6 w-11 rounded-full transition ${f.enabled ? "bg-green-500" : "bg-gray-300 dark:bg-gray-700"}`}><span className={`absolute top-0.5 h-5 w-5 rounded-full bg-white transition ${f.enabled ? "left-5" : "left-0.5"}`} /></button>
             </div>
           ))}
-          <button onClick={saveConfig} disabled={saving} className="flex items-center gap-2 rounded-lg bg-gray-700 px-4 py-2 text-sm font-medium text-white hover:bg-gray-800 disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500">{saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />} {t("adminSettings.saveFlags")}</button>
+          <button onClick={saveConfig} disabled={saving} className="flex items-center gap-2 rounded-lg bg-gray-700 px-4 py-2 text-sm font-medium text-white hover:bg-gray-800 disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500">{saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />} {t("adminSettings.saveFlags")}</button>
         </div>
       )}
 

@@ -26,7 +26,7 @@ export default function GlobalThreatsPage() {
 
   useEffect(() => { load(); }, [load]);
 
-  const severityColors: Record<string, string> = { critical: "bg-red-100 text-red-700", high: "bg-orange-100 text-orange-700", medium: "bg-yellow-100 text-yellow-700", low: "bg-blue-100 text-blue-700" };
+  const severityColors: Record<string, string> = { critical: "bg-red-100 text-red-700 dark:bg-red-950 dark:text-red-400", high: "bg-orange-100 text-orange-700 dark:bg-orange-950 dark:text-orange-400", medium: "bg-yellow-100 text-yellow-700 dark:bg-yellow-950 dark:text-yellow-400", low: "bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-400" };
 
   if (loading) return <div className="flex justify-center py-20"><Loader2 className="w-8 h-8 animate-spin text-blue-600" /></div>;
 
@@ -59,7 +59,7 @@ export default function GlobalThreatsPage() {
               </div>
               <div className="flex items-center gap-2">
                 <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${severityColors[t.severity] || severityColors.low}`}>{t.severity}</span>
-                <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${t.status === "open" ? "bg-red-100 text-red-700" : "bg-green-100 text-green-700"}`}>{t.status}</span>
+                <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${t.status === "open" ? "bg-red-100 text-red-700 dark:bg-red-950 dark:text-red-400" : "bg-green-100 text-green-700 dark:bg-green-950 dark:text-green-400"}`}>{t.status}</span>
               </div>
             </div>
           ))}

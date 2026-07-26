@@ -108,7 +108,7 @@ export default function OrgAnalyticsPage() {
 
       {/* Growth trend */}
       {stats.growth_trend.length > 0 && (
-        <div className="mb-6 rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
+        <div className="mb-6 rounded-xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-700 dark:bg-gray-800">
           <h3 className="mb-4 flex items-center gap-2 text-sm font-semibold">
             <TrendingUp className="h-4 w-4 text-brand-600" />
             {t("orgAnalytics.memberGrowthTrend")}
@@ -121,7 +121,7 @@ export default function OrgAnalyticsPage() {
                   <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
                 </linearGradient>
               </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" />
+              <CartesianGrid strokeDasharray="3 3" stroke="hsl(0 0% 80%)" strokeOpacity={0.3} />
               <XAxis dataKey="date" tick={{ fontSize: 11 }} />
               <YAxis tick={{ fontSize: 11 }} allowDecimals={false} />
               <Tooltip contentStyle={{ fontSize: 12, borderRadius: 8 }} />
@@ -134,11 +134,11 @@ export default function OrgAnalyticsPage() {
       <div className="grid gap-6 lg:grid-cols-2">
       {/* Members by Org */}
         {stats.members_by_org.length > 0 && (
-          <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
+          <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-700 dark:bg-gray-800">
             <h3 className="mb-4 text-sm font-semibold">{t("orgAnalytics.membersByOrg")}</h3>
             <ResponsiveContainer width="100%" height={250}>
               <BarChart data={stats.members_by_org} layout="vertical">
-                <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" horizontal={false} />
+                <CartesianGrid strokeDasharray="3 3" stroke="hsl(0 0% 80%)" strokeOpacity={0.3} horizontal={false} />
                 <XAxis type="number" tick={{ fontSize: 11 }} allowDecimals={false} />
                 <YAxis type="category" dataKey="org_name" tick={{ fontSize: 11 }} width={120} />
                 <Tooltip contentStyle={{ fontSize: 12, borderRadius: 8 }} />
@@ -150,7 +150,7 @@ export default function OrgAnalyticsPage() {
 
       {/* Role Distribution */}
         {stats.role_distribution.length > 0 && (
-          <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
+          <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-700 dark:bg-gray-800">
             <h3 className="mb-4 text-sm font-semibold">{t("orgAnalytics.roleDistribution")}</h3>
             <ResponsiveContainer width="100%" height={250}>
               <PieChart>

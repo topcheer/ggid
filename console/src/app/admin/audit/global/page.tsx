@@ -44,7 +44,7 @@ export default function GlobalAuditDashboard() {
 
       <div className="mb-4 flex items-center gap-3">
         <Filter className="h-4 w-4 text-gray-400" />
-        <select value={tenantFilter} onChange={e => setTenantFilter(e.target.value)} className="rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-800">
+        <select value={tenantFilter} onChange={e => setTenantFilter(e.target.value)} aria-label="Filter by tenant" className="rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500">
           <option value="">All Tenants</option>
           {tenantIds.map(tid => <option key={tid} value={tid}>{tid.substring(0, 8)}</option>)}
         </select>
@@ -56,6 +56,13 @@ export default function GlobalAuditDashboard() {
         <div className="rounded-lg border border-gray-200 p-4 dark:border-gray-800"><div className="flex items-center gap-2"><Shield className="h-5 w-5 text-red-500" /></div><p className="mt-2 text-2xl font-bold">{events.filter(e => e.result === "failed" || e.result === "denied").length}</p><p className="text-xs text-gray-500">Failed/Denied</p></div>
       </div>
 
+      {events.length === 0 ? (
+        <div className="rounded-xl border border-gray-200 bg-white p-8 text-center dark:border-gray-800 dark:bg-gray-900">
+          <Activity className="mx-auto mb-3 h-12 w-12 text-gray-300" />
+          <p className="text-sm text-gray-500">No audit events found.</p>
+          <p className="mt-1 text-xs text-gray-400">Events will appear here when activity occurs across tenants.</p>
+        </div>
+      ) : (
       <div className="overflow-x-auto rounded-xl border border-gray-200 dark:border-gray-800">
         <table className="w-full">
           <thead className="border-b border-gray-200 bg-gray-50 dark:border-gray-800 dark:bg-gray-900">
@@ -63,18 +70,19 @@ export default function GlobalAuditDashboard() {
           </thead>
           <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
             {events.slice(0, 50).map(e => (
-              <tr key={e.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500">
+              <tr key={e.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/50">
                 <td className="px-4 py-3 text-xs text-gray-500">{e.created_at ? new Date(e.created_at).toLocaleString() : "—"}</td>
                 <td className="px-4 py-3 text-sm">{e.event_type || e.action || "—"}</td>
                 <td className="px-4 py-3 text-sm">{e.actor_name || e.actor_id?.substring(0, 8) || "system"}</td>
                 <td className="px-4 py-3 text-xs"><span className="rounded-full bg-indigo-50 px-2 py-0.5 text-xs text-indigo-600 dark:bg-indigo-950">{e.tenant_id?.substring(0, 8) || "—"}</span></td>
-                <td className="px-4 py-3"><span className={`rounded-full px-2 py-0.5 text-xs font-medium ${e.result === "success" ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}`}>{e.result}</span></td>
+                <td className="px-4 py-3"><span className={`rounded-full px-2 py-0.5 text-xs font-medium ${e.result === "success" ? "bg-green-100 text-green-700 dark:bg-green-950 dark:text-green-400" : "bg-red-100 text-red-700 dark:bg-red-950 dark:text-red-400"}`}>{e.result}</span></td>
                 <td className="px-4 py-3 text-xs text-gray-400">{e.ip_address?.replace(/\/\d+$/, "") || "—"}</td>
               </tr>
             ))}
           </tbody>
         </table>
       </div>
+      )}
     </div>
   );
 }
