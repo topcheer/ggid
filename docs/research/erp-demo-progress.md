@@ -4172,3 +4172,41 @@ Baseline: de3439b34. **12 new security commits** since last cycle:
 | Demo (8 apps) | ✅ no hardcoded URLs in core routing |
 
 ### Next Dimension: 2 — Authorization Boundaries (Cycle 1300)
+
+## Cycle 1295: Passkey/WebAuthn Multi-Tenant Verification (Round 1459)
+Triggered by ggcxf_cli architecture notification: Passkey/WebAuthn multi-tenant refactor.
+New commits since C1294: `03024a912` (DB-first credential lookup for cross-tenant check).
+
+### All 5 Security Controls Verified (Both Handlers)
+| Control | Simplified (`passkey_handler.go`) | Full (`webauthn/handler.go`) |
+|---------|----------------------------------|------------------------------|
+| 1. userHandle `tenant_id:user_id` | L140-142 ✅ | L471 ✅ |
+| 2. Cross-tenant rejection | L374-386: DB query `tenant_id::text` match → 403 ✅ | L745-756: UUID match via tenant-scoped `GetCredentialByID` → 403 ✅ |
+| 3. excludeCredentials | L145-182: SQL `WHERE tenant_id AND user_id AND revoked=false` ✅ | L502-520: `webauthn.WithExclusions` ✅ |
+| 4. Identity verification (JWT sub) | L98-113: `X-User-ID` header vs body, admin-only override ✅ | L383-391: same logic ✅ |
+| 5. RP ID dynamic config | L52-73: DB sys_config → env `WEBAUTHN_RP_ID` fallback ✅ | env `WEBAUTHN_RP_ID` via http.go:328 ✅ |
+
+### Gateway Tenant Boundary Enforcement (Defense-in-Depth)
+- `middleware.go:702-736`: JWT `tenant_id` vs `X-Tenant-ID` header mismatch → 401 "tenant mismatch"
+- Only `platform:admin` scope OR role bypasses (NOT self-assigned "admin"/"administrator") ✅
+- `rbac_dynamic.go:314`: route permission rules scoped to caller's own tenant ✅
+
+### Migration Safety: Simplified → Full Handler
+- **No regression risk**: full handler has ALL 5 controls (verified above).
+- **P2 gap**: full handler RP ID resolution is env-only; simplified handler also supports DB sys_config override. Lost on migration — acceptable (env is primary deployment path).
+- ggcxf_cli migrating Console from simplified → full standard WebAuthn API.
+
+### Downstream Impact
+- **ERP demos**: 0 impact — passkey is Console-only, no demo uses WebAuthn. ✅
+- **SDK**: 0 change — no SDK touches passkey endpoints. ✅
+- Tests: auth/internal/server PASS, auth/internal/webauthn PASS (1.4s). ✅
+- Full suite: 65/65 packages, 0 FAIL. Danger patterns: 0. ✅
+
+### Three-Layer Alignment
+| Layer | Status |
+|-------|--------|
+| Core (auth passkey + gateway tenant boundary) | ✅ multi-tenant secured, builds, 65/65 |
+| SDK (7 langs) | ✅ no change (passkey is Console-only) |
+| Demo (8 apps) | ✅ no impact |
+
+### Next Dimension: 2 — Authorization Boundaries (Cycle 1300)
