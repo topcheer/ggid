@@ -228,12 +228,11 @@ func (gw *Gateway) buildProxies() {
 			}
 			if tenantID, ok := middleware.TenantIDFromRequest(req); ok {
 				req.Header.Set("X-Tenant-ID", tenantID)
-				// Inject as query param for GET requests
+				// SECURITY: always overwrite client-provided tenant_id query param
+				// with the JWT-validated value. Never trust client-supplied tenant_id.
 				q := req.URL.Query()
-				if q.Get("tenant_id") == "" {
-					q.Set("tenant_id", tenantID)
-					req.URL.RawQuery = q.Encode()
-				}
+				q.Set("tenant_id", tenantID)
+				req.URL.RawQuery = q.Encode()
 				// Inject into JSON body for POST/PUT/PATCH requests
 				injectTenantIntoBody(req, tenantID)
 			}
@@ -335,15 +334,16 @@ func (gw *Gateway) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	resolveTenant := func(r *http.Request) string {
-		// 1. tenant_id query param (explicit)
-		if tid := r.URL.Query().Get("tenant_id"); tid != "" {
-			return tid
-		}
-		// 2. tenant from middleware context (subdomain/header)
+		// SECURITY: middleware context (JWT-validated) takes precedence over
+		// client-supplied query params to prevent tenant spoofing.
 		if tid, ok := middleware.TenantIDFromRequest(r); ok {
 			return tid
 		}
-		// 3. default fallback (configurable via env, no hardcoded tenant)
+		// Fallback for unauthenticated pages (login/register): use query param
+		if tid := r.URL.Query().Get("tenant_id"); tid != "" {
+			return tid
+		}
+		// Default fallback (configurable via env, no hardcoded tenant)
 		if tid := os.Getenv("GGID_DEFAULT_TENANT_ID"); tid != "" {
 			return tid
 		}
