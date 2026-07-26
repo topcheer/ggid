@@ -16,6 +16,7 @@ import (
 	"compress/flate"
 	"fmt"
 	"log"
+	"net/url"
 	"log/slog"
 	"math/big"
 	"net"
@@ -609,9 +610,9 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 		if strings.Contains(redirectURL, "?") {
 			sep = "&"
 		}
-		redirectURL += sep + "code=" + code
+		redirectURL += sep + "code=" + url.QueryEscape(code)
 		if state != "" {
-			redirectURL += "&state=" + state
+			redirectURL += "&state=" + url.QueryEscape(state)
 		}
 
 		// HTTP 302 redirect to the client's redirect_uri with code and state

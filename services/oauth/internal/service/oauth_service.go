@@ -18,6 +18,7 @@ import (
 	"log/slog"
 	"math/big"
 	"net"
+	"net/url"
 	"strconv"
 	"strings"
 	"sync"
@@ -1387,12 +1388,12 @@ func (s *OAuthService) BuildAuthorizeRedirectURL(redirectURI, code, state string
 	if containsQS(redirectURI) {
 		sep = "&"
 	}
-	u += sep + "code=" + code
+	u += sep + "code=" + url.QueryEscape(code)
 	if state != "" {
-		u += "&state=" + state
+		u += "&state=" + url.QueryEscape(state)
 	}
 	// RFC 6749 §10.14: iss parameter prevents mix-up attacks.
-	u += "&iss=" + s.issuer
+	u += "&iss=" + url.QueryEscape(s.issuer)
 	return u
 }
 
