@@ -126,7 +126,11 @@ export default function SessionsPage() {
   const handleRevoke = async (sessionId: string) => {
     setRevokingId(sessionId);
     try {
-      await apiFetch(`/api/v1/auth/sessions/${sessionId}`, { method: "DELETE" }).catch(() => {});
+      await apiFetch("/api/v1/auth/sessions/revoke", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ session_ids: [sessionId] }),
+      });
       setSessions((prev) => prev.filter((s: any) => s.id !== sessionId));
       showMessage(t("sessions.sessionrevoked"));
     } catch {
@@ -141,7 +145,14 @@ export default function SessionsPage() {
   const handleRevokeAll = async () => {
     setRevokingAll(true);
     try {
-      await apiFetch("/api/v1/auth/sessions", { method: "DELETE" }).catch(() => {});
+      const otherIds = sessions.filter((s: any) => !s.current).map((s: any) => s.id);
+      if (otherIds.length > 0) {
+        await apiFetch("/api/v1/auth/sessions/revoke", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ session_ids: otherIds }),
+        });
+      }
       setSessions((prev) => prev.filter((s: any) => s.current));
       showMessage(t("sessions.allothersessionsrevoked"));
     } catch {
