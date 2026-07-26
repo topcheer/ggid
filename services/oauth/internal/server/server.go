@@ -628,6 +628,11 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 		}
 		_ = r.ParseForm()
 
+		// P3 (RFC 6749 §2.3.1): warn on non-form Content-Type
+		if ct := r.Header.Get("Content-Type"); ct != "" && !strings.Contains(ct, "application/x-www-form-urlencoded") {
+			log.Printf("[oauth] warning: token endpoint Content-Type: %s", ct)
+		}
+
 		// Resolve tenant ID from X-Tenant-ID header, or tenant_id query param.
 		// Fallback to default tenant for DCR flows (MCP clients don't send headers).
 		tenantIDStr := r.Header.Get("X-Tenant-ID")
@@ -2278,7 +2283,6 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 	mux.HandleFunc("/api/v1/oauth/consent/analytics", handleConsentAnalytics)
 	mux.HandleFunc("/api/v1/oauth/consent/admin-override", handleConsentAdminOverride)
 	mux.HandleFunc("/api/v1/oauth/tokens/validate-audience", handleValidateAudience)
-	mux.HandleFunc("/api/v1/oauth/token/downscope", handleTokenDownscope)
 	// Note: /api/v1/oauth/clients/ sub-paths (branding, suspend, etc.) are handled
 	// by the first /api/v1/oauth/clients/ handler registered above (line ~831).
 	// Additional sub-paths not covered there are registered with distinct prefixes:
