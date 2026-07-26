@@ -4267,3 +4267,61 @@ All demos use consistent `resource:action` permission keys from JWT `permissions
 - Build: PASS. Tests: 65/65. Danger patterns: 0.
 
 ### Next Dimension: 3 — Demo Functional Completeness (Cycle 1306)
+
+## Cycle 1306: D3 Demo Functional Completeness — 3 P2 Inconsistencies (Round 1461)
+New commits since C1300: `633733a7c` (PasswordPolicy JSON tags), `d2e7391ed` (passkey admin bypass removed), `2b484f2d6` (MFA cleanup + PasswordPolicy tags). All auth-only, no SDK/demo impact. Build: PASS.
+
+**Test status**: HEAD = 65/65 pass. 1 WIP failure in `pkg/authprovider` (TestTransparentRehash) caused by another agent's uncommitted `pkg/crypto/crypto.go` bcrypt compat change — not a committed regression.
+
+### D3 Deep Verification — CRUD + Response Content Audit
+
+#### CRUD Round-Trip: POST creates → GET shows new item ✅
+All demos correctly implement create-and-return pattern:
+- Go: `products[p.ID] = &p` + `writeJSON(w, 201, p)` ✅
+- Node: `items.push(item)` + `res.status(201).json(item)` ✅
+- Rust: in-memory store insert ✅
+- Python/C#/Java: same pattern ✅
+
+#### P2-1: Inventory Stock Field Naming — 3 Variants ⚠️
+| Demo | Field | Type |
+|------|-------|------|
+| Go, Python, C#, Rust | `stock` | int/u32 |
+| **Node** | **`qty`** | number |
+| **Java** | **`quantity`** | int |
+| Ruby | dynamic (hash) | — |
+
+**Impact**: Client reading inventory from Node gets `qty`, from Java gets `quantity`, from others gets `stock`. Breaks cross-demo client compatibility.
+**Fix**: Rename Node `qty`→`stock` (`inventory.ts:7-8`), Java `quantity`→`stock` (`Models.java:7`).
+
+#### P2-2: List Response Wrapper — 3 Patterns ⚠️
+| Pattern | Demos |
+|---------|-------|
+| `{items: [...], total: N}` | Go, Node, Rust |
+| `{items: [...], count: N}` | Python, C# |
+| `{inventory: [...], total: N}` | **Java** (unique array key!) |
+
+**Impact**: `total` vs `count` key inconsistency. Java uses `inventory` instead of `items`.
+**Fix**: Standardize on `{items: [...], total: N}`. Rename Python/C# `count`→`total`, Java `inventory`→`items`.
+
+#### P2-3: Orders Array Key — Semantic Inconsistency ⚠️
+| Array key | Demos |
+|-----------|-------|
+| `items` | **Go, Rust** (orders endpoint returns `items`) |
+| `orders` | Node, Python, C# |
+
+**Impact**: Go/Rust use generic `items` for orders, others use semantic `orders`.
+**Fix**: Standardize — either all use `items` (consistent but generic) or all use resource-specific key.
+
+#### Authorization Enforcement: Still Solid ✅
+- All demos enforce `requirePerm` per route (re-verified this cycle)
+- my-permissions endpoint now in 6/7 backends (Ruby has `/api/auth/verify` alt)
+- Danger patterns: 0 real hits
+
+### Three-Layer Alignment
+| Layer | Status |
+|-------|--------|
+| Core (auth PasswordPolicy snake_case + passkey security) | ✅ builds, HEAD 65/65 |
+| SDK (7 langs) | ✅ no change |
+| Demo (8 apps) | ⚠️ 3 P2 field/wrapper inconsistencies (not blocking, cosmetic) |
+
+### Next Dimension: 4 — Multi-Tenant Isolation (Cycle 1312)
