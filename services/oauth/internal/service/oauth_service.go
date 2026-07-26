@@ -519,8 +519,17 @@ func (s *OAuthService) ExchangeAuthorizationCode(ctx context.Context, req *Token
 	}
 
 	// 8. Issue ID Token if OIDC scope is present.
+	// Include AMR/ACR from the auth code (OIDC Core §2) and at_hash (§3.1.3.6).
 	if contains(code.Scope, "openid") {
-		idToken, err := s.issueIDToken(code.UserID, code.TenantID, client.ClientID, code.Nonce, nil)
+		// Compute at_hash: base64url(SHA256(access_token)[:128bits])
+		accessTokenHash := sha256.Sum256([]byte(accessToken))
+		atHash := base64.RawURLEncoding.EncodeToString(accessTokenHash[:16])
+		idTokenOpts := &IDTokenOptions{
+			AMR:     code.AMR,
+			ACR:     code.ACR,
+			AtHash:  atHash,
+		}
+		idToken, err := s.issueIDToken(code.UserID, code.TenantID, client.ClientID, code.Nonce, idTokenOpts)
 		if err != nil {
 			return nil, err
 		}
@@ -1124,6 +1133,7 @@ type IDTokenOptions struct {
 	AMR      []string // authentication methods references (e.g. ["pwd","otp"])
 	ACR      string   // authentication context class reference
 	AuthTime int64    // unix timestamp when the user authenticated
+	AtHash   string   // OIDC Core §3.1.3.6: access_token hash for binding
 }
 
 func (s *OAuthService) issueIDToken(userID, tenantID uuid.UUID, audience, nonce string, opts *IDTokenOptions) (string, error) {
@@ -1150,6 +1160,9 @@ func (s *OAuthService) issueIDToken(userID, tenantID uuid.UUID, audience, nonce 
 		}
 		if opts.AuthTime > 0 {
 			claims["auth_time"] = opts.AuthTime
+		}
+		if opts.AtHash != "" {
+			claims["at_hash"] = opts.AtHash
 		}
 	}
 
