@@ -593,6 +593,25 @@ func (s *HTTPServer) createRole(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// P1-10: Prevent privilege escalation via reserved role keys/names.
+	// Tenant admins must not create roles whose key matches platform-level
+	// admin scopes, as the gateway trusts these for admin access.
+	reservedKeys := map[string]bool{
+		"platform:admin": true, "tenant:admin": true,
+		"platform_admin": true, "tenant_admin": true,
+		"superadmin": true, "super_admin": true,
+	}
+	reservedLower := strings.ToLower(req.Key)
+	if reservedKeys[reservedLower] {
+		writeJSONError(w, http.StatusBadRequest, "this role key is reserved and cannot be created")
+		return
+	}
+	// Also check slugified name doesn't produce a reserved key
+	if reservedKeys[slugify(strings.ToLower(req.Name))] {
+		writeJSONError(w, http.StatusBadRequest, "role name would generate a reserved key")
+		return
+	}
+
 	var parentID *uuid.UUID
 	if req.ParentRoleID != "" {
 		pid, err := uuid.Parse(req.ParentRoleID)
