@@ -4598,3 +4598,49 @@ All P2 fixes from C1306 (field/wrapper standardization) remain in effect. No reg
 | Demo | ✅ all functional checks pass, consistent {items, total} + stock |
 
 ### Next Dimension: 4 — Multi-Tenant Isolation (Cycle 1348) — Rotation 2
+
+## Cycle 1348: D4 Multi-Tenant Isolation R2 — All Clean (Round 1468)
+New commits: `faf1435d7` (key validation), `6c2a9d4f8` (PasswordPolicy MaxLength), `e43368d2f` (R28 review).
+Build: PASS. `make test`: EXIT=0, 65/65. Danger patterns: 0.
+
+### D4 Multi-Tenant Isolation (Rotation 2) — All Layers Secure
+
+#### Gateway-Level Isolation ✅
+- `middleware.go:705-723`: JWT `tenant_id` vs `X-Tenant-ID` → 401 "tenant mismatch". Only `platform:admin` bypass.
+- `rbac_dynamic.go:314`: `row.TenantID != claims.TenantID` → skip rule. No cross-tenant RBAC grants.
+
+#### OAuth-Level Isolation ✅
+- `fetchUserPermissions` (L731): `r.tenant_id = $2` filter
+- `fetchUserRoles` (L770): same tenant_id filter
+- User lookup (L704): `tenant_id = $2` filter
+
+#### RLS-Level Isolation ✅
+- `pg_repo.go:43`: `SET LOCAL app.tenant_id = '%s'` — database row-level security
+- `rls_handler.go:18`: same RLS tenant_id injection
+
+#### All 7 Backend Demos Enforce Tenant Isolation ✅
+| Demo | Check | Location |
+|------|-------|----------|
+| Go | `info.TenantID != tenantID` → 401 | main.go:101 |
+| Node | `user.tenant_id !== TENANT` → 401 | auth.ts:69 |
+| Python | `token_tenant != TENANT_ID` → 401 | main.py:118 |
+| Ruby | `token_tenant != TENANT_ID` → halt 401 | app.rb:38 |
+| Rust | `claims.tenant_id != expected_tenant` → None | main.rs:82 |
+| C# | tenant mismatch → 401 | Program.cs:89 |
+| Java | tenant mismatch → 401 | BaseHandler.java:57 |
+
+**Python+Ruby P1 fix from C1312 confirmed still in effect.** All demos self-protecting.
+
+#### New Commits Verified ✅
+- `faf1435d7`: ensureLocalKeyPair validates RSA key pair + refuses silent regeneration in production ✅
+- `6c2a9d4f8`: PasswordPolicy.MaxLength (NIST 800-63B DoS prevention) — `conf.go:53` + `password_policy.go` ✅
+- `e43368d2f`: R28 review — 0 new issues ✅
+
+### Three-Layer Alignment
+| Layer | Status |
+|-------|--------|
+| Core | ✅ tenant isolation at gateway + oauth + RLS, key validation, build+test pass |
+| SDK | ✅ no change |
+| Demo | ✅ all 7 backends enforce tenant boundary |
+
+### Next Dimension: 5 — SDK Cross-Language Consistency (Cycle 1354) — Rotation 2
