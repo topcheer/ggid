@@ -26,10 +26,11 @@ func TestDefaultWasmResourceLimits(t *testing.T) {
 
 func TestVerifyPluginSignature_NoSecret(t *testing.T) {
 	os.Unsetenv("GGID_INTERNAL_SECRET")
+	os.Unsetenv("GGID_DEV_MODE")
 	host := NewWasmPluginHost()
 	err := host.verifyPluginSignature([]byte("wasm"), "", "/tmp/test.wasm")
-	if err != nil {
-		t.Errorf("should skip verification when no secret set: %v", err)
+	if err == nil {
+		t.Error("should reject unsigned plugins when GGID_INTERNAL_SECRET not set (fail-closed)")
 	}
 }
 
