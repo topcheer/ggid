@@ -4210,3 +4210,54 @@ New commits since C1294: `03024a912` (DB-first credential lookup for cross-tenan
 | Demo (8 apps) | ✅ no impact |
 
 ### Next Dimension: 2 — Authorization Boundaries (Cycle 1300)
+
+## Cycle 1300: D2 Authorization Boundaries — P2 Demo Gap Found (Round 1460)
+New commit since C1295: `2a73745e8` (Console→full WebAuthn migration).
+Build: PASS. HEAD tests: 65/65 (4 WIP test failures in audit/service are another agent's in-progress `access_review.go` refactoring — not committed regression).
+
+### Dimension 2 Deep Verification (Authorization Boundaries)
+
+#### Authorization Enforcement Chain — All Consistent ✅
+| Layer | Mechanism | Verified |
+|-------|-----------|----------|
+| Gateway `rbac_dynamic.go:314` | `row.TenantID != claims.TenantID` → skip | Tenant-scoped rules ✅ |
+| Gateway `middleware.go:702-736` | JWT tenant_id vs X-Tenant-ID → 401 | Only `platform:admin` bypass ✅ |
+| Gateway `rbac_dynamic.go:392` | `HasPermissionForRoute` longest-prefix match | resource:read/write/admin ✅ |
+| OAuth `oauth_service.go:705` | `fetchUserPermissions` DISTINCT + tenant_id filter | Dedup + isolation ✅ |
+| OAuth `oauth_service.go:1869` | Admin scopes from DB roles only, not client request | Scope escalation prevented ✅ |
+
+#### Per-Route Permission Enforcement — All 8 Demos ✅
+| Demo | inventory:read | inventory:write | inventory:delete | orders:approve | Tenant check |
+|------|:-:|:-:|:-:|:-:|:-:|
+| Go | ✅ `requirePerm` | ✅ | ✅ | ✅ | ✅ `withAuth` |
+| Node | ✅ `requirePermission` | ✅ | ✅ | ✅ | ✅ `requireAuth` |
+| Python | ✅ `_require_perm` | ✅ | ✅ | ✅ | ✅ |
+| Ruby | ✅ `require_perm!` | ✅ | ✅ | ✅ | ✅ |
+| Rust | ✅ `check_perm` | ✅ | ✅ | ✅ | ✅ |
+| C# | ✅ `HasPerm` | ✅ | — | ✅ | ✅ |
+| Java | ✅ `requirePermission` | ✅ | ✅ | ✅ | ✅ |
+| React | N/A (SPA) | — | — | — | — |
+
+All demos use consistent `resource:action` permission keys from JWT `permissions` claim.
+
+#### P2 Finding: 3 Demos Missing `/api/my-permissions` Endpoint
+| Demo | `/api/my-permissions` | Alternative | Impact |
+|------|:-:|---|---|
+| Go | ✅ | — | — |
+| Node | ✅ (`/api/auth/my-permissions`) | — | — |
+| Python | ✅ | — | — |
+| C# | ✅ | — | — |
+| Ruby | ❌ | `/api/auth/verify` returns permissions | Acceptable alt path |
+| **Rust** | **❌** | **None** | **No way to query own permissions** |
+| **Java** | **❌** | **None** | **No way to query own permissions** |
+
+**Fix**: Add `GET /api/my-permissions` to Rust (`main.rs`) and Java (`Main.java` context). Return `{permissions, can_write_orders, can_approve}` matching Go/Node/C#/Python pattern. Not blocking — authorization enforcement works correctly regardless.
+
+### Three-Layer Alignment
+| Layer | Status |
+|-------|--------|
+| Core (gateway RBAC + oauth permissions) | ✅ consistent, builds, tests pass |
+| SDK (7 langs) | ✅ no change this cycle |
+| Demo (8 apps) | ✅ authz enforced; ⚠️ P2 gap: Rust+Java missing my-permissions |
+
+### Next Dimension: 3 — Demo Functional Completeness (Cycle 1306)
