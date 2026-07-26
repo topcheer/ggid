@@ -90,7 +90,8 @@ func (s *Server) jwtAuth(next http.HandlerFunc) http.HandlerFunc {
 			}
 			// RFC 9728: return WWW-Authenticate header so MCP clients can
 			// auto-discover the OAuth2 authorization server via DCR.
-			w.Header().Set("WWW-Authenticate", `Bearer realm="OAuth", resource_metadata="https://mcp.iot2.win/.well-known/oauth-protected-resource", error="invalid_token", error_description="Missing or invalid access token"`)
+			baseURL := resolveBaseURL(r)
+			w.Header().Set("WWW-Authenticate", fmt.Sprintf(`Bearer realm="OAuth", resource_metadata="%s/.well-known/oauth-protected-resource", error="invalid_token", error_description="Missing or invalid access token"`, baseURL))
 			writeJSON(w, http.StatusUnauthorized, map[string]any{
 				"jsonrpc": "2.0", "error": map[string]any{
 					"code": -32001, "message": "authorization required: Bearer token expected",
@@ -480,6 +481,20 @@ func (s *Server) fetchJWKSKey(t *jwt.Token) (any, error) {
 	return nil, fmt.Errorf("JWKS verification not yet implemented — set JWKS_URL or use dev bypass")
 }
 
+// resolveBaseURL returns the external base URL for this deployment.
+// It checks OAUTH_ISSUER_URL env var first, then derives from the request
+// Host header and forwarded-proto to support any domain without hardcoding.
+func resolveBaseURL(r *http.Request) string {
+	if u := os.Getenv("OAUTH_ISSUER_URL"); u != "" {
+		return u
+	}
+	scheme := "https"
+	if r.TLS == nil && r.Header.Get("X-Forwarded-Proto") == "" {
+		scheme = "http"
+	}
+	return scheme + "://" + r.Host
+}
+
 // handleProtectedResource returns OAuth2 protected resource metadata per
 // MCP 2025-03-26 spec. This lets MCP clients auto-discover the authorization
 // server and perform DCR + token flow without manual configuration.
@@ -487,15 +502,7 @@ func (s *Server) fetchJWKSKey(t *jwt.Token) (any, error) {
 // GET /.well-known/oauth-protected-resource
 func (s *Server) handleProtectedResource(w http.ResponseWriter, r *http.Request) {
 	// Determine the base URL from the request or gateway env.
-	baseURL := os.Getenv("OAUTH_ISSUER_URL")
-	if baseURL == "" {
-		// Derive from Host header
-		scheme := "https"
-		if r.TLS == nil && r.Header.Get("X-Forwarded-Proto") == "" {
-			scheme = "http"
-		}
-		baseURL = scheme + "://" + r.Host
-	}
+	baseURL := resolveBaseURL(r)
 
 	writeJSON(w, http.StatusOK, map[string]any{
 		"resource":                  baseURL + "/mcp",
