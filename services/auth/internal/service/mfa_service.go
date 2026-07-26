@@ -122,15 +122,26 @@ func (s *MFAService) VerifyMFA(ctx context.Context, deviceID uuid.UUID, code str
 		return false, ErrInvalidMFACode
 	}
 
+	// Replay protection (RFC 6238 §5.2): reject reuse of the same TOTP code.
+	if device.LastUsedCode == code {
+		return false, ErrInvalidMFACode
+	}
+
 	// If not yet verified, enable the device.
 	wasFirstEnrollment := false
 	if !device.Enabled {
 		now := time.Now()
 		device.Enabled = true
 		device.VerifiedAt = &now
-		if err := s.repo.UpdateDevice(ctx, device); err != nil {
-			return false, fmt.Errorf("enable device: %w", err)
-		}
+	}
+	device.LastUsedCode = code
+	if err := s.repo.UpdateDevice(ctx, device); err != nil {
+		return false, fmt.Errorf("update device: %w", err)
+	}
+	if device.Enabled && device.VerifiedAt != nil && !wasFirstEnrollment {
+		// Already enabled — just updated LastUsedCode
+	}
+	if !device.Enabled {
 		wasFirstEnrollment = true
 	}
 

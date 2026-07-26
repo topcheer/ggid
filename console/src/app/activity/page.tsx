@@ -175,7 +175,7 @@ export default function ActivityLogPage() {
         <div className="flex gap-2">
           <button
             onClick={loadEvents}
-            className="flex items-center gap-1.5 rounded-lg border border-gray-300 dark:border-gray-600 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 dark:bg-gray-800"
+            className="flex items-center gap-1.5 rounded-lg border border-gray-300 dark:border-gray-600 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 dark:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
             <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
             Refresh
@@ -183,7 +183,7 @@ export default function ActivityLogPage() {
           <button
             onClick={handleExportCSV}
             disabled={filteredEvents.length === 0}
-            className="flex items-center gap-1.5 rounded-lg bg-brand-600 px-3 py-2 text-sm font-medium text-white hover:bg-brand-700 disabled:opacity-50"
+            className="flex items-center gap-1.5 rounded-lg bg-brand-600 px-3 py-2 text-sm font-medium text-white hover:bg-brand-700 disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
             <Download className="h-4 w-4" />
             Export CSV
@@ -246,7 +246,7 @@ export default function ActivityLogPage() {
         {hasActiveFilters && (
           <button
             onClick={resetFilters}
-            className="mt-3 text-xs font-medium text-brand-600 hover:text-brand-700"
+            className="mt-3 text-xs font-medium text-brand-600 hover:text-brand-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
             Clear all filters
           </button>
@@ -289,7 +289,7 @@ export default function ActivityLogPage() {
             )}
             {!loading &&
               paginatedEvents.map((event: any) => (
-                <tr key={event.id} className="hover:bg-gray-50 dark:hover:bg-gray-700 dark:bg-gray-800">
+                <tr key={event.id} className="hover:bg-gray-50 dark:hover:bg-gray-700 dark:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500">
                   <td className="whitespace-nowrap px-4 py-3 text-sm text-gray-600 dark:text-gray-300">
                     {new Date(event.timestamp).toLocaleString()}
                   </td>
@@ -333,7 +333,7 @@ export default function ActivityLogPage() {
             <button
               onClick={() => setPage(Math.max(1, currentPage - 1))}
               disabled={currentPage <= 1}
-              className="flex items-center gap-1 rounded-lg border border-gray-300 dark:border-gray-600 px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50"
+              className="flex items-center gap-1 rounded-lg border border-gray-300 dark:border-gray-600 px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               <ChevronLeft className="h-4 w-4" /> Prev
             </button>
@@ -343,7 +343,7 @@ export default function ActivityLogPage() {
             <button
               onClick={() => setPage(Math.min(totalPages, currentPage + 1))}
               disabled={currentPage >= totalPages}
-              className="flex items-center gap-1 rounded-lg border border-gray-300 dark:border-gray-600 px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50"
+              className="flex items-center gap-1 rounded-lg border border-gray-300 dark:border-gray-600 px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               Next <ChevronRight className="h-4 w-4" />
             </button>

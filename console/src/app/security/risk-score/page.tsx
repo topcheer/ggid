@@ -169,8 +169,8 @@ export default function RiskScorePage() {
                         <td className="px-4 py-3 text-gray-500">{u.factors.length} active</td>
                         <td className="px-4 py-3 text-gray-400">{new Date(u.last_updated).toLocaleDateString()}</td>
                         <td className="px-4 py-3 text-right">
-                          <button onClick={() => setSelectedUser(u)} className="mr-2 text-xs text-indigo-600 hover:underline">Details</button>
-                          <button onClick={() => handleRecalculate(u.user_id)} disabled={recalculating === u.user_id} className="text-xs text-gray-500 hover:text-indigo-600">{recalculating === u.user_id ? <Loader2 className="inline h-3 w-3 animate-spin" /> : <RefreshCw className="inline h-3 w-3" />}</button>
+                          <button onClick={() => setSelectedUser(u)} className="mr-2 text-xs text-indigo-600 hover:underline focus:outline-none focus:ring-2 focus:ring-blue-500">Details</button>
+                          <button onClick={() => handleRecalculate(u.user_id)} disabled={recalculating === u.user_id} className="text-xs text-gray-500 hover:text-indigo-600 focus:outline-none focus:ring-2 focus:ring-blue-500">{recalculating === u.user_id ? <Loader2 className="inline h-3 w-3 animate-spin" /> : <RefreshCw className="inline h-3 w-3" />}</button>
                         </td>
                       </tr>
                     ))}

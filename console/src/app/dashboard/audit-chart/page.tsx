@@ -78,8 +78,8 @@ export default function AuditChartPage() {
             <div className="flex items-end gap-1 overflow-x-auto" style={{ height: 160 }}>
               {hourly.map((h: any, i: any) => (
                 <div key={i} className="group relative flex flex-1 flex-col items-center" style={{ minWidth: 20 }}>
-                  <div className="w-full rounded-t bg-indigo-500 transition-all hover:bg-indigo-600" style={{ height: `${(h.count / maxCount) * 120}px`, minHeight: 2 }}>
-                    <div className="absolute -top-6 left-1/2 -translate-x-1/2 whitespace-nowrap rounded bg-gray-800 px-1.5 py-0.5 text-xs text-white opacity-0 group-hover:opacity-100">{h.count}</div>
+                  <div className="w-full rounded-t bg-indigo-500 transition-all hover:bg-indigo-600 focus:outline-none focus:ring-2 focus:ring-blue-500" style={{ height: `${(h.count / maxCount) * 120}px`, minHeight: 2 }}>
+                    <div className="absolute -top-6 left-1/2 -translate-x-1/2 whitespace-nowrap rounded bg-gray-800 px-1.5 py-0.5 text-xs text-white opacity-0 group-hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-blue-500">{h.count}</div>
                   </div>
                   <span className="mt-1 text-[10px] text-gray-400">{h.hour}</span>
                 </div>

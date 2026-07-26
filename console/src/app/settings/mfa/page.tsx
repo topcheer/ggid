@@ -249,10 +249,10 @@ export default function MFAPage() {
       <h1 className="mb-6 text-2xl font-bold text-gray-900 dark:text-white dark:text-gray-100">{t("mfa.title")}</h1>
 
       {msg && (
-        <div role="status" className="mb-4 rounded-lg border border-green-200 bg-green-50 p-3 text-sm text-green-700 dark:border-green-800 dark:bg-green-950 dark:text-green-400">{msg}</div>
+        <div role="status" className="mb-4 rounded-lg border border-green-200 bg-green-50 p-3 text-sm text-green-700 dark:border-green-800 dark:bg-green-950 dark:text-green-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500">{msg}</div>
       )}
       {error && (
-        <div className="mb-4 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700 dark:border-red-800 dark:bg-red-950 dark:text-red-400">{error}</div>
+        <div className="mb-4 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700 dark:border-red-800 dark:bg-red-950 dark:text-red-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500">{error}</div>
       )}
 
       <div className="space-y-6">
@@ -269,7 +269,7 @@ export default function MFAPage() {
               </div>
               <button
                 onClick={startTotpEnrollment}
-                className="flex items-center gap-2 rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700"
+                className="flex items-center gap-2 rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
                aria-label="Key">
                 <Key className="h-4 w-4" /> {t("mfa.startEnrollment")}
               </button>
@@ -281,7 +281,7 @@ export default function MFAPage() {
               <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
                 {/* QR Code */}
                 <div className="flex flex-col items-center gap-2">
-                  <div className="flex h-40 w-40 items-center justify-center rounded-lg border-2 border-dashed border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-800 dark:border-gray-600 dark:bg-gray-900">
+                  <div className="flex h-40 w-40 items-center justify-center rounded-lg border-2 border-dashed border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-800 dark:border-gray-600 dark:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500">
                     {totpQrUrl ? (
                       <div className="flex flex-col items-center gap-1 text-gray-400">
                         <div className="grid grid-cols-8 gap-px">
@@ -306,18 +306,18 @@ export default function MFAPage() {
                   <div>
                     <label className="mb-1 block text-xs font-medium text-gray-500">{t("mfa.secretKey")}</label>
                     <div className="flex items-center gap-2">
-                      <code className="flex-1 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 px-3 py-2 font-mono text-sm dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300">
+                      <code className="flex-1 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 px-3 py-2 font-mono text-sm dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500">
                         {showSecret ? totpSecret : "•••• •••• •••• ••••"}
                       </code>
                       <button
                         onClick={() => setShowSecret(!showSecret)}
-                        className="rounded-lg border border-gray-300 dark:border-gray-600 px-3 py-2 text-xs hover:bg-gray-50 dark:hover:bg-gray-700 dark:bg-gray-800 dark:border-gray-600 dark:hover:bg-gray-700"
+                        className="rounded-lg border border-gray-300 dark:border-gray-600 px-3 py-2 text-xs hover:bg-gray-50 dark:hover:bg-gray-700 dark:bg-gray-800 dark:border-gray-600 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
                       >
                         {showSecret ? t("settings.hide") : t("settings.show")}
                       </button>
                       <button
                         onClick={() => { navigator.clipboard.writeText(totpSecret); }}
-                        className="rounded-lg border border-gray-300 dark:border-gray-600 p-2 text-gray-500 hover:bg-gray-50 dark:hover:bg-gray-700 dark:bg-gray-800 dark:border-gray-600 dark:hover:bg-gray-700"
+                        className="rounded-lg border border-gray-300 dark:border-gray-600 p-2 text-gray-500 hover:bg-gray-50 dark:hover:bg-gray-700 dark:bg-gray-800 dark:border-gray-600 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
                         title={t("settings.copySecret")}
                       >
                         <Copy className="h-4 w-4" />
@@ -340,7 +340,7 @@ export default function MFAPage() {
                       <button
                         onClick={verifyTotp}
                         disabled={verifyCode.length !== 6 || verifying}
-                        className="flex items-center gap-2 rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700 disabled:opacity-50"
+                        className="flex items-center gap-2 rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700 disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
                        aria-label="Loader2">
                         {verifying ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
                         {t("mfa.enroll")}
@@ -353,7 +353,7 @@ export default function MFAPage() {
           )}
 
           {totpEnrolled && (
-            <div className="flex items-center gap-3 rounded-lg border border-green-200 bg-green-50 p-4 dark:border-green-800 dark:bg-green-950">
+            <div className="flex items-center gap-3 rounded-lg border border-green-200 bg-green-50 p-4 dark:border-green-800 dark:bg-green-950 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500">
               <Check className="h-5 w-5 text-green-600" />
               <div>
                 <p className="text-sm font-medium text-green-800 dark:text-green-400">{t("mfa.totpEnrolled")}</p>
@@ -373,20 +373,20 @@ export default function MFAPage() {
               <div className="flex gap-2">
                 <button
                   onClick={downloadCodes}
-                  className="flex items-center gap-1.5 rounded-lg border border-gray-300 dark:border-gray-600 px-3 py-1.5 text-sm hover:bg-gray-50 dark:hover:bg-gray-700 dark:bg-gray-800 dark:border-gray-600 dark:hover:bg-gray-700"
+                  className="flex items-center gap-1.5 rounded-lg border border-gray-300 dark:border-gray-600 px-3 py-1.5 text-sm hover:bg-gray-50 dark:hover:bg-gray-700 dark:bg-gray-800 dark:border-gray-600 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
                   <Download className="h-4 w-4" /> Download
                 </button>
                 <button
                   onClick={copyAllCodes}
-                  className="flex items-center gap-1.5 rounded-lg border border-gray-300 dark:border-gray-600 px-3 py-1.5 text-sm hover:bg-gray-50 dark:hover:bg-gray-700 dark:bg-gray-800 dark:border-gray-600 dark:hover:bg-gray-700"
+                  className="flex items-center gap-1.5 rounded-lg border border-gray-300 dark:border-gray-600 px-3 py-1.5 text-sm hover:bg-gray-50 dark:hover:bg-gray-700 dark:bg-gray-800 dark:border-gray-600 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
                  aria-label="Check">
                   {codesCopied ? <Check className="h-4 w-4 text-green-600" /> : <Copy className="h-4 w-4" />}
                   {codesCopied ? t("settings.copied") : t("settings.copyAll")}
                 </button>
               </div>
             </div>
-            <div className="mb-3 flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 p-3 dark:border-amber-800 dark:bg-amber-950">
+            <div className="mb-3 flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 p-3 dark:border-amber-800 dark:bg-amber-950 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500">
               <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-amber-600" />
               <p className="text-xs text-amber-700 dark:text-amber-400">
                 Save these recovery codes in a secure location. Each code can only be used once to regain access if you lose your authenticator device.
@@ -394,7 +394,7 @@ export default function MFAPage() {
             </div>
             <div className="grid grid-cols-2 gap-2 sm:grid-cols-5">
               {recoveryCodes.map((code: any, i: number) => (
-                <div key={i} className="rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 px-3 py-2 text-center font-mono text-sm dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300">
+                <div key={i} className="rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 px-3 py-2 text-center font-mono text-sm dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500">
                   {code}
                 </div>
               ))}
@@ -421,7 +421,7 @@ export default function MFAPage() {
             <button
               onClick={registerPasskey}
               disabled={webauthnLoading || !webauthnName.trim()}
-              className="flex shrink-0 items-center gap-2 rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700 disabled:opacity-50"
+              className="flex shrink-0 items-center gap-2 rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700 disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               {webauthnLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Fingerprint className="h-4 w-4" />}
               Register Passkey
@@ -441,7 +441,7 @@ export default function MFAPage() {
                       </p>
                     </div>
                   </div>
-                  <span className="rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-700 dark:bg-green-900 dark:text-green-400">
+                  <span className="rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-700 dark:bg-green-900 dark:text-green-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500">
                     Active
                   </span>
                 </div>
@@ -456,7 +456,7 @@ export default function MFAPage() {
           <h2 className={headingCls}>
             <Lock className="mr-2 inline h-5 w-5 text-red-600" /> RSA SecurID
             {radiusTestMode && (
-              <span className="ml-2 inline-flex items-center gap-1 rounded-full bg-yellow-100 px-2 py-0.5 text-xs font-medium text-yellow-700 dark:bg-yellow-900/40 dark:text-yellow-400">
+              <span className="ml-2 inline-flex items-center gap-1 rounded-full bg-yellow-100 px-2 py-0.5 text-xs font-medium text-yellow-700 dark:bg-yellow-900/40 dark:text-yellow-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500">
                 Test Mode
               </span>
             )}
@@ -468,7 +468,7 @@ export default function MFAPage() {
             }
           </p>
           {securIdEnrolled ? (
-            <div className="flex items-center gap-2 rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700 dark:border-green-800 dark:bg-green-950">
+            <div className="flex items-center gap-2 rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700 dark:border-green-800 dark:bg-green-950 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500">
               <Check className="h-4 w-4" /> SecurID token verified and enrolled.
             </div>
           ) : (
@@ -478,13 +478,13 @@ export default function MFAPage() {
                 value={securIdPasscode}
                 onChange={e => setSecurIdPasscode(e.target.value)}
                 placeholder="Enter passcode"
-                className="flex-1 rounded-lg border border-gray-300 dark:border-gray-600 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-900"
+                className="flex-1 rounded-lg border border-gray-300 dark:border-gray-600 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 maxLength={8}
               />
               <button
                 onClick={verifySecurId}
                 disabled={securIdVerifying || securIdPasscode.length < 4}
-                className="flex items-center gap-1.5 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
+                className="flex items-center gap-1.5 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
                 {securIdVerifying ? <Loader2 className="h-4 w-4 animate-spin" /> : <Key className="h-4 w-4" />}
                 Verify
@@ -500,7 +500,7 @@ export default function MFAPage() {
           <h2 className={headingCls}>
             <Usb className="mr-2 inline h-5 w-5 text-amber-600" /> YubiKey
             {yubikeyTestMode && (
-              <span className="ml-2 inline-flex items-center gap-1 rounded-full bg-yellow-100 px-2 py-0.5 text-xs font-medium text-yellow-700 dark:bg-yellow-900/40 dark:text-yellow-400">
+              <span className="ml-2 inline-flex items-center gap-1 rounded-full bg-yellow-100 px-2 py-0.5 text-xs font-medium text-yellow-700 dark:bg-yellow-900/40 dark:text-yellow-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500">
                 Test Mode
               </span>
             )}
@@ -512,7 +512,7 @@ export default function MFAPage() {
             }
           </p>
           {yubikeyEnrolled ? (
-            <div className="flex items-center gap-2 rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700 dark:border-green-800 dark:bg-green-950">
+            <div className="flex items-center gap-2 rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700 dark:border-green-800 dark:bg-green-950 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500">
               <Check className="h-4 w-4" /> YubiKey enrolled successfully.
             </div>
           ) : (
@@ -522,13 +522,13 @@ export default function MFAPage() {
                 value={yubikeyOtp}
                 onChange={e => setYubikeyOtp(e.target.value)}
                 placeholder="Touch YubiKey to generate OTP..."
-                className="w-full rounded-lg border border-gray-300 dark:border-gray-600 px-3 py-2 text-sm font-mono dark:border-gray-700 dark:bg-gray-900"
+                className="w-full rounded-lg border border-gray-300 dark:border-gray-600 px-3 py-2 text-sm font-mono dark:border-gray-700 dark:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 onFocus={() => setYubikeyOtp("")}
               />
               <button
                 onClick={verifyYubikey}
                 disabled={yubikeyVerifying || yubikeyOtp.length < 32}
-                className="mt-2 flex items-center gap-1.5 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
+                className="mt-2 flex items-center gap-1.5 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
                 {yubikeyVerifying ? <Loader2 className="h-4 w-4 animate-spin" /> : <Usb className="h-4 w-4" />}
                 Enroll YubiKey
@@ -557,9 +557,9 @@ export default function MFAPage() {
               </div>
               <button
                 onClick={() => toggleBackupMfa("sms", !backupSms)}
-                className={`relative h-6 w-11 rounded-full transition-colors ${backupSms ? "bg-brand-600" : "bg-gray-300 dark:bg-gray-600"}`}
+                className={`relative h-6 w-11 rounded-full transition-colors ${backupSms ? "bg-brand-600" : "bg-gray-300 dark:bg-gray-600"} focus:outline-none focus:ring-2 focus:ring-blue-500}`}
               >
-                <span className={`absolute top-0.5 left-0.5 h-5 w-5 rounded-full bg-white transition-transform ${backupSms ? "translate-x-5" : ""}`} />
+                <span className={`absolute top-0.5 left-0.5 h-5 w-5 rounded-full bg-white transition-transform ${backupSms ? "translate-x-5" : ""} focus:outline-none focus:ring-2 focus:ring-blue-500}`} />
               </button>
             </div>
 
@@ -573,9 +573,9 @@ export default function MFAPage() {
               </div>
               <button
                 onClick={() => toggleBackupMfa("email", !backupEmail)}
-                className={`relative h-6 w-11 rounded-full transition-colors ${backupEmail ? "bg-brand-600" : "bg-gray-300 dark:bg-gray-600"}`}
+                className={`relative h-6 w-11 rounded-full transition-colors ${backupEmail ? "bg-brand-600" : "bg-gray-300 dark:bg-gray-600"} focus:outline-none focus:ring-2 focus:ring-blue-500}`}
               >
-                <span className={`absolute top-0.5 left-0.5 h-5 w-5 rounded-full bg-white transition-transform ${backupEmail ? "translate-x-5" : ""}`} />
+                <span className={`absolute top-0.5 left-0.5 h-5 w-5 rounded-full bg-white transition-transform ${backupEmail ? "translate-x-5" : ""} focus:outline-none focus:ring-2 focus:ring-blue-500}`} />
               </button>
             </div>
           </div>

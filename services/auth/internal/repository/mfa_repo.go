@@ -53,7 +53,7 @@ func scanMFA(row pgx.Row) (*domain.MFADevice, error) {
 	err := row.Scan(
 		&d.ID, &d.TenantID, &d.UserID, &d.Name, &d.Secret,
 		&d.Algorithm, &d.Digits, &d.Period, &d.Enabled,
-		&d.VerifiedAt, &d.CreatedAt, &d.UpdatedAt,
+		&d.VerifiedAt, &d.LastUsedCode, &d.CreatedAt, &d.UpdatedAt,
 	)
 	if err != nil {
 		return nil, err
@@ -61,7 +61,7 @@ func scanMFA(row pgx.Row) (*domain.MFADevice, error) {
 	return d, nil
 }
 
-const mfaColumns = `id, tenant_id, user_id, name, secret, algorithm, digits, period, enabled, verified_at, created_at, updated_at`
+const mfaColumns = `id, tenant_id, user_id, name, secret, algorithm, digits, period, enabled, verified_at, COALESCE(last_used_code, ''), created_at, updated_at`
 
 func (r *pgMFADeviceRepo) CreateDevice(ctx context.Context, device *domain.MFADevice) error {
 	tx, err := r.pool.BeginTx(ctx, pgx.TxOptions{})
@@ -176,9 +176,10 @@ func (r *pgMFADeviceRepo) UpdateDevice(ctx context.Context, device *domain.MFADe
 	}
 
 	_, err = tx.Exec(ctx, `
-		UPDATE mfa_devices SET enabled = $3, verified_at = $4, name = $5, updated_at = NOW()
+		UPDATE mfa_devices SET enabled = $3, verified_at = $4, name = $5, updated_at = NOW(),
+			last_used_code = COALESCE($6, last_used_code)
 		WHERE id = $2 AND tenant_id = $1`,
-		device.TenantID, device.ID, device.Enabled, device.VerifiedAt, device.Name)
+		device.TenantID, device.ID, device.Enabled, device.VerifiedAt, device.Name, device.LastUsedCode)
 	if err != nil {
 		return fmt.Errorf("update mfa device: %w", err)
 	}

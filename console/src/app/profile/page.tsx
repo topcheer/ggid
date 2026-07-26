@@ -248,7 +248,7 @@ export default function EnhancedProfilePage() {
 
       <div className="flex gap-1 border-b border-gray-200 dark:border-gray-700 overflow-x-auto">
         {([["profile", t("profile.profile"), User], ["security", t("profile.security"), Shield], ["devices", `${t("profile.devices")} (${devices.length})`, Smartphone]] as const).map(([id, label, Icon]) => (
-          <button key={id} onClick={() => setTab(id as Tab)} aria-pressed={tab === id} className={`flex items-center gap-1.5 border-b-2 px-4 py-2 text-sm font-medium transition whitespace-nowrap ${tab === id ? "border-blue-600 text-blue-600 dark:text-blue-400" : "border-transparent text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"}`}><Icon className="h-4 w-4" /> {label}</button>
+          <button key={id} onClick={() => setTab(id as Tab)} aria-pressed={tab === id} className={`flex items-center gap-1.5 border-b-2 px-4 py-2 text-sm font-medium transition whitespace-nowrap ${tab === id ? "border-blue-600 text-blue-600 dark:text-blue-400" : "border-transparent text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"} focus:outline-none focus:ring-2 focus:ring-blue-500}`}><Icon className="h-4 w-4" /> {label}</button>
         ))}
       </div>
 
@@ -262,7 +262,7 @@ export default function EnhancedProfilePage() {
               <div><label className="text-sm font-medium">{t("profile.email")}</label><div className="mt-1 flex gap-2"><div className="relative flex-1"><Mail className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" /><input type="email" aria-label="Email address" value={email} onChange={e => setEmail(e.target.value)} placeholder={!profileLoaded ? "Loading..." : "you@example.com"} className="w-full rounded-lg border dark:border-gray-700 dark:bg-gray-900 pl-9 pr-3 py-2 text-sm disabled:opacity-50" disabled={!profileLoaded} /></div>{email && <span className="flex items-center gap-1 px-2 py-1 rounded text-xs bg-green-100 dark:bg-green-900/30 text-green-600"><CheckCircle2 className="h-3 w-3" /> {t("profile.verified")}</span>}</div></div>
               <div><label className="text-sm font-medium">{t("profile.phone")}</label><div className="mt-1 flex gap-2"><div className="relative flex-1"><Phone className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" /><input type="tel" aria-label="Phone number" value={phone} onChange={e => setPhone(e.target.value)} className="w-full rounded-lg border dark:border-gray-700 dark:bg-gray-900 pl-9 pr-3 py-2 text-sm" /></div>{phoneVerified ? <span className="flex items-center gap-1 px-2 py-1 rounded text-xs bg-green-100 dark:bg-green-900/30 text-green-600"><CheckCircle2 className="h-3 w-3" /> {t("profile.verified")}</span> : <button className="px-2 py-1 rounded text-xs bg-blue-600 text-white">{t("profile.verify")}</button>}</div></div>
               {profileSaved && <span className="flex items-center gap-1 text-xs text-green-600"><Check className="h-3 w-3" /> Saved</span>}
-              <button onClick={saveProfile} disabled={saving || !profileLoaded} className="flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50">{saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />} {t("profile.save")}</button>
+              <button onClick={saveProfile} disabled={saving || !profileLoaded} className="flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-blue-500">{saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />} {t("profile.save")}</button>
             </div>
           </div>
           <div className={card}>
@@ -302,7 +302,7 @@ export default function EnhancedProfilePage() {
                   <input type={showPw ? "text" : "password"} aria-label="Confirm new password" value={confirmPw} onChange={(e) => setConfirmPw(e.target.value)} required className="mt-1 w-full rounded-lg border border-gray-300 dark:border-gray-700 dark:bg-gray-900 px-3 py-2 text-sm" placeholder="••••••••" />
                 </div>
                 <div className="flex gap-2">
-                  <button type="submit" disabled={changingPw} className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50">{changingPw ? <Loader2 className="h-4 w-4 animate-spin" /> : "Change Password"}</button>
+                  <button type="submit" disabled={changingPw} className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-blue-500">{changingPw ? <Loader2 className="h-4 w-4 animate-spin" /> : "Change Password"}</button>
                   <button type="button" onClick={() => { setShowChangePw(false); setCurPw(""); setNewPw(""); setConfirmPw(""); setPwError(""); }} className="rounded-lg border border-gray-300 dark:border-gray-700 px-4 py-2 text-sm">Cancel</button>
                 </div>
               </form>
@@ -328,7 +328,7 @@ export default function EnhancedProfilePage() {
                     <code className="font-mono text-sm text-gray-900 dark:text-gray-100 select-all break-all">{mfaSecret}</code>
                     <button
                       onClick={() => { navigator.clipboard.writeText(mfaSecret); }}
-                      className="ml-2 text-xs text-blue-600 hover:underline"
+                      className="ml-2 text-xs text-blue-600 hover:underline focus:outline-none focus:ring-2 focus:ring-blue-500"
                     >Copy</button>
                   </div>
                 )}
@@ -363,11 +363,11 @@ export default function EnhancedProfilePage() {
               {mfaMethods.map((m: any, i: any) => (
                 <div key={i} className="flex items-center justify-between rounded-lg border p-3 dark:border-gray-700">
                   <div className="flex items-center gap-3">{m.type === "webauthn" ? <Fingerprint className="h-5 w-5 text-green-500" /> : m.type === "totp" ? <Smartphone className="h-5 w-5 text-blue-500" /> : <Phone className="h-5 w-5 text-gray-400" />}<div><span className="text-sm font-medium">{m.name}</span><p className="text-xs text-gray-400">{m.type}</p></div></div>
-                  <button onClick={() => disableMfa(m.type)} className="rounded-lg border border-red-300 px-2 py-1 text-xs text-red-600 hover:bg-red-50 dark:hover:bg-red-950">Disable</button>
+                  <button onClick={() => disableMfa(m.type)} className="rounded-lg border border-red-300 px-2 py-1 text-xs text-red-600 hover:bg-red-50 dark:hover:bg-red-950 focus:outline-none focus:ring-2 focus:ring-blue-500">Disable</button>
                 </div>
               ))}
               {mfaSetup === "idle" && (
-                <button onClick={setupTotp} className="mt-2 flex items-center gap-1 rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-blue-700">
+                <button onClick={setupTotp} className="mt-2 flex items-center gap-1 rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500">
                   <Plus className="h-3 w-3" /> Enable TOTP
                 </button>
               )}
@@ -383,9 +383,9 @@ export default function EnhancedProfilePage() {
                 <div key={i} className="flex items-center justify-between rounded-lg border p-3 dark:border-gray-700">
                   <div className="flex items-center gap-3"><Globe className="h-5 w-5 text-gray-400" /><div><span className="text-sm font-medium">{acc.provider}</span>{acc.email && <p className="text-xs text-gray-400">{acc.email}</p>}</div></div>
                   {acc.connected ? (
-                    <button onClick={() => unlinkAccount(acc.provider)} className="rounded-lg border border-red-300 px-2 py-1 text-xs text-red-600 hover:bg-red-50 dark:hover:bg-red-950">Unlink</button>
+                    <button onClick={() => unlinkAccount(acc.provider)} className="rounded-lg border border-red-300 px-2 py-1 text-xs text-red-600 hover:bg-red-50 dark:hover:bg-red-950 focus:outline-none focus:ring-2 focus:ring-blue-500">Unlink</button>
                   ) : (
-                    <a href={`${API_BASE}/api/v1/auth/social/${acc.provider.toLowerCase()}/connect`} className="rounded-lg border border-gray-300 px-3 py-1 text-xs dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800">Connect</a>
+                    <a href={`${API_BASE}/api/v1/auth/social/${acc.provider.toLowerCase()}/connect`} className="rounded-lg border border-gray-300 px-3 py-1 text-xs dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500">Connect</a>
                   )}
                 </div>
               ))}
@@ -393,7 +393,7 @@ export default function EnhancedProfilePage() {
               {["Google", "GitHub"].filter(p => !linkedAccounts.some(a => a.provider === p)).map(provider => (
                 <div key={provider} className="flex items-center justify-between rounded-lg border p-3 dark:border-gray-700">
                   <div className="flex items-center gap-3"><Globe className="h-5 w-5 text-gray-400" /><span className="text-sm font-medium">{provider}</span></div>
-                  <a href={`${API_BASE}/api/v1/auth/social/${provider.toLowerCase()}/connect`} className="rounded-lg border border-gray-300 px-3 py-1 text-xs dark:border-gray-700 hover:bg-gray-50">Connect</a>
+                  <a href={`${API_BASE}/api/v1/auth/social/${provider.toLowerCase()}/connect`} className="rounded-lg border border-gray-300 px-3 py-1 text-xs dark:border-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500">Connect</a>
                 </div>
               ))}
             </div>
@@ -407,7 +407,7 @@ export default function EnhancedProfilePage() {
           {devices.map(d => (
             <div key={d.id} className={`${card} flex items-center justify-between !p-3`}>
               <div className="flex items-center gap-3"><div className="flex h-9 w-9 items-center justify-center rounded-lg bg-gray-100 dark:bg-gray-700"><Smartphone className="h-4 w-4 text-gray-500" /></div><div><div className="flex items-center gap-2"><span className="text-sm font-medium">{d.name}</span>{d.trusted && <span className="px-1.5 py-0.5 rounded text-xs bg-green-100 dark:bg-green-900/30 text-green-600">{t("profile.trusted")}</span>}</div><p className="text-xs text-gray-400">{d.os} · {t("profile.lastSeen")} {new Date(d.lastSeen).toLocaleDateString()}</p></div></div>
-              <button onClick={() => revokeDevice(d.id)} aria-label={"Revoke " + d.name} className="rounded p-1.5 text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20"><Ban className="h-3.5 w-3.5" /></button>
+              <button onClick={() => revokeDevice(d.id)} aria-label={"Revoke " + d.name} className="rounded p-1.5 text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 focus:outline-none focus:ring-2 focus:ring-blue-500"><Ban className="h-3.5 w-3.5" /></button>
             </div>
           ))}
         </div>

@@ -212,7 +212,7 @@ export default function AccessRequestsPage() {
             </thead>
             <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
               {requests.map((req: any) => (
-                <tr key={req.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/50">
+                <tr key={req.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/50 focus:outline-none focus:ring-2 focus:ring-blue-500">
                   <td className="px-4 py-3">
                     <span className="font-mono text-xs text-gray-700 dark:text-gray-300">{req.requester_id.slice(0, 8)}...</span>
                   </td>
@@ -232,14 +232,14 @@ export default function AccessRequestsPage() {
                           <button
                             onClick={() => handleApprove(req)}
                             title="Approve"
-                            className="flex items-center gap-1 rounded-lg border border-green-300 px-2 py-1 text-xs font-medium text-green-600 hover:bg-green-50 dark:border-green-800 dark:hover:bg-green-950"
+                            className="flex items-center gap-1 rounded-lg border border-green-300 px-2 py-1 text-xs font-medium text-green-600 hover:bg-green-50 dark:border-green-800 dark:hover:bg-green-950 focus:outline-none focus:ring-2 focus:ring-blue-500"
                           >
                             <Check className="h-3.5 w-3.5" /> Approve
                           </button>
                           <button
                             onClick={() => handleDeny(req)}
                             title="Deny"
-                            className="flex items-center gap-1 rounded-lg border border-red-300 px-2 py-1 text-xs font-medium text-red-600 hover:bg-red-50 dark:border-red-800 dark:hover:bg-red-950"
+                            className="flex items-center gap-1 rounded-lg border border-red-300 px-2 py-1 text-xs font-medium text-red-600 hover:bg-red-50 dark:border-red-800 dark:hover:bg-red-950 focus:outline-none focus:ring-2 focus:ring-blue-500"
                           >
                             <Ban className="h-3.5 w-3.5" /> Deny
                           </button>
@@ -265,7 +265,7 @@ export default function AccessRequestsPage() {
               <h2 className="flex items-center gap-2 text-lg font-semibold dark:text-gray-100">
                 <Plus className="h-5 w-5 text-brand-600" /> Create Access Request
               </h2>
-              <button onClick={() => setShowCreate(false)} className="text-gray-400 hover:text-gray-600" aria-label="Close">
+              <button onClick={() => setShowCreate(false)} className="text-gray-400 hover:text-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500" aria-label="Close">
                 <X className="h-5 w-5" />
               </button>
             </div>

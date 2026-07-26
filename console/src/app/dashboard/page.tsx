@@ -116,7 +116,7 @@ export default function DashboardPage() {
           <div className="space-y-4">
             {/* Security alert banner for high failed logins */}
             {kpi.failedLogins24h > 100 && (
-              <a href="/audit?result=failure" role="alert" aria-label={`Security alert: ${kpi.failedLogins24h} failed login attempts in last 24 hours. Click to investigate.`} className="block rounded-xl border-2 border-red-500 bg-red-50 dark:bg-red-950/50 p-4 transition hover:bg-red-100 dark:hover:bg-red-950 focus:ring-2 focus:ring-red-500 focus:ring-offset-2 dark:focus:ring-offset-gray-950">
+              <a href="/audit?result=failure" role="alert" aria-label={`Security alert: ${kpi.failedLogins24h} failed login attempts in last 24 hours. Click to investigate.`} className="block rounded-xl border-2 border-red-500 bg-red-50 dark:bg-red-950/50 p-4 transition hover:bg-red-100 dark:hover:bg-red-950 focus:ring-2 focus:ring-red-500 focus:ring-offset-2 dark:focus:ring-offset-gray-950 focus:outline-none focus:ring-2 focus:ring-blue-500">
                 <div className="flex items-center gap-3">
                   <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-red-600 text-white animate-pulse">
                     <AlertTriangle className="h-6 w-6" />
@@ -164,13 +164,13 @@ export default function DashboardPage() {
 
         {/* Quick Actions — high-frequency admin operations */}
         <div className="flex flex-wrap gap-2">
-          <button onClick={() => window.location.href = '/users'} aria-label={t("dashboardEnhanced.welcome.createUser")} className="flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 transition-colors focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-gray-950">
+          <button onClick={() => window.location.href = '/users'} aria-label={t("dashboardEnhanced.welcome.createUser")} className="flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 transition-colors focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-gray-950 focus:outline-none focus:ring-2 focus:ring-blue-500">
             <UserPlus className="h-4 w-4" /> {t("dashboardEnhanced.welcome.createUser")}
           </button>
-          <button onClick={() => window.location.href = '/oauth-clients'} aria-label={t("dashboardEnhanced.welcome.createOAuth")} className="flex items-center gap-2 rounded-lg border border-gray-300 dark:border-gray-700 px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors focus:ring-2 focus:ring-brand-500 focus:ring-offset-2 dark:focus:ring-offset-gray-950">
+          <button onClick={() => window.location.href = '/oauth-clients'} aria-label={t("dashboardEnhanced.welcome.createOAuth")} className="flex items-center gap-2 rounded-lg border border-gray-300 dark:border-gray-700 px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors focus:ring-2 focus:ring-brand-500 focus:ring-offset-2 dark:focus:ring-offset-gray-950 focus:outline-none focus:ring-2 focus:ring-blue-500">
             <Globe className="h-4 w-4" /> {t("dashboardEnhanced.welcome.createOAuth")}
           </button>
-          <button onClick={() => window.location.href = '/audit'} aria-label="View audit log" className="flex items-center gap-2 rounded-lg border border-gray-300 dark:border-gray-700 px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors focus:ring-2 focus:ring-brand-500 focus:ring-offset-2 dark:focus:ring-offset-gray-950">
+          <button onClick={() => window.location.href = '/audit'} aria-label="View audit log" className="flex items-center gap-2 rounded-lg border border-gray-300 dark:border-gray-700 px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors focus:ring-2 focus:ring-brand-500 focus:ring-offset-2 dark:focus:ring-offset-gray-950 focus:outline-none focus:ring-2 focus:ring-blue-500">
             <Activity className="h-4 w-4" /> View Audit Log
           </button>
         </div>
@@ -244,7 +244,7 @@ function QuickLink({ icon: Icon, label, desc, href }: {
   icon: typeof BookOpen; label: string; desc: string; href: string;
 }) {
   return (
-    <a href={href} className="flex flex-col items-start gap-1 p-3 rounded-lg bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 hover:border-blue-300 dark:hover:border-blue-700 transition-colors">
+    <a href={href} className="flex flex-col items-start gap-1 p-3 rounded-lg bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 hover:border-blue-300 dark:hover:border-blue-700 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500">
       <Icon className="w-4 h-4 text-blue-600 mb-1" />
       <span className="text-xs font-medium text-gray-900 dark:text-white">{label}</span>
       <span className="text-xs text-gray-400">{desc}</span>
@@ -318,19 +318,19 @@ function UserDashboard() {
       <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-5">
         <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">Quick Actions</h2>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          <a href="/profile" className="flex flex-col items-center gap-2 p-3 rounded-lg border border-gray-200 dark:border-gray-700 hover:border-blue-300 transition-colors">
+          <a href="/profile" className="flex flex-col items-center gap-2 p-3 rounded-lg border border-gray-200 dark:border-gray-700 hover:border-blue-300 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500">
             <Shield className="w-5 h-5 text-blue-600" />
             <span className="text-xs font-medium text-gray-700 dark:text-gray-300">Profile & Security</span>
           </a>
-          <a href="/sessions" className="flex flex-col items-center gap-2 p-3 rounded-lg border border-gray-200 dark:border-gray-700 hover:border-blue-300 transition-colors">
+          <a href="/sessions" className="flex flex-col items-center gap-2 p-3 rounded-lg border border-gray-200 dark:border-gray-700 hover:border-blue-300 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500">
             <Monitor className="w-5 h-5 text-blue-600" />
             <span className="text-xs font-medium text-gray-700 dark:text-gray-300">My Sessions</span>
           </a>
-          <a href="/access-requests" className="flex flex-col items-center gap-2 p-3 rounded-lg border border-gray-200 dark:border-gray-700 hover:border-blue-300 transition-colors">
+          <a href="/access-requests" className="flex flex-col items-center gap-2 p-3 rounded-lg border border-gray-200 dark:border-gray-700 hover:border-blue-300 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500">
             <FileText className="w-5 h-5 text-blue-600" />
             <span className="text-xs font-medium text-gray-700 dark:text-gray-300">Request Access</span>
           </a>
-          <a href="/profile" className="flex flex-col items-center gap-2 p-3 rounded-lg border border-gray-200 dark:border-gray-700 hover:border-blue-300 transition-colors">
+          <a href="/profile" className="flex flex-col items-center gap-2 p-3 rounded-lg border border-gray-200 dark:border-gray-700 hover:border-blue-300 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500">
             <Fingerprint className="w-5 h-5 text-blue-600" />
             <span className="text-xs font-medium text-gray-700 dark:text-gray-300">Setup MFA</span>
           </a>

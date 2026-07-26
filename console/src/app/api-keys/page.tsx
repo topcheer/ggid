@@ -196,13 +196,13 @@ export default function ApiKeysPage() {
         <div className="flex gap-2">
           <button
             onClick={loadKeys}
-            className="flex items-center gap-2 rounded-lg border border-gray-300 px-3 py-2 text-sm hover:bg-gray-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700"
+            className="flex items-center gap-2 rounded-lg border border-gray-300 px-3 py-2 text-sm hover:bg-gray-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
            aria-label="Refresh API keys">
             <RefreshCw className="h-4 w-4" /> {t("common.refresh")}
           </button>
           <button
             onClick={() => setShowCreate(!showCreate)}
-            className="flex items-center gap-2 rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700"
+            className="flex items-center gap-2 rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
             <Plus className="h-4 w-4" /> {t("apiKeys.createKey")}
           </button>
@@ -229,7 +229,7 @@ export default function ApiKeysPage() {
             </h2>
             <button
               onClick={() => setShowCreate(false)}
-              className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+              className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               <X className="h-5 w-5" />
             </button>
@@ -286,14 +286,14 @@ export default function ApiKeysPage() {
               <button
                 onClick={handleCreate}
                 disabled={creating || !keyName.trim()}
-                className="flex items-center gap-2 rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700 disabled:opacity-50"
+                className="flex items-center gap-2 rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700 disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
                aria-label="Create API key">
                 {creating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Key className="h-4 w-4" />}
                 {t("apiKeys.generateKey")}
               </button>
               <button
                 onClick={() => setShowCreate(false)}
-                className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium hover:bg-gray-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700"
+                className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium hover:bg-gray-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
                 {t("common.cancel")}
               </button>
@@ -343,7 +343,7 @@ export default function ApiKeysPage() {
               ) : keys.map((key: any) => {
                 const expired = isExpired(key.expires_at);
                 return (
-                  <tr key={key.id} className="hover:bg-gray-50 dark:hover:bg-gray-900">
+                  <tr key={key.id} className="hover:bg-gray-50 dark:hover:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500">
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-2">
                         <Key className="h-4 w-4 text-gray-400" />
@@ -394,7 +394,7 @@ export default function ApiKeysPage() {
                     <td className="px-4 py-3 text-right">
                       <button
                         onClick={() => handleRevoke(key.id)}
-                        className="rounded p-1.5 text-gray-400 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-950"
+                        className="rounded p-1.5 text-gray-400 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-950 focus:outline-none focus:ring-2 focus:ring-blue-500"
                         title={t("apiKeys.revokeKey")}
                         disabled={expired}
                       >
@@ -448,7 +448,7 @@ export default function ApiKeysPage() {
                 </code>
                 <button
                   onClick={copyNewKey}
-                  className="flex shrink-0 items-center gap-1.5 rounded-lg border border-gray-300 px-3 py-2 text-sm hover:bg-gray-50 dark:border-gray-600 dark:hover:bg-gray-700"
+                  className="flex shrink-0 items-center gap-1.5 rounded-lg border border-gray-300 px-3 py-2 text-sm hover:bg-gray-50 dark:border-gray-600 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
                  aria-label="Copy API key">
                   {keyCopied ? <Check className="h-4 w-4 text-green-600" /> : <Copy className="h-4 w-4" />}
                   {keyCopied ? t("apiKeys.copied") : t("apiKeys.copy")}
@@ -462,7 +462,7 @@ export default function ApiKeysPage() {
                   setNewKey(null);
                   setKeyCopied(false);
                 }}
-                className="rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700"
+                className="rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
                 {t("apiKeys.done")}
               </button>

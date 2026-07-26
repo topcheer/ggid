@@ -15,7 +15,7 @@ export default function SwaggerPage() {
       <div className="text-center">
         <Loader2 className="mx-auto mb-3 h-6 w-6 animate-spin text-blue-600" />
         <p className="text-sm text-gray-500 dark:text-gray-400">Redirecting to Swagger UI...</p>
-        <a href={API_BASE_URL + "/swagger/"} className="mt-3 inline-block text-sm text-blue-600 hover:underline">
+        <a href={API_BASE_URL + "/swagger/"} className="mt-3 inline-block text-sm text-blue-600 hover:underline focus:outline-none focus:ring-2 focus:ring-blue-500">
           Click here if not redirected
         </a>
       </div>

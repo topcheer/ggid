@@ -116,7 +116,7 @@ function CallbackContent() {
           <p className="mb-6 text-center text-gray-600 dark:text-gray-400">{error}</p>
           <button
             onClick={() => router.push("/login")}
-            className="w-full rounded-lg bg-brand-600 px-4 py-2 text-white hover:bg-brand-700"
+            className="w-full rounded-lg bg-brand-600 px-4 py-2 text-white hover:bg-brand-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
             Back to Login
           </button>

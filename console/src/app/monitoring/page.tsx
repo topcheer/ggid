@@ -94,7 +94,7 @@ export default function MonitoringPage() {
         <button
           onClick={loadData}
           disabled={loading}
-          className="flex items-center gap-2 rounded-lg border border-gray-300 dark:border-gray-600 px-3 py-2 text-sm hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50"
+          className="flex items-center gap-2 rounded-lg border border-gray-300 dark:border-gray-600 px-3 py-2 text-sm hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
         >
           <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
           Refresh
@@ -150,7 +150,7 @@ export default function MonitoringPage() {
           </thead>
           <tbody className="divide-y divide-gray-100">
             {(services.length > 0 ? services : SERVICES.map((s: any) => ({ ...s, status: "checking" as const }))).map((svc: any) => (
-              <tr key={svc.name} className="hover:bg-gray-50 dark:hover:bg-gray-700 dark:bg-gray-800">
+              <tr key={svc.name} className="hover:bg-gray-50 dark:hover:bg-gray-700 dark:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500">
                 <td className="px-4 py-3 text-sm font-medium">{svc.name}</td>
                 <td className="px-4 py-3">
                   <span className={`flex items-center gap-1.5 text-xs font-medium ${
@@ -193,7 +193,7 @@ export default function MonitoringPage() {
             </thead>
             <tbody className="divide-y divide-gray-100">
               {Object.entries(gwStats.routes).map(([route, stats]: any[]) => (
-                <tr key={route} className="hover:bg-gray-50 dark:hover:bg-gray-700 dark:bg-gray-800">
+                <tr key={route} className="hover:bg-gray-50 dark:hover:bg-gray-700 dark:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500">
                   <td className="px-4 py-3 font-mono text-xs">{route}</td>
                   <td className="px-4 py-3 text-sm">{stats.requests || 0}</td>
                   <td className="px-4 py-3 text-sm text-red-600">{stats.errors || 0}</td>

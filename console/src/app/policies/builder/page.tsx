@@ -307,14 +307,14 @@ export default function PolicyBuilderPage() {
           )}
           <button
             onClick={() => setDryRunOpen(true)}
-            className="flex items-center gap-1.5 rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-600"
+            className="flex items-center gap-1.5 rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
             <Play className="h-4 w-4" /> Dry Run
           </button>
           <button
             onClick={handleSave}
             disabled={errorCount > 0}
-            className="flex items-center gap-1.5 rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-50"
+            className="flex items-center gap-1.5 rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
             <Save className="h-4 w-4" /> Save Policy
           </button>
@@ -348,12 +348,12 @@ export default function PolicyBuilderPage() {
                   draggable
                   onDragStart={() => setDraggedType(type)}
                   onClick={() => addNode(type)}
-                  className={`group flex cursor-grab items-center gap-2 rounded-lg border ${cfg.borderColor} ${cfg.bgColor} p-3 transition-all hover:shadow-md active:cursor-grabbing`}
+                  className={`group flex cursor-grab items-center gap-2 rounded-lg border ${cfg.borderColor} ${cfg.bgColor} p-3 transition-all hover:shadow-md active:cursor-grabbing focus:outline-none focus:ring-2 focus:ring-blue-500}`}
                 >
-                  <GripVertical className="h-4 w-4 text-gray-300 group-hover:text-gray-400" />
+                  <GripVertical className="h-4 w-4 text-gray-300 group-hover:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500" />
                   <Icon className={`h-4 w-4 ${cfg.color}`} />
                   <span className={`text-sm font-medium ${cfg.color}`}>{cfg.label}</span>
-                  <Plus className="ml-auto h-3.5 w-3.5 text-gray-400 group-hover:text-gray-600" />
+                  <Plus className="ml-auto h-3.5 w-3.5 text-gray-400 group-hover:text-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500" />
                 </div>
               );
             })}
@@ -504,7 +504,7 @@ export default function PolicyBuilderPage() {
                       {/* Delete button */}
                       <button
                         onClick={() => deleteNode(node.id)}
-                        className="rounded-lg p-1.5 text-gray-400 transition-colors hover:bg-red-50 hover:text-red-500 dark:hover:bg-red-900/20"
+                        className="rounded-lg p-1.5 text-gray-400 transition-colors hover:bg-red-50 hover:text-red-500 dark:hover:bg-red-900/20 focus:outline-none focus:ring-2 focus:ring-blue-500"
                         title="Delete node"
                       >
                         <Trash2 className="h-4 w-4" />
@@ -523,7 +523,7 @@ export default function PolicyBuilderPage() {
                     <button
                       key={type}
                       onClick={() => addNode(type)}
-                      className={`flex items-center gap-1.5 rounded-lg border border-dashed ${cfg.borderColor} px-3 py-2 text-xs font-medium ${cfg.color} transition-colors hover:bg-gray-50 dark:hover:bg-gray-800`}
+                      className={`flex items-center gap-1.5 rounded-lg border border-dashed ${cfg.borderColor} px-3 py-2 text-xs font-medium ${cfg.color} transition-colors hover:bg-gray-50 dark:hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500}`}
                     >
                       <Plus className="h-3 w-3" />
                       <Icon className="h-3 w-3" />
@@ -567,7 +567,7 @@ export default function PolicyBuilderPage() {
                   setDryRunOpen(false);
                   setDryRunResult(null);
                 }}
-                className="rounded-lg p-1 text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700"
+                className="rounded-lg p-1 text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
                 <X className="h-5 w-5" />
               </button>
@@ -659,7 +659,7 @@ export default function PolicyBuilderPage() {
               <button
                 onClick={handleDryRun}
                 disabled={dryRunLoading}
-                className="flex items-center gap-1.5 rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700 disabled:opacity-50"
+                className="flex items-center gap-1.5 rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700 disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
                aria-label="div">
                 {dryRunLoading ? (
                   <>

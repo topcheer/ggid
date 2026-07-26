@@ -411,21 +411,21 @@ export default function PoliciesPage() {
           />
           <button
             onClick={() => importFileRef.current?.click()}
-            className="flex items-center gap-1.5 rounded-lg border border-gray-300 px-3 py-2 text-sm font-medium hover:bg-gray-50 dark:border-gray-600 dark:hover:bg-gray-700 dark:text-gray-200"
+            className="flex items-center gap-1.5 rounded-lg border border-gray-300 px-3 py-2 text-sm font-medium hover:bg-gray-50 dark:border-gray-600 dark:hover:bg-gray-700 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
             title={t("policies.importPolicy")}
           >
             <Upload className="h-4 w-4" /> {t("policies.import")}
           </button>
           <button
             onClick={handleExportJson}
-            className="flex items-center gap-1.5 rounded-lg border border-gray-300 px-3 py-2 text-sm font-medium hover:bg-gray-50 dark:border-gray-600 dark:hover:bg-gray-700 dark:text-gray-200"
+            className="flex items-center gap-1.5 rounded-lg border border-gray-300 px-3 py-2 text-sm font-medium hover:bg-gray-50 dark:border-gray-600 dark:hover:bg-gray-700 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
             title={t("policies.exportPolicy")}
            aria-label="Download">
             <Download className="h-4 w-4" /> {t("policies.export")}
           </button>
           <button
             onClick={handleExportAllJson}
-            className="flex items-center gap-1.5 rounded-lg border border-gray-300 px-3 py-2 text-sm font-medium hover:bg-gray-50 dark:border-gray-600 dark:hover:bg-gray-700 dark:text-gray-200"
+            className="flex items-center gap-1.5 rounded-lg border border-gray-300 px-3 py-2 text-sm font-medium hover:bg-gray-50 dark:border-gray-600 dark:hover:bg-gray-700 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
             title={t("policies.exportAll")}
            aria-label="FileJson">
             <FileJson className="h-4 w-4" /> {t("policies.exportAllBtn")}
@@ -433,7 +433,7 @@ export default function PoliciesPage() {
           {selectedPolicy && (
             <button
               onClick={resetEditor}
-              className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium hover:bg-gray-50 dark:border-gray-600 dark:hover:bg-gray-700"
+              className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium hover:bg-gray-50 dark:border-gray-600 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
              aria-label="Action">
               {t("policies.newPolicy")}
             </button>
@@ -468,7 +468,7 @@ export default function PoliciesPage() {
               ) : (
                 <ul className="divide-y divide-gray-100 dark:divide-gray-700">
                   {policies.map((p: any) => (
-                    <li key={p.id || p.name} className="group flex items-center justify-between p-3 hover:bg-gray-50 dark:hover:bg-gray-700">
+                    <li key={p.id || p.name} className="group flex items-center justify-between p-3 hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500">
                       <button onClick={() => selectPolicy(p)} className="flex-1 text-left">
                         <div className="flex items-center gap-2">
                           <p className="text-sm font-medium text-gray-900 dark:text-gray-200">{p.name}</p>
@@ -492,7 +492,7 @@ export default function PoliciesPage() {
                       {p.id && (
                         <button
                           onClick={() => setDeleteTarget({ id: p.id!, name: p.name })}
-                          className="rounded p-1 text-gray-400 opacity-0 hover:bg-red-50 hover:text-red-600 group-hover:opacity-100"
+                          className="rounded p-1 text-gray-400 opacity-0 hover:bg-red-50 hover:text-red-600 group-hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
                           title={t("common.delete")}
                         >
                           <Trash2 className="h-4 w-4" />
@@ -518,7 +518,7 @@ export default function PoliciesPage() {
               <div className="flex gap-2">
                 <button
                   onClick={handleCreatePolicy}
-                  className="flex items-center gap-1.5 rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700"
+                  className="flex items-center gap-1.5 rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
                  aria-label="Save">
                   <Save className="h-4 w-4" /> {selectedPolicy ? t("policies.update") : t("common.create")}
                 </button>
@@ -576,7 +576,7 @@ export default function PoliciesPage() {
               <span className="text-sm font-medium text-gray-700 dark:text-gray-300">{t("policies.basicrules")}</span>
               <button
                 onClick={addRule}
-                className="flex items-center gap-1 rounded-lg border border-gray-300 px-3 py-1.5 text-xs font-medium hover:bg-gray-50 dark:border-gray-600 dark:hover:bg-gray-700"
+                className="flex items-center gap-1 rounded-lg border border-gray-300 px-3 py-1.5 text-xs font-medium hover:bg-gray-50 dark:border-gray-600 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
                aria-label="Plus">
                 <Plus className="h-3.5 w-3.5" /> {t("policies.addRule")}
               </button>
@@ -620,7 +620,7 @@ export default function PoliciesPage() {
                     </select>
                     <button
                       onClick={() => removeRule(i)}
-                      className="rounded p-1 text-gray-400 hover:bg-red-50 hover:text-red-600"
+                      className="rounded p-1 text-gray-400 hover:bg-red-50 hover:text-red-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
                     >
                       <Trash2 className="h-4 w-4" />
                     </button>
@@ -639,13 +639,13 @@ export default function PoliciesPage() {
               <div className="flex items-center gap-2">
                 <button
                   onClick={addRbacRole}
-                  className="flex items-center gap-1 rounded-lg border border-gray-300 px-3 py-1.5 text-xs font-medium hover:bg-gray-50 dark:border-gray-600 dark:hover:bg-gray-700"
+                  className="flex items-center gap-1 rounded-lg border border-gray-300 px-3 py-1.5 text-xs font-medium hover:bg-gray-50 dark:border-gray-600 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
                  aria-label="Plus">
                   <Plus className="h-3.5 w-3.5" /> {t("policies.addRole")}
                 </button>
                 <button
                   onClick={() => setRbacCollapsed(!rbacCollapsed)}
-                  className="rounded-lg border border-gray-300 p-1.5 hover:bg-gray-50 dark:border-gray-600 dark:hover:bg-gray-700"
+                  className="rounded-lg border border-gray-300 p-1.5 hover:bg-gray-50 dark:border-gray-600 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
                   {rbacCollapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
                 </button>
@@ -672,12 +672,12 @@ export default function PoliciesPage() {
                     </thead>
                     <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
                       {rbacEntries.map((entry, roleIdx) => (
-                        <tr key={roleIdx} className="hover:bg-gray-50 dark:hover:bg-gray-700/50">
+                        <tr key={roleIdx} className="hover:bg-gray-50 dark:hover:bg-gray-700/50 focus:outline-none focus:ring-2 focus:ring-blue-500">
                           <td className="px-3 py-2">
                             <input
                               value={entry.role}
                               onChange={(e) => renameRbacRole(roleIdx, e.target.value)}
-                              className="w-full rounded border border-transparent px-2 py-1 text-sm font-medium text-gray-900 hover:border-gray-300 focus:border-brand-500 focus:outline-none dark:bg-gray-700 dark:text-gray-200"
+                              className="w-full rounded border border-transparent px-2 py-1 text-sm font-medium text-gray-900 hover:border-gray-300 focus:border-brand-500 focus:outline-none dark:bg-gray-700 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
                             />
                           </td>
                           {PERMISSION_COLUMNS.map((perm: any) => (
@@ -694,7 +694,7 @@ export default function PoliciesPage() {
                           <td className="px-3 py-2 text-right">
                             <button
                               onClick={() => removeRbacRole(roleIdx)}
-                              className="rounded p-1 text-gray-400 hover:bg-red-50 hover:text-red-600"
+                              className="rounded p-1 text-gray-400 hover:bg-red-50 hover:text-red-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
                             >
                               <Trash2 className="h-4 w-4" />
                             </button>
@@ -717,13 +717,13 @@ export default function PoliciesPage() {
               <div className="flex items-center gap-2">
                 <button
                   onClick={addAbacRule}
-                  className="flex items-center gap-1 rounded-lg border border-gray-300 px-3 py-1.5 text-xs font-medium hover:bg-gray-50 dark:border-gray-600 dark:hover:bg-gray-700"
+                  className="flex items-center gap-1 rounded-lg border border-gray-300 px-3 py-1.5 text-xs font-medium hover:bg-gray-50 dark:border-gray-600 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
                  aria-label="Plus">
                   <Plus className="h-3.5 w-3.5" /> {t("policies.addRule")}
                 </button>
                 <button
                   onClick={() => setAbacCollapsed(!abacCollapsed)}
-                  className="rounded-lg border border-gray-300 p-1.5 hover:bg-gray-50 dark:border-gray-600 dark:hover:bg-gray-700"
+                  className="rounded-lg border border-gray-300 p-1.5 hover:bg-gray-50 dark:border-gray-600 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
                   {abacCollapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
                 </button>
@@ -752,7 +752,7 @@ export default function PoliciesPage() {
                           </div>
                           <button
                             onClick={() => removeAbacRule(rule.id)}
-                            className="rounded p-1 text-gray-400 hover:bg-red-50 hover:text-red-600"
+                            className="rounded p-1 text-gray-400 hover:bg-red-50 hover:text-red-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
                           >
                             <Trash2 className="h-4 w-4" />
                           </button>
@@ -800,7 +800,7 @@ export default function PoliciesPage() {
                               <button
                                 onClick={() => removeAbacCondition(rule.id, cond.id)}
                                 disabled={rule.conditions.length === 1}
-                                className="rounded p-1 text-gray-400 hover:bg-red-50 hover:text-red-600 disabled:opacity-30"
+                                className="rounded p-1 text-gray-400 hover:bg-red-50 hover:text-red-600 disabled:opacity-30 focus:outline-none focus:ring-2 focus:ring-blue-500"
                               >
                                 <Trash2 className="h-3.5 w-3.5" />
                               </button>
@@ -812,7 +812,7 @@ export default function PoliciesPage() {
                         <div className="mt-2 flex items-center gap-2">
                           <button
                             onClick={() => addAbacCondition(rule.id)}
-                            className="flex items-center gap-1 text-xs text-brand-600 hover:underline"
+                            className="flex items-center gap-1 text-xs text-brand-600 hover:underline focus:outline-none focus:ring-2 focus:ring-blue-500"
                           >
                             <Plus className="h-3 w-3" /> {t("policies.addCondition")}
                           </button>
@@ -848,19 +848,19 @@ export default function PoliciesPage() {
               <div className="flex gap-2">
                 <button
                   onClick={() => importFileRef.current?.click()}
-                  className="flex items-center gap-1 rounded-lg border border-gray-300 px-3 py-1.5 text-xs font-medium hover:bg-gray-50 dark:border-gray-600 dark:hover:bg-gray-700"
+                  className="flex items-center gap-1 rounded-lg border border-gray-300 px-3 py-1.5 text-xs font-medium hover:bg-gray-50 dark:border-gray-600 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
                   <Upload className="h-3.5 w-3.5" /> {t("policies.importFile")}
                 </button>
                 <button
                   onClick={handleExportJson}
-                  className="flex items-center gap-1 rounded-lg border border-gray-300 px-3 py-1.5 text-xs font-medium hover:bg-gray-50 dark:border-gray-600 dark:hover:bg-gray-700"
+                  className="flex items-center gap-1 rounded-lg border border-gray-300 px-3 py-1.5 text-xs font-medium hover:bg-gray-50 dark:border-gray-600 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
                  aria-label="Download">
                   <Download className="h-3.5 w-3.5" /> {t("policies.export")}
                 </button>
                 <button
                   onClick={syncJsonToRules}
-                  className="rounded-lg border border-gray-300 px-3 py-1.5 text-xs font-medium hover:bg-gray-50 dark:border-gray-600 dark:hover:bg-gray-700"
+                  className="rounded-lg border border-gray-300 px-3 py-1.5 text-xs font-medium hover:bg-gray-50 dark:border-gray-600 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
                  aria-label="Action">
                   {t("policies.syncJsonToRules")}
                 </button>
@@ -912,7 +912,7 @@ export default function PoliciesPage() {
             <button
               onClick={handleDryRun}
               disabled={!dryRunSubject || !dryRunResource || !dryRunAction || dryRunLoading}
-              className="mt-3 flex items-center gap-1.5 rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700 disabled:opacity-50"
+              className="mt-3 flex items-center gap-1.5 rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700 disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
              aria-label="Loader2">
               {dryRunLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Play className="h-4 w-4" />}
               {t("policies.evaluate")}

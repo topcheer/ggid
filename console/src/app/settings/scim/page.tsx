@@ -174,12 +174,12 @@ export default function SCIMPage() {
               SCIM Endpoint
             </h3>
             <div className="flex items-center gap-2">
-              <code className="flex-1 truncate rounded-lg bg-gray-100 dark:bg-gray-700 px-3 py-2 text-sm text-gray-700 dark:text-gray-300 dark:bg-gray-900 dark:text-gray-300">
+              <code className="flex-1 truncate rounded-lg bg-gray-100 dark:bg-gray-700 px-3 py-2 text-sm text-gray-700 dark:text-gray-300 dark:bg-gray-900 dark:text-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500">
                 {config.endpoint}
               </code>
               <button
                 onClick={handleCopy}
-                className="rounded-lg border border-gray-300 dark:border-gray-600 p-2 text-gray-500 hover:bg-gray-50 dark:hover:bg-gray-700 dark:bg-gray-800 dark:border-gray-600 dark:hover:bg-gray-700"
+                className="rounded-lg border border-gray-300 dark:border-gray-600 p-2 text-gray-500 hover:bg-gray-50 dark:hover:bg-gray-700 dark:bg-gray-800 dark:border-gray-600 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
                aria-label="Check">
                 {copied ? <Check className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4" />}
               </button>
@@ -219,7 +219,7 @@ export default function SCIMPage() {
                   />
                   <button
                     onClick={handleRegenerateToken}
-                    className="shrink-0 rounded-lg border border-gray-300 dark:border-gray-600 px-3 py-2 text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700"
+                    className="shrink-0 rounded-lg border border-gray-300 dark:border-gray-600 px-3 py-2 text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
                    aria-label="RefreshCw">
                     <RefreshCw className="h-4 w-4" />
                   </button>
@@ -229,7 +229,7 @@ export default function SCIMPage() {
                 <button
                   onClick={handleSave}
                   disabled={saving}
-                  className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50"
+                  className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
                   {saving ? <Loader2 className="mr-1 inline h-4 w-4 animate-spin" /> : null}
                   Save Configuration
@@ -287,7 +287,7 @@ export default function SCIMPage() {
                   <button
                     onClick={() => handleSync(sync.resourceType)}
                     disabled={syncing === sync.resourceType}
-                    className="mt-3 flex w-full items-center justify-center gap-1 rounded-lg border border-gray-300 dark:border-gray-600 py-2 text-sm font-medium text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700 dark:bg-gray-800 disabled:opacity-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700"
+                    className="mt-3 flex w-full items-center justify-center gap-1 rounded-lg border border-gray-300 dark:border-gray-600 py-2 text-sm font-medium text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700 dark:bg-gray-800 disabled:opacity-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   >
                     {syncing === sync.resourceType ? (
                       <Loader2 className="h-4 w-4 animate-spin" />

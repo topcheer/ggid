@@ -107,7 +107,7 @@ export default function OAuthClientDetailPage({ params }: { params: { id: string
   if (loading) return <p className="text-gray-500">{t("common.loading")}</p>;
   if (error) return (
     <div>
-      <button onClick={() => router.push("/oauth-clients")} className="mb-4 flex items-center gap-1 text-sm text-gray-500 hover:text-gray-700">
+      <button onClick={() => router.push("/oauth-clients")} className="mb-4 flex items-center gap-1 text-sm text-gray-500 hover:text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500">
         <ArrowLeft className="h-4 w-4" /> {t("common.back")}
       </button>
       <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">{error}</div>
@@ -119,7 +119,7 @@ export default function OAuthClientDetailPage({ params }: { params: { id: string
     <div>
       <div className="mb-6 flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <button onClick={() => router.push("/oauth-clients")} className="text-gray-400 hover:text-gray-600">
+          <button onClick={() => router.push("/oauth-clients")} className="text-gray-400 hover:text-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500">
             <ArrowLeft className="h-5 w-5" />
           </button>
           <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-brand-100">
@@ -131,10 +131,10 @@ export default function OAuthClientDetailPage({ params }: { params: { id: string
           </div>
         </div>
         <div className="flex gap-2">
-          <button onClick={handleRotateSecret} className="rounded-lg border border-amber-300 px-3 py-2 text-sm text-amber-700 hover:bg-amber-50">
+          <button onClick={handleRotateSecret} className="rounded-lg border border-amber-300 px-3 py-2 text-sm text-amber-700 hover:bg-amber-50 focus:outline-none focus:ring-2 focus:ring-blue-500">
             {t("oauthClients.rotateSecret")}
           </button>
-          <button onClick={handleDelete} className="flex items-center gap-1 rounded-lg border border-red-300 px-3 py-2 text-sm text-red-600 hover:bg-red-50">
+          <button onClick={handleDelete} className="flex items-center gap-1 rounded-lg border border-red-300 px-3 py-2 text-sm text-red-600 hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-blue-500">
             <Trash2 className="h-4 w-4" /> {t("common.delete")}
           </button>
         </div>
@@ -179,7 +179,7 @@ export default function OAuthClientDetailPage({ params }: { params: { id: string
           <div className="mb-3 flex items-center justify-between">
             <h3 className="text-sm font-semibold dark:text-gray-200">{t("oauthClients.redirectUris")}</h3>
             {!editingURIs ? (
-              <button onClick={() => setEditingURIs(true)} className="text-xs text-brand-600 hover:underline">{t("common.edit")}</button>
+              <button onClick={() => setEditingURIs(true)} className="text-xs text-brand-600 hover:underline focus:outline-none focus:ring-2 focus:ring-blue-500">{t("common.edit")}</button>
             ) : (
               <div className="flex gap-2">
                 <button onClick={() => setEditingURIs(false)} className="text-xs text-gray-500">Cancel</button>

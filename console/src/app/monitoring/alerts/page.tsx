@@ -71,7 +71,7 @@ export default function AlertsPage() {
           { id: "rules" as Tab, label: t("alerts.alertRules"), icon: Bell },
           { id: "silences" as Tab, label: t("alerts.silences"), icon: VolumeX },
         ]).map(tb => { const Icon = tb.icon; return (
-          <button key={tb.id} onClick={() => setTab(tb.id)} aria-pressed={tab === tb.id} className={`flex items-center gap-1.5 border-b-2 px-4 py-2 text-sm font-medium transition whitespace-nowrap ${tab === tb.id ? "border-red-600 text-red-600 dark:text-red-400" : "border-transparent text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"}`}><Icon className="h-4 w-4" /> {tb.label}</button>
+          <button key={tb.id} onClick={() => setTab(tb.id)} aria-pressed={tab === tb.id} className={`flex items-center gap-1.5 border-b-2 px-4 py-2 text-sm font-medium transition whitespace-nowrap ${tab === tb.id ? "border-red-600 text-red-600 dark:text-red-400" : "border-transparent text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"} focus:outline-none focus:ring-2 focus:ring-blue-500}`}><Icon className="h-4 w-4" /> {tb.label}</button>
         );})}
       </div>
 
@@ -94,7 +94,7 @@ export default function AlertsPage() {
         <div className="overflow-x-auto"><table className="w-full text-sm">
           <thead className="bg-gray-50 dark:bg-gray-800/50"><tr><th className="px-3 py-2 text-left text-xs text-gray-400">{t("alerts.name")}</th><th className="px-3 py-2 text-left text-xs text-gray-400">{t("alerts.metric")}</th><th className="px-3 py-2 text-center text-xs text-gray-400">{t("alerts.severity")}</th><th className="px-3 py-2 text-center text-xs text-gray-400">{t("alerts.enabled")}</th></tr></thead>
           <tbody className="divide-y dark:divide-gray-800">{rules.map(r => { const cfg = SEV_CFG[r.severity] || SEV_CFG.warning; return (
-            <tr key={r.id} className="hover:bg-gray-50 dark:hover:bg-gray-900/30"><td className="px-3 py-3 text-xs font-medium">{r.name}</td><td className="px-3 py-3"><code className="text-xs font-mono text-gray-500 truncate block max-w-xs">{r.metric}</code></td><td className="px-3 py-3 text-center"><span className={`px-1.5 py-0.5 rounded text-xs font-medium ${cfg.bg} ${cfg.color}`}>{r.severity}</span></td><td className="px-3 py-3 text-center"><button onClick={() => toggleRule(r.id)} aria-pressed={r.enabled} aria-label={"Toggle " + r.name} className={`relative h-5 w-9 rounded-full transition ${r.enabled ? "bg-green-500" : "bg-gray-300 dark:bg-gray-700"}`}><span className={`absolute top-0.5 h-4 w-4 rounded-full bg-white transition ${r.enabled ? "left-4" : "left-0.5"}`} /></button></td></tr>
+            <tr key={r.id} className="hover:bg-gray-50 dark:hover:bg-gray-900/30 focus:outline-none focus:ring-2 focus:ring-blue-500"><td className="px-3 py-3 text-xs font-medium">{r.name}</td><td className="px-3 py-3"><code className="text-xs font-mono text-gray-500 truncate block max-w-xs">{r.metric}</code></td><td className="px-3 py-3 text-center"><span className={`px-1.5 py-0.5 rounded text-xs font-medium ${cfg.bg} ${cfg.color}`}>{r.severity}</span></td><td className="px-3 py-3 text-center"><button onClick={() => toggleRule(r.id)} aria-pressed={r.enabled} aria-label={"Toggle " + r.name} className={`relative h-5 w-9 rounded-full transition ${r.enabled ? "bg-green-500" : "bg-gray-300 dark:bg-gray-700"}`}><span className={`absolute top-0.5 h-4 w-4 rounded-full bg-white transition ${r.enabled ? "left-4" : "left-0.5"}`} /></button></td></tr>
           );})}</tbody>
         </table></div>
       )}
@@ -102,7 +102,7 @@ export default function AlertsPage() {
       {/* SILENCES */}
       {tab === "silences" && (
         <div>
-          <div className="mb-4"><button onClick={() => setShowSilenceForm(true)} className="flex items-center gap-1 rounded-lg bg-red-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-red-700"><Plus className="h-3 w-3" /> {t("alerts.createSilence")}</button></div>
+          <div className="mb-4"><button onClick={() => setShowSilenceForm(true)} className="flex items-center gap-1 rounded-lg bg-red-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-blue-500"><Plus className="h-3 w-3" /> {t("alerts.createSilence")}</button></div>
           {SAMPLE_SILENCES.length === 0 ? <div className={card}><div className="py-8 text-center"><Volume2 className="mx-auto h-10 w-10 text-gray-300" /><p className="mt-3 text-sm text-gray-400">{t("alerts.noSilences")}</p></div></div> : (
             <div className="space-y-2">{SAMPLE_SILENCES.map(s => (
               <div key={s.id} className={`${card} flex items-center justify-between !p-3`}>
@@ -124,7 +124,7 @@ export default function AlertsPage() {
               <div><label className="text-sm font-medium">{t("alerts.reason")}</label><input type="text" value={silenceReason} onChange={e => setSilenceReason(e.target.value)} placeholder="Maintenance window" className="mt-1 w-full rounded-lg border dark:border-gray-700 dark:bg-gray-900 px-3 py-2 text-sm" autoFocus /></div>
               <div><label className="text-sm font-medium">{t("alerts.duration2")} ({t("alerts.minutes")})</label><div className="mt-1 flex gap-2">{[30, 60, 120, 240].map(d => <button key={d} onClick={() => setSilenceDuration(d)} aria-pressed={silenceDuration === d} className={`rounded-lg border px-3 py-1.5 text-sm ${silenceDuration === d ? "border-red-500 bg-red-50 dark:bg-red-950/30" : "border-gray-300 dark:border-gray-700"}`}>{d}m</button>)}</div></div>
             </div>
-            <div className="mt-4 flex justify-end gap-2"><button onClick={() => setShowSilenceForm(false)} className="rounded-lg border border-gray-300 px-4 py-2 text-sm dark:border-gray-700">{t("common.cancel")}</button><button onClick={() => setShowSilenceForm(false)} className="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700">{t("alerts.create")}</button></div>
+            <div className="mt-4 flex justify-end gap-2"><button onClick={() => setShowSilenceForm(false)} className="rounded-lg border border-gray-300 px-4 py-2 text-sm dark:border-gray-700">{t("common.cancel")}</button><button onClick={() => setShowSilenceForm(false)} className="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-blue-500">{t("alerts.create")}</button></div>
           </div>
         </div>
       )}

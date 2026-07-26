@@ -372,7 +372,7 @@ export default function APIExplorerPage() {
                     ))}
                     <button
                       onClick={() => setQueryParams(prev => ({ ...prev, [`param${Object.keys(prev).length}`]: "" }))}
-                      className="text-xs text-brand-600 hover:underline"
+                      className="text-xs text-brand-600 hover:underline focus:outline-none focus:ring-2 focus:ring-blue-500"
                     >
                       + Add query param
                     </button>
@@ -397,7 +397,7 @@ export default function APIExplorerPage() {
               <button
                 onClick={tryRequest}
                 disabled={loading}
-                className="flex items-center gap-2 rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700 disabled:opacity-50"
+                className="flex items-center gap-2 rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700 disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
                 {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Play className="h-4 w-4" />}
                 {loading ? "Sending..." : "Send Request"}
@@ -420,7 +420,7 @@ export default function APIExplorerPage() {
                     )}
                     <button
                       onClick={() => navigator.clipboard.writeText(response)}
-                      className="ml-auto text-xs text-gray-400 hover:text-gray-600"
+                      className="ml-auto text-xs text-gray-400 hover:text-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
                     >
                       <Copy className="h-3 w-3" />
                     </button>

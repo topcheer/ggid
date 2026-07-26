@@ -123,7 +123,7 @@ export default function SessionDetailPage() {
               className="w-full pl-9 pr-3 py-2.5 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-sm font-mono text-gray-900 dark:text-white" />
           </div>
           <button onClick={search} disabled={loading || !query.trim()} aria-label={t("sessionDetail.search")}
-            className="flex items-center gap-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white rounded-lg text-sm font-medium focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900">
+            className="flex items-center gap-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white rounded-lg text-sm font-medium focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500">
             {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}
             {loading ? t("sessionDetail.searching") : t("sessionDetail.search")}
           </button>
@@ -203,7 +203,7 @@ export default function SessionDetailPage() {
               {/* Revoke Button */}
               {session.status === "active" && (
                 <button onClick={revoke} disabled={revoking} aria-label={t("sessionDetail.actions.revoke")}
-                  className="mt-4 flex items-center gap-2 px-5 py-2 bg-red-600 hover:bg-red-700 disabled:opacity-50 text-white rounded-lg text-sm font-medium focus:ring-2 focus:ring-red-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900">
+                  className="mt-4 flex items-center gap-2 px-5 py-2 bg-red-600 hover:bg-red-700 disabled:opacity-50 text-white rounded-lg text-sm font-medium focus:ring-2 focus:ring-red-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500">
                   {revoking ? <Loader2 className="w-4 h-4 animate-spin" /> : <Ban className="w-4 h-4" />}
                   {t("sessionDetail.actions.revoke")}
                 </button>
@@ -222,7 +222,7 @@ export default function SessionDetailPage() {
               ) : (
                 <div className="space-y-2">
                   {caeHistory.map((e: any) => (
-                    <div key={e.id} className="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800/30">
+                    <div key={e.id} className="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800/30 focus:outline-none focus:ring-2 focus:ring-blue-500">
                       <div className="w-1.5 h-1.5 rounded-full bg-blue-500" />
                       <span className="text-xs text-gray-500 w-32">{new Date(e.timestamp).toLocaleTimeString()}</span>
                       <code className="text-xs text-gray-700 dark:text-gray-300 flex-1">{e.event}</code>

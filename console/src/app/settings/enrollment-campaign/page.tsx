@@ -255,7 +255,7 @@ function CreateCampaign({ onLaunched }: { onLaunched: () => void }) {
       </div>
 
       {/* Step Content */}
-      {error && <div className="flex items-center gap-2 px-4 py-2 mb-4 rounded-lg bg-red-50 dark:bg-red-950/30 text-red-700 dark:text-red-300 text-sm"><AlertCircle className="w-4 h-4" />{error}</div>}
+      {error && <div className="flex items-center gap-2 px-4 py-2 mb-4 rounded-lg bg-red-50 dark:bg-red-950/30 text-red-700 dark:text-red-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"><AlertCircle className="w-4 h-4" />{error}</div>}
 
       {step === 0 && (
         <div className="space-y-4">
@@ -263,7 +263,7 @@ function CreateCampaign({ onLaunched }: { onLaunched: () => void }) {
             <label className="block text-sm font-semibold text-gray-900 dark:text-white dark:text-white mb-2">{t("enrollmentCampaign.create.campaignName")}</label>
             <input type="text" aria-label={t("enrollmentCampaign.create.campaignName")} value={name} onChange={(e) => setName(e.target.value)}
               placeholder={t("enrollmentCampaign.create.campaignNamePlaceholder")}
-              className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 dark:bg-gray-800 text-sm text-gray-900 dark:text-white dark:text-white" />
+              className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 dark:bg-gray-800 text-sm text-gray-900 dark:text-white dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500" />
           </div>
           <div>
             <label className="block text-sm font-semibold text-gray-900 dark:text-white dark:text-white mb-2">{t("enrollmentCampaign.create.targetGroup")}</label>
@@ -312,7 +312,7 @@ function CreateCampaign({ onLaunched }: { onLaunched: () => void }) {
             <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">{t("enrollmentCampaign.create.deadlineDesc")}</p>
             <input type="date" aria-label="Campaign deadline" value={deadline} onChange={(e) => setDeadline(e.target.value)}
               min={new Date().toISOString().split("T")[0]}
-              className="w-full md:w-64 px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 dark:bg-gray-800 text-sm text-gray-900 dark:text-white dark:text-white" />
+              className="w-full md:w-64 px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 dark:bg-gray-800 text-sm text-gray-900 dark:text-white dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500" />
           </div>
           <label className="flex items-center gap-2 cursor-pointer">
             <input type="checkbox" aria-label="Send email notification" checked={sendEmail} onChange={(e) => setSendEmail(e.target.checked)} className="rounded" />

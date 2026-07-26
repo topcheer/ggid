@@ -231,22 +231,22 @@ export default function OAuthClientsSettingsPage() {
         </div>
         <button
           onClick={() => { setShowCreate(!showCreate); setError(null); setForm(emptyForm); }}
-          className="flex items-center gap-2 rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700"
+          className="flex items-center gap-2 rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
         >
           <Plus className="h-4 w-4" /> {t("oauth.registerClient")}
         </button>
       </div>
 
       {msg && (
-        <div role="status" className="mb-4 rounded-lg border border-green-200 bg-green-50 p-3 text-sm text-green-700">{msg}</div>
+        <div role="status" className="mb-4 rounded-lg border border-green-200 bg-green-50 p-3 text-sm text-green-700 focus:outline-none focus:ring-2 focus:ring-blue-500">{msg}</div>
       )}
       {error && (
-        <div className="mb-4 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">{error}</div>
+        <div className="mb-4 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700 focus:outline-none focus:ring-2 focus:ring-blue-500">{error}</div>
       )}
 
       {/* Secret reveal modal */}
       {newSecret && (
-        <div className="mb-4 rounded-xl border-2 border-amber-400 bg-amber-50 p-5 shadow-sm">
+        <div className="mb-4 rounded-xl border-2 border-amber-400 bg-amber-50 p-5 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
           <div className="mb-3 flex items-center justify-between">
             <h3 className="flex items-center gap-2 text-sm font-bold text-amber-800">
               <AlertTriangle className="h-5 w-5" /> {t("oauth.secretRevealed")}
@@ -259,7 +259,7 @@ export default function OAuthClientsSettingsPage() {
             {t("oauth.secretWarning")}
           </p>
           <div className="flex items-center gap-2">
-            <code className="flex-1 rounded-lg bg-white dark:bg-gray-800 px-3 py-2 font-mono text-sm break-all">
+            <code className="flex-1 rounded-lg bg-white dark:bg-gray-800 px-3 py-2 font-mono text-sm break-all focus:outline-none focus:ring-2 focus:ring-blue-500">
               {showSecret ? newSecret.secret : "••••••••••••••••••••••••••••"}
             </code>
             <button onClick={() => setShowSecret(!showSecret)} aria-label="Toggle secret visibility" className="rounded-lg border p-2" title={t("common.toggleVisibility")}>
@@ -275,7 +275,7 @@ export default function OAuthClientsSettingsPage() {
 
       {/* Create form */}
       {showCreate && (
-        <div className="mb-6 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800">
+        <div className="mb-6 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500">
           <div className="mb-4 flex items-center justify-between">
             <h3 className="text-sm font-semibold dark:text-gray-100">{t("oauth.registerNew")}</h3>
             <button onClick={() => setShowCreate(false)} aria-label="Close" className="text-gray-400 hover:text-gray-600 dark:text-gray-400">
@@ -289,7 +289,7 @@ export default function OAuthClientsSettingsPage() {
                 value={form.name}
                 onChange={(e) => setForm({ ...form, name: e.target.value })}
                 placeholder={t("oauth.clientNamePlaceholder")}
-                className="w-full rounded-lg border border-gray-300 dark:border-gray-600 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200"
+                className="w-full rounded-lg border border-gray-300 dark:border-gray-600 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
             <div>
@@ -297,7 +297,7 @@ export default function OAuthClientsSettingsPage() {
               <input
                 value={form.scopes}
                 onChange={(e) => setForm({ ...form, scopes: e.target.value })}
-                className="w-full rounded-lg border border-gray-300 dark:border-gray-600 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200"
+                className="w-full rounded-lg border border-gray-300 dark:border-gray-600 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
             <div className="sm:col-span-2">
@@ -307,7 +307,7 @@ export default function OAuthClientsSettingsPage() {
                 onChange={(e) => setForm({ ...form, redirect_uris: e.target.value })}
                 placeholder={"https://example.com/callback\nhttps://example.com/oauth/callback"}
                 rows={4}
-                className="w-full rounded-lg border border-gray-300 dark:border-gray-600 px-3 py-2 text-sm font-mono dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200"
+                className="w-full rounded-lg border border-gray-300 dark:border-gray-600 px-3 py-2 text-sm font-mono dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
             <div className="sm:col-span-2">
@@ -320,13 +320,13 @@ export default function OAuthClientsSettingsPage() {
               onClick={handleCreate}
               disabled={!form.name || creating}
               aria-label="Create OAuth client"
-              className="rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700 disabled:opacity-50"
+              className="rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700 disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               {creating ? <Loader2 className="h-4 w-4 animate-spin" /> : null} {t("oauth.createClient")}
             </button>
             <button
               onClick={() => { setShowCreate(false); setForm(emptyForm); }}
-              className="rounded-lg border border-gray-300 dark:border-gray-600 px-4 py-2 text-sm font-medium hover:bg-gray-50 dark:hover:bg-gray-700 dark:bg-gray-800 dark:border-gray-600 dark:hover:bg-gray-700"
+              className="rounded-lg border border-gray-300 dark:border-gray-600 px-4 py-2 text-sm font-medium hover:bg-gray-50 dark:hover:bg-gray-700 dark:bg-gray-800 dark:border-gray-600 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               {t("common.cancel")}
             </button>
@@ -336,7 +336,7 @@ export default function OAuthClientsSettingsPage() {
 
       {/* Edit modal */}
       {showEdit && editClient && (
-        <div className="mb-6 rounded-xl border-2 border-brand-300 bg-white dark:bg-gray-800 p-6 shadow-sm dark:border-brand-700 dark:bg-gray-800">
+        <div className="mb-6 rounded-xl border-2 border-brand-300 bg-white dark:bg-gray-800 p-6 shadow-sm dark:border-brand-700 dark:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500">
           <div className="mb-4 flex items-center justify-between">
             <h3 className="text-sm font-semibold dark:text-gray-100">
               {t("oauth.editClient")}: {editClient.name}
@@ -351,7 +351,7 @@ export default function OAuthClientsSettingsPage() {
               <input
                 value={form.name}
                 onChange={(e) => setForm({ ...form, name: e.target.value })}
-                className="w-full rounded-lg border border-gray-300 dark:border-gray-600 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200"
+                className="w-full rounded-lg border border-gray-300 dark:border-gray-600 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
             <div>
@@ -359,7 +359,7 @@ export default function OAuthClientsSettingsPage() {
               <input
                 value={form.scopes}
                 onChange={(e) => setForm({ ...form, scopes: e.target.value })}
-                className="w-full rounded-lg border border-gray-300 dark:border-gray-600 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200"
+                className="w-full rounded-lg border border-gray-300 dark:border-gray-600 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
             <div className="sm:col-span-2">
@@ -368,7 +368,7 @@ export default function OAuthClientsSettingsPage() {
                 value={form.redirect_uris}
                 onChange={(e) => setForm({ ...form, redirect_uris: e.target.value })}
                 rows={4}
-                className="w-full rounded-lg border border-gray-300 dark:border-gray-600 px-3 py-2 text-sm font-mono dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200"
+                className="w-full rounded-lg border border-gray-300 dark:border-gray-600 px-3 py-2 text-sm font-mono dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
             <div className="sm:col-span-2">
@@ -379,13 +379,13 @@ export default function OAuthClientsSettingsPage() {
           <div className="mt-4 flex gap-2">
             <button
               onClick={handleUpdate}
-              className="rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700"
+              className="rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
              aria-label="Action">
               {t("common.saveChanges")}
             </button>
             <button
               onClick={() => { setShowEdit(false); setEditClient(null); }}
-              className="rounded-lg border border-gray-300 dark:border-gray-600 px-4 py-2 text-sm font-medium hover:bg-gray-50 dark:hover:bg-gray-700 dark:bg-gray-800 dark:border-gray-600 dark:hover:bg-gray-700"
+              className="rounded-lg border border-gray-300 dark:border-gray-600 px-4 py-2 text-sm font-medium hover:bg-gray-50 dark:hover:bg-gray-700 dark:bg-gray-800 dark:border-gray-600 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               {t("common.cancel")}
             </button>
@@ -397,12 +397,12 @@ export default function OAuthClientsSettingsPage() {
       {loading ? (
         <p className="text-gray-500">{t("common.loading")}</p>
       ) : clients.length === 0 ? (
-        <div className="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-12 text-center shadow-sm dark:border-gray-700 dark:bg-gray-800">
+        <div className="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-12 text-center shadow-sm dark:border-gray-700 dark:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500">
           <KeyRound className="mx-auto mb-4 h-12 w-12 text-gray-300" />
           <p className="text-gray-500">{t("oauth.noClients")}</p>
         </div>
       ) : (
-        <div className="overflow-x-auto overflow-hidden rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm dark:border-gray-700 dark:bg-gray-800">
+        <div className="overflow-x-auto overflow-hidden rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm dark:border-gray-700 dark:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500">
           <table className="w-full">
             <thead className="border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 dark:border-gray-700 dark:bg-gray-700/50">
               <tr>
@@ -419,7 +419,7 @@ export default function OAuthClientsSettingsPage() {
                 <tr key={client.id} className="hover:bg-gray-50 dark:hover:bg-gray-700 dark:bg-gray-800 dark:hover:bg-gray-700/50">
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-2">
-                      <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand-100">
+                      <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand-100 focus:outline-none focus:ring-2 focus:ring-blue-500">
                         <KeyRound className="h-4 w-4 text-brand-600" />
                       </div>
                       <span className="text-sm font-medium dark:text-gray-100">{client.name || t("common.unnamed")}</span>
@@ -431,7 +431,7 @@ export default function OAuthClientsSettingsPage() {
                   <td className="px-4 py-3">
                     <div className="flex flex-wrap gap-1">
                       {(client.grant_types || []).map((gt: any) => (
-                        <span key={gt} className="rounded-full bg-blue-50 px-2 py-0.5 font-mono text-xs text-blue-700">
+                        <span key={gt} className="rounded-full bg-blue-50 px-2 py-0.5 font-mono text-xs text-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500">
                           {gt}
                         </span>
                       ))}
@@ -449,7 +449,7 @@ export default function OAuthClientsSettingsPage() {
                         onClick={() => handleEdit(client)}
                         aria-label={"Edit " + client.name}
                         title={t("oauth.edit")}
-                        className="rounded p-1.5 text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 dark:bg-gray-700 hover:text-gray-600 dark:text-gray-400 dark:hover:bg-gray-700"
+                        className="rounded p-1.5 text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 dark:bg-gray-700 hover:text-gray-600 dark:text-gray-400 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
                       >
                         <Pencil className="h-4 w-4" />
                       </button>
@@ -458,7 +458,7 @@ export default function OAuthClientsSettingsPage() {
                         disabled={rotating === client.client_id}
                         aria-label={"Rotate secret for " + client.name}
                         title={t("oauth.rotateSecret")}
-                        className="rounded p-1.5 text-gray-400 hover:bg-amber-50 hover:text-amber-600 disabled:opacity-50"
+                        className="rounded p-1.5 text-gray-400 hover:bg-amber-50 hover:text-amber-600 disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
                       >
                         <RefreshCw className={`h-4 w-4 ${rotating === client.client_id ? "animate-spin" : ""}`} />
                       </button>
@@ -466,7 +466,7 @@ export default function OAuthClientsSettingsPage() {
                         onClick={() => handleDelete(client.client_id, client.name)}
                         aria-label={"Delete " + client.name}
                         title={t("oauth.delete")}
-                        className="rounded p-1.5 text-gray-400 hover:bg-red-50 hover:text-red-600"
+                        className="rounded p-1.5 text-gray-400 hover:bg-red-50 hover:text-red-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
                       >
                         <Trash2 className="h-4 w-4" />
                       </button>

@@ -11,9 +11,9 @@ function TreeNode({ node, depth, collapsedIds, toggleNode, highlight }: TreeNode
   const isMatch = highlight && (node.name.toLowerCase().includes(highlight.toLowerCase()) || node.title.toLowerCase().includes(highlight.toLowerCase()));
   return (
     <div className="relative">
-      <div className={`flex items-center gap-2 py-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-900/30 ${isMatch ? "bg-yellow-50 dark:bg-yellow-900/20" : ""}`} style={{ paddingLeft: `${depth * 24 + 8}px` }}>
+      <div className={`flex items-center gap-2 py-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-900/30 ${isMatch ? "bg-yellow-50 dark:bg-yellow-900/20" : ""} focus:outline-none focus:ring-2 focus:ring-blue-500}`} style={{ paddingLeft: `${depth * 24 + 8}px` }}>
         {hasChildren ? (
-          <button onClick={() => toggleNode(node.id)} aria-label={collapsed ? `Expand ${node.name}` : `Collapse ${node.name}`} className="p-0.5 rounded hover:bg-gray-200 dark:hover:bg-gray-800">
+          <button onClick={() => toggleNode(node.id)} aria-label={collapsed ? `Expand ${node.name}` : `Collapse ${node.name}`} className="p-0.5 rounded hover:bg-gray-200 dark:hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500">
             {collapsed ? <ChevronRight className="w-4 h-4 text-gray-400" /> : <ChevronDown className="w-4 h-4 text-gray-400" />}
           </button>
         ) : (
@@ -91,7 +91,7 @@ export default function OrgChartPage() {
       <div className="p-8">
         <div className="rounded-lg border border-red-300 bg-red-50 dark:bg-red-950 dark:border-red-800 p-4">
           <p className="text-red-700 dark:text-red-400 text-sm font-medium flex items-center gap-2"><AlertTriangle className="w-4 h-4" /> Error: {error}</p>
-          <button onClick={() => { setError(null); if (selectedOrg) fetchTree(selectedOrg); }} className="mt-2 px-4 py-1.5 rounded-lg bg-red-600 text-white text-sm hover:bg-red-700">Retry</button>
+          <button onClick={() => { setError(null); if (selectedOrg) fetchTree(selectedOrg); }} className="mt-2 px-4 py-1.5 rounded-lg bg-red-600 text-white text-sm hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-blue-500">Retry</button>
         </div>
       </div>
     );
@@ -115,13 +115,13 @@ export default function OrgChartPage() {
         </div>
         {tree && (
           <div className="flex items-center gap-2">
-            <button onClick={() => setCollapsedIds(new Set())} aria-label="Expand all nodes" className="text-xs text-blue-600 hover:underline">{t("common.expandAll")}</button>
+            <button onClick={() => setCollapsedIds(new Set())} aria-label="Expand all nodes" className="text-xs text-blue-600 hover:underline focus:outline-none focus:ring-2 focus:ring-blue-500">{t("common.expandAll")}</button>
             <button onClick={() => {
               const allIds = new Set<string>();
               const collect = (n: OrgNode) => { allIds.add(n.id); (n.children || []).forEach(collect); };
               if (tree) collect(tree);
               setCollapsedIds(allIds);
-            }} aria-label="Collapse all nodes" className="text-xs text-blue-600 hover:underline">{t("common.collapseAll")}</button>
+            }} aria-label="Collapse all nodes" className="text-xs text-blue-600 hover:underline focus:outline-none focus:ring-2 focus:ring-blue-500">{t("common.collapseAll")}</button>
           </div>
         )}
       </div>

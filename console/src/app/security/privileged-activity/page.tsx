@@ -251,7 +251,7 @@ function SessionsTab({ ops, loading }: { ops: PrivilegedOp[]; loading: boolean }
       ) : sessionList.map((s: any) => (
         <div key={s.session_id} className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 overflow-hidden">
           <button onClick={() => setExpanded(expanded === s.session_id ? null : s.session_id)}
-            className="w-full flex items-center gap-3 p-4 hover:bg-gray-50 dark:hover:bg-gray-800/30">
+            className="w-full flex items-center gap-3 p-4 hover:bg-gray-50 dark:hover:bg-gray-800/30 focus:outline-none focus:ring-2 focus:ring-blue-500">
             {expanded === s.session_id ? <ChevronDown className="w-4 h-4 text-gray-400" /> : <ChevronRight className="w-4 h-4 text-gray-400" />}
             <div className="flex-1 text-left">
               <span className="text-sm font-medium text-gray-900 dark:text-white">{s.operator}</span>

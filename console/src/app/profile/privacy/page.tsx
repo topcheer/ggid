@@ -53,7 +53,7 @@ export default function PrivacyPage() {
 
       <div className="flex gap-1 border-b border-gray-200 dark:border-gray-700 overflow-x-auto">
         {([["myData", t("privacy.myData"), Database], ["export", t("privacy.dataExport"), Download], ["delete", t("privacy.deleteAccount"), Trash2]] as const).map(([id, label, Icon]) => (
-          <button key={id} onClick={() => setTab(id as Tab)} aria-pressed={tab === id} className={`flex items-center gap-1.5 border-b-2 px-4 py-2 text-sm font-medium transition whitespace-nowrap ${tab === id ? "border-purple-600 text-purple-600 dark:text-purple-400" : "border-transparent text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"}`}><Icon className="h-4 w-4" /> {label}</button>
+          <button key={id} onClick={() => setTab(id as Tab)} aria-pressed={tab === id} className={`flex items-center gap-1.5 border-b-2 px-4 py-2 text-sm font-medium transition whitespace-nowrap ${tab === id ? "border-purple-600 text-purple-600 dark:text-purple-400" : "border-transparent text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"} focus:outline-none focus:ring-2 focus:ring-blue-500}`}><Icon className="h-4 w-4" /> {label}</button>
         ))}
       </div>
 
@@ -81,7 +81,7 @@ export default function PrivacyPage() {
             {exportRequested ? (
               <div className="rounded-lg border-2 border-green-300 bg-green-50 dark:border-green-700 dark:bg-green-950/30 p-4"><div className="flex items-center gap-2"><Check className="h-5 w-5 text-green-500" /><span className="text-sm font-medium text-green-700 dark:text-green-400">{t("privacy.exportRequested")}</span></div><p className="mt-1 text-xs text-green-600 dark:text-green-500">{t("privacy.exportReadySoon")}</p></div>
             ) : (
-              <button onClick={requestExport} disabled={exporting} className="flex items-center gap-2 rounded-lg bg-purple-600 px-4 py-2 text-sm font-medium text-white hover:bg-purple-700 disabled:opacity-50">{exporting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />} {t("privacy.downloadData")}</button>
+              <button onClick={requestExport} disabled={exporting} className="flex items-center gap-2 rounded-lg bg-purple-600 px-4 py-2 text-sm font-medium text-white hover:bg-purple-700 disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-blue-500">{exporting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />} {t("privacy.downloadData")}</button>
             )}
           </div>
           <div className={card}>
@@ -98,7 +98,7 @@ export default function PrivacyPage() {
             <h3 className="mb-3 flex items-center gap-2 text-sm font-semibold uppercase text-gray-400"><Trash2 className="h-4 w-4 text-red-500" /> {t("privacy.deleteTitle")}</h3>
             <div className="rounded-lg bg-red-50 dark:bg-red-900/20 p-3 mb-4"><AlertTriangle className="inline h-4 w-4 text-red-500" /> <span className="text-xs text-red-600 dark:text-red-400">{t("privacy.deleteWarning")}</span></div>
             <div className="space-y-2 text-xs text-gray-500 mb-4"><p className="flex items-center gap-2"><Ban className="h-3 w-3 text-red-400" /> {t("privacy.deleteConsequence1")}</p><p className="flex items-center gap-2"><Ban className="h-3 w-3 text-red-400" /> {t("privacy.deleteConsequence2")}</p><p className="flex items-center gap-2"><Ban className="h-3 w-3 text-red-400" /> {t("privacy.deleteConsequence3")}</p></div>
-            <button onClick={() => setConfirmDelete(true)} className="flex items-center gap-2 rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700"><Trash2 className="h-4 w-4" /> {t("privacy.requestDeletion")}</button>
+            <button onClick={() => setConfirmDelete(true)} className="flex items-center gap-2 rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-blue-500"><Trash2 className="h-4 w-4" /> {t("privacy.requestDeletion")}</button>
           </div>
           <div className={card}>
             <h3 className="mb-3 text-sm font-semibold uppercase text-gray-400">{t("privacy.auditRetention")}</h3>
@@ -114,7 +114,7 @@ export default function PrivacyPage() {
             <div className="flex items-center gap-2"><AlertTriangle className="h-5 w-5 text-red-500" /><h3 className="text-lg font-semibold text-red-600">{t("privacy.confirmDelete")}</h3></div>
             <p className="mt-3 text-sm text-gray-500 dark:text-gray-400">{t("privacy.confirmDeleteDesc")}</p>
             <div className="mt-3"><label className="text-sm font-medium">{t("privacy.typeDelete")}</label><input type="text" value={deleteConfirm} onChange={e => setDeleteConfirm(e.target.value)} placeholder="DELETE" className="mt-1 w-full rounded-lg border dark:border-gray-700 dark:bg-gray-900 px-3 py-2 text-sm font-mono" /></div>
-            <div className="mt-4 flex justify-end gap-2"><button onClick={() => setConfirmDelete(false)} className="rounded-lg border border-gray-300 px-4 py-2 text-sm dark:border-gray-700">{t("common.cancel")}</button><button onClick={deleteAccount} disabled={deleteConfirm !== "DELETE" || deleting} className="flex items-center gap-1 rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-50">{deleting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />} {t("privacy.confirm")}</button></div>
+            <div className="mt-4 flex justify-end gap-2"><button onClick={() => setConfirmDelete(false)} className="rounded-lg border border-gray-300 px-4 py-2 text-sm dark:border-gray-700">{t("common.cancel")}</button><button onClick={deleteAccount} disabled={deleteConfirm !== "DELETE" || deleting} className="flex items-center gap-1 rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-blue-500">{deleting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />} {t("privacy.confirm")}</button></div>
           </div>
         </div>
       )}

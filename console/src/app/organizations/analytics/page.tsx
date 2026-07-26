@@ -92,7 +92,7 @@ export default function OrgAnalyticsPage() {
         </div>
         <button
           onClick={loadStats}
-          className="flex items-center gap-2 rounded-lg border border-gray-300 px-3 py-2 text-sm hover:bg-gray-50"
+          className="flex items-center gap-2 rounded-lg border border-gray-300 px-3 py-2 text-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
         >
           <RefreshCw className="h-4 w-4" /> {t("common.refresh")}
         </button>

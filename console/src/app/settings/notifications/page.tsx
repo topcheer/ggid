@@ -57,10 +57,10 @@ export default function NotificationPreferencesPage() {
       <h1 className="mb-1 text-2xl font-bold text-gray-900 dark:text-white dark:text-white">Notification Preferences</h1>
       <p className="mb-6 text-sm text-gray-500">Choose how and when you want to receive notifications.</p>
 
-      {error && <div className="mb-4 flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-800 dark:bg-red-950"><AlertCircle className="h-4 w-4 shrink-0" /> {error}</div>}
-      {success && <div className="mb-4 flex items-center gap-2 rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700 dark:border-green-800 dark:bg-green-950"><CheckCircle2 className="h-4 w-4 shrink-0" /> Preferences saved.</div>}
+      {error && <div className="mb-4 flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-800 dark:bg-red-950 focus:outline-none focus:ring-2 focus:ring-blue-500"><AlertCircle className="h-4 w-4 shrink-0" /> {error}</div>}
+      {success && <div className="mb-4 flex items-center gap-2 rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700 dark:border-green-800 dark:bg-green-950 focus:outline-none focus:ring-2 focus:ring-blue-500"><CheckCircle2 className="h-4 w-4 shrink-0" /> Preferences saved.</div>}
 
-      <div className="mb-6 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-6 dark:border-gray-800 dark:bg-gray-900">
+      <div className="mb-6 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-6 dark:border-gray-800 dark:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500">
         <h3 className="mb-4 text-sm font-semibold uppercase text-gray-400">Channels</h3>
         <div className="space-y-3">
           {channels.map(c => (
@@ -74,7 +74,7 @@ export default function NotificationPreferencesPage() {
         </div>
       </div>
 
-      <div className="mb-6 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-6 dark:border-gray-800 dark:bg-gray-900">
+      <div className="mb-6 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-6 dark:border-gray-800 dark:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500">
         <h3 className="mb-4 text-sm font-semibold uppercase text-gray-400">Categories</h3>
         <div className="space-y-3">
           {categories.map(c => (
@@ -89,7 +89,7 @@ export default function NotificationPreferencesPage() {
       </div>
 
       <div className="flex justify-end">
-        <button onClick={handleSave} disabled={saving} aria-label="Save notification preferences" className="flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50">
+        <button onClick={handleSave} disabled={saving} aria-label="Save notification preferences" className="flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-blue-500">
           {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />} Save Preferences
         </button>
       </div>

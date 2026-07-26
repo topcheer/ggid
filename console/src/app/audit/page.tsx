@@ -252,19 +252,19 @@ export default function AuditPage() {
         <div className="flex gap-2">
           <button
             onClick={() => handleExport("csv")}
-            className="flex items-center gap-1.5 rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700"
+            className="flex items-center gap-1.5 rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
             <Download className="h-4 w-4" /> CSV
           </button>
           <button
             onClick={() => handleExport("json")}
-            className="flex items-center gap-1.5 rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700"
+            className="flex items-center gap-1.5 rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
             <Download className="h-4 w-4" /> JSON
           </button>
           <button
             onClick={loadData}
-            className="flex items-center gap-2 rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700"
+            className="flex items-center gap-2 rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
             <RefreshCw className="h-4 w-4" /> Refresh
           </button>
@@ -272,7 +272,7 @@ export default function AuditPage() {
       </div>
 
       {error && (
-        <div className="mb-4 rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+        <div className="mb-4 rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700 focus:outline-none focus:ring-2 focus:ring-blue-500">
           {error}
           <p className="mt-1 text-xs">Make sure Audit Service (:8072) is running.</p>
         </div>
@@ -307,7 +307,7 @@ export default function AuditPage() {
       ) : tab === "dashboard" ? (
         /* ===== Dashboard ===== */
         !stats ? (
-          <div className="rounded-xl border border-gray-200 bg-white dark:bg-gray-900 p-12 text-center shadow-sm">
+          <div className="rounded-xl border border-gray-200 bg-white dark:bg-gray-900 p-12 text-center shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
             <Activity className="mx-auto mb-4 h-12 w-12 text-gray-300" />
             <p className="text-gray-500">No stats available</p>
             <p className="mt-1 text-xs text-gray-400">Stats are generated from events in the last 24 hours.</p>
@@ -339,7 +339,7 @@ export default function AuditPage() {
             {/* Charts row */}
             <div className="grid gap-6 lg:grid-cols-2">
               {/* Hourly distribution */}
-              <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-700 dark:bg-gray-800">
+              <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-700 dark:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500">
                 <h3 className="mb-4 text-sm font-semibold">Event Timeline (24h)</h3>
                 {hourlyData.length > 0 ? (
                   <ResponsiveContainer width="100%" height={250}>
@@ -374,7 +374,7 @@ export default function AuditPage() {
               </div>
 
               {/* Events by action pie */}
-              <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-700 dark:bg-gray-800">
+              <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-700 dark:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500">
                 <h3 className="mb-4 text-sm font-semibold">Events by Action Type</h3>
                 {actionData.length > 0 ? (
                   <ResponsiveContainer width="100%" height={250}>
@@ -409,7 +409,7 @@ export default function AuditPage() {
 
             {/* Top actors bar chart */}
             {actorData.length > 0 && (
-              <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-700 dark:bg-gray-800">
+              <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-700 dark:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500">
                 <h3 className="mb-4 flex items-center gap-2 text-sm font-semibold">
                   <Users className="h-4 w-4 text-brand-600" />
                   Top Active Users (24h)
@@ -433,7 +433,7 @@ export default function AuditPage() {
 
               {/* Top 10 active users table */}
               {stats?.top_actors && stats.top_actors.length > 0 && (
-                <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-700 dark:bg-gray-800">
+                <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-700 dark:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500">
                   <h3 className="mb-4 text-sm font-semibold">Top 10 Active Users (24h)</h3>
                   <table className="w-full">
                     <thead>
@@ -453,9 +453,9 @@ export default function AuditPage() {
                           </td>
                           <td className="px-3 py-2 text-sm">{actor.count}</td>
                           <td className="px-3 py-2">
-                            <div className="h-2 w-full max-w-[120px] rounded-full bg-gray-100">
+                            <div className="h-2 w-full max-w-[120px] rounded-full bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500">
                               <div
-                                className="h-2 rounded-full bg-purple-500"
+                                className="h-2 rounded-full bg-purple-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
                                 style={{ width: `${Math.min(100, (actor.count / Math.max(...topActorsDeduped.map((a: any) => a.count))) * 100)}%` }}
                               />
                             </div>
@@ -470,7 +470,7 @@ export default function AuditPage() {
             {/* Action bar chart + Failed logins */}
             <div className="grid gap-6 lg:grid-cols-2">
               {actionBarData.length > 0 && (
-                <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-700 dark:bg-gray-800">
+                <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-700 dark:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500">
                   <h3 className="mb-4 text-sm font-semibold">Top Event Actions</h3>
                   <ResponsiveContainer width="100%" height={220}>
                     <BarChart data={actionBarData}>
@@ -484,7 +484,7 @@ export default function AuditPage() {
                 </div>
               )}
               {failedVsSuccess.length > 0 && (
-                <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-700 dark:bg-gray-800">
+                <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-700 dark:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500">
                   <h3 className="mb-4 text-sm font-semibold">Success vs Failed Logins</h3>
                   <ResponsiveContainer width="100%" height={220}>
                     <BarChart data={failedVsSuccess}>
@@ -512,7 +512,7 @@ export default function AuditPage() {
               aria-label="Filter by action"
               value={actionFilter}
               onChange={(e) => setActionFilter(e.target.value)}
-              className="rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200"
+              className="rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               <option value="">{t("audit.allActions")}</option>
               <option value="user.login">user.login</option>
@@ -534,19 +534,19 @@ export default function AuditPage() {
               placeholder={t("audit.actorPlaceholder")}
               value={actorFilter}
               onChange={(e) => setActorFilter(e.target.value)}
-              className="rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200"
+              className="rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
             <input
               type="text"
               placeholder="IP Address"
               value={ipFilter}
               onChange={(e) => setIpFilter(e.target.value)}
-              className="rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 font-mono"
+              className="rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 font-mono focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
             <select
               value={resultFilter}
               onChange={(e) => setResultFilter(e.target.value)}
-              className="rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200"
+              className="rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               <option value="">{t("audit.allResults")}</option>
               <option value="success">Success</option>
@@ -557,24 +557,24 @@ export default function AuditPage() {
               type="date"
               value={dateFrom}
               onChange={(e) => setDateFrom(e.target.value)}
-              className="rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200"
+              className="rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
             <input
               type="date"
               value={dateTo}
               onChange={(e) => setDateTo(e.target.value)}
-              className="rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200"
+              className="rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
             <button
               onClick={loadData}
-              className="flex items-center justify-center gap-1.5 rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700"
+              className="flex items-center justify-center gap-1.5 rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               <RefreshCw className="h-4 w-4" />
               Apply Filters
             </button>
           </div>
           {events.length === 0 ? (
-            <div className="rounded-xl border border-gray-200 bg-white dark:bg-gray-900 p-12 text-center shadow-sm">
+            <div className="rounded-xl border border-gray-200 bg-white dark:bg-gray-900 p-12 text-center shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
               <ScrollText className="mx-auto mb-4 h-12 w-12 text-gray-300" />
               <p className="text-gray-500">No audit events found</p>
               <p className="mt-1 text-xs text-gray-400">
@@ -618,7 +618,7 @@ export default function AuditPage() {
                 ))}
               </div>
             )}
-            <div className="overflow-hidden rounded-xl border border-gray-200 bg-white dark:bg-gray-900 shadow-sm">
+            <div className="overflow-hidden rounded-xl border border-gray-200 bg-white dark:bg-gray-900 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
               <table className="w-full">
                 <thead className="border-b border-gray-200 bg-gray-50">
                   <tr>
@@ -653,7 +653,7 @@ export default function AuditPage() {
                           <div className="flex items-center gap-2">
                             <span className="font-mono text-xs">{event.action}</span>
                             {anomaly && (
-                              <span className="flex items-center gap-0.5 rounded-full bg-red-100 px-1.5 py-0.5 text-xs text-red-600" title={anomaly}>
+                              <span className="flex items-center gap-0.5 rounded-full bg-red-100 px-1.5 py-0.5 text-xs text-red-600 focus:outline-none focus:ring-2 focus:ring-blue-500" title={anomaly}>
                                 <AlertTriangle className="h-3 w-3" />
                               </span>
                             )}
@@ -681,7 +681,7 @@ export default function AuditPage() {
                       {isExpanded && (
                         <tr>
                           <td colSpan={5} className="bg-gray-50 px-4 py-3">
-                            <pre className="overflow-x-auto rounded-lg bg-gray-900 p-4 text-xs text-green-400">
+                            <pre className="overflow-x-auto rounded-lg bg-gray-900 p-4 text-xs text-green-400 focus:outline-none focus:ring-2 focus:ring-blue-500">
                               {JSON.stringify(event, null, 2)}
                             </pre>
                           </td>
@@ -703,14 +703,14 @@ export default function AuditPage() {
                 <button
                   onClick={() => setPage((p) => Math.max(1, p - 1))}
                   disabled={page <= 1}
-                  className="rounded-lg border border-gray-300 px-3 py-1.5 text-sm font-medium hover:bg-gray-50 disabled:opacity-50 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200"
+                  className="rounded-lg border border-gray-300 px-3 py-1.5 text-sm font-medium hover:bg-gray-50 disabled:opacity-50 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
                   Previous
                 </button>
                 <button
                   onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
                   disabled={page >= totalPages}
-                  className="rounded-lg border border-gray-300 px-3 py-1.5 text-sm font-medium hover:bg-gray-50 disabled:opacity-50 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200"
+                  className="rounded-lg border border-gray-300 px-3 py-1.5 text-sm font-medium hover:bg-gray-50 disabled:opacity-50 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
                   Next
                 </button>
@@ -743,7 +743,7 @@ function StatCard({
   };
   const c = colorMap[color];
   return (
-    <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-700 dark:bg-gray-800">
+    <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-700 dark:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500">
       <div className="flex items-center gap-3">
         <div className={`flex h-10 w-10 items-center justify-center rounded-lg ${c.bg}`}>
           <Icon className={`h-5 w-5 ${c.text}`} />

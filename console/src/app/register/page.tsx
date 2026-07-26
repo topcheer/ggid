@@ -76,7 +76,7 @@ export default function RegisterPage() {
                 else if (!/[A-Z]/.test(pw) || !/[0-9]/.test(pw)) setPwFeedback("Add uppercase letters and numbers for stronger security");
                 else setPwFeedback("Strong password");
               }} type={showPassword ? "text" : "password"} required className={inputCls + " pr-10"} placeholder="••••••••" />
-              <button type="button" onClick={() => setShowPassword(!showPassword)} aria-label={showPassword ? "Hide password" : "Show password"} className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
+              <button type="button" onClick={() => setShowPassword(!showPassword)} aria-label={showPassword ? "Hide password" : "Show password"} className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500">
                 {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
               </button>
             </div>
@@ -85,13 +85,13 @@ export default function RegisterPage() {
             )}
           </div>
 
-          <button type="submit" disabled={loading} className="flex w-full items-center justify-center gap-2 rounded-lg bg-brand-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-brand-700 disabled:opacity-50 focus:ring-2 focus:ring-brand-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800">
+          <button type="submit" disabled={loading} className="flex w-full items-center justify-center gap-2 rounded-lg bg-brand-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-brand-700 disabled:opacity-50 focus:ring-2 focus:ring-brand-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500">
             {loading ? t("register.creating") : <><UserPlus className="h-4 w-4" /> {t("register.createAccount")}</>}
           </button>
 
           <p className="mt-4 text-center text-sm text-gray-500 dark:text-gray-400">
             {t("register.alreadyHaveAccount")}{" "}
-            <a href="/login" className="font-medium text-brand-600 hover:underline">{t("register.signIn")}</a>
+            <a href="/login" className="font-medium text-brand-600 hover:underline focus:outline-none focus:ring-2 focus:ring-blue-500">{t("register.signIn")}</a>
           </p>
         </form>
       </div>

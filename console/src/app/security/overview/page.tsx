@@ -101,7 +101,7 @@ export default function SecurityOverviewPage() {
               <h3 className="mb-3 text-sm font-semibold uppercase text-gray-400">{t("secOverview.quickActions")}</h3>
               <div className="grid grid-cols-2 gap-2">
                 {quickActions.map(a => { const Icon = a.icon; return (
-                  <a key={a.href} href={a.href} className="flex flex-col items-center gap-2 rounded-lg border p-3 transition hover:shadow-md dark:border-gray-700">
+                  <a key={a.href} href={a.href} className="flex flex-col items-center gap-2 rounded-lg border p-3 transition hover:shadow-md dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500">
                     <Icon className={`h-5 w-5 ${a.color}`} /><span className="text-xs font-medium text-center">{a.label}</span>
                   </a>
                 );})}

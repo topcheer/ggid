@@ -301,7 +301,7 @@ export default function OnboardingPage() {
               </div>
               <button
                 onClick={() => router.push(`/login?tenant=${result.tenant_id}`)}
-                className="flex w-full items-center justify-center gap-2 rounded-lg bg-brand-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-brand-700"
+                className="flex w-full items-center justify-center gap-2 rounded-lg bg-brand-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-brand-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
                 {t("onboarding.goToLogin")} <ArrowRight className="h-4 w-4" />
               </button>
@@ -312,16 +312,16 @@ export default function OnboardingPage() {
           {step < 5 && (
             <div className="mt-6 flex items-center justify-between">
               {step > 1 ? (
-                <button onClick={back} className="flex items-center gap-1 text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200">
+                <button onClick={back} className="flex items-center gap-1 text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500">
                   <ArrowLeft className="h-4 w-4" /> {t("onboarding.back")}
                 </button>
               ) : <div />}
               {step < 4 ? (
-                <button onClick={next} className="flex items-center gap-2 rounded-lg bg-brand-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-brand-700">
+                <button onClick={next} className="flex items-center gap-2 rounded-lg bg-brand-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-brand-700 focus:outline-none focus:ring-2 focus:ring-blue-500">
                   {t("onboarding.continue")} <ArrowRight className="h-4 w-4" />
                 </button>
               ) : (
-                <button onClick={handleSubmit} disabled={loading} className="flex items-center gap-2 rounded-lg bg-brand-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-brand-700 disabled:opacity-50">
+                <button onClick={handleSubmit} disabled={loading} className="flex items-center gap-2 rounded-lg bg-brand-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-brand-700 disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-blue-500">
                   {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
                   {loading ? t("onboarding.creating") : t("onboarding.create")}
                 </button>
@@ -334,7 +334,7 @@ export default function OnboardingPage() {
         {step < 5 && (
           <p className="mt-4 text-center text-sm text-gray-500 dark:text-gray-400">
             {t("onboarding.alreadyHaveAccount")}{" "}
-            <a href="/login" className="font-medium text-brand-600 hover:underline">{t("onboarding.signIn")}</a>
+            <a href="/login" className="font-medium text-brand-600 hover:underline focus:outline-none focus:ring-2 focus:ring-blue-500">{t("onboarding.signIn")}</a>
           </p>
         )}
       </div>

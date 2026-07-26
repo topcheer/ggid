@@ -30,7 +30,7 @@ export default function DocsPage() {
       <div className="flex items-center gap-2 border-b border-gray-200 px-6 py-3 dark:border-gray-800">
         <Code className="h-5 w-5 text-blue-500" />
         <h1 className="text-lg font-semibold text-gray-900 dark:text-white">API Documentation</h1>
-        <a href={swaggerUrl} target="_blank" rel="noopener" className="ml-auto flex items-center gap-1 text-sm text-blue-600 hover:underline">
+        <a href={swaggerUrl} target="_blank" rel="noopener" className="ml-auto flex items-center gap-1 text-sm text-blue-600 hover:underline focus:outline-none focus:ring-2 focus:ring-blue-500">
           <Globe className="h-4 w-4" /> Open in new tab
         </a>
       </div>

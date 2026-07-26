@@ -394,7 +394,7 @@ export default function SessionsPage() {
   const SortHeader = ({ field, label, className }: { field: SortField; label: string; className?: string }) => (
     <th
       onClick={() => handleSort(field)}
-      className={`cursor-pointer select-none px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 transition-colors hover:text-gray-700 dark:hover:text-gray-300 ${className || ""}`}
+      className={`cursor-pointer select-none px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 transition-colors hover:text-gray-700 dark:hover:text-gray-300 ${className || ""} focus:outline-none focus:ring-2 focus:ring-blue-500}`}
     >
       <span className="inline-flex items-center gap-1">
         {label}
@@ -420,14 +420,14 @@ export default function SessionsPage() {
         <div className="flex gap-2">
           <button
             onClick={loadSessions}
-            className="flex items-center gap-2 rounded-lg border border-gray-300 px-3 py-2 text-sm hover:bg-gray-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700"
+            className="flex items-center gap-2 rounded-lg border border-gray-300 px-3 py-2 text-sm hover:bg-gray-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
             <RefreshCw className="h-4 w-4" /> Refresh
           </button>
           {sessions.length > 1 && (
             <button
               onClick={() => setShowRevokeAllModal(true)}
-              className="flex items-center gap-2 rounded-lg border border-red-300 px-3 py-2 text-sm text-red-600 hover:bg-red-50 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-950"
+              className="flex items-center gap-2 rounded-lg border border-red-300 px-3 py-2 text-sm text-red-600 hover:bg-red-50 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-950 focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               <Trash2 className="h-4 w-4" /> {t("sessions.revokeAll")}
             </button>
@@ -561,7 +561,7 @@ export default function SessionsPage() {
           <button
             onClick={handleSavePolicy}
             disabled={savingPolicy}
-            className="flex items-center gap-1.5 rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700 disabled:opacity-50 focus:ring-2 focus:ring-brand-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800"
+            className="flex items-center gap-1.5 rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700 disabled:opacity-50 focus:ring-2 focus:ring-brand-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
            aria-label="Save session policy">
             {savingPolicy ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
             {savingPolicy ? "Saving..." : "Save Policy"}
@@ -602,7 +602,7 @@ export default function SessionsPage() {
         {(searchQuery || deviceFilter !== "All" || (locationFilter && locationFilter !== "All")) && (
           <button
             onClick={() => { setSearchQuery(""); setDeviceFilter("All"); setLocationFilter(""); }}
-            className="flex items-center gap-1 rounded-lg border border-gray-300 px-3 py-2 text-xs text-gray-600 hover:bg-gray-50 dark:border-gray-600 dark:text-gray-400 dark:hover:bg-gray-700"
+            className="flex items-center gap-1 rounded-lg border border-gray-300 px-3 py-2 text-xs text-gray-600 hover:bg-gray-50 dark:border-gray-600 dark:text-gray-400 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
             <X className="h-3.5 w-3.5" /> Clear
           </button>
@@ -739,7 +739,7 @@ export default function SessionsPage() {
                           <button
                             onClick={() => setRevokeTarget(session)}
                             disabled={revokingId === session.id}
-                            className="inline-flex items-center gap-1 rounded-lg border border-red-300 px-2.5 py-1.5 text-xs font-medium text-red-600 hover:bg-red-50 disabled:opacity-50 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-950"
+                            className="inline-flex items-center gap-1 rounded-lg border border-red-300 px-2.5 py-1.5 text-xs font-medium text-red-600 hover:bg-red-50 disabled:opacity-50 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-950 focus:outline-none focus:ring-2 focus:ring-blue-500"
                             title="Revoke session"
                           >
                             {revokingId === session.id ? (
@@ -789,14 +789,14 @@ export default function SessionsPage() {
             <div className="flex justify-end gap-2">
               <button
                 onClick={() => setRevokeTarget(null)}
-                className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium hover:bg-gray-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700"
+                className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium hover:bg-gray-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
                 Cancel
               </button>
               <button
                 onClick={() => handleRevoke(revokeTarget.id)}
                 disabled={revokingId === revokeTarget.id}
-                className="flex items-center gap-2 rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-50"
+                className="flex items-center gap-2 rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
                 {revokingId === revokeTarget.id ? (
                   <RefreshCw className="h-4 w-4 animate-spin" />
@@ -834,14 +834,14 @@ export default function SessionsPage() {
             <div className="flex justify-end gap-2">
               <button
                 onClick={() => setShowRevokeAllModal(false)}
-                className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium hover:bg-gray-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700"
+                className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium hover:bg-gray-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
                 Cancel
               </button>
               <button
                 onClick={handleRevokeAll}
                 disabled={revokingAll}
-                className="flex items-center gap-2 rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-50"
+                className="flex items-center gap-2 rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
                 {revokingAll ? (
                   <RefreshCw className="h-4 w-4 animate-spin" />

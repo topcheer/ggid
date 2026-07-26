@@ -169,7 +169,7 @@ export default function OAuthClientsPage() {
             {t("oauth.subtitle2")}
           </p>
         </div>
-        <button onClick={() => setShowCreate(true)} className="flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700">
+        <button onClick={() => setShowCreate(true)} className="flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-blue-500">
           <Plus className="h-4 w-4" /> {t("oauth.registerClient")}
         </button>
       </div>
@@ -193,7 +193,7 @@ export default function OAuthClientsPage() {
           </div>
           <div className="mt-3 flex items-center gap-2">
             <code className="flex-1 truncate rounded-lg bg-white px-3 py-2 font-mono text-sm dark:bg-gray-900">{newSecret.secret}</code>
-            <button onClick={() => copy(newSecret.secret, "secret")} className="rounded-lg border border-gray-300 px-3 py-2 text-sm hover:bg-gray-50 dark:border-gray-600 dark:hover:bg-gray-700">
+            <button onClick={() => copy(newSecret.secret, "secret")} className="rounded-lg border border-gray-300 px-3 py-2 text-sm hover:bg-gray-50 dark:border-gray-600 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500">
               {copiedField === "secret" ? <Check className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4" />}
             </button>
             <button onClick={() => setNewSecret(null)} className="text-sm text-gray-500">{t("oauth.dismiss")}</button>
@@ -260,13 +260,13 @@ export default function OAuthClientsPage() {
                     );
                   }
                   return filtered.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE).map((c: any) => (
-                  <tr key={c.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/50">
+                  <tr key={c.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/50 focus:outline-none focus:ring-2 focus:ring-blue-500">
                     <td className="px-4 py-3">
                       <div className="font-medium text-gray-800 dark:text-gray-200">{c.client_name || c.client_id.substring(0, 8)}</div>
                       <div className="text-xs text-gray-400">{c.status}</div>
                     </td>
                     <td className="px-4 py-3">
-                      <button onClick={() => copy(c.client_id, `cid-${c.id}`)} className="flex items-center gap-1 font-mono text-xs text-indigo-600 hover:underline">
+                      <button onClick={() => copy(c.client_id, `cid-${c.id}`)} className="flex items-center gap-1 font-mono text-xs text-indigo-600 hover:underline focus:outline-none focus:ring-2 focus:ring-blue-500">
                         {c.client_id.substring(0, 16)}...
                         {copiedField === `cid-${c.id}` ? <Check className="h-3 w-3 text-green-500" /> : <Copy className="h-3 w-3" />}
                       </button>
@@ -287,10 +287,10 @@ export default function OAuthClientsPage() {
                     <td className="px-4 py-3 text-gray-500">{new Date(c.created_at).toLocaleDateString()}</td>
                     <td className="px-4 py-3">
                       <div className="flex justify-end gap-1">
-                        <button onClick={() => { setEditClient(c); setEditUris(c.redirect_uris.join("\n")); }} className="rounded-lg p-1.5 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700">
+                        <button onClick={() => { setEditClient(c); setEditUris(c.redirect_uris.join("\n")); }} className="rounded-lg p-1.5 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500">
                           <ExternalLink className="h-4 w-4" />
                         </button>
-                        <button onClick={() => setConfirmDelete(c)} className="rounded-lg p-1.5 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20">
+                        <button onClick={() => setConfirmDelete(c)} className="rounded-lg p-1.5 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 focus:outline-none focus:ring-2 focus:ring-blue-500">
                           <Trash2 className="h-4 w-4" />
                         </button>
                       </div>
@@ -315,9 +315,9 @@ export default function OAuthClientsPage() {
               <div className="flex items-center justify-between mt-4">
                 <span className="text-xs text-gray-500 dark:text-gray-400">{filtered.length} clients</span>
                 <div className="flex items-center gap-2">
-                  <button onClick={() => setPage(Math.max(0, page - 1))} disabled={page === 0} className="rounded-lg border border-gray-300 dark:border-gray-700 px-3 py-1 text-sm disabled:opacity-40 hover:bg-gray-50 dark:hover:bg-gray-800">Prev</button>
+                  <button onClick={() => setPage(Math.max(0, page - 1))} disabled={page === 0} className="rounded-lg border border-gray-300 dark:border-gray-700 px-3 py-1 text-sm disabled:opacity-40 hover:bg-gray-50 dark:hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500">Prev</button>
                   <span className="text-xs text-gray-500">Page {page + 1} of {totalPages}</span>
-                  <button onClick={() => setPage(Math.min(totalPages - 1, page + 1))} disabled={page >= totalPages - 1} className="rounded-lg border border-gray-300 dark:border-gray-700 px-3 py-1 text-sm disabled:opacity-40 hover:bg-gray-50 dark:hover:bg-gray-800">Next</button>
+                  <button onClick={() => setPage(Math.min(totalPages - 1, page + 1))} disabled={page >= totalPages - 1} className="rounded-lg border border-gray-300 dark:border-gray-700 px-3 py-1 text-sm disabled:opacity-40 hover:bg-gray-50 dark:hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500">Next</button>
                 </div>
               </div>
             );
@@ -386,8 +386,8 @@ export default function OAuthClientsPage() {
               </div>
             </div>
             <div className="mt-6 flex justify-end gap-2">
-              <button onClick={() => setShowCreate(false)} className="rounded-lg px-4 py-2 text-sm text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700">{t("common.cancel")}</button>
-              <button onClick={handleCreate} disabled={!form.client_name.trim() || creating} className="flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50" aria-label="Create OAuth client">
+              <button onClick={() => setShowCreate(false)} className="rounded-lg px-4 py-2 text-sm text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500">{t("common.cancel")}</button>
+              <button onClick={handleCreate} disabled={!form.client_name.trim() || creating} className="flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-blue-500" aria-label="Create OAuth client">
                 {creating && <Loader2 className="h-4 w-4 animate-spin" />} {t("oauth.register")}
               </button>
             </div>
@@ -406,8 +406,8 @@ export default function OAuthClientsPage() {
             <p className="mt-1 text-sm text-gray-500">{editClient.client_name}</p>
             <textarea aria-label="Edit uris" value={editUris} onChange={(e) => setEditUris(e.target.value)} rows={5} className="mt-3 w-full rounded-lg border border-gray-300 px-3 py-2 font-mono text-xs dark:border-gray-600 dark:bg-gray-700 dark:text-white" />
             <div className="mt-4 flex justify-end gap-2">
-              <button onClick={() => setEditClient(null)} className="rounded-lg px-4 py-2 text-sm text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700">{t("common.cancel")}</button>
-              <button aria-label="Save changes" onClick={handleSaveEdit} className="flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700"><RefreshCw className="h-4 w-4" /> {t("common.save")}</button>
+              <button onClick={() => setEditClient(null)} className="rounded-lg px-4 py-2 text-sm text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500">{t("common.cancel")}</button>
+              <button aria-label="Save changes" onClick={handleSaveEdit} className="flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-blue-500"><RefreshCw className="h-4 w-4" /> {t("common.save")}</button>
             </div>
           </div>
         </div>
@@ -425,8 +425,8 @@ export default function OAuthClientsPage() {
               </div>
             </div>
             <div className="mt-5 flex justify-end gap-2">
-              <button onClick={() => setConfirmDelete(null)} className="rounded-lg px-4 py-2 text-sm text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700">{t("common.cancel")}</button>
-              <button onClick={() => handleDelete(confirmDelete.client_id)} className="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700">{t("common.delete")}</button>
+              <button onClick={() => setConfirmDelete(null)} className="rounded-lg px-4 py-2 text-sm text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500">{t("common.cancel")}</button>
+              <button onClick={() => handleDelete(confirmDelete.client_id)} className="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-blue-500">{t("common.delete")}</button>
             </div>
           </div>
         </div>

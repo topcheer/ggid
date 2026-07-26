@@ -103,7 +103,7 @@ function EndpointsTab() {
     <div className="space-y-3">
       <div className="flex items-center justify-between">
         <h3 className="text-sm font-semibold text-gray-900 dark:text-white">{t("apiHealth.endpoints.title")}</h3>
-        <button onClick={load} className="flex items-center gap-1.5 px-3 py-1.5 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-xs hover:bg-gray-50">
+        <button onClick={load} className="flex items-center gap-1.5 px-3 py-1.5 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-xs hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500">
           <RefreshCw className="w-3 h-3" />
           {t("apiHealth.endpoints.refresh")}
         </button>
@@ -124,7 +124,7 @@ function EndpointsTab() {
             </thead>
             <tbody>
               {endpoints.map((e: any, i: any) => (
-                <tr key={i} className="border-b border-gray-100 dark:border-gray-800/50 hover:bg-gray-50 dark:hover:bg-gray-800/30">
+                <tr key={i} className="border-b border-gray-100 dark:border-gray-800/50 hover:bg-gray-50 dark:hover:bg-gray-800/30 focus:outline-none focus:ring-2 focus:ring-blue-500">
                   <td className="py-3 px-3"><span className={`text-xs font-bold ${methodColors[e.method] || "text-gray-500"}`}>{e.method}</span></td>
                   <td className="py-3 px-3 font-mono text-xs text-gray-900 dark:text-white">{e.path}</td>
                   <td className="py-3 px-3 text-right">
@@ -285,7 +285,7 @@ function AlertsTab() {
       )}
 
       <button onClick={save} disabled={saving}
-        className="flex items-center gap-2 px-6 py-2.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white rounded-lg font-medium text-sm">
+        className="flex items-center gap-2 px-6 py-2.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white rounded-lg font-medium text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
         {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
         {t("apiHealth.alerts.save")}
       </button>

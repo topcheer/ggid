@@ -59,7 +59,7 @@ export default function HelpPage() {
 
       <div className="flex gap-1 border-b border-gray-200 dark:border-gray-700 overflow-x-auto">
         {([["kb", t("help.knowledgeBase"), FileText], ["tickets", `${t("help.tickets")} (${TICKETS.filter(x => x.status !== "resolved").length})`, Ticket], ["status", t("help.systemStatus"), Activity]] as const).map(([id, label, Icon]) => (
-          <button key={id} onClick={() => setTab(id as Tab)} aria-pressed={tab === id} className={`flex items-center gap-1.5 border-b-2 px-4 py-2 text-sm font-medium transition whitespace-nowrap ${tab === id ? "border-blue-600 text-blue-600 dark:text-blue-400" : "border-transparent text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"}`}><Icon className="h-4 w-4" /> {label}</button>
+          <button key={id} onClick={() => setTab(id as Tab)} aria-pressed={tab === id} className={`flex items-center gap-1.5 border-b-2 px-4 py-2 text-sm font-medium transition whitespace-nowrap ${tab === id ? "border-blue-600 text-blue-600 dark:text-blue-400" : "border-transparent text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"} focus:outline-none focus:ring-2 focus:ring-blue-500}`}><Icon className="h-4 w-4" /> {label}</button>
         ))}
       </div>
 
@@ -68,9 +68,9 @@ export default function HelpPage() {
         <div>
           <div className="mb-4"><div className="relative max-w-md"><Search className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" /><input type="text" value={search} onChange={e => setSearch(e.target.value)} placeholder={t("help.searchArticles")} className="w-full rounded-lg border dark:border-gray-700 dark:bg-gray-900 pl-9 pr-3 py-2 text-sm" /></div></div>
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">{filtered.map(a => (
-            <a key={a.id} href="#" className={`${card} group flex items-center justify-between hover:shadow-md transition`}>
-              <div className="flex items-center gap-3"><FileText className="h-5 w-5 text-blue-400" /><div><h3 className="text-sm font-medium group-hover:text-blue-600">{a.title}</h3><p className="text-xs text-gray-400">{a.category} · {a.readTime}</p></div></div>
-              <ChevronRight className="h-4 w-4 text-gray-300 group-hover:text-blue-500" />
+            <a key={a.id} href="#" className={`${card} group flex items-center justify-between hover:shadow-md transition focus:outline-none focus:ring-2 focus:ring-blue-500}`}>
+              <div className="flex items-center gap-3"><FileText className="h-5 w-5 text-blue-400" /><div><h3 className="text-sm font-medium group-hover:text-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500">{a.title}</h3><p className="text-xs text-gray-400">{a.category} · {a.readTime}</p></div></div>
+              <ChevronRight className="h-4 w-4 text-gray-300 group-hover:text-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500" />
             </a>
           ))}</div>
         </div>
@@ -79,7 +79,7 @@ export default function HelpPage() {
       {/* TICKETS */}
       {tab === "tickets" && (
         <div>
-          <div className="mb-4"><button onClick={() => setShowTicketForm(true)} className="flex items-center gap-1 rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-blue-700"><Plus className="h-3 w-3" /> {t("help.newTicket")}</button></div>
+          <div className="mb-4"><button onClick={() => setShowTicketForm(true)} className="flex items-center gap-1 rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"><Plus className="h-3 w-3" /> {t("help.newTicket")}</button></div>
           <div className="space-y-2">{TICKETS.map(tk => (
             <div key={tk.id} className={`${card} flex items-center justify-between !p-3`}>
               <div className="flex items-center gap-3"><div className="flex h-9 w-9 items-center justify-center rounded-lg bg-blue-100 dark:bg-blue-900/30"><Ticket className="h-4 w-4 text-blue-500" /></div><div><div className="flex items-center gap-2"><code className="text-xs font-mono">{tk.id}</code><span className="text-sm font-medium">{tk.subject}</span></div><p className="text-xs text-gray-400">{new Date(tk.created).toLocaleDateString()}</p></div></div>
@@ -110,7 +110,7 @@ export default function HelpPage() {
           <div role="dialog" aria-modal="true" className="mx-4 w-full max-w-md rounded-xl bg-white p-6 shadow-xl dark:bg-gray-800" onClick={e => e.stopPropagation()}>
             <h3 className="flex items-center gap-2 text-lg font-semibold text-gray-900 dark:text-white"><Plus className="h-5 w-5 text-blue-500" /> {t("help.newTicket")}</h3>
             <div className="mt-4 space-y-3"><div><label className="text-sm font-medium">{t("help.subject")}</label><input type="text" value={tSubject} onChange={e => setTSubject(e.target.value)} placeholder="Describe your issue" className="mt-1 w-full rounded-lg border dark:border-gray-700 dark:bg-gray-900 px-3 py-2 text-sm" autoFocus /></div><div><label className="text-sm font-medium">{t("help.priority")}</label><div className="mt-1 flex gap-2">{["low", "medium", "high", "urgent"].map(p => <button key={p} onClick={() => setTPriority(p)} aria-pressed={tPriority === p} className={`rounded-lg border px-3 py-1.5 text-sm ${tPriority === p ? "border-blue-500 bg-blue-50 dark:bg-blue-950/30 text-blue-600" : "border-gray-300 dark:border-gray-700"}`}>{p}</button>)}</div></div></div>
-            <div className="mt-4 flex justify-end gap-2"><button onClick={() => setShowTicketForm(false)} className="rounded-lg border border-gray-300 px-4 py-2 text-sm dark:border-gray-700">{t("common.cancel")}</button><button onClick={() => setShowTicketForm(false)} className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700">{t("help.submit")}</button></div>
+            <div className="mt-4 flex justify-end gap-2"><button onClick={() => setShowTicketForm(false)} className="rounded-lg border border-gray-300 px-4 py-2 text-sm dark:border-gray-700">{t("common.cancel")}</button><button onClick={() => setShowTicketForm(false)} className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500">{t("help.submit")}</button></div>
           </div>
         </div>
       )}

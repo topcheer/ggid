@@ -384,7 +384,7 @@ export default function OrganizationsPage() {
             setShowCreate(!showCreate);
             setError(null);
           }}
-          className="flex items-center gap-1.5 rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700"
+          className="flex items-center gap-1.5 rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
         >
           <Plus className="h-4 w-4" />
           {t("common.create")} {tab === "orgs" ? t("nav.organizations") : tab === "depts" ? t("orgs.department") : t("orgs.members")}
@@ -562,7 +562,7 @@ export default function OrganizationsPage() {
               </thead>
               <tbody className="divide-y divide-gray-100">
                 {depts.map((d: any) => (
-                  <tr key={d.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
+                  <tr key={d.id} className="hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500">
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-2">
                         <Network className="h-4 w-4 text-blue-500" />
@@ -578,7 +578,7 @@ export default function OrganizationsPage() {
                     <td className="px-4 py-3">
                       <button
                         onClick={() => handleDeleteDept(d.id)}
-                        className="text-gray-400 hover:text-red-500"
+                        className="text-gray-400 hover:text-red-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
                       >
                         <Trash2 className="h-4 w-4" />
                       </button>
@@ -613,7 +613,7 @@ export default function OrganizationsPage() {
                   </div>
                   <button
                     onClick={() => handleDeleteTeam(t.id)}
-                    className="text-gray-400 hover:text-red-500"
+                    className="text-gray-400 hover:text-red-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   >
                     <Trash2 className="h-4 w-4" />
                   </button>
@@ -715,9 +715,9 @@ function MembersDetail({
           </thead>
           <tbody className="divide-y divide-gray-100">
             {members.map((m: any) => (
-              <tr key={m.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
+              <tr key={m.id} className="hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500">
                 <td className="px-4 py-2">
-                  <Link href={`/users/${m.user_id}`} className="font-mono text-xs text-brand-600 hover:underline">
+                  <Link href={`/users/${m.user_id}`} className="font-mono text-xs text-brand-600 hover:underline focus:outline-none focus:ring-2 focus:ring-blue-500">
                     {m.user_id.slice(0, 12)}...
                   </Link>
                 </td>
@@ -828,7 +828,7 @@ function UnifiedOrgNode({
   return (
     <>
       <div
-        className="flex items-center gap-2 rounded-lg px-2 py-1.5 hover:bg-gray-50 relative"
+        className="flex items-center gap-2 rounded-lg px-2 py-1.5 hover:bg-gray-50 relative focus:outline-none focus:ring-2 focus:ring-blue-500"
         style={{ paddingLeft: `${depth * 24 + 8}px` }}
       >
         {/* Tree connector lines */}
@@ -873,7 +873,7 @@ function UnifiedOrgNode({
           {orgDepts.map((dept: any) => (
             <div
               key={dept.id}
-              className="flex items-center gap-2 rounded-lg px-2 py-1 hover:bg-blue-50/30"
+              className="flex items-center gap-2 rounded-lg px-2 py-1 hover:bg-blue-50/30 focus:outline-none focus:ring-2 focus:ring-blue-500"
               style={{ paddingLeft: `${(depth + 1) * 20 + 28}px` }}
             >
               <Network className="h-3.5 w-3.5 text-blue-400" />
@@ -946,7 +946,7 @@ function OrgTreeNode({
   return (
     <>
       <div
-        className={`flex items-center gap-2 rounded-lg px-3 py-2.5 hover:bg-gray-50 ${depth === 0 ? "border-b border-gray-100 dark:border-gray-700" : ""}`}
+        className={`flex items-center gap-2 rounded-lg px-3 py-2.5 hover:bg-gray-50 ${depth === 0 ? "border-b border-gray-100 dark:border-gray-700" : ""} focus:outline-none focus:ring-2 focus:ring-blue-500}`}
         style={{ paddingLeft: `${depth * 24 + 12}px` }}
       >
         {/* Expand/Collapse toggle */}
@@ -989,7 +989,7 @@ function OrgTreeNode({
         {/* Delete */}
         <button
           onClick={() => onDelete(org.id)}
-          className="ml-auto text-gray-300 hover:text-red-500"
+          className="ml-auto text-gray-300 hover:text-red-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
         >
           <Trash2 className="h-4 w-4" />
         </button>
@@ -997,7 +997,7 @@ function OrgTreeNode({
         {/* View Details button */}
         <Link
           href={`/organizations/${org.id}`}
-          className="flex items-center gap-1 rounded-lg border border-gray-300 px-2 py-1 text-xs font-medium text-gray-600 hover:bg-gray-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700"
+          className="flex items-center gap-1 rounded-lg border border-gray-300 px-2 py-1 text-xs font-medium text-gray-600 hover:bg-gray-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
         >
           View Details →
         </Link>
@@ -1053,7 +1053,7 @@ function CreateForm({
       <div className="grid gap-3 sm:grid-cols-2">{children}</div>
       <button
         type="submit"
-        className="mt-4 rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700"
+        className="mt-4 rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
       >
         Create
       </button>

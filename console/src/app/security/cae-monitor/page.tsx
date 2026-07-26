@@ -270,7 +270,7 @@ function TriggersTab() {
           <h3 className="text-sm font-semibold text-gray-900 dark:text-white">{t("caeMonitor.triggers.title")}</h3>
           <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{t("caeMonitor.triggers.description")}</p>
         </div>
-        <button onClick={() => setShowForm(!showForm)} aria-label={t("caeMonitor.triggers.addTrigger")} className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900">
+        <button onClick={() => setShowForm(!showForm)} aria-label={t("caeMonitor.triggers.addTrigger")} className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500">
           <Plus className="w-4 h-4" />{t("caeMonitor.triggers.addTrigger")}
         </button>
       </div>
@@ -294,7 +294,7 @@ function TriggersTab() {
               <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full transition-transform ${tr.enabled ? "translate-x-4" : ""}`} />
             </button>
             <button onClick={() => deleteTrigger(tr.id)}
-              className="p-1.5 hover:bg-red-50 dark:hover:bg-red-950 rounded"><Trash2 className="w-4 h-4 text-red-500" /></button>
+              className="p-1.5 hover:bg-red-50 dark:hover:bg-red-950 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"><Trash2 className="w-4 h-4 text-red-500" /></button>
           </div>
         ))}
       </div>
@@ -322,7 +322,7 @@ function TriggerForm({ onAdd, onCancel }: { onAdd: (t: Trigger) => void; onCance
       </div>
       <div className="flex gap-2">
         <button onClick={() => onAdd({ id: `t${Date.now()}`, event, condition, action, enabled: true })}
-          className="px-4 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-medium">{t("caeMonitor.triggers.addTrigger")}</button>
+          className="px-4 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-medium focus:outline-none focus:ring-2 focus:ring-blue-500">{t("caeMonitor.triggers.addTrigger")}</button>
         <button onClick={onCancel} className="px-4 py-1.5 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg text-xs font-medium">Cancel</button>
       </div>
     </div>

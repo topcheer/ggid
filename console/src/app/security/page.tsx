@@ -100,7 +100,7 @@ export default function SecurityCenterPage() {
       <div className="p-8">
         <div className="rounded-lg border border-red-300 bg-red-50 dark:bg-red-950 dark:border-red-800 p-4">
           <p className="text-red-700 dark:text-red-400 text-sm font-medium">Error: {error}</p>
-          <button aria-label="action" onClick={loadData} className="mt-2 px-4 py-1.5 rounded-lg bg-red-600 text-white text-sm hover:bg-red-700">{t("common.refresh")}</button>
+          <button aria-label="action" onClick={loadData} className="mt-2 px-4 py-1.5 rounded-lg bg-red-600 text-white text-sm hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-blue-500">{t("common.refresh")}</button>
         </div>
       </div>
     );
@@ -332,7 +332,7 @@ export default function SecurityCenterPage() {
                   <button
                     onClick={() => dismissAnomaly(alert.id)}
                     aria-label={`Dismiss anomaly ${alert.id}`}
-                    className="ml-2 rounded-lg border border-gray-300 p-1.5 text-gray-400 hover:bg-gray-50 dark:border-gray-600 dark:hover:bg-gray-700"
+                    className="ml-2 rounded-lg border border-gray-300 p-1.5 text-gray-400 hover:bg-gray-50 dark:border-gray-600 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
                     title="Dismiss"
                   >
                     <X className="h-4 w-4" />
@@ -363,7 +363,7 @@ export default function SecurityCenterPage() {
             <button
               onClick={addAllow}
               aria-label="Add to allowlist"
-              className="flex items-center gap-1 rounded-lg bg-green-600 px-3 py-2 text-sm text-white hover:bg-green-700"
+              className="flex items-center gap-1 rounded-lg bg-green-600 px-3 py-2 text-sm text-white hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               <Plus className="h-4 w-4" /> Allow
             </button>
@@ -381,7 +381,7 @@ export default function SecurityCenterPage() {
                   <button
                     onClick={() => removeAllow(ip)}
                     aria-label={`Remove ${ip} from allowlist`}
-                    className="text-gray-400 hover:text-red-500"
+                    className="text-gray-400 hover:text-red-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   >
                     <X className="h-4 w-4" />
                   </button>
@@ -408,7 +408,7 @@ export default function SecurityCenterPage() {
             <button
               onClick={addDeny}
               aria-label="Add to denylist"
-              className="flex items-center gap-1 rounded-lg bg-red-600 px-3 py-2 text-sm text-white hover:bg-red-700"
+              className="flex items-center gap-1 rounded-lg bg-red-600 px-3 py-2 text-sm text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               <Plus className="h-4 w-4" /> Deny
             </button>
@@ -426,7 +426,7 @@ export default function SecurityCenterPage() {
                   <button
                     onClick={() => removeDeny(ip)}
                     aria-label={`Remove ${ip} from denylist`}
-                    className="text-gray-400 hover:text-red-500"
+                    className="text-gray-400 hover:text-red-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   >
                     <X className="h-4 w-4" />
                   </button>

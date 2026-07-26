@@ -295,7 +295,7 @@ export default function SecurityPosturePage() {
             Aggregate view: device trust coverage, MFA adoption, session binding, and unaddressed findings.
           </p>
         </div>
-        <button onClick={fetchData} disabled={loading} aria-label="Refresh posture" className="flex items-center gap-2 rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-600 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800">
+        <button onClick={fetchData} disabled={loading} aria-label="Refresh posture" className="flex items-center gap-2 rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-600 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500">
           <Activity className={"h-4 w-4 " + (loading ? "animate-spin" : "")} /> Refresh
         </button>
       </div>

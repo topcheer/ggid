@@ -151,7 +151,7 @@ export default function OAuthClientNewPage() {
 
         {/* Step Content */}
         <div className="bg-white dark:bg-gray-800 dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 dark:border-gray-800 p-6">
-          {error && <div className="flex items-center gap-2 px-4 py-2 mb-4 rounded-lg bg-red-50 dark:bg-red-950/30 text-red-600 text-sm"><AlertCircle className="w-4 h-4" />{error}</div>}
+          {error && <div className="flex items-center gap-2 px-4 py-2 mb-4 rounded-lg bg-red-50 dark:bg-red-950/30 text-red-600 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"><AlertCircle className="w-4 h-4" />{error}</div>}
 
           {/* Step 0: App Type */}
           {step === 0 && (
@@ -226,7 +226,7 @@ export default function OAuthClientNewPage() {
                 <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 dark:text-gray-400 mb-1">{t("oauthWizard.scopes.custom")}</label>
                 <p className="text-xs text-gray-400 mb-1">{t("oauthWizard.scopes.customDesc")}</p>
                 <input type="text" value={customScopes} onChange={(e) => setCustomScopes(e.target.value)} placeholder="read:users write:audit"
-                  className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 dark:bg-gray-800 text-sm text-gray-900 dark:text-white dark:text-white" />
+                  className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 dark:bg-gray-800 text-sm text-gray-900 dark:text-white dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500" />
               </div>
             </div>
           )}
@@ -239,15 +239,15 @@ export default function OAuthClientNewPage() {
                 <div>
                   <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 dark:text-gray-400 mb-1">{t("oauthWizard.confirm.clientName")}</label>
                   <input type="text" value={clientName} onChange={(e) => setClientName(e.target.value)} placeholder={t("oauthWizard.confirm.clientNamePlaceholder")} autoFocus
-                    className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 dark:bg-gray-800 text-sm text-gray-900 dark:text-white dark:text-white" />
+                    className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 dark:bg-gray-800 text-sm text-gray-900 dark:text-white dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500" />
                 </div>
                 <div>
                   <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 dark:text-gray-400 mb-1">{t("oauthWizard.confirm.redirectUris")}</label>
                   <p className="text-xs text-gray-400 mb-1">{t("oauthWizard.confirm.redirectUrisDesc")}</p>
                   <textarea value={redirectUris} onChange={(e) => setRedirectUris(e.target.value)} placeholder={t("oauthWizard.confirm.redirectUrisPlaceholder")} rows={3}
-                    className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 dark:bg-gray-800 text-sm font-mono text-gray-900 dark:text-white dark:text-white" />
+                    className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 dark:bg-gray-800 text-sm font-mono text-gray-900 dark:text-white dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500" />
                 </div>
-                <div className="grid grid-cols-2 gap-3 p-3 rounded-lg bg-gray-50 dark:bg-gray-800 dark:bg-gray-800/50">
+                <div className="grid grid-cols-2 gap-3 p-3 rounded-lg bg-gray-50 dark:bg-gray-800 dark:bg-gray-800/50 focus:outline-none focus:ring-2 focus:ring-blue-500">
                   <div><span className="text-xs text-gray-400">{t("oauthWizard.confirm.appTypeLabel")}</span><p className="text-sm font-medium text-gray-900 dark:text-white dark:text-white capitalize">{t(`oauthWizard.appType.${appType}`)}</p></div>
                   <div><span className="text-xs text-gray-400">{t("oauthWizard.confirm.authMethodLabel")}</span><p className="text-sm font-medium text-gray-900 dark:text-white dark:text-white">{authMethod ? t(`oauthWizard.authMethod.${authMethod === "client_secret" ? "clientSecret" : authMethod === "pkce" ? "pkce" : "mtls"}`) : "—"}</p></div>
                 </div>
@@ -263,14 +263,14 @@ export default function OAuthClientNewPage() {
           {/* Step 4: Success — show credentials */}
           {step === 4 && created && (
             <div className="text-center space-y-4">
-              <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-green-100 dark:bg-green-950/30 mb-2">
+              <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-green-100 dark:bg-green-950/30 mb-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
                 <Check className="w-8 h-8 text-green-500" />
               </div>
               <h3 className="text-lg font-bold text-gray-900 dark:text-white dark:text-white">{t("oauthWizard.confirm.created")}</h3>
 
               <div className="text-left space-y-3">
                 {/* Secret warning */}
-                <div className="flex items-center gap-2 p-3 rounded-lg bg-yellow-50 dark:bg-yellow-950/30 border border-yellow-200 dark:border-yellow-800 text-yellow-700 dark:text-yellow-300 text-xs">
+                <div className="flex items-center gap-2 p-3 rounded-lg bg-yellow-50 dark:bg-yellow-950/30 border border-yellow-200 dark:border-yellow-800 text-yellow-700 dark:text-yellow-300 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500">
                   <AlertCircle className="w-4 h-4 flex-shrink-0" />{t("oauthWizard.confirm.secretWarning")}
                 </div>
 
@@ -278,23 +278,23 @@ export default function OAuthClientNewPage() {
                   <div className="flex items-center justify-between mb-1">
                     <label className="text-xs font-medium text-gray-500">{t("oauthWizard.confirm.clientId")}</label>
                   </div>
-                  <code className="block p-3 rounded-lg bg-gray-900 dark:bg-gray-800 text-sm font-mono text-green-400 break-all">{created.client_id}</code>
+                  <code className="block p-3 rounded-lg bg-gray-900 dark:bg-gray-800 text-sm font-mono text-green-400 break-all focus:outline-none focus:ring-2 focus:ring-blue-500">{created.client_id}</code>
                 </div>
                 {created.client_secret && (
                   <div>
                     <label className="text-xs font-medium text-gray-500 mb-1 block">{t("oauthWizard.confirm.clientSecret")}</label>
-                    <code className="block p-3 rounded-lg bg-gray-900 dark:bg-gray-800 text-sm font-mono text-orange-400 break-all">{created.client_secret}</code>
+                    <code className="block p-3 rounded-lg bg-gray-900 dark:bg-gray-800 text-sm font-mono text-orange-400 break-all focus:outline-none focus:ring-2 focus:ring-blue-500">{created.client_secret}</code>
                   </div>
                 )}
 
-                <button onClick={copyAll} className="flex items-center gap-1.5 px-3 py-1.5 bg-gray-100 dark:bg-gray-700 dark:bg-gray-800 text-gray-600 dark:text-gray-400 dark:text-gray-400 rounded-lg text-sm hover:bg-gray-200">
+                <button onClick={copyAll} className="flex items-center gap-1.5 px-3 py-1.5 bg-gray-100 dark:bg-gray-700 dark:bg-gray-800 text-gray-600 dark:text-gray-400 dark:text-gray-400 rounded-lg text-sm hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500">
                   {copied ? <Check className="w-4 h-4 text-green-500" /> : <Copy className="w-4 h-4" />}{t("oauthWizard.confirm.copyAll")}
                 </button>
 
                 {/* curl example */}
                 <div>
                   <label className="text-xs font-medium text-gray-500 mb-1 block">{t("oauthWizard.confirm.curlExample")}</label>
-                  <pre className="p-3 rounded-lg bg-gray-900 dark:bg-gray-800 text-xs font-mono text-gray-300 overflow-x-auto">{`curl -X POST ${API_BASE}/api/v1/oauth/token \\
+                  <pre className="p-3 rounded-lg bg-gray-900 dark:bg-gray-800 text-xs font-mono text-gray-300 overflow-x-auto focus:outline-none focus:ring-2 focus:ring-blue-500">{`curl -X POST ${API_BASE}/api/v1/oauth/token \\
   -H "Content-Type: application/x-www-form-urlencoded" \\
   -d "grant_type=client_credentials" \\
   -d "client_id=${created.client_id}" \\

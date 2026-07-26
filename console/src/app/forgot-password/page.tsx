@@ -53,7 +53,7 @@ export default function ForgotPasswordPage() {
               <Mail className="mx-auto mb-3 h-10 w-10 text-brand-600" />
               <p className="text-sm text-gray-600 dark:text-gray-300">{t("forgotPassword.emailSent")} <strong>{email}</strong>, {t("forgotPassword.resetLinkSent")}</p>
             </div>
-            <a href="/login" className="mt-6 flex items-center justify-center gap-1 text-sm text-brand-600 hover:underline">
+            <a href="/login" className="mt-6 flex items-center justify-center gap-1 text-sm text-brand-600 hover:underline focus:outline-none focus:ring-2 focus:ring-blue-500">
               <ArrowLeft className="h-4 w-4" /> {t("forgotPassword.backToLogin")}
             </a>
           </div>
@@ -74,10 +74,10 @@ export default function ForgotPasswordPage() {
                 placeholder={t("forgotPassword.emailPlaceholder")}
               />
             </div>
-            <button type="submit" disabled={loading} className="w-full rounded-lg bg-brand-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-brand-700 disabled:opacity-50 focus:ring-2 focus:ring-brand-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800" aria-label={t("forgotPassword.sendResetLink")}>
+            <button type="submit" disabled={loading} className="w-full rounded-lg bg-brand-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-brand-700 disabled:opacity-50 focus:ring-2 focus:ring-brand-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500" aria-label={t("forgotPassword.sendResetLink")}>
               {loading ? t("forgotPassword.sending") : t("forgotPassword.sendResetLink")}
             </button>
-            <a href="/login" className="mt-4 flex items-center justify-center gap-1 text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300">
+            <a href="/login" className="mt-4 flex items-center justify-center gap-1 text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500">
               <ArrowLeft className="h-4 w-4" /> {t("forgotPassword.backToLogin")}
             </a>
           </form>

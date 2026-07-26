@@ -158,7 +158,7 @@ export default function ITDRDashboardPage() {
           onClick={() => loadData(true)}
           disabled={refreshing}
           aria-label="Refresh ITDR data"
-          className="flex items-center gap-2 rounded-lg border border-gray-300 dark:border-gray-600 px-3 py-2 text-sm hover:bg-gray-50 dark:hover:bg-gray-700"
+          className="flex items-center gap-2 rounded-lg border border-gray-300 dark:border-gray-600 px-3 py-2 text-sm hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
         >
           <RefreshCw className={`h-4 w-4 ${refreshing ? "animate-spin" : ""}`} /> Refresh
         </button>
@@ -309,7 +309,7 @@ export default function ITDRDashboardPage() {
                 <div
                   key={inc.id}
                   onClick={() => setSelectedIncident(inc)}
-                  className="flex cursor-pointer items-center justify-between rounded-lg border p-4 transition hover:border-brand-300 dark:border-gray-700 dark:hover:border-brand-700"
+                  className="flex cursor-pointer items-center justify-between rounded-lg border p-4 transition hover:border-brand-300 dark:border-gray-700 dark:hover:border-brand-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
                   <div className="flex items-center gap-3">
                     <div className={`h-2 w-2 rounded-full ${
@@ -411,7 +411,7 @@ export default function ITDRDashboardPage() {
           <div className="w-full max-w-lg rounded-xl bg-white p-6 shadow-2xl dark:bg-gray-800" onClick={e => e.stopPropagation()}>
             <div className="mb-4 flex items-center justify-between">
               <h2 className="text-lg font-bold text-gray-900 dark:text-white">{selectedIncident.title}</h2>
-              <button onClick={() => setSelectedIncident(null)} className="rounded-lg p-1 text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700">
+              <button onClick={() => setSelectedIncident(null)} className="rounded-lg p-1 text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500">
                 <X className="h-5 w-5" />
               </button>
             </div>
