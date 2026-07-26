@@ -4134,3 +4134,41 @@ Verified after `go clean -cache` (initial 62 was stale cache, re-run confirms 65
 Build: pass. 65/65 tests. OAuth 5/5. Danger: 0.
 
 ### Next Dimension: 1 — Cycle 1294
+
+## Cycle 1294: D1 Authentication Completeness — P0 Build Break Fixed (Round 1458)
+Baseline: de3439b34. **12 new security commits** since last cycle:
+- 2f0a05130 fix(oauth): CAP policies never matched — tenant_id column empty
+- 054a4ebdd fix(oauth): require_mfa CAP bypass — verify MFA device exists
+- 2da143a69 fix(audit): implement gt/lt operators in alert condition matching
+- 9fb59f8a3 fix(identity): deduplicate permissions query + add tenant_id filter
+- 32049f040 fix(oauth): expand CAP condition matching + enforce require_mfa action
+- 8e0929179 fix(auth): P0 passkey registration without identity verification
+- 8e02e83f8 fix(gateway): add route for /.well-known/oauth-protected-resource → MCP
+- 4ea3edb1b/36ebf6def fix(mcp): use dynamic baseURL in RFC 9728 metadata + WWW-Authenticate
+- 08c73818c fix(auth+oauth): remove remaining hardcoded ggid.iot2.win URLs
+- 2c9173a53 fix(oauth): cascade revoke refresh tokens on access token revocation
+- 3e736351a fix: remove hardcoded tenant ID + SSE CORS origin from gateway/audit
+
+### P0 Build Break Found + Fixed
+- `services/oauth/internal/service/oauth_service.go`: `evaluateConditionalAccess()` (added by CAP commits) uses `log.Printf` but file only imported `log/slog` → `undefined: log` at 5 call sites. **HEAD did not build.**
+- **Fix**: added single import line `"log"` (1-line surgical diff, no gofmt sweep to respect shared file).
+- After fix: `go build ./...` = EXIT 0. 65/65 test packages pass.
+
+### Dimension 1 Deep Verification (Authentication Completeness)
+- **CAP enforcement** (oauth_service.go:1842): `evaluateConditionalAccess` correctly wired into password grant. `block`/`deny` → 401; `require_mfa` → verifies code present AND user has verified MFA device (commit 054a4ebdd security fix). ✅
+- **MFA enforcement** (1818-1839): user with verified MFA device must supply valid TOTP `mfa_code`. ✅
+- **Scope escalation prevention** (1869-1873): admin scopes (platform:*/tenant:*) come ONLY from DB role keys via `filterSafeScopes` + `fetchUserRoleKeys`, never from client-requested scope. ✅ (commit a045781cc)
+- **TokenResponse** (426-434): `access_token` + `token_type=Bearer` + `expires_in` + `refresh_token?` + `id_token?` + `scope?` — OAuth2/OIDC spec-compliant. ✅
+- **JWT claims** (1879-1890): iss/sub/aud/iat/exp/jti/tenant_id/scope/permissions/roles — complete. ✅
+- **fetchUserPermissions** (705-730): `SELECT DISTINCT p.key` + `r.tenant_id = $2` filter — dedup + tenant isolation. ✅ (commit 9fb59f8a3)
+- **Hardcoded URL/tenant cleanup**: core services (gateway/audit/oauth/auth) have NO hardcoded `ggid.iot2.win` URLs; only zero-UUID (`0000...0000`) sentinels remain (legitimate system/null markers). Demo defaults are env-var-overridable. ✅
+- Danger patterns: 0 real hits (only node_modules type defs).
+
+### Three-Layer Alignment
+| Layer | Status |
+|-------|--------|
+| Core (oauth/auth/gateway) | ✅ builds, 65/65 tests, CAP+MFA+scope secured |
+| SDK (7 langs) | ✅ no change this cycle (last verified C1288) |
+| Demo (8 apps) | ✅ no hardcoded URLs in core routing |
+
+### Next Dimension: 2 — Authorization Boundaries (Cycle 1300)

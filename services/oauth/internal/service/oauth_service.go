@@ -16,6 +16,7 @@ import (
 	"fmt"
 	"math/big"
 	"net"
+	"log"
 	"log/slog"
 	"strconv"
 	"strings"
