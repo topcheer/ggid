@@ -44,6 +44,15 @@ func (s *MFAService) SetupMFA(ctx context.Context, userID uuid.UUID, deviceName 
 		return nil, fmt.Errorf("MFA already enabled — disable first to reconfigure")
 	}
 
+	// Clean up any previous unverified devices to prevent duplicates
+	// when users retry setup multiple times.
+	allDevices, _ := s.repo.ListDevicesByUser(ctx, tc.TenantID, userID)
+	for _, dev := range allDevices {
+		if dev.VerifiedAt == nil {
+			_ = s.repo.DeleteDevice(ctx, tc.TenantID, dev.ID)
+		}
+	}
+
 	// Generate TOTP key.
 	key, err := totp.Generate(totp.GenerateOpts{
 		Issuer:      "GGID",

@@ -299,7 +299,8 @@ func TestMFAService_ListDevices(t *testing.T) {
 
 	userID := uuid.New()
 
-	// Create two devices.
+	// Create two devices. Note: second setup cleans up the first unverified device
+	// (anti-duplicate behavior), so only the latest remains.
 	_, _ = svc.SetupMFA(mfaCtx(), userID, "phone")
 	_, _ = svc.SetupMFA(mfaCtx(), userID, "tablet")
 
@@ -308,8 +309,8 @@ func TestMFAService_ListDevices(t *testing.T) {
 		t.Fatalf("ListDevices failed: %v", err)
 	}
 
-	if len(devices) != 2 {
-		t.Errorf("expected 2 devices, got %d", len(devices))
+	if len(devices) != 1 {
+		t.Errorf("expected 1 device (latest after cleanup), got %d", len(devices))
 	}
 }
 
