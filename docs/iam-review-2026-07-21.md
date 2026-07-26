@@ -129,3 +129,11 @@
 | P2-15 | JWT aud 运行时验证 | 待修复 |
 | P0 WebAuthn sessionStore TTL | **已修复** (511604f77) |
 | P1 JWT alg:none bypass | **已修复** (bf1bf6f08) |
+
+## R28 增量审视 2026-07-26 06:15
+
+R27 后 2 个新 commit，均为安全增强：
+1. faf1435d7 — RSA key pair 验证 + 生产环境拒绝静默重新生成（修复 RSA key mismatch 根因）
+2. 6c2a9d4f8 — 密码 MaxLength 限制（NIST 800-63B DoS 防护）
+
+审计通过，无新问题。`go build` PASS。
