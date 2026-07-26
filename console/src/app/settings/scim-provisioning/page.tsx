@@ -99,8 +99,11 @@ export default function SCIMProvisioningPage() {
             </div>
             <button
               type="button"
+              role="switch"
+              aria-checked={config.enabled}
+              aria-label="Toggle SCIM provisioning"
               onClick={() => setConfig({ ...config, enabled: !config.enabled })}
-              className={`relative inline-flex h-6 w-11 items-center rounded-full transition ${config.enabled ? "bg-cyan-600" : "bg-gray-300 dark:bg-gray-600"}`}
+              className={`relative inline-flex h-6 w-11 items-center rounded-full transition focus:outline-none focus:ring-2 focus:ring-cyan-500 ${config.enabled ? "bg-cyan-600" : "bg-gray-300 dark:bg-gray-600"}`}
             >
               <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition ${config.enabled ? "translate-x-6" : "translate-x-1"}`} />
             </button>
@@ -110,6 +113,7 @@ export default function SCIMProvisioningPage() {
             <label className="text-sm font-medium">SCIM Endpoint URL</label>
             <input
               type="text"
+              aria-label="SCIM Endpoint URL"
               value={config.endpoint_url}
               onChange={e => setConfig({ ...config, endpoint_url: e.target.value })}
               placeholder="https://idp.example.com/scim/v2"
@@ -121,6 +125,7 @@ export default function SCIMProvisioningPage() {
             <label className="text-sm font-medium">Bearer Token</label>
             <input
               type="password"
+              aria-label="SCIM Bearer Token"
               value={config.auth_token}
               onChange={e => setConfig({ ...config, auth_token: e.target.value })}
               placeholder="••••••••••••"
@@ -132,6 +137,7 @@ export default function SCIMProvisioningPage() {
             <label className="text-sm font-medium">Sync Interval (seconds)</label>
             <input
               type="number"
+              aria-label="Sync interval in seconds"
               value={config.sync_interval}
               onChange={e => setConfig({ ...config, sync_interval: parseInt(e.target.value) || 300 })}
               className="mt-1 block w-full rounded-lg border dark:border-gray-700 dark:bg-gray-900 px-3 py-2 text-sm"
@@ -139,10 +145,10 @@ export default function SCIMProvisioningPage() {
           </div>
 
           <div className="flex gap-3">
-            <button onClick={handleSave} disabled={saving} className="flex items-center gap-2 rounded-lg bg-cyan-600 px-4 py-2 text-sm font-medium text-white hover:bg-cyan-700 disabled:opacity-50">
+            <button onClick={handleSave} disabled={saving} aria-label="Save SCIM configuration" className="flex items-center gap-2 rounded-lg bg-cyan-600 px-4 py-2 text-sm font-medium text-white hover:bg-cyan-700 focus:outline-none focus:ring-2 focus:ring-cyan-500 disabled:opacity-50">
               {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />} Save Configuration
             </button>
-            <button onClick={testConnection} disabled={testStatus === "testing"} className="flex items-center gap-2 rounded-lg border border-gray-300 dark:border-gray-600 px-4 py-2 text-sm font-medium dark:border-gray-700">
+            <button onClick={testConnection} disabled={testStatus === "testing"} aria-label="Test SCIM connection" className="flex items-center gap-2 rounded-lg border border-gray-300 dark:border-gray-600 px-4 py-2 text-sm font-medium dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-cyan-500">
               {testStatus === "testing" ? <Loader2 className="h-4 w-4 animate-spin" /> : testStatus === "ok" ? <Check className="h-4 w-4 text-green-500" /> : testStatus === "fail" ? <X className="h-4 w-4 text-red-500" /> : <ArrowRightLeft className="h-4 w-4" />}
               Test Connection
             </button>

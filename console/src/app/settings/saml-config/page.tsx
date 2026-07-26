@@ -150,10 +150,10 @@ export default function SAMLConfigPage() {
           {spMetadata || "Loading..."}
         </pre>
         <div className="mt-3 flex gap-2">
-          <button onClick={handleDownloadSp} className="flex items-center gap-1.5 rounded-lg border border-gray-300 dark:border-gray-600 px-3 py-1.5 text-sm dark:border-gray-700">
+          <button onClick={handleDownloadSp} aria-label="Download SP metadata XML" className="flex items-center gap-1.5 rounded-lg border border-gray-300 dark:border-gray-600 px-3 py-1.5 text-sm dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500">
             <Download className="h-4 w-4" /> Download XML
           </button>
-          <button onClick={handleCopySp} className="flex items-center gap-1.5 rounded-lg border border-gray-300 dark:border-gray-600 px-3 py-1.5 text-sm dark:border-gray-700">
+          <button onClick={handleCopySp} aria-label="Copy SP metadata" className="flex items-center gap-1.5 rounded-lg border border-gray-300 dark:border-gray-600 px-3 py-1.5 text-sm dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500">
             {spCopied ? <CheckCircle2 className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4" />}
             {spCopied ? "Copied!" : "Copy"}
           </button>
@@ -172,6 +172,7 @@ export default function SAMLConfigPage() {
             <label className="text-sm font-medium text-gray-700 dark:text-gray-300 dark:text-gray-300">SP Entity ID</label>
             <input
               type="text"
+              aria-label="SP Entity ID"
               value={entityId}
               onChange={e => setEntityId(e.target.value)}
               placeholder="https://ggid-console.example.com/saml/metadata"
@@ -185,6 +186,7 @@ export default function SAMLConfigPage() {
             <label className="text-sm font-medium text-gray-700 dark:text-gray-300 dark:text-gray-300">ACS URL</label>
             <input
               type="text"
+              aria-label="ACS URL"
               value={acsUrl}
               onChange={e => setAcsUrl(e.target.value)}
               placeholder="https://ggid-console.example.com/saml/acs"
@@ -198,6 +200,7 @@ export default function SAMLConfigPage() {
             <label className="text-sm font-medium text-gray-700 dark:text-gray-300 dark:text-gray-300">IdP Metadata URL (optional)</label>
             <input
               type="text"
+              aria-label="IdP Metadata URL"
               value={idpMetadataUrl}
               onChange={e => setIdpMetadataUrl(e.target.value)}
               placeholder="https://idp.example.com/metadata"
@@ -211,6 +214,7 @@ export default function SAMLConfigPage() {
             <label className="text-sm font-medium text-gray-700 dark:text-gray-300 dark:text-gray-300">IdP Metadata XML</label>
             <div className="mt-1 flex gap-2">
               <textarea
+                aria-label="IdP Metadata XML"
                 value={idpMetadataXml}
                 onChange={e => setIdpMetadataXml(e.target.value)}
                 rows={6}
@@ -229,7 +233,8 @@ export default function SAMLConfigPage() {
           <button
             onClick={handleSave}
             disabled={saving}
-            className="flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
+            aria-label="Save SAML configuration"
+            className="flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
           >
             {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
             Save Configuration
