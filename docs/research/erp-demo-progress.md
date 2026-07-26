@@ -5008,3 +5008,27 @@ Build: PASS. `make test`: EXIT=0, 65/65. Danger: 0.
 **Rotation 4: 0 P0. All prior P1 fixes deployed and stable. 5 P1 remaining (P1-2/3/6/9TOTP-now-fixed/10-now-fixed).**
 
 ### Next Dimension: 1 — Authentication Completeness (Cycle 1438) — Rotation 5
+
+## Cycle 1438: D1 Auth R5 — All P1 Deployed, 7 Services Updated (Round 1483)
+New commits: `de0870ca5` (SQL injection fix for SET app.tenant_id), `368899941` (P1 PasswordGrant brute-force), `6706541dc` (brute-force tests), `0e6025526` (P2 device code client_id binding).
+Build: PASS. `make test`: EXIT=0, 65/65 (full clean rebuild). Danger: 0.
+
+### ggcxf_cli: All P1 Fixes Deployed to 7 Services ✅
+8 P1 security fixes deployed (oauth, auth, gateway, policy, identity, audit, console):
+P1-1 (refresh binding), P1-4/5 (PII redaction), P1-7 (post_logout redirect), P1-9 (TOTP encryption), P1-10 (role impersonation), RBAC hasAdminScope removal, P2-56 (Redis client binding).
+
+**Remaining P1 (3, non-blocking)**: P1-2 (Go SDK iss), P1-3 (MCP JWKS), P1-6 (JWKS rotation).
+
+### New Security Commits Verified
+- `368899941`: PasswordGrant brute-force protection (locked_until + failed_attempts) ✅
+- `de0870ca5`: SQL injection eliminated in SET app.tenant_id (parameterized) ✅
+- `0e6025526`: Device code client_id binding ✅
+
+### Three-Layer Alignment
+| Layer | Status |
+|-------|--------|
+| Core | ✅ all P1 deployed, SQL injection fixed, brute-force protection, build+test pass |
+| SDK | ✅ no change |
+| Demo | ✅ no change |
+
+### Next Dimension: 2 — Authorization Boundaries (Cycle 1444) — Rotation 5
