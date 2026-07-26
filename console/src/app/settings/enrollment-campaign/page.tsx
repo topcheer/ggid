@@ -261,7 +261,7 @@ function CreateCampaign({ onLaunched }: { onLaunched: () => void }) {
         <div className="space-y-4">
           <div>
             <label className="block text-sm font-semibold text-gray-900 dark:text-white dark:text-white mb-2">{t("enrollmentCampaign.create.campaignName")}</label>
-            <input type="text" value={name} onChange={(e) => setName(e.target.value)}
+            <input type="text" aria-label={t("enrollmentCampaign.create.campaignName")} value={name} onChange={(e) => setName(e.target.value)}
               placeholder={t("enrollmentCampaign.create.campaignNamePlaceholder")}
               className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 dark:bg-gray-800 text-sm text-gray-900 dark:text-white dark:text-white" />
           </div>
@@ -310,12 +310,12 @@ function CreateCampaign({ onLaunched }: { onLaunched: () => void }) {
           <div>
             <label className="block text-sm font-semibold text-gray-900 dark:text-white dark:text-white mb-1">{t("enrollmentCampaign.create.deadline")}</label>
             <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">{t("enrollmentCampaign.create.deadlineDesc")}</p>
-            <input type="date" value={deadline} onChange={(e) => setDeadline(e.target.value)}
+            <input type="date" aria-label="Campaign deadline" value={deadline} onChange={(e) => setDeadline(e.target.value)}
               min={new Date().toISOString().split("T")[0]}
               className="w-full md:w-64 px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 dark:bg-gray-800 text-sm text-gray-900 dark:text-white dark:text-white" />
           </div>
           <label className="flex items-center gap-2 cursor-pointer">
-            <input type="checkbox" checked={sendEmail} onChange={(e) => setSendEmail(e.target.checked)} className="rounded" />
+            <input type="checkbox" aria-label="Send email notification" checked={sendEmail} onChange={(e) => setSendEmail(e.target.checked)} className="rounded" />
             <span className="text-sm text-gray-700 dark:text-gray-300 dark:text-gray-300 flex items-center gap-1">
               <Mail className="w-4 h-4" />
               {t("enrollmentCampaign.create.sendEmail")}
