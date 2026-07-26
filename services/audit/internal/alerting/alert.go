@@ -15,6 +15,7 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
+	"strconv"
 	"sync"
 	"time"
 )
@@ -255,8 +256,32 @@ func matchesCondition(cond AlertCondition, event *AlertEvent) bool {
 		return fmt.Sprintf("%v", val) != fmt.Sprintf("%v", cond.Value)
 	case "contains":
 		return contains(fmt.Sprintf("%v", val), fmt.Sprintf("%v", cond.Value))
+	case "gt":
+		return toFloat64(val) > toFloat64(cond.Value)
+	case "lt":
+		return toFloat64(val) < toFloat64(cond.Value)
 	default:
 		return false
+	}
+}
+
+// toFloat64 converts numeric values to float64 for comparison.
+func toFloat64(v any) float64 {
+	switch n := v.(type) {
+	case float64:
+		return n
+	case float32:
+		return float64(n)
+	case int:
+		return float64(n)
+	case int64:
+		return float64(n)
+	case json.Number:
+		f, _ := n.Float64()
+		return f
+	default:
+		f, _ := strconv.ParseFloat(fmt.Sprintf("%v", v), 64)
+		return f
 	}
 }
 
