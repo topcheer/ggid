@@ -927,13 +927,18 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 		})
 	})
 
-	// Token revocation (RFC 7009)
+	// Token revocation (RFC 7009 §2.1 requires client authentication)
 	mux.HandleFunc("/oauth/revoke", func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodPost {
 			writeJSON(w, http.StatusMethodNotAllowed, map[string]string{"error": "method_not_allowed"})
 			return
 		}
 		_ = r.ParseForm()
+		// RFC 7009 §2.1: require client authentication
+		if !introspectRequestAuthenticated(oauthSvc, r) {
+			writeJSON(w, http.StatusUnauthorized, map[string]string{"error": "invalid_client"})
+			return
+		}
 		token := r.FormValue("token")
 		tokenTypeHint := r.FormValue("token_type_hint")
 		_ = oauthSvc.RevokeToken(token, tokenTypeHint)
@@ -947,6 +952,10 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 			return
 		}
 		_ = r.ParseForm()
+		if !introspectRequestAuthenticated(oauthSvc, r) {
+			writeJSON(w, http.StatusUnauthorized, map[string]string{"error": "invalid_client"})
+			return
+		}
 		token := r.FormValue("token")
 		tokenTypeHint := r.FormValue("token_type_hint")
 		_ = oauthSvc.RevokeToken(token, tokenTypeHint)

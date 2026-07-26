@@ -200,3 +200,56 @@ admin 用户（roles: Administrator, Platform Administrator）跨租户访问现
 - P1/P2 后续轮次迭代（TOTP secret 加密、RP-Initiated Logout、Keycloak 路径别名、claim 映射、reuse detection TOCTOU 等）
 
 > **本轮审视状态：完成。** 下一轮 cron-1 触发时将聚焦增量问题。
+
+---
+
+## 深度审视 2026-07-26 05:30 — 全新角度安全+RFC审查
+
+### P0 — 阻塞标准互操作
+
+**P0-14: /oauth/revoke 无 client 认证 (RFC 7009 §2.1)**
+- 文件: `services/oauth/internal/server/server.go:931-941`
+- 问题: revoke 端点直接调用 `RevokeToken()` 无需 client 认证，任何人可撤销任何 token
+- RFC 7009 §2.1: "The client constructs the request by including the following parameters using the application/x-www-form-urlencoded format... with the client's credentials for authentication"
+- 对比: `/oauth/introspect` 已有 `introspectRequestAuthenticated()` 检查
+- 影响: DoS 攻击者可批量撤销用户 token 导致服务中断
+
+### P1 — 迁移成本
+
+**P1-15: OIDC discovery 缺 end_session_endpoint (OIDC RP-Initiated Logout)**
+- 文件: `services/oauth/internal/server/server.go:317-335`
+- 问题: discovery 文档不包含 `end_session_endpoint`，Keycloak/Auth0/Ockta 都提供
+- 影响: 从竞品迁移的 RP 无法发现 logout 端点
+
+**P1-16: PKCE code_challenge_method=plain 支持 (RFC 7636)**
+- 文件: `services/oauth/internal/service/oauth_service.go:368`
+- 问题: 支持 `plain` 方法，RFC 7636 §4.2 建议实现方应拒绝或降级为 S256
+- 影响: OAuth 2.1 标准要求仅 S256
+
+### P2 — 增强优化
+
+**P2-14: SCIM 缺 /Me 端点 (RFC 7643 §3.4)**
+- 文件: `services/identity/internal/scim/handler.go`
+- 问题: 有 /Users, /Groups, /Bulk, /ServiceProviderConfig, /ResourceTypes, /Schemas 但缺 /Me
+- 影响: 标准 SCIM 客户端无法获取当前用户信息
+
+**P2-15: JWT access token 缺 aud/iss 运行时验证**
+- 文件: `services/oauth/internal/service/oauth_service.go`
+- 问题: token 签发时设置 aud/iss 但 ParseAccessToken 不验证 aud 匹配
+- 影响: token 可能被不同 audience 的服务接受（跨服务 token 混用）
+
+### 已验证正常
+
+- OAuth 2.0 RFC 6749: authorize + token + refresh + password grant ✓
+- OIDC Core: discovery + userinfo + jwks + id_token ✓
+- PKCE RFC 7636: S256 + plain + code_verifier ✓
+- Token Introspection RFC 7662: client 认证 + 标准字段 ✓
+- SCIM RFC 7643/7644: Users + Groups + Bulk + ServiceProviderConfig + ResourceTypes + Schemas ✓
+- WebAuthn: register + autofill ✓
+- JWK/JWT RFC 7517/7519: JWKS rotation ✓
+- DCR RFC 7591: /oauth/register ✓
+- PAR RFC 9126: /oauth/par ✓
+- Device Flow RFC 8628: /api/v1/oauth/device_authorize ✓
+- SAML 2.0: metadata + SSO + ACS ✓
+- Refresh token reuse detection: family registry ✓
+- Token in URL fragment (not query param) for social login ✓
