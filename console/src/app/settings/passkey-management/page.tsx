@@ -38,10 +38,13 @@ export default function PasskeyManagementPage() {
 
   const enrollPasskey = async () => {
     try {
-      const beginResp = await fetch('/api/v1/auth/webauthn/register/begin', {
+      const userId = localStorage.getItem('ggid_user_id') || '';
+      const tenantId = localStorage.getItem('ggid_tenant_id') || '';
+
+      // Full WebAuthn handler: user_id as query param, returns standard PublicKeyCredentialCreationOptions
+      const beginResp = await fetch(`/api/v1/webauthn/register/begin?user_id=${userId}`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', ...authHeader() },
-        body: JSON.stringify({ device_name: enrollDevice || 'New Device' }),
+        headers: { 'Content-Type': 'application/json', ...authHeader(), 'X-Tenant-ID': tenantId },
       });
       if (!beginResp.ok) throw new Error(`Registration begin failed: ${beginResp.status}`);
       const rawKey = await beginResp.json();
@@ -58,12 +61,14 @@ export default function PasskeyManagementPage() {
         return buf.buffer;
       };
 
+      // The response from go-webauthn is nested under .publicKey
+      const opts = rawKey.publicKey || rawKey;
       const publicKey: PublicKeyCredentialCreationOptions = {
-        ...rawKey,
-        challenge: b64urlToBuf(rawKey.challenge),
-        user: rawKey.user ? { ...rawKey.user, id: b64urlToBuf(rawKey.user.id) } : undefined,
-        excludeCredentials: Array.isArray(rawKey.excludeCredentials)
-          ? rawKey.excludeCredentials.map((c: any) => ({ ...c, id: b64urlToBuf(c.id) }))
+        ...opts,
+        challenge: b64urlToBuf(opts.challenge),
+        user: opts.user ? { ...opts.user, id: b64urlToBuf(opts.user.id) } : undefined,
+        excludeCredentials: Array.isArray(opts.excludeCredentials)
+          ? opts.excludeCredentials.map((c: any) => ({ ...c, id: b64urlToBuf(c.id) }))
           : [],
       };
 
@@ -71,19 +76,43 @@ export default function PasskeyManagementPage() {
       const credential = await navigator.credentials.create({ publicKey });
       if (!credential) throw new Error('No credential returned');
 
-      // Send credential to finish endpoint
-      const finishResp = await fetch('/api/v1/auth/webauthn/register/finish', {
+      // Serialize credential to standard WebAuthn JSON (base64url-encoded ArrayBuffers)
+      const bufToB64url = (buf: ArrayBuffer | Uint8Array): string => {
+        const arr = buf instanceof Uint8Array ? buf : new Uint8Array(buf);
+        let bin = '';
+        for (let i = 0; i < arr.length; i++) bin += String.fromCharCode(arr[i]);
+        return btoa(bin).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+      };
+
+      const pkCred = credential as PublicKeyCredential;
+      const attResp = pkCred.response as AuthenticatorAttestationResponse;
+      const serialized = {
+        id: pkCred.id,
+        rawId: bufToB64url(pkCred.rawId),
+        type: pkCred.type,
+        response: {
+          attestationObject: bufToB64url(attResp.attestationObject),
+          clientDataJSON: bufToB64url(attResp.clientDataJSON),
+        },
+        clientExtensionResults: {},
+      };
+
+      // Send to full handler (standard WebAuthn attestation response format)
+      const finishResp = await fetch(`/api/v1/webauthn/register/finish?user_id=${userId}`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', ...authHeader() },
-        body: JSON.stringify(credential),
+        headers: { 'Content-Type': 'application/json', ...authHeader(), 'X-Tenant-ID': tenantId },
+        body: JSON.stringify(serialized),
       });
-      if (!finishResp.ok) throw new Error(`Registration finish failed: ${finishResp.status}`);
+      if (!finishResp.ok) {
+        const errText = await finishResp.text().catch(() => '');
+        throw new Error(`Registration finish failed: ${finishResp.status} ${errText}`);
+      }
 
       setShowEnroll(false);
       setEnrollDevice('');
-      // Reload passkeys from API
-      const statusResp = await fetch('/api/v1/auth/passkeys/status', {
-        headers: { ...authHeader(), 'Content-Type': 'application/json' },
+      // Reload passkeys from full handler credentials endpoint
+      const statusResp = await fetch(`/api/v1/webauthn/credentials?user_id=${userId}`, {
+        headers: { ...authHeader(), 'Content-Type': 'application/json', 'X-Tenant-ID': tenantId },
       });
       if (statusResp.ok) {
         const data = await statusResp.json();
@@ -95,8 +124,10 @@ export default function PasskeyManagementPage() {
   };
 
   useEffect(() => {
-    fetch('/api/v1/auth/passkeys/status', {
-      headers: { ...authHeader(), 'Content-Type': 'application/json', 'X-Tenant-ID': localStorage.getItem('ggid_tenant_id') || '' },
+    const userId = localStorage.getItem('ggid_user_id') || '';
+    const tenantId = localStorage.getItem('ggid_tenant_id') || '';
+    fetch(`/api/v1/webauthn/credentials?user_id=${userId}`, {
+      headers: { ...authHeader(), 'Content-Type': 'application/json', 'X-Tenant-ID': tenantId },
     })
       .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
       .then(data => {
@@ -110,9 +141,9 @@ export default function PasskeyManagementPage() {
   const confirmRevoke = async () => {
     if (revokeTarget) {
       try {
-        await fetch(`/api/v1/auth/passkeys/${revokeTarget.id}`, {
+        await fetch(`/api/v1/webauthn/credentials/${revokeTarget.id}?user_id=${localStorage.getItem('ggid_user_id') || ''}`, {
           method: "DELETE",
-          headers: { ...authHeader() },
+          headers: { ...authHeader(), 'X-Tenant-ID': localStorage.getItem('ggid_tenant_id') || '' },
         });
         setPasskeys(prev => prev.filter(p => p.id !== revokeTarget.id));
       } catch {
