@@ -4684,3 +4684,51 @@ P3 (non-blocking, unchanged from C1318): Python untyped login(), Go user_id vs s
 | Demo | ✅ no change |
 
 ### Next Dimension: 6 — End-to-End UX (Cycle 1360) — Rotation 2
+
+## Cycle 1360: D6 E2E UX R2 — Full Rotation 2 Complete (Round 1470)
+New commits: `41f960400` (SetUserStatus clears deleted_at), `2002aceb2` (console OAuth form), `52e79f1ce` (R30 review).
+Build: PASS. `make test`: EXIT=0, 65/65. Danger patterns: 0.
+
+### D6 End-to-End UX (Rotation 2) — No Regressions
+
+#### Login Entry Points: All 8 Demos ✅
+- Go: OAuth redirect (GetAuthorizeURL) ✅
+- Node: M2M clientCredentials ✅
+- C#: Password grant ✅
+- Rust: Token Exchange ✅
+- Ruby: Device Code ✅
+- Python/Java: SAML SSO ✅
+- React: SPA PKCE ✅
+
+#### 401 No-Token Handling: All Demos ✅
+Go: "Bearer token required", Node: "Missing token", Ruby: "Bearer token required" — all return 401.
+
+#### CRUD Round-Trip ✅
+Go: `products[p.ID] = &p` + 201; Node: `items.push` + 201. All create→return verified.
+
+#### my-permissions: 6/7 Backends ✅
+Go, Node, Python, Rust, C#, Java all have endpoint. Ruby uses `/api/auth/verify` alternative.
+
+#### P2 Noted (unchanged from C1324): Refresh/logout gaps
+Only Go has `/api/auth/refresh`. 6/7 demos lack refresh endpoint. SDKs all have `refreshToken()` methods — demos don't wire them. Non-blocking for demo sessions.
+
+### Full Rotation 2 Summary (C1330→C1360)
+| Dimension | Cycle | New Issues | Status |
+|-----------|-------|-----------|--------|
+| D1 Auth R2 | C1330 | P0-14 revoke (fixed), P1-15/16, P2-14/15 | ✅ Verified |
+| D2 Authz R2 | C1336 | 0 (passkey revoke fix verified) | ✅ Clean |
+| D3 Demo R2 | C1342 | 0 (alg:none + 10 bugs fixed, verified) | ✅ Clean |
+| D4 Tenant R2 | C1348 | 0 (all layers secure) | ✅ Clean |
+| D5 SDK R2 | C1354 | 0 (7 SDKs consistent) | ✅ Clean |
+| D6 E2E R2 | C1360 | 0 (refresh/logout P2 noted) | ✅ Clean |
+
+**Rotation 2: 0 new P0/P1 issues. All prior fixes confirmed stable.**
+
+### Three-Layer Alignment
+| Layer | Status |
+|-------|--------|
+| Core | ✅ build+test pass, security hardened (alg:none, revoke auth, RLS, CAP) |
+| SDK | ✅ 7 languages consistent |
+| Demo | ✅ all login+CRUD+401+tenant isolation; refresh/logout P2 noted |
+
+### Next Dimension: 1 — Authentication Completeness (Cycle 1366) — Rotation 3

@@ -149,3 +149,36 @@ R29 后 2 个新 commit：
 2. 62c2551eb — gateway 403 添加 request_id + PKCE 注释清理
 
 审计通过，无新问题。`go build` PASS。
+
+## 深度审视 2026-07-26 07:00 — R31 全新角度安全扫描
+
+### R30 后 1 个新 commit
+
+**41f960400** fix(identity): SetUserStatus to active clears deleted_at — 数据完整性修复，防止已恢复用户的凭证被清理脚本删除。审计通过。
+
+### 全新角度安全扫描结果
+
+| 检查项 | 结果 | 说明 |
+|--------|------|------|
+| SQL injection | PASS | 所有查询用 `$N` 参数化占位符，whereClause 通过 strings.Join 构建，无拼接风险 |
+| 时序攻击（密码比较） | PASS | 密码验证走 argon2id/bcrypt，无直接 `==` 比较 |
+| CORS 配置 | PASS | per-tenant CORS，fallback 非 `*` 通配符 |
+| Rate limiting | PASS | 登录有 MaxAttempts + lockout，OTP 有 3次/小时限制 |
+| JWT expiry 验证 | PASS | ParseAccessToken 检查 exp claim，过期返回错误 |
+| JWT alg:none | PASS | 所有 JWT 解析路径强制 RSA 签名方法验证（之前已修复） |
+| redirect_uri 匹配 | PASS | 精确匹配（==），非前缀匹配 |
+| PKCE 强制 | PASS | 公开客户端强制 PKCE（OAuth 2.1 mandate） |
+| Refresh token reuse | PASS | token family registry 检测重放 |
+
+### 新发现问题
+
+**无新问题。** 系统安全状态良好。
+
+### 待修复项（已知，无变化）
+
+| 编号 | 问题 | 优先级 |
+|------|------|--------|
+| P1-15 | OIDC discovery 缺 end_session_endpoint | P1 |
+| P1-16 | PKCE plain 方法应拒绝/降级为 S256 | P1 |
+| P2-14 | SCIM 缺 /Me 端点 | P2 |
+| P2-15 | JWT access token 缺 aud 运行时验证 | P2 |
