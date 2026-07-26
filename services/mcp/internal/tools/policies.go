@@ -43,6 +43,8 @@ var policyTools = []Tool{
 				"name":        argStr(args, "name"),
 				"description": argStr(args, "description"),
 				"effect":      argStr(args, "effect"),
+				"actions":     argStrSlice(args, "actions"),
+				"resources":   argStrSlice(args, "resources"),
 			}
 			var result any
 			if err := c.Post(ctx, "/api/v1/policies", body, &result); err != nil {

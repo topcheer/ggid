@@ -57,15 +57,17 @@ var userTools = []Tool{
 			"properties": map[string]any{
 				"username":     map[string]any{"type": "string"},
 				"email":        map[string]any{"type": "string"},
+				"password":     map[string]any{"type": "string", "description": "Initial password (required)"},
 				"display_name": map[string]any{"type": "string"},
 			},
-			"required": []string{"username", "email"},
+			"required": []string{"username", "email", "password"},
 		},
 		RequiredScopes: []string{"users:write"},
 		Handler: func(ctx context.Context, c *client.Client, args map[string]any) (any, error) {
 			body := map[string]any{
 				"username":     argStr(args, "username"),
 				"email":        argStr(args, "email"),
+				"password":     argStr(args, "password"),
 				"display_name": argStr(args, "display_name"),
 			}
 			var result any

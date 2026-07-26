@@ -56,6 +56,11 @@ func (c *Client) Put(ctx context.Context, path string, body, result any) error {
 	return c.do(ctx, http.MethodPut, path, body, result)
 }
 
+// Patch performs a PATCH request with a JSON body.
+func (c *Client) Patch(ctx context.Context, path string, body, result any) error {
+	return c.do(ctx, http.MethodPatch, path, body, result)
+}
+
 // Delete performs a DELETE request.
 func (c *Client) Delete(ctx context.Context, path string, result any) error {
 	return c.do(ctx, http.MethodDelete, path, nil, result)

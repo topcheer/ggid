@@ -40,7 +40,11 @@ var roleTools = []Tool{
 			body := map[string]any{"role_key": argStr(args, "role_key")}
 			var result any
 			if err := c.Post(ctx, fmt.Sprintf("/api/v1/users/%s/roles", argStr(args, "user_id")), body, &result); err != nil {
-				return nil, err
+				// Fallback: try with role_id directly
+				body2 := map[string]any{"role_id": argStr(args, "role_key")}
+				if err2 := c.Post(ctx, fmt.Sprintf("/api/v1/users/%s/roles", argStr(args, "user_id")), body2, &result); err2 != nil {
+					return nil, err
+				}
 			}
 			return result, nil
 		},

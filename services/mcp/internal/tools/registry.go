@@ -32,6 +32,7 @@ func NewRegistry() *Registry {
 	r.register(roleTools...)
 	r.register(policyTools...)
 	r.register(auditTools...)
+	r.register(adminTools...)
 	return r
 }
 
@@ -50,11 +51,15 @@ func (r *Registry) FilterByScopes(scopes []string) []Tool {
 	for _, s := range scopes {
 		scopeSet[s] = true
 	}
-	if scopeSet["admin"] || scopeSet["tenant:admin"] || scopeSet["platform:admin"] {
-		return r.tools
-	}
 	var available []Tool
 	for _, t := range r.tools {
+		// SECURITY: Tools with no RequiredScopes should NOT be accessible
+		// to anyone - they must explicitly declare required scopes.
+		if len(t.RequiredScopes) == 0 {
+			continue // Skip tools with no scope requirements
+		}
+		// Even admin scopes must satisfy RequiredScopes - this prevents
+		// tenant:admin from tenant A from accessing tools intended for tenant B.
 		if hasAllScopes(scopeSet, t.RequiredScopes) {
 			available = append(available, t)
 		}
@@ -73,6 +78,10 @@ func (r *Registry) Find(name string) (*Tool, bool) {
 }
 
 func hasAllScopes(have map[string]bool, need []string) bool {
+	// SECURITY: If RequiredScopes is nil, treat it as empty (no access allowed)
+	if need == nil {
+		return false
+	}
 	for _, s := range need {
 		if !have[s] {
 			return false
@@ -89,6 +98,31 @@ func argStr(args map[string]any, key string) string {
 	return ""
 }
 
+// argAny extracts an arg with a default value.
+func argAny(args map[string]any, key string, def any) any {
+	if v, ok := args[key]; ok {
+		return v
+	}
+	return def
+}
+
+// argStrSlice extracts a []string arg, accepting []any or []string.
+func argStrSlice(args map[string]any, key string) []string {
+	if v, ok := args[key]; ok {
+		switch s := v.(type) {
+		case []string:
+			return s
+		case []any:
+			result := make([]string, 0, len(s))
+			for _, item := range s {
+				result = append(result, fmt.Sprintf("%v", item))
+			}
+			return result
+		}
+	}
+	return nil
+}
+
 // argInt extracts an int arg.
 func argInt(args map[string]any, key string, def int) int {
 	if v, ok := args[key]; ok {
@@ -100,4 +134,10 @@ func argInt(args map[string]any, key string, def int) int {
 		}
 	}
 	return def
+}
+
+// RegisterTool is the exported wrapper for register, allowing external
+// packages (e.g., tests in server package) to register test tools.
+func (r *Registry) RegisterTool(tools ...Tool) {
+	r.register(tools...)
 }
