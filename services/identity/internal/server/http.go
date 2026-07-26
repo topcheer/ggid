@@ -1396,15 +1396,17 @@ func (h *HTTPHandler) handleMePermissions(ctx context.Context, w http.ResponseWr
 
 	// Query union of all role permissions for this user.
 	// PM created role_permissions + permissions tables.
+	tenantID := r.Header.Get("X-Tenant-ID")
 	rows, err := pool.Query(ctx, `
-		SELECT p.key, p.resource_type, p.action,
-		       COALESCE(p.description, '')
-		FROM role_permissions rp
-		JOIN permissions p ON p.id = rp.permission_id
-		JOIN user_roles ur ON ur.role_id = rp.role_id
-		WHERE ur.user_id = $1
-		ORDER BY p.resource_type, p.action
-	`, userIDStr)
+			SELECT DISTINCT p.key, p.resource_type, p.action,
+			       COALESCE(p.description, '')
+			FROM role_permissions rp
+			JOIN permissions p ON p.id = rp.permission_id
+			JOIN user_roles ur ON ur.role_id = rp.role_id
+			JOIN roles r ON r.id = ur.role_id
+			WHERE ur.user_id = $1 AND r.tenant_id = $2
+			ORDER BY p.resource_type, p.action
+		`, userIDStr, tenantID)
 	if err != nil {
 		// Fallback: try role_route_permissions table (alternative schema)
 		rows2, err2 := pool.Query(ctx, `
@@ -1469,14 +1471,16 @@ func (h *HTTPHandler) handleUserPermissions(ctx context.Context, userID uuid.UUI
 		return
 	}
 
+	tenantID := r.Header.Get("X-Tenant-ID")
 	rows, err := pool.Query(ctx, `
-		SELECT p.key, p.resource_type, p.action, COALESCE(p.description, '')
+		SELECT DISTINCT p.key, p.resource_type, p.action, COALESCE(p.description, '')
 		FROM role_permissions rp
 		JOIN permissions p ON p.id = rp.permission_id
 		JOIN user_roles ur ON ur.role_id = rp.role_id
-		WHERE ur.user_id = $1
+		JOIN roles r ON r.id = ur.role_id
+		WHERE ur.user_id = $1 AND r.tenant_id = $2
 		ORDER BY p.resource_type, p.action
-	`, userID)
+	`, userID, tenantID)
 	if err != nil {
 		writeJSON(w, http.StatusOK, map[string]any{"permissions": []any{}})
 		return
