@@ -368,6 +368,41 @@ func (h *Handler) handlePasskeyAuthFinish(w http.ResponseWriter, r *http.Request
 			return
 		}
 	}
+	// P0 Security: verify credential belongs to the requesting tenant FIRST.
+	// Check DB before in-memory map — production data lives in DB.
+	// Prevents cross-tenant passkey authentication.
+	if h.pool != nil {
+		tenantID := r.Header.Get("X-Tenant-ID")
+		if tenantID != "" {
+			var credTenant string
+			var credRevoked bool
+			err := h.pool.QueryRow(r.Context(),
+				`SELECT tenant_id::text, COALESCE(revoked, false) FROM auth_passkey_credentials WHERE credential_id = $1`,
+				req.CredentialID).Scan(&credTenant, &credRevoked)
+			if err == nil {
+				// Credential found in DB — enforce tenant boundary.
+				if credTenant != "" && credTenant != tenantID {
+					writeError(w, http.StatusForbidden, "passkey does not belong to this tenant")
+					return
+				}
+				if credRevoked {
+					writeError(w, http.StatusUnauthorized, "credential not found or revoked")
+					return
+				}
+				// Populate cred from DB for the success path.
+				if cred == nil {
+					var userID string
+					h.pool.QueryRow(r.Context(),
+						`SELECT user_id FROM auth_passkey_credentials WHERE credential_id = $1`,
+						req.CredentialID).Scan(&userID)
+					cred = &PasskeyCredential{
+						ID:     req.CredentialID,
+						UserID: userID,
+					}
+				}
+			}
+		}
+	}
 	if cred == nil {
 		var ok bool
 		cred, ok = pkCredentials[req.CredentialID]
@@ -378,22 +413,6 @@ func (h *Handler) handlePasskeyAuthFinish(w http.ResponseWriter, r *http.Request
 	} else if cred.Revoked {
 		writeError(w, http.StatusUnauthorized, "credential not found or revoked")
 		return
-	}
-
-	// P0 Security: verify credential belongs to the requesting tenant.
-	// Prevents cross-tenant passkey authentication.
-	if h.pool != nil {
-		tenantID := r.Header.Get("X-Tenant-ID")
-		if tenantID != "" {
-			var credTenant string
-			h.pool.QueryRow(r.Context(),
-				`SELECT tenant_id::text FROM auth_passkey_credentials WHERE credential_id = $1`,
-				req.CredentialID).Scan(&credTenant)
-			if credTenant != "" && credTenant != tenantID {
-				writeError(w, http.StatusForbidden, "passkey does not belong to this tenant")
-				return
-			}
-		}
 	}
 
 	cred.Counter++
