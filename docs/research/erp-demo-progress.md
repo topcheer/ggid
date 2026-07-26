@@ -4388,3 +4388,49 @@ No new commits since C1306. Build: PASS. HEAD `make test` (excluding 5 untracked
 | Demo (8 apps) | ⚠️ P1: Python+Ruby missing tenant check; P2: multihash encoding |
 
 ### Next Dimension: 5 — SDK Cross-Language Consistency (Cycle 1318)
+
+## Cycle 1318: D5 SDK Consistency + D4 Fixes Verified (Round 1463)
+New commits: `eabc6c80b` (TestTransparentRehash race fix + Python/Ruby tenant isolation), `b11ebe3ab` (move misplaced test files + fix multihash test). These fix the D4 P1 and `make test` `[setup failed]` errors.
+
+### D4 P1 Fixes Verified ✅
+- **Python** (`main.py:115-118`): `extract_tenant_from_jwt(token)` → if `token_tenant != TENANT_ID` → 401 "tenant mismatch" ✅
+- **Ruby** (`app.rb:38`): `@claims.tenant_id != TENANT_ID` → `halt 401` ✅
+- **TestTransparentRehash race**: userID stored before flag; nil guard on type assertion ✅
+- **Misplaced test files**: `bug_audit_test.go`, `crypto_bug_test.go`, `verifier_bug_test.go` moved from root to correct packages ✅
+- `make test`: **EXIT=0, 65/65 packages, 0 FAIL** ✅
+
+### D5: SDK Cross-Language Consistency
+
+#### Token Response Fields — Consistent ✅
+| SDK | Struct | access_token | token_type | expires_in | refresh_token |
+|-----|--------|:-:|:-:|:-:|:-:|
+| Go | TokenSet | ✅ string | ✅ string | ✅ int | ✅ string |
+| Node | TokenSet | ✅ string | ✅ string | ✅ number | ✅ string |
+| Rust | TokenResponse | ✅ String | ✅ String | ✅ u64 | ✅ Option |
+| C# | TokenSet | ✅ string | ✅ string | ✅ int | ✅ string |
+| Java | TokenSet | ✅ String | ✅ String | ✅ int | ✅ String |
+| **Python** | **raw dict** | ⚠️ no typed struct |
+
+All use **snake_case** JSON field names. ✅
+**P3**: Python SDK `login()` returns raw `resp.json()` dict, no typed TokenSet class. Other SDKs have typed structs. Not blocking — Python idioms favor dicts.
+
+#### JWT Claims Fields — Mostly Consistent ✅
+| SDK | sub/user_id | tenant_id | roles | permissions | scope/scopes |
+|-----|:-:|:-:|:-:|:-:|:-:|
+| Go | `user_id` (UserInfo) | ✅ | ✅ []string | ✅ []string | `scopes` |
+| Node | `sub` | ✅ | ✅ [] | ✅ [] | N/A |
+| Rust | `sub` | ✅ | ✅ Vec | ✅ Vec | `scope` (string) |
+| Python | `sub` | ✅ | ✅ list | ✅ list | `scopes` |
+| C# | `sub` | ✅ | ✅ | ✅ | N/A |
+| Java | `sub` | ✅ | ✅ | ✅ | N/A |
+
+**P3**: Go SDK uses `user_id` in UserInfo, all others use standard JWT `sub`. Both map to the same value. Not breaking — UserInfo is an SDK convenience wrapper, not raw JWT.
+
+### Three-Layer Alignment
+| Layer | Status |
+|-------|--------|
+| Core (auth fixes, multihash, test cleanup) | ✅ make test EXIT=0, 65/65 |
+| SDK (7 langs) | ✅ consistent token + claims fields; P3: Python untyped, Go user_id vs sub |
+| Demo (8 apps) | ✅ P1 Python/Ruby tenant isolation fixed; all demos now self-protecting |
+
+### Next Dimension: 6 — End-to-End UX (Cycle 1324)
