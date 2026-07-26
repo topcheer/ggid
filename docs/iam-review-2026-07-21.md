@@ -291,3 +291,43 @@ R29 后 2 个新 commit：
 
 ### 部署
 - identity + oauth 镜像构建推送，kubectl rollout 成功
+
+## R31 最终报告 — P2-14/P2-15/P2-16 全部完成
+
+### 实施汇总
+
+| 编号 | 问题 | 实现者 | commit | 测试 |
+|------|------|--------|--------|------|
+| P2-16 | PKCE plain 移除 | frontend_qa | 9e8c8fdd8 | 5 tests PASS |
+| P2-14 | SCIM /Me 端点 | god + guardian | b77fe6177 + c3f9e5bb2 | 6 tests PASS |
+| P2-15 | JWT iss/aud 验证 | god + ggcxf_researcher | 6b9f17454 + c3f9e5bb2 | 5 tests PASS |
+
+### guardian_security Review 结论
+
+**P0 认证绕过**（guardian 发现并修复）：
+- handleMe 原用 ParseUnverified → 攻击者可伪造 JWT 获取任意用户 SCIM profile
+- 修复：extractVerifiedUser 从 gateway 验证的 X-User-ID 头读取（不再信任 token claims）
+- gateway/router.go Director 现在始终覆盖 X-User-ID（有 JWT 时设值，无 JWT 时删除）
+
+**P2-15 评估**：
+- iss 验证已生效（所有 12 个 ParseAccessToken 调用点强制验证）
+- aud 验证为可选 API（ParseAccessTokenWithAudience），供需要 audience 绑定的端点显式使用
+- 设计正确，向后兼容
+
+### 部署状态
+
+- **Docker daemon 不可用**（OrbStack 连接 EOF）— 无法构建新镜像
+- 已部署镜像（c3f9e5bb2）包含所有修复代码
+- commit 6b9f17454（iss 验证注释修正）和测试文件为最后提交，需 Docker 恢复后重新构建部署
+- kubectl rollout 已执行（使用现有镜像）
+
+### 专用测试
+
+- P2-14: 6 tests (handleMe auth + extractVerifiedUser) — PASS
+- P2-15: 5 tests (iss rejection/acceptance + aud rejection/acceptance/skip) — PASS
+- 总计 11 个新测试全部通过
+
+### 待办
+
+- Docker 恢复后重新构建部署 oauth + identity 镜像（含 6b9f17454）
+- 考虑将关键端点（GetUserInfo, IntrospectToken）迁移到 ParseAccessTokenWithAudience 并传入实际 audience
