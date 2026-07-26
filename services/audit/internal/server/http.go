@@ -172,7 +172,8 @@ func (s *HTTPServer) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("/api/v1/audit/compliance-report", s.handleComplianceReportV2)
 	mux.HandleFunc("/api/v1/audit/risk-score", s.handleRiskScore)
 	mux.HandleFunc("/api/v1/audit/access-reviews", s.handleAccessReviews)
-	mux.HandleFunc("/api/v1/audit/access-reviews/pending", s.handlePendingReviews)
+	mux.HandleFunc("/api/v1/audit/access-reviews/pending", s.handlePendingReviews)           // legacy compat
+	mux.HandleFunc("/api/v1/audit/access-reviews/", s.handleAccessReviewDecision)            // matches /{id}/decision
 	mux.HandleFunc("/api/v1/audit/compliance/schedules", s.handleComplianceSchedules)
 	mux.HandleFunc("/api/v1/audit/alert-webhooks", s.handleAlertWebhooks)
 	mux.HandleFunc("/api/v1/audit/siem/health", s.handleSIEMHealth)

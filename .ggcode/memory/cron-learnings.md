@@ -234,3 +234,41 @@ The error was visible in audit pod logs: `process error: persist event: ERROR: i
 
 **Access Review**: 创建成功但返回 JSON 字段大写（ID vs id）— P2 格式不一致
 **Import 路径**: Console 应调 /api/v1/users/bulk-import（非 /api/v1/users/import）
+
+### Session 13: CAP 修复 + MCP RFC 9728 + Access Review 深审 (2026-07-26)
+
+**CAP (Conditional Access Policy) 修复链 — 端到端验证通过**:
+- `32049f040` (arch_pm): CAP 条件扩展 (ip_address/auth_method/time_of_day) + require_mfa action 返回
+- `2f0a05130` (arch_pm): JSON tenant_id 过滤 fallback (`data->>'tenant_id'`)
+- `054a4ebdd` (ggcxf_backend): require_mfa 设备存在性验证
+- `f75c8b546` (ggcxf_backend): Store 方法设置 tenant_id 列 + json 错误处理
+- **根因**: policyMap.Store 不设 tenant_id 列 → oauth 查 `WHERE tenant_id = $1` 返回 0 行 → 所有 CAP 策略静默失效
+- **验证**: block 策略正确拒绝登录 `access denied by policy` ✓; require_mfa 正确拒绝 `mfa required by policy` ✓
+
+**MCP RFC 9728 修复**:
+- `36ebf6def`: WWW-Authenticate 硬编码 → resolveBaseURL(r) helper
+- `8e02e83f8`: 网关添加 `/.well-known/oauth-protected-resource` → MCP 路由（之前 404）
+
+**Audit Alert 修复**:
+- `2da143a69`: matchesCondition 添加 gt/lt 操作符（之前文档声称支持但未实现）
+
+**P1: Access Review 功能完全不可用** (DM ggcxf_backend):
+- 内存存储 (sync.Map) — 重启丢数据
+- TenantID 永远零值 — handler 硬编码 parseUUID("")
+- GET 过滤断裂 — ListPendingAccessReviews 按 ManagerID 过滤，Console 不传此参数
+- JSON key 大写不一致 — ID vs id
+- Decision 路径不匹配 — Console /{id}/decision vs 后端 /pending
+
+**验证通过**:
+- MCP RFC 9728 metadata 动态 URL ✓
+- CAP block/deny/require_mfa 完整端到端 ✓
+- 权限查询去重 (14 unique, 0 duplicates) ✓
+- Token revocation (CAE jti) ✓
+- User CRUD + 搜索 ✓
+- SCIM 2.0 list (59 users) + create ✓
+- Feature flags (3 flags CRUD) ✓
+- RBAC role create/assign ✓
+- Org 架构: 创建层级 → 分配用户 → tree 查询 ✓
+- Audit hash chain integrity ✓
+- DSR/GDPR request creation (30-day due_date) ✓
+- Bulk import JSON endpoint (/api/v1/users/bulk-import) ✓
