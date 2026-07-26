@@ -33,11 +33,11 @@ func (bs *BrandingStore) GetBranding(ctx context.Context, tenantID string) (*dom
 	var b domain.TenantBranding
 	var settingsJSON []byte
 	err := bs.db.QueryRow(ctx,
-		`SELECT tenant_id, COALESCE(settings->>'logo_url',''), COALESCE(settings->>'favicon_url',''),
-		        COALESCE(settings->>'primary_color','#2563eb'), COALESCE(settings->>'accent_color','#1e40af'),
-		        COALESCE(settings->>'secondary_color','#1e40af'), COALESCE(settings->>'font_family','Inter'),
-		        COALESCE((settings->>'border_radius')::int, 8), COALESCE(settings->>'default_mode','light'),
-		        COALESCE(settings->>'email_template','default'), COALESCE(settings->>'custom_domain','')
+		`SELECT tenant_id, COALESCE(config->>'logo_url',''), COALESCE(config->>'favicon_url',''),
+		        COALESCE(config->>'primary_color','#2563eb'), COALESCE(config->>'accent_color','#1e40af'),
+		        COALESCE(config->>'secondary_color','#1e40af'), COALESCE(config->>'font_family','Inter'),
+		        COALESCE((config->>'border_radius')::int, 8), COALESCE(config->>'default_mode','light'),
+		        COALESCE(config->>'email_template','default'), COALESCE(config->>'custom_domain','')
 		 FROM tenant_branding WHERE tenant_id = $1`, tenantID).Scan(
 		&b.TenantID, &b.LogoURL, &b.FaviconURL, &b.PrimaryColor, &b.AccentColor,
 		&b.SecondaryColor, &b.FontFamily, &b.BorderRadius, &b.DefaultMode,
@@ -73,8 +73,8 @@ func (bs *BrandingStore) UpdateBranding(ctx context.Context, tenantID string, re
 	})
 
 	_, err := bs.db.Exec(ctx,
-		`INSERT INTO tenant_branding (tenant_id, settings, updated_at) VALUES ($1, $2, $3)
-		 ON CONFLICT (tenant_id) DO UPDATE SET settings = $2, updated_at = $3`,
+		`INSERT INTO tenant_branding (tenant_id, config, updated_at) VALUES ($1, $2, $3)
+		 ON CONFLICT (tenant_id) DO UPDATE SET config = $2, updated_at = $3`,
 		tenantID, settings, req.UpdatedAt)
 	if err != nil {
 		return nil, fmt.Errorf("update branding: %w", err)
