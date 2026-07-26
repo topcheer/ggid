@@ -141,3 +141,11 @@ R27 后 2 个新 commit，均为安全增强：
 ## R29 增量审视 2026-07-26 06:30
 
 R28 后零新增 commit。无增量问题。
+
+## R30 增量审视 2026-07-26 06:45
+
+R29 后 2 个新 commit：
+1. 62fa77ff2 — audit repair-chain SELECT 对齐 tamper-check（NULLIF/COALESCE）— 修复审计哈希链误报
+2. 62c2551eb — gateway 403 添加 request_id + PKCE 注释清理
+
+审计通过，无新问题。`go build` PASS。
