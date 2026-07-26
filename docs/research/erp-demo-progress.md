@@ -4566,3 +4566,35 @@ New commit: `186416da7` (passkey revoke UserID vs TenantID fix). arch_pm confirm
 | Demo | ✅ authz consistent across all 8 demos |
 
 ### Next Dimension: 3 — Demo Functional Completeness (Cycle 1342) — Rotation 2
+
+## Cycle 1342: D3 Demo Functional R2 — All Clean + Security Commits Verified (Round 1467)
+New commits: `bf1bf6f08` (JWT alg:none bypass), `6314e8306` (10 bugs/7 pkgs), `511604f77` (WebAuthn eviction), `d4b1856c9` (sysconfig broadcast), `a67abac92` (R27 review).
+Build: PASS. `make test`: EXIT=0, 65/65. Danger patterns: 0.
+
+### New Security Commits Verified ✅
+- **bf1bf6f08** (JWT alg:none bypass): signing method validation prevents `alg:none` attack ✅
+- **6314e8306** (10 bugs): tenant security, branding, identity service, MCP registry, OAuth — all test-covered (2197 lines of tests added) ✅
+- **511604f77** (WebAuthn sessionStore): proactive TTL eviction + parseUUIDSafe logging ✅
+- **d4b1856c9** (sysconfig): `json.Marshal` error handling in broadcast ✅
+- **god_fullstack R27**: 0 new issues, 3 fixes audited ✅
+
+### D3 Demo Functional Completeness (Rotation 2) — No Regressions
+| Check | Status |
+|-------|--------|
+| Inventory: `{items: [...], total: N}` | ✅ Go, Node, Java, Python, Rust, C# |
+| Inventory field: `stock` (not qty/quantity) | ✅ All 6 backends use `stock` |
+| Orders: `{items: [...], total: N}` | ✅ Go, Node, Python, C#, Java |
+| CRUD round-trip: POST creates → GET returns | ✅ Go: `products[p.ID]=&p`+201; Node: `items.push`+201 |
+| my-permissions endpoint | ✅ 6/7 backends (Ruby has `/api/auth/verify` alt) |
+| Order model uses `quantity` (correct — not inventory stock) | ✅ |
+
+All P2 fixes from C1306 (field/wrapper standardization) remain in effect. No regressions.
+
+### Three-Layer Alignment
+| Layer | Status |
+|-------|--------|
+| Core | ✅ alg:none fixed, 10 bugs fixed, WebAuthn eviction, build+test pass |
+| SDK | ✅ no change |
+| Demo | ✅ all functional checks pass, consistent {items, total} + stock |
+
+### Next Dimension: 4 — Multi-Tenant Isolation (Cycle 1348) — Rotation 2
