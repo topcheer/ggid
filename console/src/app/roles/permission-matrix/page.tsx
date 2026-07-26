@@ -303,14 +303,14 @@ export default function PermissionMatrixPage() {
         <div className="flex gap-2">
           <button
             onClick={handleExportCSV}
-            className="flex items-center gap-1.5 rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700"
+            className="flex items-center gap-1.5 rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
             <Download className="h-4 w-4" /> Export CSV
           </button>
           <button
             onClick={handleSave}
             disabled={saving}
-            className="flex items-center gap-1.5 rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700 disabled:opacity-50"
+            className="flex items-center gap-1.5 rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700 disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
            aria-label="Save">
             <Save className="h-4 w-4" /> {saving ? "Saving..." : "Save Matrix"}
           </button>
@@ -406,7 +406,7 @@ export default function PermissionMatrixPage() {
                   </tr>
                   {/* Permission rows */}
                   {!isCollapsed && groupPerms.map((perm: any) => (
-                    <tr key={perm.key} className="hover:bg-gray-50 dark:hover:bg-gray-700/50">
+                    <tr key={perm.key} className="hover:bg-gray-50 dark:hover:bg-gray-700/50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500">
                       <td className="sticky left-0 z-10 border-b border-r border-gray-100 bg-white px-4 py-2 font-medium text-gray-700 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300">
                         <div className="flex flex-col">
                           <span>{perm.label}</span>
@@ -422,7 +422,7 @@ export default function PermissionMatrixPage() {
                           >
                             <button
                               onClick={() => toggleCell(role.id, perm.key)}
-                              className="inline-flex h-7 w-7 items-center justify-center rounded transition-colors hover:bg-gray-100 dark:hover:bg-gray-600"
+                              className="inline-flex h-7 w-7 items-center justify-center rounded transition-colors hover:bg-gray-100 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
                               title={allowed ? "Click to deny" : "Click to allow"}
                             >
                               {allowed ? (
@@ -528,7 +528,7 @@ export default function PermissionMatrixPage() {
               {bulkGroup && (
                 <button
                   onClick={selectAllInBulkGroup}
-                  className="rounded-lg border border-gray-300 px-3 py-2 text-xs font-medium text-gray-600 hover:bg-gray-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700"
+                  className="rounded-lg border border-gray-300 px-3 py-2 text-xs font-medium text-gray-600 hover:bg-gray-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
                   Select All in Group
                 </button>
@@ -570,7 +570,7 @@ export default function PermissionMatrixPage() {
             <button
               onClick={handleApplyAll}
               disabled={!bulkRole || bulkSelected.size === 0}
-              className="flex items-center gap-1.5 rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700 disabled:opacity-50"
+              className="flex items-center gap-1.5 rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700 disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               <CheckCircle2 className="h-4 w-4" /> Apply All
             </button>

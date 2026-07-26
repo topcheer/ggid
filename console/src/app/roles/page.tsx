@@ -231,7 +231,7 @@ export default function RolesPage() {
         <div className="flex gap-2">
           <button
             onClick={() => setShowCreate(!showCreate)}
-            className="flex items-center gap-1.5 rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700"
+            className="flex items-center gap-1.5 rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
             <Plus className="h-4 w-4" /> {t("roles.createRole")}
           </button>
@@ -279,7 +279,7 @@ export default function RolesPage() {
           <button
             onClick={handleCreate}
             disabled={!createForm.key || !createForm.name}
-            className="mt-3 rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700 disabled:opacity-50"
+            className="mt-3 rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700 disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
            aria-label="Create role">
             {t("roles.createBtn")}
           </button>
@@ -335,7 +335,7 @@ export default function RolesPage() {
           </div>
           <button
             onClick={handleSaveEdit}
-            className="mt-3 flex items-center gap-1.5 rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700"
+            className="mt-3 flex items-center gap-1.5 rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
            aria-label="Pencil">
             <Pencil className="h-4 w-4" /> {t("roles.saveChanges")}
           </button>
@@ -372,21 +372,21 @@ export default function RolesPage() {
                 <div className="flex items-center gap-1">
                   <button
                     onClick={() => handleEditRole(role)}
-                    className="text-gray-400 hover:text-brand-500"
+                    className="text-gray-400 hover:text-brand-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
                     title={t("roles.editRole")}
                   >
                     <Pencil className="h-4 w-4" />
                   </button>
                   <button
                     onClick={() => { loadRoleUsers(role.id); }}
-                    className="text-gray-400 hover:text-brand-500"
+                    className="text-gray-400 hover:text-brand-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
                     title={t("roles.viewUsers")}
                   >
                     <Users className="h-4 w-4" />
                   </button>
                   <button
                     onClick={() => handleCloneRole(role)}
-                    className="text-gray-400 hover:text-brand-500"
+                    className="text-gray-400 hover:text-brand-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
                     title={t("roles.cloneRole")}
                   >
                     <Copy className="h-4 w-4" />
@@ -394,7 +394,7 @@ export default function RolesPage() {
                   {!role.system_role && (
                     <button
                       onClick={() => handleDelete(role.id, role.system_role)}
-                      className="text-gray-400 hover:text-red-500"
+                      className="text-gray-400 hover:text-red-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
                     >
                       <Trash2 className="h-4 w-4" />
                     </button>
@@ -585,7 +585,7 @@ function PolicyChecker({
           <button
             onClick={handleCheck}
             disabled={checking || !form.user_id || !form.resource_type || !form.action}
-            className="flex items-center justify-center gap-2 rounded-lg bg-brand-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-brand-700 disabled:opacity-50"
+            className="flex items-center justify-center gap-2 rounded-lg bg-brand-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-brand-700 disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
            aria-label="Search">
             <Search className="h-4 w-4" />
             {checking ? t("roles.checking") : t("roles.checkPermission")}
@@ -727,7 +727,7 @@ function PermissionAssignment({
                     <span className="text-xs text-green-600">{p.resource_type}:{p.action}</span>
                     <button
                       onClick={() => onRevoke(p.id)}
-                      className="text-green-400 hover:text-red-500"
+                      className="text-green-400 hover:text-red-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
                     >
                       <X className="h-3.5 w-3.5" />
                     </button>
@@ -745,7 +745,7 @@ function PermissionAssignment({
                 {selected.size > 0 && (
                   <button
                     onClick={() => { onBatchAssign([...selected]); setSelected(new Set()); }}
-                    className="flex items-center gap-1 rounded-lg bg-brand-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-brand-700"
+                    className="flex items-center gap-1 rounded-lg bg-brand-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-brand-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   >
                     <Layers className="h-3.5 w-3.5" />
                     {t("roles.assignSelected").replace("{n}", String(selected.size))}
@@ -761,7 +761,7 @@ function PermissionAssignment({
                       setSelected(new Set(filteredPerms.map((p: any) => p.id)));
                     }
                   }}
-                  className="text-xs font-medium text-brand-600 hover:text-brand-700"
+                  className="text-xs font-medium text-brand-600 hover:text-brand-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
                   {selected.size === filteredPerms.length && selected.size > 0 ? t("roles.deselectAll") : t("roles.selectAll")}
                 </button>
@@ -789,7 +789,7 @@ function PermissionAssignment({
                     return (
                       <div
                         key={p.id}
-                        className="flex items-center justify-between border-b border-gray-50 px-4 py-2.5 hover:bg-gray-50 dark:hover:bg-gray-700"
+                        className="flex items-center justify-between border-b border-gray-50 px-4 py-2.5 hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
                       >
                         <div className="flex items-center gap-3">
                           {!assigned && (
@@ -814,14 +814,14 @@ function PermissionAssignment({
                         {assigned ? (
                           <button
                             onClick={() => onRevoke(p.id)}
-                            className="rounded-lg border border-red-200 px-3 py-1 text-xs font-medium text-red-600 hover:bg-red-50"
+                            className="rounded-lg border border-red-200 px-3 py-1 text-xs font-medium text-red-600 hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
                           >
                             {t("roles.revoke")}
                           </button>
                         ) : (
                           <button
                             onClick={() => onAssign(p.id)}
-                            className="rounded-lg border border-brand-200 bg-brand-50 px-3 py-1 text-xs font-medium text-brand-600 hover:bg-brand-100"
+                            className="rounded-lg border border-brand-200 bg-brand-50 px-3 py-1 text-xs font-medium text-brand-600 hover:bg-brand-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
                           >
                             {t("roles.assign")}
                           </button>
@@ -932,7 +932,7 @@ function RolePermissionMatrix({
         </thead>
         <tbody className="divide-y divide-gray-100">
           {roles.map((role: any) => (
-            <tr key={role.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
+            <tr key={role.id} className="hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500">
               <td className="px-3 py-2 font-medium">
                 {role.name}
                 {role.system_role && <span className="ml-1 text-xs text-gray-400">(system)</span>}
@@ -1019,7 +1019,7 @@ function RoleHierarchyTree({
           {children.length > 0 ? (
             <button
               onClick={() => toggleExpand(role.id)}
-              className="text-gray-400 hover:text-gray-600"
+              className="text-gray-400 hover:text-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               {isExpanded ? "▼" : "▶"}
             </button>
@@ -1226,7 +1226,7 @@ function ABACConditionBuilder({
               />
               <button
                 onClick={() => removeRule(idx)}
-                className="text-gray-400 hover:text-red-500"
+                className="text-gray-400 hover:text-red-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
                 <X className="h-4 w-4" />
               </button>
@@ -1237,7 +1237,7 @@ function ABACConditionBuilder({
         <div className="mt-3 flex items-center gap-2">
           <button
             onClick={addRule}
-            className="flex items-center gap-1 rounded-lg border border-gray-300 px-3 py-1.5 text-xs font-medium text-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700"
+            className="flex items-center gap-1 rounded-lg border border-gray-300 px-3 py-1.5 text-xs font-medium text-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
             <Plus className="h-3.5 w-3.5" /> Add Condition
           </button>
@@ -1254,13 +1254,13 @@ function ABACConditionBuilder({
         <div className="mt-3 flex items-center gap-2">
           <button
             onClick={handleSave}
-            className="rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700"
+            className="rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
            aria-label="Action">
             {t("roles.savePolicy")}
           </button>
           <button
             onClick={() => navigator.clipboard.writeText(generatedJSON)}
-            className="rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 text-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700"
+            className="rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 text-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
             {t("roles.copyJson")}
           </button>

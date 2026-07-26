@@ -552,7 +552,7 @@ export default function UsersPage() {
           <div className="relative">
             <button
               onClick={() => setShowExportMenu(!showExportMenu)}
-              className="flex items-center gap-1.5 rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700"
+              className="flex items-center gap-1.5 rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               <Download className="h-4 w-4" /> {t("common.export")}
               <ChevronDown className="h-3.5 w-3.5" />
@@ -563,13 +563,13 @@ export default function UsersPage() {
                 <div className="absolute right-0 z-20 mt-1 w-44 rounded-lg border border-gray-200 bg-white shadow-lg dark:border-gray-700 dark:bg-gray-800">
                   <button
                     onClick={handleExportCSV}
-                    className="flex w-full items-center gap-2 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 dark:text-gray-200 dark:hover:bg-gray-700"
+                    className="flex w-full items-center gap-2 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 dark:text-gray-200 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
                    aria-label="FileText">
                     <FileText className="h-4 w-4 text-green-600" /> {t("users.exportCsv")}
                   </button>
                   <button
                     onClick={handleExportJSON}
-                    className="flex w-full items-center gap-2 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 dark:text-gray-200 dark:hover:bg-gray-700"
+                    className="flex w-full items-center gap-2 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 dark:text-gray-200 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
                    aria-label="FileJson">
                     <FileJson className="h-4 w-4 text-amber-600" /> {t("users.exportJson")}
                   </button>
@@ -588,7 +588,7 @@ export default function UsersPage() {
           />
           <button
             onClick={() => csvFileRef.current?.click()}
-            className="flex items-center gap-1.5 rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700"
+            className="flex items-center gap-1.5 rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
             <Upload className="h-4 w-4" /> {t("users.importCsv")}
           </button>
@@ -596,7 +596,7 @@ export default function UsersPage() {
           {/* Legacy text import */}
           <button
             onClick={() => setShowImport(!showImport)}
-            className="flex items-center gap-1.5 rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700"
+            className="flex items-center gap-1.5 rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
             title="Paste CSV text"
           >
             <FileText className="h-4 w-4" /> {t("users.paste")}
@@ -604,7 +604,7 @@ export default function UsersPage() {
 
           <button
             onClick={() => setShowCreate(!showCreate)}
-            className="flex items-center gap-2 rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700"
+            className="flex items-center gap-2 rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
             <UserPlus className="h-4 w-4" /> {t("users.newUser")}
           </button>
@@ -620,7 +620,7 @@ export default function UsersPage() {
         <div className="mb-6 rounded-xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800">
           <div className="mb-4 flex items-center justify-between">
             <h2 className="text-lg font-semibold dark:text-gray-100">{t("users.importUsersCsv")}</h2>
-            <button onClick={closeCsvImport} className="text-gray-400 hover:text-gray-600" aria-label="Close">
+            <button onClick={closeCsvImport} className="text-gray-400 hover:text-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500" aria-label="Close">
               <X className="h-5 w-5" />
             </button>
           </div>
@@ -702,7 +702,7 @@ export default function UsersPage() {
             <button
               onClick={handleCsvImport}
               disabled={csvImporting || csvData.length === 0}
-              className="flex items-center gap-1.5 rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700 disabled:opacity-50"
+              className="flex items-center gap-1.5 rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700 disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               {csvImporting ? (
                 <>
@@ -717,7 +717,7 @@ export default function UsersPage() {
             </button>
             <button
               onClick={closeCsvImport}
-              className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium hover:bg-gray-50 dark:border-gray-600 dark:hover:bg-gray-700"
+              className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium hover:bg-gray-50 dark:border-gray-600 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
              aria-label="Action">
               {t("common.cancel")}
             </button>
@@ -750,7 +750,7 @@ export default function UsersPage() {
             placeholder={"alice,alice@example.com,Pass123!\nbob,bob@example.com,Pass123!"}
             className="w-full rounded-lg border border-gray-300 px-3 py-2 font-mono text-sm"
           />
-          <button onClick={handleImportCSV} disabled={!importText.trim()} className="mt-3 rounded-lg bg-brand-600 px-4 py-2 text-sm text-white hover:bg-brand-700 disabled:opacity-50" aria-label="trim">
+          <button onClick={handleImportCSV} disabled={!importText.trim()} className="mt-3 rounded-lg bg-brand-600 px-4 py-2 text-sm text-white hover:bg-brand-700 disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500" aria-label="trim">
             {t("users.importUsers")}
           </button>
           {importResult && <p className="mt-3 text-sm text-gray-600 dark:text-gray-400">{importResult}</p>}
@@ -824,7 +824,7 @@ export default function UsersPage() {
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   aria-label={showPassword ? "Hide password" : "Show password"}
                 >
                   {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
@@ -846,8 +846,8 @@ export default function UsersPage() {
           </div>
           {formError && <div className="mt-3 flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 px-4 py-2 text-sm text-red-700 dark:border-red-800 dark:bg-red-950"><AlertCircle className="h-4 w-4 shrink-0" />{formError}</div>}
           <div className="mt-4 flex gap-2">
-            <button aria-label="action" type="submit" disabled={creating} className="rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700 disabled:opacity-50">{creating ? "Creating..." : t("common.create")}</button>
-            <button type="button" onClick={() => { setShowCreate(false); setFormError(""); setFieldErrors({}); }} className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium hover:bg-gray-50 dark:hover:bg-gray-700">{t("common.cancel")}</button>
+            <button aria-label="action" type="submit" disabled={creating} className="rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700 disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500">{creating ? "Creating..." : t("common.create")}</button>
+            <button type="button" onClick={() => { setShowCreate(false); setFormError(""); setFieldErrors({}); }} className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500">{t("common.cancel")}</button>
           </div>
         </form>
       )}
@@ -946,7 +946,7 @@ export default function UsersPage() {
               paginated.map((user: any) => {
                 const scimBadge = getScimBadge(user);
                 return (
-                  <tr key={user.id} className={`hover:bg-gray-50 ${selected.has(user.id) ? "bg-blue-50/40" : ""}`}>
+                  <tr key={user.id} className={`hover:bg-gray-50 ${selected.has(user.id) ? "bg-blue-50/40" : ""} focus:outline-none focus:ring-2 focus:ring-blue-500} focus:outline-none focus:ring-2 focus:ring-blue-500}`}>
                     <td className="px-4 py-3">
                       <input
                         type="checkbox"
@@ -961,7 +961,7 @@ export default function UsersPage() {
                           {user.username[0]}
                         </div>
                         <div>
-                          <p className="text-sm font-medium hover:text-brand-600">{user.username}</p>
+                          <p className="text-sm font-medium hover:text-brand-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500">{user.username}</p>
                           <p className="text-xs text-gray-500">{user.email}</p>
                         </div>
                       </Link>
@@ -1004,15 +1004,15 @@ export default function UsersPage() {
                     <td className="px-4 py-3">
                       <div className="flex justify-end gap-1">
                         {user.status === "active" ? (
-                          <button onClick={() => handleLock(user.id, user.status)} title={t("users.lock")} className="rounded p-1.5 text-gray-400 hover:bg-gray-100">
+                          <button onClick={() => handleLock(user.id, user.status)} title={t("users.lock")} className="rounded p-1.5 text-gray-400 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500">
                             <Lock className="h-4 w-4" />
                           </button>
                         ) : (
-                          <button onClick={() => handleLock(user.id, user.status)} title={t("users.unlock")} className="rounded p-1.5 text-gray-400 hover:bg-gray-100">
+                          <button onClick={() => handleLock(user.id, user.status)} title={t("users.unlock")} className="rounded p-1.5 text-gray-400 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500">
                             <Unlock className="h-4 w-4" />
                           </button>
                         )}
-                        <button onClick={() => handleDelete(user.id, user.username)} title={t("common.delete")} className="rounded p-1.5 text-gray-400 hover:bg-red-50 hover:text-red-600">
+                        <button onClick={() => handleDelete(user.id, user.username)} title={t("common.delete")} className="rounded p-1.5 text-gray-400 hover:bg-red-50 hover:text-red-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500">
                           <Trash2 className="h-4 w-4" />
                         </button>
                       </div>
@@ -1067,12 +1067,12 @@ export default function UsersPage() {
               This action cannot be undone. All associated data, sessions, and permissions will be permanently removed.
             </p>
             <div className="mt-5 flex justify-end gap-2">
-              <button onClick={() => setDeleteTarget(null)} className="rounded-lg border border-gray-300 px-4 py-2 text-sm dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800">
+              <button onClick={() => setDeleteTarget(null)} className="rounded-lg border border-gray-300 px-4 py-2 text-sm dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500">
                 Cancel
               </button>
               <button
                 onClick={async () => { await doDelete(deleteTarget.ids, deleteTarget.label); setDeleteTarget(null); }}
-                className="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700"
+                className="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
                 Delete
               </button>

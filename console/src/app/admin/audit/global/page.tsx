@@ -63,7 +63,7 @@ export default function GlobalAuditDashboard() {
           </thead>
           <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
             {events.slice(0, 50).map(e => (
-              <tr key={e.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/50">
+              <tr key={e.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500">
                 <td className="px-4 py-3 text-xs text-gray-500">{e.created_at ? new Date(e.created_at).toLocaleString() : "—"}</td>
                 <td className="px-4 py-3 text-sm">{e.event_type || e.action || "—"}</td>
                 <td className="px-4 py-3 text-sm">{e.actor_name || e.actor_id?.substring(0, 8) || "system"}</td>

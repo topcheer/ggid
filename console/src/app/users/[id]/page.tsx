@@ -479,7 +479,7 @@ export default function UserDetailPage() {
           <div className="flex items-center gap-3">
             <button
               onClick={closeDrawer}
-              className="flex items-center gap-1 text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+              className="flex items-center gap-1 text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               <ArrowLeft className="h-4 w-4" /> Close
             </button>
@@ -496,13 +496,13 @@ export default function UserDetailPage() {
           <div className="flex items-center gap-2">
             <button
               onClick={() => setShowImpersonate(true)}
-              className="flex items-center gap-1.5 rounded-lg border border-amber-300 bg-amber-50 px-3 py-1.5 text-xs font-medium text-amber-700 hover:bg-amber-100 dark:border-amber-700 dark:bg-amber-950 dark:text-amber-400"
+              className="flex items-center gap-1.5 rounded-lg border border-amber-300 bg-amber-50 px-3 py-1.5 text-xs font-medium text-amber-700 hover:bg-amber-100 dark:border-amber-700 dark:bg-amber-950 dark:text-amber-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               <ShieldCheck className="h-3.5 w-3.5" /> Impersonate
             </button>
             <button
               onClick={closeDrawer}
-              className="rounded-lg p-1.5 text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700"
+              className="rounded-lg p-1.5 text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
              aria-label="Close">
               <X className="h-4 w-4" />
             </button>
@@ -557,7 +557,7 @@ export default function UserDetailPage() {
                   <h3 className="text-sm font-semibold dark:text-gray-100">{t("userDetail.userInformation")}</h3>
                   <button
                     onClick={() => setEditing(!editing)}
-                    className="rounded-lg px-2 py-1 text-xs font-medium text-brand-600 hover:bg-brand-50"
+                    className="rounded-lg px-2 py-1 text-xs font-medium text-brand-600 hover:bg-brand-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   >
                     {editing ? "Cancel" : "Edit"}
                   </button>
@@ -607,7 +607,7 @@ export default function UserDetailPage() {
                     </div>
                     <button
                       onClick={handleSave}
-                      className="flex items-center gap-1.5 rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700"
+                      className="flex items-center gap-1.5 rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
                     >
                       <Save className="h-4 w-4" /> Save Changes
                     </button>
@@ -671,7 +671,7 @@ export default function UserDetailPage() {
                           {role.role_name || role.name || role.key || role.role_id}
                           <button
                             onClick={() => handleRevokeRole(role.role_id || role.id)}
-                            className="ml-0.5 text-brand-400 hover:text-red-500"
+                            className="ml-0.5 text-brand-400 hover:text-red-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
                             title="Remove role"
                           >
                             <X className="h-3 w-3" />
@@ -698,7 +698,7 @@ export default function UserDetailPage() {
                         const sel = document.getElementById("roleSelect") as HTMLSelectElement;
                         if (sel && sel.value) handleAssignRole(sel.value);
                       }}
-                      className="rounded-lg bg-blue-600 px-3 py-1 text-xs font-medium text-white hover:bg-blue-700"
+                      className="rounded-lg bg-blue-600 px-3 py-1 text-xs font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
                     >
                       Add
                     </button>
@@ -727,21 +727,21 @@ export default function UserDetailPage() {
                   {user.status === "locked" ? (
                     <button
                       onClick={() => handleLock(false)}
-                      className="flex items-center gap-1.5 rounded-lg border border-gray-300 px-3 py-1.5 text-xs font-medium hover:bg-gray-50 dark:border-gray-600 dark:text-gray-300"
+                      className="flex items-center gap-1.5 rounded-lg border border-gray-300 px-3 py-1.5 text-xs font-medium hover:bg-gray-50 dark:border-gray-600 dark:text-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
                     >
                       <Unlock className="h-3.5 w-3.5" /> Unlock
                     </button>
                   ) : (
                     <button
                       onClick={() => handleLock(true)}
-                      className="flex items-center gap-1.5 rounded-lg border border-gray-300 px-3 py-1.5 text-xs font-medium hover:bg-gray-50 dark:border-gray-600 dark:text-gray-300"
+                      className="flex items-center gap-1.5 rounded-lg border border-gray-300 px-3 py-1.5 text-xs font-medium hover:bg-gray-50 dark:border-gray-600 dark:text-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
                     >
                       <Lock className="h-3.5 w-3.5" /> Lock
                     </button>
                   )}
                   <button
                     onClick={handleDelete}
-                    className="flex items-center gap-1.5 rounded-lg border border-red-300 px-3 py-1.5 text-xs font-medium text-red-600 hover:bg-red-50"
+                    className="flex items-center gap-1.5 rounded-lg border border-red-300 px-3 py-1.5 text-xs font-medium text-red-600 hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   >
                     <Trash2 className="h-3.5 w-3.5" /> Delete
                   </button>
@@ -762,7 +762,7 @@ export default function UserDetailPage() {
                   <button
                     onClick={handleResetPassword}
                     disabled={!resetPassword}
-                    className="flex items-center gap-1.5 rounded-lg bg-brand-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-brand-700 disabled:opacity-50"
+                    className="flex items-center gap-1.5 rounded-lg bg-brand-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-brand-700 disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   >
                     <KeyRound className="h-3.5 w-3.5" /> Reset
                   </button>
@@ -812,7 +812,7 @@ export default function UserDetailPage() {
                         <button
                           onClick={() => handleRevokeSession(s.id)}
                           disabled={revokingSession === s.id}
-                          className="flex items-center gap-1 rounded-lg border border-red-300 px-2 py-1 text-xs font-medium text-red-600 hover:bg-red-50 disabled:opacity-50"
+                          className="flex items-center gap-1 rounded-lg border border-red-300 px-2 py-1 text-xs font-medium text-red-600 hover:bg-red-50 disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
                         >
                           {revokingSession === s.id ? (
                             <RefreshCw className="h-3 w-3 animate-spin" />
@@ -871,7 +871,7 @@ export default function UserDetailPage() {
                         <button
                           onClick={() => handleDeleteCredential(cred.id)}
                           disabled={deletingCred === cred.id}
-                          className="text-red-500 hover:text-red-700 disabled:opacity-50"
+                          className="text-red-500 hover:text-red-700 disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
                           title="Delete credential"
                         >
                           {deletingCred === cred.id ? (
@@ -963,14 +963,14 @@ export default function UserDetailPage() {
               <button
                 onClick={() => setShowImpersonate(false)}
                 disabled={impersonating}
-                className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50 disabled:opacity-50 dark:border-gray-600 dark:text-gray-300"
+                className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50 disabled:opacity-50 dark:border-gray-600 dark:text-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
                 Cancel
               </button>
               <button
                 onClick={handleImpersonate}
                 disabled={impersonating}
-                className="flex items-center gap-1.5 rounded-lg bg-amber-600 px-4 py-2 text-sm font-medium text-white hover:bg-amber-700 disabled:opacity-50"
+                className="flex items-center gap-1.5 rounded-lg bg-amber-600 px-4 py-2 text-sm font-medium text-white hover:bg-amber-700 disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
                 {impersonating ? (
                   <RefreshCw className="h-4 w-4 animate-spin" />

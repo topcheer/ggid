@@ -129,7 +129,7 @@ export default function UserReassignmentPage() {
         <div className="rounded-lg border dark:border-gray-800 max-h-96 overflow-y-auto">
           <div className="divide-y dark:divide-gray-800">
             {filtered.slice(0, 50).map((u: any) => (
-              <button key={u.user_id} onClick={() => selectUser(u)} className={`w-full text-left px-4 py-2 hover:bg-gray-50 dark:hover:bg-gray-900/30 ${selectedUser?.user_id === u.user_id ? "bg-blue-50 dark:bg-blue-900/20" : ""}`}>
+              <button key={u.user_id} onClick={() => selectUser(u)} className={`w-full text-left px-4 py-2 hover:bg-gray-50 dark:hover:bg-gray-900/30 ${selectedUser?.user_id === u.user_id ? "bg-blue-50 dark:bg-blue-900/20" : ""} focus:outline-none focus:ring-2 focus:ring-blue-500} focus:outline-none focus:ring-2 focus:ring-blue-500}`}>
                 <div className="text-sm font-medium">{u.username}</div>
                 <div className="text-xs text-gray-400">{u.role} · {u.org_name}</div>
               </button>
@@ -170,8 +170,8 @@ export default function UserReassignmentPage() {
                   </div>
                 </div>
                 <div className="flex items-center gap-2 pt-2">
-                  <button aria-label="Preview impact" onClick={previewImpact} disabled={!hasChanges || previewing} className="px-3 py-2 rounded-lg bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 disabled:opacity-50 flex items-center gap-2"><Eye className="w-4 h-4" /> {previewing ? "Previewing..." : "Preview Impact"}</button>
-                  <button aria-label="Execute reassignment" onClick={() => setShowConfirm(true)} disabled={!impact} className="px-3 py-2 rounded-lg bg-green-600 text-white text-sm font-medium hover:bg-green-700 disabled:opacity-50 flex items-center gap-2"><Play className="w-4 h-4" /> Execute</button>
+                  <button aria-label="Preview impact" onClick={previewImpact} disabled={!hasChanges || previewing} className="px-3 py-2 rounded-lg bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 disabled:opacity-50 flex items-center gap-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"><Eye className="w-4 h-4" /> {previewing ? "Previewing..." : "Preview Impact"}</button>
+                  <button aria-label="Execute reassignment" onClick={() => setShowConfirm(true)} disabled={!impact} className="px-3 py-2 rounded-lg bg-green-600 text-white text-sm font-medium hover:bg-green-700 disabled:opacity-50 flex items-center gap-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"><Play className="w-4 h-4" /> Execute</button>
                 </div>
               </div>
 
@@ -218,7 +218,7 @@ export default function UserReassignmentPage() {
             </div>
             <div className="flex justify-end gap-2 px-6 py-4 border-t dark:border-gray-800">
               <button aria-label="Cancel reassignment" onClick={() => setShowConfirm(false)} className="px-4 py-2 rounded-lg border dark:border-gray-700 text-sm">Cancel</button>
-              <button aria-label="Confirm reassignment" onClick={execute} disabled={executing} className="px-4 py-2 rounded-lg bg-green-600 text-white text-sm font-medium hover:bg-green-700 disabled:opacity-50">{executing ? "Executing..." : "Confirm Reassignment"}</button>
+              <button aria-label="Confirm reassignment" onClick={execute} disabled={executing} className="px-4 py-2 rounded-lg bg-green-600 text-white text-sm font-medium hover:bg-green-700 disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500">{executing ? "Executing..." : "Confirm Reassignment"}</button>
             </div>
           </div>
         </div>

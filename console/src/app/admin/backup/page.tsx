@@ -41,7 +41,7 @@ export default function BackupPage() {
 
       <div className="flex gap-1 border-b border-gray-200 dark:border-gray-700 overflow-x-auto">
         {([["status", t("backup.backupStatus"), Database], ["restore", t("backup.restorePoints"), RotateCcw], ["dr", t("backup.drStatus"), Shield]] as const).map(([id, label, Icon]) => (
-          <button key={id} onClick={() => setTab(id as Tab)} aria-pressed={tab === id} className={`flex items-center gap-1.5 border-b-2 px-4 py-2 text-sm font-medium transition whitespace-nowrap ${tab === id ? "border-indigo-600 text-indigo-600 dark:text-indigo-400" : "border-transparent text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"}`}><Icon className="h-4 w-4" /> {label}</button>
+          <button key={id} onClick={() => setTab(id as Tab)} aria-pressed={tab === id} className={`flex items-center gap-1.5 border-b-2 px-4 py-2 text-sm font-medium transition whitespace-nowrap ${tab === id ? "border-indigo-600 text-indigo-600 dark:text-indigo-400" : "border-transparent text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"} focus:outline-none focus:ring-2 focus:ring-blue-500} focus:outline-none focus:ring-2 focus:ring-blue-500}`}><Icon className="h-4 w-4" /> {label}</button>
         ))}
       </div>
 
@@ -82,7 +82,7 @@ export default function BackupPage() {
                   <p className="text-xs text-gray-400">{rp.size_gb} GB · {rp.verified ? t("backup.verified") : t("backup.unverified")}</p>
                 </div>
               </div>
-              <button onClick={() => setConfirmRestore(rp)} className="flex items-center gap-1 rounded-lg bg-indigo-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-indigo-700"><RotateCcw className="h-3 w-3" /> {t("backup.restore")}</button>
+              <button onClick={() => setConfirmRestore(rp)} className="flex items-center gap-1 rounded-lg bg-indigo-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"><RotateCcw className="h-3 w-3" /> {t("backup.restore")}</button>
             </div>
           ))}
         </div>
@@ -116,7 +116,7 @@ export default function BackupPage() {
             <div className="flex items-center gap-2"><AlertTriangle className="h-5 w-5 text-red-500" /><h3 className="text-lg font-semibold">{t("backup.restoreTitle")}</h3></div>
             <p className="mt-3 text-sm text-gray-500 dark:text-gray-400">{t("backup.restoreConfirm")} — {confirmRestore.type} from {new Date(confirmRestore.timestamp).toLocaleString()}?</p>
             {!confirmRestore.verified && <div className="mt-2 rounded-lg bg-yellow-50 dark:bg-yellow-900/20 p-2 text-xs text-yellow-600"><AlertTriangle className="inline h-3 w-3" /> {t("backup.unverifiedWarning")}</div>}
-            <div className="mt-4 flex justify-end gap-2"><button onClick={() => setConfirmRestore(null)} className="rounded-lg border border-gray-300 px-4 py-2 text-sm dark:border-gray-700">{t("common.cancel")}</button><button onClick={() => setConfirmRestore(null)} className="flex items-center gap-1 rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700"><RotateCcw className="h-4 w-4" /> {t("backup.confirmRestore")}</button></div>
+            <div className="mt-4 flex justify-end gap-2"><button onClick={() => setConfirmRestore(null)} className="rounded-lg border border-gray-300 px-4 py-2 text-sm dark:border-gray-700">{t("common.cancel")}</button><button onClick={() => setConfirmRestore(null)} className="flex items-center gap-1 rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"><RotateCcw className="h-4 w-4" /> {t("backup.confirmRestore")}</button></div>
           </div>
         </div>
       )}

@@ -403,7 +403,7 @@ export default function UserImportPage() {
       <div className="mb-6 flex items-center justify-between">
         <div>
           <div className="flex items-center gap-2 text-sm text-gray-400">
-            <Link href="/users" className="hover:text-brand-600">Users</Link>
+            <Link href="/users" className="hover:text-brand-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500">Users</Link>
             <ChevronRight className="h-3 w-3" />
             <span className="text-gray-600 dark:text-gray-300">{t("userImport.import")}</span>
           </div>
@@ -414,7 +414,7 @@ export default function UserImportPage() {
         </div>
         <button
           onClick={reset}
-          className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-800"
+          className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
         >
           Reset
         </button>
@@ -511,7 +511,7 @@ export default function UserImportPage() {
                 <button
                   onClick={(e) => { e.stopPropagation(); reset(); }}
                   aria-label="Remove file"
-                  className="text-gray-400 hover:text-red-500 focus:ring-2 focus:ring-red-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800 rounded"
+                  className="text-gray-400 hover:text-red-500 focus:ring-2 focus:ring-red-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
                   <X className="h-5 w-5" />
                 </button>
@@ -542,7 +542,7 @@ export default function UserImportPage() {
                 <button
                   onClick={handlePasteSubmit}
                   aria-label="Parse and continue"
-                  className="mt-2 flex items-center gap-1.5 rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700 focus:ring-2 focus:ring-brand-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800"
+                  className="mt-2 flex items-center gap-1.5 rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700 focus:ring-2 focus:ring-brand-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
                   Parse & Continue <ArrowRight className="h-4 w-4" />
                 </button>
@@ -644,7 +644,7 @@ export default function UserImportPage() {
                 </thead>
                 <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
                   {rows.slice(0, 10).map((row: any, i: any) => (
-                    <tr key={i} className="hover:bg-gray-50 dark:hover:bg-gray-900">
+                    <tr key={i} className="hover:bg-gray-50 dark:hover:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500">
                       <td className="px-3 py-2 text-xs text-gray-400">{i + 2}</td>
                       {headers.filter((h: any) => mapping[h]).map((h: any) => {
                         const idx = headers.indexOf(h);
@@ -689,7 +689,7 @@ export default function UserImportPage() {
             {!validationResult && !validating && (
               <button
                 onClick={runFullValidation}
-                className="flex items-center gap-2 rounded-lg bg-brand-600 px-6 py-2.5 text-sm font-medium text-white hover:bg-brand-700"
+                className="flex items-center gap-2 rounded-lg bg-brand-600 px-6 py-2.5 text-sm font-medium text-white hover:bg-brand-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
                 <PlayCircle className="h-4 w-4" />
                 Run Validation
@@ -798,7 +798,7 @@ export default function UserImportPage() {
 
                 <button
                   onClick={startImport}
-                  className="flex items-center gap-2 rounded-lg bg-brand-600 px-6 py-2.5 text-sm font-medium text-white hover:bg-brand-700"
+                  className="flex items-center gap-2 rounded-lg bg-brand-600 px-6 py-2.5 text-sm font-medium text-white hover:bg-brand-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
                   <Upload className="h-4 w-4" />
                   Start Import
@@ -872,14 +872,14 @@ export default function UserImportPage() {
                 <div className="flex gap-3">
                   <Link
                     href="/users"
-                    className="flex items-center gap-1.5 rounded-lg bg-brand-600 px-6 py-2.5 text-sm font-medium text-white hover:bg-brand-700"
+                    className="flex items-center gap-1.5 rounded-lg bg-brand-600 px-6 py-2.5 text-sm font-medium text-white hover:bg-brand-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   >
                     <Download className="h-4 w-4" />
                     View Users
                   </Link>
                   <button
                     onClick={reset}
-                    className="rounded-lg border border-gray-300 px-6 py-2.5 text-sm font-medium text-gray-600 hover:bg-gray-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-800"
+                    className="rounded-lg border border-gray-300 px-6 py-2.5 text-sm font-medium text-gray-600 hover:bg-gray-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   >
                     Import Another File
                   </button>
@@ -895,7 +895,7 @@ export default function UserImportPage() {
             <button
               onClick={() => setStep(Math.max(0, step - 1))}
               disabled={step === 0}
-              className="flex items-center gap-1.5 rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50 disabled:opacity-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-800"
+              className="flex items-center gap-1.5 rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50 disabled:opacity-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               <ChevronLeft className="h-4 w-4" />
               Back
@@ -904,7 +904,7 @@ export default function UserImportPage() {
               <button
                 onClick={() => canProceed(step) && setStep(step + 1)}
                 disabled={!canProceed(step)}
-                className="flex items-center gap-1.5 rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700 disabled:opacity-50"
+                className="flex items-center gap-1.5 rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700 disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
                 Next
                 <ChevronRight className="h-4 w-4" />
@@ -913,7 +913,7 @@ export default function UserImportPage() {
             {step === 3 && validationResult && (
               <button
                 onClick={() => setStep(4)}
-                className="flex items-center gap-1.5 rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700"
+                className="flex items-center gap-1.5 rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
                 Proceed to Import
                 <ChevronRight className="h-4 w-4" />

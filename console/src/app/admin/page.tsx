@@ -50,9 +50,9 @@ export default function AdminDashboardPage() {
       <div>
         <h2 className="mb-3 text-sm font-semibold uppercase text-gray-400">{t("adminDash.quickLinks")}</h2>
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">{LINKS.map(l => { const Icon = l.icon; return (
-          <a key={l.href} href={l.href} className="group rounded-xl border border-gray-200 bg-white p-4 shadow-sm transition hover:shadow-md hover:border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:hover:border-gray-600">
-            <div className="flex items-start justify-between mb-2"><div className="flex h-9 w-9 items-center justify-center rounded-lg bg-gray-100 dark:bg-gray-700"><Icon className={`h-4 w-4 ${l.color}`} /></div><ChevronRight className="h-4 w-4 text-gray-300 opacity-0 group-hover:opacity-100 transition" /></div>
-            <h3 className="text-sm font-semibold group-hover:text-blue-600 dark:group-hover:text-blue-400">{l.label}</h3>
+          <a key={l.href} href={l.href} className="group rounded-xl border border-gray-200 bg-white p-4 shadow-sm transition hover:shadow-md hover:border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:hover:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500">
+            <div className="flex items-start justify-between mb-2"><div className="flex h-9 w-9 items-center justify-center rounded-lg bg-gray-100 dark:bg-gray-700"><Icon className={`h-4 w-4 ${l.color}`} /></div><ChevronRight className="h-4 w-4 text-gray-300 opacity-0 group-hover:opacity-100 transition focus:outline-none focus:ring-2 focus:ring-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500" /></div>
+            <h3 className="text-sm font-semibold group-hover:text-blue-600 dark:group-hover:text-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500">{l.label}</h3>
             <p className="text-xs text-gray-400">{l.desc}</p>
           </a>
         );})}</div>

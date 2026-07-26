@@ -83,7 +83,7 @@ export default function UserActivityPage({ params }: { params: { id: string } })
   return (
     <div className="p-6 space-y-6">
       <div className="flex items-center gap-3">
-        <button aria-label="Go back" onClick={() => history.back()} className="rounded-lg border border-gray-300 p-2 hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-gray-800">
+        <button aria-label="Go back" onClick={() => history.back()} className="rounded-lg border border-gray-300 p-2 hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500">
           <ChevronLeft className="w-5 h-5" />
         </button>
         <div>
@@ -130,7 +130,7 @@ export default function UserActivityPage({ params }: { params: { id: string } })
           className="px-3 py-2 text-sm border border-gray-300 dark:border-gray-700 rounded-lg bg-transparent text-gray-900 dark:text-white">
           {EVENT_TYPES.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
         </select>
-        <button aria-label="Export activity as CSV" onClick={exportCsv} className="flex items-center gap-1.5 px-3 py-2 text-sm text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition">
+        <button aria-label="Export activity as CSV" onClick={exportCsv} className="flex items-center gap-1.5 px-3 py-2 text-sm text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition focus:outline-none focus:ring-2 focus:ring-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500">
           <Download className="w-4 h-4" /> CSV
         </button>
       </div>
@@ -143,7 +143,7 @@ export default function UserActivityPage({ params }: { params: { id: string } })
           return (
             <div key={event.id}>
               <button aria-label={`${event.description} event`} onClick={() => setExpandedId(isExpanded ? null : event.id)}
-                className={`w-full text-left flex items-center gap-4 p-3 rounded-xl border transition ${event.result === "failure" ? "border-red-200 dark:border-red-900 bg-red-50/50 dark:bg-red-950/20" : "border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 hover:border-gray-300 dark:hover:border-gray-700"}`}>
+                className={`w-full text-left flex items-center gap-4 p-3 rounded-xl border transition ${event.result === "failure" ? "border-red-200 dark:border-red-900 bg-red-50/50 dark:bg-red-950/20" : "border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 hover:border-gray-300 dark:hover:border-gray-700"} focus:outline-none focus:ring-2 focus:ring-blue-500} focus:outline-none focus:ring-2 focus:ring-blue-500}`}>
                 <div className="flex flex-col items-center">
                   <div className={`w-8 h-8 rounded-full flex items-center justify-center ${event.result === "failure" ? "bg-red-100 dark:bg-red-900/40" : "bg-green-100 dark:bg-green-900/40"}`}>
                     <Icon className={`w-4 h-4 ${event.result === "failure" ? "text-red-500" : "text-green-500"}`} />

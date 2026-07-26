@@ -364,7 +364,7 @@ export default function ImpersonatePage() {
             <button
               onClick={handleEndImpersonation}
               disabled={submitting}
-              className="flex items-center justify-center gap-2 rounded-lg bg-red-600 px-5 py-2.5 text-sm font-bold text-white shadow-sm transition-colors hover:bg-red-700 disabled:opacity-50"
+              className="flex items-center justify-center gap-2 rounded-lg bg-red-600 px-5 py-2.5 text-sm font-bold text-white shadow-sm transition-colors hover:bg-red-700 disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               {submitting ? (
                 <LogOut className="h-4 w-4 animate-pulse" />
@@ -420,7 +420,7 @@ export default function ImpersonatePage() {
                       setSearchResults([]);
                       setSelectedUser(null);
                     }}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   >
                     <X className="h-4 w-4" />
                   </button>
@@ -444,7 +444,7 @@ export default function ImpersonatePage() {
                         <li key={user.id}>
                           <button
                             onClick={() => handleSelectUser(user)}
-                            className="flex w-full items-center gap-3 px-4 py-2.5 text-left hover:bg-gray-50 dark:hover:bg-gray-700/50"
+                            className="flex w-full items-center gap-3 px-4 py-2.5 text-left hover:bg-gray-50 dark:hover:bg-gray-700/50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
                           >
                             <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-brand-100 dark:bg-brand-900/30">
                               <span className="text-xs font-bold text-brand-600 dark:text-brand-400">
@@ -522,7 +522,7 @@ export default function ImpersonatePage() {
                       setSelectedUser(null);
                       setSearchQuery("");
                     }}
-                    className="rounded-lg p-1 text-gray-400 hover:bg-gray-200 hover:text-red-500 dark:hover:bg-gray-700"
+                    className="rounded-lg p-1 text-gray-400 hover:bg-gray-200 hover:text-red-500 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   >
                     <X className="h-5 w-5" />
                   </button>
@@ -600,7 +600,7 @@ export default function ImpersonatePage() {
             <button
               onClick={handleImpersonate}
               disabled={!selectedUser || reason.trim().length < 10 || submitting}
-              className="flex items-center gap-2 rounded-lg bg-brand-600 px-6 py-3 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-50"
+              className="flex items-center gap-2 rounded-lg bg-brand-600 px-6 py-3 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
              aria-label="User">
               {submitting ? (
                 "Starting..."
@@ -625,7 +625,7 @@ export default function ImpersonatePage() {
               <button
                 onClick={loadHistory}
                 disabled={loadingHistory}
-                className="text-xs text-brand-600 hover:underline disabled:opacity-50"
+                className="text-xs text-brand-600 hover:underline disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
                aria-label="Action">
                 {loadingHistory ? "Loading..." : "Refresh"}
               </button>

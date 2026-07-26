@@ -304,7 +304,7 @@ export default function RolePermissionsMatrixPage() {
         <button
           onClick={handleSave}
           disabled={!isDirty || saving}
-          className="flex items-center gap-1.5 rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700 disabled:opacity-50"
+          className="flex items-center gap-1.5 rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700 disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
          aria-label="Save">
           <Save className="h-4 w-4" />
           {saving ? "Saving..." : "Save Changes"}
@@ -371,7 +371,7 @@ export default function RolePermissionsMatrixPage() {
         <button
           onClick={handleBulkApply}
           disabled={!bulkRole || !bulkGroup}
-          className="rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700 disabled:opacity-50"
+          className="rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700 disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
         >
           Apply to All
         </button>
@@ -432,7 +432,7 @@ export default function RolePermissionsMatrixPage() {
                 const isLastRow = rowIdx === orderedRoles.length - 1;
 
                 return (
-                  <tr key={role.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50">
+                  <tr key={role.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500">
                     {/* Role name (sticky) */}
                     <td className="sticky left-0 z-10 border-b border-r border-gray-100 bg-white px-4 py-3 dark:border-gray-700 dark:bg-gray-800">
                       <div className="flex items-center gap-2">
@@ -486,7 +486,7 @@ export default function RolePermissionsMatrixPage() {
                               ) : isInherited ? (
                                 <Lock className="h-3.5 w-3.5 text-gray-300" />
                               ) : (
-                                <XCircle className="h-5 w-5 text-gray-200 hover:text-red-400" />
+                                <XCircle className="h-5 w-5 text-gray-200 hover:text-red-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500" />
                               )}
                             </button>
                           </td>

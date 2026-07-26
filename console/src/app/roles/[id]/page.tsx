@@ -176,7 +176,7 @@ export default function RoleDetailPage() {
     return (
       <div className="py-12 text-center">
         <p className="text-gray-500">Role not found.</p>
-        <Link href="/roles" className="mt-3 inline-block text-indigo-600 hover:underline">
+        <Link href="/roles" className="mt-3 inline-block text-indigo-600 hover:underline focus:outline-none focus:ring-2 focus:ring-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500">
           ← Back to Roles
         </Link>
       </div>
@@ -190,7 +190,7 @@ export default function RoleDetailPage() {
         <div className="flex items-center gap-3">
           <Link
             href="/roles"
-            className="rounded-lg p-2 text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700"
+            className="rounded-lg p-2 text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
             <ArrowLeft className="h-5 w-5" />
           </Link>
@@ -249,7 +249,7 @@ export default function RoleDetailPage() {
                   onClick={handleSaveRole}
                   disabled={saving}
                   aria-label="Save role changes"
-                  className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800"
+                  className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
                   {saving ? <Loader2 className="mr-1 inline h-4 w-4 animate-spin" /> : <Save className="mr-1 inline h-4 w-4" />}
                   Save Changes
@@ -268,7 +268,7 @@ export default function RoleDetailPage() {
                 <button
                   onClick={() => setShowAddPerm(!showAddPerm)}
                   aria-label="Add permission to role"
-                  className="rounded-lg border border-gray-300 px-3 py-1.5 text-xs font-medium text-gray-600 hover:bg-gray-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700 focus:ring-2 focus:ring-brand-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800"
+                  className="rounded-lg border border-gray-300 px-3 py-1.5 text-xs font-medium text-gray-600 hover:bg-gray-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700 focus:ring-2 focus:ring-brand-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
                   <Plus className="mr-1 inline h-3.5 w-3.5" /> Add Permission
                 </button>
@@ -283,7 +283,7 @@ export default function RoleDetailPage() {
                   availablePermissions.map((perm: any) => (
                     <div
                       key={perm.id}
-                      className="flex items-center justify-between rounded-lg px-3 py-1.5 hover:bg-gray-50 dark:hover:bg-gray-700/50"
+                      className="flex items-center justify-between rounded-lg px-3 py-1.5 hover:bg-gray-50 dark:hover:bg-gray-700/50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
                     >
                       <div>
                         <span className="text-sm font-medium text-gray-800 dark:text-gray-200">{perm.name}</span>
@@ -291,7 +291,7 @@ export default function RoleDetailPage() {
                       </div>
                       <button
                         onClick={() => handleAddPermission(perm.id)}
-                        className="rounded bg-indigo-50 px-2 py-1 text-xs font-medium text-indigo-600 hover:bg-indigo-100 dark:bg-indigo-900/20 dark:text-indigo-400"
+                        className="rounded bg-indigo-50 px-2 py-1 text-xs font-medium text-indigo-600 hover:bg-indigo-100 dark:bg-indigo-900/20 dark:text-indigo-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
                       >
                         Add
                       </button>
@@ -319,7 +319,7 @@ export default function RoleDetailPage() {
                   {!role.system_role && (
                     <button
                       onClick={() => handleRemovePermission(perm.id)}
-                      className="rounded-lg p-1.5 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20"
+                      className="rounded-lg p-1.5 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
                     >
                       <Trash2 className="h-3.5 w-3.5" />
                     </button>
@@ -353,7 +353,7 @@ export default function RoleDetailPage() {
                 {!role.system_role && (
                   <button
                     onClick={() => handleRemoveUser(user.id)}
-                    className="rounded-lg p-1.5 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20"
+                    className="rounded-lg p-1.5 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   >
                     <Trash2 className="h-3.5 w-3.5" />
                   </button>
