@@ -426,7 +426,7 @@ var extendedAdminTools = []Tool{
 		RequiredScopes: []string{"tenants:read"},
 		Handler: func(ctx context.Context, c *client.Client, args map[string]any) (any, error) {
 			var result any
-			if err := c.Get(ctx, "/api/v1/security/password-policy", &result); err != nil {
+			if err := c.Get(ctx, "/api/v1/auth/password/policy", &result); err != nil {
 				return nil, err
 			}
 			return result, nil
@@ -456,7 +456,7 @@ var extendedAdminTools = []Tool{
 				}
 			}
 			var result any
-			if err := c.Patch(ctx, "/api/v1/security/password-policy", body, &result); err != nil {
+			if err := c.Patch(ctx, "/api/v1/auth/password-policy", body, &result); err != nil {
 				return nil, err
 			}
 			return result, nil
@@ -497,7 +497,10 @@ var extendedAdminTools = []Tool{
 			}
 			var result any
 			if err := c.Get(ctx, path, &result); err != nil {
-				return nil, err
+				// Fallback: try /api/v1/orgs/departments
+				if err2 := c.Get(ctx, "/api/v1/orgs/departments", &result); err2 != nil {
+					return nil, err
+				}
 			}
 			return result, nil
 		},
@@ -507,12 +510,18 @@ var extendedAdminTools = []Tool{
 		Description: "List all teams in the organization",
 		InputSchema: map[string]any{
 			"type": "object",
-			"properties": map[string]any{},
+			"properties": map[string]any{
+				"org_id": map[string]any{"type": "string", "description": "Organization UUID (optional)"},
+			},
 		},
 		RequiredScopes: []string{"orgs:read"},
 		Handler: func(ctx context.Context, c *client.Client, args map[string]any) (any, error) {
+			path := "/api/v1/teams"
+			if oid := argStr(args, "org_id"); oid != "" {
+				path += "?org_id=" + oid
+			}
 			var result any
-			if err := c.Get(ctx, "/api/v1/teams", &result); err != nil {
+			if err := c.Get(ctx, path, &result); err != nil {
 				return nil, err
 			}
 			return result, nil
