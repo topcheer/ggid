@@ -331,3 +331,15 @@ R29 后 2 个新 commit：
 
 - Docker 恢复后重新构建部署 oauth + identity 镜像（含 6b9f17454）
 - 考虑将关键端点（GetUserInfo, IntrospectToken）迁移到 ParseAccessTokenWithAudience 并传入实际 audience
+
+## R31 最终确认 — frontend_qa E2E 验证通过
+
+P2-15 生产回归修复 (030652afa) 已部署验证：
+- E2E 8/8 全 PASS
+- OIDC userinfo 恢复正常 (sub=abdf2d60)
+- ParseAccessTokenWithAudience 接受 aud=client_id 或 aud=issuer
+
+R31 三项 P2 全部完成并生产验证：
+- P2-14 SCIM /Me ✅ (含 guardian P0 auth bypass 修复)
+- P2-15 JWT iss/aud 验证 ✅ (5 端点迁移 + 生产回归修复)
+- P2-16 PKCE plain 移除 ✅
