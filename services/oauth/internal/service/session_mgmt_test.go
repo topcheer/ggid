@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/ggid/ggid/services/oauth/internal/domain"
+	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
 )
 
@@ -38,8 +39,11 @@ func TestCovSprint13_RPLogout_WithValidIDTokenHint(t *testing.T) {
 
 func TestCovSprint13_BCL_WithSID(t *testing.T) {
 	svc, _, _, _ := newTestOAuthService()
-	token := makeTestJWT(`{"alg":"none","typ":"JWT"}`,
-		`{"sid":"session-xyz","jti":"bcl-sid-jti-2","events":{"http://schemas.openid.net/event/backchannel-logout":{}}}`)
+	token := signTestToken(svc, jwt.MapClaims{
+		"sid":    "session-xyz",
+		"jti":    "bcl-sid-jti-2",
+		"events": map[string]any{"http://schemas.openid.net/event/backchannel-logout": map[string]any{}},
+	})
 	err := svc.BackchannelLogoutEndpoint(token)
 	if err != nil {
 		t.Fatalf("BackchannelLogoutEndpoint with sid: %v", err)
@@ -56,8 +60,12 @@ func TestCovSprint13_BCL_InvalidJWT(t *testing.T) {
 
 func TestCovSprint13_BCL_HasNonce(t *testing.T) {
 	svc, _, _, _ := newTestOAuthService()
-	token := makeTestJWT(`{"alg":"none","typ":"JWT"}`,
-		`{"sub":"user-1","nonce":"bad","jti":"bcl-nonce-jti","events":{"http://schemas.openid.net/event/backchannel-logout":{}}}`)
+	token := signTestToken(svc, jwt.MapClaims{
+		"sub":    "user-1",
+		"nonce":  "bad",
+		"jti":    "bcl-nonce-jti",
+		"events": map[string]any{"http://schemas.openid.net/event/backchannel-logout": map[string]any{}},
+	})
 	err := svc.BackchannelLogoutEndpoint(token)
 	if err == nil {
 		t.Error("expected error for nonce in logout token")
