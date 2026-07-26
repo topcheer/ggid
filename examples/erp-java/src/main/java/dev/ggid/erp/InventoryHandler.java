@@ -28,7 +28,7 @@ public class InventoryHandler extends BaseHandler {
                 items.removeIf(item -> !userOrg.equals(item.orgId));
             }
         }
-        sendJson(exchange, 200, json(Map.of("inventory", items, "total", items.size())));
+        sendJson(exchange, 200, json(Map.of("items", items, "total", items.size())));
     }
 
     @Override

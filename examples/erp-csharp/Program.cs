@@ -91,9 +91,9 @@ class Program
         }
         var perms = claims.Permissions;
 
-        if (path == "/api/inventory" && method == "GET") { if (!HasPerm(perms, "inventory:read")) { Forbid(ctx, "inventory:read"); return; } Json(ctx.Response, 200, new { items = inventory, count = inventory.Count }); return; }
+        if (path == "/api/inventory" && method == "GET") { if (!HasPerm(perms, "inventory:read")) { Forbid(ctx, "inventory:read"); return; } Json(ctx.Response, 200, new { items = inventory, total = inventory.Count }); return; }
         if (path == "/api/inventory" && method == "POST") { if (!HasPerm(perms, "inventory:write")) { Forbid(ctx, "inventory:write"); return; } var b = ToObj(ReadBody(ctx.Request)); b["id"] = $"p{inventory.Count + 1:D3}"; inventory.Add(b); Json(ctx.Response, 201, b); return; }
-        if (path == "/api/orders" && method == "GET") { if (!HasPerm(perms, "orders:read")) { Forbid(ctx, "orders:read"); return; } Json(ctx.Response, 200, new { orders, count = orders.Count }); return; }
+        if (path == "/api/orders" && method == "GET") { if (!HasPerm(perms, "orders:read")) { Forbid(ctx, "orders:read"); return; } Json(ctx.Response, 200, new { items = orders, total = orders.Count }); return; }
         if (path == "/api/orders" && method == "POST") { if (!HasPerm(perms, "orders:write")) { Forbid(ctx, "orders:write"); return; } var b = ToObj(ReadBody(ctx.Request)); b["id"] = $"o{orders.Count + 1:D3}"; b["status"] = "pending"; orders.Add(b); Json(ctx.Response, 201, b); return; }
         if (path.StartsWith("/api/orders/") && path.EndsWith("/approve") && method == "POST") { if (!HasPerm(perms, "orders:approve")) { Forbid(ctx, "orders:approve"); return; } var id = path.Split("/")[3]; var o = orders.FirstOrDefault(x => x["id"].ToString() == id); if (o == null) { Json(ctx.Response, 404, new { error = "not found" }); return; } o["status"] = "approved"; Json(ctx.Response, 200, o); return; }
         if (path == "/api/my-permissions") { Json(ctx.Response, 200, new { permissions = perms, can_write_orders = HasPerm(perms, "orders:write"), can_approve = HasPerm(perms, "orders:approve") }); return; }

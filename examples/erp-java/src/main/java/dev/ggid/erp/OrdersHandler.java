@@ -34,7 +34,7 @@ public class OrdersHandler extends BaseHandler {
                 : "Showing only your team's orders";
 
         sendJson(exchange, 200, json(Map.of(
-                "orders", allOrders,
+                "items", allOrders,
                 "total", allOrders.size(),
                 "filter_notice", filterNotice
         )));

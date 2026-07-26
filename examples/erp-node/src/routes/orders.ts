@@ -17,7 +17,7 @@ orderRoutes.get('/', requirePermission('orders:read') as any, (req, res) => {
   if (!hasPermission(user, 'orders:read:all') && !hasPermission(user, 'admin')) {
     filtered = orders.filter(o => o.org_id === 'sales'); // simplified
   }
-  res.json({ orders: filtered, total: filtered.length });
+  res.json({ items: filtered, total: filtered.length });
 });
 
 orderRoutes.get('/:id', requirePermission('orders:read') as any, (req, res) => {

@@ -6,9 +6,9 @@ export const inventoryRoutes = Router();
 inventoryRoutes.use(requireAuth() as any);
 
 const items: any[] = [
-  { id: '1', sku: 'SKU-001', name: 'Widget A', qty: 100, org_id: 'sales', price: 29.99 },
-  { id: '2', sku: 'SKU-002', name: 'Widget B', qty: 50, org_id: 'wh', price: 49.99 },
-  { id: '3', sku: 'SKU-003', name: 'Gadget C', qty: 200, org_id: 'sales', price: 19.99 },
+  { id: '1', sku: 'SKU-001', name: 'Widget A', stock: 100, org_id: 'sales', price: 29.99 },
+  { id: '2', sku: 'SKU-002', name: 'Widget B', stock: 50, org_id: 'wh', price: 49.99 },
+  { id: '3', sku: 'SKU-003', name: 'Gadget C', stock: 200, org_id: 'sales', price: 19.99 },
 ];
 
 inventoryRoutes.get('/', requirePermission('inventory:read') as any, (req, res) => {
@@ -28,9 +28,9 @@ inventoryRoutes.get('/:id', requirePermission('inventory:read') as any, (req, re
 });
 
 inventoryRoutes.post('/', requirePermission('inventory:write') as any, (req, res) => {
-  const { sku, name, qty, price } = req.body;
+  const { sku, name, stock, price } = req.body;
   const user = (req as any).user as ERPUser;
-  const item = { id: String(items.length + 1), sku, name, qty, price, org_id: user.roles[0]?.toLowerCase() || 'sales' };
+  const item = { id: String(items.length + 1), sku, name, stock, price, org_id: user.roles[0]?.toLowerCase() || 'sales' };
   items.push(item);
   res.status(201).json(item);
 });

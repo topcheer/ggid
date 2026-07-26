@@ -209,14 +209,14 @@ class ERPHandler(BaseHTTPRequestHandler):
         if path == "/api/inventory":
             if not self._require_perm("inventory:read"):
                 return
-            self._send_json(200, {"items": inventory, "count": len(inventory)})
+            self._send_json(200, {"items": inventory, "total": len(inventory)})
             return
 
         # --- Orders ---
         if path == "/api/orders":
             if not self._require_perm("orders:read"):
                 return
-            self._send_json(200, {"orders": orders, "count": len(orders)})
+            self._send_json(200, {"items": orders, "total": len(orders)})
             return
 
         # --- Users ---

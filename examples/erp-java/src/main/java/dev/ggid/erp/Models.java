@@ -4,11 +4,11 @@ import java.time.Instant;
 
 class InventoryItem {
     public String id, name, orgId;
-    public int quantity;
+    public int stock;
     public double price;
     public InventoryItem() {}
     public InventoryItem(String id, String name, int qty, double price, String orgId) {
-        this.id=id; this.name=name; this.quantity=qty; this.price=price; this.orgId=orgId;
+        this.id=id; this.name=name; this.stock=qty; this.price=price; this.orgId=orgId;
     }
 }
 
