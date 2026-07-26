@@ -4789,3 +4789,37 @@ Build: PASS. `make test`: EXIT=0, 65/65. Danger: 0.
 - `make test`: EXIT=0, 65/65
 
 ### Next Dimension: 3 — Demo Functional Completeness (Cycle 1378) — Rotation 3
+
+## Cycle 1378: D3 Demo Functional R3 — Deployment Verified (Round 1473)
+New commits: `0f12fef38` (public client revocation), `5dc202146` (R31 final E2E 8/8), `66f69ff55` (redirect_uri early validation), `cc541a47b` (API Key cross-tenant), `020ddaf27` (SCIM userName filter), `8e2773335` (forgot password + PATCH status + aud revert), `bed132148` (X-User-ID spoofing P0).
+**All 5 services deployed** (identity, auth, oauth, policy, gateway). Build: PASS. `make test`: EXIT=0, 65/65. Danger: 0.
+
+### Deployed P0/P1 Fixes Verified ✅
+| Fix | Commit | Impact |
+|-----|--------|--------|
+| SCIM BOLA + /Me auth bypass | d1bc9b820 | P0 closed |
+| X-User-ID header spoofing | bed132148 | P0 closed |
+| redirect_uri early validation | 66f69ff55 | P0 closed |
+| Public client token revocation | 0f12fef38 | P0 closed |
+| API Key cross-tenant access | cc541a47b | P1 closed |
+| Audit 8 endpoints cross-tenant | (prior) | P1 closed |
+| SCIM /Me (P2-14) | (prior) | ✅ |
+| JWT aud (P2-15) | (prior) | ✅ |
+| PKCE S256-only (P2-16) | 9e8c2fdd8 | ✅ |
+
+**R31 Final: E2E 8/8 PASS in production.** All P2 items verified.
+
+### D3 Demo Functional (Rotation 3) — No Regressions
+- Inventory `{items, total}` + `stock` field: all demos consistent ✅
+- Orders `{items, total}`: all demos ✅
+- CRUD create→return: Go+Node verified ✅
+- my-permissions: 6/7 backends + Ruby alt ✅
+
+### Three-Layer Alignment
+| Layer | Status |
+|-------|--------|
+| Core | ✅ all P0/P1 fixed + deployed, build+test pass |
+| SDK | ✅ no change |
+| Demo | ✅ all functional checks pass |
+
+### Next Dimension: 4 — Multi-Tenant Isolation (Cycle 1384) — Rotation 3
