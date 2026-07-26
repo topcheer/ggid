@@ -12,7 +12,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/golang-jwt/jwt/v5"
 	ggidtenant "github.com/ggid/ggid/pkg/tenant"
 	"github.com/ggid/ggid/services/identity/internal/domain"
 	"github.com/ggid/ggid/services/identity/internal/service"
@@ -758,38 +757,28 @@ func applyAttributeFilter(u SCIMUser, attributes, excludedAttributes string) SCI
 	return result
 }
 
-// extractTokenSub parses a Bearer JWT and returns sub + tenant_id claims.
-func extractTokenSub(r *http.Request) (uuid.UUID, uuid.UUID, error) {
-	authHeader := r.Header.Get("Authorization")
-	if !strings.HasPrefix(authHeader, "Bearer ") {
-		return uuid.Nil, uuid.Nil, fmt.Errorf("authorization Bearer token required")
+// extractVerifiedUser reads the gateway-verified X-User-ID and X-Tenant-ID headers.
+// Security (P0 fix): the gateway verifies the JWT signature and injects these headers.
+// We MUST NOT use ParseUnverified — it trusts attacker-controlled claims.
+// The gateway clears X-User-ID when no valid JWT is present.
+func extractVerifiedUser(r *http.Request) (uuid.UUID, uuid.UUID, error) {
+	userIDStr := r.Header.Get("X-User-ID")
+	if userIDStr == "" {
+		return uuid.Nil, uuid.Nil, fmt.Errorf("authentication required: no verified user identity")
 	}
-	tokenStr := strings.TrimPrefix(authHeader, "Bearer ")
-	token, _, err := jwt.NewParser().ParseUnverified(tokenStr, jwt.MapClaims{})
+	userUUID, err := uuid.Parse(userIDStr)
 	if err != nil {
-		return uuid.Nil, uuid.Nil, fmt.Errorf("invalid token")
+		return uuid.Nil, uuid.Nil, fmt.Errorf("invalid user identity")
 	}
-	claims, ok := token.Claims.(jwt.MapClaims)
-	if !ok {
-		return uuid.Nil, uuid.Nil, fmt.Errorf("invalid token claims")
-	}
-	sub, _ := claims["sub"].(string)
-	if sub == "" {
-		return uuid.Nil, uuid.Nil, fmt.Errorf("token missing sub claim")
-	}
-	tenantIDStr, _ := claims["tenant_id"].(string)
+	tenantIDStr := r.Header.Get("X-Tenant-ID")
 	if tenantIDStr == "" {
-		return uuid.Nil, uuid.Nil, fmt.Errorf("token missing tenant_id claim")
+		return uuid.Nil, uuid.Nil, fmt.Errorf("authentication required: no verified tenant identity")
 	}
-	userID, err := uuid.Parse(sub)
+	tenantUUID, err := uuid.Parse(tenantIDStr)
 	if err != nil {
-		return uuid.Nil, uuid.Nil, fmt.Errorf("invalid sub claim")
+		return uuid.Nil, uuid.Nil, fmt.Errorf("invalid tenant identity")
 	}
-	tenantID, err := uuid.Parse(tenantIDStr)
-	if err != nil {
-		return uuid.Nil, uuid.Nil, fmt.Errorf("invalid tenant_id claim")
-	}
-	return userID, tenantID, nil
+	return userUUID, tenantUUID, nil
 }
 
 // parseAttrList parses a comma-separated attribute list into a set.
@@ -831,7 +820,7 @@ func (h *Handler) handleMe(w http.ResponseWriter, r *http.Request) {
 		writeSCIMError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
-	userID, tenantID, err := extractTokenSub(r)
+	userID, tenantID, err := extractVerifiedUser(r)
 	if err != nil {
 		writeSCIMError(w, http.StatusUnauthorized, err.Error())
 		return
