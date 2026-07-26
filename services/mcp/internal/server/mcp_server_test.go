@@ -2,6 +2,7 @@ package server
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
@@ -81,12 +82,14 @@ func TestHandleMCP_Initialize(t *testing.T) {
 }
 
 func TestHandleMCP_ToolsList(t *testing.T) {
-	t.Skip("pre-existing: MCP server has no tools registered without real gateway backend")
 	s := newTestServer(t)
 	body, _ := json.Marshal(jsonRPCRequest{
 		JSONRPC: "2.0", ID: 2, Method: "tools/list",
 	})
 	req := httptest.NewRequest(http.MethodPost, "/mcp", bytes.NewReader(body))
+	// Inject scopes into context so FilterByScopes returns tools
+	ctx := context.WithValue(req.Context(), ctxKeyScopes{}, "users:read users:write roles:read roles:write policies:read audit:read")
+	req = req.WithContext(ctx)
 	rr := httptest.NewRecorder()
 	s.handleMCP(rr, req)
 	if rr.Code != http.StatusOK {

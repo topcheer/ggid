@@ -19,7 +19,6 @@ import (
 // (admin, tenant:admin, platform:admin) grants access to ALL tools,
 // even tools from other tenants.
 func TestMCP_AdminScopeBypassTooPermissive(t *testing.T) {
-	t.Skip("pre-existing: admin scope bypass test — needs real gateway backend")
 	cli := client.New("http://localhost:8080", "test-token", "")
 	s := New(cli)
 
@@ -36,6 +35,11 @@ func TestMCP_AdminScopeBypassTooPermissive(t *testing.T) {
 		"params": {}
 	}`))
 	req.Header.Set("Authorization", "Bearer "+tokenA)
+	// Inject scopes into context (simulating what jwtAuth middleware would do)
+	ctx := context.WithValue(req.Context(), ctxKeyScopes{}, "tenant:admin users:read users:write roles:read roles:write")
+	ctx = context.WithValue(ctx, ctxKeyTenantID{}, tenantA)
+	ctx = context.WithValue(ctx, ctxKeyUserID{}, userA)
+	req = req.WithContext(ctx)
 	w := httptest.NewRecorder()
 
 	s.handleMCP(w, req)
@@ -58,7 +62,7 @@ func TestMCP_AdminScopeBypassTooPermissive(t *testing.T) {
 	hasUserTools := false
 	for _, tool := range toolsList {
 		if name, ok := tool["name"].(string); ok {
-			if strings.HasPrefix(name, "user") || strings.HasPrefix(name, "role") {
+			if strings.Contains(name, "user") || strings.Contains(name, "role") {
 				hasUserTools = true
 				t.Logf("  - %s", name)
 			}
