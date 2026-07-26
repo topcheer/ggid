@@ -86,6 +86,10 @@ const hostedLoginHTML = `<!DOCTYPE html>
       <label>Password</label>
       <input type="password" id="password" placeholder="Your password" autocomplete="current-password">
     </div>
+    <div class="field" id="mfa-row" style="display:none">
+      <label>MFA Code</label>
+      <input type="text" id="mfa-code-input" placeholder="123456" maxlength="6" autocomplete="one-time-code" style="display:none" onkeyup="if(event.keyCode===13)doLogin()">
+    </div>
     <button class="btn btn-primary" id="login-btn" onclick="doLogin()">Sign In</button>
 
     <div class="divider"><span>or continue with</span></div>
@@ -127,13 +131,27 @@ async function doLogin(){
   const btn=document.getElementById("login-btn");
   btn.disabled=true;btn.textContent="Signing in...";
   try{
-    const r=await fetch("/api/v1/auth/verify",{method:"POST",headers:{"Content-Type":"application/json","X-Tenant-ID":T},body:JSON.stringify({username:u,password:p})});
+    const body={username:u,password:p};
+    // If MFA input is visible, include the code
+    const mfaInp=document.getElementById("mfa-code-input");
+    if(mfaInp&&mfaInp.style.display!=="none"){
+      body.mfa_code=mfaInp.value.trim();
+      if(!body.mfa_code){showErr("Please enter your MFA code");return}
+    }
+    const r=await fetch("/api/v1/auth/verify",{method:"POST",headers:{"Content-Type":"application/json","X-Tenant-ID":T},body:JSON.stringify(body)});
     const d=await r.json();
-    if(!r.ok){showErr(d.error||"Login failed");return}
-    if(d.mfa_required){showErr("MFA required — use the admin console to log in.");return}
+    if(!r.ok){showErr(d.error||d.detail||"Login failed");return}
+    if(d.mfa_required){
+      // Show MFA input
+      document.getElementById("mfa-row").style.display="flex";
+      mfaInp.style.display="block";
+      mfaInp.focus();
+      btn.textContent="Verify & Sign In";
+      showErr("");
+      return;
+    }
     localStorage.setItem("ggid_user_id",d.user_id);
     localStorage.setItem("ggid_tenant_id",d.tenant_id);
-    localStorage.setItem("ggid_refresh_token",d.refresh_token);
     showOk("Success! Redirecting...");
     // If on /oauth/authorize, redirect back with user_id to complete OAuth flow
     if(location.pathname==="/oauth/authorize"){

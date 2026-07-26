@@ -612,6 +612,7 @@ type loginRequest struct {
 	Password   string `json:"password"`
 	TenantID   string `json:"tenant_id"`
 	TenantSlug string `json:"tenant_slug"`
+	MFACode    string `json:"mfa_code"`
 }
 
 // resolveTenantBySlug resolves a tenant slug to a UUID via the identity client.
@@ -696,6 +697,17 @@ func (h *Handler) verifyCredentials(w http.ResponseWriter, r *http.Request) {
 		h.authSvc.ResetFailedLogins(r.Context(), tc.TenantID, req.Username)
 	}
 	h.authSvc.RecordLoginAttempt(r.Context(), req.Username, ip, userAgent, true, "")
+
+	// If MFA is required and user provided a code, verify it now.
+	if mfaRequired && req.MFACode != "" {
+		if tc, err := ggidtenant.FromContext(r.Context()); err == nil {
+			if err := h.authSvc.MFAService().VerifyUserCode(r.Context(), tc.TenantID, userID, req.MFACode); err != nil {
+				writeError(w, http.StatusUnauthorized, "invalid MFA code")
+				return
+			}
+			mfaRequired = false // MFA verified
+		}
+	}
 
 	// Audit.
 	if tc, err := ggidtenant.FromContext(r.Context()); err == nil {
