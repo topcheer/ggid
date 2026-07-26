@@ -175,7 +175,7 @@ export default function PlatformAccessPage() {
             <button onClick={copyRequestLink} className="flex items-center gap-1.5 rounded-lg border border-gray-300 dark:border-gray-600 px-3 py-2 text-sm dark:border-gray-700">
               <Copy className="h-4 w-4" /> Copy Request Link
             </button>
-            <button onClick={() => setShowGrant(true)} className="flex items-center gap-1.5 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700">
+            <button onClick={() => setShowGrant(true)} className="flex items-center gap-1.5 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500">
               <Plus className="h-4 w-4" /> Grant Access
             </button>
           </div>
@@ -190,7 +190,7 @@ export default function PlatformAccessPage() {
             <div className="space-y-4">
               <div>
                 <label className="text-sm font-medium text-gray-700 dark:text-gray-300 dark:text-gray-300">Scope</label>
-                <select value={scope} onChange={e => setScope(e.target.value)} className="mt-1 w-full rounded-lg border border-gray-300 dark:border-gray-600 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-800">
+                <select aria-label="Access scope" value={scope} onChange={e => setScope(e.target.value)} className="mt-1 w-full rounded-lg border border-gray-300 dark:border-gray-600 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-800">
                   <option value="support">Support (read-only)</option>
                   <option value="audit">Audit (read audit logs)</option>
                   <option value="full">Full (read/write)</option>
@@ -198,7 +198,7 @@ export default function PlatformAccessPage() {
               </div>
               <div>
                 <label className="text-sm font-medium text-gray-700 dark:text-gray-300 dark:text-gray-300">Expires In</label>
-                <select value={expiresIn} onChange={e => setExpiresIn(e.target.value)} className="mt-1 w-full rounded-lg border border-gray-300 dark:border-gray-600 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-800">
+                <select aria-label="Token expiry" value={expiresIn} onChange={e => setExpiresIn(e.target.value)} className="mt-1 w-full rounded-lg border border-gray-300 dark:border-gray-600 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-800">
                   <option value="1h">1 hour</option>
                   <option value="4h">4 hours</option>
                   <option value="24h">24 hours</option>
@@ -208,12 +208,12 @@ export default function PlatformAccessPage() {
               </div>
               <div>
                 <label className="text-sm font-medium text-gray-700 dark:text-gray-300 dark:text-gray-300">Reason <span className="text-red-500">*</span></label>
-                <textarea value={reason} onChange={e => setReason(e.target.value)} required rows={3} placeholder="e.g., Investigating user login issues reported on 2024-01-15" className="mt-1 w-full rounded-lg border border-gray-300 dark:border-gray-600 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-800" />
+                <textarea aria-label="Access reason" value={reason} onChange={e => setReason(e.target.value)} required rows={3} placeholder="e.g., Investigating user login issues reported on 2024-01-15" className="mt-1 w-full rounded-lg border border-gray-300 dark:border-gray-600 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-800" />
               </div>
             </div>
             <div className="mt-6 flex justify-end gap-2">
               <button onClick={() => setShowGrant(false)} className="rounded-lg border border-gray-300 dark:border-gray-600 px-4 py-2 text-sm dark:border-gray-700">Cancel</button>
-              <button onClick={handleGrant} disabled={granting || !reason.trim()} className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50">
+              <button onClick={handleGrant} disabled={granting || !reason.trim()} className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-blue-500">
                 {granting ? <Loader2 className="h-4 w-4 animate-spin" /> : "Grant Access"}
               </button>
             </div>
@@ -249,7 +249,7 @@ export default function PlatformAccessPage() {
                       <Clock className="h-3 w-3" /> {new Date(c.expires_at).toLocaleDateString()}
                     </span>
                   )}
-                  <button onClick={() => handleRevoke(c.id)} className="rounded-lg border border-red-300 px-3 py-1 text-xs text-red-600 hover:bg-red-50 dark:border-red-800">
+                  <button onClick={() => handleRevoke(c.id)} className="rounded-lg border border-red-300 px-3 py-1 text-xs text-red-600 hover:bg-red-50 dark:border-red-800 focus:outline-none focus:ring-2 focus:ring-blue-500">
                     Revoke
                   </button>
                 </div>

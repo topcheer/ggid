@@ -275,7 +275,7 @@ export default function ImportWizardPage() {
               <p className="text-xs text-gray-400">
                 {t("importWizard.upload.supportedFormats")} | {t("importWizard.upload.maxSize")}
               </p>
-              <input
+              <input aria-label="Import data"
                 ref={fileInputRef}
                 type="file"
                 accept=".json,.csv"
@@ -296,10 +296,10 @@ export default function ImportWizardPage() {
             {/* Sample Downloads */}
             <div className="mt-4 flex items-center gap-2">
               <span className="text-xs text-gray-500">Sample files:</span>
-              <button onClick={() => downloadSample("csv")} className="text-xs text-blue-600 hover:underline flex items-center gap-1">
+              <button onClick={() => downloadSample("csv")} className="text-xs text-blue-600 hover:underline flex items-center gap-1 focus:outline-none focus:ring-2 focus:ring-blue-500">
                 <Download className="w-3 h-3" /> sample-users.csv
               </button>
-              <button onClick={() => downloadSample("json")} className="text-xs text-blue-600 hover:underline flex items-center gap-1">
+              <button onClick={() => downloadSample("json")} className="text-xs text-blue-600 hover:underline flex items-center gap-1 focus:outline-none focus:ring-2 focus:ring-blue-500">
                 <Download className="w-3 h-3" /> sample-users.json
               </button>
             </div>
@@ -307,7 +307,7 @@ export default function ImportWizardPage() {
             {fileName && (
               <button
                 onClick={() => setStep("map")}
-                className="mt-4 flex items-center gap-2 px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium text-sm"
+                className="mt-4 flex items-center gap-2 px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
                 {t("importWizard.steps.map")}
                 <ArrowRight className="w-4 h-4" />
@@ -327,7 +327,7 @@ export default function ImportWizardPage() {
 
             <div className="space-y-2">
               {sourceFields.map((field: any) => (
-                <div key={field} className="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 dark:bg-gray-800 dark:hover:bg-gray-800">
+                <div key={field} className="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 dark:bg-gray-800 dark:hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500">
                   <div className="flex-1">
                     <span className="text-sm font-medium text-gray-900 dark:text-white dark:text-white">{field}</span>
                   </div>
@@ -351,14 +351,14 @@ export default function ImportWizardPage() {
             <div className="flex gap-2 mt-4">
               <button
                 onClick={() => setStep("upload")}
-                className="flex items-center gap-1.5 px-4 py-2 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 dark:text-gray-300 rounded-lg text-sm font-medium"
+                className="flex items-center gap-1.5 px-4 py-2 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 dark:text-gray-300 rounded-lg text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
                 <ArrowLeft className="w-4 h-4" />
                 {t("importWizard.preview.back")}
               </button>
               <button
                 onClick={() => setStep("preview")}
-                className="flex items-center gap-1.5 px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium"
+                className="flex items-center gap-1.5 px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
                 {t("importWizard.steps.preview")}
                 <ArrowRight className="w-4 h-4" />
@@ -418,7 +418,7 @@ export default function ImportWizardPage() {
             <div className="flex gap-2 mt-4">
               <button
                 onClick={() => setStep("map")}
-                className="flex items-center gap-1.5 px-4 py-2 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 dark:text-gray-300 rounded-lg text-sm font-medium"
+                className="flex items-center gap-1.5 px-4 py-2 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 dark:text-gray-300 rounded-lg text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
                 <ArrowLeft className="w-4 h-4" />
                 {t("importWizard.preview.back")}
@@ -426,7 +426,7 @@ export default function ImportWizardPage() {
               <button
                 onClick={handleImport}
                 disabled={step === "importing"}
-                className="flex items-center gap-2 px-6 py-2 bg-green-600 hover:bg-green-700 disabled:opacity-50 text-white rounded-lg text-sm font-medium"
+                className="flex items-center gap-2 px-6 py-2 bg-green-600 hover:bg-green-700 disabled:opacity-50 text-white rounded-lg text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
                 {step === "importing" ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
                 {step === "importing" ? t("importWizard.preview.importing") : t("importWizard.preview.confirmImport")}
@@ -451,7 +451,7 @@ export default function ImportWizardPage() {
 
             <button
               onClick={reset}
-              className="mt-6 flex items-center gap-2 px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium mx-auto"
+              className="mt-6 flex items-center gap-2 px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium mx-auto focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               <Upload className="w-4 h-4" />
               {t("importWizard.title")}

@@ -149,7 +149,7 @@ function TesterTab() {
             className="w-full px-4 py-3 pr-10 rounded-lg border border-gray-300 dark:border-gray-600 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 dark:bg-gray-800 text-sm text-gray-900 dark:text-white dark:text-white font-mono"
             autoFocus
           />
-          <button onClick={() => setShow(!show)} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:text-gray-400">
+          <button onClick={() => setShow(!show)} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500">
             {show ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
           </button>
         </div>
@@ -284,7 +284,7 @@ function ConfigTab() {
       <div>
         <label className="block text-sm font-medium text-gray-900 dark:text-white dark:text-white mb-1">{t("passwordStrength.config.customBlocklist")}</label>
         <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">{t("passwordStrength.config.customBlocklistDesc")}</p>
-        <textarea value={blocklist} onChange={(e) => setBlocklist(e.target.value)} rows={6}
+        <textarea aria-label="Password blocklist" value={blocklist} onChange={(e) => setBlocklist(e.target.value)} rows={6}
           placeholder={t("passwordStrength.config.customBlocklistPlaceholder")}
           className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 dark:bg-gray-800 text-sm font-mono text-gray-900 dark:text-white dark:text-white" />
         <p className="text-xs text-gray-400 mt-1">{blocklist.split("\n").filter(Boolean).length} words in blocklist</p>
@@ -297,7 +297,7 @@ function ConfigTab() {
       )}
 
       <button onClick={save} disabled={saving}
-        className="flex items-center gap-2 px-6 py-2.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white rounded-lg font-medium text-sm">
+        className="flex items-center gap-2 px-6 py-2.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white rounded-lg font-medium text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
         {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
         {t("passwordStrength.config.save")}
       </button>

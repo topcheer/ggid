@@ -413,7 +413,7 @@ function ConfigTab() {
         <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">
           {t("passwordMigration.config.graceDaysDesc")}
         </p>
-        <input
+        <input aria-label="Password"
           type="number"
           value={config.grace_days}
           onChange={(e) => setConfig({ ...config, grace_days: parseInt(e.target.value) || 0 })}
@@ -453,7 +453,7 @@ function ConfigTab() {
             <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 dark:text-gray-400 mb-1">
               {t("passwordMigration.config.emailSubject")}
             </label>
-            <input
+            <input aria-label="Password"
               type="text"
               value={config.email_subject}
               onChange={(e) => setConfig({ ...config, email_subject: e.target.value })}
@@ -486,7 +486,7 @@ function ConfigTab() {
       <button
         onClick={save}
         disabled={saving}
-        className="flex items-center gap-2 px-6 py-2.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white rounded-lg font-medium text-sm transition-colors"
+        className="flex items-center gap-2 px-6 py-2.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white rounded-lg font-medium text-sm transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500"
       >
         {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
         {t("passwordMigration.config.save")}
@@ -607,7 +607,7 @@ function UsersTab() {
         <button
           onClick={nudgeAll}
           disabled={sending || !users.some((u: any) => u.status === "pending")}
-          className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white rounded-lg text-sm font-medium"
+          className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white rounded-lg text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500"
         >
           {sending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
           {t("passwordMigration.users.sendNudgeAll")}
@@ -625,7 +625,7 @@ function UsersTab() {
       <div className="flex items-center gap-2">
         <div className="relative flex-1 max-w-xs">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-          <input
+          <input aria-label="Password"
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
@@ -694,7 +694,7 @@ function UsersTab() {
                       <button
                         onClick={() => sendNudge(u.user_id)}
                         disabled={sending}
-                        className="flex items-center gap-1 px-2.5 py-1 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white rounded text-xs font-medium ml-auto"
+                        className="flex items-center gap-1 px-2.5 py-1 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white rounded text-xs font-medium ml-auto focus:outline-none focus:ring-2 focus:ring-blue-500"
                       >
                         <Send className="w-3 h-3" />
                         {t("passwordMigration.users.sendNudge")}

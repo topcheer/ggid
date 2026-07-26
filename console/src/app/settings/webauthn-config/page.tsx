@@ -105,7 +105,7 @@ export default function WebAuthnConfigPage() {
           <label className="flex items-center gap-1.5 text-sm font-medium text-gray-700 dark:text-gray-300 dark:text-gray-300">
             <Fingerprint className="h-4 w-4" /> RP ID (Domain)
           </label>
-          <input
+          <input aria-label="Relying Party ID"
             type="text"
             value={rpId}
             onChange={e => setRpId(e.target.value)}
@@ -139,7 +139,7 @@ export default function WebAuthnConfigPage() {
           <button
             onClick={handleSave}
             disabled={saving || !rpId.trim()}
-            className="flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
+            className="flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
             {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
             Save Configuration
@@ -151,7 +151,7 @@ export default function WebAuthnConfigPage() {
       {!rpId && (
         <button
           onClick={() => { setRpId(currentHost); setOrigins(`https://${currentHost}`); }}
-          className="mt-3 text-sm text-blue-600 hover:underline"
+          className="mt-3 text-sm text-blue-600 hover:underline focus:outline-none focus:ring-2 focus:ring-blue-500"
         >
           Auto-fill with current domain ({currentHost})
         </button>

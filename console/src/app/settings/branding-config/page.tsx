@@ -115,7 +115,7 @@ export default function BrandingConfigPage() {
               </div>
             </div>
           </div>
-          <button onClick={save} disabled={saving} className="mt-4 flex items-center gap-2 rounded-lg bg-pink-600 px-4 py-2 text-sm font-medium text-white hover:bg-pink-700 disabled:opacity-50">
+          <button onClick={save} disabled={saving} className="mt-4 flex items-center gap-2 rounded-lg bg-pink-600 px-4 py-2 text-sm font-medium text-white hover:bg-pink-700 disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-blue-500">
             {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />} Save Theme
           </button>
           {msg && <p className="mt-2 text-sm text-green-600">{msg}</p>}

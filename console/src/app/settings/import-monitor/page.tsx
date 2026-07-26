@@ -80,7 +80,7 @@ export default function ImportMonitorPage() {
             </div>
             <p className="text-gray-600 dark:text-gray-400 dark:text-gray-400 text-sm">{t("importMonitor.description")}</p>
           </div>
-          <button onClick={load} className="flex items-center gap-1.5 px-3 py-1.5 bg-white dark:bg-gray-800 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 dark:border-gray-700 rounded-lg text-sm hover:bg-gray-50 dark:hover:bg-gray-700 dark:bg-gray-800 dark:hover:bg-gray-700">
+          <button onClick={load} className="flex items-center gap-1.5 px-3 py-1.5 bg-white dark:bg-gray-800 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 dark:border-gray-700 rounded-lg text-sm hover:bg-gray-50 dark:hover:bg-gray-700 dark:bg-gray-800 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500">
             <RefreshCw className="w-4 h-4" />
             {t("importMonitor.jobs.refresh")}
           </button>
@@ -175,7 +175,7 @@ function JobsList({ jobs, onSelect }: { jobs: ImportJob[]; onSelect: (id: string
 
             {job.failed > 0 && (
               <button onClick={() => onSelect(job.job_id)}
-                className="mt-3 flex items-center gap-1 text-xs text-blue-600 hover:underline">
+                className="mt-3 flex items-center gap-1 text-xs text-blue-600 hover:underline focus:outline-none focus:ring-2 focus:ring-blue-500">
                 <Eye className="w-3 h-3" />
                 {t("importMonitor.errors.title")} ({job.failed})
               </button>
@@ -246,7 +246,7 @@ function ErrorDetails({ jobs, selectedJob, onSelect }: {
         <div className="space-y-1">
           {jobs.filter((j: any) => j.failed > 0).map((j: any) => (
             <button key={j.job_id} onClick={() => onSelect(j.job_id)}
-              className="w-full flex items-center justify-between p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 dark:bg-gray-800 dark:hover:bg-gray-800 text-left">
+              className="w-full flex items-center justify-between p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 dark:bg-gray-800 dark:hover:bg-gray-800 text-left focus:outline-none focus:ring-2 focus:ring-blue-500">
               <div className="flex items-center gap-2">
                 <FileText className="w-4 h-4 text-gray-400" />
                 <span className="text-sm text-gray-900 dark:text-white dark:text-white">{j.file_name}</span>
@@ -265,7 +265,7 @@ function ErrorDetails({ jobs, selectedJob, onSelect }: {
   return (
     <div className="bg-white dark:bg-gray-800 dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 dark:border-gray-800 p-6">
       {/* Job selector */}
-      <select value={selectedJob} onChange={(e) => onSelect(e.target.value)}
+      <select aria-label="Select import job" value={selectedJob} onChange={(e) => onSelect(e.target.value)}
         className="w-full mb-4 px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 dark:bg-gray-800 text-sm text-gray-900 dark:text-white dark:text-white">
         {jobs.map((j: any) => (
           <option key={j.job_id} value={j.job_id}>{j.file_name} — {j.failed} errors</option>
@@ -293,7 +293,7 @@ function ErrorDetails({ jobs, selectedJob, onSelect }: {
             <tbody>
               {errors.map((e: any, i: number) => (
                 <>
-                  <tr key={i} className="border-b border-gray-100 dark:border-gray-800/50 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 dark:bg-gray-800 dark:hover:bg-gray-800/50" onClick={() => toggleRow(i)}>
+                  <tr key={i} className="border-b border-gray-100 dark:border-gray-800/50 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 dark:bg-gray-800 dark:hover:bg-gray-800/50 focus:outline-none focus:ring-2 focus:ring-blue-500" onClick={() => toggleRow(i)}>
                     <td className="py-2 px-3">
                       {expandedRows.has(i) ? <ChevronDown className="w-4 h-4 text-gray-400" /> : <ChevronRight className="w-4 h-4 text-gray-400" />}
                     </td>
@@ -400,7 +400,7 @@ function UploadTab({ onStarted }: { onStarted: () => void }) {
       )}
 
       <button onClick={startImport} disabled={!fileName || uploading}
-        className="mt-4 flex items-center gap-2 px-6 py-2.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white rounded-lg font-medium text-sm">
+        className="mt-4 flex items-center gap-2 px-6 py-2.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white rounded-lg font-medium text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
         {uploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Play className="w-4 h-4" />}
         {t("importMonitor.upload.start")}
       </button>
