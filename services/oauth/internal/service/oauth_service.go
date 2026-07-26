@@ -1468,6 +1468,22 @@ func (s *OAuthService) RevokeToken(tokenStr string, tokenTypeHint ...string) err
 	// Store the token hash in the revocation list.
 	tokenHash := hashTokenSHA256(tokenStr)
 
+	// Handle refresh token revocation: if the hint says refresh_token, or
+	// if the token doesn't parse as a JWT, try revoking it as a refresh
+	// token in the DB before falling back to the JWT blacklist path.
+	hintIsRefresh := len(tokenTypeHint) > 0 && tokenTypeHint[0] == "refresh_token"
+	if hintIsRefresh || !strings.Contains(tokenStr, ".") {
+		// Try to revoke as a refresh token in the DB.
+		if s.tokenRepo != nil {
+			_ = s.tokenRepo.RevokeRefreshToken(context.Background(), uuid.Nil, tokenHash)
+		}
+		// Also blacklist the hash in Redis (covers cross-instance checks).
+		if s.rdb != nil {
+			_ = s.rdb.Set(context.Background(), "oauth:revoked:"+tokenHash, "0", 0)
+		}
+		return nil
+	}
+
 	// Parse the token to get its claims (don't fail on invalid tokens).
 	claims, err := s.ParseAccessToken(tokenStr)
 	if err != nil {
