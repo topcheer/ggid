@@ -1554,7 +1554,13 @@ func (s *OAuthService) RefreshToken(ctx context.Context, req *RefreshTokenReques
 	}
 
 	// 8. Issue new access token.
-	accessToken, expiresIn, err := s.issueAccessToken(record.UserID, req.TenantID, resolveAudience(req.Audience, client.ClientID), joinScopes(req.Scope))
+	// SECURITY: Filter client-requested scopes to standard OAuth scopes only.
+	// Admin scopes (platform:*, tenant:*) come from the user's DB role keys,
+	// not from the refresh request — prevents scope escalation.
+	safeScopes := filterSafeScopes(req.Scope)
+	roleKeys := s.fetchUserRoleKeys(ctx, req.TenantID, record.UserID)
+	accessTokenScope := strings.TrimSpace(joinScopes(safeScopes) + " " + strings.Join(roleKeys, " "))
+	accessToken, expiresIn, err := s.issueAccessToken(record.UserID, req.TenantID, resolveAudience(req.Audience, client.ClientID), accessTokenScope)
 	if err != nil {
 		return nil, err
 	}
@@ -1570,7 +1576,7 @@ func (s *OAuthService) RefreshToken(ctx context.Context, req *RefreshTokenReques
 		ClientID:  client.ID,
 		UserID:    record.UserID,
 		TokenHash: hashTokenSHA256(newRefreshToken),
-		Scope:     req.Scope,
+		Scope:     safeScopes,
 		ExpiresAt: time.Now().Add(30 * 24 * time.Hour), // 30 days
 		FamilyID:  familyID,
 	}
@@ -1586,7 +1592,7 @@ func (s *OAuthService) RefreshToken(ctx context.Context, req *RefreshTokenReques
 		TokenType:    "Bearer",
 		ExpiresIn:    expiresIn,
 		RefreshToken: newRefreshToken,
-		Scope:        joinScopes(req.Scope),
+		Scope:        accessTokenScope,
 	}, nil
 }
 
@@ -1797,22 +1803,7 @@ func (s *OAuthService) PasswordGrant(ctx context.Context, req *PasswordGrantRequ
 
 	// SECURITY: Admin scopes (platform:*, tenant:*) come ONLY from the user's
 	// role keys in the database — never from the client's requested scope.
-	// The client may only request standard OAuth scopes (openid, profile,
-	// email, offline_access). This prevents scope escalation where a regular
-	// user requests scope=platform:admin and gets superuser access.
-	safeOAuthScopes := map[string]bool{
-		"openid":          true,
-		"profile":         true,
-		"email":           true,
-		"offline_access":  true,
-	}
-	var filteredScopes []string
-	for _, sc := range req.Scope {
-		if safeOAuthScopes[sc] {
-			filteredScopes = append(filteredScopes, sc)
-		}
-	}
-	// Admin scopes come exclusively from role keys.
+	filteredScopes := filterSafeScopes(req.Scope)
 	roleKeys := s.fetchUserRoleKeys(ctx, tenantID, userID)
 	scopeStr := strings.TrimSpace(joinScopes(filteredScopes) + " " + strings.Join(roleKeys, " "))
 
@@ -1989,6 +1980,25 @@ func validateTOTP(secret, code string) bool {
 			Algorithm: otp.AlgorithmSHA1,
 		})
 	return err == nil && valid
+}
+
+// filterSafeScopes returns only standard OAuth scopes from the input,
+// stripping any admin scopes (platform:*, tenant:*) that should only
+// come from DB role keys. This prevents scope escalation attacks.
+func filterSafeScopes(scopes []string) []string {
+	safeOAuthScopes := map[string]bool{
+		"openid":         true,
+		"profile":        true,
+		"email":          true,
+		"offline_access": true,
+	}
+	var filtered []string
+	for _, sc := range scopes {
+		if safeOAuthScopes[sc] {
+			filtered = append(filtered, sc)
+		}
+	}
+	return filtered
 }
 
 func joinScopes(scopes []string) string {
