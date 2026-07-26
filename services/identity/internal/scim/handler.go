@@ -307,13 +307,22 @@ func (h *Handler) listUsers(ctx context.Context, w http.ResponseWriter, r *http.
 
 	offset := startIndex - 1
 
-	// SCIM-01: Parse externalId filter from query param
+	// SCIM-01: Parse filter from query param
 	filterParam := r.URL.Query().Get("filter")
 	externalID := ""
+	searchFilter := ""
 	if filterParam != "" {
 		// Parse: externalId eq "value"
 		if matched := parseExternalIdFilter(filterParam); matched != "" {
 			externalID = matched
+		}
+		// Parse: userName eq "value"
+		if matched := parseSCIMFilter(filterParam, "username"); matched != "" {
+			searchFilter = matched
+		}
+		// Parse: emails.value eq "value"
+		if matched := parseSCIMFilter(filterParam, "emails.value"); matched != "" {
+			searchFilter = matched
 		}
 	}
 
@@ -323,6 +332,7 @@ func (h *Handler) listUsers(ctx context.Context, w http.ResponseWriter, r *http.
 		SortBy:     sortBy,
 		SortDesc:   sortDesc,
 		ExternalID: externalID,
+		Search:     searchFilter,
 	})
 	if err != nil {
 		writeSCIMErrorWithType(w, http.StatusInternalServerError, ScimTypeInvalidFilter, "internal server error")
@@ -802,6 +812,26 @@ func parseExternalIdFilter(filter string) string {
 		return ""
 	}
 	rest := filter[idx+len("externalid eq"):]
+	rest = strings.TrimSpace(rest)
+	if strings.HasPrefix(rest, "\"") {
+		end := strings.Index(rest[1:], "\"")
+		if end >= 0 {
+			return rest[1 : 1+end]
+		}
+	}
+	return ""
+}
+
+// parseSCIMFilter extracts a quoted value from a SCIM filter expression
+// like `userName eq "value"` or `emails.value eq "value"`.
+func parseSCIMFilter(filter, attrName string) string {
+	lower := strings.ToLower(filter)
+	prefix := strings.ToLower(attrName) + " eq"
+	idx := strings.Index(lower, prefix)
+	if idx < 0 {
+		return ""
+	}
+	rest := filter[idx+len(prefix):]
 	rest = strings.TrimSpace(rest)
 	if strings.HasPrefix(rest, "\"") {
 		end := strings.Index(rest[1:], "\"")
