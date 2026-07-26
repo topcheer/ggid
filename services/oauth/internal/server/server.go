@@ -1378,7 +1378,7 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 		}
 
 		// Verify the bearer token to get user info
-		claims, err := oauthSvc.ParseAccessToken(bearerToken)
+		claims, err := oauthSvc.ParseAccessTokenWithAudience(bearerToken, oauthSvc.GetIssuer())
 		if err != nil {
 			writeJSON(w, http.StatusUnauthorized, map[string]string{"error": "invalid token", "detail": err.Error()})
 			return

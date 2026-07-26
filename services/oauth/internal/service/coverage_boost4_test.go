@@ -428,7 +428,7 @@ func TestGetUserInfo_ValidToken_C4(t *testing.T) {
 	svc, _, _, _ := newTestOAuthService()
 
 	userID := uuid.New()
-	token, _, err := svc.issueAccessToken(userID, testTenantID, "client_x", "openid")
+	token, _, err := svc.issueAccessToken(userID, testTenantID, testIssuer, "openid")
 	if err != nil {
 		t.Fatalf("issueAccessToken: %v", err)
 	}

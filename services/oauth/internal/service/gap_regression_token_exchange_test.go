@@ -24,6 +24,7 @@ func TestTokenExchangeRFC8693_FullDelegationFlow(t *testing.T) {
 		"sub":   "user-subject-123",
 		"exp":   time.Now().Add(1 * time.Hour).Unix(),
 		"iss":   "https://test.ggid.dev",
+		"aud": "https://test.ggid.dev",
 		"scope": "read write admin",
 	})
 
@@ -61,12 +62,14 @@ func TestTokenExchangeRFC8693_WithActorToken(t *testing.T) {
 		"sub": "end-user-456",
 		"exp": time.Now().Add(1 * time.Hour).Unix(),
 		"iss": "https://test.ggid.dev",
+		"aud": "https://test.ggid.dev",
 	})
 
 	actorToken := signTestToken(svc, map[string]interface{}{
 		"sub": "service-actor-789",
 		"exp": time.Now().Add(1 * time.Hour).Unix(),
 		"iss": "https://test.ggid.dev",
+		"aud": "https://test.ggid.dev",
 	})
 
 	resp, err := svc.ExchangeToken(testCtxForExchange(), &TokenExchangeRequestRFC8693{
@@ -99,6 +102,7 @@ func TestTokenExchangeRFC8693_ScopeReduction(t *testing.T) {
 		"sub": "scope-user",
 		"exp": time.Now().Add(1 * time.Hour).Unix(),
 		"iss": "https://test.ggid.dev",
+		"aud": "https://test.ggid.dev",
 	})
 
 	// Request only a subset of the subject's scopes
@@ -142,6 +146,7 @@ func TestTokenExchangeRFC8693_ExpiredSubjectToken(t *testing.T) {
 		"sub": "expired-user",
 		"exp": time.Now().Add(-1 * time.Hour).Unix(), // expired 1 hour ago
 		"iss": "https://test.ggid.dev",
+		"aud": "https://test.ggid.dev",
 	})
 
 	_, err := svc.ExchangeToken(testCtxForExchange(), &TokenExchangeRequestRFC8693{

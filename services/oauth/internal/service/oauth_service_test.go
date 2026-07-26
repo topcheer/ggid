@@ -181,6 +181,7 @@ func (kp *mockKeyProvider) Close() error                { return nil }
 // --- Helpers ---
 
 var testTenantID = uuid.MustParse("00000000-0000-0000-0000-000000000020")
+var testIssuer = "https://test.ggid.dev"
 
 func newTestOAuthService() (*OAuthService, *mockClientRepo, *mockCodeRepo, *mockTokenRepo) {
 	clientRepo := newMockClientRepo()

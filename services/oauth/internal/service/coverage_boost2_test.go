@@ -708,7 +708,7 @@ func TestGetUserInfo_ValidToken(t *testing.T) {
 	claims := jwt.MapClaims{
 		"iss":       "https://test.ggid.dev",
 		"sub":       userID.String(),
-		"aud":       "userinfo-client",
+		"aud":       "https://test.ggid.dev",
 		"iat":       now.Unix(),
 		"exp":       expiresAt.Unix(),
 		"jti":       uuid.New().String(),
@@ -758,7 +758,7 @@ func TestExchangeToken_Success(t *testing.T) {
 	svc, _, _, _ := newTestOAuthService()
 
 	userID := uuid.New()
-	subjectToken, _, err := svc.issueAccessToken(userID, testTenantID, "source-client", "openid")
+	subjectToken, _, err := svc.issueAccessToken(userID, testTenantID, testIssuer, "openid")
 	if err != nil {
 		t.Fatalf("issueAccessToken: %v", err)
 	}

@@ -13,7 +13,7 @@ import (
 func TestSprint14_ExchangeToken_Success(t *testing.T) {
 	svc, _, _, _ := newTestOAuthService()
 	subjectToken := signTestToken(svc, map[string]interface{}{
-		"sub": "delegation-user", "exp": time.Now().Add(1 * time.Hour).Unix(), "iss": "https://test.ggid.dev",
+		"sub": "delegation-user", "exp": time.Now().Add(1 * time.Hour).Unix(), "iss": "https://test.ggid.dev", "aud": "https://test.ggid.dev",
 	})
 	resp, err := svc.ExchangeToken(context.Background(), &TokenExchangeRequestRFC8693{
 		SubjectToken: subjectToken, SubjectTokenType: "urn:ietf:params:oauth:token-type:access_token",
