@@ -4732,3 +4732,12 @@ Only Go has `/api/auth/refresh`. 6/7 demos lack refresh endpoint. SDKs all have 
 | Demo | ✅ all login+CRUD+401+tenant isolation; refresh/logout P2 noted |
 
 ### Next Dimension: 1 — Authentication Completeness (Cycle 1366) — Rotation 3
+
+## god_fullstack R31: Full Security Scan — 0 New Issues
+- **P0: 0 | P1: 0 | P2: 0** — clean scan
+- Checked: SQL injection, timing attacks, CORS, rate limiting, JWT expiry, alg:none, redirect_uri, PKCE, refresh token reuse — ALL PASS
+- `41f960400` (SetUserStatus clears deleted_at) audited ✅
+- Open items unchanged: P1-15 (OIDC end_session), P1-16 (PKCE plain), P2-14 (SCIM /Me), P2-15 (JWT aud default empty)
+- `make test`: EXIT=0, 65/65. Danger: 0.
+
+### Rotation 2 Complete — Starting Rotation 3
