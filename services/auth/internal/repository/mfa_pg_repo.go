@@ -153,6 +153,9 @@ func (r *pgMFADeviceRepository) GetEnabledDevice(ctx context.Context, tenantID, 
 		return nil, fmt.Errorf("get enabled mfa device: %w", err)
 	}
 
+	// Decrypt the TOTP secret (stored encrypted in DB).
+	device.Secret, _ = ggidcrypto.DecryptTOTPSecret(device.Secret)
+
 	tx.Commit(ctx)
 	return device, nil
 }

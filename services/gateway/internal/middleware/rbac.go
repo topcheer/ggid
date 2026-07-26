@@ -124,7 +124,11 @@ func RequireAdminScope(next http.Handler) http.Handler {
 			return
 		}
 
-		if hasAdminScope(claims.Scopes) || hasAdminScope(claims.Roles) {
+		// SECURITY: Only OAuth scopes (from token_endpoint, verified against client
+		// registration) grant admin access. Roles claim comes from DB role.name which
+		// is tenant-controlled — allowing it here would let a tenant admin create a
+		// role named "platform:admin" and escalate privileges.
+		if hasAdminScope(claims.Scopes) {
 			next.ServeHTTP(w, r)
 			return
 		}

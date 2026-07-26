@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"time"
 
+	ggidcrypto "github.com/ggid/ggid/pkg/crypto"
 	"github.com/ggid/ggid/services/auth/internal/domain"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
@@ -58,6 +59,12 @@ func scanMFA(row pgx.Row) (*domain.MFADevice, error) {
 	if err != nil {
 		return nil, err
 	}
+	// Decrypt the TOTP secret (stored encrypted in DB).
+	if d.Secret != "" {
+		if decrypted, dErr := ggidcrypto.DecryptTOTPSecret(d.Secret); dErr == nil {
+			d.Secret = decrypted
+		}
+	}
 	return d, nil
 }
 
@@ -74,11 +81,17 @@ func (r *pgMFADeviceRepo) CreateDevice(ctx context.Context, device *domain.MFADe
 		return err
 	}
 
-	err = tx.QueryRow(ctx, `
+		// Encrypt the TOTP secret before storing in DB.
+		encryptedSecret, encErr := ggidcrypto.EncryptTOTPSecret(device.Secret)
+		if encErr != nil {
+			return fmt.Errorf("encrypt totp secret: %w", encErr)
+		}
+
+		err = tx.QueryRow(ctx, `
 		INSERT INTO mfa_devices (id, tenant_id, user_id, name, secret, algorithm, digits, period, enabled)
 		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
 		RETURNING created_at, updated_at`,
-		device.ID, device.TenantID, device.UserID, device.Name, device.Secret,
+			device.ID, device.TenantID, device.UserID, device.Name, encryptedSecret,
 		device.Algorithm, device.Digits, device.Period, device.Enabled,
 	).Scan(&device.CreatedAt, &device.UpdatedAt)
 

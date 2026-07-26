@@ -66,7 +66,7 @@ func (s *OAuthService) RPInitiatedLogout(req *RPInitiatedLogoutRequest) (*RPInit
 		if req.IDTokenHint != "" {
 			claims, _ := s.ParseAccessToken(req.IDTokenHint)
 			if clientID, ok := claims["aud"].(string); ok && clientID != "" {
-				if client, cerr := s.clientRepo.GetClientByID(context.Background(), uuid.Nil, clientID); cerr == nil && client != nil {
+				if client, cerr := s.GetClient(context.Background(), clientID); cerr == nil && client != nil {
 					matched := false
 					for _, registered := range client.RedirectURIs {
 						if registered == req.PostLogoutRedirectURI {

@@ -4874,3 +4874,38 @@ Build: PASS. **Test fix**: `TestSend_DeliverySuccess` failed — SSRF protection
 **Rotation 3: 0 new P0/P1 in demos. All prior fixes stable. 1 test fix (SSRF localhost).**
 
 ### Next Dimension: 1 — Authentication Completeness (Cycle 1402) — Rotation 4
+
+## Cycle 1402: D1 Auth R4 — god R33-R35 Deep Audit (56→57 issues, 0 P0) (Round 1477)
+New commits: audit webhook wiring, alert evaluator DB rules, R33-R35 docs.
+Build: PASS. `make test`: EXIT=0, 65/65 (clean testcache). Danger: 0.
+
+### god_fullstack R33-R35 Cumulative Audit (57 issues, P0:0/P1:8/P2:49)
+**5 P1 items** (priority for fix):
+| ID | Finding | Status |
+|----|---------|--------|
+| P1-1 | Refresh token not bound to client_id | ⚠️ open |
+| P1-2 | Go SDK verifyTokenOnline skips iss claim | ⚠️ open |
+| P1-3 | MCP fetchJWKSKey unimplemented | ⚠️ open |
+| P1-4 | ForgotPassword logs user email (PII) | ⚠️ open |
+| P1-5 | CAP engine logs username via log.Printf | ⚠️ open |
+| P1-6 | JWKS rotation drops old keys | ⚠️ open |
+| P1-7 | post_logout_redirect_uri not validated (open redirect) | ⚠️ open |
+| P1-9 | TOTP secret stored plaintext (upgraded from P2-11) | ⚠️ open |
+
+**P1-8 withdrawn** (false positive — ValidateConditions IS called in auth/saml_handler.go:110).
+**P2-9 confirmed fixed** — ValidatePKCE now rejects plain.
+
+### Token Endpoint Boundary Verification ✅
+15 boundary conditions all verified: empty grant_type, code replay, client_id mismatch, redirect_uri mismatch, PKCE enforcement, refresh expiry/reuse, unsupported_grant, device RFC 8628, revocation. **All compliant.**
+
+### SCIM Verification ✅
+startIndex 1-based, count max 100 (Users), sortBy whitelist (SQL injection safe), ETag PUT CheckIfMatch. Gaps: ETag PATCH (P2-48), ETag DELETE (P2-52).
+
+### Three-Layer Alignment
+| Layer | Status |
+|-------|--------|
+| Core | ✅ build+test pass, 0 P0; 8 P1 open (assigned for fix) |
+| SDK | ✅ consistent; P1-2 (Go iss) open |
+| Demo | ✅ no change this cycle |
+
+### Next Dimension: 2 — Authorization Boundaries (Cycle 1408) — Rotation 4
