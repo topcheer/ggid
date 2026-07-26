@@ -394,11 +394,11 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 			})
 			return
 		}
-		// Validate S256 method is used when challenge is provided.
-		if codeChallenge != "" && codeChallengeMethod != "" && codeChallengeMethod != "S256" && codeChallengeMethod != "plain" {
+		// Validate S256 method is used when challenge is provided (OAuth 2.1: S256 only).
+		if codeChallenge != "" && codeChallengeMethod != "" && codeChallengeMethod != "S256" {
 			writeJSON(w, http.StatusBadRequest, map[string]string{
 				"error":             "invalid_request",
-				"error_description": "unsupported code_challenge_method: use S256 or plain",
+				"error_description": "unsupported code_challenge_method: only S256 is supported",
 			})
 			return
 		}

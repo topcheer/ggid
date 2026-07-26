@@ -146,7 +146,7 @@ func (s *OAuthService) ValidateClientAssertion(assertion, expectedClientID, clie
 }
 
 // VerifyCodeChallenge verifies a PKCE code_verifier against the stored code_challenge.
-// Implements S256 and plain methods per RFC 7636.
+// Implements S256 method per RFC 7636 / OAuth 2.1 (S256 only; plain is not supported).
 //
 // Returns true if the verifier matches the challenge.
 func VerifyCodeChallenge(challenge, verifier, method string) bool {
@@ -159,10 +159,6 @@ func VerifyCodeChallenge(challenge, verifier, method string) bool {
 		// S256: BASE64URL-ENCODE(SHA256(ASCII(code_verifier)))
 		computed := hashTokenSHA256(verifier)
 		return subtleConstantCompare(computed, challenge)
-
-	case "plain":
-		// Plain: code_verifier == code_challenge
-		return subtleConstantCompare(verifier, challenge)
 
 	default:
 		return false

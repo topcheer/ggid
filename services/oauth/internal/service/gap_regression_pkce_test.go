@@ -252,14 +252,9 @@ func TestPKCE_VerifyCodeChallenge_UnitTests(t *testing.T) {
 		t.Error("S256 verification should fail with wrong verifier")
 	}
 
-	// Plain correct
-	if !VerifyCodeChallenge(verifier, verifier, "plain") {
-		t.Error("plain verification should succeed when challenge==verifier")
-	}
-
-	// Plain wrong
-	if VerifyCodeChallenge("different", verifier, "plain") {
-		t.Error("plain verification should fail with mismatched challenge")
+	// Plain is no longer supported (OAuth 2.1: S256 only)
+	if VerifyCodeChallenge(verifier, verifier, "plain") {
+		t.Error("plain should be rejected per OAuth 2.1")
 	}
 
 	// Empty challenge

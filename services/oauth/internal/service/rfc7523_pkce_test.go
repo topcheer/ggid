@@ -443,10 +443,11 @@ func TestPKCE_VerifyCodeChallenge_S256(t *testing.T) {
 	}
 }
 
-func TestPKCE_VerifyCodeChallenge_Plain(t *testing.T) {
+func TestPKCE_VerifyCodeChallenge_PlainRejected(t *testing.T) {
 	verifier := "plain-verifier-12345678901234567890"
-	if !VerifyCodeChallenge(verifier, verifier, "plain") {
-		t.Error("expected plain challenge to match")
+	// OAuth 2.1: plain is not supported, should always fail
+	if VerifyCodeChallenge(verifier, verifier, "plain") {
+		t.Error("plain method should be rejected per OAuth 2.1")
 	}
 }
 
