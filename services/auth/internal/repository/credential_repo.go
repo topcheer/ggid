@@ -27,10 +27,12 @@ func NewCredentialRepository(db *pgxpool.Pool) *CredentialRepository {
 // FindByIDentifier looks up a credential by tenant + identifier (username or email).
 func (r *CredentialRepository) FindByIDentifier(ctx context.Context, tenantID uuid.UUID, identifier string) (*domain.Credential, error) {
 	row := r.db.QueryRow(ctx, `
-		SELECT id, tenant_id, user_id, type, identifier, secret, metadata,
-		       enabled, failed_attempts, locked_until, created_at, updated_at, last_used_at
-		FROM credentials
-		WHERE tenant_id = $1 AND identifier = $2 AND type = 'password'
+		SELECT c.id, c.tenant_id, c.user_id, c.type, c.identifier, c.secret, c.metadata,
+		       c.enabled, c.failed_attempts, c.locked_until, c.created_at, c.updated_at, c.last_used_at
+		FROM credentials c
+		LEFT JOIN users u ON u.id = c.user_id AND u.tenant_id = c.tenant_id
+		WHERE c.tenant_id = $1 AND c.type = 'password'
+		  AND (c.identifier = $2 OR u.email = $2 OR u.username = $2)
 		LIMIT 1`,
 		tenantID, identifier,
 	)

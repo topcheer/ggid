@@ -204,6 +204,7 @@ func TestCovMTLS_Binding_Matching(t *testing.T) {
 		"sub": "user-1",
 		"exp": time.Now().Add(1 * time.Hour).Unix(),
 		"iss": "https://test.ggid.dev",
+		"aud": "https://test.ggid.dev",
 		"cnf": map[string]any{"x5t#S256": thumb},
 	})
 	err := svc.ValidateMTLSBinding(token, thumb)

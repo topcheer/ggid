@@ -47,7 +47,7 @@ func TestClientCredentials_Audience(t *testing.T) {
 		t.Errorf("aud = %q, want https://api.example.com", got)
 	}
 
-	// 2. No audience → aud defaults to client_id (unchanged legacy behavior).
+	// 2. No audience → aud defaults to client_id.
 	resp2, err := svc.ClientCredentials(context.Background(), &ClientCredentialsRequest{
 		TenantID:     tenantID,
 		ClientID:     result.Client.ClientID,
@@ -57,7 +57,7 @@ func TestClientCredentials_Audience(t *testing.T) {
 		t.Fatalf("ClientCredentials: %v", err)
 	}
 	if got := parseAudClaim(t, resp2.AccessToken); got != result.Client.ClientID {
-		t.Errorf("default aud = %q, want %q", got, result.Client.ClientID)
+		t.Errorf("default aud = %q, want %q (client_id)", got, result.Client.ClientID)
 	}
 }
 

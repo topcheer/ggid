@@ -181,6 +181,11 @@ func (s *IdentityService) setStatus(ctx context.Context, id uuid.UUID, status do
 	return s.repo.SetUserStatus(ctx, tc.TenantID, id, status)
 }
 
+// SetUserStatus is the exported version for use by HTTP handlers.
+func (s *IdentityService) SetUserStatus(ctx context.Context, id uuid.UUID, status domain.UserStatus) (*domain.User, error) {
+	return s.setStatus(ctx, id, status)
+}
+
 // --- Registration & Email Verification ---
 
 // RegisterUser creates a new self-registered user and returns a verification token.
