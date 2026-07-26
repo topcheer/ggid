@@ -39,7 +39,7 @@ export default function HashChainPage() {
     setLoading(true);
     setError(null);
     try {
-      const data = await apiFetch<ChainStatus>("/api/v1/audit/hash-chain/status").catch(() => null);
+      const data = await apiFetch<ChainStatus>("/api/v1/audit/hash-chain").catch(() => null);
       if (data) setStatus(data);
     } catch {
       setError("Failed to load hash chain status");
@@ -53,7 +53,7 @@ export default function HashChainPage() {
   const handleReverify = async () => {
     setVerifying(true);
     try {
-      await apiFetch("/api/v1/audit/hash-chain/verify", { method: "POST" });
+      await apiFetch("/api/v1/audit/verify-integrity", { method: "POST" });
       await load();
     } catch {
       setError("Verification failed");
