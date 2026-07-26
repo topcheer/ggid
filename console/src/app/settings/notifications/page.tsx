@@ -66,7 +66,7 @@ export default function NotificationPreferencesPage() {
           {channels.map(c => (
             <div key={c.key} className="flex items-center justify-between">
               <div><p className="text-sm font-medium text-gray-900 dark:text-white dark:text-white">{c.label}</p><p className="text-xs text-gray-500">{c.desc}</p></div>
-              <button onClick={() => toggle(c.key)} className={`relative h-6 w-11 rounded-full transition-colors ${prefs[c.key] ? "bg-blue-600" : "bg-gray-300 dark:bg-gray-700"}`}>
+              <button onClick={() => toggle(c.key)} role="switch" aria-checked={prefs[c.key]} aria-label={`${c.label}: ${prefs[c.key] ? "enabled" : "disabled"}`} className={`relative h-6 w-11 rounded-full transition-colors ${prefs[c.key] ? "bg-blue-600" : "bg-gray-300 dark:bg-gray-700"}`}>
                 <span className={`absolute top-0.5 left-0.5 h-5 w-5 rounded-full bg-white transition-transform ${prefs[c.key] ? "translate-x-5" : ""}`}></span>
               </button>
             </div>
@@ -80,7 +80,7 @@ export default function NotificationPreferencesPage() {
           {categories.map(c => (
             <div key={c.key} className="flex items-center justify-between">
               <div><p className="text-sm font-medium text-gray-900 dark:text-white dark:text-white">{c.label}</p><p className="text-xs text-gray-500">{c.desc}</p></div>
-              <button onClick={() => toggle(c.key)} className={`relative h-6 w-11 rounded-full transition-colors ${prefs[c.key] ? "bg-blue-600" : "bg-gray-300 dark:bg-gray-700"}`}>
+              <button onClick={() => toggle(c.key)} role="switch" aria-checked={prefs[c.key]} aria-label={`${c.label}: ${prefs[c.key] ? "enabled" : "disabled"}`} className={`relative h-6 w-11 rounded-full transition-colors ${prefs[c.key] ? "bg-blue-600" : "bg-gray-300 dark:bg-gray-700"}`}>
                 <span className={`absolute top-0.5 left-0.5 h-5 w-5 rounded-full bg-white transition-transform ${prefs[c.key] ? "translate-x-5" : ""}`}></span>
               </button>
             </div>
@@ -89,7 +89,7 @@ export default function NotificationPreferencesPage() {
       </div>
 
       <div className="flex justify-end">
-        <button onClick={handleSave} disabled={saving} className="flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50">
+        <button onClick={handleSave} disabled={saving} aria-label="Save notification preferences" className="flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50">
           {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />} Save Preferences
         </button>
       </div>

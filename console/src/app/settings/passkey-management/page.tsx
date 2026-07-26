@@ -164,7 +164,7 @@ export default function PasskeyManagementPage() {
           <h1 className="text-2xl font-bold">{t("passkeyMgmt.title")}</h1>
           <p className="text-gray-600 dark:text-gray-400">{t("passkeyMgmt.subtitle")}</p>
         </div>
-        <button onClick={() => setShowEnroll(!showEnroll)} className="px-4 py-2 bg-blue-600 text-white rounded text-sm">
+        <button onClick={() => setShowEnroll(!showEnroll)} aria-label={showEnroll ? "Cancel passkey enrollment" : "Enroll new passkey"} className="px-4 py-2 bg-blue-600 text-white rounded text-sm">
           {showEnroll ? t("common.cancel") : t("passkeyMgmt.enrollPasskey")}
         </button>
       </div>
@@ -177,13 +177,14 @@ export default function PasskeyManagementPage() {
             <label className="text-sm font-medium">Device Name</label>
             <input
               type="text"
+              aria-label="Device name for new passkey"
               placeholder="e.g. Work Laptop, Personal Phone"
               value={enrollDevice}
               onChange={e => setEnrollDevice(e.target.value)}
               className="w-full border rounded px-3 py-2 text-sm mt-1"
             />
           </div>
-          <button onClick={enrollPasskey} className="px-4 py-2 bg-blue-600 text-white rounded text-sm">
+          <button onClick={enrollPasskey} aria-label="Start passkey enrollment" className="px-4 py-2 bg-blue-600 text-white rounded text-sm">
             Start Enrollment
           </button>
         </section>
@@ -242,7 +243,7 @@ export default function PasskeyManagementPage() {
                 <td className="p-3"><div className="flex flex-wrap gap-1">{(Array.isArray(p.transports) ? p.transports : []).map(t => <span key={t} className="px-1.5 py-0.5 bg-gray-100 dark:bg-gray-700 rounded text-xs font-mono">{t}</span>)}</div></td>
                 <td className="p-3"><span className={`px-2 py-0.5 rounded text-xs capitalize ${syncColor(p.syncStatus)}`}>{p.syncStatus.replace('-', ' ')}</span></td>
                 <td className="p-3">{p.backupEligible ? <span className="text-green-600 text-xs">Eligible</span> : <span className="text-gray-400 text-xs">N/A</span>}</td>
-                <td className="p-3"><button onClick={() => setRevokeTarget(p)} className="text-red-600 text-xs hover:underline">Revoke</button></td>
+                <td className="p-3"><button onClick={() => setRevokeTarget(p)} aria-label={`Revoke passkey for ${p.deviceName}`} className="text-red-600 text-xs hover:underline">Revoke</button></td>
               </tr>
             ))}
           </tbody>
@@ -273,8 +274,8 @@ export default function PasskeyManagementPage() {
             <h2 className="text-lg font-semibold">Revoke Passkey</h2>
             <p className="text-sm text-gray-600 dark:text-gray-400">You are about to revoke the passkey for <strong>{revokeTarget.deviceName}</strong> ({revokeTarget.platform}). The user will need to re-enroll this device to use passkey authentication again.</p>
             <div className="flex justify-end gap-3">
-              <button onClick={() => setRevokeTarget(null)} className="px-4 py-2 border rounded text-sm">Cancel</button>
-              <button onClick={confirmRevoke} className="px-4 py-2 bg-red-600 text-white rounded text-sm">Confirm Revoke</button>
+              <button onClick={() => setRevokeTarget(null)} aria-label="Cancel passkey revocation" className="px-4 py-2 border rounded text-sm">Cancel</button>
+              <button onClick={confirmRevoke} aria-label="Confirm revoke passkey" className="px-4 py-2 bg-red-600 text-white rounded text-sm">Confirm Revoke</button>
             </div>
           </div>
         </div>
