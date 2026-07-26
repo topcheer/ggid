@@ -69,21 +69,25 @@ export default function OAuthClientNewPage() {
   const create = async () => {
     setError("");
     if (!clientName) { setError(t("oauthWizard.confirm.clientName")); return; }
+    // Validate redirect URIs
+    const uris = redirectUris.split("\n").map((u: string) => u.trim()).filter(Boolean);
+    for (const u of uris) {
+      try { new URL(u); } catch { setError(t("oauthWizard.confirm.invalidRedirectUri") || `Invalid redirect URI: ${u}`); return; }
+    }
     setCreating(true);
     try {
       const scopes = [...selectedScopes];
       if (customScopes.trim()) scopes.push(...customScopes.trim().split(/\s+/));
+      const isPublic = appType === "spa" || appType === "mobile";
       const body: Record<string, unknown> = {
         client_name: clientName,
-        redirect_uris: redirectUris.split("\n").map((u: any) => u.trim()).filter(Boolean),
-        grant_types: appType === "m2m" ? ["client_credentials"] : ["authorization_code"],
+        type: isPublic ? "public" : "confidential",
+        redirect_uris: uris,
+        grant_types: appType === "m2m" ? ["client_credentials"] : ["authorization_code", "refresh_token"],
         response_types: appType === "m2m" ? ["token"] : ["code"],
-        token_endpoint_auth_method: authMethod,
+        token_endpoint_auth_method: isPublic ? "none" : authMethod,
         scopes,
       };
-      if (appType === "spa" || appType === "mobile") {
-        body.token_endpoint_auth_method = "none"; // PKCE
-      }
       const res = await fetch(`${API_BASE}/api/v1/oauth/clients`, {
         method: "POST", headers: { "Content-Type": "application/json", ...authHeader() },
         body: JSON.stringify(body),
