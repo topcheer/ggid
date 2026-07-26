@@ -949,20 +949,33 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 			return
 		}
 		_ = r.ParseForm()
-		// RFC 7009 §2.1: require client authentication
-		if !introspectRequestAuthenticated(oauthSvc, r) {
-			writeJSON(w, http.StatusUnauthorized, map[string]string{"error": "invalid_client"})
-			return
-		}
-		// RFC 7009 §2.1: verify the authenticated client owns the token.
-		// Extract the authenticated client_id for ownership check.
-		authClientID := extractAuthClientID(r)
 		token := r.FormValue("token")
 		tokenTypeHint := r.FormValue("token_type_hint")
+
+		// RFC 7009 §2.1: require client authentication.
+		// But allow public clients (e.g., SPAs) to revoke their own tokens
+		// by providing the token itself as proof of possession.
+		if !introspectRequestAuthenticated(oauthSvc, r) {
+			// Fallback for public clients: if a valid token is provided in the
+			// form body, verify it's active and use it as implicit auth.
+			// This lets password-grant clients revoke without client_secret.
+			if token == "" {
+				writeJSON(w, http.StatusUnauthorized, map[string]string{"error": "invalid_client"})
+				return
+			}
+			resp := oauthSvc.IntrospectToken(token)
+			if resp == nil || !resp.Active {
+				writeJSON(w, http.StatusUnauthorized, map[string]string{"error": "invalid_client"})
+				return
+			}
+			// Token is active — proceed with revocation.
+		}
+
+		// RFC 7009 §2.1: verify the authenticated client owns the token.
+		authClientID := extractAuthClientID(r)
 		if authClientID != "" && token != "" {
 			if !oauthSvc.ValidateTokenOwnership(token, authClientID) {
-				// Client doesn't own this token — still return 200 per RFC
-				// (don't leak information about token existence).
+				// Client doesn't own this token — still return 200 per RFC.
 				w.WriteHeader(http.StatusOK)
 				return
 			}
@@ -978,12 +991,20 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 			return
 		}
 		_ = r.ParseForm()
-		if !introspectRequestAuthenticated(oauthSvc, r) {
-			writeJSON(w, http.StatusUnauthorized, map[string]string{"error": "invalid_client"})
-			return
-		}
 		token := r.FormValue("token")
 		tokenTypeHint := r.FormValue("token_type_hint")
+		if !introspectRequestAuthenticated(oauthSvc, r) {
+			// Public client fallback: verify token is active.
+			if token == "" {
+				writeJSON(w, http.StatusUnauthorized, map[string]string{"error": "invalid_client"})
+				return
+			}
+			resp := oauthSvc.IntrospectToken(token)
+			if resp == nil || !resp.Active {
+				writeJSON(w, http.StatusUnauthorized, map[string]string{"error": "invalid_client"})
+				return
+			}
+		}
 		_ = oauthSvc.RevokeToken(token, tokenTypeHint)
 		w.WriteHeader(http.StatusOK)
 	})
