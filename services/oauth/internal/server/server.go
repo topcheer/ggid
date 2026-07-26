@@ -1526,6 +1526,7 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 				RedirectURIs            []string `json:"redirect_uris"`
 				Scopes                  []string `json:"scopes"`
 				TokenEndpointAuthMethod string   `json:"token_endpoint_auth_method"`
+				Description             string   `json:"description"`
 			}
 			if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
 				writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid request body"})
@@ -1553,6 +1554,7 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 				RedirectURIs:            body.RedirectURIs,
 				Scopes:                  body.Scopes,
 				TokenEndpointAuthMethod: body.TokenEndpointAuthMethod,
+				Description:             body.Description,
 			})
 			if err != nil {
 				writeInternalError(w, "CreateClient", err)

@@ -30,6 +30,7 @@ type OAuthClient struct {
 	ClientID                string         `json:"client_id"`       // public identifier
 	ClientSecretHash        string         `json:"client_secret_hash,omitempty"` // Argon2id hash; empty for public clients
 	Name                    string         `json:"name"`
+	Description             string         `json:"description,omitempty"`
 	Type                    ClientType     `json:"type"`
 	GrantTypes              []string       `json:"grant_types"`
 	ResponseTypes           []string       `json:"response_types"`

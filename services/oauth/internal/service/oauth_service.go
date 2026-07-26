@@ -101,6 +101,7 @@ func NewOAuthService(
 type CreateClientInput struct {
 	TenantID                uuid.UUID
 	Name                    string
+	Description             string
 	Type                    domain.ClientType
 	GrantTypes              []string
 	ResponseTypes           []string
@@ -124,6 +125,7 @@ func (s *OAuthService) CreateClient(ctx context.Context, input *CreateClientInpu
 		TenantID:                input.TenantID,
 		ClientID:                clientID,
 		Name:                    input.Name,
+		Description:             input.Description,
 		Type:                    input.Type,
 		GrantTypes:              input.GrantTypes,
 		ResponseTypes:           input.ResponseTypes,
@@ -144,6 +146,14 @@ func (s *OAuthService) CreateClient(ctx context.Context, input *CreateClientInpu
 	}
 	if client.RedirectURIs == nil {
 		client.RedirectURIs = []string{}
+	}
+
+	// Store description in metadata JSON (no dedicated DB column).
+	if input.Description != "" {
+		if client.Metadata == nil {
+			client.Metadata = map[string]any{}
+		}
+		client.Metadata["description"] = input.Description
 	}
 
 	var plaintextSecret string

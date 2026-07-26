@@ -75,6 +75,10 @@ func scanClient(row pgx.Row) (*domain.OAuthClient, error) {
 	if len(metadata) > 0 {
 		if err := json.Unmarshal(metadata, &c.Metadata); err != nil {
 			log.Printf("[WARN] oauth pg_repo: failed to unmarshal metadata for client %s: %v", c.ClientID, err)
+		} else if c.Metadata != nil {
+			if desc, ok := c.Metadata["description"].(string); ok {
+				c.Description = desc
+			}
 		}
 	}
 	return c, nil
