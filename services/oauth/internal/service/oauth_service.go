@@ -1406,6 +1406,25 @@ func (s *OAuthService) RevokeToken(tokenStr string, tokenTypeHint ...string) err
 			if jti := getStringClaim(claims, "jti"); jti != "" && exp > 0 {
 				s.rdb.ZAdd(context.Background(), "ggid:revoked_jti", float64(exp), jti)
 			}
+
+			// Cascade: revoke all refresh tokens for this user so the
+			// attacker can't simply mint a new access token after logout.
+			// This is critical for session termination security.
+			if s.pool != nil {
+				tenantIDStr := getStringClaim(claims, "tenant_id")
+				subStr := getStringClaim(claims, "sub")
+				if tenantIDStr != "" && subStr != "" {
+					tenantID, _ := uuid.Parse(tenantIDStr)
+					userID, _ := uuid.Parse(subStr)
+					if tenantID != uuid.Nil && userID != uuid.Nil {
+						ctx := context.Background()
+						_, _ = s.pool.Exec(ctx, fmt.Sprintf("SET app.tenant_id = '%s'", tenantID))
+						_, _ = s.pool.Exec(ctx,
+							`UPDATE oidc_refresh_tokens SET revoked = true WHERE tenant_id = $1 AND user_id = $2 AND revoked = false`,
+							tenantID, userID)
+					}
+				}
+			}
 			return nil
 		}
 	}
