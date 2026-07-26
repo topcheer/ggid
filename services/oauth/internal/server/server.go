@@ -939,8 +939,19 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 			writeJSON(w, http.StatusUnauthorized, map[string]string{"error": "invalid_client"})
 			return
 		}
+		// RFC 7009 §2.1: verify the authenticated client owns the token.
+		// Extract the authenticated client_id for ownership check.
+		authClientID := extractAuthClientID(r)
 		token := r.FormValue("token")
 		tokenTypeHint := r.FormValue("token_type_hint")
+		if authClientID != "" && token != "" {
+			if !oauthSvc.ValidateTokenOwnership(token, authClientID) {
+				// Client doesn't own this token — still return 200 per RFC
+				// (don't leak information about token existence).
+				w.WriteHeader(http.StatusOK)
+				return
+			}
+		}
 		_ = oauthSvc.RevokeToken(token, tokenTypeHint)
 		w.WriteHeader(http.StatusOK)
 	})
@@ -2328,6 +2339,18 @@ func introspectRequestAuthenticated(oauthSvc *service.OAuthService, r *http.Requ
 	}
 
 	return false
+}
+
+// extractAuthClientID extracts the client_id used for authentication from
+// either Basic auth or form-encoded client_id.
+func extractAuthClientID(r *http.Request) string {
+	if clientID, _, ok := r.BasicAuth(); ok && clientID != "" {
+		return clientID
+	}
+	if clientID := r.FormValue("client_id"); clientID != "" {
+		return clientID
+	}
+	return ""
 }
 
 // authenticateIntrospectClient verifies client credentials against the client

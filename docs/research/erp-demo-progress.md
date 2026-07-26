@@ -4527,3 +4527,42 @@ Build: PASS. `make test`: EXIT=0, 65/65. Danger patterns: 0.
 | Demo | ✅ all demos login+CRUD+401 (no change since C1324) |
 
 ### Next Dimension: 2 — Authorization Boundaries (Cycle 1336) — Rotation 2
+
+## Cycle 1336: D2 Authorization R2 — All Clean (Round 1466)
+New commit: `186416da7` (passkey revoke UserID vs TenantID fix). arch_pm confirmed false positives (PKID dead code, middleware order correct). Build: PASS. `make test`: EXIT=0, 65/65. Danger: 0.
+
+### D2 Authorization Boundaries (Rotation 2) — No New Issues
+
+#### Passkey Revoke Fix Verified ✅
+- `passkey_handler.go:122`: `WHERE id = $1 AND tenant_id = $2` — now correctly scopes by tenant, not user mismatch.
+- Memory fallback also checks ownership by JWT user ID. ✅
+
+#### Authorization Enforcement Chain — Still Solid ✅
+| Check | Location | Status |
+|-------|----------|--------|
+| Gateway tenant match | `middleware.go:707-736` | ✅ Only `platform:admin` bypass |
+| RBAC tenant scope | `rbac_dynamic.go:314` | ✅ `row.TenantID != claims.TenantID` → skip |
+| Route permission map | `rbac_dynamic.go:372-389` | ✅ 11 resource types mapped |
+| HasPermissionForRoute | `rbac_dynamic.go:392` | ✅ read/write/admin levels |
+| Admin-only paths | `rbac.go:34-50` | ✅ 17 prefixes incl impersonate, MDM, MFA |
+| Self-service exempt | `rbac.go:53-56` | ✅ `/users/me` + `/users/me/permissions` only |
+
+#### Per-Demo Authorization — Consistent ✅
+- Go: `requirePerm("orders:approve")` — viewer blocked ✅
+- Node: `requirePermission('orders:approve')` — viewer blocked ✅
+- All 8 demos: per-route `resource:action` checks verified in prior cycles
+
+#### arch_pm Triage Confirmed
+- P0 PKID race: FALSE POSITIVE (dead code, UUID used) ✅
+- P0 middleware order: FALSE POSITIVE (inside-out wrapping correct) ✅
+- P0 AuthGuard 401 cascade → P1 (refresh retry exists) ✅
+- All OAuth 2.1 compliance items → roadmap (password grant is first-party, can't remove) ✅
+
+### Three-Layer Alignment
+| Layer | Status |
+|-------|--------|
+| Core | ✅ passkey revoke fixed, admin paths secured, build+test pass |
+| SDK | ✅ no change |
+| Demo | ✅ authz consistent across all 8 demos |
+
+### Next Dimension: 3 — Demo Functional Completeness (Cycle 1342) — Rotation 2

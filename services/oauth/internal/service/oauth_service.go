@@ -592,7 +592,7 @@ func (s *OAuthService) GetDiscoveryConfig() *domain.OIDCDiscoveryConfig {
 		ScopesSupported:                   []string{"openid", "profile", "email", "offline_access"},
 		ClaimsSupported:                   []string{"sub", "email", "name", "picture", "groups", "preferred_username", "updated_at"},
 		TokenEndpointAuthMethodsSupported: []string{"client_secret_basic", "client_secret_post", "none", "tls_client_auth", "self_signed_tls_client_auth"},
-		CodeChallengeMethodsSupported:     []string{"S256", "plain"},
+		CodeChallengeMethodsSupported:     []string{"S256"}, // OAuth 2.1: S256 only
 		BackchannelLogoutSupported:        true,
 		FrontchannelLogoutSupported:       true,
 		EndSessionEndpoint:                base + "/oauth/logout",
@@ -1406,6 +1406,21 @@ func (s *OAuthService) ValidateState(clientID, state string) bool {
 
 // backchannelLogoutList stores subjects that have been globally logged out.
 var backchannelLogoutList sync.Map
+
+// ValidateTokenOwnership checks if the given client_id matches the token's
+// intended audience (aud claim). RFC 7009 §2.1 requires that the client
+// revoking a token must be the one that owns it.
+func (s *OAuthService) ValidateTokenOwnership(tokenStr, clientID string) bool {
+	if tokenStr == "" || clientID == "" {
+		return true // can't verify, allow (auth gate still applies)
+	}
+	claims, err := s.ParseAccessToken(tokenStr)
+	if err != nil {
+		return true // unparseable token — let RevokeToken handle it
+	}
+	aud := getStringClaim(claims, "aud")
+	return aud == clientID
+}
 
 // RevokeToken marks a token as revoked. The token's JWT ID is extracted and
 // stored in the blacklist. Subsequent introspection calls will return active=false.

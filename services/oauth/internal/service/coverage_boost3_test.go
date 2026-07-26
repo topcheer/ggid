@@ -243,8 +243,18 @@ func TestGetDiscoveryConfig_AllFields3(t *testing.T) {
 			t.Errorf("bad endpoint: %s", f)
 		}
 	}
-	if len(cfg.CodeChallengeMethodsSupported) < 2 {
-		t.Error("need >= 2 challenge methods")
+	if len(cfg.CodeChallengeMethodsSupported) < 1 {
+		t.Error("need >= 1 challenge method (S256)")
+	}
+	// Verify S256 is supported
+	foundS256 := false
+	for _, m := range cfg.CodeChallengeMethodsSupported {
+		if m == "S256" {
+			foundS256 = true
+		}
+	}
+	if !foundS256 {
+		t.Error("S256 must be supported")
 	}
 }
 
