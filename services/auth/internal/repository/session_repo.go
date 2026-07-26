@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"encoding/json"
+	"log"
 	"time"
 
 	"github.com/ggid/ggid/services/auth/internal/domain"
@@ -181,10 +182,14 @@ func scanSession(row rowScanner) (*domain.Session, error) {
 		return nil, err
 	}
 	if deviceInfo != nil {
-		_ = json.Unmarshal(deviceInfo, &s.DeviceInfo)
+		if err := json.Unmarshal(deviceInfo, &s.DeviceInfo); err != nil {
+			log.Printf("[WARN] session_repo: failed to unmarshal device_info for session %s: %v", s.ID, err)
+		}
 	}
 	if metadata != nil {
-		_ = json.Unmarshal(metadata, &s.Metadata)
+		if err := json.Unmarshal(metadata, &s.Metadata); err != nil {
+			log.Printf("[WARN] session_repo: failed to unmarshal metadata for session %s: %v", s.ID, err)
+		}
 	}
 	if revokedAt.Valid {
 		s.RevokedAt = &revokedAt.Time

@@ -800,6 +800,7 @@ func (s *OAuthService) fetchUserRoleKeys(ctx context.Context, tenantID, userID u
 // "block", "deny", "require_mfa") and the matching policy name.
 func (s *OAuthService) evaluateConditionalAccess(ctx context.Context, tenantID, userID uuid.UUID, username string) (action string, policyName string) {
 	if s.pool == nil {
+		log.Printf("CAP: pool nil, skipping")
 		return "allow", ""
 	}
 	rows, err := s.pool.Query(ctx, `
@@ -807,6 +808,7 @@ func (s *OAuthService) evaluateConditionalAccess(ctx context.Context, tenantID, 
 		WHERE data->>'tenant_id' = $1 AND (data->>'enabled')::bool = true
 		ORDER BY (data->>'priority')::int ASC NULLS LAST`, tenantID.String())
 	if err != nil {
+		log.Printf("CAP: query error for tenant %s: %v", tenantID.String(), err)
 		return "allow", ""
 	}
 	defer rows.Close()
@@ -870,11 +872,14 @@ func (s *OAuthService) evaluateConditionalAccess(ctx context.Context, tenantID, 
 		}
 		if matched {
 			if act == "block" || act == "deny" || act == "require_mfa" {
+				log.Printf("CAP: policy '%s' matched user '%s', action=%s", p.Name, username, act)
 				return act, p.Name
 			}
+			log.Printf("CAP: policy '%s' matched user '%s' but action='%s' (not blocking)", p.Name, username, act)
 			return "allow", ""
 		}
 	}
+	log.Printf("CAP: no policies matched for user '%s' (tenant=%s)", username, tenantID.String())
 	return "allow", ""
 }
 

@@ -65,10 +65,19 @@ func (r *policyMapRepo) Store(ctx context.Context, table, id string, data map[st
 	if id == "" {
 		id = uuid.New().String()
 	}
-	jsonData, _ := json.Marshal(data)
-	_, err := r.pool.Exec(ctx, fmt.Sprintf(
-		`INSERT INTO %s (id, data, created_at) VALUES ($1, $2, now())
-		 ON CONFLICT (id) DO UPDATE SET data = EXCLUDED.data`, table), id, jsonData)
+	jsonData, err := json.Marshal(data)
+	if err != nil {
+		return fmt.Errorf("marshal data: %w", err)
+	}
+	// Extract tenant_id from data payload so the tenant_id column is populated.
+	// This enables WHERE tenant_id = $1 filtering by the oauth service.
+	var tenantID any
+	if v, ok := data["tenant_id"]; ok {
+		tenantID = v
+	}
+	_, err = r.pool.Exec(ctx, fmt.Sprintf(
+		`INSERT INTO %s (id, tenant_id, data, created_at) VALUES ($1, $2, $3, now())
+		 ON CONFLICT (id) DO UPDATE SET data = EXCLUDED.data, tenant_id = EXCLUDED.tenant_id`, table), id, tenantID, jsonData)
 	return err
 }
 
@@ -90,7 +99,9 @@ func (r *policyMapRepo) List(ctx context.Context, table string) ([]map[string]an
 			continue
 		}
 		var m map[string]any
-		json.Unmarshal(data, &m)
+		if err := json.Unmarshal(data, &m); err != nil {
+				continue
+			}
 		m["id"] = id
 		m["created_at"] = created
 		result = append(result, m)
@@ -117,7 +128,9 @@ func (r *policyMapRepo) Get(ctx context.Context, table, id string) (map[string]a
 		return nil, err
 	}
 	var m map[string]any
-	json.Unmarshal(data, &m)
+	if err := json.Unmarshal(data, &m); err != nil {
+		return nil, fmt.Errorf("unmarshal data: %w", err)
+	}
 	m["id"] = id
 	m["created_at"] = created
 	return m, nil

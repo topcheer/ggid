@@ -732,7 +732,9 @@ func scanExternalIdentity(row pgx.Row) (*domain.ExternalIdentity, error) {
 		return nil, err
 	}
 	if len(metadata) > 0 {
-		_ = json.Unmarshal(metadata, &ei.Metadata)
+		if err := json.Unmarshal(metadata, &ei.Metadata); err != nil {
+			return nil, fmt.Errorf("unmarshal external identity metadata: %w", err)
+		}
 	}
 	return ei, nil
 }

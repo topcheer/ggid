@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	stderrors "errors"
 	"fmt"
+	"log"
 	"strings"
 	"time"
 
@@ -72,7 +73,9 @@ func scanClient(row pgx.Row) (*domain.OAuthClient, error) {
 	c.Scopes = scopes
 	c.TokenEndpointAuthMethod = authMethod
 	if len(metadata) > 0 {
-		_ = json.Unmarshal(metadata, &c.Metadata)
+		if err := json.Unmarshal(metadata, &c.Metadata); err != nil {
+			log.Printf("[WARN] oauth pg_repo: failed to unmarshal metadata for client %s: %v", c.ClientID, err)
+		}
 	}
 	return c, nil
 }
