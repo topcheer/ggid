@@ -265,3 +265,29 @@ R29 后 2 个新 commit：
 
 - **P1-15 误报修正**：OIDC discovery **已包含** end_session_endpoint，无需修复
 - **P1-16 降级为 P2-16**：discovery 声明 S256 only，但代码接受 plain — 不影响互操作（客户端按 discovery 走 S256 没问题），仅是内部不一致
+
+## R31 实施完成 — P2-14 + P2-15 + P2-16
+
+### P2-16 (frontend_qa): PKCE plain 移除 — commit 9e8c2fdd8
+- authorize 端点拒绝非 S256
+- VerifyCodeChallenge 移除 plain 分支
+- 与 discovery 声明一致
+
+### P2-14: SCIM /Me 端点 — commit b77fe6177
+- 新增 /scim/v2/Me 路由 (RFC 7643 §3.4)
+- 从 JWT Bearer token 的 sub claim 提取 user_id
+- 从 tenant_id claim 设置 tenant context (BOLA-safe)
+- 复用 getUser + ETag + attribute filtering
+
+### P2-15: JWT aud 验证 — commit b77fe6177
+- 新增 ParseAccessTokenWithAudience(tokenStr, expectedAudience)
+- ParseAccessToken 保持向后兼容（空 audience 跳过验证）
+- 支持 RFC 7519 §4.1.3 audience 验证
+
+### 测试结果
+- go build ./... — PASS
+- go test ./services/identity/internal/scim/... — PASS
+- go test ./services/oauth/... — PASS
+
+### 部署
+- identity + oauth 镜像构建推送，kubectl rollout 成功
