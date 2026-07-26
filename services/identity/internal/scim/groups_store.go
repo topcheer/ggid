@@ -36,28 +36,20 @@ func ensureGroupSchema(ctx context.Context, pool *pgxpool.Pool) {
 
 // dbCreateGroup inserts a new SCIM group.
 func dbCreateGroup(ctx context.Context, pool *pgxpool.Pool, tenantID uuid.UUID, g *SCIMGroup) error {
-	members, err := json.Marshal(g.Members)
-	if err != nil {
-		return err
-	}
-	_, err = pool.Exec(ctx, `
-		INSERT INTO scim_groups (id, tenant_id, display_name, members)
-		VALUES ($1, $2, $3, $4)
-		ON CONFLICT (id) DO UPDATE SET display_name = EXCLUDED.display_name,
-			members = EXCLUDED.members, updated_at = now()
-	`, g.ID, tenantID, g.DisplayName, members)
+	_, err := pool.Exec(ctx, `
+		INSERT INTO scim_groups (id, tenant_id, name)
+		VALUES ($1, $2, $3)
+		ON CONFLICT (id) DO UPDATE SET name = EXCLUDED.name, created_at = now()
+	`, g.ID, tenantID, g.DisplayName)
 	return err
 }
 
 // dbGetGroup loads a SCIM group by ID. Returns nil when not found.
 func dbGetGroup(ctx context.Context, pool *pgxpool.Pool, id string) (*SCIMGroup, error) {
-	var (
-		displayName string
-		membersRaw  []byte
-	)
+	var displayName string
 	err := pool.QueryRow(ctx, `
-		SELECT display_name, members FROM scim_groups WHERE id = $1
-	`, id).Scan(&displayName, &membersRaw)
+		SELECT name FROM scim_groups WHERE id = $1
+	`, id).Scan(&displayName)
 	if err != nil {
 		return nil, err
 	}
@@ -67,20 +59,19 @@ func dbGetGroup(ctx context.Context, pool *pgxpool.Pool, id string) (*SCIMGroup,
 		DisplayName: displayName,
 		Meta:        SCIMMeta{ResourceType: "Group", Location: "/scim/v2/Groups/" + id},
 	}
-	_ = json.Unmarshal(membersRaw, &g.Members)
 	return g, nil
 }
 
 // dbListGroups returns all persisted SCIM groups for a tenant (uuid.Nil
 // tenant lists all, preserving the previous tenant-agnostic behavior).
 func dbListGroups(ctx context.Context, pool *pgxpool.Pool, tenantID uuid.UUID) ([]SCIMGroup, error) {
-	query := `SELECT id, display_name, members FROM scim_groups`
+	query := `SELECT id, name FROM scim_groups`
 	args := []any{}
 	if tenantID != uuid.Nil {
 		query += ` WHERE tenant_id = $1`
 		args = append(args, tenantID)
 	}
-	query += ` ORDER BY display_name`
+	query += ` ORDER BY name`
 	rows, err := pool.Query(ctx, query, args...)
 	if err != nil {
 		return nil, err
@@ -90,9 +81,8 @@ func dbListGroups(ctx context.Context, pool *pgxpool.Pool, tenantID uuid.UUID) (
 	for rows.Next() {
 		var (
 			id, name   string
-			membersRaw []byte
 		)
-		if err := rows.Scan(&id, &name, &membersRaw); err != nil {
+		if err := rows.Scan(&id, &name); err != nil {
 			continue
 		}
 		g := SCIMGroup{
@@ -101,7 +91,6 @@ func dbListGroups(ctx context.Context, pool *pgxpool.Pool, tenantID uuid.UUID) (
 			DisplayName: name,
 			Meta:        SCIMMeta{ResourceType: "Group", Location: "/scim/v2/Groups/" + id},
 		}
-		_ = json.Unmarshal(membersRaw, &g.Members)
 		out = append(out, g)
 	}
 	return out, rows.Err()
