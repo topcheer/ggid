@@ -1088,6 +1088,12 @@ func (h *HTTPHandler) uploadAvatar(ctx context.Context, userID uuid.UUID, w http
 // --- Helpers ---
 
 func injectTenant(r *http.Request) (context.Context, bool) {
+	// Security (P0 BOLA fix): prefer tenant context already set by auth middleware.
+	// This prevents cross-tenant access via X-Tenant-ID header manipulation.
+	if existingTC, err := ggidtenant.FromContext(r.Context()); err == nil && existingTC.TenantID != uuid.Nil {
+		return r.Context(), true
+	}
+	// Fallback to X-Tenant-ID header.
 	tenantIDStr := r.Header.Get("X-Tenant-ID")
 	if tenantIDStr == "" {
 		return nil, false

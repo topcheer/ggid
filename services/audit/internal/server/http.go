@@ -332,14 +332,8 @@ func (s *HTTPServer) handleEvents(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	tenantIDStr := r.URL.Query().Get("tenant_id")
-	if tenantIDStr == "" {
-		writeJSONError(w, http.StatusBadRequest, "tenant_id query parameter is required")
-		return
-	}
-	tenantID, err := uuid.Parse(tenantIDStr)
-	if err != nil {
-		writeJSONError(w, http.StatusBadRequest, "invalid tenant_id")
+	tenantID, ok := resolveValidatedTenant(w, r)
+	if !ok {
 		return
 	}
 
@@ -449,18 +443,8 @@ func (s *HTTPServer) handleStats(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	tenantIDStr := r.URL.Query().Get("tenant_id")
-	if tenantIDStr == "" {
-		// Fallback: extract from X-Tenant-ID header (set by apiFetch)
-		tenantIDStr = r.Header.Get("X-Tenant-ID")
-	}
-	if tenantIDStr == "" {
-		writeJSONError(w, http.StatusBadRequest, "tenant_id query parameter or X-Tenant-ID header is required")
-		return
-	}
-	tenantID, err := uuid.Parse(tenantIDStr)
-	if err != nil {
-		writeJSONError(w, http.StatusBadRequest, "invalid tenant_id")
+	tenantID, ok := resolveValidatedTenant(w, r)
+	if !ok {
 		return
 	}
 
@@ -508,14 +492,8 @@ func (s *HTTPServer) handleExport(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	tenantIDStr := r.URL.Query().Get("tenant_id")
-	if tenantIDStr == "" {
-		writeJSONError(w, http.StatusBadRequest, "tenant_id query parameter is required")
-		return
-	}
-	tenantID, err := uuid.Parse(tenantIDStr)
-	if err != nil {
-		writeJSONError(w, http.StatusBadRequest, "invalid tenant_id")
+	tenantID, ok := resolveValidatedTenant(w, r)
+	if !ok {
 		return
 	}
 
@@ -634,14 +612,8 @@ func (s *HTTPServer) handleMetrics(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	tenantIDStr := r.URL.Query().Get("tenant_id")
-	if tenantIDStr == "" {
-		writeJSONError(w, http.StatusBadRequest, "tenant_id query parameter is required")
-		return
-	}
-	tenantID, err := uuid.Parse(tenantIDStr)
-	if err != nil {
-		writeJSONError(w, http.StatusBadRequest, "invalid tenant_id")
+	tenantID, ok := resolveValidatedTenant(w, r)
+	if !ok {
 		return
 	}
 
@@ -709,14 +681,8 @@ func (s *HTTPServer) handleStream(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	tenantIDStr := r.URL.Query().Get("tenant_id")
-	if tenantIDStr == "" {
-		writeJSONError(w, http.StatusBadRequest, "tenant_id query parameter is required")
-		return
-	}
-	tenantID, err := uuid.Parse(tenantIDStr)
-	if err != nil {
-		writeJSONError(w, http.StatusBadRequest, "invalid tenant_id")
+	tenantID, ok := resolveValidatedTenant(w, r)
+	if !ok {
 		return
 	}
 
@@ -779,14 +745,8 @@ func (s *HTTPServer) handleCorrelate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	tenantIDStr := r.URL.Query().Get("tenant_id")
-	if tenantIDStr == "" {
-		writeJSONError(w, http.StatusBadRequest, "tenant_id query parameter is required")
-		return
-	}
-	tenantID, err := uuid.Parse(tenantIDStr)
-	if err != nil {
-		writeJSONError(w, http.StatusBadRequest, "invalid tenant_id")
+	tenantID, ok := resolveValidatedTenant(w, r)
+	if !ok {
 		return
 	}
 
@@ -969,14 +929,8 @@ func (s *HTTPServer) handleSearch(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	tenantIDStr := r.URL.Query().Get("tenant_id")
-	if tenantIDStr == "" {
-		writeJSONError(w, http.StatusBadRequest, "tenant_id query parameter is required")
-		return
-	}
-	tenantID, err := uuid.Parse(tenantIDStr)
-	if err != nil {
-		writeJSONError(w, http.StatusBadRequest, "invalid tenant_id")
+	tenantID, ok := resolveValidatedTenant(w, r)
+	if !ok {
 		return
 	}
 
@@ -1075,14 +1029,8 @@ func (s *HTTPServer) handleVerifyIntegrity(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	tenantIDStr := r.URL.Query().Get("tenant_id")
-	if tenantIDStr == "" {
-		writeJSONError(w, http.StatusBadRequest, "tenant_id query parameter is required")
-		return
-	}
-	tenantID, err := uuid.Parse(tenantIDStr)
-	if err != nil {
-		writeJSONError(w, http.StatusBadRequest, "invalid tenant_id")
+	tenantID, ok := resolveValidatedTenant(w, r)
+	if !ok {
 		return
 	}
 
@@ -1587,14 +1535,8 @@ func (s *HTTPServer) handleComplianceReportV2(w http.ResponseWriter, r *http.Req
 		return
 	}
 
-	tenantIDStr := r.URL.Query().Get("tenant_id")
-	if tenantIDStr == "" {
-		writeJSONError(w, http.StatusBadRequest, "tenant_id is required")
-		return
-	}
-	tenantID, err := uuid.Parse(tenantIDStr)
-	if err != nil {
-		writeJSONError(w, http.StatusBadRequest, "invalid tenant_id")
+	tenantID, ok := resolveValidatedTenant(w, r)
+	if !ok {
 		return
 	}
 
@@ -1830,6 +1772,46 @@ func (s *HTTPServer) resolveActorNames(ctx context.Context, ids map[uuid.UUID]bo
 		}
 	}
 	return result
+}
+
+// resolveValidatedTenant extracts tenant_id from the request, validating that any
+// query-param tenant_id matches the X-Tenant-ID header (set by gateway from JWT).
+// Security (P1 BOLA fix): prevents cross-tenant audit log access via query param manipulation.
+// The header is authoritative (validated by gateway against JWT tenant_id).
+// Query param must match header if both are present.
+// If only header is present, uses header. If only query param, uses query param (for
+// backward compatibility with tamper-check which auto-discovers tenants).
+func resolveValidatedTenant(w http.ResponseWriter, r *http.Request) (uuid.UUID, bool) {
+	headerTenant := r.Header.Get("X-Tenant-ID")
+	queryTenant := r.URL.Query().Get("tenant_id")
+
+	// If header is set (gateway-validated), it takes precedence.
+	if headerTenant != "" {
+		hid, err := uuid.Parse(headerTenant)
+		if err != nil {
+			writeJSONError(w, http.StatusBadRequest, "invalid X-Tenant-ID header")
+			return uuid.Nil, false
+		}
+		// If query param also present, it MUST match header (prevent BOLA).
+		if queryTenant != "" && queryTenant != headerTenant {
+			writeJSONError(w, http.StatusForbidden, "tenant_id mismatch: query parameter does not match authenticated tenant")
+			return uuid.Nil, false
+		}
+		return hid, true
+	}
+
+	// Header not set — fallback to query param (e.g., tamper-check auto-discovery).
+	if queryTenant != "" {
+		qid, err := uuid.Parse(queryTenant)
+		if err != nil {
+			writeJSONError(w, http.StatusBadRequest, "invalid tenant_id")
+			return uuid.Nil, false
+		}
+		return qid, true
+	}
+
+	writeJSONError(w, http.StatusBadRequest, "tenant_id is required")
+	return uuid.Nil, false
 }
 
 func writeJSON(w http.ResponseWriter, status int, data any) {

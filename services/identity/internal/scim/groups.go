@@ -531,6 +531,11 @@ func defaultSCIMGroups(filter string) []SCIMGroup {
 }
 
 func tenantFromRequest(r *http.Request) (*ggidtenant.Context, error) {
+	// Security (P0 BOLA fix): prefer tenant context set by scimTokenAuth.
+	if existingTC, err := ggidtenant.FromContext(r.Context()); err == nil && existingTC.TenantID != uuid.Nil {
+		return existingTC, nil
+	}
+	// Fallback to X-Tenant-ID header for non-SCIM-token auth paths.
 	tenantID := r.Header.Get("X-Tenant-ID")
 	if tenantID == "" {
 		return nil, fmt.Errorf("missing tenant")
