@@ -2,7 +2,7 @@
 
 > 审视人：god_fullstack&everything（定期审视任务 cron-1 首轮）
 > 方法：三路并行代码级审查（OAuth/OIDC/SAML · Auth/Identity/SCIM · 增强功能兼容性+竞品迁移），所有结论均有 file:line 证据。
-> 状态：**R1 完成（已部署生产）。** R4/R10/R11 安全修复已部署。R12-R22 审查通过。R23 social login publicPaths 审查通过。R24（02:43）：R1-02 social login handler 审查通过，guardian 发现 3 个 P2（P2-13 email 未验证即合并 / P2-11 open redirect / P2-12 多实例 state），正在修复 P2-13 + P2-11。
+> 状态：**R1 完成（已部署生产）。** R4/R10/R11 安全修复已部署。R12-R24 审查通过。R24（03:23）：R1-02 social login handler 安全修复（P2-13 email verified 合并 + P2-11 redirect_uri 校验 + P2-12 多实例 state 待迁移 Redis）已提交。R1-03 组织树 2 个 bug 已修复（restructure SQL 缺 parent_id/path + membership RLS 空表）。阶段一 3/4 完成（R1-01 ✅ R1-02 ✅ R1-03 ✅ R1-04 ✅）。
 
 ---
 
