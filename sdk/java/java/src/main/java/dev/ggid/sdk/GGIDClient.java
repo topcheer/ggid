@@ -39,13 +39,21 @@ public class GGIDClient {
     // -----------------------------------------------------------------------
 
     public TokenSet login(String username, String password) throws GGIDException, IOException {
-        return post("/api/v1/auth/login", Map.of("username", username, "password", password),
-                TokenSet.class);
+        FormBody form = new FormBody.Builder()
+                .add("grant_type", "password")
+                .add("username", username)
+                .add("password", password)
+                .build();
+        return postForm("/api/v1/oauth/token", form, TokenSet.class);
     }
 
     public TokenSet refreshToken(String refreshToken) throws GGIDException, IOException {
-        return post("/api/v1/auth/refresh", Map.of("refresh_token", refreshToken),
-                TokenSet.class);
+        // OAuth2 token endpoint with form-encoded body (not JSON).
+        FormBody form = new FormBody.Builder()
+                .add("grant_type", "refresh_token")
+                .add("refresh_token", refreshToken)
+                .build();
+        return postForm("/api/v1/oauth/token", form, TokenSet.class);
     }
 
     public void logout(String accessToken) throws GGIDException, IOException {
@@ -308,6 +316,18 @@ public class GGIDClient {
 
     private <T> T post(String path, Object body, Class<T> type) throws GGIDException, IOException {
         Request request = buildRequest("POST", path, body);
+        return execute(request, type);
+    }
+
+    @SuppressWarnings("unchecked")
+    private <T> T postForm(String path, FormBody form, Class<T> type) throws GGIDException, IOException {
+        Request.Builder builder = new Request.Builder()
+                .url(gatewayUrl + path)
+                .header("X-Tenant-ID", tenantId);
+        if (apiKey != null && !apiKey.isEmpty()) {
+            builder.header("X-API-Key", apiKey);
+        }
+        Request request = builder.post(form).build();
         return execute(request, type);
     }
 

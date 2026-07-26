@@ -80,8 +80,12 @@ public class GGIDClient
     /// </summary>
     public async Task<TokenResponse> RefreshTokenAsync(string refreshToken, CancellationToken ct = default)
     {
-        var body = new { refresh_token = refreshToken };
-        return await PostAsync<TokenResponse>("/api/v1/auth/refresh", body, token: null, ct);
+        var dict = new Dictionary<string, string>
+        {
+            ["grant_type"] = "refresh_token",
+            ["refresh_token"] = refreshToken,
+        };
+        return await PostFormAsync<TokenResponse>("/api/v1/oauth/token", dict, ct);
     }
 
     // ── JWT Verification ──
