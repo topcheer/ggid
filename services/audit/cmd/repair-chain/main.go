@@ -70,10 +70,13 @@ func main() {
 
 func repairTenant(ctx context.Context, pool *pgxpool.Pool, tenantID uuid.UUID) (int, int, error) {
 	rows, err := pool.Query(ctx, `
-		SELECT id, tenant_id, actor_type, actor_id, action,
-		       COALESCE(resource_type, ''), resource_id, result,
-		       COALESCE(ip_address::text, ''),
-		       COALESCE(prev_hash, ''), COALESCE(hash, ''), created_at
+		SELECT id, tenant_id, actor_type, NULLIF(actor_id, '00000000-0000-0000-0000-000000000000'),
+		       COALESCE(actor_name,''), action,
+		       COALESCE(resource_type, ''), NULLIF(resource_id, '00000000-0000-0000-0000-000000000000'),
+		       COALESCE(resource_name,''), result,
+		       COALESCE(host(ip_address), ''),
+		       COALESCE(user_agent,''), COALESCE(request_id,''),
+		       COALESCE(prev_hash, ''), COALESCE(hash, ''), created_at, COALESCE(metadata, '{}')
 		FROM audit_events WHERE tenant_id = $1
 		ORDER BY created_at ASC, id ASC`, tenantID)
 	if err != nil {
@@ -82,9 +85,11 @@ func repairTenant(ctx context.Context, pool *pgxpool.Pool, tenantID uuid.UUID) (
 	var events []*domain.AuditEvent
 	for rows.Next() {
 		e := &domain.AuditEvent{}
-		if err := rows.Scan(&e.ID, &e.TenantID, &e.ActorType, &e.ActorID, &e.Action,
-			&e.ResourceType, &e.ResourceID, &e.Result, &e.IPAddress,
-			&e.PrevHash, &e.Hash, &e.CreatedAt); err != nil {
+		if err := rows.Scan(&e.ID, &e.TenantID, &e.ActorType, &e.ActorID,
+			&e.ActorName, &e.Action,
+			&e.ResourceType, &e.ResourceID, &e.ResourceName, &e.Result,
+			&e.IPAddress, &e.UserAgent, &e.RequestID,
+			&e.PrevHash, &e.Hash, &e.CreatedAt, &e.Metadata); err != nil {
 			rows.Close()
 			return 0, 0, err
 		}
