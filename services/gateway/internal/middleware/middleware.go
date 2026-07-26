@@ -3,6 +3,7 @@ package middleware
 
 import (
 	"context"
+	"crypto/tls"
 	"crypto/rand"
 	"crypto/rsa"
 	"crypto/sha256"
@@ -430,7 +431,14 @@ func NewJWKSClient(jwksURL, publicKeyPath string) (*JWKSClient, error) {
 	c := &JWKSClient{
 		jwksURL:    jwksURL,
 		keys:       make(map[string]*rsa.PublicKey),
-		httpClient: &http.Client{Timeout: 10 * time.Second},
+		httpClient: &http.Client{
+			Timeout: 10 * time.Second,
+			Transport: &http.Transport{
+				TLSClientConfig: &tls.Config{
+					MinVersion: tls.VersionTLS12,
+				},
+			},
+		},
 	}
 
 	if publicKeyPath != "" {
