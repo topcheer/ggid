@@ -102,7 +102,9 @@ export default function CCMPage() {
         <div className="flex gap-1 mb-6 bg-gray-200 dark:bg-gray-800 rounded-lg p-1">
           {tabs.map(({ id, label, icon: Icon }) => (
             <button key={id} onClick={() => setTab(id)}
-              className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+              aria-pressed={tab === id}
+              aria-label={`${label} tab`}
+              className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 ${
                 tab === id ? "bg-white dark:bg-gray-700 text-blue-600 dark:text-blue-400 shadow-sm" : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
               }`}>
               <Icon className="w-4 h-4" />{label}
@@ -126,13 +128,22 @@ function ControlsTab({ controls, loading, framework, setFramework }: {
   const t = useTranslations();
 
   if (loading) return <Spinner />;
+  if (controls.length === 0) {
+    return (
+      <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-12 text-center">
+        <ShieldCheck className="mx-auto h-12 w-12 text-gray-300" />
+        <p className="mt-4 text-sm font-medium text-gray-500">No controls found</p>
+        <p className="mt-1 text-xs text-gray-400">No CCM controls match the selected framework filter.</p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-3">
       <div className="flex gap-2">
-        <button onClick={() => setFramework("all")} className={`px-3 py-1.5 rounded-lg text-xs font-medium ${framework === "all" ? "bg-blue-600 text-white" : "bg-white dark:bg-gray-800 text-gray-600 border border-gray-200 dark:border-gray-700"}`}>{t("ccm.controls.frameworkAll")}</button>
+        <button onClick={() => setFramework("all")} aria-pressed={framework === "all"} aria-label="All frameworks" className={`px-3 py-1.5 rounded-lg text-xs font-medium focus:outline-none focus:ring-2 focus:ring-blue-500 ${framework === "all" ? "bg-blue-600 text-white" : "bg-white dark:bg-gray-800 text-gray-600 border border-gray-200 dark:border-gray-700"}`}>{t("ccm.controls.frameworkAll")}</button>
         {FRAMEWORKS.map((f: any) => (
-          <button key={f} onClick={() => setFramework(f)} className={`px-3 py-1.5 rounded-lg text-xs font-medium ${framework === f ? "bg-blue-600 text-white" : "bg-white dark:bg-gray-800 text-gray-600 border border-gray-200 dark:border-gray-700"}`}>{f}</button>
+          <button key={f} onClick={() => setFramework(f)} aria-pressed={framework === f} aria-label={`Filter by ${f}`} className={`px-3 py-1.5 rounded-lg text-xs font-medium focus:outline-none focus:ring-2 focus:ring-blue-500 ${framework === f ? "bg-blue-600 text-white" : "bg-white dark:bg-gray-800 text-gray-600 border border-gray-200 dark:border-gray-700"}`}>{f}</button>
         ))}
       </div>
 

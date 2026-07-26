@@ -440,7 +440,8 @@ export default function AuditAdvancedPage() {
       <select
         value={cond.field}
         onChange={(e) => updateCondition(groupId, cond.id, { field: e.target.value as FieldType })}
-        className="rounded-md border border-gray-300 px-2 py-1.5 text-xs dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200"
+        aria-label="Query field"
+        className="rounded-md border border-gray-300 px-2 py-1.5 text-xs dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
       >
         {Object.entries(FIELD_LABELS).map(([val, label]: any[]) => (
           <option key={val} value={val}>{label}</option>
@@ -449,7 +450,8 @@ export default function AuditAdvancedPage() {
       <select
         value={cond.operator}
         onChange={(e) => updateCondition(groupId, cond.id, { operator: e.target.value as Operator })}
-        className="rounded-md border border-gray-300 px-2 py-1.5 text-xs dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200"
+        aria-label="Query operator"
+        className="rounded-md border border-gray-300 px-2 py-1.5 text-xs dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
       >
         {Object.entries(OPERATOR_LABELS).map(([val, label]: any[]) => (
           <option key={val} value={val}>{label}</option>
@@ -510,7 +512,8 @@ export default function AuditAdvancedPage() {
       )}
       <button
         onClick={() => removeCondition(groupId, cond.id)}
-        className="rounded p-1 text-gray-400 hover:bg-red-50 hover:text-red-500 dark:hover:bg-red-950"
+        aria-label="Remove condition"
+        className="rounded p-1 text-gray-400 hover:bg-red-50 hover:text-red-500 dark:hover:bg-red-950 focus:outline-none focus:ring-2 focus:ring-red-500"
       >
         <X className="h-3.5 w-3.5" />
       </button>
@@ -532,14 +535,16 @@ export default function AuditAdvancedPage() {
           {!isRoot && (
             <button
               onClick={() => isRoot ? null : removeGroup(rootGroup.id, group.id)}
-              className="rounded p-1 text-gray-400 hover:bg-red-50 hover:text-red-500 dark:hover:bg-red-950"
+              aria-label="Remove condition group"
+              className="rounded p-1 text-gray-400 hover:bg-red-50 hover:text-red-500 dark:hover:bg-red-950 focus:outline-none focus:ring-2 focus:ring-red-500"
             >
               <X className="h-3.5 w-3.5" />
             </button>
           )}
           <button
             onClick={() => toggleGroupLogic(group.id)}
-            className={`rounded-md px-2 py-1 text-xs font-bold ${
+            aria-label={`Toggle logic (currently ${group.logic})`}
+            className={`rounded-md px-2 py-1 text-xs font-bold focus:outline-none focus:ring-2 focus:ring-blue-500 ${
               group.logic === "AND"
                 ? "bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-400"
                 : "bg-purple-100 text-purple-700 dark:bg-purple-950 dark:text-purple-400"
@@ -560,7 +565,8 @@ export default function AuditAdvancedPage() {
         <div className="mt-3 flex gap-2">
           <button
             onClick={() => addCondition(group.id)}
-            className="flex items-center gap-1 rounded-md border border-gray-300 px-2 py-1 text-xs font-medium text-gray-600 hover:bg-gray-100 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700"
+            aria-label="Add condition"
+            className="flex items-center gap-1 rounded-md border border-gray-300 px-2 py-1 text-xs font-medium text-gray-600 hover:bg-gray-100 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
             <Plus className="h-3 w-3" /> Condition
           </button>
@@ -583,13 +589,15 @@ export default function AuditAdvancedPage() {
         <div className="flex gap-2">
           <button
             onClick={() => handleExport("csv")}
-            className="flex items-center gap-1.5 rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700"
+            aria-label="Export results as CSV"
+            className="flex items-center gap-1.5 rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
             <Download className="h-4 w-4" /> CSV
           </button>
           <button
             onClick={loadData}
-            className="flex items-center gap-2 rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700"
+            aria-label="Run audit query"
+            className="flex items-center gap-2 rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
             <RefreshCw className="h-4 w-4" /> Run Query
           </button>
@@ -824,6 +832,9 @@ export default function AuditAdvancedPage() {
                       <p className="truncate text-xs font-medium">{r.name}</p>
                       <button
                         onClick={() => toggleReport(r.id)}
+                        role="switch"
+                        aria-checked={r.enabled}
+                        aria-label={`Toggle report: ${r.name}`}
                         className={`relative inline-flex h-4 w-7 shrink-0 rounded-full transition-colors ${
                           r.enabled ? "bg-brand-600" : "bg-gray-300 dark:bg-gray-600"
                         }`}
@@ -839,7 +850,8 @@ export default function AuditAdvancedPage() {
                     </div>
                     <button
                       onClick={() => deleteReport(r.id)}
-                      className="mt-1 text-[10px] text-gray-300 opacity-0 group-hover:opacity-100 hover:text-red-500"
+                      aria-label={`Delete report: ${r.name}`}
+                      className="mt-1 text-[10px] text-gray-300 opacity-0 group-hover:opacity-100 hover:text-red-500 focus:opacity-100 focus:outline-none focus:ring-2 focus:ring-red-500"
                     >
                       Delete
                     </button>
