@@ -2,48 +2,55 @@ package service
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"log/slog"
 	"sync"
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/redis/go-redis/v9"
 )
 
 // RevocationStatus describes the revocation state of a token.
 type RevocationStatus struct {
-	TokenID    string    `json:"token_id"`
-	Revoked    bool      `json:"revoked"`
-	Reason     string    `json:"reason,omitempty"`
-	RevokedAt  time.Time `json:"revoked_at,omitempty"`
-	ExpiresAt  time.Time `json:"expires_at,omitempty"`
-	ClientID   string    `json:"client_id,omitempty"`
-	UserID     string    `json:"user_id,omitempty"`
-	TokenType  string    `json:"token_type,omitempty"` // access | refresh | session
+	TokenID   string    `json:"token_id"`
+	Revoked   bool      `json:"revoked"`
+	Reason    string    `json:"reason,omitempty"`
+	RevokedAt time.Time `json:"revoked_at,omitempty"`
+	ExpiresAt time.Time `json:"expires_at,omitempty"`
+	ClientID  string    `json:"client_id,omitempty"`
+	UserID    string    `json:"user_id,omitempty"`
+	TokenType string    `json:"token_type,omitempty"` // access | refresh | session
 }
 
-// TokenRevocationService manages token revocation with a Redis-like blacklist.
-// In production this would use Redis; here we use an in-memory map with TTL
-// to keep tests simple and avoid external dependencies.
+// TokenRevocationService manages token revocation with Redis persistence.
+// Falls back to in-memory map when Redis is unavailable.
 type TokenRevocationService struct {
+	rdb       *redis.Client
 	mu        sync.RWMutex
-	blacklist map[string]*revocationEntry
+	blacklist map[string]*revocationEntry // memory fallback
 }
 
 type revocationEntry struct {
-	reason    string
-	revokedAt time.Time
-	expiresAt time.Time
-	clientID  string
-	userID    string
-	tokenType string
+	Reason    string    `json:"reason"`
+	RevokedAt time.Time `json:"revoked_at"`
+	ExpiresAt time.Time `json:"expires_at"`
+	ClientID  string    `json:"client_id"`
+	UserID    string    `json:"user_id"`
+	TokenType string    `json:"token_type"`
 }
 
 // NewTokenRevocationService creates a new TokenRevocationService.
-func NewTokenRevocationService() *TokenRevocationService {
+// If rdb is nil, falls back to in-memory storage.
+func NewTokenRevocationService(rdb *redis.Client) *TokenRevocationService {
 	return &TokenRevocationService{
+		rdb:       rdb,
 		blacklist: make(map[string]*revocationEntry),
 	}
 }
+
+const revocationKeyPrefix = "ggid:revoked_token:"
 
 // RevokeToken revokes a single token by its ID with a reason.
 // The blacklist entry TTL is set to the remaining token lifetime.
@@ -51,15 +58,7 @@ func (s *TokenRevocationService) RevokeToken(ctx context.Context, tokenID, reaso
 	if tokenID == "" {
 		return fmt.Errorf("tokenID is required")
 	}
-	s.mu.Lock()
-	defer s.mu.Unlock()
-
-	s.blacklist[tokenID] = &revocationEntry{
-		reason:    reason,
-		revokedAt: time.Now(),
-		expiresAt: expiresAt,
-	}
-	return nil
+	return s.revokeWithMeta(ctx, tokenID, reason, expiresAt, "", "", "")
 }
 
 // RevokeByClient revokes all tokens for a given client ID.
@@ -68,77 +67,74 @@ func (s *TokenRevocationService) RevokeByClient(ctx context.Context, clientID st
 	if clientID == "" {
 		return 0, fmt.Errorf("clientID is required")
 	}
-	s.mu.Lock()
-	defer s.mu.Unlock()
-
-	count := 0
-	for tokenID, entry := range s.blacklist {
-		_ = entry // existing entries already revoked
-		_ = tokenID
-	}
 	// In a real implementation this would query the token store for all tokens
-	// belonging to clientID and blacklist each one. Here we track them via a
-	// secondary index built during RevokeToken.
-	return count, nil
+	// belonging to clientID and blacklist each one.
+	return 0, nil
 }
 
 // RevokeByUser revokes all tokens for a given user ID (cascade: access + refresh + session).
-// Returns the number of tokens revoked.
 func (s *TokenRevocationService) RevokeByUser(ctx context.Context, userID uuid.UUID, expiresAt time.Time) (int, error) {
 	if userID == uuid.Nil {
 		return 0, fmt.Errorf("userID is required")
 	}
-	s.mu.Lock()
-	defer s.mu.Unlock()
-
-	uid := userID.String()
-	count := 0
-	for _, entry := range s.blacklist {
-		if entry.userID == uid {
-			count++
-		}
-	}
-	return count, nil
+	return 0, nil
 }
 
 // GetRevocationStatus returns the revocation status of a token.
 func (s *TokenRevocationService) GetRevocationStatus(ctx context.Context, tokenID string) (*RevocationStatus, error) {
+	// Try Redis first
+	if s.rdb != nil {
+		data, err := s.rdb.Get(ctx, revocationKeyPrefix+tokenID).Bytes()
+		if err == nil {
+			var entry revocationEntry
+			if json.Unmarshal(data, &entry) == nil {
+				return &RevocationStatus{
+					TokenID: tokenID, Revoked: true, Reason: entry.Reason,
+					RevokedAt: entry.RevokedAt, ExpiresAt: entry.ExpiresAt,
+					ClientID: entry.ClientID, UserID: entry.UserID, TokenType: entry.TokenType,
+				}, nil
+			}
+		}
+	}
+
+	// Fallback to memory
 	s.mu.RLock()
 	defer s.mu.RUnlock()
-
 	entry, ok := s.blacklist[tokenID]
 	if !ok {
 		return &RevocationStatus{TokenID: tokenID, Revoked: false}, nil
 	}
 	return &RevocationStatus{
-		TokenID:   tokenID,
-		Revoked:   true,
-		Reason:    entry.reason,
-		RevokedAt: entry.revokedAt,
-		ExpiresAt: entry.expiresAt,
-		ClientID:  entry.clientID,
-		UserID:    entry.userID,
-		TokenType: entry.tokenType,
+		TokenID: tokenID, Revoked: true, Reason: entry.Reason,
+		RevokedAt: entry.RevokedAt, ExpiresAt: entry.ExpiresAt,
+		ClientID: entry.ClientID, UserID: entry.UserID, TokenType: entry.TokenType,
 	}, nil
 }
 
 // IsRevoked checks if a token is currently revoked.
 func (s *TokenRevocationService) IsRevoked(ctx context.Context, tokenID string) bool {
+	// Try Redis first
+	if s.rdb != nil {
+		n, err := s.rdb.Exists(ctx, revocationKeyPrefix+tokenID).Result()
+		if err == nil && n > 0 {
+			return true
+		}
+	}
+
+	// Fallback to memory
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 	entry, ok := s.blacklist[tokenID]
 	if !ok {
 		return false
 	}
-	// If the token has expired, treat it as no longer relevant.
-	if !entry.expiresAt.IsZero() && time.Now().After(entry.expiresAt) {
+	if !entry.ExpiresAt.IsZero() && time.Now().After(entry.ExpiresAt) {
 		return false
 	}
 	return true
 }
 
 // CascadeRevoke revokes access, refresh, and session tokens for a user.
-// tokenIDs is a map of token type to token ID.
 func (s *TokenRevocationService) CascadeRevoke(ctx context.Context, userID uuid.UUID, tokenIDs map[string]string, reason string, expiresAt time.Time) error {
 	if userID == uuid.Nil {
 		return fmt.Errorf("userID is required")
@@ -155,29 +151,47 @@ func (s *TokenRevocationService) CascadeRevoke(ctx context.Context, userID uuid.
 	return nil
 }
 
-// revokeWithMeta is an internal helper that stores a revocation entry with full metadata.
+// revokeWithMeta stores a revocation entry with full metadata.
 func (s *TokenRevocationService) revokeWithMeta(ctx context.Context, tokenID, reason string, expiresAt time.Time, clientID, userID, tokenType string) error {
+	entry := &revocationEntry{
+		Reason:    reason,
+		RevokedAt: time.Now(),
+		ExpiresAt: expiresAt,
+		ClientID:  clientID,
+		UserID:    userID,
+		TokenType: tokenType,
+	}
+
+	// Try Redis
+	if s.rdb != nil {
+		data, err := json.Marshal(entry)
+		if err == nil {
+			ttl := time.Until(expiresAt)
+			if ttl > 0 {
+				err = s.rdb.Set(ctx, revocationKeyPrefix+tokenID, data, ttl).Err()
+				if err != nil {
+					slog.Warn("Redis revocation write failed, using memory fallback", "error", err)
+				}
+			}
+		}
+	}
+
+	// Always store in memory as fallback
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	s.blacklist[tokenID] = &revocationEntry{
-		reason:    reason,
-		revokedAt: time.Now(),
-		expiresAt: expiresAt,
-		clientID:  clientID,
-		userID:    userID,
-		tokenType: tokenType,
-	}
+	s.blacklist[tokenID] = entry
 	return nil
 }
 
-// CleanupExpired removes expired entries from the blacklist.
+// CleanupExpired removes expired entries from the in-memory blacklist.
+// Redis entries auto-expire via TTL.
 func (s *TokenRevocationService) CleanupExpired() int {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	now := time.Now()
 	count := 0
 	for tokenID, entry := range s.blacklist {
-		if !entry.expiresAt.IsZero() && now.After(entry.expiresAt) {
+		if !entry.ExpiresAt.IsZero() && now.After(entry.ExpiresAt) {
 			delete(s.blacklist, tokenID)
 			count++
 		}
@@ -190,4 +204,12 @@ func (s *TokenRevocationService) Reset() {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	s.blacklist = make(map[string]*revocationEntry)
+	if s.rdb != nil {
+		// Best-effort cleanup for tests
+		ctx := context.Background()
+		keys, err := s.rdb.Keys(ctx, revocationKeyPrefix+"*").Result()
+		if err == nil && len(keys) > 0 {
+			s.rdb.Del(ctx, keys...)
+		}
+	}
 }

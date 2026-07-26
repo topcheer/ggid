@@ -9,7 +9,7 @@ import (
 )
 
 func TestTokenRevocation_RevokeToken(t *testing.T) {
-	svc := NewTokenRevocationService()
+	svc := NewTokenRevocationService(nil)
 	tokenID := "token-123"
 	expires := time.Now().Add(1 * time.Hour)
 
@@ -35,7 +35,7 @@ func TestTokenRevocation_RevokeToken(t *testing.T) {
 }
 
 func TestTokenRevocation_RevokeToken_EmptyID(t *testing.T) {
-	svc := NewTokenRevocationService()
+	svc := NewTokenRevocationService(nil)
 	err := svc.RevokeToken(context.Background(), "", "test", time.Now().Add(time.Hour))
 	if err == nil {
 		t.Error("should error on empty tokenID")
@@ -43,7 +43,7 @@ func TestTokenRevocation_RevokeToken_EmptyID(t *testing.T) {
 }
 
 func TestTokenRevocation_NotRevoked(t *testing.T) {
-	svc := NewTokenRevocationService()
+	svc := NewTokenRevocationService(nil)
 	status, err := svc.GetRevocationStatus(context.Background(), "unknown-token")
 	if err != nil {
 		t.Fatalf("GetRevocationStatus: %v", err)
@@ -54,7 +54,7 @@ func TestTokenRevocation_NotRevoked(t *testing.T) {
 }
 
 func TestTokenRevocation_CascadeRevoke(t *testing.T) {
-	svc := NewTokenRevocationService()
+	svc := NewTokenRevocationService(nil)
 	userID := uuid.New()
 	expires := time.Now().Add(1 * time.Hour)
 	tokenIDs := map[string]string{
@@ -76,7 +76,7 @@ func TestTokenRevocation_CascadeRevoke(t *testing.T) {
 }
 
 func TestTokenRevocation_CascadeRevoke_NilUser(t *testing.T) {
-	svc := NewTokenRevocationService()
+	svc := NewTokenRevocationService(nil)
 	err := svc.CascadeRevoke(context.Background(), uuid.Nil, map[string]string{"access": "x"}, "test", time.Now())
 	if err == nil {
 		t.Error("should error on nil userID")
@@ -84,7 +84,7 @@ func TestTokenRevocation_CascadeRevoke_NilUser(t *testing.T) {
 }
 
 func TestTokenRevocation_CleanupExpired(t *testing.T) {
-	svc := NewTokenRevocationService()
+	svc := NewTokenRevocationService(nil)
 	// Add an expired token.
 	svc.RevokeToken(context.Background(), "expired", "test", time.Now().Add(-1*time.Hour))
 	// Add a valid token.
@@ -100,7 +100,7 @@ func TestTokenRevocation_CleanupExpired(t *testing.T) {
 }
 
 func TestTokenRevocation_RevokeByClient_EmptyClient(t *testing.T) {
-	svc := NewTokenRevocationService()
+	svc := NewTokenRevocationService(nil)
 	_, err := svc.RevokeByClient(context.Background(), "", time.Now().Add(time.Hour))
 	if err == nil {
 		t.Error("should error on empty clientID")
@@ -108,7 +108,7 @@ func TestTokenRevocation_RevokeByClient_EmptyClient(t *testing.T) {
 }
 
 func TestTokenRevocation_RevokeByUser_NilUser(t *testing.T) {
-	svc := NewTokenRevocationService()
+	svc := NewTokenRevocationService(nil)
 	_, err := svc.RevokeByUser(context.Background(), uuid.Nil, time.Now().Add(time.Hour))
 	if err == nil {
 		t.Error("should error on nil userID")
@@ -116,7 +116,7 @@ func TestTokenRevocation_RevokeByUser_NilUser(t *testing.T) {
 }
 
 func TestTokenRevocation_IsRevoked_ExpiredToken(t *testing.T) {
-	svc := NewTokenRevocationService()
+	svc := NewTokenRevocationService(nil)
 	svc.RevokeToken(context.Background(), "expired", "test", time.Now().Add(-1*time.Hour))
 	if svc.IsRevoked(context.Background(), "expired") {
 		t.Error("expired token should not be considered revoked")
