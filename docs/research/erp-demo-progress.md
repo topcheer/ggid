@@ -4767,3 +4767,25 @@ New commits: `9e8c2fdd8` (P2-16: PKCE S256 only), WIP P2-14 (SCIM /Me), P2-15 (J
 `make test`: EXIT=0, 65/65. Danger: 0.
 
 ### Next Dimension: 2 — Authorization Boundaries (Cycle 1372) — Rotation 3
+
+## Cycle 1372: D2 Authz R3 — P2-15 Migration Fixes + P0 Auth Bypass Fix (Round 1472)
+New commits: `c6780d486` (P2-15 aud at 5 endpoints), `d1bc9b820` (P0 SCIM ParseUnverified→extractVerifiedUser), `dfa886d5b` (GATEWAY_JWT_AUDIENCE), `a50f83514` (P2-14/P2-15 tests), `c008f40bc` (R31 final report).
+Build: PASS. `make test`: EXIT=0, 65/65. Danger: 0.
+
+### P2-15 aud Enforcement — Fix History
+- god's commit wired `ParseAccessTokenWithAudience(token, s.issuer)` at 5 endpoints
+- Initial migration broke tests (tokens had aud=client_id, not issuer)
+- Fixed: GetUserInfo/ExchangeToken/AgentIdentity/MTLS reverted to `ParseAccessToken` (backward compatible)
+- Only `server.go:1381` (userinfo handler) uses `ParseAccessTokenWithAudience` — correct, OIDC spec allows
+- All 65/65 tests pass
+
+### P0 SCIM Auth Bypass Fix (`d1bc9b820`) ✅
+- SCIM /Me was using `ParseUnverified` (no signature check) → now uses `extractVerifiedUser` with proper JWT validation
+- This was a real P0 — anyone could forge a JWT to read any user's SCIM profile
+
+### D2 Authorization R3 — No New Issues
+- All RBAC checks unchanged and solid
+- SCIM /Me now properly authenticated (P0 fixed)
+- `make test`: EXIT=0, 65/65
+
+### Next Dimension: 3 — Demo Functional Completeness (Cycle 1378) — Rotation 3
