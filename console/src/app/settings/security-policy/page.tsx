@@ -242,6 +242,7 @@ function PasswordPolicyTab() {
         </h3>
         <input
           type="text"
+          aria-label="Test password strength"
           value={testPw}
           onChange={(e) => setTestPw(e.target.value)}
           placeholder={t("securityPolicy.passwordPolicy.testPassword")}
@@ -648,6 +649,7 @@ function MethodPolicyForm({ editing, onSaved, onCancel }: {
         </label>
         <input
           type="text"
+          aria-label="Group name"
           value={group}
           onChange={(e) => setGroup(e.target.value)}
           placeholder={t("securityPolicy.methodPolicies.selectGroup")}
@@ -665,6 +667,7 @@ function MethodPolicyForm({ editing, onSaved, onCancel }: {
               <label key={m} className="flex items-center gap-2 text-sm">
                 <input
                   type="checkbox"
+                  aria-label={`Require ${m}`}
                   checked={required.has(m)}
                   onChange={() => toggleMethod(m, required, setRequired)}
                   className="rounded"
@@ -683,6 +686,7 @@ function MethodPolicyForm({ editing, onSaved, onCancel }: {
               <label key={m} className="flex items-center gap-2 text-sm">
                 <input
                   type="checkbox"
+                  aria-label={`Forbid ${m}`}
                   checked={forbidden.has(m)}
                   onChange={() => toggleMethod(m, forbidden, setForbidden)}
                   className="rounded"
