@@ -168,7 +168,13 @@ func (s *RoleService) DeleteRole(ctx context.Context, id uuid.UUID) error {
 }
 
 // AssignRole assigns a role to a user within a specific scope.
+// SECURITY: Prevents self-assignment to avoid privilege escalation.
 func (s *RoleService) AssignRole(ctx context.Context, userID, roleID uuid.UUID, scopeType domain.ScopeType, scopeID, grantedBy uuid.UUID, expiresAt *time.Time) error {
+	// SECURITY FIX: Prevent self-assignment to avoid privilege escalation
+	if userID == grantedBy {
+		return errors.New(errors.ErrPermissionDenied, "cannot assign roles to yourself")
+	}
+
 	// Verify role exists.
 	if _, err := s.roleRepo.GetByID(ctx, roleID); err != nil {
 		return err

@@ -32,6 +32,9 @@ type Context struct {
 
 // FromContext extracts the tenant context from a context.Context.
 func FromContext(ctx context.Context) (*Context, error) {
+	if ctx == nil {
+		return nil, fmt.Errorf("context is nil")
+	}
 	tc, ok := ctx.Value(contextKey{}).(*Context)
 	if !ok || tc == nil {
 		return nil, fmt.Errorf("no tenant context found")

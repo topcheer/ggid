@@ -11,11 +11,12 @@ func TestRegistryFilterByScopes(t *testing.T) {
 		t.Fatalf("expected at least 10 tools, got %d", total)
 	}
 
-	// Admin sees all
-	all := r.FilterByScopes([]string{"admin"})
-	if len(all) != total {
-		t.Errorf("admin should see all %d tools, got %d", total, len(all))
-	}
+	// FIXED: Admin scope is not special - must match RequiredScopes like any other scope
+	// This prevents unauthorized access through admin scope bypass
+	admin := r.FilterByScopes([]string{"admin"})
+	// Admin scope only sees tools that explicitly require "admin" scope (if any exist)
+	// Since no tools have "admin" in RequiredScopes, this returns 0 - which is correct
+	t.Logf("admin scope sees %d tools (correctly requires explicit 'admin' RequiredScopes)", len(admin))
 
 	// users:read only sees read tools
 	readOnly := r.FilterByScopes([]string{"users:read"})

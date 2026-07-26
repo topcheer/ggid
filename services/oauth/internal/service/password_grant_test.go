@@ -125,9 +125,21 @@ func TestPasswordGrant_OfflineAccessIssuesRefreshToken(t *testing.T) {
 }
 
 func TestPasswordGrant_NoOfflineAccess_NoRefreshToken(t *testing.T) {
-	svc, _, _, tokenRepo := newTestOAuthService()
+	svc, clientRepo, _, tokenRepo := newTestOAuthService()
 	hash, _ := pkgcrypto.HashPassword("correct-pass-123")
 	svc.SetPool(&fakePool{userID: uuid.New(), credHash: hash})
+
+	// Create the client with password grant support (required by the fix for bug #3)
+	client := &domain.OAuthClient{
+		ID:         uuid.New(),
+		TenantID:   testTenantID,
+		ClientID:   "ggid-console",
+		Name:       "Console",
+		Type:       domain.ClientTypePublic,
+		GrantTypes: []string{"password", "authorization_code", "refresh_token"},
+		Enabled:    true,
+	}
+	_ = clientRepo.CreateClient(context.Background(), client)
 
 	resp, err := svc.PasswordGrant(context.Background(), &PasswordGrantRequest{
 		TenantID: testTenantID,
@@ -148,9 +160,21 @@ func TestPasswordGrant_NoOfflineAccess_NoRefreshToken(t *testing.T) {
 }
 
 func TestPasswordGrant_WrongPassword(t *testing.T) {
-	svc, _, _, _ := newTestOAuthService()
+	svc, clientRepo, _, _ := newTestOAuthService()
 	hash, _ := pkgcrypto.HashPassword("correct-pass-123")
 	svc.SetPool(&fakePool{userID: uuid.New(), credHash: hash})
+
+	// Create the client with password grant support
+	client := &domain.OAuthClient{
+		ID:         uuid.New(),
+		TenantID:   testTenantID,
+		ClientID:   "ggid-console",
+		Name:       "Console",
+		Type:       domain.ClientTypePublic,
+		GrantTypes: []string{"password", "authorization_code", "refresh_token"},
+		Enabled:    true,
+	}
+	_ = clientRepo.CreateClient(context.Background(), client)
 
 	_, err := svc.PasswordGrant(context.Background(), &PasswordGrantRequest{
 		TenantID: testTenantID,
@@ -168,9 +192,21 @@ func TestPasswordGrant_WrongPassword(t *testing.T) {
 // P0 auth bypass: when the credentials lookup errors or returns no row, the
 // grant must REJECT — never skip verification.
 func TestPasswordGrant_NoCredential_FailsClosed(t *testing.T) {
-	svc, _, _, _ := newTestOAuthService()
+	svc, clientRepo, _, _ := newTestOAuthService()
 	// credHash empty → credentials query "returns no row".
 	svc.SetPool(&fakePool{userID: uuid.New(), credHash: ""})
+
+	// Create the client with password grant support
+	client := &domain.OAuthClient{
+		ID:         uuid.New(),
+		TenantID:   testTenantID,
+		ClientID:   "ggid-console",
+		Name:       "Console",
+		Type:       domain.ClientTypePublic,
+		GrantTypes: []string{"password", "authorization_code", "refresh_token"},
+		Enabled:    true,
+	}
+	_ = clientRepo.CreateClient(context.Background(), client)
 
 	_, err := svc.PasswordGrant(context.Background(), &PasswordGrantRequest{
 		TenantID: testTenantID,

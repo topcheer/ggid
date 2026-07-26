@@ -46,6 +46,11 @@ func (s *IdentityService) CreateUser(ctx context.Context, input *domain.CreateUs
 		return nil, gerr.AlreadyExists("email", input.Email)
 	}
 
+	// Validate password.
+	if input.Password == "" {
+		return nil, gerr.InvalidArgument("password cannot be empty")
+	}
+
 	// Hash the password.
 	hash, err := crypto.HashPassword(input.Password)
 	if err != nil {
@@ -246,6 +251,18 @@ func (s *IdentityService) AddUserEmail(ctx context.Context, userID uuid.UUID, em
 	if err != nil {
 		return nil, gerr.New(gerr.ErrFailedPrecondition, "missing tenant context")
 	}
+
+	// Check for duplicate email for this user.
+	existingEmails, err := s.repo.ListUserEmails(ctx, tc.TenantID, userID)
+	if err != nil {
+		return nil, err
+	}
+	for _, e := range existingEmails {
+		if e.Email == email {
+			return nil, gerr.AlreadyExists("email", email)
+		}
+	}
+
 	return s.repo.AddUserEmail(ctx, tc.TenantID, userID, email)
 }
 
@@ -318,6 +335,16 @@ func (s *IdentityService) ProvisionFromLDAP(ctx context.Context, result *authpro
 	displayName := getStringAttr(result.Attributes, "displayName")
 	if displayName == "" {
 		displayName = getStringAttr(result.Attributes, "cn")
+	}
+
+	// Check for duplicate username or email within the tenant.
+	if existing, _ := s.repo.GetUserByUsername(ctx, tc.TenantID, username); existing != nil {
+		return nil, gerr.AlreadyExists("user", username)
+	}
+	if email != "" {
+		if existing, _ := s.repo.GetUserByEmail(ctx, tc.TenantID, email); existing != nil {
+			return nil, gerr.AlreadyExists("email", email)
+		}
 	}
 
 	user := &domain.User{

@@ -153,6 +153,13 @@ func (sr *ScopeResolver) expandScopeLocked(scope string) []string {
 
 // GetEffectiveScopes returns the effective set of scopes for a user after hierarchy expansion and client restrictions.
 func (sr *ScopeResolver) GetEffectiveScopes(userID uuid.UUID, clientID string) ([]string, error) {
+	if userID == uuid.Nil {
+		return nil, fmt.Errorf("user_id is required")
+	}
+	if clientID == "" {
+		return nil, fmt.Errorf("client_id is required")
+	}
+
 	sr.mu.RLock()
 	defer sr.mu.RUnlock()
 	userPerms, ok := sr.userPermissions[userID]

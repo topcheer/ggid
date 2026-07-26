@@ -79,10 +79,11 @@ func (p *LocalProvider) Authenticate(ctx context.Context, creds Credentials) (*A
 			fmt.Sprintf("user account is %s", lc.Status))
 	}
 
-	// Try Argon2id first (native format).
-	ok, err := crypto.VerifyPassword(creds.Password, lc.PasswordHash)
-	if !ok && err != nil {
-		// Argon2id verification failed — try multi-hash for legacy formats.
+	// Verify password. crypto.VerifyPassword handles Argon2id (native) and
+	// bcrypt (backward compatibility). Other legacy formats fall through to
+	// the multihash verifier.
+	ok, _ := crypto.VerifyPassword(creds.Password, lc.PasswordHash)
+	if !ok {
 		mhOK, format, mhErr := multihash.VerifyPassword(creds.Password, lc.PasswordHash)
 
 		if format == multihash.FormatUnknown {
@@ -95,30 +96,28 @@ func (p *LocalProvider) Authenticate(ctx context.Context, creds Credentials) (*A
 		if mhErr != nil || !mhOK {
 			return nil, errors.Unauthenticated("invalid credentials")
 		}
-
-		// Legacy format matched — trigger transparent rehashing.
 		ok = true
-		if p.rehashCb != nil {
-			// Asynchronous rehash — must not block login.
-			go func() {
-				defer func() {
-					if r := recover(); r != nil {
-						slog.Error("rehash callback panicked",
-							"user_id", lc.UserID,
-							"old_format", format,
-							"panic", r)
-					}
-				}()
-				slog.Info("transparent password rehash triggered",
-					"user_id", lc.UserID,
-					"old_format", format,
-					"new_format", "argon2id")
-				p.rehashCb(ctx, lc.UserID, creds.Password, lc.PasswordHash)
-			}()
-		}
 	}
-	if !ok {
-		return nil, errors.Unauthenticated("invalid credentials")
+
+	// Transparent rehash: if the stored hash is not Argon2id, upgrade it
+	// asynchronously. This fires regardless of which verifier matched.
+	if p.rehashCb != nil && multihash.NeedsRehash(lc.PasswordHash) {
+		format := multihash.DetectFormat(lc.PasswordHash)
+		go func() {
+			defer func() {
+				if r := recover(); r != nil {
+					slog.Error("rehash callback panicked",
+						"user_id", lc.UserID,
+						"old_format", format,
+						"panic", r)
+				}
+			}()
+			slog.Info("transparent password rehash triggered",
+				"user_id", lc.UserID,
+				"old_format", format,
+				"new_format", "argon2id")
+			p.rehashCb(ctx, lc.UserID, creds.Password, lc.PasswordHash)
+		}()
 	}
 
 	uid := lc.UserID

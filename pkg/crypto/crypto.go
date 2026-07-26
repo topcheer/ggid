@@ -14,8 +14,10 @@ import (
 	"io"
 	"os"
 	"strconv"
+	"strings"
 
 	"golang.org/x/crypto/argon2"
+	"golang.org/x/crypto/bcrypt"
 )
 
 // Argon2id parameters — tuned for interactive login (<100ms target).
@@ -116,6 +118,14 @@ func HashPassword(password string) (string, error) {
 
 // VerifyPassword compares a plaintext password against a stored Argon2id hash.
 func VerifyPassword(password, encoded string) (bool, error) {
+	// Support bcrypt hashes ($2a$, $2b$, $2y$) for backward compatibility
+	// with credentials created outside the auth service (e.g. via DB scripts).
+	// Note: bcrypt mismatch is not an error, just a failed verification.
+	if strings.HasPrefix(encoded, "$2a$") || strings.HasPrefix(encoded, "$2b$") || strings.HasPrefix(encoded, "$2y$") {
+		err := bcrypt.CompareHashAndPassword([]byte(encoded), applyPepper(password))
+		return err == nil, nil
+	}
+
 	var iter, mem uint32
 	var par uint8
 	var saltB64, hashB64 string

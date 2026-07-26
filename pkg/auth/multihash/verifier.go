@@ -250,14 +250,20 @@ func verifyGGIDArgon2id(password, encoded string) (bool, error) {
 	saltB64 = parts[0]
 	hashB64 = parts[1]
 
-	salt, err := base64.StdEncoding.DecodeString(saltB64)
+	salt, err := base64.RawStdEncoding.DecodeString(saltB64)
 	if err != nil {
-		return false, fmt.Errorf("argon2id: invalid salt base64: %w", err)
+		salt, err = base64.StdEncoding.DecodeString(saltB64)
+		if err != nil {
+			return false, fmt.Errorf("argon2id: invalid salt base64: %w", err)
+		}
 	}
 
-	expectedHash, err := base64.StdEncoding.DecodeString(hashB64)
+	expectedHash, err := base64.RawStdEncoding.DecodeString(hashB64)
 	if err != nil {
-		return false, fmt.Errorf("argon2id: invalid hash base64: %w", err)
+		expectedHash, err = base64.StdEncoding.DecodeString(hashB64)
+		if err != nil {
+			return false, fmt.Errorf("argon2id: invalid hash base64: %w", err)
+		}
 	}
 
 	computed := argon2.IDKey([]byte(password), salt, uint32(iter), uint32(mem), uint8(par), uint32(len(expectedHash)))
