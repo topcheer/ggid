@@ -498,10 +498,10 @@ func (s *Server) handleProtectedResource(w http.ResponseWriter, r *http.Request)
 	}
 
 	writeJSON(w, http.StatusOK, map[string]any{
-		"resource":                  "https://mcp.iot2.win/mcp",
-		"authorization_servers":     []string{"https://ggid.iot2.win"},
+		"resource":                  baseURL + "/mcp",
+		"authorization_servers":     []string{baseURL},
 		"bearer_methods_supported":  []string{"header"},
 		"resource_name":             "GGID IAM MCP Server",
-		"resource_documentation":    "https://ggid.iot2.win/docs",
+		"resource_documentation":    baseURL + "/docs",
 	})
 }
