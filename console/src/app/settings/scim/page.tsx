@@ -55,7 +55,7 @@ export default function SCIMPage() {
       try {
         const data = await apiFetch<SCIMConfig & { syncStatus?: SyncStatus[] }>("/api/v1/identity/scim/config");
         setConfig({
-          endpoint: data.endpoint || `${window.location.origin}/api/v1/scim/v2`,
+          endpoint: data.endpoint || `${window.location.origin}/scim/v2`,
           bearerToken: data.bearerToken || "",
           enabled: data.enabled ?? false,
         });
@@ -63,7 +63,7 @@ export default function SCIMPage() {
       } catch {
         setConfig((prev) => ({
           ...prev,
-          endpoint: `${window.location.origin}/api/v1/scim/v2`,
+          endpoint: `${window.location.origin}/scim/v2`,
         }));
       } finally {
         setLoading(false);
