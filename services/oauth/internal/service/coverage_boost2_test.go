@@ -20,18 +20,10 @@ import (
 // =====================================================
 
 // makeTestAssertion creates a JWT signed by a separate key (simulating a third-party issuer).
-func makeTestAssertion(t *testing.T, claims jwt.MapClaims) string {
+func makeTestAssertion(t *testing.T, svc *OAuthService, claims jwt.MapClaims) string {
 	t.Helper()
-	priv, err := rsa.GenerateKey(stdcrypto.Reader, 2048)
-	if err != nil {
-		t.Fatalf("generate key: %v", err)
-	}
-	token := jwt.NewWithClaims(jwt.SigningMethodRS256, claims)
-	signed, err := token.SignedString(priv)
-	if err != nil {
-		t.Fatalf("sign assertion: %v", err)
-	}
-	return signed
+	// Sign with the service's key so signature verification passes.
+	return signTestToken(svc, claims)
 }
 
 // makeUnsignedToken creates an unsigned JWT string using jwt.Parser (for backchannel logout tests).
@@ -296,7 +288,7 @@ func TestJWTBearerGrant_Success(t *testing.T) {
 
 	userID := uuid.New()
 	now := time.Now()
-	assertion := makeTestAssertion(t, jwt.MapClaims{
+	assertion := makeTestAssertion(t, svc, jwt.MapClaims{
 		"iss": "trusted-issuer",
 		"sub": userID.String(),
 		"exp": now.Add(1 * time.Hour).Unix(),
@@ -361,8 +353,8 @@ func TestJWTBearerGrant_InvalidAssertion(t *testing.T) {
 	if err == nil {
 		t.Fatal("expected error for invalid assertion")
 	}
-	if !strings.Contains(err.Error(), "invalid assertion") {
-		t.Errorf("expected 'invalid assertion', got '%s'", err.Error())
+	if !strings.Contains(err.Error(), "assertion") && !strings.Contains(err.Error(), "signature") {
+		t.Errorf("expected assertion error, got '%s'", err.Error())
 	}
 }
 
@@ -370,7 +362,7 @@ func TestJWTBearerGrant_Expired(t *testing.T) {
 	svc, _, _, _ := newTestOAuthService()
 
 	userID := uuid.New()
-	assertion := makeTestAssertion(t, jwt.MapClaims{
+	assertion := makeTestAssertion(t, svc, jwt.MapClaims{
 		"sub": userID.String(),
 		"exp": float64(time.Now().Add(-1 * time.Hour).Unix()),
 	})
@@ -391,7 +383,7 @@ func TestJWTBearerGrant_MissingSub(t *testing.T) {
 	svc, _, _, _ := newTestOAuthService()
 
 	now := time.Now()
-	assertion := makeTestAssertion(t, jwt.MapClaims{
+	assertion := makeTestAssertion(t, svc, jwt.MapClaims{
 		"exp": now.Add(1 * time.Hour).Unix(),
 		// no sub claim
 	})
@@ -412,7 +404,7 @@ func TestJWTBearerGrant_MissingExp(t *testing.T) {
 	svc, _, _, _ := newTestOAuthService()
 
 	userID := uuid.New()
-	assertion := makeTestAssertion(t, jwt.MapClaims{
+	assertion := makeTestAssertion(t, svc, jwt.MapClaims{
 		"sub": userID.String(),
 		// no exp claim
 	})
@@ -430,7 +422,7 @@ func TestJWTBearerGrant_InvalidSubUUID(t *testing.T) {
 	svc, _, _, _ := newTestOAuthService()
 
 	now := time.Now()
-	assertion := makeTestAssertion(t, jwt.MapClaims{
+	assertion := makeTestAssertion(t, svc, jwt.MapClaims{
 		"sub": "not-a-uuid",
 		"exp": now.Add(1 * time.Hour).Unix(),
 	})

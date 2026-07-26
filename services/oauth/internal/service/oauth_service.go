@@ -2903,11 +2903,16 @@ func (s *OAuthService) JWTBearerGrant(ctx context.Context, req *JWTBearerRequest
 		return nil, fmt.Errorf("assertion is required")
 	}
 
-	// Parse the JWT without verifying signature first (to extract claims).
-	// In production, the assertion would be verified against a trusted issuer's JWKS.
-	token, _, err := new(jwt.Parser).ParseUnverified(req.Assertion, jwt.MapClaims{})
+	// Verify JWT assertion signature (P1-13: was ParseUnverified — RFC 7523 §3).
+	pubKey := s.keyProvider.Public()
+	token, err := jwt.Parse(req.Assertion, func(t *jwt.Token) (any, error) {
+		if _, ok := t.Method.(*jwt.SigningMethodRSA); !ok {
+			return nil, fmt.Errorf("unexpected signing method: %v", t.Header["alg"])
+		}
+		return pubKey, nil
+	})
 	if err != nil {
-		return nil, fmt.Errorf("invalid assertion: %w", err)
+		return nil, fmt.Errorf("assertion signature verification failed: %w", err)
 	}
 
 	claims, ok := token.Claims.(jwt.MapClaims)
