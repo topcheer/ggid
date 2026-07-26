@@ -4945,3 +4945,42 @@ Build: PASS. `make test`: EXIT=0, 65/65. Danger: 0.
 - my-permissions: Go, Node, Java ✅
 
 ### Next Dimension: 4 — Multi-Tenant Isolation (Cycle 1420) — Rotation 4
+
+## Cycle 1420: D4 Multi-Tenant R4 — P1-9 TOTP Fix + Test Fix (Round 1480)
+New commit: `8f29471e5` (P1-9: EncryptTOTPSecret fail-closed).
+Build: PASS. `make test`: EXIT=0, 65/65. Danger: 0.
+
+### P1-9 TOTP Encryption Fix ✅
+- `8f29471e5`: EncryptTOTPSecret now refuses plaintext storage when no encryption key is set
+- **Test fix**: `TestNoKeyReturnsPlaintext` updated to `TestNoKeyReturnsError` — matches new fail-closed behavior
+
+### D4 Multi-Tenant (Rotation 4) — All Secure
+- Gateway JWT match, RBAC scope, OAuth filters, RLS: all unchanged and solid ✅
+- 7/7 demo tenant isolation: all enforce boundary ✅
+
+### Three-Layer Alignment
+| Layer | Status |
+|-------|--------|
+| Core | ✅ P1-9 fixed, build+test pass |
+| SDK | ✅ no change |
+| Demo | ✅ all tenant checks pass |
+
+### Next Dimension: 5 — SDK Cross-Language Consistency (Cycle 1426) — Rotation 4
+
+## Cycle 1426: D5 SDK R4 — All Deployed P1 Fixes Verified (Round 1481)
+New commits: `96fe5b223` (P2 revoke refresh in DB). Deployment: 4 services (oauth/gateway/auth/policy) with all P1 fixes + GGID_ENCRYPTION_KEY set.
+Build: PASS. `make test`: EXIT=0, 65/65. Danger: 0.
+
+### Deployed P1 Fixes ✅
+- P1-1 refresh token client_id binding ✅
+- P1-7 post_logout_redirect_uri HTTPS + registered URI ✅
+- P1-9 TOTP AES-256-GCM encryption (GGID_ENCRYPTION_KEY set) ✅
+- P1-10 reserved role names (platform:admin/tenant:admin) ✅
+- RBAC: hasAdminScope(claims.Roles) removed, only OAuth scopes trusted ✅
+- Console auth-guard: isTenant no longer auto-includes isPlatform ✅
+
+### D5 SDK (Rotation 4) — All Consistent
+- Token fields: Go/Rust/Java/Node/C# all snake_case ✅
+- Claims: tenant_id + roles + permissions across all SDKs ✅
+
+### Next Dimension: 6 — End-to-End UX (Cycle 1432) — Rotation 4
