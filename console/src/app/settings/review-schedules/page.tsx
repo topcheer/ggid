@@ -76,7 +76,9 @@ export default function ReviewSchedulesPage() {
         <div className="flex gap-1 mb-6 bg-gray-200 dark:bg-gray-800 rounded-lg p-1">
           {tabs.map(({ id, label, icon: Icon }) => (
             <button key={id} onClick={() => setTab(id)}
-              className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+              aria-pressed={tab === id}
+              aria-label={`${label} tab`}
+              className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 ${
                 tab === id ? "bg-white dark:bg-gray-700 text-blue-600 dark:text-blue-400 shadow-sm" : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
               }`}>
               <Icon className="w-4 h-4" />{label}
@@ -135,7 +137,7 @@ function SchedulesTab({ schedules, setSchedules }: { schedules: Schedule[]; setS
               <span className={`px-2 py-0.5 text-xs rounded-full ${freqColors[s.frequency] || freqColors.monthly}`}>
                 {t(`reviewSchedules.schedules.frequency${(s.frequency || "monthly").replace(/^./, (m: any) => m.toUpperCase())}`)}
               </span>
-              <button onClick={() => toggle(s.id)} className={`relative w-10 h-6 rounded-full transition-colors ${s.enabled ? "bg-blue-600" : "bg-gray-300 dark:bg-gray-600"}`}>
+              <button onClick={() => toggle(s.id)} role="switch" aria-checked={s.enabled} aria-label={`Toggle schedule: ${s.name}`} className={`relative w-10 h-6 rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 ${s.enabled ? "bg-blue-600" : "bg-gray-300 dark:bg-gray-600"}`}>
                 <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full transition-transform ${s.enabled ? "translate-x-4" : ""}`} />
               </button>
             </div>
@@ -184,8 +186,8 @@ function CreateTab({ onCreated }: { onCreated: () => void }) {
 
       <div>
         <label className="block text-sm font-medium text-gray-900 dark:text-white dark:text-white mb-1">{t("reviewSchedules.create.name")}</label>
-        <input type="text" value={name} onChange={(e) => setName(e.target.value)} placeholder={t("reviewSchedules.create.namePlaceholder")}
-          className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 dark:bg-gray-800 text-sm text-gray-900 dark:text-white dark:text-white" />
+        <input type="text" value={name} onChange={(e) => setName(e.target.value)} aria-label="Schedule name" placeholder={t("reviewSchedules.create.namePlaceholder")}
+          className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 dark:bg-gray-800 text-sm text-gray-900 dark:text-white dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500" />
       </div>
 
       <div>
@@ -194,7 +196,9 @@ function CreateTab({ onCreated }: { onCreated: () => void }) {
         <div className="grid grid-cols-2 gap-2">
           {SCOPES.map((s: any) => (
             <button key={s} onClick={() => setScope(s)}
-              className={`flex items-center gap-2 p-3 rounded-lg border-2 text-sm transition-all ${scope === s ? "border-blue-500 bg-blue-50 dark:bg-blue-950/30 text-blue-700 dark:text-blue-300" : "border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400"}`}>
+              aria-pressed={scope === s}
+              aria-label={`Scope: ${s}`}
+              className={`flex items-center gap-2 p-3 rounded-lg border-2 text-sm transition-all focus:outline-none focus:ring-2 focus:ring-blue-500 ${scope === s ? "border-blue-500 bg-blue-50 dark:bg-blue-950/30 text-blue-700 dark:text-blue-300" : "border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400"}`}>
               {scope === s && <Check className="w-3 h-3" />}
               {t(`reviewSchedules.create.scope${s.replace(/_./g, (m: any) => m[1].toUpperCase()).replace(/^./, (m: any) => m.toUpperCase())}`)}
             </button>
@@ -208,7 +212,9 @@ function CreateTab({ onCreated }: { onCreated: () => void }) {
         <div className="flex flex-wrap gap-2">
           {FREQUENCIES.map((f: any) => (
             <button key={f} onClick={() => setFrequency(f)}
-              className={`px-3 py-1.5 rounded-lg text-sm font-medium border-2 transition-all ${frequency === f ? "border-blue-500 " + (freqColors[f] || "") : "border-gray-200 dark:border-gray-700 text-gray-500"}`}>
+              aria-pressed={frequency === f}
+              aria-label={`Frequency: ${f}`}
+              className={`px-3 py-1.5 rounded-lg text-sm font-medium border-2 transition-all focus:outline-none focus:ring-2 focus:ring-blue-500 ${frequency === f ? "border-blue-500 " + (freqColors[f] || "") : "border-gray-200 dark:border-gray-700 text-gray-500"}`}>
               {t(`reviewSchedules.schedules.frequency${f.replace(/^./, (m: any) => m.toUpperCase())}`)}
             </button>
           ))}
@@ -219,21 +225,22 @@ function CreateTab({ onCreated }: { onCreated: () => void }) {
         <div>
           <label className="block text-sm font-medium text-gray-900 dark:text-white dark:text-white mb-1">{t("reviewSchedules.create.reviewer")}</label>
           <p className="text-xs text-gray-500 mb-1">{t("reviewSchedules.create.reviewerDesc")}</p>
-          <input type="email" value={reviewer} onChange={(e) => setReviewer(e.target.value)} placeholder={t("reviewSchedules.create.reviewerPlaceholder")}
-            className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 dark:bg-gray-800 text-sm text-gray-900 dark:text-white dark:text-white" />
+          <input type="email" value={reviewer} onChange={(e) => setReviewer(e.target.value)} aria-label="Reviewer email" placeholder={t("reviewSchedules.create.reviewerPlaceholder")}
+            className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 dark:bg-gray-800 text-sm text-gray-900 dark:text-white dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500" />
         </div>
         <div>
           <label className="block text-sm font-medium text-gray-900 dark:text-white dark:text-white mb-1">{t("reviewSchedules.create.startDate")}</label>
-          <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)}
+          <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} aria-label="Start date"
             min={new Date().toISOString().split("T")[0]}
-            className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 dark:bg-gray-800 text-sm text-gray-900 dark:text-white dark:text-white" />
+            className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 dark:bg-gray-800 text-sm text-gray-900 dark:text-white dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500" />
         </div>
       </div>
 
       {error && <div className="flex items-center gap-2 px-4 py-2 rounded-lg bg-red-50 dark:bg-red-950/30 text-red-700 dark:text-red-300 text-sm"><AlertCircle className="w-4 h-4" />{error}</div>}
 
       <button onClick={submit} disabled={submitting}
-        className="flex items-center gap-2 px-6 py-2.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white rounded-lg font-medium text-sm">
+        aria-label="Create review schedule"
+        className="flex items-center gap-2 px-6 py-2.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white rounded-lg font-medium text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
         {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
         {t("reviewSchedules.create.submit")}
       </button>

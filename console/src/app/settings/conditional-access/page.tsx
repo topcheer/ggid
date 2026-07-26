@@ -90,7 +90,9 @@ export default function ConditionalAccessPage() {
         <div className="flex gap-1 mb-6 bg-gray-200 dark:bg-gray-800 rounded-lg p-1">
           {tabs.map(({ id, label, icon: Icon }) => (
             <button key={id} onClick={() => setTab(id)}
-              className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+              aria-pressed={tab === id}
+              aria-label={`${label} tab`}
+              className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 ${
                 tab === id ? "bg-white dark:bg-gray-700 text-blue-600 dark:text-blue-400 shadow-sm" : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
               }`}>
               <Icon className="w-4 h-4" />{label}
@@ -197,7 +199,7 @@ function PoliciesList({ policies, loading, onEdit, onAdd, onToggle, onMove, onDe
     <div className="bg-white dark:bg-gray-800 dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 dark:border-gray-800 p-6">
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-sm font-semibold text-gray-900 dark:text-white dark:text-white">{t("conditionalAccess.policies.title")}</h3>
-        <button onClick={onAdd} className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium">
+        <button onClick={onAdd} aria-label="Add new policy" className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500">
           <Plus className="w-4 h-4" />{t("conditionalAccess.policies.addPolicy")}
         </button>
       </div>
@@ -212,9 +214,9 @@ function PoliciesList({ policies, loading, onEdit, onAdd, onToggle, onMove, onDe
               <div key={p.id} className="flex items-center gap-3 p-3 rounded-lg border border-gray-200 dark:border-gray-700 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 dark:bg-gray-800 dark:hover:bg-gray-800/30">
                 {/* Priority + arrows */}
                 <div className="flex flex-col items-center gap-0.5">
-                  <button onClick={() => onMove(p.id, "up")} disabled={i === 0} className="text-gray-400 hover:text-gray-600 dark:text-gray-400 disabled:opacity-30"><ChevronUp className="w-4 h-4" /></button>
+                  <button onClick={() => onMove(p.id, "up")} disabled={i === 0} aria-label={`Move ${p.name} up`} className="text-gray-400 hover:text-gray-600 dark:text-gray-400 disabled:opacity-30 focus:outline-none focus:ring-2 focus:ring-blue-500"><ChevronUp className="w-4 h-4" /></button>
                   <span className="text-xs font-bold text-gray-500">{p.priority}</span>
-                  <button onClick={() => onMove(p.id, "down")} disabled={i === policies.length - 1} className="text-gray-400 hover:text-gray-600 dark:text-gray-400 disabled:opacity-30"><ChevronDown className="w-4 h-4" /></button>
+                  <button onClick={() => onMove(p.id, "down")} disabled={i === policies.length - 1} aria-label={`Move ${p.name} down`} className="text-gray-400 hover:text-gray-600 dark:text-gray-400 disabled:opacity-30 focus:outline-none focus:ring-2 focus:ring-blue-500"><ChevronDown className="w-4 h-4" /></button>
                 </div>
                 {/* Name + conditions */}
                 <div className="flex-1 min-w-0">
@@ -232,12 +234,14 @@ function PoliciesList({ policies, loading, onEdit, onAdd, onToggle, onMove, onDe
                 <span className={`px-2.5 py-0.5 text-xs rounded-full ${actionCfg?.color || ""}`}>{(p.action || "").replace(/_/g, " ")}</span>
                 {/* Enabled toggle */}
                 <button onClick={() => onToggle(p.id)}
-                  className={`relative w-10 h-6 rounded-full transition-colors ${p.enabled ? "bg-blue-600" : "bg-gray-300 dark:bg-gray-600"}`}>
+                  role="switch" aria-checked={p.enabled}
+                  aria-label={`Toggle policy: ${p.name}`}
+                  className={`relative w-10 h-6 rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 ${p.enabled ? "bg-blue-600" : "bg-gray-300 dark:bg-gray-600"}`}>
                   <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full transition-transform ${p.enabled ? "translate-x-4" : ""}`} />
                 </button>
                 {/* Actions */}
-                <button onClick={() => onEdit(p)} className="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-700 dark:bg-gray-700 dark:hover:bg-gray-800 rounded"><Edit2 className="w-4 h-4 text-gray-500" /></button>
-                <button onClick={() => { if (confirm(t("conditionalAccess.policies.confirmDelete"))) onDelete(p.id); }} className="p-1.5 hover:bg-red-50 dark:hover:bg-red-950 rounded"><Trash2 className="w-4 h-4 text-red-500" /></button>
+                <button onClick={() => onEdit(p)} aria-label={`Edit policy: ${p.name}`} className="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-700 dark:bg-gray-700 dark:hover:bg-gray-800 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"><Edit2 className="w-4 h-4 text-gray-500" /></button>
+                <button onClick={() => { if (confirm(t("conditionalAccess.policies.confirmDelete"))) onDelete(p.id); }} aria-label={`Delete policy: ${p.name}`} className="p-1.5 hover:bg-red-50 dark:hover:bg-red-950 rounded focus:outline-none focus:ring-2 focus:ring-red-500"><Trash2 className="w-4 h-4 text-red-500" /></button>
               </div>
             );
           })}
@@ -277,13 +281,13 @@ function PolicyEditor({ editing, onSave, onCancel }: {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div className="md:col-span-2">
           <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 dark:text-gray-400 mb-1">{t("conditionalAccess.editor.name")}</label>
-          <input type="text" value={name} onChange={(e) => setName(e.target.value)} placeholder={t("conditionalAccess.editor.namePlaceholder")}
-            className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 dark:bg-gray-800 text-sm text-gray-900 dark:text-white dark:text-white" />
+          <input type="text" value={name} onChange={(e) => setName(e.target.value)} aria-label="Policy name" placeholder={t("conditionalAccess.editor.namePlaceholder")}
+            className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 dark:bg-gray-800 text-sm text-gray-900 dark:text-white dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500" />
         </div>
         <div>
           <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 dark:text-gray-400 mb-1">{t("conditionalAccess.editor.priority")}</label>
-          <input type="number" value={priority} onChange={(e) => setPriority(parseInt(e.target.value) || 10)} min={1}
-            className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 dark:bg-gray-800 text-sm text-gray-900 dark:text-white dark:text-white" />
+          <input type="number" value={priority} onChange={(e) => setPriority(parseInt(e.target.value) || 10)} min={1} aria-label="Policy priority"
+            className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 dark:bg-gray-800 text-sm text-gray-900 dark:text-white dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500" />
         </div>
       </div>
 
@@ -359,10 +363,11 @@ function PolicyEditor({ editing, onSave, onCancel }: {
       {/* Actions */}
       <div className="flex gap-2">
         <button onClick={save} disabled={!name}
-          className="flex items-center gap-2 px-6 py-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white rounded-lg text-sm font-medium">
+          aria-label="Save policy"
+          className="flex items-center gap-2 px-6 py-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white rounded-lg text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500">
           <Save className="w-4 h-4" />{t("conditionalAccess.editor.save")}
         </button>
-        <button onClick={onCancel} className="px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 dark:text-gray-300 rounded-lg text-sm font-medium">
+        <button onClick={onCancel} aria-label="Cancel editing" className="px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 dark:text-gray-300 rounded-lg text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500">
           {t("conditionalAccess.editor.selectNew")}
         </button>
       </div>
