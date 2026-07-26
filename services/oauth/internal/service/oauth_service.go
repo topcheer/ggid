@@ -1639,6 +1639,13 @@ func (s *OAuthService) RefreshToken(ctx context.Context, req *RefreshTokenReques
 		}
 	}
 
+	// 4b. SECURITY (RFC 6749 §1.5): the refresh token must belong to the
+	// requesting client. Without this check, a token stolen from client A
+	// can be refreshed using client B's credentials.
+	if record.ClientID != uuid.Nil && record.ClientID != client.ID {
+		return nil, errors.Unauthenticated("refresh token was issued to a different client")
+	}
+
 	// 5. Reuse detection (RFC 6749 §10.4): a used/revoked token presented
 	// again means theft — mark the family and revoke ALL of its tokens.
 	if record.Used || record.Revoked {
@@ -1653,6 +1660,12 @@ func (s *OAuthService) RefreshToken(ctx context.Context, req *RefreshTokenReques
 	if time.Now().After(record.ExpiresAt) {
 		_ = s.tokenRepo.RevokeRefreshToken(ctx, req.TenantID, tokenHash)
 		return nil, errors.Unauthenticated("refresh token expired")
+	}
+
+	// 6a. SECURITY: verify the refresh token belongs to this client.
+	// Without this check, client B can use client A's refresh token.
+	if record.ClientID != uuid.Nil && record.ClientID != client.ID {
+		return nil, errors.Unauthenticated("refresh token was not issued to this client")
 	}
 
 	// 7. Mark the old token as used (rotation).
@@ -1724,12 +1737,12 @@ func (s *OAuthService) lookupAuthRefreshToken(ctx context.Context, tenantID uuid
 		return nil, fmt.Errorf("invalid token ID in redis: %s", tokenIDStr)
 	}
 
-	// The Auth service doesn't store user_id in Redis value, only token ID.
-	// We use the tenant ID from the request and set a nil user ID; the caller
-	// will issue an access token with whatever claims it can derive.
-	// For a proper implementation, the Auth service should also store user_id
-	// and session_id in the Redis value (as JSON). For now, we return a record
-	// that allows the refresh to proceed.
+	// SECURITY (P1-1): The Auth service doesn't store client_id in Redis,
+	// only token ID. Auth-issued tokens are NOT bound to a specific OAuth
+	// client, so any valid client can refresh them. This is acceptable for
+	// first-party console tokens but should be tightened for multi-client
+	// scenarios. The caller already validated the requesting client exists
+	// and has valid credentials (L1607-1618).
 	return &domain.RefreshTokenRecord{
 		ID:        tokenID,
 		TenantID:  tenantID,
