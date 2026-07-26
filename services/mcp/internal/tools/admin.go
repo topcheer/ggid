@@ -116,7 +116,7 @@ var adminTools = []Tool{
 			},
 			"required": []string{"user_id", "role_id"},
 		},
-		RequiredScopes: []string{"roles:manage"},
+		RequiredScopes: []string{"roles:write"},
 		Handler: func(ctx context.Context, c *client.Client, args map[string]any) (any, error) {
 			var result any
 			if err := c.Delete(ctx, fmt.Sprintf("/api/v1/users/%s/roles/%s", argStr(args, "user_id"), argStr(args, "role_id")), &result); err != nil {

@@ -35,7 +35,7 @@ var roleTools = []Tool{
 			},
 			"required": []string{"user_id", "role_key"},
 		},
-		RequiredScopes: []string{"roles:manage"},
+		RequiredScopes: []string{"roles:write"},
 		Handler: func(ctx context.Context, c *client.Client, args map[string]any) (any, error) {
 			body := map[string]any{"role_key": argStr(args, "role_key")}
 			var result any
