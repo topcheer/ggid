@@ -10,6 +10,7 @@ import (
 
 	"github.com/ggid/ggid/pkg/crypto"
 	"github.com/ggid/ggid/services/oauth/internal/domain"
+	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
 )
 
@@ -549,7 +550,7 @@ func TestParseBackchannelLogoutToken_WithNonce(t *testing.T) {
 func TestParseBackchannelLogoutToken_ValidWithSID(t *testing.T) {
 	svc, _, _, _ := newTestOAuthService()
 
-	token := createJWTWithClaims(t, map[string]any{
+	token := signTestToken(svc, jwt.MapClaims{
 		"sid":    "session-abc",
 		"events": map[string]any{"http://schemas.openid.net/event/backchannel-logout": map[string]any{}},
 	})
