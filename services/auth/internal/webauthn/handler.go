@@ -72,7 +72,25 @@ type sessionStore struct {
 }
 
 func newSessionStore() *sessionStore {
-	return &sessionStore{sessions: make(map[string]*sessionData)}
+	s := &sessionStore{sessions: make(map[string]*sessionData)}
+	// Background cleanup goroutine: evict expired sessions every 2 minutes
+	// to prevent unbounded memory growth from abandoned registration attempts.
+	go s.cleanupLoop()
+	return s
+}
+
+func (s *sessionStore) cleanupLoop() {
+	ticker := time.NewTicker(2 * time.Minute)
+	defer ticker.Stop()
+	for range ticker.C {
+		s.mu.Lock()
+		for k, sd := range s.sessions {
+			if time.Since(sd.createdAt) > 10*time.Minute {
+				delete(s.sessions, k)
+			}
+		}
+		s.mu.Unlock()
+	}
 }
 
 func (s *sessionStore) save(key string, sd *sessionData) {

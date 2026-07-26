@@ -2,6 +2,7 @@ package server
 
 import (
 	"encoding/json"
+	"log"
 	"net/http"
 	"time"
 
@@ -12,7 +13,10 @@ import (
 )
 
 func parseUUIDSafe(s string) uuid.UUID {
-	id, _ := uuid.Parse(s)
+	id, err := uuid.Parse(s)
+	if err != nil && s != "" {
+		log.Printf("[WARN] parseUUIDSafe: invalid UUID %q: %v", s, err)
+	}
 	return id
 }
 
