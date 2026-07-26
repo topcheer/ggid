@@ -247,14 +247,5 @@ func generateChallenge() string {
 	return base64.RawURLEncoding.EncodeToString(b)
 }
 
-// hasAdminScope checks if the request has platform:admin or tenant:admin scope.
-// The gateway injects X-Is-Admin header after JWT validation for admin users.
-func hasAdminScope(r *http.Request) bool {
-	// X-Is-Admin is set by gateway JWTAuth middleware for platform/tenant admins
-	if r.Header.Get("X-Is-Admin") == "true" {
-		return true
-	}
-	// Fallback: check X-User-Role header (also set by gateway)
-	role := r.Header.Get("X-User-Role")
-	return role == "platform:admin" || role == "tenant:admin"
-}
+// hasAdminScope removed — admins cannot enroll passkeys for other users.
+// Private keys live on the user's device and cannot be created by anyone else.

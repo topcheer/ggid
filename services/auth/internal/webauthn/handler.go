@@ -386,16 +386,14 @@ func getTenantAndUser(r *http.Request) (context.Context, uuid.UUID, uuid.UUID, e
 		return nil, uuid.Nil, uuid.Nil, fmt.Errorf("missing or invalid X-Tenant-ID")
 	}
 
-	// P0 Security: prefer authenticated user from gateway JWT (X-User-ID header).
-	// Fall back to query param for backwards compatibility.
+	// P0 Security: user_id must match the authenticated identity (JWT sub).
+	// Admins cannot enroll passkeys for other users — the private key lives
+	// on the user's own device and cannot be created by anyone else.
 	userIDStr := r.URL.Query().Get("user_id")
 	authUserID := r.Header.Get("X-User-ID")
 	if authUserID != "" {
 		if userIDStr != "" && userIDStr != authUserID {
-			// Only admins can register passkeys for other users.
-			if r.Header.Get("X-Is-Admin") != "true" {
-				return nil, uuid.Nil, uuid.Nil, fmt.Errorf("cannot register passkey for another user")
-			}
+			return nil, uuid.Nil, uuid.Nil, fmt.Errorf("cannot register passkey for another user")
 		}
 		if userIDStr == "" {
 			userIDStr = authUserID
