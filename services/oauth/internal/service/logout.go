@@ -1,10 +1,13 @@
 package service
 
 import (
+	"context"
 	"fmt"
 	"net/url"
+	"strings"
 
 	"github.com/ggid/ggid/pkg/errors"
+	"github.com/google/uuid"
 )
 
 // --- OIDC RP-Initiated Logout ---
@@ -53,8 +56,31 @@ func (s *OAuthService) RPInitiatedLogout(req *RPInitiatedLogoutRequest) (*RPInit
 			return nil, errors.InvalidArgument("invalid post_logout_redirect_uri")
 		}
 
-		// In production, validate against client's registered post_logout_redirect_uris.
-		// For now, construct the redirect URL with state parameter.
+		// SECURITY: Only allow HTTPS scheme (or localhost for development).
+		if u.Scheme != "https" && u.Host != "localhost" && !strings.HasPrefix(u.Host, "localhost:") {
+			return nil, errors.InvalidArgument("post_logout_redirect_uri must use HTTPS")
+		}
+
+		// SECURITY (OIDC Session Management §5): validate against the client's
+		// registered redirect URIs. Without this, any HTTPS URL is accepted → open redirect.
+		if req.IDTokenHint != "" {
+			claims, _ := s.ParseAccessToken(req.IDTokenHint)
+			if clientID, ok := claims["aud"].(string); ok && clientID != "" {
+				if client, cerr := s.clientRepo.GetClientByID(context.Background(), uuid.Nil, clientID); cerr == nil && client != nil {
+					matched := false
+					for _, registered := range client.RedirectURIs {
+						if registered == req.PostLogoutRedirectURI {
+							matched = true
+							break
+						}
+					}
+					if !matched {
+						return nil, errors.InvalidArgument("post_logout_redirect_uri not registered for this client")
+					}
+				}
+			}
+		}
+
 		if req.State != "" {
 			q := u.Query()
 			q.Set("state", req.State)

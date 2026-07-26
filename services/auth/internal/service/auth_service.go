@@ -263,7 +263,7 @@ func (s *AuthService) ForgotPassword(ctx context.Context, tenantID uuid.UUID, em
 	// 1. Look up credential by identifier (username or email)
 	cred, err := s.credentialRepo.FindByIDentifier(ctx, tenantID, email)
 	if err != nil {
-		slog.Error("ForgotPassword: FindByIdentifier error", "identifier", email, "error", err)
+		slog.Error("ForgotPassword: FindByIdentifier error", "identifier", "[redacted]", "error", err)
 		return err
 	}
 
@@ -271,14 +271,14 @@ func (s *AuthService) ForgotPassword(ctx context.Context, tenantID uuid.UUID, em
 	if cred == nil && s.identityClient != nil {
 		user, err := s.identityClient.GetUser(ctx, tenantID, email)
 		if err != nil {
-			slog.Error("ForgotPassword: identity lookup error", "email", email, "error", err)
+			slog.Error("ForgotPassword: identity lookup error", "email", "[redacted]", "error", err)
 			return nil // Don't reveal
 		}
 		if user != nil {
 			// Try with username from identity service
 			cred, err = s.credentialRepo.FindByIDentifier(ctx, tenantID, user.Username)
 			if err != nil {
-				slog.Error("ForgotPassword: credential lookup by username error", "username", user.Username, "error", err)
+				slog.Error("ForgotPassword: credential lookup by username error", "username", "[redacted]", "error", err)
 				return nil
 			}
 		}
@@ -286,7 +286,7 @@ func (s *AuthService) ForgotPassword(ctx context.Context, tenantID uuid.UUID, em
 
 	// Don't reveal whether the email exists
 	if cred == nil {
-		slog.Info("ForgotPassword: user not found", "identifier", email)
+		slog.Info("ForgotPassword: user not found", "identifier", "[redacted]")
 		return nil
 	}
 	slog.Info("ForgotPassword: user found, issuing reset token", "user_id", cred.UserID)
@@ -298,7 +298,7 @@ func (s *AuthService) ForgotPassword(ctx context.Context, tenantID uuid.UUID, em
 	}
 
 	// 3. Send reset email if email sender is configured
-	slog.Info("ForgotPassword: checking email sender", "sender_nil", s.emailSender == nil, "email", email)
+	slog.Info("ForgotPassword: checking email sender", "sender_nil", s.emailSender == nil)
 	if s.emailSender != nil {
 		baseURL := os.Getenv("CONSOLE_BASE_URL")
 		if baseURL == "" {
@@ -307,7 +307,7 @@ func (s *AuthService) ForgotPassword(ctx context.Context, tenantID uuid.UUID, em
 		resetURL := fmt.Sprintf("%s/reset-password?token=%s", baseURL, token)
 		body := fmt.Sprintf("You requested a password reset.\n\nClick the link below to reset your password:\n%s\n\nIf you didn't request this, ignore this email.", resetURL)
 		if err := s.emailSender.Send(ctx, email, "Password Reset - GGID", body); err != nil {
-			slog.Error("ForgotPassword: failed to send reset email", "email", email, "error", err)
+			slog.Error("ForgotPassword: failed to send reset email", "email", "[redacted]", "error", err)
 		} else {
 			slog.Info("ForgotPassword: reset email sent", "email", email)
 		}
