@@ -699,8 +699,16 @@ func (h *Handler) verifyCredentials(w http.ResponseWriter, r *http.Request) {
 	}
 	h.authSvc.RecordLoginAttempt(r.Context(), req.Username, ip, userAgent, true, "")
 
-	// If MFA is required and user provided a code, verify it now.
-	if mfaRequired && req.MFACode != "" {
+	// If MFA is required, the code MUST be provided - hard fail otherwise.
+	// BUG FIX: Previously, missing code returned success with mfa_required=true (soft fail),
+	// allowing attackers to proceed without MFA.
+	if mfaRequired {
+		if req.MFACode == "" {
+			// MFA required but not provided - reject with proper error
+			writeError(w, http.StatusForbidden, "MFA required")
+			return
+		}
+		// Verify the provided MFA code
 		if tc, err := ggidtenant.FromContext(r.Context()); err == nil {
 			if err := h.authSvc.MFAService().VerifyUserCode(r.Context(), tc.TenantID, userID, req.MFACode); err != nil {
 				writeError(w, http.StatusUnauthorized, "invalid MFA code")

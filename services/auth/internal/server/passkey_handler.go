@@ -12,6 +12,7 @@ import (
 	"sync"
 	"time"
 
+	ggidtenant "github.com/ggid/ggid/pkg/tenant"
 	"github.com/google/uuid"
 )
 
@@ -94,24 +95,37 @@ func (h *Handler) handlePasskeyRevoke(w http.ResponseWriter, r *http.Request) {
 	}
 	id := parts[len(parts)-1]
 
-	// Revoke in DB
+	// Get tenant from context for isolation
+	tc, err := ggidtenant.FromContext(r.Context())
+	if err != nil {
+		writeError(w, http.StatusUnauthorized, "tenant context required")
+		return
+	}
+
+	// Revoke in DB - must verify tenant ownership
 	if h.pool != nil {
 		tag, err := h.pool.Exec(r.Context(), `
-			UPDATE auth_passkey_credentials SET revoked = true WHERE id = $1`, id)
-		if err != nil || tag.RowsAffected() == 0 {
-			// Try in-memory fallback
-			pkMu.Lock()
-			if cred, ok := pkCredentials[id]; ok {
-				cred.Revoked = true
-			}
-			pkMu.Unlock()
+			UPDATE auth_passkey_credentials SET revoked = true
+			WHERE id = $1 AND tenant_id = $2`, id, tc.TenantID)
+		if err != nil {
+			writeError(w, http.StatusInternalServerError, "failed to revoke passkey")
+			return
+		}
+		if tag.RowsAffected() == 0 {
+			// Either passkey doesn't exist or doesn't belong to this tenant
+			writeError(w, http.StatusNotFound, "passkey not found")
+			return
 		}
 	} else {
+		// In-memory fallback - also check tenant
 		pkMu.Lock()
 		defer pkMu.Unlock()
-		if cred, ok := pkCredentials[id]; ok {
-			cred.Revoked = true
+		cred, ok := pkCredentials[id]
+		if !ok || cred.UserID != tc.TenantID.String() {
+			writeError(w, http.StatusNotFound, "passkey not found")
+			return
 		}
+		cred.Revoked = true
 	}
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(map[string]any{"status": "revoked", "id": id})
@@ -123,15 +137,33 @@ func (h *Handler) handlePasskeyStatus(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Get tenant context for isolation
+	tc, err := ggidtenant.FromContext(r.Context())
+	if err != nil {
+		writeError(w, http.StatusUnauthorized, "tenant context required")
+		return
+	}
+
 	// Query from DB
 	if h.pool != nil {
 		userID := r.URL.Query().Get("user_id")
-		rows, err := h.pool.Query(r.Context(), `
+		// BUG FIX: Always require tenant_id in WHERE clause
+		// Remove ($1 = '' OR user_id = $1) pattern that leaks all tenants' data
+		query := `
 			SELECT id, credential_id, device_name, platform, created_at,
 			       COALESCE(last_used, created_at), transports::text, backup_eligible
 			FROM auth_passkey_credentials
-			WHERE revoked = false AND ($1 = '' OR user_id = $1)
-			ORDER BY created_at DESC`, userID)
+			WHERE revoked = false AND tenant_id = $1`
+		args := []any{tc.TenantID}
+		
+		// If user_id provided, filter by it as well
+		if userID != "" {
+			query += ` AND user_id = $2`
+			args = append(args, userID)
+		}
+		query += ` ORDER BY created_at DESC`
+		
+		rows, err := h.pool.Query(r.Context(), query, args...)
 		if err != nil {
 			writeError(w, http.StatusInternalServerError, "failed to query passkeys")
 			return
