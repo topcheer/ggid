@@ -131,6 +131,7 @@ func Default() *Config {
 			"/saml":                               envOrDefault("OAUTH_SERVICE_URL", "http://localhost:9005"),
 			"/.well-known/openid-configuration":            envOrDefault("OAUTH_SERVICE_URL", "http://localhost:9005"),
 			"/.well-known/oauth-authorization-server":       envOrDefault("OAUTH_SERVICE_URL", "http://localhost:9005"),
+			"/.well-known/oauth-protected-resource":          envOrDefault("MCP_SERVICE_URL", "http://localhost:9060"),
 		},
 		RouteConfigs: map[string]RouteConfig{
 			// Auth needs short timeouts for fast failure on rate-limited requests

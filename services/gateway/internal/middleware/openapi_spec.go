@@ -444,6 +444,7 @@ func addIdentityPaths(m map[string]OpenAPIPath) {
 func addOAuthPaths(m map[string]OpenAPIPath) {
 	m["/.well-known/jwks.json"] = OpenAPIPath{Get: op([]string{"OAuth"}, "JWKS — public keys for JWT verification")}
 	m["/.well-known/openid-configuration"] = OpenAPIPath{Get: op([]string{"OAuth"}, "OIDC discovery document")}
+	m["/.well-known/oauth-protected-resource"] = OpenAPIPath{Get: op([]string{"MCP"}, "RFC 9728 protected resource metadata for MCP auto-discovery")}
 	m["/api/v1/oauth/.well-known/openid-configuration"] = OpenAPIPath{Get: op([]string{"Auth"}, "V1 Oauth .Well Known Openid Configuration")}
 	m["/api/v1/oauth/agents/"] = OpenAPIPath{Get: op([]string{"Auth"}, "V1 Oauth Agents")}
 	m["/api/v1/oauth/analytics/summary"] = OpenAPIPath{Get: op([]string{"Auth"}, "V1 Oauth Analytics Summary")}
