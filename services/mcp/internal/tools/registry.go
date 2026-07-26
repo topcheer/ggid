@@ -141,3 +141,27 @@ func argInt(args map[string]any, key string, def int) int {
 func (r *Registry) RegisterTool(tools ...Tool) {
 	r.register(tools...)
 }
+
+// findRoleIDByKey searches a roles list response for a role with matching key.
+func findRoleIDByKey(rolesResp any, key string) string {
+	m, ok := rolesResp.(map[string]any)
+	if !ok {
+		return ""
+	}
+	roles, ok := m["roles"].([]any)
+	if !ok {
+		return ""
+	}
+	for _, r := range roles {
+		rm, ok := r.(map[string]any)
+		if !ok {
+			continue
+		}
+		if rk, _ := rm["key"].(string); rk == key {
+			if id, _ := rm["id"].(string); id != "" {
+				return id
+			}
+		}
+	}
+	return ""
+}

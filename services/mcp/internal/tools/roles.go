@@ -37,14 +37,23 @@ var roleTools = []Tool{
 		},
 		RequiredScopes: []string{"roles:write"},
 		Handler: func(ctx context.Context, c *client.Client, args map[string]any) (any, error) {
-			body := map[string]any{"role_key": argStr(args, "role_key")}
+			// Try role_id first, then role_key
+			roleKey := argStr(args, "role_key")
+			body := map[string]any{"role_id": roleKey}
 			var result any
 			if err := c.Post(ctx, fmt.Sprintf("/api/v1/users/%s/roles", argStr(args, "user_id")), body, &result); err != nil {
-				// Fallback: try with role_id directly
-				body2 := map[string]any{"role_id": argStr(args, "role_key")}
-				if err2 := c.Post(ctx, fmt.Sprintf("/api/v1/users/%s/roles", argStr(args, "user_id")), body2, &result); err2 != nil {
-					return nil, err
+				// Fallback: lookup role by key, then use role_id
+				var rolesResp any
+				if err2 := c.Get(ctx, "/api/v1/roles", &rolesResp); err2 == nil {
+					if roleID := findRoleIDByKey(rolesResp, roleKey); roleID != "" {
+						body2 := map[string]any{"role_id": roleID}
+						if err3 := c.Post(ctx, fmt.Sprintf("/api/v1/users/%s/roles", argStr(args, "user_id")), body2, &result); err3 != nil {
+							return nil, err
+						}
+						return result, nil
+					}
 				}
+				return nil, err
 			}
 			return result, nil
 		},
