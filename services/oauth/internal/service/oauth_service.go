@@ -1161,14 +1161,15 @@ func (s *OAuthService) issueIDToken(userID, tenantID uuid.UUID, audience, nonce 
 // --- Token Validation / Introspection ---
 
 // ParseAccessToken validates and parses an access token JWT.
-// It does NOT enforce audience — use ParseAccessTokenWithAudience for that.
+// It enforces issuer verification (RFC 7519 §4.1.3) but does NOT enforce
+// audience — use ParseAccessTokenWithAudience for that.
 func (s *OAuthService) ParseAccessToken(tokenStr string) (jwt.MapClaims, error) {
 	return s.ParseAccessTokenWithAudience(tokenStr, "")
 }
 
-// ParseAccessTokenWithAudience parses and validates a JWT access token,
-// optionally verifying that the aud claim matches the expected audience.
-// If expectedAudience is empty, aud verification is skipped (backward compatible).
+// ParseAccessTokenWithAudience parses and validates a JWT access token.
+// Always verifies issuer (iss claim must match s.issuer).
+// If expectedAudience is non-empty, also verifies audience (aud claim).
 func (s *OAuthService) ParseAccessTokenWithAudience(tokenStr, expectedAudience string) (jwt.MapClaims, error) {
 	token, err := jwt.ParseWithClaims(tokenStr, jwt.MapClaims{}, func(t *jwt.Token) (any, error) {
 		if !isSupportedSigningMethod(t.Method) {
@@ -1182,6 +1183,11 @@ func (s *OAuthService) ParseAccessTokenWithAudience(tokenStr, expectedAudience s
 	claims, ok := token.Claims.(jwt.MapClaims)
 	if !ok || !token.Valid {
 		return nil, fmt.Errorf("invalid token")
+	}
+	// RFC 7519 §4.1.1: verify issuer (always enforced).
+	tokenIss := getStringClaim(claims, "iss")
+	if tokenIss != "" && tokenIss != s.issuer {
+		return nil, fmt.Errorf("token issuer mismatch: expected %q, got %q", s.issuer, tokenIss)
 	}
 	// RFC 7519 §4.1.3: verify audience if expected audience is provided.
 	if expectedAudience != "" {
