@@ -127,7 +127,7 @@ type AuthorizationCode struct {
 	RedirectURI         string
 	Scope               []string
 	CodeChallenge       string // PKCE
-	CodeChallengeMethod string // "plain" or "S256"
+	CodeChallengeMethod string // "S256" (OAuth 2.1 — plain deprecated)
 	Nonce               string
 	ExpiresAt           time.Time
 	Used                bool

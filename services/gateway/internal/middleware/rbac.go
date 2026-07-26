@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	"fmt"
 	"net/http"
 	"strings"
 )
@@ -105,7 +106,7 @@ func RequireAdminScope(next http.Handler) http.Handler {
 					next.ServeHTTP(w, r)
 					return
 				}
-				writeAdminForbidden(w)
+				writeAdminForbidden(w, r)
 				return
 			}
 			// No dynamic rule matched → static fallback below.
@@ -135,15 +136,19 @@ func RequireAdminScope(next http.Handler) http.Handler {
 			return
 		}
 
-		writeAdminForbidden(w)
+		writeAdminForbidden(w, r)
 	})
 }
 
 // writeAdminForbidden emits the standard 403 body for admin-scope failures.
-func writeAdminForbidden(w http.ResponseWriter) {
+func writeAdminForbidden(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
+	requestID := GetRequestID(r.Context())
+	if requestID != "" {
+		w.Header().Set("X-Request-ID", requestID)
+	}
 	w.WriteHeader(http.StatusForbidden)
-	w.Write([]byte(`{"detail":"insufficient permissions for this endpoint","title":"Forbidden","type":"https://ggid.dev/errors/forbidden"}`))
+	fmt.Fprintf(w, `{"detail":"insufficient permissions for this endpoint","title":"Forbidden","type":"https://ggid.dev/errors/forbidden","request_id":%q}`, requestID)
 }
 
 // hasAdminScope checks if any of the user's scopes indicate admin-level access.
