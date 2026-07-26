@@ -5118,3 +5118,29 @@ Build: PASS. `make test`: EXIT=0, 65/65. Danger: 0.
 **Rotation 5: 0 P0. P1 down to 2 (MCP JWKS, JWKS rotation — both architecture items).**
 
 ### Next Dimension: 1 — Authentication Completeness (Cycle 1474) — Rotation 6
+
+## Cycle 1474: D1 Auth R6 — god R40-R43, P1-13 New (Round 1489)
+god R40-R43: P2-58/59 fixed, P1-12 (backchannel logout ParseUnverified) + P1-13 (JWT bearer grant ParseUnverified) new. 58 active (P0:0/P1:4/P2:54).
+Build: PASS. `make test`: EXIT=0, 65/65. Danger: 0.
+
+### D1 Auth (Rotation 6) — All Prior Fixes Stable
+- Token response: access_token + token_type + expires_in ✅
+- Go SDK iss validation (P1-2): WithIssuer ✅
+- PKCE S256 enforcement: 17 refs ✅
+- Refresh token client binding (P1-1): 2 checks ✅
+- PasswordGrant brute-force: locked_until + failed_attempts ✅
+
+### Active P1 (4, all architecture/SDK level)
+- P1-3: MCP JWKS unimplemented
+- P1-6: JWKS rotation old key retention
+- P1-12: Backchannel logout token ParseUnverified
+- P1-13: JWT bearer grant assertion ParseUnverified (RFC 7523 §3)
+
+### god R40-R43 Confirmed Secure
+- client_credentials audience enforcement (RFC 8707) ✅
+- Token exchange actor_token signature ✅
+- SCIM .search POST + outbound sync ✅
+- Protected app router concurrency ✅
+- Consent cascade ✅
+
+### Next Dimension: 2 — Authorization Boundaries (Cycle 1480) — Rotation 6
