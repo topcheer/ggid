@@ -343,3 +343,10 @@ R31 三项 P2 全部完成并生产验证：
 - P2-14 SCIM /Me ✅ (含 guardian P0 auth bypass 修复)
 - P2-15 JWT iss/aud 验证 ✅ (5 端点迁移 + 生产回归修复)
 - P2-16 PKCE plain 移除 ✅
+
+## R32 增量审视 2026-07-26 08:00
+
+R31 最终确认后 1 个新 commit：
+- 0f12fef38 — public client token revocation via token proof-of-possession（RFC 7009 兼容：公开客户端无 secret，通过 token 本身证明所有权）
+
+审计通过。`go build` + `go test ./services/oauth/...` 全部 PASS。无新问题。
