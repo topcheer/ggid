@@ -523,11 +523,29 @@ func initKeyProvider(ctx context.Context, jwtCfg conf.JWTConfig) (crypto.KeyProv
 	})
 }
 
-// ensureLocalKeyPair generates an RSA key pair on disk if the private key is missing.
+// ensureLocalKeyPair validates that the configured RSA key pair exists and is
+// parseable. If the key file is missing, it generates a new pair ONLY in
+// development (when GGID_DEV_MODE=true). In production, missing keys are a
+// fatal error — keys must be injected via Kubernetes secrets.
 func ensureLocalKeyPair(privateKeyPath, publicKeyPath string) error {
-	if _, err := os.Stat(privateKeyPath); err == nil {
-		return nil
+	// Check if private key exists.
+	privInfo, err := os.Stat(privateKeyPath)
+	if err == nil {
+		// File exists — validate it can be parsed as an RSA key.
+		if vErr := validateRSAKeyPair(privateKeyPath, publicKeyPath); vErr != nil {
+			log.Printf("[ERROR] RSA key pair at %s exists but is invalid: %v", privateKeyPath, vErr)
+			return fmt.Errorf("invalid RSA key pair (keys exist but cannot be parsed — check secret mount): %w", vErr)
+		}
+		return nil // keys exist and are valid
 	}
+
+	// Key file missing.
+	if os.Getenv("GGID_DEV_MODE") != "true" {
+		return fmt.Errorf("RSA private key not found at %s — inject via secret mount (do not auto-generate in production)", privateKeyPath)
+	}
+
+	// Dev mode: generate key pair for local development only.
+	log.Printf("[DEV] Generating RSA key pair for local development: %s + %s", privateKeyPath, publicKeyPath)
 	_ = os.MkdirAll(filepath.Dir(privateKeyPath), 0o700)
 	key, err := rsa.GenerateKey(rand.Reader, 2048)
 	if err != nil {
@@ -552,7 +570,56 @@ func ensureLocalKeyPair(privateKeyPath, publicKeyPath string) error {
 	if err := os.WriteFile(publicKeyPath, pubData, 0o644); err != nil {
 		return fmt.Errorf("write public key: %w", err)
 	}
-	log.Printf("Generated new RSA key pair: %s + %s", privateKeyPath, publicKeyPath)
+	_ = privInfo // silence unused
+	return nil
+}
+
+// validateRSAKeyPair reads and parses the key files to ensure they are valid
+// RSA keys that can be used for JWT signing/verification.
+func validateRSAKeyPair(privateKeyPath, publicKeyPath string) error {
+	// Validate private key.
+	privPEM, err := os.ReadFile(privateKeyPath)
+	if err != nil {
+		return fmt.Errorf("read private key: %w", err)
+	}
+	block, _ := pem.Decode(privPEM)
+	if block == nil {
+		return fmt.Errorf("private key is not valid PEM")
+	}
+	priv, err := x509.ParsePKCS8PrivateKey(block.Bytes)
+	if err != nil {
+		priv, err = x509.ParsePKCS1PrivateKey(block.Bytes)
+		if err != nil {
+			return fmt.Errorf("private key is neither PKCS8 nor PKCS1: %w", err)
+		}
+	}
+	if _, ok := priv.(*rsa.PrivateKey); !ok {
+		return fmt.Errorf("private key is not RSA")
+	}
+
+	// Validate public key (if it exists).
+	if _, err := os.Stat(publicKeyPath); err == nil {
+		pubPEM, err := os.ReadFile(publicKeyPath)
+		if err != nil {
+			return fmt.Errorf("read public key: %w", err)
+		}
+		pubBlock, _ := pem.Decode(pubPEM)
+		if pubBlock == nil {
+			return fmt.Errorf("public key is not valid PEM")
+		}
+		pubKey, err := x509.ParsePKIXPublicKey(pubBlock.Bytes)
+		if err != nil {
+			// Try PKCS1 public key.
+			if _, perr := x509.ParsePKCS1PublicKey(pubBlock.Bytes); perr != nil {
+				return fmt.Errorf("public key is not parseable (PKIX or PKCS1): %w", err)
+			}
+			return nil // PKCS1 public key is valid
+		}
+		if _, ok := pubKey.(*rsa.PublicKey); !ok {
+			return fmt.Errorf("public key is not RSA")
+		}
+	}
+
 	return nil
 }
 
