@@ -1692,7 +1692,22 @@ func (s *OAuthService) RefreshToken(ctx context.Context, req *RefreshTokenReques
 	// SECURITY: Filter client-requested scopes to standard OAuth scopes only.
 	// Admin scopes (platform:*, tenant:*) come from the user's DB role keys,
 	// not from the refresh request — prevents scope escalation.
+	// RFC 6749 §6: requested scope must not include any scope not originally granted.
 	safeScopes := filterSafeScopes(req.Scope)
+	// Narrow to scopes that were in the original authorization (record.Scope).
+	if len(record.Scope) > 0 {
+		recordScopeSet := make(map[string]bool, len(record.Scope))
+		for _, sc := range record.Scope {
+			recordScopeSet[sc] = true
+		}
+		narrowed := safeScopes[:0]
+		for _, sc := range safeScopes {
+			if recordScopeSet[sc] {
+				narrowed = append(narrowed, sc)
+			}
+		}
+		safeScopes = narrowed
+	}
 	roleKeys := s.fetchUserRoleKeys(ctx, req.TenantID, record.UserID)
 	accessTokenScope := strings.TrimSpace(joinScopes(safeScopes) + " " + strings.Join(roleKeys, " "))
 	accessToken, expiresIn, err := s.issueAccessToken(record.UserID, req.TenantID, resolveAudience(req.Audience, client.ClientID), accessTokenScope)
