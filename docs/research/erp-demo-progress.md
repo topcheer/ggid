@@ -4434,3 +4434,65 @@ All use **snake_case** JSON field names. ✅
 | Demo (8 apps) | ✅ P1 Python/Ruby tenant isolation fixed; all demos now self-protecting |
 
 ### Next Dimension: 6 — End-to-End UX (Cycle 1324)
+
+## Cycle 1324: D6 End-to-End UX — Full Rotation Complete (Round 1464)
+New commits: `ca682f506` (gateway admin endpoint protection), `37924185c` (RLS tenant_id + impersonation scope). Build: PASS. `make test`: EXIT=0, 65/65. Danger patterns: 0.
+
+### D6 Deep Verification (End-to-End UX)
+
+#### Login Flow: All 8 Demos Have Entry Points ✅
+| Demo | Method | Endpoint | SDK Call |
+|------|--------|----------|----------|
+| Go | Auth Code + PKCE | `/api/auth/oauth/login` | `GetAuthorizeURL()` → redirect |
+| Node | M2M | `POST /api/auth/token` | `clientCredentials()` |
+| React | SPA PKCE | Frontend redirect | PKCE in browser |
+| Python | SAML SSO | `/login` redirect | SAML SSO URL |
+| C# | Password | `POST /api/auth/login` | `login()` |
+| Java | SAML SSO | `/auth/login` redirect | SAML SSO URL |
+| Ruby | Device Code | `POST /api/auth/device/start` | `device_authorization()` |
+| Rust | Token Exchange | `POST /api/auth/exchange` | `exchange_token()` |
+
+#### 401 No-Token Handling: All Demos ✅
+All 8 demos reject missing Bearer tokens with 401 + meaningful error. Go: `"Bearer token required"`, Node: `{code: 'unauthenticated', message: 'Missing token'}`, Ruby: `"Bearer token required"`.
+
+#### CRUD Round-Trip: Verified ✅
+- Go: `products[p.ID] = &p` + `writeJSON(w, 201, p)` — created item returned
+- Node: `items.push(item)` + `res.status(201).json(item)`
+- All demos: POST creates resource → subsequent GET returns it ✅
+
+#### P2 Finding: Refresh + Logout Gaps
+| Demo | Refresh | Logout |
+|------|:-------:|:------:|
+| Go | ✅ `/api/auth/refresh` | ❌ |
+| Node | ❌ | ❌ |
+| Python | ❌ (SAML re-auth) | ❌ |
+| C# | ❌ | ❌ |
+| Java | ❌ (SAML re-auth) | ❌ |
+| Ruby | ❌ (device re-auth) | ❌ |
+| Rust | ❌ (one-shot exchange) | ❌ |
+
+**Impact**: Token expiry requires full re-authentication in 6/7 demos. Not blocking for demo purposes (short sessions), but production apps need refresh. SDKs all have `refreshToken()` methods — demos just don't wire them to endpoints.
+**Fix**: Add `POST /api/auth/refresh` to each demo, calling `sdk.refreshToken()`. Logout endpoint optional (clear local token).
+
+#### New Commits: Security Verified ✅
+- `ca682f506`: Added 11 admin-only path prefixes (MFA, credentials, MDM, device posture, impersonation). Prevents non-admin users from accessing management endpoints.
+- `37924185c`: RLS tenant_id propagation in search queries + impersonation token scope restricted to tenant admin.
+
+### 6-Dimension Rotation Summary (C1294→C1324)
+| Dimension | Cycle | Findings | Status |
+|-----------|-------|----------|--------|
+| D1 Auth | C1294 | P0 build break (missing log import) | ✅ Fixed |
+| D2 Authz | C1300 | P2 missing my-permissions (Rust/Java) | ✅ Fixed |
+| D3 Demo | C1306 | P2 field/wrapper inconsistencies | ✅ Fixed |
+| D4 Tenant | C1312 | P1 Python/Ruby missing tenant check | ✅ Fixed |
+| D5 SDK | C1318 | P3 Python untyped, Go user_id vs sub | Noted (non-blocking) |
+| D6 E2E | C1324 | P2 refresh/logout gaps | Noted (non-blocking) |
+
+### Three-Layer Alignment
+| Layer | Status |
+|-------|--------|
+| Core | ✅ builds, 65/65 tests, admin paths secured, RLS tenant_id propagated |
+| SDK | ✅ consistent token/claims, all methods present |
+| Demo | ✅ all demos login + CRUD + 401; ⚠️ refresh/logout gaps (P2) |
+
+### Next Dimension: 1 — Authentication Completeness (Cycle 1330) — Next Rotation
