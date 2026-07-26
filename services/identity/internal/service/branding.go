@@ -89,9 +89,15 @@ func (bs *BrandingStore) EnsureBrandingTable(ctx context.Context) error {
 	}
 	_, err := bs.db.Exec(ctx, `
 		CREATE TABLE IF NOT EXISTS tenant_branding (
-			tenant_id   UUID NOT NULL PRIMARY KEY,
-			settings    JSONB NOT NULL DEFAULT '{}'::jsonb,
-			updated_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
-		)`)
+			id           UUID NOT NULL DEFAULT gen_random_uuid(),
+			tenant_id    UUID,
+			logo_url     TEXT,
+			primary_color TEXT,
+			config       JSONB NOT NULL DEFAULT '{}'::jsonb,
+			updated_at   TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+			PRIMARY KEY (id)
+		);
+		CREATE UNIQUE INDEX IF NOT EXISTS tenant_branding_tenant_id_key ON tenant_branding(tenant_id);
+	`)
 	return err
 }

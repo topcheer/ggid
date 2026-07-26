@@ -260,8 +260,8 @@ func (h *HTTPHandler) handleTenantBranding(w http.ResponseWriter, r *http.Reques
 		if pool := h.svc.Pool(); pool != nil {
 			var b TenantBranding
 			err := pool.QueryRow(r.Context(),
-				`SELECT COALESCE(primary_color, '#6366f1'), COALESCE(logo_url, ''), COALESCE(custom_domain, '') FROM tenant_branding WHERE tenant_id = $1`,
-				tenantID).Scan(&b.PrimaryColor, &b.LogoURL, &b.CustomDomain)
+				`SELECT COALESCE(primary_color, '#6366f1'), COALESCE(logo_url, '') FROM tenant_branding WHERE tenant_id = $1`,
+				tenantID).Scan(&b.PrimaryColor, &b.LogoURL)
 			if err == nil {
 				writeJSON(w, http.StatusOK, b)
 				return
@@ -286,10 +286,10 @@ func (h *HTTPHandler) handleTenantBranding(w http.ResponseWriter, r *http.Reques
 		// Try DB first
 		if pool := h.svc.Pool(); pool != nil {
 			_, err := pool.Exec(r.Context(), `
-				INSERT INTO tenant_branding (tenant_id, primary_color, logo_url, custom_domain)
-				VALUES ($1, $2, $3, $4)
-				ON CONFLICT (tenant_id) DO UPDATE SET primary_color = $2, logo_url = $3, custom_domain = $4`,
-				tenantID, branding.PrimaryColor, branding.LogoURL, branding.CustomDomain)
+				INSERT INTO tenant_branding (tenant_id, primary_color, logo_url)
+				VALUES ($1, $2, $3)
+				ON CONFLICT (tenant_id) DO UPDATE SET primary_color = $2, logo_url = $3`,
+				tenantID, branding.PrimaryColor, branding.LogoURL)
 			if err != nil {
 				slog.Error("CIAM branding update failed", "error", err)
 				writeJSONError(w, http.StatusInternalServerError, "branding update failed")
