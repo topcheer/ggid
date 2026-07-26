@@ -457,7 +457,8 @@ func (s *OAuthService) ExchangeAuthorizationCode(ctx context.Context, req *Token
 	}
 
 	// 2. Verify client secret for confidential clients.
-	if client.IsConfidential() {
+	//    RFC 6749 §2.3: If token_endpoint_auth_method is "none", skip secret.
+	if client.IsConfidential() && client.TokenEndpointAuthMethod != "none" {
 		ok, _ := pkgcrypto.VerifyPassword(req.ClientSecret, client.ClientSecretHash)
 		if !ok {
 			return nil, errors.Unauthenticated("invalid client credentials")
@@ -1559,7 +1560,8 @@ func (s *OAuthService) RefreshToken(ctx context.Context, req *RefreshTokenReques
 	}
 
 	// 2. Verify client secret for confidential clients.
-	if client.IsConfidential() {
+	//    RFC 6749 §2.3: If token_endpoint_auth_method is "none", skip secret.
+	if client.IsConfidential() && client.TokenEndpointAuthMethod != "none" {
 		ok, _ := pkgcrypto.VerifyPassword(req.ClientSecret, client.ClientSecretHash)
 		if !ok {
 			return nil, errors.Unauthenticated("invalid client credentials")
