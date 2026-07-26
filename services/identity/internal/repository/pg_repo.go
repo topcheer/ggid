@@ -153,7 +153,7 @@ func (r *pgRepo) GetUserByID(ctx context.Context, tenantID, id uuid.UUID) (*doma
 		return nil, err
 	}
 
-	row := tx.QueryRow(ctx, fmt.Sprintf(`SELECT %s FROM users WHERE id = $1 AND deleted_at IS NULL`, userColumns), id)
+	row := tx.QueryRow(ctx, fmt.Sprintf(`SELECT %s FROM users WHERE id = $1 AND tenant_id = $2 AND deleted_at IS NULL`, userColumns), id, tenantID)
 	user, err := scanUser(row)
 	if err != nil {
 		if isNoRows(err) {
@@ -185,8 +185,8 @@ func (r *pgRepo) getUserByColumn(ctx context.Context, tenantID uuid.UUID, where,
 		return nil, err
 	}
 
-	query := fmt.Sprintf(`SELECT %s FROM users WHERE %s AND deleted_at IS NULL`, userColumns, where)
-	row := tx.QueryRow(ctx, query, value)
+	query := fmt.Sprintf(`SELECT %s FROM users WHERE %s AND tenant_id = $2 AND deleted_at IS NULL`, userColumns, where)
+	row := tx.QueryRow(ctx, query, value, tenantID)
 	user, err := scanUser(row)
 	if err != nil {
 		if isNoRows(err) {
@@ -291,6 +291,15 @@ func (r *pgRepo) ListUsers(ctx context.Context, filter *domain.ListUsersFilter) 
 		args   = []any{}
 		argIdx = 1
 	)
+
+	// Explicit tenant_id filter as defense-in-depth.
+	// RLS is configured but the ggid DB role has BYPASSRLS, so RLS policies
+	// are silently skipped. This WHERE clause ensures tenant isolation regardless.
+	if filter.TenantID != uuid.Nil {
+		where = append(where, fmt.Sprintf("tenant_id = $%d", argIdx))
+		args = append(args, filter.TenantID)
+		argIdx++
+	}
 
 	if filter.Search != "" {
 		where = append(where, fmt.Sprintf("(username ILIKE $%d OR email ILIKE $%d)", argIdx, argIdx))
