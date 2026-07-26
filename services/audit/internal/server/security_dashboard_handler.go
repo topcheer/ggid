@@ -41,8 +41,12 @@ func (s *HTTPServer) handleSecurityDashboard(w http.ResponseWriter, r *http.Requ
 		tenantIDStr := r.Header.Get("X-Tenant-ID")
 		tenantID, _ := uuid.Parse(tenantIDStr)
 		if tenantID == uuid.Nil {
-			// Fallback: use default tenant
-			tenantID = uuid.MustParse("fb44ca98-2a8a-498b-a9b2-00fc014524ce")
+			// No tenant context — return empty dashboard instead of hardcoded fallback.
+			writeJSON(w, http.StatusOK, map[string]any{
+				"failed_logins_24h": 0, "total_events_24h": 0,
+				"error": "X-Tenant-ID header required",
+			})
+			return
 		}
 		// Try multiple action names used across services for failed logins
 		totalFailed := 0

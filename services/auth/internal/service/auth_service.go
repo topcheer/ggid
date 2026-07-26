@@ -6,6 +6,7 @@ import (
 	stderrors "errors"
 	"fmt"
 	"log/slog"
+	"os"
 	"strings"
 	"time"
 
@@ -299,7 +300,11 @@ func (s *AuthService) ForgotPassword(ctx context.Context, tenantID uuid.UUID, em
 	// 3. Send reset email if email sender is configured
 	slog.Info("ForgotPassword: checking email sender", "sender_nil", s.emailSender == nil, "email", email)
 	if s.emailSender != nil {
-		resetURL := fmt.Sprintf("https://ggid-console.iot2.win/reset-password?token=%s", token)
+		baseURL := os.Getenv("CONSOLE_BASE_URL")
+		if baseURL == "" {
+			baseURL = "https://ggid-console.iot2.win"
+		}
+		resetURL := fmt.Sprintf("%s/reset-password?token=%s", baseURL, token)
 		body := fmt.Sprintf("You requested a password reset.\n\nClick the link below to reset your password:\n%s\n\nIf you didn't request this, ignore this email.", resetURL)
 		if err := s.emailSender.Send(ctx, email, "Password Reset - GGID", body); err != nil {
 			slog.Error("ForgotPassword: failed to send reset email", "email", email, "error", err)
