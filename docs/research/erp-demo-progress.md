@@ -5078,3 +5078,19 @@ New: gateway `50254acf5` forces JWT-validated tenant_id over client query param 
 ### Remaining P1 (2): P1-3 (MCP JWKS), P1-6 (JWKS rotation). P1-11 new (downscope stub).
 
 ### Next Dimension: 5 — SDK Cross-Language Consistency (Cycle 1462) — Rotation 5
+
+## Cycle 1462: D5 SDK R5 — All Consistent, P1-11 Fixed (Round 1487)
+New commits: `7672a34fd` (remove duplicate downscope route), `da3a1a106` (UX focus rings).
+P1-11 fully resolved (stub removed + JWT verification + duplicate route fixed).
+Build: PASS. `make test`: EXIT=0, 65/65. Danger: 0.
+
+### D5 SDK (Rotation 5) — All 7 Consistent ✅
+- Token fields: Go/Rust/Java/Node/C# all snake_case ✅
+- Claims: tenant_id + roles + permissions across all SDKs ✅
+- Go SDK iss validation (P1-2 fix) confirmed ✅
+
+### P1 Status Update
+- P1-11 RESOLVED ✅ (stub removed, JWT verification, duplicate route fixed)
+- Remaining P1: P1-3 (MCP JWKS), P1-6 (JWKS rotation) — both non-blocking architecture items
+
+### Next Dimension: 6 — End-to-End UX (Cycle 1468) — Rotation 5
