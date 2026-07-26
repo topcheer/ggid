@@ -30,12 +30,11 @@ func TestPlaintextBackwardCompat(t *testing.T) {
 	if dt != pt { t.Fatalf("plaintext fallback: got %q", dt) }
 }
 
-func TestNoKeyReturnsPlaintext(t *testing.T) {
+func TestNoKeyReturnsError(t *testing.T) {
 	os.Unsetenv("GGID_ENCRYPTION_KEY")
 	keyCache = nil
-	ct, err := EncryptTOTPSecret("secret")
-	if err != nil { t.Fatal(err) }
-	if ct != "secret" { t.Fatal("should return plaintext") }
+	_, err := EncryptTOTPSecret("secret")
+	if err == nil { t.Fatal("should refuse plaintext storage without encryption key") }
 }
 
 func TestEmptyString(t *testing.T) {
