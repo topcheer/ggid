@@ -1254,18 +1254,39 @@ func (s *OAuthService) GetUserInfo(tokenStr string) (*UserInfoResponse, error) {
 		return nil, err
 	}
 
-	resp := &UserInfoResponse{
-		Sub:           getStringClaim(claims, "sub"),
-		Name:          getStringClaim(claims, "name"),
-		Email:         getStringClaim(claims, "email"),
-		EmailVerified: getBoolClaim(claims, "email_verified"),
-		Picture:       getStringClaim(claims, "picture"),
-		TenantID:      getStringClaim(claims, "tenant_id"),
-		Roles:         getStringSliceClaim(claims, "roles"),
-		Groups:        getStringSliceClaim(claims, "groups"),
-		Permissions:   getStringSliceClaim(claims, "permissions"),
-		RiskLevel:     getStringClaim(claims, "risk_level"),
+	// Parse scopes from the token to enforce OIDC §5.4 scope-based claims.
+	tokenScope := getStringClaim(claims, "scope")
+	scopeSet := make(map[string]bool)
+	for _, sc := range strings.Fields(tokenScope) {
+		scopeSet[sc] = true
 	}
+
+	resp := &UserInfoResponse{
+		Sub: getStringClaim(claims, "sub"),
+	}
+
+	// If no scope claim, return all claims (backward compatibility for
+	// tokens without explicit scope, and internal service tokens).
+	noScopeFilter := tokenScope == ""
+
+	// Profile scope: name, picture (OIDC §5.4)
+	if noScopeFilter || scopeSet["profile"] {
+		resp.Name = getStringClaim(claims, "name")
+		resp.Picture = getStringClaim(claims, "picture")
+	}
+
+	// Email scope: email, email_verified (OIDC §5.4)
+	if noScopeFilter || scopeSet["email"] {
+		resp.Email = getStringClaim(claims, "email")
+		resp.EmailVerified = getBoolClaim(claims, "email_verified")
+	}
+
+	// Tenant + roles always available to the token holder
+	resp.TenantID = getStringClaim(claims, "tenant_id")
+	resp.Roles = getStringSliceClaim(claims, "roles")
+	resp.Groups = getStringSliceClaim(claims, "groups")
+	resp.Permissions = getStringSliceClaim(claims, "permissions")
+	resp.RiskLevel = getStringClaim(claims, "risk_level")
 	return resp, nil
 }
 
