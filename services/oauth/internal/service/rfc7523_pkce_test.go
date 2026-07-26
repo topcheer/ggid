@@ -90,10 +90,11 @@ func TestCovSprint12_BCLEmpty(t *testing.T) {
 
 func TestCovSprint12_BCLValidWithSub(t *testing.T) {
 	svc, _, _, _ := newTestOAuthService()
-	token := makeTestJWT(
-		`{"alg":"none","typ":"JWT"}`,
-		`{"sub":"user-bcl","jti":"bcl-jti-1","events":{"http://schemas.openid.net/event/backchannel-logout":{}}}`,
-	)
+	token := signTestToken(svc, jwt.MapClaims{
+		"sub":    "user-bcl",
+		"jti":    "bcl-jti-1",
+		"events": map[string]any{"http://schemas.openid.net/event/backchannel-logout": map[string]any{}},
+	})
 	err := svc.BackchannelLogoutEndpoint(token)
 	if err != nil {
 		t.Fatalf("BackchannelLogoutEndpoint: %v", err)

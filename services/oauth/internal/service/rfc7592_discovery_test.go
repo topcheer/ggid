@@ -6,6 +6,7 @@ import (
 
 	"github.com/ggid/ggid/pkg/tenant"
 	"github.com/ggid/ggid/services/oauth/internal/domain"
+	"github.com/golang-jwt/jwt/v5"
 )
 
 func testCtx() context.Context {
@@ -120,10 +121,11 @@ func TestRFC7592_RotateClientSecret_Success(t *testing.T) {
 
 func TestBackchannelReplay_NoReplay(t *testing.T) {
 	svc, _, _, _ := newTestOAuthService()
-	token := makeTestJWT(
-		`{"alg":"none","typ":"JWT"}`,
-		`{"sub":"user-1","jti":"unique-jti-1","events":{"http://schemas.openid.net/event/backchannel-logout":{}}}`,
-	)
+	token := signTestToken(svc, jwt.MapClaims{
+		"sub":    "user-1",
+		"jti":    "unique-jti-1",
+		"events": map[string]any{"http://schemas.openid.net/event/backchannel-logout": map[string]any{}},
+	})
 	_, err := svc.ParseBackchannelLogoutToken(token)
 	if err != nil {
 		t.Fatalf("first parse should succeed: %v", err)
@@ -132,10 +134,11 @@ func TestBackchannelReplay_NoReplay(t *testing.T) {
 
 func TestBackchannelReplay_DuplicateJti(t *testing.T) {
 	svc, _, _, _ := newTestOAuthService()
-	token := makeTestJWT(
-		`{"alg":"none","typ":"JWT"}`,
-		`{"sub":"user-2","jti":"replay-jti-test","events":{"http://schemas.openid.net/event/backchannel-logout":{}}}`,
-	)
+	token := signTestToken(svc, jwt.MapClaims{
+		"sub":    "user-2",
+		"jti":    "replay-jti-test",
+		"events": map[string]any{"http://schemas.openid.net/event/backchannel-logout": map[string]any{}},
+	})
 	// First parse — should succeed
 	_, err := svc.ParseBackchannelLogoutToken(token)
 	if err != nil {
@@ -150,10 +153,10 @@ func TestBackchannelReplay_DuplicateJti(t *testing.T) {
 
 func TestBackchannelReplay_NoJti(t *testing.T) {
 	svc, _, _, _ := newTestOAuthService()
-	token := makeTestJWT(
-		`{"alg":"none","typ":"JWT"}`,
-		`{"sub":"user-3","events":{"http://schemas.openid.net/event/backchannel-logout":{}}}`,
-	)
+	token := signTestToken(svc, jwt.MapClaims{
+		"sub":    "user-3",
+		"events": map[string]any{"http://schemas.openid.net/event/backchannel-logout": map[string]any{}},
+	})
 	// Without jti, replay prevention doesn't apply — should succeed
 	_, err := svc.ParseBackchannelLogoutToken(token)
 	if err != nil {
@@ -163,10 +166,11 @@ func TestBackchannelReplay_NoJti(t *testing.T) {
 
 func TestBackchannel_SIDExtraction(t *testing.T) {
 	svc, _, _, _ := newTestOAuthService()
-	token := makeTestJWT(
-		`{"alg":"none","typ":"JWT"}`,
-		`{"sid":"session-abc-123","jti":"sid-jti-1","events":{"http://schemas.openid.net/event/backchannel-logout":{}}}`,
-	)
+	token := signTestToken(svc, jwt.MapClaims{
+		"sid":    "session-abc-123",
+		"jti":    "sid-jti-1",
+		"events": map[string]any{"http://schemas.openid.net/event/backchannel-logout": map[string]any{}},
+	})
 	claims, err := svc.ParseBackchannelLogoutToken(token)
 	if err != nil {
 		t.Fatalf("parse with sid: %v", err)

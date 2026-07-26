@@ -530,15 +530,12 @@ func TestSec_RevokeToken_Idempotent(t *testing.T) {
 
 func TestSec_BackchannelLogout_ValidToken(t *testing.T) {
 	svc, _, _, _ := newTestOAuthService()
-	header := `{"alg":"none","typ":"JWT"}`
-	body, _ := json.Marshal(map[string]any{
+	token := signTestToken(svc, jwt.MapClaims{
 		"sub": "user-logout",
 		"events": map[string]any{
 			"http://schemas.openid.net/event/backchannel-logout": map[string]any{},
 		},
 	})
-	token := base64.RawURLEncoding.EncodeToString([]byte(header)) + "." +
-		base64.RawURLEncoding.EncodeToString(body) + "."
 	claims, err := svc.ParseBackchannelLogoutToken(token)
 	if err != nil {
 		t.Fatalf("ParseBackchannelLogoutToken: %v", err)

@@ -2790,12 +2790,22 @@ func (s *OAuthService) BackchannelLogout(sub string) {
 }
 
 // ParseBackchannelLogoutToken parses the logout_token JWT (OIDC Back-Channel Logout).
-// Validates required claims: sub or sid, events containing the logout event.
+// Validates JWT signature + required claims: sub or sid, events containing the logout event.
 func (s *OAuthService) ParseBackchannelLogoutToken(tokenStr string) (jwt.MapClaims, error) {
-	// Parse without strict verification (production would verify signature).
-	token, _, err := new(jwt.Parser).ParseUnverified(tokenStr, jwt.MapClaims{})
+	// Verify JWT signature using the service's signing key (P1-12: was ParseUnverified).
+	pubKey := s.keyProvider.Public()
+
+	token, err := jwt.Parse(tokenStr, func(t *jwt.Token) (any, error) {
+		if _, ok := t.Method.(*jwt.SigningMethodRSA); ok {
+			return pubKey, nil
+		}
+		if _, ok := t.Method.(*jwt.SigningMethodECDSA); ok {
+			return pubKey, nil
+		}
+		return nil, fmt.Errorf("unexpected signing method: %v", t.Header["alg"])
+	})
 	if err != nil {
-		return nil, fmt.Errorf("invalid logout token: %w", err)
+		return nil, fmt.Errorf("logout token signature verification failed: %w", err)
 	}
 
 	claims, ok := token.Claims.(jwt.MapClaims)

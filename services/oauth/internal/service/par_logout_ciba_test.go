@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/ggid/ggid/services/oauth/internal/domain"
+	"github.com/golang-jwt/jwt/v5"
 )
 
 // --- PAR (RFC 9126) Tests ---
@@ -284,10 +285,10 @@ func TestBackchannelLogoutEndpoint_EmptyToken(t *testing.T) {
 func TestBackchannelLogoutEndpoint_ValidToken(t *testing.T) {
 	svc, _, _, _ := newTestOAuthService()
 
-	logoutToken := makeTestJWT(
-		`{"alg":"none","typ":"JWT"}`,
-		`{"sub":"user-123","events":{"http://schemas.openid.net/event/backchannel-logout":{}}}`,
-	)
+	logoutToken := signTestToken(svc, jwt.MapClaims{
+		"sub":     "user-123",
+		"events":  map[string]any{"http://schemas.openid.net/event/backchannel-logout": map[string]any{}},
+	})
 
 	err := svc.BackchannelLogoutEndpoint(logoutToken)
 	if err != nil {
