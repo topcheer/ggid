@@ -7,7 +7,6 @@ import (
 	"strings"
 
 	"github.com/ggid/ggid/pkg/errors"
-	"github.com/google/uuid"
 )
 
 // --- OIDC RP-Initiated Logout ---
