@@ -107,7 +107,7 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
         });
         const isTenant = userScopes.some((s: string) => {
           const ls = s.toLowerCase();
-          return ls === "tenant:admin" || ls === "manager" || ls === "tenant administrator" || ls === "tenant_admin" || isPlatform;
+          return ls === "tenant:admin" || ls === "manager" || ls === "tenant administrator" || ls === "tenant_admin";
         });
         for (const [prefix, scope] of Object.entries(ADMIN_PREFIXES)) {
           if (pathname.startsWith(prefix)) {
