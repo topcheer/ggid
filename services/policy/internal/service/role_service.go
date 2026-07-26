@@ -68,8 +68,12 @@ func (s *RoleService) CreateRole(ctx context.Context, tenantID uuid.UUID, key, n
 	}
 
 	// Also block role NAMES that impersonate system roles (P1-10).
-	// Prevents UI-level impersonation where a custom role is named "Administrator".
+	// Prevents privilege escalation where a custom role named "platform:admin"
+	// gets into the JWT roles claim and the static RBAC fallback trusts it.
 	reservedSystemNames := map[string]bool{
+		"platform:admin":  true,
+		"tenant:admin":    true,
+		"tenant:auditor":  true,
 		"administrator":   true,
 		"platform admin":  true,
 		"super admin":     true,
