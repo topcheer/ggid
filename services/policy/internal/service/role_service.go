@@ -67,6 +67,19 @@ func (s *RoleService) CreateRole(ctx context.Context, tenantID uuid.UUID, key, n
 		return nil, errors.New(errors.ErrInvalidArgument, "role key is reserved for system roles")
 	}
 
+	// Also block role NAMES that impersonate system roles (P1-10).
+	// Prevents UI-level impersonation where a custom role is named "Administrator".
+	reservedSystemNames := map[string]bool{
+		"administrator":   true,
+		"platform admin":  true,
+		"super admin":     true,
+		"system admin":    true,
+	}
+	normalizedName := strings.ToLower(strings.TrimSpace(name))
+	if reservedSystemNames[normalizedName] {
+		return nil, errors.New(errors.ErrInvalidArgument, "role name is reserved for system roles")
+	}
+
 	role := &domain.Role{
 		TenantID:     tenantID,
 		Key:          key,
