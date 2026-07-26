@@ -2068,7 +2068,9 @@ func (s *OAuthService) PasswordGrant(ctx context.Context, req *PasswordGrantRequ
 	if s.pool != nil {
 		sessionID := uuid.New()
 		// Set RLS context before INSERT (sessions table has FORCED RLS).
-		_, _ = s.pool.Exec(ctx, fmt.Sprintf("SET app.tenant_id = '%s'", tenantID.String()))
+		// SECURITY: use parameterized SET LOCAL instead of fmt.Sprintf to prevent
+		// SQL injection. tenantID is a uuid.UUID (safe), but defense-in-depth.
+		_, _ = s.pool.Exec(ctx, "SELECT set_config('app.tenant_id', $1, true)", tenantID.String())
 		_, sessionErr := s.pool.Exec(ctx, `
 			INSERT INTO sessions (id, tenant_id, user_id, token_hash, ip_address, user_agent, expires_at, created_at)
 			VALUES ($1, $2, $3, $4, NULLIF($5, '')::inet, $6, $7, NOW())`,

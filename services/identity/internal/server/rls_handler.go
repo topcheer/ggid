@@ -15,7 +15,7 @@ import (
 // This must be called within a transaction (pgxpool.Tx) for RLS to apply.
 // Usage: tx, _ := pool.Begin(ctx); SetTenantContext(ctx, tx, tenantID); ... tx.Commit(ctx)
 func SetTenantContext(ctx context.Context, db DBExecer, tenantID string) error {
-	_, err := db.Exec(ctx, fmt.Sprintf("SET LOCAL app.tenant_id = '%s'", tenantID))
+	_, err := db.Exec(ctx, "SELECT set_config('app.tenant_id', $1, true)", tenantID)
 	return err
 }
 

@@ -25,7 +25,7 @@ func NewMFADeviceRepository(db *pgxpool.Pool) *pgMFADeviceRepository {
 }
 
 func (r *pgMFADeviceRepository) setTenantRLS(ctx context.Context, tx pgx.Tx, tenantID uuid.UUID) error {
-	_, err := tx.Exec(ctx, fmt.Sprintf("SET LOCAL app.tenant_id = '%s'", tenantID.String()))
+	_, err := tx.Exec(ctx, "SELECT set_config('app.tenant_id', $1, true)", tenantID.String())
 	return err
 }
 
