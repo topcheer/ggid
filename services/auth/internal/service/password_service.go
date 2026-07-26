@@ -51,6 +51,9 @@ func (ps *PasswordService) Validate(password string) error {
 	if len(password) < ps.policy.MinLength {
 		return fmt.Errorf("%w: must be at least %d characters", ErrPasswordTooShort, ps.policy.MinLength)
 	}
+	if ps.policy.MaxLength > 0 && len(password) > ps.policy.MaxLength {
+		return fmt.Errorf("password too long: must be at most %d characters (NIST 800-63B)", ps.policy.MaxLength)
+	}
 
 	var hasUpper, hasLower, hasDigit, hasSpecial bool
 	for _, ch := range password {

@@ -50,6 +50,7 @@ type JWTConfig struct {
 
 type PasswordPolicy struct {
 	MinLength      int           `json:"min_length" yaml:"min_length"`
+	MaxLength      int           `json:"max_length,omitempty" yaml:"max_length"`
 	RequireUpper   bool          `json:"require_upper" yaml:"require_upper"`
 	RequireLower   bool          `json:"require_lower" yaml:"require_lower"`
 	RequireDigit   bool          `json:"require_digit" yaml:"require_digit"`
