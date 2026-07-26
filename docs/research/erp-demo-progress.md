@@ -4339,3 +4339,52 @@ All demos correctly implement create-and-return pattern:
 - **`make test` now passes: EXIT=0, 65/65 packages, 0 FAIL**
 
 ### Next Dimension: 4 — Multi-Tenant Isolation (Cycle 1312)
+
+## Cycle 1312: D4 Multi-Tenant Isolation — P1 Gap in Python+Ruby (Round 1462)
+No new commits since C1306. Build: PASS. HEAD `make test` (excluding 5 untracked WIP test files): 65/65, EXIT=0.
+
+### D4 Deep Verification (Multi-Tenant Isolation)
+
+#### Gateway-Level Isolation: Solid ✅
+- `middleware.go:702-736`: JWT `tenant_id` vs `X-Tenant-ID` mismatch → 401 "tenant mismatch"
+- Only `platform:admin` scope/role bypasses (NOT self-assigned "admin")
+- `rbac_dynamic.go:314`: `row.TenantID != claims.TenantID` → skip rule (no cross-tenant RBAC grants)
+- `jwt_claims.go:131-132`: injects `X-Tenant-ID` from JWT if header missing
+
+#### OAuth-Level Isolation: Solid ✅
+- `fetchUserPermissions` (705-730): `r.tenant_id = $2` filter — permissions only from caller's tenant
+- `fetchUserRoles` (746+): same tenant_id filter
+- CAP evaluation (802+): `data->>'tenant_id' = $1` — policies scoped to tenant
+- Passkey/WebAuthn: cross-tenant credential rejection (verified C1295)
+
+#### P1 Finding: Python + Ruby Demos Missing Tenant Isolation ⚠️
+| Demo | Tenant Check | Implementation |
+|------|:-:|---|
+| Go | ✅ | `withAuth`: `info.TenantID != tenantID` → 401 |
+| Node | ✅ | `requireAuth`: `user.tenant_id !== TENANT` → 401 |
+| **Python** | **❌** | **NO tenant_id comparison anywhere in auth flow** |
+| **Ruby** | **❌** | **NO tenant_id comparison in before block** |
+| Rust | ✅ | `extract_auth`: `claims.tenant_id != expected_tenant` → None |
+| C# | ✅ | `tenant mismatch` → 401 |
+| Java | ✅ | `BaseHandler`: `tenant mismatch` → 401 |
+
+**Impact**: A token from tenant A could access tenant B's Python/Ruby demo resources directly (bypassing gateway). Defense-in-depth violation.
+**Mitigation**: Gateway enforces tenant boundary in production, so not directly exploitable through the gateway. But demos should be self-protecting.
+**Fix**: 
+- Python (`main.py:65-69`): After `claims = _jwt_verifier.verify(token)`, add: `if hasattr(claims, 'tenant_id') and claims.tenant_id and claims.tenant_id != TENANT_ID: self._send_json(401, {"error": "tenant mismatch"}); return`
+- Ruby (`app.rb:38-40`): After `@claims = $ggid.verify_token(token)`, add: `halt 401, { error: 'tenant mismatch' }.to_json if @claims.tenant_id && @claims.tenant_id != TENANT_ID`
+
+#### P2 Finding: multihash verifyGGIDArgon2id Base64 Encoding Bug
+- `pkg/auth/multihash/verifier.go:253,258`: uses `base64.StdEncoding` (with padding `=`)
+- `pkg/crypto/crypto.go:113-114`: uses `base64.RawStdEncoding` (no padding) to create hashes
+- **Impact**: multihash can't decode Argon2id hashes created by crypto.HashPassword. Latent bug — crypto.VerifyPassword is called first and handles Argon2id natively, so multihash Argon2id path is rarely hit.
+- Found by another agent's `verifier_bug_test.go` (untracked).
+
+### Three-Layer Alignment
+| Layer | Status |
+|-------|--------|
+| Core (gateway + oauth tenant isolation) | ✅ enforced at all layers |
+| SDK (7 langs) | ✅ no change |
+| Demo (8 apps) | ⚠️ P1: Python+Ruby missing tenant check; P2: multihash encoding |
+
+### Next Dimension: 5 — SDK Cross-Language Consistency (Cycle 1318)
