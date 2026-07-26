@@ -1162,6 +1162,13 @@ func (s *OAuthService) issueIDToken(userID, tenantID uuid.UUID, audience, nonce 
 
 // ParseAccessToken validates and parses an access token JWT.
 func (s *OAuthService) ParseAccessToken(tokenStr string) (jwt.MapClaims, error) {
+	return s.ParseAccessTokenWithAudience(tokenStr, "")
+}
+
+// ParseAccessTokenWithAudience parses and validates a JWT access token,
+// optionally verifying that the aud claim matches the expected audience.
+// If expectedAudience is empty, aud verification is skipped (backward compatible).
+func (s *OAuthService) ParseAccessTokenWithAudience(tokenStr, expectedAudience string) (jwt.MapClaims, error) {
 	token, err := jwt.ParseWithClaims(tokenStr, jwt.MapClaims{}, func(t *jwt.Token) (any, error) {
 		if !isSupportedSigningMethod(t.Method) {
 			return nil, fmt.Errorf("unexpected signing method: %v", t.Header["alg"])
@@ -1174,6 +1181,19 @@ func (s *OAuthService) ParseAccessToken(tokenStr string) (jwt.MapClaims, error) 
 	claims, ok := token.Claims.(jwt.MapClaims)
 	if !ok || !token.Valid {
 		return nil, fmt.Errorf("invalid token")
+	}
+	// RFC 7519 §4.1.3: verify audience if expected audience is provided.
+	if expectedAudience != "" {
+		tokenAud, _ := claims["aud"].(string)
+		if tokenAud == "" {
+			// aud may be []string
+			if audArr, ok := claims["aud"].([]any); ok && len(audArr) > 0 {
+				tokenAud, _ = audArr[0].(string)
+			}
+		}
+		if tokenAud != expectedAudience {
+			return nil, fmt.Errorf("token audience mismatch: expected %q, got %q", expectedAudience, tokenAud)
+		}
 	}
 	return claims, nil
 }

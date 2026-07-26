@@ -12,6 +12,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/golang-jwt/jwt/v5"
 	ggidtenant "github.com/ggid/ggid/pkg/tenant"
 	"github.com/ggid/ggid/services/identity/internal/domain"
 	"github.com/ggid/ggid/services/identity/internal/service"
@@ -35,6 +36,7 @@ func (h *Handler) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("/scim/v2/Groups", h.handleGroupsCollection)
 	mux.HandleFunc("/scim/v2/Groups/", h.HandleGroupResource)
 	mux.HandleFunc("/scim/v2/Bulk", h.handleBulk)
+	mux.HandleFunc("/scim/v2/Me", h.handleMe)
 	mux.HandleFunc("/scim/v2/ServiceProviderConfig", h.handleServiceProviderConfig)
 	mux.HandleFunc("/scim/v2/ResourceTypes", h.handleResourceTypes)
 	mux.HandleFunc("/scim/v2/Schemas", h.handleSchemasCollection)
@@ -176,6 +178,13 @@ func (h *Handler) handleBulk(w http.ResponseWriter, r *http.Request) {
 }
 
 func injectTenant(r *http.Request) (bool, context.Context) {
+	// Security (P0 BOLA fix): prefer tenant context set by scimTokenAuth.
+	// The SCIM token's tenant_id MUST take precedence over any client-supplied
+	// X-Tenant-ID header to prevent cross-tenant data access.
+	if existingTC, err := ggidtenant.FromContext(r.Context()); err == nil && existingTC.TenantID != uuid.Nil {
+		return true, r.Context()
+	}
+	// Fallback to X-Tenant-ID header for non-SCIM-token auth paths.
 	tenantIDStr := r.Header.Get("X-Tenant-ID")
 	if tenantIDStr == "" {
 		return false, nil
@@ -778,4 +787,81 @@ func parseExternalIdFilter(filter string) string {
 		}
 	}
 	return ""
+}
+
+// handleMe implements RFC 7643 §3.4 /Me endpoint.
+// Returns the authenticated user's SCIM representation based on the
+// sub claim from the Bearer JWT access token.
+func (h *Handler) handleMe(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		writeSCIMError(w, http.StatusMethodNotAllowed, "method not allowed")
+		return
+	}
+
+	// Extract Bearer JWT token
+	authHeader := r.Header.Get("Authorization")
+	if !strings.HasPrefix(authHeader, "Bearer ") {
+		writeSCIMError(w, http.StatusUnauthorized, "authorization Bearer token required")
+		return
+	}
+	tokenStr := strings.TrimPrefix(authHeader, "Bearer ")
+
+	// Parse JWT without signature verification (gateway already verified it).
+	// We only need the sub claim to identify the user.
+	token, _, err := jwt.NewParser().ParseUnverified(tokenStr, jwt.MapClaims{})
+	if err != nil {
+		writeSCIMError(w, http.StatusUnauthorized, "invalid token")
+		return
+	}
+	claims, ok := token.Claims.(jwt.MapClaims)
+	if !ok {
+		writeSCIMError(w, http.StatusUnauthorized, "invalid token claims")
+		return
+	}
+
+	sub, _ := claims["sub"].(string)
+	if sub == "" {
+		writeSCIMError(w, http.StatusUnauthorized, "token missing sub claim")
+		return
+	}
+
+	tenantIDStr, _ := claims["tenant_id"].(string)
+	if tenantIDStr == "" {
+		writeSCIMError(w, http.StatusUnauthorized, "token missing tenant_id claim")
+		return
+	}
+
+	userID, err := uuid.Parse(sub)
+	if err != nil {
+		writeSCIMError(w, http.StatusBadRequest, "invalid sub claim")
+		return
+	}
+
+	tenantID, err := uuid.Parse(tenantIDStr)
+	if err != nil {
+		writeSCIMError(w, http.StatusBadRequest, "invalid tenant_id claim")
+		return
+	}
+
+	// Set tenant context from token (not from header — BOLA safe)
+	ctx := ggidtenant.WithContext(r.Context(), &ggidtenant.Context{
+		TenantID:       tenantID,
+		IsolationLevel: ggidtenant.IsolationShared,
+	})
+
+	user, err := h.svc.GetUser(ctx, userID)
+	if err != nil {
+		writeSCIMError(w, http.StatusNotFound, "user not found")
+		return
+	}
+
+	// SCIM-15: ETag support
+	etag := ComputeETag(user)
+	SetETagHeader(w, etag)
+	if CheckIfNoneMatch(r, etag) {
+		w.WriteHeader(http.StatusNotModified)
+		return
+	}
+	resp := applyAttributeFilter(toSCIMUser(user), r.URL.Query().Get("attributes"), r.URL.Query().Get("excludedAttributes"))
+	writeSCIMJSON(w, http.StatusOK, resp)
 }
