@@ -1639,7 +1639,7 @@ func (s *OAuthService) RefreshToken(ctx context.Context, req *RefreshTokenReques
 		// Fallback: check if this is a refresh token issued by the Auth service.
 		// Auth service stores tokens in Redis with key "ggid:rt:{sha256_hex}".
 		if s.rdb != nil {
-			if authRecord, authErr := s.lookupAuthRefreshToken(ctx, req.TenantID, tokenHash, req.RefreshToken); authErr == nil && authRecord != nil {
+			if authRecord, authErr := s.lookupAuthRefreshToken(ctx, req.TenantID, tokenHash, req.RefreshToken, client.ID); authErr == nil && authRecord != nil {
 				record = authRecord
 			}
 		}
@@ -1734,7 +1734,7 @@ func (s *OAuthService) RefreshToken(ctx context.Context, req *RefreshTokenReques
 // token issued by /api/v1/auth/login. The Auth service stores tokens with key
 // "ggid:rt:{sha256_hex}" and value = token ID (UUID). We read the token ID,
 // then construct a RefreshTokenRecord so the caller can issue new tokens.
-func (s *OAuthService) lookupAuthRefreshToken(ctx context.Context, tenantID uuid.UUID, tokenHash, plaintext string) (*domain.RefreshTokenRecord, error) {
+func (s *OAuthService) lookupAuthRefreshToken(ctx context.Context, tenantID uuid.UUID, tokenHash, plaintext string, requestingClientID uuid.UUID) (*domain.RefreshTokenRecord, error) {
 	redisKey := "ggid:rt:" + tokenHash
 	tokenIDStr, err := s.rdb.Get(ctx, redisKey)
 	if err != nil || tokenIDStr == "" {
@@ -1746,15 +1746,14 @@ func (s *OAuthService) lookupAuthRefreshToken(ctx context.Context, tenantID uuid
 		return nil, fmt.Errorf("invalid token ID in redis: %s", tokenIDStr)
 	}
 
-	// SECURITY (P1-1): The Auth service doesn't store client_id in Redis,
-	// only token ID. Auth-issued tokens are NOT bound to a specific OAuth
-	// client, so any valid client can refresh them. This is acceptable for
-	// first-party console tokens but should be tightened for multi-client
-	// scenarios. The caller already validated the requesting client exists
-	// and has valid credentials (L1607-1618).
+	// SECURITY (P2-56): Bind the token to the requesting client so the
+	// caller's client_id binding check (L1654) applies. Auth-issued tokens
+	// are first-party (gcid-console), so binding to the requesting client
+	// is correct — only the client that received the token can refresh it.
 	return &domain.RefreshTokenRecord{
 		ID:        tokenID,
 		TenantID:  tenantID,
+		ClientID:  requestingClientID,
 		TokenHash: tokenHash,
 		ExpiresAt: time.Now().Add(30 * 24 * time.Hour), // Auth tokens expire in 30 days
 	}, nil
