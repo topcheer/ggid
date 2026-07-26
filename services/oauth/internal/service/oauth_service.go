@@ -519,15 +519,19 @@ func (s *OAuthService) ExchangeAuthorizationCode(ctx context.Context, req *Token
 	}
 
 	// 8. Issue ID Token if OIDC scope is present.
-	// Include AMR/ACR from the auth code (OIDC Core §2) and at_hash (§3.1.3.6).
+	// Include AMR/ACR + at_hash + c_hash (OIDC Core §3.1.3.6) + auth_time.
 	if contains(code.Scope, "openid") {
-		// Compute at_hash: base64url(SHA256(access_token)[:128bits])
 		accessTokenHash := sha256.Sum256([]byte(accessToken))
 		atHash := base64.RawURLEncoding.EncodeToString(accessTokenHash[:16])
+		// c_hash: hash of the authorization code
+		codeHashBytes := sha256.Sum256([]byte(req.Code))
+		cHash := base64.RawURLEncoding.EncodeToString(codeHashBytes[:16])
 		idTokenOpts := &IDTokenOptions{
-			AMR:     code.AMR,
-			ACR:     code.ACR,
-			AtHash:  atHash,
+			AMR:      code.AMR,
+			ACR:      code.ACR,
+			AuthTime: code.AuthTime.Unix(),
+			AtHash:   atHash,
+			CHash:    cHash,
 		}
 		idToken, err := s.issueIDToken(code.UserID, code.TenantID, client.ClientID, code.Nonce, idTokenOpts)
 		if err != nil {
@@ -1134,6 +1138,7 @@ type IDTokenOptions struct {
 	ACR      string   // authentication context class reference
 	AuthTime int64    // unix timestamp when the user authenticated
 	AtHash   string   // OIDC Core §3.1.3.6: access_token hash for binding
+	CHash    string   // OIDC Core §3.1.3.6: authorization code hash for binding
 }
 
 func (s *OAuthService) issueIDToken(userID, tenantID uuid.UUID, audience, nonce string, opts *IDTokenOptions) (string, error) {
@@ -1163,6 +1168,9 @@ func (s *OAuthService) issueIDToken(userID, tenantID uuid.UUID, audience, nonce 
 		}
 		if opts.AtHash != "" {
 			claims["at_hash"] = opts.AtHash
+		}
+		if opts.CHash != "" {
+			claims["c_hash"] = opts.CHash
 		}
 	}
 
