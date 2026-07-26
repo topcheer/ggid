@@ -12,6 +12,7 @@ import (
 	"github.com/ggid/ggid/pkg/errors"
 	"github.com/ggid/ggid/pkg/pii"
 	"github.com/ggid/ggid/services/audit/internal/domain"
+	"github.com/ggid/ggid/services/audit/internal/webhook"
 	"github.com/google/uuid"
 )
 
@@ -27,13 +28,20 @@ type AuditRepo interface {
 
 // AuditService handles audit event queries.
 type AuditService struct {
-	repo      AuditRepo
-	mu        sync.RWMutex
-	prevHash  map[uuid.UUID]string // per-tenant last hash for chain
+	repo          AuditRepo
+	mu            sync.RWMutex
+	prevHash      map[uuid.UUID]string // per-tenant last hash for chain
+	webhookEngine *webhook.Engine      // optional webhook delivery engine
 }
 
 func NewAuditService(repo AuditRepo) *AuditService {
 	return &AuditService{repo: repo, prevHash: make(map[uuid.UUID]string)}
+}
+
+// SetWebhookEngine injects the webhook delivery engine. When set, audit
+// events are asynchronously delivered to registered webhooks.
+func (s *AuditService) SetWebhookEngine(engine *webhook.Engine) {
+	s.webhookEngine = engine
 }
 
 // GetEvent retrieves a single audit event.
@@ -74,6 +82,12 @@ func (s *AuditService) InsertEvent(ctx context.Context, event *domain.AuditEvent
 	if err := s.repo.Insert(ctx, event); err != nil {
 		return errors.Wrap(errors.ErrInternal, "insert audit event", err)
 	}
+
+	// Asynchronously deliver to registered webhooks (best-effort, non-blocking).
+	if s.webhookEngine != nil {
+		go s.webhookEngine.Send(context.Background(), event.Action, event)
+	}
+
 	return nil
 }
 
