@@ -4258,6 +4258,12 @@ All demos use consistent `resource:action` permission keys from JWT `permissions
 |-------|--------|
 | Core (gateway RBAC + oauth permissions) | ✅ consistent, builds, tests pass |
 | SDK (7 langs) | ✅ no change this cycle |
-| Demo (8 apps) | ✅ authz enforced; ⚠️ P2 gap: Rust+Java missing my-permissions |
+| Demo (8 apps) | ✅ authz enforced; P2 gap RESOLVED: Rust+Java now have my-permissions |
+
+### P2 Fix Verified (commit c01642e56)
+- **Rust** (`main.rs:102-109`): `my_permissions` handler using existing `AuthContext`, returns `{permissions, can_write_orders, can_approve}` ✅
+- **Java** (`MyPermissionsHandler.java`): extends `BaseHandler`, uses `GGIDUser.permissions`, registered in `Main.java:42` ✅
+- Cross-demo consistency: 6/7 backends have `/api/my-permissions`, Ruby has `/api/auth/verify` (acceptable alt)
+- Build: PASS. Tests: 65/65. Danger patterns: 0.
 
 ### Next Dimension: 3 — Demo Functional Completeness (Cycle 1306)
