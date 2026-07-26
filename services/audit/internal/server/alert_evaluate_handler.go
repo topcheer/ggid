@@ -51,7 +51,8 @@ func (s *HTTPServer) handleAlertEvaluate(w http.ResponseWriter, r *http.Request)
 
 	if req.RuleID != "" {
 		// Evaluate specific rule
-		for _, rule := range anomalyRules {
+		rules := s.getAnomalyRules(r.Context())
+		for _, rule := range rules {
 			ruleID, _ := rule["id"].(string)
 			if ruleID != req.RuleID {
 				continue
@@ -64,7 +65,8 @@ func (s *HTTPServer) handleAlertEvaluate(w http.ResponseWriter, r *http.Request)
 		}
 	} else {
 		// Evaluate all rules
-		for _, rule := range anomalyRules {
+		rules := s.getAnomalyRules(r.Context())
+		for _, rule := range rules {
 			alert := s.evaluateRule(r, rule, tenantID, since)
 			if alert != nil {
 				triggered = append(triggered, alert)

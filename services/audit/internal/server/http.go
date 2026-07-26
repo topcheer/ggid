@@ -1389,6 +1389,40 @@ func (s *HTTPServer) dispatchAlert(alert map[string]any) {
 		}()
 	}
 
+	// Also fire webhooks registered in the audit_webhooks table.
+	if s.pool != nil {
+		go func() {
+			rows, err := s.pool.Query(context.Background(),
+				`SELECT url, secret FROM audit_webhooks WHERE enabled = true`)
+			if err != nil {
+				return
+			}
+			defer rows.Close()
+			client := &http.Client{Timeout: 10 * time.Second}
+			for rows.Next() {
+				var whURL, whSecret string
+				if err := rows.Scan(&whURL, &whSecret); err != nil {
+					continue
+				}
+				req, err := http.NewRequest(http.MethodPost, whURL, strings.NewReader(string(payload)))
+				if err != nil {
+					continue
+				}
+				req.Header.Set("Content-Type", "application/json")
+				req.Header.Set("X-GGID-Event", "alert")
+				if whSecret != "" {
+					mac := hmac.New(sha256.New, []byte(whSecret))
+					mac.Write(payload)
+					req.Header.Set("X-GGID-Signature", hex.EncodeToString(mac.Sum(nil)))
+				}
+				resp, err := client.Do(req)
+				if err == nil {
+					resp.Body.Close()
+				}
+			}
+		}()
+	}
+
 	// Email notification would use the email package; log for now
 	if emailTo != "" {
 		go func() {
