@@ -10,6 +10,7 @@ import (
 	"encoding/pem"
 	"fmt"
 	"log"
+	"log/slog"
 	"net"
 	"net/http"
 	"net/smtp"
@@ -102,15 +103,20 @@ func main() {
 
 	// 5. Build auth provider chain (local + optional LDAP)
 	// Wire password pepper from env var (security hardening, P0).
-	// PASSWORD_PEPPER must be set in all environments — missing pepper means
+	// PASSWORD_PEPPER must be set in production — missing pepper means
 	// passwords are hashed without the HMAC pre-hash step, making them more
 	// vulnerable to rainbow-table and precomputation attacks.
 	pepper := os.Getenv("PASSWORD_PEPPER")
 	if pepper == "" {
-		log.Printf("⚠️  SECURITY WARNING: PASSWORD_PEPPER is not set! Password hashing runs without HMAC-SHA256 pre-hash. Set PASSWORD_PEPPER environment variable to strengthen password storage.")
+		if os.Getenv("GGID_DEV_MODE") == "true" {
+			slog.Warn("PASSWORD_PEPPER not set — running in dev mode without pepper (reduced security)")
+		} else {
+			slog.Error("PASSWORD_PEPPER not set — refusing to start in production. Set PASSWORD_PEPPER or GGID_DEV_MODE=true for local development.")
+			os.Exit(1)
+		}
 	} else {
 		crypto.SetPepper(pepper)
-		log.Printf("Password pepper enabled (HMAC-SHA256 pre-hash)")
+		slog.Info("Password pepper enabled (HMAC-SHA256 pre-hash)")
 	}
 	localProvider := service.NewLocalProvider(credRepo, cfg.Password)
 
