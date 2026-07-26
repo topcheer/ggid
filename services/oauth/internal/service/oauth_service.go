@@ -1837,9 +1837,20 @@ func (s *OAuthService) PasswordGrant(ctx context.Context, req *PasswordGrantRequ
 		return nil, errors.Unauthenticated(fmt.Sprintf("access denied by policy: %s", capPolicy))
 	case "require_mfa":
 		// Policy requires MFA — reject if no valid MFA code was provided.
+		// SECURITY: also verify the user actually has a verified MFA device.
+		// Without this check, a user without MFA could pass a random mfa_code
+		// string and bypass the policy.
 		if req.MFACode == "" {
 			return nil, errors.New(errors.ErrUnauthenticated,
 				fmt.Sprintf("mfa required by policy: %s", capPolicy))
+		}
+		var mfaVerified int
+		s.pool.QueryRow(ctx,
+			`SELECT COUNT(*) FROM mfa_devices WHERE tenant_id = $1 AND user_id = $2 AND enabled = true AND verified_at IS NOT NULL`,
+			tenantID, userID).Scan(&mfaVerified)
+		if mfaVerified == 0 {
+			return nil, errors.New(errors.ErrUnauthenticated,
+				fmt.Sprintf("mfa required by policy but no verified device: %s", capPolicy))
 		}
 	}
 
