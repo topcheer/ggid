@@ -5058,3 +5058,23 @@ Build: PASS. `make test`: EXIT=0, 65/65. Danger: 0.
 - my-permissions ✅
 
 ### Next Dimension: 4 — Multi-Tenant Isolation (Cycle 1456) — Rotation 5
+
+## Cycle 1456: D4 Multi-Tenant R5 — P1-2 Fixed, P1-11 Found (Round 1486)
+New commits: `b5efe3fd1` (P1-2 Go SDK iss), `50254acf5` (gateway JWT tenant_id force override), R38 docs.
+god R38: 1 new P1 (P1-11 token downscope stub), P1-2 confirmed fixed. 53 active (P0:0/P1:3/P2:50).
+Build: PASS. `make test`: EXIT=0, 65/65. Danger: 0.
+
+### P1-2 Fixed ✅
+Go SDK `client.go:555-562`: validates `iss` claim matches expected issuer via `WithIssuer()`.
+
+### P1-11 New (token downscope stub) ⚠️
+`oauth/server/token_downscope_handler.go`: returns random UUID, no token validation. Bypasses gateway when accessed directly on `:9005`.
+**Mitigation**: Gateway enforces JWT validation in production. Recommend removing or fully implementing.
+
+### D4 Multi-Tenant (Rotation 5) — All Secure
+Gateway tenant mismatch, RBAC scope, OAuth 7 tenant_id filters, demo boundary: all ✅.
+New: gateway `50254acf5` forces JWT-validated tenant_id over client query param ✅.
+
+### Remaining P1 (2): P1-3 (MCP JWKS), P1-6 (JWKS rotation). P1-11 new (downscope stub).
+
+### Next Dimension: 5 — SDK Cross-Language Consistency (Cycle 1462) — Rotation 5

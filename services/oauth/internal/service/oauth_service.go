@@ -1488,6 +1488,11 @@ var backchannelLogoutList sync.Map
 // ValidateTokenOwnership checks if the given client_id matches the token's
 // intended audience (aud claim). RFC 7009 §2.1 requires that the client
 // revoking a token must be the one that owns it.
+// DownscopeToken issues a new JWT with reduced scope (RFC 8693 token exchange).
+func (s *OAuthService) DownscopeToken(userID uuid.UUID, tenantID uuid.UUID, audience, scope string) (string, int, error) {
+	return s.issueAccessToken(userID, tenantID, audience, scope)
+}
+
 func (s *OAuthService) ValidateTokenOwnership(tokenStr, clientID string) bool {
 	if tokenStr == "" || clientID == "" {
 		return true // can't verify, allow (auth gate still applies)

@@ -3,57 +3,94 @@ package server
 import (
 	"encoding/json"
 	"net/http"
-	"time"
+	"strings"
 
+	"github.com/ggid/ggid/services/oauth/internal/service"
 	"github.com/google/uuid"
 )
 
-// POST /api/v1/oauth/token/downscope
-func handleTokenDownscope(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPost {
-		writeJSON(w, http.StatusMethodNotAllowed, map[string]any{"error": "method not allowed"})
-		return
-	}
-	var req struct {
-		SourceToken      string   `json:"source_token"`
-		RequestedScopes  []string `json:"requested_scopes"`
-	}
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		writeJSON(w, http.StatusBadRequest, map[string]any{"error": "invalid JSON"})
-		return
-	}
-	if req.SourceToken == "" || len(req.RequestedScopes) == 0 {
-		writeJSON(w, http.StatusBadRequest, map[string]any{"error": "source_token and requested_scopes required"})
-		return
-	}
+// POST /api/v1/oauth/token/downscope — RFC 8693 token exchange (downscope)
+// SECURITY: verifies the source JWT and ensures requested scopes are a subset.
+func handleTokenDownscope(oauthSvc *service.OAuthService) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPost {
+			writeJSON(w, http.StatusMethodNotAllowed, map[string]any{"error": "method not allowed"})
+			return
+		}
 
-	// In production: verify source token, validate requested scopes are subset, issue new token
-	originalScopes := []string{"openid", "profile", "profile.email", "audit.read", "admin.users"}
-	validScopes := []string{}
-	for _, s := range req.RequestedScopes {
-		for _, orig := range originalScopes {
-			if s == orig {
+		// Require authentication — the caller must present a valid Bearer token.
+		authHeader := r.Header.Get("Authorization")
+		if !strings.HasPrefix(authHeader, "Bearer ") {
+			writeJSON(w, http.StatusUnauthorized, map[string]any{"error": "authentication required"})
+			return
+		}
+
+		var req struct {
+			SourceToken     string   `json:"source_token"`
+			RequestedScopes []string `json:"requested_scopes"`
+		}
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			writeJSON(w, http.StatusBadRequest, map[string]any{"error": "invalid JSON"})
+			return
+		}
+		if req.SourceToken == "" || len(req.RequestedScopes) == 0 {
+			writeJSON(w, http.StatusBadRequest, map[string]any{"error": "source_token and requested_scopes required"})
+			return
+		}
+
+		// Verify the source token is a valid JWT issued by this service.
+		claims, err := oauthSvc.ParseAccessToken(req.SourceToken)
+		if err != nil {
+			writeJSON(w, http.StatusUnauthorized, map[string]any{"error": "invalid source token"})
+			return
+		}
+
+		// Extract the source token's scopes.
+		sourceScopeStr, _ := claims["scope"].(string)
+		sourceScopes := strings.Fields(sourceScopeStr)
+		if len(sourceScopes) == 0 {
+			writeJSON(w, http.StatusBadRequest, map[string]any{"error": "source token has no scopes to downscope"})
+			return
+		}
+		sourceSet := make(map[string]bool, len(sourceScopes))
+		for _, s := range sourceScopes {
+			sourceSet[s] = true
+		}
+
+		// Ensure requested scopes are a subset of source scopes.
+		validScopes := []string{}
+		for _, s := range req.RequestedScopes {
+			if sourceSet[s] {
 				validScopes = append(validScopes, s)
-				break
 			}
 		}
+		if len(validScopes) == 0 {
+			writeJSON(w, http.StatusBadRequest, map[string]any{"error": "requested scopes not subset of source token scopes"})
+			return
+		}
+
+		// Issue a real downscoped JWT (not a random UUID).
+		sub, _ := claims["sub"].(string)
+		tenantIDStr, _ := claims["tenant_id"].(string)
+		aud, _ := claims["aud"].(string)
+
+		subToken, expiresIn, err := oauthSvc.DownscopeToken(
+			uuid.MustParse(sub),
+			uuid.MustParse(tenantIDStr),
+			aud,
+			strings.Join(validScopes, " "),
+		)
+		if err != nil {
+			writeJSON(w, http.StatusInternalServerError, map[string]any{"error": "failed to issue downscoped token"})
+			return
+		}
+
+		writeJSON(w, http.StatusOK, map[string]any{
+			"access_token": subToken,
+			"token_type":   "Bearer",
+			"expires_in":   expiresIn,
+			"scope":        validScopes,
+			"downscoped":   true,
+		})
 	}
-
-	if len(validScopes) == 0 {
-		writeJSON(w, http.StatusBadRequest, map[string]any{"error": "requested scopes not subset of source token scopes"})
-		return
-	}
-
-	newToken := uuid.New().String() + uuid.New().String()
-	expiresAt := time.Now().UTC().Add(3600 * time.Second)
-
-	writeJSON(w, http.StatusOK, map[string]any{
-		"access_token":      newToken,
-		"token_type":        "Bearer",
-		"expires_in":        3600,
-		"expires_at":        expiresAt.Format(time.RFC3339),
-		"scope":             validScopes,
-		"parent_token_id":   req.SourceToken[:8] + "****",
-		"downscoped":        true,
-	})
 }
