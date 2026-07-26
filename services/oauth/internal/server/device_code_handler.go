@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"os"
 	"strings"
 
 	"github.com/google/uuid"
@@ -53,7 +54,11 @@ func handleDeviceAuthorize(s *service.OAuthService) http.HandlerFunc {
 			return
 		}
 
-		verificationURI := "https://ggid-console.iot2.win/device"
+		verificationURI := os.Getenv("CONSOLE_BASE_URL")
+		if verificationURI == "" {
+			verificationURI = "https://ggid-console.iot2.win"
+		}
+		verificationURI += "/device"
 		writeJSON(w, http.StatusOK, map[string]any{
 			"device_code":               entry.DeviceCode,
 			"user_code":                 entry.UserCode,

@@ -18,10 +18,19 @@ import (
 
 // GET /saml/metadata — returns SP metadata XML for IdP configuration
 func (h *Handler) handleSAMLMetadata(w http.ResponseWriter, r *http.Request) {
-	// Build SP metadata dynamically
-	entityID := "https://ggid.iot2.win/saml/metadata"
-	acsURL := "https://ggid.iot2.win/saml/acs"
-	sloURL := "https://ggid.iot2.win/saml/slo"
+	// Build SP metadata dynamically using the request's public URL
+	publicURL := os.Getenv("PUBLIC_URL")
+	if publicURL == "" {
+		// Fallback: construct from request host
+		scheme := "https"
+		if r.TLS == nil && r.Host != "" && !strings.Contains(r.Host, "ggid.") {
+			scheme = "http"
+		}
+		publicURL = scheme + "://" + r.Host
+	}
+	entityID := publicURL + "/saml/metadata"
+	acsURL := publicURL + "/saml/acs"
+	sloURL := publicURL + "/saml/slo"
 
 	metadata := fmt.Sprintf(`<?xml version="1.0" encoding="UTF-8"?>
 <EntityDescriptor xmlns="urn:oasis:names:tc:SAML:2.0:metadata" entityID="%s">
