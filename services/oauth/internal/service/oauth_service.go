@@ -2550,6 +2550,12 @@ func (s *OAuthService) PollDeviceToken(ctx context.Context, deviceCode, clientID
 		return nil, fmt.Errorf("invalid_device_code")
 	}
 
+	// SECURITY: verify the polling client matches the one that initiated the flow.
+	// Without this, client B can poll client A's device code and steal tokens.
+	if clientID != "" && info.ClientID != "" && clientID != info.ClientID {
+		return nil, fmt.Errorf("invalid_client")
+	}
+
 	if time.Now().After(info.ExpiresAt) {
 		deviceCodeMu.Lock()
 		delete(deviceCodeStore, deviceCode)
