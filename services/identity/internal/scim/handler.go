@@ -758,6 +758,40 @@ func applyAttributeFilter(u SCIMUser, attributes, excludedAttributes string) SCI
 	return result
 }
 
+// extractTokenSub parses a Bearer JWT and returns sub + tenant_id claims.
+func extractTokenSub(r *http.Request) (uuid.UUID, uuid.UUID, error) {
+	authHeader := r.Header.Get("Authorization")
+	if !strings.HasPrefix(authHeader, "Bearer ") {
+		return uuid.Nil, uuid.Nil, fmt.Errorf("authorization Bearer token required")
+	}
+	tokenStr := strings.TrimPrefix(authHeader, "Bearer ")
+	token, _, err := jwt.NewParser().ParseUnverified(tokenStr, jwt.MapClaims{})
+	if err != nil {
+		return uuid.Nil, uuid.Nil, fmt.Errorf("invalid token")
+	}
+	claims, ok := token.Claims.(jwt.MapClaims)
+	if !ok {
+		return uuid.Nil, uuid.Nil, fmt.Errorf("invalid token claims")
+	}
+	sub, _ := claims["sub"].(string)
+	if sub == "" {
+		return uuid.Nil, uuid.Nil, fmt.Errorf("token missing sub claim")
+	}
+	tenantIDStr, _ := claims["tenant_id"].(string)
+	if tenantIDStr == "" {
+		return uuid.Nil, uuid.Nil, fmt.Errorf("token missing tenant_id claim")
+	}
+	userID, err := uuid.Parse(sub)
+	if err != nil {
+		return uuid.Nil, uuid.Nil, fmt.Errorf("invalid sub claim")
+	}
+	tenantID, err := uuid.Parse(tenantIDStr)
+	if err != nil {
+		return uuid.Nil, uuid.Nil, fmt.Errorf("invalid tenant_id claim")
+	}
+	return userID, tenantID, nil
+}
+
 // parseAttrList parses a comma-separated attribute list into a set.
 func parseAttrList(s string) map[string]bool {
 	result := make(map[string]bool)
@@ -797,58 +831,16 @@ func (h *Handler) handleMe(w http.ResponseWriter, r *http.Request) {
 		writeSCIMError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
-
-	// Extract Bearer JWT token
-	authHeader := r.Header.Get("Authorization")
-	if !strings.HasPrefix(authHeader, "Bearer ") {
-		writeSCIMError(w, http.StatusUnauthorized, "authorization Bearer token required")
-		return
-	}
-	tokenStr := strings.TrimPrefix(authHeader, "Bearer ")
-
-	// Parse JWT without signature verification (gateway already verified it).
-	// We only need the sub claim to identify the user.
-	token, _, err := jwt.NewParser().ParseUnverified(tokenStr, jwt.MapClaims{})
+	userID, tenantID, err := extractTokenSub(r)
 	if err != nil {
-		writeSCIMError(w, http.StatusUnauthorized, "invalid token")
+		writeSCIMError(w, http.StatusUnauthorized, err.Error())
 		return
 	}
-	claims, ok := token.Claims.(jwt.MapClaims)
-	if !ok {
-		writeSCIMError(w, http.StatusUnauthorized, "invalid token claims")
-		return
-	}
-
-	sub, _ := claims["sub"].(string)
-	if sub == "" {
-		writeSCIMError(w, http.StatusUnauthorized, "token missing sub claim")
-		return
-	}
-
-	tenantIDStr, _ := claims["tenant_id"].(string)
-	if tenantIDStr == "" {
-		writeSCIMError(w, http.StatusUnauthorized, "token missing tenant_id claim")
-		return
-	}
-
-	userID, err := uuid.Parse(sub)
-	if err != nil {
-		writeSCIMError(w, http.StatusBadRequest, "invalid sub claim")
-		return
-	}
-
-	tenantID, err := uuid.Parse(tenantIDStr)
-	if err != nil {
-		writeSCIMError(w, http.StatusBadRequest, "invalid tenant_id claim")
-		return
-	}
-
 	// Set tenant context from token (not from header — BOLA safe)
 	ctx := ggidtenant.WithContext(r.Context(), &ggidtenant.Context{
 		TenantID:       tenantID,
 		IsolationLevel: ggidtenant.IsolationShared,
 	})
-
 	user, err := h.svc.GetUser(ctx, userID)
 	if err != nil {
 		writeSCIMError(w, http.StatusNotFound, "user not found")

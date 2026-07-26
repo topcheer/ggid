@@ -1161,6 +1161,7 @@ func (s *OAuthService) issueIDToken(userID, tenantID uuid.UUID, audience, nonce 
 // --- Token Validation / Introspection ---
 
 // ParseAccessToken validates and parses an access token JWT.
+// It does NOT enforce audience — use ParseAccessTokenWithAudience for that.
 func (s *OAuthService) ParseAccessToken(tokenStr string) (jwt.MapClaims, error) {
 	return s.ParseAccessTokenWithAudience(tokenStr, "")
 }

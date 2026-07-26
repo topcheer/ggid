@@ -19,11 +19,12 @@ import (
 // helper to create a valid subject (user) token for testing
 func makeSubjectToken(svc *OAuthService, sub string) string {
 	claims := jwt.MapClaims{
-		"sub":      sub,
-		"iss":      "https://test.ggid.dev",
-		"iat":      time.Now().Unix(),
-		"exp":      time.Now().Add(time.Hour).Unix(),
-		"scope":    "read write",
+		"sub":       sub,
+		"iss":       "https://test.ggid.dev",
+		"aud":       "https://test.ggid.dev",
+		"iat":       time.Now().Unix(),
+		"exp":       time.Now().Add(time.Hour).Unix(),
+		"scope":     "read write",
 		"tenant_id": testTenantID.String(),
 	}
 	token := jwt.NewWithClaims(jwt.SigningMethodRS256, claims)
