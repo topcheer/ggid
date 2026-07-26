@@ -446,7 +446,7 @@ impl GGIDClient {
         user_id: &str,
     ) -> Result<serde_json::Value, GGIDError> {
         let resp = self.http
-            .post(format!("{}/api/v1/auth/webauthn/register/begin", self.base_url))
+            .post(format!("{}/api/v1/webauthn/register/begin", self.base_url))
             .header("Authorization", format!("Bearer {}", token))
             .header("X-Tenant-ID", &self.tenant_id)
             .json(&json!({"user_id": user_id}))

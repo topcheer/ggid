@@ -20,7 +20,7 @@ module GGID
     def register_passkey(api_base_url:, auth_token:, user_id:, tenant_id: nil)
       require 'net/http'
       require 'uri'
-      uri = URI("#{api_base_url}/api/v1/auth/webauthn/register/begin")
+      uri = URI("#{api_base_url}/api/v1/webauthn/register/begin")
       http = Net::HTTP.new(uri.host, uri.port)
       http.use_ssl = uri.scheme == 'https'
       req = Net::HTTP::Post.new(uri, 'Content-Type' => 'application/json')

@@ -255,6 +255,12 @@ func (h *Handler) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("/.well-known/apple-app-site-association", h.wellKnownAppleAppSiteAssociation)
 }
 
+// Proxy methods for backwards-compatible alias routes registered by the auth server.
+func (h *Handler) BeginRegistrationProxy(w http.ResponseWriter, r *http.Request)  { h.beginRegistration(w, r) }
+func (h *Handler) FinishRegistrationProxy(w http.ResponseWriter, r *http.Request) { h.finishRegistration(w, r) }
+func (h *Handler) BeginAuthenticationProxy(w http.ResponseWriter, r *http.Request)  { h.beginAuthentication(w, r) }
+func (h *Handler) FinishAuthenticationProxy(w http.ResponseWriter, r *http.Request) { h.finishAuthentication(w, r) }
+
 // --- Well-Known Endpoints (WA-11, WA-12) ---
 
 // wellKnownWebAuthn returns Related Origin Requests (ROR) JSON (WA-11).

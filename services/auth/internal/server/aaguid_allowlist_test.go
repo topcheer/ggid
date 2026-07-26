@@ -120,7 +120,7 @@ func TestAAGUIDAllowlist_SeedDefaults(t *testing.T) {
 func TestAAGUIDAllowlist_RegistrationCheckNilRepo(t *testing.T) {
 	h := &Handler{} // no aaguidAllowlistRepo set
 
-	req := httptest.NewRequest("POST", "/api/v1/auth/passkey/register/finish", nil)
+	req := httptest.NewRequest("POST", "/api/v1/webauthn/register/finish", nil)
 	if !h.CheckAAGUIDDuringRegistration(req, "any-aaguid") {
 		t.Error("with nil repo, CheckAAGUIDDuringRegistration should return true")
 	}

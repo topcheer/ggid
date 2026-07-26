@@ -39,6 +39,7 @@ public class Main {
         server.createContext("/api/orders", new OrdersHandler());
         server.createContext("/api/audit", new AuditHandler());
         server.createContext("/api/dashboard", new DashboardHandler());
+        server.createContext("/api/my-permissions", new MyPermissionsHandler());
         server.createContext("/health", new HealthHandler());
         server.setExecutor(java.util.concurrent.Executors.newFixedThreadPool(10));
         server.start();

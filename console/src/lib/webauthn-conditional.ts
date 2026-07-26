@@ -79,7 +79,7 @@ export async function offerPasskeyUpgrade(params: {
 
   try {
     // 3. Fetch registration challenge from backend
-    const beginRes = await fetch(`${API_BASE}/api/v1/auth/webauthn/register/begin`, {
+    const beginRes = await fetch(`${API_BASE}/api/v1/webauthn/register/begin`, {
       method: "POST",
       headers: {
         ...authHeader(),
@@ -114,7 +114,7 @@ export async function offerPasskeyUpgrade(params: {
 
     // 5. Send attestation back to backend
     const attestation = encodeAttestation(credential);
-    const finishRes = await fetch(`${API_BASE}/api/v1/auth/webauthn/register/finish`, {
+    const finishRes = await fetch(`${API_BASE}/api/v1/webauthn/register/finish`, {
       method: "POST",
       headers: {
         ...authHeader(),

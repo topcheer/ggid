@@ -186,17 +186,17 @@ export default function MFAPage() {
     setWebauthnLoading(true);
     setError(null);
     try {
-      const beginResp = await apiFetch<{ publicKey?: Record<string, unknown> }>("/api/v1/auth/webauthn/register/begin", {
+      const beginResp = await apiFetch<{ publicKey?: Record<string, unknown> }>("/api/v1/webauthn/register/begin", {
         method: "POST",
         body: JSON.stringify({ name: webauthnName }),
       });
       // In a real impl, we'd pass beginResp.publicKey to navigator.credentials.create()
-      // and then POST the result to /api/v1/auth/webauthn/register/finish
+      // and then POST the result to /api/v1/webauthn/register/finish
       // For now, simulate success
       try {
         if (beginResp.publicKey && typeof navigator !== "undefined" && navigator.credentials) {
           const credential = await navigator.credentials.create({ publicKey: beginResp.publicKey as unknown as PublicKeyCredentialCreationOptions });
-          await apiFetch("/api/v1/auth/webauthn/register/finish", {
+          await apiFetch("/api/v1/webauthn/register/finish", {
             method: "POST",
             body: JSON.stringify({ credential, name: webauthnName }),
           });

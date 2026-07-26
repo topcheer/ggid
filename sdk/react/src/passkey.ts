@@ -78,7 +78,7 @@ export function usePasskey(opts: UsePasskeyOptions): PasskeyHook {
       if (opts.tenantId) headers["X-Tenant-ID"] = opts.tenantId;
 
       // Begin
-      const beginRes = await fetch(`${opts.apiBaseUrl}/api/v1/auth/webauthn/register/begin`, {
+      const beginRes = await fetch(`${opts.apiBaseUrl}/api/v1/webauthn/register/begin`, {
         method: "POST",
         headers,
         body: JSON.stringify({ user_id: userId }),
@@ -120,7 +120,7 @@ export function usePasskey(opts: UsePasskeyOptions): PasskeyHook {
         },
       };
 
-      const finishRes = await fetch(`${opts.apiBaseUrl}/api/v1/auth/webauthn/register/finish`, {
+      const finishRes = await fetch(`${opts.apiBaseUrl}/api/v1/webauthn/register/finish`, {
         method: "POST",
         headers,
         body: JSON.stringify(attestation),

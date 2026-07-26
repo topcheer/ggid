@@ -32,7 +32,7 @@ class WebAuthn
 
         $body = json_encode(['user_id' => $userId]);
         $ch = $curl ?: curl_init();
-        curl_setopt($ch, CURLOPT_URL, "$apiBaseUrl/api/v1/auth/webauthn/register/begin");
+        curl_setopt($ch, CURLOPT_URL, "$apiBaseUrl/api/v1/webauthn/register/begin");
         curl_setopt($ch, CURLOPT_POST, true);
         curl_setopt($ch, CURLOPT_POSTFIELDS, $body);
         curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);

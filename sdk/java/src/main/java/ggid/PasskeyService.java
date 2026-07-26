@@ -32,7 +32,7 @@ public class PasskeyService {
      */
     public String registerBegin(String accessToken, String userId) throws Exception {
         String body = String.format("{\"user_id\":\"%s\"}", userId);
-        return post("/api/v1/auth/webauthn/register/begin", accessToken, body);
+        return post("/api/v1/webauthn/register/begin", accessToken, body);
     }
 
     /**
@@ -44,7 +44,7 @@ public class PasskeyService {
      */
     public String registerFinish(String accessToken, String sessionId, String credentialJson) throws Exception {
         String body = String.format("{\"session_id\":\"%s\",\"credential\":%s}", sessionId, credentialJson);
-        return post("/api/v1/auth/webauthn/register/finish", accessToken, body);
+        return post("/api/v1/webauthn/register/finish", accessToken, body);
     }
 
     /**

@@ -21,7 +21,7 @@ namespace GGID
             var headers = new { Authorization = $"Bearer {authToken}", X_Tenant_ID = tenantId };
             // Begin
             var beginBody = JsonSerializer.Serialize(new { user_id = userId });
-            var beginReq = new HttpRequestMessage(HttpMethod.Post, $"{apiBaseUrl}/api/v1/auth/webauthn/register/begin")
+            var beginReq = new HttpRequestMessage(HttpMethod.Post, $"{apiBaseUrl}/api/v1/webauthn/register/begin")
             {
                 Content = new StringContent(beginBody, Encoding.UTF8, "application/json")
             };

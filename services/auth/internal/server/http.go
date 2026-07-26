@@ -45,6 +45,7 @@ type Handler struct {
 	sysconfigStore sysconfig.Store
 	auditPublisher *audit.Publisher
 	waCredStore    webauthn.CredentialStore
+	waHandler      *webauthn.Handler
 	revocationMgr  *service.SessionRevocationManager
 	breakGlassRepo  *repository.BreakGlassRepository
 	authMethodPolicyRepo    *repository.AuthMethodPolicyRepository
@@ -283,10 +284,13 @@ h.mux.HandleFunc("/api/v1/auth/mfa/backup", h.backupCodesGenerate) // Console al
 	h.mux.HandleFunc("/api/v1/auth/hooks", h.manageHooks)
 
 	// WebAuthn route aliases under /api/v1/auth/webauthn/ — dispatch to passkey handlers
-	h.mux.HandleFunc("/api/v1/auth/webauthn/register/begin", h.handlePasskeyRegisterBegin)
-	h.mux.HandleFunc("/api/v1/auth/webauthn/register/finish", h.handlePasskeyRegisterFinish)
-	h.mux.HandleFunc("/api/v1/auth/webauthn/login/begin", h.handlePasskeyAuthBegin)
-	h.mux.HandleFunc("/api/v1/auth/webauthn/login/finish", h.handlePasskeyAuthFinish)
+	// WebAuthn route aliases — now point to the full go-webauthn handler.
+	// These exist for SDK backwards compatibility (SDKs POST to these URLs).
+	// The full handler at /api/v1/webauthn/* is registered via RegisterRoutes().
+	h.mux.HandleFunc("/api/v1/auth/webauthn/register/begin", h.handleWebAuthnRegisterBeginAlias)
+	h.mux.HandleFunc("/api/v1/auth/webauthn/register/finish", h.handleWebAuthnRegisterFinishAlias)
+	h.mux.HandleFunc("/api/v1/auth/webauthn/login/begin", h.handleWebAuthnLoginBeginAlias)
+	h.mux.HandleFunc("/api/v1/auth/webauthn/login/finish", h.handleWebAuthnLoginFinishAlias)
 
 	// Passwordless (WebAuthn-only) registration + login
 	h.mux.HandleFunc("/api/v1/auth/passwordless/register", h.passwordlessRegister)
@@ -386,6 +390,7 @@ h.mux.HandleFunc("/api/v1/auth/mfa/backup", h.backupCodesGenerate) // Console al
 	if err != nil {
 		log.Printf("warning: webauthn init failed: %v", err)
 	} else {
+		h.waHandler = webauthnHandler
 		webauthnHandler.RegisterRoutes(h.mux)
 	}
 
@@ -503,11 +508,7 @@ h.mux.HandleFunc("/api/v1/auth/mfa/backup", h.backupCodesGenerate) // Console al
 	h.mux.HandleFunc("/api/v1/auth/credentials/rotation/due", h.handleRotationDue)
 	h.mux.HandleFunc("/api/v1/auth/credentials/rotation", h.handleRotationRoute)
 	h.mux.HandleFunc("/api/v1/auth/credentials/rotation/execute", h.handleRotationRoute)
-	h.mux.HandleFunc("/api/v1/auth/passkey/register/begin", h.handlePasskeyRegisterBegin)
-	h.mux.HandleFunc("/api/v1/auth/passkey/register/finish", h.handlePasskeyRegisterFinish)
-	h.mux.HandleFunc("/api/v1/auth/passkey/auth/begin", h.handlePasskeyAuthBegin)
-	h.mux.HandleFunc("/api/v1/auth/passkey/auth/finish", h.handlePasskeyAuthFinish)
-	h.mux.HandleFunc("/api/v1/auth/passkey/", h.handlePasskeyRevoke)
+	// Old /api/v1/auth/passkey/* routes removed — use /api/v1/webauthn/* instead.
 	h.mux.HandleFunc("/api/v1/auth/sessions/geo-stats", h.handleSessionGeoStats)
 	h.mux.HandleFunc("/api/v1/auth/mfa/enrollment-stats", h.handleMFAEnrollmentStats)
 	h.mux.HandleFunc("/api/v1/auth/devices/attest", h.handleDeviceAttest)
@@ -1474,6 +1475,55 @@ func (h *Handler) lockoutPolicy(w http.ResponseWriter, r *http.Request) {
 }
 
 // passkeyAutofill handles GET /api/v1/auth/webauthn/autofill.
+// handleWebAuthnRegisterBeginAlias delegates to the full go-webauthn handler.
+// Adapts SDK requests that send user_id in POST body to query param format.
+func (h *Handler) handleWebAuthnRegisterBeginAlias(w http.ResponseWriter, r *http.Request) {
+	// If user_id is in POST body but not query, move it to query for getTenantAndUser.
+	if r.URL.Query().Get("user_id") == "" {
+		if uid := r.Header.Get("X-User-ID"); uid != "" {
+			q := r.URL.Query()
+			q.Set("user_id", uid)
+			r.URL.RawQuery = q.Encode()
+		}
+	}
+	if h.waHandler != nil {
+		h.waHandler.BeginRegistrationProxy(w, r)
+		return
+	}
+	writeError(w, http.StatusServiceUnavailable, "WebAuthn handler not initialized")
+}
+
+func (h *Handler) handleWebAuthnRegisterFinishAlias(w http.ResponseWriter, r *http.Request) {
+	if r.URL.Query().Get("user_id") == "" {
+		if uid := r.Header.Get("X-User-ID"); uid != "" {
+			q := r.URL.Query()
+			q.Set("user_id", uid)
+			r.URL.RawQuery = q.Encode()
+		}
+	}
+	if h.waHandler != nil {
+		h.waHandler.FinishRegistrationProxy(w, r)
+		return
+	}
+	writeError(w, http.StatusServiceUnavailable, "WebAuthn handler not initialized")
+}
+
+func (h *Handler) handleWebAuthnLoginBeginAlias(w http.ResponseWriter, r *http.Request) {
+	if h.waHandler != nil {
+		h.waHandler.BeginAuthenticationProxy(w, r)
+		return
+	}
+	writeError(w, http.StatusServiceUnavailable, "WebAuthn handler not initialized")
+}
+
+func (h *Handler) handleWebAuthnLoginFinishAlias(w http.ResponseWriter, r *http.Request) {
+	if h.waHandler != nil {
+		h.waHandler.FinishAuthenticationProxy(w, r)
+		return
+	}
+	writeError(w, http.StatusServiceUnavailable, "WebAuthn handler not initialized")
+}
+
 // Returns WebAuthn options with conditional mediation for browser autofill.
 // The browser will show available passkeys in the credential picker.
 func (h *Handler) passkeyAutofill(w http.ResponseWriter, r *http.Request) {
@@ -1484,7 +1534,7 @@ func (h *Handler) passkeyAutofill(w http.ResponseWriter, r *http.Request) {
 
 	// Return a challenge + mediation=conditional for the browser to
 	// prompt passkey autofill. The actual assertion is sent to
-	// /api/v1/auth/webauthn/login/finish for verification.
+	// /api/v1/webauthn/auth/finish for verification.
 	challenge, err := h.authSvc.GenerateWebAuthnChallenge(r.Context())
 	if err != nil {
 		// Fall back to a simple random challenge.
@@ -1495,7 +1545,7 @@ func (h *Handler) passkeyAutofill(w http.ResponseWriter, r *http.Request) {
 		"mediation":  "conditional",
 		"challenge":  challenge,
 		"rpId":       "ggid.dev",
-		"login_url":  "/api/v1/auth/webauthn/login/finish",
+		"login_url":  "/api/v1/webauthn/auth/finish",
 		"timeout":    60000,
 		"userVerification": "preferred",
 	})

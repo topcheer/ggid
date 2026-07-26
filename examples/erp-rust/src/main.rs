@@ -99,6 +99,15 @@ fn now_str() -> String {
 
 // --- Handlers ---
 
+async fn my_permissions(headers: HeaderMap, State(state): State<Store>) -> Result<Json<Value>, StatusCode> {
+    let auth = extract_auth(&headers, &state.read().await.ggid_client).await.ok_or(StatusCode::UNAUTHORIZED)?;
+    Ok(Json(json!({
+        "permissions": auth.permissions,
+        "can_write_orders": auth.permissions.iter().any(|p| p == "orders:write" || p == "admin"),
+        "can_approve": auth.permissions.iter().any(|p| p == "orders:approve" || p == "admin"),
+    })))
+}
+
 async fn list_inventory(State(state): State<Store>, headers: HeaderMap) -> Result<Json<Value>, StatusCode> {
     let auth = extract_auth(&headers, &state.read().await.ggid_client).await.ok_or(StatusCode::UNAUTHORIZED)?;
     if !check_perm(&auth, "inventory:read") { return Err(StatusCode::FORBIDDEN); }
@@ -223,6 +232,7 @@ async fn main() {
         .route("/api/orders/{id}/approve", put(approve_order))
         .route("/api/audit", get(get_audit))
         .route("/api/dashboard", get(dashboard))
+        .route("/api/my-permissions", get(my_permissions))
         .with_state(state);
 
     let listener = tokio::net::TcpListener::bind("0.0.0.0:9092").await.unwrap();
