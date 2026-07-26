@@ -4644,3 +4644,43 @@ Build: PASS. `make test`: EXIT=0, 65/65. Danger patterns: 0.
 | Demo | ✅ all 7 backends enforce tenant boundary |
 
 ### Next Dimension: 5 — SDK Cross-Language Consistency (Cycle 1354) — Rotation 2
+
+## Cycle 1354: D5 SDK Consistency R2 — No Change, All Consistent (Round 1469)
+New commits: `62c2551eb` (gateway request_id in 403), `62fa77ff2` (audit repair-chain alignment), `972e15cb5` (R29 review).
+Build: PASS. `make test`: EXIT=0, 65/65. Danger patterns: 0.
+
+### D5 SDK Cross-Language Consistency (Rotation 2) — No Regressions
+
+#### Token Response: All snake_case JSON ✅
+| SDK | access_token | token_type | expires_in | refresh_token |
+|-----|:-:|:-:|:-:|:-:|
+| Go (TokenSet) | ✅ string | ✅ string | ✅ int | ✅ string |
+| Rust (TokenResponse) | ✅ String | ✅ String | ✅ u64 | ✅ Option |
+| Java (TokenSet) | ✅ String | ✅ String | ✅ int | ✅ String |
+| C# (TokenSet) | ✅ string | ✅ string | ✅ int | ✅ string? |
+| Node (TokenSet) | ✅ string | ✅ string | ✅ number | ✅ string? |
+| Python | ✅ raw dict | ✅ | ✅ | ✅ |
+
+#### JWT Claims: All Expose tenant_id + roles + permissions ✅
+| SDK | sub/user_id | tenant_id | roles | permissions |
+|-----|:-:|:-:|:-:|:-:|
+| Go | user_id (UserInfo) | ✅ | ✅ []string | ✅ []string |
+| Node | sub | ✅ | ✅ [] | ✅ [] |
+| Rust | sub | ✅ | ✅ Vec | ✅ Vec |
+| Python | sub | ✅ | ✅ list | ✅ list |
+| Ruby | user_id+sub | ✅ | ✅ | ✅ |
+| Java | tenantId (GGIDUser) | ✅ | ✅ String[] | ✅ String[] |
+| C# | TenantId | ✅ | ✅ List | ✅ List |
+
+All JSON fields use snake_case (`tenant_id`, `access_token`, etc.). Native-language naming for struct fields (PascalCase in C#/Java) is correct — JSON tags map to snake_case.
+
+P3 (non-blocking, unchanged from C1318): Python untyped login(), Go user_id vs sub.
+
+### Three-Layer Alignment
+| Layer | Status |
+|-------|--------|
+| Core | ✅ gateway/audit improvements, build+test pass |
+| SDK | ✅ consistent token + claims across all 7 languages |
+| Demo | ✅ no change |
+
+### Next Dimension: 6 — End-to-End UX (Cycle 1360) — Rotation 2
