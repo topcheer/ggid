@@ -4741,3 +4741,29 @@ Only Go has `/api/auth/refresh`. 6/7 demos lack refresh endpoint. SDKs all have 
 - `make test`: EXIT=0, 65/65. Danger: 0.
 
 ### Rotation 2 Complete — Starting Rotation 3
+
+## Cycle 1366: D1 Auth R3 — P2-14/P2-15/P2-16 Fixes + Build Breaks Resolved (Round 1471)
+New commits: `9e8c2fdd8` (P2-16: PKCE S256 only), WIP P2-14 (SCIM /Me), P2-15 (JWT aud).
+**Build breaks found + fixed** (3 issues from WIP integration):
+
+### Fixes Applied
+1. **SCIM handler.go**: duplicate `handleMe` (undefined `middleware.UserIDKey`) → removed duplicate, extracted `extractTokenSub` helper, kept JWT-parsing impl (BOLA-safe)
+2. **oauth_service.go**: `ParseAccessToken` passed `s.issuer` as aud → broke agent tokens (aud="agent-api"). Fixed to pass empty (backward compatible); `ParseAccessTokenWithAudience` for strict checks
+3. **agent_identity_test.go**: added `aud` claim to `makeSubjectToken` for completeness
+
+### P2-14 SCIM /Me: ✅ IMPLEMENTED (WIP, pending commit by backend)
+- `handleMe`: JWT Bearer → extract sub+tenant_id → GetUser → SCIM response
+- BOLA-safe: tenant context from token, not header
+- Route: `/scim/v2/Me` (RFC 7643 §3.4)
+
+### P2-15 JWT aud validation: ✅ IMPLEMENTED (WIP, pending commit)
+- `ParseAccessTokenWithAudience`: RFC 7519 §4.1.3 audience verification
+- Empty audience = skip (backward compatible)
+
+### P2-16 PKCE plain: ✅ COMMITTED (`9e8c2fdd8`)
+- Only S256 accepted, plain removed (OAuth 2.1 compliance)
+
+### Open items remaining: P1-15 (reclassified FALSE POSITIVE — end_session present)
+`make test`: EXIT=0, 65/65. Danger: 0.
+
+### Next Dimension: 2 — Authorization Boundaries (Cycle 1372) — Rotation 3
