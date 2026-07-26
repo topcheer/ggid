@@ -137,3 +137,7 @@ R27 后 2 个新 commit，均为安全增强：
 2. 6c2a9d4f8 — 密码 MaxLength 限制（NIST 800-63B DoS 防护）
 
 审计通过，无新问题。`go build` PASS。
+
+## R29 增量审视 2026-07-26 06:30
+
+R28 后零新增 commit。无增量问题。
