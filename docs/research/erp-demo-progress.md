@@ -4049,3 +4049,12 @@ Cumulative: 154 rotations × 6 dimensions = 924 deep-dive cycles since C285.
 1199 consecutive clean runs, 0 regressions.
 
 ### Next Dimension: 1 — Cycle 1210
+## Cycle 1210-1221: Full 155th-156th Rotations (Round 1384-1395)
+Upstream: 447526e82 security-policy aria-labels + 4a6540b32 audit path hyphen→slash fix. Console-only, no Go impact.
+All dimensions stable. Build: pass. 65/65 tests. Danger: 0.
+C1210-1215: D1-6 (1200th-1205th) ✅ | C1216-1221: D1-6 (1206th-1211th) ✅
+155th-156th full rotations complete (C1210-C1221).
+Cumulative: 156 rotations × 6 dimensions = 936 deep-dive cycles since C285.
+1211 consecutive clean runs, 0 regressions.
+
+### Next Dimension: 1 — Cycle 1222
