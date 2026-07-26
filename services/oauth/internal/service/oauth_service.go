@@ -894,14 +894,14 @@ func (s *OAuthService) evaluateConditionalAccess(ctx context.Context, tenantID, 
 		}
 		if matched {
 			if act == "block" || act == "deny" || act == "require_mfa" {
-				log.Printf("CAP: policy '%s' matched user '%s', action=%s", p.Name, username, act)
+				slog.Info("CAP: policy matched user", "policy", p.Name, "user", maskUser(username), "action", act)
 				return act, p.Name
 			}
-			log.Printf("CAP: policy '%s' matched user '%s' but action='%s' (not blocking)", p.Name, username, act)
+			slog.Info("CAP: policy matched but not blocking", "policy", p.Name, "user", maskUser(username), "action", act)
 			return "allow", ""
 		}
 	}
-	log.Printf("CAP: no policies matched for user '%s' (tenant=%s)", username, tenantID.String())
+	slog.Info("CAP: no policies matched", "user", maskUser(username), "tenant", tenantID.String())
 	return "allow", ""
 }
 
@@ -1584,6 +1584,15 @@ func (s *OAuthService) IsTokenRevoked(tokenStr string) bool {
 func hashTokenSHA256(token string) string {
 	h := sha256.Sum256([]byte(token))
 	return hex.EncodeToString(h[:])
+}
+
+// maskUser redacts a username for safe logging (PII protection).
+// e.g. "alice.admin" → "al***", "a" → "***"
+func maskUser(username string) string {
+	if len(username) <= 2 {
+		return "***"
+	}
+	return username[:2] + "***"
 }
 
 // --- Refresh Token Grant ---

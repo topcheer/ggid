@@ -309,7 +309,7 @@ func (s *AuthService) ForgotPassword(ctx context.Context, tenantID uuid.UUID, em
 		if err := s.emailSender.Send(ctx, email, "Password Reset - GGID", body); err != nil {
 			slog.Error("ForgotPassword: failed to send reset email", "email", "[redacted]", "error", err)
 		} else {
-			slog.Info("ForgotPassword: reset email sent", "email", email)
+			slog.Info("ForgotPassword: reset email sent", "email", maskEmail(email))
 		}
 	}
 
@@ -724,4 +724,18 @@ func (s *AuthService) GenerateWebAuthnChallenge(ctx context.Context) (string, er
 // GetPasswordService returns the password service (may be nil if not configured).
 func (s *AuthService) GetPasswordService() *PasswordService {
 	return s.passwordService
+}
+
+// maskEmail redacts the local part of an email address for safe logging.
+// e.g. "alice@example.com" → "al***@example.com"
+func maskEmail(email string) string {
+	at := strings.Index(email, "@")
+	if at <= 0 {
+		return "[redacted]"
+	}
+	prefix := email[:at]
+	if len(prefix) <= 2 {
+		return prefix + "***" + email[at:]
+	}
+	return prefix[:2] + "***" + email[at:]
 }
