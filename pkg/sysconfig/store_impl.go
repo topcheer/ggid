@@ -156,7 +156,11 @@ func (s *pgStore) broadcast(ctx context.Context, tenantID, key string) {
 	if s.rdb == nil {
 		return
 	}
-	payload, _ := json.Marshal(map[string]string{"tenant_id": tenantID, "key": key})
+	payload, err := json.Marshal(map[string]string{"tenant_id": tenantID, "key": key})
+	if err != nil {
+		log.Printf("sysconfig: failed to marshal broadcast payload: %v", err)
+		return
+	}
 	if err := s.rdb.Publish(ctx, PubSubChannel, payload).Err(); err != nil {
 		log.Printf("sysconfig: failed to broadcast change: %v", err)
 	}
