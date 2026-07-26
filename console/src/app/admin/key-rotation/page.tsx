@@ -90,7 +90,7 @@ export default function KeyRotationPage() {
             <div className="space-y-3">{SCHEDULE.map(s => (
               <div key={s.type} className="flex items-center justify-between rounded-lg border p-3 dark:border-gray-700">
                 <span className="text-sm font-medium">{s.type}</span>
-                <div className="flex items-center gap-2"><input type="number" defaultValue={s.interval} className="w-20 rounded-lg border dark:border-gray-700 dark:bg-gray-900 px-2 py-1 text-sm text-center" /><span className="text-xs text-gray-400">{s.unit}</span></div>
+                <div className="flex items-center gap-2"><input type="number" aria-label={`${s.type} rotation interval`} defaultValue={s.interval} className="w-20 rounded-lg border dark:border-gray-700 dark:bg-gray-900 px-2 py-1 text-sm text-center focus:outline-none focus:ring-2 focus:ring-blue-500" /><span className="text-xs text-gray-400">{s.unit}</span></div>
               </div>
             ))}</div>
             <button onClick={saveSchedule} disabled={saving} className="mt-4 flex items-center gap-2 rounded-lg bg-amber-600 px-4 py-2 text-sm font-medium text-white hover:bg-amber-700 disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-blue-500">{saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />} {t("keyRotation.saveSchedule")}</button>

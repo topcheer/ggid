@@ -380,10 +380,8 @@ export default function OrganizationsPage() {
       <div className="mb-6 flex items-center justify-between">
         <h1 className="text-2xl font-bold dark:text-gray-100">{t("orgs.title")}</h1>
         <button
-          onClick={() => {
-            setShowCreate(!showCreate);
-            setError(null);
-          }}
+          onClick={() => { setShowCreate(!showCreate); setError(null); }}
+          aria-label={showCreate ? "Cancel creation" : "Create new organization"}
           className="flex items-center gap-1.5 rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
         >
           <Plus className="h-4 w-4" />
@@ -577,6 +575,7 @@ export default function OrganizationsPage() {
                     <td className="px-4 py-3 font-mono text-xs text-gray-500 dark:text-gray-400">{d.path || "-"}</td>
                     <td className="px-4 py-3">
                       <button
+                        aria-label={`Delete department ${d.name || d.id}`}
                         onClick={() => handleDeleteDept(d.id)}
                         className="text-gray-400 hover:text-red-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
                       >
@@ -612,6 +611,7 @@ export default function OrganizationsPage() {
                     </div>
                   </div>
                   <button
+                    aria-label={`Delete team ${t.name || t.id}`}
                     onClick={() => handleDeleteTeam(t.id)}
                     className="text-gray-400 hover:text-red-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   >
@@ -846,6 +846,8 @@ function UnifiedOrgNode({
         )}
         <button
           onClick={() => hasContent && onToggle(org.id)}
+          aria-label={isExpanded ? `Collapse ${org.name}` : `Expand ${org.name}`}
+          aria-expanded={isExpanded}
           className={`flex h-4 w-4 items-center justify-center ${hasContent ? "cursor-pointer text-gray-400" : "invisible"}`}
         >
           {hasContent && (isExpanded ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />)}
