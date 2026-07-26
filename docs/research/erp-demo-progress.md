@@ -4099,4 +4099,28 @@ C1270-1275: D1-6 (1260th-1265th) ✅ | C1276-1281: D1-6 (1266th-1271st) ✅
 Cumulative: 166 rotations × 6 dimensions = 996 deep-dive cycles since C285.
 1271 consecutive clean runs, 0 regressions.
 
-### Next Dimension: 1 — Cycle 1282
+### Next Dimension: 5 — Cycle 1282
+## Cycle 1282: D5 SDK Deep Audit — CRITICAL FINDINGS (Round 1456)
+**Integration user experience audit — 3 issues found:**
+
+**P0: refreshToken endpoint mismatch — Java + C# SDKs are BROKEN**
+- Java SDK: `POST /api/v1/auth/refresh` (GGIDClient.java:76)
+- C# SDK: `POST /api/v1/auth/refresh` (Client.cs:84)
+- Python + Go SDK: `POST /api/v1/oauth/token` with `grant_type=refresh_token` (CORRECT)
+- `/api/v1/auth/refresh` was an OpenAPI annotation but OAuth handles refresh via `/oauth/token` (server.go:669)
+- **Impact: Java + C# users calling refreshToken() get 404 — token refresh completely broken**
+- **Fix: Change Java+C# to use `/api/v1/oauth/token` with `grant_type=refresh_token`**
+
+**P1: No SDK has getMyPermissions() method**
+- Demo endpoints exist (Go /api/my-permissions, Node /api/auth/my-permissions)
+- But zero SDKs expose a method for it
+- Users must manually call the endpoint or decode JWT themselves
+- **Fix: Add `GetMyPermissions()` to all 7 SDKs**
+
+**P2: logout()/revokeToken() coverage gaps**
+- Go SDK: has Logout() ✅
+- Python SDK: has revoke_token() ✅  
+- Node/Ruby/Rust/C#/Java: missing or unclear
+- **Fix: Ensure all SDKs expose logout/revoke**
+
+### Next Dimension: 1 — Cycle 1288
