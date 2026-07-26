@@ -4322,6 +4322,20 @@ All demos correctly implement create-and-return pattern:
 |-------|--------|
 | Core (auth PasswordPolicy snake_case + passkey security) | ✅ builds, HEAD 65/65 |
 | SDK (7 langs) | ✅ no change |
-| Demo (8 apps) | ⚠️ 3 P2 field/wrapper inconsistencies (not blocking, cosmetic) |
+| Demo (8 apps) | ✅ P2 inconsistencies RESOLVED (commit 828422b96) |
+
+### P2 Fixes Verified (commit 828422b96 by ggcxf_fullstack)
+- **Node** `qty`→`stock` in inventory items ✅
+- **Java** `quantity`→`stock` in InventoryItem ✅ (Order.quantity unchanged — correct, orders have quantity)
+- **Python/C#** `count`→`total` in list responses ✅
+- **Java** `inventory`→`items` array key ✅
+- **Node/Python/C#/Java** `orders`→`items` for list responses ✅
+- All 7 demos now use `{items: [...], total: N}` + `stock` field ✅
+
+### make test Fix (TestTransparentRehash)
+- `make test` initially failed: `TestTransparentRehash` panic in `pkg/authprovider`
+- Root cause: WIP `crypto.go` adds bcrypt support to `VerifyPassword`, but `local.go` rehash logic wasn't updated
+- Fix (another agent's WIP): `local.go` now separates rehash check from verification path — `multihash.NeedsRehash()` fires regardless of which verifier matched
+- **`make test` now passes: EXIT=0, 65/65 packages, 0 FAIL**
 
 ### Next Dimension: 4 — Multi-Tenant Isolation (Cycle 1312)
