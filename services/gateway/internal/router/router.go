@@ -330,31 +330,48 @@ func (gw *Gateway) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	resolveTenant := func(r *http.Request) string {
+		// 1. tenant_id query param (explicit)
+		if tid := r.URL.Query().Get("tenant_id"); tid != "" {
+			return tid
+		}
+		// 2. tenant from middleware context (subdomain/header)
+		if tid, ok := middleware.TenantIDFromRequest(r); ok {
+			return tid
+		}
+		// 3. default fallback
+		return "fb44ca98-2a8a-498b-a9b2-00fc014524ce"
+	}
+
 	// Hosted login page (served by Gateway — any app can redirect here)
 	if r.URL.Path == "/login" {
+		html := strings.ReplaceAll(hostedLoginHTML, "__TENANT_ID__", resolveTenant(r))
 		w.Header().Set("Content-Type", "text/html; charset=utf-8")
-		_, _ = w.Write([]byte(hostedLoginHTML))
+		_, _ = w.Write([]byte(html))
 		return
 	}
 
 	// Hosted registration page
 	if r.URL.Path == "/register" {
+		html := strings.ReplaceAll(hostedRegisterHTML, "__TENANT_ID__", resolveTenant(r))
 		w.Header().Set("Content-Type", "text/html; charset=utf-8")
-		_, _ = w.Write([]byte(hostedRegisterHTML))
+		_, _ = w.Write([]byte(html))
 		return
 	}
 
 	// Password reset page
 	if r.URL.Path == "/forgot-password" {
+		html := strings.ReplaceAll(hostedForgotPasswordHTML, "__TENANT_ID__", resolveTenant(r))
 		w.Header().Set("Content-Type", "text/html; charset=utf-8")
-		_, _ = w.Write([]byte(hostedForgotPasswordHTML))
+		_, _ = w.Write([]byte(html))
 		return
 	}
 
 	// Device code approval page (RFC 8628) — used by CLI and other device flows
 	if r.URL.Path == "/device" {
+		html := strings.ReplaceAll(hostedDeviceApproveHTML, "__TENANT_ID__", resolveTenant(r))
 		w.Header().Set("Content-Type", "text/html; charset=utf-8")
-		_, _ = w.Write([]byte(hostedDeviceApproveHTML))
+		_, _ = w.Write([]byte(html))
 		return
 	}
 
@@ -364,9 +381,10 @@ func (gw *Gateway) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if r.URL.Path == "/oauth/authorize" && r.Method == http.MethodGet {
 		userID := r.URL.Query().Get("user_id")
 		if userID == "" {
+			html := strings.ReplaceAll(hostedLoginHTML, "__TENANT_ID__", resolveTenant(r))
 			w.Header().Set("Content-Type", "text/html; charset=utf-8")
 			w.WriteHeader(http.StatusOK)
-			_, _ = w.Write([]byte(hostedLoginHTML))
+			_, _ = w.Write([]byte(html))
 			return
 		}
 		// With user_id, proxy to OAuth service for code generation

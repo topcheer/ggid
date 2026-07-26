@@ -135,7 +135,14 @@ async function doLogin(){
     localStorage.setItem("ggid_tenant_id",d.tenant_id);
     localStorage.setItem("ggid_refresh_token",d.refresh_token);
     showOk("Success! Redirecting...");
-    setTimeout(()=>window.location.href=redirectUri,500);
+    // If on /oauth/authorize, redirect back with user_id to complete OAuth flow
+    if(location.pathname==="/oauth/authorize"){
+      const url=new URL(location.href);
+      url.searchParams.set("user_id",d.user_id);
+      setTimeout(()=>window.location.href=url.toString(),500);
+    } else {
+      setTimeout(()=>window.location.href=redirectUri,500);
+    }
   }catch(e){showErr("Network error — is the API running?")}
   finally{btn.disabled=false;btn.textContent="Sign In"}
 }
