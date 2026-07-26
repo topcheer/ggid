@@ -243,10 +243,10 @@ var adminTools = []Tool{
 		Handler: func(ctx context.Context, c *client.Client, args map[string]any) (any, error) {
 			body := map[string]any{}
 			if sid := argStr(args, "session_id"); sid != "" {
-				body["session_id"] = sid
+				body["session_ids"] = []string{sid}
 			}
 			if uid := argStr(args, "user_id"); uid != "" {
-				body["user_id"] = uid
+				body["user_ids"] = []string{uid}
 			}
 			var result any
 			if err := c.Post(ctx, "/api/v1/auth/sessions/revoke", body, &result); err != nil {
