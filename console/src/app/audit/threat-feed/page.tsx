@@ -72,7 +72,7 @@ export default function ThreatFeedPage() {
         </div>
         <div className="flex items-center gap-2">
           <div className="flex items-center gap-1.5"><Radio className={`h-4 w-4 ${connected ? "text-green-500" : "text-gray-400"}`} /><span className="text-xs text-gray-400">{connected ? "Live" : "Disconnected"}</span></div>
-          <button onClick={togglePause} aria-label={paused ? "Resume threat feed" : "Pause threat feed"} aria-pressed={paused} className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium ${paused ? "bg-green-600 text-white hover:bg-green-700" : "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30"}`}>{paused ? <><Play className="h-4 w-4" /> Resume</> : <><Pause className="h-4 w-4" /> Pause</>}</button>
+          <button onClick={togglePause} aria-label={paused ? "Resume threat feed" : "Pause threat feed"} aria-pressed={paused} className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium ${paused ? "bg-green-600 text-white hover:bg-green-700" : "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30"} focus:outline-none focus:ring-2 focus:ring-blue-500}`}>{paused ? <><Play className="h-4 w-4" /> Resume</> : <><Pause className="h-4 w-4" /> Pause</>}</button>
           <button onClick={() => setThreats([])} aria-label="Clear threat feed" className="flex items-center gap-2 rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-600 dark:border-gray-600 dark:text-gray-300"><Trash2 className="h-4 w-4" /></button>
         </div>
       </div>

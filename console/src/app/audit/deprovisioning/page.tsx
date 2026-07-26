@@ -156,12 +156,12 @@ export default function DeprovisioningPage() {
         <div className={cardCls}>
           <div className="flex gap-2">
             <input aria-label="Search by name or email..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} onKeyDown={(e) => e.key === "Enter" && handleSearch()} placeholder="Search by name or email..." className="flex-1 rounded-lg border border-gray-300 px-4 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white" />
-            <button onClick={handleSearch} className="flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700"><Search className="h-4 w-4" />Search</button>
+            <button onClick={handleSearch} className="flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-blue-500"><Search className="h-4 w-4" />Search</button>
           </div>
           {searchResults.length > 0 && (
             <div className="mt-4 space-y-2">
               {searchResults.map((u: any) => (
-                <button key={u.id} onClick={() => { setSelectedUser(u); setStep("confirm"); }} className="flex w-full items-center justify-between rounded-lg border border-gray-200 p-3 text-left hover:border-indigo-300 hover:bg-indigo-50/50 dark:border-gray-700 dark:hover:bg-indigo-900/10">
+                <button key={u.id} onClick={() => { setSelectedUser(u); setStep("confirm"); }} className="flex w-full items-center justify-between rounded-lg border border-gray-200 p-3 text-left hover:border-indigo-300 hover:bg-indigo-50/50 dark:border-gray-700 dark:hover:bg-indigo-900/10 focus:outline-none focus:ring-2 focus:ring-blue-500">
                   <div>
                     <p className="font-medium text-gray-800 dark:text-gray-200">{u.name}</p>
                     <p className="text-xs text-gray-400">{u.email}</p>
@@ -201,8 +201,8 @@ export default function DeprovisioningPage() {
             <input aria-label="e.g. Employee departure" value={reason} onChange={(e) => setReason(e.target.value)} placeholder="e.g. Employee departure" className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white" />
           </div>
           <div className="mt-5 flex justify-end gap-2">
-            <button onClick={() => setStep("search")} className="rounded-lg px-4 py-2 text-sm text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700">Back</button>
-            <button onClick={handleExecute} disabled={executing} className="flex items-center gap-2 rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-50">
+            <button onClick={() => setStep("search")} className="rounded-lg px-4 py-2 text-sm text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500">Back</button>
+            <button onClick={handleExecute} disabled={executing} className="flex items-center gap-2 rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-blue-500">
               {executing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Shield className="h-4 w-4" />}Execute Deprovisioning
             </button>
           </div>
@@ -237,14 +237,14 @@ export default function DeprovisioningPage() {
               ))}
             </div>
           </div>
-          <button onClick={reset} className="flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700">New Deprovisioning</button>
+          <button onClick={reset} className="flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-blue-500">New Deprovisioning</button>
         </div>
       )}
 
       {/* History */}
       <div>
         <h2 className="mb-3 flex items-center gap-2 text-sm font-semibold uppercase text-gray-500"><History className="h-4 w-4" /> Recent Deprovisionings</h2>
-        <button onClick={loadHistory} className="mb-3 text-xs text-indigo-600 hover:underline">Load history</button>
+        <button onClick={loadHistory} className="mb-3 text-xs text-indigo-600 hover:underline focus:outline-none focus:ring-2 focus:ring-blue-500">Load history</button>
         {history.length > 0 && (
           <div className="space-y-2">
             {history.map((h: any) => (

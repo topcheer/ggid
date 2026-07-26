@@ -56,7 +56,7 @@ export default function IntegrityPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div><h1 className="flex items-center gap-2 text-2xl font-bold text-gray-900 dark:text-white"><Link2 className="h-6 w-6 text-blue-500" /> {t("integrity.title")}</h1><p className="mt-1 text-sm text-gray-500 dark:text-gray-400">{t("integrity.subtitle")}</p></div>
-        <button onClick={runVerification} disabled={verifying} className="flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50">{verifying ? <Loader2 className="h-4 w-4 animate-spin" /> : <Play className="h-4 w-4" />} {t("integrity.runVerification")}</button>
+        <button onClick={runVerification} disabled={verifying} className="flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-blue-500">{verifying ? <Loader2 className="h-4 w-4 animate-spin" /> : <Play className="h-4 w-4" />} {t("integrity.runVerification")}</button>
       </div>
 
       {error && (<div role="alert" className="flex items-center gap-2 rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700 dark:bg-red-900/20 dark:text-red-400"><AlertCircle className="h-4 w-4 shrink-0" />{error}<button onClick={() => setError(null)} aria-label="Dismiss" className="ml-auto"><X className="h-4 w-4" /></button></div>)}
@@ -67,7 +67,7 @@ export default function IntegrityPage() {
           { id: "verification" as Tab, label: t("integrity.verificationLog"), icon: Clock },
           { id: "tamper" as Tab, label: `${t("integrity.tamperDetection")} (${tamperEvents.filter(e => !e.resolved).length})`, icon: AlertTriangle },
         ]).map(tb => { const Icon = tb.icon; return (
-          <button key={tb.id} onClick={() => setTab(tb.id)} aria-pressed={tab === tb.id} className={`flex items-center gap-1.5 border-b-2 px-4 py-2 text-sm font-medium transition whitespace-nowrap ${tab === tb.id ? "border-blue-600 text-blue-600 dark:text-blue-400" : "border-transparent text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"}`}><Icon className="h-4 w-4" /> {tb.label}</button>
+          <button key={tb.id} onClick={() => setTab(tb.id)} aria-pressed={tab === tb.id} className={`flex items-center gap-1.5 border-b-2 px-4 py-2 text-sm font-medium transition whitespace-nowrap ${tab === tb.id ? "border-blue-600 text-blue-600 dark:text-blue-400" : "border-transparent text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"} focus:outline-none focus:ring-2 focus:ring-blue-500}`}><Icon className="h-4 w-4" /> {tb.label}</button>
         );})}
       </div>
 
@@ -99,7 +99,7 @@ export default function IntegrityPage() {
         <div className="overflow-x-auto"><table className="w-full text-sm">
           <thead className="bg-gray-50 dark:bg-gray-800/50"><tr><th className="px-3 py-2 text-left text-xs text-gray-400">{t("integrity.time")}</th><th className="px-3 py-2 text-center text-xs text-gray-400">{t("integrity.blocksChecked")}</th><th className="px-3 py-2 text-center text-xs text-gray-400">{t("integrity.anomalies")}</th><th className="px-3 py-2 text-center text-xs text-gray-400">{t("integrity.duration")}</th><th className="px-3 py-2 text-center text-xs text-gray-400">{t("integrity.status")}</th></tr></thead>
           <tbody className="divide-y dark:divide-gray-800">{verifications.map(v => (
-            <tr key={v.id} className="hover:bg-gray-50 dark:hover:bg-gray-900/30"><td className="px-3 py-3 text-xs">{new Date(v.timestamp).toLocaleString()}</td><td className="px-3 py-3 text-center text-xs font-mono">{v.blocks_checked.toLocaleString()}</td><td className="px-3 py-3 text-center"><span className={`text-xs font-mono ${v.anomalies > 0 ? "text-red-600 font-bold" : "text-gray-400"}`}>{v.anomalies}</span></td><td className="px-3 py-3 text-center text-xs font-mono">{v.duration_ms}ms</td><td className="px-3 py-3 text-center"><span className={`px-1.5 py-0.5 rounded text-xs ${v.status === "pass" ? "bg-green-100 dark:bg-green-900/30 text-green-600" : "bg-red-100 dark:bg-red-900/30 text-red-600"}`}>{v.status}</span></td></tr>
+            <tr key={v.id} className="hover:bg-gray-50 dark:hover:bg-gray-900/30 focus:outline-none focus:ring-2 focus:ring-blue-500"><td className="px-3 py-3 text-xs">{new Date(v.timestamp).toLocaleString()}</td><td className="px-3 py-3 text-center text-xs font-mono">{v.blocks_checked.toLocaleString()}</td><td className="px-3 py-3 text-center"><span className={`text-xs font-mono ${v.anomalies > 0 ? "text-red-600 font-bold" : "text-gray-400"}`}>{v.anomalies}</span></td><td className="px-3 py-3 text-center text-xs font-mono">{v.duration_ms}ms</td><td className="px-3 py-3 text-center"><span className={`px-1.5 py-0.5 rounded text-xs ${v.status === "pass" ? "bg-green-100 dark:bg-green-900/30 text-green-600" : "bg-red-100 dark:bg-red-900/30 text-red-600"}`}>{v.status}</span></td></tr>
           ))}</tbody>
         </table></div>
       )}

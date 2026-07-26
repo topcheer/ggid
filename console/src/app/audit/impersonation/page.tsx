@@ -96,7 +96,7 @@ export default function ImpersonationLogPage() {
             Audit trail of all user impersonation sessions.
           </p>
         </div>
-        <button onClick={handleExport} aria-label="Export impersonation log as CSV" className="rounded-lg border border-gray-300 px-3 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700">
+        <button onClick={handleExport} aria-label="Export impersonation log as CSV" className="rounded-lg border border-gray-300 px-3 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500">
           <Download className="mr-1 inline h-4 w-4" /> Export
         </button>
       </div>

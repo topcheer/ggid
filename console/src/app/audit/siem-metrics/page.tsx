@@ -69,7 +69,7 @@ export default function SIEMMetricsPage() {
           <span className="text-gray-400">to</span>
           <input aria-label="End date" type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} className="px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-900 text-sm" />
         </div>
-        <button aria-label="action" onClick={fetchData} disabled={loading} className="px-4 py-2 rounded-lg bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 disabled:opacity-50">{loading ? "Loading..." : "Refresh"}</button>
+        <button aria-label="action" onClick={fetchData} disabled={loading} className="px-4 py-2 rounded-lg bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-blue-500">{loading ? "Loading..." : "Refresh"}</button>
       </div>
 
       {data && (
@@ -130,7 +130,7 @@ export default function SIEMMetricsPage() {
                 {data.destinations.length === 0 ? (
                   <tr><td colSpan={4} className="px-4 py-8 text-center text-sm text-gray-400">No SIEM destinations configured.</td></tr>
                 ) : data.destinations.map((d: any) => (
-                  <tr key={d.id} className="hover:bg-gray-50 dark:hover:bg-gray-900/30">
+                  <tr key={d.id} className="hover:bg-gray-50 dark:hover:bg-gray-900/30 focus:outline-none focus:ring-2 focus:ring-blue-500">
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-2">
                         <Server className="w-3 h-3 text-gray-400" />

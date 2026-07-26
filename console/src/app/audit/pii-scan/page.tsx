@@ -74,7 +74,7 @@ export default function PIIScanPage() {
           <h1 className="flex items-center gap-2 text-2xl font-bold text-gray-900 dark:text-white"><ScanSearch className="h-6 w-6 text-purple-600" /> {t("auditPiiScan.title")}</h1>
           <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">Automated discovery of personally identifiable information across all data stores.</p>
         </div>
-        <button onClick={handleScan} disabled={scanning} className="flex items-center gap-2 rounded-lg bg-purple-600 px-4 py-2 text-sm font-medium text-white hover:bg-purple-700 disabled:opacity-50">{scanning ? <Loader2 className="h-4 w-4 animate-spin" /> : <Play className="h-4 w-4" />} Run Scan</button>
+        <button onClick={handleScan} disabled={scanning} className="flex items-center gap-2 rounded-lg bg-purple-600 px-4 py-2 text-sm font-medium text-white hover:bg-purple-700 disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-blue-500">{scanning ? <Loader2 className="h-4 w-4 animate-spin" /> : <Play className="h-4 w-4" />} Run Scan</button>
       </div>
 
       {error && <div role="alert" className="flex items-center gap-2 rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700 dark:bg-red-900/20 dark:text-red-400"><AlertCircle className="h-4 w-4 shrink-0" />{error}<button onClick={() => setError(null)} aria-label="Dismiss error" className="ml-auto"><X className="h-4 w-4" /></button></div>}

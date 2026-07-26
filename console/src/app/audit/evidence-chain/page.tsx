@@ -155,7 +155,7 @@ export default function EvidenceChainPage() {
                         )}
                       </div>
                       {entry.status !== "verified" && (
-                        <button onClick={() => verifyEntry(entry.id)} disabled={verifying === entry.id} className="mt-2 text-xs font-medium text-blue-600 hover:underline disabled:opacity-50">
+                        <button onClick={() => verifyEntry(entry.id)} disabled={verifying === entry.id} className="mt-2 text-xs font-medium text-blue-600 hover:underline disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-blue-500">
                           {verifying === entry.id ? "Verifying..." : "Verify"}
                         </button>
                       )}

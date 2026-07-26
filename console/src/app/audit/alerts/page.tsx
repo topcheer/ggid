@@ -157,7 +157,7 @@ export default function AuditAlertsPage() {
                   </div>
                   <button
                     onClick={() => handleDelete(rule.id)}
-                    className="rounded-lg p-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20"
+                    className="rounded-lg p-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   >
                     <Trash2 className="h-4 w-4" />
                   </button>

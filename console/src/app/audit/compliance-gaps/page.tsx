@@ -95,7 +95,7 @@ export default function ComplianceGapsPage() {
       {/* Summary cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {(["open", "in_progress", "remediated", "accepted_risk"] as const).map((s: any) => (
-          <div key={s} className="rounded-lg border p-4 dark:border-gray-800 cursor-pointer hover:border-blue-400" onClick={() => setFilterStatus(filterStatus === s ? "all" : s)}>
+          <div key={s} className="rounded-lg border p-4 dark:border-gray-800 cursor-pointer hover:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-500" onClick={() => setFilterStatus(filterStatus === s ? "all" : s)}>
             <span className="text-sm text-gray-500 capitalize">{s.replace("_", " ")}</span>
             <p className={`text-2xl font-bold mt-1`}>
               <span className={`inline-block px-2 py-0.5 rounded ${statusColors[s as keyof typeof statusColors]}`}>{summary[s as keyof typeof summary]}</span>
@@ -132,7 +132,7 @@ export default function ComplianceGapsPage() {
           </thead>
           <tbody className="divide-y dark:divide-gray-800">
             {filtered.map((gap: any) => (
-              <tr key={gap.id} className="hover:bg-gray-50 dark:hover:bg-gray-900/30">
+              <tr key={gap.id} className="hover:bg-gray-50 dark:hover:bg-gray-900/30 focus:outline-none focus:ring-2 focus:ring-blue-500">
                 <td className="px-4 py-3 font-mono text-xs">{gap.control_id}</td>
                 <td className="px-4 py-3">{gap.framework}</td>
                 <td className="px-4 py-3 max-w-xs truncate" title={gap.description}>{gap.description}</td>
@@ -141,7 +141,7 @@ export default function ComplianceGapsPage() {
                 <td className="px-4 py-3 flex items-center gap-1"><Calendar className="w-3 h-3 text-gray-400" />{gap.due_date}</td>
                 <td className="px-4 py-3"><span className={`px-2 py-0.5 rounded text-xs ${statusColors[gap.status]}`}>{gap.status.replace("_", " ")}</span></td>
                 <td className="px-4 py-3">
-                  <button onClick={() => { setUpdateGap(gap); setNewStatus(gap.status); }} className="text-blue-600 hover:underline text-xs font-medium">Update</button>
+                  <button onClick={() => { setUpdateGap(gap); setNewStatus(gap.status); }} className="text-blue-600 hover:underline text-xs font-medium focus:outline-none focus:ring-2 focus:ring-blue-500">Update</button>
                 </td>
               </tr>
             ))}
@@ -185,7 +185,7 @@ export default function ComplianceGapsPage() {
             </div>
             <div className="flex justify-end gap-2 px-6 py-4 border-t dark:border-gray-800">
               <button onClick={() => setUpdateGap(null)} className="px-4 py-2 rounded-lg border dark:border-gray-700 text-sm">Cancel</button>
-              <button onClick={handleUpdate} className="px-4 py-2 rounded-lg bg-blue-600 text-white text-sm font-medium hover:bg-blue-700">Save</button>
+              <button onClick={handleUpdate} className="px-4 py-2 rounded-lg bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500">Save</button>
             </div>
           </div>
         </div>

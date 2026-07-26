@@ -96,7 +96,7 @@ export default function ComplianceEvidencePage() {
           const Icon = tb.icon;
           return (
             <button key={tb.id} onClick={() => setTab(tb.id)} aria-pressed={tab === tb.id}
-              className={`flex items-center gap-1.5 border-b-2 px-4 py-2 text-sm font-medium transition whitespace-nowrap ${tab === tb.id ? "border-emerald-600 text-emerald-600 dark:text-emerald-400" : "border-transparent text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"}`}>
+              className={`flex items-center gap-1.5 border-b-2 px-4 py-2 text-sm font-medium transition whitespace-nowrap ${tab === tb.id ? "border-emerald-600 text-emerald-600 dark:text-emerald-400" : "border-transparent text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"} focus:outline-none focus:ring-2 focus:ring-blue-500}`}>
               <Icon className="h-4 w-4" /> {tb.label}
             </button>
           );
@@ -129,7 +129,7 @@ export default function ComplianceEvidencePage() {
       {/* EVIDENCE VAULT */}
       {tab === "evidence" && (
         <div>
-          <div className="mb-4"><button className="flex items-center gap-1 rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-emerald-700"><Upload className="h-3 w-3" /> {t("complianceEvidence.uploadEvidence")}</button></div>
+          <div className="mb-4"><button className="flex items-center gap-1 rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-blue-500"><Upload className="h-3 w-3" /> {t("complianceEvidence.uploadEvidence")}</button></div>
           <div className="space-y-2">
             {evidence.map(ev => (
               <div key={ev.id} className={`${card} flex items-center justify-between !p-3`}>
@@ -146,7 +146,7 @@ export default function ComplianceEvidencePage() {
                 </div>
                 <div className="flex items-center gap-2">
                   <span className="flex items-center gap-1 text-xs text-gray-400"><Hash className="h-3 w-3" />{ev.hash.slice(0, 12)}</span>
-                  <button aria-label="Download" className="rounded p-1.5 text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700"><Download className="h-3.5 w-3.5" /></button>
+                  <button aria-label="Download" className="rounded p-1.5 text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"><Download className="h-3.5 w-3.5" /></button>
                 </div>
               </div>
             ))}

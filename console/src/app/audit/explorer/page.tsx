@@ -154,7 +154,7 @@ export default function AuditExplorerPage() {
                     <tbody>
                       {events.map((e: any) => (
                         <>
-                          <tr key={e.id} className="border-b border-gray-100 dark:border-gray-800/50 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800/30"
+                          <tr key={e.id} className="border-b border-gray-100 dark:border-gray-800/50 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800/30 focus:outline-none focus:ring-2 focus:ring-blue-500"
                             onClick={() => toggleRow(e.id)}>
                             <td className="py-3 px-3">
                               {expandedRows.has(e.id) ? <ChevronDown className="w-4 h-4 text-gray-400" /> : <ChevronRight className="w-4 h-4 text-gray-400" />}
@@ -188,7 +188,7 @@ export default function AuditExplorerPage() {
                                   </div>
                                 </div>
                                 <button onClick={() => { setSelectedEvent(e); setTab("details"); }}
-                                  className="mt-2 flex items-center gap-1 text-xs text-blue-600 hover:underline">
+                                  className="mt-2 flex items-center gap-1 text-xs text-blue-600 hover:underline focus:outline-none focus:ring-2 focus:ring-blue-500">
                                   <Eye className="w-3 h-3" />
                                   {t("auditExplorer.tabs.details")}
                                 </button>
@@ -211,7 +211,7 @@ export default function AuditExplorerPage() {
               <div className="space-y-4">
                 <div className="flex items-center justify-between mb-2">
                   <h3 className="text-sm font-semibold text-gray-900 dark:text-white">{t("auditExplorer.details.title")}</h3>
-                  <button onClick={() => setSelectedEvent(null)} className="text-gray-400 hover:text-gray-600"><X className="w-4 h-4" /></button>
+                  <button onClick={() => setSelectedEvent(null)} className="text-gray-400 hover:text-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500"><X className="w-4 h-4" /></button>
                 </div>
                 <DetailRow label={t("auditExplorer.details.eventId")} value={selectedEvent.id} />
                 <DetailRow label={t("auditExplorer.details.timestamp")} value={new Date(selectedEvent.timestamp).toLocaleString()} />
@@ -241,7 +241,7 @@ export default function AuditExplorerPage() {
               <div className="text-center py-12">
                 <Eye className="w-12 h-12 mx-auto mb-3 text-gray-300" />
                 <p className="text-sm text-gray-500">{t("auditExplorer.details.selectEvent")}</p>
-                <button onClick={() => setTab("events")} className="mt-3 text-sm text-blue-600 hover:underline">
+                <button onClick={() => setTab("events")} className="mt-3 text-sm text-blue-600 hover:underline focus:outline-none focus:ring-2 focus:ring-blue-500">
                   {t("auditExplorer.tabs.events")}
                 </button>
               </div>
@@ -369,7 +369,7 @@ function ExportTab({ events }: { events: AuditEvent[] }) {
       )}
 
       <button onClick={doExport} disabled={exporting || events.length === 0}
-        className="flex items-center gap-2 px-6 py-2.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white rounded-lg font-medium text-sm">
+        className="flex items-center gap-2 px-6 py-2.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white rounded-lg font-medium text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
         {exporting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
         {exporting ? t("auditExplorer.export.exporting") : t("auditExplorer.export.export")}
       </button>

@@ -124,7 +124,7 @@ export default function AuditExportPage() {
             </div>
 
             <div className="mt-6 flex justify-end">
-              <button onClick={handleExport} disabled={exporting} className="flex items-center gap-2 rounded-lg bg-indigo-600 px-6 py-2.5 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50">
+              <button onClick={handleExport} disabled={exporting} className="flex items-center gap-2 rounded-lg bg-indigo-600 px-6 py-2.5 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-blue-500">
                 {exporting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />} Export {format.toUpperCase()}
               </button>
             </div>

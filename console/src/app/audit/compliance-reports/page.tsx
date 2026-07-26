@@ -122,7 +122,7 @@ export default function ComplianceReportsPage() {
           </h1>
           <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">Schedule automated compliance report generation and delivery.</p>
         </div>
-        <button onClick={() => setShowCreate(true)} className="flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700"><Plus className="h-4 w-4" /> New Schedule</button>
+        <button onClick={() => setShowCreate(true)} className="flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-blue-500"><Plus className="h-4 w-4" /> New Schedule</button>
       </div>
 
       {error && (
@@ -163,7 +163,7 @@ export default function ComplianceReportsPage() {
                       <input aria-label="S" type="checkbox" checked={s.enabled} onChange={() => handleToggle(s)} className="peer sr-only" />
                       <div className="h-5 w-9 rounded-full bg-gray-200 after:absolute after:left-[2px] after:top-[2px] after:h-4 after:w-4 after:rounded-full after:border after:transition-all peer-checked:bg-indigo-600 peer-checked:after:translate-x-full dark:bg-gray-700" />
                     </label>
-                    <button onClick={() => setConfirmDelete(s)} aria-label="Delete schedule" className="rounded-lg p-1.5 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20"><Trash2 className="h-4 w-4" /></button>
+                    <button onClick={() => setConfirmDelete(s)} aria-label="Delete schedule" className="rounded-lg p-1.5 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 focus:outline-none focus:ring-2 focus:ring-blue-500"><Trash2 className="h-4 w-4" /></button>
                   </div>
                 </div>
               </div>
@@ -183,12 +183,12 @@ export default function ComplianceReportsPage() {
               </tr></thead>
               <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
                 {pastReports.map((r: any) => (
-                  <tr key={r.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/50">
+                  <tr key={r.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/50 focus:outline-none focus:ring-2 focus:ring-blue-500">
                     <td className="px-4 py-3 font-medium text-gray-700 dark:text-gray-300">{r.schedule_name}</td>
                     <td className="px-4 py-3"><span className="rounded-full bg-indigo-100 px-2 py-0.5 text-xs uppercase text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400">{r.framework}</span></td>
                     <td className="px-4 py-3 text-gray-500">{new Date(r.generated_at).toLocaleString()}</td>
                     <td className="px-4 py-3 text-gray-400">{r.size_kb} KB</td>
-                    <td className="px-4 py-3 text-right"><button onClick={() => handleDownload(r.download_url)} className="inline-flex items-center gap-1 rounded-lg border border-gray-300 px-2 py-1 text-xs hover:bg-gray-50 dark:border-gray-600 dark:hover:bg-gray-700"><Download className="h-3 w-3" /> Get</button></td>
+                    <td className="px-4 py-3 text-right"><button onClick={() => handleDownload(r.download_url)} className="inline-flex items-center gap-1 rounded-lg border border-gray-300 px-2 py-1 text-xs hover:bg-gray-50 dark:border-gray-600 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"><Download className="h-3 w-3" /> Get</button></td>
                   </tr>
                 ))}
               </tbody>
@@ -215,8 +215,8 @@ export default function ComplianceReportsPage() {
               <div><label className="text-sm font-medium text-gray-700 dark:text-gray-300">Format</label><select aria-label="form" value={form.format} onChange={(e) => setForm((p) => ({ ...p, format: e.target.value }))} className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white">{["pdf", "csv", "json"].map((f: any) => <option key={f} value={f}>{f.toUpperCase()}</option>)}</select></div>
             </div>
             <div className="mt-6 flex justify-end gap-2">
-              <button onClick={() => setShowCreate(false)} className="rounded-lg px-4 py-2 text-sm text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700">Cancel</button>
-              <button onClick={handleCreate} disabled={!form.name.trim() || creating} className="flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50">{creating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}Create</button>
+              <button onClick={() => setShowCreate(false)} className="rounded-lg px-4 py-2 text-sm text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500">Cancel</button>
+              <button onClick={handleCreate} disabled={!form.name.trim() || creating} className="flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-blue-500">{creating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}Create</button>
             </div>
           </div>
         </div>
@@ -227,7 +227,7 @@ export default function ComplianceReportsPage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() => setConfirmDelete(null)}>
           <div role="dialog" aria-modal="true" className="w-full max-w-sm rounded-xl bg-white p-6 shadow-xl dark:bg-gray-800" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center gap-3"><div className="rounded-full bg-red-100 p-2 dark:bg-red-900/30"><Trash2 className="h-5 w-5 text-red-600" /></div><div><h2 className="font-semibold text-gray-900 dark:text-white">Delete Schedule?</h2><p className="text-sm text-gray-500"><strong>{confirmDelete.name}</strong> will stop generating reports.</p></div></div>
-            <div className="mt-5 flex justify-end gap-2"><button onClick={() => setConfirmDelete(null)} className="rounded-lg px-4 py-2 text-sm text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700">Cancel</button><button onClick={() => handleDelete(confirmDelete.id)} className="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700">Delete</button></div>
+            <div className="mt-5 flex justify-end gap-2"><button onClick={() => setConfirmDelete(null)} className="rounded-lg px-4 py-2 text-sm text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500">Cancel</button><button onClick={() => handleDelete(confirmDelete.id)} className="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-blue-500">Delete</button></div>
           </div>
         </div>
       )}

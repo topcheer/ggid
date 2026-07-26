@@ -83,13 +83,13 @@ export default function GDPRForgetPage() {
         <h3 className="mb-3 text-sm font-semibold text-gray-700 dark:text-gray-300">Search User</h3>
         <div className="flex items-center gap-2">
           <div className="relative flex-1"><Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" /><input aria-label="Username, email, or user ID" value={query} onChange={(e) => setQuery(e.target.value)} onKeyDown={(e) => e.key === "Enter" && handleSearch()} placeholder="Username, email, or user ID" className="w-full rounded-lg border border-gray-300 py-2 pl-10 pr-3 text-sm dark:border-gray-600 dark:bg-gray-900 dark:text-gray-200" /></div>
-          <button onClick={handleSearch} disabled={!query.trim() || searching} className="flex items-center gap-2 rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-50">{searching ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />} Search</button>
+          <button onClick={handleSearch} disabled={!query.trim() || searching} className="flex items-center gap-2 rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-blue-500">{searching ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />} Search</button>
         </div>
         {searchResult && (
           <div className="mt-4 rounded-lg border border-gray-200 p-4 dark:border-gray-700">
             <div className="flex items-center justify-between">
               <div><div className="font-medium text-gray-900 dark:text-white">{searchResult.username}</div><div className="text-sm text-gray-400">{searchResult.email}</div><div className="mt-1 text-xs text-gray-500">{searchResult.record_count} records found</div></div>
-              <button onClick={() => setConfirmUser(searchResult)} className="flex items-center gap-2 rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700"><Trash2 className="h-4 w-4" /> Delete</button>
+              <button onClick={() => setConfirmUser(searchResult)} className="flex items-center gap-2 rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-blue-500"><Trash2 className="h-4 w-4" /> Delete</button>
             </div>
           </div>
         )}
@@ -103,7 +103,7 @@ export default function GDPRForgetPage() {
             <div className="mb-4 flex items-center justify-between"><h3 className="flex items-center gap-2 text-lg font-bold text-red-700 dark:text-red-400"><AlertOctagon className="h-5 w-5" /> Confirm Deletion</h3><button onClick={() => setConfirmUser(null)} aria-label="Close"><X className="h-5 w-5 text-gray-400" /></button></div>
             <p className="mb-4 text-sm text-gray-600 dark:text-gray-300">You are about to permanently delete ALL data for <span className="font-bold text-red-600">{confirmUser.username}</span> ({confirmUser.email}). This includes {confirmUser.record_count} records and all associated audit logs.</p>
             <div className="rounded-lg bg-red-50 p-3 text-xs text-red-700 dark:bg-red-900/20 dark:text-red-400">Type the username to confirm: {confirmUser.username}</div>
-            <button onClick={handleExecute} disabled={executing} className="mt-4 flex w-full items-center justify-center gap-2 rounded-lg bg-red-600 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-50">{executing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />} Confirm Permanent Deletion</button>
+            <button onClick={handleExecute} disabled={executing} className="mt-4 flex w-full items-center justify-center gap-2 rounded-lg bg-red-600 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-blue-500">{executing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />} Confirm Permanent Deletion</button>
           </div>
         </div>
       )}

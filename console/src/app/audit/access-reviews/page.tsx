@@ -170,13 +170,13 @@ export default function AccessReviewsPage() {
       <div className="flex gap-1 border-b border-gray-200 dark:border-gray-700">
         <button
           onClick={() => setTab("pending")}
-          className={`flex items-center gap-2 border-b-2 px-4 py-2 text-sm font-medium ${tab === "pending" ? "border-indigo-600 text-indigo-600" : "border-transparent text-gray-400 hover:text-gray-600"}`}
+          className={`flex items-center gap-2 border-b-2 px-4 py-2 text-sm font-medium ${tab === "pending" ? "border-indigo-600 text-indigo-600" : "border-transparent text-gray-400 hover:text-gray-600"} focus:outline-none focus:ring-2 focus:ring-blue-500}`}
         >
           <Clock className="h-4 w-4" /> Pending ({reviews.length})
         </button>
         <button
           onClick={() => setTab("history")}
-          className={`flex items-center gap-2 border-b-2 px-4 py-2 text-sm font-medium ${tab === "history" ? "border-indigo-600 text-indigo-600" : "border-transparent text-gray-400 hover:text-gray-600"}`}
+          className={`flex items-center gap-2 border-b-2 px-4 py-2 text-sm font-medium ${tab === "history" ? "border-indigo-600 text-indigo-600" : "border-transparent text-gray-400 hover:text-gray-600"} focus:outline-none focus:ring-2 focus:ring-blue-500}`}
         >
           <History className="h-4 w-4" /> History ({history.length})
         </button>
@@ -190,10 +190,10 @@ export default function AccessReviewsPage() {
           {selected.size > 0 && (
             <div className="flex items-center gap-3 rounded-lg bg-indigo-50 px-4 py-3 dark:bg-indigo-900/20">
               <span className="text-sm font-medium text-indigo-700 dark:text-indigo-400">{selected.size} selected</span>
-              <button onClick={() => handleBulkDecision("approve")} disabled={actionLoading === "bulk"} className="flex items-center gap-1 rounded-lg bg-green-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-green-700">
+              <button onClick={() => handleBulkDecision("approve")} disabled={actionLoading === "bulk"} className="flex items-center gap-1 rounded-lg bg-green-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-blue-500">
                 <Check className="h-3.5 w-3.5" /> Approve All
               </button>
-              <button onClick={() => handleBulkDecision("revoke")} disabled={actionLoading === "bulk"} className="flex items-center gap-1 rounded-lg bg-red-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-red-700">
+              <button onClick={() => handleBulkDecision("revoke")} disabled={actionLoading === "bulk"} className="flex items-center gap-1 rounded-lg bg-red-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-blue-500">
                 <X className="h-3.5 w-3.5" /> Revoke All
               </button>
               {actionLoading === "bulk" && <Loader2 className="h-4 w-4 animate-spin text-indigo-600" />}
@@ -253,7 +253,7 @@ export default function AccessReviewsPage() {
                         <button
                           onClick={() => handleDecision(r.id, "approve")}
                           disabled={actionLoading === r.id}
-                          className="flex items-center gap-1 rounded-lg bg-green-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-green-700 disabled:opacity-50"
+                          className="flex items-center gap-1 rounded-lg bg-green-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-green-700 disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
                         >
                           {actionLoading === r.id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Check className="h-3.5 w-3.5" />}
                           Approve
@@ -261,7 +261,7 @@ export default function AccessReviewsPage() {
                         <button
                           onClick={() => handleDecision(r.id, "revoke")}
                           disabled={actionLoading === r.id}
-                          className="flex items-center gap-1 rounded-lg bg-red-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-red-700 disabled:opacity-50"
+                          className="flex items-center gap-1 rounded-lg bg-red-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-red-700 disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
                         >
                           <X className="h-3.5 w-3.5" /> Revoke
                         </button>
@@ -297,7 +297,7 @@ export default function AccessReviewsPage() {
               </thead>
               <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
                 {history.map((r: any) => (
-                  <tr key={r.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/50">
+                  <tr key={r.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/50 focus:outline-none focus:ring-2 focus:ring-blue-500">
                     <td className="px-4 py-3">
                       <div className="font-medium text-gray-800 dark:text-gray-200">{r.user_name}</div>
                       <div className="text-xs text-gray-400">{r.user_email}</div>
