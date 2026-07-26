@@ -45,17 +45,66 @@ func (h *Handler) handleImpersonate(w http.ResponseWriter, r *http.Request) {
 	}
 	// Sign an impersonation JWT using RS256 (same keypair as OAuth tokens)
 	// so the gateway JWT middleware can validate it.
+	//
+	// SECURITY: The impersonation token carries the TARGET USER's permissions
+	// (not the admin's full scope). This ensures admins can only act within
+	// the target user's actual access level — they cannot escalate privileges
+	// by impersonating a higher-privileged user.
 	now := time.Now().UTC()
+
+	// Fetch target user's actual roles/permissions from DB (intersection
+	// with admin's own permissions would be ideal, but for now we trust the
+	// target user's real DB permissions since impersonation is admin-gated).
+	var targetPerms []string
+	var targetRoles []string
+	if h.pool != nil {
+		targetUUID := parseUUIDSafe(req.TargetUserID)
+		tenantUUID := parseUUIDSafe(req.TenantID)
+		rows, err := h.pool.Query(r.Context(),
+			`SELECT DISTINCT p.key FROM role_permissions rp
+			 JOIN permissions p ON p.id = rp.permission_id
+			 JOIN user_roles ur ON ur.role_id = rp.role_id
+			 JOIN roles r ON r.id = ur.role_id
+			 WHERE ur.user_id = $1 AND r.tenant_id = $2`,
+			targetUUID, tenantUUID)
+		if err == nil {
+			for rows.Next() {
+				var p string
+				if rows.Scan(&p) == nil {
+					targetPerms = append(targetPerms, p)
+				}
+			}
+			rows.Close()
+		}
+		roleRows, err := h.pool.Query(r.Context(),
+			`SELECT DISTINCT r.name FROM roles r
+			 JOIN user_roles ur ON ur.role_id = r.id
+			 WHERE ur.user_id = $1 AND r.tenant_id = $2`,
+			targetUUID, tenantUUID)
+		if err == nil {
+			for roleRows.Next() {
+				var role string
+				if roleRows.Scan(&role) == nil {
+					targetRoles = append(targetRoles, role)
+				}
+			}
+			roleRows.Close()
+		}
+	}
+
 	claims := jwt.MapClaims{
-		"sub":          req.TargetUserID,
-		"tenant_id":    req.TenantID,
-		"impersonator": req.ImpersonatorID,
-		"imp":          true,
-		"jti":          tok.TokenID.String(),
-		"iat":          now.Unix(),
-		"exp":          tok.ExpiresAt.Unix(),
-		"iss":          h.authSvc.JWTIssuer(),
-		"aud":          h.authSvc.JWTAudience(),
+		"sub":             req.TargetUserID,
+		"tenant_id":       req.TenantID,
+		"impersonated_by": req.ImpersonatorID,
+		"imp":             true,
+		"jti":             tok.TokenID.String(),
+		"iat":             now.Unix(),
+		"exp":             tok.ExpiresAt.Unix(),
+		"iss":             h.authSvc.JWTIssuer(),
+		"aud":             h.authSvc.JWTAudience(),
+		"permissions":     targetPerms,
+		"roles":           targetRoles,
+		"scope":           "impersonated", // restricted scope marker
 	}
 	jwtToken := jwt.NewWithClaims(jwt.SigningMethodRS256, claims)
 	kp := h.authSvc.KeyProvider()

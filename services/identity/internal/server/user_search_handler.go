@@ -48,7 +48,16 @@ func (h *HTTPHandler) handleUserSearch(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	result, err := h.svc.ListUsers(r.Context(), searchFilter)
+	// Inject tenant context from X-Tenant-ID header so that RLS policies
+	// are enforced. Without this, ListUsers → setTenantRLS receives uuid.Nil
+	// and the query may bypass tenant isolation.
+	ctx, ok := injectTenant(r)
+	if !ok {
+		writeJSONError(w, http.StatusBadRequest, "missing or invalid X-Tenant-ID header")
+		return
+	}
+
+	result, err := h.svc.ListUsers(ctx, searchFilter)
 	if err != nil {
 		writeJSONError(w, http.StatusInternalServerError, "failed to search users")
 		return
