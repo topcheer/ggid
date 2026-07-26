@@ -584,6 +584,15 @@ func (s *HTTPServer) createRole(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Auto-generate key from name if not provided (slugify).
+	if req.Key == "" && req.Name != "" {
+		req.Key = slugify(req.Name)
+	}
+	if req.Key == "" {
+		writeJSONError(w, http.StatusBadRequest, "key or name is required")
+		return
+	}
+
 	var parentID *uuid.UUID
 	if req.ParentRoleID != "" {
 		pid, err := uuid.Parse(req.ParentRoleID)
@@ -2116,4 +2125,26 @@ func isAdminRequest(r *http.Request) bool {
 		}
 	}
 	return false
+}
+
+// slugify converts a display name to a URL-safe key.
+// "E2E Viewer" → "e2e_viewer", "Admin/Super" → "admin_super"
+func slugify(s string) string {
+	s = strings.ToLower(s)
+	s = strings.ReplaceAll(s, " ", "_")
+	s = strings.ReplaceAll(s, "/", "_")
+	s = strings.ReplaceAll(s, "-", "_")
+	// Remove non-alphanumeric except underscore
+	var b strings.Builder
+	for _, c := range s {
+		if (c >= 'a' && c <= 'z') || (c >= '0' && c <= '9') || c == '_' {
+			b.WriteRune(c)
+		}
+	}
+	result := b.String()
+	// Collapse multiple underscores
+	for strings.Contains(result, "__") {
+		result = strings.ReplaceAll(result, "__", "_")
+	}
+	return strings.Trim(result, "_")
 }
