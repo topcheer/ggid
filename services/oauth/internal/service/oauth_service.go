@@ -31,6 +31,8 @@ import (
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
+	"github.com/pquerna/otp"
+	"github.com/pquerna/otp/totp"
 )
 
 // OAuthService implements OAuth2 client management and the authorization code flow.
@@ -1717,6 +1719,7 @@ type PasswordGrantRequest struct {
 	ClientID string
 	Scope    []string
 	Audience string // optional target audience (defaults to client_id)
+	MFACode  string // optional TOTP code for users with MFA enrolled
 }
 
 // PasswordGrant authenticates a user with username/password and issues tokens.
@@ -1760,7 +1763,30 @@ func (s *OAuthService) PasswordGrant(ctx context.Context, req *PasswordGrantRequ
 		return nil, errors.New(errors.ErrInternal, "database not configured")
 	}
 
-	// 1b. Evaluate conditional access policies (block/deny).
+	// 1b. MFA enforcement: if user has a verified MFA device, the password
+	// grant MUST verify an MFA code before issuing a token. This prevents
+	// the password grant from bypassing MFA (which /api/v1/auth/verify enforces).
+	if s.pool != nil {
+		var mfaCount int
+		s.pool.QueryRow(ctx,
+			`SELECT COUNT(*) FROM mfa_devices WHERE tenant_id = $1 AND user_id = $2 AND enabled = true AND verified_at IS NOT NULL`,
+			tenantID, userID).Scan(&mfaCount)
+		if mfaCount > 0 {
+			if req.MFACode == "" {
+				return nil, errors.New(errors.ErrUnauthenticated, "mfa_required")
+			}
+			// Verify the TOTP code against the user's enabled device.
+			var secret string
+			s.pool.QueryRow(ctx,
+				`SELECT secret FROM mfa_devices WHERE tenant_id = $1 AND user_id = $2 AND enabled = true AND verified_at IS NOT NULL LIMIT 1`,
+				tenantID, userID).Scan(&secret)
+			if secret == "" || !validateTOTP(secret, req.MFACode) {
+				return nil, errors.New(errors.ErrUnauthenticated, "invalid mfa code")
+			}
+		}
+	}
+
+	// 1c. Evaluate conditional access policies (block/deny).
 	if action, policyName := s.evaluateConditionalAccess(ctx, tenantID, userID, req.Username); action == "block" || action == "deny" {
 		return nil, errors.Unauthenticated(fmt.Sprintf("access denied by policy: %s", policyName))
 	}
@@ -1768,13 +1794,27 @@ func (s *OAuthService) PasswordGrant(ctx context.Context, req *PasswordGrantRequ
 	// 2. Fetch user permissions and roles.
 	permissions := s.fetchUserPermissions(ctx, tenantID, userID)
 	roles := s.fetchUserRoles(ctx, tenantID, userID)
-	scopeStr := joinScopes(req.Scope)
-	// Append role keys (e.g. "platform:admin") to scope claim so gateway
-	// RBAC can detect platform admin via scope, not forgeable role names.
-	roleKeys := s.fetchUserRoleKeys(ctx, tenantID, userID)
-	if len(roleKeys) > 0 {
-		scopeStr = strings.TrimSpace(scopeStr + " " + strings.Join(roleKeys, " "))
+
+	// SECURITY: Admin scopes (platform:*, tenant:*) come ONLY from the user's
+	// role keys in the database — never from the client's requested scope.
+	// The client may only request standard OAuth scopes (openid, profile,
+	// email, offline_access). This prevents scope escalation where a regular
+	// user requests scope=platform:admin and gets superuser access.
+	safeOAuthScopes := map[string]bool{
+		"openid":          true,
+		"profile":         true,
+		"email":           true,
+		"offline_access":  true,
 	}
+	var filteredScopes []string
+	for _, sc := range req.Scope {
+		if safeOAuthScopes[sc] {
+			filteredScopes = append(filteredScopes, sc)
+		}
+	}
+	// Admin scopes come exclusively from role keys.
+	roleKeys := s.fetchUserRoleKeys(ctx, tenantID, userID)
+	scopeStr := strings.TrimSpace(joinScopes(filteredScopes) + " " + strings.Join(roleKeys, " "))
 
 	// 3. Issue access token with full user context.
 	now := time.Now()
@@ -1810,9 +1850,9 @@ func (s *OAuthService) PasswordGrant(ctx context.Context, req *PasswordGrantRequ
 	// 4. Issue a refresh token when offline_access is requested and the
 	// registered client (if any) allows the refresh_token grant. Unregistered
 	// client IDs keep legacy behavior (no refresh token).
-	if contains(req.Scope, "offline_access") {
+	if contains(filteredScopes, "offline_access") {
 		if client, err := s.clientRepo.GetClientByID(ctx, tenantID, req.ClientID); err == nil && client.SupportsGrantType("refresh_token") {
-			refreshPlain, err := s.issueRefreshTokenRecord(ctx, tenantID, client.ID, userID, req.Scope, "")
+			refreshPlain, err := s.issueRefreshTokenRecord(ctx, tenantID, client.ID, userID, filteredScopes, "")
 			if err != nil {
 				return nil, err
 			}
@@ -1933,6 +1973,22 @@ func contains(slice []string, item string) bool {
 		}
 	}
 	return false
+}
+
+// validateTOTP validates a 6-digit TOTP code against the given base32 secret.
+// Uses Skew=1 to tolerate ±30s clock drift between client and server.
+func validateTOTP(secret, code string) bool {
+	if secret == "" || len(code) != 6 {
+		return false
+	}
+	valid, err := totp.ValidateCustom(code, secret, time.Now().UTC(),
+		totp.ValidateOpts{
+			Period:    30,
+			Skew:      1,
+			Digits:    otp.DigitsSix,
+			Algorithm: otp.AlgorithmSHA1,
+		})
+	return err == nil && valid
 }
 
 func joinScopes(scopes []string) string {

@@ -696,6 +696,7 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 				ClientID:     clientID,
 				Scope:        scopes,
 				Audience:     r.FormValue("audience"),
+				MFACode:      r.FormValue("mfa_code"),
 			})
 		case "urn:ietf:params:oauth:grant-type:device_code":
 			resp, tokenErr = oauthSvc.PollDeviceToken(ctx, r.FormValue("device_code"), clientID)
