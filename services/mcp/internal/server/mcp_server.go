@@ -3,13 +3,16 @@ package server
 
 import (
 	"context"
+	"crypto/rsa"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"log"
+	"math/big"
 	"net/http"
 	"os"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/ggid/ggid/services/mcp/internal/client"
@@ -475,10 +478,82 @@ func writeJSONRPCError(w http.ResponseWriter, id any, code int, msg string) {
 // suppress unused import in case time isn't used in future refactor
 var _ time.Duration
 
+// jwksCache caches JWKS keys with a 5-minute TTL.
+var jwksCache struct {
+	sync.RWMutex
+	keys     map[string]*rsa.PublicKey
+	fetchedAt time.Time
+}
+
 // fetchJWKSKey fetches the RSA public key from the JWKS endpoint for RS256 verification.
-// TODO: implement full JWKS fetch + cache. Currently returns error (use dev bypass).
+// Caches keys for 5 minutes to avoid repeated HTTP calls.
 func (s *Server) fetchJWKSKey(t *jwt.Token) (any, error) {
-	return nil, fmt.Errorf("JWKS verification not yet implemented — set JWKS_URL or use dev bypass")
+	if s.jwksURL == "" {
+		return nil, fmt.Errorf("JWKS_URL not configured")
+	}
+
+	kid, _ := t.Header["kid"].(string)
+
+	// Check cache (5-minute TTL)
+	jwksCache.RLock()
+	if jwksCache.keys != nil && time.Since(jwksCache.fetchedAt) < 5*time.Minute {
+		if key, ok := jwksCache.keys[kid]; ok {
+			jwksCache.RUnlock()
+			return key, nil
+		}
+	}
+	jwksCache.RUnlock()
+
+	// Fetch JWKS from endpoint
+	client := &http.Client{Timeout: 10 * time.Second}
+	resp, err := client.Get(s.jwksURL)
+	if err != nil {
+		return nil, fmt.Errorf("JWKS fetch failed: %w", err)
+	}
+	defer resp.Body.Close()
+
+	var jwks struct {
+		Keys []struct {
+			KTY string `json:"kty"`
+			KID string `json:"kid"`
+			N   string `json:"n"`
+			E   string `json:"e"`
+		} `json:"keys"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&jwks); err != nil {
+		return nil, fmt.Errorf("JWKS decode failed: %w", err)
+	}
+
+	// Parse and cache all keys
+	jwksCache.Lock()
+	defer jwksCache.Unlock()
+	jwksCache.keys = make(map[string]*rsa.PublicKey)
+	for _, k := range jwks.Keys {
+		if k.KTY != "RSA" {
+			continue
+		}
+		nBytes, err := base64.RawURLEncoding.DecodeString(k.N)
+		if err != nil {
+			continue
+		}
+		eBytes, err := base64.RawURLEncoding.DecodeString(k.E)
+		if err != nil {
+			continue
+		}
+		n := new(big.Int).SetBytes(nBytes)
+		e := 0
+		for _, b := range eBytes {
+			e = e<<8 + int(b)
+		}
+		jwksCache.keys[k.KID] = &rsa.PublicKey{N: n, E: e}
+	}
+	jwksCache.fetchedAt = time.Now()
+
+	// Return requested key
+	if key, ok := jwksCache.keys[kid]; ok {
+		return key, nil
+	}
+	return nil, fmt.Errorf("JWKS key not found for kid: %s", kid)
 }
 
 // resolveBaseURL returns the external base URL for this deployment.
