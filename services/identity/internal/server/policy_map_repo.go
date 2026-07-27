@@ -20,6 +20,21 @@ func newIdentityPolicyMapRepo(pool *pgxpool.Pool) *identityPolicyMapRepo {
 	return &identityPolicyMapRepo{pool: pool}
 }
 
+// allowedTables is the allowlist of table names that can be used in queries.
+// This prevents SQL injection via the table parameter (which is interpolated
+// via fmt.Sprintf, not parameterized).
+var allowedTables = map[string]bool{
+	"review_campaigns_store":     true,
+	"identity_attestations":      true,
+	"identity_attribute_history": true,
+	"identity_templates":         true,
+	"identity_delegations":       true,
+}
+
+func validTable(table string) bool {
+	return allowedTables[table]
+}
+
 func (r *identityPolicyMapRepo) EnsureSchema(ctx context.Context) error {
 	if r.pool == nil {
 		return nil
@@ -86,7 +101,7 @@ func (r *identityPolicyMapRepo) List(ctx context.Context, table string) ([]map[s
 }
 
 func (r *identityPolicyMapRepo) Delete(ctx context.Context, table, id string) error {
-	if r.pool == nil {
+	if r.pool == nil || !validTable(table) {
 		return nil
 	}
 	_, err := r.pool.Exec(ctx, fmt.Sprintf(`DELETE FROM %s WHERE id = $1`, table), id)
@@ -94,7 +109,7 @@ func (r *identityPolicyMapRepo) Delete(ctx context.Context, table, id string) er
 }
 
 func (r *identityPolicyMapRepo) Get(ctx context.Context, table, id string) (map[string]any, error) {
-	if r.pool == nil {
+	if r.pool == nil || !validTable(table) {
 		return map[string]any{}, nil
 	}
 	var data []byte
