@@ -143,14 +143,7 @@ func joinPath(parts []string) string {
 }
 
 func looksLikeID(s string) bool {
-	if len(s) < 8 {
-		return false
-	}
-	// UUID-like
-	if len(s) == 36 && s[8] == '-' {
-		return true
-	}
-	// Numeric ID
+	// Numeric IDs: check first (allows short numeric IDs like 12345)
 	isNum := true
 	for _, c := range s {
 		if c < '0' || c > '9' {
@@ -160,6 +153,26 @@ func looksLikeID(s string) bool {
 	}
 	if isNum && len(s) > 3 {
 		return true
+	}
+	// UUID-like: must be at least 8 chars with dash at position 8
+	if len(s) >= 36 && s[8] == '-' {
+		return true
+	}
+	// Long hex or alphanumeric strings (likely IDs)
+	if len(s) >= 16 {
+		hasDash := false
+		hasHex := true
+		for _, c := range s {
+			if c == '-' {
+				hasDash = true
+			} else if !((c >= '0' && c <= '9') || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F')) {
+				hasHex = false
+				break
+			}
+		}
+		if hasHex && (hasDash || len(s) >= 32) {
+			return true
+		}
 	}
 	return false
 }
