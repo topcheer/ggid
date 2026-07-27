@@ -392,15 +392,10 @@ func (gw *Gateway) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// The frontend JS posts credentials to /api/v1/auth/verify, gets user_id,
 	// then redirects back to /oauth/authorize?user_id=xxx which proxies to OAuth service.
 	if r.URL.Path == "/oauth/authorize" && r.Method == http.MethodGet {
-		userID := r.URL.Query().Get("user_id")
-		if userID == "" {
-			html := strings.ReplaceAll(hostedLoginHTML, "__TENANT_ID__", resolveTenant(r))
-			w.Header().Set("Content-Type", "text/html; charset=utf-8")
-			w.WriteHeader(http.StatusOK)
-			_, _ = w.Write([]byte(html))
-			return
-		}
-		// With user_id, proxy to OAuth service for code generation
+		// Proxy to OAuth service which renders dynamic login page based on
+		// client.AuthMethods (password/passkey/sms_otp/email_otp).
+		// The OAuth service also handles auth_ticket verification.
+		// Only fall through (proxy) — do not serve static HTML here.
 	}
 
 	// OpenAPI JSON spec
