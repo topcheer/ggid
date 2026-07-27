@@ -3,6 +3,7 @@ package handler
 
 import (
 	"context"
+	"strconv"
 	"time"
 
 	pb "github.com/ggid/ggid/api/gen/audit/v1"
@@ -64,7 +65,9 @@ func (h *AuditHandler) ListEvents(ctx context.Context, req *pb.ListEventsRequest
 		filter.EndTime = &t
 	}
 
-	events, total, err := h.svc.ListEvents(ctx, filter, 1, int(req.GetPageSize()))
+	pageSize := int(req.GetPageSize())
+	page := parsePageToken(req.GetPageToken())
+	events, total, err := h.svc.ListEvents(ctx, filter, page, pageSize)
 	if err != nil {
 		return nil, toGRPCError(err)
 	}
@@ -74,10 +77,14 @@ func (h *AuditHandler) ListEvents(ctx context.Context, req *pb.ListEventsRequest
 		pbEvents[i] = eventToProto(e)
 	}
 
-	return &pb.ListEventsResponse{
+	resp := &pb.ListEventsResponse{
 		Events: pbEvents,
 		Total:  int32(total),
-	}, nil
+	}
+	if len(events) == pageSize {
+		resp.NextPageToken = strconv.Itoa(page + 1)
+	}
+	return resp, nil
 }
 
 func (h *AuditHandler) GetEvent(ctx context.Context, req *pb.GetEventRequest) (*pb.AuditEvent, error) {
@@ -121,6 +128,18 @@ func eventToProto(e *domain.AuditEvent) *pb.AuditEvent {
 		p.CreatedAt = timestamppb.New(e.CreatedAt)
 	}
 	return p
+}
+
+// parsePageToken parses a page token into a page number (1-based).
+func parsePageToken(token string) int {
+	if token == "" {
+		return 1
+	}
+	page, err := strconv.Atoi(token)
+	if err != nil || page < 1 {
+		return 1
+	}
+	return page
 }
 
 // toGRPCError converts a GGIDError to a gRPC status error.
