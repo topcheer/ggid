@@ -420,6 +420,7 @@ export default function SessionsPage() {
         <div className="flex gap-2">
           <button
             onClick={loadSessions}
+            aria-label="Refresh sessions list"
             className="flex items-center gap-2 rounded-lg border border-gray-300 px-3 py-2 text-sm hover:bg-gray-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
             <RefreshCw className="h-4 w-4" /> Refresh
@@ -427,6 +428,7 @@ export default function SessionsPage() {
           {sessions.length > 1 && (
             <button
               onClick={() => setShowRevokeAllModal(true)}
+              aria-label="Revoke all sessions"
               className="flex items-center gap-2 rounded-lg border border-red-300 px-3 py-2 text-sm text-red-600 hover:bg-red-50 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-950 focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               <Trash2 className="h-4 w-4" /> {t("sessions.revokeAll")}
@@ -525,6 +527,9 @@ export default function SessionsPage() {
             <div className="flex items-center gap-3">
               <button
                 onClick={() => setLimitConcurrent(!limitConcurrent)}
+                role="switch"
+                aria-checked={limitConcurrent}
+                aria-label="Toggle concurrent session limit"
                 className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
                   limitConcurrent ? "bg-brand-600" : "bg-gray-300 dark:bg-gray-600"
                 }`}
@@ -602,6 +607,7 @@ export default function SessionsPage() {
         {(searchQuery || deviceFilter !== "All" || (locationFilter && locationFilter !== "All")) && (
           <button
             onClick={() => { setSearchQuery(""); setDeviceFilter("All"); setLocationFilter(""); }}
+            aria-label="Clear all filters"
             className="flex items-center gap-1 rounded-lg border border-gray-300 px-3 py-2 text-xs text-gray-600 hover:bg-gray-50 dark:border-gray-600 dark:text-gray-400 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
             <X className="h-3.5 w-3.5" /> Clear
