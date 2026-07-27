@@ -28,6 +28,13 @@ func envOrDefault(key, defaultVal string) string {
 	return defaultVal
 }
 
+func init() {
+	// Password pepper must match auth service for PasswordGrant to verify hashes.
+	if pepper := os.Getenv("PASSWORD_PEPPER"); pepper != "" {
+		crypto.SetPepper(pepper)
+	}
+}
+
 func main() {
 	var (
 		addr           = flag.String("addr", ":9005", "HTTP listen address")
