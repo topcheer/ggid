@@ -5178,3 +5178,13 @@ Login/401/CRUD/refresh: all demos functional.
 New: CAE CIDR matching improvement.
 
 ### Next Dimension: 1 — Authentication Completeness (Cycle 1504) — Rotation 7
+
+## Cycle 1504: D1 Auth R7 — P1 Down to 2, god R45 (Round 1492)
+god R45: P2-62 new (password history race, extremely low risk). P1-12 confirmed fixed. Active P1: only 2 (P1-3 MCP JWKS, P1-6 JWKS rotation).
+Confirmed secure: scope escalation, gateway body size 10MB, Redis GetDel atomic, CAE CIDR.
+Build: PASS. `make test`: EXIT=0, 65/65. Danger: 0.
+
+### D1 Auth R7 — All Stable ✅
+Token response, iss validation, PKCE S256, refresh binding, brute-force: all verified.
+
+### Next Dimension: 2 — Authorization Boundaries (Cycle 1510) — Rotation 7
