@@ -289,11 +289,11 @@ function TriggersTab() {
               </div>
             </div>
             <span className={`px-2 py-0.5 text-xs rounded-full ${resultColors[tr.action]}`}>{tr.action.replace(/_/g, " ")}</span>
-            <button onClick={() => toggleTrigger(tr.id)}
+            <button onClick={() => toggleTrigger(tr.id)} aria-label={`Toggle trigger ${tr.id}`}
               className={`relative w-10 h-6 rounded-full transition-colors ${tr.enabled ? "bg-blue-600" : "bg-gray-300 dark:bg-gray-600"}`}>
               <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full transition-transform ${tr.enabled ? "translate-x-4" : ""}`} />
             </button>
-            <button onClick={() => deleteTrigger(tr.id)}
+            <button onClick={() => deleteTrigger(tr.id)} aria-label={`Delete trigger ${tr.id}`}
               className="p-1.5 hover:bg-red-50 dark:hover:bg-red-950 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"><Trash2 className="w-4 h-4 text-red-500" /></button>
           </div>
         ))}
@@ -321,9 +321,9 @@ function TriggerForm({ onAdd, onCancel }: { onAdd: (t: Trigger) => void; onCance
         </select>
       </div>
       <div className="flex gap-2">
-        <button onClick={() => onAdd({ id: `t${Date.now()}`, event, condition, action, enabled: true })}
+        <button onClick={() => onAdd({ id: `t${Date.now()}`, event, condition, action, enabled: true })} aria-label="Add trigger"
           className="px-4 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-medium focus:outline-none focus:ring-2 focus:ring-blue-500">{t("caeMonitor.triggers.addTrigger")}</button>
-        <button onClick={onCancel} className="px-4 py-1.5 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg text-xs font-medium">Cancel</button>
+        <button onClick={onCancel} aria-label="Cancel" className="px-4 py-1.5 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg text-xs font-medium">Cancel</button>
       </div>
     </div>
   );
