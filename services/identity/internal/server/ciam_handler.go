@@ -3,6 +3,7 @@ package server
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log/slog"
 	"net/http"
@@ -13,6 +14,7 @@ import (
 	"github.com/ggid/ggid/pkg/crypto"
 	"github.com/ggid/ggid/pkg/tenant"
 	"github.com/ggid/ggid/services/identity/internal/domain"
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -112,8 +114,13 @@ func (h *HTTPHandler) handleSelfRegister(w http.ResponseWriter, r *http.Request)
 		 RETURNING id::text`,
 		req.OrgName, slug).Scan(&tenantIDStr)
 	if err != nil {
-		// Slug already exists — reject to prevent creating users in existing tenant.
-		writeJSONError(w, http.StatusConflict, fmt.Sprintf("organization slug '%s' already exists", slug))
+		if errors.Is(err, pgx.ErrNoRows) {
+			// ON CONFLICT DO NOTHING: slug already exists.
+			writeJSONError(w, http.StatusConflict, fmt.Sprintf("organization slug '%s' already exists", slug))
+		} else {
+			slog.Error("B2B register: create tenant failed", "error", err)
+			writeJSONError(w, http.StatusInternalServerError, "failed to create tenant")
+		}
 		return
 	}
 	tenantID, _ := uuid.Parse(tenantIDStr)
