@@ -389,6 +389,7 @@ func main() {
 		Handler:      internalMW(handler),
 		ReadTimeout:  cfg.Server.HTTP.ReadTimeout,
 		WriteTimeout: cfg.Server.HTTP.WriteTimeout,
+		IdleTimeout:  120 * time.Second,
 	}
 
 	go func() {
