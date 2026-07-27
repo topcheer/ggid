@@ -2,6 +2,7 @@ package handler
 
 import (
 	"context"
+	"strconv"
 	"time"
 
 	pb "github.com/ggid/ggid/api/gen/policy/v1"
@@ -64,7 +65,9 @@ func (h *RoleHandler) ListRoles(ctx context.Context, req *pb.ListRolesRequest) (
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, "invalid tenant_id")
 	}
-	roles, err := h.roleSvc.ListRoles(ctx, tenantID, 1, int(req.GetPageSize()))
+	pageSize := int(req.GetPageSize())
+	page := parsePageToken(req.GetPageToken())
+	roles, err := h.roleSvc.ListRoles(ctx, tenantID, page, pageSize)
 	if err != nil {
 		return nil, toGRPCError(err)
 	}
@@ -72,7 +75,11 @@ func (h *RoleHandler) ListRoles(ctx context.Context, req *pb.ListRolesRequest) (
 	for i, r := range roles {
 		pbRoles[i] = roleToProto(r)
 	}
-	return &pb.ListRolesResponse{Roles: pbRoles}, nil
+	resp := &pb.ListRolesResponse{Roles: pbRoles}
+	if len(roles) == pageSize {
+		resp.NextPageToken = strconv.Itoa(page + 1)
+	}
+	return resp, nil
 }
 
 func (h *RoleHandler) UpdateRole(ctx context.Context, req *pb.UpdateRoleRequest) (*pb.Role, error) {
@@ -200,6 +207,19 @@ func roleToProto(r *domain.Role) *pb.Role {
 		p.UpdatedAt = timestamppb.New(r.UpdatedAt)
 	}
 	return p
+}
+
+// parsePageToken parses a page token into a page number (1-based).
+// Empty or invalid token returns page 1.
+func parsePageToken(token string) int {
+	if token == "" {
+		return 1
+	}
+	page, err := strconv.Atoi(token)
+	if err != nil || page < 1 {
+		return 1
+	}
+	return page
 }
 
 // toGRPCError converts a GGIDError to a gRPC status error.

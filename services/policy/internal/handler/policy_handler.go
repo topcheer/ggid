@@ -2,6 +2,7 @@ package handler
 
 import (
 	"context"
+	"strconv"
 
 	pb "github.com/ggid/ggid/api/gen/policy/v1"
 	"github.com/ggid/ggid/services/policy/internal/domain"
@@ -60,7 +61,9 @@ func (h *PolicyHandler) ListPolicies(ctx context.Context, req *pb.ListPoliciesRe
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, "invalid tenant_id")
 	}
-	policies, err := h.policySvc.ListPolicies(ctx, tenantID, 1, int(req.GetPageSize()))
+	pageSize := int(req.GetPageSize())
+	page := parsePageToken(req.GetPageToken())
+	policies, err := h.policySvc.ListPolicies(ctx, tenantID, page, pageSize)
 	if err != nil {
 		return nil, toGRPCError(err)
 	}
@@ -68,7 +71,11 @@ func (h *PolicyHandler) ListPolicies(ctx context.Context, req *pb.ListPoliciesRe
 	for i, p := range policies {
 		pbPolicies[i] = policyToProto(p)
 	}
-	return &pb.ListPoliciesResponse{Policies: pbPolicies}, nil
+	resp := &pb.ListPoliciesResponse{Policies: pbPolicies}
+	if len(policies) == pageSize {
+		resp.NextPageToken = strconv.Itoa(page + 1)
+	}
+	return resp, nil
 }
 
 func (h *PolicyHandler) DeletePolicy(ctx context.Context, req *pb.DeletePolicyRequest) (*pb.DeletePolicyResponse, error) {

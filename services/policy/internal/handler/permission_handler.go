@@ -2,6 +2,7 @@ package handler
 
 import (
 	"context"
+	"strconv"
 
 	pb "github.com/ggid/ggid/api/gen/policy/v1"
 	"github.com/ggid/ggid/services/policy/internal/domain"
@@ -46,7 +47,9 @@ func (h *PermissionHandler) ListPermissions(ctx context.Context, req *pb.ListPer
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, "invalid tenant_id")
 	}
-	perms, err := h.roleSvc.ListPermissions(ctx, tenantID, 1, int(req.GetPageSize()))
+	pageSize := int(req.GetPageSize())
+	page := parsePageToken(req.GetPageToken())
+	perms, err := h.roleSvc.ListPermissions(ctx, tenantID, page, pageSize)
 	if err != nil {
 		return nil, toGRPCError(err)
 	}
@@ -54,7 +57,11 @@ func (h *PermissionHandler) ListPermissions(ctx context.Context, req *pb.ListPer
 	for i, p := range perms {
 		pbPerms[i] = permissionToProto(p)
 	}
-	return &pb.ListPermissionsResponse{Permissions: pbPerms}, nil
+	resp := &pb.ListPermissionsResponse{Permissions: pbPerms}
+	if len(perms) == pageSize {
+		resp.NextPageToken = strconv.Itoa(page + 1)
+	}
+	return resp, nil
 }
 
 func (h *PermissionHandler) GrantPermissions(ctx context.Context, req *pb.GrantPermissionsRequest) (*pb.GrantPermissionsResponse, error) {
