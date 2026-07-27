@@ -65,12 +65,15 @@ func (h *HTTPHandler) handleDashboardStats(w http.ResponseWriter, r *http.Reques
 				AND ($1::uuid IS NULL OR tenant_id = $1)
 			`, tenantID).Scan(&stats.OAuthClients)
 
-			// Login stats from audit_events
+			// Login stats from audit_events.
+			// Failed logins: action='user.login', result='failure'.
+			// Successful logins: action='token_issued', result='success'
+			// (OAuth password grant logs token_issued, not user.login success).
 			since := time.Now().Add(-24 * time.Hour)
 			_ = pool.QueryRow(ctx, `
-				SELECT count(*) FILTER (WHERE result = 'failure') AS failed,
-				       count(*) FILTER (WHERE result = 'success') AS success
-				FROM audit_events WHERE action = 'user.login' AND created_at > $1
+				SELECT count(*) FILTER (WHERE action = 'user.login' AND result = 'failure') AS failed,
+				       count(*) FILTER (WHERE action = 'token_issued' AND result = 'success') AS success
+				FROM audit_events WHERE action IN ('user.login', 'token_issued') AND created_at > $1
 				AND ($2::uuid IS NULL OR tenant_id = $2)
 			`, since, tenantID).Scan(&stats.FailedLogins24h, &stats.SuccessfulLogins24h)
 
