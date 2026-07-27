@@ -349,6 +349,7 @@ func main() {
 	}
 	handler.SetAttrMapRepo(attrMapRepo)
 	handler.SetPool(pool) // KB-365: for account linking queries
+	handler.SetRedis(rdb) // For auth tickets (passkey passwordless login)
 
 	// Delegation repository.
 	delRepo := server.NewDelegationRepo(pool)
