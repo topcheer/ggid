@@ -130,7 +130,7 @@ type CredentialStore interface {
 	GetCredentialByID(ctx context.Context, tenantID uuid.UUID, credID []byte) (*Credential, error)
 	UpdateCounter(ctx context.Context, tenantID uuid.UUID, credID []byte, counter uint32) error
 	UpdateLastUsed(ctx context.Context, tenantID uuid.UUID, credID []byte, lastUsedAt time.Time) error
-	DeleteCredential(ctx context.Context, tenantID uuid.UUID, credID []byte) error
+	DeleteCredential(ctx context.Context, tenantID uuid.UUID, credID []byte, userID uuid.UUID) error
 }
 
 // --- Handler ---
@@ -893,6 +893,12 @@ func (h *Handler) deleteCredential(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusBadRequest, "missing X-Tenant-ID")
 		return
 	}
+	userIDStr := r.Header.Get("X-User-ID")
+	userID, err := uuid.Parse(userIDStr)
+	if err != nil {
+		writeError(w, http.StatusUnauthorized, "user not identified")
+		return
+	}
 
 	// Extract credential ID from URL path.
 	credIDStr := strings.TrimPrefix(r.URL.Path, "/api/v1/webauthn/credentials/")
@@ -907,7 +913,7 @@ func (h *Handler) deleteCredential(w http.ResponseWriter, r *http.Request) {
 			TenantID:       tenantID,
 			IsolationLevel: ggidtenant.IsolationShared,
 		})
-		if err := h.creds.DeleteCredential(ctx, tenantID, credID); err != nil {
+		if err := h.creds.DeleteCredential(ctx, tenantID, credID, userID); err != nil {
 			writeError(w, http.StatusInternalServerError, "internal server error")
 			return
 		}

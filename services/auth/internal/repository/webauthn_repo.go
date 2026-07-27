@@ -88,10 +88,10 @@ func (s *pgWebAuthnCredentialStore) UpdateLastUsed(ctx context.Context, tenantID
 	return err
 }
 
-func (s *pgWebAuthnCredentialStore) DeleteCredential(ctx context.Context, tenantID uuid.UUID, credID []byte) error {
+func (s *pgWebAuthnCredentialStore) DeleteCredential(ctx context.Context, tenantID uuid.UUID, credID []byte, userID uuid.UUID) error {
 	_, err := s.pool.Exec(ctx, `
 		DELETE FROM webauthn_credentials
-		WHERE tenant_id = $1 AND credential_id = $2
-	`, tenantID, credID)
+		WHERE tenant_id = $1 AND credential_id = $2 AND user_id = $3
+	`, tenantID, credID, userID)
 	return err
 }

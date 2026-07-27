@@ -1611,11 +1611,24 @@ func (h *Handler) handleWebAuthnDeleteCredential(w http.ResponseWriter, r *http.
 		writeError(w, http.StatusBadRequest, "missing tenant context")
 		return
 	}
+	// SECURITY: extract userID from JWT context or X-User-ID header
+	// (gateway overwrites X-User-ID from JWT subject).
+	userIDStr := r.Header.Get("X-User-ID")
+	if userIDStr == "" {
+		if uid, ok := r.Context().Value(ctxUserIDKey{}).(uuid.UUID); ok {
+			userIDStr = uid.String()
+		}
+	}
+	userID, err := uuid.Parse(userIDStr)
+	if err != nil {
+		writeError(w, http.StatusUnauthorized, "user not identified")
+		return
+	}
 	if h.waCredStore == nil {
 		writeError(w, http.StatusServiceUnavailable, "WebAuthn credential store not initialized")
 		return
 	}
-	if err := h.waCredStore.DeleteCredential(r.Context(), tc.TenantID, []byte(credID)); err != nil {
+	if err := h.waCredStore.DeleteCredential(r.Context(), tc.TenantID, []byte(credID), userID); err != nil {
 		writeError(w, http.StatusInternalServerError, "failed to delete credential")
 		return
 	}

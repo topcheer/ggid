@@ -65,7 +65,7 @@ func (m *mockStore) UpdateLastUsed(_ context.Context, _ uuid.UUID, _ []byte, _ t
 	return nil
 }
 
-func (m *mockStore) DeleteCredential(_ context.Context, _ uuid.UUID, _ []byte) error {
+func (m *mockStore) DeleteCredential(_ context.Context, _ uuid.UUID, _ []byte, _ uuid.UUID) error {
 	return m.deleteErr
 }
 
@@ -712,6 +712,7 @@ func TestDeleteCredential_Errors(t *testing.T) {
 		rr := httptest.NewRecorder()
 		req := newReq(http.MethodDelete, "/api/v1/webauthn/credentials/!!!invalid-base64!!!", "")
 		req.Header.Set("X-Tenant-ID", testTenantIDStr)
+		req.Header.Set("X-User-ID", testUserIDStr)
 		h.deleteCredential(rr, req)
 		assertStatus(t, rr, http.StatusBadRequest)
 		assertBodyContains(t, rr, "invalid credential ID")
@@ -725,6 +726,7 @@ func TestDeleteCredential_NilStore(t *testing.T) {
 	credID := base64.RawURLEncoding.EncodeToString([]byte("test-cred-id"))
 	req := newReq(http.MethodDelete, "/api/v1/webauthn/credentials/"+credID, "")
 	req.Header.Set("X-Tenant-ID", testTenantIDStr)
+	req.Header.Set("X-User-ID", testUserIDStr)
 	h.deleteCredential(rr, req)
 	assertStatus(t, rr, http.StatusOK)
 	assertBodyContains(t, rr, "deleted")
@@ -737,6 +739,7 @@ func TestDeleteCredential_StoreError(t *testing.T) {
 	credID := base64.RawURLEncoding.EncodeToString([]byte("test-cred-id"))
 	req := newReq(http.MethodDelete, "/api/v1/webauthn/credentials/"+credID, "")
 	req.Header.Set("X-Tenant-ID", testTenantIDStr)
+	req.Header.Set("X-User-ID", testUserIDStr)
 	h.deleteCredential(rr, req)
 	assertStatus(t, rr, http.StatusInternalServerError)
 	assertBodyContains(t, rr, "internal server error")
@@ -749,6 +752,7 @@ func TestDeleteCredential_Success(t *testing.T) {
 	credID := base64.RawURLEncoding.EncodeToString([]byte("some-cred"))
 	req := newReq(http.MethodDelete, "/api/v1/webauthn/credentials/"+credID, "")
 	req.Header.Set("X-Tenant-ID", testTenantIDStr)
+	req.Header.Set("X-User-ID", testUserIDStr)
 	h.deleteCredential(rr, req)
 	assertStatus(t, rr, http.StatusOK)
 	assertBodyContains(t, rr, "deleted")

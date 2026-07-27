@@ -269,6 +269,7 @@ func TestDeleteCredentialV2_SuccessWithStore(t *testing.T) {
 	rr := httptest.NewRecorder()
 	req := newReq(http.MethodDelete, "/api/v1/webauthn/credentials/"+encID, "")
 	req.Header.Set("X-Tenant-ID", testTenantIDStr)
+	req.Header.Set("X-User-ID", testUserIDStr)
 	h.deleteCredential(rr, req)
 	assertStatus(t, rr, http.StatusOK)
 }

@@ -317,6 +317,7 @@ func TestDeleteCredential_SuccessWithStore2(t *testing.T) {
 	credID := base64.RawURLEncoding.EncodeToString([]byte("cred-xyz"))
 	req := newReq(http.MethodDelete, "/api/v1/webauthn/credentials/"+credID, "")
 	req.Header.Set("X-Tenant-ID", testTenantIDStr)
+	req.Header.Set("X-User-ID", testUserIDStr)
 	h.deleteCredential(rr, req)
 	assertStatus(t, rr, http.StatusOK)
 	assertBodyContains(t, rr, "deleted")
