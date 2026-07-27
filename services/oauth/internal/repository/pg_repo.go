@@ -45,7 +45,8 @@ func isNoRows(err error) bool {
 const clientColumns = `
     id, tenant_id, client_id, client_secret_hash, name, type,
     grant_types, response_types, redirect_uris, scopes,
-    token_endpoint_auth_method, metadata, enabled, created_at, updated_at`
+    token_endpoint_auth_method, metadata, enabled, created_at, updated_at,
+    auth_methods`
 
 func scanClient(row pgx.Row) (*domain.OAuthClient, error) {
 	c := &domain.OAuthClient{}
@@ -57,11 +58,13 @@ func scanClient(row pgx.Row) (*domain.OAuthClient, error) {
 		scopes        []string
 		metadata      []byte
 		authMethod    string
+		authMethods   []string
 	)
 	err := row.Scan(
 		&c.ID, &c.TenantID, &c.ClientID, &c.ClientSecretHash, &c.Name, &clientType,
 		&grantTypes, &responseTypes, &redirectURIs, &scopes,
 		&authMethod, &metadata, &c.Enabled, &c.CreatedAt, &c.UpdatedAt,
+		&authMethods,
 	)
 	if err != nil {
 		return nil, err
@@ -72,6 +75,7 @@ func scanClient(row pgx.Row) (*domain.OAuthClient, error) {
 	c.RedirectURIs = redirectURIs
 	c.Scopes = scopes
 	c.TokenEndpointAuthMethod = authMethod
+	c.AuthMethods = authMethods
 	if len(metadata) > 0 {
 		if err := json.Unmarshal(metadata, &c.Metadata); err != nil {
 			log.Printf("[WARN] oauth pg_repo: failed to unmarshal metadata for client %s: %v", c.ClientID, err)
@@ -114,6 +118,7 @@ func (r *pgClientRepo) CreateClient(ctx context.Context, client *domain.OAuthCli
 		client.Name, string(client.Type),
 		client.GrantTypes, client.ResponseTypes, client.RedirectURIs, client.Scopes,
 		client.TokenEndpointAuthMethod, client.MetadataJSON(), client.Enabled,
+		client.AuthMethods,
 	).Scan(&client.CreatedAt, &client.UpdatedAt)
 
 	if err != nil {

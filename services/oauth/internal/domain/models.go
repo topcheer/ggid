@@ -39,6 +39,7 @@ type OAuthClient struct {
 	TokenEndpointAuthMethod string         `json:"token_endpoint_auth_method"`
 	Metadata                map[string]any `json:"metadata,omitempty"`
 	RequirePKCE             bool           `json:"require_pkce"` // enforce PKCE for this client
+	AuthMethods             []string       `json:"auth_methods,omitempty"` // allowed auth: password, passkey, sms_otp, email_otp
 	Enabled                 bool           `json:"enabled"`
 	CreatedAt               time.Time      `json:"created_at"`
 	UpdatedAt               time.Time      `json:"updated_at"`
@@ -52,6 +53,15 @@ func (c *OAuthClient) IsPublic() bool { return c.Type == ClientTypePublic }
 
 // RequiresPKCE returns true if PKCE should be enforced (public clients or RequirePKCE flag).
 func (c *OAuthClient) RequiresPKCE() bool { return c.RequirePKCE || c.IsPublic() }
+
+// GetAuthMethods returns the allowed authentication methods.
+// Defaults to ["password"] if not configured (backward compatible).
+func (c *OAuthClient) GetAuthMethods() []string {
+	if len(c.AuthMethods) == 0 {
+		return []string{"password"}
+	}
+	return c.AuthMethods
+}
 
 // FAPI2_0 returns true if the client is configured for FAPI 2.0 profile.
 // The value is stored in client Metadata["fapi_2_0"].
