@@ -10,9 +10,17 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/ggid/ggid/pkg/crypto"
 	"github.com/ggid/ggid/services/identity/internal/conf"
 	"github.com/ggid/ggid/services/identity/internal/server"
 )
+
+// Password pepper must match auth and oauth services for consistent hash verification.
+func init() {
+	if pepper := os.Getenv("PASSWORD_PEPPER"); pepper != "" {
+		crypto.SetPepper(pepper)
+	}
+}
 
 func main() {
 	var (
