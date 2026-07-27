@@ -64,6 +64,7 @@ type Handler struct {
 	caeRepo                *repository.CAERepository
 	policyCheckFn          PolicyCheckFunc
 	smsSender           service.SMSSender
+	otpService          *service.OTPService
 	memMapRepo          *authMemoryMapRepo
 	verificationRepo    *verificationRepo
 	emailRepo           *emailRepo
@@ -426,8 +427,12 @@ h.mux.HandleFunc("/api/v1/auth/mfa/backup", h.backupCodesGenerate) // Console al
 	h.mux.HandleFunc("/api/v1/auth/biometric/enroll", h.handleBiometricEnroll)
 	h.mux.HandleFunc("/api/v1/auth/biometric/verify", h.handleBiometricVerify)
 	h.mux.HandleFunc("/api/v1/auth/sessions/", h.handleSessionReevaluate)
-	h.mux.HandleFunc("/api/v1/auth/email-otp/send", h.handleEmailOTPSend)
-	h.mux.HandleFunc("/api/v1/auth/email-otp/verify", h.handleEmailOTPVerify)
+	h.mux.HandleFunc("/api/v1/auth/email-otp/send", h.handleOTPSend)
+	h.mux.HandleFunc("/api/v1/auth/email-otp/verify", h.handleOTPVerify)
+	h.mux.HandleFunc("/api/v1/auth/otp/send", h.handleOTPSend)
+	h.mux.HandleFunc("/api/v1/auth/otp/verify", h.handleOTPVerify)
+	h.mux.HandleFunc("/api/v1/auth/sms-otp/send", h.handleOTPSend)
+	h.mux.HandleFunc("/api/v1/auth/sms-otp/verify", h.handleOTPVerify)
 	h.mux.HandleFunc("/api/v1/auth/login/orchestrate", h.handleLoginOrchestrate)
 	h.mux.HandleFunc("/api/v1/auth/sessions/stream", h.handleSessionStream)
 	h.mux.HandleFunc("/api/v1/auth/password-history-check", h.handlePasswordHistoryCheck)
