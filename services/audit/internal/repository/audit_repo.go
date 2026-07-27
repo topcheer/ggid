@@ -372,6 +372,31 @@ func (r *AuditRepository) DeleteOlderThan(ctx context.Context, before time.Time)
 	return tag.RowsAffected(), nil
 }
 
+// AnonymizeOlderThan nullifies PII fields (actor_ip, user_agent, metadata)
+// for events older than the cutoff time. Keeps the event row for compliance.
+func (r *AuditRepository) AnonymizeOlderThan(ctx context.Context, before time.Time) (int64, error) {
+	tx, err := r.db.Begin(ctx)
+	if err != nil {
+		return 0, fmt.Errorf("begin anonymize tx: %w", err)
+	}
+	defer func() { _ = tx.Rollback(ctx) }()
+
+	if _, err := tx.Exec(ctx, `SET LOCAL app.allow_audit_mutation = 'on'`); err != nil {
+		return 0, fmt.Errorf("allow audit mutation: %w", err)
+	}
+	tag, err := tx.Exec(ctx,
+		`UPDATE audit_events SET actor_ip = NULL, user_agent = NULL, metadata = '{}'::jsonb WHERE created_at < $1`,
+		before,
+	)
+	if err != nil {
+		return 0, fmt.Errorf("anonymize old audit events: %w", err)
+	}
+	if err := tx.Commit(ctx); err != nil {
+		return 0, fmt.Errorf("commit anonymize tx: %w", err)
+	}
+	return tag.RowsAffected(), nil
+}
+
 func mapErr(err error, resource, id string) error {
 	if err == pgx.ErrNoRows {
 		return errors.NotFound(resource, id)

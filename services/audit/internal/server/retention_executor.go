@@ -4,8 +4,6 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/ggid/ggid/services/audit/internal/domain"
-	"github.com/google/uuid"
 )
 
 // POST /api/v1/audit/retention/execute — manually trigger retention policy execution.
@@ -17,10 +15,6 @@ func (s *HTTPServer) handleRetentionExecute(w http.ResponseWriter, r *http.Reque
 	}
 
 	tenantIDStr := r.URL.Query().Get("tenant_id")
-	var tenantID uuid.UUID
-	if tenantIDStr != "" {
-		tenantID, _ = uuid.Parse(tenantIDStr)
-	}
 
 	// Get all retention policies from PG
 	var policies []*RetentionPolicy
@@ -61,23 +55,30 @@ func (s *HTTPServer) handleRetentionExecute(w http.ResponseWriter, r *http.Reque
 
 		cutoff := now.AddDate(0, 0, -p.RetentionDays)
 
-		// Query events that need action
-		filter := domain.ListFilter{
-			TenantID:  tenantID,
-			Action:    p.EventType,
-			EndTime:   &cutoff,
-		}
-
-		events, _, err := s.svc.ListEvents(r.Context(), filter, 1, 50000)
-		if err != nil {
-			continue
-		}
-
-		affected := len(events)
 		if p.Action == "delete" {
-			totalDeleted += affected
+			// Actually delete old events (not just count them)
+			tag, err := s.pool.Exec(r.Context(),
+				`SET LOCAL app.allow_audit_mutation = 'on'; DELETE FROM audit_events WHERE created_at < $1`, cutoff)
+			if err != nil {
+				executedPolicies = append(executedPolicies, map[string]any{
+					"policy_id": p.ID, "event_type": p.EventType,
+					"action": p.Action, "error": err.Error(),
+				})
+				continue
+			}
+			totalDeleted += int(tag.RowsAffected())
 		} else if p.Action == "anonymize" {
-			totalAnonymized += affected
+			// Anonymize: nullify PII fields but keep the event for compliance
+			tag, err := s.pool.Exec(r.Context(),
+				`UPDATE audit_events SET actor_ip = NULL, user_agent = NULL, metadata = '{}'::jsonb WHERE created_at < $1`, cutoff)
+			if err != nil {
+				executedPolicies = append(executedPolicies, map[string]any{
+					"policy_id": p.ID, "event_type": p.EventType,
+					"action": p.Action, "error": err.Error(),
+				})
+				continue
+			}
+			totalAnonymized += int(tag.RowsAffected())
 		}
 
 		executedPolicies = append(executedPolicies, map[string]any{
@@ -86,7 +87,6 @@ func (s *HTTPServer) handleRetentionExecute(w http.ResponseWriter, r *http.Reque
 			"retention_days": p.RetentionDays,
 			"action":         p.Action,
 			"cutoff_date":    cutoff.Format(time.RFC3339),
-			"affected_count": affected,
 		})
 	}
 

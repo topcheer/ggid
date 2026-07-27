@@ -266,6 +266,13 @@ func (r *pgRepo) DeleteUser(ctx context.Context, tenantID, id uuid.UUID) error {
 	for _, cleanup := range []struct{ name, sql string }{
 		{"credentials", `DELETE FROM credentials WHERE user_id = $1`},
 		{"user_roles", `DELETE FROM user_roles WHERE user_id = $1`},
+		{"mfa_devices", `DELETE FROM mfa_devices WHERE user_id = $1`},
+		{"webauthn_credentials", `DELETE FROM webauthn_credentials WHERE user_id = $1`},
+		{"backup_codes", `DELETE FROM backup_codes WHERE user_id = $1`},
+		{"sessions", `DELETE FROM sessions WHERE user_id = $1`},
+		{"api_keys", `DELETE FROM api_keys WHERE user_id = $1`},
+		{"refresh_tokens", `DELETE FROM refresh_tokens WHERE user_id = $1`},
+		{"oauth_authorization_codes", `DELETE FROM oauth_authorization_codes WHERE user_id = $1`},
 	} {
 		if _, err := tx.Exec(ctx, cleanup.sql, id); err != nil {
 			return ggiderrors.Wrap(ggiderrors.ErrInternal, "cascade cleanup "+cleanup.name, err)
