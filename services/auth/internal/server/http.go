@@ -1579,7 +1579,7 @@ func (h *Handler) handleWebAuthnListCredentials(w http.ResponseWriter, r *http.R
 		Transports   []string  `json:"transports,omitempty"`
 		BackupEligible bool    `json:"backup_eligible,omitempty"`
 	}
-	var list []credInfo
+	var list []credInfo = []credInfo{}
 	for _, c := range creds {
 		list = append(list, credInfo{
 			ID:             c.ID.String(),
