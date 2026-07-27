@@ -33,7 +33,7 @@ func (r *PermissionRepository) Create(ctx context.Context, perm *domain.Permissi
 func (r *PermissionRepository) ListByTenant(ctx context.Context, tenantID uuid.UUID, limit, offset int) ([]*domain.Permission, error) {
 	query := `
 		SELECT id, tenant_id, key, name, resource_type, action, description, system_perm
-		FROM permissions WHERE tenant_id = $1
+		FROM permissions WHERE tenant_id = $1 OR system_perm = true
 		ORDER BY resource_type, action LIMIT $2 OFFSET $3`
 	rows, err := r.db.Query(ctx, query, tenantID, limit, offset)
 	if err != nil {
