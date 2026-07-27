@@ -306,57 +306,57 @@ export const NAV_PERMISSION_MAP: Record<string, string[]> = {
   "/access-requests": [],
 
   // Group: IDENTITY
-  "/users": ["users:read"],
-  "/roles": ["roles:read"],
-  "/organizations": ["orgs:read"],
-  "/organizations/analytics": ["orgs:read"],
-  "/settings/nhi": ["identity:read"],
-  "/settings/migration": ["identity:read"],
-  "/settings/attribute-mapping": ["identity:read"],
-  "/settings/import-wizard": ["identity:write"],
-  "/settings/import-monitor": ["identity:read"],
-  "/settings/review-schedules": ["identity:read"],
+  "/users": ["users:read:tenant"],
+  "/roles": ["roles:read:tenant"],
+  "/organizations": ["orgs:read:tenant"],
+  "/organizations/analytics": ["orgs:read:tenant"],
+  "/settings/nhi": ["identity:read:tenant"],
+  "/settings/migration": ["identity:read:tenant"],
+  "/settings/attribute-mapping": ["identity:read:tenant"],
+  "/settings/import-wizard": ["identity:write:tenant"],
+  "/settings/import-monitor": ["identity:read:tenant"],
+  "/settings/review-schedules": ["identity:read:tenant"],
 
   // Group: SECURITY
-  "/security/session-detail": ["security:read"],
-  "/security/cae-monitor": ["security:read"],
-  "/security/privileged-activity": ["security:read"],
-  "/security/risk-score": ["security:read"],
-  "/security/posture": ["security:read"],
-  "/settings/conditional-access": ["security:read"],
-  "/settings/security-policy": ["security:read"],
-  "/settings/password-migration": ["security:read"],
-  "/settings/password-strength": ["security:read"],
-  "/settings/password-policy": ["security:read"],
-  "/settings/enrollment-campaign": ["security:read"],
-  "/settings/passkey-management": ["security:read"],
-  "/settings/mfa": ["security:read"],
+  "/security/session-detail": ["security:read:tenant"],
+  "/security/cae-monitor": ["security:read:tenant"],
+  "/security/privileged-activity": ["security:read:tenant"],
+  "/security/risk-score": ["security:read:tenant"],
+  "/security/posture": ["security:read:tenant"],
+  "/settings/conditional-access": ["policies:read:tenant"],
+  "/settings/security-policy": ["security:read:tenant"],
+  "/settings/password-migration": ["security:read:tenant"],
+  "/settings/password-strength": ["security:read:tenant"],
+  "/settings/password-policy": ["security:read:tenant"],
+  "/settings/enrollment-campaign": ["security:read:tenant"],
+  "/settings/passkey-management": ["security:read:tenant"],
+  "/settings/mfa": ["security:read:tenant"],
 
   // Group: GOVERNANCE
-  "/settings/sod-matrix": ["governance:read"],
-  "/settings/delegations": ["governance:read"],
-  "/policies": ["policies:read"],
+  "/settings/sod-matrix": ["governance:read:tenant"],
+  "/settings/delegations": ["governance:read:tenant"],
+  "/policies": ["policies:read:tenant"],
 
   // Group: AUDIT
-  "/audit": ["audit:read"],
-  "/audit/explorer": ["audit:read"],
-  "/audit/ccm": ["audit:read"],
+  "/audit": ["audit:read:tenant"],
+  "/audit/explorer": ["audit:read:tenant"],
+  "/audit/ccm": ["audit:read:tenant"],
 
   // Group: APPLICATIONS
-  "/oauth-clients": ["oauth:read"],
-  "/webhooks": ["webhooks:read"],
-  "/api-keys": ["apikeys:read"],
-  "/settings/scim": ["provisioning:read"],
-  "/settings/ldap-config": ["provisioning:read"],
-  "/settings/ldap-sync-config": ["provisioning:read"],
+  "/oauth-clients": ["oauth_clients:read:tenant"],
+  "/webhooks": ["webhooks:read:tenant"],
+  "/api-keys": ["api_keys:read:tenant"],
+  "/settings/scim": ["identity:read:tenant"],
+  "/settings/ldap-config": ["identity:read:tenant"],
+  "/settings/ldap-sync-config": ["identity:read:tenant"],
 
   // Group: SETTINGS
-  "/settings": ["settings:read"],
-  "/settings/branding": ["settings:read"],
-  "/settings/feature-flags": ["settings:write"],
+  "/settings": ["settings:read:tenant"],
+  "/settings/branding": ["settings:read:tenant"],
+  "/settings/feature-flags": ["settings:feature_flags:tenant"],
 
   // Group: ADMIN
-  "/admin/tenants": ["tenants:read"],
+  "/admin/tenants": ["tenants:read:all"],
 
   // Group: HELP — always visible
   "/docs": [],
@@ -391,7 +391,21 @@ export function useUserPermissions(): {
   const { isPlatformAdmin, isTenantAdmin } = useUserRole();
   const hasPermission = (key: string): boolean => {
     if (isPlatformAdmin || isTenantAdmin) return true;
-    return permissions.includes(key);
+    if (permissions.includes("admin") || permissions.includes("system:admin")) return true;
+    // Exact match
+    if (permissions.includes(key)) return true;
+    // Scope hierarchy: all > tenant > department > own
+    const parts = key.split(":");
+    if (parts.length >= 3) {
+      const resource = parts[0], action = parts[1];
+      const scopeOrder: Record<string, number> = { own: 1, department: 2, tenant: 3, all: 4 };
+      const requiredScope = scopeOrder[parts[2]] || 0;
+      return permissions.some((p: string) => {
+        const pp = p.split(":");
+        return pp.length >= 3 && pp[0] === resource && pp[1] === action && (scopeOrder[pp[2]] || 0) >= requiredScope;
+      });
+    }
+    return false;
   };
 
   return { permissions, hasPermission, loading };
