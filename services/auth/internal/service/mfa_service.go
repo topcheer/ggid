@@ -159,10 +159,20 @@ func (s *MFAService) VerifyUserCode(ctx context.Context, tenantID, userID uuid.U
 		return fmt.Errorf("no enabled MFA device")
 	}
 
+	// SECURITY (RFC 6238 §5.2): reject replay of previously used codes.
+	if device.LastUsedCode == code {
+		return ErrInvalidMFACode
+	}
+
 	valid := totp.Validate(code, device.Secret)
 	if !valid {
 		return ErrInvalidMFACode
 	}
+
+	// Persist the used code to prevent replay within the same TOTP window.
+	device.LastUsedCode = code
+	_ = s.repo.UpdateDevice(ctx, device)
+
 	return nil
 }
 

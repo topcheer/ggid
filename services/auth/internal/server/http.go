@@ -735,6 +735,8 @@ func (h *Handler) verifyCredentials(w http.ResponseWriter, r *http.Request) {
 		// Verify the provided MFA code
 		if tc, err := ggidtenant.FromContext(r.Context()); err == nil {
 			if err := h.authSvc.MFAService().VerifyUserCode(r.Context(), tc.TenantID, userID, req.MFACode); err != nil {
+				// SECURITY: record failed MFA attempt for brute-force protection.
+				_ = h.authSvc.RecordFailedLogin(r.Context(), tc.TenantID, req.Username)
 				writeError(w, http.StatusUnauthorized, "invalid MFA code")
 				return
 			}
