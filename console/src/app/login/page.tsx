@@ -101,7 +101,7 @@ export default function LoginPage() {
 
   // Check system initialization status on mount
   useEffect(() => {
-    fetch(`${API_BASE}/api/v1/system/status`)
+    fetch(`${API_BASE}/api/v1/system/initialized`)
       .then((r) => (r.ok ? r.json() : null))
       .then((data) => {
         if (data && data.initialized === false) {
