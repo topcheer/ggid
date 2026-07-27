@@ -1568,13 +1568,28 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 			writeJSON(w, http.StatusCreated, result)
 
 		case http.MethodGet:
-			// List clients.
-			clients, _, err := oauthSvc.ListClients(ctx, 20, 0)
+			// List clients with pagination support.
+			limit, _ := strconv.Atoi(r.URL.Query().Get("limit"))
+			if limit <= 0 || limit > 100 {
+				limit = 20
+			}
+			offset, _ := strconv.Atoi(r.URL.Query().Get("offset"))
+			if offset < 0 {
+				offset = 0
+			}
+			clients, total, err := oauthSvc.ListClients(ctx, limit, offset)
 			if err != nil {
 				writeInternalError(w, "ListClients", err)
 				return
 			}
-			writeJSON(w, http.StatusOK, map[string]any{"clients": clients})
+			writeJSON(w, http.StatusOK, map[string]any{
+				"clients":     clients,
+				"total":       total,
+				"limit":       limit,
+				"offset":      offset,
+				"next_offset": offset + limit,
+				"has_more":    offset+limit < total,
+			})
 
 		default:
 			writeJSON(w, http.StatusMethodNotAllowed, map[string]string{"error": "method_not_allowed"})
