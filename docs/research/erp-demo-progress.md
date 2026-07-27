@@ -5360,3 +5360,12 @@ Build: PASS. `make test`: EXIT=0, 69/69. Danger: 0.
 P0:0/P1:0/P2:0 throughout. Core→SDK→Demo fully aligned.
 
 ### Next Dimension: 1 — Authentication Completeness (Cycle 1750) — Rotation 23
+
+## Cycle 1750: D1-D6 R23 Batch — Rotation 23 Complete (Round 1511)
+New commits: `2aad16b6e` + `67d91e8f0` (PASSWORD_PEPPER init in identity + gateway — admin-created users login fix).
+Build: PASS. `make test`: EXIT=0, 69/69. Danger: 0.
+
+### 23 Rotations — Platform Stable
+P0:0/P1:0/P2:0 throughout.
+
+### Next Dimension: 1 — Authentication Completeness (Cycle 1762) — Rotation 24
