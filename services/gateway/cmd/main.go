@@ -26,6 +26,13 @@ import (
 	"github.com/ggid/ggid/pkg/shutdown"
 )
 
+// Password pepper must match auth/identity/oauth for API key hash verification.
+func init() {
+	if pepper := os.Getenv("PASSWORD_PEPPER"); pepper != "" {
+		crypto.SetPepper(pepper)
+	}
+}
+
 func main() {
 	cfg := config.LoadFromEnv(config.Default())
 
