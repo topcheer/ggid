@@ -101,6 +101,7 @@ func Default() *Config {
 		},
 		Password: PasswordPolicy{
 			MinLength:      12,
+			MaxLength:      64, // NIST 800-63B §5.1.1.2
 			RequireUpper:   true,
 			RequireLower:   true,
 			RequireDigit:   true,

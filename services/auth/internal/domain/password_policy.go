@@ -11,6 +11,7 @@ import (
 // reuse by the password service and HTTP handlers without importing conf.
 type PasswordPolicy struct {
 	MinLength      int      `json:"min_length"`
+	MaxLength      int      `json:"max_length,omitempty"` // NIST 800-63B: max 64 to prevent DoS
 	RequireUpper   bool     `json:"require_upper"`
 	RequireLower   bool     `json:"require_lower"`
 	RequireDigit   bool     `json:"require_digit"`
@@ -28,12 +29,18 @@ var (
 	ErrPolicyNoDigit     = errors.New("password must contain a digit")
 	ErrPolicyNoSpecial   = errors.New("password must contain a special character")
 	ErrPolicyBlacklisted = errors.New("password is blacklisted")
+	ErrPolicyTooLong     = errors.New("password exceeds maximum length")
 )
 
 // Validate checks a plaintext password against this policy.
 func (p PasswordPolicy) Validate(password string) error {
 	if len(password) < p.MinLength {
 		return ErrPolicyTooShort
+	}
+	// NIST 800-63B §5.1.1.2: enforce max length to prevent DoS
+	// (bcrypt truncates at 72 bytes; Argon2id handles longer but DoS risk remains)
+	if p.MaxLength > 0 && len(password) > p.MaxLength {
+		return ErrPolicyTooLong
 	}
 
 	var hasUpper, hasLower, hasDigit, hasSpecial bool
