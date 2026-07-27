@@ -44,6 +44,7 @@ interface ClientForm {
   redirect_uris: string;
   grant_types: Set<string>;
   scopes: string;
+  auth_methods: Set<string>;
 }
 
 const emptyForm: ClientForm = {
@@ -51,6 +52,7 @@ const emptyForm: ClientForm = {
   redirect_uris: "",
   grant_types: new Set(["authorization_code", "refresh_token"]),
   scopes: "openid,profile,email",
+  auth_methods: new Set(["password"]),
 };
 
 export default function OAuthClientsSettingsPage() {
@@ -103,6 +105,25 @@ export default function OAuthClientsSettingsPage() {
     return { ...target, grant_types: next };
   };
 
+  // Auth methods: passwordless options (passkey/sms_otp/email_otp) are mutually exclusive.
+  // password can combine with one OTP factor for MFA.
+  const toggleAuthMethod = (method: string, target: ClientForm) => {
+    const next = new Set(target.auth_methods);
+    const passwordless = ["passkey", "sms_otp", "email_otp"];
+    if (next.has(method)) {
+      next.delete(method);
+    } else {
+      // If selecting a passwordless method, remove other passwordless (mutually exclusive)
+      if (passwordless.includes(method)) {
+        passwordless.forEach((p) => next.delete(p));
+      }
+      next.add(method);
+    }
+    // Ensure at least one method
+    if (next.size === 0) next.add("password");
+    return { ...target, auth_methods: next };
+  };
+
   const handleCreate = async () => {
     setCreating(true);
     try {
@@ -114,6 +135,7 @@ export default function OAuthClientsSettingsPage() {
           redirect_uris: form.redirect_uris.split("\n").map((s: any) => s.trim()).filter(Boolean),
           scopes: form.scopes.split(",").map((s: any) => s.trim()).filter(Boolean),
           response_types: ["code"],
+          auth_methods: [...form.auth_methods],
         }),
       });
       setShowCreate(false);
@@ -138,6 +160,7 @@ export default function OAuthClientsSettingsPage() {
       redirect_uris: (client.redirect_uris || []).join("\n"),
       grant_types: new Set(client.grant_types || []),
       scopes: (client.scopes || []).join(","),
+      auth_methods: new Set((client as any).auth_methods || ["password"]),
     });
     setShowEdit(true);
   };
@@ -150,6 +173,7 @@ export default function OAuthClientsSettingsPage() {
         body: JSON.stringify({
           name: form.name,
           grant_types: [...form.grant_types],
+          auth_methods: [...form.auth_methods],
           redirect_uris: form.redirect_uris.split("\n").map((s: any) => s.trim()).filter(Boolean),
           scopes: form.scopes.split(",").map((s: any) => s.trim()).filter(Boolean),
         }),
@@ -234,6 +258,39 @@ export default function OAuthClientsSettingsPage() {
       ))}
     </div>
   );
+
+  const AuthMethodCheckboxes = ({ target, onChange }: { target: ClientForm; onChange: (f: ClientForm) => void }) => {
+    const methods = [
+      { key: "password", label: "Password", desc: "用户名+密码" },
+      { key: "passkey", label: "Passkey", desc: "指纹/Face ID/安全密钥" },
+      { key: "sms_otp", label: "SMS OTP", desc: "手机验证码" },
+      { key: "email_otp", label: "Email OTP", desc: "邮箱验证码" },
+    ];
+    return (
+      <div className="flex flex-wrap gap-3">
+        {methods.map((m) => {
+          const checked = target.auth_methods.has(m.key);
+          const isPasswordless = ["passkey", "sms_otp", "email_otp"].includes(m.key);
+          // Grey out other passwordless if one is already selected
+          const disabled = isPasswordless && !checked && ["passkey", "sms_otp", "email_otp"].some((p) => target.auth_methods.has(p));
+          return (
+            <label key={m.key} className={`flex items-center gap-1.5 text-sm ${disabled ? "opacity-40" : ""}`}>
+              <input
+                type="checkbox"
+                checked={checked}
+                onChange={() => onChange(toggleAuthMethod(m.key, target))}
+                className="rounded"
+              />
+              <div>
+                <span className="font-mono text-xs">{m.label}</span>
+                <span className="ml-1 text-xs text-gray-400">{m.desc}</span>
+              </div>
+            </label>
+          );
+        })}
+      </div>
+    );
+  };
 
   return (
     <div>
@@ -327,6 +384,11 @@ export default function OAuthClientsSettingsPage() {
               <label className="mb-1 block text-xs font-medium text-gray-500">{t("oauth.grantTypes")}</label>
               <GrantCheckboxes target={form} onChange={setForm} />
             </div>
+            <div className="sm:col-span-2">
+              <label className="mb-1 block text-xs font-medium text-gray-500">认证方式 (Auth Methods)</label>
+              <AuthMethodCheckboxes target={form} onChange={setForm} />
+              <p className="mt-1 text-xs text-gray-400">Passwordless 选项互斥（Passkey/SMS/Email 只能选一个）。Password + OTP 可组合为 MFA。</p>
+            </div>
           </div>
           <div className="mt-4 flex gap-2">
             <button
@@ -387,6 +449,11 @@ export default function OAuthClientsSettingsPage() {
             <div className="sm:col-span-2">
               <label className="mb-1 block text-xs font-medium text-gray-500">{t("oauth.grantTypes")}</label>
               <GrantCheckboxes target={form} onChange={setForm} />
+            </div>
+            <div className="sm:col-span-2">
+              <label className="mb-1 block text-xs font-medium text-gray-500">认证方式 (Auth Methods)</label>
+              <AuthMethodCheckboxes target={form} onChange={setForm} />
+              <p className="mt-1 text-xs text-gray-400">Passwordless 选项互斥。Password + OTP 可组合为 MFA。</p>
             </div>
           </div>
           <div className="mt-4 flex gap-2">
