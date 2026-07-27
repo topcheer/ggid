@@ -64,19 +64,65 @@ class JwtVerifier {
       }
     }
 
-    // Try full verification with dart_jsonwebtoken
-    try {
-      final jwt = JWT.verify(token, SecretKey('placeholder'), checkExpiresIn: false);
+    // SECURITY: Verify JWT signature against JWKS public key.
+    final kid = header['kid'] as String?;
+    if (kid == null) {
+      throw const InvalidTokenException('JWT header missing kid');
+    }
 
-      // If verification succeeds with placeholder key, it means the token
-      // was decoded but not signature-verified (HS256 fallback).
-      // In production, we'd fetch JWKS and verify with the public key.
-      // For now, we extract claims from the decoded payload.
+    final jwks = await _getKeys();
+    final keys = jwks['keys'] as List<dynamic>?;
+    if (keys == null) {
+      throw const InvalidTokenException('JWKS response missing keys');
+    }
+
+    Map<String, dynamic>? jwk;
+    for (final k in keys) {
+      if ((k as Map<String, dynamic>)['kid'] == kid) {
+        jwk = k;
+        break;
+      }
+    }
+    if (jwk == null) {
+      throw InvalidTokenException('no JWKS key found for kid=$kid');
+    }
+
+    // Verify signature: reconstruct signing input and compare with RSA verification.
+    // dart_jsonwebtoken's JWT.verify requires the correct key type.
+    // For RS256, we need to build an RSAPublicKey from the JWK n and e fields.
+    try {
+      final alg = header['alg'] as String? ?? 'RS256';
+      if (alg != 'RS256') {
+        throw InvalidTokenException('unsupported algorithm: $alg');
+      }
+
+      // Use dart_jsonwebtoken with proper RSA key from JWK
+      final n = jwk['n'] as String?;
+      final e = jwk['e'] as String?;
+      if (n == null || e == null) {
+        throw const InvalidTokenException('JWK missing n or e');
+      }
+
+      // dart_jsonwebtoken can verify with RSAPublicKey constructed from JWK
+      final rsaKey = RSAPublicKey(
+        BigInt.parse(
+          base64Url.decode(n).map((b) => b.toRadixString(16).padLeft(2, '0')).join(),
+          radix: 16,
+        ),
+        BigInt.parse(
+          base64Url.decode(e).map((b) => b.toRadixString(16).padLeft(2, '0')).join(),
+          radix: 16,
+        ),
+      );
+
+      // This will throw if signature is invalid.
+      JWT.verify(token, rsaKey, checkExpiresIn: false);
+    } on JWTInvalidException {
+      throw const InvalidTokenException('JWT signature verification failed');
+    } on InvalidTokenException {
+      rethrow;
     } catch (e) {
-      // dart_jsonwebtoken throws on invalid signature — but we've already
-      // checked expiration manually. In production, we'd verify against JWKS.
-      // For SDK usability, we allow tokens that pass structure + expiry checks.
-      // The server-side enforcement is the source of truth.
+      throw InvalidTokenException('JWT verification error: $e');
     }
 
     // Build claims from decoded payload

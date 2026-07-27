@@ -177,7 +177,7 @@ class Auth
     public function revokeToken(string $token, string $clientId, string $clientSecret): void
     {
         $this->httpClient->request('POST', $this->baseUrl . '/api/v1/oauth/revoke', [
-            'json' => [
+            'form_params' => [
                 'token' => $token,
                 'client_id' => $clientId,
                 'client_secret' => $clientSecret,
@@ -191,7 +191,7 @@ class Auth
     public function introspectToken(string $token, string $clientId, string $clientSecret): array
     {
         $resp = $this->httpClient->request('POST', $this->baseUrl . '/api/v1/oauth/introspect', [
-            'json' => [
+            'form_params' => [
                 'token' => $token,
                 'client_id' => $clientId,
                 'client_secret' => $clientSecret,
