@@ -51,6 +51,11 @@ var defaultAdminPrefixes = []string{
 	"/api/v1/auth/credential-stuffing/", // Credential stuffing config
 	"/api/v1/mdm/devices",               // MDM device management
 	"/api/v1/identity/devices/",         // Device posture management
+	// Paths rewritten to /api/v1/audit/* before proxying — must be
+	// listed here because RBAC check runs BEFORE the URL rewrite.
+	"/api/v1/access-reviews", // → /api/v1/audit/access-reviews
+	"/api/v1/activity",       // → /api/v1/audit/activity
+	"/api/v1/exports",        // → /api/v1/audit/exports
 }
 
 // SelfServicePaths are /users/me sub-paths exempt from admin checks.

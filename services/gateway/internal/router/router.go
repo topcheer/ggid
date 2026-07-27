@@ -720,6 +720,10 @@ var adminOnlyPaths = []string{
 	"/api/v1/auth/credential-stuffing/", // Credential stuffing config (admin)
 	"/api/v1/mdm/devices",               // MDM device management
 	"/api/v1/identity/devices/",         // Device posture management
+	// Paths rewritten to /api/v1/audit/* before proxying — RBAC runs first.
+	"/api/v1/access-reviews", // → /api/v1/audit/access-reviews
+	"/api/v1/activity",       // → /api/v1/audit/activity
+	"/api/v1/exports",        // → /api/v1/audit/exports
 	// Bare OAuth management endpoints (no /api/v1 prefix in proxy route)
 	"/oauth/clients",
 }
