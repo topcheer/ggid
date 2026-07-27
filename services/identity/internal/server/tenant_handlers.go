@@ -138,7 +138,7 @@ func (h *HTTPHandler) handleSystemBootstrap(w http.ResponseWriter, r *http.Reque
 	var tenantIDStr string
 	err := h.svc.Pool().QueryRow(ctx,
 		`INSERT INTO tenants (name, slug, status, plan) VALUES ($1, $2, 'active', 'enterprise')
-		 ON CONFLICT (slug) DO UPDATE SET name = EXCLUDED.name
+		 ON CONFLICT (slug) DO NOTHING
 		 RETURNING id::text`,
 		req.TenantName, req.TenantSlug).Scan(&tenantIDStr)
 	if err != nil {

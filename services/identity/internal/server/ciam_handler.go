@@ -3,6 +3,7 @@ package server
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"log/slog"
 	"net/http"
 	"strings"
@@ -107,12 +108,12 @@ func (h *HTTPHandler) handleSelfRegister(w http.ResponseWriter, r *http.Request)
 	err := pool.QueryRow(ctx,
 		 `INSERT INTO tenants (name, slug, status, plan)
 		 VALUES ($1, $2, 'active', 'free')
-		 ON CONFLICT (slug) DO UPDATE SET name = EXCLUDED.name
+		 ON CONFLICT (slug) DO NOTHING
 		 RETURNING id::text`,
 		req.OrgName, slug).Scan(&tenantIDStr)
 	if err != nil {
-		slog.Error("B2B register: create tenant failed", "error", err)
-		writeJSONError(w, http.StatusInternalServerError, "failed to create tenant")
+		// Slug already exists — reject to prevent creating users in existing tenant.
+		writeJSONError(w, http.StatusConflict, fmt.Sprintf("organization slug '%s' already exists", slug))
 		return
 	}
 	tenantID, _ := uuid.Parse(tenantIDStr)
