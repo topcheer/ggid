@@ -291,6 +291,8 @@ h.mux.HandleFunc("/api/v1/auth/mfa/backup", h.backupCodesGenerate) // Console al
 	h.mux.HandleFunc("/api/v1/auth/webauthn/register/finish", h.handleWebAuthnRegisterFinishAlias)
 	h.mux.HandleFunc("/api/v1/auth/webauthn/login/begin", h.handleWebAuthnLoginBeginAlias)
 	h.mux.HandleFunc("/api/v1/auth/webauthn/login/finish", h.handleWebAuthnLoginFinishAlias)
+	h.mux.HandleFunc("/api/v1/auth/webauthn/credentials", h.handleWebAuthnListCredentials)
+	h.mux.HandleFunc("/api/v1/auth/webauthn/credentials/", h.handleWebAuthnDeleteCredential)
 
 	// Passwordless (WebAuthn-only) registration + login
 	h.mux.HandleFunc("/api/v1/auth/passwordless/register", h.passwordlessRegister)
@@ -1532,7 +1534,95 @@ func (h *Handler) handleWebAuthnLoginFinishAlias(w http.ResponseWriter, r *http.
 	writeError(w, http.StatusServiceUnavailable, "WebAuthn handler not initialized")
 }
 
-// Returns WebAuthn options with conditional mediation for browser autofill.
+// handleWebAuthnListCredentials returns the user's registered WebAuthn credentials.
+func (h *Handler) handleWebAuthnListCredentials(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+		return
+	}
+	tc, err := ggidtenant.FromContext(r.Context())
+	if err != nil || tc.TenantID == uuid.Nil {
+		// Fallback to X-User-ID header
+		tc = &ggidtenant.Context{TenantID: uuid.Nil}
+	}
+	userIDStr := r.Header.Get("X-User-ID")
+	if userIDStr == "" {
+		// Try extracting from JWT in context
+		if uid, ok := r.Context().Value(ctxUserIDKey{}).(uuid.UUID); ok {
+			userIDStr = uid.String()
+		}
+	}
+	userID, err := uuid.Parse(userIDStr)
+	if err != nil {
+		writeError(w, http.StatusUnauthorized, "user not identified")
+		return
+	}
+
+	if h.waCredStore == nil {
+		writeJSON(w, http.StatusOK, map[string]any{"credentials": []any{}})
+		return
+	}
+
+	creds, err := h.waCredStore.GetCredentialsByUser(r.Context(), tc.TenantID, userID)
+	if err != nil {
+		writeJSON(w, http.StatusOK, map[string]any{"credentials": []any{}})
+		return
+	}
+
+	type credInfo struct {
+		ID           string    `json:"id"`
+		Name         string    `json:"name"`
+		DeviceType   string    `json:"device_type"`
+		Attachment   string    `json:"attachment,omitempty"`
+		CreatedAt    time.Time `json:"created_at"`
+		LastUsedAt   *time.Time `json:"last_used_at,omitempty"`
+		Transports   []string  `json:"transports,omitempty"`
+		BackupEligible bool    `json:"backup_eligible,omitempty"`
+	}
+	var list []credInfo
+	for _, c := range creds {
+		list = append(list, credInfo{
+			ID:             c.ID.String(),
+			Name:           c.Name,
+			DeviceType:     c.Attachment,
+			Attachment:     c.Attachment,
+			CreatedAt:      c.CreatedAt,
+			LastUsedAt:     c.LastUsedAt,
+			Transports:     c.Transports,
+			BackupEligible: c.BackupEligible,
+		})
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"credentials": list})
+}
+
+// handleWebAuthnDeleteCredential removes a WebAuthn credential by ID.
+func (h *Handler) handleWebAuthnDeleteCredential(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodDelete {
+		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+		return
+	}
+	credID := strings.TrimPrefix(r.URL.Path, "/api/v1/auth/webauthn/credentials/")
+	if credID == "" || credID == r.URL.Path {
+		writeError(w, http.StatusBadRequest, "credential ID required")
+		return
+	}
+	tc, err := ggidtenant.FromContext(r.Context())
+	if err != nil || tc.TenantID == uuid.Nil {
+		writeError(w, http.StatusBadRequest, "missing tenant context")
+		return
+	}
+	if h.waCredStore == nil {
+		writeError(w, http.StatusServiceUnavailable, "WebAuthn credential store not initialized")
+		return
+	}
+	if err := h.waCredStore.DeleteCredential(r.Context(), tc.TenantID, []byte(credID)); err != nil {
+		writeError(w, http.StatusInternalServerError, "failed to delete credential")
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]string{"status": "deleted"})
+}
+
+type ctxUserIDKey struct{}
 // The browser will show available passkeys in the credential picker.
 func (h *Handler) passkeyAutofill(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
