@@ -174,6 +174,22 @@ func (gw *Gateway) handleSystemBootstrap(w http.ResponseWriter, r *http.Request)
 		writeGatewayJSONError(w, http.StatusConflict, "System is already initialized. Use admin login to create new tenants via /api/v1/tenants.")
 		return
 	}
+
+	// Validate request body fields BEFORE DB check (so missing fields return 400, not 503)
+	var req BootstrapRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		writeGatewayJSONError(w, http.StatusBadRequest, "invalid request body")
+		return
+	}
+	if req.AdminUsername == "" || req.AdminEmail == "" || req.AdminPassword == "" {
+		writeGatewayJSONError(w, http.StatusBadRequest, "admin_username, admin_email, and admin_password are required")
+		return
+	}
+	if len(req.AdminPassword) < 8 {
+		writeGatewayJSONError(w, http.StatusBadRequest, "admin_password must be at least 8 characters")
+		return
+	}
+
 	// DB check: if tenants exist, system is already bootstrapped
 	var dbURL string
 	if gw.cfg != nil {
@@ -194,17 +210,7 @@ func (gw *Gateway) handleSystemBootstrap(w http.ResponseWriter, r *http.Request)
 		}
 	}
 
-	var req BootstrapRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		writeGatewayJSONError(w, http.StatusBadRequest, "invalid request body")
-		return
-	}
-
-	if req.AdminUsername == "" || req.AdminEmail == "" || req.AdminPassword == "" {
-		writeGatewayJSONError(w, http.StatusBadRequest, "admin_username, admin_email, and admin_password are required")
-		return
-	}
-
+	// Proceed with bootstrap (req already parsed and validated above)
 	if len(req.AdminPassword) < 8 {
 		writeGatewayJSONError(w, http.StatusBadRequest, "admin_password must be at least 8 characters")
 		return

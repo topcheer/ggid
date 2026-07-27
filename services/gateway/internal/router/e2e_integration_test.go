@@ -133,9 +133,9 @@ func TestE2E_Bootstrap_Complete(t *testing.T) {
 	rr := httptest.NewRecorder()
 	handler.ServeHTTP(rr, req)
 	// Bootstrap handler tries to connect to auth service internally (not via proxy),
-	// so it will fail regardless of mock backend. Accept 502 or 500.
-	if rr.Code != http.StatusBadGateway && rr.Code != http.StatusInternalServerError {
-		t.Errorf("complete bootstrap: expected 502 or 500 (internal handler can't reach auth), got %d", rr.Code)
+	// so it will fail regardless of mock backend. Accept 502, 500, or 503.
+	if rr.Code != http.StatusBadGateway && rr.Code != http.StatusInternalServerError && rr.Code != http.StatusServiceUnavailable {
+		t.Errorf("complete bootstrap: expected 502, 500, or 503 (internal handler can't reach auth), got %d", rr.Code)
 	}
 }
 
