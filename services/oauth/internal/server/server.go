@@ -342,6 +342,11 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 		jwks := oauthSvc.GetJWKS()
 		writeJSON(w, http.StatusOK, jwks)
 	})
+	// RFC 8628 / OIDC standard JWKS path for direct-connect SDK compatibility
+	mux.HandleFunc("/.well-known/jwks.json", func(w http.ResponseWriter, r *http.Request) {
+		jwks := oauthSvc.GetJWKS()
+		writeJSON(w, http.StatusOK, jwks)
+	})
 
 	// Prefixed aliases for gateway: re-dispatch to non-prefixed handlers
 	mux.HandleFunc("/api/v1/oauth/authorize", func(w http.ResponseWriter, r *http.Request) {
