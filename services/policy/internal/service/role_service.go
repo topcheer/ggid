@@ -121,6 +121,21 @@ func (s *RoleService) UpdateRole(ctx context.Context, id uuid.UUID, name, descri
 		return nil, err
 	}
 	if name != nil {
+		// SECURITY (P1-10): block renaming to system role names — prevents
+		// privilege escalation via JWT roles claim (same check as CreateRole).
+		reservedSystemNames := map[string]bool{
+			"platform:admin":  true,
+			"tenant:admin":    true,
+			"tenant:auditor":  true,
+			"administrator":   true,
+			"platform admin":  true,
+			"super admin":     true,
+			"system admin":    true,
+		}
+		normalizedName := strings.ToLower(strings.TrimSpace(*name))
+		if reservedSystemNames[normalizedName] {
+			return nil, errors.New(errors.ErrInvalidArgument, "role name is reserved for system roles")
+		}
 		role.Name = *name
 	}
 	if description != nil {

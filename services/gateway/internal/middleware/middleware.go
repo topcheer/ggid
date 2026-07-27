@@ -676,8 +676,14 @@ func JWTAuth(jwks *JWKSClient, required bool, issuer, audience string) func(http
 			if !crypto.IsSupportedAlg(token.Method.Alg()) {
 				return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
 			}
+			// Use kid to support key rotation. Fall back to static key if kid
+			// is missing or not found in JWKS (backward compatibility).
 			keyID, _ := token.Header["kid"].(string)
-			_ = keyID // ignore kid from JWT; always use static public key
+			if keyID != "" {
+				if key, err := jwks.GetKey(keyID); err == nil && key != nil {
+					return key, nil
+				}
+			}
 			return jwks.publicKey, nil
 		}, parseOpts...)
 
