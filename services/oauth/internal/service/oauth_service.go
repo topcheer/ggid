@@ -634,13 +634,33 @@ func (s *OAuthService) GetDiscoveryConfig() *domain.OIDCDiscoveryConfig {
 
 // --- JWKS ---
 
-// GetJWKS returns the JSON Web Key Set containing the public key.
+// GetJWKS returns the JSON Web Key Set containing public keys.
+// During key rotation grace period, both current and previous keys are returned
+// so that clients can verify tokens signed with either key.
 func (s *OAuthService) GetJWKS() *domain.JWKSResponse {
+	var keys []domain.JWKSKey
+
+	// Current signing key
 	key, err := publicKeyToJWK(s.keyProvider.Metadata().KeyID, s.keyProvider.Public())
-	if err != nil {
+	if err == nil {
+		keys = append(keys, key)
+	}
+
+	// Previous key (if within grace period) — check if provider supports rotation
+	if rkp, ok := s.keyProvider.(*RotatingKeyProvider); ok {
+		if prevPub := rkp.PreviousPublicKey(); prevPub != nil {
+			if prevKid := rkp.PreviousKeyID(); prevKid != "" {
+				if prevKey, err := publicKeyToJWK(prevKid, prevPub); err == nil {
+					keys = append(keys, prevKey)
+				}
+			}
+		}
+	}
+
+	if len(keys) == 0 {
 		return &domain.JWKSResponse{Keys: []domain.JWKSKey{}}
 	}
-	return &domain.JWKSResponse{Keys: []domain.JWKSKey{key}}
+	return &domain.JWKSResponse{Keys: keys}
 }
 
 func publicKeyToJWK(kid string, pub crypto.PublicKey) (domain.JWKSKey, error) {
