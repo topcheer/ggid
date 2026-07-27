@@ -25,6 +25,7 @@ import (
 	"github.com/ggid/ggid/pkg/audit"
 	"github.com/ggid/ggid/pkg/middleware"
 	"github.com/ggid/ggid/pkg/crypto"
+	"github.com/ggid/ggid/pkg/rbac"
 	"github.com/ggid/ggid/pkg/shutdown"
 	"github.com/ggid/ggid/pkg/sysconfig"
 	"github.com/ggid/ggid/pkg/truststore"
@@ -350,6 +351,12 @@ func main() {
 	handler.SetAttrMapRepo(attrMapRepo)
 	handler.SetPool(pool) // KB-365: for account linking queries
 	handler.SetRedis(rdb) // For auth tickets (passkey passwordless login)
+
+	// Sync system permissions to DB (version-controlled, immutable)
+	rbacPool := rbac.NewPgxPool(pool)
+	if err := rbac.EnsureSystemPermissions(ctx, rbacPool); err != nil {
+		slog.Warn("System permission sync failed", "error", err)
+	}
 
 	// Delegation repository.
 	delRepo := server.NewDelegationRepo(pool)
