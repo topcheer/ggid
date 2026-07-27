@@ -478,72 +478,17 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 		}
 		userID, err := uuid.Parse(userIDStr)
 		if err != nil {
-			// Show built-in login page (not the admin console)
-			w.Header().Set("Content-Type", "text/html; charset=utf-8")
-			w.WriteHeader(http.StatusOK)
-			fmt.Fprintf(w, `<!DOCTYPE html>
-	<html lang="zh-CN">
-	<head>
-	<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-	<title>GGID 登录</title>
-	<style>
-	*{margin:0;padding:0;box-sizing:border-box}
-	body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:linear-gradient(135deg,#667eea 0%%,#764ba2 100%%);min-height:100vh;display:flex;align-items:center;justify-content:center}
-	.card{background:#fff;border-radius:12px;padding:40px;width:400px;max-width:90vw;box-shadow:0 20px 60px rgba(0,0,0,.15)}
-	h1{text-align:center;color:#1677ff;margin-bottom:8px;font-size:24px}
-	.sub{text-align:center;color:#999;margin-bottom:24px;font-size:14px}
-	label{display:block;margin-bottom:6px;font-weight:600;font-size:14px;color:#333}
-	input{width:100%%;padding:12px 14px;border:1px solid #ddd;border-radius:8px;font-size:15px;margin-bottom:16px;transition:border .2s}
-	input:focus{outline:none;border-color:#1677ff;box-shadow:0 0 0 2px rgba(22,119,255,.1)}
-	button{width:100%%;padding:14px;background:#1677ff;color:#fff;border:none;border-radius:8px;font-size:16px;font-weight:600;cursor:pointer;transition:background .2s}
-	button:hover{background:#0958d9}
-	button:disabled{background:#ccc;cursor:not-allowed}
-	.err{color:#ff4d4f;font-size:13px;margin-bottom:12px;display:none}
-	.redirect-info{margin-top:16px;padding:10px;background:#f6f8fa;border-radius:6px;font-size:12px;color:#666;text-align:center}
-	</style>
-	</head>
-	<body>
-	<div class="card">
-	<h1>GGID 登录</h1>
-	<p class="sub">使用您的账户登录以继续</p>
-	<form id="loginForm">
-	<div id="err" class="err"></div>
-	<label>用户名</label>
-	<input id="username" type="text" required autocomplete="username" placeholder="输入用户名">
-	<label>密码</label>
-	<input id="password" type="password" required autocomplete="current-password" placeholder="输入密码">
-	<button type="submit" id="btn">登录</button>
-	</form>
-	<div class="redirect-info">授权完成后将返回 <strong id="app-name">应用</strong></div>
-	</div>
-	<script>
-	document.getElementById('loginForm').addEventListener('submit', async (e) => {
-	  e.preventDefault();
-	  const btn = document.getElementById('btn');
-	  const errDiv = document.getElementById('err');
-	  btn.disabled = true; btn.textContent = '登录中...';
-	  errDiv.style.display = 'none';
-	  try {
-    const resp = await fetch('%s/api/v1/auth/verify', {
-      method: 'POST',
-      headers: {'Content-Type': 'application/json', 'X-Tenant-ID': '%s'},
-      body: JSON.stringify({username: document.getElementById('username').value, password: document.getElementById('password').value, tenant_id: '%s'})
-    });
-	    const data = await resp.json();
-		    if (!resp.ok) { errDiv.textContent = data.error?.message || data.error || '登录失败'; errDiv.style.display = 'block'; btn.disabled = false; btn.textContent = '登录'; return; }
-		    // Redirect back to authorize with verified user_id
-		    const url = new URL(window.location.href);
-	    const authorizeURL = url.pathname + url.search;
-	    const sep = authorizeURL.includes('?') ? '&' : '?';
-		    window.location.href = authorizeURL + sep + 'user_id=' + data.user_id;
-	  } catch (err) {
-	    errDiv.textContent = '网络错误，请重试'; errDiv.style.display = 'block';
-	    btn.disabled = false; btn.textContent = '登录';
-	  }
-	});
-	</script>
-	</body>
-	</html>`, os.Getenv("GGID_URL"), tenantID.String(), tenantID.String())
+		// Load client to determine configured auth methods for dynamic login page.
+		loginCtx := tenant.WithContext(r.Context(), &tenant.Context{
+			TenantID:       tenantID,
+			IsolationLevel: tenant.IsolationShared,
+		})
+		loginClient, _ := oauthSvc.GetClient(loginCtx, clientID)
+		authMethods := []string{"password"}
+		if loginClient != nil {
+			authMethods = loginClient.GetAuthMethods()
+		}
+		renderDynamicLoginPage(w, r, tenantID, authMethods, os.Getenv("GGID_URL"))
 			return
 		}
 
