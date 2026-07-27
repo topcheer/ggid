@@ -2,10 +2,11 @@ package service
 
 import (
 	"context"
+	"crypto/rand"
 	"encoding/json"
 	"fmt"
 	"log/slog"
-	"math/rand"
+	"math/big"
 	"time"
 
 	"github.com/ggid/ggid/pkg/crypto"
@@ -56,8 +57,12 @@ func (s *OTPService) SendOTP(ctx context.Context, tenantID uuid.UUID, identifier
 		return fmt.Errorf("please wait before requesting another code")
 	}
 
-	// Generate 6-digit code
-	code := fmt.Sprintf("%06d", rand.Intn(1000000))
+	// Generate 6-digit code using crypto/rand (secure)
+	n, err := rand.Int(rand.Reader, big.NewInt(1000000))
+	if err != nil {
+		return fmt.Errorf("generate otp code: %w", err)
+	}
+	code := fmt.Sprintf("%06d", n.Int64())
 
 	// Store OTP in Redis: key=otp:{channel}:{identifier}, TTL=5min
 	otpKey := fmt.Sprintf("otp:%s:%s", channel, identifier)
@@ -105,7 +110,18 @@ func (s *OTPService) VerifyOTP(ctx context.Context, tenantID uuid.UUID, identifi
 		return "", fmt.Errorf("invalid or expired code")
 	}
 
+	// SECURITY: brute-force protection — track failed attempts per identifier.
+	// After 5 failures, delete the OTP and force re-request.
+	attemptKey := fmt.Sprintf("otp_attempts:%s:%s", channel, identifier)
 	if storedCode != code {
+		attempts, _ := s.rdb.Incr(ctx, attemptKey).Result()
+		if attempts == 1 {
+			s.rdb.Expire(ctx, attemptKey, 5*time.Minute)
+		}
+		if attempts >= 5 {
+			s.rdb.Del(ctx, otpKey, attemptKey)
+			return "", fmt.Errorf("too many failed attempts, please request a new code")
+		}
 		return "", fmt.Errorf("invalid code")
 	}
 
