@@ -5378,3 +5378,13 @@ Build: PASS. `make test`: EXIT=0, 69/69. Danger: 0.
 P0:0/P1:0/P2:0 throughout.
 
 ### Next Dimension: 1 — Authentication Completeness (Cycle 1774) — Rotation 25
+
+## Cycle 1774: D1-D6 R25 Batch — Rotation 25 Complete (Round 1513)
+New commit: `24c4659b5` (console conditional-access API path fix).
+god R66: 0 issues, 34 review rounds.
+Build: PASS. `make test`: EXIT=0, 69/69. Danger: 0.
+
+### 25 Rotations — Platform Stable
+P0:0/P1:0/P2:0 throughout.
+
+### Next Dimension: 1 — Authentication Completeness (Cycle 1786) — Rotation 26
