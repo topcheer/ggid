@@ -6,10 +6,12 @@ import (
 	"encoding/json"
 	stderrors "errors"
 	"fmt"
+	"io"
 	"log"
 	"log/slog"
 	"net"
 	"net/http"
+	"net/url"
 	"os"
 	"strings"
 	"time"
@@ -388,6 +390,11 @@ h.mux.HandleFunc("/api/v1/auth/mfa/backup", h.backupCodesGenerate) // Console al
 		}
 		waOpts = append(waOpts, webauthn.WithIOSAppSiteAssociation(iosIDs))
 	}
+	// Inject TokenIssuer: after passkey verification, call OAuth service to issue JWT.
+	waOpts = append(waOpts, webauthn.WithTokenIssuer(func(ctx context.Context, tenantID, userID uuid.UUID) (string, error) {
+		return h.exchangePasskeyForToken(ctx, tenantID, userID)
+	}))
+
 	webauthnHandler, err := webauthn.NewHandler(rpID, rpName, h.waCredStore, waOpts...)
 	if err != nil {
 		log.Printf("warning: webauthn init failed: %v", err)
@@ -3014,5 +3021,78 @@ func (h *Handler) securityPasswordPolicy(w http.ResponseWriter, r *http.Request)
 	default:
 		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
 	}
+}
+
+// exchangePasskeyForToken creates a one-time password for the verified user,
+// calls OAuth internally to get JWT, then the temp password is discarded.
+func (h *Handler) exchangePasskeyForToken(ctx context.Context, tenantID, userID uuid.UUID) (string, error) {
+	if h.pool == nil {
+		return "", fmt.Errorf("database not configured")
+	}
+
+	tempPassword, err := crypto.GenerateRandomToken(32)
+	if err != nil {
+		return "", fmt.Errorf("generate temp token: %w", err)
+	}
+
+	hash, err := crypto.HashPassword(tempPassword)
+	if err != nil {
+		return "", fmt.Errorf("hash temp password: %w", err)
+	}
+
+	_, err = h.pool.Exec(ctx,
+		`UPDATE users SET password_hash = $2 WHERE id = $1 AND tenant_id = $3`,
+		userID, hash, tenantID)
+	if err != nil {
+		return "", fmt.Errorf("update temp password: %w", err)
+	}
+	_, _ = h.pool.Exec(ctx,
+		`UPDATE credentials SET secret = $3 WHERE user_id = $1 AND tenant_id = $2 AND type = 'password'`,
+		userID, tenantID, hash)
+
+	var username string
+	err = h.pool.QueryRow(ctx, `SELECT username FROM users WHERE id = $1 AND tenant_id = $2`,
+		userID, tenantID).Scan(&username)
+	if err != nil {
+		return "", fmt.Errorf("lookup username: %w", err)
+	}
+
+	oauthURL := os.Getenv("OAUTH_SERVICE_URL")
+	if oauthURL == "" {
+		oauthURL = "http://ggid-oauth.ggid.svc:9005"
+	}
+
+	formData := url.Values{
+		"grant_type": {"password"},
+		"username":   {username},
+		"password":   {tempPassword},
+		"client_id":  {"gcid-console"},
+		"scope":      {"openid profile"},
+	}
+
+	req, _ := http.NewRequestWithContext(ctx, "POST",
+		oauthURL+"/oauth/token?tenant_id="+tenantID.String(),
+		strings.NewReader(formData.Encode()))
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return "", fmt.Errorf("oauth internal call: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		body, _ := io.ReadAll(resp.Body)
+		return "", fmt.Errorf("oauth returned %d: %s", resp.StatusCode, string(body))
+	}
+
+	var tokenResp struct {
+		AccessToken string `json:"access_token"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&tokenResp); err != nil {
+		return "", fmt.Errorf("decode token response: %w", err)
+	}
+
+	return tokenResp.AccessToken, nil
 }
 

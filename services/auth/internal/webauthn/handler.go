@@ -58,6 +58,16 @@ func (u *webAuthnUser) WebAuthnCredentials() []webauthn.Credential { return u.cr
 
 // --- Session Store (in-memory, ephemeral — production would use Redis) ---
 
+// TokenIssuer generates a JWT for a user after passkey authentication.
+type TokenIssuer func(ctx context.Context, tenantID, userID uuid.UUID) (string, error)
+
+// SessionBackend abstracts session storage (memory or Redis).
+type SessionBackend interface {
+	Save(ctx context.Context, key string, data []byte, ttl time.Duration) error
+	Load(ctx context.Context, key string) ([]byte, error)
+	Delete(ctx context.Context, key string) error
+}
+
 type sessionData struct {
 	userID    uuid.UUID
 	tenantID  uuid.UUID
@@ -144,6 +154,8 @@ type Handler struct {
 	androidPkg    string         // WA-12: Android package name for asset links
 	androidSHA256 string         // WA-12: Android app SHA-256 fingerprint
 	iosAppIDs     []string       // WA-12: iOS app IDs for universal links
+	tokenIssuer   TokenIssuer    // Issues JWT after successful passkey auth
+	sessionBackend SessionBackend // Redis-backed session persistence
 }
 
 // HandlerOption configures a Handler at construction time.
@@ -154,6 +166,22 @@ type handlerConfig struct {
 	androidPkg    string   // WA-12
 	androidSHA256 string   // WA-12
 	iosAppIDs     []string // WA-12
+	tokenIssuer   TokenIssuer
+	sessionBackend SessionBackend
+}
+
+// WithTokenIssuer injects a JWT token issuer for passkey login completion.
+func WithTokenIssuer(fn TokenIssuer) HandlerOption {
+	return func(c *handlerConfig) {
+		c.tokenIssuer = fn
+	}
+}
+
+// WithSessionBackend injects a Redis-backed session store.
+func WithSessionBackend(sb SessionBackend) HandlerOption {
+	return func(c *handlerConfig) {
+		c.sessionBackend = sb
+	}
 }
 
 // WithOrigins sets the allowed RP origins for WebAuthn (WA-9).
@@ -210,6 +238,8 @@ func NewHandler(rpID, rpName string, store CredentialStore, opts ...HandlerOptio
 		androidPkg:    cfg.androidPkg,
 		androidSHA256: cfg.androidSHA256,
 		iosAppIDs:     cfg.iosAppIDs,
+		tokenIssuer:   cfg.tokenIssuer,
+		sessionBackend: cfg.sessionBackend,
 	}, nil
 }
 
@@ -813,6 +843,34 @@ func (h *Handler) finishAuthentication(w http.ResponseWriter, r *http.Request) {
 		now := time.Now()
 		_ = h.creds.UpdateCounter(ctx, tenantID, credential.ID, credential.Authenticator.SignCount)
 		_ = h.creds.UpdateLastUsed(ctx, tenantID, credential.ID, now)
+	}
+
+	// Determine the authenticated user ID from the session or credential lookup.
+	authUserID := sd.userID
+	if authUserID == uuid.Nil {
+		// Discoverable credential flow: extract from credential record.
+		if h.creds != nil {
+			if stored, _ := h.creds.GetCredentialByID(ctx, tenantID, credential.ID); stored != nil {
+				authUserID = stored.UserID
+			}
+		}
+	}
+
+	// Issue JWT if token issuer is configured.
+	if h.tokenIssuer != nil && authUserID != uuid.Nil {
+		token, err := h.tokenIssuer(ctx, tenantID, authUserID)
+		if err != nil {
+			writeError(w, http.StatusInternalServerError, "failed to issue token")
+			return
+		}
+		writeJSON(w, http.StatusOK, map[string]any{
+			"status":         "authenticated",
+			"access_token":   token,
+			"token_type":     "Bearer",
+			"credential_id":  base64.RawURLEncoding.EncodeToString(credential.ID),
+			"sign_count":     credential.Authenticator.SignCount,
+		})
+		return
 	}
 
 	writeJSON(w, http.StatusOK, map[string]any{
