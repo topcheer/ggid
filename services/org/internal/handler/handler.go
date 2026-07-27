@@ -4,6 +4,7 @@ package handler
 import (
 	"context"
 	"encoding/json"
+	"strconv"
 
 	pb "github.com/ggid/ggid/api/gen/org/v1"
 	"github.com/ggid/ggid/pkg/audit"
@@ -212,7 +213,9 @@ func (h *OrgHandler) ListOrganizations(ctx context.Context, req *pb.ListOrgsRequ
 	if err != nil {
 		return nil, err
 	}
-	orgs, err := h.svc.List(ctx, tenantID, 1, int(req.GetPageSize()))
+	page := parsePageToken(req.GetPageToken())
+	pageSize := int(req.GetPageSize())
+	orgs, err := h.svc.List(ctx, tenantID, page, pageSize)
 	if err != nil {
 		return nil, toGRPCError(err)
 	}
@@ -220,7 +223,11 @@ func (h *OrgHandler) ListOrganizations(ctx context.Context, req *pb.ListOrgsRequ
 	for i, o := range orgs {
 		pbOrgs[i] = orgToProto(o)
 	}
-	return &pb.ListOrgsResponse{Organizations: pbOrgs}, nil
+	resp := &pb.ListOrgsResponse{Organizations: pbOrgs}
+	if len(orgs) == pageSize {
+		resp.NextPageToken = strconv.Itoa(page + 1)
+	}
+	return resp, nil
 }
 
 func (h *OrgHandler) GetSubTree(ctx context.Context, req *pb.GetSubTreeRequest) (*pb.ListOrgsResponse, error) {
@@ -459,7 +466,9 @@ func (h *TeamHandler) ListTeams(ctx context.Context, req *pb.ListTeamsRequest) (
 	if err != nil {
 		return nil, err
 	}
-	teams, err := h.svc.List(ctx, orgID, 1, int(req.GetPageSize()))
+	page := parsePageToken(req.GetPageToken())
+	pageSize := int(req.GetPageSize())
+	teams, err := h.svc.List(ctx, orgID, page, pageSize)
 	if err != nil {
 		return nil, toGRPCError(err)
 	}
@@ -467,7 +476,11 @@ func (h *TeamHandler) ListTeams(ctx context.Context, req *pb.ListTeamsRequest) (
 	for i, t := range teams {
 		pbTeams[i] = teamToProto(t)
 	}
-	return &pb.ListTeamsResponse{Teams: pbTeams}, nil
+	resp := &pb.ListTeamsResponse{Teams: pbTeams}
+	if len(teams) == pageSize {
+		resp.NextPageToken = strconv.Itoa(page + 1)
+	}
+	return resp, nil
 }
 
 func (h *TeamHandler) DeleteTeam(ctx context.Context, req *pb.DeleteTeamRequest) (*pb.DeleteTeamResponse, error) {
@@ -586,7 +599,9 @@ func (h *MembershipHandler) ListMembers(ctx context.Context, req *pb.ListMembers
 		}
 		filter.OrgID = &orgID
 	}
-	members, err := h.svc.List(ctx, filter, 1, int(req.GetPageSize()))
+	page := parsePageToken(req.GetPageToken())
+	pageSize := int(req.GetPageSize())
+	members, err := h.svc.List(ctx, filter, page, pageSize)
 	if err != nil {
 		return nil, toGRPCError(err)
 	}
@@ -594,7 +609,11 @@ func (h *MembershipHandler) ListMembers(ctx context.Context, req *pb.ListMembers
 	for i, m := range members {
 		pbMembers[i] = membershipToProto(m)
 	}
-	return &pb.ListMembersResponse{Memberships: pbMembers}, nil
+	resp := &pb.ListMembersResponse{Memberships: pbMembers}
+	if len(members) == pageSize {
+		resp.NextPageToken = strconv.Itoa(page + 1)
+	}
+	return resp, nil
 }
 
 func membershipToProto(m *domain.Membership) *pb.Membership {
@@ -615,6 +634,19 @@ func membershipToProto(m *domain.Membership) *pb.Membership {
 		s2 := m.TeamID.String(); p.TeamId = &s2
 	}
 	return p
+}
+
+// parsePageToken parses a page token into a page number (1-based).
+// Empty or invalid token returns page 1.
+func parsePageToken(token string) int {
+	if token == "" {
+		return 1
+	}
+	page, err := strconv.Atoi(token)
+	if err != nil || page < 1 {
+		return 1
+	}
+	return page
 }
 
 // emitAudit publishes a tenant audit event if publisher is configured.
