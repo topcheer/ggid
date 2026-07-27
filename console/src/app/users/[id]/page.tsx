@@ -128,6 +128,7 @@ function credentialTypeColor(type: string): string {
 export default function UserDetailPage() {
   const t = useTranslations();
   const { apiFetch } = useApi();
+  const { confirm } = useConfirm();
   const router = useRouter();
   const params = useParams();
   const userId = params?.id as string;
@@ -268,19 +269,26 @@ export default function UserDetailPage() {
   };
 
   const handleDeleteCredential = async (credId: string) => {
-    if (!window.confirm("Delete this credential? This cannot be undone.")) return;
-    setDeletingCred(credId);
-    try {
-      await apiFetch(`/api/v1/users/${userId}/credentials/${credId}`, {
-        method: "DELETE",
-      });
-      setMsg("Credential deleted successfully");
-      setCredentials((prev) => prev.filter((c: any) => c.id !== credId));
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to delete credential");
-    } finally {
-      setDeletingCred(null);
-    }
+    confirm({
+      title: "Delete this credential?",
+      description: "This cannot be undone.",
+      variant: "danger",
+      confirmLabel: "Delete",
+      onConfirm: async () => {
+        setDeletingCred(credId);
+        try {
+          await apiFetch(`/api/v1/users/${userId}/credentials/${credId}`, {
+            method: "DELETE",
+          });
+          setMsg("Credential deleted successfully");
+          setCredentials((prev) => prev.filter((c: any) => c.id !== credId));
+        } catch (err) {
+          setError(err instanceof Error ? err.message : "Failed to delete credential");
+        } finally {
+          setDeletingCred(null);
+        }
+      },
+    });
   };
 
   const handleImpersonate = async () => {
@@ -414,13 +422,20 @@ export default function UserDetailPage() {
   };
 
   const handleDelete = async () => {
-    if (!window.confirm("Are you sure you want to delete this user?")) return;
-    try {
-      await apiFetch(`/api/v1/users/${userId}`, { method: "DELETE" });
-      router.push("/users");
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to delete");
-    }
+    confirm({
+      title: "Delete this user?",
+      description: "This action cannot be undone.",
+      variant: "danger",
+      confirmLabel: "Delete",
+      onConfirm: async () => {
+        try {
+          await apiFetch(`/api/v1/users/${userId}`, { method: "DELETE" });
+          router.push("/users");
+        } catch (err) {
+          setError(err instanceof Error ? err.message : "Failed to delete");
+        }
+      },
+    });
   };
 
   const closeDrawer = () => router.push("/users");

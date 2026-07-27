@@ -56,6 +56,7 @@ const emptyForm: ClientForm = {
 export default function OAuthClientsSettingsPage() {
   const { apiFetch } = useApi();
   const t = useTranslations();
+  const { confirm } = useConfirm();
   const [clients, setClients] = useState<OAuthClient[]>([]);
   const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(false);
@@ -164,40 +165,52 @@ export default function OAuthClientsSettingsPage() {
   };
 
   const handleDelete = async (clientId: string, name: string) => {
-    if (!window.confirm(`${t("oauth.deleteConfirm").replace("{name}", name)}`)) return;
-    try {
-      await apiFetch(`/api/v1/oauth/clients/${clientId}`, { method: "DELETE" });
-      setMsg(t("oauth.deleted"));
-      loadClients();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : t("settings.failedDelete"));
-    }
+    confirm({
+      title: t("oauth.deleteConfirm").replace("{name}", name),
+      variant: "danger",
+      confirmLabel: "Delete",
+      onConfirm: async () => {
+        try {
+          await apiFetch(`/api/v1/oauth/clients/${clientId}`, { method: "DELETE" });
+          setMsg(t("oauth.deleted"));
+          loadClients();
+        } catch (err) {
+          setError(err instanceof Error ? err.message : t("settings.failedDelete"));
+        }
+      },
+    });
   };
 
   const handleRotateSecret = async (clientId: string) => {
-    if (!window.confirm(t("oauth.rotateConfirm"))) return;
-    setRotating(clientId);
-    try {
-      const result = await apiFetch<{ client_secret?: string }>(
-        `/api/v1/oauth/clients/${clientId}/rotate-secret`,
-        { method: "POST" },
-      ).catch(async () => {
-        // Fallback: some APIs use PUT to regenerate
-        return apiFetch<OAuthClient>(`/api/v1/oauth/clients/${clientId}`, {
-          method: "PUT",
-          body: JSON.stringify({ rotate_secret: true }),
-        });
-      });
-      if (result.client_secret) {
-        setNewSecret({ id: clientId, secret: result.client_secret });
-        setShowSecret(true);
-        setMsg(t("oauth.secretRotated"));
-      }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : t("settings.failedRotate"));
-    } finally {
-      setRotating(null);
-    }
+    confirm({
+      title: t("oauth.rotateConfirm"),
+      variant: "warning",
+      confirmLabel: "Rotate",
+      onConfirm: async () => {
+        setRotating(clientId);
+        try {
+          const result = await apiFetch<{ client_secret?: string }>(
+            `/api/v1/oauth/clients/${clientId}/rotate-secret`,
+            { method: "POST" },
+          ).catch(async () => {
+            // Fallback: some APIs use PUT to regenerate
+            return apiFetch<OAuthClient>(`/api/v1/oauth/clients/${clientId}`, {
+              method: "PUT",
+              body: JSON.stringify({ rotate_secret: true }),
+            });
+          });
+          if (result.client_secret) {
+            setNewSecret({ id: clientId, secret: result.client_secret });
+            setShowSecret(true);
+            setMsg(t("oauth.secretRotated"));
+          }
+        } catch (err) {
+          setError(err instanceof Error ? err.message : t("settings.failedRotate"));
+        } finally {
+          setRotating(null);
+        }
+      },
+    });
   };
 
   const copyToClipboard = (text: string) => {

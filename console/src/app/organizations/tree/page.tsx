@@ -115,6 +115,7 @@ interface ContextMenuState {
 export default function OrganizationTreePage() {
   const { apiFetch } = useApi();
   const { t } = useI18n();
+  const { confirm } = useConfirm();
   const [orgs, setOrgs] = useState<Organization[]>([]);
   const [memberCounts, setMemberCounts] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(true);
@@ -446,14 +447,21 @@ export default function OrganizationTreePage() {
   const handleDelete = async (orgId: string) => {
     const org = orgMap.get(orgId);
     if (!org) return;
-    if (!window.confirm(`Delete "${org.name}" and all its sub-organizations?`)) return;
-    try {
-      await apiFetch(`/api/v1/orgs/${orgId}`, { method: "DELETE" });
-      setMsg(`Deleted "${org.name}"`);
-      loadData();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to delete organization");
-    }
+    confirm({
+      title: `Delete "${org.name}"?`,
+      description: "All sub-organizations will also be deleted.",
+      variant: "danger",
+      confirmLabel: "Delete",
+      onConfirm: async () => {
+        try {
+          await apiFetch(`/api/v1/orgs/${orgId}`, { method: "DELETE" });
+          setMsg(`Deleted "${org.name}"`);
+          loadData();
+        } catch (err) {
+          setError(err instanceof Error ? err.message : "Failed to delete organization");
+        }
+      },
+    });
   };
 
   const handleMove = async (orgId: string, direction: "up" | "down") => {
