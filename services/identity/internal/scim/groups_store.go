@@ -62,17 +62,14 @@ func dbGetGroup(ctx context.Context, pool *pgxpool.Pool, id string) (*SCIMGroup,
 	return g, nil
 }
 
-// dbListGroups returns all persisted SCIM groups for a tenant (uuid.Nil
-// tenant lists all, preserving the previous tenant-agnostic behavior).
+// dbListGroups returns all persisted SCIM groups for a tenant.
+// Fail-closed: if tenantID is uuid.Nil, returns empty to prevent cross-tenant leak.
 func dbListGroups(ctx context.Context, pool *pgxpool.Pool, tenantID uuid.UUID) ([]SCIMGroup, error) {
-	query := `SELECT id, name FROM scim_groups`
-	args := []any{}
-	if tenantID != uuid.Nil {
-		query += ` WHERE tenant_id = $1`
-		args = append(args, tenantID)
+	if tenantID == uuid.Nil {
+		return nil, nil
 	}
-	query += ` ORDER BY name`
-	rows, err := pool.Query(ctx, query, args...)
+	query := `SELECT id, name FROM scim_groups WHERE tenant_id = $1 ORDER BY name`
+	rows, err := pool.Query(ctx, query, tenantID)
 	if err != nil {
 		return nil, err
 	}
