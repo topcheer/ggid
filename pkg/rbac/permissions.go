@@ -266,3 +266,38 @@ type PoolExecutor interface {
 type CommandTag interface {
 	RowsAffected() int64
 }
+
+// DefaultRolePermissionKeys returns the permission keys that should be assigned
+// to each system role at bootstrap time. This ensures that a freshly bootstrapped
+// instance has working roles with appropriate permissions without manual setup.
+//
+// Role hierarchy:
+//   - platform:admin: ALL permissions (instance + tenant)
+//   - tenant:admin:   ALL tenant-level permissions (no instance-level)
+//   - tenant:auditor: Read-only tenant-level permissions
+//   - user:self:      Self-service permissions only
+func DefaultRolePermissionKeys() map[string][]string {
+	result := make(map[string][]string)
+
+	for _, sp := range SystemPermissions {
+		// platform:admin gets everything
+		result["platform:admin"] = append(result["platform:admin"], sp.Key)
+
+		if sp.Level == LevelTenant {
+			// tenant:admin gets all tenant-level permissions
+			result["tenant:admin"] = append(result["tenant:admin"], sp.Key)
+
+			// tenant:auditor gets read-only subset
+			if sp.Action == "read" || sp.Action == "read_integrity" || sp.Action == "export" {
+				result["tenant:auditor"] = append(result["tenant:auditor"], sp.Key)
+			}
+		}
+
+		// user:self gets self-service permissions
+		if sp.Scope == "own" {
+			result["user:self"] = append(result["user:self"], sp.Key)
+		}
+	}
+
+	return result
+}

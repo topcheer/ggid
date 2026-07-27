@@ -12,6 +12,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
+	"github.com/ggid/ggid/pkg/rbac"
 )
 
 // --- Webhook Event Catalog ---
@@ -336,6 +337,28 @@ func (gw *Gateway) handleSystemBootstrap(w http.ResponseWriter, r *http.Request)
 				log.Printf("bootstrap: role %s assigned (status %d)", role.key, assignResp.StatusCode)
 				assignResp.Body.Close()
 			}
+		}
+	}
+
+	// Step 2c: Seed default role-permission assignments via direct DB.
+	// This ensures a freshly bootstrapped instance has working roles with
+	// appropriate permissions. Without this, admin login produces a JWT
+	// with empty permissions array — all API calls return 403.
+	if dbURL != "" {
+		if conn, err := pgx.Connect(r.Context(), dbURL); err == nil {
+			rolePerms := rbac.DefaultRolePermissionKeys()
+			for roleKey, permKeys := range rolePerms {
+				for _, pk := range permKeys {
+					conn.Exec(r.Context(),
+						`INSERT INTO role_permissions (role_id, permission_id)
+						 SELECT r.id, p.id FROM roles r, permissions p
+						 WHERE r.key = $1 AND p.key = $2
+						 ON CONFLICT DO NOTHING`,
+						roleKey, pk)
+				}
+			}
+			conn.Close(r.Context())
+			log.Printf("bootstrap: seeded default role-permission assignments")
 		}
 	}
 
