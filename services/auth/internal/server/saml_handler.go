@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
+	"net/url"
 	"os"
 	"strings"
 
@@ -15,6 +16,19 @@ import (
 )
 
 // --- SAML IdP Endpoints ---
+
+// publicURIFromRequest derives the public base URL from the request or PUBLIC_URL env.
+func publicURIFromRequest(r *http.Request) string {
+	publicURL := os.Getenv("PUBLIC_URL")
+	if publicURL != "" {
+		return strings.TrimRight(publicURL, "/")
+	}
+	scheme := "https"
+	if r.TLS == nil && r.Host != "" && !strings.Contains(r.Host, "ggid.") {
+		scheme = "http"
+	}
+	return scheme + "://" + r.Host
+}
 
 // GET /saml/metadata — returns SP metadata XML for IdP configuration
 func (h *Handler) handleSAMLMetadata(w http.ResponseWriter, r *http.Request) {
@@ -106,8 +120,10 @@ func (h *Handler) handleSAMLACS(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Validate conditions (time window, audience)
-	if err := assertion.ValidateConditions(); err != nil {
+	// Validate conditions (time window, audience, subject confirmation)
+	// Expected audience = our SP entityID (derived from request)
+	spEntityID := publicURIFromRequest(r) + "/saml/metadata"
+	if err := assertion.ValidateConditionsWithAudience(spEntityID); err != nil {
 		slog.Error("SAML ACS: conditions validation failed", "error", err)
 		writeError(w, http.StatusForbidden, "SAML assertion conditions not met")
 		return
@@ -153,9 +169,9 @@ func (h *Handler) handleSAMLACS(w http.ResponseWriter, r *http.Request) {
 		redirectURL += "?"
 	}
 	redirectURL += fmt.Sprintf("saml_session=%s&email=%s&name=%s",
-		sessionID,
-		userEmail,
-		userName,
+		url.QueryEscape(sessionID),
+		url.QueryEscape(userEmail),
+		url.QueryEscape(userName),
 	)
 
 	http.Redirect(w, r, redirectURL, http.StatusFound)

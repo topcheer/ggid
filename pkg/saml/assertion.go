@@ -75,10 +75,21 @@ func ParseAssertion(rawXML []byte) (*SAMLAssertion, error) {
 	return &assertion, nil
 }
 
-// ValidateConditions checks that the assertion is within its validity window.
+// ValidateConditions checks that the assertion is within its validity window,
+// the audience restriction matches the expected SP, and the subject confirmation
+// data is valid (bearer confirmation with NotOnOrAfter).
+// expectedAudience is the SP's entityID. Pass empty string to skip audience
+// validation (not recommended for production).
 func (a *SAMLAssertion) ValidateConditions() error {
+	return a.ValidateConditionsWithAudience("")
+}
+
+// ValidateConditionsWithAudience validates conditions with audience restriction
+// enforcement. The expectedAudience should be the SP's entityID.
+func (a *SAMLAssertion) ValidateConditionsWithAudience(expectedAudience string) error {
 	now := time.Now().UTC()
 
+	// --- Conditions: time window ---
 	if a.Conditions.NotBefore != "" {
 		notBefore, err := time.Parse(time.RFC3339, a.Conditions.NotBefore)
 		if err == nil && now.Before(notBefore.Add(-2 * time.Minute)) {
@@ -90,6 +101,31 @@ func (a *SAMLAssertion) ValidateConditions() error {
 		notOnOrAfter, err := time.Parse(time.RFC3339, a.Conditions.NotOnOrAfter)
 		if err == nil && !now.Before(notOnOrAfter) {
 			return fmt.Errorf("assertion expired (NotOnOrAfter=%s)", a.Conditions.NotOnOrAfter)
+		}
+	}
+
+	// --- Conditions: AudienceRestriction ---
+	if expectedAudience != "" {
+		if a.Conditions.AudienceRestriction.Audience == "" {
+			return fmt.Errorf("assertion has no AudienceRestriction")
+		}
+		if a.Conditions.AudienceRestriction.Audience != expectedAudience {
+			return fmt.Errorf("assertion audience %q does not match expected %q",
+				a.Conditions.AudienceRestriction.Audience, expectedAudience)
+		}
+	}
+
+	// --- SubjectConfirmation: bearer method + NotOnOrAfter ---
+	method := a.Subject.SubjectConfirmation.Method
+	if method != "" && method != "urn:oasis:names:tc:SAML:2.0:cm:bearer" {
+		return fmt.Errorf("unsupported SubjectConfirmation method: %s", method)
+	}
+
+	scd := a.Subject.SubjectConfirmation.SubjectConfirmationData
+	if scd.NotOnOrAfter != "" {
+		expiry, err := time.Parse(time.RFC3339, scd.NotOnOrAfter)
+		if err == nil && !now.Before(expiry) {
+			return fmt.Errorf("subject confirmation expired (NotOnOrAfter=%s)", scd.NotOnOrAfter)
 		}
 	}
 
