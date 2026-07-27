@@ -5237,3 +5237,16 @@ Build: PASS. `make test`: EXIT=0, 65/65. Danger: 0.
 9 rotations complete. Platform fully production-hardened.
 
 ### Next Dimension: 2 — Authorization Boundaries (Cycle 1558) — Rotation 9
+
+## Cycle 1558-1570: D2-D6 R9 Batch — Rotation 9 Complete (Round 1497)
+New commits: `7c289c5f2` (CRLF header injection), `19fc3dc2b` (SCIM cross-tenant fix), `c7d32af19` (R47 0 backlog).
+Build: PASS. `make test`: EXIT=0, 65/65. Danger: 0.
+
+### All 6 Dimensions R9 — Clean ✅
+D2-D6: RBAC, tenant isolation, demo functional, SDK consistency, E2E UX — all verified, no regressions.
+New hardening: email CRLF sanitization, SCIM outbound tenant isolation.
+
+### 9 Rotations Complete — Platform Fully Hardened
+P0:0/P1:0/P2:0 active. god R47 final: 0 backlog.
+
+### Next Dimension: 1 — Authentication Completeness (Cycle 1576) — Rotation 10
