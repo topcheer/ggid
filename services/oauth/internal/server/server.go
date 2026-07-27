@@ -759,6 +759,7 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 			}
 			resp, tokenErr = oauthSvc.JWTBearerGrant(ctx, &service.JWTBearerRequest{
 				TenantID:  tenantID,
+				ClientID:  clientID,
 				Assertion: assertion,
 				Scope:     scopes,
 				Issuer:    cfg.Issuer,

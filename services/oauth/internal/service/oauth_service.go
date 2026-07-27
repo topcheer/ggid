@@ -3153,6 +3153,7 @@ func cryptoRandInt(max int) int {
 // JWTBearerRequest holds parameters for the jwt-bearer grant type.
 type JWTBearerRequest struct {
 	TenantID  uuid.UUID
+	ClientID  string // the OAuth client making the request
 	Assertion string // the third-party-signed JWT
 	Scope     []string
 	Issuer    string
@@ -3165,18 +3166,11 @@ func (s *OAuthService) JWTBearerGrant(ctx context.Context, req *JWTBearerRequest
 		return nil, fmt.Errorf("assertion is required")
 	}
 
-	// Step 1: Parse assertion header to extract 'iss' and 'kid' without verification.
-	unverifiedToken, _, err := jwt.Parse(req.Assertion, func(t *jwt.Token) (any, error) {
-		return nil, nil // return nil key to skip verification on this pass
-	})
-	if unverifiedToken == nil {
-		// Parse fails with nil key, but we can still extract claims from the error path.
-		// Use ParseUnverified-equivalent via manual decode.
-		parser := jwt.NewParser(jwt.WithoutClaimsValidation())
-		unverifiedToken, err = parser.ParseUnverified(req.Assertion, jwt.MapClaims{})
-		if err != nil {
-			return nil, fmt.Errorf("malformed assertion JWT: %w", err)
-		}
+	// Step 1: Parse assertion to extract header claims without signature verification.
+	parser := jwt.NewParser(jwt.WithoutClaimsValidation())
+	unverifiedToken, _, err := parser.ParseUnverified(req.Assertion, jwt.MapClaims{})
+	if err != nil {
+		return nil, fmt.Errorf("malformed assertion JWT: %w", err)
 	}
 
 	claims, ok := unverifiedToken.Claims.(jwt.MapClaims)

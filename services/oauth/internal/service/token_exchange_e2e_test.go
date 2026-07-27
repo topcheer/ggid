@@ -39,8 +39,8 @@ func TestTokenExchange_FullFlow(t *testing.T) {
 	if resp.AccessToken == "" {
 		t.Fatal("exchanged access token is empty")
 	}
-	if resp.TokenType != "N_A" {
-		t.Fatalf("expected token_type=N_A, got %s", resp.TokenType)
+	if resp.TokenType != "Bearer" {
+		t.Fatalf("expected token_type=Bearer, got %s", resp.TokenType)
 	}
 	if resp.ExpiresIn != 3600 {
 		t.Fatalf("expected expires_in=3600, got %d", resp.ExpiresIn)
