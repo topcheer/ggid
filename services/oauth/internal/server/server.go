@@ -721,14 +721,15 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 			// Inject client IP and User-Agent for session audit tracking.
 			ctx = service.WithClientInfo(ctx, r.RemoteAddr, r.UserAgent())
 			resp, tokenErr = oauthSvc.PasswordGrant(ctx, &service.PasswordGrantRequest{
-				TenantID:   tenantID,
-				Username:   r.FormValue("username"),
-				Password:   r.FormValue("password"),
-				ClientID:   clientID,
-				Scope:      scopes,
-				Audience:   r.FormValue("audience"),
-				MFACode:    r.FormValue("mfa_code"),
-				BackupCode: r.FormValue("backup_code"),
+				TenantID:     tenantID,
+				Username:     r.FormValue("username"),
+				Password:     r.FormValue("password"),
+				ClientID:     clientID,
+				ClientSecret: r.FormValue("client_secret"),
+				Scope:        scopes,
+				Audience:     r.FormValue("audience"),
+				MFACode:      r.FormValue("mfa_code"),
+				BackupCode:   r.FormValue("backup_code"),
 			})
 		case "urn:ietf:params:oauth:grant-type:device_code":
 			resp, tokenErr = oauthSvc.PollDeviceToken(ctx, r.FormValue("device_code"), clientID)
@@ -810,6 +811,15 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 				writeJSON(w, http.StatusBadRequest, map[string]string{
 					"error":             "mfa_required",
 					"error_description": "multi-factor authentication is required",
+				})
+				return
+			}
+			// RFC 6749 §5.2: client authentication failures return invalid_client (HTTP 401)
+			if strings.Contains(errMsg, "client authentication") || strings.Contains(errMsg, "client not found") {
+				w.Header().Set("WWW-Authenticate", "Basic")
+				writeJSON(w, http.StatusUnauthorized, map[string]string{
+					"error":             "invalid_client",
+					"error_description": errMsg,
 				})
 				return
 			}

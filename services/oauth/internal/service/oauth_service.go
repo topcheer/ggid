@@ -18,6 +18,7 @@ import (
 	"log/slog"
 	"math/big"
 	"net"
+	"net/http"
 	"net/url"
 	"strconv"
 	"strings"
@@ -2036,14 +2037,15 @@ func (s *OAuthService) issueClientAccessToken(tenantID uuid.UUID, audience, clie
 
 // PasswordGrantRequest holds parameters for the password grant (RFC 6749 §4.3).
 type PasswordGrantRequest struct {
-	TenantID   uuid.UUID
-	Username   string
-	Password   string
-	ClientID   string
-	Scope      []string
-	Audience   string // optional target audience (defaults to client_id)
-	MFACode    string // optional TOTP code for users with MFA enrolled
-	BackupCode string // optional single-use backup code
+	TenantID     uuid.UUID
+	Username     string
+	Password     string
+	ClientID     string
+	ClientSecret string // required for confidential clients (RFC 6749 §4.3.2)
+	Scope        []string
+	Audience     string // optional target audience (defaults to client_id)
+	MFACode      string // optional TOTP code for users with MFA enrolled
+	BackupCode   string // optional single-use backup code
 }
 
 // PasswordGrant authenticates a user with username/password and issues tokens.
@@ -2065,6 +2067,17 @@ func (s *OAuthService) PasswordGrant(ctx context.Context, req *PasswordGrantRequ
 	}
 	if !client.SupportsGrantType("password") {
 		return nil, errors.InvalidArgument("client does not support password grant")
+	}
+
+	// SECURITY (RFC 6749 §4.3.2): confidential clients MUST authenticate.
+	if client.IsConfidential() {
+		if req.ClientSecret == "" {
+			return nil, errors.Unauthenticated("client authentication required for confidential clients")
+		}
+		ok, _ := pkgcrypto.VerifyPassword(req.ClientSecret, client.ClientSecretHash)
+		if !ok {
+			return nil, errors.Unauthenticated("client authentication failed")
+		}
 	}
 
 	// 2. Verify credentials via database lookup.
@@ -2686,12 +2699,44 @@ func (s *OAuthService) ExchangeToken(ctx context.Context, req *TokenExchangeRequ
 		return nil, fmt.Errorf("subject_token missing 'sub' claim")
 	}
 
-	// Issue a new access token with reduced scope/audience.
+	// Issue a new access token with reduced scope/audience (P2-4: issue real JWT, not fake token).
+	now := time.Now()
+	expiresAt := now.Add(1 * time.Hour)
+	tenantIDStr := getStringClaim(claims, "tenant_id")
+	if tenantIDStr == "" {
+		tenantIDStr = "00000000-0000-0000-0000-000000000000"
+	}
+
+	scopeStr := ""
+	if len(req.Scope) > 0 {
+		scopeStr = strings.Join(req.Scope, " ")
+	}
+
+	exchangedClaims := jwt.MapClaims{
+		"iss":               s.issuer,
+		"sub":               sub,
+		"aud":               req.Audience,
+		"tenant_id":         tenantIDStr,
+		"iat":               now.Unix(),
+		"exp":               expiresAt.Unix(),
+		"jti":               uuid.New().String(),
+		"scope":             scopeStr,
+		"exchanged_from":    req.SubjectTokenType,
+		}
+
+	exchangedToken := jwt.NewWithClaims(s.signingMethod(), exchangedClaims)
+	exchangedToken.Header["kid"] = s.keyProvider.Metadata().KeyID
+
+	signedToken, err := exchangedToken.SignedString(s.keyProvider.Signer())
+	if err != nil {
+		return nil, fmt.Errorf("sign exchanged token: %w", err)
+	}
+
 	tokenResp := &TokenResponse{
-		AccessToken: "exchanged_" + uuid.New().String(),
-		TokenType:   "N_A",
+		AccessToken: signedToken,
+		TokenType:   "Bearer",
 		ExpiresIn:   3600,
-		Scope:       strings.Join(req.Scope, " "),
+		Scope:       scopeStr,
 	}
 
 	return tokenResp, nil
@@ -2993,6 +3038,77 @@ func (s *OAuthService) ParseBackchannelLogoutToken(tokenStr string) (jwt.MapClai
 }
 
 // signingMethod returns the jwt.SigningMethod matching the key provider algorithm.
+// fetchExternalIssuerKey retrieves the RSA public key for verifying a JWT
+// assertion issued by an external issuer. It queries the OAuth client's
+// jwks_uri if configured, or returns an error.
+func (s *OAuthService) fetchExternalIssuerKey(ctx context.Context, issuer, clientID string, header map[string]any) (any, error) {
+	if clientID == "" {
+		return nil, fmt.Errorf("client_id required for external issuer assertion")
+	}
+
+	// Look up the OAuth client to get its JWKS URI.
+	var jwksURI string
+	err := s.pool.QueryRow(ctx,
+		`SELECT COALESCE(jwks_uri, '') FROM oauth_clients WHERE client_id = $1`,
+		clientID).Scan(&jwksURI)
+	if err != nil || jwksURI == "" {
+		return nil, fmt.Errorf("no jwks_uri registered for client %s: %w", clientID, err)
+	}
+
+	// Fetch JWKS from the client's endpoint.
+	req, err := http.NewRequestWithContext(ctx, "GET", jwksURI, nil)
+	if err != nil {
+		return nil, fmt.Errorf("create JWKS request: %w", err)
+	}
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("fetch JWKS from %s: %w", jwksURI, err)
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != 200 {
+		return nil, fmt.Errorf("JWKS endpoint returned %d", resp.StatusCode)
+	}
+
+	var jwks struct {
+		Keys []map[string]any `json:"keys"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&jwks); err != nil {
+		return nil, fmt.Errorf("decode JWKS: %w", err)
+	}
+
+	// Find the key matching the assertion's kid header.
+	kid, _ := header["kid"].(string)
+	for _, key := range jwks.Keys {
+		if kid != "" {
+			if keyKid, _ := key["kid"].(string); keyKid != kid {
+				continue
+			}
+		}
+		// Convert JWK to RSA public key.
+		nStr, _ := key["n"].(string)
+		eStr, _ := key["e"].(string)
+		if nStr == "" || eStr == "" {
+			continue
+		}
+		nBytes, err := base64.RawURLEncoding.DecodeString(nStr)
+		if err != nil {
+			continue
+		}
+		eBytes, err := base64.RawURLEncoding.DecodeString(eStr)
+		if err != nil {
+			continue
+		}
+		n := new(big.Int).SetBytes(nBytes)
+		e := 0
+		for _, b := range eBytes {
+			e = e<<8 + int(b)
+		}
+		return &rsa.PublicKey{N: n, E: e}, nil
+	}
+
+	return nil, fmt.Errorf("no matching key found in JWKS for kid %q", kid)
+}
+
 func (s *OAuthService) signingMethod() jwt.SigningMethod {
 	alg := s.keyProvider.Metadata().Algorithm
 	switch alg {
@@ -3049,21 +3165,29 @@ func (s *OAuthService) JWTBearerGrant(ctx context.Context, req *JWTBearerRequest
 		return nil, fmt.Errorf("assertion is required")
 	}
 
-	// Verify JWT assertion signature (P1-13: was ParseUnverified — RFC 7523 §3).
-	pubKey := s.keyProvider.Public()
-	token, err := jwt.Parse(req.Assertion, func(t *jwt.Token) (any, error) {
-		if _, ok := t.Method.(*jwt.SigningMethodRSA); !ok {
-			return nil, fmt.Errorf("unexpected signing method: %v", t.Header["alg"])
-		}
-		return pubKey, nil
+	// Step 1: Parse assertion header to extract 'iss' and 'kid' without verification.
+	unverifiedToken, _, err := jwt.Parse(req.Assertion, func(t *jwt.Token) (any, error) {
+		return nil, nil // return nil key to skip verification on this pass
 	})
-	if err != nil {
-		return nil, fmt.Errorf("assertion signature verification failed: %w", err)
+	if unverifiedToken == nil {
+		// Parse fails with nil key, but we can still extract claims from the error path.
+		// Use ParseUnverified-equivalent via manual decode.
+		parser := jwt.NewParser(jwt.WithoutClaimsValidation())
+		unverifiedToken, err = parser.ParseUnverified(req.Assertion, jwt.MapClaims{})
+		if err != nil {
+			return nil, fmt.Errorf("malformed assertion JWT: %w", err)
+		}
 	}
 
-	claims, ok := token.Claims.(jwt.MapClaims)
+	claims, ok := unverifiedToken.Claims.(jwt.MapClaims)
 	if !ok {
 		return nil, fmt.Errorf("invalid assertion claims")
+	}
+
+	// Extract issuer (iss) — who signed this assertion.
+	iss, _ := claims["iss"].(string)
+	if iss == "" {
+		return nil, fmt.Errorf("assertion missing 'iss' claim")
 	}
 
 	// Extract subject (sub) — the user/service this token is for.
@@ -3072,8 +3196,43 @@ func (s *OAuthService) JWTBearerGrant(ctx context.Context, req *JWTBearerRequest
 		return nil, fmt.Errorf("assertion missing 'sub' claim")
 	}
 
-	// Extract issuer (iss) — who signed this assertion.
-	iss, _ := claims["iss"].(string)
+	// Step 2: Determine the verification key based on the assertion issuer.
+	// P0-2 fix: Do NOT use the AS's own key — verify with the correct issuer key.
+	var verifyKey any
+	if iss == s.issuer {
+		// Assertion issued by GGID itself (e.g., delegation/impersonation).
+		verifyKey = s.keyProvider.Public()
+	} else {
+		// External issuer: fetch key from client's JWKS or configured trusted keys.
+		// Look up the OAuth client by issuer to get its JWKS URI.
+		externalKey, fetchErr := s.fetchExternalIssuerKey(ctx, iss, req.ClientID, unverifiedToken.Header)
+		if fetchErr != nil {
+			return nil, fmt.Errorf("cannot verify assertion from issuer %q: %w", iss, fetchErr)
+		}
+		verifyKey = externalKey
+	}
+
+	// Step 3: Verify the assertion signature with the correct key.
+	token, err := jwt.Parse(req.Assertion, func(t *jwt.Token) (any, error) {
+		if _, ok := t.Method.(*jwt.SigningMethodRSA); !ok {
+			return nil, fmt.Errorf("unexpected signing method: %v", t.Header["alg"])
+		}
+		return verifyKey, nil
+	})
+	if err != nil {
+		return nil, fmt.Errorf("assertion signature verification failed: %w", err)
+	}
+
+	verifiedClaims, ok := token.Claims.(jwt.MapClaims)
+	if !ok {
+		return nil, fmt.Errorf("invalid assertion claims after verification")
+	}
+
+	// Re-extract sub from verified claims.
+	sub, ok = verifiedClaims["sub"].(string)
+	if !ok || sub == "" {
+		return nil, fmt.Errorf("assertion missing 'sub' claim")
+	}
 
 	// Verify expiration.
 	exp, ok := claims["exp"].(float64)
