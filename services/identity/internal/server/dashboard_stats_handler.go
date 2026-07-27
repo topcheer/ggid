@@ -44,42 +44,49 @@ func (h *HTTPHandler) handleDashboardStats(w http.ResponseWriter, r *http.Reques
 		}
 
 		// Set RLS context for this pooled connection's queries
-		if tenantID != nil {
-			_, _ = pool.Exec(ctx, `SET app.tenant_id = $1`, tenantID.String())
-		}
+			if tenantID != nil {
+				_, _ = pool.Exec(ctx, "SELECT set_config('app.tenant_id', $1, true)", tenantID.String())
+			}
 
-		// Total users (non-deleted)
-		_ = pool.QueryRow(ctx, `
-			SELECT count(*) FROM users WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1)
-		`, tenantID).Scan(&stats.TotalUsers)
+			// Total users (non-deleted)
+			_ = pool.QueryRow(ctx, `
+				SELECT count(*) FROM users WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1)
+			`, tenantID).Scan(&stats.TotalUsers)
 
-		// Active sessions (non-revoked, created in last 24h)
-		_ = pool.QueryRow(ctx, `
-			SELECT count(*) FROM sessions WHERE revoked_at IS NULL AND created_at > NOW() - INTERVAL '24 hours'
-		`).Scan(&stats.ActiveSessions)
+			// Active sessions (non-revoked, created in last 24h)
+			_ = pool.QueryRow(ctx, `
+				SELECT count(*) FROM sessions WHERE revoked_at IS NULL AND created_at > NOW() - INTERVAL '24 hours'
+				AND ($1::uuid IS NULL OR tenant_id = $1)
+			`, tenantID).Scan(&stats.ActiveSessions)
 
-		// OAuth clients count
-		_ = pool.QueryRow(ctx, `SELECT count(*) FROM oauth_clients WHERE enabled = true`).Scan(&stats.OAuthClients)
+			// OAuth clients count
+			_ = pool.QueryRow(ctx, `
+				SELECT count(*) FROM oauth_clients WHERE enabled = true
+				AND ($1::uuid IS NULL OR tenant_id = $1)
+			`, tenantID).Scan(&stats.OAuthClients)
 
-		// Login stats from audit_events (auth_events table doesn't exist)
-		since := time.Now().Add(-24 * time.Hour)
-		_ = pool.QueryRow(ctx, `
-			SELECT count(*) FILTER (WHERE result = 'failure') AS failed,
-			       count(*) FILTER (WHERE result = 'success') AS success
-			FROM audit_events WHERE action = 'user.login' AND created_at > $1
-		`, since).Scan(&stats.FailedLogins24h, &stats.SuccessfulLogins24h)
+			// Login stats from audit_events
+			since := time.Now().Add(-24 * time.Hour)
+			_ = pool.QueryRow(ctx, `
+				SELECT count(*) FILTER (WHERE result = 'failure') AS failed,
+				       count(*) FILTER (WHERE result = 'success') AS success
+				FROM audit_events WHERE action = 'user.login' AND created_at > $1
+				AND ($2::uuid IS NULL OR tenant_id = $2)
+			`, since, tenantID).Scan(&stats.FailedLogins24h, &stats.SuccessfulLogins24h)
 
-		// Audit events from last 24h
-		_ = pool.QueryRow(ctx, `
-			SELECT count(*) FROM audit_events WHERE created_at > $1
-		`, since).Scan(&stats.AuditEvents24h)
+			// Audit events from last 24h
+			_ = pool.QueryRow(ctx, `
+				SELECT count(*) FROM audit_events WHERE created_at > $1
+				AND ($2::uuid IS NULL OR tenant_id = $2)
+			`, since, tenantID).Scan(&stats.AuditEvents24h)
 
 		// MFA enrollment rate from mfa_devices table
-		if stats.TotalUsers > 0 {
-			var mfaCount int
-			_ = pool.QueryRow(ctx, `
-				SELECT count(DISTINCT user_id) FROM mfa_devices WHERE verified_at IS NOT NULL
-			`).Scan(&mfaCount)
+			if stats.TotalUsers > 0 {
+				var mfaCount int
+				_ = pool.QueryRow(ctx, `
+					SELECT count(DISTINCT user_id) FROM mfa_devices WHERE verified_at IS NOT NULL
+					AND ($1::uuid IS NULL OR tenant_id = $1)
+				`, tenantID).Scan(&mfaCount)
 			if mfaCount > 0 {
 				stats.MFAEnrollmentRate = (mfaCount * 100) / stats.TotalUsers
 			}
