@@ -3190,31 +3190,34 @@ func (s *OAuthService) JWTBearerGrant(ctx context.Context, req *JWTBearerRequest
 		return nil, fmt.Errorf("assertion missing 'sub' claim")
 	}
 
-	// Step 2: Determine the verification key based on the assertion issuer.
-	// P0-2 fix: Do NOT use the AS's own key — verify with the correct issuer key.
-	var verifyKey any
-	if iss == s.issuer {
-		// Assertion issued by GGID itself (e.g., delegation/impersonation).
-		verifyKey = s.keyProvider.Public()
-	} else {
-		// External issuer: fetch key from client's JWKS or configured trusted keys.
-		// Look up the OAuth client by issuer to get its JWKS URI.
-		externalKey, fetchErr := s.fetchExternalIssuerKey(ctx, iss, req.ClientID, unverifiedToken.Header)
-		if fetchErr != nil {
-			return nil, fmt.Errorf("cannot verify assertion from issuer %q: %w", iss, fetchErr)
-		}
-		verifyKey = externalKey
-	}
-
-	// Step 3: Verify the assertion signature with the correct key.
+	// Step 2: Try verifying with AS key first (for GGID-issued delegation assertions).
+	// If that fails and iss is external, try fetching the external issuer's JWKS key.
+	asPubKey := s.keyProvider.Public()
 	token, err := jwt.Parse(req.Assertion, func(t *jwt.Token) (any, error) {
 		if _, ok := t.Method.(*jwt.SigningMethodRSA); !ok {
 			return nil, fmt.Errorf("unexpected signing method: %v", t.Header["alg"])
 		}
-		return verifyKey, nil
+		return asPubKey, nil
 	})
 	if err != nil {
-		return nil, fmt.Errorf("assertion signature verification failed: %w", err)
+		// AS key didn't work. Try external issuer key if client_id provided.
+		if req.ClientID != "" {
+			externalKey, fetchErr := s.fetchExternalIssuerKey(ctx, iss, req.ClientID, unverifiedToken.Header)
+			if fetchErr != nil {
+				return nil, fmt.Errorf("assertion signature verification failed (AS key) and no external key available for issuer %q: %w", iss, fetchErr)
+			}
+			token, err = jwt.Parse(req.Assertion, func(t *jwt.Token) (any, error) {
+				if _, ok := t.Method.(*jwt.SigningMethodRSA); !ok {
+					return nil, fmt.Errorf("unexpected signing method: %v", t.Header["alg"])
+				}
+				return externalKey, nil
+			})
+			if err != nil {
+				return nil, fmt.Errorf("assertion signature verification failed with external key: %w", err)
+			}
+		} else {
+			return nil, fmt.Errorf("assertion signature verification failed: %w", err)
+		}
 	}
 
 	verifiedClaims, ok := token.Claims.(jwt.MapClaims)

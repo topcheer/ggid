@@ -363,6 +363,7 @@ func TestJWTBearerGrant_Expired(t *testing.T) {
 
 	userID := uuid.New()
 	assertion := makeTestAssertion(t, svc, jwt.MapClaims{
+		"iss": "https://test.ggid.dev",
 		"sub": userID.String(),
 		"exp": float64(time.Now().Add(-1 * time.Hour).Unix()),
 	})
@@ -384,6 +385,7 @@ func TestJWTBearerGrant_MissingSub(t *testing.T) {
 
 	now := time.Now()
 	assertion := makeTestAssertion(t, svc, jwt.MapClaims{
+		"iss": "https://test.ggid.dev",
 		"exp": now.Add(1 * time.Hour).Unix(),
 		// no sub claim
 	})
@@ -771,11 +773,11 @@ func TestExchangeToken_Success(t *testing.T) {
 	if resp.AccessToken == "" {
 		t.Error("expected non-empty access_token")
 	}
-	if !strings.HasPrefix(resp.AccessToken, "exchanged_") {
-		t.Errorf("expected 'exchanged_' prefix, got %s", resp.AccessToken)
+	if !strings.HasPrefix(resp.AccessToken, "eyJ") {
+		t.Errorf("expected JWT token, got %s", resp.AccessToken[:20])
 	}
-	if resp.TokenType != "N_A" {
-		t.Errorf("expected N_A, got %s", resp.TokenType)
+	if resp.TokenType != "Bearer" {
+		t.Errorf("expected Bearer, got %s", resp.TokenType)
 	}
 	if resp.ExpiresIn != 3600 {
 		t.Errorf("expected 3600, got %d", resp.ExpiresIn)

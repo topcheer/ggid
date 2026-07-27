@@ -43,8 +43,8 @@ func TestTokenExchangeRFC8693_FullDelegationFlow(t *testing.T) {
 	if resp.AccessToken == "" {
 		t.Error("access_token must be issued")
 	}
-	if resp.TokenType != "N_A" {
-		t.Errorf("token_type should be 'N_A' per RFC 8693, got '%s'", resp.TokenType)
+	if resp.TokenType != "Bearer" {
+		t.Errorf("token_type should be 'Bearer' for exchanged JWT, got '%s'", resp.TokenType)
 	}
 	if resp.ExpiresIn != 3600 {
 		t.Errorf("expires_in should be 3600, got %d", resp.ExpiresIn)
@@ -88,9 +88,12 @@ func TestTokenExchangeRFC8693_WithActorToken(t *testing.T) {
 	if resp.Scope != "read write" {
 		t.Errorf("scope should be 'read write', got '%s'", resp.Scope)
 	}
-	// Token should be prefixed with "exchanged_" indicating delegation
+	// Exchanged token should be a real JWT
 	if resp.AccessToken == "" {
 		t.Error("access_token must be issued")
+	}
+	if len(resp.AccessToken) < 50 {
+		t.Errorf("expected full JWT, got short token: %s", resp.AccessToken)
 	}
 }
 
