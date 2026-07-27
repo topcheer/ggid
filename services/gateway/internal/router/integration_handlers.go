@@ -180,7 +180,8 @@ func (gw *Gateway) handleSystemBootstrap(w http.ResponseWriter, r *http.Request)
 		dbURL = gw.cfg.DatabaseURL
 	}
 	if dbURL == "" {
-		dbURL = "postgres://ggid:ggid-k3s@ggid-postgresql:5432/ggid?sslmode=disable"
+		writeGatewayJSONError(w, http.StatusServiceUnavailable, "database not configured")
+		return
 	}
 	if conn, err := pgx.Connect(r.Context(), dbURL); err == nil {
 		var tenantCount int
@@ -411,7 +412,7 @@ func (gw *Gateway) handleSystemBootstrap(w http.ResponseWriter, r *http.Request)
 		})
 		dbURL := gw.cfg.DatabaseURL
 		if dbURL == "" {
-			dbURL = "postgres://ggid:ggid-k3s@ggid-postgresql:5432/ggid?sslmode=disable"
+			writeGatewayJSONError(w, http.StatusServiceUnavailable, "database not configured"); return
 		}
 		if conn, err := pgx.Connect(r.Context(), dbURL); err == nil {
 			conn.Exec(r.Context(),
@@ -484,7 +485,7 @@ func (gw *Gateway) handleTenantCreate(w http.ResponseWriter, r *http.Request) {
 	// Write to DB
 	dbURL := gw.cfg.DatabaseURL
 	if dbURL == "" {
-		dbURL = "postgres://ggid:ggid-k3s@ggid-postgresql:5432/ggid?sslmode=disable"
+		writeGatewayJSONError(w, http.StatusServiceUnavailable, "database not configured"); return
 	}
 	conn, err := pgx.Connect(r.Context(), dbURL)
 	if err != nil {
@@ -522,7 +523,7 @@ func (gw *Gateway) handleTenantCreate(w http.ResponseWriter, r *http.Request) {
 func (gw *Gateway) handleTenantList(w http.ResponseWriter, r *http.Request) {
 	dbURL := gw.cfg.DatabaseURL
 	if dbURL == "" {
-		dbURL = "postgres://ggid:ggid-k3s@ggid-postgresql:5432/ggid?sslmode=disable"
+		writeGatewayJSONError(w, http.StatusServiceUnavailable, "database not configured"); return
 	}
 	conn, err := pgx.Connect(r.Context(), dbURL)
 	if err != nil {
@@ -576,7 +577,7 @@ func (gw *Gateway) handleTenantDetail(w http.ResponseWriter, r *http.Request) {
 
 	dbURL := gw.cfg.DatabaseURL
 	if dbURL == "" {
-		dbURL = "postgres://ggid:ggid-k3s@ggid-postgresql:5432/ggid?sslmode=disable"
+		writeGatewayJSONError(w, http.StatusServiceUnavailable, "database not configured"); return
 	}
 	conn, err := pgx.Connect(r.Context(), dbURL)
 	if err != nil {
