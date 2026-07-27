@@ -9,6 +9,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/ggid/ggid/pkg/crypto"
 	"github.com/google/uuid"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -132,21 +133,78 @@ func (h *Handler) handleRegister(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusBadRequest, "password must be 8+ chars with upper, lower, and digit")
 		return
 	}
-	// Create user in pending_verification state (would call service).
-	userID := uuid.New().String()
-	// Generate verification token.
+
+	// Extract tenant ID from context (set by gateway)
+	tenantIDStr := tenantFromRequest(r)
+	if tenantIDStr == "" {
+		writeError(w, http.StatusBadRequest, "missing tenant context")
+		return
+	}
+	tenantID, err := uuid.Parse(tenantIDStr)
+	if err != nil {
+		writeError(w, http.StatusBadRequest, "invalid tenant_id")
+		return
+	}
+
+	userID := uuid.New()
+
+	// Create user record in database
+	if h.pool != nil {
+		// Check if username already exists
+		var existingID string
+		err := h.pool.QueryRow(r.Context(),
+			`SELECT id FROM users WHERE username = $1 AND tenant_id = $2`,
+			req.Username, tenantID).Scan(&existingID)
+		if err == nil {
+			writeError(w, http.StatusConflict, "username already exists")
+			return
+		}
+
+		// Insert user with active status (email verification optional in v1)
+		_, err = h.pool.Exec(r.Context(), `
+			INSERT INTO users (id, tenant_id, username, email, status, email_verified)
+			VALUES ($1, $2, $3, $4, 'active', false)`,
+			userID, tenantID, req.Username, req.Email)
+		if err != nil {
+			writeError(w, http.StatusInternalServerError, "failed to create user")
+			return
+		}
+
+		// Hash password and create credential
+		hash, err := crypto.HashPassword(req.Password)
+		if err != nil {
+			writeError(w, http.StatusInternalServerError, "failed to hash password")
+			return
+		}
+		_, err = h.pool.Exec(r.Context(), `
+			INSERT INTO credentials (tenant_id, user_id, type, identifier, secret, enabled)
+			VALUES ($1, $2, 'password', $3, $4, true)`,
+			tenantID, userID, req.Username, hash)
+		if err != nil {
+			writeError(w, http.StatusInternalServerError, "failed to create credential")
+			return
+		}
+
+		// Sync password_hash in users table for LocalProvider login
+		_, _ = h.pool.Exec(r.Context(),
+			`UPDATE users SET password_hash = $2 WHERE id = $1`,
+			userID, hash)
+	}
+
+	// Generate verification token (optional — user can login without verification in v1)
 	var token *VerificationToken
 	if h.verificationRepo != nil {
-		token, _ = h.verificationRepo.CreateToken(r.Context(), userID, "email_verification", 24*time.Hour)
+		token, _ = h.verificationRepo.CreateToken(r.Context(), userID.String(), "email_verification", 24*time.Hour)
 	}
-	writeJSON(w, http.StatusCreated, map[string]any{
-		"status": "registered",
-		"user_id": userID,
-		"state": "pending_verification",
-		"verification_required": true,
-		"message": "check your email for verification link",
-	})
 	_ = token
+
+	writeJSON(w, http.StatusCreated, map[string]any{
+		"status":              "registered",
+		"user_id":             userID.String(),
+		"state":               "active",
+		"verification_required": false,
+		"message":             "registration successful",
+	})
 }
 
 // GET /api/v1/auth/verify-email?token=xxx
