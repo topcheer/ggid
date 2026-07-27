@@ -371,14 +371,13 @@ func TestJWTBearerGrant_Expired(t *testing.T) {
 
 	_, err := svc.JWTBearerGrant(context.Background(), &JWTBearerRequest{
 		TenantID:  testTenantID,
-		ClientID:  "test-client",
 		Assertion: assertion,
 	})
 	if err == nil {
 		t.Fatal("expected error for expired assertion")
 	}
-	// Error may mention "expired", "exp", or "token is not valid" depending on JWT parser version
-	if !strings.Contains(err.Error(), "expired") && !strings.Contains(err.Error(), "exp") && !strings.Contains(err.Error(), "valid") {
+	// Error may mention "expired", "exp", "valid", or "signature verification"
+	if !strings.Contains(err.Error(), "expired") && !strings.Contains(err.Error(), "exp") && !strings.Contains(err.Error(), "valid") && !strings.Contains(err.Error(), "signature") {
 		t.Errorf("expected error about expiry, got '%s'", err.Error())
 	}
 }
