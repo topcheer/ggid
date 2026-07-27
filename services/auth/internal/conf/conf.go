@@ -81,6 +81,7 @@ func Default() *Config {
 				Addr:         ":9001",
 				ReadTimeout:  10 * time.Second,
 				WriteTimeout: 10 * time.Second,
+				IdleTimeout:  120 * time.Second,
 			},
 		},
 		Database: DatabaseConfig{
