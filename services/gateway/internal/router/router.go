@@ -37,6 +37,12 @@ var publicPaths = []string{
 	"/api/v1/auth/mfa/radius/verify",
 	"/api/v1/auth/mfa/yubikey/verify",
 	"/api/v1/auth/mfa/methods",
+	"/api/v1/auth/otp/send",                 // Passwordless OTP (SMS/Email)
+	"/api/v1/auth/otp/verify",               // Passwordless OTP verification
+	"/api/v1/auth/sms-otp/",                 // Backward compat OTP paths
+	"/api/v1/auth/email-otp/",               // Backward compat OTP paths
+	"/api/v1/auth/webauthn/login/begin",     // Passkey login (no JWT yet)
+	"/api/v1/auth/webauthn/login/finish",    // Passkey login completion
 	"/api/v1/identity/tenants/self-register", // B2B onboarding (R1-01)
 	"/api/v1/auth/social/",                   // Social login OAuth flow (R1-02)
 	"/api/v1/healthz",
