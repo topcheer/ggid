@@ -17,6 +17,7 @@ import (
 // Target represents a downstream SCIM endpoint.
 type Target struct {
 	ID          string `json:"id"`
+	TenantID    string `json:"tenant_id"`
 	Name        string `json:"name"`
 	Endpoint    string `json:"endpoint"`     // e.g. https://scim.aws.amazon.com/...
 	AuthTokenRef string `json:"auth_token_ref"` // vault://scim/aws
@@ -104,15 +105,17 @@ func (c *Client) EnsureSchema(ctx context.Context) error {
 	if c.pool == nil {
 		return nil
 	}
-	_, err := c.pool.Exec(ctx, `
+		_, err := c.pool.Exec(ctx, `
 		CREATE TABLE IF NOT EXISTS scim_targets (
 			id TEXT PRIMARY KEY,
-			name TEXT NOT NULL UNIQUE,
+			tenant_id UUID NOT NULL,
+			name TEXT NOT NULL,
 			endpoint TEXT NOT NULL,
 			auth_token_ref TEXT,
 			mapping JSONB DEFAULT '{}',
 			enabled BOOLEAN NOT NULL DEFAULT TRUE,
-			created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+			created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+			UNIQUE (tenant_id, name)
 		);
 		CREATE TABLE IF NOT EXISTS scim_sync_log (
 			id TEXT PRIMARY KEY,
