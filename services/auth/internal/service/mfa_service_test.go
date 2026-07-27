@@ -235,8 +235,10 @@ func TestMFAService_VerifyUserCode_Success(t *testing.T) {
 	deviceID, _ := uuid.Parse(resp.DeviceID)
 	_, _ = svc.VerifyMFA(mfaCtx(), deviceID, code)
 
-	// Now verify by user code.
-	code2, _ := totp.GenerateCode(resp.Secret, time.Now())
+	// Now verify by user code. Generate with a slight time offset to
+	// produce a different code than the one used in VerifyMFA above.
+	// If within the same TOTP window, advance time by 30s for a fresh code.
+	code2, _ := totp.GenerateCode(resp.Secret, time.Now().Add(30*time.Second))
 	err := svc.VerifyUserCode(context.Background(), mfaTestTenantID, userID, code2)
 	if err != nil {
 		t.Fatalf("VerifyUserCode failed: %v", err)

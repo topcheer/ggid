@@ -47,7 +47,7 @@ func BeginConditionalUI(req *ConditionalUIRequest, registeredCredentials [][]byt
 
 	uv := req.UserVerification
 	if uv == "" {
-		uv = "preferred"
+		uv = "required"
 	}
 
 	return &ConditionalUIResponse{

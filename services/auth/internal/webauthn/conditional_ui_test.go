@@ -28,8 +28,8 @@ func TestConditionalUI_BeginBasic(t *testing.T) {
 
 func TestConditionalUI_DefaultUserVerification(t *testing.T) {
 	resp := BeginConditionalUI(&ConditionalUIRequest{}, nil)
-	if resp.PublicKey.UserVerification != "preferred" {
-		t.Errorf("expected 'preferred', got '%s'", resp.PublicKey.UserVerification)
+	if resp.PublicKey.UserVerification != "required" {
+		t.Errorf("expected required, got '%s'", resp.PublicKey.UserVerification)
 	}
 }
 

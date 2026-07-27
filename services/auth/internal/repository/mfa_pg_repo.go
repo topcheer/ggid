@@ -87,7 +87,11 @@ func (r *pgMFADeviceRepository) GetDeviceByID(ctx context.Context, tenantID, id 
 		}
 		return nil, fmt.Errorf("get mfa device: %w", err)
 	}
-	device.Secret, _ = ggidcrypto.DecryptTOTPSecret(device.Secret)
+	decrypted, dErr := ggidcrypto.DecryptTOTPSecret(device.Secret)
+	if dErr != nil {
+		return nil, fmt.Errorf("decrypt TOTP secret: %w", dErr)
+	}
+	device.Secret = decrypted
 
 	tx.Commit(ctx)
 	return device, nil
@@ -120,7 +124,11 @@ func (r *pgMFADeviceRepository) ListDevicesByUser(ctx context.Context, tenantID,
 			&device.CreatedAt, &device.UpdatedAt); err != nil {
 			return nil, fmt.Errorf("scan mfa device: %w", err)
 		}
-		device.Secret, _ = ggidcrypto.DecryptTOTPSecret(device.Secret)
+		decrypted, dErr := ggidcrypto.DecryptTOTPSecret(device.Secret)
+		if dErr != nil {
+			return nil, fmt.Errorf("decrypt TOTP secret: %w", dErr)
+		}
+		device.Secret = decrypted
 		devices = append(devices, device)
 	}
 
@@ -154,7 +162,11 @@ func (r *pgMFADeviceRepository) GetEnabledDevice(ctx context.Context, tenantID, 
 	}
 
 	// Decrypt the TOTP secret (stored encrypted in DB).
-	device.Secret, _ = ggidcrypto.DecryptTOTPSecret(device.Secret)
+	decrypted, dErr := ggidcrypto.DecryptTOTPSecret(device.Secret)
+	if dErr != nil {
+		return nil, fmt.Errorf("decrypt TOTP secret: %w", dErr)
+	}
+	device.Secret = decrypted
 
 	tx.Commit(ctx)
 	return device, nil

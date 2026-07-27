@@ -61,9 +61,11 @@ func scanMFA(row pgx.Row) (*domain.MFADevice, error) {
 	}
 	// Decrypt the TOTP secret (stored encrypted in DB).
 	if d.Secret != "" {
-		if decrypted, dErr := ggidcrypto.DecryptTOTPSecret(d.Secret); dErr == nil {
-			d.Secret = decrypted
+		decrypted, dErr := ggidcrypto.DecryptTOTPSecret(d.Secret)
+		if dErr != nil {
+			return nil, fmt.Errorf("decrypt TOTP secret: %w", dErr)
 		}
+		d.Secret = decrypted
 	}
 	return d, nil
 }

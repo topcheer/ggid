@@ -570,10 +570,10 @@ func (h *Handler) beginRegistration(w http.ResponseWriter, r *http.Request) {
 		})
 	}
 
-	// WA-4: explicit AuthenticatorSelection with ResidentKey preferred, UV preferred.
+	// WA-4: explicit AuthenticatorSelection with ResidentKey preferred, UV required.
 	authSel := protocol.AuthenticatorSelection{
 		ResidentKey:      protocol.ResidentKeyRequirementPreferred,
-		UserVerification: protocol.VerificationPreferred,
+		UserVerification: protocol.VerificationRequired,
 	}
 
 	var regOpts []webauthn.RegistrationOption
