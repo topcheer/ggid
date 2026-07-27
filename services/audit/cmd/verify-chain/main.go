@@ -3,6 +3,8 @@ package main
 import (
 	"context"
 	"fmt"
+	"log"
+	"os"
 	"time"
 	"github.com/ggid/ggid/services/audit/internal/domain"
 	"github.com/google/uuid"
@@ -10,8 +12,19 @@ import (
 )
 
 func main() {
-	domain.SetHashChainSecret([]byte("ee24b9b1b112a0c835dcaad305ab32be5d590f5d3ece9f6b4f1930913cbd1357"))
-	pool, _ := pgxpool.New(context.Background(), "postgres://ggid:ggid-k3s@localhost:5432/ggid?sslmode=disable")
+	secret := os.Getenv("AUDIT_HASH_CHAIN_SECRET")
+	if secret == "" {
+		log.Fatal("AUDIT_HASH_CHAIN_SECRET required")
+	}
+	dsn := os.Getenv("DATABASE_URL")
+	if dsn == "" {
+		log.Fatal("DATABASE_URL required")
+	}
+	domain.SetHashChainSecret([]byte(secret))
+	pool, err := pgxpool.New(context.Background(), dsn)
+	if err != nil {
+		log.Fatalf("connect: %v", err)
+	}
 	defer pool.Close()
 
 	rows, _ := pool.Query(context.Background(), "SELECT DISTINCT tenant_id FROM audit_events")

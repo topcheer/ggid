@@ -34,7 +34,7 @@ func main() {
 	}
 	dsn := os.Getenv("DATABASE_URL")
 	if dsn == "" {
-		dsn = "postgres://ggid:ggid-k3s@localhost:15432/ggid"
+		log.Fatal("DATABASE_URL required")
 	}
 	domain.SetHashChainSecret([]byte(secret))
 
