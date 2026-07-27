@@ -461,8 +461,17 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 		// Check for auth_ticket (passwordless verification)
 		if userIDStr == "" {
 			if ticket := r.URL.Query().Get("auth_ticket"); ticket != "" {
-				verifiedUserID, ticketErr := oauthSvc.VerifyAuthTicket(r.Context(), ticket)
+				verifiedUserID, ticketTenantID, ticketErr := oauthSvc.VerifyAuthTicket(r.Context(), ticket)
 				if ticketErr == nil && verifiedUserID != uuid.Nil {
+					// SECURITY: verify ticket's tenant matches the request tenant
+					// to prevent cross-tenant token issuance.
+					if ticketTenantID != tenantID {
+						writeJSON(w, http.StatusForbidden, map[string]string{
+							"error":             "invalid_request",
+							"error_description": "auth ticket tenant mismatch",
+						})
+						return
+					}
 					userIDStr = verifiedUserID.String()
 				}
 			}
