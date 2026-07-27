@@ -55,7 +55,7 @@ export default function ConditionalAccessPage() {
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch(`${API_BASE}/api/v1/policies/conditional-access`, { headers: { ...authHeader() } });
+      const res = await fetch(`${API_BASE}/api/v1/auth/conditional-access/`, { headers: { ...authHeader() } });
       if (res.ok) {
         const d = await res.json();
         setPolicies(Array.isArray(d) ? d : (d.policies || []));
@@ -108,7 +108,7 @@ export default function ConditionalAccessPage() {
               const p = policies.find((x: any) => x.id === id);
               if (!p) return;
               try {
-                await fetch(`${API_BASE}/api/v1/policies/conditional-access?id=${id}`, {
+                await fetch(`${API_BASE}/api/v1/auth/conditional-access/${id}`, {
                   method: "PUT",
                   headers: { "Content-Type": "application/json", ...authHeader() },
                   body: JSON.stringify({ enabled: !p.enabled }),
@@ -126,7 +126,7 @@ export default function ConditionalAccessPage() {
             }}
             onDelete={async (id) => {
               try {
-                await fetch(`${API_BASE}/api/v1/policies/conditional-access?id=${id}`, {
+                await fetch(`${API_BASE}/api/v1/auth/conditional-access/${id}`, {
                   method: "DELETE",
                   headers: { ...authHeader() },
                 });
@@ -154,13 +154,13 @@ export default function ConditionalAccessPage() {
                   conditions: conditionsMap,
                 };
                 if (editing && editing.id) {
-                  await fetch(`${API_BASE}/api/v1/policies/conditional-access?id=${editing.id}`, {
+                  await fetch(`${API_BASE}/api/v1/auth/conditional-access/${editing.id}`, {
                     method: "PUT",
                     headers: { "Content-Type": "application/json", ...authHeader() },
                     body: JSON.stringify(body),
                   });
                 } else {
-                  await fetch(`${API_BASE}/api/v1/policies/conditional-access`, {
+                  await fetch(`${API_BASE}/api/v1/auth/conditional-access/`, {
                     method: "POST",
                     headers: { "Content-Type": "application/json", ...authHeader() },
                     body: JSON.stringify(body),
