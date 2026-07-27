@@ -1615,6 +1615,7 @@ func permissionToJSON(p *domain.Permission) map[string]any {
 		"resource_type": p.ResourceType,
 		"action":        p.Action,
 		"system_perm":   p.SystemPerm,
+		"level":         p.Level,
 	}
 }
 

@@ -32,7 +32,7 @@ func (r *PermissionRepository) Create(ctx context.Context, perm *domain.Permissi
 // ListByTenant returns permissions for a tenant with pagination.
 func (r *PermissionRepository) ListByTenant(ctx context.Context, tenantID uuid.UUID, limit, offset int) ([]*domain.Permission, error) {
 	query := `
-		SELECT id, tenant_id, key, name, resource_type, action, description, system_perm
+		SELECT id, tenant_id, key, name, resource_type, action, description, system_perm, level
 		FROM permissions WHERE tenant_id = $1 OR system_perm = true
 		ORDER BY resource_type, action LIMIT $2 OFFSET $3`
 	rows, err := r.db.Query(ctx, query, tenantID, limit, offset)
@@ -44,7 +44,7 @@ func (r *PermissionRepository) ListByTenant(ctx context.Context, tenantID uuid.U
 	var perms []*domain.Permission
 	for rows.Next() {
 		p := &domain.Permission{}
-		if err := rows.Scan(&p.ID, &p.TenantID, &p.Key, &p.Name, &p.ResourceType, &p.Action, &p.Description, &p.SystemPerm); err != nil {
+		if err := rows.Scan(&p.ID, &p.TenantID, &p.Key, &p.Name, &p.ResourceType, &p.Action, &p.Description, &p.SystemPerm, &p.Level); err != nil {
 			return nil, err
 		}
 		perms = append(perms, p)
@@ -55,7 +55,7 @@ func (r *PermissionRepository) ListByTenant(ctx context.Context, tenantID uuid.U
 // FindByResourceAction retrieves permissions matching a resource type and action.
 func (r *PermissionRepository) FindByResourceAction(ctx context.Context, tenantID uuid.UUID, resourceType, action string) ([]*domain.Permission, error) {
 	query := `
-		SELECT id, tenant_id, key, name, resource_type, action, description, system_perm
+		SELECT id, tenant_id, key, name, resource_type, action, description, system_perm, level
 		FROM permissions
 		WHERE tenant_id = $1 AND resource_type = $2 AND action = $3`
 	rows, err := r.db.Query(ctx, query, tenantID, resourceType, action)
@@ -67,7 +67,7 @@ func (r *PermissionRepository) FindByResourceAction(ctx context.Context, tenantI
 	var perms []*domain.Permission
 	for rows.Next() {
 		p := &domain.Permission{}
-		if err := rows.Scan(&p.ID, &p.TenantID, &p.Key, &p.Name, &p.ResourceType, &p.Action, &p.Description, &p.SystemPerm); err != nil {
+		if err := rows.Scan(&p.ID, &p.TenantID, &p.Key, &p.Name, &p.ResourceType, &p.Action, &p.Description, &p.SystemPerm, &p.Level); err != nil {
 			return nil, err
 		}
 		perms = append(perms, p)

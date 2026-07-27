@@ -58,6 +58,7 @@ type Permission struct {
 	Action       string
 	Description  string
 	SystemPerm   bool
+	Level        string // "instance" or "tenant"
 }
 
 // RolePermission links a role to a permission with optional ABAC conditions.
