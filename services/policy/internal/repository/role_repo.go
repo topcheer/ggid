@@ -173,7 +173,7 @@ func (r *RoleRepository) RevokePermissions(ctx context.Context, roleID uuid.UUID
 // roleIDs should include the role and all its ancestors.
 func (r *RoleRepository) GetRolePermissions(ctx context.Context, roleIDs []uuid.UUID) ([]*domain.Permission, error) {
 	query := `
-		SELECT p.id, p.tenant_id, p.key, p.name, p.resource_type, p.action, p.description, p.system_perm
+		SELECT p.id, p.tenant_id, p.key, p.name, p.resource_type, p.action, p.description, p.system_perm, p.level
 		FROM permissions p
 		JOIN role_permissions rp ON p.id = rp.permission_id
 		WHERE rp.role_id = ANY($1)`
@@ -186,7 +186,7 @@ func (r *RoleRepository) GetRolePermissions(ctx context.Context, roleIDs []uuid.
 	var perms []*domain.Permission
 	for rows.Next() {
 		p := &domain.Permission{}
-		if err := rows.Scan(&p.ID, &p.TenantID, &p.Key, &p.Name, &p.ResourceType, &p.Action, &p.Description, &p.SystemPerm); err != nil {
+		if err := rows.Scan(&p.ID, &p.TenantID, &p.Key, &p.Name, &p.ResourceType, &p.Action, &p.Description, &p.SystemPerm, &p.Level); err != nil {
 			return nil, err
 		}
 		perms = append(perms, p)
