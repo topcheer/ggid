@@ -370,7 +370,7 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 	// Authorize endpoint (GET/POST — creates auth code, redirects)
 	mux.HandleFunc("/oauth/authorize", func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodGet && r.Method != http.MethodPost {
-			writeJSON(w, http.StatusMethodNotAllowed, map[string]string{"error": "method_not_allowed"})
+			writeJSON(w, http.StatusMethodNotAllowed, map[string]any{"error": map[string]string{"code": "method_not_allowed", "message": "method_not_allowed"}})
 			return
 		}
 
@@ -596,7 +596,7 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 	// Token endpoint (POST)
 	mux.HandleFunc("/oauth/token", func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodPost {
-			writeJSON(w, http.StatusMethodNotAllowed, map[string]string{"error": "method_not_allowed"})
+			writeJSON(w, http.StatusMethodNotAllowed, map[string]any{"error": map[string]string{"code": "method_not_allowed", "message": "method_not_allowed"}})
 			return
 		}
 		_ = r.ParseForm()
@@ -876,7 +876,7 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 	// UserInfo endpoint (GET)
 	mux.HandleFunc("/oauth/userinfo", func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodGet && r.Method != http.MethodPost {
-			writeJSON(w, http.StatusMethodNotAllowed, map[string]string{"error": "method_not_allowed"})
+			writeJSON(w, http.StatusMethodNotAllowed, map[string]any{"error": map[string]string{"code": "method_not_allowed", "message": "method_not_allowed"}})
 			return
 		}
 
@@ -902,21 +902,21 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 	// Back-channel logout (OIDC Session Management 1.0)
 	mux.HandleFunc("/oauth/logout", func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodPost {
-			writeJSON(w, http.StatusMethodNotAllowed, map[string]string{"error": "method_not_allowed"})
+			writeJSON(w, http.StatusMethodNotAllowed, map[string]any{"error": map[string]string{"code": "method_not_allowed", "message": "method_not_allowed"}})
 			return
 		}
 		_ = r.ParseForm()
 
 		logoutToken := r.FormValue("logout_token")
 		if logoutToken == "" {
-			writeJSON(w, http.StatusBadRequest, map[string]string{"error": "logout_token is required"})
+			writeJSON(w, http.StatusBadRequest, map[string]any{"error": map[string]string{"code": "invalid_argument", "message": "logout_token is required"}})
 			return
 		}
 
 		// Parse the logout token to extract sub (user ID) and sid (session ID).
 		claims, err := oauthSvc.ParseAccessToken(logoutToken)
 		if err != nil {
-			writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid logout token"})
+			writeJSON(w, http.StatusBadRequest, map[string]any{"error": map[string]string{"code": "invalid_argument", "message": "invalid logout token"}})
 			return
 		}
 
@@ -947,7 +947,7 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 	// Token revocation (RFC 7009 §2.1 requires client authentication)
 	mux.HandleFunc("/oauth/revoke", func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodPost {
-			writeJSON(w, http.StatusMethodNotAllowed, map[string]string{"error": "method_not_allowed"})
+			writeJSON(w, http.StatusMethodNotAllowed, map[string]any{"error": map[string]string{"code": "method_not_allowed", "message": "method_not_allowed"}})
 			return
 		}
 		_ = r.ParseForm()
@@ -989,7 +989,7 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 	// Token revocation route alias (RFC 7009)
 	mux.HandleFunc("/api/v1/oauth/revoke", func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodPost {
-			writeJSON(w, http.StatusMethodNotAllowed, map[string]string{"error": "method_not_allowed"})
+			writeJSON(w, http.StatusMethodNotAllowed, map[string]any{"error": map[string]string{"code": "method_not_allowed", "message": "method_not_allowed"}})
 			return
 		}
 		_ = r.ParseForm()
@@ -1014,7 +1014,7 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 	// Back-channel logout (OIDC Back-Channel Logout)
 	mux.HandleFunc("/api/v1/oauth/backchannel-logout", func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodPost {
-			writeJSON(w, http.StatusMethodNotAllowed, map[string]string{"error": "method_not_allowed"})
+			writeJSON(w, http.StatusMethodNotAllowed, map[string]any{"error": map[string]string{"code": "method_not_allowed", "message": "method_not_allowed"}})
 			return
 		}
 		_ = r.ParseForm()
@@ -1044,12 +1044,12 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 	// Dynamic client registration route alias (RFC 7591)
 	mux.HandleFunc("/api/v1/oauth/register", func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodPost {
-			writeJSON(w, http.StatusMethodNotAllowed, map[string]string{"error": "method_not_allowed"})
+			writeJSON(w, http.StatusMethodNotAllowed, map[string]any{"error": map[string]string{"code": "method_not_allowed", "message": "method_not_allowed"}})
 			return
 		}
 		var req service.DynamicRegistrationRequest
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-			writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid request body"})
+			writeJSON(w, http.StatusBadRequest, map[string]any{"error": map[string]string{"code": "invalid_argument", "message": "invalid request body"}})
 			return
 		}
 		// Inject tenant context from header or query param.
@@ -1069,7 +1069,7 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 	// Token introspection — requires client authentication per RFC 7662 §2.1
 	mux.HandleFunc("/oauth/introspect", func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodPost {
-			writeJSON(w, http.StatusMethodNotAllowed, map[string]string{"error": "method_not_allowed"})
+			writeJSON(w, http.StatusMethodNotAllowed, map[string]any{"error": map[string]string{"code": "method_not_allowed", "message": "method_not_allowed"}})
 			return
 		}
 		_ = r.ParseForm()
@@ -1093,7 +1093,7 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 	})
 	mux.HandleFunc("/api/v1/oauth/introspect", func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodPost {
-			writeJSON(w, http.StatusMethodNotAllowed, map[string]string{"error": "method_not_allowed"})
+			writeJSON(w, http.StatusMethodNotAllowed, map[string]any{"error": map[string]string{"code": "method_not_allowed", "message": "method_not_allowed"}})
 			return
 		}
 		_ = r.ParseForm()
@@ -1118,12 +1118,12 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 	// Dynamic Client Registration (RFC 7591)
 	mux.HandleFunc("/oauth/register", func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodPost {
-			writeJSON(w, http.StatusMethodNotAllowed, map[string]string{"error": "method_not_allowed"})
+			writeJSON(w, http.StatusMethodNotAllowed, map[string]any{"error": map[string]string{"code": "method_not_allowed", "message": "method_not_allowed"}})
 			return
 		}
 		var req service.DynamicRegistrationRequest
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-			writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid request body"})
+			writeJSON(w, http.StatusBadRequest, map[string]any{"error": map[string]string{"code": "invalid_argument", "message": "invalid request body"}})
 			return
 		}
 		// Inject tenant context from header or query param.
@@ -1147,7 +1147,7 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 	// OAuth Consent Screen
 	mux.HandleFunc("/oauth/consent", func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodGet && r.Method != http.MethodPost {
-			writeJSON(w, http.StatusMethodNotAllowed, map[string]string{"error": "method_not_allowed"})
+			writeJSON(w, http.StatusMethodNotAllowed, map[string]any{"error": map[string]string{"code": "method_not_allowed", "message": "method_not_allowed"}})
 			return
 		}
 
@@ -1200,19 +1200,19 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 
 	mux.HandleFunc("/saml/acs", func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodPost {
-			writeJSON(w, http.StatusMethodNotAllowed, map[string]string{"error": "method_not_allowed"})
+			writeJSON(w, http.StatusMethodNotAllowed, map[string]any{"error": map[string]string{"code": "method_not_allowed", "message": "method_not_allowed"}})
 			return
 		}
 		_ = r.ParseForm()
 		samlResponseB64 := r.FormValue("SAMLResponse")
 		if samlResponseB64 == "" {
-			writeJSON(w, http.StatusBadRequest, map[string]string{"error": "missing SAMLResponse"})
+			writeJSON(w, http.StatusBadRequest, map[string]any{"error": map[string]string{"code": "invalid_argument", "message": "missing SAMLResponse"}})
 			return
 		}
 
 		rawXML, err := base64.StdEncoding.DecodeString(samlResponseB64)
 		if err != nil {
-			writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid base64 encoding"})
+			writeJSON(w, http.StatusBadRequest, map[string]any{"error": map[string]string{"code": "invalid_argument", "message": "invalid base64 encoding"}})
 			return
 		}
 
@@ -1234,13 +1234,13 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 		trustCfg, certErr := samlACSTrustConfig(r, pool)
 		if certErr != nil {
 			slog.Warn("SAML ACS: no trusted IdP certificate", "error", certErr)
-			writeJSON(w, http.StatusForbidden, map[string]string{"error": "saml_idp_not_configured", "detail": "no trusted IdP certificate configured"})
+			writeJSON(w, http.StatusForbidden, map[string]any{"error": map[string]string{"code": "permission_denied", "message": "saml_idp_not_configured", "detail": "no trusted IdP certificate configured"}})
 			return
 		}
 		assertion, err := saml.VerifySignedAssertion(rawXML, trustCfg.Cert)
 		if err != nil {
 			slog.Warn("SAML ACS: assertion verification failed", "error", err)
-			writeJSON(w, http.StatusForbidden, map[string]string{"error": "invalid_signature", "detail": "SAML assertion signature verification failed"})
+			writeJSON(w, http.StatusForbidden, map[string]any{"error": map[string]string{"code": "permission_denied", "message": "invalid_signature", "detail": "SAML assertion signature verification failed"}})
 			return
 		}
 
@@ -1250,14 +1250,14 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 		// IdP-initiated (unsolicited) assertions are accepted.
 		if irt := assertion.InResponseTo(); irt != "" {
 			slog.Warn("SAML ACS: unsolicited-only endpoint received InResponseTo", "in_response_to", irt)
-			writeJSON(w, http.StatusForbidden, map[string]string{"error": "unexpected_in_response_to", "detail": "SP-initiated responses are not accepted by this ACS (no request store)"})
+			writeJSON(w, http.StatusForbidden, map[string]any{"error": map[string]string{"code": "permission_denied", "message": "unexpected_in_response_to", "detail": "SP-initiated responses are not accepted by this ACS (no request store)"}})
 			return
 		}
 
 		// Security: Issuer must match the configured IdP entityID (when set).
 		if trustCfg.IdPEntityID != "" && assertion.Issuer != trustCfg.IdPEntityID {
 			slog.Warn("SAML ACS: issuer mismatch", "got", assertion.Issuer, "want", trustCfg.IdPEntityID)
-			writeJSON(w, http.StatusForbidden, map[string]string{"error": "issuer_mismatch", "detail": "assertion issuer does not match configured IdP entityID"})
+			writeJSON(w, http.StatusForbidden, map[string]any{"error": map[string]string{"code": "permission_denied", "message": "issuer_mismatch", "detail": "assertion issuer does not match configured IdP entityID"}})
 			return
 		}
 
@@ -1268,7 +1268,7 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 			spEntityID = cfg.Issuer + "/saml/metadata"
 		}
 		if assertion.Conditions.AudienceRestriction.Audience != spEntityID {
-			writeJSON(w, http.StatusForbidden, map[string]string{"error": "audience_mismatch", "detail": "assertion audience does not match SP entity ID"})
+			writeJSON(w, http.StatusForbidden, map[string]any{"error": map[string]string{"code": "permission_denied", "message": "audience_mismatch", "detail": "assertion audience does not match SP entity ID"}})
 			return
 		}
 
@@ -1321,7 +1321,7 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 		authnReq := saml.BuildAuthnRequest(sp, idpSSOURL)
 		encoded, err := authnReq.EncodeForRedirect()
 		if err != nil {
-			writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "failed to encode SAML AuthnRequest"})
+			writeJSON(w, http.StatusInternalServerError, map[string]any{"error": map[string]string{"code": "internal_error", "message": "failed to encode SAML AuthnRequest"}})
 			return
 		}
 
@@ -1351,7 +1351,7 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 			})
 			return
 		}
-		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "missing SAMLRequest or SAMLResponse"})
+		writeJSON(w, http.StatusBadRequest, map[string]any{"error": map[string]string{"code": "invalid_argument", "message": "missing SAMLRequest or SAMLResponse"}})
 	})
 
 	// --- SAML 2.0 IdP endpoints (GGID as Identity Provider) ---
@@ -1360,7 +1360,7 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 		idp := buildIdP(cfg, pool)
 		meta, err := idp.GenerateIdPMetadata()
 		if err != nil {
-			writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "failed to generate IdP metadata"})
+			writeJSON(w, http.StatusInternalServerError, map[string]any{"error": map[string]string{"code": "internal_error", "message": "failed to generate IdP metadata"}})
 			return
 		}
 		w.Header().Set("Content-Type", "application/xml")
@@ -1383,14 +1383,14 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 		}
 
 		if samlRequestB64 == "" {
-			writeJSON(w, http.StatusBadRequest, map[string]string{"error": "missing SAMLRequest"})
+			writeJSON(w, http.StatusBadRequest, map[string]any{"error": map[string]string{"code": "invalid_argument", "message": "missing SAMLRequest"}})
 			return
 		}
 
 		// Decode the AuthnRequest (base64 + deflate)
 		rawCompressed, err := base64.StdEncoding.DecodeString(samlRequestB64)
 		if err != nil {
-			writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid base64"})
+			writeJSON(w, http.StatusBadRequest, map[string]any{"error": map[string]string{"code": "invalid_argument", "message": "invalid base64"}})
 			return
 		}
 		rawReader := bytes.NewReader(rawCompressed)
@@ -1398,7 +1398,7 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 		rawXML, err := io.ReadAll(flateReader)
 		flateReader.Close()
 		if err != nil {
-			writeJSON(w, http.StatusBadRequest, map[string]string{"error": "failed to decompress SAMLRequest"})
+			writeJSON(w, http.StatusBadRequest, map[string]any{"error": map[string]string{"code": "invalid_argument", "message": "failed to decompress SAMLRequest"}})
 			return
 		}
 
@@ -1484,7 +1484,7 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 			})
 			return
 		}
-		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "missing SAMLRequest or SAMLResponse"})
+		writeJSON(w, http.StatusBadRequest, map[string]any{"error": map[string]string{"code": "invalid_argument", "message": "missing SAMLRequest or SAMLResponse"}})
 	})
 
 	// --- OAuth Client Management REST API ---
@@ -1498,7 +1498,7 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 		tenantIDStr := r.Header.Get("X-Tenant-ID")
 		tenantID, err := uuid.Parse(tenantIDStr)
 		if err != nil {
-			writeJSON(w, http.StatusBadRequest, map[string]string{"error": "valid X-Tenant-ID header required"})
+			writeJSON(w, http.StatusBadRequest, map[string]any{"error": map[string]string{"code": "invalid_argument", "message": "valid X-Tenant-ID header required"}})
 			return
 		}
 
@@ -1522,7 +1522,7 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 				Description             string   `json:"description"`
 			}
 			if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
-				writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid request body"})
+				writeJSON(w, http.StatusBadRequest, map[string]any{"error": map[string]string{"code": "invalid_argument", "message": "invalid request body"}})
 				return
 			}
 			if body.Name == "" {
@@ -1534,7 +1534,7 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 				clientType = domain.ClientTypeConfidential
 			}
 			if !clientType.IsValid() {
-				writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid client type"})
+				writeJSON(w, http.StatusBadRequest, map[string]any{"error": map[string]string{"code": "invalid_argument", "message": "invalid client type"}})
 				return
 			}
 
@@ -1592,7 +1592,7 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 			})
 
 		default:
-			writeJSON(w, http.StatusMethodNotAllowed, map[string]string{"error": "method_not_allowed"})
+			writeJSON(w, http.StatusMethodNotAllowed, map[string]any{"error": map[string]string{"code": "method_not_allowed", "message": "method_not_allowed"}})
 		}
 	})
 
@@ -1601,7 +1601,7 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 		tenantIDStr := r.Header.Get("X-Tenant-ID")
 		tenantID, err := uuid.Parse(tenantIDStr)
 		if err != nil {
-			writeJSON(w, http.StatusBadRequest, map[string]string{"error": "valid X-Tenant-ID header required"})
+			writeJSON(w, http.StatusBadRequest, map[string]any{"error": map[string]string{"code": "invalid_argument", "message": "valid X-Tenant-ID header required"}})
 			return
 		}
 
@@ -1612,7 +1612,7 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 
 		clientID := r.URL.Path[len("/api/v1/oauth/clients/"):]
 		if clientID == "" {
-			writeJSON(w, http.StatusBadRequest, map[string]string{"error": "client_id is required"})
+			writeJSON(w, http.StatusBadRequest, map[string]any{"error": map[string]string{"code": "invalid_argument", "message": "client_id is required"}})
 			return
 		}
 
@@ -1676,7 +1676,7 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 		case http.MethodGet:
 			client, err := oauthSvc.GetClient(ctx, clientID)
 			if err != nil {
-				writeJSON(w, http.StatusNotFound, map[string]string{"error": "client not found"})
+				writeJSON(w, http.StatusNotFound, map[string]any{"error": map[string]string{"code": "not_found", "message": "client not found"}})
 				return
 			}
 			writeJSON(w, http.StatusOK, client)
@@ -1691,7 +1691,7 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 				TokenEndpointAuthMethod *string  `json:"token_endpoint_auth_method"`
 			}
 			if err := json.NewDecoder(r.Body).Decode(&update); err != nil {
-				writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid request body"})
+				writeJSON(w, http.StatusBadRequest, map[string]any{"error": map[string]string{"code": "invalid_argument", "message": "invalid request body"}})
 				return
 			}
 			upd := &service.ClientMetadataUpdate{
@@ -1730,7 +1730,7 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 			writeJSON(w, http.StatusOK, map[string]bool{"deleted": true})
 
 		default:
-			writeJSON(w, http.StatusMethodNotAllowed, map[string]string{"error": "method_not_allowed"})
+			writeJSON(w, http.StatusMethodNotAllowed, map[string]any{"error": map[string]string{"code": "method_not_allowed", "message": "method_not_allowed"}})
 		}
 	})
 
@@ -1743,7 +1743,7 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 	})
 	mux.HandleFunc("/api/v1/oauth/device_authorization", func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodPost {
-			writeJSON(w, http.StatusMethodNotAllowed, map[string]string{"error": "method_not_allowed"})
+			writeJSON(w, http.StatusMethodNotAllowed, map[string]any{"error": map[string]string{"code": "method_not_allowed", "message": "method_not_allowed"}})
 			return
 		}
 		_ = r.ParseForm()
@@ -1754,13 +1754,13 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 		}
 		tenantID, err := uuid.Parse(tenantIDStr)
 		if err != nil {
-			writeJSON(w, http.StatusBadRequest, map[string]string{"error": "valid X-Tenant-ID header or tenant_id param required"})
+			writeJSON(w, http.StatusBadRequest, map[string]any{"error": map[string]string{"code": "invalid_argument", "message": "valid X-Tenant-ID header or tenant_id param required"}})
 			return
 		}
 
 		clientID := r.FormValue("client_id")
 		if clientID == "" {
-			writeJSON(w, http.StatusBadRequest, map[string]string{"error": "client_id is required"})
+			writeJSON(w, http.StatusBadRequest, map[string]any{"error": map[string]string{"code": "invalid_argument", "message": "client_id is required"}})
 			return
 		}
 
@@ -1786,14 +1786,14 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 	// Device code approval endpoint (user visits verification_uri and enters user_code)
 	mux.HandleFunc("/api/v1/oauth/device/approve", func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodPost {
-			writeJSON(w, http.StatusMethodNotAllowed, map[string]string{"error": "method_not_allowed"})
+			writeJSON(w, http.StatusMethodNotAllowed, map[string]any{"error": map[string]string{"code": "method_not_allowed", "message": "method_not_allowed"}})
 			return
 		}
 		_ = r.ParseForm()
 
 		userCode := r.FormValue("user_code")
 		if userCode == "" {
-			writeJSON(w, http.StatusBadRequest, map[string]string{"error": "user_code is required"})
+			writeJSON(w, http.StatusBadRequest, map[string]any{"error": map[string]string{"code": "invalid_argument", "message": "user_code is required"}})
 			return
 		}
 
@@ -1803,7 +1803,7 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 		}
 		userID, err := uuid.Parse(userIDStr)
 		if err != nil {
-			writeJSON(w, http.StatusBadRequest, map[string]string{"error": "valid user_id or X-User-ID header required"})
+			writeJSON(w, http.StatusBadRequest, map[string]any{"error": map[string]string{"code": "invalid_argument", "message": "valid user_id or X-User-ID header required"}})
 			return
 		}
 
@@ -1817,11 +1817,11 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 	// PAR (RFC 9126) — Pushed Authorization Request
 	mux.HandleFunc("/oauth/par", func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodPost {
-			writeJSON(w, http.StatusMethodNotAllowed, map[string]string{"error": "method not allowed"})
+			writeJSON(w, http.StatusMethodNotAllowed, map[string]any{"error": map[string]string{"code": "method_not_allowed", "message": "method not allowed"}})
 			return
 		}
 		if err := r.ParseForm(); err != nil {
-			writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid form data"})
+			writeJSON(w, http.StatusBadRequest, map[string]any{"error": map[string]string{"code": "invalid_argument", "message": "invalid form data"}})
 			return
 		}
 		req := &service.PushedAuthorizationRequest{
@@ -1846,7 +1846,7 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 	// Consent management
 	mux.HandleFunc("/api/v1/oauth/consent/list", func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodGet {
-			writeJSON(w, http.StatusMethodNotAllowed, map[string]string{"error": "method not allowed"})
+			writeJSON(w, http.StatusMethodNotAllowed, map[string]any{"error": map[string]string{"code": "method_not_allowed", "message": "method not allowed"}})
 			return
 		}
 		writeJSON(w, http.StatusOK, map[string]any{"consents": []any{}})
@@ -1857,13 +1857,13 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 			return
 		}
 		if r.Method != http.MethodDelete {
-			writeJSON(w, http.StatusMethodNotAllowed, map[string]string{"error": "method not allowed"})
+			writeJSON(w, http.StatusMethodNotAllowed, map[string]any{"error": map[string]string{"code": "method_not_allowed", "message": "method not allowed"}})
 			return
 		}
 		// Parse consent ID from path: /api/v1/oauth/consent/{id}
 		parts := strings.Split(strings.TrimSuffix(r.URL.Path, "/"), "/")
 		if len(parts) < 1 {
-			writeJSON(w, http.StatusBadRequest, map[string]string{"error": "consent id required"})
+			writeJSON(w, http.StatusBadRequest, map[string]any{"error": map[string]string{"code": "invalid_argument", "message": "consent id required"}})
 			return
 		}
 		consentID := parts[len(parts)-1]
@@ -1919,7 +1919,7 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 	mux.HandleFunc("/api/v1/oauth/ciba/config", handleCIBAConfig)
 	mux.HandleFunc("/api/v1/oauth/backchannel", func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodPost {
-			writeJSON(w, http.StatusMethodNotAllowed, map[string]string{"error": "method_not_allowed"})
+			writeJSON(w, http.StatusMethodNotAllowed, map[string]any{"error": map[string]string{"code": "method_not_allowed", "message": "method_not_allowed"}})
 			return
 		}
 		_ = r.ParseForm()
@@ -1987,7 +1987,7 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 			agentIDStr := strings.TrimSuffix(strings.TrimPrefix(r.URL.Path, "/api/v1/agents/"), "/scopes")
 			agentID, err := uuid.Parse(agentIDStr)
 			if err != nil {
-				writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid agent_id in path"})
+				writeJSON(w, http.StatusBadRequest, map[string]any{"error": map[string]string{"code": "invalid_argument", "message": "invalid agent_id in path"}})
 				return
 			}
 			switch r.Method {
@@ -1996,7 +1996,7 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 					Scopes []string `json:"scopes"`
 				}
 				if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
-					writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid JSON body"})
+					writeJSON(w, http.StatusBadRequest, map[string]any{"error": map[string]string{"code": "invalid_argument", "message": "invalid JSON body"}})
 					return
 				}
 				if err := oauthSvc.UpdateAgentScopes(r.Context(), agentID, body.Scopes); err != nil {
@@ -2022,7 +2022,7 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 					"available": service.StandardAgentScopes,
 				})
 			default:
-				writeJSON(w, http.StatusMethodNotAllowed, map[string]string{"error": "method not allowed"})
+				writeJSON(w, http.StatusMethodNotAllowed, map[string]any{"error": map[string]string{"code": "method_not_allowed", "message": "method not allowed"}})
 			}
 			return
 		}
@@ -2031,14 +2031,14 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 			agentIDStr := strings.TrimSuffix(strings.TrimPrefix(r.URL.Path, "/api/v1/agents/"), "/status")
 			agentID, err := uuid.Parse(agentIDStr)
 			if err != nil {
-				writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid agent_id in path"})
+				writeJSON(w, http.StatusBadRequest, map[string]any{"error": map[string]string{"code": "invalid_argument", "message": "invalid agent_id in path"}})
 				return
 			}
 			var body struct {
 				Status string `json:"status"`
 			}
 			if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
-				writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid JSON body"})
+				writeJSON(w, http.StatusBadRequest, map[string]any{"error": map[string]string{"code": "invalid_argument", "message": "invalid JSON body"}})
 				return
 			}
 			if err := oauthSvc.UpdateAgentStatus(r.Context(), agentID, service.AgentStatus(body.Status)); err != nil {
@@ -2084,21 +2084,21 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 				"updated":     true,
 			})
 		default:
-			writeJSON(w, http.StatusMethodNotAllowed, map[string]string{"error": "method not allowed"})
+			writeJSON(w, http.StatusMethodNotAllowed, map[string]any{"error": map[string]string{"code": "method_not_allowed", "message": "method not allowed"}})
 		}
 	})
 
 	// Front-channel logout
 	mux.HandleFunc("/api/v1/oauth/frontchannel-logout", func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodPost {
-			writeJSON(w, http.StatusMethodNotAllowed, map[string]string{"error": "method not allowed"})
+			writeJSON(w, http.StatusMethodNotAllowed, map[string]any{"error": map[string]string{"code": "method_not_allowed", "message": "method not allowed"}})
 			return
 		}
 		var req struct {
 			SessionID string `json:"session_id"`
 		}
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-			writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid JSON"})
+			writeJSON(w, http.StatusBadRequest, map[string]any{"error": map[string]string{"code": "invalid_argument", "message": "invalid JSON"}})
 			return
 		}
 		uris, err := service.FrontChannelLogout(req.SessionID)
@@ -2114,12 +2114,12 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 	// Register a new AI agent
 	mux.HandleFunc("/api/v1/agents/register", func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodPost {
-			writeJSON(w, http.StatusMethodNotAllowed, map[string]string{"error": "method not allowed"})
+			writeJSON(w, http.StatusMethodNotAllowed, map[string]any{"error": map[string]string{"code": "method_not_allowed", "message": "method not allowed"}})
 			return
 		}
 		var req service.AgentRegistration
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-			writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid JSON body"})
+			writeJSON(w, http.StatusBadRequest, map[string]any{"error": map[string]string{"code": "invalid_argument", "message": "invalid JSON body"}})
 			return
 		}
 		agent, err := oauthSvc.RegisterAgent(r.Context(), &req)
@@ -2133,7 +2133,7 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 	// List agents for a tenant
 	mux.HandleFunc("/api/v1/agents", func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodGet {
-			writeJSON(w, http.StatusMethodNotAllowed, map[string]string{"error": "method not allowed"})
+			writeJSON(w, http.StatusMethodNotAllowed, map[string]any{"error": map[string]string{"code": "method_not_allowed", "message": "method not allowed"}})
 			return
 		}
 		tenantIDStr := r.Header.Get("X-Tenant-ID")
@@ -2142,7 +2142,7 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 		}
 		tenantID, err := uuid.Parse(tenantIDStr)
 		if err != nil {
-			writeJSON(w, http.StatusBadRequest, map[string]string{"error": "valid X-Tenant-ID header or tenant_id query param required"})
+			writeJSON(w, http.StatusBadRequest, map[string]any{"error": map[string]string{"code": "invalid_argument", "message": "valid X-Tenant-ID header or tenant_id query param required"}})
 			return
 		}
 		agents, err := oauthSvc.ListAgents(r.Context(), tenantID)
@@ -2156,7 +2156,7 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 	// Agent token exchange (RFC 8693 with agent claims)
 	mux.HandleFunc("/api/v1/agents/token", func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodPost {
-			writeJSON(w, http.StatusMethodNotAllowed, map[string]string{"error": "method not allowed"})
+			writeJSON(w, http.StatusMethodNotAllowed, map[string]any{"error": map[string]string{"code": "method_not_allowed", "message": "method not allowed"}})
 			return
 		}
 		tenantIDStr := r.Header.Get("X-Tenant-ID")
@@ -2165,7 +2165,7 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 		}
 		tenantID, err := uuid.Parse(tenantIDStr)
 		if err != nil {
-			writeJSON(w, http.StatusBadRequest, map[string]string{"error": "valid X-Tenant-ID header required"})
+			writeJSON(w, http.StatusBadRequest, map[string]any{"error": map[string]string{"code": "invalid_argument", "message": "valid X-Tenant-ID header required"}})
 			return
 		}
 		var body struct {
@@ -2176,12 +2176,12 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 			Audience       string   `json:"audience"`
 		}
 		if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
-			writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid JSON body"})
+			writeJSON(w, http.StatusBadRequest, map[string]any{"error": map[string]string{"code": "invalid_argument", "message": "invalid JSON body"}})
 			return
 		}
 		agentID, err := uuid.Parse(body.AgentID)
 		if err != nil {
-			writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid agent_id"})
+			writeJSON(w, http.StatusBadRequest, map[string]any{"error": map[string]string{"code": "invalid_argument", "message": "invalid agent_id"}})
 			return
 		}
 		resp, err := oauthSvc.ExchangeAgentToken(r.Context(), &service.AgentTokenExchangeRequest{
@@ -2202,14 +2202,14 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 	// Verify an agent token
 	mux.HandleFunc("/api/v1/agents/verify", func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodPost {
-			writeJSON(w, http.StatusMethodNotAllowed, map[string]string{"error": "method not allowed"})
+			writeJSON(w, http.StatusMethodNotAllowed, map[string]any{"error": map[string]string{"code": "method_not_allowed", "message": "method not allowed"}})
 			return
 		}
 		var body struct {
 			Token string `json:"token"`
 		}
 		if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
-			writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid JSON body"})
+			writeJSON(w, http.StatusBadRequest, map[string]any{"error": map[string]string{"code": "invalid_argument", "message": "invalid JSON body"}})
 			return
 		}
 		claims, err := oauthSvc.VerifyAgentToken(r.Context(), body.Token)
@@ -2537,7 +2537,7 @@ func writeJSON(w http.ResponseWriter, code int, v any) {
 // Never expose internal error details to the HTTP client.
 func writeInternalError(w http.ResponseWriter, op string, err error) {
 	slog.Error("internal error", "operation", op, "error", err)
-	writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "internal server error"})
+	writeJSON(w, http.StatusInternalServerError, map[string]any{"error": map[string]string{"code": "internal_error", "message": "internal server error"}})
 }
 
 // extractBearerToken extracts the token from an "Authorization: Bearer <token>" header.
@@ -2814,6 +2814,23 @@ func parseAuthnRequest(rawXML []byte) (entityID, acsURL, requestID string) {
 }
 // writeJSONError writes a standard JSON error response.
 func writeJSONError(w http.ResponseWriter, status int, msg string) {
-	writeJSON(w, status, map[string]string{"error": msg})
+	code := "internal_error"
+	switch status {
+	case http.StatusBadRequest:
+		code = "invalid_argument"
+	case http.StatusUnauthorized:
+		code = "unauthenticated"
+	case http.StatusForbidden:
+		code = "permission_denied"
+	case http.StatusNotFound:
+		code = "not_found"
+	case http.StatusConflict:
+		code = "already_exists"
+	case http.StatusTooManyRequests:
+		code = "rate_limited"
+	}
+	writeJSON(w, status, map[string]any{
+		"error": map[string]string{"code": code, "message": msg},
+	})
 }
 
