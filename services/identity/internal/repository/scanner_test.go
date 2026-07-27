@@ -110,7 +110,7 @@ func TestScanUser_Success(t *testing.T) {
 		"active",               // status (string)
 		true,                   // email_verified
 		false,                  // phone_verified
-		&primaryEmailID,        // primary_email_id
+		primaryEmailID,        // primary_email_id (value, not pointer)
 		"Test User",            // display_name
 		"https://avatar.url",   // avatar_url
 		"en_US",                // locale
