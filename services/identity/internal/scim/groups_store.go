@@ -37,19 +37,19 @@ func ensureGroupSchema(ctx context.Context, pool *pgxpool.Pool) {
 // dbCreateGroup inserts a new SCIM group.
 func dbCreateGroup(ctx context.Context, pool *pgxpool.Pool, tenantID uuid.UUID, g *SCIMGroup) error {
 	_, err := pool.Exec(ctx, `
-		INSERT INTO scim_groups (id, tenant_id, name)
+		INSERT INTO scim_groups (id, tenant_id, display_name)
 		VALUES ($1, $2, $3)
-		ON CONFLICT (id) DO UPDATE SET name = EXCLUDED.name, created_at = now()
+		ON CONFLICT (id) DO UPDATE SET display_name = EXCLUDED.display_name, created_at = now()
 	`, g.ID, tenantID, g.DisplayName)
 	return err
 }
 
 // dbGetGroup loads a SCIM group by ID. Returns nil when not found.
-func dbGetGroup(ctx context.Context, pool *pgxpool.Pool, id string) (*SCIMGroup, error) {
+func dbGetGroup(ctx context.Context, pool *pgxpool.Pool, tenantID uuid.UUID, id string) (*SCIMGroup, error) {
 	var displayName string
 	err := pool.QueryRow(ctx, `
-		SELECT name FROM scim_groups WHERE id = $1
-	`, id).Scan(&displayName)
+		SELECT display_name FROM scim_groups WHERE id = $1 AND tenant_id = $2
+	`, id, tenantID).Scan(&displayName)
 	if err != nil {
 		return nil, err
 	}
@@ -68,7 +68,7 @@ func dbListGroups(ctx context.Context, pool *pgxpool.Pool, tenantID uuid.UUID) (
 	if tenantID == uuid.Nil {
 		return nil, nil
 	}
-	query := `SELECT id, name FROM scim_groups WHERE tenant_id = $1 ORDER BY name`
+	query := `SELECT id, display_name FROM scim_groups WHERE tenant_id = $1 ORDER BY display_name`
 	rows, err := pool.Query(ctx, query, tenantID)
 	if err != nil {
 		return nil, err
@@ -94,20 +94,20 @@ func dbListGroups(ctx context.Context, pool *pgxpool.Pool, tenantID uuid.UUID) (
 }
 
 // dbUpdateGroup persists display name + members for an existing group.
-func dbUpdateGroup(ctx context.Context, pool *pgxpool.Pool, g *SCIMGroup) error {
+func dbUpdateGroup(ctx context.Context, pool *pgxpool.Pool, tenantID uuid.UUID, g *SCIMGroup) error {
 	members, err := json.Marshal(g.Members)
 	if err != nil {
 		return err
 	}
 	_, err = pool.Exec(ctx, `
 		UPDATE scim_groups SET display_name = $2, members = $3, updated_at = $4
-		WHERE id = $1
-	`, g.ID, g.DisplayName, members, time.Now())
+		WHERE id = $1 AND tenant_id = $5
+	`, g.ID, g.DisplayName, members, time.Now(), tenantID)
 	return err
 }
 
 // dbDeleteGroup removes a SCIM group by ID.
-func dbDeleteGroup(ctx context.Context, pool *pgxpool.Pool, id string) error {
-	_, err := pool.Exec(ctx, `DELETE FROM scim_groups WHERE id = $1`, id)
+func dbDeleteGroup(ctx context.Context, pool *pgxpool.Pool, tenantID uuid.UUID, id string) error {
+	_, err := pool.Exec(ctx, `DELETE FROM scim_groups WHERE id = $1 AND tenant_id = $2`, id, tenantID)
 	return err
 }

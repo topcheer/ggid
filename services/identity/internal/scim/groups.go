@@ -211,16 +211,14 @@ func (h *Handler) HandleGroupResource(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) getGroup(w http.ResponseWriter, r *http.Request, id string) {
+	tc, err := tenantFromRequest(r)
+	if err != nil {
+		writeSCIMError(w, http.StatusUnauthorized, "tenant context required")
+		return
+	}
 	// DB-persisted groups first (Task-C).
 	if pool := h.dbPool(r.Context()); pool != nil {
-		if g, err := dbGetGroup(r.Context(), pool, id); err == nil && g != nil {
-			writeSCIMJSON(w, http.StatusOK, g)
-			return
-		}
-	}
-	groups := h.getMockGroups("", "")
-	for _, g := range groups {
-		if g.ID == id {
+		if g, err := dbGetGroup(r.Context(), pool, tc.TenantID, id); err == nil && g != nil {
 			writeSCIMJSON(w, http.StatusOK, g)
 			return
 		}
@@ -245,6 +243,13 @@ func (h *Handler) patchGroup(w http.ResponseWriter, r *http.Request, id string) 
 		return
 	}
 
+	// Resolve tenant for SCIM operations
+	tc, terr := tenantFromRequest(r)
+	if terr != nil {
+		writeSCIMError(w, http.StatusUnauthorized, "tenant context required")
+		return
+	}
+
 	// Try DB-backed approach first; fall back to in-memory for tests
 	var pool *pgxpool.Pool
 	if h.svc != nil {
@@ -252,7 +257,7 @@ func (h *Handler) patchGroup(w http.ResponseWriter, r *http.Request, id string) 
 	}
 	if pool != nil {
 		// Load group from DB (Task-C: scim_groups table)
-		group, err := dbGetGroup(r.Context(), pool, id)
+		group, err := dbGetGroup(r.Context(), pool, tc.TenantID, id)
 		if err != nil || group == nil {
 			writeSCIMError(w, http.StatusNotFound, "group not found")
 			return
@@ -302,7 +307,7 @@ func (h *Handler) patchGroup(w http.ResponseWriter, r *http.Request, id string) 
 			}
 		}
 
-		if err := dbUpdateGroup(r.Context(), pool, group); err != nil {
+		if err := dbUpdateGroup(r.Context(), pool, tc.TenantID, group); err != nil {
 			writeSCIMError(w, http.StatusInternalServerError, "failed to update group")
 			return
 		}
@@ -440,10 +445,13 @@ func parseMemberFilter(path string) map[string]bool {
 }
 
 func (h *Handler) deleteGroup(w http.ResponseWriter, r *http.Request, id string) {
-	// Delete persisted group when DB is available (Task-C); 204 either way
-	// per SCIM semantics.
+	tc, err := tenantFromRequest(r)
+	if err != nil {
+		writeSCIMError(w, http.StatusUnauthorized, "tenant context required")
+		return
+	}
 	if pool := h.dbPool(r.Context()); pool != nil {
-		_ = dbDeleteGroup(r.Context(), pool, id)
+		_ = dbDeleteGroup(r.Context(), pool, tc.TenantID, id)
 	}
 	w.WriteHeader(http.StatusNoContent)
 }

@@ -113,6 +113,7 @@ func TestPatchGroup_AddMembers(t *testing.T) {
 	h := newTestHandler()
 	body := `{"Operations":[{"op":"add","path":"members","value":[{"value":"user-1","display":"Alice"}]}]}`
 	req := httptest.NewRequest("PATCH", "/scim/v2/Groups/role-admin-001", strings.NewReader(body))
+	req.Header.Set("X-Tenant-ID", "00000000-0000-0000-0000-000000000001")
 	w := httptest.NewRecorder()
 	h.patchGroup(w, req, "role-admin-001")
 
@@ -133,6 +134,7 @@ func TestPatchGroup_ReplaceDisplayName(t *testing.T) {
 	h := newTestHandler()
 	body := `{"Operations":[{"op":"replace","path":"displayName","value":"Super Admin"}]}`
 	req := httptest.NewRequest("PATCH", "/scim/v2/Groups/role-admin-001", strings.NewReader(body))
+	req.Header.Set("X-Tenant-ID", "00000000-0000-0000-0000-000000000001")
 	w := httptest.NewRecorder()
 	h.patchGroup(w, req, "role-admin-001")
 
@@ -150,6 +152,7 @@ func TestPatchGroup_ReplaceAllMembers(t *testing.T) {
 	h := newTestHandler()
 	body := `{"Operations":[{"op":"replace","path":"members","value":[{"value":"u1"},{"value":"u2"}]}]}`
 	req := httptest.NewRequest("PATCH", "/scim/v2/Groups/role-admin-001", strings.NewReader(body))
+	req.Header.Set("X-Tenant-ID", "00000000-0000-0000-0000-000000000001")
 	w := httptest.NewRecorder()
 	h.patchGroup(w, req, "role-admin-001")
 
@@ -165,12 +168,14 @@ func TestPatchGroup_AddDuplicateMembers(t *testing.T) {
 	// First add a member
 	body1 := `{"Operations":[{"op":"add","path":"members","value":[{"value":"dup-1"}]}]}`
 	req1 := httptest.NewRequest("PATCH", "/scim/v2/Groups/role-admin-001", strings.NewReader(body1))
+	req1.Header.Set("X-Tenant-ID", "00000000-0000-0000-0000-000000000001")
 	w1 := httptest.NewRecorder()
 	h.patchGroup(w1, req1, "role-admin-001")
 
 	// Add the same member again
 	body2 := `{"Operations":[{"op":"add","path":"members","value":[{"value":"dup-1"}]}]}`
 	req2 := httptest.NewRequest("PATCH", "/scim/v2/Groups/role-admin-001", strings.NewReader(body2))
+	req2.Header.Set("X-Tenant-ID", "00000000-0000-0000-0000-000000000001")
 	w2 := httptest.NewRecorder()
 	h.patchGroup(w2, req2, "role-admin-001")
 
@@ -186,12 +191,14 @@ func TestPatchGroup_RemoveMemberByFilter(t *testing.T) {
 	// Add members first
 	addBody := `{"Operations":[{"op":"add","path":"members","value":[{"value":"rm-1"},{"value":"rm-2"}]}]}`
 	addReq := httptest.NewRequest("PATCH", "/scim/v2/Groups/role-admin-001", strings.NewReader(addBody))
+	addReq.Header.Set("X-Tenant-ID", "00000000-0000-0000-0000-000000000001")
 	addW := httptest.NewRecorder()
 	h.patchGroup(addW, addReq, "role-admin-001")
 
 	// Remove one member by filter
 	rmBody := `{"Operations":[{"op":"remove","path":"members[value eq \"rm-1\"]"}]}`
 	rmReq := httptest.NewRequest("PATCH", "/scim/v2/Groups/role-admin-001", strings.NewReader(rmBody))
+	rmReq.Header.Set("X-Tenant-ID", "00000000-0000-0000-0000-000000000001")
 	rmW := httptest.NewRecorder()
 	h.patchGroup(rmW, rmReq, "role-admin-001")
 
@@ -210,12 +217,14 @@ func TestPatchGroup_RemoveAllMembers(t *testing.T) {
 	// Add members first
 	addBody := `{"Operations":[{"op":"add","path":"members","value":[{"value":"x1"},{"value":"x2"}]}]}`
 	addReq := httptest.NewRequest("PATCH", "/scim/v2/Groups/role-admin-001", strings.NewReader(addBody))
+	addReq.Header.Set("X-Tenant-ID", "00000000-0000-0000-0000-000000000001")
 	addW := httptest.NewRecorder()
 	h.patchGroup(addW, addReq, "role-admin-001")
 
 	// Remove all
 	rmBody := `{"Operations":[{"op":"remove","path":"members"}]}`
 	rmReq := httptest.NewRequest("PATCH", "/scim/v2/Groups/role-admin-001", strings.NewReader(rmBody))
+	rmReq.Header.Set("X-Tenant-ID", "00000000-0000-0000-0000-000000000001")
 	rmW := httptest.NewRecorder()
 	h.patchGroup(rmW, rmReq, "role-admin-001")
 
@@ -230,6 +239,7 @@ func TestPatchGroup_GroupNotFound(t *testing.T) {
 	h := newTestHandler()
 	body := `{"Operations":[{"op":"replace","path":"displayName","value":"Test"}]}`
 	req := httptest.NewRequest("PATCH", "/scim/v2/Groups/nonexistent", strings.NewReader(body))
+	req.Header.Set("X-Tenant-ID", "00000000-0000-0000-0000-000000000001")
 	w := httptest.NewRecorder()
 	h.patchGroup(w, req, "nonexistent")
 
@@ -241,6 +251,7 @@ func TestPatchGroup_GroupNotFound(t *testing.T) {
 func TestPatchGroup_InvalidJSON(t *testing.T) {
 	h := newTestHandler()
 	req := httptest.NewRequest("PATCH", "/scim/v2/Groups/role-admin-001", strings.NewReader("{bad}"))
+	req.Header.Set("X-Tenant-ID", "00000000-0000-0000-0000-000000000001")
 	w := httptest.NewRecorder()
 	h.patchGroup(w, req, "role-admin-001")
 
