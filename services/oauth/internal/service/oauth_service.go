@@ -1774,6 +1774,20 @@ func (s *OAuthService) RefreshToken(ctx context.Context, req *RefreshTokenReques
 		return nil, errors.Unauthenticated("refresh token was not issued to this client")
 	}
 
+	// 6b. SECURITY: verify the user is still active. A soft-deleted, suspended,
+	// or locked user must not be able to refresh tokens indefinitely.
+	if s.pool != nil {
+		var userStatus string
+		err := s.pool.QueryRow(ctx,
+			`SELECT status FROM users WHERE id = $1 AND tenant_id = $2 AND deleted_at IS NULL`,
+			record.UserID, req.TenantID).Scan(&userStatus)
+		if err != nil || userStatus != "active" {
+			// Revoke the token since the user is no longer valid.
+			_ = s.tokenRepo.RevokeRefreshToken(ctx, req.TenantID, tokenHash)
+			return nil, errors.Unauthenticated("user account is not active")
+		}
+	}
+
 	// 7. Mark the old token as used (rotation).
 	_ = s.tokenRepo.RevokeRefreshToken(ctx, req.TenantID, tokenHash)
 
