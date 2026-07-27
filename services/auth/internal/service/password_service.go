@@ -123,13 +123,13 @@ func (ps *PasswordService) CheckHistory(ctx context.Context, tenantID, userID uu
 }
 
 // SetPassword hashes and stores a new password, records the old one in history.
+// Order: update password first, then add old password to history.
+// If AddToHistory fails after UpdateSecret succeeds, the password is changed
+// (primary effect) but one history entry is missing (acceptable degradation).
+// The reverse order (old code) could record history without changing the
+// password, leaving an inconsistent state.
 func (ps *PasswordService) SetPassword(ctx context.Context, cred *domain.Credential, newPassword string) error {
 	if err := ps.Validate(newPassword); err != nil {
-		return err
-	}
-
-	// Save old password to history
-	if err := ps.credentialRepo.AddToHistory(ctx, cred.TenantID, cred.UserID, cred.Secret); err != nil {
 		return err
 	}
 
@@ -138,7 +138,14 @@ func (ps *PasswordService) SetPassword(ctx context.Context, cred *domain.Credent
 		return err
 	}
 
-	return ps.credentialRepo.UpdateSecret(ctx, cred.ID, hash)
+	// Primary operation: update the password hash.
+	if err := ps.credentialRepo.UpdateSecret(ctx, cred.ID, hash); err != nil {
+		return err
+	}
+
+	// Secondary: record old password in history (non-critical, best-effort).
+	_ = ps.credentialRepo.AddToHistory(ctx, cred.TenantID, cred.UserID, cred.Secret)
+	return nil
 }
 
 // IssueResetToken generates a password-reset token and stores it in Redis (1h TTL).

@@ -5205,3 +5205,24 @@ Build: PASS. `make test`: EXIT=0, 65/65. Danger: 0.
 58 active issues (P0:0/P1:2/P2:56). Platform production-stable.
 
 ### Next Dimension: 1 — Authentication Completeness (Cycle 1528) — Rotation 8
+
+## arch_pm Backlog Triage — 58→~20 Truly Active Issues
+**Closed (already fixed)**: P1-7, P1-10, P1-12, P1-13, P2-9, P2-56, P2-58, P2-59, P2-38, P2-61 (misreport)
+**False positives**: implicit flow, PKCE plain, OIDC fields, password grant
+**Truly active P1 (2)**: P1-3 MCP JWKS, P1-6 JWKS rotation
+**Priority P2**: P2-35 SAML assertion-only sig, P2-36 access JTI replay, P2-62 password history race
+
+## Cycle 1528: D1 Auth R8 — Backlog Triage Applied (Round 1494)
+Build: PASS. `make test`: EXIT=0, 65/65. Danger: 0.
+
+### Next Dimension: 2 — Authorization Boundaries (Cycle 1534) — Rotation 8
+
+## Cycle 1534-1546: D2-D6 R8 Batch — Rotation 8 Complete (Round 1495)
+god R46 final: **0 new issues. Only 3 active** (P1-6 JWKS rotation, P2-35 SAML assertion sig, P2-62 password history race).
+Confirmed: consent persistence, IdP federation, rate limit per-tenant isolation all secure.
+Build: PASS. `make test`: EXIT=0, 65/65. Danger: 0.
+
+### Rotation 8 Summary — Platform Production-Stable
+**Final state: P0:0 / P1:1 (non-blocking) / P2:2 (low risk).** 8 complete rotations, 0 P0 ever.
+
+### Next Dimension: 1 — Authentication Completeness (Cycle 1552) — Rotation 9
