@@ -786,6 +786,14 @@ func (h *HTTPHandler) listUsers(ctx context.Context, w http.ResponseWriter, r *h
 			filter.PageSize = n
 		}
 	}
+	// Also accept "limit" as an alias (Console convention)
+	if ps := q.Get("limit"); ps != "" {
+		var n int
+		fmt.Sscanf(ps, "%d", &n)
+		if n > 0 {
+			filter.PageSize = n
+		}
+	}
 	if off := q.Get("offset"); off != "" {
 		var n int
 		fmt.Sscanf(off, "%d", &n)
