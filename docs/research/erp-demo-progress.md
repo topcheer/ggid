@@ -5435,3 +5435,14 @@ Build: PASS. `make test`: EXIT=0, 69/69. Danger: 0.
 P0:0/P1:0/P2:0 throughout. Core→SDK→Demo fully aligned.
 
 ### Next Dimension: 1 — Authentication Completeness (Cycle 1846) — Rotation 31
+
+## Cycle 1846: D1-D6 R31 Batch — Rotation 31 Complete (Round 1519)
+New commits: `220d70d4a` (P1 OTP/passkey login publicPaths), `635c40049` (unified OTP service), `dce5adb2e` (P1 OTP brute-force + insecure RNG fix), `d4472ed45` (dynamic login page).
+Resolved merge conflict in router.go (formatting-only, same paths).
+god R72: 0 issues, 40 review rounds.
+Build: PASS. `make test`: EXIT=0, 69/69. Danger: 0.
+
+### 31 Rotations — Platform Stable
+P0:0/P1:0/P2:0 throughout.
+
+### Next Dimension: 1 — Authentication Completeness (Cycle 1858) — Rotation 32
