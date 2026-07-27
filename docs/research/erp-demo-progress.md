@@ -5156,3 +5156,25 @@ god R44 confirmed: consent bypass protected, MFA challenge replay protected, Con
 ### Active P1 (3): P1-3 MCP JWKS, P1-6 JWKS rotation, P1-12 backchannel logout.
 
 ### Next Dimension: 3 — Demo Functional Completeness (Cycle 1486) — Rotation 6
+
+## Cycle 1486-1498: D3-D6 R6 Batch — Rotation 6 Complete (Round 1491)
+New commits: `3fd98a9f2` (P2-61 revocation Redis persistence), `5a27e8d45` (CAE CIDR matching).
+Build: PASS. `make test`: EXIT=0, 65/65. Danger: 0.
+
+### D3 Demo Functional R6 ✅
+Inventory `{items,total}` + stock, Orders, CRUD, my-permissions: all consistent.
+
+### D4 Multi-Tenant R6 ✅
+Gateway JWT match, RBAC scope, OAuth filters, RLS, 7/7 demos: all secure.
+
+### D5 SDK R6 ✅
+7 SDKs: token fields snake_case, claims tenant_id+roles+permissions consistent.
+
+### D6 E2E R6 ✅
+Login/401/CRUD/refresh: all demos functional.
+
+### Rotation 6 Summary (C1474→C1498)
+0 P0. P1-13 fixed. P2-61 fixed (Redis revocation). Active P1: 3 (MCP JWKS, JWKS rotation, backchannel logout).
+New: CAE CIDR matching improvement.
+
+### Next Dimension: 1 — Authentication Completeness (Cycle 1504) — Rotation 7
