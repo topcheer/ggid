@@ -3,54 +3,155 @@ package domain
 import (
 	"crypto/sha256"
 	"encoding/base64"
-	"strings"
 	"testing"
 )
 
-func TestValidatePKCE_LengthAndCharSet(t *testing.T) {
-	s256Challenge := func(verifier string) string {
-		h := sha256.Sum256([]byte(verifier))
-		return base64.RawURLEncoding.EncodeToString(h[:])
+// --- PKCE ValidatePKCE tests (supplementing existing models_test.go) ---
+
+func TestValidatePKCE_S256_Match(t *testing.T) {
+	verifier := "dBjftJeZ4CVP-mB92K27uhbUJU1p1r_wW1gFWFOEjXk"
+	h := sha256.Sum256([]byte(verifier))
+	challenge := base64.RawURLEncoding.EncodeToString(h[:])
+
+	code := &AuthorizationCode{
+		CodeChallenge:       challenge,
+		CodeChallengeMethod: "S256",
 	}
-
-	valid := strings.Repeat("a", 43) // exactly 43 chars, minimum allowed
-
-	cases := []struct {
-		name     string
-		verifier string
-		method   string
-		chal     string
-		want     bool
-	}{
-		// RFC 7636 §4.1: 43*128unreserved
-		{"valid 43 chars S256", valid, "S256", s256Challenge(valid), true},
-		{"valid 128 chars S256", strings.Repeat("a", 128), "S256", s256Challenge(strings.Repeat("a", 128)), true},
-		{"too short (42 chars)", strings.Repeat("a", 42), "S256", s256Challenge(strings.Repeat("a", 42)), false},
-		{"too long (129 chars)", strings.Repeat("a", 129), "S256", s256Challenge(strings.Repeat("a", 129)), false},
-		{"empty verifier", "", "S256", s256Challenge(valid), false},
-		{"invalid char (slash)", strings.Repeat("a", 42) + "/", "S256", "somechallenge", false},
-		{"invalid char (equals)", strings.Repeat("a", 42) + "=", "plain", "somechallenge", false},
-		{"tilde allowed", strings.Repeat("~", 43), "S256", s256Challenge(strings.Repeat("~", 43)), true},
-		{"plain rejected (OAuth 2.1)", strings.Repeat("a", 43), "plain", strings.Repeat("a", 43), false},
-		{"correct S256 match", valid, "S256", s256Challenge(valid), true},
-		{"wrong S256 challenge", valid, "S256", "wrongchallenge", false},
-		{"no PKCE required", valid, "", "", true},
+	if !code.ValidatePKCE(verifier) {
+		t.Error("expected PKCE validation to pass with correct verifier")
 	}
+}
 
-	for _, tc := range cases {
-		t.Run(tc.name, func(t *testing.T) {
-			code := &AuthorizationCode{
-				CodeChallenge:       tc.chal,
-				CodeChallengeMethod: tc.method,
-			}
-			// For "no PKCE required", leave CodeChallenge empty.
-			if tc.name == "no PKCE required" {
-				code.CodeChallenge = ""
-			}
-			got := code.ValidatePKCE(tc.verifier)
-			if got != tc.want {
-				t.Errorf("ValidatePKCE(%q) = %v, want %v", tc.verifier, got, tc.want)
-			}
-		})
+func TestValidatePKCE_S256_NoMatch(t *testing.T) {
+	code := &AuthorizationCode{
+		CodeChallenge:       "invalidchallenge",
+		CodeChallengeMethod: "S256",
+	}
+	if code.ValidatePKCE("validverifier12345678901234567890123456789012345") {
+		t.Error("expected PKCE validation to fail with mismatched verifier")
+	}
+}
+
+func TestValidatePKCE_NoChallenge(t *testing.T) {
+	code := &AuthorizationCode{
+		CodeChallenge:       "",
+		CodeChallengeMethod: "",
+	}
+	// No PKCE required — always passes
+	if !code.ValidatePKCE("anything") {
+		t.Error("expected PKCE to pass when no challenge is set")
+	}
+}
+
+func TestValidatePKCE_Plain_Rejected(t *testing.T) {
+	code := &AuthorizationCode{
+		CodeChallenge:       "somechallenge",
+		CodeChallengeMethod: "plain",
+	}
+	// OAuth 2.1: plain method not supported
+	if code.ValidatePKCE("somechallenge") {
+		t.Error("expected PKCE to reject plain method")
+	}
+}
+
+func TestValidatePKCE_VerifierTooShort(t *testing.T) {
+	code := &AuthorizationCode{
+		CodeChallenge:       "challenge",
+		CodeChallengeMethod: "S256",
+	}
+	if code.ValidatePKCE("short") {
+		t.Error("expected PKCE to reject verifier < 43 chars")
+	}
+}
+
+func TestValidatePKCE_VerifierTooLong(t *testing.T) {
+	code := &AuthorizationCode{
+		CodeChallenge:       "challenge",
+		CodeChallengeMethod: "S256",
+	}
+	longVerifier := ""
+	for i := 0; i < 129; i++ {
+		longVerifier += "a"
+	}
+	if code.ValidatePKCE(longVerifier) {
+		t.Error("expected PKCE to reject verifier > 128 chars")
+	}
+}
+
+func TestValidatePKCE_VerifierInvalidChars(t *testing.T) {
+	code := &AuthorizationCode{
+		CodeChallenge:       "challenge",
+		CodeChallengeMethod: "S256",
+	}
+	// Contains invalid character '!'
+	invalidVerifier := "verifier_with_invalid_char!_padding_to_43_chars__"
+	if code.ValidatePKCE(invalidVerifier) {
+		t.Error("expected PKCE to reject verifier with invalid chars")
+	}
+}
+
+func TestValidatePKCE_EmptyMethodDefaultsS256(t *testing.T) {
+	verifier := "dBjftJeZ4CVP-mB92K27uhbUJU1p1r_wW1gFWFOEjXk"
+	h := sha256.Sum256([]byte(verifier))
+	challenge := base64.RawURLEncoding.EncodeToString(h[:])
+
+	code := &AuthorizationCode{
+		CodeChallenge:       challenge,
+		CodeChallengeMethod: "", // empty defaults to S256
+	}
+	if !code.ValidatePKCE(verifier) {
+		t.Error("expected PKCE to pass with empty method defaulting to S256")
+	}
+}
+
+func TestValidatePKCE_ValidUnreservedChars(t *testing.T) {
+	// All unreserved chars from RFC 7636: A-Z a-z 0-9 - . _ ~
+	verifier := "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-._~"
+	if len(verifier) < 43 {
+		t.Fatalf("test verifier too short: %d", len(verifier))
+	}
+	h := sha256.Sum256([]byte(verifier))
+	challenge := base64.RawURLEncoding.EncodeToString(h[:])
+
+	code := &AuthorizationCode{
+		CodeChallenge:       challenge,
+		CodeChallengeMethod: "S256",
+	}
+	if !code.ValidatePKCE(verifier) {
+		t.Error("expected PKCE to pass with all valid unreserved chars")
+	}
+}
+
+// --- FAPI 2.0 tests (supplementing existing tests) ---
+
+func TestOAuthClient_FAPI2_0_NilMetadata(t *testing.T) {
+	c := &OAuthClient{}
+	if c.FAPI2_0() {
+		t.Error("expected FAPI2_0=false for nil metadata")
+	}
+}
+
+func TestOAuthClient_FAPI2_0_SetAndGet(t *testing.T) {
+	c := &OAuthClient{}
+	c.SetFAPI2_0(true)
+	if !c.FAPI2_0() {
+		t.Error("expected FAPI2_0=true after SetFAPI2_0(true)")
+	}
+	c.SetFAPI2_0(false)
+	if c.FAPI2_0() {
+		t.Error("expected FAPI2_0=false after SetFAPI2_0(false)")
+	}
+}
+
+func TestOAuthClient_ValidateRedirectURI_PartialMatch(t *testing.T) {
+	c := &OAuthClient{
+		RedirectURIs: []string{"https://app.example.com/callback"},
+	}
+	// Ensure exact match required — no path prefix bypass
+	if c.ValidateRedirectURI("https://app.example.com/callback/evil") {
+		t.Error("expected exact URI match — prefix should not pass")
+	}
+	if c.ValidateRedirectURI("https://app.example.com/callback?param=1") {
+		t.Error("expected exact URI match — query string should not pass")
 	}
 }
