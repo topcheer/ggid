@@ -481,10 +481,85 @@ export default function LoginPage() {
 
             <button
               type="button"
-              onClick={() => {
-                /* Trigger WebAuthn conditional UI autofill */
-                const usernameInput = document.getElementById("username") as HTMLInputElement;
-                if (usernameInput) { usernameInput.focus(); }
+              onClick={async () => {
+                setLoading(true);
+                setError("");
+                try {
+                  // Step 1: Begin passkey authentication
+                  const beginResp = await fetch(`${API_BASE}/api/v1/auth/webauthn/login/begin`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json", "X-Tenant-ID": resolvedTenantId },
+                  });
+                  if (!beginResp.ok) throw new Error("Passkey not available");
+                  const options = await beginResp.json();
+
+                  // Step 2: Browser prompts user for passkey (biometric/PIN)
+                  const credential = await navigator.credentials.get({ publicKey: options.response });
+
+                  // Step 3: Send assertion to backend for verification
+                  const assertBody = {
+                    id: credential.id,
+                    rawId: btoa(String.fromCharCode(...new Uint8Array(credential.rawId))),
+                    type: credential.type,
+                    response: {
+                      authenticatorData: btoa(String.fromCharCode(...new Uint8Array(credential.response.authenticatorData))),
+                      clientDataJSON: btoa(String.fromCharCode(...new Uint8Array(credential.response.clientDataJSON))),
+                      signature: btoa(String.fromCharCode(...new Uint8Array(credential.response.signature))),
+                      userHandle: credential.response.userHandle ? btoa(String.fromCharCode(...new Uint8Array(credential.response.userHandle))) : null,
+                    },
+                  };
+
+                  const finishResp = await fetch(`${API_BASE}/api/v1/auth/webauthn/login/finish`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json", "X-Tenant-ID": resolvedTenantId },
+                    body: JSON.stringify(assertBody),
+                  });
+                  const result = await finishResp.json();
+                  if (!finishResp.ok) throw new Error(result.error || "Passkey verification failed");
+
+                  // Step 4: Exchange auth_ticket for JWT via OAuth authorize → code → token
+                  if (result.auth_ticket) {
+                    // Use auth_ticket to get authorization code, then exchange for token
+                    const codeResp = await fetch(`${API_BASE}/oauth/authorize?auth_ticket=${result.auth_ticket}&client_id=gcid-console&redirect_uri=${encodeURIComponent(window.location.origin + "/callback")}&response_type=code&scope=openid+profile+email+offline_access&code_challenge=console-passkey&code_challenge_method=S256`, {
+                      headers: { "X-Tenant-ID": resolvedTenantId },
+                      redirect: "manual",
+                    });
+                    const loc = codeResp.headers.get("location") || "";
+                    const codeMatch = loc.match(/code=([^&]+)/);
+                    if (codeMatch) {
+                      const code = codeMatch[1];
+                      const tokenResp = await fetch(`${API_BASE}/oauth/token`, {
+                        method: "POST",
+                        headers: { "Content-Type": "application/x-www-form-urlencoded", "X-Tenant-ID": resolvedTenantId },
+                        body: new URLSearchParams({
+                          grant_type: "authorization_code",
+                          code,
+                          client_id: "gcid-console",
+                          redirect_uri: window.location.origin + "/callback",
+                          code_verifier: "console-passkey",
+                        }),
+                      });
+                      const tokenData = await tokenResp.json();
+                      if (tokenData.access_token) {
+                        localStorage.setItem("ggid_access_token", tokenData.access_token);
+                        if (tokenData.refresh_token) localStorage.setItem("ggid_refresh_token", tokenData.refresh_token);
+                        localStorage.setItem("ggid_tenant_id", resolvedTenantId);
+                        router.replace(redirectTo);
+                        return;
+                      }
+                    }
+                    throw new Error("Failed to exchange passkey auth for token");
+                  } else {
+                    throw new Error("No auth ticket received");
+                  }
+                } catch (err) {
+                  if (err.name === "NotAllowedError") {
+                    setError("Passkey authentication cancelled");
+                  } else {
+                    setError(err instanceof Error ? err.message : "Passkey login failed");
+                  }
+                  setLoading(false);
+                }
               }}
               className="w-full flex items-center justify-center gap-2 rounded-xl border border-gray-300 px-4 py-2.5 text-sm font-medium text-gray-700 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-600 focus:ring-2 focus:ring-brand-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800"
             >
