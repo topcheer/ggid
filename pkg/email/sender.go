@@ -237,16 +237,25 @@ func (s *SMTPSender) sendWithTLS(addr, host string, auth smtp.Auth, from string,
 	return c.Quit()
 }
 
+// sanitizeHeader removes CR and LF characters that could enable SMTP header
+// injection. Per RFC 5322, header fields must not contain bare CR or LF.
+func sanitizeHeader(s string) string {
+	s = strings.ReplaceAll(s, "\r\n", "")
+	s = strings.ReplaceAll(s, "\r", "")
+	s = strings.ReplaceAll(s, "\n", "")
+	return s
+}
+
 func (s *SMTPSender) buildHeaders(from string, msg *Message) string {
 	var b strings.Builder
-	b.WriteString(fmt.Sprintf("From: %s\r\n", from))
-	b.WriteString(fmt.Sprintf("To: %s\r\n", strings.Join(msg.To, ", ")))
+	b.WriteString(fmt.Sprintf("From: %s\r\n", sanitizeHeader(from)))
+	b.WriteString(fmt.Sprintf("To: %s\r\n", sanitizeHeader(strings.Join(msg.To, ", "))))
 	if len(msg.Cc) > 0 {
-		b.WriteString(fmt.Sprintf("Cc: %s\r\n", strings.Join(msg.Cc, ", ")))
+		b.WriteString(fmt.Sprintf("Cc: %s\r\n", sanitizeHeader(strings.Join(msg.Cc, ", "))))
 	}
-	b.WriteString(fmt.Sprintf("Subject: %s\r\n", msg.Subject))
+	b.WriteString(fmt.Sprintf("Subject: %s\r\n", sanitizeHeader(msg.Subject)))
 	if msg.ReplyTo != "" {
-		b.WriteString(fmt.Sprintf("Reply-To: %s\r\n", msg.ReplyTo))
+		b.WriteString(fmt.Sprintf("Reply-To: %s\r\n", sanitizeHeader(msg.ReplyTo)))
 	}
 	b.WriteString("MIME-Version: 1.0\r\n")
 	if msg.HTMLBody != "" {
@@ -255,7 +264,7 @@ func (s *SMTPSender) buildHeaders(from string, msg *Message) string {
 		b.WriteString("Content-Type: text/plain; charset=UTF-8\r\n")
 	}
 	for k, v := range msg.Headers {
-		b.WriteString(fmt.Sprintf("%s: %s\r\n", k, v))
+		b.WriteString(fmt.Sprintf("%s: %s\r\n", sanitizeHeader(k), sanitizeHeader(v)))
 	}
 	b.WriteString(fmt.Sprintf("Date: %s\r\n", time.Now().Format(time.RFC1123Z)))
 	return b.String()
