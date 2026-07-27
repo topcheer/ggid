@@ -6,12 +6,10 @@ import (
 	"encoding/json"
 	stderrors "errors"
 	"fmt"
-	"io"
 	"log"
 	"log/slog"
 	"net"
 	"net/http"
-	"net/url"
 	"os"
 	"strings"
 	"time"
@@ -19,6 +17,7 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"github.com/redis/go-redis/v9"
 
 	ggiderrors "github.com/ggid/ggid/pkg/errors"
 	"github.com/ggid/ggid/pkg/audit"
@@ -58,6 +57,7 @@ type Handler struct {
 	migrationEngine        *jitMigrationEngine
 	attrMapRepo            *attributeMappingRepo
 	pool                   *pgxpool.Pool
+	rdb                    *redis.Client
 	delRepo                *delegationRepo
 	tapPolicyRepo          *repository.TAPPolicyRepository
 	capRepo                *repository.ConditionalAccessRepository
@@ -140,6 +140,19 @@ func (h *Handler) SetAttrMapRepo(r *attributeMappingRepo) {
 // SetPool injects the DB pool for direct queries (account linking, etc).
 func (h *Handler) SetPool(pool *pgxpool.Pool) {
 	h.pool = pool
+}
+
+// SetRedis injects the Redis client for auth tickets.
+func (h *Handler) SetRedis(rdb *redis.Client) {
+	h.rdb = rdb
+	// Wire auth ticket issuer into WebAuthn handler.
+	if h.waHandler != nil && rdb != nil {
+		// Re-init waHandler with ticket issuer
+		// The handler was already created; we inject the issuer via a closure.
+		h.waHandler.SetTicketIssuer(func(ctx context.Context, tenantID, userID uuid.UUID, scopes []string) (string, error) {
+			return h.issueAuthTicket(ctx, tenantID, userID, scopes)
+		})
+	}
 }
 
 // SetDelegationRepo injects the delegation repository.
@@ -390,10 +403,7 @@ h.mux.HandleFunc("/api/v1/auth/mfa/backup", h.backupCodesGenerate) // Console al
 		}
 		waOpts = append(waOpts, webauthn.WithIOSAppSiteAssociation(iosIDs))
 	}
-	// Inject TokenIssuer: after passkey verification, call OAuth service to issue JWT.
-	waOpts = append(waOpts, webauthn.WithTokenIssuer(func(ctx context.Context, tenantID, userID uuid.UUID) (string, error) {
-		return h.exchangePasskeyForToken(ctx, tenantID, userID)
-	}))
+	// Auth ticket issuer is injected after Redis is wired (see SetRedis).
 
 	webauthnHandler, err := webauthn.NewHandler(rpID, rpName, h.waCredStore, waOpts...)
 	if err != nil {
@@ -3023,76 +3033,32 @@ func (h *Handler) securityPasswordPolicy(w http.ResponseWriter, r *http.Request)
 	}
 }
 
-// exchangePasskeyForToken creates a one-time password for the verified user,
-// calls OAuth internally to get JWT, then the temp password is discarded.
-func (h *Handler) exchangePasskeyForToken(ctx context.Context, tenantID, userID uuid.UUID) (string, error) {
-	if h.pool == nil {
-		return "", fmt.Errorf("database not configured")
+// issueAuthTicket creates a short-lived ticket in Redis after passwordless verification.
+// The ticket can be exchanged at the OAuth /authorize endpoint for an authorization code,
+// which is then exchanged for JWT via standard grant_type=authorization_code.
+// This is the standard bridge for all passwordless auth (passkey, SMS OTP, email OTP).
+func (h *Handler) issueAuthTicket(ctx context.Context, tenantID, userID uuid.UUID, scopes []string) (string, error) {
+	if h.rdb == nil {
+		return "", fmt.Errorf("redis not configured for auth tickets")
 	}
 
-	tempPassword, err := crypto.GenerateRandomToken(32)
+	ticket, err := crypto.GenerateRandomToken(32)
 	if err != nil {
-		return "", fmt.Errorf("generate temp token: %w", err)
+		return "", fmt.Errorf("generate ticket: %w", err)
 	}
 
-	hash, err := crypto.HashPassword(tempPassword)
-	if err != nil {
-		return "", fmt.Errorf("hash temp password: %w", err)
+	ticketData, _ := json.Marshal(map[string]any{
+		"tenant_id": tenantID.String(),
+		"user_id":   userID.String(),
+		"scopes":    scopes,
+		"issued_at": time.Now().Unix(),
+	})
+
+	key := "auth_ticket:" + ticket
+	if err := h.rdb.Set(ctx, key, ticketData, 30*time.Second).Err(); err != nil {
+		return "", fmt.Errorf("store ticket: %w", err)
 	}
 
-	_, err = h.pool.Exec(ctx,
-		`UPDATE users SET password_hash = $2 WHERE id = $1 AND tenant_id = $3`,
-		userID, hash, tenantID)
-	if err != nil {
-		return "", fmt.Errorf("update temp password: %w", err)
-	}
-	_, _ = h.pool.Exec(ctx,
-		`UPDATE credentials SET secret = $3 WHERE user_id = $1 AND tenant_id = $2 AND type = 'password'`,
-		userID, tenantID, hash)
-
-	var username string
-	err = h.pool.QueryRow(ctx, `SELECT username FROM users WHERE id = $1 AND tenant_id = $2`,
-		userID, tenantID).Scan(&username)
-	if err != nil {
-		return "", fmt.Errorf("lookup username: %w", err)
-	}
-
-	oauthURL := os.Getenv("OAUTH_SERVICE_URL")
-	if oauthURL == "" {
-		oauthURL = "http://ggid-oauth.ggid.svc:9005"
-	}
-
-	formData := url.Values{
-		"grant_type": {"password"},
-		"username":   {username},
-		"password":   {tempPassword},
-		"client_id":  {"gcid-console"},
-		"scope":      {"openid profile"},
-	}
-
-	req, _ := http.NewRequestWithContext(ctx, "POST",
-		oauthURL+"/oauth/token?tenant_id="+tenantID.String(),
-		strings.NewReader(formData.Encode()))
-	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-
-	resp, err := http.DefaultClient.Do(req)
-	if err != nil {
-		return "", fmt.Errorf("oauth internal call: %w", err)
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		body, _ := io.ReadAll(resp.Body)
-		return "", fmt.Errorf("oauth returned %d: %s", resp.StatusCode, string(body))
-	}
-
-	var tokenResp struct {
-		AccessToken string `json:"access_token"`
-	}
-	if err := json.NewDecoder(resp.Body).Decode(&tokenResp); err != nil {
-		return "", fmt.Errorf("decode token response: %w", err)
-	}
-
-	return tokenResp.AccessToken, nil
+	return ticket, nil
 }
 

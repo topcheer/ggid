@@ -73,6 +73,45 @@ func (s *OAuthService) SetRedisClient(rdb RedisCmdable) {
 	s.rdb = rdb
 }
 
+// VerifyAuthTicket validates a one-time auth ticket from passwordless authentication
+// (passkey, SMS OTP, email OTP). The ticket was created by the auth service and stored
+// in Redis with 30s TTL. This method reads, validates, and deletes the ticket (single-use).
+// Returns the verified user UUID.
+func (s *OAuthService) VerifyAuthTicket(ctx context.Context, ticket string) (uuid.UUID, error) {
+	if s.rdb == nil {
+		return uuid.Nil, fmt.Errorf("redis not configured")
+	}
+	if ticket == "" {
+		return uuid.Nil, fmt.Errorf("empty ticket")
+	}
+
+	key := "auth_ticket:" + ticket
+	val, err := s.rdb.Get(ctx, key)
+	if err != nil {
+		return uuid.Nil, fmt.Errorf("invalid or expired ticket")
+	}
+	data := []byte(val)
+
+	// Delete immediately — single use
+	s.rdb.Del(ctx, key)
+
+	var ticketData struct {
+		TenantID string   `json:"tenant_id"`
+		UserID   string   `json:"user_id"`
+		Scopes   []string `json:"scopes"`
+	}
+	if err := json.Unmarshal(data, &ticketData); err != nil {
+		return uuid.Nil, fmt.Errorf("malformed ticket data")
+	}
+
+	userID, err := uuid.Parse(ticketData.UserID)
+	if err != nil {
+		return uuid.Nil, fmt.Errorf("invalid user_id in ticket")
+	}
+
+	return userID, nil
+}
+
 // SetPool wires a DB pool for user profile queries (used in access token claims).
 func (s *OAuthService) SetPool(pool PoolQuerier) {
 	s.pool = pool

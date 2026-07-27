@@ -451,10 +451,21 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 			return
 		}
 
-		// The user must be authenticated (via JWT).
+		// The user must be authenticated (via JWT, user_id, or auth_ticket).
+		// auth_ticket: one-time ticket from passwordless auth (passkey/SMS/email OTP).
+		// Verified via Redis, consumed on use. Maps to standard authorize flow.
 		userIDStr := r.URL.Query().Get("user_id")
 		if userIDStr == "" {
 			userIDStr = r.Header.Get("X-User-ID")
+		}
+		// Check for auth_ticket (passwordless verification)
+		if userIDStr == "" {
+			if ticket := r.URL.Query().Get("auth_ticket"); ticket != "" {
+				verifiedUserID, ticketErr := oauthSvc.VerifyAuthTicket(r.Context(), ticket)
+				if ticketErr == nil && verifiedUserID != uuid.Nil {
+					userIDStr = verifiedUserID.String()
+				}
+			}
 		}
 		userID, err := uuid.Parse(userIDStr)
 		if err != nil {

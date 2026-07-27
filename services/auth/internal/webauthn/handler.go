@@ -58,8 +58,12 @@ func (u *webAuthnUser) WebAuthnCredentials() []webauthn.Credential { return u.cr
 
 // --- Session Store (in-memory, ephemeral — production would use Redis) ---
 
-// TokenIssuer generates a JWT for a user after passkey authentication.
-type TokenIssuer func(ctx context.Context, tenantID, userID uuid.UUID) (string, error)
+// AuthTicketIssuer creates a short-lived auth ticket after passwordless verification.
+// The ticket is exchanged at the OAuth token endpoint for a JWT.
+// This is the standard pattern for all passwordless flows (passkey, SMS OTP, email OTP).
+// Ticket format: opaque string stored in Redis with key auth_ticket:{ticket}.
+// Value: {tenant_id, user_id, scopes}. TTL: 30 seconds (single-use).
+type AuthTicketIssuer func(ctx context.Context, tenantID, userID uuid.UUID, scopes []string) (string, error)
 
 // SessionBackend abstracts session storage (memory or Redis).
 type SessionBackend interface {
@@ -154,7 +158,7 @@ type Handler struct {
 	androidPkg    string         // WA-12: Android package name for asset links
 	androidSHA256 string         // WA-12: Android app SHA-256 fingerprint
 	iosAppIDs     []string       // WA-12: iOS app IDs for universal links
-	tokenIssuer   TokenIssuer    // Issues JWT after successful passkey auth
+	ticketIssuer  AuthTicketIssuer  // Creates auth ticket after passkey verification
 	sessionBackend SessionBackend // Redis-backed session persistence
 }
 
@@ -166,14 +170,14 @@ type handlerConfig struct {
 	androidPkg    string   // WA-12
 	androidSHA256 string   // WA-12
 	iosAppIDs     []string // WA-12
-	tokenIssuer   TokenIssuer
+	ticketIssuer   AuthTicketIssuer
 	sessionBackend SessionBackend
 }
 
-// WithTokenIssuer injects a JWT token issuer for passkey login completion.
-func WithTokenIssuer(fn TokenIssuer) HandlerOption {
+// WithTicketIssuer injects an auth ticket issuer for passkey login completion.
+func WithTicketIssuer(fn AuthTicketIssuer) HandlerOption {
 	return func(c *handlerConfig) {
-		c.tokenIssuer = fn
+		c.ticketIssuer = fn
 	}
 }
 
@@ -238,9 +242,15 @@ func NewHandler(rpID, rpName string, store CredentialStore, opts ...HandlerOptio
 		androidPkg:    cfg.androidPkg,
 		androidSHA256: cfg.androidSHA256,
 		iosAppIDs:     cfg.iosAppIDs,
-		tokenIssuer:   cfg.tokenIssuer,
+		ticketIssuer:   cfg.ticketIssuer,
 		sessionBackend: cfg.sessionBackend,
 	}, nil
+}
+
+// SetTicketIssuer allows late injection of the auth ticket issuer.
+// Used when Redis is wired after handler creation.
+func (h *Handler) SetTicketIssuer(fn AuthTicketIssuer) {
+	h.ticketIssuer = fn
 }
 
 // generateCredentialName derives a human-readable credential name from the
@@ -856,19 +866,20 @@ func (h *Handler) finishAuthentication(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	// Issue JWT if token issuer is configured.
-	if h.tokenIssuer != nil && authUserID != uuid.Nil {
-		token, err := h.tokenIssuer(ctx, tenantID, authUserID)
+	// Issue auth ticket if ticket issuer is configured.
+	if h.ticketIssuer != nil && authUserID != uuid.Nil {
+		ticket, err := h.ticketIssuer(ctx, tenantID, authUserID, []string{"openid", "profile"})
 		if err != nil {
-			writeError(w, http.StatusInternalServerError, "failed to issue token")
+			writeError(w, http.StatusInternalServerError, "failed to issue auth ticket")
 			return
 		}
 		writeJSON(w, http.StatusOK, map[string]any{
-			"status":         "authenticated",
-			"access_token":   token,
-			"token_type":     "Bearer",
-			"credential_id":  base64.RawURLEncoding.EncodeToString(credential.ID),
-			"sign_count":     credential.Authenticator.SignCount,
+			"status":        "authenticated",
+			"auth_ticket":   ticket,
+			"ticket_type":   "urn:ggid:auth-ticket",
+			"expires_in":    30,
+			"credential_id": base64.RawURLEncoding.EncodeToString(credential.ID),
+			"sign_count":    credential.Authenticator.SignCount,
 		})
 		return
 	}
