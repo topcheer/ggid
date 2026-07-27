@@ -8,6 +8,7 @@ import { API_BASE_URL, DEFAULT_TENANT_ID, getEffectiveTenantSlug, resolveTenantS
 import { useTranslations } from "@/lib/i18n";
 import { authHeader, isAuthenticated } from "@/lib/auth-helpers";
 import { offerPasskeyUpgrade, syncSignalAfterLogin } from "@/lib/webauthn-conditional";
+import { PasswordlessLogin } from "@/components/auth/passwordless-login";
 
 const API_BASE = API_BASE_URL;
 
@@ -42,6 +43,8 @@ export default function LoginPage() {
   const tenantLocked = !!getTenantSlugFromSubdomain();
   const [resolvedTenantId, setResolvedTenantId] = useState(DEFAULT_TENANT_ID);
   const [pwFeedback, setPwFeedback] = useState("");
+  const [authMethods, setAuthMethods] = useState<string[]>(["password"]);
+  const [otpChannel, setOtpChannel] = useState<"sms" | "email">("email");
   const [systemInitialized, setSystemInitialized] = useState<boolean | null>(null);
   const [initUserCount, setInitUserCount] = useState(0);
 
@@ -60,6 +63,22 @@ export default function LoginPage() {
       setResolvedTenantId(DEFAULT_TENANT_ID);
     }
   }, []);
+
+  // Fetch console client auth_methods to determine which login options to show
+  useEffect(() => {
+    fetch(`${API_BASE}/api/v1/oauth/clients/gcid-console`, {
+      headers: { "X-Tenant-ID": resolvedTenantId, ...authHeader() },
+    })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
+        if (data) {
+          const client = data.client || data;
+          const methods = client.auth_methods || ["password"];
+          setAuthMethods(methods);
+        }
+      })
+      .catch(() => {});
+  }, [resolvedTenantId]);
 
   // Check for WebAuthn / Passkey support and attempt conditional mediation (autofill)
   useEffect(() => {
@@ -470,103 +489,44 @@ export default function LoginPage() {
               {loading ? t("login.signingIn") : t("login.signIn")}
             </button>
 
-            {/* Passkey as alternative method */}
-            {passkeySupported && (
-            <>
-            <div className="my-5 flex items-center gap-3">
-              <div className="h-px flex-1 bg-gray-200 dark:bg-gray-700" />
-              <span className="text-xs text-gray-400 dark:text-gray-500">{t("loginEnhanced.otherMethods")}</span>
-              <div className="h-px flex-1 bg-gray-200 dark:bg-gray-700" />
-            </div>
-
-            <button
-              type="button"
-              onClick={async () => {
-                setLoading(true);
-                setError("");
-                try {
-                  // Step 1: Begin passkey authentication
-                  const beginResp = await fetch(`${API_BASE}/api/v1/auth/webauthn/login/begin`, {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json", "X-Tenant-ID": resolvedTenantId },
-                  });
-                  if (!beginResp.ok) throw new Error("Passkey not available");
-                  const options = await beginResp.json();
-
-                  // Step 2: Browser prompts user for passkey (biometric/PIN)
-                  const credential = await navigator.credentials.get({ publicKey: options.response });
-
-                  // Step 3: Send assertion to backend for verification
-                  const assertBody = {
-                    id: credential.id,
-                    rawId: btoa(String.fromCharCode(...new Uint8Array(credential.rawId))),
-                    type: credential.type,
-                    response: {
-                      authenticatorData: btoa(String.fromCharCode(...new Uint8Array(credential.response.authenticatorData))),
-                      clientDataJSON: btoa(String.fromCharCode(...new Uint8Array(credential.response.clientDataJSON))),
-                      signature: btoa(String.fromCharCode(...new Uint8Array(credential.response.signature))),
-                      userHandle: credential.response.userHandle ? btoa(String.fromCharCode(...new Uint8Array(credential.response.userHandle))) : null,
-                    },
-                  };
-
-                  const finishResp = await fetch(`${API_BASE}/api/v1/auth/webauthn/login/finish`, {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json", "X-Tenant-ID": resolvedTenantId },
-                    body: JSON.stringify(assertBody),
-                  });
-                  const result = await finishResp.json();
-                  if (!finishResp.ok) throw new Error(result.error || "Passkey verification failed");
-
-                  // Step 4: Exchange auth_ticket for JWT via OAuth authorize → code → token
-                  if (result.auth_ticket) {
-                    // Use auth_ticket to get authorization code, then exchange for token
-                    const codeResp = await fetch(`${API_BASE}/oauth/authorize?auth_ticket=${result.auth_ticket}&client_id=gcid-console&redirect_uri=${encodeURIComponent(window.location.origin + "/callback")}&response_type=code&scope=openid+profile+email+offline_access&code_challenge=console-passkey&code_challenge_method=S256`, {
-                      headers: { "X-Tenant-ID": resolvedTenantId },
-                      redirect: "manual",
-                    });
-                    const loc = codeResp.headers.get("location") || "";
-                    const codeMatch = loc.match(/code=([^&]+)/);
-                    if (codeMatch) {
-                      const code = codeMatch[1];
-                      const tokenResp = await fetch(`${API_BASE}/oauth/token`, {
-                        method: "POST",
-                        headers: { "Content-Type": "application/x-www-form-urlencoded", "X-Tenant-ID": resolvedTenantId },
-                        body: new URLSearchParams({
-                          grant_type: "authorization_code",
-                          code,
-                          client_id: "gcid-console",
-                          redirect_uri: window.location.origin + "/callback",
-                          code_verifier: "console-passkey",
-                        }),
-                      });
-                      const tokenData = await tokenResp.json();
-                      if (tokenData.access_token) {
-                        localStorage.setItem("ggid_access_token", tokenData.access_token);
-                        if (tokenData.refresh_token) localStorage.setItem("ggid_refresh_token", tokenData.refresh_token);
-                        localStorage.setItem("ggid_tenant_id", resolvedTenantId);
-                        router.replace(redirectTo);
-                        return;
-                      }
-                    }
-                    throw new Error("Failed to exchange passkey auth for token");
-                  } else {
-                    throw new Error("No auth ticket received");
-                  }
-                } catch (err) {
-                  if (err.name === "NotAllowedError") {
-                    setError("Passkey authentication cancelled");
-                  } else {
-                    setError(err instanceof Error ? err.message : "Passkey login failed");
-                  }
-                  setLoading(false);
-                }
-              }}
-              className="w-full flex items-center justify-center gap-2 rounded-xl border border-gray-300 px-4 py-2.5 text-sm font-medium text-gray-700 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-600 focus:ring-2 focus:ring-brand-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800"
-            >
-              <Fingerprint className="h-4 w-4" />
-              {t("loginEnhanced.passkeyButton")}
-            </button>
-            </>
+            {/* Passwordless methods — rendered based on client auth_methods config */}
+            {(authMethods.includes("passkey") || authMethods.includes("sms_otp") || authMethods.includes("email_otp")) && !authMethods.includes("password") ? (
+              <>
+                {/* Passwordless-only mode: show as primary login */}
+                {authMethods.includes("passkey") && passkeySupported && (
+                  <PasswordlessLogin apiBase={API_BASE} tenantId={resolvedTenantId} authMethod="passkey"
+                    onSuccess={(d) => { localStorage.setItem("ggid_access_token", d.access_token); if (d.refresh_token) localStorage.setItem("ggid_refresh_token", d.refresh_token); localStorage.setItem("ggid_tenant_id", resolvedTenantId); router.replace(redirectTo); }}
+                    onError={(m) => setError(m)} />
+                )}
+                {authMethods.includes("sms_otp") && (
+                  <div className="mt-3">
+                    <PasswordlessLogin apiBase={API_BASE} tenantId={resolvedTenantId} authMethod="sms_otp"
+                      onSuccess={(d) => { localStorage.setItem("ggid_access_token", d.access_token); if (d.refresh_token) localStorage.setItem("ggid_refresh_token", d.refresh_token); localStorage.setItem("ggid_tenant_id", resolvedTenantId); router.replace(redirectTo); }}
+                      onError={(m) => setError(m)} />
+                  </div>
+                )}
+                {authMethods.includes("email_otp") && (
+                  <div className="mt-3">
+                    <PasswordlessLogin apiBase={API_BASE} tenantId={resolvedTenantId} authMethod="email_otp"
+                      onSuccess={(d) => { localStorage.setItem("ggid_access_token", d.access_token); if (d.refresh_token) localStorage.setItem("ggid_refresh_token", d.refresh_token); localStorage.setItem("ggid_tenant_id", resolvedTenantId); router.replace(redirectTo); }}
+                      onError={(m) => setError(m)} />
+                  </div>
+                )}
+              </>
+            ) : (
+              /* Password mode with optional passkey/OTP as secondary */
+              (authMethods.includes("passkey") && passkeySupported) && (
+                <>
+                  <div className="my-5 flex items-center gap-3">
+                    <div className="h-px flex-1 bg-gray-200 dark:bg-gray-700" />
+                    <span className="text-xs text-gray-400 dark:text-gray-500">{t("loginEnhanced.otherMethods")}</span>
+                    <div className="h-px flex-1 bg-gray-200 dark:bg-gray-700" />
+                  </div>
+                  <PasswordlessLogin apiBase={API_BASE} tenantId={resolvedTenantId} authMethod="passkey"
+                    onSuccess={(d) => { localStorage.setItem("ggid_access_token", d.access_token); if (d.refresh_token) localStorage.setItem("ggid_refresh_token", d.refresh_token); localStorage.setItem("ggid_tenant_id", resolvedTenantId); router.replace(redirectTo); }}
+                    onError={(m) => setError(m)} />
+                </>
+              )
             )}
 
             {/* Social Login - only show configured connectors */}
