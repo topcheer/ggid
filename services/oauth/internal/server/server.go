@@ -716,13 +716,14 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 			// Inject client IP and User-Agent for session audit tracking.
 			ctx = service.WithClientInfo(ctx, r.RemoteAddr, r.UserAgent())
 			resp, tokenErr = oauthSvc.PasswordGrant(ctx, &service.PasswordGrantRequest{
-				TenantID:     tenantID,
-				Username:     r.FormValue("username"),
-				Password:     r.FormValue("password"),
-				ClientID:     clientID,
-				Scope:        scopes,
-				Audience:     r.FormValue("audience"),
-				MFACode:      r.FormValue("mfa_code"),
+				TenantID:   tenantID,
+				Username:   r.FormValue("username"),
+				Password:   r.FormValue("password"),
+				ClientID:   clientID,
+				Scope:      scopes,
+				Audience:   r.FormValue("audience"),
+				MFACode:    r.FormValue("mfa_code"),
+				BackupCode: r.FormValue("backup_code"),
 			})
 		case "urn:ietf:params:oauth:grant-type:device_code":
 			resp, tokenErr = oauthSvc.PollDeviceToken(ctx, r.FormValue("device_code"), clientID)
@@ -797,7 +798,17 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 				ev.Metadata = map[string]any{"username": r.FormValue("username"), "error": tokenErr.Error()}
 				auditPub.PublishAsync(ev)
 			}
-			writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid_grant", "error_description": tokenErr.Error()})
+			// Special-case MFA required: return "mfa_required" error code (not invalid_grant)
+			// so that console and SDK clients can detect the MFA step.
+			errMsg := tokenErr.Error()
+			if strings.Contains(errMsg, "mfa_required") || strings.Contains(errMsg, "mfa required") {
+				writeJSON(w, http.StatusBadRequest, map[string]string{
+					"error":             "mfa_required",
+					"error_description": "multi-factor authentication is required",
+				})
+				return
+			}
+			writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid_grant", "error_description": errMsg})
 			return
 		}
 

@@ -2036,13 +2036,14 @@ func (s *OAuthService) issueClientAccessToken(tenantID uuid.UUID, audience, clie
 
 // PasswordGrantRequest holds parameters for the password grant (RFC 6749 §4.3).
 type PasswordGrantRequest struct {
-	TenantID uuid.UUID
-	Username string
-	Password string
-	ClientID string
-	Scope    []string
-	Audience string // optional target audience (defaults to client_id)
-	MFACode  string // optional TOTP code for users with MFA enrolled
+	TenantID   uuid.UUID
+	Username   string
+	Password   string
+	ClientID   string
+	Scope      []string
+	Audience   string // optional target audience (defaults to client_id)
+	MFACode    string // optional TOTP code for users with MFA enrolled
+	BackupCode string // optional single-use backup code
 }
 
 // PasswordGrant authenticates a user with username/password and issues tokens.
@@ -2124,16 +2125,25 @@ func (s *OAuthService) PasswordGrant(ctx context.Context, req *PasswordGrantRequ
 			`SELECT COUNT(*) FROM mfa_devices WHERE tenant_id = $1 AND user_id = $2 AND enabled = true AND verified_at IS NOT NULL`,
 			tenantID, userID).Scan(&mfaCount)
 		if mfaCount > 0 {
-			if req.MFACode == "" {
+			if req.MFACode == "" && req.BackupCode == "" {
 				return nil, errors.New(errors.ErrUnauthenticated, "mfa_required")
 			}
-			// Verify the TOTP code against the user's enabled device.
-			var secret string
-			s.pool.QueryRow(ctx,
-				`SELECT secret FROM mfa_devices WHERE tenant_id = $1 AND user_id = $2 AND enabled = true AND verified_at IS NOT NULL LIMIT 1`,
-				tenantID, userID).Scan(&secret)
-			if secret == "" || !validateTOTP(secret, req.MFACode) {
-				return nil, errors.New(errors.ErrUnauthenticated, "invalid mfa code")
+			// Try backup code first if provided
+			if req.BackupCode != "" {
+				bcID, bcErr := s.verifyBackupCode(ctx, tenantID, userID, req.BackupCode)
+				if bcErr != nil {
+					return nil, errors.New(errors.ErrUnauthenticated, "invalid backup code")
+				}
+				_ = bcID // backup code consumed inside verifyBackupCode
+			} else {
+				// Verify the TOTP code against the user's enabled device.
+				var secret string
+				s.pool.QueryRow(ctx,
+					`SELECT secret FROM mfa_devices WHERE tenant_id = $1 AND user_id = $2 AND enabled = true AND verified_at IS NOT NULL LIMIT 1`,
+					tenantID, userID).Scan(&secret)
+				if secret == "" || !validateTOTP(secret, req.MFACode) {
+					return nil, errors.New(errors.ErrUnauthenticated, "invalid mfa code")
+				}
 			}
 		}
 	}
@@ -2148,10 +2158,16 @@ func (s *OAuthService) PasswordGrant(ctx context.Context, req *PasswordGrantRequ
 		// SECURITY: also verify the user actually has a verified MFA device.
 		// Without this check, a user without MFA could pass a random mfa_code
 		// string and bypass the policy.
-		if req.MFACode == "" {
-			return nil, errors.New(errors.ErrUnauthenticated,
-				fmt.Sprintf("mfa required by policy: %s", capPolicy))
-		}
+		if req.MFACode == "" && req.BackupCode == "" {
+				return nil, errors.New(errors.ErrUnauthenticated,
+					fmt.Sprintf("mfa required by policy: %s", capPolicy))
+			}
+			// If backup code provided, verify and consume it
+			if req.BackupCode != "" {
+				if _, err := s.verifyBackupCode(ctx, tenantID, userID, req.BackupCode); err != nil {
+					return nil, errors.New(errors.ErrUnauthenticated, "invalid backup code")
+				}
+			}
 		var mfaVerified int
 		s.pool.QueryRow(ctx,
 			`SELECT COUNT(*) FROM mfa_devices WHERE tenant_id = $1 AND user_id = $2 AND enabled = true AND verified_at IS NOT NULL`,
@@ -2367,6 +2383,35 @@ func validateTOTP(secret, code string) bool {
 			Algorithm: otp.AlgorithmSHA1,
 		})
 	return err == nil && valid
+}
+
+// verifyBackupCode checks a single-use backup code and consumes it if valid.
+func (s *OAuthService) verifyBackupCode(ctx context.Context, tenantID, userID uuid.UUID, code string) (uuid.UUID, error) {
+	code = strings.TrimSpace(code)
+	if code == "" {
+		return uuid.Nil, fmt.Errorf("empty backup code")
+	}
+	// Fetch all unused backup codes for the user and compare hashes.
+	rows, err := s.pool.Query(ctx,
+		`SELECT id, code_hash FROM backup_codes WHERE tenant_id = $1 AND user_id = $2 AND used_at IS NULL`,
+		tenantID, userID)
+	if err != nil {
+		return uuid.Nil, err
+	}
+	defer rows.Close()
+	for rows.Next() {
+		var id uuid.UUID
+		var hash string
+		if err := rows.Scan(&id, &hash); err != nil {
+			continue
+		}
+		if ok, _ := pkgcrypto.VerifyPassword(code, hash); ok {
+			// Consume the code
+			s.pool.Exec(ctx, `UPDATE backup_codes SET used_at = $1 WHERE id = $2`, time.Now().UTC(), id)
+			return id, nil
+		}
+	}
+	return uuid.Nil, fmt.Errorf("invalid backup code")
 }
 
 // filterSafeScopes returns only standard OAuth scopes from the input,
