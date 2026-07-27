@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/redis/go-redis/v9"
 )
 
@@ -28,6 +29,7 @@ type RevocationStatus struct {
 // Falls back to in-memory map when Redis is unavailable.
 type TokenRevocationService struct {
 	rdb       *redis.Client
+	pool      *pgxpool.Pool
 	mu        sync.RWMutex
 	blacklist map[string]*revocationEntry // memory fallback
 }
@@ -50,6 +52,11 @@ func NewTokenRevocationService(rdb *redis.Client) *TokenRevocationService {
 	}
 }
 
+// SetPool enables DB-level cascade revocation.
+func (s *TokenRevocationService) SetPool(pool *pgxpool.Pool) {
+	s.pool = pool
+}
+
 const revocationKeyPrefix = "ggid:revoked_token:"
 
 // RevokeToken revokes a single token by its ID with a reason.
@@ -67,9 +74,17 @@ func (s *TokenRevocationService) RevokeByClient(ctx context.Context, clientID st
 	if clientID == "" {
 		return 0, fmt.Errorf("clientID is required")
 	}
-	// In a real implementation this would query the token store for all tokens
-	// belonging to clientID and blacklist each one.
-	return 0, nil
+	count := 0
+	if s.pool != nil {
+		tag, err := s.pool.Exec(ctx, `
+			UPDATE refresh_tokens SET revoked = true, revoked_at = NOW()
+			WHERE client_id = $1 AND revoked = false`, clientID)
+		if err != nil {
+			return 0, fmt.Errorf("revoke by client: %w", err)
+		}
+		count = int(tag.RowsAffected())
+	}
+	return count, nil
 }
 
 // RevokeByUser revokes all tokens for a given user ID (cascade: access + refresh + session).
@@ -77,7 +92,17 @@ func (s *TokenRevocationService) RevokeByUser(ctx context.Context, userID uuid.U
 	if userID == uuid.Nil {
 		return 0, fmt.Errorf("userID is required")
 	}
-	return 0, nil
+	count := 0
+	if s.pool != nil {
+		tag, err := s.pool.Exec(ctx, `
+			UPDATE refresh_tokens SET revoked = true, revoked_at = NOW()
+			WHERE user_id = $1 AND revoked = false`, userID)
+		if err != nil {
+			return 0, fmt.Errorf("revoke by user: %w", err)
+		}
+		count = int(tag.RowsAffected())
+	}
+	return count, nil
 }
 
 // GetRevocationStatus returns the revocation status of a token.

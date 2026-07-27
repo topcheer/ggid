@@ -14,10 +14,12 @@ import (
 	"os/signal"
 	"path/filepath"
 	"syscall"
+	"time"
 
 	"github.com/ggid/ggid/pkg/crypto"
 	"github.com/ggid/ggid/services/oauth/internal/conf"
 	"github.com/ggid/ggid/services/oauth/internal/server"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 // envOrDefault returns the env var value or default if not set.
@@ -89,6 +91,9 @@ func main() {
 	ctx, cancel := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer cancel()
 
+	// Start cleanup goroutine for expired tokens, auth codes, and id-token records.
+	go startTokenCleanup(ctx, os.Getenv("DATABASE_URL"))
+
 	if err := srv.Run(ctx); err != nil {
 		log.Fatalf("oauth server error: %v", err)
 	}
@@ -127,4 +132,47 @@ func ensureLocalKeyPair(privateKeyPath, publicKeyPath string) error {
 	}
 	log.Printf("Generated new RSA key pair: %s + %s", privateKeyPath, publicKeyPath)
 	return nil
+}
+
+// startTokenCleanup periodically deletes expired tokens, auth codes, and id-token records.
+func startTokenCleanup(ctx context.Context, dbURL string) {
+	if dbURL == "" {
+		return
+	}
+	pool, err := pgxpool.New(ctx, dbURL)
+	if err != nil {
+		log.Printf("token cleanup: failed to connect DB: %v", err)
+		return
+	}
+	defer pool.Close()
+
+	ticker := time.NewTicker(1 * time.Hour)
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-ticker.C:
+			// Delete expired/revoked refresh tokens (keep 7 days for audit).
+			if tag, err := pool.Exec(ctx, `
+				DELETE FROM refresh_tokens
+				WHERE (expires_at < NOW() OR (revoked = true AND revoked_at < NOW() - INTERVAL '7 days'))
+			`); err == nil {
+				log.Printf("cleanup: deleted %d expired/revoked refresh tokens", tag.RowsAffected())
+			}
+			// Delete used/expired auth codes.
+			if tag, err := pool.Exec(ctx, `
+				DELETE FROM oauth_authorization_codes WHERE used = true OR expires_at < NOW()
+			`); err == nil {
+				log.Printf("cleanup: deleted %d expired auth codes", tag.RowsAffected())
+			}
+			// Delete expired id-token records.
+			if tag, err := pool.Exec(ctx, `
+				DELETE FROM oidc_id_tokens WHERE expires_at < NOW()
+			`); err == nil {
+				log.Printf("cleanup: deleted %d expired id-token records", tag.RowsAffected())
+			}
+		}
+	}
 }
