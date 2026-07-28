@@ -22,6 +22,7 @@ import (
 	"github.com/ggid/ggid/services/gateway/internal/config"
 	"github.com/ggid/ggid/services/gateway/internal/healthcheck"
 	"github.com/ggid/ggid/services/gateway/internal/middleware"
+	"github.com/google/uuid"
 	pkgmiddleware "github.com/ggid/ggid/pkg/middleware"
 )
 
@@ -349,8 +350,13 @@ func (gw *Gateway) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			return tid
 		}
 		// Fallback for unauthenticated pages (login/register): use query param
+		// SECURITY: validate as UUID to prevent XSS via template injection.
 		if tid := r.URL.Query().Get("tenant_id"); tid != "" {
-			return tid
+			if _, err := uuid.Parse(tid); err == nil {
+				return tid
+			}
+			// Not a valid UUID — reject to prevent script injection
+			return ""
 		}
 		// Default fallback (configurable via env, no hardcoded tenant)
 		if tid := os.Getenv("GGID_DEFAULT_TENANT_ID"); tid != "" {
