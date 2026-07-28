@@ -36,7 +36,8 @@ export function PasswordlessLogin({ apiBase, tenantId, authMethod, onSuccess, on
       const hashBuf = await crypto.subtle.digest("SHA-256", encoder.encode(codeVerifier));
       const codeChallenge = btoa(String.fromCharCode(...new Uint8Array(hashBuf))).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
 
-      const authorizeUrl = `${apiBase}/oauth/authorize?auth_ticket=${ticket}&client_id=gcid-console&redirect_uri=${encodeURIComponent(window.location.origin + "/callback")}&response_type=code&scope=openid+profile+email+offline_access&code_challenge=${codeChallenge}&code_challenge_method=S256&state=${state}`;
+      const redirectUri = window.location.origin + "/auth/callback";
+      const authorizeUrl = `${apiBase}/oauth/authorize?auth_ticket=${ticket}&client_id=gcid-console&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=code&scope=openid+profile+email+offline_access&code_challenge=${codeChallenge}&code_challenge_method=S256&state=${state}`;
 
       // Try to get auth code via fetch with redirect:manual
       let authCode = "";
@@ -57,7 +58,7 @@ export function PasswordlessLogin({ apiBase, tenantId, authMethod, onSuccess, on
         // receive the code and exchange it using the stored flow.
         sessionStorage.setItem("ggid_oauth_flow", JSON.stringify({
           code_verifier: codeVerifier,
-          redirect_uri: window.location.origin + "/callback",
+          redirect_uri: redirectUri,
           client_id: "gcid-console",
           state: state,
         }));
@@ -73,7 +74,7 @@ export function PasswordlessLogin({ apiBase, tenantId, authMethod, onSuccess, on
           grant_type: "authorization_code",
           code: authCode,
           client_id: "gcid-console",
-          redirect_uri: window.location.origin + "/callback",
+          redirect_uri: redirectUri,
           code_verifier: codeVerifier,
         }),
       });
