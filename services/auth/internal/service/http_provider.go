@@ -2,13 +2,59 @@ package service
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
+	"net"
 	"net/http"
 	"strings"
 	"time"
 )
+
+// isPrivateIP checks if an IP address is private/loopback/link-local.
+func isPrivateIP(ip net.IP) bool {
+	if ip.IsLoopback() || ip.IsLinkLocalUnicast() || ip.IsLinkLocalMulticast() {
+		return true
+	}
+	if ip4 := ip.To4(); ip4 != nil {
+		// 10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16
+		if ip4[0] == 10 || (ip4[0] == 172 && ip4[1]&0xf0 == 16) || (ip4[0] == 192 && ip4[1] == 168) {
+			return true
+		}
+		// 169.254.169.254 (cloud metadata)
+		if ip4[0] == 169 && ip4[1] == 254 {
+			return true
+		}
+	}
+	return false
+}
+
+// ssrfSafeDialer blocks connections to private/internal IP addresses.
+var ssrfSafeDialer = &net.Dialer{
+	Timeout: 10 * time.Second,
+}
+
+// ssrfSafeTransport blocks private IPs and prevents redirect-based SSRF.
+var ssrfSafeTransport = &http.Transport{
+	DialContext: func(ctx context.Context, network, addr string) (net.Conn, error) {
+		host, port, err := net.SplitHostPort(addr)
+		if err != nil {
+			return nil, err
+		}
+		// Resolve and check all IPs
+		ips, err := net.DefaultResolver.LookupIP(ctx, network, host)
+		if err != nil {
+			return nil, err
+		}
+		for _, ip := range ips {
+			if isPrivateIP(ip) {
+				return nil, fmt.Errorf("SSRF blocked: %s resolves to private IP %s", host, ip)
+			}
+		}
+		return ssrfSafeDialer.DialContext(ctx, network, net.JoinHostPort(ips[0].String(), port))
+	},
+}
 
 // HTTPProviderConfig defines a fully custom HTTP webhook for SMS/Email sending.
 // Users can configure any HTTP endpoint with templated request/response matching.
@@ -94,8 +140,15 @@ func ExecuteHTTPProvider(cfg HTTPProviderConfig, vars map[string]string) error {
 		req.Header.Set(k, renderVars(v, vars))
 	}
 
-	// Send
-	client := &http.Client{Timeout: time.Duration(timeout) * time.Second}
+	// Send with SSRF protection: block private IPs, prevent redirect-based SSRF.
+	client := &http.Client{
+		Timeout:   time.Duration(timeout) * time.Second,
+		Transport: ssrfSafeTransport,
+		CheckRedirect: func(req *http.Request, via []*http.Request) error {
+			// Prevent redirect to private IPs
+			return http.ErrUseLastResponse
+		},
+	}
 	resp, err := client.Do(req)
 	if err != nil {
 		return fmt.Errorf("HTTP provider request failed: %w", err)
