@@ -495,7 +495,7 @@ func (h *Handler) createUser(ctx context.Context, w http.ResponseWriter, r *http
 	user, err := h.svc.CreateUser(ctx, &domain.CreateUserInput{
 		Username:    scimUser.UserName,
 		Email:       email,
-		Password:    "TempPass123!", // SCIM provisioned users get temp password
+		Password:    service.GenerateRandomPassword(), // SCIM: random per-user password
 		DisplayName: scimUser.DisplayName,
 		ExternalID:  scimUser.ExternalID,
 	})

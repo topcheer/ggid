@@ -137,7 +137,7 @@ func (h *Handler) bulkCreateUser(ctx context.Context, op BulkOperationRequest) (
 	user, err := h.svc.CreateUser(ctx, &domain.CreateUserInput{
 		Username:    scimUser.UserName,
 		Email:       email,
-		Password:    "TempPass123!",
+		Password:    service.GenerateRandomPassword(),
 		DisplayName: scimUser.DisplayName,
 		ExternalID:  scimUser.ExternalID,
 	})
