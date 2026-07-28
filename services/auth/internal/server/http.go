@@ -593,6 +593,7 @@ h.mux.HandleFunc("/api/v1/auth/mfa/backup", h.backupCodesGenerate) // Console al
 	// Per-tenant registration configuration (admin)
 	h.mux.HandleFunc("/api/v1/auth/registration/config", h.handleRegistrationConfig)
 	h.mux.HandleFunc("/api/v1/providers/status", h.handleProviderStatus)
+	h.mux.HandleFunc("/api/v1/providers/config", h.handleProviderConfig)
 }
 
 // ServeHTTP implements http.Handler.
