@@ -135,19 +135,20 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
   // Listen for 401 events from api.ts to force logout without page reload
   useEffect(() => {
     const handleUnauthorized = () => {
-      localStorage.removeItem("ggid_access_token");
-      localStorage.removeItem("ggid_refresh_token");
-      localStorage.removeItem("ggid_session_id");
-      localStorage.removeItem("ggid_tenant_id");
-      localStorage.removeItem("ggid_user_id");
-      localStorage.removeItem("ggid_user_name");
-      localStorage.removeItem("ggid_user_email");
+      // If already on a public page (login/register/setup), don't redirect — prevents loop
+      const currentPath = typeof window !== "undefined" ? window.location.pathname : "";
+      const isPublicPath = PUBLIC_PATHS.some((p) => currentPath === p || currentPath.startsWith(p));
+      if (isPublicPath) return;
+
+      // Clear all auth state
+      ["ggid_access_token","ggid_refresh_token","ggid_session_id","ggid_tenant_id","ggid_user_id","ggid_user_name","ggid_user_email","ggid_user_scopes","ggid_user_permissions"].forEach(k => localStorage.removeItem(k));
       setIsAuthenticated(false);
-      router.push(`/login?redirect_to=${encodeURIComponent(window.location.pathname)}`);
+      // Use full page reload to login to ensure clean state
+      window.location.replace(`/login?redirect_to=${encodeURIComponent(currentPath)}`);
     };
     window.addEventListener("ggid:unauthorized", handleUnauthorized);
     return () => window.removeEventListener("ggid:unauthorized", handleUnauthorized);
-  }, [router]);
+  }, []);
 
   if (!checked) {
     return (

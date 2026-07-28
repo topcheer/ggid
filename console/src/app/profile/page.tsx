@@ -194,7 +194,7 @@ export default function EnhancedProfilePage() {
 
   const loadPasskeys = async () => {
     try {
-      const resp = await fetch(`${process.env.NEXT_PUBLIC_API_BASE || ""}/api/v1/auth/webauthn/credentials`, {
+      const resp = await fetch(`${API_BASE}/api/v1/auth/webauthn/credentials`, {
         headers: authHeader(),
       });
       if (resp.ok) {
@@ -207,7 +207,7 @@ export default function EnhancedProfilePage() {
   const registerPasskey = async () => {
     setPasskeyRegistering(true); setPasskeyError(""); setPasskeySuccess("");
     try {
-      const beginResp = await fetch(`${process.env.NEXT_PUBLIC_API_BASE || ""}/api/v1/auth/webauthn/register/begin`, {
+      const beginResp = await fetch(`${API_BASE}/api/v1/auth/webauthn/register/begin`, {
         method: "POST", headers: { "Content-Type": "application/json", ...authHeader() }, body: "{}",
       });
       if (!beginResp.ok) { const e = await beginResp.json().catch(()=>({})); throw new Error(e.error?.message || e.error || "Failed to start"); }
@@ -221,7 +221,7 @@ export default function EnhancedProfilePage() {
       const pkc = cred as PublicKeyCredential;
       const resp = pkc.response as AuthenticatorAttestationResponse;
       const b64 = (buf: ArrayBuffer) => btoa(String.fromCharCode(...new Uint8Array(buf))).replace(/\+/g,"-").replace(/\//g,"_").replace(/=+$/,"");
-      const finishResp = await fetch(`${process.env.NEXT_PUBLIC_API_BASE || ""}/api/v1/auth/webauthn/register/finish`, {
+      const finishResp = await fetch(`${API_BASE}/api/v1/auth/webauthn/register/finish`, {
         method: "POST", headers: { "Content-Type": "application/json", ...authHeader() },
         body: JSON.stringify({ id: pkc.id, rawId: b64(pkc.rawId), type: pkc.type, response: { attestationObject: b64(resp.attestationObject), clientDataJSON: b64(resp.clientDataJSON) } }),
       });
@@ -237,7 +237,7 @@ export default function EnhancedProfilePage() {
   const removePasskey = async (id: string) => {
     if (!confirm("Remove this passkey?")) return;
     try {
-      await fetch(`${process.env.NEXT_PUBLIC_API_BASE || ""}/api/v1/auth/webauthn/credentials/${id}`, { method: "DELETE", headers: authHeader() });
+      await fetch(`${API_BASE}/api/v1/auth/webauthn/credentials/${id}`, { method: "DELETE", headers: authHeader() });
       setPasskeySuccess("Passkey removed."); loadPasskeys();
     } catch { setPasskeyError("Failed to remove passkey."); }
   };
