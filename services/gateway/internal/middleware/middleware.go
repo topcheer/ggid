@@ -733,11 +733,11 @@ func JWTAuth(jwks *JWKSClient, required bool, issuer, audience string) func(http
 					}
 				}
 				if !isPlatformAdmin {
-					if required {
-						writeUnauthorized(w, "tenant mismatch: token tenant does not match request tenant")
-						return
-					}
-				}
+					// P1-3 fix: Always reject tenant mismatch, even when required=false.
+					// Silently allowing mismatched headers enables cross-tenant BOLA.
+					writeUnauthorized(w, "tenant mismatch: token tenant does not match request tenant")
+					return
+				}				}
 			}
 			// Set tenant_id from JWT into context (preserve existing if set by TenantResolver).
 			if jwtTenantID != "" {

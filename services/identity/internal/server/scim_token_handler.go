@@ -21,8 +21,18 @@ func (h *HTTPHandler) handleSCIMTokens(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// P1-4 Defense-in-depth: verify header tenant matches context tenant.
+	// Gateway should have validated this already, but don't trust the header alone.
+	headerTID := r.Header.Get("X-Tenant-ID")
+	if headerTID != "" {
+		if headerUUID, err := uuid.Parse(headerTID); err == nil && headerUUID != tc.TenantID {
+			writeJSONError(w, http.StatusForbidden, "tenant mismatch: header does not match authenticated tenant")
+			return
+		}
+	}
+
 	if h.scimRepo == nil {
-		writeJSON(w, http.StatusOK, map[string]any{"tokens": []any{}, "count": 0})
+		writeJSONError(w, http.StatusServiceUnavailable, "SCIM token storage not configured")
 		return
 	}
 
