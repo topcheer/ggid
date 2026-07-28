@@ -62,10 +62,12 @@ func TestLogin(t *testing.T) {
 
 func TestRefreshToken(t *testing.T) {
 	c, _ := newTestClient(t, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		var body map[string]string
-		_ = json.NewDecoder(r.Body).Decode(&body)
-		if body["refresh_token"] != "rt-123" {
-			t.Errorf("unexpected refresh_token: %v", body)
+		_ = r.ParseForm()
+		if r.FormValue("refresh_token") != "rt-123" {
+			t.Errorf("unexpected refresh_token: %s", r.FormValue("refresh_token"))
+		}
+		if r.FormValue("grant_type") != "refresh_token" {
+			t.Errorf("unexpected grant_type: %s", r.FormValue("grant_type"))
 		}
 		writeJSON(w, 200, TokenSet{AccessToken: "new-access", RefreshToken: "new-refresh", ExpiresIn: 3600, TokenType: "Bearer"})
 	}))

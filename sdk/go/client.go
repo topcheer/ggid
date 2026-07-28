@@ -30,6 +30,9 @@ type Client struct {
 	baseURL    string
 	httpClient *http.Client
 	apiKey     string
+	tenantID   string
+	clientID   string
+	clientSecret string
 	jwksURL    string
 	issuer     string
 	useDiscovery bool
@@ -47,6 +50,16 @@ type Option func(*Client)
 // WithAPIKey sets the server-side API key for management operations.
 func WithAPIKey(key string) Option {
 	return func(c *Client) { c.apiKey = key }
+}
+
+// WithTenantID sets the tenant ID for multi-tenant API calls.
+func WithTenantID(tenantID string) Option {
+	return func(c *Client) { c.tenantID = tenantID }
+}
+
+// WithClientCredentials sets the client ID and secret for OAuth flows.
+func WithClientCredentials(clientID, clientSecret string) Option {
+	return func(c *Client) { c.clientID = clientID; c.clientSecret = clientSecret }
 }
 
 // WithHTTPClient sets a custom HTTP client.
@@ -345,9 +358,6 @@ func (c *Client) ClientCredentials(ctx context.Context, clientID, clientSecret, 
 		"client_id":     {clientID},
 		"client_secret": {clientSecret},
 	}
-	if tenantID != "" {
-		form.Set("X-Tenant-ID", tenantID)
-	}
 	if len(scopes) > 0 {
 		form.Set("scope", strings.Join(scopes, " "))
 	}
@@ -356,6 +366,10 @@ func (c *Client) ClientCredentials(ctx context.Context, clientID, clientSecret, 
 		c.baseURL+"/api/v1/oauth/token", strings.NewReader(form.Encode()))
 	if err != nil {
 		return nil, err
+	}
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	if tenantID != "" {
+		req.Header.Set("X-Tenant-ID", tenantID)
 	}
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	if tenantID != "" {
@@ -455,11 +469,35 @@ func WithCodeChallenge(challenge string) AuthorizeOpt {
 	return func(a *AuthorizeConfig) { a.CodeChallenge = challenge }
 }
 
-// RefreshToken refreshes an access token using a refresh token.
+// RefreshToken refreshes an access token using a refresh token (RFC 6749 §6).
 func (c *Client) RefreshToken(ctx context.Context, refreshToken string) (*TokenSet, error) {
-	body := map[string]string{"refresh_token": refreshToken}
+	form := url.Values{}
+	form.Set("grant_type", "refresh_token")
+	form.Set("refresh_token", refreshToken)
+	form.Set("client_id", c.clientID)
+	if c.clientSecret != "" {
+		form.Set("client_secret", c.clientSecret)
+	}
+	req, err := http.NewRequestWithContext(ctx, "POST", c.baseURL+"/api/v1/oauth/token", strings.NewReader(form.Encode()))
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	if c.tenantID != "" {
+		req.Header.Set("X-Tenant-ID", c.tenantID)
+	}
+	resp, err := c.httpClient.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		var errResp map[string]string
+		json.NewDecoder(resp.Body).Decode(&errResp)
+		return nil, fmt.Errorf("token refresh failed: %s", errResp["error_description"])
+	}
 	var ts TokenSet
-	if err := c.post(ctx, "/api/v1/auth/refresh", body, &ts); err != nil {
+	if err := json.NewDecoder(resp.Body).Decode(&ts); err != nil {
 		return nil, err
 	}
 	return &ts, nil
@@ -819,6 +857,9 @@ func (c *Client) sendWithBody(ctx context.Context, method, path string, body any
 func (c *Client) do(req *http.Request, out any) error {
 	if c.apiKey != "" {
 		req.Header.Set("X-API-Key", c.apiKey)
+	}
+	if c.tenantID != "" {
+		req.Header.Set("X-Tenant-ID", c.tenantID)
 	}
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
