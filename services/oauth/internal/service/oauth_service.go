@@ -234,11 +234,16 @@ func (s *OAuthService) GetClient(ctx context.Context, clientID string) (*domain.
 	if s.clientRepo == nil {
 		return nil, errors.New(errors.ErrNotFound, "client not found")
 	}
-	client, err := s.clientRepo.GetClientByID(ctx, tc.TenantID, clientID)
+	return s.clientRepo.GetClientByID(ctx, tc.TenantID, clientID)
+}
+
+// GetClientForAuth retrieves a client and rejects disabled ones.
+// Used in authorization/token flows where disabled clients must be blocked.
+func (s *OAuthService) GetClientForAuth(ctx context.Context, clientID string) (*domain.OAuthClient, error) {
+	client, err := s.GetClient(ctx, clientID)
 	if err != nil {
 		return nil, err
 	}
-	// P1-2: reject disabled clients in authorization/token flows
 	if client != nil && !client.Enabled {
 		return nil, errors.New(errors.ErrPermissionDenied, "client is disabled")
 	}
@@ -249,7 +254,7 @@ func (s *OAuthService) GetClient(ctx context.Context, clientID string) (*domain.
 // registry (RFC 7662 §2.1 introspection authentication, RFC 6749 §2.3).
 // Returns nil on success; Unauthenticated on any failure (no oracle leaks).
 func (s *OAuthService) AuthenticateClient(ctx context.Context, clientID, clientSecret string) error {
-	client, err := s.GetClient(ctx, clientID)
+	client, err := s.GetClientForAuth(ctx, clientID)
 	if err != nil || client == nil {
 		return errors.Unauthenticated("invalid client credentials")
 	}
