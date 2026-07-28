@@ -1287,7 +1287,7 @@ func TestHandleStream_MissingTenantID(t *testing.T) {
 
 func TestHandleStream_InvalidTenantID(t *testing.T) {
 	srv := newTestServer(nil, nil)
-	w := doRequestNoTenant(srv, "GET", "/api/v1/audit/stream?tenant_id=invalid-uuid", "")
+	w := doRequestWithTenant(srv, "GET", "/api/v1/audit/stream", "", "not-a-uuid")
 	if w.Code != http.StatusBadRequest {
 		t.Fatalf("expected 400, got %v", w.Code)
 	}
@@ -1300,7 +1300,8 @@ func TestHandleStream_ConnectAndCancel(t *testing.T) {
 
 	// Use a cancellable context to stop the SSE loop quickly
 	ctx, cancel := context.WithCancel(context.Background())
-	req := httptest.NewRequest("GET", "/api/v1/audit/stream?tenant_id="+testTenantID.String(), nil)
+	req := httptest.NewRequest("GET", "/api/v1/audit/stream", nil)
+	req.Header.Set("X-Tenant-ID", testTenantID.String())
 	req = req.WithContext(ctx)
 	w := httptest.NewRecorder()
 
@@ -1498,7 +1499,8 @@ func TestHandleStream_ReceivesAuditEvent(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	req := httptest.NewRequest("GET", "/api/v1/audit/stream?tenant_id="+testTenantID.String(), nil)
+	req := httptest.NewRequest("GET", "/api/v1/audit/stream", nil)
+	req.Header.Set("X-Tenant-ID", testTenantID.String())
 	req = req.WithContext(ctx)
 	w := httptest.NewRecorder()
 
