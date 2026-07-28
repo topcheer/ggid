@@ -2168,6 +2168,15 @@ func (s *OAuthService) PasswordGrant(ctx context.Context, req *PasswordGrantRequ
 				s.pool.QueryRow(ctx,
 					`SELECT secret FROM mfa_devices WHERE tenant_id = $1 AND user_id = $2 AND enabled = true AND verified_at IS NOT NULL LIMIT 1`,
 					tenantID, userID).Scan(&secret)
+				if secret != "" {
+					// Secrets are stored AES-256-GCM encrypted (pkg/crypto.EncryptTOTPSecret) —
+					// decrypt before validation or legitimate TOTP codes always fail.
+					dec, dErr := pkgcrypto.DecryptTOTPSecret(secret)
+					if dErr != nil {
+						return nil, errors.Internal("decrypt mfa secret", dErr)
+					}
+					secret = dec
+				}
 				if secret == "" || !validateTOTP(secret, req.MFACode) {
 					return nil, errors.New(errors.ErrUnauthenticated, "invalid mfa code")
 				}
@@ -2433,8 +2442,15 @@ func (s *OAuthService) verifyBackupCode(ctx context.Context, tenantID, userID uu
 			continue
 		}
 		if ok, _ := pkgcrypto.VerifyPassword(code, hash); ok {
-			// Consume the code
-			s.pool.Exec(ctx, `UPDATE backup_codes SET used_at = $1 WHERE id = $2`, time.Now().UTC(), id)
+			// Consume the code atomically — the used_at IS NULL guard prevents
+			// TOCTOU reuse under concurrent logins presenting the same code.
+			tag, execErr := s.pool.Exec(ctx, `UPDATE backup_codes SET used_at = $1 WHERE id = $2 AND used_at IS NULL`, time.Now().UTC(), id)
+			if execErr != nil {
+				return uuid.Nil, execErr
+			}
+			if tag.RowsAffected() == 0 {
+				return uuid.Nil, fmt.Errorf("invalid backup code")
+			}
 			return id, nil
 		}
 	}
