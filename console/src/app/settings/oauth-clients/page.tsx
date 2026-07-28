@@ -174,7 +174,7 @@ export default function OAuthClientsSettingsPage() {
     }
   };
 
-  const handleEdit = (client: OAuthClient) => {
+  const handleEdit = async (client: OAuthClient) => {
     setEditClient(client);
     setForm({
       name: client.name,
@@ -183,7 +183,18 @@ export default function OAuthClientsSettingsPage() {
       scopes: (client.scopes || []).join(","),
       auth_methods: new Set((client as any).auth_methods || ["password"]),
     });
+    setEditTab("general");
     setShowEdit(true);
+    // Load app-level provider config
+    const tenantId = typeof window !== "undefined" ? localStorage.getItem("ggid_tenant_id") || "" : "";
+    try {
+      const [sms, email] = await Promise.all([
+        apiFetch<any>(`/api/v1/providers/config?key=sms_provider&scope=app&tenant_id=${tenantId}&client_id=${client.client_id}`).catch(() => null),
+        apiFetch<any>(`/api/v1/providers/config?key=email_provider&scope=app&tenant_id=${tenantId}&client_id=${client.client_id}`).catch(() => null),
+      ]);
+      setAppSmsConfig(sms);
+      setAppEmailConfig(email);
+    } catch { /* ignore */ }
   };
 
   const handleUpdate = async () => {
@@ -447,6 +458,12 @@ export default function OAuthClientsSettingsPage() {
               <X className="h-5 w-5" />
             </button>
           </div>
+          {/* Tabs */}
+          <div className="mb-4 flex gap-2 border-b border-gray-200 dark:border-gray-700">
+            <button onClick={() => setEditTab("general")} className={`px-3 py-1.5 text-xs font-medium border-b-2 ${editTab === "general" ? "border-brand-600 text-brand-600" : "border-transparent text-gray-500"}`}>General</button>
+            <button onClick={() => setEditTab("providers")} className={`px-3 py-1.5 text-xs font-medium border-b-2 ${editTab === "providers" ? "border-brand-600 text-brand-600" : "border-transparent text-gray-500"}`}>Provider Override</button>
+          </div>
+          {editTab === "general" ? (
           <div className="grid gap-4 sm:grid-cols-2">
             <div>
               <label className="mb-1 block text-xs font-medium text-gray-500">{t("oauth.clientName")}</label>
@@ -483,6 +500,64 @@ export default function OAuthClientsSettingsPage() {
               <p className="mt-1 text-xs text-gray-400">Passwordless 选项互斥。Password + OTP 可组合为 MFA。</p>
             </div>
           </div>
+          ) : (
+          /* Provider Override Tab */
+          <div className="space-y-4">
+            <p className="text-xs text-gray-500">Override SMS/Email provider settings for this specific OAuth client. Leave fields empty to inherit from tenant or instance level.</p>
+            {/* SMS Provider Override */}
+            <div className="rounded-lg border border-gray-200 dark:border-gray-700 p-4">
+              <h4 className="text-sm font-medium mb-2">SMS Provider</h4>
+              <p className="text-xs text-gray-400 mb-2">Current: {appSmsConfig?.provider_type || "Inherited from tenant/instance"}</p>
+              <div className="grid gap-2 sm:grid-cols-2">
+                <input placeholder="Provider type (twilio/sns/log)" defaultValue={appSmsConfig?.provider_type || ""} id="app-sms-type" className="rounded border dark:border-gray-600 dark:bg-gray-700 px-2 py-1 text-xs" />
+                <input placeholder="From number" defaultValue={appSmsConfig?.config?.from || ""} id="app-sms-from" className="rounded border dark:border-gray-600 dark:bg-gray-700 px-2 py-1 text-xs" />
+              </div>
+              <button
+                onClick={async () => {
+                  setAppProviderSaving(true);
+                  const tenantId = localStorage.getItem("ggid_tenant_id") || "";
+                  const type = (document.getElementById("app-sms-type") as HTMLInputElement)?.value || "";
+                  const from = (document.getElementById("app-sms-from") as HTMLInputElement)?.value || "";
+                  if (!type) { setAppProviderSaving(false); return; }
+                  await apiFetch(`/api/v1/providers/config?key=sms_provider&scope=app&tenant_id=${tenantId}&client_id=${editClient.client_id}`, {
+                    method: "PUT",
+                    body: JSON.stringify({ provider_type: type, config: { from }, enabled: true }),
+                  }).catch(() => null);
+                  setAppProviderSaving(false);
+                  setMsg("SMS provider override saved");
+                }}
+                disabled={appProviderSaving}
+                className="mt-2 rounded bg-brand-600 px-3 py-1 text-xs text-white disabled:opacity-50"
+              >{appProviderSaving ? "Saving..." : "Save SMS Override"}</button>
+            </div>
+            {/* Email Provider Override */}
+            <div className="rounded-lg border border-gray-200 dark:border-gray-700 p-4">
+              <h4 className="text-sm font-medium mb-2">Email Provider</h4>
+              <p className="text-xs text-gray-400 mb-2">Current: {appEmailConfig?.provider_type || "Inherited from tenant/instance"}</p>
+              <div className="grid gap-2 sm:grid-cols-2">
+                <input placeholder="Provider type (smtp/sendgrid/log)" defaultValue={appEmailConfig?.provider_type || ""} id="app-email-type" className="rounded border dark:border-gray-600 dark:bg-gray-700 px-2 py-1 text-xs" />
+                <input placeholder="From address" defaultValue={appEmailConfig?.config?.from || ""} id="app-email-from" className="rounded border dark:border-gray-600 dark:bg-gray-700 px-2 py-1 text-xs" />
+              </div>
+              <button
+                onClick={async () => {
+                  setAppProviderSaving(true);
+                  const tenantId = localStorage.getItem("ggid_tenant_id") || "";
+                  const type = (document.getElementById("app-email-type") as HTMLInputElement)?.value || "";
+                  const from = (document.getElementById("app-email-from") as HTMLInputElement)?.value || "";
+                  if (!type) { setAppProviderSaving(false); return; }
+                  await apiFetch(`/api/v1/providers/config?key=email_provider&scope=app&tenant_id=${tenantId}&client_id=${editClient.client_id}`, {
+                    method: "PUT",
+                    body: JSON.stringify({ provider_type: type, config: { from }, enabled: true }),
+                  }).catch(() => null);
+                  setAppProviderSaving(false);
+                  setMsg("Email provider override saved");
+                }}
+                disabled={appProviderSaving}
+                className="mt-2 rounded bg-brand-600 px-3 py-1 text-xs text-white disabled:opacity-50"
+              >{appProviderSaving ? "Saving..." : "Save Email Override"}</button>
+            </div>
+          </div>
+          )}
           <div className="mt-4 flex gap-2">
             <button
               onClick={handleUpdate}
