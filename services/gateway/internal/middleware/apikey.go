@@ -62,8 +62,10 @@ func APIKeyAuth(validator APIKeyValidator) func(http.Handler) http.Handler {
 }
 
 // IsAPIKeyRequest checks if the request carries an API key.
+// SECURITY: API keys are accepted ONLY via headers, never query parameters
+// (query strings are logged in proxy/CDN/browser history).
 func IsAPIKeyRequest(r *http.Request) bool {
-	if r.Header.Get("X-API-Key") != "" || r.URL.Query().Get("api_key") != "" {
+	if r.Header.Get("X-API-Key") != "" {
 		return true
 	}
 	// Also detect Authorization: ApiKey ggid_sk_*

@@ -3,8 +3,10 @@ package middleware
 import (
 	"encoding/json"
 	"fmt"
+	"net"
 	"net/http"
 	"strconv"
+	"strings"
 	"sync"
 	"time"
 )
@@ -112,11 +114,32 @@ func (rl *RateLimiter) getLimit(path string) int {
 }
 
 func (rl *RateLimiter) bucketKey(r *http.Request) string {
-	ip := r.RemoteAddr
-	if fwd := r.Header.Get("X-Forwarded-For"); fwd != "" {
-		ip = fwd
-	}
+	ip := clientIPFromRequest(r)
 	return fmt.Sprintf("%s:%s", r.URL.Path, ip)
+}
+
+// clientIPFromRequest extracts the real client IP safely.
+// SECURITY: Only trusts X-Forwarded-For from the leftmost entry (original client).
+// Falls back to X-Real-IP, then RemoteAddr.
+func clientIPFromRequest(r *http.Request) string {
+	// X-Real-IP is set by trusted reverse proxies (Traefik, nginx)
+	if realIP := r.Header.Get("X-Real-IP"); realIP != "" {
+		return realIP
+	}
+	// X-Forwarded-For: client, proxy1, proxy2 — take only the first (client)
+	if xff := r.Header.Get("X-Forwarded-For"); xff != "" {
+		parts := strings.SplitN(xff, ",", 2)
+		clientIP := strings.TrimSpace(parts[0])
+		if clientIP != "" {
+			return clientIP
+		}
+	}
+	// Fall back to connection RemoteAddr
+	host, _, err := net.SplitHostPort(r.RemoteAddr)
+	if err != nil {
+		return r.RemoteAddr
+	}
+	return host
 }
 
 func (rl *RateLimiter) allow(key string, limit int) (allowed bool, remaining int, resetAt time.Time) {
