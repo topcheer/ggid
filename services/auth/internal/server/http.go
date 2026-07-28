@@ -594,6 +594,7 @@ h.mux.HandleFunc("/api/v1/auth/mfa/backup", h.backupCodesGenerate) // Console al
 	h.mux.HandleFunc("/api/v1/auth/registration/config", h.handleRegistrationConfig)
 	h.mux.HandleFunc("/api/v1/providers/status", h.handleProviderStatus)
 	h.mux.HandleFunc("/api/v1/providers/config", h.handleProviderConfig)
+	h.mux.HandleFunc("/api/v1/providers/password-policy", h.handlePasswordPolicyConfig)
 }
 
 // ServeHTTP implements http.Handler.
