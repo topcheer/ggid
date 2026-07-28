@@ -1638,13 +1638,17 @@ func (h *Handler) handleWebAuthnDeleteCredential(w http.ResponseWriter, r *http.
 		writeError(w, http.StatusBadRequest, "credential ID required")
 		return
 	}
+	// Get tenant from context, or fallback to X-Tenant-ID header
 	tc, err := ggidtenant.FromContext(r.Context())
-	if err != nil || tc.TenantID == uuid.Nil {
+	tenantID := tc.TenantID
+	if err != nil || tenantID == uuid.Nil {
+		tenantID, _ = uuid.Parse(r.Header.Get("X-Tenant-ID"))
+	}
+	if tenantID == uuid.Nil {
 		writeError(w, http.StatusBadRequest, "missing tenant context")
 		return
 	}
 	// SECURITY: extract userID from JWT context or X-User-ID header
-	// (gateway overwrites X-User-ID from JWT subject).
 	userIDStr := r.Header.Get("X-User-ID")
 	if userIDStr == "" {
 		if uid, ok := r.Context().Value(ctxUserIDKey{}).(uuid.UUID); ok {
@@ -1660,7 +1664,22 @@ func (h *Handler) handleWebAuthnDeleteCredential(w http.ResponseWriter, r *http.
 		writeError(w, http.StatusServiceUnavailable, "WebAuthn credential store not initialized")
 		return
 	}
-	if err := h.waCredStore.DeleteCredential(r.Context(), tc.TenantID, []byte(credID), userID); err != nil {
+	// credID from URL path may be the UUID primary key or the raw credential_id.
+	// Try parsing as UUID first (DB primary key), then fall back to raw bytes.
+	if _, parseErr := uuid.Parse(credID); parseErr == nil {
+		// It's a UUID — delete by primary key id column
+		credUUID, _ := uuid.Parse(credID)
+		if pool := h.getPool(); pool != nil {
+			_, dErr := pool.Exec(r.Context(), `DELETE FROM webauthn_credentials WHERE id = $1 AND tenant_id = $2 AND user_id = $3`, credUUID, tenantID, userID)
+			if dErr != nil {
+				writeError(w, http.StatusInternalServerError, "failed to delete credential")
+				return
+			}
+			writeJSON(w, http.StatusOK, map[string]string{"status": "deleted"})
+			return
+		}
+	}
+	if err := h.waCredStore.DeleteCredential(r.Context(), tenantID, []byte(credID), userID); err != nil {
 		writeError(w, http.StatusInternalServerError, "failed to delete credential")
 		return
 	}
