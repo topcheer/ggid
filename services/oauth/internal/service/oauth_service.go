@@ -660,7 +660,7 @@ func (s *OAuthService) GetDiscoveryConfig() *domain.OIDCDiscoveryConfig {
 		// implicit/hybrid response types (token, id_token) are NOT issued, so
 		// they must not be advertised or standard clients will attempt them.
 		ResponseTypesSupported:            []string{"code"},
-		GrantTypesSupported:               []string{"authorization_code", "refresh_token", "client_credentials", "password", "urn:ietf:params:oauth:grant-type:device_code", "urn:ietf:params:oauth:grant-type:token-exchange", "urn:ietf:params:oauth:grant-type:jwt-bearer"},
+		GrantTypesSupported:               []string{"authorization_code", "refresh_token", "client_credentials", "password", "urn:ietf:params:oauth:grant-type:device_code", "urn:ietf:params:oauth:grant-type:token-exchange", "urn:ietf:params:oauth:grant-type:jwt-bearer", "urn:ietf:params:oauth:grant-type:ciba"},
 		SubjectTypesSupported:             []string{"public"},
 		IDTokenSigningAlgValues:           []string{"RS256"},
 		ScopesSupported:                   []string{"openid", "profile", "email", "offline_access"},
@@ -674,6 +674,7 @@ func (s *OAuthService) GetDiscoveryConfig() *domain.OIDCDiscoveryConfig {
 		DeviceAuthorizationEndpoint:        base + "/api/v1/oauth/device_authorize",
 		RegistrationEndpoint:               base + "/oauth/register",
 		PushedAuthorizationRequestEndpoint: base + "/oauth/par",
+		BackchannelAuthenticationEndpoint:  base + "/api/v1/oauth/backchannel",
 	}
 }
 

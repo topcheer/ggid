@@ -764,6 +764,13 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 				Scope:     scopes,
 				Issuer:    cfg.Issuer,
 			})
+		case "urn:ietf:params:oauth:grant-type:ciba": // CIBA (RFC 9126) token polling
+			authReqID := r.FormValue("auth_req_id")
+			if authReqID == "" {
+				writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid_request", "error_description": "auth_req_id is required for CIBA grant"})
+				return
+			}
+			resp, tokenErr = oauthSvc.PollCIBAToken(ctx, tenantID, authReqID, clientID, r.FormValue("client_secret"))
 		default:
 			// RFC 8693 Token Exchange.
 			if grantType == "urn:ietf:params:oauth:grant-type:token-exchange" {

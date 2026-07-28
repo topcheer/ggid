@@ -222,6 +222,7 @@ type OIDCDiscoveryConfig struct {
 	DeviceAuthorizationEndpoint       string   `json:"device_authorization_endpoint,omitempty"`
 	RegistrationEndpoint              string   `json:"registration_endpoint,omitempty"`
 	PushedAuthorizationRequestEndpoint string  `json:"pushed_authorization_request_endpoint,omitempty"`
+	BackchannelAuthenticationEndpoint string   `json:"backchannel_authentication_endpoint,omitempty"`
 }
 
 // JWKSKey represents a single key in a JWKS response.
