@@ -72,10 +72,11 @@ func TestExtractAPIKey_XAPIKeyHeader(t *testing.T) {
 	}
 }
 
-func TestExtractAPIKey_QueryParam(t *testing.T) {
+func TestExtractAPIKey_QueryParamRemoved(t *testing.T) {
+	// P1-3: API key query param removed for security — should NOT extract from query
 	req := httptest.NewRequest("GET", "/api/v1/users?api_key=ggid_sk_query", nil)
-	if got := extractAPIKeyFromRequest(req); got != "ggid_sk_query" {
-		t.Errorf("expected ggid_sk_query, got %s", got)
+	if got := extractAPIKeyFromRequest(req); got != "" {
+		t.Errorf("API key should NOT be extracted from query param, got %s", got)
 	}
 }
 
