@@ -741,16 +741,40 @@ func (h *Handler) beginAuthentication(w http.ResponseWriter, r *http.Request) {
 	if sessionUserID != uuid.Nil {
 		u, _ := h.buildWebAuthnUser(ctx, tenantID, sessionUserID)
 		loginUser = u
-	} else {
-		loginUser = &webAuthnUser{
-			id:          uuid.New(),
-			username:    "discoverable",
-			displayName: "Discoverable Credential",
+	}
+
+	if loginUser == nil {
+		// Discoverable credential (passkey) flow: build options manually.
+		// go-webauthn's BeginLogin rejects users with 0 credentials, but
+		// for discoverable credentials we want empty allowCredentials.
+		challenge, err := protocol.CreateChallenge()
+		if err != nil {
+			writeError(w, http.StatusInternalServerError, fmt.Sprintf("create challenge: %v", err))
+			return
 		}
-		// Discoverable credentials (passkey) flow: empty allowCredentials + UV=Required
-		loginOpts = append(loginOpts,
-			webauthn.WithUserVerification(protocol.VerificationRequired),
-		)
+		opts := &protocol.PublicKeyCredentialRequestOptions{
+			Challenge:        challenge,
+			RelyingPartyID:   h.wbn.Config.RPID,
+			UserVerification: protocol.VerificationRequired,
+			Timeout:          60000,
+		}
+		sessData := &webauthn.SessionData{
+			Challenge:        challenge.String(),
+			UserID:           []byte(uuid.New().String()),
+			UserVerification: protocol.VerificationRequired,
+		}
+		resp := &protocol.CredentialAssertion{
+			Response: *opts,
+		}
+		challengeStr := challenge.String()
+		h.sessions.save("auth:"+challengeStr, &sessionData{
+			userID:    uuid.Nil,
+			tenantID:  tenantID,
+			challenge: challengeStr,
+			data:      sessData,
+		})
+		writeJSON(w, http.StatusOK, resp)
+		return
 	}
 
 	options, sessData, err := h.wbn.BeginLogin(loginUser, loginOpts...)
