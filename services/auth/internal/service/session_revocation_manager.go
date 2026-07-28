@@ -128,3 +128,19 @@ func (m *SessionRevocationManager) RevokeUser(ctx context.Context, tenantID, use
 
 	return result, nil
 }
+
+// RevokeImpersonationJTI adds an impersonation token's JTI to the Redis blocklist
+// so the gateway CAECheck middleware rejects it immediately.
+// This closes the P0-2 gap: revoked impersonation tokens were still valid until expiry.
+func (m *SessionRevocationManager) RevokeImpersonationJTI(ctx context.Context, jti string, expiresAt time.Time) {
+	if m.jtiBlocklist == nil || jti == "" {
+		return
+	}
+	if expiresAt.IsZero() || expiresAt.Before(time.Now()) {
+		expiresAt = time.Now().Add(15 * time.Minute) // fallback
+	}
+	if err := m.jtiBlocklist.Revoke(ctx, jti, expiresAt); err != nil {
+		slog.Warn("SessionRevocationManager: failed to blocklist impersonation JTI",
+			"jti", jti, "error", err)
+	}
+}

@@ -162,9 +162,19 @@ func (h *Handler) handleImpersonateRevoke(w http.ResponseWriter, r *http.Request
 		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid JSON"})
 		return
 	}
+	// Get token info before revoking (to get expiry for Redis TTL)
+	tok, _ := service.GetImpersonationToken(parseUUIDSafe(req.TokenID))
 	if err := service.RevokeImpersonationToken(parseUUIDSafe(req.TokenID)); err != nil {
 		writeJSON(w, http.StatusBadRequest, map[string]string{"error": err.Error()})
 		return
+	}
+	// Push JTI to Redis ZSET so the gateway CAECheck middleware blocks the token.
+	// The JTI equals the token ID (set at signing time as tok.TokenID.String()).
+	// The gateway reads the same ZSET key "ggid:revoked_jti" via JTIBlocklist.IsRevoked.
+	if h.revocationMgr != nil && tok != nil {
+		// Access the JTI blocklist through the revocation manager.
+		// The JTI is the token ID string.
+		h.revocationMgr.RevokeImpersonationJTI(r.Context(), req.TokenID, tok.ExpiresAt)
 	}
 	writeJSON(w, http.StatusOK, map[string]string{"status": "revoked"})
 }

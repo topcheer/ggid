@@ -38,6 +38,8 @@ const (
 	UserIDKey    contextKey = "user_id"
 	TenantIDKey  contextKey = "tenant_id"
 	JTIKey       contextKey = "jti"
+	ImpKey       contextKey = "impersonated"
+	ImpByKey     contextKey = "impersonated_by"
 )
 
 // --- Request ID ---
@@ -748,6 +750,15 @@ func JWTAuth(jwks *JWKSClient, required bool, issuer, audience string) func(http
 			if jti, _ := claims["jti"].(string); jti != "" {
 				ctx = context.WithValue(ctx, JTIKey, jti)
 			}
+			// P0-2 fix: Extract impersonation claims for audit and enforcement.
+			// The imp token's JTI is already in context; CAECheck will verify
+			// it against Redis revocation list when the token is revoked.
+			if imp, ok := claims["imp"].(bool); ok && imp {
+				ctx = context.WithValue(ctx, ImpKey, true)
+				if impBy, _ := claims["impersonated_by"].(string); impBy != "" {
+					ctx = context.WithValue(ctx, ImpByKey, impBy)
+				}
+			}
 			next.ServeHTTP(w, r.WithContext(ctx))
 		})
 	}
@@ -757,6 +768,18 @@ func JWTAuth(jwks *JWKSClient, required bool, issuer, audience string) func(http
 func JTIFromRequest(r *http.Request) (string, bool) {
 	jti, ok := r.Context().Value(JTIKey).(string)
 	return jti, ok
+}
+
+// IsImpersonated returns true if the request carries an impersonation token.
+func IsImpersonated(r *http.Request) bool {
+	imp, _ := r.Context().Value(ImpKey).(bool)
+	return imp
+}
+
+// ImpersonatorFromRequest returns the impersonator's user ID, if applicable.
+func ImpersonatorFromRequest(r *http.Request) (string, bool) {
+	id, ok := r.Context().Value(ImpByKey).(string)
+	return id, ok
 }
 
 // CAECheck checks if the JWT's jti has been revoked via Redis blocklist.
