@@ -140,7 +140,19 @@ async function doLogin(){
     }
     const r=await fetch("/api/v1/auth/verify",{method:"POST",headers:{"Content-Type":"application/json","X-Tenant-ID":T},body:JSON.stringify(body)});
     const d=await r.json();
-    if(!r.ok){showErr(d.error||d.detail||"Login failed");return}
+    // Handle both 200 (mfa_required flag) and 403 (MFA required as error)
+    if(!r.ok){
+      if(r.status===403&&(d.error||"").toLowerCase().includes("mfa")){
+        // Show MFA input — re-send username+password+mfa_code on next submit
+        document.getElementById("mfa-row").style.display="flex";
+        mfaInp.style.display="block";
+        mfaInp.focus();
+        btn.textContent="Verify & Sign In";
+        showErr("");
+        return;
+      }
+      showErr(d.error||d.detail||"Login failed");return;
+    }
     if(d.mfa_required){
       // Show MFA input
       document.getElementById("mfa-row").style.display="flex";
@@ -167,13 +179,24 @@ async function doLogin(){
 
 async function doMfa(){
   const code=document.getElementById("mfa-code").value;
+  if(!code){showErr("Please enter your MFA code");return}
+  const u=document.getElementById("username").value;
+  const p=document.getElementById("password").value;
   try{
-    const r=await fetch("/api/v1/auth/verify",{method:"POST",headers:{"Content-Type":"application/json","X-Tenant-ID":T},body:JSON.stringify({session_id:window._session,code:code})});
+    const r=await fetch("/api/v1/auth/verify",{method:"POST",headers:{"Content-Type":"application/json","X-Tenant-ID":T},body:JSON.stringify({username:u,password:p,mfa_code:code})});
     const d=await r.json();
     if(!r.ok){showErr(d.error||"Invalid code");return}
     localStorage.setItem("ggid_access_token",d.access_token);
+    localStorage.setItem("ggid_user_id",d.user_id);
+    localStorage.setItem("ggid_tenant_id",d.tenant_id);
     showOk("Verified! Redirecting...");
-    setTimeout(()=>window.location.href=redirectUri,500);
+    if(location.pathname==="/oauth/authorize"){
+      const url=new URL(location.href);
+      url.searchParams.set("user_id",d.user_id);
+      setTimeout(()=>window.location.href=url.toString(),500);
+    } else {
+      setTimeout(()=>window.location.href=redirectUri,500);
+    }
   }catch(e){showErr("Network error")}
 }
 
@@ -348,8 +371,6 @@ async function doLogin(){
     }
     // Store user identity for device approval
     window._userId=d.user_id;
-      return;
-    }
     token=d.access_token;
     localStorage.setItem("ggid_access_token",d.access_token);
     showApproveForm();
