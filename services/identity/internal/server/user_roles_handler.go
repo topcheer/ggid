@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/jackc/pgx/v5"
 )
 
 // UserRoleAssignment represents a role assigned to a user.
@@ -37,7 +36,7 @@ func (h *HTTPHandler) handleUserRoles(ctx context.Context, userID uuid.UUID, w h
 			return
 		}
 		// SECURITY: filter by caller's tenant to prevent cross-tenant role access.
-		var rows pgx.Rows
+		var rows interface{ Next() bool; Scan(...any) error; Close() }
 		var err error
 		if callerTenantID != "" {
 			rows, err = pool.Query(ctx, `
@@ -111,6 +110,7 @@ func (h *HTTPHandler) handleUserRoles(ctx context.Context, userID uuid.UUID, w h
 		} else {
 			_ = pool.QueryRow(ctx, `SELECT name, tenant_id FROM roles WHERE id = $1`, roleUUID).Scan(&req.RoleName, &roleTenant)
 		}
+		// backward compat: default tenant if still nil
 		if roleTenant == uuid.Nil {
 			roleTenant = defaultTenantID()
 		}
@@ -161,7 +161,7 @@ func (h *HTTPHandler) handleUserRoles(ctx context.Context, userID uuid.UUID, w h
 		}
 
 		// SECURITY: only delete roles within the caller's tenant.
-		var cmd pgx.CommandTag
+		var cmd interface{ RowsAffected() int64 }
 		var err2 error
 		if callerTenantID != "" {
 			cmd, err2 = pool.Exec(ctx, `
