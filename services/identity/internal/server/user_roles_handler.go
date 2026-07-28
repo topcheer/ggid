@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5"
 )
 
 // UserRoleAssignment represents a role assigned to a user.
@@ -26,19 +27,35 @@ func (h *HTTPHandler) handleUserRoles(ctx context.Context, userID uuid.UUID, w h
 	parts := splitUserPath(r.URL.Path)
 	pool := h.svc.Pool()
 
+	// SECURITY: extract caller's tenant for cross-tenant protection.
+	callerTenantID := r.Header.Get("X-Tenant-ID")
+
 	switch r.Method {
 	case http.MethodGet:
 		if pool == nil {
 			writeJSON(w, http.StatusOK, map[string]any{"roles": []UserRoleAssignment{}})
 			return
 		}
-		rows, err := pool.Query(ctx, `
-			SELECT ur.user_id::text, ur.role_id::text, COALESCE(r.name, r.key, ur.role_id::text), ur.created_at, COALESCE(ur.granted_by::text, '')
-			FROM user_roles ur
-			LEFT JOIN roles r ON r.id = ur.role_id
-			WHERE ur.user_id = $1
-			ORDER BY ur.created_at DESC
-		`, userID)
+		// SECURITY: filter by caller's tenant to prevent cross-tenant role access.
+		var rows pgx.Rows
+		var err error
+		if callerTenantID != "" {
+			rows, err = pool.Query(ctx, `
+				SELECT ur.user_id::text, ur.role_id::text, COALESCE(r.name, r.key, ur.role_id::text), ur.created_at, COALESCE(ur.granted_by::text, '')
+				FROM user_roles ur
+				LEFT JOIN roles r ON r.id = ur.role_id
+				WHERE ur.user_id = $1 AND r.tenant_id = $2
+				ORDER BY ur.created_at DESC
+			`, userID, callerTenantID)
+		} else {
+			rows, err = pool.Query(ctx, `
+				SELECT ur.user_id::text, ur.role_id::text, COALESCE(r.name, r.key, ur.role_id::text), ur.created_at, COALESCE(ur.granted_by::text, '')
+				FROM user_roles ur
+				LEFT JOIN roles r ON r.id = ur.role_id
+				WHERE ur.user_id = $1
+				ORDER BY ur.created_at DESC
+			`, userID)
+		}
 		if err != nil {
 			writeJSON(w, http.StatusOK, map[string]any{"roles": []UserRoleAssignment{}})
 			return
@@ -83,7 +100,17 @@ func (h *HTTPHandler) handleUserRoles(ctx context.Context, userID uuid.UUID, w h
 
 		// Get role name and tenant from roles table if not provided
 		roleTenant := uuid.Nil
-		_ = pool.QueryRow(ctx, `SELECT name, tenant_id FROM roles WHERE id = $1`, roleUUID).Scan(&req.RoleName, &roleTenant)
+		// SECURITY: verify the role belongs to the caller's tenant.
+		if callerTenantID != "" {
+			callerTID, _ := uuid.Parse(callerTenantID)
+			_ = pool.QueryRow(ctx, `SELECT name, tenant_id FROM roles WHERE id = $1 AND tenant_id = $2`, roleUUID, callerTID).Scan(&req.RoleName, &roleTenant)
+			if roleTenant == uuid.Nil {
+				writeJSONError(w, http.StatusNotFound, "role not found in your tenant")
+				return
+			}
+		} else {
+			_ = pool.QueryRow(ctx, `SELECT name, tenant_id FROM roles WHERE id = $1`, roleUUID).Scan(&req.RoleName, &roleTenant)
+		}
 		if roleTenant == uuid.Nil {
 			roleTenant = defaultTenantID()
 		}
@@ -133,10 +160,20 @@ func (h *HTTPHandler) handleUserRoles(ctx context.Context, userID uuid.UUID, w h
 			return
 		}
 
-		cmd, err := pool.Exec(ctx, `
-			DELETE FROM user_roles WHERE user_id = $1 AND role_id = $2
-		`, userID, roleUUID)
-		if err != nil || cmd.RowsAffected() == 0 {
+		// SECURITY: only delete roles within the caller's tenant.
+		var cmd pgx.CommandTag
+		var err2 error
+		if callerTenantID != "" {
+			cmd, err2 = pool.Exec(ctx, `
+				DELETE FROM user_roles WHERE user_id = $1 AND role_id = $2
+				AND role_id IN (SELECT id FROM roles WHERE tenant_id = $3)
+			`, userID, roleUUID, callerTenantID)
+		} else {
+			cmd, err2 = pool.Exec(ctx, `
+				DELETE FROM user_roles WHERE user_id = $1 AND role_id = $2
+			`, userID, roleUUID)
+		}
+		if err2 != nil || cmd.RowsAffected() == 0 {
 			writeJSONError(w, http.StatusNotFound, "role assignment not found")
 			return
 		}
