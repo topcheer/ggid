@@ -70,8 +70,9 @@ export default function LoginPage() {
     }
   }, []);
 
-  // Fetch console client auth_methods to determine which login options to show
+  // Fetch console client auth_methods + provider availability
   useEffect(() => {
+    // 1. Get client auth_methods config
     fetch(`${API_BASE}/api/v1/oauth/clients/gcid-console`, {
       headers: { "X-Tenant-ID": resolvedTenantId, ...authHeader() },
     })
@@ -80,7 +81,25 @@ export default function LoginPage() {
         if (data) {
           const client = data.client || data;
           const methods = client.auth_methods || ["password"];
-          setAuthMethods(methods);
+          // 2. Get provider availability — filter out methods whose provider isn't ready
+          fetch(`${API_BASE}/api/v1/providers/status?tenant_id=${resolvedTenantId}&client_id=gcid-console`)
+            .then((r) => r.ok ? r.json() : null)
+            .then((status) => {
+              if (status) {
+                // Only show auth methods that are both configured on client AND have provider ready
+                const available = methods.filter((m: string) => {
+                  if (m === "password") return true;
+                  if (m === "passkey") return true;
+                  if (m === "sms_otp") return status.sms_otp === true;
+                  if (m === "email_otp") return status.email_otp === true;
+                  return true;
+                });
+                setAuthMethods(available.length > 0 ? available : ["password"]);
+              } else {
+                setAuthMethods(methods);
+              }
+            })
+            .catch(() => setAuthMethods(methods));
         }
       })
       .catch(() => {});
