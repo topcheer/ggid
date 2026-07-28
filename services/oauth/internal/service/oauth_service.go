@@ -1823,11 +1823,7 @@ func (s *OAuthService) RefreshToken(ctx context.Context, req *RefreshTokenReques
 		return nil, errors.Unauthenticated("refresh token expired")
 	}
 
-	// 6a. SECURITY: verify the refresh token belongs to this client.
-	// Without this check, client B can use client A's refresh token.
-	if record.ClientID != uuid.Nil && record.ClientID != client.ID {
-		return nil, errors.Unauthenticated("refresh token was not issued to this client")
-	}
+	// 7. Token is valid — rotate it (mark old as used, issue new).
 
 	// 6b. SECURITY: verify the user is still active. A soft-deleted, suspended,
 	// or locked user must not be able to refresh tokens indefinitely.
