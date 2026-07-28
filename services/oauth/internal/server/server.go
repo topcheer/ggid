@@ -1831,7 +1831,10 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 			writeJSON(w, http.StatusBadRequest, map[string]any{"error": map[string]string{"code": "invalid_argument", "message": "invalid form data"}})
 			return
 		}
+		// Resolve tenant from X-Tenant-ID header (set by gateway from JWT).
+		tenantID, _ := uuid.Parse(r.Header.Get("X-Tenant-ID"))
 		req := &service.PushedAuthorizationRequest{
+			TenantID:            tenantID,
 			ClientID:            r.Form.Get("client_id"),
 			ClientSecret:        r.Form.Get("client_secret"),
 			RedirectURI:         r.Form.Get("redirect_uri"),

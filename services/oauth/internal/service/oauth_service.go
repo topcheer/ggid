@@ -1409,13 +1409,22 @@ func (s *OAuthService) IntrospectToken(tokenStr string) *IntrospectionResponse {
 		return &IntrospectionResponse{Active: false}
 	}
 
+	// RFC 7662 §2.2: client_id should be the issuing client (azp), not audience.
+	introspectClientID := getStringClaim(claims, "azp")
+	if introspectClientID == "" {
+		introspectClientID = getStringClaim(claims, "client_id")
+	}
+	if introspectClientID == "" {
+		introspectClientID = getStringClaim(claims, "aud") // backward fallback
+	}
+
 	resp := &IntrospectionResponse{
 		Active:    true,
 		TokenType: "Bearer",
 		Sub:       getStringClaim(claims, "sub"),
 		Aud:       getStringClaim(claims, "aud"),
 		Iss:       getStringClaim(claims, "iss"),
-		ClientID:  getStringClaim(claims, "aud"),
+		ClientID:  introspectClientID,
 		Username:  getStringClaim(claims, "preferred_username"),
 		Exp:       getInt64Claim(claims, "exp"),
 		Iat:       getInt64Claim(claims, "iat"),
@@ -2611,7 +2620,23 @@ func (s *OAuthService) DynamicClientRegister(ctx context.Context, req *DynamicRe
 	}
 
 	clientID := generateClientID()
-	scopes := strings.Fields(req.Scope)
+	// SECURITY: filter requested scopes — DCR is a self-service endpoint.
+	// Only allow standard OIDC scopes, never admin/system scopes.
+	requestedScopes := strings.Fields(req.Scope)
+	safeScopes := []string{}
+	for _, sc := range requestedScopes {
+		switch sc {
+		case "openid", "profile", "email", "offline_access", "address", "phone":
+			safeScopes = append(safeScopes, sc)
+		default:
+			// Block admin, platform, system, and any custom privileged scopes
+			if !strings.HasPrefix(sc, "admin") && !strings.HasPrefix(sc, "platform") &&
+				!strings.HasPrefix(sc, "system") && !strings.HasPrefix(sc, "tenant") {
+				safeScopes = append(safeScopes, sc)
+			}
+		}
+	}
+	scopes := safeScopes
 
 	client := &domain.OAuthClient{
 		ID:                      uuid.New(),
