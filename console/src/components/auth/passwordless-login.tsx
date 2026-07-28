@@ -29,16 +29,41 @@ export function PasswordlessLogin({ apiBase, tenantId, authMethod, onSuccess, on
 
   const exchangeTicketForToken = useCallback(async (ticket: string) => {
     try {
-      // Generate random state for CSRF protection
+      // Generate random state + PKCE code_verifier
       const state = crypto.getRandomValues(new Uint32Array(8)).join("");
-      // Exchange auth_ticket for code via /oauth/authorize
-      const codeResp = await fetch(
-        `${apiBase}/oauth/authorize?auth_ticket=${ticket}&client_id=gcid-console&redirect_uri=${encodeURIComponent(window.location.origin + "/callback")}&response_type=code&scope=openid+profile+email+offline_access&code_challenge=console-pkce&code_challenge_method=S256&state=${state}`,
-        { headers: { "X-Tenant-ID": tenantId }, redirect: "manual" as RequestRedirect },
-      );
-      const loc = codeResp.headers.get("location") || "";
-      const codeMatch = loc.match(/code=([^&]+)/);
-      if (!codeMatch) throw new Error("Failed to get authorization code");
+      const codeVerifier = crypto.getRandomValues(new Uint32Array(32)).reduce((s, b) => s + b.toString(16).padStart(2, "0"), "");
+      const encoder = new TextEncoder();
+      const hashBuf = await crypto.subtle.digest("SHA-256", encoder.encode(codeVerifier));
+      const codeChallenge = btoa(String.fromCharCode(...new Uint8Array(hashBuf))).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+
+      const authorizeUrl = `${apiBase}/oauth/authorize?auth_ticket=${ticket}&client_id=gcid-console&redirect_uri=${encodeURIComponent(window.location.origin + "/callback")}&response_type=code&scope=openid+profile+email+offline_access&code_challenge=${codeChallenge}&code_challenge_method=S256&state=${state}`;
+
+      // Try to get auth code via fetch with redirect:manual
+      let authCode = "";
+      try {
+        const codeResp = await fetch(authorizeUrl, {
+          headers: { "X-Tenant-ID": tenantId },
+          redirect: "manual" as RequestRedirect,
+        });
+        const loc = codeResp.headers.get("location") || "";
+        const m = loc.match(/code=([^&]+)/);
+        if (m) authCode = m[1];
+      } catch {}
+
+      // If manual redirect didn't work, redirect browser to authorize URL.
+      // The /callback page will receive the code and exchange it.
+      if (!authCode) {
+        // Redirect browser to authorize URL. The /callback page will
+        // receive the code and exchange it using the stored flow.
+        sessionStorage.setItem("ggid_oauth_flow", JSON.stringify({
+          code_verifier: codeVerifier,
+          redirect_uri: window.location.origin + "/callback",
+          client_id: "gcid-console",
+          state: state,
+        }));
+        window.location.href = authorizeUrl;
+        return;
+      }
 
       // Exchange code for token
       const tokenResp = await fetch(`${apiBase}/oauth/token`, {
@@ -46,10 +71,10 @@ export function PasswordlessLogin({ apiBase, tenantId, authMethod, onSuccess, on
         headers: { "Content-Type": "application/x-www-form-urlencoded", "X-Tenant-ID": tenantId },
         body: new URLSearchParams({
           grant_type: "authorization_code",
-          code: codeMatch[1],
+          code: authCode,
           client_id: "gcid-console",
           redirect_uri: window.location.origin + "/callback",
-          code_verifier: "console-pkce",
+          code_verifier: codeVerifier,
         }),
       });
       const tokenData = await tokenResp.json();
