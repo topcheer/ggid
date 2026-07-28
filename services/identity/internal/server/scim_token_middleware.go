@@ -19,8 +19,9 @@ import (
 // X-Tenant-ID header (prevents cross-tenant access).
 func (h *HTTPHandler) scimTokenAuth(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// Only apply to /scim/v2/ paths.
-		if !strings.HasPrefix(r.URL.Path, "/scim/v2/") {
+		// Only apply SCIM token auth to /scim/v2/ paths.
+		// Exception: /scim/v2/Me uses JWT auth (via gateway X-User-ID), not SCIM tokens.
+		if !strings.HasPrefix(r.URL.Path, "/scim/v2/") || r.URL.Path == "/scim/v2/Me" {
 			next.ServeHTTP(w, r)
 			return
 		}
