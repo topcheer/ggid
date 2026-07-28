@@ -45,6 +45,7 @@ var publicPaths = []string{
 	"/api/v1/auth/webauthn/login/finish",    // Passkey login completion
 	"/api/v1/identity/tenants/self-register", // B2B onboarding (R1-01)
 	"/api/v1/auth/social/",                   // Social login OAuth flow (R1-02)
+	"/api/v1/providers/status",                // Provider availability check (pre-auth)
 	"/api/v1/healthz",
 	"/healthz",
 	"/api/v1/identity/healthz",

@@ -62,6 +62,7 @@ func Default() *Config {
 		DatabaseURL:   os.Getenv("DATABASE_URL"),
 		Routes: map[string]string{
 			"/api/v1/auth":        envOrDefault("AUTH_SERVICE_URL", "http://localhost:9001"),
+			"/api/v1/providers":   envOrDefault("AUTH_SERVICE_URL", "http://localhost:9001"),
 			"/api/v1/identity":    envOrDefault("USERS_SERVICE_URL", "http://localhost:8081"),
 			"/api/v1/users":       envOrDefault("USERS_SERVICE_URL", "http://localhost:8081"),
 			"/api/v1/agents":      envOrDefault("OAUTH_SERVICE_URL", "http://localhost:9005"),

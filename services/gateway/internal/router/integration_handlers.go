@@ -376,6 +376,7 @@ func (gw *Gateway) handleSystemBootstrap(w http.ResponseWriter, r *http.Request)
 		"token_endpoint_auth_method": "none", // public client (SPA with PKCE)
 		"redirect_uris":              []string{consoleRedirectURI},
 		"scope":                      "openid profile email offline_access",
+		"auth_methods":               []string{"password"}, // only password at bootstrap; add sms_otp/email_otp/passkey after provider config
 	})
 	dcrReq, _ := http.NewRequestWithContext(r.Context(), "POST", oauthURL+"/api/v1/oauth/register", bytes.NewReader(dcrBody))
 	dcrReq.Header.Set("Content-Type", "application/json")
