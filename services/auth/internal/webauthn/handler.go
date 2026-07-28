@@ -747,6 +747,10 @@ func (h *Handler) beginAuthentication(w http.ResponseWriter, r *http.Request) {
 			username:    "discoverable",
 			displayName: "Discoverable Credential",
 		}
+		// Discoverable credentials (passkey) flow: empty allowCredentials + UV=Required
+		loginOpts = append(loginOpts,
+			webauthn.WithUserVerification(protocol.VerificationRequired),
+		)
 	}
 
 	options, sessData, err := h.wbn.BeginLogin(loginUser, loginOpts...)
