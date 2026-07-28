@@ -174,13 +174,17 @@ export default function ProviderSettingsPage() {
           <span className="text-xs font-medium text-gray-500">Configuration Scope:</span>
           <button
             onClick={() => setScope("instance")}
-            className={`rounded-lg px-3 py-1 text-xs font-medium ${scope === "instance" ? "bg-indigo-600 text-white" : "bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400"}`}
+            aria-pressed={scope === "instance"}
+            aria-label="Instance scope"
+            className={`rounded-lg px-3 py-1 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-blue-500 ${scope === "instance" ? "bg-indigo-600 text-white" : "bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400"}`}
           >
             Instance (Global)
           </button>
           <button
             onClick={() => setScope("tenant")}
-            className={`rounded-lg px-3 py-1 text-xs font-medium ${scope === "tenant" ? "bg-indigo-600 text-white" : "bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400"}`}
+            aria-pressed={scope === "tenant"}
+            aria-label="Tenant scope"
+            className={`rounded-lg px-3 py-1 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-blue-500 ${scope === "tenant" ? "bg-indigo-600 text-white" : "bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400"}`}
           >
             Tenant Override
           </button>
@@ -303,6 +307,7 @@ export default function ProviderSettingsPage() {
           <button
             onClick={saveSms}
             disabled={saving === "sms"}
+            aria-label="Save SMS provider config"
             className="flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50"
           >
             {saving === "sms" ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
@@ -384,6 +389,7 @@ export default function ProviderSettingsPage() {
           <button
             onClick={saveEmail}
             disabled={saving === "email"}
+            aria-label="Save email provider config"
             className="flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50"
           >
             {saving === "email" ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
