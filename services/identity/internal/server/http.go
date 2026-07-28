@@ -763,7 +763,15 @@ func (h *HTTPHandler) getUser(ctx context.Context, userID uuid.UUID, w http.Resp
 		writeServiceError(w, err)
 		return
 	}
-	writeJSON(w, http.StatusOK, userToJSON(user))
+	m := userToJSON(user)
+	// Enrich with roles (same as listUsers does)
+	userRolesMap := h.batchGetUserRoles(ctx, []*domain.User{user})
+	if roles, ok := userRolesMap[user.ID]; ok {
+		m["roles"] = roles
+	} else {
+		m["roles"] = []map[string]any{}
+	}
+	writeJSON(w, http.StatusOK, m)
 }
 
 func (h *HTTPHandler) listUsers(ctx context.Context, w http.ResponseWriter, r *http.Request) {
