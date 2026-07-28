@@ -74,9 +74,19 @@ func handleTokenDownscope(oauthSvc *service.OAuthService) http.HandlerFunc {
 		tenantIDStr, _ := claims["tenant_id"].(string)
 		aud, _ := claims["aud"].(string)
 
+		subUUID, err := uuid.Parse(sub)
+		if err != nil {
+			writeJSON(w, http.StatusBadRequest, map[string]any{"error": "invalid subject UUID in token"})
+			return
+		}
+		tenantUUID, err := uuid.Parse(tenantIDStr)
+		if err != nil {
+			writeJSON(w, http.StatusBadRequest, map[string]any{"error": "invalid tenant_id in token"})
+			return
+		}
 		subToken, expiresIn, err := oauthSvc.DownscopeToken(
-			uuid.MustParse(sub),
-			uuid.MustParse(tenantIDStr),
+			subUUID,
+			tenantUUID,
 			aud,
 			strings.Join(validScopes, " "),
 		)

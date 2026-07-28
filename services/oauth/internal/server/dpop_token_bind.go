@@ -3,6 +3,7 @@ package server
 import (
 	"encoding/json"
 	"net/http"
+	"strings"
 	"sync"
 	"time"
 
@@ -46,6 +47,15 @@ func handleDPoPTokenBind(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusMethodNotAllowed, map[string]any{"error": "method not allowed"})
 		return
 	}
+	// P0-2 Security: Require Bearer auth — only token holder can bind DPoP.
+	bearerToken := ""
+	if auth := r.Header.Get("Authorization"); strings.HasPrefix(auth, "Bearer ") {
+		bearerToken = strings.TrimPrefix(auth, "Bearer ")
+	}
+	if bearerToken == "" {
+		writeJSON(w, http.StatusUnauthorized, map[string]any{"error": "Authorization Bearer token required"})
+		return
+	}
 	var req struct {
 		AccessToken string `json:"access_token"`
 		DPoPProof   string `json:"dpop_proof"`
@@ -56,7 +66,10 @@ func handleDPoPTokenBind(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if req.AccessToken == "" {
-		writeJSON(w, http.StatusBadRequest, map[string]any{"error": "access_token is required"})
+		req.AccessToken = bearerToken
+	}
+	if req.AccessToken != bearerToken {
+		writeJSON(w, http.StatusForbidden, map[string]any{"error": "access_token must match authenticated bearer token"})
 		return
 	}
 	jkt := req.DPoPJKT
