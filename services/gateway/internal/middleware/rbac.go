@@ -56,6 +56,7 @@ var defaultAdminPrefixes = []string{
 	"/api/v1/access-reviews", // → /api/v1/audit/access-reviews
 	"/api/v1/activity",       // → /api/v1/audit/activity
 	"/api/v1/exports",        // → /api/v1/audit/exports
+	"/api/v1/providers/config", // Provider config CRUD (admin only; /status stays public)
 }
 
 // SelfServicePaths are /users/me sub-paths exempt from admin checks.

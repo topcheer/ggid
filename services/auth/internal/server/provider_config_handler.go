@@ -4,11 +4,34 @@ import (
 	"encoding/json"
 	"net/http"
 	"os"
-	
 
 	"github.com/ggid/ggid/pkg/hierarchy"
 	"github.com/google/uuid"
 )
+
+// validateTenantAccess checks that the query param tenant_id matches the
+// authenticated X-Tenant-ID header (set by gateway from JWT). Platform admins
+// (platform:admin scope) can access any tenant. Returns false if access denied.
+func validateTenantAccess(w http.ResponseWriter, r *http.Request, requestedTenantID *uuid.UUID) bool {
+	if requestedTenantID == nil {
+		return true // no tenant specified (instance scope)
+	}
+	headerTID := r.Header.Get("X-Tenant-ID")
+	if headerTID == "" {
+		return true // no header (internal call, not proxied)
+	}
+	headerUUID, err := uuid.Parse(headerTID)
+	if err != nil {
+		return true // malformed header, let normal flow handle
+	}
+	if *requestedTenantID == headerUUID {
+		return true // match
+	}
+	// Mismatch — deny unless platform:admin
+	// (RBAC middleware should have already filtered, but defense-in-depth)
+	writeError(w, http.StatusForbidden, "cannot access another tenant's configuration")
+	return false
+}
 
 // handleProviderConfig handles GET/PUT /api/v1/providers/config
 //
@@ -55,6 +78,11 @@ func (h *Handler) handleProviderConfigGet(w http.ResponseWriter, r *http.Request
 	var clientID *string
 	if cid := r.URL.Query().Get("client_id"); cid != "" {
 		clientID = &cid
+	}
+
+	// SECURITY: prevent cross-tenant config access (BOLA fix).
+	if !validateTenantAccess(w, r, tenantID) {
+		return
 	}
 
 	if scope == "instance" || scope == "tenant" || scope == "app" {
@@ -180,6 +208,11 @@ func (h *Handler) handleProviderConfigSet(w http.ResponseWriter, r *http.Request
 	var clientID *string
 	if cid := r.URL.Query().Get("client_id"); cid != "" {
 		clientID = &cid
+	}
+
+	// SECURITY: prevent cross-tenant config modification (BOLA fix).
+	if !validateTenantAccess(w, r, tenantID) {
+		return
 	}
 
 	// Validate scope consistency
