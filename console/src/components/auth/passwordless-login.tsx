@@ -78,17 +78,45 @@ export function PasswordlessLogin({ apiBase, tenantId, authMethod, onSuccess, on
         throw new Error(errMsg);
       }
       const options = await beginResp.json();
+      const pk = options.publicKey || options.response || options;
 
-      const credential = await navigator.credentials.get({ publicKey: options.response });
+      // base64url decode helper
+      const b64urlToBuf = (s: string): Uint8Array => {
+        const raw = atob(s.replace(/-/g, "+").replace(/_/g, "/"));
+        const arr = new Uint8Array(raw.length);
+        for (let i = 0; i < raw.length; i++) arr[i] = raw.charCodeAt(i);
+        return arr;
+      };
+      if (pk.challenge && typeof pk.challenge === "string") pk.challenge = b64urlToBuf(pk.challenge);
+      if (pk.allowCredentials) {
+        pk.allowCredentials = pk.allowCredentials.map((c: any) => ({ ...c, id: b64urlToBuf(c.id) }));
+      }
+
+      const credential = await navigator.credentials.get({ publicKey: pk });
+      if (!credential) throw new Error("No credential returned");
+
+      // safe base64url encoder (chunked to avoid stack overflow)
+      const bufToB64url = (buf: ArrayBuffer): string => {
+        const bytes = new Uint8Array(buf);
+        let binary = "";
+        const chunk = 8192;
+        for (let i = 0; i < bytes.length; i += chunk) {
+          binary += String.fromCharCode(...bytes.subarray(i, i + chunk));
+        }
+        return btoa(binary).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+      };
+
+      const pkc = credential as PublicKeyCredential;
+      const assertResp = pkc.response as AuthenticatorAssertionResponse;
       const assertBody = {
-        id: credential.id,
-        rawId: btoa(String.fromCharCode(...new Uint8Array(credential.rawId))),
-        type: credential.type,
+        id: pkc.id,
+        rawId: bufToB64url(pkc.rawId),
+        type: pkc.type,
         response: {
-          authenticatorData: btoa(String.fromCharCode(...new Uint8Array(credential.response.authenticatorData))),
-          clientDataJSON: btoa(String.fromCharCode(...new Uint8Array(credential.response.clientDataJSON))),
-          signature: btoa(String.fromCharCode(...new Uint8Array(credential.response.signature))),
-          userHandle: credential.response.userHandle ? btoa(String.fromCharCode(...new Uint8Array(credential.response.userHandle))) : null,
+          authenticatorData: bufToB64url(assertResp.authenticatorData),
+          clientDataJSON: bufToB64url(assertResp.clientDataJSON),
+          signature: bufToB64url(assertResp.signature),
+          userHandle: assertResp.userHandle ? bufToB64url(assertResp.userHandle) : null,
         },
       };
 
