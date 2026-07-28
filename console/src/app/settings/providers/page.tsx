@@ -31,6 +31,7 @@ interface ProviderStatus {
 }
 
 export default function ProviderSettingsPage() {
+  const [scope, setScope] = useState<"instance" | "tenant">("instance");
   const [status, setStatus] = useState<ProviderStatus | null>(null);
   const [smsConfig, setSmsConfig] = useState<ProviderConfig | null>(null);
   const [emailConfig, setEmailConfig] = useState<ProviderConfig | null>(null);
@@ -54,11 +55,12 @@ export default function ProviderSettingsPage() {
   const loadData = useCallback(async () => {
     setLoading(true);
     try {
+      const scopeParam = scope;
       const [statusResp, smsResp, emailResp] = await Promise.all([
         fetch(`${API_BASE}/api/v1/providers/status`).then((r) => r.json()).catch(() => null),
-        fetch(`${API_BASE}/api/v1/providers/config?key=sms_provider&scope=instance`, { headers: authHeader() })
+        fetch(`${API_BASE}/api/v1/providers/config?key=sms_provider&scope=${scopeParam}`, { headers: authHeader() })
           .then((r) => r.ok ? r.json() : null).catch(() => null) as Promise<ProviderConfig | null>,
-        fetch(`${API_BASE}/api/v1/providers/config?key=email_provider&scope=instance`, { headers: authHeader() })
+        fetch(`${API_BASE}/api/v1/providers/config?key=email_provider&scope=${scopeParam}`, { headers: authHeader() })
           .then((r) => r.ok ? r.json() : null).catch(() => null) as Promise<ProviderConfig | null>,
       ]);
       setStatus(statusResp);
@@ -80,13 +82,13 @@ export default function ProviderSettingsPage() {
     }
   }, []);
 
-  useEffect(() => { loadData(); }, [loadData]);
+  useEffect(() => { loadData(); }, [loadData, scope]);
 
   const saveSms = async () => {
     setSaving("sms");
     setMessage(null);
     try {
-      const resp = await fetch(`${API_BASE}/api/v1/providers/config?key=sms_provider&scope=instance`, {
+      const resp = await fetch(`${API_BASE}/api/v1/providers/config?key=sms_provider&scope=${scope}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json", ...authHeader() },
         body: JSON.stringify({
@@ -118,7 +120,7 @@ export default function ProviderSettingsPage() {
     setSaving("email");
     setMessage(null);
     try {
-      const resp = await fetch(`${API_BASE}/api/v1/providers/config?key=email_provider&scope=instance`, {
+      const resp = await fetch(`${API_BASE}/api/v1/providers/config?key=email_provider&scope=${scope}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json", ...authHeader() },
         body: JSON.stringify({
@@ -167,6 +169,25 @@ export default function ProviderSettingsPage() {
         <p className="text-sm text-gray-500 mt-1">
           Configure SMS and Email providers for authentication. Settings cascade: App overrides Tenant overrides Instance (global).
         </p>
+        {/* Scope selector */}
+        <div className="mt-3 flex items-center gap-2">
+          <span className="text-xs font-medium text-gray-500">Configuration Scope:</span>
+          <button
+            onClick={() => setScope("instance")}
+            className={`rounded-lg px-3 py-1 text-xs font-medium ${scope === "instance" ? "bg-indigo-600 text-white" : "bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400"}`}
+          >
+            Instance (Global)
+          </button>
+          <button
+            onClick={() => setScope("tenant")}
+            className={`rounded-lg px-3 py-1 text-xs font-medium ${scope === "tenant" ? "bg-indigo-600 text-white" : "bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400"}`}
+          >
+            Tenant Override
+          </button>
+          {scope === "tenant" && (
+            <span className="text-xs text-amber-500">Editing tenant-level override (leave fields empty to inherit from instance)</span>
+          )}
+        </div>
       </div>
 
       {/* Provider Status Banner */}

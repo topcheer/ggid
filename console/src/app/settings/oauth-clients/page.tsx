@@ -72,6 +72,27 @@ export default function OAuthClientsSettingsPage() {
   const [showSecret, setShowSecret] = useState(true);
   const [copied, setCopied] = useState(false);
   const [rotating, setRotating] = useState<string | null>(null);
+  const [providerStatus, setProviderStatus] = useState<Record<string, boolean>>({});
+  const [editTab, setEditTab] = useState<"general" | "providers">("general");
+  const [appSmsConfig, setAppSmsConfig] = useState<any>(null);
+  const [appEmailConfig, setAppEmailConfig] = useState<any>(null);
+  const [appProviderSaving, setAppProviderSaving] = useState(false);
+
+  // Fetch provider availability status
+  useEffect(() => {
+    apiFetch<{ providers?: Record<string, { configured: boolean }> }>("/api/v1/providers/status")
+      .then((data) => {
+        const status: Record<string, boolean> = {};
+        const providers = data.providers || data;
+        if (providers && typeof providers === "object") {
+          for (const [key, val] of Object.entries(providers)) {
+            status[key] = (val as any)?.configured ?? (val as any)?.enabled ?? false;
+          }
+        }
+        setProviderStatus(status);
+      })
+      .catch(() => {});
+  }, [apiFetch]);
 
   const loadClients = useCallback(async () => {
     setLoading(true);
@@ -261,18 +282,20 @@ export default function OAuthClientsSettingsPage() {
 
   const AuthMethodCheckboxes = ({ target, onChange }: { target: ClientForm; onChange: (f: ClientForm) => void }) => {
     const methods = [
-      { key: "password", label: "Password", desc: "用户名+密码" },
-      { key: "passkey", label: "Passkey", desc: "指纹/Face ID/安全密钥" },
-      { key: "sms_otp", label: "SMS OTP", desc: "手机验证码" },
-      { key: "email_otp", label: "Email OTP", desc: "邮箱验证码" },
+      { key: "password", label: "Password", desc: "用户名+密码", providerKey: null },
+      { key: "passkey", label: "Passkey", desc: "指纹/Face ID/安全密钥", providerKey: "webauthn" },
+      { key: "sms_otp", label: "SMS OTP", desc: "手机验证码", providerKey: "sms" },
+      { key: "email_otp", label: "Email OTP", desc: "邮箱验证码", providerKey: "email" },
     ];
     return (
       <div className="flex flex-wrap gap-3">
         {methods.map((m) => {
           const checked = target.auth_methods.has(m.key);
           const isPasswordless = ["passkey", "sms_otp", "email_otp"].includes(m.key);
-          // Grey out other passwordless if one is already selected
-          const disabled = isPasswordless && !checked && ["passkey", "sms_otp", "email_otp"].some((p) => target.auth_methods.has(p));
+          const providerReady = !m.providerKey || providerStatus[m.providerKey] === true;
+          // Grey out other passwordless if one is already selected, OR if provider not configured
+          const disabled = (isPasswordless && !checked && ["passkey", "sms_otp", "email_otp"].some((p) => target.auth_methods.has(p)))
+            || (!providerReady && !checked);
           return (
             <label key={m.key} className={`flex items-center gap-1.5 text-sm ${disabled ? "opacity-40" : ""}`}>
               <input
@@ -280,10 +303,14 @@ export default function OAuthClientsSettingsPage() {
                 checked={checked}
                 onChange={() => onChange(toggleAuthMethod(m.key, target))}
                 className="rounded"
+                disabled={disabled}
               />
               <div>
                 <span className="font-mono text-xs">{m.label}</span>
                 <span className="ml-1 text-xs text-gray-400">{m.desc}</span>
+                {!providerReady && !checked && (
+                  <span className="ml-1 text-xs text-amber-500">需先配置 Provider</span>
+                )}
               </div>
             </label>
           );
