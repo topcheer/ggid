@@ -205,6 +205,9 @@ func (h *OrgHandler) GetOrganization(ctx context.Context, req *pb.GetOrgRequest)
 	if err != nil {
 		return nil, toGRPCError(err)
 	}
+	if org == nil {
+		return nil, status.Error(codes.NotFound, "organization not found")
+	}
 	return orgToProto(org), nil
 }
 
@@ -281,6 +284,9 @@ func (h *OrgHandler) DeleteOrganization(ctx context.Context, req *pb.DeleteOrgRe
 }
 
 func orgToProto(o *domain.Organization) *pb.Organization {
+	if o == nil {
+		return nil
+	}
 	metaJSON, _ := json.Marshal(o.Metadata)
 	p := &pb.Organization{
 		Id:       o.ID.String(),
