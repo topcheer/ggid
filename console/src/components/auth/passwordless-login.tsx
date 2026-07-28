@@ -29,9 +29,11 @@ export function PasswordlessLogin({ apiBase, tenantId, authMethod, onSuccess, on
 
   const exchangeTicketForToken = useCallback(async (ticket: string) => {
     try {
+      // Generate random state for CSRF protection
+      const state = crypto.getRandomValues(new Uint32Array(8)).join("");
       // Exchange auth_ticket for code via /oauth/authorize
       const codeResp = await fetch(
-        `${apiBase}/oauth/authorize?auth_ticket=${ticket}&client_id=gcid-console&redirect_uri=${encodeURIComponent(window.location.origin + "/callback")}&response_type=code&scope=openid+profile+email+offline_access&code_challenge=console-pkce&code_challenge_method=S256`,
+        `${apiBase}/oauth/authorize?auth_ticket=${ticket}&client_id=gcid-console&redirect_uri=${encodeURIComponent(window.location.origin + "/callback")}&response_type=code&scope=openid+profile+email+offline_access&code_challenge=console-pkce&code_challenge_method=S256&state=${state}`,
         { headers: { "X-Tenant-ID": tenantId }, redirect: "manual" as RequestRedirect },
       );
       const loc = codeResp.headers.get("location") || "";
