@@ -88,6 +88,8 @@ func (v *DBAPIKeyValidator) Validate(ctx context.Context, key string) (string, s
 	).Scan(&tenantID, &keyHash, &scopes, &status, &expiresAt)
 
 	if err == pgx.ErrNoRows {
+		// P2-5: Cache negative result to prevent repeated Argon2id DoS
+		v.cache.Store(keyID, &cachedKey{status: "not_found", cachedAt: time.Now()})
 		return "", "", nil, fmt.Errorf("invalid api key")
 	}
 	if err != nil {

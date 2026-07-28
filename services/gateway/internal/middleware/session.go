@@ -60,8 +60,9 @@ func (sm *SessionManager) Middleware(next http.Handler) http.Handler {
 			return
 		}
 		if err != nil {
-			// Redis error — fail open (don't block on infra issues)
-			next.ServeHTTP(w, r)
+			// P2-4 fix: Redis error — fail closed (don't allow revoked sessions through).
+			// Logging the error but blocking is safer than allowing potentially revoked sessions.
+			writeSessionError(w, "session validation unavailable — please retry")
 			return
 		}
 
