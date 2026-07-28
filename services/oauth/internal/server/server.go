@@ -1007,6 +1007,14 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 				return
 			}
 		}
+		// SECURITY (RFC 7009 §2.1): verify token ownership before revoking.
+		authClientID := extractAuthClientID(r)
+		if authClientID != "" && token != "" {
+			if !oauthSvc.ValidateTokenOwnership(token, authClientID) {
+				w.WriteHeader(http.StatusOK) // silent per RFC
+				return
+			}
+		}
 		_ = oauthSvc.RevokeToken(token, tokenTypeHint)
 		w.WriteHeader(http.StatusOK)
 	})
