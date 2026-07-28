@@ -239,7 +239,13 @@ export function useUserRole(): { role: UserRole; scopes: string[]; isPlatformAdm
   const hasRole = (...keys: string[]) => keys.some((k) => {
     if (scopes.includes(k)) return true;
     const normalized = k.replace(/[:_]/g, " ").toLowerCase();
-    return lowerScopes.some((ls) => ls === normalized || ls === k.toLowerCase() || (k === "platform administrator" && ls === "platform:admin"));
+    // Case-insensitive match against any scope
+    return lowerScopes.some((ls) =>
+      ls === normalized ||
+      ls === k.toLowerCase() ||
+      ls === normalized.replace(/[:_]/g, " ") || // "platform admin" matches "platform:admin"
+      (k.includes("admin") && (ls === "administrator" || ls === "platform:admin" || ls === "tenant:admin" || ls === "admin"))
+    );
   });
   const role: UserRole = hasRole("platform:admin", "platform administrator")
     ? "platform_admin"
@@ -421,7 +427,17 @@ export function useAuth() {
     setLoading(false);
   }, []);
 
-  const logout = () => {
+  const logout = async () => {
+    const token = getAuthToken();
+    // Revoke token server-side (best-effort, don't block on failure)
+    if (token) {
+      try {
+        await fetch(`${API_BASE_URL}/api/v1/auth/logout`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        }).catch(() => {});
+      } catch { /* ignore — still clear local state */ }
+    }
     if (typeof window !== "undefined") {
       localStorage.removeItem("ggid_access_token");
       localStorage.removeItem("ggid_refresh_token");
