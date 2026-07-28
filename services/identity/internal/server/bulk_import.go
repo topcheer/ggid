@@ -8,6 +8,8 @@ import (
 	"strings"
 	"time"
 
+	"golang.org/x/crypto/bcrypt"
+
 	ggidcrypto "github.com/ggid/ggid/pkg/crypto"
 	ggidtenant "github.com/ggid/ggid/pkg/tenant"
 	"github.com/ggid/ggid/services/identity/internal/domain"
@@ -221,9 +223,8 @@ func VerifyMultiHash(password, storedHash string) (valid bool, needsRehash bool)
 		return ok && err == nil, false // already argon2id, no rehash needed
 
 	case "bcrypt":
-		// Would use golang.org/x/crypto/bcrypt — structure ready.
-		// ok := bcrypt.CompareHashAndPassword([]byte(actualHash), []byte(password)) == nil
-		return false, true // placeholder: verify in production with bcrypt lib
+		err := bcrypt.CompareHashAndPassword([]byte(actualHash), []byte(password))
+		return err == nil, true // needs rehash to argon2id
 
 	case "ssha", "ssha256":
 		// LDAP SSHA: base64 decode, split salt, SHA digest.
