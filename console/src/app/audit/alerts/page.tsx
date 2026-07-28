@@ -52,7 +52,7 @@ export default function AuditAlertsPage() {
     setLoading(true);
     try {
       const [rulesRes, historyRes] = await Promise.all([
-        apiFetch<{ rules?: AlertRule[] }>("/api/v1/settings/alerting/rules").catch(() => ({ rules: [] })),
+        apiFetch<{ rules?: AlertRule[] }>("/api/v1/audit/rules").catch(() => ({ rules: [] })),
         apiFetch<{ alerts?: AlertHistoryEntry[] }>("/api/v1/audit/alerts").catch(() => ({ alerts: [] })),
       ]);
       setRules(rulesRes.rules ?? []);
@@ -71,7 +71,7 @@ export default function AuditAlertsPage() {
     if (!rule) return;
     setRules(rules.map((r: any) => (r.id === id ? { ...r, enabled: !r.enabled } : r)));
     try {
-      await apiFetch(`/api/v1/settings/alerting/rules/${id}`, {
+      await apiFetch(`/api/v1/audit/rules/${id}`, {
         method: "PATCH",
         body: JSON.stringify({ enabled: !rule.enabled }),
       });
@@ -81,7 +81,7 @@ export default function AuditAlertsPage() {
   const handleDelete = async (id: string) => {
     setRules(rules.filter((r: any) => r.id !== id));
     try {
-      await apiFetch(`/api/v1/settings/alerting/rules/${id}`, { method: "DELETE" });
+      await apiFetch(`/api/v1/audit/rules/${id}`, { method: "DELETE" });
     } catch { /* optimistic */ }
   };
 
