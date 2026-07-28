@@ -242,6 +242,7 @@ func main() {
 	// Wire DB-backed WebAuthn credential store so passkeys persist across restarts.
 	if pool != nil {
 		handler.SetWebAuthnCredentialStore(repository.NewWebAuthnCredentialStore(pool))
+	service.SetImpersonationRedis(rdb) // P0: persist impersonation tokens to survive restarts
 		log.Println("WebAuthn: DB-backed credential store enabled")
 	} else {
 		log.Println("WebAuthn: WARNING no DB pool — credentials will not persist")

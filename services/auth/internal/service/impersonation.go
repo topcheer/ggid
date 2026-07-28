@@ -1,29 +1,44 @@
 package service
 
 import (
+	"context"
+	"encoding/json"
 	"fmt"
 	"sync"
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/redis/go-redis/v9"
 )
 
 // ImpersonationToken represents a delegated admin token for impersonation.
 type ImpersonationToken struct {
-	TokenID            uuid.UUID
-	ImpersonatorID     uuid.UUID // admin who impersonates
-	TargetUserID       uuid.UUID // user being impersonated
-	TenantID           uuid.UUID
-	Reason             string
-	IssuedAt           time.Time
-	ExpiresAt          time.Time
-	Revoked            bool
+	TokenID        uuid.UUID `json:"token_id"`
+	ImpersonatorID uuid.UUID `json:"impersonator_id"`
+	TargetUserID   uuid.UUID `json:"target_user_id"`
+	TenantID       uuid.UUID `json:"tenant_id"`
+	Reason         string    `json:"reason"`
+	IssuedAt       time.Time `json:"issued_at"`
+	ExpiresAt      time.Time `json:"expires_at"`
+	Revoked        bool      `json:"revoked"`
 }
+
+const (
+	impersonationKeyPrefix = "ggid:imp_token:"
+	// In-memory fallback when Redis is unavailable
+)
 
 var (
 	impersonationMu    sync.RWMutex
 	impersonationStore = make(map[uuid.UUID]*ImpersonationToken)
+	impRedisClient     *redis.Client
 )
+
+// SetImpersonationRedis injects a Redis client for persistent storage.
+// When set, impersonation tokens survive process restarts.
+func SetImpersonationRedis(rdb *redis.Client) {
+	impRedisClient = rdb
+}
 
 // IssueImpersonationToken creates a temporary token for admin to act as target user.
 func IssueImpersonationToken(impersonatorID, targetUserID, tenantID uuid.UUID, reason string) (*ImpersonationToken, error) {
@@ -52,27 +67,49 @@ func IssueImpersonationToken(impersonatorID, targetUserID, tenantID uuid.UUID, r
 	impersonationStore[t.TokenID] = t
 	impersonationMu.Unlock()
 
+	// Persist to Redis with TTL = expiry
+	if impRedisClient != nil {
+		data, _ := json.Marshal(t)
+		ttl := time.Until(t.ExpiresAt)
+		if ttl > 0 {
+			impRedisClient.Set(context.Background(), impersonationKeyPrefix+t.TokenID.String(), data, ttl)
+		}
+	}
+
 	return t, nil
 }
 
 // GetImpersonationToken retrieves an impersonation token by ID.
 func GetImpersonationToken(id uuid.UUID) (*ImpersonationToken, error) {
+	// Try memory first
 	impersonationMu.RLock()
-	defer impersonationMu.RUnlock()
 	t, ok := impersonationStore[id]
-	if !ok {
-		return nil, fmt.Errorf("impersonation token not found")
+	impersonationMu.RUnlock()
+	if ok {
+		return t, nil
 	}
-	return t, nil
+	// Try Redis (survives restart)
+	if impRedisClient != nil {
+		data, err := impRedisClient.Get(context.Background(), impersonationKeyPrefix+id.String()).Bytes()
+		if err == nil {
+			var rt ImpersonationToken
+			if json.Unmarshal(data, &rt) == nil {
+				// Cache in memory
+				impersonationMu.Lock()
+				impersonationStore[id] = &rt
+				impersonationMu.Unlock()
+				return &rt, nil
+			}
+		}
+	}
+	return nil, fmt.Errorf("impersonation token not found")
 }
 
 // ValidateImpersonationToken checks if a token is valid (not revoked, not expired).
 func ValidateImpersonationToken(id uuid.UUID) (*ImpersonationToken, error) {
-	impersonationMu.RLock()
-	defer impersonationMu.RUnlock()
-	t, ok := impersonationStore[id]
-	if !ok {
-		return nil, fmt.Errorf("token not found")
+	t, err := GetImpersonationToken(id)
+	if err != nil {
+		return nil, err
 	}
 	if t.Revoked {
 		return nil, fmt.Errorf("token revoked")
@@ -85,13 +122,21 @@ func ValidateImpersonationToken(id uuid.UUID) (*ImpersonationToken, error) {
 
 // RevokeImpersonationToken revokes an active impersonation token.
 func RevokeImpersonationToken(id uuid.UUID) error {
-	impersonationMu.Lock()
-	defer impersonationMu.Unlock()
-	t, ok := impersonationStore[id]
-	if !ok {
-		return fmt.Errorf("token not found")
+	t, err := GetImpersonationToken(id)
+	if err != nil {
+		return err
 	}
+	impersonationMu.Lock()
 	t.Revoked = true
+	impersonationMu.Unlock()
+	// Update Redis
+	if impRedisClient != nil {
+		data, _ := json.Marshal(t)
+		ttl := time.Until(t.ExpiresAt)
+		if ttl > 0 {
+			impRedisClient.Set(context.Background(), impersonationKeyPrefix+id.String(), data, ttl)
+		}
+	}
 	return nil
 }
 
