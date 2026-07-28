@@ -23,7 +23,14 @@ export default function EnhancedProfilePage() {
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [phoneVerified, setPhoneVerified] = useState(false);
+  const [phoneVerifying, setPhoneVerifying] = useState(false);
+  const [phoneOtp, setPhoneOtp] = useState("");
+  const [phoneOtpSent, setPhoneOtpSent] = useState(false);
   const [profileLoaded, setProfileLoaded] = useState(false);
+  const [passkeyCreds, setPasskeyCreds] = useState<any[]>([]);
+  const [passkeyRegistering, setPasskeyRegistering] = useState(false);
+  const [passkeyError, setPasskeyError] = useState("");
+  const [passkeySuccess, setPasskeySuccess] = useState("");
   const [profileSaved, setProfileSaved] = useState(false);
 
   // Change password
@@ -182,7 +189,58 @@ export default function EnhancedProfilePage() {
       setLoadingProfile(false);
     };
     loadProfile();
+    loadPasskeys();
   }, []);
+
+  const loadPasskeys = async () => {
+    try {
+      const resp = await fetch(`${process.env.NEXT_PUBLIC_API_BASE || ""}/api/v1/auth/webauthn/credentials`, {
+        headers: authHeader(),
+      });
+      if (resp.ok) {
+        const data = await resp.json();
+        setPasskeyCreds(data.credentials || data.data || (Array.isArray(data) ? data : []));
+      }
+    } catch {}
+  };
+
+  const registerPasskey = async () => {
+    setPasskeyRegistering(true); setPasskeyError(""); setPasskeySuccess("");
+    try {
+      const beginResp = await fetch(`${process.env.NEXT_PUBLIC_API_BASE || ""}/api/v1/auth/webauthn/register/begin`, {
+        method: "POST", headers: { "Content-Type": "application/json", ...authHeader() }, body: "{}",
+      });
+      if (!beginResp.ok) { const e = await beginResp.json().catch(()=>({})); throw new Error(e.error?.message || e.error || "Failed to start"); }
+      const options = await beginResp.json();
+      const pk = options.response || options.publicKey || options;
+      pk.challenge = Uint8Array.from(atob(pk.challenge.replace(/-/g,"+").replace(/_/g,"/")), c=>c.charCodeAt(0));
+      pk.user.id = Uint8Array.from(atob(pk.user.id.replace(/-/g,"+").replace(/_/g,"/")), c=>c.charCodeAt(0));
+      if (pk.excludeCredentials) pk.excludeCredentials = pk.excludeCredentials.map((c:any)=>({...c, id: Uint8Array.from(atob(c.id.replace(/-/g,"+").replace(/_/g,"/")), (x:string)=>x.charCodeAt(0))}));
+      const cred = await navigator.credentials.create({ publicKey: pk });
+      if (!cred) throw new Error("No credential");
+      const pkc = cred as PublicKeyCredential;
+      const resp = pkc.response as AuthenticatorAttestationResponse;
+      const b64 = (buf: ArrayBuffer) => btoa(String.fromCharCode(...new Uint8Array(buf))).replace(/\+/g,"-").replace(/\//g,"_").replace(/=+$/,"");
+      const finishResp = await fetch(`${process.env.NEXT_PUBLIC_API_BASE || ""}/api/v1/auth/webauthn/register/finish`, {
+        method: "POST", headers: { "Content-Type": "application/json", ...authHeader() },
+        body: JSON.stringify({ id: pkc.id, rawId: b64(pkc.rawId), type: pkc.type, response: { attestationObject: b64(resp.attestationObject), clientDataJSON: b64(resp.clientDataJSON) } }),
+      });
+      if (!finishResp.ok) { const e = await finishResp.json().catch(()=>({})); throw new Error(e.error?.message || e.error || "Failed to finish"); }
+      setPasskeySuccess("Passkey registered! You can now use it to log in.");
+      loadPasskeys();
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : "Failed";
+      setPasskeyError(msg.includes("cancelled") || msg.includes("aborted") ? "Registration cancelled." : msg);
+    } finally { setPasskeyRegistering(false); }
+  };
+
+  const removePasskey = async (id: string) => {
+    if (!confirm("Remove this passkey?")) return;
+    try {
+      await fetch(`${process.env.NEXT_PUBLIC_API_BASE || ""}/api/v1/auth/webauthn/credentials/${id}`, { method: "DELETE", headers: authHeader() });
+      setPasskeySuccess("Passkey removed."); loadPasskeys();
+    } catch { setPasskeyError("Failed to remove passkey."); }
+  };
 
   const saveProfile = async () => {
     setSaving(true);
@@ -198,6 +256,38 @@ export default function EnhancedProfilePage() {
       }
     } catch {}
     setSaving(false);
+  };
+
+  const sendPhoneOtp = async () => {
+    if (!phone) return;
+    setPhoneVerifying(true);
+    try {
+      const res = await fetch(`${API_BASE}/api/v1/auth/sms-otp/send`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", ...authHeader() },
+        body: JSON.stringify({ phone }),
+      });
+      if (res.ok) setPhoneOtpSent(true);
+    } catch {}
+    setPhoneVerifying(false);
+  };
+
+  const verifyPhoneOtp = async () => {
+    if (!phoneOtp) return;
+    setPhoneVerifying(true);
+    try {
+      const res = await fetch(`${API_BASE}/api/v1/auth/sms-otp/verify`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", ...authHeader() },
+        body: JSON.stringify({ phone, code: phoneOtp }),
+      });
+      if (res.ok) {
+        setPhoneVerified(true);
+        setPhoneOtpSent(false);
+        setPhoneOtp("");
+      }
+    } catch {}
+    setPhoneVerifying(false);
   };
 
   const checkPwStrength = (pw: string) => {
@@ -240,7 +330,15 @@ export default function EnhancedProfilePage() {
   const card = "rounded-xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-700 dark:bg-gray-800";
 
 
-  const revokeDevice = (id: string) => setDevices(prev => prev.filter(d => d.id !== id));
+  const revokeDevice = async (id: string) => {
+    try {
+      await fetch(`${API_BASE}/api/v1/auth/trusted-devices/${id}`, {
+        method: "DELETE",
+        headers: { ...authHeader() },
+      }).catch(() => null);
+    } catch { /* ignore — still update local state */ }
+    setDevices(prev => prev.filter(d => d.id !== id));
+  };
 
   return (
     <div className="space-y-6">
@@ -260,7 +358,7 @@ export default function EnhancedProfilePage() {
             <div className="space-y-3">
               <div><label className="text-sm font-medium">{t("profile.fullName")}</label><input type="text" aria-label="Full name" value={name} onChange={e => setName(e.target.value)} placeholder={!profileLoaded ? "Loading..." : "Enter your name"} className="mt-1 w-full rounded-lg border dark:border-gray-700 dark:bg-gray-900 px-3 py-2 text-sm disabled:opacity-50" disabled={!profileLoaded} /></div>
               <div><label className="text-sm font-medium">{t("profile.email")}</label><div className="mt-1 flex gap-2"><div className="relative flex-1"><Mail className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" /><input type="email" aria-label="Email address" value={email} onChange={e => setEmail(e.target.value)} placeholder={!profileLoaded ? "Loading..." : "you@example.com"} className="w-full rounded-lg border dark:border-gray-700 dark:bg-gray-900 pl-9 pr-3 py-2 text-sm disabled:opacity-50" disabled={!profileLoaded} /></div>{email && <span className="flex items-center gap-1 px-2 py-1 rounded text-xs bg-green-100 dark:bg-green-900/30 text-green-600"><CheckCircle2 className="h-3 w-3" /> {t("profile.verified")}</span>}</div></div>
-              <div><label className="text-sm font-medium">{t("profile.phone")}</label><div className="mt-1 flex gap-2"><div className="relative flex-1"><Phone className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" /><input type="tel" aria-label="Phone number" value={phone} onChange={e => setPhone(e.target.value)} className="w-full rounded-lg border dark:border-gray-700 dark:bg-gray-900 pl-9 pr-3 py-2 text-sm" /></div>{phoneVerified ? <span className="flex items-center gap-1 px-2 py-1 rounded text-xs bg-green-100 dark:bg-green-900/30 text-green-600"><CheckCircle2 className="h-3 w-3" /> {t("profile.verified")}</span> : <button className="px-2 py-1 rounded text-xs bg-blue-600 text-white">{t("profile.verify")}</button>}</div></div>
+              <div><label className="text-sm font-medium">{t("profile.phone")}</label><div className="mt-1 flex gap-2"><div className="relative flex-1"><Phone className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" /><input type="tel" aria-label="Phone number" value={phone} onChange={e => setPhone(e.target.value)} className="w-full rounded-lg border dark:border-gray-700 dark:bg-gray-900 pl-9 pr-3 py-2 text-sm" /></div>{phoneVerified ? <span className="flex items-center gap-1 px-2 py-1 rounded text-xs bg-green-100 dark:bg-green-900/30 text-green-600"><CheckCircle2 className="h-3 w-3" /> {t("profile.verified")}</span> : phoneOtpSent ? <div className="flex gap-1"><input type="text" maxLength={6} value={phoneOtp} onChange={e => setPhoneOtp(e.target.value)} placeholder="6-digit code" className="w-24 rounded border dark:border-gray-700 dark:bg-gray-900 px-2 py-1 text-xs" /><button onClick={verifyPhoneOtp} disabled={phoneVerifying || phoneOtp.length !== 6} className="px-2 py-1 rounded text-xs bg-green-600 text-white disabled:opacity-50">{phoneVerifying ? "..." : "Verify"}</button></div> : <button onClick={sendPhoneOtp} disabled={phoneVerifying || !phone} className="px-2 py-1 rounded text-xs bg-blue-600 text-white disabled:opacity-50">{phoneVerifying ? "..." : t("profile.verify")}</button>}</div></div>
               {profileSaved && <span className="flex items-center gap-1 text-xs text-green-600"><Check className="h-3 w-3" /> Saved</span>}
               <button onClick={saveProfile} disabled={saving || !profileLoaded} className="flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-blue-500">{saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />} {t("profile.save")}</button>
             </div>
@@ -372,6 +470,26 @@ export default function EnhancedProfilePage() {
                 </button>
               )}
             </div>
+          </div>
+
+          {/* Passkey Registration */}
+          <div className={card}>
+            <h3 className="mb-3 flex items-center gap-2 text-sm font-semibold uppercase text-gray-400"><Fingerprint className="h-4 w-4" /> Passkeys</h3>
+            <p className="mb-3 text-xs text-gray-500">Register a passkey for passwordless login. Passkeys are more secure than passwords.</p>
+            {passkeyError && <div className="mb-3 flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700 dark:border-red-800 dark:bg-red-950"><AlertCircle className="h-4 w-4" /> {passkeyError}</div>}
+            {passkeySuccess && <div className="mb-3 flex items-center gap-2 rounded-lg border border-green-200 bg-green-50 px-3 py-2 text-sm text-green-700 dark:border-green-800 dark:bg-green-950"><CheckCircle2 className="h-4 w-4" /> {passkeySuccess}</div>}
+            <div className="space-y-2">
+              {passkeyCreds.length === 0 && <p className="text-sm text-gray-400 py-2">No passkeys registered.</p>}
+              {passkeyCreds.map((c: any) => (
+                <div key={c.id} className="flex items-center justify-between rounded-lg border p-3 dark:border-gray-700">
+                  <div className="flex items-center gap-3"><Fingerprint className="h-5 w-5 text-green-500" /><div><span className="text-sm font-medium">{c.name || c.device_name || `Passkey ${String(c.id).slice(0,8)}`}</span><p className="text-xs text-gray-400">{c.platform || "Unknown"}{c.created_at ? ` · ${new Date(c.created_at).toLocaleDateString()}` : ""}</p></div></div>
+                  <button onClick={() => removePasskey(c.id)} className="rounded-lg border border-red-300 px-2 py-1 text-xs text-red-600 hover:bg-red-50 dark:hover:bg-red-950">Remove</button>
+                </div>
+              ))}
+            </div>
+            <button onClick={registerPasskey} disabled={passkeyRegistering} className="mt-3 flex items-center gap-1 rounded-lg bg-indigo-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-indigo-700 disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+              {passkeyRegistering ? <Loader2 className="h-3 w-3 animate-spin" /> : <Plus className="h-3 w-3" />} Add Passkey
+            </button>
           </div>
 
           {/* Social Accounts */}
