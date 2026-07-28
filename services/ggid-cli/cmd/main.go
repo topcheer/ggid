@@ -142,6 +142,10 @@ func main() {
 	case "settings", "setting":
 		commands.Settings(ctx, args)
 
+	// Providers (hierarchical config)
+	case "providers", "provider":
+		commands.Providers(ctx, args)
+
 	// Security
 	case "security":
 		commands.Security(ctx, args)
