@@ -210,26 +210,60 @@ export default function EnhancedProfilePage() {
       const beginResp = await fetch(`${API_BASE}/api/v1/auth/webauthn/register/begin`, {
         method: "POST", headers: { "Content-Type": "application/json", ...authHeader() }, body: "{}",
       });
-      if (!beginResp.ok) { const e = await beginResp.json().catch(()=>({})); throw new Error(e.error?.message || e.error || "Failed to start"); }
+      if (!beginResp.ok) { const e = await beginResp.json().catch(()=>({})); throw new Error(e.error?.message || e.error || "Failed to start registration"); }
       const options = await beginResp.json();
-      const pk = options.response || options.publicKey || options;
-      pk.challenge = Uint8Array.from(atob(pk.challenge.replace(/-/g,"+").replace(/_/g,"/")), c=>c.charCodeAt(0));
-      pk.user.id = Uint8Array.from(atob(pk.user.id.replace(/-/g,"+").replace(/_/g,"/")), c=>c.charCodeAt(0));
-      if (pk.excludeCredentials) pk.excludeCredentials = pk.excludeCredentials.map((c:any)=>({...c, id: Uint8Array.from(atob(c.id.replace(/-/g,"+").replace(/_/g,"/")), (x:string)=>x.charCodeAt(0))}));
+      // Response can be {publicKey: {...}} or flat
+      const pk = options.publicKey || options.response || options;
+
+      // Decode base64url fields to Uint8Array
+      const b64urlToBuf = (s: string): Uint8Array => {
+        const raw = atob(s.replace(/-/g, "+").replace(/_/g, "/"));
+        const arr = new Uint8Array(raw.length);
+        for (let i = 0; i < raw.length; i++) arr[i] = raw.charCodeAt(i);
+        return arr;
+      };
+      pk.challenge = b64urlToBuf(pk.challenge);
+      if (pk.user?.id) pk.user.id = b64urlToBuf(pk.user.id);
+      if (pk.excludeCredentials) {
+        pk.excludeCredentials = pk.excludeCredentials.map((c: any) => ({ ...c, id: b64urlToBuf(c.id) }));
+      }
+
       const cred = await navigator.credentials.create({ publicKey: pk });
-      if (!cred) throw new Error("No credential");
+      if (!cred) throw new Error("No credential returned");
+
       const pkc = cred as PublicKeyCredential;
-      const resp = pkc.response as AuthenticatorAttestationResponse;
-      const b64 = (buf: ArrayBuffer) => btoa(String.fromCharCode(...new Uint8Array(buf))).replace(/\+/g,"-").replace(/\//g,"_").replace(/=+$/,"");
+      const attResp = pkc.response as AuthenticatorAttestationResponse;
+
+      // Safe base64 encoder — no spread operator (avoids stack overflow on large buffers)
+      const bufToB64url = (buf: ArrayBuffer): string => {
+        const bytes = new Uint8Array(buf);
+        let binary = "";
+        const chunk = 8192;
+        for (let i = 0; i < bytes.length; i += chunk) {
+          binary += String.fromCharCode(...bytes.subarray(i, i + chunk));
+        }
+        return btoa(binary).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+      };
+
+      const payload = {
+        id: pkc.id,
+        rawId: bufToB64url(pkc.rawId),
+        type: pkc.type,
+        response: {
+          attestationObject: bufToB64url(attResp.attestationObject),
+          clientDataJSON: bufToB64url(attResp.clientDataJSON),
+        },
+      };
+
       const finishResp = await fetch(`${API_BASE}/api/v1/auth/webauthn/register/finish`, {
         method: "POST", headers: { "Content-Type": "application/json", ...authHeader() },
-        body: JSON.stringify({ id: pkc.id, rawId: b64(pkc.rawId), type: pkc.type, response: { attestationObject: b64(resp.attestationObject), clientDataJSON: b64(resp.clientDataJSON) } }),
+        body: JSON.stringify(payload),
       });
-      if (!finishResp.ok) { const e = await finishResp.json().catch(()=>({})); throw new Error(e.error?.message || e.error || "Failed to finish"); }
+      if (!finishResp.ok) { const e = await finishResp.json().catch(()=>({})); throw new Error(e.error?.message || e.error || "Failed to finish registration"); }
       setPasskeySuccess("Passkey registered! You can now use it to log in.");
       loadPasskeys();
     } catch (e) {
-      const msg = e instanceof Error ? e.message : "Failed";
+      const msg = e instanceof Error ? e.message : String(e);
       setPasskeyError(msg.includes("cancelled") || msg.includes("aborted") ? "Registration cancelled." : msg);
     } finally { setPasskeyRegistering(false); }
   };
