@@ -106,3 +106,51 @@ func marshalAndSet(ctx context.Context, pool *pgxpool.Pool, key string, scope hi
 	}
 	return SetGenericConfig(ctx, pool, key, scope, tenantID, clientID, configJSON)
 }
+
+// --- Login Policy ---
+
+// LoginPolicyConfig holds login attempt limits and lockout settings.
+type LoginPolicyConfig struct {
+	MaxAttempts     int `json:"max_attempts"`      // failed login before lockout (e.g. 5)
+	LockDurationSec int `json:"lock_duration_sec"` // lockout duration in seconds
+}
+
+func GetLoginPolicy(ctx context.Context, pool *pgxpool.Pool, tenantID *uuid.UUID, clientID *string, def LoginPolicyConfig) LoginPolicyConfig {
+	return getHierarchical(ctx, pool, "login_policy", tenantID, clientID, def)
+}
+
+func SetLoginPolicy(ctx context.Context, pool *pgxpool.Pool, scope hierarchy.ScopeType, tenantID *uuid.UUID, clientID *string, cfg LoginPolicyConfig) error {
+	return marshalAndSet(ctx, pool, "login_policy", scope, tenantID, clientID, cfg)
+}
+
+// --- Rate Limit ---
+
+// RateLimitConfig holds per-scope rate limiting thresholds.
+type RateLimitConfig struct {
+	PerMinute int `json:"per_minute"` // requests per minute per user/IP
+	BurstSize int `json:"burst_size"` // burst capacity
+}
+
+func GetRateLimit(ctx context.Context, pool *pgxpool.Pool, tenantID *uuid.UUID, clientID *string, def RateLimitConfig) RateLimitConfig {
+	return getHierarchical(ctx, pool, "rate_limit", tenantID, clientID, def)
+}
+
+func SetRateLimit(ctx context.Context, pool *pgxpool.Pool, scope hierarchy.ScopeType, tenantID *uuid.UUID, clientID *string, cfg RateLimitConfig) error {
+	return marshalAndSet(ctx, pool, "rate_limit", scope, tenantID, clientID, cfg)
+}
+
+// --- Breach Check ---
+
+// BreachCheckConfig controls password breach detection (HIBP-style).
+type BreachCheckConfig struct {
+	Enabled bool `json:"enabled"` // check passwords against breach database
+	Block   bool `json:"block"`   // block registration if password is breached
+}
+
+func GetBreachCheck(ctx context.Context, pool *pgxpool.Pool, tenantID *uuid.UUID, clientID *string, def BreachCheckConfig) BreachCheckConfig {
+	return getHierarchical(ctx, pool, "breach_check", tenantID, clientID, def)
+}
+
+func SetBreachCheck(ctx context.Context, pool *pgxpool.Pool, scope hierarchy.ScopeType, tenantID *uuid.UUID, clientID *string, cfg BreachCheckConfig) error {
+	return marshalAndSet(ctx, pool, "breach_check", scope, tenantID, clientID, cfg)
+}
