@@ -23,15 +23,15 @@ func NewWebAuthnCredentialStore(pool *pgxpool.Pool) webauthn.CredentialStore {
 
 func (s *pgWebAuthnCredentialStore) SaveCredential(ctx context.Context, cred *webauthn.Credential) error {
 	_, err := s.pool.Exec(ctx, `
-		INSERT INTO webauthn_credentials (id, tenant_id, user_id, name, credential_id, public_key, transports, counter, created_at, last_used_at)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
-	`, cred.ID, cred.TenantID, cred.UserID, cred.Name, cred.CredentialID, cred.PublicKey, cred.Transports, cred.Counter, cred.CreatedAt, cred.LastUsedAt)
+		INSERT INTO webauthn_credentials (id, tenant_id, user_id, name, credential_id, public_key, transports, counter, created_at, last_used_at, backup_eligible, backup_state)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+	`, cred.ID, cred.TenantID, cred.UserID, cred.Name, cred.CredentialID, cred.PublicKey, cred.Transports, cred.Counter, cred.CreatedAt, cred.LastUsedAt, cred.BackupEligible, cred.BackupState)
 	return err
 }
 
 func (s *pgWebAuthnCredentialStore) GetCredentialsByUser(ctx context.Context, tenantID, userID uuid.UUID) ([]*webauthn.Credential, error) {
 	rows, err := s.pool.Query(ctx, `
-		SELECT id, tenant_id, user_id, name, credential_id, public_key, transports, counter, created_at, last_used_at
+		SELECT id, tenant_id, user_id, name, credential_id, public_key, transports, counter, created_at, last_used_at, backup_eligible, backup_state
 		FROM webauthn_credentials
 		WHERE tenant_id = $1 AND user_id = $2
 	`, tenantID, userID)
@@ -44,7 +44,7 @@ func (s *pgWebAuthnCredentialStore) GetCredentialsByUser(ctx context.Context, te
 	for rows.Next() {
 		c := &webauthn.Credential{}
 		var transports []string
-		if err := rows.Scan(&c.ID, &c.TenantID, &c.UserID, &c.Name, &c.CredentialID, &c.PublicKey, &transports, &c.Counter, &c.CreatedAt, &c.LastUsedAt); err != nil {
+		if err := rows.Scan(&c.ID, &c.TenantID, &c.UserID, &c.Name, &c.CredentialID, &c.PublicKey, &transports, &c.Counter, &c.CreatedAt, &c.LastUsedAt, &c.BackupEligible, &c.BackupState); err != nil {
 			return nil, err
 		}
 		c.Transports = transports
@@ -57,10 +57,10 @@ func (s *pgWebAuthnCredentialStore) GetCredentialByID(ctx context.Context, tenan
 	c := &webauthn.Credential{}
 	var transports []string
 	err := s.pool.QueryRow(ctx, `
-		SELECT id, tenant_id, user_id, name, credential_id, public_key, transports, counter, created_at, last_used_at
+		SELECT id, tenant_id, user_id, name, credential_id, public_key, transports, counter, created_at, last_used_at, backup_eligible, backup_state
 		FROM webauthn_credentials
 		WHERE tenant_id = $1 AND credential_id = $2
-	`, tenantID, credID).Scan(&c.ID, &c.TenantID, &c.UserID, &c.Name, &c.CredentialID, &c.PublicKey, &transports, &c.Counter, &c.CreatedAt, &c.LastUsedAt)
+	`, tenantID, credID).Scan(&c.ID, &c.TenantID, &c.UserID, &c.Name, &c.CredentialID, &c.PublicKey, &transports, &c.Counter, &c.CreatedAt, &c.LastUsedAt, &c.BackupEligible, &c.BackupState)
 	if err == pgx.ErrNoRows {
 		return nil, nil
 	}
