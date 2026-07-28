@@ -1717,7 +1717,14 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 
 		case http.MethodDelete:
 			if err := oauthSvc.DeleteClient(ctx, clientID); err != nil {
-				writeInternalError(w, "DeleteClient", err)
+				// Return 404 for not found, 500 for other errors
+				if strings.Contains(err.Error(), "not found") {
+					writeJSON(w, http.StatusNotFound, map[string]any{
+						"error": map[string]string{"code": "not_found", "message": "client not found: " + clientID},
+					})
+				} else {
+					writeInternalError(w, "DeleteClient", err)
+				}
 				return
 			}
 			// Audit: client deleted
