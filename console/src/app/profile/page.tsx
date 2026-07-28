@@ -332,10 +332,10 @@ export default function EnhancedProfilePage() {
 
   const revokeDevice = async (id: string) => {
     try {
-      await fetch(`${API_BASE}/api/v1/auth/trusted-devices/${id}`, {
+      await fetch(`${API_BASE}/api/v1/auth/sessions/${id}`, {
         method: "DELETE",
         headers: { ...authHeader() },
-      }).catch(() => null);
+      });
     } catch { /* ignore — still update local state */ }
     setDevices(prev => prev.filter(d => d.id !== id));
   };
