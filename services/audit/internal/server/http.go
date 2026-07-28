@@ -453,10 +453,24 @@ func (s *HTTPServer) handleEventByID(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// SECURITY: verify the event belongs to the caller's tenant (BOLA fix).
+	tenantIDStr := r.Header.Get("X-Tenant-ID")
+	if tenantIDStr == "" {
+		tenantIDStr = r.URL.Query().Get("tenant_id")
+	}
+
 	event, err := s.svc.GetEvent(r.Context(), id)
 	if err != nil {
 		writeServiceError(w, err)
 		return
+	}
+	// Cross-tenant check: reject if event tenant doesn't match caller tenant.
+	if tenantIDStr != "" && event != nil && event.TenantID != uuid.Nil {
+		eventTID := event.TenantID.String()
+		if eventTID != tenantIDStr {
+			writeJSONError(w, http.StatusNotFound, "event not found")
+			return
+		}
 	}
 	writeJSON(w, http.StatusOK, eventToJSON(event))
 }
@@ -1947,14 +1961,12 @@ func resolveValidatedTenant(w http.ResponseWriter, r *http.Request) (uuid.UUID, 
 		return hid, true
 	}
 
-	// Header not set — fallback to query param (e.g., tamper-check auto-discovery).
+	// P1-3: Query param fallback removed — was a BOLA vector.
+	// Only X-Tenant-ID header (set by gateway from validated JWT) is trusted.
+	// Query param tenant_id is only accepted if it matches the header.
 	if queryTenant != "" {
-		qid, err := uuid.Parse(queryTenant)
-		if err != nil {
-			writeJSONError(w, http.StatusBadRequest, "invalid tenant_id")
-			return uuid.Nil, false
-		}
-		return qid, true
+		writeJSONError(w, http.StatusForbidden, "tenant_id query parameter requires matching X-Tenant-ID header")
+		return uuid.Nil, false
 	}
 
 	writeJSONError(w, http.StatusBadRequest, "tenant_id is required")
