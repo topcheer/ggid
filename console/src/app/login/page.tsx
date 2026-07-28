@@ -541,7 +541,7 @@ export default function LoginPage() {
               </>
             ) : (
               /* Password mode with optional passkey/OTP as secondary */
-              (authMethods.includes("passkey") && passkeySupported) && (
+              authMethods.includes("passkey") && (
                 <>
                   <div className="my-5 flex items-center gap-3">
                     <div className="h-px flex-1 bg-gray-200 dark:bg-gray-700" />
