@@ -234,7 +234,15 @@ func (s *OAuthService) GetClient(ctx context.Context, clientID string) (*domain.
 	if s.clientRepo == nil {
 		return nil, errors.New(errors.ErrNotFound, "client not found")
 	}
-	return s.clientRepo.GetClientByID(ctx, tc.TenantID, clientID)
+	client, err := s.clientRepo.GetClientByID(ctx, tc.TenantID, clientID)
+	if err != nil {
+		return nil, err
+	}
+	// P1-2: reject disabled clients in authorization/token flows
+	if client != nil && !client.Enabled {
+		return nil, errors.New(errors.ErrPermissionDenied, "client is disabled")
+	}
+	return client, nil
 }
 
 // AuthenticateClient verifies a client_id + client_secret pair against the

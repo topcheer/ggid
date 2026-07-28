@@ -183,7 +183,14 @@ func injectTenant(r *http.Request) (bool, context.Context) {
 	if existingTC, err := ggidtenant.FromContext(r.Context()); err == nil && existingTC.TenantID != uuid.Nil {
 		return true, r.Context()
 	}
-	// Fallback to X-Tenant-ID header for non-SCIM-token auth paths.
+	// Fallback to X-Tenant-ID header — ONLY when authenticated via JWT
+	// (gateway sets this header from JWT claims, so it's server-validated).
+	// Reject if the request has a SCIM Authorization header (Bearer token
+	// that wasn't validated by scimTokenAuth) — this prevents bypass.
+	authHeader := r.Header.Get("Authorization")
+	if authHeader != "" && !strings.HasPrefix(authHeader, "Bearer ") {
+		return false, nil
+	}
 	tenantIDStr := r.Header.Get("X-Tenant-ID")
 	if tenantIDStr == "" {
 		return false, nil
