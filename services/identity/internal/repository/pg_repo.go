@@ -273,6 +273,8 @@ func (r *pgRepo) DeleteUser(ctx context.Context, tenantID, id uuid.UUID) error {
 		{"api_keys", `DELETE FROM api_keys WHERE user_id = $1`},
 		{"refresh_tokens", `DELETE FROM refresh_tokens WHERE user_id = $1`},
 		{"oauth_authorization_codes", `DELETE FROM oauth_authorization_codes WHERE user_id = $1`},
+		{"password_history", `DELETE FROM password_history WHERE user_id = $1`},
+		{"email_verification_tokens", `DELETE FROM email_verification_tokens WHERE user_id = $1`},
 	} {
 		if _, err := tx.Exec(ctx, cleanup.sql, id); err != nil {
 			return ggiderrors.Wrap(ggiderrors.ErrInternal, "cascade cleanup "+cleanup.name, err)
@@ -413,6 +415,14 @@ RETURNING %s`, userColumns)
 			return nil, ggiderrors.NotFound("user", id.String())
 		}
 		return nil, ggiderrors.Wrap(ggiderrors.ErrInternal, "set user status", err)
+	}
+
+	// SECURITY: When locking/disabling a user, immediately revoke all sessions
+	// and tokens to prevent continued access with existing credentials.
+	if status == domain.UserStatusLocked || status == domain.UserStatusDisabled {
+		tx.Exec(ctx, `DELETE FROM sessions WHERE user_id = $1`, id)
+		tx.Exec(ctx, `UPDATE refresh_tokens SET revoked = true, revoked_at = NOW() WHERE user_id = $1 AND revoked = false`, id)
+		tx.Exec(ctx, `DELETE FROM api_keys WHERE user_id = $1`)
 	}
 
 	tx.Commit(ctx)

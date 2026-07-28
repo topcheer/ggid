@@ -420,15 +420,58 @@ func (h *HTTPHandler) tenantDelete(w http.ResponseWriter, r *http.Request, tenan
 		return
 	}
 
-	tag, err := h.svc.Pool().Exec(r.Context(), `
-		DELETE FROM tenants WHERE id::text = $1 OR slug = $1`, tenantID)
+	// P1-4: Cascade cleanup all tenant data before deleting the tenant row.
+	tx, err := h.svc.Pool().Begin(r.Context())
 	if err != nil {
-		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "failed to delete tenant"})
+		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "failed to begin transaction"})
 		return
 	}
-	if tag.RowsAffected() == 0 {
+	defer tx.Rollback(r.Context())
+
+	// Resolve tenant UUID (may have been passed as slug)
+	var tenantUUID string
+	err = tx.QueryRow(r.Context(), `SELECT id::text FROM tenants WHERE id::text = $1 OR slug = $1`, tenantID).Scan(&tenantUUID)
+	if err != nil {
 		writeJSON(w, http.StatusNotFound, map[string]string{"error": "tenant not found"})
 		return
 	}
-	writeJSON(w, http.StatusOK, map[string]any{"deleted": true})
+
+	// Delete all tenant-scoped data
+	tenantTables := []struct{ name, sql string }{
+		{"password_history", `DELETE FROM password_history WHERE tenant_id = $1::uuid`},
+		{"email_verification_tokens", `DELETE FROM email_verification_tokens WHERE tenant_id = $1::uuid`},
+		{"credentials", `DELETE FROM credentials WHERE tenant_id = $1::uuid`},
+		{"sessions", `DELETE FROM sessions WHERE tenant_id = $1::uuid`},
+		{"mfa_devices", `DELETE FROM mfa_devices WHERE tenant_id = $1::uuid`},
+		{"webauthn_credentials", `DELETE FROM webauthn_credentials WHERE tenant_id = $1::uuid`},
+		{"backup_codes", `DELETE FROM backup_codes WHERE tenant_id = $1::uuid`},
+		{"api_keys", `DELETE FROM api_keys WHERE tenant_id = $1::uuid`},
+		{"refresh_tokens", `DELETE FROM refresh_tokens WHERE tenant_id = $1::uuid`},
+		{"oauth_authorization_codes", `DELETE FROM oauth_authorization_codes WHERE tenant_id = $1::uuid`},
+		{"oauth_clients", `DELETE FROM oauth_clients WHERE tenant_id = $1::uuid`},
+		{"role_permissions", `DELETE FROM role_permissions WHERE role_id IN (SELECT id FROM roles WHERE tenant_id = $1::uuid)`},
+		{"user_roles", `DELETE FROM user_roles WHERE tenant_id = $1::uuid`},
+		{"audit_events", `DELETE FROM audit_events WHERE tenant_id = $1::uuid`},
+		{"roles", `DELETE FROM roles WHERE tenant_id = $1::uuid`},
+		{"user_emails", `DELETE FROM user_emails WHERE tenant_id = $1::uuid`},
+		{"user_external_identities", `DELETE FROM user_external_identities WHERE tenant_id = $1::uuid`},
+		{"users", `DELETE FROM users WHERE tenant_id = $1::uuid`},
+		{"conditional_access_store", `DELETE FROM conditional_access_store WHERE tenant_id = $1::uuid`},
+		{"tenant_branding", `DELETE FROM tenant_branding WHERE tenant_id = $1::uuid`},
+	}
+	for _, t := range tenantTables {
+		if _, err := tx.Exec(r.Context(), t.sql, tenantUUID); err != nil {
+			// Non-fatal: some tables may not exist or have no rows
+			continue
+		}
+	}
+
+	// Finally delete the tenant itself
+	tx.Exec(r.Context(), `DELETE FROM tenants WHERE id = $1::uuid`, tenantUUID)
+
+	if err := tx.Commit(r.Context()); err != nil {
+		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "failed to commit tenant deletion"})
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]string{"status": "deleted", "id": tenantUUID})
 }
