@@ -219,6 +219,12 @@ func main() {
 
 	httpAPI.RegisterRoutes(mux)
 
+	// Start periodic audit retention cleanup (90-day default, hourly check).
+	if db != nil {
+		go httpAPI.StartRetentionCleanup(ctx, time.Hour)
+		log.Println("audit retention cleanup goroutine started (1h interval, 90-day retention)")
+	}
+
 	mwSecret, mwPrevSecret := middleware.LoadInternalSecrets()
 	protectedMux := middleware.InternalAuthPathOnly(middleware.InternalAuthConfig{
 		Secret:     mwSecret,
