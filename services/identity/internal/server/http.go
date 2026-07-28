@@ -913,6 +913,7 @@ func (h *HTTPHandler) listUsers(ctx context.Context, w http.ResponseWriter, r *h
 		"users":       users,
 		"total":       result.Total,
 		"next_offset": result.NextOffset,
+		"has_more":    result.NextOffset > 0,
 	})
 }
 

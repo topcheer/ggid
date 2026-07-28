@@ -92,7 +92,9 @@ func (trl *TierRateLimiter) Middleware(next http.Handler) http.Handler {
 			w.Header().Set("Retry-After", "60")
 			w.Header().Set("X-RateLimit-Limit", fmt.Sprintf("%d", limit))
 			w.Header().Set("X-RateLimit-Tier", string(tier))
+			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusTooManyRequests)
+			w.Write([]byte(`{"error": "rate limit exceeded"}`))
 			return
 		}
 
