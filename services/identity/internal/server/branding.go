@@ -6,7 +6,9 @@ import (
 	"net/http"
 	"strings"
 
+	ggidtenant "github.com/ggid/ggid/pkg/tenant"
 	"github.com/ggid/ggid/services/identity/internal/domain"
+	"github.com/google/uuid"
 )
 
 // handleBranding handles GET and PUT /api/v1/tenants/{id}/branding
@@ -34,6 +36,18 @@ func (h *HTTPHandler) handleBranding(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	tenantID := parts[3]
+
+	// SECURITY: verify the requesting user belongs to this tenant.
+	if tc, err := ggidtenant.FromContext(r.Context()); err == nil && tc.TenantID != uuid.Nil {
+		if tc.TenantID.String() != tenantID {
+			// Check if user has platform:admin scope
+			scopes := r.Header.Get("X-User-Scopes")
+			if !strings.Contains(scopes, "platform:admin") {
+				writeJSONError(w, http.StatusForbidden, "cannot access another tenant's branding")
+				return
+			}
+		}
+	}
 
 	switch r.Method {
 	case http.MethodGet:

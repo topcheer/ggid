@@ -27,8 +27,12 @@ func (h *HTTPHandler) scimTokenAuth(next http.Handler) http.Handler {
 
 		authHeader := r.Header.Get("Authorization")
 		if !strings.HasPrefix(authHeader, "Bearer "+scimTokenPrefix) {
-			// Not a SCIM token — let other auth handle it.
-			next.ServeHTTP(w, r)
+			// SECURITY: SCIM endpoints require a valid SCIM bearer token.
+			// No token = no access (prevent unauthenticated user management).
+			w.Header().Set("Content-Type", "application/scim+json")
+			w.Header().Set("WWW-Authenticate", "Bearer")
+			w.WriteHeader(http.StatusUnauthorized)
+			w.Write([]byte(`{"schemas":["urn:ietf:params:scim:api:messages:2.0:Error"],"detail":"SCIM bearer token required","status":"401"}`))
 			return
 		}
 
