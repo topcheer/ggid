@@ -101,13 +101,18 @@ func RequireAdminScope(next http.Handler) http.Handler {
 		// reused for both the dynamic and the fallback path.
 		claims := ExtractJWTClaims(r)
 		if res := getRBACResolver(); res != nil && res.Available() {
-			// No JWT subject → let JWTAuth produce the 401 (same contract as
-			// the static path); never 403 anonymous requests here.
 			if claims.Subject == "" {
-				next.ServeHTTP(w, r)
-				return
-			}
-			if allow, handled := res.CheckAccess(r.Context(), r.URL.Path, r.Method, claims); handled {
+				// SECURITY: API key requests (no JWT subject) must still be
+				// checked. If JWTAuth has validated an API key with route
+				// permissions, let HasPermissionForRoute in JWTAuth handle it.
+				// But do NOT skip admin-gate entirely for admin endpoints.
+				if !isAdminEndpoint(r.URL.Path) {
+					next.ServeHTTP(w, r)
+					return
+				}
+				// Admin endpoint + no JWT: fall through to static check below
+				// which will enforce scope requirements.
+			} else if allow, handled := res.CheckAccess(r.Context(), r.URL.Path, r.Method, claims); handled {
 				if allow {
 					next.ServeHTTP(w, r)
 					return

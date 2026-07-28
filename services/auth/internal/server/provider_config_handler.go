@@ -44,12 +44,20 @@ func validateTenantAccess(w http.ResponseWriter, r *http.Request, requestedTenan
 	return false
 }
 
-// isAdminScope checks if the request has platform:admin or tenant:admin role.
+// isAdminScope checks if the request has platform:admin or tenant:admin scope.
+// The gateway sets X-User-Scopes (plural) from the verified JWT scope claim.
 func isAdminScope(r *http.Request) bool {
-	roles := r.Header.Get("X-User-Roles")
-	return strings.Contains(roles, "platform:admin") ||
-		strings.Contains(roles, "Administrator") ||
-		strings.Contains(roles, "tenant:admin")
+	scopes := r.Header.Get("X-User-Scopes")
+	if scopes == "" {
+		scopes = r.Header.Get("X-User-Role") // backward compat fallback
+	}
+	for _, s := range strings.Split(scopes, " ") {
+		switch strings.TrimSpace(s) {
+		case "platform:admin", "tenant:admin":
+			return true
+		}
+	}
+	return false
 }
 
 // handleProviderConfig handles GET/PUT /api/v1/providers/config
