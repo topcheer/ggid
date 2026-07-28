@@ -8,6 +8,7 @@ import (
 	"net/smtp"
 
 	"github.com/ggid/ggid/pkg/hierarchy"
+	"github.com/ggid/ggid/services/auth/internal/service"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
@@ -37,6 +38,34 @@ func (h *HierarchicalEmailSender) SendEmail(msg EmailMessage) error {
 	// Try hierarchical config
 	cfg, err := hierarchy.GetConfig(ctx, h.pool, hierarchy.KeyEmailProvider, h.tenantID, h.clientID, nil)
 	if err == nil && cfg != nil {
+		var rawConfig map[string]json.RawMessage
+		if err := json.Unmarshal(cfg.Config, &rawConfig); err == nil {
+			// Check if provider is http_webhook
+			var providerType string
+			if pt, ok := rawConfig["provider"]; ok {
+				json.Unmarshal(pt, &providerType)
+			}
+			if providerType == "http_webhook" {
+				// Decode as HTTPProviderConfig
+				var httpCfg struct {
+					HTTPWebhook *service.HTTPProviderConfig `json:"http_webhook"`
+				}
+				if err := json.Unmarshal(cfg.Config, &httpCfg); err != nil {
+					return fmt.Errorf("invalid http_webhook email config: %w", err)
+				}
+				if httpCfg.HTTPWebhook == nil {
+					return fmt.Errorf("http_webhook config is empty")
+				}
+				fromEmail := ""
+				if h.fallback != nil {
+					fromEmail = h.fallback.From
+				}
+				return service.ExecuteEmailHTTPProvider(*httpCfg.HTTPWebhook,
+					msg.To, msg.Subject, msg.Template, fromEmail)
+			}
+		}
+
+		// Default: SMTP
 		var emailCfg EmailConfig
 		if err := json.Unmarshal(cfg.Config, &emailCfg); err != nil {
 			return fmt.Errorf("invalid email provider config: %w", err)

@@ -37,13 +37,15 @@ func NewHierarchicalSMSSender(pool *pgxpool.Pool, tenantID *uuid.UUID, clientID 
 
 // SMSProviderConfig holds the DB-stored SMS provider settings.
 type SMSProviderConfig struct {
-	Provider   string `json:"provider"`    // "twilio", "sns", "log"
+	Provider   string `json:"provider"`    // "twilio", "sns", "log", "http_webhook"
 	AccountSID string `json:"account_sid"` // Twilio
 	AuthToken  string `json:"auth_token"`  // Twilio
 	FromNumber string `json:"from_number"` // Twilio
 	Region     string `json:"region"`      // SNS
 	AccessKey  string `json:"access_key"`  // SNS
 	SecretKey  string `json:"secret_key"`  // SNS
+	// HTTPWebhook: custom HTTP endpoint for SMS sending
+	HTTPWebhook *HTTPProviderConfig `json:"http_webhook,omitempty"`
 }
 
 func (s *HierarchicalSMSSender) SendSMS(to, message string) error {
@@ -79,6 +81,14 @@ func (s *HierarchicalSMSSender) SendSMS(to, message string) error {
 			region:    smsCfg.Region,
 		}
 		return sender.SendSMS(to, message)
+	case "http_webhook":
+		if smsCfg.HTTPWebhook == nil {
+			return fmt.Errorf("http_webhook config is empty")
+		}
+		return executeHTTPProvider(*smsCfg.HTTPWebhook, map[string]string{
+			"phone":   to,
+			"message": message,
+		})
 	case "log":
 		return (&LogSMSSender{}).SendSMS(to, message)
 	default:
