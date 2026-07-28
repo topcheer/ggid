@@ -5830,3 +5830,13 @@ P0:0/P1:0/P2:0 throughout. Core→SDK→Demo fully aligned.
 80 god security review rounds, 0 active backlog.
 
 ### Next Dimension: 1 — Authentication Completeness (Cycle 2350) — Rotation 71
+
+## Cycle 2350: D1-D6 R71 Batch — Rotation 71 Complete (Round 1559)
+New commits: `1fad887de` (P1 revoke alias token ownership check), `f68c64792` (P0-1 CIBA token polling + discovery endpoint).
+god R113: 0 issues, 81 review rounds.
+Build: PASS. `make test`: EXIT=0, 70/70. Danger: 0.
+
+### 71 Rotations — Platform Stable
+P0:0/P1:0/P2:0 throughout.
+
+### Next Dimension: 1 — Authentication Completeness (Cycle 2362) — Rotation 72
