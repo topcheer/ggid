@@ -159,7 +159,7 @@ impl GGIDClient {
         client_id: &str,
         client_secret: &str,
     ) -> Result<(), GGIDError> {
-        let _ = self
+        let resp = self
             .http
             .post(format!("{}/api/v1/oauth/revoke", self.base_url))
             .header("X-Tenant-ID", &self.tenant_id)
@@ -170,6 +170,11 @@ impl GGIDClient {
             }))
             .send()
             .await?;
+        if !resp.status().is_success() {
+            let status = resp.status().as_u16();
+            let body = resp.text().await.unwrap_or_default();
+            return Err(GGIDError::Api { status, body });
+        }
         Ok(())
     }
 
