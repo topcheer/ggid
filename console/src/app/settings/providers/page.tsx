@@ -1,10 +1,19 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { Settings, Save, TestTube, CheckCircle2, AlertCircle, Loader2, Server, Mail, Phone } from "lucide-react";
-import { apiFetch, authHeader } from "@/lib/api";
+import { Save, CheckCircle2, AlertCircle, Loader2, Server, Mail, Phone } from "lucide-react";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE || "";
+
+function getAuthToken(): string | null {
+  if (typeof window === "undefined") return null;
+  return localStorage.getItem("ggid_access_token");
+}
+
+function authHeader(): Record<string, string> {
+  const token = getAuthToken();
+  return token ? { Authorization: `Bearer ${token}` } : {};
+}
 
 interface ProviderConfig {
   configured: boolean;
@@ -47,8 +56,10 @@ export default function ProviderSettingsPage() {
     try {
       const [statusResp, smsResp, emailResp] = await Promise.all([
         fetch(`${API_BASE}/api/v1/providers/status`).then((r) => r.json()).catch(() => null),
-        apiFetch<ProviderConfig>(`/api/v1/providers/config?key=sms_provider&scope=instance`).catch(() => null),
-        apiFetch<ProviderConfig>(`/api/v1/providers/config?key=email_provider&scope=instance`).catch(() => null),
+        fetch(`${API_BASE}/api/v1/providers/config?key=sms_provider&scope=instance`, { headers: authHeader() })
+          .then((r) => r.ok ? r.json() : null).catch(() => null) as Promise<ProviderConfig | null>,
+        fetch(`${API_BASE}/api/v1/providers/config?key=email_provider&scope=instance`, { headers: authHeader() })
+          .then((r) => r.ok ? r.json() : null).catch(() => null) as Promise<ProviderConfig | null>,
       ]);
       setStatus(statusResp);
       setSmsConfig(smsResp);
