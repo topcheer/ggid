@@ -534,7 +534,13 @@ func (s *OAuthService) ExchangeAuthorizationCode(ctx context.Context, req *Token
 		}
 	}
 
-	// 3. Consume the authorization code (atomically — prevents replay).
+	// 3. Reject disabled clients — a client disabled after code issuance must
+	//    not be able to exchange outstanding codes for tokens.
+	if !client.Enabled {
+		return nil, errors.InvalidArgument("client is disabled")
+	}
+
+	// 4. Consume the authorization code (atomically — prevents replay).
 	code, err := s.codeRepo.ConsumeCode(ctx, hashCode(req.Code))
 	if err != nil {
 		return nil, err
@@ -1138,6 +1144,14 @@ func (s *OAuthService) ExchangeTokenRFC8693(ctx context.Context, req *RFC8693Exc
 	// 4. Parse subject user ID (validate format).
 	if _, err := uuid.Parse(subjectID); err != nil {
 		return nil, fmt.Errorf("subject_token has invalid sub: %s", subjectID)
+	}
+
+	// 4.5. Audience validation (P0-4): if resource is specified, verify the
+	// subject token's audience includes the requesting client. This prevents
+	// token exchange from issuing tokens for unintended audiences.
+	subjectAud, _ := subjectClaims["aud"].(string)
+	if req.Resource != "" && subjectAud != "" && req.Resource != subjectAud && req.Resource != s.issuer {
+		return nil, fmt.Errorf("invalid_target: resource '%s' does not match subject token audience", req.Resource)
 	}
 
 	// 5. Determine audience.
@@ -1792,7 +1806,13 @@ func (s *OAuthService) RefreshToken(ctx context.Context, req *RefreshTokenReques
 		}
 	}
 
-	// 3. Verify grant type.
+	// 3. Reject disabled clients — disabling a client must immediately stop
+	//    all token issuance, including refresh-token rotation.
+	if !client.Enabled {
+		return nil, errors.InvalidArgument("client is disabled")
+	}
+
+	// 4. Verify grant type.
 	if !client.SupportsGrantType("refresh_token") {
 		return nil, errors.InvalidArgument("client does not support refresh_token grant")
 	}
@@ -2097,6 +2117,12 @@ func (s *OAuthService) PasswordGrant(ctx context.Context, req *PasswordGrantRequ
 		if !ok {
 			return nil, errors.Unauthenticated("client authentication failed")
 		}
+	}
+
+	// 1b. Reject disabled clients before any credential lookup (fail fast,
+	//     consistent with ClientCredentials / CreateAuthorizationCode).
+	if !client.Enabled {
+		return nil, errors.InvalidArgument("client is disabled")
 	}
 
 	// 2. Verify credentials via database lookup.
