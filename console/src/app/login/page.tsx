@@ -57,17 +57,30 @@ export default function LoginPage() {
       setRegisteredMsg("Registration successful! Please log in with your new account.");
     }
     const slug = getEffectiveTenantSlug();
-    if (slug) {
-      setTenantSlug(slug);
-      resolveTenantSlug(slug).then((id) => {
-        if (id) {
-          setResolvedTenantId(id);
-          localStorage.setItem("ggid_tenant_id", id);
-        }
-      });
-    } else {
-      setResolvedTenantId(DEFAULT_TENANT_ID);
-    }
+
+    // Always proactively resolve tenant UUID — don't rely on DEFAULT_TENANT_ID env being set
+    const effectiveSlug = slug || "default";
+    setTenantSlug(effectiveSlug);
+
+    resolveTenantSlug(effectiveSlug).then((id) => {
+      if (id) {
+        setResolvedTenantId(id);
+        localStorage.setItem("ggid_tenant_id", id);
+      } else {
+        // Fallback: try /api/v1/tenants/resolve?slug=default
+        fetch(`${API_BASE}/api/v1/tenants/resolve?slug=default`)
+          .then((r) => r.ok ? r.json() : null)
+          .then((d) => {
+            const fallbackId = d?.id || d?.tenant_id || "fb44ca98-2a8a-498b-a9b2-00fc014524ce";
+            setResolvedTenantId(fallbackId);
+            localStorage.setItem("ggid_tenant_id", fallbackId);
+          })
+          .catch(() => {
+            // Last resort: use hardcoded platform tenant
+            setResolvedTenantId("fb44ca98-2a8a-498b-a9b2-00fc014524ce");
+          });
+      }
+    });
   }, []);
 
   // Fetch console client auth_methods + provider availability

@@ -66,8 +66,9 @@ export function getEffectiveTenantSlug(): string {
 let cachedTenantResolve: { slug: string; id: string; ts: number } | null = null;
 
 export async function resolveTenantSlug(slug: string): Promise<string | null> {
-  if (!slug || slug === "default") return DEFAULT_TENANT_ID;
-  
+  if (!slug) return null;
+  // Don't skip "default" — resolve it to get the actual UUID
+
   // Cache for 5 minutes
   if (cachedTenantResolve && cachedTenantResolve.slug === slug && Date.now() - cachedTenantResolve.ts < 300000) {
     return cachedTenantResolve.id;
