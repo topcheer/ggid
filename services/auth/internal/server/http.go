@@ -97,9 +97,12 @@ func New(authSvc *service.AuthService) *Handler {
 }
 
 // SetWebAuthnCredentialStore injects a DB-backed credential store for WebAuthn.
-// Must be called before ServeHTTP / registerRoutes.
+// Must be called after New(). Also updates the already-created waHandler.
 func (h *Handler) SetWebAuthnCredentialStore(store webauthn.CredentialStore) {
 	h.waCredStore = store
+	if h.waHandler != nil {
+		h.waHandler.SetCredentialStore(store)
+	}
 }
 
 // SetSessionRevocationManager injects the CAE Phase 2 session revocation manager.

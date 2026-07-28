@@ -248,6 +248,12 @@ func NewHandler(rpID, rpName string, store CredentialStore, opts ...HandlerOptio
 	}, nil
 }
 
+// SetCredentialStore replaces the credential store (used for late injection
+// after the handler is created in New/registerRoutes).
+func (h *Handler) SetCredentialStore(store CredentialStore) {
+	h.creds = store
+}
+
 // SetTicketIssuer allows late injection of the auth ticket issuer.
 // Used when Redis is wired after handler creation.
 func (h *Handler) SetTicketIssuer(fn AuthTicketIssuer) {
