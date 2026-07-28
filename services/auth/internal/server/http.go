@@ -2034,12 +2034,14 @@ func httpStatusToCode(status int) string {
 }
 
 func clientIP(r *http.Request) string {
+	// SECURITY: prefer X-Real-IP (set by trusted proxy/gateway) over
+	// X-Forwarded-For (client-spoofable).
+	if xri := r.Header.Get("X-Real-IP"); xri != "" {
+		return xri
+	}
 	if xff := r.Header.Get("X-Forwarded-For"); xff != "" {
 		parts := strings.SplitN(xff, ",", 2)
 		return strings.TrimSpace(parts[0])
-	}
-	if xri := r.Header.Get("X-Real-IP"); xri != "" {
-		return xri
 	}
 	// Use net.SplitHostPort to correctly handle both IPv4 and IPv6
 	host, _, err := net.SplitHostPort(r.RemoteAddr)

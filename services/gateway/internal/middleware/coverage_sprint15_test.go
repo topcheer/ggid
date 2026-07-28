@@ -11,8 +11,8 @@ import (
 
 func TestIsAPIKeyRequest_Bearer(t *testing.T) {
 	req := httptest.NewRequest("GET", "/api/data?api_key=abc123", nil)
-	if !IsAPIKeyRequest(req) {
-		t.Error("api_key query param should be API key request")
+	if IsAPIKeyRequest(req) {
+		t.Error("query param API key should NOT be accepted (security)")
 	}
 }
 

@@ -159,8 +159,8 @@ func TestIsAPIKeyRequest_AuthorizationApiKey(t *testing.T) {
 
 func TestIsAPIKeyRequest_QueryParam(t *testing.T) {
 	req := httptest.NewRequest("GET", "/test?api_key=ggid_sk_test", nil)
-	if !IsAPIKeyRequest(req) {
-		t.Error("should detect api_key query param")
+	if IsAPIKeyRequest(req) {
+		t.Error("query param API key should NOT be accepted (security: log leakage)")
 	}
 }
 

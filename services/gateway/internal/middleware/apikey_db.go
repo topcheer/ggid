@@ -174,12 +174,9 @@ func WithDBAPIKeyAuth(validator *DBAPIKeyValidator) func(http.Handler) http.Hand
 	return APIKeyAuth(validator)
 }
 
-// extractAPIKeyFromRequest gets the API key from header or query param.
+// extractAPIKeyFromRequest gets the API key from headers only (security: no query params).
 func extractAPIKeyFromRequest(r *http.Request) string {
 	key := r.Header.Get("X-API-Key")
-	if key == "" {
-		key = r.URL.Query().Get("api_key")
-	}
 	// Also check Authorization: ApiKey ggid_sk_*
 	auth := r.Header.Get("Authorization")
 	if key == "" && strings.HasPrefix(auth, "ApiKey ") {
