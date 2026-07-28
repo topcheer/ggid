@@ -86,8 +86,10 @@ func TestServer_RetentionMethodNotAllowed(t *testing.T) {
 func TestServer_ComplianceReportV2SOC2(t *testing.T) {
 	mux := newIntegrationTestMux()
 
-	req := httptest.NewRequest(http.MethodGet, "/api/v1/audit/compliance-report?type=soc2&tenant_id=550e8400-e29b-41d4-a716-446655440000", nil)
+	req := httptest.NewRequest(http.MethodGet, "/api/v1/audit/compliance-report?type=soc2", nil)
+	req.Header.Set("X-Tenant-ID", "550e8400-e29b-41d4-a716-446655440000")
 	rr := httptest.NewRecorder()
+	req.Header.Set("X-Tenant-ID", "550e8400-e29b-41d4-a716-446655440000")
 	mux.ServeHTTP(rr, req)
 
 	if rr.Code != http.StatusOK {
@@ -104,8 +106,10 @@ func TestServer_ComplianceReportV2SOC2(t *testing.T) {
 func TestServer_ComplianceReportV2HIPAA(t *testing.T) {
 	mux := newIntegrationTestMux()
 
-	req := httptest.NewRequest(http.MethodGet, "/api/v1/audit/compliance-report?type=hipaa&tenant_id=550e8400-e29b-41d4-a716-446655440000", nil)
+	req := httptest.NewRequest(http.MethodGet, "/api/v1/audit/compliance-report?type=hipaa", nil)
+	req.Header.Set("X-Tenant-ID", "550e8400-e29b-41d4-a716-446655440000")
 	rr := httptest.NewRecorder()
+	req.Header.Set("X-Tenant-ID", "550e8400-e29b-41d4-a716-446655440000")
 	mux.ServeHTTP(rr, req)
 
 	if rr.Code != http.StatusOK {
@@ -120,7 +124,9 @@ func TestServer_ComplianceReportV2InvalidType(t *testing.T) {
 	mux := newIntegrationTestMux()
 
 	req := httptest.NewRequest(http.MethodGet, "/api/v1/audit/compliance-report?type=invalid", nil)
+	req.Header.Set("X-Tenant-ID", "550e8400-e29b-41d4-a716-446655440000")
 	rr := httptest.NewRecorder()
+	req.Header.Set("X-Tenant-ID", "550e8400-e29b-41d4-a716-446655440000")
 	mux.ServeHTTP(rr, req)
 
 	if rr.Code != http.StatusBadRequest {
@@ -132,7 +138,9 @@ func TestServer_ComplianceReportV2MethodNotAllowed(t *testing.T) {
 	mux := newIntegrationTestMux()
 
 	req := httptest.NewRequest(http.MethodPost, "/api/v1/audit/compliance-report", nil)
+	req.Header.Set("X-Tenant-ID", "550e8400-e29b-41d4-a716-446655440000")
 	rr := httptest.NewRecorder()
+	req.Header.Set("X-Tenant-ID", "550e8400-e29b-41d4-a716-446655440000")
 	mux.ServeHTTP(rr, req)
 
 	if rr.Code != http.StatusMethodNotAllowed {
@@ -181,8 +189,9 @@ func TestServer_AlertTest(t *testing.T) {
 func TestServer_ComplianceReportV2WithDateRange(t *testing.T) {
 	mux := newIntegrationTestMux()
 
-	url := "/api/v1/audit/compliance-report?type=gdpr&tenant_id=550e8400-e29b-41d4-a716-446655440000&from=2025-01-01T00:00:00Z&to=2025-07-01T00:00:00Z"
+	url := "/api/v1/audit/compliance-report?type=gdpr&from=2025-01-01T00:00:00Z&to=2025-07-01T00:00:00Z"
 	req := httptest.NewRequest(http.MethodGet, url, nil)
+	req.Header.Set("X-Tenant-ID", "550e8400-e29b-41d4-a716-446655440000")
 	rr := httptest.NewRecorder()
 	mux.ServeHTTP(rr, req)
 
@@ -200,8 +209,10 @@ func TestServer_ComplianceReportV2WithDateRange(t *testing.T) {
 func TestServer_EvidencePackageSOC2(t *testing.T) {
 	mux := newIntegrationTestMux()
 
-	req := httptest.NewRequest(http.MethodGet, "/api/v1/audit/compliance/evidence-package?framework=soc2&tenant_id=550e8400-e29b-41d4-a716-446655440000", nil)
+	req := httptest.NewRequest(http.MethodGet, "/api/v1/audit/compliance/evidence-package?framework=soc2", nil)
+	req.Header.Set("X-Tenant-ID", "550e8400-e29b-41d4-a716-446655440000")
 	rr := httptest.NewRecorder()
+	req.Header.Set("X-Tenant-ID", "550e8400-e29b-41d4-a716-446655440000")
 	mux.ServeHTTP(rr, req)
 
 	if rr.Code != http.StatusOK {
@@ -222,7 +233,9 @@ func TestServer_EvidencePackageInvalidFramework(t *testing.T) {
 	mux := newIntegrationTestMux()
 
 	req := httptest.NewRequest(http.MethodGet, "/api/v1/audit/compliance/evidence-package?framework=invalid", nil)
+	req.Header.Set("X-Tenant-ID", "550e8400-e29b-41d4-a716-446655440000")
 	rr := httptest.NewRecorder()
+	req.Header.Set("X-Tenant-ID", "550e8400-e29b-41d4-a716-446655440000")
 	mux.ServeHTTP(rr, req)
 
 	if rr.Code != http.StatusBadRequest {
@@ -233,8 +246,10 @@ func TestServer_EvidencePackageInvalidFramework(t *testing.T) {
 func TestServer_EvidencePackageGDPR(t *testing.T) {
 	mux := newIntegrationTestMux()
 
-	req := httptest.NewRequest(http.MethodGet, "/api/v1/audit/compliance/evidence-package?framework=gdpr&tenant_id=550e8400-e29b-41d4-a716-446655440000", nil)
+	req := httptest.NewRequest(http.MethodGet, "/api/v1/audit/compliance/evidence-package?framework=gdpr", nil)
+	req.Header.Set("X-Tenant-ID", "550e8400-e29b-41d4-a716-446655440000")
 	rr := httptest.NewRecorder()
+	req.Header.Set("X-Tenant-ID", "550e8400-e29b-41d4-a716-446655440000")
 	mux.ServeHTTP(rr, req)
 
 	if rr.Code != http.StatusOK {
