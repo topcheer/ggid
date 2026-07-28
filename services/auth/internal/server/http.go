@@ -1567,10 +1567,12 @@ func (h *Handler) handleWebAuthnListCredentials(w http.ResponseWriter, r *http.R
 		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
+	// Get tenant from context, or fallback to X-Tenant-ID header
 	tc, err := ggidtenant.FromContext(r.Context())
-	if err != nil || tc.TenantID == uuid.Nil {
-		// Fallback to X-User-ID header
-		tc = &ggidtenant.Context{TenantID: uuid.Nil}
+	tenantID := tc.TenantID
+	if err != nil || tenantID == uuid.Nil {
+		// Fallback to X-Tenant-ID header (set by gateway)
+		tenantID, _ = uuid.Parse(r.Header.Get("X-Tenant-ID"))
 	}
 	userIDStr := r.Header.Get("X-User-ID")
 	if userIDStr == "" {
@@ -1590,7 +1592,7 @@ func (h *Handler) handleWebAuthnListCredentials(w http.ResponseWriter, r *http.R
 		return
 	}
 
-	creds, err := h.waCredStore.GetCredentialsByUser(r.Context(), tc.TenantID, userID)
+	creds, err := h.waCredStore.GetCredentialsByUser(r.Context(), tenantID, userID)
 	if err != nil {
 		writeJSON(w, http.StatusOK, map[string]any{"credentials": []any{}})
 		return
