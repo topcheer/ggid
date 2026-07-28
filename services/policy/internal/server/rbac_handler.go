@@ -129,6 +129,20 @@ func (s *HTTPServer) handleRoleRoutePermissions(w http.ResponseWriter, r *http.R
 				writeJSONError(w, http.StatusBadRequest, "route_prefix is required")
 				return
 			}
+			// P1-3: Tenant admins cannot set permissions for platform-level routes.
+			platformPrefixes := []string{"/api/v1/system/", "/api/v1/tenants/", "/api/v1/admin/", "/api/v1/oauth/jwks"}
+			for _, blocked := range platformPrefixes {
+				if strings.HasPrefix(p.RoutePrefix, blocked) {
+					roles := r.Header.Get("X-User-Role")
+					if roles == "" {
+						roles = r.Header.Get("X-User-Roles")
+					}
+					if !strings.Contains(roles, "platform:admin") && !strings.Contains(roles, "Platform Administrator") {
+						writeJSONError(w, http.StatusForbidden, "cannot set permissions for platform-level routes: "+p.RoutePrefix)
+						return
+					}
+				}
+			}
 		}
 
 		// Overwrite: delete existing, insert new

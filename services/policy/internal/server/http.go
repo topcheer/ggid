@@ -474,9 +474,32 @@ func (s *HTTPServer) handleAssignRole(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Verify the role exists.
-	if _, err := s.roleSvc.GetRole(r.Context(), roleID); err != nil {
+	role, err := s.roleSvc.GetRole(r.Context(), roleID)
+	if err != nil {
 		writeJSONError(w, http.StatusNotFound, "role not found")
 		return
+	}
+
+	// P1-5: Hierarchy check — tenant admin cannot assign instance-level roles.
+	assignerRoles := r.Header.Get("X-User-Role")
+	if assignerRoles == "" {
+		assignerRoles = r.Header.Get("X-User-Roles")
+	}
+	isPlatformAdmin := strings.Contains(assignerRoles, "platform:admin") || strings.Contains(assignerRoles, "Platform Administrator")
+	if !isPlatformAdmin {
+		// Check if target role is a system/instance-level role
+		roleKey := ""
+		if role != nil {
+			roleKey = role.Key
+		}
+		instanceRoleKeys := map[string]bool{
+			"platform:admin": true, "tenant:admin": true,
+			"system:admin": true, "administrator": true,
+		}
+		if instanceRoleKeys[roleKey] {
+			writeJSONError(w, http.StatusForbidden, "cannot assign instance-level role without platform admin privileges")
+			return
+		}
 	}
 
 	// Assign the role.

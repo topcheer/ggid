@@ -284,10 +284,26 @@ func (h *HTTPHandler) handleTenantCRUD(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *HTTPHandler) tenantList(w http.ResponseWriter, r *http.Request) {
-	rows, err := h.svc.Pool().Query(r.Context(), `
-		SELECT id::text, name, slug, plan::text, status::text, max_users,
-		       created_at, updated_at
-		FROM tenants ORDER BY created_at DESC`)
+	// P1-4: Non-platform-admins can only see their own tenant.
+	roles := r.Header.Get("X-User-Role")
+	if roles == "" {
+		roles = r.Header.Get("X-User-Roles")
+	}
+	isPlatformAdmin := strings.Contains(roles, "platform:admin") || strings.Contains(roles, "Platform Administrator")
+
+	query := `SELECT id::text, name, slug, plan::text, status::text, max_users, created_at, updated_at FROM tenants`
+	args := []interface{}{}
+	if !isPlatformAdmin {
+		// Filter to requester's tenant only
+		headerTID := r.Header.Get("X-Tenant-ID")
+		if headerTID != "" {
+			query += ` WHERE id::text = $1`
+			args = append(args, headerTID)
+		}
+	}
+	query += ` ORDER BY created_at DESC`
+
+	rows, err := h.svc.Pool().Query(r.Context(), query, args...)
 	if err != nil {
 		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "failed to query tenants"})
 		return
