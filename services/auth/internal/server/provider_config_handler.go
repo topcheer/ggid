@@ -3,6 +3,7 @@ package server
 import (
 	"encoding/json"
 	"net/http"
+	"strings"
 	"os"
 
 	"github.com/ggid/ggid/pkg/hierarchy"
@@ -14,23 +15,41 @@ import (
 // (platform:admin scope) can access any tenant. Returns false if access denied.
 func validateTenantAccess(w http.ResponseWriter, r *http.Request, requestedTenantID *uuid.UUID) bool {
 	if requestedTenantID == nil {
-		return true // no tenant specified (instance scope)
+		// Instance scope — require admin privileges
+		if !isAdminScope(r) {
+			writeError(w, http.StatusForbidden, "instance-level configuration requires admin privileges")
+			return false
+		}
+		return true
 	}
 	headerTID := r.Header.Get("X-Tenant-ID")
 	if headerTID == "" {
-		return true // no header (internal call, not proxied)
+		// No header = not authenticated by gateway — fail closed
+		writeError(w, http.StatusForbidden, "missing tenant context")
+		return false
 	}
 	headerUUID, err := uuid.Parse(headerTID)
 	if err != nil {
-		return true // malformed header, let normal flow handle
+		writeError(w, http.StatusForbidden, "invalid tenant context")
+		return false
 	}
 	if *requestedTenantID == headerUUID {
 		return true // match
 	}
 	// Mismatch — deny unless platform:admin
-	// (RBAC middleware should have already filtered, but defense-in-depth)
+	if isAdminScope(r) {
+		return true
+	}
 	writeError(w, http.StatusForbidden, "cannot access another tenant's configuration")
 	return false
+}
+
+// isAdminScope checks if the request has platform:admin or tenant:admin role.
+func isAdminScope(r *http.Request) bool {
+	roles := r.Header.Get("X-User-Roles")
+	return strings.Contains(roles, "platform:admin") ||
+		strings.Contains(roles, "Administrator") ||
+		strings.Contains(roles, "tenant:admin")
 }
 
 // handleProviderConfig handles GET/PUT /api/v1/providers/config
