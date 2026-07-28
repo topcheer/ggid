@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/ggid/ggid/services/auth/internal/service"
@@ -39,6 +40,22 @@ func (h *Handler) handleImpersonate(w http.ResponseWriter, r *http.Request) {
 	if req.ImpersonatorID == "" {
 		req.ImpersonatorID = r.Header.Get("X-User-ID")
 	}
+	// SECURITY: verify the impersonator belongs to the same tenant as the target.
+	headerTenantID := r.Header.Get("X-Tenant-ID")
+	if headerTenantID != "" && req.TenantID != "" {
+		if headerTenantID != req.TenantID {
+			// Cross-tenant impersonation requires platform:admin scope.
+			scopes := r.Header.Get("X-User-Scopes")
+			if scopes == "" {
+				scopes = r.Header.Get("X-User-Role")
+			}
+			if !strings.Contains(scopes, "platform:admin") {
+				writeJSON(w, http.StatusForbidden, map[string]string{"error": "cross-tenant impersonation requires platform:admin scope"})
+				return
+			}
+		}
+	}
+
 	tok, err := service.IssueImpersonationToken(
 		parseUUIDSafe(req.ImpersonatorID), parseUUIDSafe(req.TargetUserID),
 		parseUUIDSafe(req.TenantID), req.Reason,
