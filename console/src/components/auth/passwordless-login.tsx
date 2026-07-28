@@ -67,7 +67,16 @@ export function PasswordlessLogin({ apiBase, tenantId, authMethod, onSuccess, on
         method: "POST",
         headers: { "Content-Type": "application/json", "X-Tenant-ID": tenantId },
       });
-      if (!beginResp.ok) throw new Error("Passkey not available");
+      if (!beginResp.ok) {
+        const errData = await beginResp.json().catch(() => ({}));
+        const errMsg = typeof errData.error === 'string'
+          ? errData.error
+          : errData.error?.message || errData.error || "Passkey login not available";
+        if (errMsg.includes("no credentials") || errMsg.includes("Found no credentials")) {
+          throw new Error("No passkey registered. Please log in with password first, then register a passkey in Settings.");
+        }
+        throw new Error(errMsg);
+      }
       const options = await beginResp.json();
 
       const credential = await navigator.credentials.get({ publicKey: options.response });
