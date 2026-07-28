@@ -2622,16 +2622,18 @@ func (s *OAuthService) DynamicClientRegister(ctx context.Context, req *DynamicRe
 	clientID := generateClientID()
 	// SECURITY: filter requested scopes — DCR is a self-service endpoint.
 	// Only allow standard OIDC scopes, never admin/system scopes.
+	// Use case-insensitive check to prevent bypass via "Platform:admin" etc.
 	requestedScopes := strings.Fields(req.Scope)
 	safeScopes := []string{}
 	for _, sc := range requestedScopes {
-		switch sc {
+		lowerScope := strings.ToLower(sc)
+		switch lowerScope {
 		case "openid", "profile", "email", "offline_access", "address", "phone":
 			safeScopes = append(safeScopes, sc)
 		default:
-			// Block admin, platform, system, and any custom privileged scopes
-			if !strings.HasPrefix(sc, "admin") && !strings.HasPrefix(sc, "platform") &&
-				!strings.HasPrefix(sc, "system") && !strings.HasPrefix(sc, "tenant") {
+			// Block admin, platform, system, tenant prefixed scopes (case-insensitive)
+			if !strings.HasPrefix(lowerScope, "admin") && !strings.HasPrefix(lowerScope, "platform") &&
+				!strings.HasPrefix(lowerScope, "system") && !strings.HasPrefix(lowerScope, "tenant") {
 				safeScopes = append(safeScopes, sc)
 			}
 		}
