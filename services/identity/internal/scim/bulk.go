@@ -8,6 +8,7 @@ import (
 	"net/http"
 
 	"github.com/ggid/ggid/services/identity/internal/domain"
+	"github.com/ggid/ggid/services/identity/internal/service"
 	"github.com/google/uuid"
 )
 
