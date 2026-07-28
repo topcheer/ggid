@@ -168,7 +168,13 @@ func CORSWithConfig(cfg CORSConfig) func(http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			origin := r.Header.Get("Origin")
 
-			if allowAll {
+			// P1-2: CORS spec violation — ACAO:* + ACAC:true is invalid.
+			// When AllowCredentials is true, never use wildcard ACAO.
+			if allowAll && cfg.AllowCredentials && origin != "" {
+				// Echo the specific origin instead of wildcard
+				w.Header().Set("Access-Control-Allow-Origin", origin)
+				w.Header().Set("Vary", "Origin")
+			} else if allowAll {
 				w.Header().Set("Access-Control-Allow-Origin", "*")
 			} else {
 				// Echo the origin if it's in the allowed list

@@ -8,6 +8,7 @@ import (
 	"net"
 	"os"
 	"strconv"
+	"strings"
 
 	identityv1 "github.com/ggid/ggid/api/gen/identity/v1"
 	"github.com/ggid/ggid/services/identity/internal/domain"
@@ -29,6 +30,52 @@ func NewIdentityGRPCHandler(svc *service.IdentityService) *IdentityGRPCHandler {
 	return &IdentityGRPCHandler{svc: svc}
 }
 
+// mapGRPCErr maps service-layer errors to appropriate gRPC status codes.
+func mapGRPCErr(prefix string, err error) error {
+	if err == nil {
+		return nil
+	}
+	msg := fmt.Sprintf("%s: %v", prefix, err)
+	switch {
+	case isAlreadyExists(err):
+		return status.Error(codes.AlreadyExists, msg)
+	case isNotFound(err):
+		return status.Error(codes.NotFound, msg)
+	case isInvalidArgument(err):
+		return status.Error(codes.InvalidArgument, msg)
+	case isPermissionDenied(err):
+		return status.Error(codes.PermissionDenied, msg)
+	case isUnauthenticated(err):
+		return status.Error(codes.Unauthenticated, msg)
+	default:
+		return status.Error(codes.Internal, msg)
+	}
+}
+
+func isAlreadyExists(err error) bool {
+	return containsAny(err.Error(), "already exists", "duplicate", "unique")
+}
+func isNotFound(err error) bool {
+	return containsAny(err.Error(), "not found", "no rows")
+}
+func isInvalidArgument(err error) bool {
+	return containsAny(err.Error(), "invalid", "required", "empty", "must")
+}
+func isPermissionDenied(err error) bool {
+	return containsAny(err.Error(), "permission", "forbidden", "denied")
+}
+func isUnauthenticated(err error) bool {
+	return containsAny(err.Error(), "unauthorized", "unauthenticated")
+}
+func containsAny(s string, subs ...string) bool {
+	for _, sub := range subs {
+		if strings.Contains(s, sub) {
+			return true
+		}
+	}
+	return false
+}
+
 func (h *IdentityGRPCHandler) RegisterGRPC(s *grpc.Server) {
 	identityv1.RegisterIdentityServiceServer(s, h)
 }
@@ -46,7 +93,7 @@ func (h *IdentityGRPCHandler) CreateUser(ctx context.Context, req *identityv1.Cr
 	}
 	user, err := h.svc.CreateUser(ctx, input)
 	if err != nil {
-		return nil, status.Error(codes.Internal, fmt.Sprintf("create user: %v", err))
+	return nil, mapGRPCErr("create user", err)
 	}
 	return domainToPbUser(user), nil
 }
@@ -86,7 +133,7 @@ func (h *IdentityGRPCHandler) ListUsers(ctx context.Context, req *identityv1.Lis
 
 	result, err := h.svc.ListUsers(ctx, filter)
 	if err != nil {
-		return nil, status.Error(codes.Internal, fmt.Sprintf("list users: %v", err))
+	return nil, mapGRPCErr("list users", err)
 	}
 
 	pbUsers := make([]*identityv1.User, 0, len(result.Users))
@@ -120,7 +167,7 @@ func (h *IdentityGRPCHandler) UpdateUser(ctx context.Context, req *identityv1.Up
 	}
 	user, err := h.svc.UpdateUser(ctx, id, input)
 	if err != nil {
-		return nil, status.Error(codes.Internal, fmt.Sprintf("update user: %v", err))
+	return nil, mapGRPCErr("update user", err)
 	}
 	return domainToPbUser(user), nil
 }
@@ -131,7 +178,7 @@ func (h *IdentityGRPCHandler) DeleteUser(ctx context.Context, req *identityv1.De
 		return nil, status.Error(codes.InvalidArgument, "invalid user id")
 	}
 	if err := h.svc.DeleteUser(ctx, id); err != nil {
-		return nil, status.Error(codes.Internal, fmt.Sprintf("delete user: %v", err))
+	return nil, mapGRPCErr("delete user", err)
 	}
 	return &identityv1.DeleteUserResponse{}, nil
 }
@@ -143,7 +190,7 @@ func (h *IdentityGRPCHandler) LockUser(ctx context.Context, req *identityv1.Lock
 	}
 	user, err := h.svc.LockUser(ctx, id)
 	if err != nil {
-		return nil, status.Error(codes.Internal, fmt.Sprintf("lock user: %v", err))
+	return nil, mapGRPCErr("lock user", err)
 	}
 	return domainToPbUser(user), nil
 }
@@ -155,7 +202,7 @@ func (h *IdentityGRPCHandler) UnlockUser(ctx context.Context, req *identityv1.Un
 	}
 	user, err := h.svc.UnlockUser(ctx, id)
 	if err != nil {
-		return nil, status.Error(codes.Internal, fmt.Sprintf("unlock user: %v", err))
+	return nil, mapGRPCErr("unlock user", err)
 	}
 	return domainToPbUser(user), nil
 }
@@ -170,7 +217,7 @@ func (h *IdentityGRPCHandler) RegisterUser(ctx context.Context, req *identityv1.
 	}
 	user, token, err := h.svc.RegisterUser(ctx, input)
 	if err != nil {
-		return nil, status.Error(codes.Internal, fmt.Sprintf("register user: %v", err))
+	return nil, mapGRPCErr("register user", err)
 	}
 	return &identityv1.RegisterUserResponse{
 		User:              domainToPbUser(user),
@@ -193,7 +240,7 @@ func (h *IdentityGRPCHandler) ListUserEmails(ctx context.Context, req *identityv
 	}
 	emails, err := h.svc.ListUserEmails(ctx, userID)
 	if err != nil {
-		return nil, status.Error(codes.Internal, fmt.Sprintf("list emails: %v", err))
+	return nil, mapGRPCErr("list emails", err)
 	}
 	pbEmails := make([]*identityv1.UserEmail, 0, len(emails))
 	for _, e := range emails {
@@ -209,7 +256,7 @@ func (h *IdentityGRPCHandler) AddUserEmail(ctx context.Context, req *identityv1.
 	}
 	email, err := h.svc.AddUserEmail(ctx, userID, req.GetEmail())
 	if err != nil {
-		return nil, status.Error(codes.Internal, fmt.Sprintf("add email: %v", err))
+	return nil, mapGRPCErr("add email", err)
 	}
 	return domainToPbUserEmail(email), nil
 }
