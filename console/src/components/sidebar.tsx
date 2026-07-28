@@ -139,7 +139,9 @@ export function Sidebar() {
     const hasRoutePermission = (href: string) => {
       const requiredPerms = NAV_PERMISSION_MAP[href];
       if (!requiredPerms || requiredPerms.length === 0) return true; // No permission needed
-      return requiredPerms.every(p => hasPermission(p));
+      // Platform/tenant admins bypass route-level permission checks
+      if (isPlatformAdmin || isTenantAdmin) return true;
+      return requiredPerms.some(p => hasPermission(p));
     };
 
     return navGroups
@@ -253,9 +255,13 @@ export function Sidebar() {
 
           {/* User */}
           <div className="flex items-center gap-3 pt-2 border-t border-gray-100 dark:border-gray-800">
-            <Link href="/profile" className="flex h-8 w-8 items-center justify-center rounded-full bg-gray-200 text-sm font-medium hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600">A</Link>
+            <Link href="/profile" className="flex h-8 w-8 items-center justify-center rounded-full bg-gray-200 text-sm font-medium hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600">
+              {(typeof window !== "undefined" ? localStorage.getItem("ggid_user_name") || localStorage.getItem("ggid_user_email") || "A" : "A").charAt(0).toUpperCase()}
+            </Link>
             <div className="flex-1 min-w-0">
-              <Link href="/profile" className="block truncate text-sm font-medium text-gray-900 hover:text-blue-600 dark:text-gray-200 dark:hover:text-blue-400">admin@ggid.dev</Link>
+              <Link href="/profile" className="block truncate text-sm font-medium text-gray-900 hover:text-blue-600 dark:text-gray-200 dark:hover:text-blue-400">
+                {typeof window !== "undefined" ? localStorage.getItem("ggid_user_email") || localStorage.getItem("ggid_user_name") || "User" : "User"}
+              </Link>
               <p className="truncate text-xs text-gray-500">{t("sidebar.administrator")}</p>
             </div>
             <button onClick={() => { localStorage.removeItem("ggid_access_token"); localStorage.removeItem("ggid_refresh_token"); localStorage.removeItem("ggid_tenant_id"); window.location.href = "/login"; }}

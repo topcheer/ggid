@@ -106,6 +106,7 @@ func newTestServer(events []*domain.AuditEvent, stats *domain.Stats) *HTTPServer
 func doRequest(srv *HTTPServer, method, path, body string) *httptest.ResponseRecorder {
 	req := httptest.NewRequest(method, path, strings.NewReader(body))
 	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("X-Tenant-ID", testTenantID.String())
 	w := httptest.NewRecorder()
 	mux := http.NewServeMux()
 	srv.RegisterRoutes(mux)
@@ -147,17 +148,30 @@ func TestHandleEvents_WithFilters(t *testing.T) {
 
 func TestHandleEvents_MissingTenantID(t *testing.T) {
 	srv := newTestServer(nil, nil)
-	w := doRequest(srv, "GET", "/api/v1/audit/events", "")
+	// Use raw request without X-Tenant-ID header (doRequest adds it by default)
+	req := httptest.NewRequest("GET", "/api/v1/audit/events", nil)
+	req.Header.Set("Content-Type", "application/json")
+	w := httptest.NewRecorder()
+	mux := http.NewServeMux()
+	srv.RegisterRoutes(mux)
+	mux.ServeHTTP(w, req)
 	if w.Code != http.StatusBadRequest {
-		t.Fatalf("expected 400, got %d", w.Code)
+		t.Fatalf("expected 400, got %d: %s", w.Code, w.Body.String())
 	}
 }
 
 func TestHandleEvents_InvalidTenantID(t *testing.T) {
 	srv := newTestServer(nil, nil)
-	w := doRequest(srv, "GET", "/api/v1/audit/events?tenant_id=invalid", "")
+	// Set invalid tenant header
+	req := httptest.NewRequest("GET", "/api/v1/audit/events", nil)
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("X-Tenant-ID", "invalid-uuid")
+	w := httptest.NewRecorder()
+	mux := http.NewServeMux()
+	srv.RegisterRoutes(mux)
+	mux.ServeHTTP(w, req)
 	if w.Code != http.StatusBadRequest {
-		t.Fatalf("expected 400, got %d", w.Code)
+		t.Fatalf("expected 400, got %d: %s", w.Code, w.Body.String())
 	}
 }
 

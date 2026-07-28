@@ -361,8 +361,8 @@ export const NAV_PERMISSION_MAP: Record<string, string[]> = {
   "/settings/branding": ["settings:read:tenant"],
   "/settings/feature-flags": ["settings:feature_flags:tenant"],
 
-  // Group: ADMIN
-  "/admin/tenants": ["tenants:read:all"],
+  // Group: ADMIN — platform admins with tenant perms also allowed
+  "/admin/tenants": ["tenants:read:all", "tenants:read:tenant", "tenants:read:own"],
 
   // Group: HELP — always visible
   "/docs": [],
