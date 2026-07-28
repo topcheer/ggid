@@ -1321,7 +1321,7 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 		authnReq := saml.BuildAuthnRequest(sp, idpSSOURL)
 		encoded, err := authnReq.EncodeForRedirect()
 		if err != nil {
-			writeJSON(w, http.StatusInternalServerError, map[string]any{"error": map[string]string{"code": "internal_error", "message": "failed to encode SAML AuthnRequest"}})
+			writeJSON(w, http.StatusInternalServerError, map[string]any{"error": map[string]string{"code": "internal", "message": "failed to encode SAML AuthnRequest"}})
 			return
 		}
 
@@ -1360,7 +1360,7 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 		idp := buildIdP(cfg, pool)
 		meta, err := idp.GenerateIdPMetadata()
 		if err != nil {
-			writeJSON(w, http.StatusInternalServerError, map[string]any{"error": map[string]string{"code": "internal_error", "message": "failed to generate IdP metadata"}})
+			writeJSON(w, http.StatusInternalServerError, map[string]any{"error": map[string]string{"code": "internal", "message": "failed to generate IdP metadata"}})
 			return
 		}
 		w.Header().Set("Content-Type", "application/xml")
@@ -1734,7 +1734,7 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 				ev.ResourceType = "oauth_client"
 				auditPub.PublishAsync(ev)
 			}
-			writeJSON(w, http.StatusOK, map[string]bool{"deleted": true})
+			writeJSON(w, http.StatusOK, map[string]string{"status": "deleted", "id": clientID})
 
 		default:
 			writeJSON(w, http.StatusMethodNotAllowed, map[string]any{"error": map[string]string{"code": "method_not_allowed", "message": "method_not_allowed"}})
@@ -2547,7 +2547,7 @@ func writeJSON(w http.ResponseWriter, code int, v any) {
 // Never expose internal error details to the HTTP client.
 func writeInternalError(w http.ResponseWriter, op string, err error) {
 	slog.Error("internal error", "operation", op, "error", err)
-	writeJSON(w, http.StatusInternalServerError, map[string]any{"error": map[string]string{"code": "internal_error", "message": "internal server error"}})
+	writeJSON(w, http.StatusInternalServerError, map[string]any{"error": map[string]string{"code": "internal", "message": "internal server error"}})
 }
 
 // extractBearerToken extracts the token from an "Authorization: Bearer <token>" header.
@@ -2824,7 +2824,7 @@ func parseAuthnRequest(rawXML []byte) (entityID, acsURL, requestID string) {
 }
 // writeJSONError writes a standard JSON error response.
 func writeJSONError(w http.ResponseWriter, status int, msg string) {
-	code := "internal_error"
+	code := "internal"
 	switch status {
 	case http.StatusBadRequest:
 		code = "invalid_argument"
