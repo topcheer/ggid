@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { Shield, ArrowLeft, KeyRound, Building2, AlertCircle, CheckCircle2, Loader2, Fingerprint, Eye, EyeOff, Lock } from "lucide-react";
 import { getTenantSlugFromSubdomain } from "@/lib/api-config";
@@ -31,9 +31,11 @@ export default function LoginPage() {
   const [useBackupCode, setUseBackupCode] = useState(false);
   const [backupCode, setBackupCode] = useState("");
   const [remember, setRemember] = useState(true);
+  const redirectTo = useRef(typeof window !== "undefined" ? new URLSearchParams(window.location.search).get("redirect_to") || "/" : "/").current;
   const [showPassword, setShowPassword] = useState(false);
   const [mfaToken, setMfaToken] = useState("");
   const [error, setError] = useState("");
+  const [registeredMsg, setRegisteredMsg] = useState("");
   const [rateLimitSeconds, setRateLimitSeconds] = useState(0);
   const [loading, setLoading] = useState(false);
   const [connectors, setConnectors] = useState<SocialConnector[]>([]);
@@ -48,8 +50,12 @@ export default function LoginPage() {
   const [systemInitialized, setSystemInitialized] = useState<boolean | null>(null);
   const [initUserCount, setInitUserCount] = useState(0);
 
-  // Extract tenant from subdomain on mount
+  // Extract tenant from subdomain on mount + check registration success
   useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("registered") === "1") {
+      setRegisteredMsg("Registration successful! Please log in with your new account.");
+    }
     const slug = getEffectiveTenantSlug();
     if (slug) {
       setTenantSlug(slug);
@@ -206,9 +212,7 @@ export default function LoginPage() {
       // Sync WebAuthn signal if passkey support is available
       syncSignalAfterLogin().catch(() => {});
 
-      // Save redirect target
-      const params = new URLSearchParams(window.location.search);
-      const redirectTo = params.get("redirect_to") || "/";
+      // Redirect to target (redirectTo is defined at component level)
       router.replace(redirectTo);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Login failed");
@@ -258,9 +262,7 @@ export default function LoginPage() {
         localStorage.setItem("ggid_user_scopes", JSON.stringify(Array.isArray(userScopes) ? userScopes : [userScopes]));
       } catch {}
 
-      // Read redirect target from URL params (consistent with credentials step)
-      const params = new URLSearchParams(window.location.search);
-      const redirectTo = params.get("redirect_to") || "/";
+      // Redirect to target (redirectTo is defined at component level)
       router.replace(redirectTo);
     } catch (err) {
       setError(err instanceof Error ? err.message : "MFA verification failed");
@@ -375,6 +377,11 @@ export default function LoginPage() {
         ) : step === "credentials" ? (
           /* ===== Step 1: Passkey-First Credentials ===== */
           <div className="rounded-2xl border border-gray-200 bg-white p-8 shadow-xl dark:border-gray-700 dark:bg-gray-800">
+            {registeredMsg && (
+              <div className="mb-4 rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700 dark:border-green-800 dark:bg-green-950 dark:text-green-400">
+                {registeredMsg}
+              </div>
+            )}
             {error && (
               <div className="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-800 dark:bg-red-950 dark:text-red-400">
                 {error}
