@@ -114,6 +114,30 @@ func doRequest(srv *HTTPServer, method, path, body string) *httptest.ResponseRec
 	return w
 }
 
+// doRequestNoTenant sends a request WITHOUT X-Tenant-ID header — for testing
+// the tenant validation logic (MissingTenantID / InvalidTenantID tests).
+func doRequestNoTenant(srv *HTTPServer, method, path, body string) *httptest.ResponseRecorder {
+	req := httptest.NewRequest(method, path, strings.NewReader(body))
+	req.Header.Set("Content-Type", "application/json")
+	w := httptest.NewRecorder()
+	mux := http.NewServeMux()
+	srv.RegisterRoutes(mux)
+	mux.ServeHTTP(w, req)
+	return w
+}
+
+// doRequestWithTenant sends a request with a custom X-Tenant-ID header.
+func doRequestWithTenant(srv *HTTPServer, method, path, body, tenantID string) *httptest.ResponseRecorder {
+	req := httptest.NewRequest(method, path, strings.NewReader(body))
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("X-Tenant-ID", tenantID)
+	w := httptest.NewRecorder()
+	mux := http.NewServeMux()
+	srv.RegisterRoutes(mux)
+	mux.ServeHTTP(w, req)
+	return w
+}
+
 // --- Events Handler ---
 
 func TestHandleEvents_GetList(t *testing.T) {
@@ -248,7 +272,7 @@ func TestHandleStats_Get(t *testing.T) {
 
 func TestHandleStats_MissingTenantID(t *testing.T) {
 	srv := newTestServer(nil, nil)
-	w := doRequest(srv, "GET", "/api/v1/audit/stats", "")
+	w := doRequestNoTenant(srv, "GET", "/api/v1/audit/stats", "")
 	if w.Code != http.StatusBadRequest {
 		t.Fatalf("expected 400, got %d", w.Code)
 	}
@@ -557,7 +581,7 @@ func TestHandleExport_InvalidFormat(t *testing.T) {
 
 func TestHandleExport_MissingTenantID(t *testing.T) {
 	srv := newTestServer(nil, nil)
-	w := doRequest(srv, "GET", "/api/v1/audit/export", "")
+	w := doRequestNoTenant(srv, "GET", "/api/v1/audit/export", "")
 	if w.Code != http.StatusBadRequest {
 		t.Fatalf("expected 400, got %d", w.Code)
 	}
@@ -759,7 +783,7 @@ func TestHandleEventByID_NotFound(t *testing.T) {
 
 func TestHandleStats_InvalidTenantID(t *testing.T) {
 	srv := newTestServer(nil, nil)
-	w := doRequest(srv, "GET", "/api/v1/audit/stats?tenant_id=bad", "")
+	w := doRequestWithTenant(srv, "GET", "/api/v1/audit/stats", "", "not-a-uuid")
 	if w.Code != http.StatusBadRequest {
 		t.Fatalf("expected 400, got %d", w.Code)
 	}
@@ -835,7 +859,7 @@ func TestDetectAnomalies_MissingTenantID(t *testing.T) {
 	}
 	srv := newTestServer(nil, nil)
 	// Without tenant_id, detectAnomalies should skip (no alerts)
-	w := doRequest(srv, "GET", "/api/v1/audit/rules?check=true", "")
+	w := doRequestNoTenant(srv, "GET", "/api/v1/audit/rules?check=true", "")
 	if w.Code != http.StatusOK {
 		t.Fatalf("expected 200, got %d", w.Code)
 	}
@@ -897,7 +921,7 @@ func TestHandleMetrics_Get(t *testing.T) {
 
 func TestHandleMetrics_MissingTenantID(t *testing.T) {
 	srv := newTestServer(nil, nil)
-	w := doRequest(srv, "GET", "/api/v1/audit/metrics", "")
+	w := doRequestNoTenant(srv, "GET", "/api/v1/audit/metrics", "")
 	if w.Code != http.StatusBadRequest {
 		t.Fatalf("expected 400, got %d", w.Code)
 	}
@@ -905,7 +929,7 @@ func TestHandleMetrics_MissingTenantID(t *testing.T) {
 
 func TestHandleMetrics_InvalidTenantID(t *testing.T) {
 	srv := newTestServer(nil, nil)
-	w := doRequest(srv, "GET", "/api/v1/audit/metrics?tenant_id=bad", "")
+	w := doRequestWithTenant(srv, "GET", "/api/v1/audit/metrics", "", "not-a-uuid")
 	if w.Code != http.StatusBadRequest {
 		t.Fatalf("expected 400, got %d", w.Code)
 	}
@@ -944,7 +968,7 @@ func TestHandleCorrelate_WithActor(t *testing.T) {
 
 func TestHandleCorrelate_MissingTenantID(t *testing.T) {
 	srv := newTestServer(nil, nil)
-	w := doRequest(srv, "GET", "/api/v1/audit/correlate", "")
+	w := doRequestNoTenant(srv, "GET", "/api/v1/audit/correlate", "")
 	if w.Code != http.StatusBadRequest {
 		t.Fatalf("expected 400, got %d", w.Code)
 	}
@@ -975,7 +999,7 @@ func TestHandleVerifyIntegrity_Get(t *testing.T) {
 
 func TestHandleVerifyIntegrity_MissingTenantID(t *testing.T) {
 	srv := newTestServer(nil, nil)
-	w := doRequest(srv, "GET", "/api/v1/audit/verify-integrity", "")
+	w := doRequestNoTenant(srv, "GET", "/api/v1/audit/verify-integrity", "")
 	if w.Code != http.StatusBadRequest {
 		t.Fatalf("expected 400, got %d", w.Code)
 	}
@@ -983,7 +1007,7 @@ func TestHandleVerifyIntegrity_MissingTenantID(t *testing.T) {
 
 func TestHandleVerifyIntegrity_InvalidTenantID(t *testing.T) {
 	srv := newTestServer(nil, nil)
-	w := doRequest(srv, "GET", "/api/v1/audit/verify-integrity?tenant_id=bad", "")
+	w := doRequestWithTenant(srv, "GET", "/api/v1/audit/verify-integrity", "", "not-a-uuid")
 	if w.Code != http.StatusBadRequest {
 		t.Fatalf("expected 400, got %d", w.Code)
 	}
@@ -1033,7 +1057,7 @@ func TestHandleSearch_MissingQuery(t *testing.T) {
 
 func TestHandleSearch_MissingTenantID(t *testing.T) {
 	srv := newTestServer(nil, nil)
-	w := doRequest(srv, "GET", "/api/v1/audit/search?q=login", "")
+	w := doRequestNoTenant(srv, "GET", "/api/v1/audit/search?q=login", "")
 	if w.Code != http.StatusBadRequest {
 		t.Fatalf("expected 400, got %d", w.Code)
 	}
@@ -1084,7 +1108,7 @@ func TestHandleWebhooks_Create_InvalidJSON(t *testing.T) {
 
 func TestHandleWebhooks_MissingTenantID(t *testing.T) {
 	srv := newTestServer(nil, nil)
-	w := doRequest(srv, "GET", "/api/v1/audit/webhooks", "")
+	w := doRequestNoTenant(srv, "GET", "/api/v1/audit/webhooks", "")
 	// Some implementations return 200 with empty list when tenant_id is missing
 	if w.Code != http.StatusBadRequest && w.Code != http.StatusOK {
 		t.Fatalf("expected 400 or 200, got %d", w.Code)
@@ -1255,7 +1279,7 @@ func TestHandleStream_MethodNotAllowed(t *testing.T) {
 
 func TestHandleStream_MissingTenantID(t *testing.T) {
 	srv := newTestServer(nil, nil)
-	w := doRequest(srv, "GET", "/api/v1/audit/stream", "")
+	w := doRequestNoTenant(srv, "GET", "/api/v1/audit/stream", "")
 	if w.Code != http.StatusBadRequest {
 		t.Fatalf("expected 400, got %d", w.Code)
 	}
@@ -1263,7 +1287,7 @@ func TestHandleStream_MissingTenantID(t *testing.T) {
 
 func TestHandleStream_InvalidTenantID(t *testing.T) {
 	srv := newTestServer(nil, nil)
-	w := doRequest(srv, "GET", "/api/v1/audit/stream?tenant_id=invalid-uuid", "")
+	w := doRequestNoTenant(srv, "GET", "/api/v1/audit/stream?tenant_id=invalid-uuid", "")
 	if w.Code != http.StatusBadRequest {
 		t.Fatalf("expected 400, got %v", w.Code)
 	}
@@ -1756,7 +1780,7 @@ func TestDetectAnomalies_InvalidTenantID(t *testing.T) {
 
 	srv := newTestServer(nil, nil)
 	// Invalid tenant_id → detectAnomalies should skip (uuid.Parse fails)
-	w := doRequest(srv, "GET", "/api/v1/audit/rules?check=true&tenant_id=not-a-uuid", "")
+	w := doRequestNoTenant(srv, "GET", "/api/v1/audit/rules?check=true&tenant_id=not-a-uuid", "")
 	if w.Code != http.StatusOK {
 		t.Fatalf("expected 200, got %d", w.Code)
 	}
