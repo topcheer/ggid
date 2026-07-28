@@ -485,15 +485,15 @@ func TestBeginAuthentication_Errors(t *testing.T) {
 }
 
 func TestBeginAuthentication_NoCredentials(t *testing.T) {
-	// In go-webauthn v0.17, BeginLogin requires at least one credential.
-	// The handler creates an ephemeral user with no credentials, so this returns 500.
+	// With no user_id and no credentials, the handler returns discoverable
+	// credential options (empty allowCredentials) instead of failing.
 	h := testHandler(t, nil)
 	rr := httptest.NewRecorder()
 	req := newReq(http.MethodPost, "/api/v1/webauthn/auth/begin", "")
 	req.Header.Set("X-Tenant-ID", testTenantIDStr)
 	h.beginAuthentication(rr, req)
-	assertStatus(t, rr, http.StatusInternalServerError)
-	assertBodyContains(t, rr, "begin login")
+	assertStatus(t, rr, http.StatusOK)
+	assertBodyContains(t, rr, "challenge")
 }
 
 // ---------------------------------------------------------------------------

@@ -244,8 +244,8 @@ func TestBeginAuthentication_InvalidUserID(t *testing.T) {
 	req.Header.Set("X-Tenant-ID", testTenantIDStr)
 	// Invalid user_id falls through to ephemeral user flow.
 	h.beginAuthentication(rr, req)
-	// With no credentials on ephemeral user, BeginLogin fails → 500.
-	assertStatus(t, rr, http.StatusInternalServerError)
+	// Invalid user_id falls through to discoverable credential flow → 200.
+	assertStatus(t, rr, http.StatusOK)
 }
 
 // ---------------------------------------------------------------------------

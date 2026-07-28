@@ -90,11 +90,11 @@ func TestBeginAuthenticationV2_WithStore(t *testing.T) {
 	req.Header.Set("X-Tenant-ID", testTenantIDStr)
 	h.beginAuthentication(rr, req)
 
-	// BeginLogin fails because ephemeral user has no credentials.
-	if rr.Code != http.StatusInternalServerError {
-		t.Fatalf("expected 500, got %d; body=%s", rr.Code, rr.Body.String())
+	// Discoverable credential flow: returns 200 with empty allowCredentials.
+	if rr.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d; body=%s", rr.Code, rr.Body.String())
 	}
-	assertBodyContains(t, rr, "begin login")
+	assertBodyContains(t, rr, "challenge")
 }
 
 // ---------------------------------------------------------------------------
