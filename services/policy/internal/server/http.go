@@ -666,7 +666,17 @@ func (s *HTTPServer) listRoles(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	roles, err := s.roleSvc.ListRoles(r.Context(), tenantID, 1, 50)
+	// Pagination support (P1 consistency fix).
+	pageSize, _ := strconv.Atoi(r.URL.Query().Get("page_size"))
+	if pageSize <= 0 || pageSize > 100 {
+		pageSize = 50
+	}
+	page, _ := strconv.Atoi(r.URL.Query().Get("page"))
+	if page <= 0 {
+		page = 1
+	}
+
+	roles, err := s.roleSvc.ListRoles(r.Context(), tenantID, page, pageSize)
 	if err != nil {
 		writeServiceError(w, err)
 		return
@@ -675,7 +685,14 @@ func (s *HTTPServer) listRoles(w http.ResponseWriter, r *http.Request) {
 	for i, role := range roles {
 		result[i] = roleToJSON(role)
 	}
-	writeJSON(w, http.StatusOK, map[string]any{"roles": result})
+	writeJSON(w, http.StatusOK, map[string]any{
+		"roles":       result,
+		"total":       len(result),
+		"page":        page,
+		"page_size":   pageSize,
+		"next_offset": page*pageSize + 1,
+		"has_more":    len(result) == pageSize,
+	})
 }
 
 // --- Permissions ---

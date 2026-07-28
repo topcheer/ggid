@@ -424,9 +424,14 @@ func (s *HTTPServer) handleEvents(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 	}
+	currentOffset := (page - 1) * pageSize
+	nextOffset := currentOffset + pageSize
+	hasMore := nextOffset < total
 	writeJSON(w, http.StatusOK, map[string]any{
-		"events": result,
-		"total":  total,
+		"events":      result,
+		"total":       total,
+		"next_offset": nextOffset,
+		"has_more":    hasMore,
 	})
 }
 
