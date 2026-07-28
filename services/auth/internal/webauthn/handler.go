@@ -7,6 +7,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 	"strings"
 	"sync"
@@ -640,6 +641,8 @@ func (h *Handler) finishRegistration(w http.ResponseWriter, r *http.Request) {
 		writeClassifiedError(w, http.StatusBadRequest, fmt.Errorf("verify attestation: %w", err))
 		return
 	}
+
+	log.Printf("WebAuthn finishRegistration: CreateCredential OK, user=%s cred_id_len=%d", userID, len(credential.ID))
 
 		// Persist the credential if store is available.
 	if h.creds != nil {
