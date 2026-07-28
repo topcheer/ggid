@@ -856,6 +856,13 @@ func (h *Handler) finishAuthentication(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	// Fix: For discoverable credential flow, the session was created with an
+	// ephemeral UserID. Update it to match the real user so ValidateLogin's
+	// internal UserID check passes.
+	if sd.data != nil {
+		sd.data.UserID = user.id[:]
+	}
+
 	// Verify the assertion — this is the core cryptographic check.
 	credential, err := h.wbn.ValidateLogin(user, *sd.data, parsedResponse)
 	if err != nil {
