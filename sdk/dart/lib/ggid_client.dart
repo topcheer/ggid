@@ -75,9 +75,11 @@ class GGIDClient {
 
   /// Login with username/password and receive tokens.
   Future<TokenResponse> login(String username, String password) async {
-    final json = await _post('/api/v1/auth/login', {
+    final json = await _postForm('/api/v1/oauth/token', {
+      'grant_type': 'password',
       'username': username,
       'password': password,
+      'client_id': clientId ?? '',
     });
     return TokenResponse.fromJson(json);
   }
@@ -95,8 +97,10 @@ class GGIDClient {
 
   /// Refresh tokens using a refresh token.
   Future<TokenResponse> refreshToken(String refreshToken) async {
-    final json = await _post('/api/v1/auth/refresh', {
+    final json = await _postForm('/api/v1/oauth/token', {
+      'grant_type': 'refresh_token',
       'refresh_token': refreshToken,
+      'client_id': clientId ?? '',
     });
     return TokenResponse.fromJson(json);
   }

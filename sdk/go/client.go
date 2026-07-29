@@ -27,21 +27,21 @@ const Version = "1.0.0"
 
 // Client is the GGID SDK client.
 type Client struct {
-	baseURL    string
-	httpClient *http.Client
-	apiKey     string
-	tenantID   string
-	clientID   string
+	baseURL      string
+	httpClient   *http.Client
+	apiKey       string
+	tenantID     string
+	clientID     string
 	clientSecret string
-	jwksURL    string
-	issuer     string
+	jwksURL      string
+	issuer       string
 	useDiscovery bool
 
 	// JWKS cache for JWT signature verification.
-	jwksMu      sync.RWMutex
-	jwks        map[string]*rsa.PublicKey
-	jwksExpiry  time.Time
-	jwksTTL     time.Duration
+	jwksMu     sync.RWMutex
+	jwks       map[string]*rsa.PublicKey
+	jwksExpiry time.Time
+	jwksTTL    time.Duration
 }
 
 // Option configures the Client.
@@ -84,14 +84,14 @@ func WithIssuer(issuer string) Option {
 
 // OIDCDiscovery holds the OpenID Connect discovery document.
 type OIDCDiscovery struct {
-	Issuer                 string   `json:"issuer"`
-	AuthorizationEndpoint  string   `json:"authorization_endpoint"`
-	TokenEndpoint          string   `json:"token_endpoint"`
-	UserInfoEndpoint       string   `json:"userinfo_endpoint"`
-	JwksURI                string   `json:"jwks_uri"`
-	IntrospectionEndpoint  string   `json:"introspection_endpoint"`
-	DeviceAuthEndpoint     string   `json:"device_authorization_endpoint,omitempty"`
-	GrantTypesSupported    []string `json:"grant_types_supported"`
+	Issuer                string   `json:"issuer"`
+	AuthorizationEndpoint string   `json:"authorization_endpoint"`
+	TokenEndpoint         string   `json:"token_endpoint"`
+	UserInfoEndpoint      string   `json:"userinfo_endpoint"`
+	JwksURI               string   `json:"jwks_uri"`
+	IntrospectionEndpoint string   `json:"introspection_endpoint"`
+	DeviceAuthEndpoint    string   `json:"device_authorization_endpoint,omitempty"`
+	GrantTypesSupported   []string `json:"grant_types_supported"`
 }
 
 // GetDiscovery fetches the OIDC discovery document.
@@ -142,7 +142,7 @@ type UserInfo struct {
 	Username    string         `json:"username"`
 	Email       string         `json:"email"`
 	Roles       []string       `json:"roles"`
-	Scopes      []string       `json:"scopes"`       // OAuth scopes (openid, profile, email)
+	Scopes      []string       `json:"scopes"`      // OAuth scopes (openid, profile, email)
 	Permissions []string       `json:"permissions"` // Fine-grained permissions (inventory:read)
 	Claims      map[string]any `json:"claims,omitempty"`
 }
@@ -241,7 +241,8 @@ type LoginRequest struct {
 	Password   string `json:"password"`
 	ClientID   string `json:"client_id,omitempty"`
 	TenantID   string `json:"tenant_id,omitempty"`
-	TenantSlug string `json:"tenant_slug,omitempty"`}
+	TenantSlug string `json:"tenant_slug,omitempty"`
+}
 
 // APIError represents a structured error returned by the GGID API.
 type APIError struct {
@@ -281,9 +282,9 @@ func (e *APIError) IsRateLimited() bool { return e.StatusCode == http.StatusTooM
 func (c *Client) Login(ctx context.Context, req *LoginRequest) (*TokenSet, error) {
 	form := url.Values{
 		"grant_type": {"password"},
-		"username":  {req.Username},
-		"password":  {req.Password},
-		"client_id": {req.ClientID},
+		"username":   {req.Username},
+		"password":   {req.Password},
+		"client_id":  {req.ClientID},
 	}
 	postReq, err := http.NewRequestWithContext(ctx, http.MethodPost,
 		c.baseURL+"/api/v1/oauth/token", strings.NewReader(form.Encode()))
@@ -332,7 +333,7 @@ func (c *Client) ExchangeAgentToken(ctx context.Context, subjectToken, grantType
 func (c *Client) ExchangeSAMLToken(ctx context.Context, samlResponse, clientID string) (*TokenSet, error) {
 	form := url.Values{
 		"grant_type": {"urn:ietf:params:oauth:grant-type:saml2-bearer"},
-		"assertion": {samlResponse},
+		"assertion":  {samlResponse},
 	}
 	if clientID != "" {
 		form.Set("client_id", clientID)
@@ -388,8 +389,8 @@ func (c *Client) ClientCredentials(ctx context.Context, clientID, clientSecret, 
 // After login, GGID redirects back to redirectURI with an authorization code.
 func (c *Client) GetAuthorizeURL(clientID, redirectURI, tenantID string, opts ...AuthorizeOpt) string {
 	o := &AuthorizeConfig{
-		Scope:          "openid profile email",
-		ResponseType:   "code",
+		Scope:               "openid profile email",
+		ResponseType:        "code",
 		CodeChallengeMethod: "S256",
 	}
 	for _, opt := range opts {
@@ -397,16 +398,16 @@ func (c *Client) GetAuthorizeURL(clientID, redirectURI, tenantID string, opts ..
 	}
 
 	params := url.Values{
-		"response_type":         {o.ResponseType},
-		"client_id":             {clientID},
-		"redirect_uri":          {redirectURI},
-		"scope":                 {o.Scope},
-		"state":                 {o.State},
-		"code_challenge_method": {o.CodeChallengeMethod},
-		"tenant_id":             {tenantID},
+		"response_type": {o.ResponseType},
+		"client_id":     {clientID},
+		"redirect_uri":  {redirectURI},
+		"scope":         {o.Scope},
+		"state":         {o.State},
+		"tenant_id":     {tenantID},
 	}
 	if o.CodeChallenge != "" {
 		params.Set("code_challenge", o.CodeChallenge)
+		params.Set("code_challenge_method", o.CodeChallengeMethod)
 	}
 	return c.baseURL + "/api/v1/oauth/authorize?" + params.Encode()
 }
@@ -416,10 +417,10 @@ func (c *Client) GetAuthorizeURL(clientID, redirectURI, tenantID string, opts ..
 // that corresponds to the code_challenge used in GetAuthorizeURL.
 func (c *Client) ExchangeCode(ctx context.Context, code, redirectURI, clientID, codeVerifier, tenantID string) (*TokenSet, error) {
 	form := url.Values{
-		"grant_type":    {"authorization_code"},
-		"code":          {code},
-		"redirect_uri":  {redirectURI},
-		"client_id":     {clientID},
+		"grant_type":   {"authorization_code"},
+		"code":         {code},
+		"redirect_uri": {redirectURI},
+		"client_id":    {clientID},
 	}
 	if codeVerifier != "" {
 		form.Set("code_verifier", codeVerifier)
@@ -444,10 +445,10 @@ func (c *Client) ExchangeCode(ctx context.Context, code, redirectURI, clientID, 
 
 // AuthorizeConfig holds optional parameters for the authorize URL.
 type AuthorizeConfig struct {
-	Scope              string
-	State              string
-	ResponseType       string
-	CodeChallenge      string
+	Scope               string
+	State               string
+	ResponseType        string
+	CodeChallenge       string
 	CodeChallengeMethod string
 }
 
@@ -486,19 +487,9 @@ func (c *Client) RefreshToken(ctx context.Context, refreshToken string) (*TokenS
 	if c.tenantID != "" {
 		req.Header.Set("X-Tenant-ID", c.tenantID)
 	}
-	resp, err := c.httpClient.Do(req)
-	if err != nil {
-		return nil, err
-	}
-	defer resp.Body.Close()
-	if resp.StatusCode != http.StatusOK {
-		var errResp map[string]string
-		json.NewDecoder(resp.Body).Decode(&errResp)
-		return nil, fmt.Errorf("token refresh failed: %s", errResp["error_description"])
-	}
 	var ts TokenSet
-	if err := json.NewDecoder(resp.Body).Decode(&ts); err != nil {
-		return nil, err
+	if err := c.do(req, &ts); err != nil {
+		return nil, err // returns *APIError with code/message for structured error handling
 	}
 	return &ts, nil
 }
