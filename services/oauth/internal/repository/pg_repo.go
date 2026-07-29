@@ -240,6 +240,20 @@ func (r *pgClientRepo) DeleteClient(ctx context.Context, tenantID uuid.UUID, cli
 		return err
 	}
 
+	// SECURITY: Cascade cleanup — revoke/delete all tokens and codes for this client.
+	cleanupTables := []struct{ name, sql string }{
+		{"refresh_tokens", `UPDATE refresh_tokens SET revoked = true WHERE client_id = $2`},
+		{"oidc_refresh_tokens", `UPDATE oidc_refresh_tokens SET revoked = true WHERE client_id = $2`},
+		{"oauth_authorization_codes", `DELETE FROM oauth_authorization_codes WHERE client_id = $2`},
+		{"oidc_id_tokens", `DELETE FROM oidc_id_tokens WHERE client_id = $2`},
+	}
+	for _, c := range cleanupTables {
+		if _, err := tx.Exec(ctx, c.sql, tenantID, clientID); err != nil {
+			// Best-effort: log but don't fail the delete
+			log.Printf("DeleteClient: cascade cleanup failed table=%s err=%v", c.name, err)
+		}
+	}
+
 	// Support both client_id (gcid_xxx) and internal id (UUID) for deletion
 	tag, err := tx.Exec(ctx, `
 		DELETE FROM oauth_clients
