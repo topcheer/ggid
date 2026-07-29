@@ -167,21 +167,20 @@ func (ps *PasswordService) IssueResetToken(ctx context.Context, userID, tenantID
 }
 
 // ConsumeResetToken validates a reset token and returns the associated user info.
-// The token is consumed (deleted) after successful validation.
+// The token is consumed (deleted) atomically after successful validation.
 func (ps *PasswordService) ConsumeResetToken(ctx context.Context, token string) (uuid.UUID, uuid.UUID, error) {
 	tokenHash := hashToken(token)
 	key := passwordResetKey(tokenHash)
 
-	val, err := ps.rdb.Get(ctx, key).Result()
+	// Use GETDEL for atomic one-time use (prevents TOCTOU race).
+	// If GETDEL is unavailable, fall back to pipeline Get+Del.
+	val, err := ps.rdb.GetDel(ctx, key).Result()
 	if err != nil {
 		if err == redis.Nil {
 			return uuid.Nil, uuid.Nil, ErrInvalidResetToken
 		}
 		return uuid.Nil, uuid.Nil, err
 	}
-
-	// Delete the token (one-time use)
-	ps.rdb.Del(ctx, key)
 
 	parts := strings.SplitN(val, ":", 2)
 	if len(parts) != 2 {

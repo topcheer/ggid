@@ -119,22 +119,19 @@ func (rl *RateLimiter) bucketKey(r *http.Request) string {
 }
 
 // clientIPFromRequest extracts the real client IP safely.
-// SECURITY: Only trusts X-Forwarded-For from the leftmost entry (original client).
-// Falls back to X-Real-IP, then RemoteAddr.
+// SECURITY: Only trusts X-Forwarded-For from the rightmost entry (set by our
+// trusted reverse proxy). Does NOT trust X-Real-IP (client-spoofable header).
 func clientIPFromRequest(r *http.Request) string {
-	// X-Real-IP is set by trusted reverse proxies (Traefik, nginx)
-	if realIP := r.Header.Get("X-Real-IP"); realIP != "" {
-		return realIP
-	}
-	// X-Forwarded-For: client, proxy1, proxy2 — take only the first (client)
+	// X-Forwarded-For: client, proxy1, proxy2 — take the LAST entry (added by
+	// our trusted ingress proxy). The leftmost entry is client-controllable.
 	if xff := r.Header.Get("X-Forwarded-For"); xff != "" {
-		parts := strings.SplitN(xff, ",", 2)
-		clientIP := strings.TrimSpace(parts[0])
-		if clientIP != "" {
-			return clientIP
+		parts := strings.Split(xff, ",")
+		last := strings.TrimSpace(parts[len(parts)-1])
+		if last != "" {
+			return last
 		}
 	}
-	// Fall back to connection RemoteAddr
+	// Fall back to connection RemoteAddr (ground truth at TCP level)
 	host, _, err := net.SplitHostPort(r.RemoteAddr)
 	if err != nil {
 		return r.RemoteAddr
