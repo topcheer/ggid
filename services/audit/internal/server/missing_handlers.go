@@ -134,25 +134,23 @@ func (s *HTTPServer) handleWebhooksList(w http.ResponseWriter, r *http.Request) 
 			}
 			globalAlertWebhooks.mu.Lock()
 			filtered := globalAlertWebhooks.webhooks[:0]
+			deleted := false
 			for _, wh := range globalAlertWebhooks.webhooks {
 				if wh["id"] == whID {
 					// SECURITY: verify webhook belongs to caller's tenant (fail-closed)
-					if callerTenant == "" {
-						writeJSON(w, http.StatusForbidden, map[string]string{"error": "X-Tenant-ID header required"})
-						globalAlertWebhooks.mu.Unlock()
-						return
-					}
-					if wtid, ok := wh["tenant_id"].(string); ok && wtid != callerTenant {
+					if wtid, ok := wh["tenant_id"].(string); !ok || wtid != callerTenant {
 						filtered = append(filtered, wh) // keep other tenants' webhooks
 						continue
 					}
+					deleted = true
 					continue // remove matched webhook
 				}
 				filtered = append(filtered, wh)
 			}
 			globalAlertWebhooks.webhooks = filtered
 			globalAlertWebhooks.mu.Unlock()
-			if s.memMapRepo2 != nil {
+			// Only delete from persistence if in-memory delete succeeded
+			if deleted && s.memMapRepo2 != nil {
 				_ = s.memMapRepo2.DeleteJSON(r.Context(), "audit_webhook_configs", whID)
 			}
 		}
