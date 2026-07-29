@@ -23,16 +23,27 @@ type RetentionPolicy struct {
 }
 
 func (s *HTTPServer) handleRetentionPolicies(w http.ResponseWriter, r *http.Request) {
+	// SECURITY: Enforce tenant isolation — only show/modify caller's tenant policies.
+	callerTenant := r.Header.Get("X-Tenant-ID")
+	if callerTenant == "" {
+		writeJSONError(w, http.StatusForbidden, "tenant context required")
+		return
+	}
 	switch r.Method {
 	case http.MethodGet:
 		id := r.URL.Query().Get("id")
-		tenantID := r.URL.Query().Get("tenant_id")
+		// SECURITY: Force tenant filter to caller's tenant.
+		tenantID := callerTenant
 		var result []*RetentionPolicy
 		if s.memMapRepo2 != nil {
 			rows, _ := s.memMapRepo2.ListJSON(r.Context(), "audit_retention_policies")
 			for _, row := range rows {
-				if id != "" && amGetString(row, "id") != id { continue }
-				if tenantID != "" && amGetString(row, "tenant_id") != tenantID { continue }
+				if id != "" && amGetString(row, "id") != id {
+					continue
+				}
+				if tenantID != "" && amGetString(row, "tenant_id") != tenantID {
+					continue
+				}
 				result = append(result, &RetentionPolicy{
 					ID: amGetString(row, "id"), TenantID: amGetString(row, "tenant_id"),
 					EventType: amGetString(row, "event_type"), Action: amGetString(row, "action"),
@@ -40,7 +51,9 @@ func (s *HTTPServer) handleRetentionPolicies(w http.ResponseWriter, r *http.Requ
 				})
 			}
 		}
-		if result == nil { result = []*RetentionPolicy{} }
+		if result == nil {
+			result = []*RetentionPolicy{}
+		}
 		if id != "" && len(result) == 1 {
 			writeJSON(w, http.StatusOK, result[0])
 			return
@@ -64,9 +77,13 @@ func (s *HTTPServer) handleRetentionPolicies(w http.ResponseWriter, r *http.Requ
 			writeJSONError(w, http.StatusBadRequest, "event_type is required")
 			return
 		}
-		if req.Action == "" { req.Action = "delete" }
+		if req.Action == "" {
+			req.Action = "delete"
+		}
 		enabled := true
-		if req.Enabled != nil { enabled = *req.Enabled }
+		if req.Enabled != nil {
+			enabled = *req.Enabled
+		}
 		now := time.Now().UTC()
 		p := &RetentionPolicy{
 			ID: uuid.New().String(), TenantID: req.TenantID, EventType: req.EventType,
@@ -95,7 +112,9 @@ func (s *HTTPServer) handleRetentionPolicies(w http.ResponseWriter, r *http.Requ
 			writeJSONError(w, http.StatusBadRequest, "invalid JSON body")
 			return
 		}
-		if req.ID == "" { req.ID = r.URL.Query().Get("id") }
+		if req.ID == "" {
+			req.ID = r.URL.Query().Get("id")
+		}
 		if req.ID == "" {
 			writeJSONError(w, http.StatusBadRequest, "id is required")
 			return
@@ -103,7 +122,9 @@ func (s *HTTPServer) handleRetentionPolicies(w http.ResponseWriter, r *http.Requ
 		if s.memMapRepo2 != nil {
 			update := map[string]any{"event_type": req.EventType, "retention_days": req.RetentionDays,
 				"action": req.Action, "description": req.Description}
-			if req.Enabled != nil { update["enabled"] = *req.Enabled }
+			if req.Enabled != nil {
+				update["enabled"] = *req.Enabled
+			}
 			s.memMapRepo2.StoreJSON(r.Context(), "audit_retention_policies", req.ID, update)
 		}
 		writeJSON(w, http.StatusOK, map[string]any{"status": "updated", "id": req.ID})

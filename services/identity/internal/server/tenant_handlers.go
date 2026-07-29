@@ -26,11 +26,11 @@ type TenantInfo struct {
 
 // BootstrapRequest is the request body for POST /api/v1/system/bootstrap.
 type BootstrapRequest struct {
-	TenantName    string   `json:"tenant_name"`
-	TenantSlug    string   `json:"tenant_slug"`
-	AdminUsername string   `json:"admin_username"`
-	AdminEmail    string   `json:"admin_email"`
-	AdminPassword string   `json:"admin_password"`
+	TenantName        string   `json:"tenant_name"`
+	TenantSlug        string   `json:"tenant_slug"`
+	AdminUsername     string   `json:"admin_username"`
+	AdminEmail        string   `json:"admin_email"`
+	AdminPassword     string   `json:"admin_password"`
 	WebAuthnRPID      string   `json:"webauthn_rp_id"`
 	WebAuthnRPOrigins []string `json:"webauthn_rp_origins"`
 }
@@ -303,12 +303,14 @@ func (h *HTTPHandler) tenantList(w http.ResponseWriter, r *http.Request) {
 	query := `SELECT id::text, name, slug, plan::text, status::text, max_users, created_at, updated_at FROM tenants`
 	args := []interface{}{}
 	if !isPlatformAdmin {
-		// Filter to requester's tenant only
+		// SECURITY: Filter to requester's tenant only (fail-closed if no header).
 		headerTID := r.Header.Get("X-Tenant-ID")
-		if headerTID != "" {
-			query += ` WHERE id::text = $1`
-			args = append(args, headerTID)
+		if headerTID == "" {
+			writeJSON(w, http.StatusOK, map[string]any{"tenants": []any{}, "count": 0})
+			return
 		}
+		query += ` WHERE id::text = $1`
+		args = append(args, headerTID)
 	}
 	query += ` ORDER BY created_at DESC`
 
@@ -416,13 +418,13 @@ func (h *HTTPHandler) tenantDetail(w http.ResponseWriter, r *http.Request, tenan
 		return
 	}
 	writeJSON(w, http.StatusOK, map[string]any{
-		"tenant_id": id,
-		"id":        id,
-		"name":      name,
-		"slug":      slug,
-		"plan":      plan,
-		"status":    status,
-		"max_users": maxUsers,
+		"tenant_id":  id,
+		"id":         id,
+		"name":       name,
+		"slug":       slug,
+		"plan":       plan,
+		"status":     status,
+		"max_users":  maxUsers,
 		"created_at": createdAt,
 		"updated_at": updatedAt,
 	})

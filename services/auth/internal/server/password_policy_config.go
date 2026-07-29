@@ -3,6 +3,7 @@ package server
 import (
 	"encoding/json"
 	"net/http"
+	"strings"
 
 	"github.com/ggid/ggid/pkg/hierarchy"
 	"github.com/ggid/ggid/services/auth/internal/service"
@@ -23,8 +24,28 @@ func (h *Handler) handlePasswordPolicyConfig(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
+	// SECURITY: Only allow operating on the caller's own tenant (from gateway JWT).
+	callerTenant := r.Header.Get("X-Tenant-ID")
+	if callerTenant == "" {
+		writeError(w, http.StatusForbidden, "tenant context required")
+		return
+	}
+	if _, err := uuid.Parse(callerTenant); err != nil {
+		writeError(w, http.StatusBadRequest, "invalid tenant context")
+		return
+	}
+
 	switch r.Method {
 	case http.MethodGet:
+		// SECURITY: Override tenant_id query param with caller's tenant.
+		queryTID := r.URL.Query().Get("tenant_id")
+		if queryTID != "" && queryTID != callerTenant {
+			scopes := r.Header.Get("X-Scopes")
+			if !strings.Contains(scopes, "platform:admin") {
+				writeError(w, http.StatusForbidden, "cannot access other tenants' password policy")
+				return
+			}
+		}
 		var tenantID *uuid.UUID
 		if tid := r.URL.Query().Get("tenant_id"); tid != "" {
 			if parsed, err := uuid.Parse(tid); err == nil {
@@ -61,10 +82,10 @@ func (h *Handler) handlePasswordPolicyConfig(w http.ResponseWriter, r *http.Requ
 
 	case http.MethodPut:
 		var body struct {
-			Scope    string                         `json:"scope"`
-			TenantID string                         `json:"tenant_id"`
-			ClientID string                         `json:"client_id"`
-			Policy   service.PasswordPolicyConfig   `json:"policy"`
+			Scope    string                       `json:"scope"`
+			TenantID string                       `json:"tenant_id"`
+			ClientID string                       `json:"client_id"`
+			Policy   service.PasswordPolicyConfig `json:"policy"`
 		}
 		if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
 			writeError(w, http.StatusBadRequest, "invalid JSON body")
@@ -78,6 +99,14 @@ func (h *Handler) handlePasswordPolicyConfig(w http.ResponseWriter, r *http.Requ
 
 		var tenantID *uuid.UUID
 		if body.TenantID != "" {
+			// SECURITY: Verify caller's tenant matches requested tenant.
+			if body.TenantID != callerTenant {
+				scopes := r.Header.Get("X-Scopes")
+				if !strings.Contains(scopes, "platform:admin") {
+					writeError(w, http.StatusForbidden, "cannot modify other tenants' password policy")
+					return
+				}
+			}
 			if parsed, err := uuid.Parse(body.TenantID); err == nil {
 				tenantID = &parsed
 			}

@@ -38,21 +38,35 @@ func (h *HTTPHandler) handleBranding(w http.ResponseWriter, r *http.Request) {
 	tenantID := parts[3]
 
 	// SECURITY: verify the requesting user belongs to this tenant.
-	if tc, err := ggidtenant.FromContext(r.Context()); err == nil && tc.TenantID != uuid.Nil {
-		if tc.TenantID.String() != tenantID {
-			// Check if user has platform:admin scope
-			scopes := strings.Split(r.Header.Get("X-User-Scopes"), ",")
-			isPlatformAdmin := false
-			for _, sc := range scopes {
-				if strings.TrimSpace(sc) == "platform:admin" {
-					isPlatformAdmin = true
-					break
-				}
+	// SECURITY: Fail-closed tenant check. Check context first, then X-Tenant-ID header.
+	tc, tcErr := ggidtenant.FromContext(r.Context())
+	if tcErr != nil || tc.TenantID == uuid.Nil {
+		// Fallback: use X-Tenant-ID header (set by gateway from JWT).
+		headerTID := r.Header.Get("X-Tenant-ID")
+		if headerTID == "" {
+			writeJSONError(w, http.StatusForbidden, "tenant context required")
+			return
+		}
+		if parsed, err := uuid.Parse(headerTID); err == nil {
+			tc = &ggidtenant.Context{TenantID: parsed}
+		} else {
+			writeJSONError(w, http.StatusBadRequest, "invalid tenant context")
+			return
+		}
+	}
+	if tc.TenantID.String() != tenantID {
+		// Check if user has platform:admin scope
+		scopes := strings.Split(r.Header.Get("X-User-Scopes"), ",")
+		isPlatformAdmin := false
+		for _, sc := range scopes {
+			if strings.TrimSpace(sc) == "platform:admin" {
+				isPlatformAdmin = true
+				break
 			}
-			if !isPlatformAdmin {
-				writeJSONError(w, http.StatusForbidden, "cannot access another tenant's branding")
-				return
-			}
+		}
+		if !isPlatformAdmin {
+			writeJSONError(w, http.StatusForbidden, "cannot access another tenant's branding")
+			return
 		}
 	}
 

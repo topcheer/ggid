@@ -21,7 +21,8 @@ func TestBranding_GetDefault(t *testing.T) {
 	h.mux = http.NewServeMux()
 	h.mux.HandleFunc("/api/v1/tenants/", h.handleBranding)
 
-	req := httptest.NewRequest(http.MethodGet, "/api/v1/tenants/tenant-123/branding", nil)
+	req := httptest.NewRequest(http.MethodGet, "/api/v1/tenants/00000000-0000-0000-0000-000000000001/branding", nil)
+	req.Header.Set("X-Tenant-ID", "00000000-0000-0000-0000-000000000001")
 	rr := httptest.NewRecorder()
 	h.mux.ServeHTTP(rr, req)
 
@@ -43,7 +44,8 @@ func TestBranding_Update(t *testing.T) {
 	h.mux.HandleFunc("/api/v1/tenants/", h.handleBranding)
 
 	body := `{"logo_url":"https://example.com/logo.png","primary_color":"#ff0000","secondary_color":"#cc0000","custom_domain":"login.example.com","email_template":"custom"}`
-	req := httptest.NewRequest(http.MethodPut, "/api/v1/tenants/t1/branding", strings.NewReader(body))
+	req := httptest.NewRequest(http.MethodPut, "/api/v1/tenants/00000000-0000-0000-0000-000000000001/branding", strings.NewReader(body))
+	req.Header.Set("X-Tenant-ID", "00000000-0000-0000-0000-000000000001")
 	rr := httptest.NewRecorder()
 	h.mux.ServeHTTP(rr, req)
 
@@ -66,7 +68,8 @@ func TestBranding_GetAfterUpdate(t *testing.T) {
 
 	// Update first
 	body := `{"logo_url":"https://example.com/logo.png","primary_color":"#00ff00"}`
-	putReq := httptest.NewRequest(http.MethodPut, "/api/v1/tenants/t2/branding", strings.NewReader(body))
+	putReq := httptest.NewRequest(http.MethodPut, "/api/v1/tenants/00000000-0000-0000-0000-000000000002/branding", strings.NewReader(body))
+	putReq.Header.Set("X-Tenant-ID", "00000000-0000-0000-0000-000000000002")
 	putRR := httptest.NewRecorder()
 	h.mux.ServeHTTP(putRR, putReq)
 	if putRR.Code != http.StatusOK {
@@ -74,7 +77,8 @@ func TestBranding_GetAfterUpdate(t *testing.T) {
 	}
 
 	// Then GET
-	getReq := httptest.NewRequest(http.MethodGet, "/api/v1/tenants/t2/branding", nil)
+	getReq := httptest.NewRequest(http.MethodGet, "/api/v1/tenants/00000000-0000-0000-0000-000000000002/branding", nil)
+	getReq.Header.Set("X-Tenant-ID", "00000000-0000-0000-0000-000000000001")
 	getRR := httptest.NewRecorder()
 	h.mux.ServeHTTP(getRR, getReq)
 	if getRR.Code != http.StatusOK {
@@ -95,6 +99,7 @@ func TestBranding_MethodNotAllowed(t *testing.T) {
 	h.mux.HandleFunc("/api/v1/tenants/", h.handleBranding)
 
 	req := httptest.NewRequest(http.MethodPost, "/api/v1/tenants/t3/branding", nil)
+	req.Header.Set("X-Tenant-ID", "00000000-0000-0000-0000-000000000001")
 	rr := httptest.NewRecorder()
 	h.mux.ServeHTTP(rr, req)
 	if rr.Code != http.StatusMethodNotAllowed {
@@ -108,6 +113,7 @@ func TestBranding_InvalidJSON(t *testing.T) {
 	h.mux.HandleFunc("/api/v1/tenants/", h.handleBranding)
 
 	req := httptest.NewRequest(http.MethodPut, "/api/v1/tenants/t4/branding", strings.NewReader("not json"))
+	req.Header.Set("X-Tenant-ID", "00000000-0000-0000-0000-000000000001")
 	rr := httptest.NewRecorder()
 	h.mux.ServeHTTP(rr, req)
 	if rr.Code != http.StatusBadRequest {
@@ -123,15 +129,18 @@ func TestBranding_TenantIsolation(t *testing.T) {
 	// Update tenant A
 	bodyA := `{"primary_color":"#aaaaaa"}`
 	putReq := httptest.NewRequest(http.MethodPut, "/api/v1/tenants/tenantA/branding", strings.NewReader(bodyA))
+	putReq.Header.Set("X-Tenant-ID", "00000000-0000-0000-0000-000000000001")
 	h.mux.ServeHTTP(httptest.NewRecorder(), putReq)
 
 	// Update tenant B
 	bodyB := `{"primary_color":"#bbbbbb"}`
 	putReqB := httptest.NewRequest(http.MethodPut, "/api/v1/tenants/tenantB/branding", strings.NewReader(bodyB))
+	putReqB.Header.Set("X-Tenant-ID", "00000000-0000-0000-0000-000000000001")
 	h.mux.ServeHTTP(httptest.NewRecorder(), putReqB)
 
 	// GET tenant A — should have #aaaaaa
 	getReqA := httptest.NewRequest(http.MethodGet, "/api/v1/tenants/tenantA/branding", nil)
+	getReqA.Header.Set("X-Tenant-ID", "00000000-0000-0000-0000-000000000001")
 	getRRA := httptest.NewRecorder()
 	h.mux.ServeHTTP(getRRA, getReqA)
 	if !strings.Contains(getRRA.Body.String(), "#aaaaaa") {
@@ -140,6 +149,7 @@ func TestBranding_TenantIsolation(t *testing.T) {
 
 	// GET tenant B — should have #bbbbbb
 	getReqB := httptest.NewRequest(http.MethodGet, "/api/v1/tenants/tenantB/branding", nil)
+	getReqB.Header.Set("X-Tenant-ID", "00000000-0000-0000-0000-000000000001")
 	getRRB := httptest.NewRecorder()
 	h.mux.ServeHTTP(getRRB, getReqB)
 	if !strings.Contains(getRRB.Body.String(), "#bbbbbb") {
