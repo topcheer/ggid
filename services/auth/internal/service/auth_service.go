@@ -560,6 +560,22 @@ func (s *AuthService) RemainingLoginAttempts(ctx context.Context, tenantID uuid.
 	return remaining
 }
 
+// MaxLoginAttempts returns the configured max failed login attempts before lockout.
+func (s *AuthService) MaxLoginAttempts() int {
+	if s.cfg.Password.MaxAttempts > 0 {
+		return s.cfg.Password.MaxAttempts
+	}
+	return 5
+}
+
+// LockoutDurationSeconds returns the configured lockout duration in seconds.
+func (s *AuthService) LockoutDurationSeconds() int {
+	if s.cfg.Password.LockDuration > 0 {
+		return int(s.cfg.Password.LockDuration.Seconds())
+	}
+	return 1800 // 30 minutes default
+}
+
 // RecordFailedLogin increments the failed attempt counter and locks if threshold reached.
 func (s *AuthService) RecordFailedLogin(ctx context.Context, tenantID uuid.UUID, identifier string) error {
 	key := fmt.Sprintf("ggid:lockout:%s:%s", tenantID, identifier)

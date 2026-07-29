@@ -712,7 +712,7 @@ func (h *Handler) verifyCredentials(w http.ResponseWriter, r *http.Request) {
 			writeJSON(w, http.StatusLocked, map[string]any{
 				"error":       "account locked",
 				"locked":      true,
-				"retry_after": 300,
+				"retry_after": h.authSvc.LockoutDurationSeconds(),
 				"recovery":    "Use 'Forgot Password' or contact your administrator.",
 			})
 			return
@@ -726,14 +726,14 @@ func (h *Handler) verifyCredentials(w http.ResponseWriter, r *http.Request) {
 		}
 		h.authSvc.RecordLoginAttempt(r.Context(), req.Username, ip, userAgent, false, err.Error())
 		// Provide remaining attempts for better UX
-		remaining := 5
+		remaining := h.authSvc.MaxLoginAttempts()
 		if tc, terr := ggidtenant.FromContext(r.Context()); terr == nil {
 			remaining = h.authSvc.RemainingLoginAttempts(r.Context(), tc.TenantID, req.Username)
 		}
 		writeJSON(w, http.StatusUnauthorized, map[string]any{
 			"error":              "invalid credentials",
 			"remaining_attempts": remaining,
-			"max_attempts":       5,
+			"max_attempts":       h.authSvc.MaxLoginAttempts(),
 		})
 		return
 	}

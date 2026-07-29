@@ -42,10 +42,16 @@ func SetHashChainSecretVersioned(version int, secret []byte) {
 }
 
 // SetHashChainCurrentVersion sets which version to use for new events.
-func SetHashChainCurrentVersion(v int) { hashChainCurrentVersion = v }
+func SetHashChainCurrentVersion(v int) {
+	hashChainMu.Lock()
+	defer hashChainMu.Unlock()
+	hashChainCurrentVersion = v
+}
 
 // IsHashChainEnabled returns true if a hash chain secret has been configured.
 func IsHashChainEnabled() bool {
+	hashChainMu.RLock()
+	defer hashChainMu.RUnlock()
 	return len(hashChainSecrets[hashChainCurrentVersion]) > 0
 }
 
@@ -80,14 +86,19 @@ func canonicalEventData(e *AuditEvent) []byte {
 // with different secret versions can be identified and verified with
 // the correct key. Format: HMAC(vN_secret, "vN" || prev_hash || canonical)
 func (e *AuditEvent) ComputeHash(prevHash string) string {
+	hashChainMu.RLock()
 	secret := hashChainSecrets[hashChainCurrentVersion]
+	version := hashChainCurrentVersion
+	hashChainMu.RUnlock()
 	if secret == nil {
+		hashChainMu.RLock()
 		secret = hashChainSecrets[0] // backward compat
+		hashChainMu.RUnlock()
 	}
 
 	mac := hmac.New(sha256.New, secret)
 	// Write version tag + prev_hash + canonical data
-	mac.Write([]byte(fmt.Sprintf("v%d:", hashChainCurrentVersion)))
+	mac.Write([]byte(fmt.Sprintf("v%d:", version)))
 	mac.Write([]byte(prevHash))
 	mac.Write(canonicalEventData(e))
 	return hex.EncodeToString(mac.Sum(nil))
@@ -99,10 +110,12 @@ func (e *AuditEvent) VerifyHashWithVersion(prevHash string, secretVersion int) b
 	if e.Hash == "" {
 		return false
 	}
+	hashChainMu.RLock()
 	secret := hashChainSecrets[secretVersion]
 	if secret == nil {
 		secret = hashChainSecrets[0]
 	}
+	hashChainMu.RUnlock()
 	mac := hmac.New(sha256.New, secret)
 	mac.Write([]byte(fmt.Sprintf("v%d:", secretVersion)))
 	mac.Write([]byte(prevHash))
