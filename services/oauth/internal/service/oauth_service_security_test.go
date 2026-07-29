@@ -303,6 +303,20 @@ func (m *mockSecTokenRepo) RevokeRefreshToken(ctx context.Context, tenantID uuid
 	return nil
 }
 
+func (m *mockSecTokenRepo) ConsumeRefreshToken(ctx context.Context, tenantID uuid.UUID, tokenHash string) (bool, error) {
+	if m.tokens != nil {
+		if tok, ok := m.tokens[tokenHash]; ok {
+			if tok.Used || tok.Revoked {
+				return false, nil
+			}
+			tok.Used = true
+			tok.Revoked = true
+			return true, nil
+		}
+	}
+	return false, nil
+}
+
 type mockSecClientRepo struct {
 	clients map[uuid.UUID]*domain.OAuthClient
 }

@@ -169,6 +169,23 @@ func (r *MemoryIDTokenRepository) RevokeRefreshToken(_ context.Context, tenantID
 	return nil
 }
 
+// ConsumeRefreshToken atomically marks the token used+revoked if currently
+// unused and unrevoked. consumed=false means already consumed or missing.
+// Unlike RevokeRefreshToken it keeps the record so reuse detection can see
+// the used state.
+func (r *MemoryIDTokenRepository) ConsumeRefreshToken(_ context.Context, tenantID uuid.UUID, tokenHash string) (bool, error) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	key := tenantID.String() + ":" + tokenHash
+	c, ok := r.refresh[key]
+	if !ok || c.Used || c.Revoked {
+		return false, nil
+	}
+	c.Used = true
+	c.Revoked = true
+	return true, nil
+}
+
 func (r *MemoryIDTokenRepository) RevokeAllRefreshTokens(_ context.Context, _, _ uuid.UUID) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()

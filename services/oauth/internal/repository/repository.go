@@ -31,5 +31,10 @@ type IDTokenRepository interface {
 	StoreRefreshToken(ctx context.Context, record *domain.RefreshTokenRecord) error
 	GetRefreshToken(ctx context.Context, tenantID uuid.UUID, tokenHash string) (*domain.RefreshTokenRecord, error)
 	RevokeRefreshToken(ctx context.Context, tenantID uuid.UUID, tokenHash string) error
+	// ConsumeRefreshToken atomically marks the token used+revoked if and only
+	// if it is currently neither used nor revoked. consumed=false means the
+	// token was already consumed (concurrent reuse) or does not exist. This
+	// closes the check-then-use TOCTOU race in refresh-token rotation.
+	ConsumeRefreshToken(ctx context.Context, tenantID uuid.UUID, tokenHash string) (consumed bool, err error)
 	RevokeAllRefreshTokens(ctx context.Context, tenantID, clientID uuid.UUID) error
 }

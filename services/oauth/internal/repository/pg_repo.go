@@ -409,9 +409,24 @@ func (r *pgIDTokenRepo) RevokeRefreshTokensByFamily(ctx context.Context, tenantI
 }
 
 func (r *pgIDTokenRepo) RevokeRefreshToken(ctx context.Context, tenantID uuid.UUID, tokenHash string) error {
-	_, err := r.pool.Exec(ctx, `UPDATE oidc_refresh_tokens SET revoked = true, used = true WHERE tenant_id = $1 AND token_hash = $2`, tenantID, tokenHash)
+	// A nil tenantID means "revoke by hash only" (used by RFC 7009 RevokeToken,
+	// which has no tenant context). The token hash is a SHA-256 of a
+	// high-entropy random token, so matching by hash alone is safe.
+	_, err := r.pool.Exec(ctx, `UPDATE oidc_refresh_tokens SET revoked = true, used = true WHERE (tenant_id = $1 OR $1 = '00000000-0000-0000-0000-000000000000') AND token_hash = $2`, tenantID, tokenHash)
 	if err != nil {
 		return ggiderrors.Wrap(ggiderrors.ErrInternal, "revoke refresh token", err)
 	}
 	return nil
+}
+
+// ConsumeRefreshToken atomically marks a refresh token used+revoked only when
+// it is currently unused and unrevoked. The conditional UPDATE makes rotation
+// race-safe: exactly one concurrent request wins; losers get consumed=false
+// and must be treated as token reuse (RFC 6749 §10.4).
+func (r *pgIDTokenRepo) ConsumeRefreshToken(ctx context.Context, tenantID uuid.UUID, tokenHash string) (bool, error) {
+	tag, err := r.pool.Exec(ctx, `UPDATE oidc_refresh_tokens SET revoked = true, used = true WHERE tenant_id = $1 AND token_hash = $2 AND used = false AND revoked = false`, tenantID, tokenHash)
+	if err != nil {
+		return false, ggiderrors.Wrap(ggiderrors.ErrInternal, "consume refresh token", err)
+	}
+	return tag.RowsAffected() == 1, nil
 }

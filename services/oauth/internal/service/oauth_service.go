@@ -1637,11 +1637,17 @@ func (s *OAuthService) RevokeToken(tokenStr string, tokenTypeHint ...string) err
 	if hintIsRefresh || !strings.Contains(tokenStr, ".") {
 		// Try to revoke as a refresh token in the DB.
 		if s.tokenRepo != nil {
-			_ = s.tokenRepo.RevokeRefreshToken(context.Background(), uuid.Nil, tokenHash)
+			// Nil tenant: revocation matches by token hash alone (hash is a
+			// SHA-256 of a high-entropy token, so this is safe).
+			if err := s.tokenRepo.RevokeRefreshToken(context.Background(), uuid.Nil, tokenHash); err != nil {
+				slog.Warn("oauth: failed to revoke refresh token in DB", "err", err)
+			}
 		}
 		// Also blacklist the hash in Redis (covers cross-instance checks).
 		if s.rdb != nil {
-			_ = s.rdb.Set(context.Background(), "oauth:revoked:"+tokenHash, "0", 0)
+			if err := s.rdb.Set(context.Background(), "oauth:revoked:"+tokenHash, "0", 0); err != nil {
+				slog.Warn("oauth: failed to blacklist revoked token hash in redis", "err", err)
+			}
 		}
 		return nil
 	}
@@ -1949,7 +1955,12 @@ func (s *OAuthService) RefreshToken(ctx context.Context, req *RefreshTokenReques
 		ExpiresAt: time.Now().Add(30 * 24 * time.Hour), // 30 days
 		FamilyID:  familyID,
 	}
-	_ = s.tokenRepo.StoreRefreshToken(ctx, newRecord)
+	// SECURITY: if storing the new token fails we must not hand the client an
+	// unusable refresh token — fail the request instead.
+	if err := s.tokenRepo.StoreRefreshToken(ctx, newRecord); err != nil {
+		slog.Error("oauth: failed to store rotated refresh token", "err", err)
+		return nil, errors.Internal("store refresh token", err)
+	}
 
 	// 9a. Register the rotation in the family registry (best-effort).
 	if s.tokenFamilyStore != nil {

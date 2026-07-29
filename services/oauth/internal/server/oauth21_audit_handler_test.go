@@ -57,6 +57,9 @@ func (m *testTokenRepo) GetRefreshToken(_ context.Context, _ uuid.UUID, _ string
 	return nil, nil
 }
 func (m *testTokenRepo) RevokeRefreshToken(_ context.Context, _ uuid.UUID, _ string) error { return nil }
+func (m *testTokenRepo) ConsumeRefreshToken(_ context.Context, _ uuid.UUID, _ string) (bool, error) {
+	return true, nil
+}
 func (m *testTokenRepo) RevokeAllRefreshTokens(_ context.Context, _, _ uuid.UUID) error { return nil }
 
 type testKeyProvider struct{}
