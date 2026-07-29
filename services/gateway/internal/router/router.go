@@ -367,6 +367,16 @@ func (gw *Gateway) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	// Hosted login page (served by Gateway — any app can redirect here)
 	if r.URL.Path == "/login" {
+		// CSRF protection for POST to hosted login form
+		if r.Method == http.MethodPost {
+			if !middleware.ValidateCSRF(r) {
+				w.Header().Set("Content-Type", "application/json")
+				w.WriteHeader(http.StatusForbidden)
+				w.Write([]byte(`{"error":"CSRF token mismatch"}`))
+				return
+			}
+		}
+		middleware.SetCSRFCookie(w)
 		html := strings.ReplaceAll(hostedLoginHTML, "__TENANT_ID__", resolveTenant(r))
 		w.Header().Set("Content-Type", "text/html; charset=utf-8")
 		_, _ = w.Write([]byte(html))

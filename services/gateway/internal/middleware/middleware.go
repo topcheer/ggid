@@ -243,7 +243,7 @@ func CSRFProtect(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// Safe methods don't need CSRF check, but we refresh the cookie
 		if r.Method == http.MethodGet || r.Method == http.MethodHead || r.Method == http.MethodOptions {
-			setCSRFCookie(w)
+			SetCSRFCookie(w)
 			next.ServeHTTP(w, r)
 			return
 		}
@@ -271,7 +271,8 @@ func CSRFProtect(next http.Handler) http.Handler {
 	})
 }
 
-func setCSRFCookie(w http.ResponseWriter) {
+// SetCSRFCookie sets a CSRF token cookie on the response.
+func SetCSRFCookie(w http.ResponseWriter) {
 	token := generateCSRFToken()
 	http.SetCookie(w, &http.Cookie{
 		Name:     "csrf_token",
@@ -282,6 +283,17 @@ func setCSRFCookie(w http.ResponseWriter) {
 		Secure:   true,
 		SameSite: http.SameSiteLaxMode,
 	})
+}
+
+// ValidateCSRF checks the double-submit token for session-based requests.
+// Returns true if valid or not applicable (no cookie = API request with Bearer token).
+func ValidateCSRF(r *http.Request) bool {
+	cookieToken, err := r.Cookie("csrf_token")
+	if err != nil || cookieToken.Value == "" {
+		return true // No cookie = Bearer token auth, CSRF not applicable
+	}
+	headerToken := r.Header.Get("X-CSRF-Token")
+	return subtle.ConstantTimeCompare([]byte(cookieToken.Value), []byte(headerToken)) == 1
 }
 
 func generateCSRFToken() string {
