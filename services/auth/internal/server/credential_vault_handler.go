@@ -13,18 +13,6 @@ import (
 	"time"
 )
 
-// hasScope checks if the given space-separated scope string contains the
-// exact scope. This avoids substring bypass attacks (e.g., "not-platform:admin"
-// matching "platform:admin" via strings.Contains).
-func hasScope(scopesHeader, scope string) bool {
-	for _, s := range strings.Fields(scopesHeader) {
-		if s == scope {
-			return true
-		}
-	}
-	return false
-}
-
 type StoredCredential struct {
 	Key       string    `json:"key"`
 	Value     string    `json:"-"` // never expose ciphertext in JSON
@@ -165,19 +153,23 @@ func (h *Handler) handleCredentialVault(w http.ResponseWriter, r *http.Request) 
 			writeError(w, http.StatusBadRequest, "key and user_id required")
 			return
 		}
-			// Check if caller has admin scope (exact match, not substring)
-			scopes := strings.Split(r.Header.Get("X-Scopes"), ",")
-			isAdmin := false
-			for _, sc := range scopes {
-				sc = strings.TrimSpace(sc)
-				if sc == "platform:admin" || sc == "tenant:admin" {
-					isAdmin = true
-					break
+			// SECURITY: Only allow operating on own account (admin override via scope already enforced by gateway).
+			// Non-admin callers cannot inject arbitrary user_id.
+			if userID != authenticatedUserID {
+				// Check if caller has admin scope (exact match, not substring)
+				scopes := strings.Split(r.Header.Get("X-Scopes"), ",")
+				isAdmin := false
+				for _, sc := range scopes {
+					sc = strings.TrimSpace(sc)
+					if sc == "platform:admin" || sc == "tenant:admin" {
+						isAdmin = true
+						break
+					}
 				}
-			}
-			if !isAdmin {
-				writeError(w, http.StatusForbidden, "cannot access other users' credentials")
-				return
+				if !isAdmin {
+					writeError(w, http.StatusForbidden, "cannot access other users' credentials")
+					return
+				}
 			}
 		// Try DB first, then PG memMap, fall back to in-memory.
 		var cred *StoredCredential

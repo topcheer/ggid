@@ -291,7 +291,14 @@ func (h *HTTPHandler) tenantList(w http.ResponseWriter, r *http.Request) {
 	if roles == "" {
 		roles = r.Header.Get("X-User-Roles")
 	}
-	isPlatformAdmin := strings.Contains(roles, "platform:admin") || strings.Contains(roles, "Platform Administrator")
+	isPlatformAdmin := false
+	for _, r := range strings.Split(roles, ",") {
+		r = strings.TrimSpace(r)
+		if r == "platform:admin" || r == "Platform Administrator" {
+			isPlatformAdmin = true
+			break
+		}
+	}
 
 	query := `SELECT id::text, name, slug, plan::text, status::text, max_users, created_at, updated_at FROM tenants`
 	args := []interface{}{}

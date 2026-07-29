@@ -137,7 +137,7 @@ func (s *HTTPServer) handleRoleRoutePermissions(w http.ResponseWriter, r *http.R
 					if roles == "" {
 						roles = r.Header.Get("X-User-Roles")
 					}
-					if !strings.Contains(roles, "platform:admin") && !strings.Contains(roles, "Platform Administrator") {
+					if !isPlatformAdmin(roles) {
 						writeJSONError(w, http.StatusForbidden, "cannot set permissions for platform-level routes: "+p.RoutePrefix)
 						return
 					}
@@ -242,4 +242,17 @@ func (s *HTTPServer) handleUserMePermissions(w http.ResponseWriter, r *http.Requ
 		"permissions": perms,
 		"total":       len(perms),
 	})
+}
+
+// isPlatformAdmin checks if the roles header contains platform:admin or
+// Platform Administrator using exact matching (not substring) to prevent
+// bypass via crafted role names like "not-platform:admin".
+func isPlatformAdmin(roles string) bool {
+	for _, r := range strings.Split(roles, ",") {
+		r = strings.TrimSpace(r)
+		if r == "platform:admin" || r == "Platform Administrator" {
+			return true
+		}
+	}
+	return false
 }

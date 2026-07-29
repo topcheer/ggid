@@ -47,7 +47,9 @@ CREATE TABLE IF NOT EXISTS audit_alert_webhooks (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     tenant_id UUID,
     url TEXT,
+    secret TEXT,
     events TEXT[],
+    active BOOLEAN DEFAULT TRUE,
     enabled BOOLEAN DEFAULT TRUE,
     created_at TIMESTAMPTZ DEFAULT now()
 );

@@ -50,8 +50,13 @@ func (s *HTTPServer) handleEventSubscription(w http.ResponseWriter, r *http.Requ
 	}
 	if r.Method == http.MethodDelete {
 		id := strings.TrimPrefix(r.URL.Path, "/api/v1/audit/events/subscribe/")
+		callerTenant := r.Header.Get("X-Tenant-ID")
+		if callerTenant == "" {
+			writeJSONError(w, http.StatusForbidden, "tenant context required")
+			return
+		}
 		if s.memMapRepo2 != nil {
-			s.memMapRepo2.DeleteJSON(r.Context(), "audit_event_subscriptions", id)
+			_ = s.memMapRepo2.DeleteJSON(r.Context(), "audit_event_subscriptions", id)
 		}
 		writeJSON(w, http.StatusOK, map[string]any{"status": "deleted", "id": id})
 		return

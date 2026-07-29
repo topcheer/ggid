@@ -1026,16 +1026,18 @@ func (s *HTTPServer) handleAuditWebhooks(w http.ResponseWriter, r *http.Request)
 			writeJSONError(w, http.StatusBadRequest, "id is required")
 			return
 		}
+		callerTenant := r.Header.Get("X-Tenant-ID")
+		if callerTenant == "" {
+			writeJSONError(w, http.StatusForbidden, "tenant context required")
+			return
+		}
 		auditWebhooks.Lock()
 		found := false
-		callerTenant := r.Header.Get("X-Tenant-ID")
 		for i, cfg := range auditWebhooks.configs {
 			// SECURITY: verify webhook belongs to caller's tenant
 			if cfg["id"] == id {
-				if callerTenant != "" {
-					if wtid, ok := cfg["tenant_id"].(string); ok && wtid != callerTenant {
-						continue // skip other tenants' webhooks
-					}
+				if wtid, ok := cfg["tenant_id"].(string); ok && wtid != callerTenant {
+					continue // skip other tenants' webhooks
 				}
 				auditWebhooks.configs = append(auditWebhooks.configs[:i], auditWebhooks.configs[i+1:]...)
 				found = true
