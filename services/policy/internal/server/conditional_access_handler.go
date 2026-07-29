@@ -68,8 +68,14 @@ func (s *HTTPServer) handleConditionalAccess(w http.ResponseWriter, r *http.Requ
 				actionStr = a
 			}
 		}
+		// SECURITY: Force tenant_id from caller context, ignore request body value.
+		callerTenantID := tenantIDFromHeader(r)
+		if callerTenantID == uuid.Nil {
+			writeJSONError(w, http.StatusBadRequest, "tenant_id is required")
+			return
+		}
 		p := &ConditionalAccessPolicy{
-			ID: uuid.New().String(), TenantID: req.TenantID, Name: req.Name,
+			ID: uuid.New().String(), TenantID: callerTenantID.String(), Name: req.Name,
 			Conditions: req.Conditions, Actions: req.Actions, Action: actionStr,
 			Enabled: enabled, Priority: req.Priority, CreatedAt: now, UpdatedAt: now,
 		}
@@ -82,7 +88,12 @@ func (s *HTTPServer) handleConditionalAccess(w http.ResponseWriter, r *http.Requ
 		writeJSON(w, http.StatusCreated, p)
 
 	case http.MethodGet:
-		tenantID := r.URL.Query().Get("tenant_id")
+		// SECURITY: Force tenant_id from caller, ignore query param spoofing.
+		callerTenantID := tenantIDFromHeader(r)
+		if callerTenantID == uuid.Nil {
+			writeJSONError(w, http.StatusBadRequest, "tenant_id is required")
+			return
+		}
 		var result []*ConditionalAccessPolicy
 		if s.policyMap != nil {
 			rows, _ := s.policyMap.List(r.Context(), "conditional_access_store")
@@ -100,7 +111,7 @@ func (s *HTTPServer) handleConditionalAccess(w http.ResponseWriter, r *http.Requ
 				if id != "" && p.ID != id {
 					continue
 				}
-				if tenantID != "" && p.TenantID != tenantID {
+				if callerTenantID.String() != p.TenantID {
 					continue
 				}
 				result = append(result, p)
@@ -136,6 +147,14 @@ func (s *HTTPServer) handleConditionalAccess(w http.ResponseWriter, r *http.Requ
 			return
 		}
 		if s.policyMap != nil {
+			// SECURITY: Verify policy belongs to caller's tenant before update.
+			callerTenantID := tenantIDFromHeader(r)
+			if existing, _ := s.policyMap.Get(r.Context(), "conditional_access_store", req.ID); existing != nil {
+				if pmGetString(existing, "tenant_id") != callerTenantID.String() {
+					writeJSONError(w, http.StatusNotFound, "policy not found")
+					return
+				}
+			}
 			update := map[string]any{"name": req.Name, "conditions": req.Conditions,
 				"actions": req.Actions, "priority": req.Priority}
 			if req.Enabled != nil {
@@ -151,6 +170,14 @@ func (s *HTTPServer) handleConditionalAccess(w http.ResponseWriter, r *http.Requ
 			return
 		}
 		if s.policyMap != nil {
+			// SECURITY: Verify policy belongs to caller's tenant before delete.
+			callerTenantID := tenantIDFromHeader(r)
+			if existing, _ := s.policyMap.Get(r.Context(), "conditional_access_store", id); existing != nil {
+				if pmGetString(existing, "tenant_id") != callerTenantID.String() {
+					writeJSONError(w, http.StatusNotFound, "policy not found")
+					return
+				}
+			}
 			s.policyMap.Delete(r.Context(), "conditional_access_store", id)
 		}
 		writeJSON(w, http.StatusOK, map[string]any{"status": "deleted", "id": id})

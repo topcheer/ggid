@@ -10,6 +10,7 @@ import (
 	"sync"
 	"time"
 
+	ggidtenant "github.com/ggid/ggid/pkg/tenant"
 	"github.com/google/uuid"
 )
 
@@ -84,10 +85,14 @@ func (s *Service) Create(ctx context.Context, tenantID uuid.UUID, idpType IdPTyp
 }
 
 // Get retrieves an IdP config by ID.
+// SECURITY: validates config belongs to the caller's tenant.
 func (s *Service) Get(ctx context.Context, id uuid.UUID) (*TenantIdPConfig, error) {
 	cfg, err := s.store.GetByID(ctx, id)
 	if err != nil {
 		return nil, fmt.Errorf("IdP config not found: %w", err)
+	}
+	if err := validateIdPTenant(ctx, cfg); err != nil {
+		return nil, err
 	}
 	return cfg, nil
 }
@@ -103,6 +108,9 @@ func (s *Service) Update(ctx context.Context, id uuid.UUID, name, configJSON str
 	if err != nil {
 		return nil, fmt.Errorf("IdP config not found: %w", err)
 	}
+	if err := validateIdPTenant(ctx, cfg); err != nil {
+		return nil, err
+	}
 
 	cfg.Name = name
 	cfg.ConfigJSON = configJSON
@@ -117,13 +125,28 @@ func (s *Service) Update(ctx context.Context, id uuid.UUID, name, configJSON str
 
 // Delete removes an IdP config.
 func (s *Service) Delete(ctx context.Context, id uuid.UUID) error {
+	cfg, err := s.store.GetByID(ctx, id)
+	if err != nil {
+		return fmt.Errorf("IdP config not found: %w", err)
+	}
+	if err := validateIdPTenant(ctx, cfg); err != nil {
+		return err
+	}
 	if err := s.store.Delete(ctx, id); err != nil {
 		return fmt.Errorf("failed to delete: %w", err)
 	}
 	return nil
 }
 
-// --- In-memory store ---
+// validateIdPTenant ensures the config belongs to the caller's tenant.
+func validateIdPTenant(ctx context.Context, cfg *TenantIdPConfig) error {
+	if tc, err := ggidtenant.FromContext(ctx); err == nil && tc.TenantID != uuid.Nil {
+		if cfg.TenantID != tc.TenantID {
+			return fmt.Errorf("IdP config not found")
+		}
+	}
+	return nil
+}
 
 type MemoryStore struct {
 	mu      sync.RWMutex
