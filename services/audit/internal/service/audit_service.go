@@ -148,10 +148,12 @@ func (s *AuditService) computeHashChain(event *domain.AuditEvent) {
 	}
 	// Set PrevHash from the in-memory chain state for this tenant.
 	// First event for a tenant gets empty PrevHash (genesis).
+	s.mu.Lock()
 	event.PrevHash = s.prevHash[event.TenantID]
 	event.Hash = event.ComputeHash(event.PrevHash)
 	// Update chain state for the next event.
 	s.prevHash[event.TenantID] = event.Hash
+	s.mu.Unlock()
 }
 
 // canonicalEventData produces a deterministic byte representation of an event

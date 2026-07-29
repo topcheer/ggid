@@ -144,10 +144,10 @@ func (p *GRPCProxy) HandleConn(ctx context.Context, clientConn net.Conn, targetA
 		done <- struct{}{}
 	}()
 
-	select {
-	case <-done:
-	case <-ctx.Done():
-	}
+	// Wait for either direction to finish, then close both connections
+	// to unblock the other goroutine (prevents leak).
+	<-done
+	clientConn.Close()
 }
 
 // GRPCHTTPHandler is an HTTP handler that detects gRPC requests (Content-Type:

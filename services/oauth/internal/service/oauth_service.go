@@ -1873,7 +1873,12 @@ func (s *OAuthService) RefreshToken(ctx context.Context, req *RefreshTokenReques
 	}
 
 	// 7. Mark the old token as used (rotation).
-	_ = s.tokenRepo.RevokeRefreshToken(ctx, req.TenantID, tokenHash)
+	// SECURITY: If this fails, the old token remains usable — an attacker who
+	// intercepted it could replay it without triggering reuse detection.
+	if err := s.tokenRepo.RevokeRefreshToken(ctx, req.TenantID, tokenHash); err != nil {
+		slog.Error("oauth: failed to revoke (rotate) refresh token", "err", err)
+		return nil, errors.Internal("token rotation failed", err)
+	}
 
 	// 7a. Resolve the rotation family: inherit from the consumed token, or
 	// start a new family rooted at the consumed token's ID.
