@@ -160,7 +160,21 @@ func (s *AuthService) VerifyCredentials(ctx context.Context, username, password,
 
 // Logout revokes the session and all associated refresh tokens.
 func (s *AuthService) Logout(ctx context.Context, refreshToken string) error {
-	return s.tokenService.RevokeRefreshToken(ctx, refreshToken)
+	// SECURITY: Look up session ID BEFORE revoking (revoke deletes the record).
+	tokenHash := hashToken(refreshToken)
+	var sessionID uuid.UUID
+	if rt, err := s.tokenService.FindRefreshTokenByHash(ctx, tokenHash); err == nil && rt != nil {
+		sessionID = rt.SessionID
+	}
+	// Revoke the refresh token.
+	if err := s.tokenService.RevokeRefreshToken(ctx, refreshToken); err != nil {
+		return err
+	}
+	// Also revoke the server-side session to fully invalidate the login.
+	if sessionID != uuid.Nil && s.sessionService != nil {
+		_ = s.sessionService.Revoke(ctx, sessionID)
+	}
+	return nil
 }
 
 // getUserScopesAndPermissions resolves role names and fine-grained permissions separately.

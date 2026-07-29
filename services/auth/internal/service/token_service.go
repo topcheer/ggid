@@ -19,6 +19,7 @@ import (
 	"github.com/redis/go-redis/v9"
 
 	ggidcrypto "github.com/ggid/ggid/pkg/crypto"
+	"github.com/ggid/ggid/services/auth/internal/domain"
 )
 
 // TokenService handles JWT signing and refresh-token lifecycle.
@@ -180,6 +181,12 @@ func (ts *TokenService) PublicKey() *rsa.PublicKey {
 // KeyID returns the key identifier used in JWT headers and JWKS.
 func (ts *TokenService) KeyID() string {
 	return ts.keyID
+}
+
+// FindRefreshTokenByHash looks up a refresh token by its hash.
+// Used by Logout to find the associated session ID before revoking.
+func (ts *TokenService) FindRefreshTokenByHash(ctx context.Context, hash string) (*domain.RefreshToken, error) {
+	return ts.refreshRepo.FindByHash(ctx, hash)
 }
 
 // Provider returns the underlying KeyProvider.

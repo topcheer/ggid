@@ -40,7 +40,7 @@ func (h *AuthGRPCHandler) Register(ctx context.Context, req *authv1.RegisterRequ
 	userID := uuid.New()
 
 	if err := h.svc.Register(ctx, tenantID, userID, req.GetUsername(), req.GetPassword()); err != nil {
-		return nil, status.Error(codes.Internal, fmt.Sprintf("register failed: %v", err))
+		return nil, status.Error(codes.Internal, "internal error")
 	}
 
 	return &authv1.RegisterResponse{UserId: userID.String()}, nil
@@ -48,7 +48,7 @@ func (h *AuthGRPCHandler) Register(ctx context.Context, req *authv1.RegisterRequ
 
 func (h *AuthGRPCHandler) Logout(ctx context.Context, req *authv1.LogoutRequest) (*authv1.LogoutResponse, error) {
 	if err := h.svc.Logout(ctx, req.GetRefreshToken()); err != nil {
-		return nil, status.Error(codes.Internal, fmt.Sprintf("logout failed: %v", err))
+		return nil, status.Error(codes.Internal, "internal error")
 	}
 	return &authv1.LogoutResponse{}, nil
 }
@@ -68,7 +68,7 @@ func (h *AuthGRPCHandler) ForgotPassword(ctx context.Context, req *authv1.Forgot
 
 func (h *AuthGRPCHandler) ResetPassword(ctx context.Context, req *authv1.ResetPasswordRequest) (*authv1.ResetPasswordResponse, error) {
 	if err := h.svc.ResetPassword(ctx, req.GetToken(), req.GetNewPassword()); err != nil {
-		return nil, status.Error(codes.InvalidArgument, fmt.Sprintf("reset password failed: %v", err))
+		return nil, status.Error(codes.InvalidArgument, "invalid or expired token")
 	}
 	return &authv1.ResetPasswordResponse{}, nil
 }
@@ -80,7 +80,7 @@ func (h *AuthGRPCHandler) ChangePassword(ctx context.Context, req *authv1.Change
 		return nil, status.Error(codes.InvalidArgument, "invalid user id")
 	}
 	if err := h.svc.ChangePassword(ctx, tenantID, userID, req.GetOldPassword(), req.GetNewPassword()); err != nil {
-		return nil, status.Error(codes.InvalidArgument, fmt.Sprintf("change password failed: %v", err))
+		return nil, status.Error(codes.InvalidArgument, "password change failed")
 	}
 	return &authv1.ChangePasswordResponse{}, nil
 }
@@ -93,7 +93,7 @@ func (h *AuthGRPCHandler) ListSessions(ctx context.Context, req *authv1.ListSess
 	}
 	sessions, err := h.svc.ListSessions(ctx, tenantID, userID)
 	if err != nil {
-		return nil, status.Error(codes.Internal, fmt.Sprintf("list sessions failed: %v", err))
+		return nil, status.Error(codes.Internal, "internal error")
 	}
 	pbSessions := make([]*authv1.SessionInfo, 0, len(sessions))
 	for _, s := range sessions {
@@ -108,7 +108,7 @@ func (h *AuthGRPCHandler) RevokeSession(ctx context.Context, req *authv1.RevokeS
 		return nil, status.Error(codes.InvalidArgument, "invalid session id")
 	}
 	if err := h.svc.RevokeSession(ctx, sessionID); err != nil {
-		return nil, status.Error(codes.Internal, fmt.Sprintf("revoke session failed: %v", err))
+		return nil, status.Error(codes.Internal, "internal error")
 	}
 	return &authv1.RevokeSessionResponse{}, nil
 }

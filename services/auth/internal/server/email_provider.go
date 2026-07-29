@@ -174,10 +174,14 @@ func (h *Handler) handleEmailTest(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if h.emailRepo != nil {
-		go h.emailRepo.SendEmail(nil, &EmailMessage{
-			To: req.To, Subject: "GGID Test Email", Template: "test",
-			Data: map[string]string{},
-		})
+		go func() {
+			ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+			defer cancel()
+			_ = h.emailRepo.SendEmail(ctx, &EmailMessage{
+				To: req.To, Subject: "GGID Test Email", Template: "test",
+				Data: map[string]string{},
+			})
+		}()
 	}
 	writeJSON(w, http.StatusOK, map[string]any{"status": "queued", "to": req.To, "message": "test email queued for delivery"})
 }
