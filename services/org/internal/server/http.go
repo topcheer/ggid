@@ -287,8 +287,23 @@ func (s *HTTPServer) handleOrgByID(w http.ResponseWriter, r *http.Request) {
 			writeServiceError(w, err)
 			return
 		}
+		// SECURITY: verify org belongs to caller's tenant
+		if tid := s.getTenantID(r); tid != uuid.Nil && org.TenantID != tid {
+			writeJSONError(w, http.StatusNotFound, "organization not found")
+			return
+		}
 		writeJSON(w, http.StatusOK, orgToJSON(org))
 	case http.MethodDelete:
+		// SECURITY: verify org belongs to caller's tenant before delete
+		org, err := s.orgSvc.Get(r.Context(), id)
+		if err != nil {
+			writeServiceError(w, err)
+			return
+		}
+		if tid := s.getTenantID(r); tid != uuid.Nil && org.TenantID != tid {
+			writeJSONError(w, http.StatusNotFound, "organization not found")
+			return
+		}
 		if err := s.orgSvc.Delete(r.Context(), id); err != nil {
 			writeServiceError(w, err)
 			return
@@ -596,10 +611,27 @@ func (s *HTTPServer) handleDepartmentByID(w http.ResponseWriter, r *http.Request
 			writeServiceError(w, err)
 			return
 		}
+		// SECURITY: verify dept's parent org belongs to caller's tenant
+		parentOrg, err := s.orgSvc.Get(r.Context(), dept.OrgID)
+		if err != nil || (func() bool { tid := s.getTenantID(r); return tid != uuid.Nil && parentOrg.TenantID != tid }()) {
+			writeJSONError(w, http.StatusNotFound, "department not found")
+			return
+		}
 		writeJSON(w, http.StatusOK, deptToJSON(dept))
 	case http.MethodPut:
 		s.updateDept(w, r, id)
 	case http.MethodDelete:
+		// SECURITY: verify dept's parent org belongs to caller's tenant before delete
+		dept, err := s.deptSvc.Get(r.Context(), id)
+		if err != nil {
+			writeServiceError(w, err)
+			return
+		}
+		parentOrg, err := s.orgSvc.Get(r.Context(), dept.OrgID)
+		if err != nil || (func() bool { tid := s.getTenantID(r); return tid != uuid.Nil && parentOrg.TenantID != tid }()) {
+			writeJSONError(w, http.StatusNotFound, "department not found")
+			return
+		}
 		if err := s.deptSvc.Delete(r.Context(), id); err != nil {
 			writeServiceError(w, err)
 			return

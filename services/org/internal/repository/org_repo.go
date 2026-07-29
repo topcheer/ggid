@@ -31,7 +31,7 @@ func (r *OrgRepository) Create(ctx context.Context, org *domain.Organization) er
 
 	var parentPath string
 	if org.ParentID != nil {
-		err := r.db.QueryRow(ctx, `SELECT path::text FROM organizations WHERE id = $1`, org.ParentID).Scan(&parentPath)
+		err := r.db.QueryRow(ctx, `SELECT path::text FROM organizations WHERE id = $1 AND tenant_id = $2`, org.ParentID, org.TenantID).Scan(&parentPath)
 		if err != nil {
 			return mapErr(err, "organization (parent)", org.ParentID.String())
 		}
