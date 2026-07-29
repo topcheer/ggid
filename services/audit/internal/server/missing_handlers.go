@@ -173,8 +173,19 @@ func (s *HTTPServer) handleWebhooksList(w http.ResponseWriter, r *http.Request) 
 			return
 		}
 		globalAlertWebhooks.mu.Lock()
+		callerTenant := r.Header.Get("X-Tenant-ID")
+		if callerTenant == "" {
+			writeJSONError(w, http.StatusForbidden, "missing tenant context")
+			return
+		}
+		found := false
 		for _, wh := range globalAlertWebhooks.webhooks {
 			if wh["id"] == whID {
+				// SECURITY: verify webhook belongs to caller's tenant
+				if wtid, ok := wh["tenant_id"].(string); !ok || wtid != callerTenant {
+					continue // skip other tenants' webhooks
+				}
+				found = true
 				if update.Name != nil { wh["name"] = *update.Name }
 				if update.URL != nil { wh["url"] = *update.URL }
 				if update.Events != nil { wh["events"] = *update.Events }
@@ -188,8 +199,10 @@ func (s *HTTPServer) handleWebhooksList(w http.ResponseWriter, r *http.Request) 
 			}
 		}
 		globalAlertWebhooks.mu.Unlock()
+		if found {
+			return
+		}
 		writeJSONError(w, http.StatusNotFound, "webhook not found")
-		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 	}
 }
 
