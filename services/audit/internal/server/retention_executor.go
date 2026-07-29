@@ -50,6 +50,10 @@ func (s *HTTPServer) handleRetentionExecute(w http.ResponseWriter, r *http.Reque
 			if !p.Enabled {
 				continue
 			}
+			// P1: Skip policies with empty tenant_id (they would affect all tenants)
+			if p.TenantID == "" {
+				continue
+			}
 			if tenantIDStr != "" && p.TenantID != tenantIDStr {
 				continue
 			}

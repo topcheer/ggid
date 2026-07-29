@@ -16,7 +16,7 @@ import (
 type EventDeleter interface {
 	DeleteOlderThan(ctx context.Context, tenantID uuid.UUID, before time.Time) (int64, error)
 	Count(ctx context.Context) (int64, error)
-	DeleteExcess(ctx context.Context, keep int64) (int64, error)
+	DeleteExcess(ctx context.Context, tenantID uuid.UUID, keep int64) (int64, error)
 }
 
 // RetentionPolicy defines audit event retention rules.
@@ -79,7 +79,7 @@ func (p *RetentionPolicy) Apply(ctx context.Context, deleter EventDeleter) (*Res
 			return result, err
 		}
 		if count > p.MaxEvents {
-			deleted, err := deleter.DeleteExcess(ctx, p.MaxEvents)
+			deleted, err := deleter.DeleteExcess(ctx, p.TenantID, p.MaxEvents)
 			if err != nil {
 				return result, err
 			}

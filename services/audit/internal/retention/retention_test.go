@@ -36,7 +36,7 @@ func (m *mockDeleter) Count(_ context.Context) (int64, error) {
 	return int64(len(m.events)), nil
 }
 
-func (m *mockDeleter) DeleteExcess(_ context.Context, keep int64) (int64, error) {
+func (m *mockDeleter) DeleteExcess(_ context.Context, _ uuid.UUID, keep int64) (int64, error) {
 	if m.deleteExErr != nil {
 		return 0, m.deleteExErr
 	}
