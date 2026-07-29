@@ -125,9 +125,9 @@ func TestCORS_CredentialsWithWildcard(t *testing.T) {
 	if w.Header().Get("Access-Control-Allow-Credentials") != "true" {
 		t.Error("expected Access-Control-Allow-Credentials: true")
 	}
-	// Should echo origin, NOT wildcard "*" (spec-compliant with credentials)
-	if got := w.Header().Get("Access-Control-Allow-Origin"); got != "https://example.com" {
-		t.Errorf("expected echoed origin, got %q", got)
+	// SECURITY: With wildcard + credentials, use * without credentials (no origin reflection)
+	if got := w.Header().Get("Access-Control-Allow-Origin"); got != "*" {
+		t.Errorf("expected wildcard * (no reflection with credentials), got %q", got)
 	}
 }
 

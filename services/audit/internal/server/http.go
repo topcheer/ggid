@@ -12,7 +12,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"net"
 	"net/http"
+	"net/url"
 	"os"
 	"strconv"
 	"strings"
@@ -128,7 +130,9 @@ func (s *HTTPServer) StartRetentionCleanup(ctx context.Context, interval time.Du
 				if !enabled {
 					continue
 				}
-				deleted, err := s.svc.CleanupOldEvents(ctx, days)
+				// System-wide scheduled cleanup — uuid.Nil is the internal
+				// all-tenants mode, not reachable from the HTTP path.
+				deleted, err := s.svc.CleanupOldEvents(ctx, uuid.Nil, days)
 				if err != nil {
 					continue
 				}
@@ -1292,7 +1296,15 @@ func (s *HTTPServer) handleRetention(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 
-		deleted, err := s.svc.CleanupOldEvents(r.Context(), days)
+		// Tenant context is mandatory — an unscoped cleanup would delete
+		// every tenant's audit events (P0).
+		tenantID, terr := uuid.Parse(r.Header.Get("X-Tenant-ID"))
+		if terr != nil || tenantID == uuid.Nil {
+			writeJSON(w, http.StatusForbidden, map[string]string{"error": "tenant context required"})
+			return
+		}
+
+		deleted, err := s.svc.CleanupOldEvents(r.Context(), tenantID, days)
 		if err != nil {
 			writeServiceError(w, err)
 			return
@@ -1507,7 +1519,7 @@ func (s *HTTPServer) dispatchAlert(alert map[string]any) {
 	payload, _ := json.Marshal(alert)
 
 	// Fire webhook (async, non-blocking)
-	if webhookURL != "" {
+	if webhookURL != "" && isSafeWebhookURL(webhookURL) {
 		go func() {
 			client := &http.Client{Timeout: 10 * time.Second}
 			resp, err := client.Post(webhookURL, "application/json", strings.NewReader(string(payload)))
@@ -1532,6 +1544,9 @@ func (s *HTTPServer) dispatchAlert(alert map[string]any) {
 				var whURL, whSecret string
 				if err := rows.Scan(&whURL, &whSecret); err != nil {
 					continue
+				}
+				if !isSafeWebhookURL(whURL) {
+					continue // SSRF protection: skip unsafe URLs
 				}
 				req, err := http.NewRequest(http.MethodPost, whURL, strings.NewReader(string(payload)))
 				if err != nil {
@@ -2057,4 +2072,32 @@ func maskSecret(s string) string {
 		return "****"
 	}
 	return s[:2] + "****"
+}
+
+// isSafeWebhookURL validates that a webhook URL is safe to call (SSRF protection).
+// Blocks: non-HTTP(S) schemes, localhost, loopback, link-local, private IP ranges.
+func isSafeWebhookURL(rawURL string) bool {
+	u, err := url.Parse(rawURL)
+	if err != nil {
+		return false
+	}
+	if u.Scheme != "http" && u.Scheme != "https" {
+		return false
+	}
+	host := u.Hostname()
+	if host == "localhost" || host == "127.0.0.1" || host == "::1" {
+		return false
+	}
+	// Block link-local (169.254.x.x — cloud metadata)
+	if strings.HasPrefix(host, "169.254.") {
+		return false
+	}
+	// Block private IP ranges (RFC 1918)
+	ip := net.ParseIP(host)
+	if ip != nil {
+		if ip.IsLoopback() || ip.IsPrivate() || ip.IsLinkLocalUnicast() || ip.IsUnspecified() {
+			return false
+		}
+	}
+	return true
 }

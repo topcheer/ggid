@@ -3,11 +3,11 @@ package middleware
 
 import (
 	"context"
-	"crypto/tls"
 	"crypto/rand"
 	"crypto/rsa"
 	"crypto/sha256"
 	"crypto/subtle"
+	"crypto/tls"
 	"crypto/x509"
 	"encoding/base64"
 	"encoding/json"
@@ -168,12 +168,15 @@ func CORSWithConfig(cfg CORSConfig) func(http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			origin := r.Header.Get("Origin")
 
-			// P1-2: CORS spec violation — ACAO:* + ACAC:true is invalid.
-			// When AllowCredentials is true, never use wildcard ACAO.
-			if allowAll && cfg.AllowCredentials && origin != "" {
-				// Echo the specific origin instead of wildcard
-				w.Header().Set("Access-Control-Allow-Origin", origin)
-				w.Header().Set("Vary", "Origin")
+			// SECURITY: When AllowCredentials is true, NEVER reflect arbitrary origins.
+			// Reflecting any origin with credentials is worse than wildcard — it allows
+			// any malicious site to make authenticated cross-origin requests.
+			// Only allow explicit origin whitelist matches when credentials are enabled.
+			if allowAll && cfg.AllowCredentials {
+				// Wildcard + credentials is invalid AND dangerous. Use wildcard
+				// without credentials instead.
+				w.Header().Set("Access-Control-Allow-Origin", "*")
+				// Do NOT set Access-Control-Allow-Credentials: true
 			} else if allowAll {
 				w.Header().Set("Access-Control-Allow-Origin", "*")
 			} else {
@@ -449,8 +452,8 @@ type JWKSClient struct {
 // NewJWKSClient creates a JWKS client. If jwksURL is empty, uses the static public key.
 func NewJWKSClient(jwksURL, publicKeyPath string) (*JWKSClient, error) {
 	c := &JWKSClient{
-		jwksURL:    jwksURL,
-		keys:       make(map[string]*rsa.PublicKey),
+		jwksURL: jwksURL,
+		keys:    make(map[string]*rsa.PublicKey),
 		httpClient: &http.Client{
 			Timeout: 10 * time.Second,
 			Transport: &http.Transport{
@@ -492,7 +495,7 @@ func (c *JWKSClient) StartRefresh(ctx context.Context, interval time.Duration) {
 				return
 			case <-ticker.C:
 				if err := c.refreshJWKS(); err != nil {
-						slog.Error("JWKS refresh error", "err", err)
+					slog.Error("JWKS refresh error", "err", err)
 				}
 			}
 		}
@@ -680,32 +683,32 @@ func JWTAuth(jwks *JWKSClient, required bool, issuer, audience string) func(http
 				return
 			}
 
-		tokenStr := strings.TrimSpace(parts[1])
-		// Build validation options: jwt/v5 validates exp/nbf/iat by default
-		// when claims are present. We add issuer, audience, and method restrictions.
-		parseOpts := []jwt.ParserOption{
-			jwt.WithValidMethods(crypto.SupportedAlgs()),
-		}
-		if issuer != "" {
-			parseOpts = append(parseOpts, jwt.WithIssuer(issuer))
-		}
-		if audience != "" {
-			parseOpts = append(parseOpts, jwt.WithAudience(audience))
-		}
-		token, err := jwt.Parse(tokenStr, func(token *jwt.Token) (any, error) {
-			if !crypto.IsSupportedAlg(token.Method.Alg()) {
-				return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
+			tokenStr := strings.TrimSpace(parts[1])
+			// Build validation options: jwt/v5 validates exp/nbf/iat by default
+			// when claims are present. We add issuer, audience, and method restrictions.
+			parseOpts := []jwt.ParserOption{
+				jwt.WithValidMethods(crypto.SupportedAlgs()),
 			}
-			// Use kid to support key rotation. Fall back to static key if kid
-			// is missing or not found in JWKS (backward compatibility).
-			keyID, _ := token.Header["kid"].(string)
-			if keyID != "" {
-				if key, err := jwks.GetKey(keyID); err == nil && key != nil {
-					return key, nil
+			if issuer != "" {
+				parseOpts = append(parseOpts, jwt.WithIssuer(issuer))
+			}
+			if audience != "" {
+				parseOpts = append(parseOpts, jwt.WithAudience(audience))
+			}
+			token, err := jwt.Parse(tokenStr, func(token *jwt.Token) (any, error) {
+				if !crypto.IsSupportedAlg(token.Method.Alg()) {
+					return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
 				}
-			}
-			return jwks.publicKey, nil
-		}, parseOpts...)
+				// Use kid to support key rotation. Fall back to static key if kid
+				// is missing or not found in JWKS (backward compatibility).
+				keyID, _ := token.Header["kid"].(string)
+				if keyID != "" {
+					if key, err := jwks.GetKey(keyID); err == nil && key != nil {
+						return key, nil
+					}
+				}
+				return jwks.publicKey, nil
+			}, parseOpts...)
 
 			if err != nil || !token.Valid {
 				if required {
