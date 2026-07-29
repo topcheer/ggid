@@ -284,9 +284,9 @@ func (s *HTTPServer) handleRoleByID(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Unknown sub-path — reject
+	// Unknown sub-path — return 404 (consistent with org service)
 	if len(parts) == 2 {
-		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
+		writeJSONError(w, http.StatusNotFound, "resource not found")
 		return
 	}
 
