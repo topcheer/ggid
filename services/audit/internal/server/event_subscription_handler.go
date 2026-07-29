@@ -43,6 +43,7 @@ func (s *HTTPServer) handleEventSubscription(w http.ResponseWriter, r *http.Requ
 				"delivery":     sub.Delivery,
 				"active":       sub.Active,
 				"created_at":   sub.CreatedAt,
+				"tenant_id":    r.Header.Get("X-Tenant-ID"),
 			})
 		}
 		writeJSON(w, http.StatusCreated, sub)
@@ -55,7 +56,24 @@ func (s *HTTPServer) handleEventSubscription(w http.ResponseWriter, r *http.Requ
 			writeJSONError(w, http.StatusForbidden, "tenant context required")
 			return
 		}
+		// SECURITY: verify subscription belongs to caller's tenant
 		if s.memMapRepo2 != nil {
+			rows, _ := s.memMapRepo2.ListJSON(r.Context(), "audit_event_subscriptions")
+			var found map[string]any
+			for _, row := range rows {
+				if amGetString(row, "id") == id {
+					found = row
+					break
+				}
+			}
+			if found == nil {
+				writeJSONError(w, http.StatusNotFound, "subscription not found")
+				return
+			}
+			if wtid, ok := found["tenant_id"].(string); !ok || wtid != callerTenant {
+				writeJSONError(w, http.StatusNotFound, "subscription not found")
+				return
+			}
 			_ = s.memMapRepo2.DeleteJSON(r.Context(), "audit_event_subscriptions", id)
 		}
 		writeJSON(w, http.StatusOK, map[string]any{"status": "deleted", "id": id})

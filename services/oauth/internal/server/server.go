@@ -1829,10 +1829,8 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 			return
 		}
 
-		userIDStr := r.FormValue("user_id")
-		if userIDStr == "" {
-			userIDStr = r.Header.Get("X-User-ID")
-		}
+		// SECURITY: Only use X-User-ID header (set by gateway from JWT).
+		userIDStr := r.Header.Get("X-User-ID")
 		userID, err := uuid.Parse(userIDStr)
 		if err != nil {
 			writeJSON(w, http.StatusBadRequest, map[string]any{"error": map[string]string{"code": "invalid_argument", "message": "valid user_id or X-User-ID header required"}})
@@ -1910,10 +1908,9 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 			}
 		}
 
-		// Run consent cascade: revoke tokens/sessions for the affected scope.
-		// Extract user_id, tenant_id, scope from request query params or body.
-		userID := r.URL.Query().Get("user_id")
-		tenantID := r.URL.Query().Get("tenant_id")
+		// SECURITY: Use authenticated user from gateway, not query params.
+		userID := r.Header.Get("X-User-ID")
+		tenantID := r.Header.Get("X-Tenant-ID")
 		scope := r.URL.Query().Get("scope")
 
 		var cascadeResult map[string]any

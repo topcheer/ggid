@@ -34,9 +34,11 @@ type RehashCallback func(ctx context.Context, userID uuid.UUID, plainPassword, o
 
 // LocalProvider authenticates users whose credentials are stored in the local database.
 // Passwords are hashed with Argon2id via pkg/crypto.
-// dummyArgon2Hash is a pre-computed Argon2id hash used for timing-safe
+// dummyArgon2Hash is a pre-computed Argon2id hash in the internal format
+// (argon2id$version$memory$parallelism$salt$hash) used for timing-safe
 // user enumeration prevention when the username doesn't exist.
-var dummyArgon2Hash = "$argon2id$v=19$m=65536,t=3,p=4$AAAAAAAAAAAAAAAAAAAAAA$AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+// VerifyPassword parses this format and executes Argon2id verification.
+var dummyArgon2Hash = "argon2id$2$19456$1$1muvN4Duh4uBJcbYpvpk7g.IKg2Zr+K8NMPQkJlzFZ2m34K6SWRTSFQeS27S0ZtVUg"
 
 type LocalProvider struct {
 	store     LocalCredentialStore
