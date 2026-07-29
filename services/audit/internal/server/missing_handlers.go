@@ -126,12 +126,21 @@ func (s *HTTPServer) handleWebhooksList(w http.ResponseWriter, r *http.Request) 
 			whID = pathParts[len(pathParts)-1]
 		}
 		if whID != "" {
+			callerTenant := r.Header.Get("X-Tenant-ID")
 			globalAlertWebhooks.mu.Lock()
 			filtered := globalAlertWebhooks.webhooks[:0]
 			for _, wh := range globalAlertWebhooks.webhooks {
-				if wh["id"] != whID {
-					filtered = append(filtered, wh)
+				if wh["id"] == whID {
+					// SECURITY: verify webhook belongs to caller's tenant
+					if callerTenant != "" {
+						if wtid, ok := wh["tenant_id"].(string); ok && wtid != callerTenant {
+							filtered = append(filtered, wh) // keep other tenants' webhooks
+							continue
+						}
+					}
+					continue // remove matched webhook
 				}
+				filtered = append(filtered, wh)
 			}
 			globalAlertWebhooks.webhooks = filtered
 			globalAlertWebhooks.mu.Unlock()

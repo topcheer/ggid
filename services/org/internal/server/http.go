@@ -871,6 +871,19 @@ func (s *HTTPServer) updateDept(w http.ResponseWriter, r *http.Request, id uuid.
 }
 
 func (s *HTTPServer) updateTeam(w http.ResponseWriter, r *http.Request, id uuid.UUID) {
+	// SECURITY: verify team's parent org belongs to caller's tenant (same as GET/DELETE)
+	team, err := s.teamSvc.Get(r.Context(), id)
+	if err != nil {
+		writeServiceError(w, err)
+		return
+	}
+	if tid := s.getTenantID(r); tid != uuid.Nil {
+		parentOrg, err := s.orgSvc.Get(r.Context(), team.OrgID)
+		if err != nil || parentOrg.TenantID != tid {
+			writeJSONError(w, http.StatusNotFound, "team not found")
+			return
+		}
+	}
 	var req struct {
 		Name        string `json:"name"`
 		Description string `json:"description"`
@@ -878,20 +891,6 @@ func (s *HTTPServer) updateTeam(w http.ResponseWriter, r *http.Request, id uuid.
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		writeJSONError(w, http.StatusBadRequest, "invalid JSON body")
 		return
-	}
-	team, err := s.teamSvc.Get(r.Context(), id)
-	if err != nil {
-		writeServiceError(w, err)
-		return
-	}
-	// SECURITY: Verify team's parent org belongs to caller's tenant
-	if tid := s.getTenantID(r); tid != uuid.Nil {
-		parentOrg, orgErr := s.orgSvc.Get(r.Context(), team.OrgID)
-		if orgErr != nil || parentOrg.TenantID != tid {
-			writeJSONError(w, http.StatusNotFound, "team not found")
-			return
-		}
-	}
 	}
 	if req.Name != "" {
 		team.Name = req.Name

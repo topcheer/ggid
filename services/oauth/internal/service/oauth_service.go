@@ -2849,7 +2849,9 @@ func (s *OAuthService) ExchangeToken(ctx context.Context, req *TokenExchangeRequ
 	if resource == "" {
 		resource = req.Audience
 	}
-	return s.ExchangeTokenRFC8693(ctx, &RFC8693ExchangeRequest{
+	// Legacy wrapper: use exchangeTokenInternal (no client auth for backward compat).
+	// External HTTP callers go through ExchangeTokenRFC8693 which enforces client auth.
+	return s.exchangeTokenInternal(ctx, &RFC8693ExchangeRequest{
 		TenantID:         req.TenantID,
 		ClientID:         req.ClientID,
 		SubjectToken:     req.SubjectToken,
