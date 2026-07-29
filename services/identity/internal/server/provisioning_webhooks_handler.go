@@ -12,8 +12,9 @@ import (
 // provisioningWebhook configures outbound webhooks for IdP provisioning callbacks.
 type provisioningWebhook struct {
 	ID        string   `json:"id"`
+	TenantID  string   `json:"tenant_id"`
 	URL       string   `json:"url"`
-	Events    []string `json:"events"`    // user.created, user.updated, user.deactivated, user.deleted
+	Events    []string `json:"events"` // user.created, user.updated, user.deactivated, user.deleted
 	Secret    string   `json:"secret,omitempty"`
 	Active    bool     `json:"active"`
 	CreatedAt string   `json:"created_at"`
@@ -58,8 +59,14 @@ func (h *HTTPHandler) handleProvisioningWebhooks(w http.ResponseWriter, r *http.
 			}
 		}
 
+		tenantID := r.Header.Get("X-Tenant-ID")
+		if tenantID == "" {
+			writeJSONError(w, http.StatusForbidden, "tenant context required")
+			return
+		}
 		wh := &provisioningWebhook{
 			ID:        uuid.New().String(),
+			TenantID:  tenantID,
 			URL:       req.URL,
 			Events:    req.Events,
 			Secret:    req.Secret,
@@ -74,10 +81,17 @@ func (h *HTTPHandler) handleProvisioningWebhooks(w http.ResponseWriter, r *http.
 		writeJSON(w, http.StatusCreated, wh)
 
 	case http.MethodGet:
+		tenantID := r.Header.Get("X-Tenant-ID")
+		if tenantID == "" {
+			writeJSONError(w, http.StatusForbidden, "tenant context required")
+			return
+		}
 		provisioningWebhookStore.RLock()
 		result := []*provisioningWebhook{}
 		for _, wh := range provisioningWebhookStore.webhooks {
-			result = append(result, wh)
+			if wh.TenantID == tenantID {
+				result = append(result, wh)
+			}
 		}
 		provisioningWebhookStore.RUnlock()
 
@@ -87,6 +101,11 @@ func (h *HTTPHandler) handleProvisioningWebhooks(w http.ResponseWriter, r *http.
 		})
 
 	case http.MethodDelete:
+		tenantID := r.Header.Get("X-Tenant-ID")
+		if tenantID == "" {
+			writeJSONError(w, http.StatusForbidden, "tenant context required")
+			return
+		}
 		id := r.URL.Query().Get("id")
 		if id == "" {
 			writeJSONError(w, http.StatusBadRequest, "id query parameter is required")
@@ -94,9 +113,11 @@ func (h *HTTPHandler) handleProvisioningWebhooks(w http.ResponseWriter, r *http.
 		}
 
 		provisioningWebhookStore.Lock()
-		_, exists := provisioningWebhookStore.webhooks[id]
-		if exists {
+		wh, exists := provisioningWebhookStore.webhooks[id]
+		if exists && wh.TenantID == tenantID {
 			delete(provisioningWebhookStore.webhooks, id)
+		} else {
+			exists = false // tenant mismatch = not found
 		}
 		provisioningWebhookStore.Unlock()
 

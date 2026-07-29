@@ -112,6 +112,7 @@ func TestFeatureFlagsHandler(t *testing.T) {
 
 	// GET
 	req := httptest.NewRequest("GET", "/api/v1/admin/feature-flags", nil)
+	req.Header.Set("X-Scopes", "tenant:admin")
 	w := httptest.NewRecorder()
 	h.handleFeatureFlags(w, req)
 	if w.Code != http.StatusOK {
@@ -127,6 +128,7 @@ func TestFeatureFlagsHandler(t *testing.T) {
 	// POST create
 	body := `{"name":"new-flag","enabled":false,"rollout_pct":0,"target_audience":"all"}`
 	req = httptest.NewRequest("POST", "/api/v1/admin/feature-flags", strings.NewReader(body))
+	req.Header.Set("X-Scopes", "tenant:admin")
 	w = httptest.NewRecorder()
 	h.handleFeatureFlags(w, req)
 	if w.Code != http.StatusCreated {
@@ -135,6 +137,7 @@ func TestFeatureFlagsHandler(t *testing.T) {
 
 	// Toggle
 	req = httptest.NewRequest("POST", "/api/v1/admin/feature-flags/new-flag/toggle", nil)
+	req.Header.Set("X-Scopes", "tenant:admin")
 	w = httptest.NewRecorder()
 	h.handleFeatureFlags(w, req)
 	if w.Code != http.StatusOK {

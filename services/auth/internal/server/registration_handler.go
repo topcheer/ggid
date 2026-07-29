@@ -10,8 +10,8 @@ import (
 	"time"
 
 	"github.com/ggid/ggid/pkg/crypto"
-	"github.com/google/uuid"
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -42,7 +42,9 @@ func newVerificationRepo(pool *pgxpool.Pool) *verificationRepo {
 }
 
 func (r *verificationRepo) EnsureSchema(ctx context.Context) error {
-	if r.pool == nil { return nil }
+	if r.pool == nil {
+		return nil
+	}
 	_, err := r.pool.Exec(ctx, `
 		CREATE TABLE IF NOT EXISTS verification_tokens (
 			id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -62,7 +64,9 @@ func (r *verificationRepo) CreateToken(ctx context.Context, userID, tokenType st
 		Token: uuid.New().String(), Type: tokenType,
 		ExpiresAt: time.Now().UTC().Add(ttl),
 	}
-	if r.pool == nil { return token, nil }
+	if r.pool == nil {
+		return token, nil
+	}
 	_, err := r.pool.Exec(ctx,
 		`INSERT INTO verification_tokens (user_id,token,type,expires_at) VALUES ($1,$2,$3,$4)`,
 		token.UserID, token.Token, token.Type, token.ExpiresAt)
@@ -70,19 +74,25 @@ func (r *verificationRepo) CreateToken(ctx context.Context, userID, tokenType st
 }
 
 func (r *verificationRepo) ValidateToken(ctx context.Context, tokenStr, tokenType string) (*VerificationToken, error) {
-	if r.pool == nil { return nil, fmt.Errorf("not found") }
+	if r.pool == nil {
+		return nil, fmt.Errorf("not found")
+	}
 	t := &VerificationToken{}
 	err := r.pool.QueryRow(ctx,
 		`SELECT id,user_id,token,type,expires_at,used_at FROM verification_tokens
 		 WHERE token=$1 AND type=$2 AND used_at IS NULL AND expires_at > now()`,
 		tokenStr, tokenType,
 	).Scan(&t.ID, &t.UserID, &t.Token, &t.Type, &t.ExpiresAt, &t.UsedAt)
-	if err != nil { return nil, fmt.Errorf("invalid or expired token") }
+	if err != nil {
+		return nil, fmt.Errorf("invalid or expired token")
+	}
 	return t, nil
 }
 
 func (r *verificationRepo) MarkUsed(ctx context.Context, tokenID string) error {
-	if r.pool == nil { return nil }
+	if r.pool == nil {
+		return nil
+	}
 	_, err := r.pool.Exec(ctx, `UPDATE verification_tokens SET used_at=now() WHERE id=$1`, tokenID)
 	return err
 }
@@ -95,13 +105,18 @@ func validateEmail(email string) bool {
 }
 
 func validatePassword(password string) bool {
-	if len(password) < 8 { return false }
+	if len(password) < 8 {
+		return false
+	}
 	hasUpper, hasLower, hasDigit := false, false, false
 	for _, c := range password {
 		switch {
-		case c >= 'A' && c <= 'Z': hasUpper = true
-		case c >= 'a' && c <= 'z': hasLower = true
-		case c >= '0' && c <= '9': hasDigit = true
+		case c >= 'A' && c <= 'Z':
+			hasUpper = true
+		case c >= 'a' && c <= 'z':
+			hasLower = true
+		case c >= '0' && c <= '9':
+			hasDigit = true
 		}
 	}
 	return hasUpper && hasLower && hasDigit
@@ -110,6 +125,7 @@ func validatePassword(password string) bool {
 // --- HTTP Handlers ---
 
 // POST /api/v1/auth/register
+//
 //nolint:unused// alternative handler
 func (h *Handler) handleRegister(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
@@ -127,6 +143,17 @@ func (h *Handler) handleRegister(w http.ResponseWriter, r *http.Request) {
 	}
 	if len(req.Username) < 3 || len(req.Username) > 64 {
 		writeError(w, http.StatusBadRequest, "username must be 3-64 characters")
+		return
+	}
+	// Reject usernames starting or ending with special characters
+	firstChar := req.Username[0]
+	lastChar := req.Username[len(req.Username)-1]
+	if firstChar == '.' || firstChar == '-' || firstChar == '_' {
+		writeError(w, http.StatusBadRequest, "username must not start with a special character")
+		return
+	}
+	if lastChar == '.' || lastChar == '-' || lastChar == '_' {
+		writeError(w, http.StatusBadRequest, "username must not end with a special character")
 		return
 	}
 	for _, c := range req.Username {
@@ -220,16 +247,17 @@ func (h *Handler) handleRegister(w http.ResponseWriter, r *http.Request) {
 	}
 
 	writeJSON(w, http.StatusCreated, map[string]any{
-		"status":                "registered",
-		"user_id":               userID.String(),
-		"state":                 "active",
-		"verification_required": false,
+		"status":                  "registered",
+		"user_id":                 userID.String(),
+		"state":                   "active",
+		"verification_required":   false,
 		"email_verification_sent": verificationSent,
-		"message":               "registration successful",
+		"message":                 "registration successful",
 	})
 }
 
 // GET /api/v1/auth/verify-email?token=xxx
+//
 //nolint:unused// alternative handler
 func (h *Handler) handleVerifyEmail(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
@@ -258,13 +286,16 @@ func (h *Handler) handleVerifyEmail(w http.ResponseWriter, r *http.Request) {
 }
 
 // POST /api/v1/auth/forgot-password
+//
 //nolint:unused// alternative handler
 func (h *Handler) handleForgotPassword(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
-	var req struct{ Email string `json:"email"` }
+	var req struct {
+		Email string `json:"email"`
+	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		writeError(w, http.StatusBadRequest, "invalid JSON")
 		return
@@ -284,6 +315,7 @@ func (h *Handler) handleForgotPassword(w http.ResponseWriter, r *http.Request) {
 }
 
 // POST /api/v1/auth/reset-password
+//
 //nolint:unused// alternative handler
 func (h *Handler) handleResetPassword(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
@@ -323,6 +355,7 @@ func (h *Handler) handleResetPassword(w http.ResponseWriter, r *http.Request) {
 }
 
 // PUT /api/v1/auth/profile
+//
 //nolint:unused// alternative handler
 func (h *Handler) handleProfileUpdate(w http.ResponseWriter, r *http.Request) {
 	// GET returns current user profile from JWT
@@ -363,10 +396,10 @@ func (h *Handler) handleProfileUpdate(w http.ResponseWriter, r *http.Request) {
 	}
 	needsReverification := req.Email != ""
 	writeJSON(w, http.StatusOK, map[string]any{
-		"status": "updated",
-		"display_name": req.DisplayName,
-		"phone": req.Phone,
-		"email_changed": needsReverification,
+		"status":                  "updated",
+		"display_name":            req.DisplayName,
+		"phone":                   req.Phone,
+		"email_changed":           needsReverification,
 		"reverification_required": needsReverification,
 	})
 }

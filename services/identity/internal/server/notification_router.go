@@ -26,22 +26,23 @@ const (
 
 // NotificationRule defines severity-based routing.
 type NotificationRule struct {
-	ID         string              `json:"id"`
-	Severity   string              `json:"severity"` // critical, high, medium, low
-	Channels   []NotificationChannel `json:"channels"`
-	Enabled    bool                `json:"enabled"`
-	CreatedAt  time.Time           `json:"created_at"`
+	ID        string                `json:"id"`
+	TenantID  string                `json:"tenant_id"`
+	Severity  string                `json:"severity"` // critical, high, medium, low
+	Channels  []NotificationChannel `json:"channels"`
+	Enabled   bool                  `json:"enabled"`
+	CreatedAt time.Time             `json:"created_at"`
 }
 
 // NotificationLogEntry records a sent notification.
 type NotificationLogEntry struct {
-	ID        string    `json:"id"`
-	Rule      string    `json:"rule"`
-	Severity  string    `json:"severity"`
-	Channel   string    `json:"channel"`
-	Subject   string    `json:"subject"`
-	Status    string    `json:"status"` // sent, failed, escalated
-	SentAt    time.Time `json:"sent_at"`
+	ID       string    `json:"id"`
+	Rule     string    `json:"rule"`
+	Severity string    `json:"severity"`
+	Channel  string    `json:"channel"`
+	Subject  string    `json:"subject"`
+	Status   string    `json:"status"` // sent, failed, escalated
+	SentAt   time.Time `json:"sent_at"`
 }
 
 // notificationRepo manages notification rules + log in PG.
@@ -54,11 +55,13 @@ func newNotificationRepo(pool *pgxpool.Pool) *notificationRepo {
 }
 
 func (r *notificationRepo) EnsureSchema(ctx context.Context) error {
-	if r.pool == nil { return nil }
+	if r.pool == nil {
+		return nil
+	}
 	_, err := r.pool.Exec(ctx, `
 		CREATE TABLE IF NOT EXISTS notification_rules (
 			id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-			severity TEXT NOT NULL, channels TEXT[] NOT NULL,
+			tenant_id UUID, severity TEXT NOT NULL, channels TEXT[] NOT NULL,
 			enabled BOOLEAN DEFAULT TRUE, created_at TIMESTAMPTZ DEFAULT now()
 		);
 		CREATE TABLE IF NOT EXISTS notification_log (
@@ -68,57 +71,92 @@ func (r *notificationRepo) EnsureSchema(ctx context.Context) error {
 			sent_at TIMESTAMPTZ DEFAULT now()
 		);
 		CREATE INDEX IF NOT EXISTS idx_notif_log_sent ON notification_log(sent_at DESC);
+		CREATE INDEX IF NOT EXISTS idx_notif_rules_tenant ON notification_rules(tenant_id);
 	`)
 	return err
 }
 
 func (r *notificationRepo) CreateRule(ctx context.Context, rule *NotificationRule) error {
-	if r.pool == nil { return nil }
-	if rule.ID == "" { rule.ID = uuid.New().String() }
+	if r.pool == nil {
+		return nil
+	}
+	if rule.ID == "" {
+		rule.ID = uuid.New().String()
+	}
 	channels := make([]string, len(rule.Channels))
-	for i, c := range rule.Channels { channels[i] = string(c) }
+	for i, c := range rule.Channels {
+		channels[i] = string(c)
+	}
+	var tenantID any
+	if rule.TenantID != "" {
+		if tid, err := uuid.Parse(rule.TenantID); err == nil {
+			tenantID = tid
+		}
+	}
 	_, err := r.pool.Exec(ctx,
-		`INSERT INTO notification_rules (severity,channels,enabled) VALUES ($1,$2,$3)`,
-		rule.Severity, channels, rule.Enabled)
+		`INSERT INTO notification_rules (tenant_id,severity,channels,enabled) VALUES ($1,$2,$3,$4)`,
+		tenantID, rule.Severity, channels, rule.Enabled)
 	return err
 }
 
-func (r *notificationRepo) ListRules(ctx context.Context) ([]*NotificationRule, error) {
-	if r.pool == nil { return []*NotificationRule{}, nil }
-	rows, err := r.pool.Query(ctx, `SELECT id,severity,channels,enabled,created_at FROM notification_rules ORDER BY created_at DESC`)
-	if err != nil { return nil, err }
+func (r *notificationRepo) ListRules(ctx context.Context, tenantID string) ([]*NotificationRule, error) {
+	if r.pool == nil {
+		return []*NotificationRule{}, nil
+	}
+	rows, err := r.pool.Query(ctx,
+		`SELECT id,severity,channels,enabled,created_at FROM notification_rules WHERE tenant_id::text = $1 OR tenant_id IS NULL ORDER BY created_at DESC`,
+		tenantID)
+	if err != nil {
+		return nil, err
+	}
 	defer rows.Close()
 	var result []*NotificationRule
 	for rows.Next() {
 		rule := &NotificationRule{}
 		var channels []string
-		if err := rows.Scan(&rule.ID, &rule.Severity, &channels, &rule.Enabled, &rule.CreatedAt); err != nil { continue }
+		if err := rows.Scan(&rule.ID, &rule.Severity, &channels, &rule.Enabled, &rule.CreatedAt); err != nil {
+			continue
+		}
 		rule.Channels = make([]NotificationChannel, len(channels))
-		for i, c := range channels { rule.Channels[i] = NotificationChannel(c) }
+		for i, c := range channels {
+			rule.Channels[i] = NotificationChannel(c)
+		}
 		result = append(result, rule)
 	}
 	return result, nil
 }
 
 func (r *notificationRepo) LogNotification(ctx context.Context, entry *NotificationLogEntry) {
-	if r.pool == nil || entry == nil { return }
-	if entry.ID == "" { entry.ID = uuid.New().String() }
+	if r.pool == nil || entry == nil {
+		return
+	}
+	if entry.ID == "" {
+		entry.ID = uuid.New().String()
+	}
 	r.pool.Exec(ctx,
 		`INSERT INTO notification_log (rule,severity,channel,subject,status) VALUES ($1,$2,$3,$4,$5)`,
 		entry.Rule, entry.Severity, entry.Channel, entry.Subject, entry.Status)
 }
 
 func (r *notificationRepo) ListLog(ctx context.Context, limit int) ([]*NotificationLogEntry, error) {
-	if r.pool == nil { return []*NotificationLogEntry{}, nil }
-	if limit <= 0 || limit > 100 { limit = 50 }
+	if r.pool == nil {
+		return []*NotificationLogEntry{}, nil
+	}
+	if limit <= 0 || limit > 100 {
+		limit = 50
+	}
 	rows, err := r.pool.Query(ctx,
 		`SELECT id,rule,severity,channel,subject,status,sent_at FROM notification_log ORDER BY sent_at DESC LIMIT $1`, limit)
-	if err != nil { return nil, err }
+	if err != nil {
+		return nil, err
+	}
 	defer rows.Close()
 	var result []*NotificationLogEntry
 	for rows.Next() {
 		e := &NotificationLogEntry{}
-		if err := rows.Scan(&e.ID, &e.Rule, &e.Severity, &e.Channel, &e.Subject, &e.Status, &e.SentAt); err != nil { continue }
+		if err := rows.Scan(&e.ID, &e.Rule, &e.Severity, &e.Channel, &e.Subject, &e.Status, &e.SentAt); err != nil {
+			continue
+		}
 		result = append(result, e)
 	}
 	return result, nil
@@ -160,16 +198,20 @@ func (h *HTTPHandler) handleNotificationRules(w http.ResponseWriter, r *http.Req
 		}
 		rule.Enabled = true
 		rule.CreatedAt = time.Now().UTC()
+		rule.TenantID = r.Header.Get("X-Tenant-ID")
 		if h.notificationRepo != nil {
 			h.notificationRepo.CreateRule(r.Context(), &rule)
 		}
 		writeJSON(w, http.StatusCreated, rule)
 	case http.MethodGet:
+		tenantID := r.Header.Get("X-Tenant-ID")
 		var rules []*NotificationRule
 		if h.notificationRepo != nil {
-			rules, _ = h.notificationRepo.ListRules(r.Context())
+			rules, _ = h.notificationRepo.ListRules(r.Context(), tenantID)
 		}
-		if rules == nil { rules = []*NotificationRule{} }
+		if rules == nil {
+			rules = []*NotificationRule{}
+		}
 		writeJSON(w, http.StatusOK, map[string]any{"rules": rules, "count": len(rules)})
 	default:
 		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
@@ -185,7 +227,9 @@ func (h *HTTPHandler) handleNotificationLog(w http.ResponseWriter, r *http.Reque
 	if h.notificationRepo != nil {
 		log, _ = h.notificationRepo.ListLog(r.Context(), 50)
 	}
-	if log == nil { log = []*NotificationLogEntry{} }
+	if log == nil {
+		log = []*NotificationLogEntry{}
+	}
 	writeJSON(w, http.StatusOK, map[string]any{"notifications": log, "count": len(log)})
 }
 

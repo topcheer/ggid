@@ -242,6 +242,11 @@ func (h *Handler) getSAMLConfig(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) putSAMLConfig(w http.ResponseWriter, r *http.Request) {
+	// SECURITY: modifying SAML configuration requires admin scope
+	if !hasAdminScope(r) {
+		writeError(w, http.StatusForbidden, "admin scope required")
+		return
+	}
 	var req map[string]any
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		writeError(w, http.StatusBadRequest, "invalid JSON")

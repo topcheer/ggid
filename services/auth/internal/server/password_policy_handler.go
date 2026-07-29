@@ -11,10 +11,15 @@ func (h *Handler) handlePasswordPolicyCheck(w http.ResponseWriter, r *http.Reque
 		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
+	// SECURITY: require tenant context to prevent unauthenticated probing of password rules
+	if r.Header.Get("X-Tenant-ID") == "" {
+		writeError(w, http.StatusForbidden, "tenant context required")
+		return
+	}
 	var req struct {
-		Password  string   `json:"password"`
-		UserID    string   `json:"user_id"`
-		History   []string `json:"history"`
+		Password string   `json:"password"`
+		UserID   string   `json:"user_id"`
+		History  []string `json:"history"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		writeError(w, http.StatusBadRequest, "invalid JSON")
@@ -32,16 +37,28 @@ func (h *Handler) handlePasswordPolicyCheck(w http.ResponseWriter, r *http.Reque
 	hasUpper, hasLower, hasDigit, hasSpecial := false, false, false, false
 	for _, c := range req.Password {
 		switch {
-			case c >= 'A' && c <= 'Z': hasUpper = true
-		case c >= 'a' && c <= 'z': hasLower = true
-		case c >= '0' && c <= '9': hasDigit = true
-		default: hasSpecial = true
+		case c >= 'A' && c <= 'Z':
+			hasUpper = true
+		case c >= 'a' && c <= 'z':
+			hasLower = true
+		case c >= '0' && c <= '9':
+			hasDigit = true
+		default:
+			hasSpecial = true
 		}
 	}
-	if !hasUpper { violations = append(violations, map[string]string{"rule": "complexity", "message": "must contain uppercase"}) }
-	if !hasLower { violations = append(violations, map[string]string{"rule": "complexity", "message": "must contain lowercase"}) }
-	if !hasDigit { violations = append(violations, map[string]string{"rule": "complexity", "message": "must contain digit"}) }
-	if !hasSpecial { violations = append(violations, map[string]string{"rule": "complexity", "message": "must contain special character"}) }
+	if !hasUpper {
+		violations = append(violations, map[string]string{"rule": "complexity", "message": "must contain uppercase"})
+	}
+	if !hasLower {
+		violations = append(violations, map[string]string{"rule": "complexity", "message": "must contain lowercase"})
+	}
+	if !hasDigit {
+		violations = append(violations, map[string]string{"rule": "complexity", "message": "must contain digit"})
+	}
+	if !hasSpecial {
+		violations = append(violations, map[string]string{"rule": "complexity", "message": "must contain special character"})
+	}
 	for _, h := range req.History {
 		if h == req.Password {
 			violations = append(violations, map[string]string{"rule": "history", "message": "password matches a recent password"})
@@ -50,8 +67,8 @@ func (h *Handler) handlePasswordPolicyCheck(w http.ResponseWriter, r *http.Reque
 	}
 
 	writeJSON(w, http.StatusOK, map[string]any{
-		"is_valid":    len(violations) == 0,
-		"violations":  violations,
+		"is_valid":        len(violations) == 0,
+		"violations":      violations,
 		"violation_count": len(violations),
 	})
 }

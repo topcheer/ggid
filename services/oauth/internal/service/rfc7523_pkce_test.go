@@ -113,12 +113,12 @@ func TestCovSprint12_PollCIBA_Approved(t *testing.T) {
 	svc, clientRepo, _, _ := newTestOAuthService()
 
 	client := &domain.OAuthClient{
-		ID:            uuid.New(),
-		TenantID:      testTenantID,
-		ClientID:      "ciba-poll-client",
-		Type:          domain.ClientTypePublic,
-		GrantTypes:    []string{"urn:openid:params:grant-type:ciba"},
-		Enabled:       true,
+		ID:         uuid.New(),
+		TenantID:   testTenantID,
+		ClientID:   "ciba-poll-client",
+		Type:       domain.ClientTypePublic,
+		GrantTypes: []string{"urn:openid:params:grant-type:ciba"},
+		Enabled:    true,
 	}
 	_ = clientRepo.CreateClient(context.Background(), client)
 
@@ -145,12 +145,12 @@ func TestCovSprint12_PollCIBA_Denied(t *testing.T) {
 	svc, clientRepo, _, _ := newTestOAuthService()
 
 	client := &domain.OAuthClient{
-		ID:            uuid.New(),
-		TenantID:      testTenantID,
-		ClientID:      "ciba-deny-client",
-		Type:          domain.ClientTypePublic,
-		GrantTypes:    []string{"urn:openid:params:grant-type:ciba"},
-		Enabled:       true,
+		ID:         uuid.New(),
+		TenantID:   testTenantID,
+		ClientID:   "ciba-deny-client",
+		Type:       domain.ClientTypePublic,
+		GrantTypes: []string{"urn:openid:params:grant-type:ciba"},
+		Enabled:    true,
 	}
 	_ = clientRepo.CreateClient(context.Background(), client)
 
@@ -172,12 +172,12 @@ func TestCovSprint12_PollCIBA_SlowDown(t *testing.T) {
 	svc, clientRepo, _, _ := newTestOAuthService()
 
 	client := &domain.OAuthClient{
-		ID:            uuid.New(),
-		TenantID:      testTenantID,
-		ClientID:      "ciba-slow-client",
-		Type:          domain.ClientTypePublic,
-		GrantTypes:    []string{"urn:openid:params:grant-type:ciba"},
-		Enabled:       true,
+		ID:         uuid.New(),
+		TenantID:   testTenantID,
+		ClientID:   "ciba-slow-client",
+		Type:       domain.ClientTypePublic,
+		GrantTypes: []string{"urn:openid:params:grant-type:ciba"},
+		Enabled:    true,
 	}
 	_ = clientRepo.CreateClient(context.Background(), client)
 
@@ -200,12 +200,12 @@ func TestCovSprint12_PollCIBA_Expired(t *testing.T) {
 	svc, clientRepo, _, _ := newTestOAuthService()
 
 	client := &domain.OAuthClient{
-		ID:            uuid.New(),
-		TenantID:      testTenantID,
-		ClientID:      "ciba-exp-client",
-		Type:          domain.ClientTypePublic,
-		GrantTypes:    []string{"urn:openid:params:grant-type:ciba"},
-		Enabled:       true,
+		ID:         uuid.New(),
+		TenantID:   testTenantID,
+		ClientID:   "ciba-exp-client",
+		Type:       domain.ClientTypePublic,
+		GrantTypes: []string{"urn:openid:params:grant-type:ciba"},
+		Enabled:    true,
 	}
 	_ = clientRepo.CreateClient(context.Background(), client)
 
@@ -571,9 +571,9 @@ func TestUserInfo_ValidToken(t *testing.T) {
 func TestDynReg_Success(t *testing.T) {
 	svc, _, _, _ := newTestOAuthService()
 	resp, err := svc.DynamicClientRegister(testCtx(), &DynamicRegistrationRequest{
-		ClientName:   "DynReg App",
-		RedirectURIs: []string{"https://app.example.com/cb"},
-		GrantTypes:   []string{"authorization_code"},
+		ClientName:    "DynReg App",
+		RedirectURIs:  []string{"https://app.example.com/cb"},
+		GrantTypes:    []string{"authorization_code"},
 		ResponseTypes: []string{"code"},
 	})
 	if err != nil {

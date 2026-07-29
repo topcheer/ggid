@@ -25,12 +25,20 @@ func TestDefaultSeverityRouting(t *testing.T) {
 
 func TestNotificationRepo_NilPool(t *testing.T) {
 	repo := newNotificationRepo(nil)
-	rules, err := repo.ListRules(nil)
-	if err != nil { t.Fatalf("nil pool should not error: %v", err) }
-	if len(rules) != 0 { t.Error("nil pool should return empty") }
+	rules, err := repo.ListRules(nil, "")
+	if err != nil {
+		t.Fatalf("nil pool should not error: %v", err)
+	}
+	if len(rules) != 0 {
+		t.Error("nil pool should return empty")
+	}
 	log, err := repo.ListLog(nil, 10)
-	if err != nil { t.Fatalf("nil pool should not error: %v", err) }
-	if len(log) != 0 { t.Error("nil pool should return empty") }
+	if err != nil {
+		t.Fatalf("nil pool should not error: %v", err)
+	}
+	if len(log) != 0 {
+		t.Error("nil pool should return empty")
+	}
 }
 
 func TestNotificationRepo_CreateRuleNilPool(t *testing.T) {
@@ -42,7 +50,13 @@ func TestNotificationRepo_CreateRuleNilPool(t *testing.T) {
 }
 
 func TestNotificationChannel_Constants(t *testing.T) {
-	if ChEmail != "email" { t.Error("email mismatch") }
-	if ChSlack != "slack" { t.Error("slack mismatch") }
-	if ChPagerDuty != "pagerduty" { t.Error("pagerduty mismatch") }
+	if ChEmail != "email" {
+		t.Error("email mismatch")
+	}
+	if ChSlack != "slack" {
+		t.Error("slack mismatch")
+	}
+	if ChPagerDuty != "pagerduty" {
+		t.Error("pagerduty mismatch")
+	}
 }

@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/ggid/ggid/pkg/errors"
+	"github.com/ggid/ggid/services/oauth/internal/domain"
 	"github.com/google/uuid"
 )
 
@@ -186,8 +187,21 @@ func (s *OAuthService) PollCIBAToken(ctx context.Context, tenantID uuid.UUID, au
 	if clientID != entry.ClientID.String() && clientID != entry.ClientIDSrc {
 		return nil, &CIBAError{Err: "invalid_grant", Desc: "auth_req_id was not issued to this client"}
 	}
-	// P1-3: Verify client credentials for confidential clients (RFC 9126 §7)
-	if clientSecret != "" {
+	// SECURITY (RFC 9126 §7): Authenticate the client.
+	// - Confidential clients MUST present a valid secret.
+	// - Public clients rely on the auth_req_id binding (already verified above).
+	// Previously, empty clientSecret bypassed auth entirely, allowing
+	// confidential clients to poll without credentials.
+	client, _ := s.GetClientForAuth(ctx, clientID)
+	if client != nil && client.Type == domain.ClientTypeConfidential {
+		if clientSecret == "" {
+			return nil, &CIBAError{Err: "invalid_client", Desc: "client authentication required"}
+		}
+		if err := s.AuthenticateClient(ctx, clientID, clientSecret); err != nil {
+			return nil, &CIBAError{Err: "invalid_client", Desc: "client authentication failed"}
+		}
+	} else if clientSecret != "" {
+		// Public client provided a secret — verify it anyway for defense-in-depth
 		if err := s.AuthenticateClient(ctx, clientID, clientSecret); err != nil {
 			return nil, &CIBAError{Err: "invalid_client", Desc: "client authentication failed"}
 		}

@@ -49,7 +49,25 @@ var (
 // PUT /api/v1/admin/feature-flags/{name} (toggle via PUT — Console-compatible)
 // POST /api/v1/admin/feature-flags/{name}/toggle
 // DELETE /api/v1/admin/feature-flags/{name}
+// hasAdminScope checks if the request has tenant:admin or platform:admin scope.
+// Defense-in-depth: the gateway adminOnlyPaths also enforces this.
+func hasAdminScope(r *http.Request) bool {
+	scopes := r.Header.Get("X-Scopes")
+	for _, s := range strings.Split(scopes, ",") {
+		s = strings.TrimSpace(s)
+		if s == "platform:admin" || s == "tenant:admin" {
+			return true
+		}
+	}
+	return false
+}
+
 func (h *Handler) handleFeatureFlags(w http.ResponseWriter, r *http.Request) {
+	// SECURITY: admin scope required (defense-in-depth alongside gateway adminOnlyPaths)
+	if !hasAdminScope(r) {
+		writeError(w, http.StatusForbidden, "admin scope required")
+		return
+	}
 	if r.URL.Path == "/api/v1/admin/feature-flags" && r.Method == http.MethodGet {
 		flagMu.RLock()
 		defer flagMu.RUnlock()
