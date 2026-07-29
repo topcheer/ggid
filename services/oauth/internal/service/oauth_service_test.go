@@ -134,6 +134,14 @@ func (m *mockTokenRepo) RevokeRefreshToken(_ context.Context, _ uuid.UUID, token
 	return nil
 }
 func (m *mockTokenRepo) RevokeAllRefreshTokens(_ context.Context, _ uuid.UUID, _ uuid.UUID) error { return nil }
+func (m *mockTokenRepo) ConsumeRefreshToken(_ context.Context, _ uuid.UUID, tokenHash string) error {
+	for _, rt := range m.refreshTokens {
+		if rt.TokenHash == tokenHash {
+			rt.Used = true
+		}
+	}
+	return nil
+}
 
 // --- Mock KeyProvider ---
 
