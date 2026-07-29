@@ -62,6 +62,18 @@ func hasAdminScope(r *http.Request) bool {
 	return false
 }
 
+// hasPlatformAdminScope checks ONLY for platform:admin (not tenant:admin).
+// Use this for operations that affect global/platform-level settings.
+func hasPlatformAdminScope(r *http.Request) bool {
+	scopes := r.Header.Get("X-Scopes")
+	for _, s := range strings.Split(scopes, ",") {
+		if strings.TrimSpace(s) == "platform:admin" {
+			return true
+		}
+	}
+	return false
+}
+
 func (h *Handler) handleFeatureFlags(w http.ResponseWriter, r *http.Request) {
 	// SECURITY: admin scope required (defense-in-depth alongside gateway adminOnlyPaths)
 	if !hasAdminScope(r) {

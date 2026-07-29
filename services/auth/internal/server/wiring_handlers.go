@@ -42,8 +42,13 @@ func (h *Handler) handleImpersonate(w http.ResponseWriter, r *http.Request) {
 	}
 	// SECURITY: verify the impersonator belongs to the same tenant as the target.
 	headerTenantID := r.Header.Get("X-Tenant-ID")
-	if headerTenantID != "" && req.TenantID != "" {
-		if headerTenantID != req.TenantID {
+	if headerTenantID != "" {
+		// Defense-in-depth: validate UUID format
+		if _, err := uuid.Parse(headerTenantID); err != nil {
+			writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid X-Tenant-ID header"})
+			return
+		}
+		if req.TenantID != "" && headerTenantID != req.TenantID {
 			// Cross-tenant impersonation requires platform:admin scope.
 			scopesStr := r.Header.Get("X-User-Scopes")
 			if scopesStr == "" {
@@ -148,13 +153,13 @@ func (h *Handler) handleImpersonate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	writeJSON(w, http.StatusCreated, map[string]any{
-		"token_id":      tok.TokenID,
-		"access_token":  signedToken,
-		"token_type":    "Bearer",
-		"expires_in":    900,
-		"impersonator":  req.ImpersonatorID,
-		"target_user":   req.TargetUserID,
-		"reason":        req.Reason,
+		"token_id":     tok.TokenID,
+		"access_token": signedToken,
+		"token_type":   "Bearer",
+		"expires_in":   900,
+		"impersonator": req.ImpersonatorID,
+		"target_user":  req.TargetUserID,
+		"reason":       req.Reason,
 	})
 }
 
@@ -276,14 +281,14 @@ func (h *Handler) handlePasswordHistoryCheck(w http.ResponseWriter, r *http.Requ
 		return
 	}
 	var req struct {
-		UserID string `json:"user_id"`
+		UserID   string `json:"user_id"`
 		Password string `json:"password"`
 	}
 	json.NewDecoder(r.Body).Decode(&req)
 	writeJSON(w, http.StatusOK, map[string]any{
-		"is_repeated":    false,
-		"history_count":  5,
-		"max_history":    5,
+		"is_repeated":   false,
+		"history_count": 5,
+		"max_history":   5,
 	})
 }
 
