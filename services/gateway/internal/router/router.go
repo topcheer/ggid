@@ -228,6 +228,15 @@ func (gw *Gateway) buildProxies() {
 			} else {
 				req.Header.Del("X-User-ID")
 			}
+			// SECURITY (P0): unconditionally strip ALL client-supplied
+			// identity headers before re-deriving them from verified JWT
+			// claims. Previously only X-User-ID was cleared — a client
+			// could spoof X-Scopes/X-User-Role/X-Is-Admin straight through
+			// to backend authorization checks.
+			req.Header.Del("X-Scopes")
+			req.Header.Del("X-User-Role")
+			req.Header.Del("X-User-Roles")
+			req.Header.Del("X-Is-Admin")
 			// Forward JWT scopes so backend services can check admin authorization.
 			jwtClaims := middleware.ExtractJWTClaims(req)
 			if len(jwtClaims.Scopes) > 0 {
@@ -742,7 +751,7 @@ func (gw *Gateway) Handler() http.Handler {
 // the same set of admin endpoints (both /api/v1/* and bare /oauth/* variants).
 var adminOnlyPaths = []string{
 	"/api/v1/users", "/api/v1/roles", "/api/v1/audit/",
-	"/api/v1/policies", "/api/v1/webhooks", "/api/v1/oauth/clients",
+	"/api/v1/policies", "/api/v1/policy/", "/api/v1/webhooks", "/api/v1/oauth/clients",
 	"/api/v1/settings/", "/api/v1/admin/", "/api/v1/identity/dashboard",
 	"/api/v1/tenants", "/api/v1/impersonate",
 	"/api/v1/api-keys", "/api/v1/access-keys",

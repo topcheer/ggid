@@ -78,6 +78,16 @@ func (s *HTTPServer) handleRetentionExecute(w http.ResponseWriter, r *http.Reque
 	totalAnonymized := 0
 
 	for _, p := range policies {
+		if p.TenantID == "" {
+			// Fail-closed (R150): a policy without a tenant would delete or
+			// anonymize EVERY tenant's events. Skip and surface it.
+			slog.Warn("retention execute: skipping policy without tenant_id", "policy_id", p.ID)
+			executedPolicies = append(executedPolicies, map[string]any{
+				"policy_id": p.ID, "event_type": p.EventType,
+				"action": p.Action, "error": "policy has no tenant_id",
+			})
+			continue
+		}
 		if p.RetentionDays <= 0 {
 			continue // unlimited
 		}

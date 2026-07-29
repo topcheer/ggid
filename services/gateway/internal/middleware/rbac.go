@@ -37,6 +37,7 @@ var defaultAdminPrefixes = []string{
 	"/api/v1/users",         // User CRUD (except /me which is public-ish)
 	"/api/v1/audit/",        // Audit events
 	"/api/v1/policies",      // Policy management
+	"/api/v1/policy/",       // Policy service mounts singular paths (P1 gap)
 	"/api/v1/webhooks",      // Webhook CRUD
 	"/api/v1/oauth/clients", // OAuth client management
 	"/api/v1/roles",         // Role management (listing is OK for all, but POST/DELETE need admin)
@@ -226,7 +227,7 @@ func hasPlatformAdminScope(scopes []string) bool {
 func isAdminOnlyPath(path string) bool {
 	adminPrefixes := []string{
 		"/api/v1/users", "/api/v1/roles", "/api/v1/audit/",
-		"/api/v1/policies", "/api/v1/webhooks", "/api/v1/oauth/clients",
+		"/api/v1/policies", "/api/v1/policy/", "/api/v1/webhooks", "/api/v1/oauth/clients",
 		"/api/v1/settings/", "/api/v1/admin/", "/api/v1/identity/dashboard",
 		"/api/v1/tenants", "/api/v1/impersonate",
 		"/api/v1/api-keys", "/api/v1/access-keys",
