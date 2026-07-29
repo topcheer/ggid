@@ -40,7 +40,7 @@ func (s *HTTPServer) handleSoDRules(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		rule := &SoDRulePair{
-			ID: uuid.New().String(), TenantID: req.TenantID, RoleA: req.RoleA,
+			ID: uuid.New().String(), TenantID: callerTenant(r), RoleA: req.RoleA,
 			RoleB: req.RoleB, Description: req.Description, Enabled: true,
 			CreatedAt: time.Now().UTC(),
 		}

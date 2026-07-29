@@ -2276,3 +2276,9 @@ func requireTenantHeader(w http.ResponseWriter, r *http.Request) (string, bool) 
 	}
 	return tenantID, true
 }
+
+// callerTenant returns the gateway-verified tenant for write paths.
+// Body-supplied tenant_id is never trusted; when the header is absent
+// (direct access bypassing the gateway) the record is written with an
+// empty tenant, which the fail-closed list paths render invisible.
+func callerTenant(r *http.Request) string { return r.Header.Get("X-Tenant-ID") }

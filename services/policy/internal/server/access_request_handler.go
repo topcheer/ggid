@@ -125,7 +125,7 @@ func (s *HTTPServer) createAccessRequest(w http.ResponseWriter, r *http.Request)
 	}
 	now := time.Now().UTC()
 	ar := &AccessRequest{
-		ID: uuid.New().String(), TenantID: req.TenantID, RequesterID: req.RequesterID,
+		ID: uuid.New().String(), TenantID: callerTenant(r), RequesterID: req.RequesterID,
 		RoleID: req.RoleID, Justification: req.Justification, Status: "pending",
 		CreatedAt: now, ExpiresAt: now.Add(time.Duration(req.ExpiryHours) * time.Hour),
 	}
@@ -142,7 +142,10 @@ func (s *HTTPServer) createAccessRequest(w http.ResponseWriter, r *http.Request)
 func (s *HTTPServer) listAccessRequests(w http.ResponseWriter, r *http.Request) {
 	status := r.URL.Query().Get("status")
 	requesterID := r.URL.Query().Get("requester_id")
-	tenantID := r.URL.Query().Get("tenant_id")
+	tenantID, tok := requireTenantHeader(w, r)
+	if !tok {
+		return
+	}
 	var result []map[string]any
 	if s.policyMap != nil {
 		rows, _ := s.policyMap.List(r.Context(), "access_requests_store")

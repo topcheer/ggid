@@ -57,7 +57,7 @@ func (s *HTTPServer) handleBreakGlass(w http.ResponseWriter, r *http.Request) {
 		now := time.Now().UTC()
 		dur := time.Duration(req.DurationHours) * time.Hour
 		bg := &BreakGlassAccess{
-			ID: uuid.New().String(), TenantID: req.TenantID,
+			ID: uuid.New().String(), TenantID: callerTenant(r),
 			Requester: req.Requester, Approver: req.Approver,
 			Reason: req.Reason, Scope: req.Scope,
 			Duration: dur.String(),

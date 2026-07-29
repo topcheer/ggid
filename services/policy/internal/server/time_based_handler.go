@@ -64,7 +64,7 @@ func (s *HTTPServer) handleTimeBased(w http.ResponseWriter, r *http.Request) {
 		}
 		rule := &TimeAccessRule{
 			ID: uuid.New().String(),
-			TenantID: req.TenantID, Name: req.Name,
+			TenantID: callerTenant(r), Name: req.Name,
 			Schedule: req.Schedule, Timezone: req.Timezone,
 			AllowedRoles: req.AllowedRoles, ResourcePattern: req.ResourcePattern,
 			Action: req.Action, Enabled: enabled, CreatedAt: time.Now().UTC(),
