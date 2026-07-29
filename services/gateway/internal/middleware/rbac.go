@@ -34,17 +34,17 @@ func AdminOnly(next http.Handler) http.Handler {
 // defaultAdminPrefixes is the hardcoded admin-endpoint list, kept as a
 // fallback when the dynamic RBAC resolver has no data (ADR-dynamic-rbac).
 var defaultAdminPrefixes = []string{
-	"/api/v1/users",           // User CRUD (except /me which is public-ish)
-	"/api/v1/audit/",          // Audit events
-	"/api/v1/policies",        // Policy management
-	"/api/v1/webhooks",        // Webhook CRUD
-	"/api/v1/oauth/clients",   // OAuth client management
-	"/api/v1/roles",           // Role management (listing is OK for all, but POST/DELETE need admin)
-	"/api/v1/admin/",          // Admin dashboard
-	"/api/v1/settings/",       // System settings
-	"/api/v1/system/",         // System management
-	"/api/v1/tenants",         // Tenant management (except resolve which is public)
-	"/api/v1/impersonate",     // Impersonation (platform admin only)
+	"/api/v1/users",         // User CRUD (except /me which is public-ish)
+	"/api/v1/audit/",        // Audit events
+	"/api/v1/policies",      // Policy management
+	"/api/v1/webhooks",      // Webhook CRUD
+	"/api/v1/oauth/clients", // OAuth client management
+	"/api/v1/roles",         // Role management (listing is OK for all, but POST/DELETE need admin)
+	"/api/v1/admin/",        // Admin dashboard
+	"/api/v1/settings/",     // System settings
+	"/api/v1/system/",       // System management
+	"/api/v1/tenants",       // Tenant management (except resolve which is public)
+	"/api/v1/impersonate",   // Impersonation (platform admin only)
 	// Admin-level management endpoints (self-service variants are in publicPaths)
 	"/api/v1/auth/mfa/factors",          // MFA factor configuration
 	"/api/v1/auth/mfa/admin/",           // Admin MFA management for other users
@@ -54,9 +54,9 @@ var defaultAdminPrefixes = []string{
 	"/api/v1/identity/devices/",         // Device posture management
 	// Paths rewritten to /api/v1/audit/* before proxying — must be
 	// listed here because RBAC check runs BEFORE the URL rewrite.
-	"/api/v1/access-reviews", // → /api/v1/audit/access-reviews
-	"/api/v1/activity",       // → /api/v1/audit/activity
-	"/api/v1/exports",        // → /api/v1/audit/exports
+	"/api/v1/access-reviews",   // → /api/v1/audit/access-reviews
+	"/api/v1/activity",         // → /api/v1/audit/activity
+	"/api/v1/exports",          // → /api/v1/audit/exports
 	"/api/v1/providers/config", // Provider config CRUD (admin only; /status stays public)
 }
 
@@ -171,7 +171,9 @@ func RequireAdminScope(next http.Handler) http.Handler {
 
 		// M2M tokens (client_credentials) carry permissions but no admin scope.
 		// If the token has the required permission for this route, allow it.
-		if HasPermissionForRoute(r.URL.Path, r.Method, claims.Permissions) {
+		// SECURITY: Block permission-key fallback on admin-only prefixes to prevent
+		// privilege escalation (e.g. users:read accessing GET /api/v1/users).
+		if HasPermissionForRoute(r.URL.Path, r.Method, claims.Permissions) && !isAdminOnlyPath(r.URL.Path) {
 			next.ServeHTTP(w, r)
 			return
 		}
@@ -212,6 +214,25 @@ func hasAdminScope(scopes []string) bool {
 func hasPlatformAdminScope(scopes []string) bool {
 	for _, sc := range scopes {
 		if strings.EqualFold(sc, "platform:admin") {
+			return true
+		}
+	}
+	return false
+}
+
+// isAdminOnlyPath returns true for admin-protected path prefixes where
+// permission-key fallback must NOT apply. These paths require platform:admin
+// or tenant:admin OAuth scope, not just resource-level permissions.
+func isAdminOnlyPath(path string) bool {
+	adminPrefixes := []string{
+		"/api/v1/users", "/api/v1/roles", "/api/v1/audit/",
+		"/api/v1/policies", "/api/v1/webhooks", "/api/v1/oauth/clients",
+		"/api/v1/settings/", "/api/v1/admin/", "/api/v1/identity/dashboard",
+		"/api/v1/tenants", "/api/v1/impersonate",
+		"/api/v1/api-keys", "/api/v1/access-keys",
+	}
+	for _, prefix := range adminPrefixes {
+		if strings.HasPrefix(path, prefix) {
 			return true
 		}
 	}
