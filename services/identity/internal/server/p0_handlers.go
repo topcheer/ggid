@@ -171,6 +171,17 @@ func (h *HTTPHandler) handleGDPRDeleteAccount(w http.ResponseWriter, r *http.Req
 		{"user_roles", `DELETE FROM user_roles WHERE user_id = $1`},
 		{"sessions", `DELETE FROM sessions WHERE user_id = $1`},
 		{"user_emails", `DELETE FROM user_emails WHERE user_id = $1`},
+		{"mfa_devices", `DELETE FROM mfa_devices WHERE user_id = $1`},
+		{"webauthn_credentials", `DELETE FROM webauthn_credentials WHERE user_id = $1`},
+		{"backup_codes", `DELETE FROM backup_codes WHERE user_id = $1`},
+		{"api_keys", `DELETE FROM api_keys WHERE user_id = $1`},
+		{"refresh_tokens", `DELETE FROM refresh_tokens WHERE user_id = $1`},
+		{"oauth_authorization_codes", `DELETE FROM oauth_authorization_codes WHERE user_id = $1`},
+		{"password_history", `DELETE FROM password_history WHERE user_id = $1`},
+		{"email_verification_tokens", `DELETE FROM email_verification_tokens WHERE user_id = $1`},
+		{"scim_group_members", `DELETE FROM scim_group_members WHERE user_id = $1`},
+		{"oidc_refresh_tokens", `DELETE FROM oidc_refresh_tokens WHERE user_id = $1`},
+		{"oidc_id_tokens", `DELETE FROM oidc_id_tokens WHERE user_id = $1`},
 	}
 	for _, d := range deletions {
 		if _, err := tx.Exec(r.Context(), d.sql, userID); err != nil {
