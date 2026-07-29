@@ -10,6 +10,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log/slog"
 	"net/http"
 	"net/url"
 	"sort"
@@ -252,7 +253,8 @@ func (h *Handler) handleMFAYubiKeyVerify(w http.ResponseWriter, r *http.Request)
 	verified, err := verifyYubiKeyOTP(r.Context(), cfg.ClientID, cfg.SecretKey, cfg.APIServers, req.OTP)
 	auditMFAResult(h, r, "yubikey", deviceID, verified)
 	if err != nil || !verified {
-		writeError(w, http.StatusUnauthorized, fmt.Sprintf("YubiKey verification failed: %v", err))
+		slog.Warn("mfa: YubiKey verification failed", "err", err, "verified", verified)
+		writeError(w, http.StatusUnauthorized, "YubiKey verification failed")
 		return
 	}
 

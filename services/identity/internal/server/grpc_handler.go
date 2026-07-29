@@ -31,24 +31,26 @@ func NewIdentityGRPCHandler(svc *service.IdentityService) *IdentityGRPCHandler {
 }
 
 // mapGRPCErr maps service-layer errors to appropriate gRPC status codes.
+// The raw error is logged server-side; clients receive a generic message so
+// internal details (SQL, file paths, stack context) are not leaked (R132 P1-2).
 func mapGRPCErr(prefix string, err error) error {
 	if err == nil {
 		return nil
 	}
-	msg := fmt.Sprintf("%s: %v", prefix, err)
+	slog.Error("identity gRPC error", "prefix", prefix, "err", err)
 	switch {
 	case isAlreadyExists(err):
-		return status.Error(codes.AlreadyExists, msg)
+		return status.Error(codes.AlreadyExists, prefix+": resource already exists")
 	case isNotFound(err):
-		return status.Error(codes.NotFound, msg)
+		return status.Error(codes.NotFound, prefix+": resource not found")
 	case isInvalidArgument(err):
-		return status.Error(codes.InvalidArgument, msg)
+		return status.Error(codes.InvalidArgument, prefix+": invalid argument")
 	case isPermissionDenied(err):
-		return status.Error(codes.PermissionDenied, msg)
+		return status.Error(codes.PermissionDenied, prefix+": permission denied")
 	case isUnauthenticated(err):
-		return status.Error(codes.Unauthenticated, msg)
+		return status.Error(codes.Unauthenticated, prefix+": unauthenticated")
 	default:
-		return status.Error(codes.Internal, msg)
+		return status.Error(codes.Internal, prefix+": internal error")
 	}
 }
 
@@ -105,7 +107,8 @@ func (h *IdentityGRPCHandler) GetUser(ctx context.Context, req *identityv1.GetUs
 	}
 	user, err := h.svc.GetUser(ctx, id)
 	if err != nil {
-		return nil, status.Error(codes.NotFound, fmt.Sprintf("user not found: %v", err))
+		slog.Error("gRPC GetUser error", "err", err)
+		return nil, status.Error(codes.NotFound, "user not found")
 	}
 	return domainToPbUser(user), nil
 }

@@ -59,7 +59,7 @@ func (h *OAuthGRPCHandler) CreateClient(ctx context.Context, req *oauthv1.Create
 	result, err := h.svc.CreateClient(ctx, input)
 	if err != nil {
 		slog.Error("gRPC CreateClient error", "err", err)
-		return nil, status.Error(codes.Internal, fmt.Sprintf("failed to create client: %v", err))
+		return nil, status.Error(codes.Internal, "failed to create client")
 	}
 	pbClient := domainToPbClient(result.Client)
 	pbClient.ClientSecret = result.ClientSecret // plaintext secret — only returned on create
@@ -69,7 +69,8 @@ func (h *OAuthGRPCHandler) CreateClient(ctx context.Context, req *oauthv1.Create
 func (h *OAuthGRPCHandler) GetClient(ctx context.Context, req *oauthv1.GetClientRequest) (*oauthv1.OAuthClient, error) {
 	client, err := h.svc.GetClient(ctx, req.GetClientId())
 	if err != nil {
-		return nil, status.Error(codes.NotFound, fmt.Sprintf("client not found: %v", err))
+		slog.Error("gRPC GetClient error", "err", err)
+		return nil, status.Error(codes.NotFound, "client not found")
 	}
 	return domainToPbClient(client), nil
 }
@@ -88,7 +89,8 @@ func (h *OAuthGRPCHandler) ListClients(ctx context.Context, req *oauthv1.ListCli
 
 	clients, total, err := h.svc.ListClients(ctx, pageSize, offset)
 	if err != nil {
-		return nil, status.Error(codes.Internal, fmt.Sprintf("failed to list clients: %v", err))
+		slog.Error("gRPC ListClients error", "err", err)
+		return nil, status.Error(codes.Internal, "failed to list clients")
 	}
 
 	pbClients := make([]*oauthv1.OAuthClient, 0, len(clients))
@@ -125,14 +127,16 @@ func (h *OAuthGRPCHandler) UpdateClient(ctx context.Context, req *oauthv1.Update
 
 	client, err := h.svc.UpdateClientMetadata(ctx, req.GetClientId(), updates)
 	if err != nil {
-		return nil, status.Error(codes.Internal, fmt.Sprintf("failed to update client: %v", err))
+		slog.Error("gRPC UpdateClient error", "err", err)
+		return nil, status.Error(codes.Internal, "failed to update client")
 	}
 	return domainToPbClient(client), nil
 }
 
 func (h *OAuthGRPCHandler) DeleteClient(ctx context.Context, req *oauthv1.DeleteClientRequest) (*oauthv1.DeleteClientResponse, error) {
 	if err := h.svc.DeleteClient(ctx, req.GetClientId()); err != nil {
-		return nil, status.Error(codes.Internal, fmt.Sprintf("failed to delete client: %v", err))
+		slog.Error("gRPC DeleteClient error", "err", err)
+		return nil, status.Error(codes.Internal, "failed to delete client")
 	}
 	return &oauthv1.DeleteClientResponse{Success: true}, nil
 }

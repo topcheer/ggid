@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"log/slog"
 	"net/http"
 	"os"
 	"strconv"
@@ -482,7 +483,8 @@ func (s *HTTPServer) handleOrgAccessMatrix(w http.ResponseWriter, r *http.Reques
 	// Return org info + member count using memberships table.
 	orgs, err := s.orgSvc.GetSubTree(r.Context(), org.TenantID, orgID)
 	if err != nil {
-		writeJSONError(w, http.StatusInternalServerError, fmt.Sprintf("access matrix failed: %v", err))
+		slog.Error("org: access matrix failed", "org_id", orgID, "err", err)
+		writeJSONError(w, http.StatusInternalServerError, "access matrix failed")
 		return
 	}
 

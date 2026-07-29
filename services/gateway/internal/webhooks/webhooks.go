@@ -11,6 +11,7 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"log/slog"
 	"net/http"
 	"sync"
 	"time"
@@ -278,7 +279,8 @@ func (h *Handler) Test(w http.ResponseWriter, r *http.Request) {
 
 	err = h.deliverer.Deliver(r.Context(), wh.URL, wh.Secret, payload)
 	if err != nil {
-		writeJSON(w, 502, map[string]string{"error": fmt.Sprintf("delivery failed: %v", err)})
+		slog.Error("webhook: test delivery failed", "url", wh.URL, "err", err)
+		writeJSON(w, 502, map[string]string{"error": "delivery failed"})
 		return
 	}
 	writeJSON(w, 200, map[string]string{"status": "delivered"})

@@ -3,6 +3,7 @@ package server
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log/slog"
 	"net/http"
@@ -13,6 +14,7 @@ import (
 	"github.com/ggid/ggid/pkg/tenant"
 	"github.com/ggid/ggid/services/identity/internal/domain"
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgconn"
 )
 
 // TenantInfo represents a minimal tenant record for resolution.
@@ -161,7 +163,7 @@ func (h *HTTPHandler) handleSystemBootstrap(w http.ResponseWriter, r *http.Reque
 	})
 	if err != nil {
 		slog.Error("bootstrap: failed to create admin user", "error", err)
-		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": fmt.Sprintf("failed to create admin user: %v", err)})
+		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "failed to create admin user"})
 		return
 	}
 
@@ -372,11 +374,17 @@ func (h *HTTPHandler) tenantCreate(w http.ResponseWriter, r *http.Request) {
 	err := h.svc.Pool().QueryRow(r.Context(), `
 		INSERT INTO tenants (name, slug, plan, status) VALUES ($1, $2, $3, 'active')
 		RETURNING id::text`, req.Name, req.Slug, req.Plan).Scan(&tenantID)
-if err != nil {
-			slog.Error("tenant create: DB error", "error", err)
-			writeJSONError(w, http.StatusInternalServerError, "failed to create tenant")
+	if err != nil {
+		// Unique violation on slug → 409 Conflict, not 500 (R131 P2-1).
+		var pgErr *pgconn.PgError
+		if errors.As(err, &pgErr) && pgErr.Code == "23505" {
+			writeJSONError(w, http.StatusConflict, fmt.Sprintf("tenant slug '%s' already exists", req.Slug))
 			return
 		}
+		slog.Error("tenant create: DB error", "error", err)
+		writeJSONError(w, http.StatusInternalServerError, "failed to create tenant")
+		return
+	}
 
 	writeJSON(w, http.StatusCreated, map[string]any{
 		"tenant_id": tenantID,
@@ -466,8 +474,13 @@ func (h *HTTPHandler) tenantDelete(w http.ResponseWriter, r *http.Request, tenan
 		}
 	}
 
-	// Finally delete the tenant itself
-	tx.Exec(r.Context(), `DELETE FROM tenants WHERE id = $1::uuid`, tenantUUID)
+	// Finally delete the tenant itself. This one must succeed — failure
+	// here would leave an orphaned tenant with all data wiped (R133 P2-3).
+	if _, err := tx.Exec(r.Context(), `DELETE FROM tenants WHERE id = $1::uuid`, tenantUUID); err != nil {
+		slog.Error("tenant delete: failed to delete tenant row", "tenant", tenantUUID, "error", err)
+		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "failed to delete tenant"})
+		return
+	}
 
 	if err := tx.Commit(r.Context()); err != nil {
 		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "failed to commit tenant deletion"})

@@ -407,7 +407,7 @@ func TestFinishRegistration_Errors(t *testing.T) {
 		req.Header.Set("X-Tenant-ID", testTenantIDStr)
 		h.finishRegistration(rr, req)
 		assertStatus(t, rr, http.StatusBadRequest)
-		assertBodyContains(t, rr, "parse credential creation")
+		assertBodyContains(t, rr, "invalid credential creation response")
 	})
 
 	t.Run("empty body", func(t *testing.T) {
@@ -416,7 +416,7 @@ func TestFinishRegistration_Errors(t *testing.T) {
 		req.Header.Set("X-Tenant-ID", testTenantIDStr)
 		h.finishRegistration(rr, req)
 		assertStatus(t, rr, http.StatusBadRequest)
-		assertBodyContains(t, rr, "parse credential creation")
+		assertBodyContains(t, rr, "invalid credential creation response")
 	})
 
 	t.Run("session not found", func(t *testing.T) {
@@ -524,7 +524,7 @@ func TestFinishAuthentication_Errors(t *testing.T) {
 		req.Header.Set("X-Tenant-ID", testTenantIDStr)
 		h.finishAuthentication(rr, req)
 		assertStatus(t, rr, http.StatusBadRequest)
-		assertBodyContains(t, rr, "parse assertion")
+		assertBodyContains(t, rr, "invalid assertion response")
 	})
 
 	t.Run("empty body", func(t *testing.T) {
@@ -533,7 +533,7 @@ func TestFinishAuthentication_Errors(t *testing.T) {
 		req.Header.Set("X-Tenant-ID", testTenantIDStr)
 		h.finishAuthentication(rr, req)
 		assertStatus(t, rr, http.StatusBadRequest)
-		assertBodyContains(t, rr, "parse assertion")
+		assertBodyContains(t, rr, "invalid assertion response")
 	})
 
 	t.Run("session not found", func(t *testing.T) {

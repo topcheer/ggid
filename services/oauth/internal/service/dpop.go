@@ -8,7 +8,9 @@ import (
 	"crypto/sha256"
 	"encoding/base64"
 	"encoding/json"
+	"errors"
 	"fmt"
+	"log/slog"
 	"math/big"
 	"net/http"
 	"strings"
@@ -64,7 +66,14 @@ func ParseDPoPHeader(headerValue, httpMethod, httpURI string) (*DPoPProof, error
 		return extractJWKPublicKey(jwk)
 	})
 	if err != nil {
-		return nil, &DPoPError{Code: "invalid_proof", Description: fmt.Sprintf("JWT parse/signature: %v", err)}
+		// Preserve deliberate DPoPErrors raised by the key function (e.g.
+		// missing jwk); sanitize everything else (R133 P2-4).
+		var dpopErr *DPoPError
+		if errors.As(err, &dpopErr) {
+			return nil, dpopErr
+		}
+		slog.Warn("dpop: JWT parse/signature failure", "err", err)
+		return nil, &DPoPError{Code: "invalid_proof", Description: "invalid DPoP proof JWT"}
 	}
 
 	// Verify the signing algorithm is asymmetric (ES256, RS256, EdDSA).

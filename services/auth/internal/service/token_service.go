@@ -10,6 +10,7 @@ import (
 	"encoding/hex"
 	"encoding/pem"
 	"fmt"
+	"log/slog"
 	"os"
 	"path/filepath"
 	"time"
@@ -144,22 +145,36 @@ func ComputeACR(authMethods []string) string {
 	return ""
 }
 
-// IssueAccessToken signs a new JWT for the given user.
+// RevokeRefreshToken revokes a refresh token by its plaintext value.
+// The DB is updated first (it is authoritative for validity); the Redis
+// fast-path entry is removed only after a successful DB revoke.
 func (ts *TokenService) RevokeRefreshToken(ctx context.Context, plaintext string) error {
 	tokenHash := hashToken(plaintext)
 
-	// Delete from Redis
-	ts.rdb.Del(ctx, refreshTokenKey(tokenHash))
-
-	// Revoke in DB
+	// Revoke in DB FIRST — the DB is the authority on token validity
+	// (domain.RefreshToken.IsValid checks RevokedAt). Deleting the Redis
+	// entry before the DB revoke would leave the token valid if the DB
+	// operation fails (R131 P0).
 	rt, err := ts.refreshRepo.FindByHash(ctx, tokenHash)
 	if err != nil {
 		return err
 	}
 	if rt == nil {
-		return nil // already gone
+		// Not in DB — still clear any stale Redis fast-path entry.
+		if derr := ts.rdb.Del(ctx, refreshTokenKey(tokenHash)); derr != nil {
+			slog.Warn("auth: failed to delete stale refresh token from redis", "err", derr)
+		}
+		return nil
 	}
-	return ts.refreshRepo.Revoke(ctx, rt.ID)
+	if err := ts.refreshRepo.Revoke(ctx, rt.ID); err != nil {
+		return err
+	}
+	// DB revoke succeeded — now drop the Redis fast-path entry. A Redis
+	// failure here is safe (DB remains authoritative) but worth logging.
+	if derr := ts.rdb.Del(ctx, refreshTokenKey(tokenHash)); derr != nil {
+		slog.Warn("auth: failed to delete refresh token from redis after DB revoke", "err", derr)
+	}
+	return nil
 }
 
 // RevokeAllForSession revokes all refresh tokens for a session.

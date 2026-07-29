@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"log/slog"
 	"net/http"
 	"strings"
 	"sync"
@@ -591,7 +592,8 @@ func (h *Handler) beginRegistration(w http.ResponseWriter, r *http.Request) {
 
 	options, sessData, err := h.wbn.BeginRegistration(user, regOpts...)
 	if err != nil {
-		writeError(w, http.StatusInternalServerError, fmt.Sprintf("begin registration: %v", err))
+		slog.Error("webauthn: begin registration failed", "err", err)
+		writeError(w, http.StatusInternalServerError, "begin registration failed")
 		return
 	}
 
@@ -622,7 +624,8 @@ func (h *Handler) finishRegistration(w http.ResponseWriter, r *http.Request) {
 	// Parse the credential creation response from the authenticator.
 	parsedResponse, err := protocol.ParseCredentialCreationResponseBody(r.Body)
 	if err != nil {
-		writeError(w, http.StatusBadRequest, fmt.Sprintf("parse credential creation: %v", err))
+		slog.Warn("webauthn: parse credential creation failed", "err", err)
+		writeError(w, http.StatusBadRequest, "invalid credential creation response")
 		return
 	}
 
@@ -685,7 +688,8 @@ func (h *Handler) finishRegistration(w http.ResponseWriter, r *http.Request) {
 			CreatedAt:       time.Now(),
 		}
 		if err := h.creds.SaveCredential(ctx, cred); err != nil {
-			writeError(w, http.StatusInternalServerError, fmt.Sprintf("save credential: %v", err))
+			slog.Error("webauthn: save credential failed", "err", err)
+			writeError(w, http.StatusInternalServerError, "save credential failed")
 			return
 		}
 	}
@@ -758,7 +762,8 @@ func (h *Handler) beginAuthentication(w http.ResponseWriter, r *http.Request) {
 		// for discoverable credentials we want empty allowCredentials.
 		challenge, err := protocol.CreateChallenge()
 		if err != nil {
-			writeError(w, http.StatusInternalServerError, fmt.Sprintf("create challenge: %v", err))
+			slog.Error("webauthn: create challenge failed", "err", err)
+			writeError(w, http.StatusInternalServerError, "create challenge failed")
 			return
 		}
 		opts := &protocol.PublicKeyCredentialRequestOptions{
@@ -788,7 +793,8 @@ func (h *Handler) beginAuthentication(w http.ResponseWriter, r *http.Request) {
 
 	options, sessData, err := h.wbn.BeginLogin(loginUser, loginOpts...)
 	if err != nil {
-		writeError(w, http.StatusInternalServerError, fmt.Sprintf("begin login: %v", err))
+		slog.Error("webauthn: begin login failed", "err", err)
+		writeError(w, http.StatusInternalServerError, "begin login failed")
 		return
 	}
 
@@ -819,7 +825,8 @@ func (h *Handler) finishAuthentication(w http.ResponseWriter, r *http.Request) {
 	// Parse the assertion response from the authenticator.
 	parsedResponse, err := protocol.ParseCredentialRequestResponseBody(r.Body)
 	if err != nil {
-		writeError(w, http.StatusBadRequest, fmt.Sprintf("parse assertion: %v", err))
+		slog.Warn("webauthn: parse assertion failed", "err", err)
+		writeError(w, http.StatusBadRequest, "invalid assertion response")
 		return
 	}
 
