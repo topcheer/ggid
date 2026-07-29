@@ -254,6 +254,10 @@ func (gw *Gateway) buildProxies() {
 			// JWT-derived value may reach backends (same spoofing class as the
 			// X-Scopes fix).
 			req.Header.Del("X-Tenant-ID")
+			// SECURITY: strip rate-limiting dimension headers to prevent spoofing.
+			req.Header.Del("X-Tier")
+			req.Header.Del("X-API-Key")
+			req.Header.Del("X-Real-IP")
 			if tenantID, ok := middleware.TenantIDFromRequest(req); ok {
 				req.Header.Set("X-Tenant-ID", tenantID)
 				// SECURITY: always overwrite client-provided tenant_id query param
@@ -1280,6 +1284,10 @@ func (gw *Gateway) buildProxiesLocked() {
 				}
 			}
 			req.Header.Del("X-Tenant-ID")
+			// SECURITY: strip rate-limiting dimension headers (same as primary Director).
+			req.Header.Del("X-Tier")
+			req.Header.Del("X-API-Key")
+			req.Header.Del("X-Real-IP")
 			if tenantID, ok := middleware.TenantIDFromRequest(req); ok {
 				req.Header.Set("X-Tenant-ID", tenantID)
 				// Match the primary Director: unconditionally overwrite the
