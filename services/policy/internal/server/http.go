@@ -26,17 +26,17 @@ import (
 
 // HTTPServer exposes the Policy Engine as a REST API.
 type HTTPServer struct {
-	roleSvc       *service.RoleService
-	policySvc     *service.PolicyService
-	evaluator     *service.Evaluator
+	roleSvc        *service.RoleService
+	policySvc      *service.PolicyService
+	evaluator      *service.Evaluator
 	auditPublisher *audit.Publisher
-	campaignRepo  *CampaignRepo
-	jitRepo       *repository.JITRequestRepository
-	policyMap     *policyMapRepo
-	pdpRepo       *pdpRepo
-	riskRepo      *riskRepo
-	sodRepo       *sodPGRepo
-	pool          *pgxpool.Pool
+	campaignRepo   *CampaignRepo
+	jitRepo        *repository.JITRequestRepository
+	policyMap      *policyMapRepo
+	pdpRepo        *pdpRepo
+	riskRepo       *riskRepo
+	sodRepo        *sodPGRepo
+	pool           *pgxpool.Pool
 }
 
 // SetPool injects the DB pool for real queries (blast radius, etc).
@@ -377,13 +377,13 @@ func (s *HTTPServer) handleEffectivePermissions(w http.ResponseWriter, r *http.R
 	}
 
 	writeJSON(w, http.StatusOK, map[string]any{
-		"role_id":          roleID.String(),
-		"role_name":        role.Name,
-		"total_effective":  len(effectivePerms),
-		"total_direct":     directCount,
-		"total_inherited":  inheritedCount,
-		"child_roles":      childCount,
-		"permissions":      permList,
+		"role_id":         roleID.String(),
+		"role_name":       role.Name,
+		"total_effective": len(effectivePerms),
+		"total_direct":    directCount,
+		"total_inherited": inheritedCount,
+		"child_roles":     childCount,
+		"permissions":     permList,
 	})
 }
 
@@ -578,12 +578,12 @@ func (s *HTTPServer) handleBulkAssign(w http.ResponseWriter, r *http.Request, ro
 	}
 
 	writeJSON(w, http.StatusOK, map[string]any{
-		"status":         "completed",
-		"role_id":        roleID.String(),
-		"assigned":       assigned,
-		"skipped":        skipped,
-		"errors":         len(errors),
-		"error_details":  errors,
+		"status":          "completed",
+		"role_id":         roleID.String(),
+		"assigned":        assigned,
+		"skipped":         skipped,
+		"errors":          len(errors),
+		"error_details":   errors,
 		"total_requested": len(req.UserIDs),
 	})
 }
@@ -1042,7 +1042,9 @@ func buildDataFilter(attrs map[string]any) map[string]any {
 
 // POST /api/v1/policies/evaluate — evaluate ABAC policies with attribute conditions
 // Request: {"user_id": "...", "tenant_id": "...", "resource_type": "user", "action": "read",
-//           "attributes": {"user.department": "eng", "resource.owner": "abc", "env.time": "14:30"}}
+//
+//	"attributes": {"user.department": "eng", "resource.owner": "abc", "env.time": "14:30"}}
+//
 // Response: {"allowed": true, "reason": "...", "matched_rules": [...], "evaluation_time_ms": 1}
 func (s *HTTPServer) handleEvaluate(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
@@ -1097,8 +1099,8 @@ func (s *HTTPServer) handleEvaluate(w http.ResponseWriter, r *http.Request) {
 	matchedRules := []map[string]any{}
 	if result.Allowed {
 		matchedRules = append(matchedRules, map[string]any{
-			"type":   result.MatchedBy,
-			"effect": "allow",
+			"type":                 result.MatchedBy,
+			"effect":               "allow",
 			"conditions_evaluated": conditions,
 		})
 	}
@@ -1330,11 +1332,11 @@ func (s *HTTPServer) handleFromTemplate(w http.ResponseWriter, r *http.Request) 
 	created := make([]map[string]any, 0, len(policies))
 	for _, p := range policies {
 		policy := &domain.Policy{
-			ID:       uuid.New(),
-			TenantID: tenantID,
-			Name:     fmt.Sprintf("[%s] %s", selected["compliance"], p["name"]),
-			Effect:   domain.Effect(p["effect"].(string)),
-			Actions:  toStringSlice(p["actions"]),
+			ID:        uuid.New(),
+			TenantID:  tenantID,
+			Name:      fmt.Sprintf("[%s] %s", selected["compliance"], p["name"]),
+			Effect:    domain.Effect(p["effect"].(string)),
+			Actions:   toStringSlice(p["actions"]),
 			Resources: toStringSlice(p["resources"]),
 		}
 		createdPolicy, err := s.policySvc.CreatePolicy(r.Context(), policy)
@@ -1349,11 +1351,11 @@ func (s *HTTPServer) handleFromTemplate(w http.ResponseWriter, r *http.Request) 
 	}
 
 	writeJSON(w, http.StatusCreated, map[string]any{
-		"status":            "created",
-		"template_id":       templateID,
-		"template_name":     selected["name"],
-		"policies_created":  len(created),
-		"policies":          created,
+		"status":           "created",
+		"template_id":      templateID,
+		"template_name":    selected["name"],
+		"policies_created": len(created),
+		"policies":         created,
 	})
 }
 
@@ -1372,7 +1374,12 @@ func toStringSlice(v any) []string {
 }
 
 // policyVersions tracks version history per policy (in-memory for now).
-var policyVersions = map[string][]map[string]any{} // policyID → versions
+var (
+	policyVersions    = map[string][]map[string]any{} // policyID → versions
+	policyVersionsMu  sync.RWMutex
+	attributeMappings = []map[string]any{}
+	attrMappingsMu    sync.RWMutex
+)
 
 // GET /api/v1/policies/versions?policy_id=X — list versions
 // POST /api/v1/policies/versions?policy_id=X — snapshot current policy as new version
@@ -1386,7 +1393,7 @@ func (s *HTTPServer) handlePolicyVersions(w http.ResponseWriter, r *http.Request
 
 	switch r.Method {
 	case http.MethodGet:
-		versions := policyVersions[policyID]
+		policyVersionsMu.RLock(); versions := policyVersions[policyID]; policyVersionsMu.RUnlock()
 		if versions == nil {
 			versions = []map[string]any{}
 		}
@@ -1404,7 +1411,7 @@ func (s *HTTPServer) handlePolicyVersions(w http.ResponseWriter, r *http.Request
 				writeJSONError(w, http.StatusBadRequest, "version is required for rollback")
 				return
 			}
-			versions := policyVersions[policyID]
+			policyVersionsMu.RLock(); versions := policyVersions[policyID]; policyVersionsMu.RUnlock()
 			versionNum, err := strconv.Atoi(versionStr)
 			if err != nil || versionNum < 1 || versionNum > len(versions) {
 				writeJSONError(w, http.StatusBadRequest, "invalid version number")
@@ -1452,7 +1459,7 @@ func (s *HTTPServer) handlePolicyVersions(w http.ResponseWriter, r *http.Request
 			"resources":  policy.Resources,
 			"created_at": time.Now().UTC().Format(time.RFC3339),
 		}
-		policyVersions[policyID] = append(policyVersions[policyID], version)
+		policyVersionsMu.Lock(); policyVersions[policyID] = append(policyVersions[policyID], version); policyVersionsMu.Unlock()
 		writeJSON(w, http.StatusCreated, version)
 
 	default:
@@ -1464,14 +1471,14 @@ func (s *HTTPServer) handlePolicyVersions(w http.ResponseWriter, r *http.Request
 
 // GET/POST/DELETE /api/v1/policies/attribute-mapping
 // Maps user attributes (e.g. department=Engineering) to role assignments.
-var attributeMappings = []map[string]any{}
+// attributeMappings moved to var block above with mutex
 
 // POST /api/v1/policies/attribute-mapping
 // Body: { "attribute": "department", "value": "Engineering", "role_id": "uuid", "tenant_id": "uuid" }
 func (s *HTTPServer) handleAttributeMapping(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case http.MethodGet:
-		writeJSON(w, http.StatusOK, map[string]any{"mappings": attributeMappings})
+		writeJSON(w, http.StatusOK, map[string]any{"mappings": func() []map[string]any { attrMappingsMu.RLock(); defer attrMappingsMu.RUnlock(); return attributeMappings }()})
 
 	case http.MethodPost:
 		var req struct {
@@ -1499,7 +1506,7 @@ func (s *HTTPServer) handleAttributeMapping(w http.ResponseWriter, r *http.Reque
 			"role_id":   req.RoleID,
 			"action":    req.Action,
 		}
-		attributeMappings = append(attributeMappings, mapping)
+		attrMappingsMu.Lock(); attributeMappings = append(attributeMappings, mapping); attrMappingsMu.Unlock()
 
 		// If role_id is provided, try to assign the role
 		if req.RoleID != "" && req.Action == "assign_role" {
@@ -1562,10 +1569,10 @@ func (s *HTTPServer) handlePolicyExport(w http.ResponseWriter, r *http.Request) 
 
 	w.Header().Set("Content-Disposition", `attachment; filename="policies_export.json"`)
 	writeJSON(w, http.StatusOK, map[string]any{
-		"version":   "1.0",
+		"version":     "1.0",
 		"exported_at": time.Now().UTC().Format(time.RFC3339),
-		"policies":  export,
-		"total":     len(export),
+		"policies":    export,
+		"total":       len(export),
 	})
 }
 
@@ -1746,7 +1753,7 @@ func (s *HTTPServer) handleDefaultAction(w http.ResponseWriter, r *http.Request)
 		defaultPolicyAction.RUnlock()
 		writeJSON(w, http.StatusOK, map[string]any{
 			"default_action": action,
-			"description":   "When no explicit policy matches, requests are " + action + "ed by default",
+			"description":    "When no explicit policy matches, requests are " + action + "ed by default",
 		})
 	case http.MethodPut:
 		var req struct {
@@ -1766,7 +1773,7 @@ func (s *HTTPServer) handleDefaultAction(w http.ResponseWriter, r *http.Request)
 		defaultPolicyAction.Unlock()
 		writeJSON(w, http.StatusOK, map[string]any{
 			"default_action": action,
-			"status":        "updated",
+			"status":         "updated",
 		})
 	default:
 		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
@@ -1791,7 +1798,8 @@ var timeConditions = struct {
 
 // GET /api/v1/policies/time-conditions — list time-based conditions
 // POST /api/v1/policies/time-conditions — create time-based condition
-//   {"name": "business-hours", "time_between": "09:00-17:00", "days_of_week": [1,2,3,4,5], "timezone": "America/New_York", "effect": "allow"}
+//
+//	{"name": "business-hours", "time_between": "09:00-17:00", "days_of_week": [1,2,3,4,5], "timezone": "America/New_York", "effect": "allow"}
 func (s *HTTPServer) handleTimeConditions(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case http.MethodGet:
@@ -1805,11 +1813,11 @@ func (s *HTTPServer) handleTimeConditions(w http.ResponseWriter, r *http.Request
 
 	case http.MethodPost:
 		var req struct {
-			Name       string   `json:"name"`
-			TimeBetween string  `json:"time_between"`  // "09:00-17:00"
-			DaysOfWeek []int    `json:"days_of_week"`  // [1,2,3,4,5] (1=Mon)
-			Timezone   string   `json:"timezone"`      // "America/New_York"
-			Effect     string   `json:"effect"`        // "allow" or "deny"
+			Name        string `json:"name"`
+			TimeBetween string `json:"time_between"` // "09:00-17:00"
+			DaysOfWeek  []int  `json:"days_of_week"` // [1,2,3,4,5] (1=Mon)
+			Timezone    string `json:"timezone"`     // "America/New_York"
+			Effect      string `json:"effect"`       // "allow" or "deny"
 		}
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 			writeJSONError(w, http.StatusBadRequest, "invalid JSON body")
@@ -1826,13 +1834,13 @@ func (s *HTTPServer) handleTimeConditions(w http.ResponseWriter, r *http.Request
 			req.Timezone = "UTC"
 		}
 		rule := map[string]any{
-			"id":            uuid.New().String(),
-			"name":          req.Name,
-			"time_between":  req.TimeBetween,
-			"days_of_week":  req.DaysOfWeek,
-			"timezone":      req.Timezone,
-			"effect":        req.Effect,
-			"created_at":    time.Now().UTC().Format(time.RFC3339),
+			"id":           uuid.New().String(),
+			"name":         req.Name,
+			"time_between": req.TimeBetween,
+			"days_of_week": req.DaysOfWeek,
+			"timezone":     req.Timezone,
+			"effect":       req.Effect,
+			"created_at":   time.Now().UTC().Format(time.RFC3339),
 		}
 		timeConditions.Lock()
 		timeConditions.rules = append(timeConditions.rules, rule)
@@ -1910,9 +1918,9 @@ func (s *HTTPServer) handleDryRun(w http.ResponseWriter, r *http.Request) {
 		"matched_rules": matchedRules,
 		"dry_run":       true,
 		"request": map[string]any{
-			"user_id":   req.UserID,
-			"resource":  req.Resource,
-			"action":    req.Action,
+			"user_id":    req.UserID,
+			"resource":   req.Resource,
+			"action":     req.Action,
 			"attributes": req.Attributes,
 		},
 	})
@@ -1950,7 +1958,7 @@ func (s *HTTPServer) handlePolicyDiff(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	versions := policyVersions[policyID]
+	policyVersionsMu.RLock(); versions := policyVersions[policyID]; policyVersionsMu.RUnlock()
 	if v1 < 1 || v1 > len(versions) || v2 < 1 || v2 > len(versions) {
 		writeJSONError(w, http.StatusBadRequest, "version out of range")
 		return
@@ -1974,9 +1982,9 @@ func (s *HTTPServer) handlePolicyDiff(w http.ResponseWriter, r *http.Request) {
 			newStr := fmt.Sprintf("%v", newVal)
 			if oldStr != newStr {
 				modified = append(modified, map[string]any{
-					"field":  key,
-					"old":    oldVal,
-					"new":    newVal,
+					"field": key,
+					"old":   oldVal,
+					"new":   newVal,
 				})
 			}
 		}
@@ -2046,7 +2054,7 @@ func (s *HTTPServer) handleAnalyze(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Build resource → actions map
-	resourceActions := map[string]map[string]bool{}      // direct
+	resourceActions := map[string]map[string]bool{}          // direct
 	inheritedResourceActions := map[string]map[string]bool{} // inherited
 
 	for _, p := range permissions {
@@ -2082,10 +2090,10 @@ func (s *HTTPServer) handleAnalyze(w http.ResponseWriter, r *http.Request) {
 		}
 		allActions := append(actionList, inheritedOnly...)
 		resources = append(resources, map[string]any{
-			"resource":           res,
-			"direct_actions":     actionList,
-			"inherited_actions":  inheritedOnly,
-			"total_actions":      len(allActions),
+			"resource":          res,
+			"direct_actions":    actionList,
+			"inherited_actions": inheritedOnly,
+			"total_actions":     len(allActions),
 		})
 	}
 
@@ -2094,13 +2102,13 @@ func (s *HTTPServer) handleAnalyze(w http.ResponseWriter, r *http.Request) {
 	totalInherited := len(inheritedPerms)
 
 	writeJSON(w, http.StatusOK, map[string]any{
-		"role_id":            roleID.String(),
-		"role_name":          role.Name,
-		"has_parent":         role.ParentRoleID != nil,
-		"total_direct":       totalDirect,
-		"total_inherited":    totalInherited,
-		"resource_count":     len(resources),
-		"resources":          resources,
+		"role_id":         roleID.String(),
+		"role_name":       role.Name,
+		"has_parent":      role.ParentRoleID != nil,
+		"total_direct":    totalDirect,
+		"total_inherited": totalInherited,
+		"resource_count":  len(resources),
+		"resources":       resources,
 	})
 }
 
@@ -2137,13 +2145,13 @@ func (s *HTTPServer) handleDecisionLog(w http.ResponseWriter, r *http.Request) {
 			continue
 		}
 		filtered = append(filtered, map[string]any{
-			"timestamp": d.Timestamp.Format("2006-01-02T15:04:05Z07:00"),
-			"user_id":   d.UserID.String(),
-			"tenant_id": d.TenantID.String(),
-			"action":    d.Action,
-			"resource":  d.Resource,
-			"allowed":   d.Allowed,
-			"reason":    d.Reason,
+			"timestamp":  d.Timestamp.Format("2006-01-02T15:04:05Z07:00"),
+			"user_id":    d.UserID.String(),
+			"tenant_id":  d.TenantID.String(),
+			"action":     d.Action,
+			"resource":   d.Resource,
+			"allowed":    d.Allowed,
+			"reason":     d.Reason,
 			"matched_by": d.MatchedBy,
 		})
 	}
@@ -2160,11 +2168,11 @@ func (s *HTTPServer) handleDecisionLog(w http.ResponseWriter, r *http.Request) {
 	}
 
 	writeJSON(w, http.StatusOK, map[string]any{
-		"total":          len(decisions),
-		"filtered":       len(filtered),
-		"allow_count":    totalAllow,
-		"deny_count":     totalDeny,
-		"decisions":      filtered,
+		"total":       len(decisions),
+		"filtered":    len(filtered),
+		"allow_count": totalAllow,
+		"deny_count":  totalDeny,
+		"decisions":   filtered,
 	})
 }
 
