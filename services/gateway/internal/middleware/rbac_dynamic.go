@@ -12,6 +12,7 @@ import (
 
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/redis/go-redis/v9"
+	"golang.org/x/sync/singleflight"
 )
 
 // rbac_dynamic.go implements ADR-dynamic-rbac: DB-driven route permissions
@@ -64,6 +65,7 @@ type RBACResolver struct {
 	snapshot  []routePermRow
 	loadedAt  time.Time
 	everLoaded bool
+	sf        singleflight.Group
 }
 
 // NewRBACResolver creates a resolver. Either rdb or databaseURL may be empty;
@@ -145,6 +147,7 @@ func (r *RBACResolver) Available() bool {
 
 // load returns the current snapshot, refreshing from Redis/DB when stale.
 // Order: fresh memory → Redis → DB (re-cache) → stale memory.
+// Uses singleflight to prevent cache stampede when TTL expires.
 func (r *RBACResolver) load(ctx context.Context, force bool) ([]routePermRow, error) {
 	r.mu.RLock()
 	fresh := r.everLoaded && time.Since(r.loadedAt) < rbacMemCacheTTL
@@ -156,33 +159,49 @@ func (r *RBACResolver) load(ctx context.Context, force bool) ([]routePermRow, er
 		return snap, nil
 	}
 
-	// Redis cache.
-	if r.rdb != nil {
-		if data, err := r.rdb.Get(ctx, rbacCacheKey).Bytes(); err == nil {
-			var rows []routePermRow
-			if json.Unmarshal(data, &rows) == nil {
-				r.storeSnapshot(rows)
-				return rows, nil
-			}
+	// Singleflight: deduplicate concurrent load requests
+	rows, err, _ := r.sf.Do("rbac_load", func() (interface{}, error) {
+		// Re-check freshness inside singleflight (another goroutine may have just loaded)
+		r.mu.RLock()
+		if r.everLoaded && time.Since(r.loadedAt) < rbacMemCacheTTL {
+			rows := r.snapshot
+			r.mu.RUnlock()
+			return rows, nil
 		}
-	}
+		r.mu.RUnlock()
 
-	// PostgreSQL.
-	if rows, err := r.loadFromDB(ctx); err == nil {
-		r.storeSnapshot(rows)
+		// Redis cache.
 		if r.rdb != nil {
-			if data, merr := json.Marshal(rows); merr == nil {
-				_ = r.rdb.Set(ctx, rbacCacheKey, data, rbacCacheTTL).Err()
+			if data, err := r.rdb.Get(ctx, rbacCacheKey).Bytes(); err == nil {
+				var rows []routePermRow
+				if json.Unmarshal(data, &rows) == nil {
+					r.storeSnapshot(rows)
+					return rows, nil
+				}
 			}
 		}
-		return rows, nil
-	}
 
-	// Stale memory fallback.
-	if ever {
-		return snap, nil
+		// PostgreSQL.
+		if rows, err := r.loadFromDB(ctx); err == nil {
+			r.storeSnapshot(rows)
+			if r.rdb != nil {
+				if data, merr := json.Marshal(rows); merr == nil {
+					_ = r.rdb.Set(ctx, rbacCacheKey, data, rbacCacheTTL).Err()
+				}
+			}
+			return rows, nil
+		}
+
+		// Stale memory fallback — only if cache is not too old (max 5min staleness).
+		if ever && time.Since(r.loadedAt) < 5*time.Minute {
+			return snap, nil
+		}
+		return nil, errNoRBACData
+	})
+	if err != nil {
+		return nil, err
 	}
-	return nil, errNoRBACData
+	return rows.([]routePermRow), nil
 }
 
 var errNoRBACData = errRBAC("rbac: no route-permission data available")
@@ -237,6 +256,7 @@ func (r *RBACResolver) loadFromDB(ctx context.Context) ([]routePermRow, error) {
 		SELECT r.name, r.key, rrp.route_prefix, rrp.permission_level, r.tenant_id::text
 		FROM role_route_permissions rrp
 		JOIN roles r ON r.id = rrp.role_id
+		LIMIT 10000
 	`)
 	if err != nil {
 		return nil, err

@@ -196,7 +196,7 @@ func (gw *Gateway) buildProxies() {
 		to := gw.cfg.GetRouteTimeout(prefix)
 		proxy.Transport = &http.Transport{
 			MaxIdleConns:        100,
-			MaxIdleConnsPerHost: 10,
+			MaxIdleConnsPerHost: 64,
 			MaxConnsPerHost:     0, // unlimited
 			IdleConnTimeout:     to.Idle,
 			DialContext: (&net.Dialer{
@@ -1209,7 +1209,7 @@ func (gw *Gateway) buildProxiesLocked() {
 		to := gw.cfg.GetRouteTimeout(prefix)
 		proxy.Transport = &http.Transport{
 			MaxIdleConns:        100,
-			MaxIdleConnsPerHost: 10,
+			MaxIdleConnsPerHost: 64,
 			IdleConnTimeout:     to.Idle,
 			DialContext: (&net.Dialer{
 				Timeout:   to.Dial,
