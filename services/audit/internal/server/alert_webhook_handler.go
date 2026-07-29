@@ -1,6 +1,8 @@
 package httpserver
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
 	"net/http"
 	"sync"
@@ -73,17 +75,23 @@ func (s *HTTPServer) handleAlertWebhooks(w http.ResponseWriter, r *http.Request)
 			return
 		}
 		hookID := uuid.New().String()
+		// SECURITY: hash the secret before storing (never store plaintext)
+		secretHash := ""
+		if req.Secret != "" {
+			h := sha256.Sum256([]byte(req.Secret))
+			secretHash = hex.EncodeToString(h[:])
+		}
 		hook := map[string]any{
 			"id":        hookID,
 			"url":       req.URL,
-			"secret":    req.Secret,
+			"secret":    "", // never return secret in response
 			"active":    true,
 			"tenant_id": tid,
 		}
 		if s.pool != nil {
 			_, err := s.pool.Exec(r.Context(), `
 				INSERT INTO audit_alert_webhooks (id, tenant_id, url, secret, active)
-				VALUES ($1, $2, $3, $4, true)`, hookID, tid, req.URL, req.Secret)
+				VALUES ($1, $2, $3, $4, true)`, hookID, tid, req.URL, secretHash)
 			if err != nil {
 				writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "failed to save webhook"})
 				return

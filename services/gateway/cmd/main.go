@@ -16,14 +16,14 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/redis/go-redis/v9"
 	"github.com/ggid/ggid/pkg/auth"
 	"github.com/ggid/ggid/pkg/crypto"
+	"github.com/ggid/ggid/pkg/shutdown"
 	"github.com/ggid/ggid/pkg/sysconfig"
 	"github.com/ggid/ggid/services/gateway/internal/config"
 	"github.com/ggid/ggid/services/gateway/internal/middleware"
 	"github.com/ggid/ggid/services/gateway/internal/router"
-	"github.com/ggid/ggid/pkg/shutdown"
+	"github.com/redis/go-redis/v9"
 )
 
 // Password pepper must match auth/identity/oauth for API key hash verification.
@@ -169,11 +169,17 @@ func defaultPrivateKeyPath(publicKeyPath string) string {
 	return "configs/rsa_private.pem"
 }
 
-// ensureLocalKeyPair generates an RSA key pair on disk if the private key is missing.
+// ensureLocalKeyPair generates an RSA key pair on disk ONLY in dev mode.
+// In production, missing keys are a fatal error.
 func ensureLocalKeyPair(privateKeyPath, publicKeyPath string) error {
 	if _, err := os.Stat(privateKeyPath); err == nil {
 		return nil
 	}
+	// Key file missing.
+	if os.Getenv("GGID_DEV_MODE") != "true" {
+		return fmt.Errorf("RSA private key not found at %s — inject via secret mount (do not auto-generate in production)", privateKeyPath)
+	}
+	log.Printf("[DEV] Generating RSA key pair for local development: %s", privateKeyPath)
 	_ = os.MkdirAll(filepath.Dir(privateKeyPath), 0o700)
 	key, err := rsa.GenerateKey(rand.Reader, 2048)
 	if err != nil {

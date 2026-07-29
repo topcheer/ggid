@@ -327,7 +327,7 @@ func (s *HTTPServer) handleRepairChain(w http.ResponseWriter, r *http.Request) {
 		WHERE tenant_id = $1
 		ORDER BY created_at ASC, id ASC`, tenantID)
 	if err != nil {
-		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": err.Error()})
+		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "internal server error"})
 		return
 	}
 	defer rows.Close()
@@ -344,7 +344,7 @@ func (s *HTTPServer) handleRepairChain(w http.ResponseWriter, r *http.Request) {
 			&e.ResourceType, &e.ResourceID, &e.ResourceName, &e.Result,
 			&e.IPAddress, &e.UserAgent, &e.RequestID, &e.CreatedAt,
 		); err != nil {
-			writeJSON(w, http.StatusInternalServerError, map[string]string{"error": err.Error()})
+			writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "internal server error"})
 			return
 		}
 		items = append(items, repairItem{id: e.ID, event: e})

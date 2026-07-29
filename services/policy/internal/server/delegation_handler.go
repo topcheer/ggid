@@ -16,6 +16,12 @@ func (s *HTTPServer) handleDelegate(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusMethodNotAllowed, map[string]string{"error": "method not allowed"})
 		return
 	}
+	// SECURITY: delegation requires admin scope (verifies delegator is authorized)
+	scopes := r.Header.Get("X-Scopes")
+	if !hasRole(scopes, "platform:admin") && !hasRole(scopes, "tenant:admin") {
+		writeJSONError(w, http.StatusForbidden, "admin scope required for delegation")
+		return
+	}
 	var req struct {
 		DelegatorID  string   `json:"delegator_id"`
 		DelegateeID  string   `json:"delegatee_id"`
@@ -59,8 +65,8 @@ func (s *HTTPServer) handleListDelegations(w http.ResponseWriter, r *http.Reques
 	userID := parseUUIDSafe(r.URL.Query().Get("user_id"))
 	delegations, err := s.policySvc.ListDelegations(context.Background(), userID)
 	if err != nil {
-			log.Printf("delegation list error: %v", err)
-			writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "internal server error"})
+		log.Printf("delegation list error: %v", err)
+		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "internal server error"})
 		return
 	}
 	writeJSON(w, http.StatusOK, map[string]any{"delegations": delegations})

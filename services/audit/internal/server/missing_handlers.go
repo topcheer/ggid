@@ -316,7 +316,7 @@ func (s *HTTPServer) handleWebhookTest(w http.ResponseWriter, r *http.Request, w
 	if err != nil {
 		writeJSON(w, http.StatusOK, map[string]any{
 			"status":   "failed",
-			"error":    err.Error(),
+			"error":    "internal server error",
 			"success":  false,
 		})
 		return

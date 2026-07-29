@@ -64,7 +64,7 @@ func (s *HTTPServer) handleAccessReviews(w http.ResponseWriter, r *http.Request)
 		}
 		review, err := repo.Create(r.Context(), tenantID, managerID, parseUUID(req.UserID), req.Roles)
 		if err != nil {
-			writeJSONError(w, http.StatusInternalServerError, err.Error())
+			writeJSONError(w, http.StatusInternalServerError, "internal server error")
 			return
 		}
 		writeJSON(w, http.StatusCreated, review)
@@ -74,7 +74,7 @@ func (s *HTTPServer) handleAccessReviews(w http.ResponseWriter, r *http.Request)
 		managerID := parseUUID(r.URL.Query().Get("manager_id"))
 		reviews, err := repo.ListPending(r.Context(), tenantID, managerID, status)
 		if err != nil {
-			writeJSONError(w, http.StatusInternalServerError, err.Error())
+			writeJSONError(w, http.StatusInternalServerError, "internal server error")
 			return
 		}
 		writeJSON(w, http.StatusOK, map[string]any{"reviews": reviews})
@@ -115,7 +115,7 @@ func (s *HTTPServer) handleAccessReviewDecision(w http.ResponseWriter, r *http.R
 	repo := service.NewAccessReviewRepo(s.pool)
 	result, err := repo.SubmitDecision(r.Context(), tenantID, reviewID, req.Decision)
 	if err != nil {
-		writeJSONError(w, http.StatusBadRequest, err.Error())
+		writeJSONError(w, http.StatusBadRequest, "bad request")
 		return
 	}
 	writeJSON(w, http.StatusOK, result)
