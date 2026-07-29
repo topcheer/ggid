@@ -93,7 +93,13 @@ func (s *HTTPServer) handleAlertWebhooks(w http.ResponseWriter, r *http.Request)
 			globalAlertWebhooks.webhooks = append(globalAlertWebhooks.webhooks, hook)
 			globalAlertWebhooks.mu.Unlock()
 		}
-		writeJSON(w, http.StatusCreated, hook)
+		writeJSON(w, http.StatusCreated, map[string]any{
+			"id":        hookID,
+			"url":       req.URL,
+			"secret":    maskSecret(req.Secret),
+			"active":    true,
+			"tenant_id": tid,
+		})
 
 	case http.MethodDelete:
 		id := r.URL.Query().Get("id")

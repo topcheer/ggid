@@ -3429,7 +3429,7 @@ func (s *OAuthService) JWTBearerGrant(ctx context.Context, req *JWTBearerRequest
 			return nil, fmt.Errorf("assertion sub does not match any known user")
 		}
 		if status != "active" {
-			return nil, fmt.Errorf("user account is %s, cannot issue token", status)
+			return nil, fmt.Errorf("user account is not active")
 		}
 	}
 
