@@ -38,10 +38,11 @@ type Client struct {
 	useDiscovery bool
 
 	// JWKS cache for JWT signature verification.
-	jwksMu     sync.RWMutex
-	jwks       map[string]*rsa.PublicKey
-	jwksExpiry time.Time
-	jwksTTL    time.Duration
+	jwksMu        sync.RWMutex
+	jwks          map[string]*rsa.PublicKey
+	jwksExpiry    time.Time
+	jwksTTL       time.Duration
+	discoveryOnce sync.Once
 }
 
 // Option configures the Client.
@@ -498,24 +499,23 @@ func (c *Client) RefreshToken(ctx context.Context, refreshToken string) (*TokenS
 // Requires JWKS to be configured via WithJWKS(). Without JWKS, signature
 // verification is impossible and the call returns an error.
 func (c *Client) VerifyToken(ctx context.Context, accessToken string) (*UserInfo, error) {
-	// Auto-configure from OIDC discovery if enabled
-	if c.useDiscovery && c.jwksURL == "" {
-		disc, err := c.GetDiscovery(ctx)
-		if err != nil {
-			return nil, fmt.Errorf("OIDC discovery failed: %w", err)
-		}
-		if disc.JwksURI != "" {
-			// Convert absolute URL to relative path for c.get()
+	// Auto-configure from OIDC discovery if enabled (thread-safe via sync.Once)
+	c.discoveryOnce.Do(func() {
+		if c.useDiscovery && c.jwksURL == "" {
+			disc, err := c.GetDiscovery(ctx)
+			if err != nil || disc.JwksURI == "" {
+				return
+			}
 			if strings.HasPrefix(disc.JwksURI, c.baseURL) {
 				c.jwksURL = strings.TrimPrefix(disc.JwksURI, c.baseURL)
 			} else {
 				c.jwksURL = disc.JwksURI
 			}
+			if c.jwksTTL == 0 {
+				c.jwksTTL = 15 * time.Minute
+			}
 		}
-		if c.jwksTTL == 0 {
-			c.jwksTTL = 15 * time.Minute
-		}
-	}
+	})
 	if c.jwksURL == "" {
 		return nil, fmt.Errorf("JWKS not configured: call WithJWKS() or WithDiscovery() to enable")
 	}
