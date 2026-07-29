@@ -109,6 +109,7 @@ func TestTenantMigrate_DryRun(t *testing.T) {
 
 	body := `{"source_tenant":"src-1","destination_tenant":"dst-1","scope":["users"],"dry_run":true}`
 	req := httptest.NewRequest(http.MethodPost, "/api/v1/org/tenants/migrate", strings.NewReader(body))
+	req.Header.Set("X-Scopes", "platform:admin")
 	rr := httptest.NewRecorder()
 	mux.ServeHTTP(rr, req)
 
