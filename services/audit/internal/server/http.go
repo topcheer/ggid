@@ -930,7 +930,8 @@ func (s *HTTPServer) handleAuditWebhooks(w http.ResponseWriter, r *http.Request)
 				return
 			}
 		}
-		// Memory fallback
+		// Memory fallback — mask secrets before returning (DB path above
+		// already does; raw secrets must never leave the API, R147 P1-5).
 		tenantID := r.URL.Query().Get("tenant_id")
 		auditWebhooks.RLock()
 		result := []map[string]any{}
@@ -938,7 +939,14 @@ func (s *HTTPServer) handleAuditWebhooks(w http.ResponseWriter, r *http.Request)
 			if tenantID != "" && cfg["tenant_id"] != tenantID {
 				continue
 			}
-			result = append(result, cfg)
+			masked := make(map[string]any, len(cfg))
+			for k, v := range cfg {
+				masked[k] = v
+			}
+			if s, ok := cfg["secret"].(string); ok {
+				masked["secret"] = maskSecret(s)
+			}
+			result = append(result, masked)
 		}
 		auditWebhooks.RUnlock()
 		writeJSON(w, http.StatusOK, map[string]any{"webhooks": result, "count": len(result)})
