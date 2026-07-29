@@ -884,6 +884,15 @@ func (s *HTTPServer) updateTeam(w http.ResponseWriter, r *http.Request, id uuid.
 		writeServiceError(w, err)
 		return
 	}
+	// SECURITY: Verify team's parent org belongs to caller's tenant
+	if tid := s.getTenantID(r); tid != uuid.Nil {
+		parentOrg, orgErr := s.orgSvc.Get(r.Context(), team.OrgID)
+		if orgErr != nil || parentOrg.TenantID != tid {
+			writeJSONError(w, http.StatusNotFound, "team not found")
+			return
+		}
+	}
+	}
 	if req.Name != "" {
 		team.Name = req.Name
 	}
