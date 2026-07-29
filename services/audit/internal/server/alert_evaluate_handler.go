@@ -79,11 +79,11 @@ func (s *HTTPServer) handleAlertEvaluate(w http.ResponseWriter, r *http.Request)
 	}
 
 	writeJSON(w, http.StatusOK, map[string]any{
-		"rule_id":     req.RuleID,
-		"time_range":  req.TimeRange,
+		"rule_id":      req.RuleID,
+		"time_range":   req.TimeRange,
 		"evaluated_at": time.Now().UTC().Format(time.RFC3339),
-		"total":       len(triggered),
-		"alerts":      triggered,
+		"total":        len(triggered),
+		"alerts":       triggered,
 	})
 }
 
@@ -118,6 +118,7 @@ func (s *HTTPServer) evaluateRule(r *http.Request, rule map[string]any, tenantID
 			"rule_id":      rule["id"],
 			"rule_name":    rule["name"],
 			"severity":     rule["severity"],
+			"tenant_id":    tenantID.String(), // dispatchAlert scopes delivery by this key
 			"count":        len(events),
 			"threshold":    threshold,
 			"window_mins":  windowMins,

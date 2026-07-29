@@ -1484,6 +1484,7 @@ func (s *HTTPServer) detectAnomalies(r *http.Request) []map[string]any {
 				"rule_id":     rule["id"],
 				"rule_name":   rule["name"],
 				"severity":    rule["severity"],
+				"tenant_id":   tenantIDStr, // dispatchAlert scopes delivery by this key
 				"count":       len(events),
 				"threshold":   threshold,
 				"window_mins": windowMins,
