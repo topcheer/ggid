@@ -25,7 +25,17 @@ func (s *HTTPServer) handleRetentionExecute(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
+	// Header is authoritative; query param must match when present.
+	// Otherwise a caller could trigger another tenant's policy deletes.
+	headerTenant := r.Header.Get("X-Tenant-ID")
 	tenantIDStr := r.URL.Query().Get("tenant_id")
+	if headerTenant == "" {
+		writeJSONError(w, http.StatusForbidden, "tenant context required")
+		return
+	}
+	if tenantIDStr == "" || tenantIDStr != headerTenant {
+		tenantIDStr = headerTenant
+	}
 
 	// Get all retention policies from PG
 	var policies []*RetentionPolicy
@@ -109,17 +119,41 @@ func (s *HTTPServer) handleRetentionExecute(w http.ResponseWriter, r *http.Reque
 				continue
 			}
 		} else if p.Action == "anonymize" {
-			// Anonymize: nullify PII fields but keep the event for compliance
-			tag, err := s.pool.Exec(r.Context(),
-				`UPDATE audit_events SET actor_ip = NULL, user_agent = NULL, metadata = '{}'::jsonb WHERE created_at < $1`, cutoff)
-			if err != nil {
+			// Anonymize: nullify PII fields but keep the event for compliance.
+			// Same scoping rules as delete — tenant + event_type filters,
+			// tx for SET LOCAL, generic client error (R149 P1-7).
+			tx, terr := s.pool.Begin(r.Context())
+			if terr != nil {
+				slog.Error("retention execute: begin tx failed", "policy_id", p.ID, "error", terr)
 				executedPolicies = append(executedPolicies, map[string]any{
 					"policy_id": p.ID, "event_type": p.EventType,
-					"action": p.Action, "error": err.Error(),
+					"action": p.Action, "error": "execution failed",
 				})
 				continue
 			}
-			totalAnonymized += int(tag.RowsAffected())
+			if _, terr = tx.Exec(r.Context(), `SET LOCAL app.allow_audit_mutation = 'on'`); terr == nil {
+				var tag pgconn.CommandTag
+				if p.TenantID == "" {
+					tag, terr = tx.Exec(r.Context(),
+						`UPDATE audit_events SET actor_ip = NULL, user_agent = NULL, metadata = '{}'::jsonb WHERE created_at < $1 AND ($2::text IS NULL OR event_type = $2)`, cutoff, nullIfEmpty(p.EventType))
+				} else {
+					tag, terr = tx.Exec(r.Context(),
+						`UPDATE audit_events SET actor_ip = NULL, user_agent = NULL, metadata = '{}'::jsonb WHERE created_at < $1 AND tenant_id = $2 AND ($3::text IS NULL OR event_type = $3)`, cutoff, p.TenantID, nullIfEmpty(p.EventType))
+				}
+				if terr == nil {
+					totalAnonymized += int(tag.RowsAffected())
+					terr = tx.Commit(r.Context())
+				}
+			}
+			if terr != nil {
+				_ = tx.Rollback(r.Context())
+				slog.Error("retention execute: anonymize failed", "policy_id", p.ID, "error", terr)
+				executedPolicies = append(executedPolicies, map[string]any{
+					"policy_id": p.ID, "event_type": p.EventType,
+					"action": p.Action, "error": "execution failed",
+				})
+				continue
+			}
 		}
 
 		executedPolicies = append(executedPolicies, map[string]any{
