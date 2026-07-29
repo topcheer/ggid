@@ -688,7 +688,8 @@ func (gw *Gateway) Handler() http.Handler {
 		}
 	})
 
-	// Apply outer middleware: PanicRecovery → SecurityHeaders → CORS → RequestID → StructuredLogging → RateLimit → BotDetect → TenantResolver → Timeout → MaxBodySize → Metering → inner
+	// Apply outer middleware: PanicRecovery → RequestID → SecurityHeaders → CORS → StructuredLogging → RateLimit → BotDetect → TenantResolver → Timeout → MaxBodySize → Metering → inner
+	// RequestID must be first (after recovery) so all downstream middleware have request_id in logs.
 	logger := middleware.NewStructuredLogger("ggid-gateway")
 	handler := middleware.MaxBodySize(gw.maxBodySize())(inner)
 	handler = middleware.TimeoutMiddleware(middleware.DefaultTimeoutConfig())(handler)
@@ -701,11 +702,11 @@ func (gw *Gateway) Handler() http.Handler {
 	if gw.cfg.DatabaseURL != "" {
 		handler = middleware.APIMetering(gw.cfg.DatabaseURL, middleware.DefaultMeteringConfig())(handler)
 	}
-	handler = middleware.RequestID(handler)
 	handler = middleware.Gzip(handler)
 	handler = middleware.CORS(handler)
 	handler = middleware.HostValidation(gw.hostValidationConfig())(handler)
 	handler = middleware.SecurityHeaders(handler)
+	handler = middleware.RequestID(handler)
 	handler = middleware.PanicRecovery(logger)(handler)
 
 	return handler
