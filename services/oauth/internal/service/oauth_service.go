@@ -3198,6 +3198,9 @@ func (s *OAuthService) fetchExternalIssuerKey(ctx context.Context, issuer, clien
 
 	// Look up the OAuth client to get its JWKS URI.
 	var jwksURI string
+	if s.pool == nil {
+		return nil, fmt.Errorf("database not available for external issuer key lookup")
+	}
 	err := s.pool.QueryRow(ctx,
 		`SELECT COALESCE(jwks_uri, '') FROM oauth_clients WHERE client_id = $1`,
 		clientID).Scan(&jwksURI)
