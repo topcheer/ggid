@@ -895,9 +895,16 @@ func (s *HTTPServer) handleAuditWebhooks(w http.ResponseWriter, r *http.Request)
 	case http.MethodGet:
 		// DB-backed: query audit_webhooks table.
 		if s.pool != nil {
-			tenantID := r.URL.Query().Get("tenant_id")
+			// Header is authoritative; query param must match when present
+			// (P1: cross-tenant webhook listing).
+			tenantID := r.Header.Get("X-Tenant-ID")
+			if q := r.URL.Query().Get("tenant_id"); q != "" && q != tenantID {
+				writeJSONError(w, http.StatusForbidden, "tenant mismatch")
+				return
+			}
 			if tenantID == "" {
-				tenantID = r.Header.Get("X-Tenant-ID")
+				writeJSONError(w, http.StatusForbidden, "tenant context required")
+				return
 			}
 			query := `SELECT id, url, events, secret, enabled, created_at FROM audit_webhooks`
 			args := []any{}
@@ -1333,7 +1340,10 @@ func (s *HTTPServer) handleRetention(w http.ResponseWriter, r *http.Request) {
 // repo is configured (tests). Production uses the audit_anomaly_rules table
 // via memMapRepo2 (Task-C) so rules survive restarts and are consistent
 // across replicas.
-var anomalyRules = []map[string]any{}
+var (
+	anomalyRules   = []map[string]any{}
+	anomalyRulesMu sync.RWMutex
+)
 
 // getAnomalyRules returns the current rule set — DB-backed when available.
 func (s *HTTPServer) getAnomalyRules(ctx context.Context) []map[string]any {
@@ -1345,7 +1355,11 @@ func (s *HTTPServer) getAnomalyRules(ctx context.Context) []map[string]any {
 			return rows
 		}
 	}
-	return anomalyRules
+	anomalyRulesMu.RLock()
+	defer anomalyRulesMu.RUnlock()
+	out := make([]map[string]any, len(anomalyRules))
+	copy(out, anomalyRules)
+	return out
 }
 
 // GET/POST/DELETE /api/v1/audit/rules
@@ -1404,7 +1418,9 @@ func (s *HTTPServer) handleAnomalyRules(w http.ResponseWriter, r *http.Request) 
 				return
 			}
 		}
+		anomalyRulesMu.Lock()
 		anomalyRules = append(anomalyRules, rule)
+		anomalyRulesMu.Unlock()
 		writeJSON(w, http.StatusCreated, rule)
 
 	case http.MethodDelete:
@@ -1416,6 +1432,7 @@ func (s *HTTPServer) handleAnomalyRules(w http.ResponseWriter, r *http.Request) 
 		if s.memMapRepo2 != nil {
 			_ = s.memMapRepo2.DeleteJSON(r.Context(), "audit_anomaly_rules", idStr)
 		}
+		anomalyRulesMu.Lock()
 		filtered := anomalyRules[:0]
 		for _, rule := range anomalyRules {
 			if rule["id"] != idStr {
@@ -1423,6 +1440,7 @@ func (s *HTTPServer) handleAnomalyRules(w http.ResponseWriter, r *http.Request) 
 			}
 		}
 		anomalyRules = filtered
+		anomalyRulesMu.Unlock()
 		writeJSON(w, http.StatusOK, map[string]string{"status": "deleted"})
 
 	default:
@@ -1441,7 +1459,9 @@ func (s *HTTPServer) detectAnomalies(r *http.Request) []map[string]any {
 
 		since := time.Now().UTC().Add(-time.Duration(windowMins) * time.Minute)
 		tenantIDStr := r.URL.Query().Get("tenant_id")
-		if tenantIDStr == "" {
+		headerTenant := r.Header.Get("X-Tenant-ID")
+		if tenantIDStr == "" || (headerTenant != "" && tenantIDStr != headerTenant) {
+			// Cross-tenant anomaly checks are not allowed (P1).
 			continue
 		}
 		tenantID, err := uuid.Parse(tenantIDStr)
@@ -1530,11 +1550,19 @@ func (s *HTTPServer) dispatchAlert(alert map[string]any) {
 		}()
 	}
 
-	// Also fire webhooks registered in the audit_webhooks table.
+	// Also fire webhooks registered in the audit_webhooks table — scoped
+	// to the alert's tenant so one tenant's alerts never leak to another
+	// tenant's endpoints (P1).
 	if s.pool != nil {
 		go func() {
-			rows, err := s.pool.Query(context.Background(),
-				`SELECT url, secret FROM audit_webhooks WHERE enabled = true`)
+			alertTenant, _ := alert["tenant_id"].(string)
+			query := `SELECT url, secret FROM audit_webhooks WHERE enabled = true`
+			args := []any{}
+			if alertTenant != "" {
+				query += ` AND tenant_id = $1`
+				args = append(args, alertTenant)
+			}
+			rows, err := s.pool.Query(context.Background(), query, args...)
 			if err != nil {
 				return
 			}

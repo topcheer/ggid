@@ -41,7 +41,7 @@ func (s *HTTPServer) handleAlertWebhooks(w http.ResponseWriter, r *http.Request)
 					var created interface{}
 					_ = rows.Scan(&id, &url, &secret, &active, &created)
 					webhooks = append(webhooks, map[string]any{
-						"id": id, "url": url, "secret": secret, "active": active, "created_at": created,
+						"id": id, "url": url, "secret": maskSecret(secret), "active": active, "created_at": created,
 					})
 				}
 				writeJSON(w, http.StatusOK, map[string]any{"webhooks": webhooks})
