@@ -1256,6 +1256,25 @@ func (gw *Gateway) buildProxiesLocked() {
 			} else {
 				req.Header.Del("X-User-ID")
 			}
+			// SECURITY (P0): same identity-header hygiene as the primary
+			// Director — this reload-built proxy must also strip
+			// client-supplied X-Scopes/X-User-Role/X-Is-Admin.
+			req.Header.Del("X-Scopes")
+			req.Header.Del("X-User-Role")
+			req.Header.Del("X-User-Roles")
+			req.Header.Del("X-Is-Admin")
+			jwtClaims := middleware.ExtractJWTClaims(req)
+			if len(jwtClaims.Scopes) > 0 {
+				req.Header.Set("X-Scopes", strings.Join(jwtClaims.Scopes, ","))
+				for _, s := range jwtClaims.Scopes {
+					sl := strings.ToLower(s)
+					if sl == "admin" || sl == "superadmin" || sl == "platform:admin" || sl == "tenant:admin" || sl == "administrator" || sl == "platform administrator" || sl == "tenant administrator" {
+						req.Header.Set("X-User-Role", s)
+						req.Header.Set("X-Is-Admin", "true")
+						break
+					}
+				}
+			}
 			if tenantID, ok := middleware.TenantIDFromRequest(req); ok {
 				req.Header.Set("X-Tenant-ID", tenantID)
 				q := req.URL.Query()
