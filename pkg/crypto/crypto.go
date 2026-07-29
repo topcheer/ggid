@@ -15,6 +15,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"sync"
 
 	"golang.org/x/crypto/argon2"
 	"golang.org/x/crypto/bcrypt"
@@ -69,7 +70,10 @@ func EnableTestFastHash() {
 // pepper is an optional HMAC-SHA256 pre-hash pepper.
 // When set, passwords are HMAC'd before Argon2id, adding a server-side secret.
 // Configure via SetPepper() at startup from environment variable.
-var pepper []byte
+var (
+	pepperMu sync.RWMutex
+	pepper   []byte
+)
 
 // SetPepper configures the password pepper. Must be called once at startup
 // before any HashPassword/VerifyPassword calls. The pepper adds a server-side
@@ -77,15 +81,20 @@ var pepper []byte
 // attacks even if the database is compromised without the app config.
 func SetPepper(p string) {
 	if p != "" {
+		pepperMu.Lock()
 		pepper = []byte(p)
+		pepperMu.Unlock()
 	}
 }
 
 // applyPepper applies HMAC-SHA256 pepper if configured.
 func applyPepper(password string) []byte {
 	pw := []byte(password)
-	if len(pepper) > 0 {
-		mac := hmac.New(sha256.New, pepper)
+	pepperMu.RLock()
+	p := pepper
+	pepperMu.RUnlock()
+	if len(p) > 0 {
+		mac := hmac.New(sha256.New, p)
 		mac.Write(pw)
 		pw = mac.Sum(nil)
 	}

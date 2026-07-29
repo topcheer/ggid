@@ -6,14 +6,18 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"sync"
 
 	"github.com/google/uuid"
 )
 
 // hashChainSecrets maps secret version → key bytes.
-// Version 0 is the default (backward compat with pre-versioning events).
-var hashChainSecrets map[int][]byte
-var hashChainCurrentVersion int
+// Protected by hashChainMu for concurrent access.
+var (
+	hashChainSecrets        = make(map[int][]byte)
+	hashChainMu             sync.RWMutex
+	hashChainCurrentVersion int
+)
 
 func init() {
 	hashChainSecrets = make(map[int][]byte)
@@ -21,12 +25,16 @@ func init() {
 
 // SetHashChainSecret sets the current-version HMAC secret.
 func SetHashChainSecret(secret []byte) {
+	hashChainMu.Lock()
+	defer hashChainMu.Unlock()
 	hashChainSecrets[hashChainCurrentVersion] = secret
 }
 
 // SetHashChainSecretVersioned sets a secret at a specific version.
 // Use this when rotating keys: keep old versions for backward verification.
 func SetHashChainSecretVersioned(version int, secret []byte) {
+	hashChainMu.Lock()
+	defer hashChainMu.Unlock()
 	hashChainSecrets[version] = secret
 	if version > hashChainCurrentVersion {
 		hashChainCurrentVersion = version
