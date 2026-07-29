@@ -584,3 +584,24 @@ a8b9be747 fix(console): passkey redirect_uri /callback → /auth/callback
 - arch_pm 定时审查发现的 P0-1~P0-6 中：P0-4 已由 frontend_qa 修复，P0-5 确认误报，其余由 arch_pm/shen 处理中
 - ggcxf_fullstack_agent 报告的 Medium/Low 项（DPoP、idle session timeout、concurrent session limit）为功能增强建议，非安全漏洞
 
+
+## R126 — 2026-07-29
+
+### 回归验证
+- Build: OK
+- 核心服务测试: oauth/auth/identity/scim 全部 PASS
+
+### 最近 5 commits 审查
+1. `df96c013e` fix(api): standardize error format + Content-Type across middleware — ✅ API 一致性修复
+2. `702215e2d` fix(security): RBAC P0 self-assignment + P1 cycle/admin spoof/wildcard — ✅ 安全修复已验证
+3. `50613265d` fix(P1): org/department cross-tenant BOLA + parent org tenant check — ✅ 多租户 BOLA 修复
+4. `30a7a63f2` docs(iam-review): R125 — ✅ 文档
+5. `25bac1d2d` fix(oauth): atomic refresh token consumption + revoke nil-tenant fix — ✅ TOCTOU 修复
+
+### 发现
+发现 0 个新问题：P0 0个 / P1 0个 / P2 0个
+
+### 备注
+- 子代理 sa-2 因 context canceled 失败，已自行完成审查
+- RBAC R4 + Multi-tenancy R4 修复均已部署验证
+
