@@ -605,3 +605,24 @@ a8b9be747 fix(console): passkey redirect_uri /callback → /auth/callback
 - 子代理 sa-2 因 context canceled 失败，已自行完成审查
 - RBAC R4 + Multi-tenancy R4 修复均已部署验证
 
+
+## R127 — 2026-07-29
+
+### 回归验证
+- Build: OK
+- 核心服务测试: oauth/auth/identity/scim 全部 PASS
+
+### 最近 5 commits 审查
+1. `de6feb715` docs(iam-review): R3 — arch_pm 定时审查报告 ✅
+2. `28e7ce7cb` fix(security): logout session revocation + gRPC error leak + email nil ctx — ✅ 安全修复
+3. `e9c02fd01` docs(iam-review): R126 — ✅ 文档
+4. `df96c013e` fix(api): standardize error format + Content-Type — ✅ API 一致性
+5. `702215e2d` fix(security): RBAC P0 self-assignment + P1 cycle/admin spoof/wildcard — ✅ 已验证
+
+### 发现
+发现 0 个新问题：P0 0个 / P1 0个 / P2 0个
+
+### 备注
+- 子代理 sa-3 连续第三次 context canceled 失败，已自行完成审查
+- logout session revocation + gRPC error leak + email nil ctx 修复已验证
+
