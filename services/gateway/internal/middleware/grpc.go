@@ -133,21 +133,29 @@ func (p *GRPCProxy) HandleConn(ctx context.Context, clientConn net.Conn, targetA
 	}
 	defer backendConn.Close()
 
-	// Bidirectional copy
-	done := make(chan struct{}, 2)
+	// Bidirectional copy with WaitGroup to prevent goroutine leak
+	var wg sync.WaitGroup
+	wg.Add(2)
 	go func() {
+		defer wg.Done()
 		io.Copy(backendConn, clientConn)
-		done <- struct{}{}
+		// Close backend write side to signal EOF to backend
+		if cw, ok := backendConn.(interface{ CloseWrite() error }); ok {
+			cw.CloseWrite()
+		}
 	}()
 	go func() {
+		defer wg.Done()
 		io.Copy(clientConn, backendConn)
-		done <- struct{}{}
+		// Close client write side to signal EOF to client
+		if cw, ok := clientConn.(interface{ CloseWrite() error }); ok {
+			cw.CloseWrite()
+		}
 	}()
 
-	// Wait for either direction to finish, then close both connections
-	// to unblock the other goroutine (prevents leak).
-	<-done
-	clientConn.Close()
+	// Wait for both goroutines to finish before closing connections
+	// (deferred Close calls will execute after wg.Wait returns)
+	wg.Wait()
 }
 
 // GRPCHTTPHandler is an HTTP handler that detects gRPC requests (Content-Type:
