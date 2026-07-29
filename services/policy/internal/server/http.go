@@ -1393,7 +1393,9 @@ func (s *HTTPServer) handlePolicyVersions(w http.ResponseWriter, r *http.Request
 
 	switch r.Method {
 	case http.MethodGet:
-		policyVersionsMu.RLock(); versions := policyVersions[policyID]; policyVersionsMu.RUnlock()
+		policyVersionsMu.RLock()
+		versions := policyVersions[policyID]
+		policyVersionsMu.RUnlock()
 		if versions == nil {
 			versions = []map[string]any{}
 		}
@@ -1411,7 +1413,9 @@ func (s *HTTPServer) handlePolicyVersions(w http.ResponseWriter, r *http.Request
 				writeJSONError(w, http.StatusBadRequest, "version is required for rollback")
 				return
 			}
-			policyVersionsMu.RLock(); versions := policyVersions[policyID]; policyVersionsMu.RUnlock()
+			policyVersionsMu.RLock()
+			versions := policyVersions[policyID]
+			policyVersionsMu.RUnlock()
 			versionNum, err := strconv.Atoi(versionStr)
 			if err != nil || versionNum < 1 || versionNum > len(versions) {
 				writeJSONError(w, http.StatusBadRequest, "invalid version number")
@@ -1459,7 +1463,9 @@ func (s *HTTPServer) handlePolicyVersions(w http.ResponseWriter, r *http.Request
 			"resources":  policy.Resources,
 			"created_at": time.Now().UTC().Format(time.RFC3339),
 		}
-		policyVersionsMu.Lock(); policyVersions[policyID] = append(policyVersions[policyID], version); policyVersionsMu.Unlock()
+		policyVersionsMu.Lock()
+		policyVersions[policyID] = append(policyVersions[policyID], version)
+		policyVersionsMu.Unlock()
 		writeJSON(w, http.StatusCreated, version)
 
 	default:
@@ -1478,7 +1484,11 @@ func (s *HTTPServer) handlePolicyVersions(w http.ResponseWriter, r *http.Request
 func (s *HTTPServer) handleAttributeMapping(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case http.MethodGet:
-		writeJSON(w, http.StatusOK, map[string]any{"mappings": func() []map[string]any { attrMappingsMu.RLock(); defer attrMappingsMu.RUnlock(); return attributeMappings }()})
+		writeJSON(w, http.StatusOK, map[string]any{"mappings": func() []map[string]any {
+			attrMappingsMu.RLock()
+			defer attrMappingsMu.RUnlock()
+			return attributeMappings
+		}()})
 
 	case http.MethodPost:
 		var req struct {
@@ -1506,7 +1516,9 @@ func (s *HTTPServer) handleAttributeMapping(w http.ResponseWriter, r *http.Reque
 			"role_id":   req.RoleID,
 			"action":    req.Action,
 		}
-		attrMappingsMu.Lock(); attributeMappings = append(attributeMappings, mapping); attrMappingsMu.Unlock()
+		attrMappingsMu.Lock()
+		attributeMappings = append(attributeMappings, mapping)
+		attrMappingsMu.Unlock()
 
 		// If role_id is provided, try to assign the role
 		if req.RoleID != "" && req.Action == "assign_role" {
@@ -1523,6 +1535,7 @@ func (s *HTTPServer) handleAttributeMapping(w http.ResponseWriter, r *http.Reque
 			writeJSONError(w, http.StatusBadRequest, "id query parameter is required")
 			return
 		}
+		attrMappingsMu.Lock()
 		filtered := attributeMappings[:0]
 		for _, m := range attributeMappings {
 			if m["id"] != idStr {
@@ -1530,6 +1543,7 @@ func (s *HTTPServer) handleAttributeMapping(w http.ResponseWriter, r *http.Reque
 			}
 		}
 		attributeMappings = filtered
+		attrMappingsMu.Unlock()
 		writeJSON(w, http.StatusOK, map[string]string{"status": "deleted"})
 
 	default:
@@ -1958,7 +1972,9 @@ func (s *HTTPServer) handlePolicyDiff(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	policyVersionsMu.RLock(); versions := policyVersions[policyID]; policyVersionsMu.RUnlock()
+	policyVersionsMu.RLock()
+	versions := policyVersions[policyID]
+	policyVersionsMu.RUnlock()
 	if v1 < 1 || v1 > len(versions) || v2 < 1 || v2 > len(versions) {
 		writeJSONError(w, http.StatusBadRequest, "version out of range")
 		return
