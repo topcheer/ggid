@@ -25,6 +25,7 @@ func TestServer_RetentionGet(t *testing.T) {
 	mux := newIntegrationTestMux()
 
 	req := httptest.NewRequest(http.MethodGet, "/api/v1/audit/retention", nil)
+	req.Header.Set("X-Tenant-ID", "11111111-1111-1111-1111-111111111111")
 	rr := httptest.NewRecorder()
 	mux.ServeHTTP(rr, req)
 
@@ -44,6 +45,7 @@ func TestServer_RetentionUpdate(t *testing.T) {
 
 	body := `{"retention_days": 30, "enabled": true}`
 	req := httptest.NewRequest(http.MethodPut, "/api/v1/audit/retention", strings.NewReader(body))
+	req.Header.Set("X-Tenant-ID", "11111111-1111-1111-1111-111111111111")
 	rr := httptest.NewRecorder()
 	mux.ServeHTTP(rr, req)
 
@@ -76,6 +78,7 @@ func TestServer_RetentionMethodNotAllowed(t *testing.T) {
 	mux := newIntegrationTestMux()
 
 	req := httptest.NewRequest(http.MethodPatch, "/api/v1/audit/retention", nil)
+	req.Header.Set("X-Tenant-ID", "11111111-1111-1111-1111-111111111111")
 	rr := httptest.NewRecorder()
 	mux.ServeHTTP(rr, req)
 
