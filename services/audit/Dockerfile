@@ -10,6 +10,8 @@ RUN CGO_ENABLED=0 go build -o /audit ./services/audit/cmd
 FROM alpine:3.20
 RUN apk add --no-cache ca-certificates
 COPY --from=builder /audit /audit
+RUN addgroup -S app && adduser -S app -G app
+USER app
 
 EXPOSE 8072 9072
 ENTRYPOINT ["/audit"]

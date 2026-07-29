@@ -10,6 +10,8 @@ RUN CGO_ENABLED=0 go build -o /oauth-server ./services/oauth/cmd/
 FROM alpine:3.21
 RUN apk add --no-cache ca-certificates tzdata
 COPY --from=builder /oauth-server /usr/local/bin/oauth-server
+RUN addgroup -S app && adduser -S app -G app
+USER app
 
 EXPOSE 9005
 ENTRYPOINT ["oauth-server"]
