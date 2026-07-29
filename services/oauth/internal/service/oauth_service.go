@@ -1717,6 +1717,24 @@ func (s *OAuthService) RevokeToken(tokenStr string, tokenTypeHint ...string) err
 			ttl = 0 // already expired, no TTL needed
 		}
 	}
+	// SECURITY: Cascade — revoke all refresh tokens for this user so the
+	// attacker can't simply mint a new access token after logout.
+	// This MUST run regardless of Redis availability.
+	if s.pool != nil {
+		tenantIDStr := getStringClaim(claims, "tenant_id")
+		subStr := getStringClaim(claims, "sub")
+		if tenantIDStr != "" && subStr != "" {
+			tenantID, _ := uuid.Parse(tenantIDStr)
+			userID, _ := uuid.Parse(subStr)
+			if tenantID != uuid.Nil && userID != uuid.Nil {
+				ctx := context.Background()
+				_, _ = s.pool.Exec(ctx,
+					`UPDATE oidc_refresh_tokens SET revoked = true WHERE tenant_id = $1 AND user_id = $2 AND revoked = false`,
+					tenantID, userID)
+			}
+		}
+	}
+
 	// Try Redis first (for HA/multi-instance).
 	if s.rdb != nil {
 		if e := s.rdb.Set(context.Background(), "oauth:revoked:"+tokenHash, strconv.FormatInt(exp, 10), ttl); e == nil {
@@ -1724,24 +1742,6 @@ func (s *OAuthService) RevokeToken(tokenStr string, tokenTypeHint ...string) err
 			// can reject revoked tokens on every request (continuous access evaluation).
 			if jti := getStringClaim(claims, "jti"); jti != "" && exp > 0 {
 				s.rdb.ZAdd(context.Background(), "ggid:revoked_jti", float64(exp), jti)
-			}
-
-			// Cascade: revoke all refresh tokens for this user so the
-			// attacker can't simply mint a new access token after logout.
-			// This is critical for session termination security.
-			if s.pool != nil {
-				tenantIDStr := getStringClaim(claims, "tenant_id")
-				subStr := getStringClaim(claims, "sub")
-				if tenantIDStr != "" && subStr != "" {
-					tenantID, _ := uuid.Parse(tenantIDStr)
-					userID, _ := uuid.Parse(subStr)
-					if tenantID != uuid.Nil && userID != uuid.Nil {
-						ctx := context.Background()
-						_, _ = s.pool.Exec(ctx,
-							`UPDATE oidc_refresh_tokens SET revoked = true WHERE tenant_id = $1 AND user_id = $2 AND revoked = false`,
-							tenantID, userID)
-					}
-				}
 			}
 			return nil
 		}
