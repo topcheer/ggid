@@ -2259,3 +2259,20 @@ func slugify(s string) string {
 	}
 	return strings.Trim(result, "_")
 }
+
+// requireTenantHeader resolves the caller tenant fail-closed: the
+// gateway-verified X-Tenant-ID header is authoritative and mandatory;
+// the tenant_id query param must match when present (R7: query-param-only
+// tenant selection let callers list every tenant's policy data).
+func requireTenantHeader(w http.ResponseWriter, r *http.Request) (string, bool) {
+	tenantID := r.Header.Get("X-Tenant-ID")
+	if q := r.URL.Query().Get("tenant_id"); q != "" && q != tenantID {
+		writeJSONError(w, http.StatusForbidden, "tenant mismatch")
+		return "", false
+	}
+	if tenantID == "" {
+		writeJSONError(w, http.StatusForbidden, "tenant context required")
+		return "", false
+	}
+	return tenantID, true
+}

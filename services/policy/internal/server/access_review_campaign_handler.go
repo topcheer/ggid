@@ -67,7 +67,10 @@ func (s *HTTPServer) handleReviewCampaignsActive(w http.ResponseWriter, r *http.
 		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
-	tenantID := r.URL.Query().Get("tenant_id")
+	tenantID, tok := requireTenantHeader(w, r)
+	if !tok {
+		return
+	}
 
 	var result []*ReviewCampaign
 	if s.campaignRepo != nil {

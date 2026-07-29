@@ -53,7 +53,10 @@ func (s *HTTPServer) handleSoDRules(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusCreated, rule)
 
 	case http.MethodGet:
-		tenantID := r.URL.Query().Get("tenant_id")
+		tenantID, tok := requireTenantHeader(w, r)
+	if !tok {
+		return
+	}
 		var result []*SoDRulePair
 		if s.policyMap != nil {
 			rows, _ := s.policyMap.List(r.Context(), "policy_sod_rule_pairs")

@@ -72,7 +72,10 @@ func (s *HTTPServer) handleBreakGlass(w http.ResponseWriter, r *http.Request) {
 		})
 
 	case http.MethodGet:
-		tenantID := r.URL.Query().Get("tenant_id")
+		tenantID, tok := requireTenantHeader(w, r)
+	if !tok {
+		return
+	}
 		now := time.Now().UTC()
 		breakGlassMu.RLock()
 		result := []*BreakGlassAccess{}

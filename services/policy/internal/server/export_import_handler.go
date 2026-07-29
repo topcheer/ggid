@@ -33,7 +33,10 @@ var policyPackageStore = struct {
 func (s *HTTPServer) handlePolicyExportImport(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case http.MethodGet:
-		tenantID := r.URL.Query().Get("tenant_id")
+		tenantID, tok := requireTenantHeader(w, r)
+	if !tok {
+		return
+	}
 
 		// Gather all policies, roles, bindings, ABAC from services
 		policies, _ := s.policySvc.ListPolicies(r.Context(), uuid.Nil, 1, 500)

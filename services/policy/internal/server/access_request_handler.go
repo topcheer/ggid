@@ -77,7 +77,10 @@ func (s *HTTPServer) handleAccessRequestsPending(w http.ResponseWriter, r *http.
 		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
-	tenantID := r.URL.Query().Get("tenant_id")
+	tenantID, tok := requireTenantHeader(w, r)
+	if !tok {
+		return
+	}
 	var result []map[string]any
 	if s.policyMap != nil {
 		rows, _ := s.policyMap.List(r.Context(), "access_requests_store")

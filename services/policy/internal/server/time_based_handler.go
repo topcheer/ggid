@@ -75,7 +75,10 @@ func (s *HTTPServer) handleTimeBased(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusCreated, rule)
 
 	case http.MethodGet:
-		tenantID := r.URL.Query().Get("tenant_id")
+		tenantID, tok := requireTenantHeader(w, r)
+	if !tok {
+		return
+	}
 		timeAccessMu.RLock()
 		result := []*TimeAccessRule{}
 		for _, rule := range timeAccessRules {

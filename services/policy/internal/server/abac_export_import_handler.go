@@ -40,7 +40,10 @@ var (
 func (s *HTTPServer) handleABACExportImport(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case http.MethodGet:
-		tenantID := r.URL.Query().Get("tenant_id")
+		tenantID, tok := requireTenantHeader(w, r)
+	if !tok {
+		return
+	}
 		abacPolicyMu.RLock()
 		result := []*ABACPolicySet{}
 		for _, ps := range abacPolicies {
