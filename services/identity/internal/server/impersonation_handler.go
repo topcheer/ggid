@@ -13,9 +13,10 @@ import (
 // --- Tenant Access Consent ---
 
 // handleConsentCRUD handles:
-//   POST   /api/v1/tenants/{id}/access/grant   — grant consent
-//   DELETE /api/v1/tenants/{id}/access/{cid}   — revoke consent
-//   GET    /api/v1/tenants/{id}/access         — list consents
+//
+//	POST   /api/v1/tenants/{id}/access/grant   — grant consent
+//	DELETE /api/v1/tenants/{id}/access/{cid}   — revoke consent
+//	GET    /api/v1/tenants/{id}/access         — list consents
 func (h *HTTPHandler) handleConsentCRUD(w http.ResponseWriter, r *http.Request) {
 	pool := h.svc.Pool()
 	if pool == nil {
@@ -206,9 +207,10 @@ func (h *HTTPHandler) consentList(w http.ResponseWriter, r *http.Request, tenant
 // --- Impersonation ---
 
 // handleImpersonation handles:
-//   POST /api/v1/impersonate/start  — start impersonation
-//   POST /api/v1/impersonate/end    — end impersonation
-//   GET  /api/v1/impersonate/active — list active sessions
+//
+//	POST /api/v1/impersonate/start  — start impersonation
+//	POST /api/v1/impersonate/end    — end impersonation
+//	GET  /api/v1/impersonate/active — list active sessions
 func (h *HTTPHandler) handleImpersonation(w http.ResponseWriter, r *http.Request) {
 	path := strings.TrimRight(r.URL.Path, "/")
 
@@ -264,8 +266,8 @@ func (h *HTTPHandler) impersonateStart(w http.ResponseWriter, r *http.Request) {
 		ORDER BY created_at DESC LIMIT 1`, tenantUUID, impersonatorStr).Scan(&consentID, &scope)
 	if err != nil {
 		writeJSON(w, http.StatusForbidden, map[string]any{
-			"error":  "no active consent for this tenant",
-			"action": "request_consent",
+			"error":   "no active consent for this tenant",
+			"action":  "request_consent",
 			"message": "Tenant admin must grant access first",
 		})
 		return
@@ -292,12 +294,12 @@ func (h *HTTPHandler) impersonateStart(w http.ResponseWriter, r *http.Request) {
 	}
 
 	writeJSON(w, http.StatusOK, map[string]any{
-		"session_id":      sessionID,
-		"tenant_id":       req.TenantID,
-		"scope":           scope,
-		"consent_id":      consentID,
-		"status":          "active",
-		"message":         "Impersonation started. All actions are audited.",
+		"session_id": sessionID,
+		"tenant_id":  req.TenantID,
+		"scope":      scope,
+		"consent_id": consentID,
+		"status":     "active",
+		"message":    "Impersonation started. All actions are audited.",
 	})
 }
 
@@ -326,6 +328,12 @@ func (h *HTTPHandler) impersonateEnd(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *HTTPHandler) impersonateActive(w http.ResponseWriter, r *http.Request) {
+	// SECURITY: Filter to caller's tenant only.
+	callerTenant := r.Header.Get("X-Tenant-ID")
+	if callerTenant == "" {
+		writeJSON(w, http.StatusForbidden, map[string]string{"error": "tenant context required"})
+		return
+	}
 	rows, err := h.svc.Pool().Query(r.Context(), `
 		SELECT s.id::text, s.tenant_id::text, s.impersonator_id::text,
 		       COALESCE(s.target_user_id::text, ''), s.scope, s.reason,
@@ -333,8 +341,8 @@ func (h *HTTPHandler) impersonateActive(w http.ResponseWriter, r *http.Request) 
 		       t.name as tenant_name
 		FROM impersonation_sessions s
 		LEFT JOIN tenants t ON t.id = s.tenant_id
-		WHERE s.ended_at IS NULL
-		ORDER BY s.started_at DESC`)
+		WHERE s.ended_at IS NULL AND s.tenant_id = $1
+		ORDER BY s.started_at DESC`, callerTenant)
 	if err != nil {
 		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "failed to query sessions"})
 		return

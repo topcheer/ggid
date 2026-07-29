@@ -65,10 +65,10 @@ func (s *RoleService) CreateRole(ctx context.Context, tenantID uuid.UUID, key, n
 	// assign it to themselves, and the gateway's cross-tenant check trusts
 	// the roles claim — resulting in privilege escalation.
 	reservedSystemRoles := map[string]bool{
-		"platform:admin":  true,
-		"tenant:admin":    true,
-		"tenant:auditor":  true,
-		"user:self":       true,
+		"platform:admin": true,
+		"tenant:admin":   true,
+		"tenant:auditor": true,
+		"user:self":      true,
 	}
 	if reservedSystemRoles[strings.ToLower(strings.TrimSpace(key))] {
 		return nil, errors.New(errors.ErrInvalidArgument, "role key is reserved for system roles")
@@ -78,13 +78,13 @@ func (s *RoleService) CreateRole(ctx context.Context, tenantID uuid.UUID, key, n
 	// Prevents privilege escalation where a custom role named "platform:admin"
 	// gets into the JWT roles claim and the static RBAC fallback trusts it.
 	reservedSystemNames := map[string]bool{
-		"platform:admin":  true,
-		"tenant:admin":    true,
-		"tenant:auditor":  true,
-		"administrator":   true,
-		"platform admin":  true,
-		"super admin":     true,
-		"system admin":    true,
+		"platform:admin": true,
+		"tenant:admin":   true,
+		"tenant:auditor": true,
+		"administrator":  true,
+		"platform admin": true,
+		"super admin":    true,
+		"system admin":   true,
 	}
 	normalizedName := strings.ToLower(strings.TrimSpace(name))
 	if reservedSystemNames[normalizedName] {
@@ -143,13 +143,13 @@ func (s *RoleService) UpdateRole(ctx context.Context, id uuid.UUID, name, descri
 		// SECURITY (P1-10): block renaming to system role names — prevents
 		// privilege escalation via JWT roles claim (same check as CreateRole).
 		reservedSystemNames := map[string]bool{
-			"platform:admin":  true,
-			"tenant:admin":    true,
-			"tenant:auditor":  true,
-			"administrator":   true,
-			"platform admin":  true,
-			"super admin":     true,
-			"system admin":    true,
+			"platform:admin": true,
+			"tenant:admin":   true,
+			"tenant:auditor": true,
+			"administrator":  true,
+			"platform admin": true,
+			"super admin":    true,
+			"system admin":   true,
 		}
 		normalizedName := strings.ToLower(strings.TrimSpace(*name))
 		if reservedSystemNames[normalizedName] {
@@ -203,6 +203,16 @@ func (s *RoleService) SetParent(ctx context.Context, roleID, parentID uuid.UUID)
 			break // reached root
 		}
 		current = *p.ParentRoleID
+	}
+
+	// SECURITY: If we exhausted maxDepth iterations without reaching root,
+	// the parent chain is too deep to verify — reject to prevent undetected cycles.
+	lastRole, err := s.roleRepo.GetByID(ctx, current)
+	if err != nil {
+		return nil, errors.Wrap(errors.ErrInternal, "verify parent chain depth", err)
+	}
+	if lastRole.ParentRoleID != nil {
+		return nil, errors.New(errors.ErrInvalidArgument, "parent chain exceeds max depth, cycle cannot be verified")
 	}
 
 	role, err := s.roleRepo.GetByID(ctx, roleID)
