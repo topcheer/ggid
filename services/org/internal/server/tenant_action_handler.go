@@ -3,6 +3,7 @@ package httpserver
 import (
 	"encoding/json"
 	"net/http"
+	"strings"
 
 	"github.com/google/uuid"
 )
@@ -18,6 +19,15 @@ func (s *HTTPServer) handleSuspendTenant(w http.ResponseWriter, r *http.Request)
 
 	if s.tenantSvc == nil {
 		writeJSONError(w, http.StatusServiceUnavailable, "tenant service not configured")
+		return
+	}
+
+	// SECURITY (P0): suspending/activating a tenant is a platform-admin
+	// operation. The gateway strips and re-derives X-Scopes from verified
+	// JWT claims, so it is trustworthy here. Previously ANY caller could
+	// DoS an entire tenant.
+	if !strings.Contains(r.Header.Get("X-Scopes"), "platform:admin") {
+		writeJSONError(w, http.StatusForbidden, "platform:admin scope required")
 		return
 	}
 
@@ -42,7 +52,7 @@ func (s *HTTPServer) handleSuspendTenant(w http.ResponseWriter, r *http.Request)
 	}
 
 	if err := s.tenantSvc.Suspend(r.Context(), tenantID); err != nil {
-		writeJSONError(w, http.StatusInternalServerError, err.Error())
+		writeJSONError(w, http.StatusInternalServerError, "suspend failed")
 		return
 	}
 
@@ -70,6 +80,12 @@ func (s *HTTPServer) handleActivateTenant(w http.ResponseWriter, r *http.Request
 		return
 	}
 
+	// SECURITY (P0): platform-admin only — see handleSuspendTenant.
+	if !strings.Contains(r.Header.Get("X-Scopes"), "platform:admin") {
+		writeJSONError(w, http.StatusForbidden, "platform:admin scope required")
+		return
+	}
+
 	var req struct {
 		TenantID string `json:"tenant_id"`
 	}
@@ -90,7 +106,7 @@ func (s *HTTPServer) handleActivateTenant(w http.ResponseWriter, r *http.Request
 	}
 
 	if err := s.tenantSvc.Activate(r.Context(), tenantID); err != nil {
-		writeJSONError(w, http.StatusInternalServerError, err.Error())
+		writeJSONError(w, http.StatusInternalServerError, "activate failed")
 		return
 	}
 

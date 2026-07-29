@@ -250,6 +250,10 @@ func (gw *Gateway) buildProxies() {
 					}
 				}
 			}
+			// SECURITY (P1): strip client-supplied X-Tenant-ID too — only the
+			// JWT-derived value may reach backends (same spoofing class as the
+			// X-Scopes fix).
+			req.Header.Del("X-Tenant-ID")
 			if tenantID, ok := middleware.TenantIDFromRequest(req); ok {
 				req.Header.Set("X-Tenant-ID", tenantID)
 				// SECURITY: always overwrite client-provided tenant_id query param
@@ -1275,13 +1279,14 @@ func (gw *Gateway) buildProxiesLocked() {
 					}
 				}
 			}
+			req.Header.Del("X-Tenant-ID")
 			if tenantID, ok := middleware.TenantIDFromRequest(req); ok {
 				req.Header.Set("X-Tenant-ID", tenantID)
+				// Match the primary Director: unconditionally overwrite the
+				// client-provided tenant_id query param.
 				q := req.URL.Query()
-				if q.Get("tenant_id") == "" {
-					q.Set("tenant_id", tenantID)
-					req.URL.RawQuery = q.Encode()
-				}
+				q.Set("tenant_id", tenantID)
+				req.URL.RawQuery = q.Encode()
 				injectTenantIntoBody(req, tenantID)
 			}
 		}

@@ -29,6 +29,7 @@ func TestSuspendTenant_MissingTenantID(t *testing.T) {
 
 	body := `{}`
 	req := httptest.NewRequest(http.MethodPost, "/api/v1/org/tenants/suspend", strings.NewReader(body))
+	req.Header.Set("X-Scopes", "platform:admin")
 	rr := httptest.NewRecorder()
 	mux.ServeHTTP(rr, req)
 
@@ -44,6 +45,7 @@ func TestSuspendTenant_InvalidUUID(t *testing.T) {
 
 	body := `{"tenant_id":"not-a-uuid"}`
 	req := httptest.NewRequest(http.MethodPost, "/api/v1/org/tenants/suspend", strings.NewReader(body))
+	req.Header.Set("X-Scopes", "platform:admin")
 	rr := httptest.NewRecorder()
 	mux.ServeHTTP(rr, req)
 
@@ -61,6 +63,7 @@ func TestSuspendTenant_Success(t *testing.T) {
 	// We test the handler wiring, not the full business logic
 	body := `{"tenant_id":"550e8400-e29b-41d4-a716-446655440000","reason":"policy violation"}`
 	req := httptest.NewRequest(http.MethodPost, "/api/v1/org/tenants/suspend", strings.NewReader(body))
+	req.Header.Set("X-Scopes", "platform:admin")
 	rr := httptest.NewRecorder()
 	mux.ServeHTTP(rr, req)
 
@@ -90,6 +93,7 @@ func TestActivateTenant_MissingTenantID(t *testing.T) {
 
 	body := `{}`
 	req := httptest.NewRequest(http.MethodPost, "/api/v1/org/tenants/activate", strings.NewReader(body))
+	req.Header.Set("X-Scopes", "platform:admin")
 	rr := httptest.NewRecorder()
 	mux.ServeHTTP(rr, req)
 
