@@ -289,15 +289,25 @@ func (s *HTTPServer) handleRoleByID(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusOK, roleToJSON(role))
 	case http.MethodPut, http.MethodPatch:
 		var req struct {
-			Name        string `json:"name"`
-			Description string `json:"description"`
+			Name        *string `json:"name,omitempty"`
+			Description *string `json:"description,omitempty"`
 		}
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 			writeJSONError(w, http.StatusBadRequest, "invalid request body")
 			return
 		}
-		namePtr := &req.Name
-		descPtr := &req.Description
+		// For PUT: require at least name field; for PATCH: nil = don't update
+		var namePtr, descPtr *string
+		if r.Method == http.MethodPut {
+			namePtr = req.Name
+			descPtr = req.Description
+			if namePtr == nil {
+				namePtr = new(string) // empty string for PUT
+			}
+		} else {
+			namePtr = req.Name
+			descPtr = req.Description
+		}
 		updated, err := s.roleSvc.UpdateRole(r.Context(), id, namePtr, descPtr, nil)
 		if err != nil {
 			log.Printf("role update error: %v", err)
