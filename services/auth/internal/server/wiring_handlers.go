@@ -26,6 +26,25 @@ func (h *Handler) handleImpersonate(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusMethodNotAllowed, map[string]string{"error": "method not allowed"})
 		return
 	}
+	// SECURITY: Impersonation requires admin scope — same-tenant needs tenant:admin,
+	// cross-tenant needs platform:admin (checked below). Without this, any authenticated
+	// user could impersonate anyone in their tenant.
+	scopesStr := r.Header.Get("X-Scopes")
+	if scopesStr == "" {
+		scopesStr = r.Header.Get("X-User-Scopes")
+	}
+	isAdmin := false
+	for _, sc := range strings.Split(scopesStr, ",") {
+		s := strings.TrimSpace(sc)
+		if s == "platform:admin" || s == "tenant:admin" {
+			isAdmin = true
+			break
+		}
+	}
+	if !isAdmin {
+		writeJSON(w, http.StatusForbidden, map[string]string{"error": "admin scope required for impersonation"})
+		return
+	}
 	var req struct {
 		ImpersonatorID string `json:"impersonator_id"`
 		TargetUserID   string `json:"target_user_id"`

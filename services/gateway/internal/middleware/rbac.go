@@ -34,18 +34,19 @@ func AdminOnly(next http.Handler) http.Handler {
 // defaultAdminPrefixes is the hardcoded admin-endpoint list, kept as a
 // fallback when the dynamic RBAC resolver has no data (ADR-dynamic-rbac).
 var defaultAdminPrefixes = []string{
-	"/api/v1/users",         // User CRUD (except /me which is public-ish)
-	"/api/v1/audit/",        // Audit events
-	"/api/v1/policies",      // Policy management
-	"/api/v1/policy/",       // Policy service mounts singular paths (P1 gap)
-	"/api/v1/webhooks",      // Webhook CRUD
-	"/api/v1/oauth/clients", // OAuth client management
-	"/api/v1/roles",         // Role management (listing is OK for all, but POST/DELETE need admin)
-	"/api/v1/admin/",        // Admin dashboard
-	"/api/v1/settings/",     // System settings
-	"/api/v1/system/",       // System management
-	"/api/v1/tenants",       // Tenant management (except resolve which is public)
-	"/api/v1/impersonate",   // Impersonation (platform admin only)
+	"/api/v1/users",            // User CRUD (except /me which is public-ish)
+	"/api/v1/audit/",           // Audit events
+	"/api/v1/policies",         // Policy management
+	"/api/v1/policy/",          // Policy service mounts singular paths (P1 gap)
+	"/api/v1/webhooks",         // Webhook CRUD
+	"/api/v1/oauth/clients",    // OAuth client management
+	"/api/v1/roles",            // Role management (listing is OK for all, but POST/DELETE need admin)
+	"/api/v1/admin/",           // Admin dashboard
+	"/api/v1/settings/",        // System settings
+	"/api/v1/system/",          // System management
+	"/api/v1/tenants",          // Tenant management (except resolve which is public)
+	"/api/v1/impersonate",      // Impersonation (platform admin only)
+	"/api/v1/auth/impersonate", // Auth service impersonation endpoint
 	// Admin-level management endpoints (self-service variants are in publicPaths)
 	"/api/v1/auth/mfa/factors",          // MFA factor configuration
 	"/api/v1/auth/mfa/admin/",           // Admin MFA management for other users

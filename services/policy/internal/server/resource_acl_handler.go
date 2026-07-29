@@ -46,7 +46,7 @@ func (s *HTTPServer) handleResourceACL(w http.ResponseWriter, r *http.Request) {
 			req.PrincipalType = "user"
 		}
 		acl := &ResourceACL{
-			ID: uuid.New().String(), TenantID: req.TenantID, ResourcePath: req.ResourcePath,
+			ID: uuid.New().String(), TenantID: callerTenant(r), ResourcePath: req.ResourcePath,
 			Principal: req.Principal, PrincipalType: req.PrincipalType, Effect: req.Effect,
 			Priority: req.Priority, CreatedAt: time.Now().UTC(),
 		}
@@ -60,10 +60,14 @@ func (s *HTTPServer) handleResourceACL(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusCreated, acl)
 	case http.MethodGet:
 		resource := r.URL.Query().Get("resource")
+		tid := r.Header.Get("X-Tenant-ID")
 		var result []*ResourceACL
 		if s.policyMap != nil {
 			rows, _ := s.policyMap.List(r.Context(), "policy_resource_acls")
 			for _, row := range rows {
+				if pmGetString(row, "tenant_id") != tid {
+					continue
+				}
 				acl := &ResourceACL{
 					ID: pmGetString(row, "id"), TenantID: pmGetString(row, "tenant_id"),
 					ResourcePath: pmGetString(row, "resource_path"), Principal: pmGetString(row, "principal"),

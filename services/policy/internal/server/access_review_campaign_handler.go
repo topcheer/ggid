@@ -13,16 +13,16 @@ import (
 
 // ReviewCampaign represents an access review campaign.
 type ReviewCampaign struct {
-	ID         string    `json:"id"`
-	TenantID   string    `json:"tenant_id"`
-	Scope      string    `json:"scope"`       // "org", "role", "department"
-	ScopeID    string    `json:"scope_id"`    // org ID, role ID, or dept ID
-	ReviewerID string    `json:"reviewer_id"`
-	Deadline   time.Time `json:"deadline"`
-	Status     string    `json:"status"`      // "active", "completed", "expired"
-	Decision   string    `json:"decision,omitempty"` // "approve", "revoke", "modify"
-	Notes      string    `json:"notes,omitempty"`
-	CreatedAt  time.Time `json:"created_at"`
+	ID          string     `json:"id"`
+	TenantID    string     `json:"tenant_id"`
+	Scope       string     `json:"scope"`    // "org", "role", "department"
+	ScopeID     string     `json:"scope_id"` // org ID, role ID, or dept ID
+	ReviewerID  string     `json:"reviewer_id"`
+	Deadline    time.Time  `json:"deadline"`
+	Status      string     `json:"status"`             // "active", "completed", "expired"
+	Decision    string     `json:"decision,omitempty"` // "approve", "revoke", "modify"
+	Notes       string     `json:"notes,omitempty"`
+	CreatedAt   time.Time  `json:"created_at"`
 	SubmittedAt *time.Time `json:"submitted_at,omitempty"`
 }
 
@@ -95,11 +95,11 @@ func (s *HTTPServer) handleReviewCampaignsActive(w http.ResponseWriter, r *http.
 
 func (s *HTTPServer) createReviewCampaign(w http.ResponseWriter, r *http.Request) {
 	var req struct {
-		TenantID   string `json:"tenant_id"`
-		Scope      string `json:"scope"`
-		ScopeID    string `json:"scope_id"`
-		ReviewerID string `json:"reviewer_id"`
-		DeadlineHours int  `json:"deadline_hours"`
+		TenantID      string `json:"tenant_id"`
+		Scope         string `json:"scope"`
+		ScopeID       string `json:"scope_id"`
+		ReviewerID    string `json:"reviewer_id"`
+		DeadlineHours int    `json:"deadline_hours"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		writeJSONError(w, http.StatusBadRequest, "invalid JSON body")
@@ -109,6 +109,7 @@ func (s *HTTPServer) createReviewCampaign(w http.ResponseWriter, r *http.Request
 		writeJSONError(w, http.StatusBadRequest, "scope is required")
 		return
 	}
+	tenantID := callerTenant(r)
 	if req.ReviewerID == "" {
 		writeJSONError(w, http.StatusBadRequest, "reviewer_id is required")
 		return
@@ -120,7 +121,7 @@ func (s *HTTPServer) createReviewCampaign(w http.ResponseWriter, r *http.Request
 	now := time.Now().UTC()
 	c := &ReviewCampaign{
 		ID:         uuid.New().String(),
-		TenantID:   req.TenantID,
+		TenantID:   tenantID,
 		Scope:      req.Scope,
 		ScopeID:    req.ScopeID,
 		ReviewerID: req.ReviewerID,

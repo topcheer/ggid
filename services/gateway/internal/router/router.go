@@ -757,7 +757,7 @@ var adminOnlyPaths = []string{
 	"/api/v1/users", "/api/v1/roles", "/api/v1/audit/",
 	"/api/v1/policies", "/api/v1/policy/", "/api/v1/webhooks", "/api/v1/oauth/clients",
 	"/api/v1/settings/", "/api/v1/admin/", "/api/v1/identity/dashboard",
-	"/api/v1/tenants", "/api/v1/impersonate",
+	"/api/v1/tenants", "/api/v1/impersonate", "/api/v1/auth/impersonate",
 	"/api/v1/api-keys", "/api/v1/access-keys",
 	"/api/v1/admin/secrets", "/api/v1/admin/key-rotation", "/api/v1/admin/backup",
 	// Admin-level management endpoints (self-service MFA setup/verify are in publicPaths)
