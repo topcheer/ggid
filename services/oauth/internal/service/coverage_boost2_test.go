@@ -772,7 +772,7 @@ func TestExchangeToken_Success(t *testing.T) {
 	_ = clientRepo // ensure client is in repo
 
 	userID := uuid.New()
-	subjectToken, _, err := svc.issueAccessToken(userID, testTenantID, testIssuer, "openid read")
+	subjectToken, _, err := svc.issueAccessToken(userID, testTenantID, "target-service", "openid read")
 	if err != nil {
 		t.Fatalf("issueAccessToken: %v", err)
 	}
