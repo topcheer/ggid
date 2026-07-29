@@ -3,6 +3,7 @@ package server
 
 import (
 	"bytes"
+	"compress/flate"
 	"context"
 	stdcrypto "crypto"
 	"crypto/rand"
@@ -13,23 +14,22 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"encoding/pem"
-	"compress/flate"
 	"fmt"
+	"io"
 	"log"
-	"net/url"
 	"log/slog"
 	"math/big"
 	"net"
 	"net/http"
-	"io"
+	"net/url"
 	"os"
 	"strconv"
 	"strings"
 	"time"
 
 	"github.com/ggid/ggid/pkg/audit"
-	"github.com/ggid/ggid/pkg/middleware"
 	"github.com/ggid/ggid/pkg/crypto"
+	"github.com/ggid/ggid/pkg/middleware"
 	"github.com/ggid/ggid/pkg/saml"
 	"github.com/ggid/ggid/pkg/tenant"
 	"github.com/ggid/ggid/services/oauth/internal/conf"
@@ -46,14 +46,14 @@ import (
 
 // Server encapsulates the OAuth HTTP server.
 type Server struct {
-	cfg           *conf.Config
-	httpSrv      *http.Server
-	oauthSvc     *service.OAuthService
-	pool         *pgxpool.Pool
-	stopTicker   func()
-	rotatingKP   *service.RotatingKeyProvider
-	auditPub     *audit.Publisher
-	mapRepo      *oauthMapRepo
+	cfg        *conf.Config
+	httpSrv    *http.Server
+	oauthSvc   *service.OAuthService
+	pool       *pgxpool.Pool
+	stopTicker func()
+	rotatingKP *service.RotatingKeyProvider
+	auditPub   *audit.Publisher
+	mapRepo    *oauthMapRepo
 }
 
 func (s *Server) SetMapRepo(repo *oauthMapRepo) {
@@ -74,9 +74,9 @@ func (kp *keyProvider) Metadata() crypto.KeyMetadata {
 		Use:       "sig",
 	}
 }
-func (kp *keyProvider) Public() stdcrypto.PublicKey   { return kp.pub }
-func (kp *keyProvider) Signer() stdcrypto.Signer        { return kp.priv }
-func (kp *keyProvider) Close() error               { return nil }
+func (kp *keyProvider) Public() stdcrypto.PublicKey { return kp.pub }
+func (kp *keyProvider) Signer() stdcrypto.Signer    { return kp.priv }
+func (kp *keyProvider) Close() error                { return nil }
 
 // New constructs and wires up the OAuth server using a local key provider by default.
 func New(cfg *conf.Config) (*Server, error) {
@@ -127,7 +127,6 @@ func NewWithKeyProvider(cfg *conf.Config, kp crypto.KeyProvider) (*Server, error
 	} else {
 		log.Printf("OAuth key provider is not a local RSA key; rotation disabled")
 	}
-
 
 	var (
 		clientRepo repository.ClientRepository
@@ -481,17 +480,17 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 		}
 		userID, err := uuid.Parse(userIDStr)
 		if err != nil {
-		// Load client to determine configured auth methods for dynamic login page.
-		loginCtx := tenant.WithContext(r.Context(), &tenant.Context{
-			TenantID:       tenantID,
-			IsolationLevel: tenant.IsolationShared,
-		})
-		loginClient, _ := oauthSvc.GetClient(loginCtx, clientID)
-		authMethods := []string{"password"}
-		if loginClient != nil {
-			authMethods = loginClient.GetAuthMethods()
-		}
-		renderDynamicLoginPage(w, r, tenantID, authMethods, os.Getenv("GGID_URL"))
+			// Load client to determine configured auth methods for dynamic login page.
+			loginCtx := tenant.WithContext(r.Context(), &tenant.Context{
+				TenantID:       tenantID,
+				IsolationLevel: tenant.IsolationShared,
+			})
+			loginClient, _ := oauthSvc.GetClient(loginCtx, clientID)
+			authMethods := []string{"password"}
+			if loginClient != nil {
+				authMethods = loginClient.GetAuthMethods()
+			}
+			renderDynamicLoginPage(w, r, tenantID, authMethods, os.Getenv("GGID_URL"))
 			return
 		}
 
@@ -569,7 +568,7 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 			CodeChallengeMethod:  codeChallengeMethod,
 			UserID:               userID,
 			AuthorizationDetails: authDetailsJSON,
-			RequestedACR:          acrValues,
+			RequestedACR:         acrValues,
 		})
 		if err != nil {
 			writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid_request", "error_description": err.Error()})
@@ -955,9 +954,9 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 		}
 
 		writeJSON(w, http.StatusOK, map[string]any{
-			"status":  "logged_out",
-			"sub":     sub,
-			"sid":     sid,
+			"status": "logged_out",
+			"sub":    sub,
+			"sid":    sid,
 		})
 	})
 
@@ -1709,24 +1708,30 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 		case http.MethodPut, http.MethodPatch:
 			var update struct {
 				Name                    *string   `json:"name"`
-				RedirectURIs           *[]string `json:"redirect_uris"`
-				GrantTypes             *[]string `json:"grant_types"`
-				Scopes                 *[]string `json:"scopes"`
-				Enabled                *bool     `json:"enabled"`
-				TokenEndpointAuthMethod *string  `json:"token_endpoint_auth_method"`
+				RedirectURIs            *[]string `json:"redirect_uris"`
+				GrantTypes              *[]string `json:"grant_types"`
+				Scopes                  *[]string `json:"scopes"`
+				Enabled                 *bool     `json:"enabled"`
+				TokenEndpointAuthMethod *string   `json:"token_endpoint_auth_method"`
 			}
 			if err := json.NewDecoder(r.Body).Decode(&update); err != nil {
 				writeJSON(w, http.StatusBadRequest, map[string]any{"error": map[string]string{"code": "invalid_argument", "message": "invalid request body"}})
 				return
 			}
 			upd := &service.ClientMetadataUpdate{
-				Name: update.Name,
+				Name:                    update.Name,
 				TokenEndpointAuthMethod: update.TokenEndpointAuthMethod,
-				Enabled: update.Enabled,
+				Enabled:                 update.Enabled,
 			}
-			if update.RedirectURIs != nil { upd.RedirectURIs = *update.RedirectURIs }
-			if update.GrantTypes != nil { upd.GrantTypes = *update.GrantTypes }
-			if update.Scopes != nil { upd.Scopes = *update.Scopes }
+			if update.RedirectURIs != nil {
+				upd.RedirectURIs = *update.RedirectURIs
+			}
+			if update.GrantTypes != nil {
+				upd.GrantTypes = *update.GrantTypes
+			}
+			if update.Scopes != nil {
+				upd.Scopes = *update.Scopes
+			}
 			updated, err := oauthSvc.UpdateClientMetadata(ctx, clientID, upd)
 			if err != nil {
 				writeInternalError(w, "UpdateClient", err)
@@ -1755,7 +1760,7 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 			// Audit: client deleted
 			if auditPub != nil {
 				actorID, _ := uuid.Parse(r.Header.Get("X-User-ID"))
-			ev := audit.NewEvent("oauth_client.delete", "success", tenantID, actorID)
+				ev := audit.NewEvent("oauth_client.delete", "success", tenantID, actorID)
 				ev.ResourceType = "oauth_client"
 				auditPub.PublishAsync(ev)
 			}
@@ -1901,16 +1906,35 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 		}
 		consentID := parts[len(parts)-1]
 
-		// Delete the consent record from the store.
+		// SECURITY: authenticate and verify ownership BEFORE deleting —
+		// previously the record was deleted before any identity check,
+		// allowing cross-tenant consent deletion (R-cron P1-3 BOLA).
+		userID := r.Header.Get("X-User-ID")
+		tenantID := r.Header.Get("X-Tenant-ID")
+		if userID == "" || tenantID == "" {
+			writeJSON(w, http.StatusUnauthorized, map[string]any{"error": map[string]string{"code": "unauthenticated", "message": "authentication required"}})
+			return
+		}
+
+		// Delete the consent record from the store (ownership-checked).
 		if mapRepoVar != nil {
+			rec, gerr := mapRepoVar.Get(r.Context(), "oauth_consents", consentID)
+			if gerr == nil && rec != nil {
+				// Fail-closed: a record lacking tenant/user ownership fields
+				// can never be deleted by anyone (prevents vacuous pass when
+				// a future writer omits these fields).
+				rtid, rtok := rec["tenant_id"].(string)
+				ruid, ruok := rec["user_id"].(string)
+				if !rtok || !ruok || rtid != tenantID || ruid != userID {
+					writeJSON(w, http.StatusNotFound, map[string]any{"error": map[string]string{"code": "not_found", "message": "consent not found"}})
+					return
+				}
+			}
 			if err := mapRepoVar.Delete(r.Context(), "oauth_consents", consentID); err != nil {
 				slog.Warn("consent delete failed", "error", err, "consent_id", consentID)
 			}
 		}
 
-		// SECURITY: Use authenticated user from gateway, not query params.
-		userID := r.Header.Get("X-User-ID")
-		tenantID := r.Header.Get("X-Tenant-ID")
 		scope := r.URL.Query().Get("scope")
 
 		var cascadeResult map[string]any
@@ -2106,7 +2130,7 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 			writeJSON(w, http.StatusOK, map[string]any{"ttl_seconds": 30, "enabled": true})
 		case http.MethodPut:
 			var req struct {
-				TTLSeconds int  `json:"ttl_seconds"`
+				TTLSeconds int   `json:"ttl_seconds"`
 				Enabled    *bool `json:"enabled"`
 			}
 			json.NewDecoder(r.Body).Decode(&req)
@@ -2201,11 +2225,11 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 			return
 		}
 		var body struct {
-			SubjectToken   string   `json:"subject_token"`
-			AgentID        string   `json:"agent_id"`
-			Scope          []string `json:"scope"`
-			MCPServers     []string `json:"mcp_servers"`
-			Audience       string   `json:"audience"`
+			SubjectToken string   `json:"subject_token"`
+			AgentID      string   `json:"agent_id"`
+			Scope        []string `json:"scope"`
+			MCPServers   []string `json:"mcp_servers"`
+			Audience     string   `json:"audience"`
 		}
 		if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
 			writeJSON(w, http.StatusBadRequest, map[string]any{"error": map[string]string{"code": "invalid_argument", "message": "invalid JSON body"}})
@@ -2844,6 +2868,7 @@ func parseAuthnRequest(rawXML []byte) (entityID, acsURL, requestID string) {
 
 	return entityID, acsURL, requestID
 }
+
 // writeJSONError writes a standard JSON error response.
 func writeJSONError(w http.ResponseWriter, status int, msg string) {
 	code := "internal"
@@ -2865,4 +2890,3 @@ func writeJSONError(w http.ResponseWriter, status int, msg string) {
 		"error": map[string]string{"code": code, "message": msg},
 	})
 }
-

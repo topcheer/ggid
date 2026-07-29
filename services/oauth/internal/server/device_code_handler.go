@@ -7,8 +7,8 @@ import (
 	"os"
 	"strings"
 
-	"github.com/google/uuid"
 	"github.com/ggid/ggid/services/oauth/internal/service"
+	"github.com/google/uuid"
 )
 
 // POST /api/v1/oauth/device_authorize
@@ -81,15 +81,11 @@ func handleDeviceVerify(s *service.OAuthService) http.HandlerFunc {
 		var req struct {
 			UserCode string `json:"user_code"`
 			Action   string `json:"action"`
-			UserID   string `json:"user_id"`
-			TenantID string `json:"tenant_id"`
 		}
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 			r.ParseForm()
 			req.UserCode = r.FormValue("user_code")
 			req.Action = r.FormValue("action")
-			req.UserID = r.FormValue("user_id")
-			req.TenantID = r.FormValue("tenant_id")
 		}
 		if req.UserCode == "" {
 			writeJSONError(w, http.StatusBadRequest, "user_code is required")
@@ -99,11 +95,32 @@ func handleDeviceVerify(s *service.OAuthService) http.HandlerFunc {
 			req.Action = "approve"
 		}
 
-		err := s.ApproveDeviceCode(req.UserCode, uuid.Nil)
+		// SECURITY: user identity comes ONLY from the X-User-ID header set by
+		// the gateway from the verified JWT — never from body/form fields.
+		// Approving with uuid.Nil previously let anyone mint a token for the
+		// all-zero subject in a tenant of their choosing (R-cron P1-2).
+		userID, perr := uuid.Parse(r.Header.Get("X-User-ID"))
+		if perr != nil || userID == uuid.Nil {
+			writeJSONError(w, http.StatusUnauthorized, "authentication required")
+			return
+		}
+
+		var err error
+		switch req.Action {
+		case "approve":
+			err = s.ApproveDeviceCode(req.UserCode, userID)
+		case "deny":
+			err = s.DenyDeviceCode(req.UserCode)
+		default:
+			writeJSONError(w, http.StatusBadRequest, "action must be approve or deny")
+			return
+		}
 		if err != nil {
 			writeJSONError(w, http.StatusBadRequest, err.Error())
 			return
 		}
-		writeJSON(w, http.StatusOK, map[string]any{"status": "ok", "user_code": req.UserCode})
+		// Note: response status field now echoes the action ("approve"/"deny")
+		// instead of "ok" — no known clients call this endpoint.
+		writeJSON(w, http.StatusOK, map[string]any{"status": req.Action, "user_code": req.UserCode})
 	}
 }

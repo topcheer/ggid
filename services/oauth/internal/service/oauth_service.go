@@ -87,14 +87,13 @@ func (s *OAuthService) VerifyAuthTicket(ctx context.Context, ticket string) (uui
 	}
 
 	key := "auth_ticket:" + ticket
-	val, err := s.rdb.Get(ctx, key)
+	// GetDel is atomic — Get+Del allowed concurrent replay of the same
+	// single-use ticket (R-cron P2).
+	val, err := s.rdb.GetDel(ctx, key)
 	if err != nil {
 		return uuid.Nil, uuid.Nil, fmt.Errorf("invalid or expired ticket")
 	}
 	data := []byte(val)
-
-	// Delete immediately — single use
-	s.rdb.Del(ctx, key)
 
 	var ticketData struct {
 		TenantID string   `json:"tenant_id"`
@@ -2305,15 +2304,15 @@ func (s *OAuthService) PasswordGrant(ctx context.Context, req *PasswordGrantRequ
 		// Without this check, a user without MFA could pass a random mfa_code
 		// string and bypass the policy.
 		if req.MFACode == "" && req.BackupCode == "" {
-				return nil, errors.New(errors.ErrUnauthenticated,
-					fmt.Sprintf("mfa required by policy: %s", capPolicy))
+			return nil, errors.New(errors.ErrUnauthenticated,
+				fmt.Sprintf("mfa required by policy: %s", capPolicy))
+		}
+		// If backup code provided, verify and consume it
+		if req.BackupCode != "" {
+			if _, err := s.verifyBackupCode(ctx, tenantID, userID, req.BackupCode); err != nil {
+				return nil, errors.New(errors.ErrUnauthenticated, "invalid backup code")
 			}
-			// If backup code provided, verify and consume it
-			if req.BackupCode != "" {
-				if _, err := s.verifyBackupCode(ctx, tenantID, userID, req.BackupCode); err != nil {
-					return nil, errors.New(errors.ErrUnauthenticated, "invalid backup code")
-				}
-			}
+		}
 		var mfaVerified int
 		s.pool.QueryRow(ctx,
 			`SELECT COUNT(*) FROM mfa_devices WHERE tenant_id = $1 AND user_id = $2 AND enabled = true AND verified_at IS NOT NULL`,
@@ -3015,6 +3014,11 @@ func (s *OAuthService) PollDeviceToken(ctx context.Context, deviceCode, clientID
 
 // ApproveDeviceCode is called when the user enters their user_code and approves.
 func (s *OAuthService) ApproveDeviceCode(userCode string, userID uuid.UUID) error {
+	// Defense in depth: approving as the nil user would issue tokens for the
+	// all-zero subject (R-cron P1-2).
+	if userID == uuid.Nil {
+		return fmt.Errorf("user_id is required")
+	}
 	deviceCodeMu.Lock()
 	defer deviceCodeMu.Unlock()
 
@@ -3036,6 +3040,31 @@ func (s *OAuthService) ApproveDeviceCode(userCode string, userID uuid.UUID) erro
 
 	info.Status = "approved"
 	info.UserID = &userID
+	return nil
+}
+
+// DenyDeviceCode marks a device authorization request as denied (RFC 8628 §3.4).
+func (s *OAuthService) DenyDeviceCode(userCode string) error {
+	deviceCodeMu.Lock()
+	defer deviceCodeMu.Unlock()
+
+	deviceCode, ok := userCodeIndex[userCode]
+	if !ok {
+		return fmt.Errorf("invalid user_code")
+	}
+
+	info, ok := deviceCodeStore[deviceCode]
+	if !ok {
+		return fmt.Errorf("device code not found")
+	}
+
+	if time.Now().After(info.ExpiresAt) {
+		delete(deviceCodeStore, deviceCode)
+		delete(userCodeIndex, userCode)
+		return fmt.Errorf("expired user_code")
+	}
+
+	info.Status = "denied"
 	return nil
 }
 
