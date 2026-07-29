@@ -280,9 +280,9 @@ export default function EnhancedProfilePage() {
     setSaving(true);
     try {
       const res = await fetch(`${API_BASE}/api/v1/users/me`, {
-        method: "PUT",
+        method: "PATCH",
         headers: { "Content-Type": "application/json", ...authHeader() },
-        body: JSON.stringify({ display_name: name, email, phone }),
+        body: JSON.stringify({ display_name: name, phone }),
       });
       if (res.ok) {
         setProfileSaved(true);

@@ -125,6 +125,16 @@ func (h *Handler) handleRegister(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusBadRequest, "username, email, and password are required")
 		return
 	}
+	if len(req.Username) < 3 || len(req.Username) > 64 {
+		writeError(w, http.StatusBadRequest, "username must be 3-64 characters")
+		return
+	}
+	for _, c := range req.Username {
+		if !((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9') || c == '_' || c == '-' || c == '.') {
+			writeError(w, http.StatusBadRequest, "username contains invalid characters (allowed: letters, digits, _ - .)")
+			return
+		}
+	}
 	if !validateEmail(req.Email) {
 		writeError(w, http.StatusBadRequest, "invalid email format")
 		return
@@ -191,19 +201,31 @@ func (h *Handler) handleRegister(w http.ResponseWriter, r *http.Request) {
 			userID, hash)
 	}
 
-	// Generate verification token (optional — user can login without verification in v1)
+	// Generate verification token and send email
 	var token *VerificationToken
 	if h.verificationRepo != nil {
 		token, _ = h.verificationRepo.CreateToken(r.Context(), userID.String(), "email_verification", 24*time.Hour)
 	}
-	_ = token
+	// Send verification email if token created and email service available
+	verificationSent := false
+	if token != nil && h.emailRepo != nil {
+		verifyURL := fmt.Sprintf("/api/v1/auth/verify-email?token=%s", token.Token)
+		_ = h.emailRepo.SendEmail(r.Context(), &EmailMessage{
+			To:       req.Email,
+			Subject:  "Verify your GGID account",
+			Template: "email_verification",
+			Data:     map[string]string{"verify_url": verifyURL, "username": req.Username},
+		})
+		verificationSent = true
+	}
 
 	writeJSON(w, http.StatusCreated, map[string]any{
-		"status":              "registered",
-		"user_id":             userID.String(),
-		"state":               "active",
+		"status":                "registered",
+		"user_id":               userID.String(),
+		"state":                 "active",
 		"verification_required": false,
-		"message":             "registration successful",
+		"email_verification_sent": verificationSent,
+		"message":               "registration successful",
 	})
 }
 
