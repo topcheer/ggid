@@ -104,13 +104,13 @@ impl GGIDClient {
             .http
             .post(format!("{}/api/v1/oauth/token", self.base_url))
             .header("X-Tenant-ID", &self.tenant_id)
-            .json(&json!({
-                "grant_type": "authorization_code",
-                "code": code,
-                "redirect_uri": redirect_uri,
-                "client_id": client_id,
-                "client_secret": client_secret,
-            }))
+            .form(&[
+                ("grant_type", "authorization_code"),
+                ("code", code),
+                ("redirect_uri", redirect_uri),
+                ("client_id", client_id),
+                ("client_secret", client_secret),
+            ])
             .send()
             .await?;
 
@@ -134,12 +134,12 @@ impl GGIDClient {
             .http
             .post(format!("{}/api/v1/oauth/token", self.base_url))
             .header("X-Tenant-ID", &self.tenant_id)
-            .json(&json!({
-                "grant_type": "refresh_token",
-                "refresh_token": refresh_token,
-                "client_id": client_id,
-                "client_secret": client_secret,
-            }))
+            .form(&[
+                ("grant_type", "refresh_token"),
+                ("refresh_token", refresh_token),
+                ("client_id", client_id),
+                ("client_secret", client_secret),
+            ])
             .send()
             .await?;
 
