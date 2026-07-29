@@ -456,13 +456,11 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 			return
 		}
 
-		// The user must be authenticated (via JWT, user_id, or auth_ticket).
-		// auth_ticket: one-time ticket from passwordless auth (passkey/SMS/email OTP).
-		// Verified via Redis, consumed on use. Maps to standard authorize flow.
-		userIDStr := r.URL.Query().Get("user_id")
-		if userIDStr == "" {
-			userIDStr = r.Header.Get("X-User-ID")
-		}
+		// The user must be authenticated via the gateway's X-User-ID header
+		// (set from verified JWT), or via a verified auth_ticket (passwordless).
+		// SECURITY: Do NOT accept raw user_id query parameter — it allows
+		// authentication bypass by injecting any user's UUID.
+		userIDStr := r.Header.Get("X-User-ID")
 		// Check for auth_ticket (passwordless verification)
 		if userIDStr == "" {
 			if ticket := r.URL.Query().Get("auth_ticket"); ticket != "" {
@@ -535,7 +533,7 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 				"requested_scopes": scopes,
 				"state":            state,
 				"message":          "User consent is required for the requested scopes.",
-				"consent_url":      "/oauth/authorize?consent=true&client_id=" + clientID + "&redirect_uri=" + redirectURI + "&response_type=code&scope=" + scopeParam + "&user_id=" + userIDStr,
+				"consent_url":      "/oauth/authorize?consent=true&client_id=" + url.QueryEscape(clientID) + "&redirect_uri=" + url.QueryEscape(redirectURI) + "&response_type=code&scope=" + url.QueryEscape(scopeParam) + "&user_id=" + url.QueryEscape(userIDStr),
 			})
 			return
 		}
@@ -687,6 +685,17 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 
 		switch grantType {
 		case "authorization_code":
+			// SECURITY (RFC 6749 §10.12): Validate state parameter for CSRF protection.
+			stateParam := r.FormValue("state")
+			if stateParam != "" {
+				if !oauthSvc.ValidateState(clientID, stateParam) {
+					writeJSON(w, http.StatusBadRequest, map[string]string{
+						"error":             "invalid_state",
+						"error_description": "state parameter validation failed",
+					})
+					return
+				}
+			}
 			resp, tokenErr = oauthSvc.ExchangeAuthorizationCode(ctx, &service.TokenExchangeRequest{
 				TenantID:     tenantID,
 				GrantType:    grantType,
