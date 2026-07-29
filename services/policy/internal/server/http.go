@@ -503,7 +503,13 @@ func (s *HTTPServer) handleAssignRole(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Assign the role.
-	if err := s.roleSvc.AssignRole(r.Context(), userID, roleID, "global", uuid.Nil, uuid.Nil, nil); err != nil {
+	// SECURITY: extract grantedBy from the authenticated user's identity.
+	grantedByStr := r.Header.Get("X-User-ID")
+	var grantedBy uuid.UUID
+	if grantedByStr != "" {
+		grantedBy, _ = uuid.Parse(grantedByStr)
+	}
+	if err := s.roleSvc.AssignRole(r.Context(), userID, roleID, "global", uuid.Nil, grantedBy, nil); err != nil {
 		writeServiceError(w, err)
 		return
 	}

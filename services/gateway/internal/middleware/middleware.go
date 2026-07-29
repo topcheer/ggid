@@ -643,8 +643,7 @@ func JWTAuth(jwks *JWKSClient, required bool, issuer, audience string) func(http
 					// Fallback: wildcard or admin scopes bypass resource check
 					hasWildcard := false
 					for _, s := range scopes {
-						if s == "*" || s == "admin" {
-							hasWildcard = true
+						if s == "*" || s == "platform:admin" || s == "tenant:admin" {
 							break
 						}
 					}
@@ -915,8 +914,7 @@ func apiKeyHasWriteAccess(method string, scopes []string) bool {
 		return true // no scopes defined = full access (backward compat)
 	}
 	for _, s := range scopes {
-		if s == "*" || s == "admin" {
-			return true
+		if s == "*" || s == "platform:admin" || s == "tenant:admin" {
 		}
 	}
 	// Read-only methods need any ":read" scope

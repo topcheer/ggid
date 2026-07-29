@@ -133,15 +133,24 @@ func JWTClaimExtraction(next http.Handler) http.Handler {
 		}
 		if len(claims.Scopes) > 0 {
 			r.Header.Set("X-Scopes", strings.Join(claims.Scopes, ","))
-			// Derive admin status from scopes for backward-compat with
-			// policy service's isAdminRequest() check.
+			isAdmin := false
 			for _, sc := range claims.Scopes {
 				if sc == "platform:admin" || sc == "tenant:admin" {
 					r.Header.Set("X-User-Role", sc)
 					r.Header.Set("X-Is-Admin", "true")
+					isAdmin = true
 					break
 				}
 			}
+			// SECURITY: always clear spoofed admin headers for non-admin users.
+			if !isAdmin {
+				r.Header.Del("X-Is-Admin")
+				r.Header.Del("X-User-Role")
+			}
+		} else {
+			// SECURITY: no scopes → definitely not admin, clear headers.
+			r.Header.Del("X-Is-Admin")
+			r.Header.Del("X-User-Role")
 		}
 		// Store in context
 		ctx := context.WithValue(r.Context(), claimsKey, claims)

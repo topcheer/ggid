@@ -161,7 +161,17 @@ func (s *RoleService) UpdateRole(ctx context.Context, id uuid.UUID, name, descri
 		role.Description = *description
 	}
 	if parentRoleID != nil {
-		role.ParentRoleID = parentRoleID
+		if *parentRoleID == uuid.Nil {
+			// Clear parent — make root role. No cycle check needed.
+			role.ParentRoleID = nil
+		} else {
+			// SECURITY: delegate to SetParent for cycle detection.
+			updated, err := s.SetParent(ctx, id, *parentRoleID)
+			if err != nil {
+				return nil, err
+			}
+			return updated, nil
+		}
 	}
 	if err := s.roleRepo.Update(ctx, role); err != nil {
 		return nil, errors.Wrap(errors.ErrInternal, "update role", err)
