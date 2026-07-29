@@ -372,11 +372,11 @@ func (h *HTTPHandler) tenantCreate(w http.ResponseWriter, r *http.Request) {
 	err := h.svc.Pool().QueryRow(r.Context(), `
 		INSERT INTO tenants (name, slug, plan, status) VALUES ($1, $2, $3, 'active')
 		RETURNING id::text`, req.Name, req.Slug, req.Plan).Scan(&tenantID)
-	if err != nil {
-		slog.Error("tenant create: DB error", "error", err)
-		writeJSON(w, http.StatusConflict, map[string]string{"error": "tenant slug already exists or invalid"})
-		return
-	}
+if err != nil {
+			slog.Error("tenant create: DB error", "error", err)
+			writeJSONError(w, http.StatusInternalServerError, "failed to create tenant")
+			return
+		}
 
 	writeJSON(w, http.StatusCreated, map[string]any{
 		"tenant_id": tenantID,
@@ -473,5 +473,5 @@ func (h *HTTPHandler) tenantDelete(w http.ResponseWriter, r *http.Request, tenan
 		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "failed to commit tenant deletion"})
 		return
 	}
-	writeJSON(w, http.StatusOK, map[string]string{"status": "deleted", "id": tenantUUID})
+	w.WriteHeader(http.StatusNoContent)
 }

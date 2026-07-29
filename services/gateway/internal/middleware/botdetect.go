@@ -32,7 +32,7 @@ func BotDetect(next http.Handler) http.Handler {
 			if strings.Contains(ua, pattern) {
 				w.Header().Set("Content-Type", "application/json")
 				w.WriteHeader(http.StatusForbidden)
-				w.Write([]byte(`{"error":"access denied"}`))
+				w.Write([]byte(`{"error":{"code":"bot_detected","message":"access denied"}}`))
 				return
 			}
 		}
@@ -124,7 +124,7 @@ func (b *BehavioralBotDetect) Middleware(next http.Handler) http.Handler {
 			w.Header().Set("Content-Type", "application/json")
 			w.Header().Set("Retry-After", strconv.Itoa(int(b.window.Seconds())))
 			w.WriteHeader(http.StatusTooManyRequests)
-			w.Write([]byte(`{"error":"rate limit exceeded — possible bot"}`))
+			w.Write([]byte(`{"error":{"code":"rate_limit_exceeded","message":"rate limit exceeded — possible bot"}}`))
 			return
 		}
 

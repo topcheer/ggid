@@ -87,7 +87,9 @@ func CAEMiddleware(riskEvalFn func(ctx context.Context, userID, sessionID string
 					entry := v.(riskEntry)
 					if time.Since(entry.evaluatedAt) < sessionRiskTTL {
 						if entry.decision == "block" {
-							http.Error(w, `{"error":"access_blocked","reason":"risk_score_too_high"}`, http.StatusForbidden)
+							w.Header().Set("Content-Type", "application/json")
+							w.WriteHeader(http.StatusForbidden)
+							w.Write([]byte(`{"error":{"code":"access_blocked","message":"risk score too high"}}`))
 							return
 						}
 						// step_up: add header for downstream MFA challenge.
@@ -111,7 +113,9 @@ func CAEMiddleware(riskEvalFn func(ctx context.Context, userID, sessionID string
 			// Enforce decision.
 			switch decision {
 			case "block":
-				http.Error(w, `{"error":"access_blocked","reason":"risk_score_too_high"}`, http.StatusForbidden)
+				w.Header().Set("Content-Type", "application/json")
+				w.WriteHeader(http.StatusForbidden)
+				w.Write([]byte(`{"error":{"code":"access_blocked","message":"risk score too high"}}`))
 			case "step_up", "step_up_strong":
 				w.Header().Set("X-Risk-Step-Up", decision)
 				fallthrough

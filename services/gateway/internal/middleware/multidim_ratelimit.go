@@ -319,8 +319,10 @@ func MultiDimRateLimitMiddleware(limiter *MultiDimRateLimiter, tierResolver func
 
 			if !result.Allowed {
 				w.Header().Set("Retry-After", fmt.Sprintf("%d", int(time.Until(result.ResetAt).Seconds())+1))
-				http.Error(w, fmt.Sprintf(`{"error":"rate_limit_exceeded","dimension":"%s","retry_after":"%s"}`,
-					result.Dimension, result.ResetAt.Format(time.RFC3339)), http.StatusTooManyRequests)
+				w.Header().Set("Content-Type", "application/json")
+				w.WriteHeader(http.StatusTooManyRequests)
+				w.Write([]byte(fmt.Sprintf(`{"error":{"code":"rate_limit_exceeded","message":"rate limit exceeded for dimension %s"}}`,
+					result.Dimension)))
 				return
 			}
 			next.ServeHTTP(w, r)
