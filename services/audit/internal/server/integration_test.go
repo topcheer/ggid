@@ -59,6 +59,7 @@ func TestServer_RetentionCleanup(t *testing.T) {
 	mux := newIntegrationTestMux()
 
 	req := httptest.NewRequest(http.MethodPost, "/api/v1/audit/retention?days=30", nil)
+	req.Header.Set("X-Tenant-ID", "11111111-1111-1111-1111-111111111111")
 	rr := httptest.NewRecorder()
 	mux.ServeHTTP(rr, req)
 

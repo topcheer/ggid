@@ -5,6 +5,7 @@
 package retention
 
 import (
+	"github.com/google/uuid"
 	"context"
 	"log/slog"
 	"time"
@@ -13,7 +14,7 @@ import (
 // EventDeleter is the interface for deleting audit events.
 // Implementations typically wrap an audit repository.
 type EventDeleter interface {
-	DeleteOlderThan(ctx context.Context, before time.Time) (int64, error)
+	DeleteOlderThan(ctx context.Context, tenantID uuid.UUID, before time.Time) (int64, error)
 	Count(ctx context.Context) (int64, error)
 	DeleteExcess(ctx context.Context, keep int64) (int64, error)
 }
@@ -55,7 +56,7 @@ func (p *RetentionPolicy) Apply(ctx context.Context, deleter EventDeleter) (*Res
 	// Phase 1: Delete by age
 	if p.MaxAge > 0 {
 		cutoff := time.Now().Add(-p.MaxAge)
-		deleted, err := deleter.DeleteOlderThan(ctx, cutoff)
+		deleted, err := deleter.DeleteOlderThan(ctx, uuid.Nil, cutoff)
 		if err != nil {
 			return result, err
 		}

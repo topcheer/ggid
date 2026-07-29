@@ -55,7 +55,7 @@ func (m *mockRepo) GetStats(_ context.Context, _ uuid.UUID, _ time.Time) (*domai
 	return m.stats, nil
 }
 
-func (m *mockRepo) DeleteOlderThan(_ context.Context, _ time.Time) (int64, error) {
+func (m *mockRepo) DeleteOlderThan(_ context.Context, _ uuid.UUID, _ time.Time) (int64, error) {
 	if m.cleanupErr != nil {
 		return 0, m.cleanupErr
 	}

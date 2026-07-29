@@ -46,16 +46,31 @@ func (s *HTTPServer) handleWebhookDelivery(w http.ResponseWriter, r *http.Reques
 			return
 		}
 		statusFilter := r.URL.Query().Get("status")
-		if statusFilter == "" { statusFilter = "failed" }
+		if statusFilter == "" {
+			statusFilter = "failed"
+		}
+		// Tenant context mandatory — delivery rows contain event payloads.
+		callerTenant := r.Header.Get("X-Tenant-ID")
+		if callerTenant == "" {
+			writeJSONError(w, http.StatusForbidden, "tenant context required")
+			return
+		}
 		var result []map[string]any
 		if s.memMapRepo2 != nil {
 			rows, _ := s.memMapRepo2.ListJSON(r.Context(), "webhook_deliveries")
 			for _, row := range rows {
-				if statusFilter != "all" && amGetString(row, "status") != statusFilter { continue }
+				if statusFilter != "all" && amGetString(row, "status") != statusFilter {
+					continue
+				}
+				if tid := amGetString(row, "tenant_id"); tid != "" && tid != callerTenant {
+					continue
+				}
 				result = append(result, row)
 			}
 		}
-		if result == nil { result = []map[string]any{} }
+		if result == nil {
+			result = []map[string]any{}
+		}
 		writeJSON(w, http.StatusOK, map[string]any{"deliveries": result, "count": len(result)})
 		return
 	}
@@ -68,12 +83,25 @@ func (s *HTTPServer) retryWebhookDelivery(w http.ResponseWriter, r *http.Request
 		return
 	}
 	// In PG-backed mode, retry updates the delivery status.
+	// Tenant context mandatory — rows are matched and mutated.
+	callerTenant := r.Header.Get("X-Tenant-ID")
+	if callerTenant == "" {
+		writeJSONError(w, http.StatusForbidden, "tenant context required")
+		return
+	}
 	retried := 0
 	if s.memMapRepo2 != nil {
 		rows, _ := s.memMapRepo2.ListJSON(r.Context(), "webhook_deliveries")
 		for _, row := range rows {
-			if amGetString(row, "webhook_id") != webhookID { continue }
-			if amGetString(row, "status") == "delivered" { continue }
+			if amGetString(row, "webhook_id") != webhookID {
+				continue
+			}
+			if tid := amGetString(row, "tenant_id"); tid != "" && tid != callerTenant {
+				continue
+			}
+			if amGetString(row, "status") == "delivered" {
+				continue
+			}
 			row["status"] = "retrying"
 			s.memMapRepo2.StoreJSON(r.Context(), "webhook_deliveries", amGetString(row, "id"), row)
 			retried++

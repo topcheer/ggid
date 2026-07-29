@@ -1,10 +1,21 @@
 package httpserver
 
 import (
+	"log/slog"
 	"net/http"
 	"time"
 
+	"github.com/jackc/pgx/v5/pgconn"
 )
+
+// nullIfEmpty returns nil for an empty string so SQL `($N IS NULL OR ...)`
+// optional filters work.
+func nullIfEmpty(s string) any {
+	if s == "" {
+		return nil
+	}
+	return s
+}
 
 // POST /api/v1/audit/retention/execute — manually trigger retention policy execution.
 // Reads all enabled retention policies, executes cleanup based on retention_days + action.
@@ -26,8 +37,12 @@ func (s *HTTPServer) handleRetentionExecute(w http.ResponseWriter, r *http.Reque
 				EventType: amGetString(row, "event_type"), Action: amGetString(row, "action"),
 				Enabled: amGetBool(row, "enabled"),
 			}
-			if !p.Enabled { continue }
-			if tenantIDStr != "" && p.TenantID != tenantIDStr { continue }
+			if !p.Enabled {
+				continue
+			}
+			if tenantIDStr != "" && p.TenantID != tenantIDStr {
+				continue
+			}
 			policies = append(policies, p)
 		}
 	}
@@ -56,17 +71,43 @@ func (s *HTTPServer) handleRetentionExecute(w http.ResponseWriter, r *http.Reque
 		cutoff := now.AddDate(0, 0, -p.RetentionDays)
 
 		if p.Action == "delete" {
-			// Actually delete old events (not just count them)
-			tag, err := s.pool.Exec(r.Context(),
-				`SET LOCAL app.allow_audit_mutation = 'on'; DELETE FROM audit_events WHERE created_at < $1`, cutoff)
-			if err != nil {
+			// Scoped delete in a tx: SET LOCAL only works inside a
+			// transaction, and the DELETE must honor the policy's tenant
+			// and event_type — the old single-Exec multi-statement form
+			// failed under pgx AND would have deleted every tenant's
+			// events (P0). Error details go to logs, not the client.
+			tx, terr := s.pool.Begin(r.Context())
+			if terr != nil {
+				slog.Error("retention execute: begin tx failed", "policy_id", p.ID, "error", terr)
 				executedPolicies = append(executedPolicies, map[string]any{
 					"policy_id": p.ID, "event_type": p.EventType,
-					"action": p.Action, "error": err.Error(),
+					"action": p.Action, "error": "execution failed",
 				})
 				continue
 			}
-			totalDeleted += int(tag.RowsAffected())
+			if _, terr = tx.Exec(r.Context(), `SET LOCAL app.allow_audit_mutation = 'on'`); terr == nil {
+				var tag pgconn.CommandTag
+				if p.TenantID == "" {
+					tag, terr = tx.Exec(r.Context(),
+						`DELETE FROM audit_events WHERE created_at < $1 AND ($2::text IS NULL OR event_type = $2)`, cutoff, nullIfEmpty(p.EventType))
+				} else {
+					tag, terr = tx.Exec(r.Context(),
+						`DELETE FROM audit_events WHERE created_at < $1 AND tenant_id = $2 AND ($3::text IS NULL OR event_type = $3)`, cutoff, p.TenantID, nullIfEmpty(p.EventType))
+				}
+				if terr == nil {
+					totalDeleted += int(tag.RowsAffected())
+					terr = tx.Commit(r.Context())
+				}
+			}
+			if terr != nil {
+				_ = tx.Rollback(r.Context())
+				slog.Error("retention execute: delete failed", "policy_id", p.ID, "error", terr)
+				executedPolicies = append(executedPolicies, map[string]any{
+					"policy_id": p.ID, "event_type": p.EventType,
+					"action": p.Action, "error": "execution failed",
+				})
+				continue
+			}
 		} else if p.Action == "anonymize" {
 			// Anonymize: nullify PII fields but keep the event for compliance
 			tag, err := s.pool.Exec(r.Context(),

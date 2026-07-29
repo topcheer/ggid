@@ -55,7 +55,7 @@ func (r *hashChainTestRepo) List(_ context.Context, filter domain.ListFilter, li
 func (r *hashChainTestRepo) GetStats(_ context.Context, _ uuid.UUID, _ time.Time) (*domain.Stats, error) {
 	return &domain.Stats{}, nil
 }
-func (r *hashChainTestRepo) DeleteOlderThan(_ context.Context, _ time.Time) (int64, error) {
+func (r *hashChainTestRepo) DeleteOlderThan(_ context.Context, _ uuid.UUID, _ time.Time) (int64, error) {
 	return 0, nil
 }
 

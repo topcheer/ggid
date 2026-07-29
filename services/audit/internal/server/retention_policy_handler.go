@@ -86,7 +86,7 @@ func (s *HTTPServer) handleRetentionPolicies(w http.ResponseWriter, r *http.Requ
 		}
 		now := time.Now().UTC()
 		p := &RetentionPolicy{
-			ID: uuid.New().String(), TenantID: req.TenantID, EventType: req.EventType,
+			ID: uuid.New().String(), TenantID: callerTenant, EventType: req.EventType,
 			RetentionDays: req.RetentionDays, Action: req.Action,
 			Description: req.Description, Enabled: enabled, CreatedAt: now, UpdatedAt: now,
 		}
@@ -120,7 +120,14 @@ func (s *HTTPServer) handleRetentionPolicies(w http.ResponseWriter, r *http.Requ
 			return
 		}
 		if s.memMapRepo2 != nil {
-			update := map[string]any{"event_type": req.EventType, "retention_days": req.RetentionDays,
+			// Ownership check before overwrite (BOLA); preserve tenant_id.
+			if existing, _ := s.memMapRepo2.GetJSON(r.Context(), "audit_retention_policies", req.ID); existing != nil {
+				if et, _ := existing["tenant_id"].(string); et != "" && et != callerTenant {
+					writeJSONError(w, http.StatusNotFound, "policy not found")
+					return
+				}
+			}
+			update := map[string]any{"tenant_id": callerTenant, "event_type": req.EventType, "retention_days": req.RetentionDays,
 				"action": req.Action, "description": req.Description}
 			if req.Enabled != nil {
 				update["enabled"] = *req.Enabled
@@ -136,6 +143,13 @@ func (s *HTTPServer) handleRetentionPolicies(w http.ResponseWriter, r *http.Requ
 			return
 		}
 		if s.memMapRepo2 != nil {
+			// Ownership check before delete (BOLA).
+			if existing, _ := s.memMapRepo2.GetJSON(r.Context(), "audit_retention_policies", id); existing != nil {
+				if et, _ := existing["tenant_id"].(string); et != "" && et != callerTenant {
+					writeJSONError(w, http.StatusNotFound, "policy not found")
+					return
+				}
+			}
 			s.memMapRepo2.DeleteJSON(r.Context(), "audit_retention_policies", id)
 		}
 		writeJSON(w, http.StatusOK, map[string]any{"status": "deleted", "id": id})

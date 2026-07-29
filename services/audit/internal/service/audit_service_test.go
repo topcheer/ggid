@@ -74,7 +74,7 @@ func (m *mockAuditRepo) GetStats(_ context.Context, _ uuid.UUID, _ time.Time) (*
 	return &domain.Stats{EventsByAction: make(map[string]int)}, nil
 }
 
-func (m *mockAuditRepo) DeleteOlderThan(_ context.Context, _ time.Time) (int64, error) {
+func (m *mockAuditRepo) DeleteOlderThan(_ context.Context, _ uuid.UUID, _ time.Time) (int64, error) {
 	return 0, nil
 }
 
@@ -273,13 +273,13 @@ func TestListEvents_FilterByTimeRange(t *testing.T) {
 	repo.events = []*domain.AuditEvent{
 		newEvent(tenantID, "a", domain.ResultSuccess, base.AddDate(0, 0, -10)), // Jun 5
 		newEvent(tenantID, "a", domain.ResultSuccess, base.AddDate(0, 0, -1)),  // Jun 14
-		newEvent(tenantID, "a", domain.ResultSuccess, base),                     // Jun 15
+		newEvent(tenantID, "a", domain.ResultSuccess, base),                    // Jun 15
 		newEvent(tenantID, "a", domain.ResultSuccess, base.AddDate(0, 0, 1)),   // Jun 16
 	}
 	svc := NewAuditService(repo)
 
 	start := base.AddDate(0, 0, -2) // Jun 13
-	end := base.AddDate(0, 0, 1)   // Jun 16 (exclusive)
+	end := base.AddDate(0, 0, 1)    // Jun 16 (exclusive)
 
 	_, total, err := svc.ListEvents(context.Background(), domain.ListFilter{
 		TenantID:  tenantID,
@@ -457,8 +457,8 @@ func TestGetStats_Success(t *testing.T) {
 			TotalEvents24h:  100,
 			FailedLogins24h: 5,
 			EventsByAction: map[string]int{
-				"user.login":   40,
-				"role.assign":  10,
+				"user.login":  40,
+				"role.assign": 10,
 			},
 			HourlyDistribution: []domain.HourlyCount{
 				{Hour: time.Now().UTC().Truncate(time.Hour), Count: 15},
@@ -499,28 +499,38 @@ func TestGetStats_RepoError(t *testing.T) {
 func TestCleanupOldEvents_Default(t *testing.T) {
 	repo := &mockAuditRepo{}
 	svc := NewAuditService(repo)
-	deleted, err := svc.CleanupOldEvents(context.Background(), 0)
-	if err != nil { t.Fatalf("unexpected: %v", err) }
-	if deleted != 0 { t.Fatalf("expected 0 deleted") }
+	deleted, err := svc.CleanupOldEvents(context.Background(), uuid.Nil, 0)
+	if err != nil {
+		t.Fatalf("unexpected: %v", err)
+	}
+	if deleted != 0 {
+		t.Fatalf("expected 0 deleted")
+	}
 }
 
 func TestCleanupOldEvents_CustomDays(t *testing.T) {
 	repo := &mockAuditRepo{}
 	svc := NewAuditService(repo)
-	_, err := svc.CleanupOldEvents(context.Background(), 30)
-	if err != nil { t.Fatalf("unexpected: %v", err) }
+	_, err := svc.CleanupOldEvents(context.Background(), uuid.Nil, 30)
+	if err != nil {
+		t.Fatalf("unexpected: %v", err)
+	}
 }
 
 func TestListEvents_EmptyFilter(t *testing.T) {
 	repo := &mockAuditRepo{events: []*domain.AuditEvent{}}
 	svc := NewAuditService(repo)
 	_, _, err := svc.ListEvents(context.Background(), domain.ListFilter{TenantID: uuid.New()}, 1, 50)
-	if err != nil { t.Fatalf("unexpected: %v", err) }
+	if err != nil {
+		t.Fatalf("unexpected: %v", err)
+	}
 }
 
 func TestListEvents_InvalidPage(t *testing.T) {
 	repo := &mockAuditRepo{events: []*domain.AuditEvent{}}
 	svc := NewAuditService(repo)
 	_, _, err := svc.ListEvents(context.Background(), domain.ListFilter{TenantID: uuid.New()}, -1, 0)
-	if err != nil { t.Fatalf("unexpected: %v", err) }
+	if err != nil {
+		t.Fatalf("unexpected: %v", err)
+	}
 }

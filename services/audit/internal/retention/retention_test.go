@@ -1,6 +1,7 @@
 package retention
 
 import (
+	"github.com/google/uuid"
 	"context"
 	"errors"
 	"testing"
@@ -15,7 +16,7 @@ type mockDeleter struct {
 	deleteExErr  error
 }
 
-func (m *mockDeleter) DeleteOlderThan(_ context.Context, before time.Time) (int64, error) {
+func (m *mockDeleter) DeleteOlderThan(_ context.Context, _ uuid.UUID, before time.Time) (int64, error) {
 	if m.deleteOldErr != nil {
 		return 0, m.deleteOldErr
 	}

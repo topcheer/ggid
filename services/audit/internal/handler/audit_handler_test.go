@@ -70,7 +70,7 @@ func (m *mockAuditRepo) GetStats(_ context.Context, _ uuid.UUID, _ time.Time) (*
 	return &domain.Stats{EventsByAction: make(map[string]int)}, nil
 }
 
-func (m *mockAuditRepo) DeleteOlderThan(_ context.Context, _ time.Time) (int64, error) {
+func (m *mockAuditRepo) DeleteOlderThan(_ context.Context, _ uuid.UUID, _ time.Time) (int64, error) {
 	return 0, nil
 }
 

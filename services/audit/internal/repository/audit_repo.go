@@ -349,7 +349,7 @@ func (r *AuditRepository) GetStats(ctx context.Context, tenantID uuid.UUID, sinc
 // DeleteOlderThan deletes audit events older than the given time.
 // Returns the number of deleted rows. Authorized retention deletions set the
 // app.allow_audit_mutation GUC to bypass the WORM trigger inside the tx.
-func (r *AuditRepository) DeleteOlderThan(ctx context.Context, before time.Time) (int64, error) {
+func (r *AuditRepository) DeleteOlderThan(ctx context.Context, tenantID uuid.UUID, before time.Time) (int64, error) {
 	tx, err := r.db.Begin(ctx)
 	if err != nil {
 		return 0, fmt.Errorf("begin retention tx: %w", err)
@@ -359,9 +359,16 @@ func (r *AuditRepository) DeleteOlderThan(ctx context.Context, before time.Time)
 	if _, err := tx.Exec(ctx, `SET LOCAL app.allow_audit_mutation = 'on'`); err != nil {
 		return 0, fmt.Errorf("allow audit mutation: %w", err)
 	}
+	// Tenant-scoped delete. A NULL tenant param means "all tenants" and is
+	// reserved for the internal scheduled retention job — the HTTP path
+	// must always pass a real tenant (P0: cross-tenant audit destruction).
+	var tid any
+	if tenantID != uuid.Nil {
+		tid = tenantID
+	}
 	tag, err := tx.Exec(ctx,
-		`DELETE FROM audit_events WHERE created_at < $1`,
-		before,
+		`DELETE FROM audit_events WHERE created_at < $1 AND ($2::uuid IS NULL OR tenant_id = $2)`,
+		before, tid,
 	)
 	if err != nil {
 		return 0, fmt.Errorf("delete old audit events: %w", err)
