@@ -46,23 +46,23 @@ func (h *Handler) RegisterRoutes(mux *http.ServeMux) {
 
 // SCIMUser is the RFC 7643 User resource representation.
 type SCIMUser struct {
-	Schemas      []string        `json:"schemas"`
-	ID           string          `json:"id"`
-	ExternalID   string          `json:"externalId,omitempty"`
-	UserName     string          `json:"userName"`
-	Name         SCIMName        `json:"name"`
-	DisplayName  string          `json:"displayName,omitempty"`
-	NickName     string          `json:"nickName,omitempty"`
-	ProfileURL   string          `json:"profileUrl,omitempty"`
-	Title        string          `json:"title,omitempty"`
-	UserType     string          `json:"userType,omitempty"`
-	PreferredLanguage string     `json:"preferredLanguage,omitempty"`
-	Locale       string          `json:"locale,omitempty"`
-	Timezone     string          `json:"timezone,omitempty"`
-	Emails       []SCIMEmail     `json:"emails,omitempty"`
-	PhoneNumbers []SCIMPhone     `json:"phoneNumbers,omitempty"`
-	Active       bool            `json:"active"`
-	Meta         SCIMMeta        `json:"meta"`
+	Schemas           []string    `json:"schemas"`
+	ID                string      `json:"id"`
+	ExternalID        string      `json:"externalId,omitempty"`
+	UserName          string      `json:"userName"`
+	Name              SCIMName    `json:"name"`
+	DisplayName       string      `json:"displayName,omitempty"`
+	NickName          string      `json:"nickName,omitempty"`
+	ProfileURL        string      `json:"profileUrl,omitempty"`
+	Title             string      `json:"title,omitempty"`
+	UserType          string      `json:"userType,omitempty"`
+	PreferredLanguage string      `json:"preferredLanguage,omitempty"`
+	Locale            string      `json:"locale,omitempty"`
+	Timezone          string      `json:"timezone,omitempty"`
+	Emails            []SCIMEmail `json:"emails,omitempty"`
+	PhoneNumbers      []SCIMPhone `json:"phoneNumbers,omitempty"`
+	Active            bool        `json:"active"`
+	Meta              SCIMMeta    `json:"meta"`
 }
 
 type SCIMName struct {
@@ -98,20 +98,20 @@ type SCIMPhone struct {
 }
 
 type SCIMMeta struct {
-	ResourceType  string `json:"resourceType"`
-	Location      string `json:"location,omitempty"`
-	Created       *string `json:"created,omitempty"`
-	LastModified  *string `json:"lastModified,omitempty"`
-	Version       string  `json:"version,omitempty"`
+	ResourceType string  `json:"resourceType"`
+	Location     string  `json:"location,omitempty"`
+	Created      *string `json:"created,omitempty"`
+	LastModified *string `json:"lastModified,omitempty"`
+	Version      string  `json:"version,omitempty"`
 }
 
 // ListResponse is the standard SCIM paginated response.
 type ListResponse struct {
-	Schemas      []string    `json:"schemas"`
-	TotalResults int         `json:"totalResults"`
-	ItemsPerPage int         `json:"itemsPerPage"`
-	StartIndex   int         `json:"startIndex"`
-	Resources    []SCIMUser  `json:"Resources"`
+	Schemas      []string   `json:"schemas"`
+	TotalResults int        `json:"totalResults"`
+	ItemsPerPage int        `json:"itemsPerPage"`
+	StartIndex   int        `json:"startIndex"`
+	Resources    []SCIMUser `json:"Resources"`
 }
 
 // ErrorResponse is the SCIM standard error format (RFC 7644 Section 3.12).
@@ -124,12 +124,12 @@ type ErrorResponse struct {
 
 // SCIM error type constants (RFC 7644 Section 3.12.1).
 const (
-	ScimTypeInvalidFilter  = "invalidFilter"
-	ScimTypeInvalidSyntax  = "invalidSyntax"
-	ScimTypeInvalidPath    = "invalidPath"
-	ScimTypeUniqueness     = "uniqueness"
-	ScimTypeInvalidValue   = "invalidValue"
-	ScimTypeTooMany        = "tooMany"
+	ScimTypeInvalidFilter = "invalidFilter"
+	ScimTypeInvalidSyntax = "invalidSyntax"
+	ScimTypeInvalidPath   = "invalidPath"
+	ScimTypeUniqueness    = "uniqueness"
+	ScimTypeInvalidValue  = "invalidValue"
+	ScimTypeTooMany       = "tooMany"
 )
 
 // --- Helpers ---
@@ -218,7 +218,7 @@ func toSCIMUser(u *domain.User) SCIMUser {
 		UserName:    u.Username,
 		DisplayName: u.DisplayName,
 		Name: SCIMName{
-			GivenName:  u.DisplayName,
+			GivenName: u.DisplayName,
 		},
 		Emails: []SCIMEmail{
 			{Value: u.Email, Type: "work", Primary: true},
@@ -589,9 +589,15 @@ func (h *Handler) replaceUser(ctx context.Context, w http.ResponseWriter, r *htt
 
 	// Handle active/inactive status
 	if !scimUser.Active {
-		user, _ = h.svc.LockUser(ctx, userID)
+		user, err = h.svc.LockUser(ctx, userID)
 	} else {
-		user, _ = h.svc.UnlockUser(ctx, userID)
+		user, err = h.svc.UnlockUser(ctx, userID)
+	}
+	if err != nil {
+		// Previously the error was swallowed and the nil user dereferenced
+		// below (500 panic, R-cron3 P1).
+		writeSCIMError(w, http.StatusInternalServerError, "status change failed")
+		return
 	}
 
 	SetETagHeader(w, ComputeETag(user))
@@ -601,14 +607,14 @@ func (h *Handler) replaceUser(ctx context.Context, w http.ResponseWriter, r *htt
 
 // SCIMPatchOp represents a single PATCH operation (RFC 7644 Section 3.5.2).
 type SCIMPatchRequest struct {
-	Schemas    []string       `json:"schemas"`
-	Operations []SCIMPatchOp  `json:"Operations"`
+	Schemas    []string      `json:"schemas"`
+	Operations []SCIMPatchOp `json:"Operations"`
 }
 
 type SCIMPatchOp struct {
-	Op    string          `json:"op"`     // add, replace, remove
-	Path  string          `json:"path"`   // attribute path (e.g. "displayName", "emails[type eq \"work\"]")
-	Value json.RawMessage `json:"value"`  // value to set (for add/replace)
+	Op    string          `json:"op"`    // add, replace, remove
+	Path  string          `json:"path"`  // attribute path (e.g. "displayName", "emails[type eq \"work\"]")
+	Value json.RawMessage `json:"value"` // value to set (for add/replace)
 }
 
 func (h *Handler) patchUser(ctx context.Context, w http.ResponseWriter, r *http.Request, userID uuid.UUID) {
@@ -666,9 +672,13 @@ func (h *Handler) patchUser(ctx context.Context, w http.ResponseWriter, r *http.
 
 	// Handle active/inactive toggle.
 	if active && updatedUser.Status != domain.UserStatusActive {
-		updatedUser, _ = h.svc.UnlockUser(ctx, userID)
+		updatedUser, err = h.svc.UnlockUser(ctx, userID)
 	} else if !active && updatedUser.Status == domain.UserStatusActive {
-		updatedUser, _ = h.svc.LockUser(ctx, userID)
+		updatedUser, err = h.svc.LockUser(ctx, userID)
+	}
+	if err != nil {
+		writeSCIMError(w, http.StatusInternalServerError, "status change failed")
+		return
 	}
 
 	writeSCIMJSON(w, http.StatusOK, toSCIMUser(updatedUser))
@@ -687,15 +697,15 @@ func (h *Handler) deleteUser(ctx context.Context, w http.ResponseWriter, r *http
 
 func (h *Handler) handleServiceProviderConfig(w http.ResponseWriter, r *http.Request) {
 	writeSCIMJSON(w, http.StatusOK, map[string]any{
-		"schemas":       []string{"urn:ietf:params:scim:schemas:core:2.0:ServiceProviderConfig"},
-		"patch":         map[string]any{"supported": true},
-		"bulk":          map[string]any{"supported": true, "maxOperations": 1000, "maxPayloadSize": 1048576},
-		"filter":        map[string]any{"supported": true, "maxResults": 100},
+		"schemas":        []string{"urn:ietf:params:scim:schemas:core:2.0:ServiceProviderConfig"},
+		"patch":          map[string]any{"supported": true},
+		"bulk":           map[string]any{"supported": true, "maxOperations": 1000, "maxPayloadSize": 1048576},
+		"filter":         map[string]any{"supported": true, "maxResults": 100},
 		"changePassword": map[string]any{"supported": true},
-		"sort":          map[string]any{"supported": true},
+		"sort":           map[string]any{"supported": true},
 		// ETag + If-Match optimistic locking IS implemented (see etag.go,
 		// ComputeETag/CheckIfMatch) — advertise it so SCIM clients use it.
-		"etag":          map[string]any{"supported": true},
+		"etag": map[string]any{"supported": true},
 		"authenticationSchemes": []map[string]any{
 			{
 				"name":        "OAuth 2.0 Bearer",
@@ -709,12 +719,12 @@ func (h *Handler) handleServiceProviderConfig(w http.ResponseWriter, r *http.Req
 func (h *Handler) handleResourceTypes(w http.ResponseWriter, r *http.Request) {
 	writeSCIMJSON(w, http.StatusOK, []map[string]any{
 		{
-			"schemas":      []string{"urn:ietf:params:scim:schemas:core:2.0:ResourceType"},
-			"id":           "User",
-			"name":         "User",
-			"endpoint":     "/Users",
-			"description":  "User Account",
-			"schema":       "urn:ietf:params:scim:schemas:core:2.0:User",
+			"schemas":     []string{"urn:ietf:params:scim:schemas:core:2.0:ResourceType"},
+			"id":          "User",
+			"name":        "User",
+			"endpoint":    "/Users",
+			"description": "User Account",
+			"schema":      "urn:ietf:params:scim:schemas:core:2.0:User",
 			"schemaExtensions": []map[string]string{
 				{
 					"schema":   "urn:ietf:params:scim:schemas:extension:enterprise:2.0:User",
@@ -723,12 +733,12 @@ func (h *Handler) handleResourceTypes(w http.ResponseWriter, r *http.Request) {
 			},
 		},
 		{
-			"schemas":      []string{"urn:ietf:params:scim:schemas:core:2.0:ResourceType"},
-			"id":           "Group",
-			"name":         "Group",
-			"endpoint":     "/Groups",
-			"description":  "Group",
-			"schema":       "urn:ietf:params:scim:schemas:core:2.0:Group",
+			"schemas":     []string{"urn:ietf:params:scim:schemas:core:2.0:ResourceType"},
+			"id":          "Group",
+			"name":        "Group",
+			"endpoint":    "/Groups",
+			"description": "Group",
+			"schema":      "urn:ietf:params:scim:schemas:core:2.0:Group",
 		},
 	})
 }

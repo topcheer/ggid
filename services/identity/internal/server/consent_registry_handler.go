@@ -155,14 +155,30 @@ func (r *consentRepo) PurgeUser(ctx context.Context, tenantID uuid.UUID, userID 
 // --- API Handlers ---
 
 func (h *HTTPHandler) handleConsentRegistry(w http.ResponseWriter, r *http.Request) {
+	// SECURITY (R-cron3 P1): caller identity and tenant come only from
+	// gateway-verified headers — never from query/body. Fail-closed.
+	callerUser := r.Header.Get("X-User-ID")
+	callerTenant := r.Header.Get("X-Tenant-ID")
+	tenantID, terr := uuid.Parse(callerTenant)
+	if callerUser == "" || terr != nil {
+		writeJSONError(w, http.StatusUnauthorized, "authentication and tenant context required")
+		return
+	}
+
 	switch r.Method {
 	case http.MethodGet:
-		// List consent records from DB.
+		// List consent records from DB — caller may only read their own.
 		userID := r.URL.Query().Get("user_id")
+		if userID == "" {
+			userID = callerUser
+		}
+		if userID != callerUser {
+			writeJSONError(w, http.StatusForbidden, "cannot read other users' consents")
+			return
+		}
 		status := r.URL.Query().Get("status")
 		var records []*ConsentRecord
 		if h.consentRepo != nil {
-			tenantID := uuid.Nil
 			records, _ = h.consentRepo.List(r.Context(), tenantID, userID, status)
 		}
 		if records == nil {
@@ -205,8 +221,13 @@ func (h *HTTPHandler) handleConsentRegistry(w http.ResponseWriter, r *http.Reque
 			writeJSONError(w, http.StatusBadRequest, "user_id and purpose required")
 			return
 		}
+		// Caller may only grant consent for themselves.
+		if req.UserID != callerUser {
+			writeJSONError(w, http.StatusForbidden, "cannot grant consent for other users")
+			return
+		}
 		c := &ConsentRecord{
-			TenantID: uuid.Nil, UserID: req.UserID, ClientID: req.ClientID,
+			TenantID: tenantID, UserID: req.UserID, ClientID: req.ClientID,
 			Purpose: req.Purpose, Scopes: req.Scopes, Status: "active",
 			PolicyVersion: "1.0", GrantedAt: time.Now().UTC(),
 		}

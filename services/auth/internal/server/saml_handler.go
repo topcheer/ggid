@@ -161,6 +161,9 @@ func (h *Handler) handleSAMLACS(w http.ResponseWriter, r *http.Request) {
 			writeError(w, http.StatusForbidden, "SAML assertion already used")
 			return
 		}
+	} else if h.rdb == nil {
+		// Replay protection is silently OFF without Redis — surface it.
+		slog.Error("SAML ACS: redis unavailable, assertion replay protection disabled")
 	}
 
 	attrs := ggidSAML.ExtractAttributes(assertion)

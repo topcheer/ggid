@@ -107,7 +107,9 @@ func (s *OTPService) VerifyOTP(ctx context.Context, tenantID uuid.UUID, identifi
 	}
 
 	otpKey := fmt.Sprintf("otp:%s:%s:%s", tenantID, channel, identifier)
-	storedCode, err := s.rdb.Get(ctx, otpKey).Result()
+	// GetDel is atomic — Get+Del allowed two concurrent verifies to both
+	// redeem the same code (R-cron3 P2).
+	storedCode, err := s.rdb.GetDel(ctx, otpKey).Result()
 	if err != nil {
 		return "", fmt.Errorf("invalid or expired code")
 	}
@@ -116,6 +118,8 @@ func (s *OTPService) VerifyOTP(ctx context.Context, tenantID uuid.UUID, identifi
 	// After 5 failures, delete the OTP and force re-request.
 	attemptKey := fmt.Sprintf("otp_attempts:%s:%s:%s", tenantID, channel, identifier)
 	if storedCode != code {
+		// Code was already consumed atomically; on mismatch re-store nothing,
+		// only track failed attempts.
 		attempts, _ := s.rdb.Incr(ctx, attemptKey).Result()
 		if attempts == 1 {
 			s.rdb.Expire(ctx, attemptKey, 5*time.Minute)
@@ -127,8 +131,7 @@ func (s *OTPService) VerifyOTP(ctx context.Context, tenantID uuid.UUID, identifi
 		return "", fmt.Errorf("invalid code")
 	}
 
-	// Delete OTP after successful verification (single use)
-	s.rdb.Del(ctx, otpKey)
+	// (OTP already consumed atomically via GetDel above — single use.)
 
 	// Look up user by identifier
 	cred, err := s.credRepo.FindByIDentifier(ctx, tenantID, identifier)
