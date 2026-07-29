@@ -41,8 +41,15 @@ func (h *HTTPHandler) handleBranding(w http.ResponseWriter, r *http.Request) {
 	if tc, err := ggidtenant.FromContext(r.Context()); err == nil && tc.TenantID != uuid.Nil {
 		if tc.TenantID.String() != tenantID {
 			// Check if user has platform:admin scope
-			scopes := r.Header.Get("X-User-Scopes")
-			if !strings.Contains(scopes, "platform:admin") {
+			scopes := strings.Split(r.Header.Get("X-User-Scopes"), ",")
+			isPlatformAdmin := false
+			for _, sc := range scopes {
+				if strings.TrimSpace(sc) == "platform:admin" {
+					isPlatformAdmin = true
+					break
+				}
+			}
+			if !isPlatformAdmin {
 				writeJSONError(w, http.StatusForbidden, "cannot access another tenant's branding")
 				return
 			}

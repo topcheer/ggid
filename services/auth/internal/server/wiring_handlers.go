@@ -45,11 +45,19 @@ func (h *Handler) handleImpersonate(w http.ResponseWriter, r *http.Request) {
 	if headerTenantID != "" && req.TenantID != "" {
 		if headerTenantID != req.TenantID {
 			// Cross-tenant impersonation requires platform:admin scope.
-			scopes := r.Header.Get("X-User-Scopes")
-			if scopes == "" {
-				scopes = r.Header.Get("X-User-Role")
+			scopesStr := r.Header.Get("X-User-Scopes")
+			if scopesStr == "" {
+				scopesStr = r.Header.Get("X-User-Role")
 			}
-			if !strings.Contains(scopes, "platform:admin") {
+			scopes := strings.Split(scopesStr, ",")
+			isPlatformAdmin := false
+			for _, sc := range scopes {
+				if strings.TrimSpace(sc) == "platform:admin" {
+					isPlatformAdmin = true
+					break
+				}
+			}
+			if !isPlatformAdmin {
 				writeJSON(w, http.StatusForbidden, map[string]string{"error": "cross-tenant impersonation requires platform:admin scope"})
 				return
 			}
