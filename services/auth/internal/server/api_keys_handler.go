@@ -2,6 +2,7 @@ package server
 
 import (
 	"encoding/json"
+	"fmt"
 	"log/slog"
 	"net/http"
 	"strings"
@@ -82,6 +83,27 @@ func (h *Handler) handleAPIKeys(w http.ResponseWriter, r *http.Request) {
 		if req.Name == "" {
 			writeError(w, http.StatusBadRequest, "name is required")
 			return
+		}
+		// SECURITY: Validate scopes against a whitelist. Prevent creating API keys
+		// with wildcard (*) or admin scopes that bypass all permission checks.
+		allowedScopePrefix := map[string]bool{
+			"users:": true, "roles:": true, "audit:": true, "policies:": true,
+			"oauth:": true, "org:": true, "identity:": true, "scim:": true,
+			"webhooks:": true, "api-keys:": true, "settings:": true,
+			"mfa:": true, "sessions:": true,
+		}
+		for _, sc := range req.Scopes {
+			// Reject wildcards and admin scopes
+			if sc == "*" || sc == "platform:admin" || sc == "tenant:admin" {
+				writeError(w, http.StatusBadRequest, "cannot create API key with wildcard or admin scope")
+				return
+			}
+			// Check scope has valid format (namespace:action)
+			parts := strings.SplitN(sc, ":", 2)
+			if len(parts) != 2 || !allowedScopePrefix[parts[0]+":"] {
+				writeError(w, http.StatusBadRequest, fmt.Sprintf("invalid scope: %s", sc))
+				return
+			}
 		}
 
 		// Generate the key ID first so we can embed it in the secret.

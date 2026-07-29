@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"strings"
@@ -129,8 +130,32 @@ func RequireAdminScope(next http.Handler) http.Handler {
 		}
 
 		// Admin endpoint: check scope.
-		// No JWT subject → let JWTAuth handle the 401.
+		// No JWT subject → check if this is an API key request.
 		if claims.Subject == "" {
+			// If API key scopes are present, enforce admin scope check.
+			if scopes, ok := r.Context().Value(APIKeyScopesKey).([]string); ok && len(scopes) > 0 {
+				isAdmin := false
+				for _, s := range scopes {
+					if s == "platform:admin" || s == "tenant:admin" {
+						isAdmin = true
+						break
+					}
+				}
+				if !isAdmin {
+					w.Header().Set("Content-Type", "application/json")
+					w.WriteHeader(http.StatusForbidden)
+					json.NewEncoder(w).Encode(map[string]any{
+						"error": map[string]string{
+							"code":    "permission_denied",
+							"message": "admin scope required",
+						},
+					})
+					return
+				}
+				next.ServeHTTP(w, r)
+				return
+			}
+			// No API key either → let JWTAuth handle the 401.
 			next.ServeHTTP(w, r)
 			return
 		}

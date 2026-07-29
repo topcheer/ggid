@@ -644,6 +644,7 @@ func JWTAuth(jwks *JWKSClient, required bool, issuer, audience string) func(http
 					hasWildcard := false
 					for _, s := range scopes {
 						if s == "*" || s == "platform:admin" || s == "tenant:admin" {
+							hasWildcard = true
 							break
 						}
 					}
