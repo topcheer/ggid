@@ -24,6 +24,17 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
+// hasRole checks if a specific role exists in a comma-delimited header value
+// using exact matching (not substring) to prevent false positives.
+func hasRole(rolesHeader, target string) bool {
+	for _, r := range strings.Split(rolesHeader, ",") {
+		if strings.TrimSpace(r) == target {
+			return true
+		}
+	}
+	return false
+}
+
 // HTTPServer exposes the Policy Engine as a REST API.
 type HTTPServer struct {
 	roleSvc        *service.RoleService
@@ -495,7 +506,7 @@ func (s *HTTPServer) handleAssignRole(w http.ResponseWriter, r *http.Request) {
 	if assignerRoles == "" {
 		assignerRoles = r.Header.Get("X-User-Roles")
 	}
-	isPlatformAdmin := strings.Contains(assignerRoles, "platform:admin") || strings.Contains(assignerRoles, "Platform Administrator")
+	isPlatformAdmin := hasRole(assignerRoles, "platform:admin") || hasRole(assignerRoles, "Platform Administrator")
 	if !isPlatformAdmin {
 		// Check if target role is a system/instance-level role
 		roleKey := ""

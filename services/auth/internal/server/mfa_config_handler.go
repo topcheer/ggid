@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"net/http"
 	"os"
-	"strings"
 )
 
 // getMFAConfigForTenant returns the MFA config for a given tenant.
@@ -85,8 +84,7 @@ func (h *Handler) handleMFAConfig(w http.ResponseWriter, r *http.Request) {
 		json.NewEncoder(w).Encode(cfg)
 	case http.MethodPut:
 		// SECURITY: Only platform:admin can change MFA enforcement globally.
-		scopes := r.Header.Get("X-Scopes")
-		if !strings.Contains(scopes, "platform:admin") {
+		if !hasAdminScope(r) {
 			writeError(w, http.StatusForbidden, "platform:admin scope required to modify MFA config")
 			return
 		}

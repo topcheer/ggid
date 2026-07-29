@@ -3,7 +3,6 @@ package server
 import (
 	"encoding/json"
 	"net/http"
-	"strings"
 
 	"github.com/ggid/ggid/pkg/hierarchy"
 	"github.com/ggid/ggid/services/auth/internal/service"
@@ -40,8 +39,7 @@ func (h *Handler) handlePasswordPolicyConfig(w http.ResponseWriter, r *http.Requ
 		// SECURITY: Override tenant_id query param with caller's tenant.
 		queryTID := r.URL.Query().Get("tenant_id")
 		if queryTID != "" && queryTID != callerTenant {
-			scopes := r.Header.Get("X-Scopes")
-			if !strings.Contains(scopes, "platform:admin") {
+			if !hasAdminScope(r) {
 				writeError(w, http.StatusForbidden, "cannot access other tenants' password policy")
 				return
 			}
@@ -101,8 +99,7 @@ func (h *Handler) handlePasswordPolicyConfig(w http.ResponseWriter, r *http.Requ
 		if body.TenantID != "" {
 			// SECURITY: Verify caller's tenant matches requested tenant.
 			if body.TenantID != callerTenant {
-				scopes := r.Header.Get("X-Scopes")
-				if !strings.Contains(scopes, "platform:admin") {
+				if !hasAdminScope(r) {
 					writeError(w, http.StatusForbidden, "cannot modify other tenants' password policy")
 					return
 				}
