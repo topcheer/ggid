@@ -74,6 +74,16 @@ func (s *HTTPServer) handleOrgRoleBindings(w http.ResponseWriter, r *http.Reques
 	}
 	orgID := pathParts[3] // api/v1/organizations/{id}/role-bindings
 
+	// SECURITY: verify org belongs to caller's tenant (fail-closed)
+	orgUUID, err := uuid.Parse(orgID)
+	if err != nil {
+		writeJSONError(w, http.StatusBadRequest, "invalid org id")
+		return
+	}
+	if !s.checkOrgOwnership(w, r, orgUUID) {
+		return
+	}
+
 	switch r.Method {
 	case http.MethodPost:
 		var req struct {
@@ -125,8 +135,14 @@ func (s *HTTPServer) handleOrgRoleBindings(w http.ResponseWriter, r *http.Reques
 			writeJSONError(w, http.StatusBadRequest, "binding_id is required")
 			return
 		}
-		_, ok := orgRoleBindings.LoadAndDelete(bindingID)
+		// SECURITY: verify binding belongs to this org before delete
+		val, ok := orgRoleBindings.LoadAndDelete(bindingID)
 		if !ok {
+			writeJSONError(w, http.StatusNotFound, "binding not found")
+			return
+		}
+		b := val.(*OrgRoleBinding)
+		if b.OrgID != orgID {
 			writeJSONError(w, http.StatusNotFound, "binding not found")
 			return
 		}

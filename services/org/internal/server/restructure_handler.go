@@ -60,10 +60,8 @@ func (s *HTTPServer) handleOrgRestructure(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	// Fetch the org to verify it exists (tenant context)
-	_, err = s.orgSvc.Get(r.Context(), orgID)
-	if err != nil {
-		writeServiceError(w, err)
+	// SECURITY: verify org belongs to caller's tenant (fail-closed)
+	if !s.checkOrgOwnership(w, r, orgID) {
 		return
 	}
 
@@ -81,25 +79,33 @@ func (s *HTTPServer) handleOrgRestructure(w http.ResponseWriter, r *http.Request
 		return
 	}
 
+	// SECURITY: verify both departments belong to the same org
+	if dept.OrgID != orgID || newParent.OrgID != orgID {
+		writeJSONError(w, http.StatusBadRequest, "departments must belong to the specified organization")
+		return
+	}
+
 	// Cycle check: ensure newParent is not a descendant of dept
 	if pathContains(newParent.Path, dept.Path) {
 		writeJSONError(w, http.StatusBadRequest, "cannot move department under its own descendant — cycle detected")
 		return
 	}
 
+	// Save old path BEFORE updating for cascade
+	oldPath := dept.Path
+
 	// Update the department's parent and path
 	dept.ParentID = &newParentID
-	dept.Path = newParent.Path + "." + deptID.String()
+	newPath := newParent.Path + "." + deptID.String()
+	dept.Path = newPath
 
 	if _, err := s.deptSvc.Update(r.Context(), dept); err != nil {
 		writeServiceError(w, err)
 		return
 	}
 
-	// Cascade: update paths for all child departments
-	oldPathPrefix := dept.Path
-	newPathPrefix := newParent.Path + "." + deptID.String()
-	if err := s.deptSvc.UpdateChildPaths(r.Context(), oldPathPrefix, newPathPrefix); err != nil {
+	// Cascade: update paths for all child departments using old→new prefix
+	if err := s.deptSvc.UpdateChildPaths(r.Context(), oldPath, newPath); err != nil {
 		writeServiceError(w, err)
 		return
 	}

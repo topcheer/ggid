@@ -11,6 +11,7 @@ func TestOrgServer_AccessMatrix(t *testing.T) {
 
 	t.Run("GET returns access matrix", func(t *testing.T) {
 		req := httptest.NewRequest(http.MethodGet, "/api/v1/organizations/550e8400-e29b-41d4-a716-446655440001/access-matrix", nil)
+		req.Header.Set("X-Tenant-ID", "550e8400-e29b-41d4-a716-446655440000")
 		rr := httptest.NewRecorder()
 		mux.ServeHTTP(rr, req)
 		if rr.Code != http.StatusOK {
@@ -20,6 +21,7 @@ func TestOrgServer_AccessMatrix(t *testing.T) {
 
 	t.Run("POST returns 405", func(t *testing.T) {
 		req := httptest.NewRequest(http.MethodPost, "/api/v1/organizations/550e8400-e29b-41d4-a716-446655440001/access-matrix", nil)
+		req.Header.Set("X-Tenant-ID", "550e8400-e29b-41d4-a716-446655440000")
 		rr := httptest.NewRecorder()
 		mux.ServeHTTP(rr, req)
 		if rr.Code != http.StatusMethodNotAllowed {

@@ -88,3 +88,32 @@ func (s *HTTPServer) getTenantID(r *http.Request) uuid.UUID {
 	}
 	return id
 }
+
+// requireTenant extracts the tenant ID from the request (fail-closed).
+// Returns uuid.Nil and writes a 403 error if the X-Tenant-ID header is
+// missing or invalid. Use this instead of getTenantID when the operation
+// MUST be tenant-scoped.
+func (s *HTTPServer) requireTenant(w http.ResponseWriter, r *http.Request) (uuid.UUID, bool) {
+	tid := s.getTenantID(r)
+	if tid == uuid.Nil {
+		writeJSONError(w, http.StatusForbidden, "tenant context required")
+		return uuid.Nil, false
+	}
+	return tid, true
+}
+
+// checkOrgOwnership verifies that orgID belongs to the caller's tenant.
+// Fail-closed: rejects if tenant header is missing. Returns true if
+// ownership is verified, false (and writes error) otherwise.
+func (s *HTTPServer) checkOrgOwnership(w http.ResponseWriter, r *http.Request, orgID uuid.UUID) bool {
+	tid, ok := s.requireTenant(w, r)
+	if !ok {
+		return false
+	}
+	org, err := s.orgSvc.Get(r.Context(), orgID)
+	if err != nil || org.TenantID != tid {
+		writeJSONError(w, http.StatusNotFound, "organization not found")
+		return false
+	}
+	return true
+}

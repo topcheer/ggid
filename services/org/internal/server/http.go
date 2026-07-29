@@ -74,7 +74,7 @@ func (s *HTTPServer) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("/api/v1/org/tenants/suspend", s.handleSuspendTenant)
 	mux.HandleFunc("/api/v1/org/tenants/activate", s.handleActivateTenant)
 	mux.HandleFunc("/api/v1/org/stats/membership-trends", s.handleMembershipTrends)
-mux.HandleFunc("/api/v1/org/memberships", s.handleMemberships)
+	mux.HandleFunc("/api/v1/org/memberships", s.handleMemberships)
 }
 
 // GET /api/v1/orgs/tree?tenant_id=X&depth=N — returns full org tree as nested structure
@@ -111,9 +111,9 @@ func (s *HTTPServer) handleFullTree(w http.ResponseWriter, r *http.Request) {
 	// Build nested tree structure
 	tree := buildOrgTree(orgs, depth)
 	writeJSON(w, http.StatusOK, map[string]any{
-		"tree":     tree,
-		"count":    len(orgs),
-		"depth":    depth,
+		"tree":  tree,
+		"count": len(orgs),
+		"depth": depth,
 	})
 }
 
@@ -288,20 +288,24 @@ func (s *HTTPServer) handleOrgByID(w http.ResponseWriter, r *http.Request) {
 			writeServiceError(w, err)
 			return
 		}
-		// SECURITY: verify org belongs to caller's tenant
-		if tid := s.getTenantID(r); tid != uuid.Nil && org.TenantID != tid {
+		// SECURITY: verify org belongs to caller's tenant (fail-closed)
+		if tid, ok := s.requireTenant(w, r); !ok {
+			return
+		} else if org.TenantID != tid {
 			writeJSONError(w, http.StatusNotFound, "organization not found")
 			return
 		}
 		writeJSON(w, http.StatusOK, orgToJSON(org))
 	case http.MethodDelete:
-		// SECURITY: verify org belongs to caller's tenant before delete
+		// SECURITY: verify org belongs to caller's tenant before delete (fail-closed)
 		org, err := s.orgSvc.Get(r.Context(), id)
 		if err != nil {
 			writeServiceError(w, err)
 			return
 		}
-		if tid := s.getTenantID(r); tid != uuid.Nil && org.TenantID != tid {
+		if tid, ok := s.requireTenant(w, r); !ok {
+			return
+		} else if org.TenantID != tid {
 			writeJSONError(w, http.StatusNotFound, "organization not found")
 			return
 		}
@@ -331,6 +335,13 @@ func (s *HTTPServer) updateOrg(w http.ResponseWriter, r *http.Request, id uuid.U
 		writeServiceError(w, err)
 		return
 	}
+	// SECURITY: verify org belongs to caller's tenant (fail-closed)
+	if tid, ok := s.requireTenant(w, r); !ok {
+		return
+	} else if org.TenantID != tid {
+		writeJSONError(w, http.StatusNotFound, "organization not found")
+		return
+	}
 	if req.Name != "" {
 		org.Name = req.Name
 	}
@@ -343,12 +354,15 @@ func (s *HTTPServer) updateOrg(w http.ResponseWriter, r *http.Request, id uuid.U
 }
 
 func (s *HTTPServer) handleOrgMembers(w http.ResponseWriter, r *http.Request, orgID uuid.UUID) {
+	// SECURITY: verify org belongs to caller's tenant before any operation
+	if !s.checkOrgOwnership(w, r, orgID) {
+		return
+	}
 	switch r.Method {
 	case http.MethodPost:
 		var req struct {
-			UserID   string `json:"user_id"`
-			TenantID string `json:"tenant_id"`
-			Title    string `json:"title"`
+			UserID string `json:"user_id"`
+			Title  string `json:"title"`
 		}
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 			writeJSONError(w, http.StatusBadRequest, "invalid JSON body")
@@ -359,11 +373,8 @@ func (s *HTTPServer) handleOrgMembers(w http.ResponseWriter, r *http.Request, or
 			writeJSONError(w, http.StatusBadRequest, "invalid user_id")
 			return
 		}
-		tenantID, err := uuid.Parse(req.TenantID)
-		if err != nil {
-			writeJSONError(w, http.StatusBadRequest, "invalid tenant_id")
-			return
-		}
+		// SECURITY: use tenant from verified header, not from request body
+		tenantID := s.getTenantID(r)
 		mem, err := s.memberSvc.Invite(r.Context(), &domain.Membership{
 			UserID:   userID,
 			TenantID: tenantID,
@@ -376,12 +387,8 @@ func (s *HTTPServer) handleOrgMembers(w http.ResponseWriter, r *http.Request, or
 		}
 		writeJSON(w, http.StatusCreated, membershipToJSON(mem))
 	case http.MethodGet:
-		tenantIDStr := r.URL.Query().Get("tenant_id")
-		if tenantIDStr == "" {
-			writeJSONError(w, http.StatusBadRequest, "tenant_id required")
-			return
-		}
-		tid, _ := uuid.Parse(tenantIDStr)
+		// SECURITY: use caller's verified tenant ID, not query param
+		tid := s.getTenantID(r)
 		members, err := s.memberSvc.List(r.Context(), repository.ListMembersFilter{
 			TenantID: tid, OrgID: &orgID,
 		}, 1, 100)
@@ -474,6 +481,10 @@ func (s *HTTPServer) handleOrgAccessMatrix(w http.ResponseWriter, r *http.Reques
 		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
+	// SECURITY: verify org belongs to caller's tenant (fail-closed)
+	if !s.checkOrgOwnership(w, r, orgID) {
+		return
+	}
 	org, err := s.orgSvc.Get(r.Context(), orgID)
 	if err != nil {
 		// Return 404 for not-found instead of leaking 500 to client
@@ -490,13 +501,13 @@ func (s *HTTPServer) handleOrgAccessMatrix(w http.ResponseWriter, r *http.Reques
 
 	// Query memberships for this org
 	type member struct {
-		UserID   string `json:"user_id"`
-		Title    string `json:"title"`
-		Status   string `json:"status"`
+		UserID string `json:"user_id"`
+		Title  string `json:"title"`
+		Status string `json:"status"`
 	}
 	var members []member
 	// Try memberships table (actual table name in DB)
-	_ = s.orgSvc  // keep reference
+	_ = s.orgSvc // keep reference
 	// Use memberSvc to list members
 	memList, memErr := s.memberSvc.List(r.Context(), repository.ListMembersFilter{
 		TenantID: org.TenantID, OrgID: &orgID,
@@ -613,26 +624,34 @@ func (s *HTTPServer) handleDepartmentByID(w http.ResponseWriter, r *http.Request
 			writeServiceError(w, err)
 			return
 		}
-		// SECURITY: verify dept's parent org belongs to caller's tenant
-		parentOrg, err := s.orgSvc.Get(r.Context(), dept.OrgID)
-		if err != nil || (func() bool { tid := s.getTenantID(r); return tid != uuid.Nil && parentOrg.TenantID != tid }()) {
-			writeJSONError(w, http.StatusNotFound, "department not found")
+		// SECURITY: verify dept's parent org belongs to caller's tenant (fail-closed)
+		if tid, ok := s.requireTenant(w, r); !ok {
 			return
+		} else {
+			parentOrg, err := s.orgSvc.Get(r.Context(), dept.OrgID)
+			if err != nil || parentOrg.TenantID != tid {
+				writeJSONError(w, http.StatusNotFound, "department not found")
+				return
+			}
 		}
 		writeJSON(w, http.StatusOK, deptToJSON(dept))
 	case http.MethodPut:
 		s.updateDept(w, r, id)
 	case http.MethodDelete:
-		// SECURITY: verify dept's parent org belongs to caller's tenant before delete
+		// SECURITY: verify dept's parent org belongs to caller's tenant before delete (fail-closed)
 		dept, err := s.deptSvc.Get(r.Context(), id)
 		if err != nil {
 			writeServiceError(w, err)
 			return
 		}
-		parentOrg, err := s.orgSvc.Get(r.Context(), dept.OrgID)
-		if err != nil || (func() bool { tid := s.getTenantID(r); return tid != uuid.Nil && parentOrg.TenantID != tid }()) {
-			writeJSONError(w, http.StatusNotFound, "department not found")
+		if tid, ok := s.requireTenant(w, r); !ok {
 			return
+		} else {
+			parentOrg, err := s.orgSvc.Get(r.Context(), dept.OrgID)
+			if err != nil || parentOrg.TenantID != tid {
+				writeJSONError(w, http.StatusNotFound, "department not found")
+				return
+			}
 		}
 		if err := s.deptSvc.Delete(r.Context(), id); err != nil {
 			writeServiceError(w, err)
@@ -659,6 +678,10 @@ func (s *HTTPServer) createDept(w http.ResponseWriter, r *http.Request) {
 	orgID, err := uuid.Parse(req.OrgID)
 	if err != nil {
 		writeJSONError(w, http.StatusBadRequest, "invalid org_id")
+		return
+	}
+	// SECURITY: verify org belongs to caller's tenant before creating dept
+	if !s.checkOrgOwnership(w, r, orgID) {
 		return
 	}
 
@@ -697,6 +720,10 @@ func (s *HTTPServer) listDepts(w http.ResponseWriter, r *http.Request) {
 	orgID, err := uuid.Parse(orgIDStr)
 	if err != nil {
 		writeJSONError(w, http.StatusBadRequest, "invalid org_id")
+		return
+	}
+	// SECURITY: verify org belongs to caller's tenant
+	if !s.checkOrgOwnership(w, r, orgID) {
 		return
 	}
 
@@ -744,8 +771,10 @@ func (s *HTTPServer) handleTeamByID(w http.ResponseWriter, r *http.Request) {
 			writeServiceError(w, err)
 			return
 		}
-		// SECURITY: verify team's parent org belongs to caller's tenant
-		if tid := s.getTenantID(r); tid != uuid.Nil {
+		// SECURITY: verify team's parent org belongs to caller's tenant (fail-closed)
+		if tid, ok := s.requireTenant(w, r); !ok {
+			return
+		} else {
 			parentOrg, err := s.orgSvc.Get(r.Context(), team.OrgID)
 			if err != nil || parentOrg.TenantID != tid {
 				writeJSONError(w, http.StatusNotFound, "team not found")
@@ -756,13 +785,15 @@ func (s *HTTPServer) handleTeamByID(w http.ResponseWriter, r *http.Request) {
 	case http.MethodPut:
 		s.updateTeam(w, r, id)
 	case http.MethodDelete:
-		// SECURITY: verify team's parent org belongs to caller's tenant
+		// SECURITY: verify team's parent org belongs to caller's tenant (fail-closed)
 		team, err := s.teamSvc.Get(r.Context(), id)
 		if err != nil {
 			writeServiceError(w, err)
 			return
 		}
-		if tid := s.getTenantID(r); tid != uuid.Nil {
+		if tid, ok := s.requireTenant(w, r); !ok {
+			return
+		} else {
 			parentOrg, err := s.orgSvc.Get(r.Context(), team.OrgID)
 			if err != nil || parentOrg.TenantID != tid {
 				writeJSONError(w, http.StatusNotFound, "team not found")
@@ -796,6 +827,10 @@ func (s *HTTPServer) createTeam(w http.ResponseWriter, r *http.Request) {
 		writeJSONError(w, http.StatusBadRequest, "invalid org_id")
 		return
 	}
+	// SECURITY: verify org belongs to caller's tenant before creating team
+	if !s.checkOrgOwnership(w, r, orgID) {
+		return
+	}
 	createdBy, err := uuid.Parse(req.CreatedBy)
 	if err != nil {
 		writeJSONError(w, http.StatusBadRequest, "invalid created_by")
@@ -826,6 +861,10 @@ func (s *HTTPServer) listTeams(w http.ResponseWriter, r *http.Request) {
 		writeJSONError(w, http.StatusBadRequest, "invalid org_id")
 		return
 	}
+	// SECURITY: verify org belongs to caller's tenant
+	if !s.checkOrgOwnership(w, r, orgID) {
+		return
+	}
 
 	teams, err := s.teamSvc.List(r.Context(), orgID, 1, 100)
 	if err != nil {
@@ -853,6 +892,16 @@ func (s *HTTPServer) updateDept(w http.ResponseWriter, r *http.Request, id uuid.
 		writeServiceError(w, err)
 		return
 	}
+	// SECURITY: verify dept's parent org belongs to caller's tenant (fail-closed)
+	if tid, ok := s.requireTenant(w, r); !ok {
+		return
+	} else {
+		parentOrg, err := s.orgSvc.Get(r.Context(), dept.OrgID)
+		if err != nil || parentOrg.TenantID != tid {
+			writeJSONError(w, http.StatusNotFound, "department not found")
+			return
+		}
+	}
 	if req.Name != "" {
 		dept.Name = req.Name
 	}
@@ -877,7 +926,9 @@ func (s *HTTPServer) updateTeam(w http.ResponseWriter, r *http.Request, id uuid.
 		writeServiceError(w, err)
 		return
 	}
-	if tid := s.getTenantID(r); tid != uuid.Nil {
+	if tid, ok := s.requireTenant(w, r); !ok {
+		return
+	} else {
 		parentOrg, err := s.orgSvc.Get(r.Context(), team.OrgID)
 		if err != nil || parentOrg.TenantID != tid {
 			writeJSONError(w, http.StatusNotFound, "team not found")
@@ -1019,9 +1070,9 @@ func (s *HTTPServer) handleOrgRoles(w http.ResponseWriter, r *http.Request, orgI
 		copy(result, roleIDs)
 
 		writeJSON(w, http.StatusOK, map[string]any{
-			"org_id":   orgID.String(),
-			"roles":    result,
-			"count":    len(result),
+			"org_id": orgID.String(),
+			"roles":  result,
+			"count":  len(result),
 		})
 
 	default:
@@ -1139,13 +1190,13 @@ func (s *HTTPServer) handleOrgStats(w http.ResponseWriter, r *http.Request, orgI
 	orgRoles.RUnlock()
 
 	writeJSON(w, http.StatusOK, map[string]any{
-		"org_id":           orgID.String(),
-		"org_name":         org.Name,
-		"member_count":     len(members),
-		"child_org_count":  childCount,
-		"role_count":       roleCount,
-		"path":             org.Path,
-		"parent_id":        org.ParentID,
+		"org_id":          orgID.String(),
+		"org_name":        org.Name,
+		"member_count":    len(members),
+		"child_org_count": childCount,
+		"role_count":      roleCount,
+		"path":            org.Path,
+		"parent_id":       org.ParentID,
 	})
 }
 
@@ -1156,10 +1207,14 @@ func (s *HTTPServer) handleBulkAddMembers(w http.ResponseWriter, r *http.Request
 		return
 	}
 
+	// SECURITY: verify org belongs to caller's tenant
+	if !s.checkOrgOwnership(w, r, orgID) {
+		return
+	}
+
 	var req struct {
-		TenantID string   `json:"tenant_id"`
-		UserIDs  []string `json:"user_ids"`
-		Role     string   `json:"role"`
+		UserIDs []string `json:"user_ids"`
+		Role    string   `json:"role"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		writeJSONError(w, http.StatusBadRequest, "invalid JSON body")
@@ -1170,7 +1225,8 @@ func (s *HTTPServer) handleBulkAddMembers(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	tenantID, _ := uuid.Parse(req.TenantID)
+	// SECURITY: use verified tenant from header, not from request body
+	tenantID := s.getTenantID(r)
 	if req.Role == "" {
 		req.Role = "member"
 	}
@@ -1199,10 +1255,10 @@ func (s *HTTPServer) handleBulkAddMembers(w http.ResponseWriter, r *http.Request
 	}
 
 	writeJSON(w, http.StatusCreated, map[string]any{
-		"status":       "completed",
-		"added":        added,
-		"failed":       len(errors),
-		"errors":       errors,
+		"status":          "completed",
+		"added":           added,
+		"failed":          len(errors),
+		"errors":          errors,
 		"total_requested": len(req.UserIDs),
 	})
 }
@@ -1249,8 +1305,8 @@ func (s *HTTPServer) handleBulkRemoveMembers(w http.ResponseWriter, r *http.Requ
 	}
 
 	writeJSON(w, http.StatusOK, map[string]any{
-		"status":         "completed",
-		"removed":        removed,
+		"status":          "completed",
+		"removed":         removed,
 		"total_requested": len(req.UserIDs),
 	})
 }
@@ -1322,9 +1378,9 @@ func (s *HTTPServer) handleOrgInherit(w http.ResponseWriter, r *http.Request, or
 		orgRoles.Unlock()
 
 		writeJSON(w, http.StatusOK, map[string]any{
-			"status":     "inheriting",
-			"org_id":     orgID.String(),
-			"parent_id":  parentID.String(),
+			"status":       "inheriting",
+			"org_id":       orgID.String(),
+			"parent_id":    parentID.String(),
 			"merged_roles": len(parentRoles),
 		})
 
@@ -1344,16 +1400,11 @@ func (s *HTTPServer) handleMemberImport(w http.ResponseWriter, r *http.Request, 
 		return
 	}
 
-	tenantIDStr := r.URL.Query().Get("tenant_id")
-	if tenantIDStr == "" {
-		writeJSONError(w, http.StatusBadRequest, "tenant_id query parameter is required")
+	// SECURITY: verify org belongs to caller's tenant + use verified tenant ID
+	if !s.checkOrgOwnership(w, r, orgID) {
 		return
 	}
-	tenantID, err := uuid.Parse(tenantIDStr)
-	if err != nil {
-		writeJSONError(w, http.StatusBadRequest, "invalid tenant_id")
-		return
-	}
+	tenantID := s.getTenantID(r)
 
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
@@ -1442,16 +1493,11 @@ func (s *HTTPServer) handleMemberExport(w http.ResponseWriter, r *http.Request, 
 		return
 	}
 
-	tenantIDStr := r.URL.Query().Get("tenant_id")
-	if tenantIDStr == "" {
-		writeJSONError(w, http.StatusBadRequest, "tenant_id query parameter is required")
+	// SECURITY: verify org belongs to caller's tenant + use verified tenant ID
+	if !s.checkOrgOwnership(w, r, orgID) {
 		return
 	}
-	tenantID, err := uuid.Parse(tenantIDStr)
-	if err != nil {
-		writeJSONError(w, http.StatusBadRequest, "invalid tenant_id")
-		return
-	}
+	tenantID := s.getTenantID(r)
 
 	members, err := s.memberSvc.List(r.Context(), repository.ListMembersFilter{
 		TenantID: tenantID, OrgID: &orgID,

@@ -143,7 +143,7 @@ func (m *mockMemberRepo) Create(_ context.Context, mem *domain.Membership) error
 		mem.ID = uuid.New()
 	}
 	t := time.Now()
-		mem.JoinedAt = &t
+	mem.JoinedAt = &t
 	m.members[mem.ID] = mem
 	return nil
 }
@@ -291,6 +291,7 @@ func TestOrgServer_GetOrgByID(t *testing.T) {
 	// The create response should have the org — extract ID from response
 	// For simplicity, just test with an invalid UUID to get 400
 	req := httptest.NewRequest(http.MethodGet, "/api/v1/orgs/not-a-uuid", nil)
+	req.Header.Set("X-Tenant-ID", testTenantID)
 	rr := httptest.NewRecorder()
 	mux.ServeHTTP(rr, req)
 
@@ -321,8 +322,9 @@ func TestOrgServer_CreateDepartment(t *testing.T) {
 	mux.ServeHTTP(orgRR, orgReq)
 
 	// Create a department
-	deptBody := `{"name":"Backend","org_id":"550e8400-e29b-41d4-a716-446655440099"}`
+	deptBody := `{"name":"Backend","org_id":"550e8400-e29b-41d4-a716-446655440001"}`
 	deptReq := httptest.NewRequest(http.MethodPost, "/api/v1/departments", strings.NewReader(deptBody))
+	deptReq.Header.Set("X-Tenant-ID", testTenantID)
 	deptRR := httptest.NewRecorder()
 	mux.ServeHTTP(deptRR, deptReq)
 
