@@ -1096,6 +1096,7 @@ const (
 type RFC8693ExchangeRequest struct {
 	TenantID         uuid.UUID
 	ClientID         string
+	ClientSecret     string // required for confidential clients
 	SubjectToken     string
 	SubjectTokenType string // must be urn:ietf:params:oauth:token-type:access_token
 	ActorToken       string // optional, for delegation
@@ -1108,10 +1109,38 @@ type RFC8693ExchangeRequest struct {
 // Validates subject_token, enforces scope narrowing, and issues a new token
 // with optional `act` claim for delegation chains.
 func (s *OAuthService) ExchangeTokenRFC8693(ctx context.Context, req *RFC8693ExchangeRequest) (*TokenResponse, error) {
+	// 0. SECURITY: Authenticate the requesting client (same as other grants).
+	if req.ClientID != "" {
+		client, err := s.clientRepo.GetClientByID(ctx, req.TenantID, req.ClientID)
+		if err != nil {
+			return nil, errors.Unauthenticated("client authentication failed")
+		}
+		if client.IsConfidential() && client.TokenEndpointAuthMethod != "none" {
+			ok, _ := pkgcrypto.VerifyPassword(req.ClientSecret, client.ClientSecretHash)
+			if !ok {
+				return nil, errors.Unauthenticated("invalid client credentials")
+			}
+		}
+		if !client.Enabled {
+			return nil, errors.InvalidArgument("client is disabled")
+		}
+	}
+
+	// 0a. Validate subject_token_type (RFC 8693 §2.1).
+	const expectedSubjectType = "urn:ietf:params:oauth:token-type:access_token"
+	if req.SubjectTokenType != "" && req.SubjectTokenType != expectedSubjectType {
+		return nil, fmt.Errorf("unsupported subject_token_type: %s", req.SubjectTokenType)
+	}
+
 	// 1. Validate subject token.
 	subjectClaims, err := s.parseAndValidateJWT(req.SubjectToken)
 	if err != nil {
 		return nil, fmt.Errorf("invalid subject_token: %w", err)
+	}
+
+	// 1a. Reject ID tokens used as subject_token (nonce is an ID token indicator).
+	if _, hasNonce := subjectClaims["nonce"]; hasNonce {
+		return nil, fmt.Errorf("ID tokens cannot be used as subject_token")
 	}
 
 	subjectID, _ := subjectClaims["sub"].(string)
@@ -1363,6 +1392,10 @@ type UserInfoResponse struct {
 
 // GetUserInfo returns user info claims from a validated access token.
 func (s *OAuthService) GetUserInfo(tokenStr string) (*UserInfoResponse, error) {
+	// SECURITY: Check revocation before serving claims.
+	if s.IsTokenRevoked(tokenStr) {
+		return nil, fmt.Errorf("token has been revoked")
+	}
 	claims, err := s.ParseAccessToken(tokenStr)
 	if err != nil {
 		return nil, err
@@ -2038,12 +2071,13 @@ func (s *OAuthService) ClientCredentials(ctx context.Context, req *ClientCredent
 		return nil, errors.Unauthenticated("client authentication failed")
 	}
 
-	// 2. Verify client secret.
-	if client.IsConfidential() {
-		ok, _ := pkgcrypto.VerifyPassword(req.ClientSecret, client.ClientSecretHash)
-		if !ok {
-			return nil, errors.Unauthenticated("invalid client credentials")
-		}
+	// 2. SECURITY: client_credentials requires confidential clients (RFC 6749 §4.4.1).
+	if !client.IsConfidential() {
+		return nil, errors.Unauthenticated("client_credentials grant requires a confidential client")
+	}
+	ok, _ := pkgcrypto.VerifyPassword(req.ClientSecret, client.ClientSecretHash)
+	if !ok {
+		return nil, errors.Unauthenticated("invalid client credentials")
 	}
 
 	// 3. Check client is enabled.

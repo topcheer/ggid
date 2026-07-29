@@ -60,23 +60,29 @@ func (s *OAuthService) RPInitiatedLogout(req *RPInitiatedLogoutRequest) (*RPInit
 			return nil, errors.InvalidArgument("post_logout_redirect_uri must use HTTPS")
 		}
 
-		// SECURITY (OIDC Session Management §5): validate against the client's
-		// registered redirect URIs. Without this, any HTTPS URL is accepted → open redirect.
+		// SECURITY: validate against client's registered URIs.
+		// Must have either id_token_hint or client_id to identify the client.
+		clientID := ""
 		if req.IDTokenHint != "" {
 			claims, _ := s.ParseAccessToken(req.IDTokenHint)
-			if clientID, ok := claims["aud"].(string); ok && clientID != "" {
-				if client, cerr := s.GetClient(context.Background(), clientID); cerr == nil && client != nil {
-					matched := false
-					for _, registered := range client.RedirectURIs {
-						if registered == req.PostLogoutRedirectURI {
-							matched = true
-							break
-						}
-					}
-					if !matched {
-						return nil, errors.InvalidArgument("post_logout_redirect_uri not registered for this client")
-					}
+			clientID, _ = claims["aud"].(string)
+		}
+		if clientID == "" {
+			clientID = req.ClientID
+		}
+		if clientID == "" {
+			return nil, errors.InvalidArgument("client_id or id_token_hint required for post_logout_redirect")
+		}
+		if client, cerr := s.GetClient(context.Background(), clientID); cerr == nil && client != nil {
+			matched := false
+			for _, registered := range client.RedirectURIs {
+				if registered == req.PostLogoutRedirectURI {
+					matched = true
+					break
 				}
+			}
+			if !matched {
+				return nil, errors.InvalidArgument("post_logout_redirect_uri not registered for this client")
 			}
 		}
 

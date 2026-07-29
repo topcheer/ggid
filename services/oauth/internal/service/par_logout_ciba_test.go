@@ -217,18 +217,13 @@ func TestGetPushedAuthorizationRequest_SingleUse(t *testing.T) {
 func TestRPInitiatedLogout_WithRedirect(t *testing.T) {
 	svc, _, _, _ := newTestOAuthService()
 
-	result, err := svc.RPInitiatedLogout(&RPInitiatedLogoutRequest{
+	// SECURITY: redirect without client identification should be rejected.
+	_, err := svc.RPInitiatedLogout(&RPInitiatedLogoutRequest{
 		PostLogoutRedirectURI: "https://app.example.com/post-logout",
 		State:                 "logout-state-123",
 	})
-	if err != nil {
-		t.Fatalf("RPInitiatedLogout: %v", err)
-	}
-	if result.RedirectURL == "" {
-		t.Error("expected non-empty redirect URL")
-	}
-	if !strings.Contains(result.RedirectURL, "state=logout-state-123") {
-		t.Errorf("redirect URL should contain state: %s", result.RedirectURL)
+	if err == nil {
+		t.Fatal("should require client_id or id_token_hint for post_logout_redirect")
 	}
 }
 

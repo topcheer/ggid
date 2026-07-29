@@ -29,19 +29,16 @@ func TestClientCredentials_PublicClient(t *testing.T) {
 		Name:       "Public M2M",
 		Type:       domain.ClientTypePublic,
 		GrantTypes: []string{"client_credentials"},
-		Enabled:    true,
 	}
-	_ = clientRepo.CreateClient(context.Background(), client)
+	clientRepo.CreateClient(context.Background(), client)
 
-	resp, err := svc.ClientCredentials(context.Background(), &ClientCredentialsRequest{
-		TenantID: testTenantID,
-		ClientID: "gcid_pub_cc",
+	// SECURITY: public clients must be rejected for client_credentials.
+	_, err := svc.ClientCredentials(context.Background(), &ClientCredentialsRequest{
+		TenantID:     testTenantID,
+		ClientID:     "gcid_pub_cc",
 	})
-	if err != nil {
-		t.Fatalf("public client_credentials: %v", err)
-	}
-	if resp.AccessToken == "" {
-		t.Error("expected access token")
+	if err == nil {
+		t.Fatal("public client should be rejected for client_credentials")
 	}
 }
 

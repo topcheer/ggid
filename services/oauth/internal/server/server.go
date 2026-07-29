@@ -777,6 +777,7 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 				resp, tokenErr = oauthSvc.ExchangeTokenRFC8693(ctx, &service.RFC8693ExchangeRequest{
 					TenantID:         tenantID,
 					ClientID:         clientID,
+					ClientSecret:     clientSecret,
 					SubjectToken:     r.FormValue("subject_token"),
 					SubjectTokenType: r.FormValue("subject_token_type"),
 					ActorToken:       r.FormValue("actor_token"),
