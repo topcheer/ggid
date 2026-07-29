@@ -20,11 +20,11 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/ggid/ggid/pkg/authprovider"
-	ggidauth "github.com/ggid/ggid/pkg/auth"
 	"github.com/ggid/ggid/pkg/audit"
-	"github.com/ggid/ggid/pkg/middleware"
+	ggidauth "github.com/ggid/ggid/pkg/auth"
+	"github.com/ggid/ggid/pkg/authprovider"
 	"github.com/ggid/ggid/pkg/crypto"
+	"github.com/ggid/ggid/pkg/middleware"
 	"github.com/ggid/ggid/pkg/rbac"
 	"github.com/ggid/ggid/pkg/shutdown"
 	"github.com/ggid/ggid/pkg/sysconfig"
@@ -38,8 +38,8 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/nats-io/nats.go"
 	"github.com/redis/go-redis/v9"
-	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials"
 )
 
 func main() {
@@ -164,7 +164,6 @@ func main() {
 
 	// 5a. Build MFA service
 	mfaRepo := repository.NewPGMFADeviceRepository(pool)
-	mfaService := service.NewMFAService(mfaRepo)
 
 	// 5b. Backup code service (PostgreSQL-backed for persistence)
 	backupCodeRepo := service.NewPgBackupCodeRepo(pool)
@@ -177,6 +176,11 @@ func main() {
 		}
 	}
 	backupCodeService := service.NewBackupCodeService(backupCodeRepo)
+
+	// MFA service with backup-code cascade wired in — disabling MFA now
+	// also removes orphaned backup codes (R151: repo existed but was
+	// never passed, so the cleanup silently never ran in production).
+	mfaService := service.NewMFAServiceWithBackupCodes(mfaRepo, backupCodeRepo)
 
 	// 6. Build identity client (HTTP-based, connects to Identity Service)
 	var identityClient service.IdentityClient
@@ -205,9 +209,9 @@ func main() {
 			fmt.Sscanf(p, "%d", &smtpPort)
 		}
 		sender := &smtpEmailSender{
-			host:     smtpHost,
-			port:     smtpPort,
-			from:     os.Getenv("SMTP_FROM"),
+			host: smtpHost,
+			port: smtpPort,
+			from: os.Getenv("SMTP_FROM"),
 		}
 		// Wire trust store CA pool for custom CA support
 		if ts := loadTrustStoreCAs(ctx, pool); ts != nil {
@@ -242,7 +246,7 @@ func main() {
 	// Wire DB-backed WebAuthn credential store so passkeys persist across restarts.
 	if pool != nil {
 		handler.SetWebAuthnCredentialStore(repository.NewWebAuthnCredentialStore(pool))
-	service.SetImpersonationRedis(rdb) // P0: persist impersonation tokens to survive restarts
+		service.SetImpersonationRedis(rdb) // P0: persist impersonation tokens to survive restarts
 		log.Println("WebAuthn: DB-backed credential store enabled")
 	} else {
 		log.Println("WebAuthn: WARNING no DB pool — credentials will not persist")
@@ -752,4 +756,3 @@ func startSessionRevokeSubscriber(ctx context.Context, natsURL string, mgr *serv
 	_ = sub.Unsubscribe()
 	log.Println("CAE: session.revoke subscriber stopped")
 }
-
