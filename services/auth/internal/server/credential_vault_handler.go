@@ -70,6 +70,13 @@ func decryptCredential(ciphertextB64 string) (string, error) {
 // POST /api/v1/auth/credentials/store — store encrypted credential in per-user vault.
 // GET /api/v1/auth/credentials/{key} — retrieve decrypted credential.
 func (h *Handler) handleCredentialVault(w http.ResponseWriter, r *http.Request) {
+	// SECURITY: Require authenticated user. The gateway enforces admin scope
+	// on this path, but we add defense-in-depth at the handler level.
+	authenticatedUserID := r.Header.Get("X-User-ID")
+	if authenticatedUserID == "" {
+		writeError(w, http.StatusUnauthorized, "authentication required")
+		return
+	}
 	switch r.Method {
 	case http.MethodPost:
 		var req struct {
@@ -84,6 +91,17 @@ func (h *Handler) handleCredentialVault(w http.ResponseWriter, r *http.Request) 
 		if req.UserID == "" || req.Key == "" || req.Value == "" {
 			writeError(w, http.StatusBadRequest, "user_id, key, value required")
 			return
+		}
+		// SECURITY: Only allow operating on own account (admin override via scope already enforced by gateway).
+		// Non-admin callers cannot inject arbitrary user_id.
+		reqUserID := req.UserID
+		if reqUserID != authenticatedUserID {
+			// Check if caller has admin scope
+			scopes := r.Header.Get("X-Scopes")
+			if !strings.Contains(scopes, "platform:admin") && !strings.Contains(scopes, "tenant:admin") {
+				writeError(w, http.StatusForbidden, "cannot access other users' credentials")
+				return
+			}
 		}
 		encVal, err := encryptCredential(req.Value)
 		if err != nil {
@@ -126,6 +144,14 @@ func (h *Handler) handleCredentialVault(w http.ResponseWriter, r *http.Request) 
 		if key == "" || userID == "" {
 			writeError(w, http.StatusBadRequest, "key and user_id required")
 			return
+		}
+		// SECURITY: Only allow reading own credentials unless admin.
+		if userID != authenticatedUserID {
+			scopes := r.Header.Get("X-Scopes")
+			if !strings.Contains(scopes, "platform:admin") && !strings.Contains(scopes, "tenant:admin") {
+				writeError(w, http.StatusForbidden, "cannot access other users' credentials")
+				return
+			}
 		}
 		// Try DB first, then PG memMap, fall back to in-memory.
 		var cred *StoredCredential
