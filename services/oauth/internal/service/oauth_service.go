@@ -3421,12 +3421,15 @@ func (s *OAuthService) JWTBearerGrant(ctx context.Context, req *JWTBearerRequest
 		return nil, fmt.Errorf("assertion sub must be a valid user ID")
 	}
 
-	// SECURITY (RFC 8705): Verify sub maps to a known user in the tenant.
+	// SECURITY (RFC 8705): Verify sub maps to a known active user in the tenant.
 	if s.pool != nil {
-		var exists bool
-		_ = s.pool.QueryRow(ctx, `SELECT EXISTS(SELECT 1 FROM users WHERE id = $1 AND tenant_id = $2)`, userID, req.TenantID).Scan(&exists)
-		if !exists {
+		var status string
+		err := s.pool.QueryRow(ctx, `SELECT status FROM users WHERE id = $1 AND tenant_id = $2`, userID, req.TenantID).Scan(&status)
+		if err != nil {
 			return nil, fmt.Errorf("assertion sub does not match any known user")
+		}
+		if status != "active" {
+			return nil, fmt.Errorf("user account is %s, cannot issue token", status)
 		}
 	}
 
