@@ -129,6 +129,20 @@ func (r *auditMemoryMapRepo2) DeleteJSON(ctx context.Context, table, id string) 
 	return err
 }
 
+func (r *auditMemoryMapRepo2) GetJSON(ctx context.Context, table, id string) (map[string]any, error) {
+	if r.pool == nil {
+		return nil, fmt.Errorf("not found")
+	}
+	var data []byte
+	err := r.pool.QueryRow(ctx, fmt.Sprintf(`SELECT data FROM %s WHERE id = $1`, table), id).Scan(&data)
+	if err != nil {
+		return nil, err
+	}
+	var m map[string]any
+	json.Unmarshal(data, &m)
+	return m, nil
+}
+
 // --- Typed helpers: Webhook Delivery ---
 
 func (r *auditMemoryMapRepo2) StoreWebhookDelivery(ctx context.Context, d map[string]any) error {
