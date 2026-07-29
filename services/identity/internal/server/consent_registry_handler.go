@@ -180,6 +180,11 @@ func (h *HTTPHandler) handleConsentRegistry(w http.ResponseWriter, r *http.Reque
 		var records []*ConsentRecord
 		if h.consentRepo != nil {
 			records, _ = h.consentRepo.List(r.Context(), tenantID, userID, status)
+			// Migration window: pre-fix records were stored with tenant_id
+			// = uuid.Nil — merge the caller's legacy records so they don't
+			// silently disappear.
+			legacy, _ := h.consentRepo.List(r.Context(), uuid.Nil, userID, status)
+			records = append(records, legacy...)
 		}
 		if records == nil {
 			records = []*ConsentRecord{}
@@ -246,6 +251,21 @@ func (h *HTTPHandler) handleConsentRegistry(w http.ResponseWriter, r *http.Reque
 			return
 		}
 		if h.consentRepo != nil {
+			// Ownership check: previously any authenticated caller could
+			// withdraw ANY user's consent by ID (R-cron3 P1 residual BOLA).
+			owned := false
+			recs, _ := h.consentRepo.List(r.Context(), tenantID, callerUser, "")
+			legacy, _ := h.consentRepo.List(r.Context(), uuid.Nil, callerUser, "")
+			for _, rc := range append(recs, legacy...) {
+				if rc.ID == id {
+					owned = true
+					break
+				}
+			}
+			if !owned {
+				writeJSONError(w, http.StatusNotFound, "consent not found")
+				return
+			}
 			h.consentRepo.Withdraw(r.Context(), id, reason)
 		}
 		writeJSON(w, http.StatusOK, map[string]any{"status": "withdrawn", "id": idStr})
