@@ -88,7 +88,8 @@ func (h *Handler) handleSAMLACS(w http.ResponseWriter, r *http.Request) {
 
 	samlResponseB64 := r.FormValue("SAMLResponse")
 	relayState := r.FormValue("RelayState")
-	if relayState == "" {
+	// SECURITY: Validate RelayState is a relative path (prevent open redirect + PII leak).
+	if relayState == "" || !strings.HasPrefix(relayState, "/") || strings.HasPrefix(relayState, "//") {
 		relayState = "/"
 	}
 
@@ -160,21 +161,17 @@ func (h *Handler) handleSAMLACS(w http.ResponseWriter, r *http.Request) {
 		"email", userEmail, "name", userName, "session", sessionID,
 		"attributes", attrs, "relay_state", relayState)
 
-	// Redirect back to relay state with session info
-	// In production, this would issue a real JWT and set cookie
-	redirectURL := relayState
-	if strings.Contains(redirectURL, "?") {
-		redirectURL += "&"
-	} else {
-		redirectURL += "?"
-	}
-	redirectURL += fmt.Sprintf("saml_session=%s&email=%s&name=%s",
-		url.QueryEscape(sessionID),
-		url.QueryEscape(userEmail),
-		url.QueryEscape(userName),
-	)
-
-	http.Redirect(w, r, redirectURL, http.StatusFound)
+	// Redirect back to relay state — session via cookie, NOT URL params (PII leak prevention)
+	http.SetCookie(w, &http.Cookie{
+		Name:     "saml_session",
+		Value:    url.QueryEscape(sessionID),
+		Path:     "/",
+		HttpOnly: true,
+		Secure:   true,
+		SameSite: http.SameSiteLaxMode,
+		MaxAge:   3600,
+	})
+	http.Redirect(w, r, relayState, http.StatusFound)
 }
 
 // GET /saml/config — get SAML configuration from sys_config

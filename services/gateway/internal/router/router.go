@@ -76,7 +76,10 @@ var publicPaths = []string{
 	"/api/v1/auth/saml/",
 	"/scim/v2/", // SCIM 2.0 uses its own bearer token, not JWT
 	"/oauth/",
-	"/saml/",
+	"/saml/metadata", // SAML SP metadata (public)
+	"/saml/acs",      // SAML Assertion Consumer Service (public, receives IdP responses)
+	"/saml/login",    // SAML login redirect (public, starts SP-initiated flow)
+	// SECURITY: /saml/config and /saml/ are NOT public — require admin auth.
 	"/.well-known/",
 	"/docs",
 	"/api-docs",
