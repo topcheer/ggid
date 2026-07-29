@@ -130,7 +130,20 @@ func (h *Handler) handleSAMLACS(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Extract user attributes
+	// SECURITY (P1-5): Validate InResponseTo to prevent assertion replay.
+	// If the assertion contains an InResponseTo attribute, it must match
+	// a SAML AuthnRequest ID we initiated. Since this implementation only
+	// supports IdP-initiated SSO (InResponseTo will be empty), any non-empty
+	// InResponseTo that we didn't generate is rejected.
+	inResponseTo := assertion.InResponseTo()
+	if inResponseTo != "" {
+		// We don't generate AuthnRequest IDs yet (no SP-initiated flow).
+		// Reject unexpected InResponseTo to prevent replay of captured assertions.
+		slog.Warn("SAML ACS: assertion has InResponseTo but no SP-initiated request was made",
+			"in_response_to", inResponseTo)
+		writeError(w, http.StatusForbidden, "unexpected SAML InResponseTo")
+		return
+	}
 	attrs := ggidSAML.ExtractAttributes(assertion)
 	userEmail := ggidSAML.GetAttribute(assertion, "email")
 	if userEmail == "" {

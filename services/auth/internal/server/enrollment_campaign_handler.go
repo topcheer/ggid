@@ -3,6 +3,7 @@ package server
 import (
 	"encoding/json"
 	"net/http"
+	"sync"
 	"time"
 
 	"github.com/google/uuid"
@@ -23,7 +24,10 @@ type EnrollmentCampaign struct {
 
 // handleEnrollmentCampaigns manages CRUD for enrollment campaigns.
 // Uses in-memory storage (replaced by DB in production).
-var campaignStore = []EnrollmentCampaign{}
+var (
+	campaignStore   = []EnrollmentCampaign{}
+	campaignStoreMu sync.RWMutex
+)
 
 func (h *Handler) handleEnrollmentCampaigns(w http.ResponseWriter, r *http.Request) {
 	// Check for /{id} sub-path
@@ -36,6 +40,8 @@ func (h *Handler) handleEnrollmentCampaigns(w http.ResponseWriter, r *http.Reque
 
 	switch r.Method {
 	case http.MethodGet:
+		campaignStoreMu.RLock()
+		defer campaignStoreMu.RUnlock()
 		if len(campaignStore) == 0 {
 			// Return empty list instead of null
 			writeJSON(w, http.StatusOK, map[string]any{"campaigns": []EnrollmentCampaign{}})
@@ -54,7 +60,9 @@ func (h *Handler) handleEnrollmentCampaigns(w http.ResponseWriter, r *http.Reque
 		if c.Status == "" {
 			c.Status = "active"
 		}
+		campaignStoreMu.Lock()
 		campaignStore = append(campaignStore, c)
+		campaignStoreMu.Unlock()
 		writeJSON(w, http.StatusCreated, c)
 
 	default:
@@ -65,6 +73,8 @@ func (h *Handler) handleEnrollmentCampaigns(w http.ResponseWriter, r *http.Reque
 func (h *Handler) handleEnrollmentCampaignByID(w http.ResponseWriter, r *http.Request, id string) {
 	switch r.Method {
 	case http.MethodDelete:
+		campaignStoreMu.Lock()
+		defer campaignStoreMu.Unlock()
 		for i, c := range campaignStore {
 			if c.ID == id {
 				campaignStore = append(campaignStore[:i], campaignStore[i+1:]...)
@@ -81,6 +91,8 @@ func (h *Handler) handleEnrollmentCampaignByID(w http.ResponseWriter, r *http.Re
 			return
 		}
 		c.ID = id
+		campaignStoreMu.Lock()
+		defer campaignStoreMu.Unlock()
 		for i, existing := range campaignStore {
 			if existing.ID == id {
 				campaignStore[i] = c
