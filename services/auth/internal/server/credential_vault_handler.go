@@ -13,6 +13,18 @@ import (
 	"time"
 )
 
+// hasScope checks if the given space-separated scope string contains the
+// exact scope. This avoids substring bypass attacks (e.g., "not-platform:admin"
+// matching "platform:admin" via strings.Contains).
+func hasScope(scopesHeader, scope string) bool {
+	for _, s := range strings.Fields(scopesHeader) {
+		if s == scope {
+			return true
+		}
+	}
+	return false
+}
+
 type StoredCredential struct {
 	Key       string    `json:"key"`
 	Value     string    `json:"-"` // never expose ciphertext in JSON
@@ -96,9 +108,17 @@ func (h *Handler) handleCredentialVault(w http.ResponseWriter, r *http.Request) 
 		// Non-admin callers cannot inject arbitrary user_id.
 		reqUserID := req.UserID
 		if reqUserID != authenticatedUserID {
-			// Check if caller has admin scope
-			scopes := r.Header.Get("X-Scopes")
-			if !strings.Contains(scopes, "platform:admin") && !strings.Contains(scopes, "tenant:admin") {
+			// Check if caller has admin scope (exact match, not substring)
+			scopes := strings.Split(r.Header.Get("X-Scopes"), ",")
+			isAdmin := false
+			for _, sc := range scopes {
+				sc = strings.TrimSpace(sc)
+				if sc == "platform:admin" || sc == "tenant:admin" {
+					isAdmin = true
+					break
+				}
+			}
+			if !isAdmin {
 				writeError(w, http.StatusForbidden, "cannot access other users' credentials")
 				return
 			}
@@ -145,14 +165,20 @@ func (h *Handler) handleCredentialVault(w http.ResponseWriter, r *http.Request) 
 			writeError(w, http.StatusBadRequest, "key and user_id required")
 			return
 		}
-		// SECURITY: Only allow reading own credentials unless admin.
-		if userID != authenticatedUserID {
-			scopes := r.Header.Get("X-Scopes")
-			if !strings.Contains(scopes, "platform:admin") && !strings.Contains(scopes, "tenant:admin") {
+			// Check if caller has admin scope (exact match, not substring)
+			scopes := strings.Split(r.Header.Get("X-Scopes"), ",")
+			isAdmin := false
+			for _, sc := range scopes {
+				sc = strings.TrimSpace(sc)
+				if sc == "platform:admin" || sc == "tenant:admin" {
+					isAdmin = true
+					break
+				}
+			}
+			if !isAdmin {
 				writeError(w, http.StatusForbidden, "cannot access other users' credentials")
 				return
 			}
-		}
 		// Try DB first, then PG memMap, fall back to in-memory.
 		var cred *StoredCredential
 		if h.pool != nil {
