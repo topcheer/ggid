@@ -17,13 +17,13 @@ import (
 	"sync"
 	"time"
 
+	pkgmiddleware "github.com/ggid/ggid/pkg/middleware"
 	"github.com/ggid/ggid/pkg/posture"
 	"github.com/ggid/ggid/pkg/sysconfig"
 	"github.com/ggid/ggid/services/gateway/internal/config"
 	"github.com/ggid/ggid/services/gateway/internal/healthcheck"
 	"github.com/ggid/ggid/services/gateway/internal/middleware"
 	"github.com/google/uuid"
-	pkgmiddleware "github.com/ggid/ggid/pkg/middleware"
 )
 
 // publicPaths are paths that skip JWT verification.
@@ -39,16 +39,16 @@ var publicPaths = []string{
 	"/api/v1/auth/mfa/radius/verify",
 	"/api/v1/auth/mfa/yubikey/verify",
 	"/api/v1/auth/mfa/methods",
-	"/api/v1/auth/otp/send",                 // Passwordless OTP (SMS/Email)
-	"/api/v1/auth/otp/verify",               // Passwordless OTP verification
-	"/api/v1/auth/sms-otp/",                 // Backward compat OTP paths
-	"/api/v1/auth/email-otp/",               // Backward compat OTP paths
-	"/api/v1/auth/webauthn/login/begin",     // Passkey login (no JWT yet)
-	"/api/v1/auth/webauthn/login/finish",    // Passkey login completion
+	"/api/v1/auth/otp/send",                  // Passwordless OTP (SMS/Email)
+	"/api/v1/auth/otp/verify",                // Passwordless OTP verification
+	"/api/v1/auth/sms-otp/",                  // Backward compat OTP paths
+	"/api/v1/auth/email-otp/",                // Backward compat OTP paths
+	"/api/v1/auth/webauthn/login/begin",      // Passkey login (no JWT yet)
+	"/api/v1/auth/webauthn/login/finish",     // Passkey login completion
 	"/api/v1/identity/tenants/self-register", // B2B onboarding (R1-01)
 	"/api/v1/auth/social/",                   // Social login OAuth flow (R1-02)
-	"/api/v1/providers/status",                // Provider availability check (pre-auth)
-	"/api/v1/oauth/clients/gcid-console",      // Console client auth_methods (pre-auth, read-only)
+	"/api/v1/providers/status",               // Provider availability check (pre-auth)
+	"/api/v1/oauth/clients/gcid-console",     // Console client auth_methods (pre-auth, read-only)
 	"/api/v1/healthz",
 	"/healthz",
 	"/api/v1/identity/healthz",
@@ -74,7 +74,7 @@ var publicPaths = []string{
 	"/api/v1/oauth/backchannel",
 	"/api/v1/oauth/userinfo",
 	"/api/v1/auth/saml/",
-	"/scim/v2/",                  // SCIM 2.0 uses its own bearer token, not JWT
+	"/scim/v2/", // SCIM 2.0 uses its own bearer token, not JWT
 	"/oauth/",
 	"/saml/",
 	"/.well-known/",
@@ -83,29 +83,30 @@ var publicPaths = []string{
 	"/login",
 	"/register",
 	"/forgot-password",
+	"/reset-password",
 	"/device",
 }
 
 // Gateway is the API Gateway HTTP handler.
 type Gateway struct {
-	cfg            *config.Config
-	jwks           *middleware.JWKSClient
-	proxies        map[string]*httputil.ReverseProxy
-	timeouts       map[string]time.Duration
-	healthChecker  *healthcheck.Checker
-	rateLimiter    *middleware.TenantBucketLimiter
+	cfg             *config.Config
+	jwks            *middleware.JWKSClient
+	proxies         map[string]*httputil.ReverseProxy
+	timeouts        map[string]time.Duration
+	healthChecker   *healthcheck.Checker
+	rateLimiter     *middleware.TenantBucketLimiter
 	multiDimLimiter *middleware.MultiDimRateLimiter
 	postureEngine   *posture.Engine
 	postureDropFn   func(ctx context.Context, tenantID, userID string, score int)
-	reloadFunc     ReloadFunc
-	routeVersion   int64
-	stats          *middleware.StatsCollector
-	graphql        *middleware.GraphQLResolver
-	sessionMgr     *middleware.SessionManager
-	sysconfigStore sysconfig.Store
-	internalSecret []byte
-	caeCheck       func(http.Handler) http.Handler
-	appRouter      *ProtectedAppRouter
+	reloadFunc      ReloadFunc
+	routeVersion    int64
+	stats           *middleware.StatsCollector
+	graphql         *middleware.GraphQLResolver
+	sessionMgr      *middleware.SessionManager
+	sysconfigStore  sysconfig.Store
+	internalSecret  []byte
+	caeCheck        func(http.Handler) http.Handler
+	appRouter       *ProtectedAppRouter
 	circuitRegistry *middleware.CircuitRegistry
 	apiKeyValidator *middleware.DBAPIKeyValidator
 	mu              sync.RWMutex
@@ -133,13 +134,13 @@ func New(cfg *config.Config, jwks *middleware.JWKSClient) *Gateway {
 	middleware.SetRBACExemptPrefixes(publicPaths)
 
 	gw := &Gateway{
-		cfg:         cfg,
-		jwks:        jwks,
-		proxies:        make(map[string]*httputil.ReverseProxy),
-		timeouts:       make(map[string]time.Duration),
-		rateLimiter:    middleware.NewTenantBucketLimiter(middleware.DefaultBucketRateLimitConfig()),
+		cfg:             cfg,
+		jwks:            jwks,
+		proxies:         make(map[string]*httputil.ReverseProxy),
+		timeouts:        make(map[string]time.Duration),
+		rateLimiter:     middleware.NewTenantBucketLimiter(middleware.DefaultBucketRateLimitConfig()),
 		circuitRegistry: middleware.NewCircuitRegistry(middleware.DefaultCircuitConfig()),
-		appRouter:      NewProtectedAppRouter(),
+		appRouter:       NewProtectedAppRouter(),
 	}
 	gw.buildProxies()
 	gw.buildHealthChecker()
@@ -228,13 +229,13 @@ func (gw *Gateway) buildProxies() {
 			if len(jwtClaims.Scopes) > 0 {
 				req.Header.Set("X-Scopes", strings.Join(jwtClaims.Scopes, ","))
 				for _, s := range jwtClaims.Scopes {
-				sl := strings.ToLower(s)
-				if sl == "admin" || sl == "superadmin" || sl == "platform:admin" || sl == "tenant:admin" || sl == "administrator" || sl == "platform administrator" || sl == "tenant administrator" {
-					req.Header.Set("X-User-Role", s)
-					req.Header.Set("X-Is-Admin", "true")
-					break
+					sl := strings.ToLower(s)
+					if sl == "admin" || sl == "superadmin" || sl == "platform:admin" || sl == "tenant:admin" || sl == "administrator" || sl == "platform administrator" || sl == "tenant administrator" {
+						req.Header.Set("X-User-Role", s)
+						req.Header.Set("X-Is-Admin", "true")
+						break
+					}
 				}
-			}
 			}
 			if tenantID, ok := middleware.TenantIDFromRequest(req); ok {
 				req.Header.Set("X-Tenant-ID", tenantID)
@@ -654,7 +655,7 @@ func (gw *Gateway) Handler() http.Handler {
 			if strings.HasPrefix(r.URL.Path, pp) {
 				isPublic = true
 				break
-		}
+			}
 		}
 		// Health check and JWKS are always public
 		if r.URL.Path == "/healthz" || r.URL.Path == "/healthz/live" || r.URL.Path == "/healthz/ready" || r.URL.Path == "/healthz/deep" || r.URL.Path == "/.well-known/jwks.json" || r.URL.Path == "/metrics" {
@@ -664,7 +665,7 @@ func (gw *Gateway) Handler() http.Handler {
 		if isPublic {
 			// Public path: no JWT required, but still validate if token present
 			jwtMW := middleware.JWTAuth(gw.jwks, false, gw.cfg.JWTIssuer, gw.cfg.JWTAudience)
-			h := middleware.RequireAdminScope(gw) // RBAC: block non-admin from management endpoints
+			h := middleware.RequireAdminScope(gw)              // RBAC: block non-admin from management endpoints
 			h = middleware.CheckConsent(gw.cfg.DatabaseURL)(h) // Consent: block platform admin from tenant data without consent
 			// CAE: check jti blocklist AFTER JWTAuth (needs jti in context)
 			if gw.caeCheck != nil {
@@ -681,7 +682,7 @@ func (gw *Gateway) Handler() http.Handler {
 		} else {
 			// Protected path: JWT required
 			jwtMW := middleware.JWTAuth(gw.jwks, true, gw.cfg.JWTIssuer, gw.cfg.JWTAudience)
-			h := middleware.RequireAdminScope(gw) // RBAC: block non-admin from management endpoints
+			h := middleware.RequireAdminScope(gw)              // RBAC: block non-admin from management endpoints
 			h = middleware.CheckConsent(gw.cfg.DatabaseURL)(h) // Consent: block platform admin from tenant data without consent
 			// CAE: check jti blocklist AFTER JWTAuth (needs jti in context)
 			if gw.caeCheck != nil {
@@ -831,7 +832,7 @@ func (gw *Gateway) checkRouteScope(w http.ResponseWriter, r *http.Request) bool 
 		}
 	}
 
-		// Check tenant-admin paths (but allow self-service endpoints)
+	// Check tenant-admin paths (but allow self-service endpoints)
 	for _, prefix := range adminOnlyPaths {
 		if strings.HasPrefix(path, prefix) && !hasTenant {
 			// Allow whitelisted self-service paths (exact match only)
@@ -1049,10 +1050,10 @@ func (gw *Gateway) SetReloadFunc(fn ReloadFunc) {
 
 // AdminRouteInfo describes a route for the admin API, including enabled state.
 type AdminRouteInfo struct {
-	Prefix   string `json:"prefix"`
-	Backend  string `json:"backend"`
-	Enabled  bool   `json:"enabled"`
-	Timeout  string `json:"timeout,omitempty"`
+	Prefix  string `json:"prefix"`
+	Backend string `json:"backend"`
+	Enabled bool   `json:"enabled"`
+	Timeout string `json:"timeout,omitempty"`
 }
 
 // AdminStatsResponse holds per-backend statistics.
@@ -1062,11 +1063,11 @@ type AdminStatsResponse struct {
 
 // BackendStats holds statistics for a single backend.
 type BackendStats struct {
-	RequestCount   int64   `json:"request_count"`
-	ErrorCount     int64   `json:"error_count"`
-	ErrorRate      float64 `json:"error_rate"`
-	AvgLatencyMs   float64 `json:"avg_latency_ms"`
-	P99LatencyMs   float64 `json:"p99_latency_ms"`
+	RequestCount int64   `json:"request_count"`
+	ErrorCount   int64   `json:"error_count"`
+	ErrorRate    float64 `json:"error_rate"`
+	AvgLatencyMs float64 `json:"avg_latency_ms"`
+	P99LatencyMs float64 `json:"p99_latency_ms"`
 }
 
 // handleAdminRoutes returns all route configurations with enabled state.
@@ -1361,8 +1362,8 @@ func (gw *Gateway) handleRateLimitStatus(w http.ResponseWriter, r *http.Request)
 	tier, tenantID, userID, apiKey, ip, endpoint := middleware.DefaultTierResolver(r)
 	usage := gw.multiDimLimiter.GetUsage(middleware.Tier(tier), tenantID, userID, apiKey, ip, endpoint)
 	_ = json.NewEncoder(w).Encode(map[string]interface{}{
-		"tier":    tier,
-		"usage":   usage,
+		"tier":  tier,
+		"usage": usage,
 	})
 }
 
