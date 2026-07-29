@@ -1819,6 +1819,7 @@ func (s *OAuthService) RefreshToken(ctx context.Context, req *RefreshTokenReques
 
 	// 4. Hash the refresh token and look it up.
 	tokenHash := hashTokenSHA256(req.RefreshToken)
+	var fromAuthStore bool
 	record, err := s.tokenRepo.GetRefreshToken(ctx, req.TenantID, tokenHash)
 	if err != nil || record == nil {
 		// Fallback: check if this is a refresh token issued by the Auth service.
@@ -1826,6 +1827,7 @@ func (s *OAuthService) RefreshToken(ctx context.Context, req *RefreshTokenReques
 		if s.rdb != nil {
 			if authRecord, authErr := s.lookupAuthRefreshToken(ctx, req.TenantID, tokenHash, req.RefreshToken, client.ID); authErr == nil && authRecord != nil {
 				record = authRecord
+				fromAuthStore = true
 			}
 		}
 		if record == nil {
@@ -1852,7 +1854,9 @@ func (s *OAuthService) RefreshToken(ctx context.Context, req *RefreshTokenReques
 
 	// 6. Check expiry.
 	if time.Now().After(record.ExpiresAt) {
-		_ = s.tokenRepo.RevokeRefreshToken(ctx, req.TenantID, tokenHash)
+		if err := s.tokenRepo.RevokeRefreshToken(ctx, req.TenantID, tokenHash); err != nil {
+			slog.Warn("oauth: failed to revoke expired refresh token", "err", err)
+		}
 		return nil, errors.Unauthenticated("refresh token expired")
 	}
 
@@ -1867,17 +1871,33 @@ func (s *OAuthService) RefreshToken(ctx context.Context, req *RefreshTokenReques
 			record.UserID, req.TenantID).Scan(&userStatus)
 		if err != nil || userStatus != "active" {
 			// Revoke the token since the user is no longer valid.
-			_ = s.tokenRepo.RevokeRefreshToken(ctx, req.TenantID, tokenHash)
+			if rerr := s.tokenRepo.RevokeRefreshToken(ctx, req.TenantID, tokenHash); rerr != nil {
+				slog.Warn("oauth: failed to revoke refresh token of inactive user", "err", rerr)
+			}
 			return nil, errors.Unauthenticated("user account is not active")
 		}
 	}
 
-	// 7. Mark the old token as used (rotation).
-	// SECURITY: If this fails, the old token remains usable — an attacker who
-	// intercepted it could replay it without triggering reuse detection.
-	if err := s.tokenRepo.RevokeRefreshToken(ctx, req.TenantID, tokenHash); err != nil {
-		slog.Error("oauth: failed to revoke (rotate) refresh token", "err", err)
+	// 7. Atomically consume the old token (rotation). The conditional UPDATE
+	// closes the check-then-use TOCTOU race: exactly one concurrent request
+	// can consume the token; a loser means the token was already consumed —
+	// i.e. reuse — and must trigger theft response.
+	// Auth-store (Redis) tokens are not in the DB, so consume misses them;
+	// skip reuse handling for that path (its old token lifecycle is owned by
+	// the Auth service).
+	consumed, err := s.tokenRepo.ConsumeRefreshToken(ctx, req.TenantID, tokenHash)
+	if err != nil {
+		slog.Error("oauth: failed to consume (rotate) refresh token", "err", err)
 		return nil, errors.Internal("token rotation failed", err)
+	}
+	if !consumed && !fromAuthStore {
+		slog.Warn("oauth: refresh token consumed concurrently — treating as reuse",
+			"tenant", req.TenantID, "family", record.FamilyID)
+		if record.FamilyID != "" && s.tokenFamilyStore != nil {
+			_ = s.tokenFamilyStore.MarkTheft(ctx, record.FamilyID)
+		}
+		s.revokeFamily(ctx, req.TenantID, client.ID, record.FamilyID)
+		return nil, errors.Unauthenticated("refresh token reuse detected — all tokens revoked")
 	}
 
 	// 7a. Resolve the rotation family: inherit from the consumed token, or
