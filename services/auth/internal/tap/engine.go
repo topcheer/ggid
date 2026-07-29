@@ -16,7 +16,7 @@ import (
 type TAPRecord struct {
 	ID        string     `json:"id"`
 	UserID    string     `json:"user_id"`
-	CodeHash  string     `json:"-"`          // never expose hash
+	CodeHash  string     `json:"-"` // never expose hash
 	IssuedBy  string     `json:"issued_by"`
 	Reason    string     `json:"reason"`
 	ExpiresAt time.Time  `json:"expires_at"`
@@ -95,26 +95,21 @@ func (e *Engine) Verify(ctx context.Context, code string) (*TAPRecord, error) {
 	codeHash := hashCode(code)
 
 	if e.pool != nil {
+		// Atomic single-use consume: UPDATE ... WHERE used_at IS NULL
+		// RETURNING guarantees only one concurrent Verify can consume a TAP
+		// (the old SELECT FOR UPDATE + separate UPDATE had a TOCTOU window —
+		// the row lock released when the implicit statement tx ended).
+		// Uniform error message avoids a valid-code oracle.
 		var record TAPRecord
+		now := time.Now()
 		err := e.pool.QueryRow(ctx,
-			`SELECT id, user_id, code_hash, issued_by, reason, expires_at, used_at, created_at
-			FROM temporary_access_passes WHERE code_hash = $1 AND used_at IS NULL FOR UPDATE`,
-			codeHash).Scan(&record.ID, &record.UserID, &record.CodeHash, &record.IssuedBy, &record.Reason, &record.ExpiresAt, &record.UsedAt, &record.CreatedAt)
+			`UPDATE temporary_access_passes SET used_at = $2
+			WHERE code_hash = $1 AND used_at IS NULL AND expires_at > $2
+			RETURNING id, user_id, code_hash, issued_by, reason, expires_at, used_at, created_at`,
+			codeHash, now).Scan(&record.ID, &record.UserID, &record.CodeHash, &record.IssuedBy, &record.Reason, &record.ExpiresAt, &record.UsedAt, &record.CreatedAt)
 		if err != nil {
 			return nil, fmt.Errorf("invalid or expired TAP")
 		}
-
-		// Check expiry.
-		if time.Now().After(record.ExpiresAt) {
-			return nil, fmt.Errorf("TAP expired")
-		}
-
-		// Mark as used.
-		now := time.Now()
-		if _, err := e.pool.Exec(ctx, `UPDATE temporary_access_passes SET used_at = $1 WHERE id = $2`, now, record.ID); err != nil {
-			slog.Error("tap: failed to mark TAP as used", "error", err, "tap_id", record.ID)
-		}
-		record.UsedAt = &now
 
 		slog.Info("TAP used", "user_id", record.UserID, "tap_id", record.ID)
 		return &record, nil

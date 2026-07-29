@@ -4,9 +4,9 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"github.com/google/uuid"
 	"github.com/ggid/ggid/pkg/tenant"
 	"github.com/ggid/ggid/services/auth/internal/service"
+	"github.com/google/uuid"
 )
 
 // POST /api/v1/auth/otp/send — send OTP via SMS or Email.
@@ -45,6 +45,12 @@ func (h *Handler) handleOTPSend(w http.ResponseWriter, r *http.Request) {
 				tc = &tenant.Context{TenantID: parsed}
 			}
 		}
+	}
+	if tc == nil {
+		// Without a tenant context tc.TenantID below would panic — this is a
+		// pre-auth endpoint, so reject cleanly (R-cron2 P1-2).
+		writeError(w, http.StatusBadRequest, "tenant context required")
+		return
 	}
 
 	var otpSvc *service.OTPService
@@ -106,6 +112,10 @@ func (h *Handler) handleOTPVerify(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 	}
+	if tc == nil {
+		writeError(w, http.StatusBadRequest, "tenant context required")
+		return
+	}
 
 	var otpSvc *service.OTPService
 	if h.otpService != nil {
@@ -128,9 +138,9 @@ func (h *Handler) handleOTPVerify(w http.ResponseWriter, r *http.Request) {
 	}
 
 	writeJSON(w, http.StatusOK, map[string]any{
-		"status":       "authenticated",
-		"auth_ticket":  ticket,
-		"ticket_type":  "urn:ggid:auth-ticket",
-		"expires_in":   30,
+		"status":      "authenticated",
+		"auth_ticket": ticket,
+		"ticket_type": "urn:ggid:auth-ticket",
+		"expires_in":  30,
 	})
 }

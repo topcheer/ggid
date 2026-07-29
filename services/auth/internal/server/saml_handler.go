@@ -10,6 +10,7 @@ import (
 	"net/url"
 	"os"
 	"strings"
+	"time"
 
 	ggidSAML "github.com/ggid/ggid/pkg/saml"
 	"github.com/google/uuid"
@@ -144,6 +145,24 @@ func (h *Handler) handleSAMLACS(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusForbidden, "unexpected SAML InResponseTo")
 		return
 	}
+	// SECURITY (R-cron2 P1-4): one-time consumption of assertion IDs.
+	// Without this, a captured validly-signed assertion could be replayed
+	// indefinitely. SETNX is atomic across replicas; TTL covers the maximum
+	// assertion validity window plus clock skew.
+	if h.rdb != nil && assertion.ID != "" {
+		ok, serr := h.rdb.SetNX(r.Context(), "saml_assertion:"+assertion.ID, 1, 15*time.Minute).Result()
+		if serr != nil {
+			slog.Error("SAML ACS: assertion replay cache error", "error", serr)
+			writeError(w, http.StatusInternalServerError, "SAML processing error")
+			return
+		}
+		if !ok {
+			slog.Warn("SAML ACS: assertion ID replay rejected", "assertion_id", assertion.ID)
+			writeError(w, http.StatusForbidden, "SAML assertion already used")
+			return
+		}
+	}
+
 	attrs := ggidSAML.ExtractAttributes(assertion)
 	userEmail := ggidSAML.GetAttribute(assertion, "email")
 	if userEmail == "" {

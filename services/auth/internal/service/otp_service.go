@@ -25,10 +25,10 @@ const (
 // OTPService handles passwordless OTP authentication (SMS/Email).
 // OTPs are stored in Redis with a short TTL and rate-limited per identifier.
 type OTPService struct {
-	rdb          *redis.Client
-	smsSender    SMSSender
-	emailSender  EmailSender
-	credRepo     CredentialRepo // for user lookup by email/phone
+	rdb         *redis.Client
+	smsSender   SMSSender
+	emailSender EmailSender
+	credRepo    CredentialRepo // for user lookup by email/phone
 }
 
 // NewOTPService creates a new OTP service.
@@ -52,7 +52,7 @@ func (s *OTPService) SendOTP(ctx context.Context, tenantID uuid.UUID, identifier
 	}
 
 	// Rate limit: check if OTP was recently sent
-	rateKey := fmt.Sprintf("otp_rate:%s:%s", channel, identifier)
+	rateKey := fmt.Sprintf("otp_rate:%s:%s:%s", tenantID, channel, identifier)
 	if exists, _ := s.rdb.Exists(ctx, rateKey).Result(); exists > 0 {
 		return fmt.Errorf("please wait before requesting another code")
 	}
@@ -64,8 +64,10 @@ func (s *OTPService) SendOTP(ctx context.Context, tenantID uuid.UUID, identifier
 	}
 	code := fmt.Sprintf("%06d", n.Int64())
 
-	// Store OTP in Redis: key=otp:{channel}:{identifier}, TTL=5min
-	otpKey := fmt.Sprintf("otp:%s:%s", channel, identifier)
+	// Store OTP in Redis: key=otp:{tenantID}:{channel}:{identifier}, TTL=5min.
+	// The tenant dimension is mandatory — without it, a code sent for an
+	// identifier in tenant A could be redeemed in tenant B (R-cron2 P1-1).
+	otpKey := fmt.Sprintf("otp:%s:%s:%s", tenantID, channel, identifier)
 	if err := s.rdb.Set(ctx, otpKey, code, 5*time.Minute).Err(); err != nil {
 		return fmt.Errorf("store otp: %w", err)
 	}
@@ -104,7 +106,7 @@ func (s *OTPService) VerifyOTP(ctx context.Context, tenantID uuid.UUID, identifi
 		return "", fmt.Errorf("redis not configured")
 	}
 
-	otpKey := fmt.Sprintf("otp:%s:%s", channel, identifier)
+	otpKey := fmt.Sprintf("otp:%s:%s:%s", tenantID, channel, identifier)
 	storedCode, err := s.rdb.Get(ctx, otpKey).Result()
 	if err != nil {
 		return "", fmt.Errorf("invalid or expired code")
@@ -112,7 +114,7 @@ func (s *OTPService) VerifyOTP(ctx context.Context, tenantID uuid.UUID, identifi
 
 	// SECURITY: brute-force protection — track failed attempts per identifier.
 	// After 5 failures, delete the OTP and force re-request.
-	attemptKey := fmt.Sprintf("otp_attempts:%s:%s", channel, identifier)
+	attemptKey := fmt.Sprintf("otp_attempts:%s:%s:%s", tenantID, channel, identifier)
 	if storedCode != code {
 		attempts, _ := s.rdb.Incr(ctx, attemptKey).Result()
 		if attempts == 1 {
