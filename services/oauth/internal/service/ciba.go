@@ -186,6 +186,12 @@ func (s *OAuthService) PollCIBAToken(ctx context.Context, tenantID uuid.UUID, au
 	if clientID != entry.ClientID.String() && clientID != entry.ClientIDSrc {
 		return nil, &CIBAError{Err: "invalid_grant", Desc: "auth_req_id was not issued to this client"}
 	}
+	// P1-3: Verify client credentials for confidential clients (RFC 9126 §7)
+	if clientSecret != "" {
+		if err := s.AuthenticateClient(ctx, clientID, clientSecret); err != nil {
+			return nil, &CIBAError{Err: "invalid_client", Desc: "client authentication failed"}
+		}
+	}
 	if tenantID != entry.TenantID {
 		return nil, &CIBAError{Err: "invalid_grant", Desc: "tenant mismatch"}
 	}

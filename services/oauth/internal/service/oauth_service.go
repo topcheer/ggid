@@ -3342,13 +3342,15 @@ func (s *OAuthService) JWTBearerGrant(ctx context.Context, req *JWTBearerRequest
 
 	// Step 2: Try verifying with AS key first (for GGID-issued delegation assertions).
 	// If that fails and iss is external, try fetching the external issuer's JWKS key.
+	// P1-4 (RFC 7523 §3): Validate audience claim to prevent cross-audience replay.
+	asAudience := s.issuer
 	asPubKey := s.keyProvider.Public()
 	token, err := jwt.Parse(req.Assertion, func(t *jwt.Token) (any, error) {
 		if _, ok := t.Method.(*jwt.SigningMethodRSA); !ok {
 			return nil, fmt.Errorf("unexpected signing method: %v", t.Header["alg"])
 		}
 		return asPubKey, nil
-	})
+	}, jwt.WithAudience(asAudience))
 	if err != nil {
 		// AS key didn't work. Try external issuer key if client_id provided.
 		if req.ClientID != "" {
