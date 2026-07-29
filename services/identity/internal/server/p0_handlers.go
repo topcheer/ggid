@@ -186,6 +186,9 @@ func (h *HTTPHandler) handleGDPRDeleteAccount(w http.ResponseWriter, r *http.Req
 	for _, d := range deletions {
 		if _, err := tx.Exec(r.Context(), d.sql, userID); err != nil {
 			slog.Error("GDPR delete: failed to clean up table", "table", d.name, "error", err)
+			tx.Rollback(r.Context())
+			writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "failed to delete user data from " + d.name})
+			return
 		}
 	}
 
