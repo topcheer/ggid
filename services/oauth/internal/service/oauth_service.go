@@ -151,6 +151,7 @@ type CreateClientInput struct {
 	GrantTypes              []string
 	ResponseTypes           []string
 	RedirectURIs            []string
+	PostLogoutRedirectURIs  []string
 	Scopes                  []string
 	TokenEndpointAuthMethod string
 	Metadata                map[string]any
@@ -1110,20 +1111,22 @@ type RFC8693ExchangeRequest struct {
 // with optional `act` claim for delegation chains.
 func (s *OAuthService) ExchangeTokenRFC8693(ctx context.Context, req *RFC8693ExchangeRequest) (*TokenResponse, error) {
 	// 0. SECURITY: Authenticate the requesting client (same as other grants).
-	if req.ClientID != "" {
-		client, err := s.clientRepo.GetClientByID(ctx, req.TenantID, req.ClientID)
-		if err != nil {
-			return nil, errors.Unauthenticated("client authentication failed")
+	// Client authentication is mandatory for token exchange per RFC 8693 §2.4.
+	if req.ClientID == "" {
+		return nil, errors.Unauthenticated("client_id is required for token exchange")
+	}
+	client, err := s.clientRepo.GetClientByID(ctx, req.TenantID, req.ClientID)
+	if err != nil {
+		return nil, errors.Unauthenticated("client authentication failed")
+	}
+	if client.IsConfidential() && client.TokenEndpointAuthMethod != "none" {
+		ok, _ := pkgcrypto.VerifyPassword(req.ClientSecret, client.ClientSecretHash)
+		if !ok {
+			return nil, errors.Unauthenticated("invalid client credentials")
 		}
-		if client.IsConfidential() && client.TokenEndpointAuthMethod != "none" {
-			ok, _ := pkgcrypto.VerifyPassword(req.ClientSecret, client.ClientSecretHash)
-			if !ok {
-				return nil, errors.Unauthenticated("invalid client credentials")
-			}
-		}
-		if !client.Enabled {
-			return nil, errors.InvalidArgument("client is disabled")
-		}
+	}
+	if !client.Enabled {
+		return nil, errors.InvalidArgument("client is disabled")
 	}
 
 	// 0a. Validate subject_token_type (RFC 8693 §2.1).

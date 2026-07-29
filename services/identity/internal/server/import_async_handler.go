@@ -142,6 +142,11 @@ func (h *HTTPHandler) handleImportAsyncStatus(w http.ResponseWriter, r *http.Req
 		writeJSONError(w, http.StatusNotFound, "job not found")
 		return
 	}
+	// SECURITY: verify job belongs to caller's tenant
+	if tc, e := ggidtenant.FromContext(r.Context()); e == nil && tc.TenantID != uuid.Nil && job.TenantID != tc.TenantID {
+		writeJSONError(w, http.StatusNotFound, "job not found")
+		return
+	}
 
 	writeJSON(w, http.StatusOK, job)
 }

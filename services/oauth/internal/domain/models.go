@@ -35,6 +35,7 @@ type OAuthClient struct {
 	GrantTypes              []string       `json:"grant_types"`
 	ResponseTypes           []string       `json:"response_types"`
 	RedirectURIs            []string       `json:"redirect_uris"`
+	PostLogoutRedirectURIs  []string       `json:"post_logout_redirect_uris,omitempty"`
 	Scopes                  []string       `json:"scopes"`
 	TokenEndpointAuthMethod string         `json:"token_endpoint_auth_method"`
 	Metadata                map[string]any `json:"metadata,omitempty"`

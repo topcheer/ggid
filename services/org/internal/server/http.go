@@ -744,10 +744,31 @@ func (s *HTTPServer) handleTeamByID(w http.ResponseWriter, r *http.Request) {
 			writeServiceError(w, err)
 			return
 		}
+		// SECURITY: verify team's parent org belongs to caller's tenant
+		if tid := s.getTenantID(r); tid != uuid.Nil {
+			parentOrg, err := s.orgSvc.Get(r.Context(), team.OrgID)
+			if err != nil || parentOrg.TenantID != tid {
+				writeJSONError(w, http.StatusNotFound, "team not found")
+				return
+			}
+		}
 		writeJSON(w, http.StatusOK, teamToJSON(team))
 	case http.MethodPut:
 		s.updateTeam(w, r, id)
 	case http.MethodDelete:
+		// SECURITY: verify team's parent org belongs to caller's tenant
+		team, err := s.teamSvc.Get(r.Context(), id)
+		if err != nil {
+			writeServiceError(w, err)
+			return
+		}
+		if tid := s.getTenantID(r); tid != uuid.Nil {
+			parentOrg, err := s.orgSvc.Get(r.Context(), team.OrgID)
+			if err != nil || parentOrg.TenantID != tid {
+				writeJSONError(w, http.StatusNotFound, "team not found")
+				return
+			}
+		}
 		if err := s.teamSvc.Delete(r.Context(), id); err != nil {
 			writeServiceError(w, err)
 			return

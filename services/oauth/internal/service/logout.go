@@ -77,8 +77,10 @@ func (s *OAuthService) RPInitiatedLogout(req *RPInitiatedLogoutRequest) (*RPInit
 		if cerr != nil || client == nil {
 			return nil, errors.InvalidArgument("client not found — cannot validate post_logout_redirect_uri")
 		}
+		// Check registered redirect URIs for post_logout_redirect_uri validation.
+		registeredURIs := client.RedirectURIs
 		matched := false
-		for _, registered := range client.RedirectURIs {
+		for _, registered := range registeredURIs {
 			if registered == req.PostLogoutRedirectURI {
 				matched = true
 				break
