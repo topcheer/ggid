@@ -171,7 +171,7 @@ func (m *testPermRepo) ListByTenant(_ context.Context, tid uuid.UUID, limit, off
 // testUserRoleRepo implements service.UserRoleRepo.
 type testUserRoleRepo struct{}
 
-func (m *testUserRoleRepo) Assign(_ context.Context, _ *domain.UserRole) error      { return nil }
+func (m *testUserRoleRepo) Assign(_ context.Context, _ *domain.UserRole) error { return nil }
 func (m *testUserRoleRepo) Revoke(_ context.Context, _, _ uuid.UUID, _ domain.ScopeType, _ uuid.UUID) error {
 	return nil
 }
@@ -232,7 +232,9 @@ func (m *testPolicyRepo) Delete(_ context.Context, id uuid.UUID) error {
 	return nil
 }
 
-func (m *testPolicyRepo) AttachPolicy(_ context.Context, _ *domain.PolicyAttachment) error { return nil }
+func (m *testPolicyRepo) AttachPolicy(_ context.Context, _ *domain.PolicyAttachment) error {
+	return nil
+}
 func (m *testPolicyRepo) DetachPolicy(_ context.Context, _ uuid.UUID, _ domain.PrincipalType, _ uuid.UUID) error {
 	return nil
 }
@@ -1454,5 +1456,5 @@ func TestHandleRoleByID_UnknownSubPath(t *testing.T) {
 	h := newTestHarness()
 	role, _ := h.roleSvc.CreateRole(context.Background(), h.tenantID, "x", "X", "", nil)
 	w := doReq("PUT", "/api/v1/roles/"+role.ID.String()+"/unknown", "")
-	assertStatus(t, w, http.StatusMethodNotAllowed)
+	assertStatus(t, w, http.StatusNotFound)
 }
