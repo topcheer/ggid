@@ -34,6 +34,10 @@ type RehashCallback func(ctx context.Context, userID uuid.UUID, plainPassword, o
 
 // LocalProvider authenticates users whose credentials are stored in the local database.
 // Passwords are hashed with Argon2id via pkg/crypto.
+// dummyArgon2Hash is a pre-computed Argon2id hash used for timing-safe
+// user enumeration prevention when the username doesn't exist.
+var dummyArgon2Hash = "$argon2id$v=19$m=65536,t=3,p=4$AAAAAAAAAAAAAAAAAAAAAA$AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+
 type LocalProvider struct {
 	store     LocalCredentialStore
 	rehashCb  RehashCallback
@@ -70,13 +74,16 @@ func (p *LocalProvider) Authenticate(ctx context.Context, creds Credentials) (*A
 
 	lc, err := p.store.GetCredentialByUsername(ctx, tenantID, creds.Username)
 	if err != nil {
-		// Intentionally do not reveal whether the user exists.
+		// SECURITY: Execute dummy hash verification to prevent timing-based
+		// user enumeration (non-existent user takes ~same time as wrong password).
+		_, _ = crypto.VerifyPassword(creds.Password, dummyArgon2Hash)
 		return nil, errors.Unauthenticated("invalid credentials")
 	}
 
 	if lc.Status != "active" {
-		return nil, errors.New(errors.ErrFailedPrecondition,
-			fmt.Sprintf("user account is %s", lc.Status))
+		// SECURITY: Don't reveal account status — return same error as wrong password.
+		_, _ = crypto.VerifyPassword(creds.Password, lc.PasswordHash)
+		return nil, errors.Unauthenticated("invalid credentials")
 	}
 
 	// Verify password. crypto.VerifyPassword handles Argon2id (native) and

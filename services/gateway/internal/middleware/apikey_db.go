@@ -2,6 +2,8 @@ package middleware
 
 import (
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
 	"fmt"
 	"net/http"
 	"strings"
@@ -64,8 +66,10 @@ func (v *DBAPIKeyValidator) Validate(ctx context.Context, key string) (string, s
 		return "", "", nil, fmt.Errorf("invalid api key format")
 	}
 
-	// Check cache first
-	if cached, ok := v.cache.Load(keyID); ok {
+	// Check cache first — cache stores SHA-256 of the FULL key, not just keyID.
+	// SECURITY: This prevents bypass where only UUID was cached and secret wasn't verified.
+	keyHash := sha256Hex(key)
+	if cached, ok := v.cache.Load(keyHash); ok {
 		ck := cached.(*cachedKey)
 		if time.Since(ck.cachedAt) < v.ttl {
 			if ck.status != "active" {
@@ -76,7 +80,7 @@ func (v *DBAPIKeyValidator) Validate(ctx context.Context, key string) (string, s
 	}
 
 	// Query DB for the stored hash + metadata
-	var tenantID, keyHash, status string
+	var tenantID, storedHash, status string
 	var scopes []string
 	var expiresAt time.Time
 
@@ -85,11 +89,11 @@ func (v *DBAPIKeyValidator) Validate(ctx context.Context, key string) (string, s
 		FROM api_keys
 		WHERE id = $1`,
 		keyID,
-	).Scan(&tenantID, &keyHash, &scopes, &status, &expiresAt)
+	).Scan(&tenantID, &storedHash, &scopes, &status, &expiresAt)
 
 	if err == pgx.ErrNoRows {
 		// P2-5: Cache negative result to prevent repeated Argon2id DoS
-		v.cache.Store(keyID, &cachedKey{status: "not_found", cachedAt: time.Now()})
+		v.cache.Store(keyHash, &cachedKey{status: "not_found", cachedAt: time.Now()})
 		return "", "", nil, fmt.Errorf("invalid api key")
 	}
 	if err != nil {
@@ -104,13 +108,13 @@ func (v *DBAPIKeyValidator) Validate(ctx context.Context, key string) (string, s
 	}
 
 	// Verify the full secret against the stored Argon2id hash.
-	match, err := ggidcrypto.VerifyPassword(key, keyHash)
+	match, err := ggidcrypto.VerifyPassword(key, storedHash)
 	if err != nil || !match {
 		return "", "", nil, fmt.Errorf("invalid api key")
 	}
 
 	// Cache the result (key verified)
-	v.cache.Store(keyID, &cachedKey{
+	v.cache.Store(keyHash, &cachedKey{
 		tenantID: tenantID,
 		scopes:   scopes,
 		status:   status,
@@ -259,4 +263,9 @@ func (w *statusCaptureWriter) Flush() {
 	if f, ok := w.ResponseWriter.(http.Flusher); ok {
 		f.Flush()
 	}
+}
+
+func sha256Hex(s string) string {
+	h := sha256.Sum256([]byte(s))
+	return hex.EncodeToString(h[:])
 }

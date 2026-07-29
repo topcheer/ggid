@@ -173,8 +173,8 @@ func TestLocalProvider_Authenticate_LockedUser(t *testing.T) {
 	if !ok {
 		t.Fatalf("expected GGIDError, got %T: %v", err, err)
 	}
-	if ge.Code != gerr.ErrFailedPrecondition {
-		t.Errorf("expected ErrFailedPrecondition, got %s", ge.Code)
+	if ge.Code != gerr.ErrUnauthenticated {
+		t.Errorf("expected ErrUnauthenticated (security: don't reveal account status), got %s", ge.Code)
 	}
 }
 
