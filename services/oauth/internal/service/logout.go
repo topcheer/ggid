@@ -73,17 +73,19 @@ func (s *OAuthService) RPInitiatedLogout(req *RPInitiatedLogoutRequest) (*RPInit
 		if clientID == "" {
 			return nil, errors.InvalidArgument("client_id or id_token_hint required for post_logout_redirect")
 		}
-		if client, cerr := s.GetClient(context.Background(), clientID); cerr == nil && client != nil {
-			matched := false
-			for _, registered := range client.RedirectURIs {
-				if registered == req.PostLogoutRedirectURI {
-					matched = true
-					break
-				}
+		client, cerr := s.GetClient(context.Background(), clientID)
+		if cerr != nil || client == nil {
+			return nil, errors.InvalidArgument("client not found — cannot validate post_logout_redirect_uri")
+		}
+		matched := false
+		for _, registered := range client.RedirectURIs {
+			if registered == req.PostLogoutRedirectURI {
+				matched = true
+				break
 			}
-			if !matched {
-				return nil, errors.InvalidArgument("post_logout_redirect_uri not registered for this client")
-			}
+		}
+		if !matched {
+			return nil, errors.InvalidArgument("post_logout_redirect_uri not registered for this client")
 		}
 
 		if req.State != "" {

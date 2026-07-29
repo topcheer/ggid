@@ -26,16 +26,35 @@ type AuditRepo interface {
 	DeleteOlderThan(ctx context.Context, before time.Time) (int64, error)
 }
 
+// hashChainShardCount is the number of lock shards for the per-tenant hash
+// chain state. A single global lock serialized event ingestion across ALL
+// tenants; sharding by tenant restores cross-tenant parallelism (P1-4).
+const hashChainShardCount = 64
+
+type hashChainShard struct {
+	mu       sync.Mutex
+	prevHash map[uuid.UUID]string // per-tenant last hash for chain
+}
+
 // AuditService handles audit event queries.
 type AuditService struct {
 	repo          AuditRepo
-	mu            sync.RWMutex
-	prevHash      map[uuid.UUID]string // per-tenant last hash for chain
-	webhookEngine *webhook.Engine      // optional webhook delivery engine
+	shards        [hashChainShardCount]hashChainShard
+	webhookEngine *webhook.Engine // optional webhook delivery engine
 }
 
 func NewAuditService(repo AuditRepo) *AuditService {
-	return &AuditService{repo: repo, prevHash: make(map[uuid.UUID]string)}
+	s := &AuditService{repo: repo}
+	for i := range s.shards {
+		s.shards[i].prevHash = make(map[uuid.UUID]string)
+	}
+	return s
+}
+
+// shardFor returns the lock shard owning the given tenant's chain state.
+// UUIDs are random, so the first byte distributes tenants evenly.
+func (s *AuditService) shardFor(tenantID uuid.UUID) *hashChainShard {
+	return &s.shards[int(tenantID[0])&(hashChainShardCount-1)]
 }
 
 // SetWebhookEngine injects the webhook delivery engine. When set, audit
@@ -148,12 +167,14 @@ func (s *AuditService) computeHashChain(event *domain.AuditEvent) {
 	}
 	// Set PrevHash from the in-memory chain state for this tenant.
 	// First event for a tenant gets empty PrevHash (genesis).
-	s.mu.Lock()
-	event.PrevHash = s.prevHash[event.TenantID]
+	// Only this tenant's shard is locked — other tenants ingest in parallel.
+	sh := s.shardFor(event.TenantID)
+	sh.mu.Lock()
+	event.PrevHash = sh.prevHash[event.TenantID]
 	event.Hash = event.ComputeHash(event.PrevHash)
 	// Update chain state for the next event.
-	s.prevHash[event.TenantID] = event.Hash
-	s.mu.Unlock()
+	sh.prevHash[event.TenantID] = event.Hash
+	sh.mu.Unlock()
 }
 
 // canonicalEventData produces a deterministic byte representation of an event
