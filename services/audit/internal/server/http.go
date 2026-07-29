@@ -24,31 +24,31 @@ import (
 	"github.com/ggid/ggid/services/audit/internal/domain"
 	"github.com/ggid/ggid/services/audit/internal/repository"
 	"github.com/ggid/ggid/services/audit/internal/service"
-	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 // retentionConfig holds audit log retention settings.
 type retentionConfig struct {
-	mu         sync.RWMutex
-	days       int
-	lastRun    time.Time
+	mu          sync.RWMutex
+	days        int
+	lastRun     time.Time
 	lastDeleted int64
-	enabled    bool
+	enabled     bool
 }
 
 // HTTPServer exposes the Audit Service as a REST API.
 type HTTPServer struct {
-	svc            *service.AuditService
-	retention      retentionConfig
-	hub            *StreamHub
-	itdrRepo       *repository.ITDRRepository
-	compositeRepo  *compositeRuleRepo
-	memMapRepo2    *auditMemoryMapRepo2
-	threatIntelRepo *repository.ThreatIntelRepository
-	ccmEngine       *CCMEngine
+	svc                   *service.AuditService
+	retention             retentionConfig
+	hub                   *StreamHub
+	itdrRepo              *repository.ITDRRepository
+	compositeRepo         *compositeRuleRepo
+	memMapRepo2           *auditMemoryMapRepo2
+	threatIntelRepo       *repository.ThreatIntelRepository
+	ccmEngine             *CCMEngine
 	complianceMappingRepo *repository.ComplianceMappingRepository
-	pool            *pgxpool.Pool
+	pool                  *pgxpool.Pool
 }
 
 func (s *HTTPServer) SetPool(pool *pgxpool.Pool) { s.pool = pool }
@@ -172,8 +172,8 @@ func (s *HTTPServer) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("/api/v1/audit/compliance-report", s.handleComplianceReportV2)
 	mux.HandleFunc("/api/v1/audit/risk-score", s.handleRiskScore)
 	mux.HandleFunc("/api/v1/audit/access-reviews", s.handleAccessReviews)
-	mux.HandleFunc("/api/v1/audit/access-reviews/pending", s.handlePendingReviews)           // legacy compat
-	mux.HandleFunc("/api/v1/audit/access-reviews/", s.handleAccessReviewDecision)            // matches /{id}/decision
+	mux.HandleFunc("/api/v1/audit/access-reviews/pending", s.handlePendingReviews) // legacy compat
+	mux.HandleFunc("/api/v1/audit/access-reviews/", s.handleAccessReviewDecision)  // matches /{id}/decision
 	mux.HandleFunc("/api/v1/audit/compliance/schedules", s.handleComplianceSchedules)
 	mux.HandleFunc("/api/v1/audit/alert-webhooks", s.handleAlertWebhooks)
 	mux.HandleFunc("/api/v1/audit/siem/health", s.handleSIEMHealth)
@@ -516,11 +516,11 @@ func statsToJSON(s *domain.Stats) map[string]any {
 		}
 	}
 	return map[string]any{
-		"total_events_24h":     s.TotalEvents24h,
-		"events_by_action":     actions,
-		"hourly_distribution":  hourly,
-		"top_actors":           actors,
-		"failed_logins_24h":    s.FailedLogins24h,
+		"total_events_24h":    s.TotalEvents24h,
+		"events_by_action":    actions,
+		"hourly_distribution": hourly,
+		"top_actors":          actors,
+		"failed_logins_24h":   s.FailedLogins24h,
 	}
 }
 
@@ -916,14 +916,14 @@ func (s *HTTPServer) handleAuditWebhooks(w http.ResponseWriter, r *http.Request)
 						continue
 					}
 					result = append(result, map[string]any{
-						"id":         id,
-						"url":        url,
-						"events":     events,
+						"id":          id,
+						"url":         url,
+						"events":      events,
 						"event_types": events,
-						"secret":     secret,
-						"active":     enabled,
-						"enabled":    enabled,
-						"created_at": createdAt,
+						"secret":      maskSecret(secret),
+						"active":      enabled,
+						"enabled":     enabled,
+						"created_at":  createdAt,
 					})
 				}
 				writeJSON(w, http.StatusOK, map[string]any{"webhooks": result, "count": len(result)})
@@ -987,16 +987,16 @@ func (s *HTTPServer) handleAuditWebhooks(w http.ResponseWriter, r *http.Request)
 				req.TenantID, req.URL, events, req.Secret, isActive).Scan(&dbID)
 			if err == nil {
 				cfg := map[string]any{
-					"id":                dbID,
-					"tenant_id":         req.TenantID,
-					"url":               req.URL,
-					"events":            events,
-					"event_types":       events,
-					"secret":            req.Secret,
-					"active":            isActive,
-					"enabled":           isActive,
+					"id":                 dbID,
+					"tenant_id":          req.TenantID,
+					"url":                req.URL,
+					"events":             events,
+					"event_types":        events,
+					"secret":             maskSecret(req.Secret),
+					"active":             isActive,
+					"enabled":            isActive,
 					"severity_threshold": req.SeverityThreshold,
-					"created_at":        time.Now().UTC().Format(time.RFC3339),
+					"created_at":         time.Now().UTC().Format(time.RFC3339),
 				}
 				writeJSON(w, http.StatusCreated, cfg)
 				return
@@ -1004,16 +1004,16 @@ func (s *HTTPServer) handleAuditWebhooks(w http.ResponseWriter, r *http.Request)
 		}
 		// Memory fallback
 		cfg := map[string]any{
-			"id":                uuid.New().String(),
-			"tenant_id":         req.TenantID,
-			"url":               req.URL,
-			"events":            events,
-			"event_types":       events,
-			"secret":            req.Secret,
-			"active":            isActive,
-			"enabled":           isActive,
+			"id":                 uuid.New().String(),
+			"tenant_id":          req.TenantID,
+			"url":                req.URL,
+			"events":             events,
+			"event_types":        events,
+			"secret":             maskSecret(req.Secret),
+			"active":             isActive,
+			"enabled":            isActive,
 			"severity_threshold": req.SeverityThreshold,
-			"created_at":        time.Now().UTC().Format(time.RFC3339),
+			"created_at":         time.Now().UTC().Format(time.RFC3339),
 		}
 		auditWebhooks.Lock()
 		auditWebhooks.configs = append(auditWebhooks.configs, cfg)
@@ -1119,7 +1119,9 @@ func (s *HTTPServer) handleSearch(w http.ResponseWriter, r *http.Request) {
 						break
 					}
 				}
-				if matched { break }
+				if matched {
+					break
+				}
 			}
 		} else {
 			// AND: all terms must match at least one field
@@ -1132,7 +1134,10 @@ func (s *HTTPServer) handleSearch(w http.ResponseWriter, r *http.Request) {
 						break
 					}
 				}
-				if !termFound { matched = false; break }
+				if !termFound {
+					matched = false
+					break
+				}
 			}
 		}
 
@@ -1200,12 +1205,12 @@ func (s *HTTPServer) handleVerifyIntegrity(w http.ResponseWriter, r *http.Reques
 	}
 
 	writeJSON(w, http.StatusOK, map[string]any{
-		"status":          result,
-		"total_events":    total,
-		"verified":        verified,
-		"tampered":        tampered,
-		"chain_complete":  verified + tampered == total,
-		"checked_at":      time.Now().UTC().Format(time.RFC3339),
+		"status":         result,
+		"total_events":   total,
+		"verified":       verified,
+		"tampered":       tampered,
+		"chain_complete": verified+tampered == total,
+		"checked_at":     time.Now().UTC().Format(time.RFC3339),
 	})
 }
 
@@ -1249,7 +1254,7 @@ func (s *HTTPServer) handleRetention(w http.ResponseWriter, r *http.Request) {
 
 	case http.MethodPut:
 		var req struct {
-			RetentionDays int  `json:"retention_days"`
+			RetentionDays int   `json:"retention_days"`
 			Enabled       *bool `json:"enabled"`
 		}
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -1436,15 +1441,15 @@ func (s *HTTPServer) detectAnomalies(r *http.Request) []map[string]any {
 
 		if len(events) >= threshold {
 			alerts = append(alerts, map[string]any{
-				"rule_id":    rule["id"],
-				"rule_name":  rule["name"],
-				"severity":   rule["severity"],
-				"count":      len(events),
-				"threshold":  threshold,
+				"rule_id":     rule["id"],
+				"rule_name":   rule["name"],
+				"severity":    rule["severity"],
+				"count":       len(events),
+				"threshold":   threshold,
 				"window_mins": windowMins,
-				"action":     action,
-				"triggered":  time.Now().UTC().Format(time.RFC3339),
-				"message":    fmt.Sprintf("%d '%s' failures in %d minutes (threshold: %d)", len(events), action, windowMins, threshold),
+				"action":      action,
+				"triggered":   time.Now().UTC().Format(time.RFC3339),
+				"message":     fmt.Sprintf("%d '%s' failures in %d minutes (threshold: %d)", len(events), action, windowMins, threshold),
 			})
 		}
 	}
@@ -1616,8 +1621,8 @@ func (s *HTTPServer) handleAlertTest(w http.ResponseWriter, r *http.Request) {
 	}
 	s.dispatchAlert(testAlert)
 	writeJSON(w, http.StatusOK, map[string]any{
-		"status":  "test_alert_dispatched",
-		"alert":   testAlert,
+		"status": "test_alert_dispatched",
+		"alert":  testAlert,
 	})
 }
 
@@ -1632,7 +1637,7 @@ func (s *HTTPServer) handleComplianceReport(w http.ResponseWriter, r *http.Reque
 
 	var req struct {
 		TenantID  string `json:"tenant_id"`
-		Format    string `json:"format"`    // "soc2" or "gdpr"
+		Format    string `json:"format"` // "soc2" or "gdpr"
 		StartTime string `json:"start_time"`
 		EndTime   string `json:"end_time"`
 	}
@@ -1818,13 +1823,13 @@ func (s *HTTPServer) generateComplianceReport(format string, tenantID uuid.UUID,
 	}
 
 	base := map[string]any{
-		"report_id":     uuid.New().String(),
-		"tenant_id":     tenantID.String(),
-		"format":        format,
-		"period_start":  start.Format(time.RFC3339),
-		"period_end":    end.Format(time.RFC3339),
-		"generated_at":  time.Now().UTC().Format(time.RFC3339),
-		"total_events":  len(events),
+		"report_id":    uuid.New().String(),
+		"tenant_id":    tenantID.String(),
+		"format":       format,
+		"period_start": start.Format(time.RFC3339),
+		"period_end":   end.Format(time.RFC3339),
+		"generated_at": time.Now().UTC().Format(time.RFC3339),
+		"total_events": len(events),
 		"summary": map[string]any{
 			"total_auth_events":   totalAuth,
 			"failed_auth_events":  failedAuth,
@@ -1841,24 +1846,24 @@ func (s *HTTPServer) generateComplianceReport(format string, tenantID uuid.UUID,
 	if format == "soc2" {
 		base["compliance_controls"] = map[string]any{
 			"CC6_1_logical_access": map[string]any{
-				"status":       "pass",
-				"description":  "Logical and physical access controls implemented",
-				"evidence":     fmt.Sprintf("%d authentication events, %d failed attempts blocked", totalAuth, failedAuth),
+				"status":      "pass",
+				"description": "Logical and physical access controls implemented",
+				"evidence":    fmt.Sprintf("%d authentication events, %d failed attempts blocked", totalAuth, failedAuth),
 			},
 			"CC6_6_intrusion_detection": map[string]any{
-				"status":       "pass",
-				"description":  "Anomaly detection and brute-force protection active",
-				"evidence":     fmt.Sprintf("%d unique IPs monitored, %d MFA challenges", len(uniqueIPs), mfaChallenges),
+				"status":      "pass",
+				"description": "Anomaly detection and brute-force protection active",
+				"evidence":    fmt.Sprintf("%d unique IPs monitored, %d MFA challenges", len(uniqueIPs), mfaChallenges),
 			},
 			"CC7_1_system_monitoring": map[string]any{
-				"status":       "pass",
-				"description":  "System monitoring and alerting configured",
-				"evidence":     fmt.Sprintf("%d total audit events captured in period", len(events)),
+				"status":      "pass",
+				"description": "System monitoring and alerting configured",
+				"evidence":    fmt.Sprintf("%d total audit events captured in period", len(events)),
 			},
 			"CC7_2_anomaly_detection": map[string]any{
-				"status":       "pass",
-				"description":  "Anomaly detection rules evaluated against audit trail",
-				"evidence":     fmt.Sprintf("%d admin actions tracked, %d data access events", adminActions, dataAccess),
+				"status":      "pass",
+				"description": "Anomaly detection rules evaluated against audit trail",
+				"evidence":    fmt.Sprintf("%d admin actions tracked, %d data access events", adminActions, dataAccess),
 			},
 		}
 	} else if format == "gdpr" {
@@ -2037,4 +2042,11 @@ func isAllowedOrigin(origin string) bool {
 		return false
 	}
 	return allowedSSEOrigins[origin]
+}
+
+func maskSecret(s string) string {
+	if len(s) <= 4 {
+		return "****"
+	}
+	return s[:2] + "****"
 }

@@ -65,34 +65,34 @@ func (h *HTTPHandler) handleTenantOrBranding(w http.ResponseWriter, r *http.Requ
 
 // HTTPHandler is the HTTP handler for the Identity Service REST API.
 type HTTPHandler struct {
-	svc              *service.IdentityService
-	mux              *http.ServeMux
-	brandingStore    *service.BrandingStore
-	accessRequestSvc *service.AccessRequestService
-	idpConfigSvc     *idpconfig.Service
-	auditPublisher   *audit.Publisher
-	scimRepo         *scimTokenRepo
-	rebacRepo        *relationTupleRepo
-	rebacCache       *rebacCache
-	lifecycleRepo    *lifecycleRepo
-	lifecycleEngine  *JMLEngine
-	dataGovRepo      *dataGovRepo
-	abRepo           *accessBrokerRepo
-	journeyRepo      *journeyRepo
-	fedRepo          *federationRepo
-	jitRepo          *jitRepo
+	svc               *service.IdentityService
+	mux               *http.ServeMux
+	brandingStore     *service.BrandingStore
+	accessRequestSvc  *service.AccessRequestService
+	idpConfigSvc      *idpconfig.Service
+	auditPublisher    *audit.Publisher
+	scimRepo          *scimTokenRepo
+	rebacRepo         *relationTupleRepo
+	rebacCache        *rebacCache
+	lifecycleRepo     *lifecycleRepo
+	lifecycleEngine   *JMLEngine
+	dataGovRepo       *dataGovRepo
+	abRepo            *accessBrokerRepo
+	journeyRepo       *journeyRepo
+	fedRepo           *federationRepo
+	jitRepo           *jitRepo
 	rateLimitRepo     *rateLimitRepo
 	dlpPolicyRepo     *dlpRepo
 	secretBrokerRepo  *secretBrokerRepo
-consentRepo       *consentRepo
-hrConnectorRepo   *hrConnectorRepo
-dormantRepo       *dormantRepo
-rlsRepo           *rlsRepo
-quotaRepo         *quotaRepo
-secretRepo        *secretRepo
-backupRepo        *backupRepo
-notificationRepo  *notificationRepo
-identityPolicyMap *identityPolicyMapRepo
+	consentRepo       *consentRepo
+	hrConnectorRepo   *hrConnectorRepo
+	dormantRepo       *dormantRepo
+	rlsRepo           *rlsRepo
+	quotaRepo         *quotaRepo
+	secretRepo        *secretRepo
+	backupRepo        *backupRepo
+	notificationRepo  *notificationRepo
+	identityPolicyMap *identityPolicyMapRepo
 	devicePostureRepo *devicePostureRepo
 	importJobRepo     *importJobRepo
 	pcRepo            *privilegeCreepRepo
@@ -928,7 +928,8 @@ func (h *HTTPHandler) deleteUser(ctx context.Context, userID uuid.UUID, w http.R
 	globalTTLCache.Invalidate("users:default:")
 
 	if tc, e := ggidtenant.FromContext(ctx); e == nil {
-		actorID, _ := uuid.Parse(r.Header.Get("X-User-ID")); h.publishAuditEvent("user.delete", "success", "user", userID, tc.TenantID, actorID)
+		actorID, _ := uuid.Parse(r.Header.Get("X-User-ID"))
+		h.publishAuditEvent("user.delete", "success", "user", userID, tc.TenantID, actorID)
 	}
 }
 
@@ -987,7 +988,8 @@ func (h *HTTPHandler) updateUser(ctx context.Context, userID uuid.UUID, w http.R
 		return
 	}
 	if tc, e := ggidtenant.FromContext(ctx); e == nil {
-		actorID, _ := uuid.Parse(r.Header.Get("X-User-ID")); h.publishAuditEvent("user.update", "success", "user", userID, tc.TenantID, actorID)
+		actorID, _ := uuid.Parse(r.Header.Get("X-User-ID"))
+		h.publishAuditEvent("user.update", "success", "user", userID, tc.TenantID, actorID)
 	}
 	writeJSON(w, http.StatusOK, userToJSON(user))
 }
@@ -1001,7 +1003,8 @@ func (h *HTTPHandler) lockUser(ctx context.Context, userID uuid.UUID, w http.Res
 	writeJSON(w, http.StatusOK, userToJSON(user))
 
 	if tc, e := ggidtenant.FromContext(ctx); e == nil {
-		actorID, _ := uuid.Parse(r.Header.Get("X-User-ID")); h.publishAuditEvent("user.lock", "success", "user", userID, tc.TenantID, actorID)
+		actorID, _ := uuid.Parse(r.Header.Get("X-User-ID"))
+		h.publishAuditEvent("user.lock", "success", "user", userID, tc.TenantID, actorID)
 	}
 }
 
@@ -1014,7 +1017,8 @@ func (h *HTTPHandler) unlockUser(ctx context.Context, userID uuid.UUID, w http.R
 	writeJSON(w, http.StatusOK, userToJSON(user))
 
 	if tc, e := ggidtenant.FromContext(ctx); e == nil {
-		actorID, _ := uuid.Parse(r.Header.Get("X-User-ID")); h.publishAuditEvent("user.unlock", "success", "user", userID, tc.TenantID, actorID)
+		actorID, _ := uuid.Parse(r.Header.Get("X-User-ID"))
+		h.publishAuditEvent("user.unlock", "success", "user", userID, tc.TenantID, actorID)
 	}
 }
 
@@ -1025,7 +1029,8 @@ func (h *HTTPHandler) deactivateUser(ctx context.Context, userID uuid.UUID, w ht
 		return
 	}
 	if tc, e := ggidtenant.FromContext(ctx); e == nil {
-		actorID, _ := uuid.Parse(r.Header.Get("X-User-ID")); h.publishAuditEvent("user.deactivate", "success", "user", userID, tc.TenantID, actorID)
+		actorID, _ := uuid.Parse(r.Header.Get("X-User-ID"))
+		h.publishAuditEvent("user.deactivate", "success", "user", userID, tc.TenantID, actorID)
 	}
 	writeJSON(w, http.StatusOK, userToJSON(user))
 }
@@ -1037,7 +1042,8 @@ func (h *HTTPHandler) activateUser(ctx context.Context, userID uuid.UUID, w http
 		return
 	}
 	if tc, e := ggidtenant.FromContext(ctx); e == nil {
-		actorID, _ := uuid.Parse(r.Header.Get("X-User-ID")); h.publishAuditEvent("user.activate", "success", "user", userID, tc.TenantID, actorID)
+		actorID, _ := uuid.Parse(r.Header.Get("X-User-ID"))
+		h.publishAuditEvent("user.activate", "success", "user", userID, tc.TenantID, actorID)
 	}
 	writeJSON(w, http.StatusOK, userToJSON(user))
 }
@@ -1049,7 +1055,8 @@ func (h *HTTPHandler) restoreUser(ctx context.Context, userID uuid.UUID, w http.
 		return
 	}
 	if tc, e := ggidtenant.FromContext(ctx); e == nil {
-		actorID, _ := uuid.Parse(r.Header.Get("X-User-ID")); h.publishAuditEvent("user.restore", "success", "user", userID, tc.TenantID, actorID)
+		actorID, _ := uuid.Parse(r.Header.Get("X-User-ID"))
+		h.publishAuditEvent("user.restore", "success", "user", userID, tc.TenantID, actorID)
 	}
 	writeJSON(w, http.StatusOK, userToJSON(user))
 }
@@ -1215,8 +1222,8 @@ func (h *HTTPHandler) batchGetUserRoles(ctx context.Context, users []*domain.Use
 			continue
 		}
 		result[userID] = append(result[userID], map[string]any{
-			"role_id":    roleID,
-			"role_name":  roleName,
+			"role_id":     roleID,
+			"role_name":   roleName,
 			"assigned_at": assignedAt,
 		})
 	}
@@ -1372,7 +1379,7 @@ func (h *HTTPHandler) handleExportUsers(w http.ResponseWriter, r *http.Request) 
 	}
 
 	ctx, ok := injectTenant(r)
-	if ! ok {
+	if !ok {
 		writeJSONError(w, http.StatusBadRequest, "missing or invalid X-Tenant-ID header")
 		return
 	}
@@ -1417,9 +1424,24 @@ func (h *HTTPHandler) handleExportUsers(w http.ResponseWriter, r *http.Request) 
 		}
 		wr.Flush()
 	case "json":
+		// SECURITY: Map to safe fields only — never serialize raw User struct
+		// (would leak PasswordHash, LastLoginIP, DeletedAt, ExternalID).
+		safeUsers := make([]map[string]any, 0, len(users))
+		for _, u := range users {
+			safeUsers = append(safeUsers, map[string]any{
+				"id":           u.ID.String(),
+				"tenant_id":    u.TenantID.String(),
+				"username":     u.Username,
+				"email":        u.Email,
+				"display_name": u.DisplayName,
+				"status":       string(u.Status),
+				"created_at":   u.CreatedAt.Format(time.RFC3339),
+				"updated_at":   u.UpdatedAt.Format(time.RFC3339),
+			})
+		}
 		w.Header().Set("Content-Type", "application/json")
 		w.Header().Set("Content-Disposition", `attachment; filename="users_export.json"`)
-		json.NewEncoder(w).Encode(map[string]any{"users": users})
+		json.NewEncoder(w).Encode(map[string]any{"users": safeUsers})
 	}
 }
 
@@ -1427,7 +1449,6 @@ func (h *HTTPHandler) handleExportUsers(w http.ResponseWriter, r *http.Request) 
 func writeJSONError(w http.ResponseWriter, status int, msg string) {
 	ggiderrors.WriteSimpleAPIError(w, status, httpStatusToCode(status), msg)
 }
-
 
 // handleMePermissions returns the merged permissions for the current user
 // (union of all assigned roles' permissions).
@@ -1479,8 +1500,8 @@ func (h *HTTPHandler) handleMePermissions(ctx context.Context, w http.ResponseWr
 		defer rows2.Close()
 
 		type routePerm struct {
-			Route    string `json:"route"`
-			Level    string `json:"level"`
+			Route string `json:"route"`
+			Level string `json:"level"`
 		}
 		perms := []routePerm{}
 		for rows2.Next() {
