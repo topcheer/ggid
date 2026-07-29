@@ -5,8 +5,8 @@
 package retention
 
 import (
-	"github.com/google/uuid"
 	"context"
+	"github.com/google/uuid"
 	"log/slog"
 	"time"
 )
@@ -21,12 +21,14 @@ type EventDeleter interface {
 
 // RetentionPolicy defines audit event retention rules.
 type RetentionPolicy struct {
-	// MaxAge is the maximum age of events to keep. Events older than this are deleted.
-	// Zero means no time-based deletion.
+	// TenantID scopes deletion to a specific tenant. uuid.Nil means all tenants
+	// (internal scheduled cleanup only — HTTP endpoints must set a real tenant).
+	TenantID uuid.UUID
+
+	// MaxAge is the maximum age of events to keep.
 	MaxAge time.Duration
 
-	// MaxEvents is the maximum number of events to keep. Excess events (oldest first)
-	// are deleted. Zero means no count-based deletion.
+	// MaxEvents is the maximum number of events to keep.
 	MaxEvents int64
 
 	// Enabled controls whether the policy is active.
@@ -53,10 +55,16 @@ func (p *RetentionPolicy) Apply(ctx context.Context, deleter EventDeleter) (*Res
 		return result, nil
 	}
 
+	// SECURITY: Never allow uuid.Nil — would delete ALL tenants' audit events.
+	if p.TenantID == uuid.Nil {
+		slog.Warn("retention: skipping — tenantID is nil (would delete all tenants)")
+		return result, nil
+	}
+
 	// Phase 1: Delete by age
 	if p.MaxAge > 0 {
 		cutoff := time.Now().Add(-p.MaxAge)
-		deleted, err := deleter.DeleteOlderThan(ctx, uuid.Nil, cutoff)
+		deleted, err := deleter.DeleteOlderThan(ctx, p.TenantID, cutoff)
 		if err != nil {
 			return result, err
 		}
@@ -94,8 +102,8 @@ func (p *RetentionPolicy) Apply(ctx context.Context, deleter EventDeleter) (*Res
 // NewDefaultPolicy returns a policy with 90-day retention, no count limit.
 func NewDefaultPolicy() *RetentionPolicy {
 	return &RetentionPolicy{
-		MaxAge:   90 * 24 * time.Hour,
-		Enabled:  true,
+		MaxAge:  90 * 24 * time.Hour,
+		Enabled: true,
 	}
 }
 
