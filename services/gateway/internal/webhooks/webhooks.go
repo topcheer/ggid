@@ -120,7 +120,7 @@ type Deliverer interface {
 
 // HTTPDeliverer delivers webhooks via HTTP POST with HMAC-SHA256 signatures.
 type HTTPDeliverer struct {
-	client  *http.Client
+	client     *http.Client
 	maxRetries int
 }
 
@@ -294,7 +294,13 @@ func (h *Handler) DeliverEvent(ctx context.Context, event string, payload []byte
 	}
 	for _, wh := range webhooks {
 		go func(w *Webhook) {
-			if err := h.deliverer.Deliver(ctx, w.URL, w.Secret, payload); err != nil {
+			// Detach from the caller's context: if ctx is a request context,
+			// deliveries would be silently cancelled when the request ends;
+			// without a timeout, a hung endpoint would leak the goroutine
+			// forever (P1-2).
+			dctx, cancel := context.WithTimeout(context.WithoutCancel(ctx), 30*time.Second)
+			defer cancel()
+			if err := h.deliverer.Deliver(dctx, w.URL, w.Secret, payload); err != nil {
 				log.Printf("webhook %s delivery failed for event %s: %v", w.ID, event, err)
 			}
 		}(wh)
