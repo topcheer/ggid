@@ -696,8 +696,8 @@ func (s *HTTPServer) listRoles(w http.ResponseWriter, r *http.Request) {
 		"total":       len(result),
 		"page":        page,
 		"page_size":   pageSize,
-		"next_offset": page*pageSize + 1,
-		"has_more":    len(result) == pageSize,
+		"next_offset": page * pageSize,
+		"has_more":    len(result) == pageSize && len(result) >= pageSize,
 	})
 }
 

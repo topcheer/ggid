@@ -710,8 +710,29 @@ func writeGatewayJSON(w http.ResponseWriter, code int, data any) {
 	_ = json.NewEncoder(w).Encode(data)
 }
 
-func writeGatewayJSONError(w http.ResponseWriter, code int, message string) {
+// writeGatewayJSONError writes an error in the standard API format
+// {"error": {"code": "...", "message": "..."}} matching backend services.
+func writeGatewayJSONError(w http.ResponseWriter, statusCode int, message string) {
+	code := "internal_error"
+	switch statusCode {
+	case http.StatusBadRequest:
+		code = "invalid_argument"
+	case http.StatusUnauthorized:
+		code = "unauthenticated"
+	case http.StatusForbidden:
+		code = "permission_denied"
+	case http.StatusNotFound:
+		code = "not_found"
+	case http.StatusConflict:
+		code = "already_exists"
+	case http.StatusTooManyRequests:
+		code = "rate_limit_exceeded"
+	case http.StatusMethodNotAllowed:
+		code = "method_not_allowed"
+	}
 	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(code)
-	_ = json.NewEncoder(w).Encode(map[string]any{"error": message})
+	w.WriteHeader(statusCode)
+	_ = json.NewEncoder(w).Encode(map[string]any{
+		"error": map[string]string{"code": code, "message": message},
+	})
 }
