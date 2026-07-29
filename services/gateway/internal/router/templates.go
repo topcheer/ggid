@@ -263,6 +263,48 @@ async function doReset(){
 }
 </script></body></html>`
 
+const hostedResetPasswordHTML = `<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Reset Password — GGID</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}body{font-family:system-ui,sans-serif;background:#f0f2f5;display:flex;justify-content:center;align-items:center;min-height:100vh}
+.card{background:#fff;border-radius:12px;padding:2.5rem;width:100%;max-width:400px;box-shadow:0 4px 12px rgba(0,0,0,.1)}
+h1{font-size:1.5rem;margin-bottom:.5rem}label{display:block;font-size:.85rem;color:#666;margin-bottom:.3rem}
+input{width:100%;padding:.6rem;border:1px solid #ddd;border-radius:6px;font-size:1rem;margin-bottom:1rem}
+button{width:100%;padding:.7rem;background:#2563eb;color:#fff;border:none;border-radius:6px;font-size:1rem;cursor:pointer}
+button:hover{background:#1d4ed8}.err{color:#dc2626;font-size:.85rem;margin-bottom:.5rem;min-height:1.2em}
+.ok{color:#16a34a;font-size:.85rem;margin-bottom:.5rem;min-height:1.2em}
+</style></head><body><div class="card">
+<h1>Set New Password</h1>
+<p style="color:#666;font-size:.9rem;margin-bottom:1.5rem">Enter your new password below.</p>
+<div id="err" class="err"></div>
+<div id="ok" class="ok"></div>
+<label for="np">New Password</label>
+<input type="password" id="np" placeholder="8+ chars, upper, lower, digit" />
+<label for="cp">Confirm Password</label>
+<input type="password" id="cp" placeholder="Repeat new password" />
+<button id="btn" onclick="reset()">Reset Password</button>
+</div><script>
+function reset(){
+ var np=document.getElementById('np').value,cp=document.getElementById('cp').value;
+ var t=new URLSearchParams(location.search).get('token');
+ if(!t){document.getElementById('err').textContent='Missing reset token.';return}
+ if(np!==cp){document.getElementById('err').textContent='Passwords do not match.';return}
+ if(np.length<8){document.getElementById('err').textContent='Password must be 8+ chars.';return}
+ var btn=document.getElementById('btn');btn.disabled=true;btn.textContent='Resetting...';
+ fetch('/api/v1/auth/password/reset',{method:'POST',headers:{'Content-Type':'application/json'},
+  body:JSON.stringify({token:t,new_password:np})})
+ .then(function(r){return r.json().then(function(d){return{ok:r.ok,data:d}})})
+ .then(function(r){
+  btn.disabled=false;btn.textContent='Reset Password';
+  if(r.ok){document.getElementById('ok').textContent='Password reset! Redirecting to login...';
+   setTimeout(function(){location.href='/login'},2000)}
+  else{document.getElementById('err').textContent=r.data.error?r.data.error.message||'Reset failed':'Reset failed'}
+ }).catch(function(){btn.disabled=false;btn.textContent='Reset Password';
+  document.getElementById('err').textContent='Network error. Please try again.'})
+}
+</script></body></html>`
+
 const hostedDeviceApproveHTML = `<!DOCTYPE html>
 <html lang="en">
 <head>

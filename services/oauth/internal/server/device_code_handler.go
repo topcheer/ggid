@@ -119,8 +119,6 @@ func handleDeviceVerify(s *service.OAuthService) http.HandlerFunc {
 			writeJSONError(w, http.StatusBadRequest, err.Error())
 			return
 		}
-		// Note: response status field now echoes the action ("approve"/"deny")
-		// instead of "ok" — no known clients call this endpoint.
 		writeJSON(w, http.StatusOK, map[string]any{"status": req.Action, "user_code": req.UserCode})
 	}
 }

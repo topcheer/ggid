@@ -1,505 +1,546 @@
-# GGID IAM 安全体系全面审计报告
+# IAM Security Audit — 2026-07-23
 
-日期：2026-07-23
-审计员：guardian_security
-范围：全部 10 个服务 + 网关 + SDK + 部署配置
+## Attack Surface #1: Authentication Bypass
 
----
+### P0-1: Credential Vault — Complete Authentication Bypass (IDOR + Auth Bypass)
 
-## 审计方法论
+**Severity:** P0 (Critical)
+**CVSS:** 9.8 (AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H)
 
-从 7 个维度系统性审查，对标 OWASP Top 10、OAuth 2.0 Security BCP (RFC 9700)、NIST 800-63B：
-1. 认证与凭据安全
-2. 授权与访问控制
-3. 会话与令牌安全
-4. 传输与存储加密
-5. 输入验证与注入防护
-6. 审计与可观测性
-7. 架构与运维安全
+**Affected endpoints:**
+- `GET /api/v1/auth/credentials/{key}?user_id={any_user_id}`
+- `POST /api/v1/auth/credentials/store`
 
-每项标注严重度（P0 阻塞 / P1 高 / P2 中 / P3 低）和当前状态。
+**Root cause:**
 
----
+The credential vault endpoints are listed in `publicPaths` (router.go:41-42):
+```go
+"/api/v1/auth/credentials/",      // line 41
+"/api/v1/auth/credentials/store", // line 42
+```
 
-## 一、认证与凭据安全
+This triggers the following bypass chain:
 
-### 已落实 ✅
-- Argon2id 密码哈希（OWASP 推荐参数）+ pepper + 历史检查 + HIBP k-anonymity breach 检测
-- 客户端密钥用 Argon2id 存储（`verifyClientSecret` → `crypto.VerifyPassword`，constant-time）
-- JWT `alg=none` 拒绝（rfc7523.go:53）；HS 系列算法拒绝用于 client_assertion
-- MFA：TOTP（RFC 6238）、WebAuthn/Passkey、RADIUS、YubiKey
-- 密码策略可配置（长度/复杂度/历史/过期）
+1. **Gateway `Handler()`** (router.go:664): Path matches publicPaths → `isPublic = true` → `JWTAuth(required=false)` is applied. No token required to pass through.
 
-### 薄弱点
+2. **`RequireAdminScope`** (rbac.go:93-96): `isRBACExempt()` returns `true` for all publicPaths (set via `SetRBACExemptPrefixes(publicPaths)` in router.go:133). Middleware passes through.
 
-| # | 问题 | 严重度 | 详情 |
-|---|------|--------|------|
-| A1 | **LDAP InsecureSkipVerify=true** | P1 | `ldap_sync_service.go:123` StartTLS 跳过证书验证，MITM 风险。生产必须验证 IdP 证书。 |
-| A2 | **GGID_INTERNAL_SECRET 有 dev fallback** | P1 | `scim_token_middleware.go:83` fallback `"dev-internal-secret"`，`secret_broker.go:247` 同款。生产部署若漏配 env，内部认证降级为已知弱密钥。 |
-| A3 | **PASSWORD_PEPPER 生产未强制** | P1 | auth/cmd/main.go:105 仅 `if pepper != ""`。未配置时不报错不告警，密码哈希少一层保护。 |
-| A4 | **TOTP secret 明文存储** | P2 | domain/mfa.go 注释声称加密但未实现（review 报告已标出）。 |
-| A5 | **WebAuthn challenge 内存存储** | P2 | 多实例部署时 challenge 不可共享，影响 Passkey 注册/认证可用性。需迁移 Redis。 |
-| A6 | **JWT key 生成仅 2048-bit** | P3 | RSA 2048 目前安全但 NIST 建议新系统用 3072-bit。key_rotation.go:103。 |
+3. **`checkRouteScope`** (router.go:770): `claims.Subject == ""` (no JWT) → returns `true` (skip).
 
----
+4. **Auth service `handleCredentialVault`** (credential_vault_handler.go:72-178): Accepts `user_id` from:
+   - POST: JSON request body field `"user_id"` (line 76-77)
+   - GET: Query parameter `user_id` (line 125)
+   
+   **No authentication check whatsoever.** The handler does not verify:
+   - `X-User-ID` header (which the gateway sets from JWT)
+   - Any JWT claim or context value
+   - Any internal secret or HMAC signature
 
-## 二、授权与访问控制
+**Attack scenario:**
 
-### 已落实 ✅
-- Gateway 三层 RBAC（动态 role_route_permissions + 静态 RequireAdminScope + checkRouteScope）
-- RLS 行级租户隔离（`SET app.tenant_id` + FORCE RLS）
-- 自服务白名单精确匹配（SelfServicePaths map）
-- 平台/租户 admin scope 分离（`platform:admin` / `tenant:admin`）
-- SAML ACS 完整校验（签名验证 + InResponseTo + Issuer + Audience + XSW 防护）
-- GDPR 删除需密码确认 + WORM 审计
+```
+# Retrieve any user's decrypted credential (no auth):
+curl "http://target/api/v1/auth/credentials/aws_secret?user_id=550e8400-e29b-41d4-a716-446655440000"
 
-### 薄弱点
+# Overwrite any user's credential (no auth):
+curl -X POST "http://target/api/v1/auth/credentials/store" \
+  -H 'Content-Type: application/json' \
+  -d '{"user_id":"550e8400-e29b-41d4-a716-446655440000","key":"aws_secret","value":"AKIA-ATTACKER-KEY"}'
+```
 
-| # | 问题 | 严重度 | 详情 |
-|---|------|--------|------|
-| B1 | **`platform:admin` scope 签发侧无租户过滤** | P1 | auth `http_identity_client.go` 按角色 key 生成 scope，租户自建 role key=`platform:admin` 可伪造平台管理员 scope。三层 RBAC 已无法防御（因为 scope 本身被伪造）。根治必须在签发侧验证角色归属。 |
-| B2 | **CORS `Access-Control-Allow-Origin: *` 作为 fallback** | P2 | audit/http.go:715 和 per_tenant_cors.go:90,93 在未匹配到允许源时回退 `*`，允许任意跨域。生产应 fail-closed（拒绝而非通配）。 |
-| B3 | **OAuth token scope 未与 client 注册 scope 交叉验证** | P2 | authorize 端点接受请求 scope 但未严格校验是否在 client 注册的 allowed_scopes 内（oauth_service.go IssueToken 路径）。可导致 scope 扩张。 |
-| B4 | **consent cascade mock 路径** | P3 | `cascade.go:251` 返回 `tok_mock_1` 等硬编码值，生产 pool 为 nil 时可能走到。 |
+**Impact:**
+- Any unauthenticated attacker can retrieve any user's stored plaintext secrets (API keys, passwords, etc.)
+- Attacker can overwrite any user's credentials, enabling supply-chain style attacks
+- Cross-tenant: `user_id` is not tenant-scoped — any user in any tenant is affected
+
+**Note:** The credential vault also stores to DB with `user_id` as a simple string concatenation for the vault ID (`req.UserID + ":" + req.Key`), enabling predictable ID enumeration.
 
 ---
 
-## 三、会话与令牌安全
+### P1-1: System Bootstrap — Unauthenticated Admin Creation
 
-### 已落实 ✅
-- Access token TTL 15 分钟（符合 OAuth 2.1 BCP）
-- Refresh token family + reuse detection（RFC 6749 §10.4）
-- CAE（JTI blocklist + session revocation）
-- Cookie 安全属性（HttpOnly + SameSite=Strict + Secure）
-- Session 表存储 token_hash（非明文）
+**Severity:** P1 (High)
+**CVSS:** 8.1 (AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H)
 
-### 薄弱点
+**Affected endpoint:**
+- `POST /api/v1/system/bootstrap`
 
-| # | 问题 | 严重度 | 详情 |
-|---|------|--------|------|
-| C1 | **revokedTokens 和 stateStore 用 sync.Map（内存态）** | P1 | oauth_service.go:1223-1224。多实例部署时一个 pod 吊销的 token 在其他 pod 仍有效。必须迁移 Redis。 |
-| C2 | **DPoP token cache 内存态** | P2 | dpop_token_bind.go:14 `dpopCache sync.Map`，同 C1 问题。 |
-| C3 | **Session cleanup 依赖定时扫描** | P3 | auth/cmd/main.go:460 周期清理过期 session，期间过期 session 仍在 DB 中可被滥用（TTL 内）。影响低但非最佳。 |
-| C4 | **Refresh token TOCTOU 竞态** | P2 | Used 判定与 revokeFamily 之间存在时间窗口（review 已标出），并发请求可能误伤合法客户端。需 CAS 或 SELECT FOR UPDATE。 |
+**Root cause:**
 
----
+`/api/v1/system/bootstrap` is in `publicPaths` (router.go:61). The handler `handleSystemBootstrap` (integration_handlers.go:166-470):
 
-## 四、传输与存储加密
+1. Checks `quickstartInitialized` in-memory flag (line 174)
+2. Checks if tenants exist in DB (line 194+)
+3. Creates admin user, tenant, roles, and OAuth client if not initialized
+4. **Performs NO authentication check** — anyone can call this endpoint
 
-### 已落实 ✅
-- gRPC TLS（MinVersion 1.2）identity/audit/org 服务
-- SIEM forwarder TLS（MinVersion 1.2）
-- Cookie Secure flag（生产 HTTPS）
+The only protection is the "already initialized" guard. On a fresh deployment, before the legitimate admin bootstraps the system, an attacker can race to create their own admin account.
 
-### 薄弱点
+**Attack scenario:**
+```
+# On a freshly deployed instance (before admin bootstraps):
+curl -X POST "http://target/api/v1/system/bootstrap" \
+  -H 'Content-Type: application/json' \
+  -d '{"admin_username":"attacker","admin_email":"attacker@evil.com","admin_password":"Attacker123!"}'
+```
 
-| # | 问题 | 严重度 | 详情 |
-|---|------|--------|------|
-| D1 | **LDAP InsecureSkipVerify** | P1 | 同 A1。StartTLS 后不验证证书 = 加密但无身份验证。 |
-| D2 | **审计 HMAC secret 无版本管理** | P2 | hash_chain.go 全局单一 secret，轮换后旧链不可验证。需 secret ID + 多版本支持。 |
-| D3 | **审计 HMAC canonicalization 碰撞风险** | P2 | canonical 拼接用 `|` 分隔符，字段值含 `|` 可碰撞。需固定长度前缀或 protobuf。 |
-| D4 | **JWT key 轮换 grace period 过长** | P3 | key_rotation.go gracePeriod 内旧 key 仍签发，泄漏后窗口更大。应缩短至 <5 分钟。 |
+**Impact:** Attacker gains full admin access to the IAM system on fresh deployments or after DB resets.
 
 ---
 
-## 五、输入验证与注入防护
+### P1-2: System Status — Information Disclosure
 
-### 已落实 ✅
-- 参数化查询为主（$1, $2 占位符）
-- RLS + `SET app.tenant_id` 隔离
-- Gateway 请求体大小限制
-- Security headers（X-Frame-Options, CSP, HSTS, X-Content-Type-Options）
+**Severity:** P1 (Medium)
+**CVSS:** 5.3 (AV:N/AC:L/PR:N/UI:N/S:U/C:L)
 
-### 薄弱点
+**Affected endpoint:**
+- `GET /api/v1/system/status`
 
-| # | 问题 | 严重度 | 详情 |
-|---|------|--------|------|
-| E1 | **fmt.Sprintf 拼接 SQL 列名** | P2 | identity/pg_repo.go 多处 `fmt.Sprintf("SELECT %s FROM ...", userColumns)`。虽然列名是常量非用户输入（无直接注入），但模式不安全——后续若有人改列名来源则引入注入。应改为固定字符串或白名单验证。 |
-| E2 | **map_repo.go 表名 fmt.Sprintf** | P2 | `fmt.Sprintf("SELECT ... FROM %s", table)` — table 参数若来自用户可控路径则为注入。当前调用方传硬编码表名，但缺乏防御性校验。 |
-| E3 | **20 处错误吞噬 `_, _ = pool.Exec`** | P2 | 审计和安全操作的 DB 错误被静默忽略，可能导致安全事件丢失。应至少 slog.Warn。 |
-| E4 | **OAuth state 参数仅内存校验** | P3 | stateStore sync.Map，多实例不一致可能导致 CSRF 保护失效。 |
+**Root cause:** In `publicPaths` (router.go:62). Returns system version, uptime, DB/Redis/NATS connectivity status, user/tenant counts (quickstart_handler.go:150-197).
+
+**Impact:** Unauthenticated attackers gain infrastructure reconnaissance data.
 
 ---
 
-## 六、审计与可观测性
+### P1-3: Dashboard Endpoint — Unauthenticated Access
 
-### 已落实 ✅
-- 哈希链 tamper-evidence（HMAC-SHA256 + WORM 触发器 + 自动告警）
-- ITDR 威胁检测引擎（NATS consumer + 规则匹配）
-- 审计事件包含 actor/IP/UA/device/request_id
-- 结构化日志（slog 部分采用）
-- Prometheus metrics 端点
+**Severity:** P1 (Medium)
 
-### 薄弱点
+**Affected endpoint:**
+- `GET /api/v1/dashboard` (and sub-paths via prefix match)
 
-| # | 问题 | 严重度 | 详情 |
-|---|------|--------|------|
-| F1 | **HMAC secret 未配置时静默禁用** | P1 | hash_chain.go `IsHashChainEnabled()` 返回 false 时所有事件不建链，无告警。生产必须 fail-closed 或至少 loud warning。 |
-| F2 | **审计事件大量 log.Printf** | P3 | 部分服务仍用 log.Printf 而非 slog，不利于日志聚合和安全分析。 |
-| F3 | **告警规则未配置** | P2 | Grafana dashboards 已建但无告警规则。tamper detection 写了 audit_incidents 但无主动通知渠道（email/Slack/webhook 未对接）。 |
+**Root cause:** `/api/v1/dashboard` is in `publicPaths` (router.go:64). The prefix match `strings.HasPrefix(r.URL.Path, pp)` means `/api/v1/dashboard/stats` also matches as public.
+
+However, `handleDashboardStats` is handled at router.go:462 which is inside `ServeHTTP` — the inner handler that runs after JWTAuth(required=false). So JWT is optional but not required. The handler itself may or may not check auth internally.
 
 ---
 
-## 七、架构与运维安全
+### Info-1: `apiKeyHasWriteAccess` — Dead Code with Empty Loop Body
 
-### 已落实 ✅
-- 微服务隔离（独立 deployment + DB 连接池）
-- K8s Secrets 挂载（JWT key、DB 密码）
-- 网络：K8s ClusterIP + Ingress TLS
-- 镜像最小化（Alpine + ca-certificates）
+**Severity:** Informational
 
-### 薄弱点
+**Location:** middleware.go:912-918
 
-| # | 问题 | 严重度 | 详情 |
-|---|------|--------|------|
-| G1 | **无服务间 mTLS** | P2 | 服务间 gRPC 调用虽有 TLS 但未做双向证书验证。K8s 网络内任何 pod 可冒充。Istio/Linkerd 或自签 CA 可解。 |
-| G2 | **DB 凭据共享** | P2 | 所有服务用同一 `ggid:ggid-k3s` 连同一个 PG 实例。无读写分离、无 per-service 权限隔离。 |
-| G3 | **无密钥管理服务集成** | P2 | JWT key、HMAC secret、PASSWORD_PEPPER 全从 env/文件读取。无 Vault/KMS 集成，轮换需手动重启。 |
-| G4 | **无 Helm/版本化发布** | P3 | 部署靠手工 docker build + kubectl rollout。无回滚 runbook，安全补丁部署慢。 |
-| G5 | **dependency 供应链安全缺失** | P2 | 无 `govulncheck` CI、无 SBOM、无 dependabot/renovate。依赖漏洞不可见。 |
+```go
+for _, s := range scopes {
+    if s == "*" || s == "platform:admin" || s == "tenant:admin" {
+        // EMPTY BODY — should return true but doesn't
+    }
+}
+```
+
+The loop matches admin/wildcard scopes but the body is empty. This function appears to be dead code (replaced by `HasPermissionForRoute`), but if resurrected, would silently fail to grant admin access — or worse, if someone "fixes" it to `return true`, it could become an unintended privilege escalation path.
 
 ---
 
-## 优先级排序与修复建议
+---
 
-### 立即修复（P0/P1，安全阻塞）
+## Attack Surface #2: Authorization Logic Vulnerabilities — RBAC Bypass, M2M Token Permissions, API Key Scope
 
-| 优先级 | 项 | 修复方案 | 预估工作量 |
-|--------|-----|---------|-----------|
-| 1 | **B1** scope 签发侧租户过滤 | `http_identity_client.go` 只为平台租户的 `platform:admin` 角色生成 scope | 2h |
-| 2 | **A2** 内部密钥 dev fallback 移除 | 删除 `"dev-internal-secret"` fallback，空值时 panic | 30min |
-| 3 | **A1/D1** LDAP 证书验证 | InsecureSkipVerify 改为读取配置的 CA 证书 | 1h |
-| 4 | **C1** revokedTokens 迁移 Redis | sync.Map → Redis SET + TTL | 4h |
-| 5 | **F1** HMAC secret 缺失告警 | boot 时检查，缺失则 panic 或强制降级模式 | 30min |
-| 6 | **A3** PASSWORD_PEPPER 强制检查 | boot 时检查，缺失则 panic 或 loud warning | 15min |
-| 7 | **B2** CORS fail-closed | 未匹配源时返回 403 而非 `*` | 1h |
+### P1-4: Broken Wildcard Bypass in JWTAuth for API Keys (Fail-Closed Logic Bug)
 
-### 近期修复（P2，企业交付前）
+**Severity:** P1 (High — latent privilege escalation risk)
+**CVSS:** 6.5 (AV:N/AC:L/PR:H/UI:N/S:U/C:H/I:H/A:N)
+**Location:** `services/gateway/internal/middleware/middleware.go:643-649`
 
-| 优先级 | 项 | 修复方案 |
-|--------|-----|---------|
-| 8 | A4 TOTP secret 加密 | AES-GCM 加密落盘，密钥从 KMS/env |
-| 9 | C4 Refresh TOCTOU | SELECT FOR UPDATE 或 optimistic lock |
-| 10 | E3 错误吞噬 | 全局排查 `_, _ =` → slog.Warn |
-| 11 | F3 告警通知 | tamper incident → email/Slack webhook |
-| 12 | B3 OAuth scope 校验 | IssueToken 校验 requested scope ⊆ client.allowed_scopes |
-| 13 | D2/D3 审计 secret 版本化 + canonical | secret ID 列 + protobuf canonical |
-| 14 | G5 依赖安全 | `govulncheck` CI + SBOM 生成 |
+**Root cause:**
 
-### 后续迭代（P3）
+The wildcard/admin scope bypass in JWTAuth's API key path has a logic bug — `hasWildcard` is never set to `true`:
 
-15. A6 JWT key 升级 3072-bit
-16. A5/C2 WebAuthn challenge + DPoP 迁移 Redis
-17. E1/E2 SQL 列名/表名白名单校验
-18. G1 服务间 mTLS
-19. G3 KMS/Vault 集成
-20. G4 Helm chart + 回滚 runbook
+```go
+hasWildcard := false
+for _, s := range scopes {
+    if s == "*" || s == "platform:admin" || s == "tenant:admin" {
+        break  // BUG: exits loop but never sets hasWildcard = true
+    }
+}
+if !hasWildcard {
+    // Always reached — 403 for all routes not in routePermissionResource
+    w.WriteHeader(http.StatusForbidden)
+    return
+}
+```
+
+**Current behavior:** Fail-closed. API keys with `*`, `platform:admin`, or `tenant:admin` scopes are silently denied for any route not in `routePermissionResource`. The wildcard bypass is dead code.
+
+**Exploitation risk:** If a developer "fixes" this bug by adding `hasWildcard = true` before `break` (the obvious fix), API keys with `*` scope would bypass ALL `HasPermissionForRoute` checks, granting access to every route in `routePermissionResource`:
+- `/api/v1/users` → `users:*`
+- `/api/v1/roles` → `roles:*`
+- `/api/v1/audit/` → `audit:*`
+- `/api/v1/policies` → `policies:*`
+- `/api/v1/webhooks` → `webhooks:*`
+- `/api/v1/oauth/clients` → `oauth:*`
+- `/api/v1/settings/` → `settings:*`
+
+Combined with Finding P2-5 (no scope validation on API key creation), this would allow a tenant admin to create an API key with `*` scope and access all admin endpoints within the tenant.
+
+**Impact:** Currently no direct exploit (fail-closed), but represents a latent P0 if "fixed" without adding scope validation.
 
 ---
 
-## 总结
+### P2-4: RequireAdminScope Bypasses Admin Scope Check for API Key Requests
 
-GGID 经过近期密集安全加固，核心认证/授权/审计链路已达到企业级安全基线。**但存在一个系统性薄弱点：多实例状态管理**。revokedTokens、stateStore、dpopCache、WebAuthn challenge 四处用 sync.Map 存储安全状态，在 K8s 多副本环境下会失效——这是当前最大的架构级安全风险。
+**Severity:** P2 (Medium)
+**CVSS:** 5.7 (AV:N/AC:L/PR:H/UI:N/S:U/C:H/I:N/A:N)
+**Location:** `services/gateway/internal/middleware/rbac.go:133-136`
 
-第二级风险是**密钥管理薄弱**：dev fallback、未强制配置、无轮换自动化、无 KMS 集成。生产部署清单缺少这些强制检查项。
+**Root cause:**
 
-第三级风险是**签发侧信任链不完整**：`platform:admin` scope 的生成不验证角色租户归属，这是 RBAC 层面所有修复的上游根因。
+When `claims.Subject == ""` (API key request, no JWT Bearer token), RequireAdminScope passes the request through to admin endpoints without any admin scope check:
 
-建议按上表优先级逐项修复，前 7 项可在 1 天内完成，使系统达到生产安全就绪。
+```go
+// Admin endpoint: check scope.
+// No JWT subject → let JWTAuth handle the 401.
+if claims.Subject == "" {
+    next.ServeHTTP(w, r)  // PASSES THROUGH — no scope check!
+    return
+}
+```
+
+The comment says "let JWTAuth handle the 401," but JWTAuth already validated the API key via `HasPermissionForRoute`. So if `HasPermissionForRoute` returned true (e.g., API key has `users:write` scope for `POST /api/v1/users`), the request passes through to the admin endpoint with no additional admin scope check.
+
+**Attack path:**
+1. Admin creates API key with scopes `["users:write"]`
+2. API key request: `POST /api/v1/users` with `X-API-Key: ggid_sk_...`
+3. APIKeyAuth: validates key, sets context with scopes
+4. JWTAuth: `HasPermissionForRoute("/api/v1/users", "POST", ["users:write"])` → true → allows
+5. RequireAdminScope: `claims.Subject == ""` → passes through (line 133-136)
+6. checkRouteScope: `claims.Subject == ""` → returns true (line 770-771)
+7. Request reaches backend — API key holder can create users
+
+**Mitigating factors:**
+- API key creation is admin-gated (`/api/v1/api-keys` is in `adminOnlyPaths`)
+- Routes not in `routePermissionResource` (e.g., `/api/v1/system/`, `/api/v1/admin/`) are not accessible
+- The broken wildcard check (P1-4) prevents `*` scope from working
+
+**Residual risk:** API key holders have no JWT, no CAE revocation, no session timeout, and no user-level audit trail. A compromised API key with `users:write` scope grants persistent, unrevocable access to user management until the key expires or is manually revoked.
 
 ---
 
-## 巡航日志
+### P2-5: No Scope Validation on API Key Creation
 
-### 巡航 #1 | 维度 2: 授权与访问控制 | 2026-07-23
+**Severity:** P2 (Medium)
+**CVSS:** 5.1 (AV:N/AC:L/PR:H/UI:N/S:U/C:L/I:L/A:N)
+**Location:** `services/auth/internal/server/api_keys_handler.go:72-108`
 
-**S1-S4 部署验证**：
-- S1 scope filter: deployed (commit 787270449, binary contains platform-reserved filter)
-- S2 dev secrets removed: scim_token_middleware + secret_broker + sdjwt_handler (commit 4c326e28a)
-- S3 HMAC secret alert: deployed (commit 787270449)
-- S4 LDAP TLS: deployed (commit 787270449)
-- encryption_key.go dev fallback: FIXED (commit 0200102fa)
+**Root cause:**
 
-**RBAC 单元测试**: ✅ 全绿 (router 7/7 + middleware 7/7)
-**生产匿名访问**: ✅ /users 401, /oauth/clients 401, /system/config 401
+API key scopes are accepted from the request body and stored directly in the database with no validation:
 
-**新发现**：
-| # | 发现 | 严重度 | 位置 | 状态 |
-|---|------|--------|------|------|
-| P2-8 | jwt_claims.go:139 仍用裸 "admin"/"superadmin"/"*" 匹配 admin scope | P2 | gateway/middleware/jwt_claims.go | OPEN |
-| P2-9 | router.go:724 "administrator"/"platform administrator" 裸名匹配 hasPlatform | P2 | gateway/router/router.go | OPEN |
-| P2-10 | router.go:986 "admin"/"ggid:admin" 裸名检查 | P2 | gateway/router/router.go | OPEN |
+```go
+var req struct {
+    Name      string   `json:"name"`
+    Scopes    []string `json:"scopes"`    // ← arbitrary, no whitelist
+    ExpiresAt string   `json:"expires_at"`
+}
+// ... no scope validation ...
+rec, err := repo.CreateWithID(r.Context(), tc.TenantID, keyID, req.Name, secret, req.Scopes, expiresAt)
+```
 
-**内存态安全存储**（历史项，仍 OPEN）：
-- revokedTokens sync.Map: ⚠️ Redis 优先+内存 fallback（C1, P1）
-- stateStore sync.Map: ⚠️ 同上（C1, P1）
-- dpopCache sync.Map: ❌ 纯内存无 Redis（C2, P2）
+There is no:
+- Whitelist of allowed API key scopes
+- Check that scopes are within the creator's own permissions
+- Prevention of reserved scopes (`*`, `platform:admin`, `tenant:admin`)
+- Per-scope audit logging
 
-**结论**: S1 根因修复已部署，三层 RBAC 防护完整。3 个裸名残留为 P2（提权面收窄但未完全消除，需下轮统一为 scope-only）。
+A tenant admin can create API keys with any scope string, including `*`, `platform:admin`, `users:admin`, `roles:admin`, etc.
 
-### 修复状态汇总（2026-07-23 final）
+**Current impact:** Limited due to P1-4 (broken wildcard) — API keys with `*` scope can only access routes in `routePermissionResource`. But if P1-4 is "fixed" without adding scope validation, API keys with `*` scope would bypass all permission checks.
 
-| 项 | 严重度 | 状态 | commit |
-|---|--------|------|--------|
-| S1 scope 签发侧租户过滤 | P1 | ✅ FIXED+DEPLOYED+VERIFIED | 787270449 |
-| S2 dev fallback 密钥移除 | P1 | ✅ FIXED+DEPLOYED | 787270449+4c326e28a |
-| S3 HMAC secret 缺失告警 | P1 | ✅ FIXED+DEPLOYED | 787270449 |
-| S4 LDAP 证书验证 | P1 | ✅ FIXED+DEPLOYED | 787270449 |
-| encryption_key.go dev fallback | P1 | ✅ FIXED+DEPLOYED | 0200102fa |
-| P2-1 TOTP secret 加密落盘 | P2 | ✅ FIXED+DEPLOYED | f1920ce55 |
-| P2-6 HMAC secret 版本管理 | P2 | ✅ FIXED+DEPLOYED | 63ed9054f |
-| P2-7 canonicalization 碰撞修复 | P2 | ✅ FIXED+DEPLOYED+REPAIRED | 63ed9054f |
-| P2-8 jwt_claims.go 裸名匹配 | P2 | ✅ FIXED+DEPLOYED | 7bc8c4572 |
-| P2-9 router.go:724 裸名匹配 | P2 | ✅ FIXED+DEPLOYED | 7bc8c4572 |
-| P2-10 router.go:986 裸名匹配 | P2 | ✅ FIXED+DEPLOYED | 7bc8c4572 |
-| C1 revokedTokens sync.Map | P1 | ❌ OPEN (Redis-first, mem fallback) | — |
-| C2 dpopCache sync.Map | P2 | ❌ OPEN (pure memory) | — |
-| C4 stateStore sync.Map | P2 | ❌ OPEN (Redis-first, mem fallback) | — |
+---
 
-### 巡航 #2 | 维度 3: 会话与令牌安全 | 2026-07-23
+### P2-6: Static RBAC Fallback Lacks adminProtected Guard — M2M Token Permission Bypass
 
-**历史项复查**：
-| # | 发现 | 之前状态 | 当前状态 |
-|---|------|---------|---------|
-| C1 | revokedTokens sync.Map | ❌ OPEN | ✅ FIXED (DB-backed, commit 0b2cd2a48) |
-| C2 | dpopCache sync.Map | ❌ OPEN | ❌ 仍 OPEN (纯内存, P2) |
-| C4 | stateStore sync.Map | ❌ OPEN | ⚠️ Redis优先+内存fallback (P2) |
-| C4b | Refresh TOCTOU (SELECT FOR UPDATE) | 未追踪 | ❌ OPEN (0处FOR UPDATE, P2) |
+**Severity:** P2 (Medium)
+**CVSS:** 5.7 (AV:N/AC:L/PR:H/UI:N/S:U/C:H/I:N/A:N)
+**Location:** `services/gateway/internal/middleware/rbac.go:147-152` (static fallback) vs `rbac_dynamic.go:377` (dynamic)
 
-**安全实践确认 ✅**：
-- Cookie: HttpOnly + SameSite (Lax/Strict) + Secure ✅
-- PKCE: 公开客户端强制 + per-client RequirePKCE ✅
-- Token comparison: subtle.ConstantTimeCompare + hmac.Equal ✅
-- Access token TTL: 15min (符合 OAuth 2.1 BCP) ✅
-- Security headers live: HSTS + X-Frame DENY + X-Content-Type nosniff ✅
+**Root cause:**
 
-**新发现**：
-| # | 发现 | 严重度 | 详情 |
-|---|------|--------|------|
-| P3-1 | Session fixation: 无 session ID 轮换 | P3 | 登录成功后未生成新 session ID（auth_service.go 无 RotateSession 调用）。JWT jti 有 blocklist 但 session 表记录固定。影响低（JWT-based，非 cookie-session）。 |
-| P3-2 | CORS fallback 仍可能返回 * | P3 | per_tenant_cors.go 有 fallback 配置，若未配置 allowed origins 可能通配。已有 security_headers.go HardenCookie 但 CORS 层未 fail-closed。 |
+The dynamic RBAC resolver has an `adminProtected` guard that blocks permission-based bypass for admin-protected routes:
 
-**近期 commit 安全审查**：
-- `8e95c7758` social login publicPath 去重 — 无安全问题
-- `83809081e` CORS fail-closed + PEPPER warning — 正面改进
-- `c24a19645` JWT permissions 去重 — 无安全问题
+```go
+// rbac_dynamic.go:377 — DYNAMIC path (has guard)
+if grant < required && !adminProtected {
+    if HasPermissionForRoute(path, method, claims.Permissions) {
+        grant = required
+    }
+}
+```
 
-**结论**: C1 已修复（DB-backed revokedTokens）。剩余 C2/C4 为 P2（Redis-first 已有缓解）。无新 P0/P1 发现。
+But the static fallback (used when the resolver is unavailable — startup, DB/Redis outage) has NO such guard:
 
-### 巡航 #3 | 维度 4: 传输与存储加密 | 2026-07-23
+```go
+// rbac.go:149 — STATIC fallback (no guard)
+if HasPermissionForRoute(r.URL.Path, r.Method, claims.Permissions) {
+    next.ServeHTTP(w, r)
+    return
+}
+```
 
-**历史项复查**：
-| # | 发现 | 状态 |
-|---|------|------|
-| D1 | LDAP InsecureSkipVerify | ✅ FIXED (comment-only, actual code loads CA cert) |
-| D2 | HMAC secret 版本管理 | ✅ FIXED (commit 63ed9054f, 12 refs) |
-| D3 | canonicalization 碰撞 | ✅ FIXED (length-prefix %04x) |
-| A4 | TOTP secret 加密 | ✅ FIXED (3 refs in mfa_pg_repo) |
-| A1 | TLS MinVersion | ✅ 7处 TLS 1.2+ |
+**Exploitation scenario:**
+1. Admin creates OAuth client with `users:write` scope for M2M integration
+2. Dynamic RBAC has admin-level rule for `/api/v1/users` → blocks M2M token (adminProtected guard)
+3. DB/Redis outage → resolver falls back to static logic
+4. M2M token with `users:write` permission now passes `HasPermissionForRoute` → **access granted**
+5. M2M token can access admin user management during the outage
 
-**错误吞噬增长**: 20→25处 `_, _ =` (增加5处, P2, 建议排查新增来源)
-**近期 commit**: R1-02 social login migration + ERP stability — 无安全回归
-**新发现**: 无 P0/P1。错误吞噬增加 5 处标记为 P3 跟踪。
+The comment at rbac.go:147-148 explicitly acknowledges this is intentional: "M2M tokens (client_credentials) carry permissions but no admin scope. If the token has the required permission for this route, allow it."
 
-### 巡航 #4 | 维度 5: 输入验证与注入防护 | 2026-07-23
+**Impact:** Defense-in-depth gap. M2M tokens with specific permission scopes can bypass admin route protection during RBAC resolver unavailability (startup, DB/Redis outage, or before WarmStart completes).
 
-**历史项复查**：
-| # | 发现 | 状态 | 变化 |
-|---|------|------|------|
-| E1 | fmt.Sprintf SQL 列名 | ⚠️ 32处 (常量列名, 无直接注入) | 无变化 |
-| E2 | map_repo 表名 fmt.Sprintf | ⚠️ 5处 (调用方传硬编码, 无用户输入) | 无变化 |
-| E3 | 错误吞噬 `_, _ =` | ⚠️ 25处 | 无变化 (巡航#3→#4) |
-| P2-11 | redirect_uri 未白名单 | ❌ OPEN (第2轮) | 未修 |
-| P2-13 | email 未验证即合并 | ❌ OPEN (第2轮) | 未修 |
+---
 
-**安全实践确认 ✅**：
-- Body size limit: gateway MaxBytesReader ✅
-- 无 template.HTML 使用（无 XSS 模板渲染）✅
-- 参数化查询占位符 ($1/$2) 广泛使用 ✅
-- OAuth HTML 响应 (server.go:426,1336) 是静态表单，无用户输入插值 ✅
+### P2-7: HasScope Function Accepts `*` as Wildcard (Latent Risk)
 
-**近期 commit**: R1-03 org restructure ltree cast — 无注入风险（参数化）。ERP stability cycles — 无安全回归。
+**Severity:** P2 (Low — latent)
+**Location:** `services/gateway/internal/middleware/apikey.go:90-91`
 
-**结论**: 无新 P0/P1。历史 P2 项稳定（E1/E2/E3 无恶化）。P2-11/13 第2轮未修，下轮（第3轮）如仍未修将 DM 提醒。
+```go
+func HasScope(ctx context.Context, scope string) bool {
+    // ...
+    for _, s := range scopes {
+        if s == scope || s == "*" {  // ← wildcard bypass
+            return true
+        }
+    }
+    return false
+}
+```
 
-### 巡航 #5 | 维度 6: 审计与可观测性 | 2026-07-23
+If any production code path uses `HasScope` to check API key permissions, an API key with `*` scope would bypass all checks. Currently only used in tests, but represents a latent risk if adopted in production code. Combined with P2-5 (no scope validation), this could allow `*` scope to bypass any `HasScope`-based check.
 
-**历史项复查**：
-| # | 发现 | 状态 |
-|---|------|------|
-| F1 | HMAC secret 缺失告警 | ✅ FIXED (ERROR log) |
-| F2 | log.Printf → slog 迁移 | ⚠️ 280处仍用 log.Printf (P3, 渐进迁移) |
-| F3 | 告警规则 DB 加载 | ✅ FIXED (LoadAlertRulesFromDB + migration 046) |
-| D2/D3 | hash chain 版本管理+canonical | ✅ FIXED |
-| E3 | 错误吞噬 | ⚠️ 25处 (稳定，无恶化) |
-| P2-11 | redirect_uri 未白名单 | ❌ 第3轮未修 → DM 提醒 |
-| P2-12 | socialStates 内存态 | ❌ 第3轮未修 → DM 提醒 |
-| P2-13 | email 未验证即合并 | ❌ 第3轮未修 → DM 提醒 |
+---
 
-**可观测性状态**：
-- Prometheus metrics: 38处 ✅
-- OTel tracing: 3处 ⚠️ (覆盖面极低)
-- Security headers live: HSTS + X-Content-Type + CORS ✅
-- 错误吞噬稳定在 25 处 ✅ (无恶化)
+## Updated Summary
 
-**新发现**：无 P0/P1
-**近期 commit**: R1-03 org restructure + API key gap doc — 无安全回归
+| ID | Severity | Finding | Status |
+|----|----------|---------|--------|
+| P0-1 | Critical | Credential Vault auth bypass — any user's secrets readable/writable without auth | New |
+| P1-1 | High | System bootstrap unauthenticated — admin creation without auth on fresh deploy | New |
+| P1-2 | Medium | System status info disclosure without auth | New |
+| P1-3 | Medium | Dashboard endpoint public access | New |
+| P1-4 | High | Broken wildcard bypass in JWTAuth for API keys — fail-closed logic bug, latent P0 if "fixed" | New |
+| P2-4 | Medium | RequireAdminScope bypasses admin scope check for API key requests (claims.Subject == "") | New |
+| P2-5 | Medium | No scope validation on API key creation — arbitrary scopes accepted | New |
+| P2-6 | Medium | Static RBAC fallback lacks adminProtected guard — M2M token bypass during outages | New |
+| P2-7 | Low | HasScope function accepts `*` as wildcard — latent risk | New |
+| Info-1 | Info | Dead code: apiKeyHasWriteAccess empty loop body | New |
 
-### 巡航 #6 | 维度 7: 架构与运维安全 | 2026-07-23
+## Commit reviewed
 
-**历史项复查**：
-| # | 发现 | 状态 | 变化 |
-|---|------|------|------|
-| G1 | 无服务间 mTLS | ❌ OPEN (0处ClientAuth) | 无变化 P2 |
-| G2 | DB 凭据共享 | ⚠️ 10处 ggid-k3s 引用 | 无变化 P2 |
-| G3 | 无 KMS/Vault | ❌ OPEN | 无变化 P2 |
-| G4 | Helm chart | ✅ EXISTS (deploy/helm/) | 已有 |
-| G5 | govulncheck CI | ⚠️ security.yml 存在但无 vulncheck | P2 |
-| C1 | revokedTokens | ✅ FIXED (DB-backed) | — |
-| C2 | dpopCache | ❌ OPEN | 第4轮 |
-| C4 | stateStore | ❌ OPEN (Redis-first) | 第4轮 |
-| E3 | 错误吞噬 | ⚠️ 26处 (+1) | 微增 |
-| 硬编码密钥 | — | ✅ 0处 | 全清除 |
+```
+d249d8452 fix(audit): DeleteJSON only on successful in-memory delete
+```
 
-**新发现**：
-| # | 发现 | 严重度 |
-|---|------|--------|
-| G6 | 新增 sync.Map 安全态扩散 | P2 | scopeLifecycleStore/scopeCache/versionCache/receiptCache 4处新增（OAuth service），均非核心安全态但多实例不一致 |
-| — | Helm chart 目录已存在 | ✅ | deploy/helm/ggid 可用 |
+---
 
-**近期 commit**: R3-01 SDK gap fixes + R3-03 multi-region HA design — 无安全回归
-**结论**: 无 P0/P1。硬编码密钥清零确认。架构级 P2 项（mTLS/KMS/DB隔离）需产品迭代决策。
+## Attack Surface #3: OAuth/OIDC Flow — redirect_uri / state CSRF / PKCE / token leakage
 
-### 巡航 #7 | 维度 1: 认证与凭据安全（第二循环） | 2026-07-23
+### P0-3: Authentication Bypass in /oauth/authorize — user_id Query Parameter Injection
 
-**全部历史项状态不变**：S1-S4 ✅, TOTP加密 ✅, 硬编码密钥 0, InsecureSkipVerify(仅注释) ✅
-**sync.Map**: 13处（稳定，非核心安全态）
-**错误吞噬**: 26处（稳定）
-**近期 commit**: ITDR dashboard alignment + UX fixes — 无安全回归
-**结论**: 无新 P0/P1，无变化。第二循环开始，基线稳固。
+**Severity:** P0 (Critical)
+**CVSS:** 9.1 (AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:N)
 
-### 巡航 #8 | 维度 2: 授权与访问控制（第二循环） | 2026-07-23
+**Affected endpoint:** `GET/POST /oauth/authorize`
 
-**全部历史项稳定**：scope-only matching ✅, 硬编码密钥 0, InsecureSkipVerify 0, 匿名 401
-**P2-13 状态更新**: ✅ FIXED — commit 6856bf8b5 加入 EmailVerified 字段到 social_handler.go
-**错误吞噬**: 26处（稳定）
-**近期 commit**: social EmailVerified + posture handler context leak fix — 正面安全改进
-**结论**: 无新 P0/P1。P2-13 从 OPEN → FIXED。
+**Root cause:**
 
-### 巡航 #9 | 维度 3: 会话与令牌安全（第二循环） | 2026-07-23
+The `/oauth/authorize` handler accepts `user_id` directly from the query string with no session/JWT verification:
 
-**历史项全部不变**：C1 ✅ FIXED, C2/C4 ❌ OPEN (P2), Refresh TOCTOU ❌ (P2), PKCE ✅, 硬编码 0
-**错误吞噬**: 26（稳定）
-**近期 commit**: console password settings + ITDR a11y — 无安全回归
-**结论**: 无新 P0/P1，无变化。
+```go
+// server.go:462
+userIDStr := r.URL.Query().Get("user_id")
+if userIDStr == "" {
+    userIDStr = r.Header.Get("X-User-ID")
+}
+// ... auth_ticket fallback only when userIDStr is still empty ...
+userID, err := uuid.Parse(userIDStr)
+if err != nil {
+    renderDynamicLoginPage(w, r, tenantID, authMethods, os.Getenv("GGID_URL"))
+    return
+}
+// Proceeds to issue authorization code for userID — no authentication check!
+```
 
-### 巡航 #10 | 维度 4: 传输与存储加密（第二循环） | 2026-07-23
-全部历史项 ✅ FIXED，无变化。HSTS live 确认。静默记录。
+The `InternalAuthPathOnly` middleware (pkg/middleware/internal_auth.go:183-196) only protects paths containing `/internal/`. The `/oauth/authorize` endpoint is public and has no JWT/session verification middleware. The `user_id` query parameter is trusted as proof of authentication.
 
-### 巡航 #11 | 维度 5: 输入验证与注入防护（第二循环） | 2026-07-23
+**Attack scenario:**
 
-**历史项复查**：
-| # | 发现 | 状态 | 变化 |
-|---|------|------|------|
-| E1 | fmt.Sprintf SQL 列名 | ⚠️ 32处 | 无变化 |
-| E2 | map_repo 表名 fmt.Sprintf | ⚠️ 19处 (+14新增) | 增长来自新功能 |
-| E3 | 错误吞噬 | ⚠️ 26处 | 稳定 |
-| P2-11 | redirect_uri 白名单 | ✅ FIXED (5处匹配) | 从 OPEN→FIXED |
-| P2-13 | EmailVerified | ✅ FIXED | 巡航#8已确认 |
-| — | 硬编码密钥 | ✅ 0 | 稳定 |
-| — | InsecureSkipVerify | ✅ 0 | 稳定 |
-| — | Body size limit | ✅ 6处 | 稳定 |
+1. Attacker registers an OAuth client via DCR or uses an existing public client
+2. Attacker sends: `GET /oauth/authorize?client_id=<client>&redirect_uri=https://attacker.com/cb&response_type=code&user_id=<victim_uuid>&state=xxx&scope=openid`
+3. Server issues an authorization code and HTTP 302 redirects to `https://attacker.com/cb?code=<auth_code>&state=xxx`
+4. Attacker exchanges the code at `/oauth/token` for access_token + id_token + refresh_token
 
-**新发现**：无 P0/P1。E2 增长（5→19）来自新 map_repo 通用表名拼接，调用方仍传硬编码表名（非用户输入），注入风险低但建议加白名单校验。
-**近期 commit**: UX fixes + ERP stability cycles — 无安全回归
-**结论**: P2-11 从 OPEN → FIXED。基线稳定。
+**Requirements:** Attacker needs the victim's user UUID (obtainable via API enumeration, information disclosure, or social engineering).
 
-### 巡航 #12 | 维度 6: 审计与可观测性（第二循环） | 2026-07-24
+**Evidence:**
+- `server.go:462` — `userIDStr := r.URL.Query().Get("user_id")` — no verification
+- `server.go:484` — `userID, err := uuid.Parse(userIDStr)` — only validates format, not session
+- `server.go:562-575` — `CreateAuthorizationCode` called with unverified `userID`
+- No JWT/session middleware on `/oauth/authorize` — `InternalAuthPathOnly` skips non-`/internal/` paths
 
-**历史项复查**：
-| # | 发现 | 状态 | 变化 |
-|---|------|------|------|
-| F1 | HMAC secret 缺失告警 | ✅ FIXED | — |
-| F3 | 告警规则 DB 加载 | ✅ FIXED | — |
-| E3 | 错误吞噬 | ⚠️ 28处 (+2) | 微增 |
-| — | 硬编码密钥 | ✅ 0 | 稳定 |
-| — | InsecureSkipVerify | ✅ 0 | 稳定 |
-| — | sync.Map 安全态 | ⚠️ 13处 | 稳定 |
-| — | tamper-check | ✅ is_clean=True, 1450 verified | 根因修复后稳定 |
+**Recommendation:** Require a verified session token (JWT cookie or auth_ticket) before accepting `user_id`. The `user_id` query parameter must never be trusted as authentication proof.
 
-**新发现**：无 P0/P1。错误吞噬 26→28 (+2)，增量来自新功能代码。
-**近期 commit**: SDK submodules + release.yml fixes — 无安全回归
-**结论**: tamper-check 连续 clean，hash 计算根因修复确认有效。
+---
 
-### 巡航 #13 | 维度 7: 架构与运维安全（第二循环） | 2026-07-24
+### P1-3: State Parameter CSRF Protection Non-Functional — ValidateState Never Called
 
-全部历史项不变：G1 mTLS ❌, G2 DB creds ⚠️ 10, G5 govulncheck ⚠️, 硬编码 0, 错误吞噬 28, sync.Map 13。
-Tamper-check: ✅ is_clean=True, 45 verified (fresh boot 后少量事件，全部正确)。
-近期 commit: S14 MCP deploy + UX fixes — 无安全回归。HSTS/X-Frame/X-Content live ✅。
-无新 P0/P1，静默记录。
+**Severity:** P1 (High)
+**CVSS:** 7.5 (AV:N/AC:L/PR:N/UI:R/S:U/C:H/I:H/A:N)
 
-### 巡航 #14 | 维度 1: 认证与凭据安全（第三循环） | 2026-07-24
+**Affected endpoint:** `POST /oauth/token` (authorization_code grant)
 
-全部历史项不变：硬编码 0, LDAP TLS ✅, TOTP encrypt ✅, 错误吞噬 28, 匿名 401。
-S1 scope filter 在 binary 中未检出（fresh boot 后可能重部署了旧版二进制？需关注）。
-近期 commit: policy POST handler + ERP stability — 无安全回归。
-无新 P0/P1，静默记录。
+**Root cause:**
 
-### 巡航 #15 | 维度 2: 授权与访问控制（第三循环） | 2026-07-24
+The state parameter is stored during `/authorize` (oauth_service.go:480-492) and the `ValidateState` method (oauth_service.go:1610-1639) correctly implements one-time-use semantics with Redis `GetDel` + in-memory fallback. However, `ValidateState` is **never called** from `ExchangeAuthorizationCode` or the token endpoint handler.
 
-全部历史项不变：裸角色名 0, 硬编码 0, 错误吞噬 28, sync.Map 13, 匿名 401, RBAC 测试全绿。
-近期 commit `2cb2ae717` fix(rbac): M2M tokens with matching permissions bypass admin scope check — 需关注是否放宽了检查。
-无新 P0/P1，静默记录。
+**Evidence:**
 
-### 巡航 #16+#17 | 维度 3+4: 会话/令牌 + 传输/加密（第三循环） | 2026-07-24
+1. State is stored in `CreateAuthorizationCode`:
+```go
+// oauth_service.go:480-492
+if req.State != "" {
+    stateKey := fmt.Sprintf("oauth:state:%s:%s", req.ClientID, req.State)
+    // ... stored in Redis or sync.Map ...
+}
+```
 
-全部历史项不变。C1 ✅ FIXED (DB-backed), C2/C4 ❌ OPEN (P2 sync.Map), PKCE ✅, LDAP TLS ✅, HMAC versioning ✅, TOTP encrypt ✅, TLS 1.2+ ✅ (7处), 硬编码 0, InsecureSkipVerify 0, 错误吞噬 28, 匿名 401, HSTS ✅.
-近期 commit: ERP stability cycles only — 无安全回归。无新 P0/P1，静默记录。
+2. `ValidateState` exists and is correct (one-time use, TTL, cross-client isolation):
+```go
+// oauth_service.go:1610
+func (s *OAuthService) ValidateState(clientID, state string) bool { ... }
+```
 
-### 巡航 #18+#19 | 维度 5+6: 输入验证+审计可观测（第三循环） | 2026-07-24
-全部历史项不变。E1 32, E2 19, 错误吞噬 28, 硬编码 0, InsecureSkipVerify 0, XSS username 验证仍缺失(P2), body size 6. 近期 commit: login a11y + ERP cycles — 无安全回归. 无新 P0/P1，静默记录。
+3. BUT `ExchangeAuthorizationCode` (oauth_service.go:522-631) never calls `ValidateState`:
+- Steps 1-9: client lookup, secret verify, code consume, redirect_uri match, PKCE verify, token issuance
+- No state validation step anywhere
 
-### 巡航 #20 | 维度 7: 架构与运维（第三循环） | 2026-07-24
-全部不变：G1 mTLS ❌, G2 DB creds 6 (↓from 10, arch_pm 清理了4处), 硬编码 0, sync.Map 13, 错误吞噬 28. CAE 执行 ✅ (arch_pm P0修复). Consent cascade ✅ (21处正确表引用). Tamper clean ✅ (404 verified). Helm migration Job 新增 ✅. 无新 P0/P1，静默记录。
+4. The token endpoint handler (server.go:690-699) does not set `State` in `TokenExchangeRequest`:
+```go
+resp, tokenErr = oauthSvc.ExchangeAuthorizationCode(ctx, &service.TokenExchangeRequest{
+    TenantID:     tenantID,
+    GrantType:    grantType,
+    Code:         r.FormValue("code"),
+    RedirectURI:  r.FormValue("redirect_uri"),
+    ClientID:     clientID,
+    ClientSecret: clientSecret,
+    CodeVerifier: r.FormValue("code_verifier"),
+    Audience:     r.FormValue("audience"),
+    // State is NOT set — field exists in struct but is never populated
+})
+```
 
-### 巡航 #21+#22 | 维度 1+2: 认证+授权（第四循环） | 2026-07-24
-全部不变。S1 scope filter 在源码中存在（binary strings 未检出可能因编译优化），硬编码 0, LDAP TLS ✅, TOTP encrypt ✅, 错误吞噬 28, 匿名 401. 近期 commit: UX a11y + ERP cycles — 无安全回归. 无新 P0/P1，静默记录。
+5. Grep confirms `ValidateState` is only referenced in test files — never called from production code:
+```
+grep ValidateState services/oauth/internal/service/oauth_service.go → only definition at line 1610
+grep ValidateState services/oauth/internal/server/server.go → no matches
+```
 
-### 巡航 #23-25 | 维度 3-5 | 第四循环 | 2026-07-24
-全部不变。revoke DB-backed ✅, dpopCache ❌ OPEN, stateStore ❌ OPEN, PKCE ✅, TLS 1.2+ ✅(7), 硬编码 0, 错误吞噬 28, 匿名 401. ERP stability cycles only. 无新 P0/P1，静默记录。
+**Impact:** CSRF protection per RFC 6749 §10.12 is completely non-functional. An attacker can initiate a token exchange without a valid state parameter. Combined with P0-3, this means the entire OAuth flow has no CSRF defense.
 
-### 巡航 #26 | 维度 6+7 | 第四循环 | 2026-07-24
-全部不变。secrets 0, swallow 28, sync.Map 13, anon 401, tamper clean (615 verified). 近期: bulk import + alias route — 无安全回归. 无新 P0/P1，静默记录。
+---
 
-### 巡航 #27 | 第五循环 | 2026-07-25
-secrets 0, swallow 28, anon 401, tamper clean (691 verified). 近期: social connectors route + ERP cycles. 无新 P0/P1，静默记录。
+### P1-4: Parameter Injection via Unencoded Values in consent_url
 
-### 巡航 #28 | 第五循环 | 2026-07-25
-secrets 0, swallow 28, anon 401, tamper clean (756). 近期: API key scope-based ACL (P0 fix, 正面安全改进) + a11y fixes. 无新 P0/P1，静默记录。
+**Severity:** P1 (High)
+**CVSS:** 6.5 (AV:N/AC:L/PR:N/UI:R/S:U/C:H/I:L/A:N)
 
-### 巡航 #29-30 | 第五循环 | 2026-07-25
-secrets 0, swallow 28, anon 401, tamper clean (834 verified). ERP stability cycles only. 无新 P0/P1，静默记录。
+**Affected endpoints:**
+- `GET /oauth/authorize` (consent_required response, server.go:538)
+- `POST /oauth/consent` (server.go:1179, 1187)
 
-### 巡航 #31 | arch_pm 20+ commits 安全影响评估 | 2026-07-25
+**Root cause:**
 
-**正面安全改进确认**：
-- ✅ CAE 条件访问策略执行（之前 stub，现在登录拦截）
-- ✅ API Key scope 强制执行（middleware.go:595 — read-only key 不能写）
-- ✅ Consent cascade 修复（21处正确表引用 refresh_tokens + sessions）
-- ✅ 硬编码密钥 0（稳定）
-- ✅ Tamper clean (898 verified)
+The `consent_url` and `redirect_url` are built by raw string concatenation without URL-encoding user-supplied parameters:
 
-**安全关注项**：
-- Bulk import 支持 plaintext 密码 — 需确认导入后是否触发 re-hash（P2）
-- impersonate crash 修复（31dae9639）— roles API 返回类型变化，需确认不引入提权面（观察）
-- Migration 050 创建 30+ 表 — 无安全风险（DDL only）
+```go
+// server.go:538 — consent_required response
+"consent_url": "/oauth/authorize?consent=true&client_id=" + clientID +
+    "&redirect_uri=" + redirectURI +
+    "&response_type=code&scope=" + scopeParam +
+    "&user_id=" + userIDStr,
+```
 
-**全部指标稳定**：secrets 0, swallow 28, sync.Map 13, anon 401. 无新 P0/P1.
-PATROL32: all stable, tamper clean 1030, no P0/P1
-PATROL33: secrets 0, swallow 29, sync.Map 13, anon 401, tamper still 2 crit (unrepaired events from prior round). No new P0/P1.
-PATROL34: secrets 0, swallow 29, anon 401, tamper still 2 crit (same unrepaired events), ERP cycles only. No new P0/P1.
-PATROL35: secrets 0, swallow 29, anon 401, tamper CLEAN (1330 verified). Hash chain fully repaired. No new P0/P1.
-PATROL36: secrets 0, swallow 29, anon 401, tamper CLEAN (1418). Impersonation JWT deployed (HS256 concern flagged). No new P0/P1.
-PATROL37: secrets 0, swallow 29, anon 401, tamper 5 NEW crit (hash path still inconsistent). commit 23dbee168 auth-guard fuzzy admin matching removed (positive). Needs repair+deploy audit.
-PATROL38: secrets 0, swallow 29, anon 401, tamper 12 crit (systemic hash path issue persists). DM'd PM with root cause fix suggestion.
-PATROL39: secrets 0, swallow 29, anon 401, tamper 46 crit (accelerating). API key scope P1 fix noted (f7f1f0c08, positive). DM'd PM.
+```go
+// server.go:1179 — consent approve handler
+authURL := "/oauth/authorize?consent=true&client_id=" + clientID +
+    "&redirect_uri=" + redirectURI +
+    "&response_type=code&scope=" + scopeParam +
+    "&state=" + state
+```
+
+```go
+// server.go:1187 — consent deny handler
+"redirect_url": redirectURI + "?error=access_denied&state=" + state,
+```
+
+**Note:** `BuildAuthorizeRedirectURL` (oauth_service.go:1584-1597) correctly uses `url.QueryEscape()` for `code` and `state`, but this function is NOT used in the consent flow paths above.
+
+**Attack scenario:**
+
+If `state` contains `&user_id=<attacker_uuid>`, the constructed URL becomes:
+```
+/oauth/authorize?consent=true&client_id=xxx&redirect_uri=xxx&response_type=code&scope=openid&state=abc&user_id=<attacker_uuid>
+```
+
+This injects `user_id` as a parameter, which (combined with P0-3) allows impersonation. Even without P0-3, parameter injection can override `scope`, `redirect_uri`, or `client_id`.
+
+**Recommendation:** Use `url.Values` and `Encode()` for all URL construction involving user-supplied parameters.
+
+---
+
+### P2-8: PKCE Not Enforced for Confidential Clients
+
+**Severity:** P2 (Medium)
+**CVSS:** 4.3 (AV:N/AC:H/PR:L/UI:N/S:U/C:L/I:L/A:N)
+
+**Root cause:**
+
+PKCE is enforced for public clients (oauth_service.go:430) and when `RequirePKCE` is explicitly set (line 433), but NOT for confidential clients by default:
+
+```go
+// oauth_service.go:428-435
+if client.IsPublic() && req.CodeChallenge == "" {
+    return "", errors.InvalidArgument("code_challenge is required for public clients")
+}
+if client.RequirePKCE && req.CodeChallenge == "" {
+    return "", errors.InvalidArgument("code_challenge is required for this client")
+}
+// No enforcement for confidential clients without RequirePKCE flag
+```
+
+OAuth 2.1 (draft §7.5) and RFC 9700 (BCP) recommend PKCE for ALL clients including confidential ones. While the PKCE implementation itself is correct (S256 only, `ValidatePKCE` rejects `plain` method at models.go:183), the enforcement gap leaves confidential clients vulnerable to authorization code interception if their transport is compromised.
+
+---
+
+### Info-2: No Token Leakage to Logs Found
+
+**Status:** Clean
+
+The token endpoint does not log access tokens, refresh tokens, authorization codes, or client secrets. The only logging in the token flow is:
+- `server.go:606` — Content-Type warning (no token values)
+- `oauth_service.go:1685-2003` — Refresh token rotation errors (no token values)
+
+No `slog`/`log.Printf` calls include token or code values.
+
+---
+
+### Info-3: redirect_uri Validation is Correct (Exact Match)
+
+**Status:** Clean
+
+`ValidateRedirectURI` (models.go:96-103) performs exact string comparison against registered URIs — no wildcard matching, no prefix matching, no path traversal. This is the correct approach per RFC 6749 §3.1.2.3.
+
+---
+
+## Summary — Attack Surface #3
+
+| ID | Severity | Finding | Status |
+|----|----------|---------|--------|
+| P0-3 | Critical | Authentication bypass via user_id query parameter in /oauth/authorize | New |
+| P1-3 | High | State CSRF protection non-functional — ValidateState never called | New |
+| P1-4 | High | Parameter injection via unencoded values in consent_url | New |
+| P2-8 | Medium | PKCE not enforced for confidential clients | New |
+| Info-2 | Info | No token leakage to logs found | Clean |
+| Info-3 | Info | redirect_uri validation is exact match (correct) | Clean |

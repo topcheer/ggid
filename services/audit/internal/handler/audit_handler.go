@@ -81,7 +81,7 @@ func (h *AuditHandler) ListEvents(ctx context.Context, req *pb.ListEventsRequest
 		Events: pbEvents,
 		Total:  int32(total),
 	}
-	if len(events) == pageSize {
+	if len(events) == pageSize && (page+1)*pageSize < total {
 		resp.NextPageToken = strconv.Itoa(page + 1)
 	}
 	return resp, nil

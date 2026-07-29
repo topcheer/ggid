@@ -2319,7 +2319,7 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 	mux.HandleFunc("/api/v1/oauth/dpop/verify", handleDPoPVerify)
 	mux.HandleFunc("/api/v1/oauth/token/dpop-bind", handleDPoPTokenBind)
 	mux.HandleFunc("/api/v1/oauth/token/dpop-verify", handleDPoPTokenVerify)
-	mux.HandleFunc("/api/v1/oauth/token-exchange-delegation", handleTokenExchangeDelegation)
+	mux.HandleFunc("/api/v1/oauth/token-exchange-delegation", handleTokenExchangeDelegation(oauthSvc))
 
 	// RAR (RFC 9396): consent preview for authorization_details.
 	mux.HandleFunc("/api/v1/oauth/rar/consent-preview", RARConsentPreviewHandler)
