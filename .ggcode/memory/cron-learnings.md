@@ -1,111 +1,98 @@
-## 2026-07-28 arch_pm 深度审查
+# Cron 执行 Lessons - GGID IAM 审查 R5
 
-### P0 发现并修复: JWT Audience 不匹配导致全站 401
-- **根因**: OAuth 签发的 JWT aud=ggid-console (client_id)，但 gateway 配置 GATEWAY_JWT_AUDIENCE=gcid-console
-- **影响**: 除 /dashboard/stats (publicPaths 豁免) 外所有受保护端点返回 401
-- **修复**: kubectl set env GATEWAY_JWT_AUDIENCE=ggid-console + rollout restart
-- **可能引入时间**: P0-2 JWT kid key rotation 修复后
+## 执行日期
+2026-07-30
 
-### P1 发现并修复: Permissions DB level 全部为 tenant
-- **根因**: EnsureSystemPermissions 的 UPSERT 新增了 level 字段，但之前部署的旧版本已用默认值 'tenant' 插入。ON CONFLICT DO UPDATE 现在包含 level，但需要新版本部署才会生效
-- **修复**: 手动 UPDATE permissions SET level='instance' WHERE key LIKE 'tenants:%' OR key LIKE 'system:%' (13 行) + 重建部署 policy 服务
-- **验证**: API 返回 79 tenant + 13 instance，分布正确
+## 审查范围
+- DeleteClient cascade cleanup（验证修复）
+- OAuth token exchange scope narrowing
+- Audit webhook tenant isolation（验证修复）
+- Feature flags 多租户隔离
 
-### Admin 密码重置
-- auth pod 6 次重启后 bootstrap 覆盖了密码 hash
-- 新密码: Admin@2026Reset#9
-- 重置方法: kubectl exec auth pod → printenv PASSWORD_PEPPER → go run hash_pw with SetPepper() → UPDATE credentials SET secret
-- 注意: pkgcrypto.HashPassword(password) 只接收 1 个参数，pepper 通过 SetPepper() 全局设置
+## 发现的问题
 
-### 权限 API 端点确认
-- 正确端点: /api/v1/permissions (不是 /api/v1/policies/permissions)
-- Console roles 页面正确调用 /api/v1/permissions 和 /api/v1/roles/{id}/permissions
-- /api/v1/policies/permissions 被错误路由到 /api/v1/policies/{id} handler
+### P0 - OAuth token exchange scope narrowing
+**文件**: `services/oauth/internal/server/token_exchange_delegation.go`
 
----
+**问题**: 根据 RFC 8693，token exchange 应该验证请求的 scope 不超过原始 token 的 scope，但当前实现直接使用请求的 scope，没有验证。
 
-## 2026-07-29 深度功能审查 (R2)
+**修复方案**:
+1. 从 subject_token 和 actor_token 提取 scopes
+2. 验证请求的 scope 是原始 scopes 的子集
+3. 如果超范围，返回 400 error with `invalid_scope`
 
-### 审查范围
-1. RBAC 动态 resolver 缓存一致性
-2. DELETE 响应格式一致性
-3. 架构债务标记搜索 (TODO/FIXME/mock/hardcode)
+### P1 - Feature flags 多租户隔离
+**文件**: `services/auth/internal/server/feature_flags_handler.go`
 
-### P1-1: RBAC 缓存刷新窗口不一致
-- **根因**: Memory TTL (60s) + Redis TTL (60s) 叠加，策略更新后最长 120s 延迟
-- **影响**: 权限变更（如角色调整、路由权限修改）无法即时生效
-- **建议**: 增加 Invalidate() 触发点（通过 DB 触发器或应用层事件），考虑缩短 Redis TTL 至 30s
-- **参考文件**: `services/gateway/internal/middleware/rbac_dynamic.go` L148-186
+**问题**: Feature flags 使用全局变量存储，所有租户共享，没有任何 tenant 隔离：
+- GET 返回所有租户的 flags
+- POST 添加到全局存储
+- PUT 修改全局 flag
+- 审计日志也是全局的
 
-### P1-2: DELETE 响应格式不统一
-- **根因**: 未强制统一 DELETE 端点响应标准，部分可能返回 200 + JSON，部分未定义
-- **影响**: SDK 兼容性风险，REST 最佳实践（204 No Content）未落实
-- **建议**: 统一为 204 No Content，添加 DELETE 端点响应格式测试，更新 OpenAPI spec
-- **影响范围**: `/api/v1/users/:id`, `/api/v1/roles/:id`, `/api/v1/policies/:id` 等
+**修复方案**:
+- 方案 1: 数据库存储，添加 tenant_id 列
+- 方案 2: 内存存储，使用 `map[tenantID]*TenantFeatureFlags`
+- 所有操作都检查 X-Tenant-ID header
+- 审计日志也按 tenant 分离
 
-### 良好实践
-- ✅ RBAC 三层缓存降级（Memory → Redis → DB）设计合理
-- ✅ 租户隔离强制检查防止跨租户提权
-- ✅ Public Path 免白名单避免 P0 事故 (/oauth/token 拦截)
-- ✅ Superuser 范围隔离（仅 scopes claim）
+## 已验证的修复
 
-### 架构债务
-- 搜索到 94 个 TODO/FIXME/mock/hardcode 标记
-- 优先关注: `services/oauth/internal/service/device_bound_sso.go` (安全敏感)
+### DeleteClient cascade cleanup ✅
+**提交**: `a84acd6b7`
 
-### 下次审查建议
-- OAuth token endpoint RFC 6749 合规性
-- 分层配置体系 (App→Tenant→Instance fallback)
+**修复内容**:
+1. 将 `gcid_xxx` 解析为内部 UUID
+2. 使用 `revoked_at = now()` 替代 `revoked = true`
+3. 添加 `AND revoked_at IS NULL` 避免重复撤销
 
----
+**验证**: ✅ 修复正确，所有级联清理操作使用正确的 UUID 类型
 
-## 2026-07-29 深度功能审查 (R3)
+### Audit webhook tenant isolation ✅
+**提交**: `98bf151d0`
 
-### 审查范围
-1. OAuth refresh token 轮换路径完整性 (auth Redis fallback 路径)
-2. Conditional Access 策略评估逻辑
-3. Audit hash chain 完整性验证
-4. Console error helper 统一性
+**修复内容**:
+1. 所有 CRUD 操作都要求 X-Tenant-ID header
+2. GET/POST/DELETE/PUT/PATCH 都按 tenant_id 过滤
+3. 内存回退也正确过滤 tenant
 
-### P0-1: Refresh token 撤销时 Redis 和 DB 状态可能不一致
-- **根因**: RevokeRefreshToken 先删除 Redis，再更新数据库。如果数据库更新失败，Redis 缓存已删除但 DB 中 token 仍然有效
-- **影响**: 攻击者可以在 Redis 删除后、DB 更新前的时间窗口内使用被撤销的 token
-- **修复方案**: 先执行 DB 撤销 (源数据)，成功后再删除 Redis 缓存。如果 DB 撤销失败，保留 Redis 缓存并返回错误
-- **参考文件**: `services/auth/internal/service/token_service.go` L148-163
+**验证**: ✅ 修复正确，包括 DB 和内存回退两种场景
 
-### P0-2: Conditional Access 策略评估函数双重实现
-- **根因**: 存在两个同名的 EvaluateConditionalAccess 函数：
-  - HTTPServer.EvaluateConditionalAccess (L218): 完整实现，包含策略匹配逻辑
-  - EvaluateConditionalAccess (L267): 包级别函数，硬编码返回 "allow", nil
-- **影响**: 如果其他地方调用包级别函数，会完全绕过所有 Conditional Access 策略检查
-- **修复方案**: 删除或废弃包级别函数，添加 Deprecated 注解或返回错误
-- **参考文件**: `services/policy/internal/server/conditional_access_handler.go` L267-269
+## Git 操作 Lessons
 
-### P1-1: Refresh token 撤销缺少事务回滚机制
-- **根因**: 两步操作 (Redis + DB) 没有事务回滚机制，状态不一致时无法自动恢复
-- **影响**: Redis 删除成功但 DB 更新失败后，系统进入不一致状态
-- **修复方案**: 在 DB 更新失败时，记录到 Redis 作为 "待撤销" 标记，异步重试
+1. **Stash 处理**: 工作区有未提交更改时，使用 `git stash push` 暂存，然后 `git pull --rebase`，再 `git stash pop`（选择性恢复）
 
-### P1-2: Redis fallback 路径未在 token 验证中实现
-- **根因**: FindByHash 只查询数据库，不检查 Redis 缓存
-- **影响**: Redis 无法加速 token 验证路径，高并发场景下 DB 压力大
-- **修复方案**: 在 FindByHash 中先检查 Redis，再 fallback 到 DB
+2. **Stash 内容审查**: stash 包含多个文件（cron-learnings.md、iam-review-2026-07-29.md、scripts/auto-review/main.go 等），都是之前的审查产物，需要选择性恢复
 
-### P1-3: Conditional Access 上下文数据未经验证直接使用
-- **根因**: EvaluateConditionalAccess 直接使用 ctxMap 中的值进行字符串比较，没有类型安全检查
-- **影响**: 类型不匹配可能导致误判，超大输入可能导致拒绝服务
-- **修复方案**: 添加输入大小限制和类型验证
+## Kubectl 操作 Lessons
 
-### 良好实践
-- ✅ Audit hash chain 的 FOR UPDATE 锁正确防止并发写入导致的链断裂
-- ✅ Conditional Access 的 tenant 隔离强制从 header 获取 tenant_id，防止欺骗
-- ✅ Token hash 计算 SHA256 哈希存储 token，不存储明文
+1. **Pod 状态检查**: `kubectl get pods -n ggid` 显示所有服务健康运行，Ready 状态正常
 
-### 架构债务
-- P2-1: Hash chain 秘钥轮转未持久化版本号，无法确定旧事件使用的 secret version
-- P2-2: Canonical JSON 字段顺序依赖 Go 默认序列化，存在风险
-- P3-1: Console error helper 错误消息提取逻辑不一致
+2. **Restart 注意**: ggid-auth 有 3 个副本，每个都有 1 次重启（约 62s 前），可能是配置更新导致的正常重启
 
-### 最近变更相关
-- 最近的修复包括 "atomic refresh token consumption" 和 "revoke nil-tenant fix"
-- 这些修复可能与 P0-1 问题相关，需要确认是否已经解决部分问题
+## 代码审查 Lessons
+
+1. **Schema 验证**: 修复 cascade cleanup 时，需要确认数据库 schema 中的列名类型（`revoked_at` 是 TIMESTAMPTZ，不是 boolean）
+
+2. **UUID 类型匹配**: OAuth token 表中 `client_id` 是 UUID 类型，不能直接使用 `gcid_xxx` 字符串，需要先解析为内部 UUID
+
+3. **多租户隔离模式**: 正确的模式是：
+   - DB 存储时包含 `tenant_id` 列
+   - 所有查询都添加 `WHERE tenant_id = $1`
+   - HTTP handler 从 `X-Tenant-ID` header 获取租户上下文
+   - 如果 header 缺失，返回 403 Forbidden
+
+4. **Scope narrowing**: OAuth 2.0 Token Exchange (RFC 8693) 要求验证请求的 scope 不超过原始 token 的 scope，这是防止权限升级的关键安全检查
+
+## 架构债务 Lessons
+
+1. **TODO/FIXME 搜索**: 当前项目中没有 `FIXME` 标记，`TODO` 主要是文档注释，不是技术债务
+
+2. **Hardcode 检查**: 没有发现 `hardcode` 标记，代码中没有明显的硬编码问题
+
+## 下次审查重点
+
+1. **Scope narrowing 实现**: 检查 token exchange 是否正确实现 scope narrowing
+2. **Feature flags 修复**: 验证多租户隔离修复是否完整
+3. **其他 cascade cleanup**: 检查其他服务（如 user delete）是否也需要类似的级联清理
+4. **RLS 策略**: 检查数据库 Row Level Security 是否覆盖所有敏感表

@@ -400,6 +400,14 @@ func (gw *Gateway) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Password reset page — user arrives here via email link with ?token=xxx
+	if r.URL.Path == "/reset-password" {
+		html := strings.ReplaceAll(hostedResetPasswordHTML, "__TENANT_ID__", resolveTenant(r))
+		w.Header().Set("Content-Type", "text/html; charset=utf-8")
+		_, _ = w.Write([]byte(html))
+		return
+	}
+
 	// Device code approval page (RFC 8628) — used by CLI and other device flows
 	if r.URL.Path == "/device" {
 		html := strings.ReplaceAll(hostedDeviceApproveHTML, "__TENANT_ID__", resolveTenant(r))
