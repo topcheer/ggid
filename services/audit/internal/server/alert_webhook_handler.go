@@ -81,15 +81,18 @@ func (s *HTTPServer) handleAlertWebhooks(w http.ResponseWriter, r *http.Request)
 
 	case http.MethodDelete:
 		id := r.URL.Query().Get("id")
+		if id == "" {
+			writeJSON(w, http.StatusBadRequest, map[string]string{"error": "id required"})
+			return
+		}
+		// P0: Require tenant context — reject if missing to prevent cross-tenant BOLA
+		tid := r.Header.Get("X-Tenant-ID")
+		if tid == "" {
+			writeJSON(w, http.StatusForbidden, map[string]string{"error": "missing tenant context"})
+			return
+		}
 		if s.pool != nil {
-			// P0-1: Filter by tenant to prevent cross-tenant BOLA
-			tid := r.Header.Get("X-Tenant-ID")
-			var err error
-			if tid != "" {
-				_, err = s.pool.Exec(r.Context(), `DELETE FROM audit_alert_webhooks WHERE id::text = $1 AND tenant_id::text = $2`, id, tid)
-			} else {
-				_, err = s.pool.Exec(r.Context(), `DELETE FROM audit_alert_webhooks WHERE id::text = $1`, id)
-			}
+			_, err := s.pool.Exec(r.Context(), `DELETE FROM audit_alert_webhooks WHERE id::text = $1 AND tenant_id::text = $2`, id, tid)
 			if err == nil {
 				writeJSON(w, http.StatusOK, map[string]string{"status": "deleted"})
 				return
