@@ -173,10 +173,12 @@ func startTokenCleanup(ctx context.Context, dbURL string) {
 			`); err == nil {
 				log.Printf("cleanup: deleted %d expired id-token records", tag.RowsAffected())
 			}
-			// Delete expired/revoked OIDC refresh tokens (oidc_refresh_tokens table).
+			// Delete revoked OIDC refresh tokens after 7-day retention window,
+			// and expired tokens after 30 days. Keeps revoked_at for forensics.
 			if tag, err := pool.Exec(ctx, `
 				DELETE FROM oidc_refresh_tokens
-				WHERE revoked = true OR created_at < NOW() - INTERVAL '30 days'
+				WHERE (revoked = true AND revoked_at < NOW() - INTERVAL '7 days')
+				OR created_at < NOW() - INTERVAL '30 days'
 			`); err == nil {
 				log.Printf("cleanup: deleted %d expired/revoked oidc_refresh_tokens", tag.RowsAffected())
 			}

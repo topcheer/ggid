@@ -15,12 +15,18 @@ import (
 
 // MFAService handles TOTP device registration and verification.
 type MFAService struct {
-	repo repository.MFADeviceRepository
+	repo           repository.MFADeviceRepository
+	backupCodeRepo BackupCodeRepository
 }
 
 // NewMFAService creates a new MFAService.
 func NewMFAService(repo repository.MFADeviceRepository) *MFAService {
 	return &MFAService{repo: repo}
+}
+
+// NewMFAServiceWithBackupCodes creates MFAService with backup code repo for cascade cleanup.
+func NewMFAServiceWithBackupCodes(repo repository.MFADeviceRepository, bcr BackupCodeRepository) *MFAService {
+	return &MFAService{repo: repo, backupCodeRepo: bcr}
 }
 
 // SetupResponse is returned by SetupMFA.
@@ -183,7 +189,21 @@ func (s *MFAService) DisableMFA(ctx context.Context, deviceID uuid.UUID) error {
 		return fmt.Errorf("tenant context required")
 	}
 
-	return s.repo.DeleteDevice(ctx, tc.TenantID, deviceID)
+	// Get device before deletion to know user/tenant for cascade check.
+	device, _ := s.repo.GetDeviceByID(ctx, tc.TenantID, deviceID)
+
+	if err := s.repo.DeleteDevice(ctx, tc.TenantID, deviceID); err != nil {
+		return err
+	}
+
+	// SECURITY: If this was the last MFA device, clean up backup codes
+	// to prevent orphaned codes from being used after MFA is disabled.
+	if device != nil && !s.HasMFAEnabled(ctx, tc.TenantID, device.UserID) {
+		if s.backupCodeRepo != nil {
+			_ = s.backupCodeRepo.DeleteAll(ctx, tc.TenantID, device.UserID)
+		}
+	}
+	return nil
 }
 
 // HasMFAEnabled returns true if the user has any enabled MFA device.
