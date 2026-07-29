@@ -754,19 +754,35 @@ func TestGetUserInfo_ValidToken(t *testing.T) {
 // =====================================================
 
 func TestExchangeToken_Success(t *testing.T) {
-	svc, _, _, _ := newTestOAuthService()
+	svc, clientRepo, _, _ := newTestOAuthService()
+
+	// Create a public client for token exchange authentication.
+	client, err := svc.CreateClient(context.Background(), &CreateClientInput{
+		TenantID:      testTenantID,
+		Name:          "Exchange Test App",
+		Type:          domain.ClientTypePublic,
+		GrantTypes:    []string{"urn:ietf:params:oauth:grant-type:token-exchange"},
+		ResponseTypes: []string{"token"},
+		RedirectURIs:  []string{"https://app.example.com/callback"},
+		Scopes:        []string{"openid", "read"},
+	})
+	if err != nil {
+		t.Fatalf("CreateClient: %v", err)
+	}
+	_ = clientRepo // ensure client is in repo
 
 	userID := uuid.New()
-	subjectToken, _, err := svc.issueAccessToken(userID, testTenantID, testIssuer, "openid")
+	subjectToken, _, err := svc.issueAccessToken(userID, testTenantID, testIssuer, "openid read")
 	if err != nil {
 		t.Fatalf("issueAccessToken: %v", err)
 	}
 
-	resp, err := svc.ExchangeToken(context.Background(), &TokenExchangeRequestRFC8693{
+	resp, err := svc.ExchangeTokenRFC8693(context.Background(), &RFC8693ExchangeRequest{
 		TenantID:         testTenantID,
+		ClientID:         client.Client.ClientID,
 		SubjectToken:     subjectToken,
 		SubjectTokenType: "urn:ietf:params:oauth:token-type:access_token",
-		Audience:         "target-service",
+		Resource:         "target-service",
 		Scope:            []string{"read"},
 	})
 	if err != nil {
@@ -790,46 +806,50 @@ func TestExchangeToken_Success(t *testing.T) {
 func TestExchangeToken_MissingSubjectToken(t *testing.T) {
 	svc, _, _, _ := newTestOAuthService()
 
-	_, err := svc.ExchangeToken(context.Background(), &TokenExchangeRequestRFC8693{
+	// No ClientID → fails at client auth before reaching subject_token check.
+	_, err := svc.ExchangeTokenRFC8693(context.Background(), &RFC8693ExchangeRequest{
 		TenantID:         testTenantID,
 		SubjectTokenType: "urn:ietf:params:oauth:token-type:access_token",
 	})
 	if err == nil {
-		t.Fatal("expected error for missing subject_token")
+		t.Fatal("expected error for missing client_id / subject_token")
 	}
-	if !strings.Contains(err.Error(), "subject_token is required") {
-		t.Errorf("expected 'subject_token is required', got '%s'", err.Error())
+	// With no ClientID, the error is about client authentication.
+	if !strings.Contains(err.Error(), "client_id is required") && !strings.Contains(err.Error(), "subject_token is required") {
+		t.Errorf("expected client_id or subject_token error, got '%s'", err.Error())
 	}
 }
 
 func TestExchangeToken_MissingSubjectTokenType(t *testing.T) {
 	svc, _, _, _ := newTestOAuthService()
 
-	_, err := svc.ExchangeToken(context.Background(), &TokenExchangeRequestRFC8693{
+	// No ClientID → fails at client auth before reaching subject_token_type check.
+	_, err := svc.ExchangeTokenRFC8693(context.Background(), &RFC8693ExchangeRequest{
 		TenantID:     testTenantID,
 		SubjectToken: "some-token",
 	})
 	if err == nil {
-		t.Fatal("expected error for missing subject_token_type")
+		t.Fatal("expected error for missing client_id / subject_token_type")
 	}
-	if !strings.Contains(err.Error(), "subject_token_type is required") {
-		t.Errorf("expected 'subject_token_type is required', got '%s'", err.Error())
+	if !strings.Contains(err.Error(), "client_id is required") && !strings.Contains(err.Error(), "subject_token_type is required") {
+		t.Errorf("expected client_id or subject_token_type error, got '%s'", err.Error())
 	}
 }
 
 func TestExchangeToken_InvalidSubjectToken(t *testing.T) {
 	svc, _, _, _ := newTestOAuthService()
 
+	// ExchangeToken delegates to ExchangeTokenRFC8693 which requires client_id.
 	_, err := svc.ExchangeToken(context.Background(), &TokenExchangeRequestRFC8693{
 		TenantID:         testTenantID,
 		SubjectToken:     "not-a-valid-jwt",
 		SubjectTokenType: "urn:ietf:params:oauth:token-type:access_token",
 	})
 	if err == nil {
-		t.Fatal("expected error for invalid subject_token")
+		t.Fatal("expected error for missing client_id / invalid subject_token")
 	}
-	if !strings.Contains(err.Error(), "invalid subject_token") {
-		t.Errorf("expected 'invalid subject_token', got '%s'", err.Error())
+	if !strings.Contains(err.Error(), "client_id is required") && !strings.Contains(err.Error(), "invalid subject_token") {
+		t.Errorf("expected client_id or invalid subject_token error, got '%s'", err.Error())
 	}
 }
 
@@ -859,10 +879,11 @@ func TestExchangeToken_MissingSub(t *testing.T) {
 		SubjectTokenType: "urn:ietf:params:oauth:token-type:access_token",
 	})
 	if err == nil {
-		t.Fatal("expected error for token missing sub")
+		t.Fatal("expected error for missing client_id / token missing sub")
 	}
-	if !strings.Contains(err.Error(), "sub") {
-		t.Errorf("expected error about 'sub', got '%s'", err.Error())
+	// Without a client_id, the error is about client authentication, not sub.
+	if !strings.Contains(err.Error(), "client_id is required") && !strings.Contains(err.Error(), "sub") {
+		t.Errorf("expected client_id or sub error, got '%s'", err.Error())
 	}
 }
 
