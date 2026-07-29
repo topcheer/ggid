@@ -3396,6 +3396,15 @@ func (s *OAuthService) JWTBearerGrant(ctx context.Context, req *JWTBearerRequest
 		return nil, fmt.Errorf("assertion sub must be a valid user ID")
 	}
 
+	// SECURITY (RFC 8705): Verify sub maps to a known user in the tenant.
+	if s.pool != nil {
+		var exists bool
+		_ = s.pool.QueryRow(ctx, `SELECT EXISTS(SELECT 1 FROM users WHERE id = $1 AND tenant_id = $2)`, userID, req.TenantID).Scan(&exists)
+		if !exists {
+			return nil, fmt.Errorf("assertion sub does not match any known user")
+		}
+	}
+
 	// Issue a GGID access token for this user.
 	now := time.Now()
 	expiresAt := now.Add(1 * time.Hour)

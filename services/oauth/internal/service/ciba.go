@@ -16,24 +16,24 @@ import (
 
 // BackchannelAuthRequest holds parameters for the CIBA flow.
 type BackchannelAuthRequest struct {
-	TenantID            uuid.UUID
-	ClientID            string
-	ClientSecret        string
-	Scope               string
-	ACRValues           string
-	LoginHint           string // hint: username, email, phone number
-	LoginHintToken      string // hint: JWT or opaque token
-	IDTokenHint         string // hint: existing ID token
-	BindingMessage      string // user-friendly message to display on auth device
-	UserCode            string // PIN the user must enter
-	RequestedExpiry     int    // requested lifetime of auth_req_id in seconds
-	Context             string // opaque context for the consumption device
+	TenantID        uuid.UUID
+	ClientID        string
+	ClientSecret    string
+	Scope           string
+	ACRValues       string
+	LoginHint       string // hint: username, email, phone number
+	LoginHintToken  string // hint: JWT or opaque token
+	IDTokenHint     string // hint: existing ID token
+	BindingMessage  string // user-friendly message to display on auth device
+	UserCode        string // PIN the user must enter
+	RequestedExpiry int    // requested lifetime of auth_req_id in seconds
+	Context         string // opaque context for the consumption device
 }
 
 // BackchannelAuthResponse is returned from the CIBA backchannel authentication endpoint.
 type BackchannelAuthResponse struct {
 	AuthReqID string `json:"auth_req_id"` // identifier to poll the token endpoint
-	ExpiresIn int    `json:"expires_in"`   // seconds until auth_req_id expires
+	ExpiresIn int    `json:"expires_in"`  // seconds until auth_req_id expires
 	Interval  int    `json:"interval"`    // minimum polling interval in seconds
 }
 
@@ -41,15 +41,16 @@ type BackchannelAuthResponse struct {
 type CIBAStatus string
 
 const (
-	CIBAStatusPending    CIBAStatus = "pending"
-	CIBAStatusApproved   CIBAStatus = "approved"
-	CIBAStatusDenied     CIBAStatus = "denied"
-	CIBAStatusExpired    CIBAStatus = "expired"
+	CIBAStatusPending  CIBAStatus = "pending"
+	CIBAStatusApproved CIBAStatus = "approved"
+	CIBAStatusDenied   CIBAStatus = "denied"
+	CIBAStatusExpired  CIBAStatus = "expired"
 )
 
 // cibaEntry stores a CIBA authentication request.
 type cibaEntry struct {
 	ClientID       uuid.UUID
+	ClientIDSrc    string // original gcid_xxx string for client matching
 	TenantID       uuid.UUID
 	UserID         uuid.UUID
 	Status         CIBAStatus
@@ -61,8 +62,8 @@ type cibaEntry struct {
 }
 
 const (
-	cibaDefaultExpiry = 300 // 5 minutes
-	cibaDefaultInterval = 5 // 5 seconds minimum polling
+	cibaDefaultExpiry   = 300 // 5 minutes
+	cibaDefaultInterval = 5   // 5 seconds minimum polling
 )
 
 var (
@@ -155,6 +156,7 @@ func (s *OAuthService) BackchannelAuthentication(ctx context.Context, req *Backc
 
 	s.cibaStoreRedis(ctx, authReqID, cibaEntry{
 		ClientID:       client.ID,
+		ClientIDSrc:    req.ClientID,
 		TenantID:       req.TenantID,
 		UserID:         userID,
 		Status:         CIBAStatusPending,
@@ -178,6 +180,14 @@ func (s *OAuthService) PollCIBAToken(ctx context.Context, tenantID uuid.UUID, au
 	entry, ok := s.cibaLoadRedis(ctx, authReqID)
 	if !ok {
 		return nil, &CIBAError{Err: "invalid_grant", Desc: "unknown or expired auth_req_id"}
+	}
+
+	// SECURITY (RFC 9126 §7): Only the originating client may poll for the token.
+	if clientID != entry.ClientID.String() && clientID != entry.ClientIDSrc {
+		return nil, &CIBAError{Err: "invalid_grant", Desc: "auth_req_id was not issued to this client"}
+	}
+	if tenantID != entry.TenantID {
+		return nil, &CIBAError{Err: "invalid_grant", Desc: "tenant mismatch"}
 	}
 
 	// Check expiry.
