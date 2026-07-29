@@ -30,18 +30,18 @@ const maxSessionsPerUser = 10
 // AuthService orchestrates the authentication workflow:
 // login, logout, register, refresh, password flows, session management, MFA.
 type AuthService struct {
-	cfg            *conf.Config
-	chain          *authprovider.Chain
-	credentialRepo CredentialRepo
-	tokenService   *TokenService
-	sessionService *SessionService
+	cfg             *conf.Config
+	chain           *authprovider.Chain
+	credentialRepo  CredentialRepo
+	tokenService    *TokenService
+	sessionService  *SessionService
 	passwordService *PasswordService
-	rateLimiter    *RateLimiter
-	identityClient IdentityClient
-	mfaService     *MFAService
-	backupCodeSvc  *BackupCodeService
-	emailService   *EmailService
-	emailSender    PasswordResetEmailSender
+	rateLimiter     *RateLimiter
+	identityClient  IdentityClient
+	mfaService      *MFAService
+	backupCodeSvc   *BackupCodeService
+	emailService    *EmailService
+	emailSender     PasswordResetEmailSender
 }
 
 // PasswordResetEmailSender sends password reset emails.
@@ -179,7 +179,9 @@ func (s *AuthService) Logout(ctx context.Context, refreshToken string) error {
 
 // getUserScopesAndPermissions resolves role names and fine-grained permissions separately.
 // Returns: roles (e.g. "Administrator") for JWT roles claim,
-//          permissions (e.g. "inventory:read") for JWT permissions claim.
+//
+//	permissions (e.g. "inventory:read") for JWT permissions claim.
+//
 // All permissions are explicit — no inheritance or admin bypass.
 func (s *AuthService) getUserScopesAndPermissions(ctx context.Context, tenantID, userID uuid.UUID) (roles []string, permissions []string) {
 	if s.identityClient != nil {
@@ -544,6 +546,20 @@ func (s *AuthService) IsAccountLocked(ctx context.Context, tenantID uuid.UUID, i
 	return count >= s.cfg.Password.MaxAttempts
 }
 
+// RemainingLoginAttempts returns how many more failed attempts before lockout.
+func (s *AuthService) RemainingLoginAttempts(ctx context.Context, tenantID uuid.UUID, identifier string) int {
+	key := fmt.Sprintf("ggid:lockout:%s:%s", tenantID, identifier)
+	count, err := s.rateLimiter.rdb.Get(ctx, key).Int()
+	if err != nil || count < 0 {
+		count = 0
+	}
+	remaining := s.cfg.Password.MaxAttempts - count
+	if remaining < 0 {
+		remaining = 0
+	}
+	return remaining
+}
+
 // RecordFailedLogin increments the failed attempt counter and locks if threshold reached.
 func (s *AuthService) RecordFailedLogin(ctx context.Context, tenantID uuid.UUID, identifier string) error {
 	key := fmt.Sprintf("ggid:lockout:%s:%s", tenantID, identifier)
@@ -722,8 +738,8 @@ func (s *AuthService) GetPasswordHistory(ctx context.Context, userID uuid.UUID) 
 			hashPrefix = hashPrefix[:12] + "..."
 		}
 		result = append(result, map[string]any{
-			"id":         h.ID.String(),
-			"created_at": h.CreatedAt.Format(time.RFC3339),
+			"id":          h.ID.String(),
+			"created_at":  h.CreatedAt.Format(time.RFC3339),
 			"hash_prefix": hashPrefix,
 		})
 	}

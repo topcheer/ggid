@@ -19,9 +19,9 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/redis/go-redis/v9"
 
-	ggiderrors "github.com/ggid/ggid/pkg/errors"
 	"github.com/ggid/ggid/pkg/audit"
 	"github.com/ggid/ggid/pkg/crypto"
+	ggiderrors "github.com/ggid/ggid/pkg/errors"
 	"github.com/ggid/ggid/pkg/i18n"
 	"github.com/ggid/ggid/pkg/social"
 	"github.com/ggid/ggid/pkg/sysconfig"
@@ -36,42 +36,42 @@ import (
 
 // Handler is the HTTP handler for the Auth Service.
 type Handler struct {
-	authSvc        *service.AuthService
-	mux            *http.ServeMux
-	socialReg      *social.Registry
-	hooks          *service.HookManager
-	idpConfigs     map[string]*service.IdPConfig
-	translator     *i18n.Translator
-	tsHandler      *TrustStoreHandler
-	sysconfigStore sysconfig.Store
-	auditPublisher *audit.Publisher
-	waCredStore    webauthn.CredentialStore
-	waHandler      *webauthn.Handler
-	revocationMgr  *service.SessionRevocationManager
-	breakGlassRepo  *repository.BreakGlassRepository
+	authSvc                 *service.AuthService
+	mux                     *http.ServeMux
+	socialReg               *social.Registry
+	hooks                   *service.HookManager
+	idpConfigs              map[string]*service.IdPConfig
+	translator              *i18n.Translator
+	tsHandler               *TrustStoreHandler
+	sysconfigStore          sysconfig.Store
+	auditPublisher          *audit.Publisher
+	waCredStore             webauthn.CredentialStore
+	waHandler               *webauthn.Handler
+	revocationMgr           *service.SessionRevocationManager
+	breakGlassRepo          *repository.BreakGlassRepository
 	authMethodPolicyRepo    *repository.AuthMethodPolicyRepository
 	passwordDeprecationRepo *repository.PasswordDeprecationRepository
-	enrollmentNudgeRepo    *repository.EnrollmentNudgeRepository
-	aaguidAllowlistRepo    *repository.AAGUIDAllowlistRepository
-	tapEngine              *tap.Engine
-	migrationEngine        *jitMigrationEngine
-	attrMapRepo            *attributeMappingRepo
-	pool                   *pgxpool.Pool
-	rdb                    *redis.Client
-	delRepo                *delegationRepo
-	tapPolicyRepo          *repository.TAPPolicyRepository
-	capRepo                *repository.ConditionalAccessRepository
-	caeRepo                *repository.CAERepository
-	policyCheckFn          PolicyCheckFunc
-	smsSender           service.SMSSender
-	otpService          *service.OTPService
-	memMapRepo          *authMemoryMapRepo
-	verificationRepo    *verificationRepo
-	emailRepo           *emailRepo
-	keyRotationRepo        *keyRotationRepo
-	registrationConfigRepo *registrationConfigRepo
-	internalSecret     string
-	internalPrevSecret string
+	enrollmentNudgeRepo     *repository.EnrollmentNudgeRepository
+	aaguidAllowlistRepo     *repository.AAGUIDAllowlistRepository
+	tapEngine               *tap.Engine
+	migrationEngine         *jitMigrationEngine
+	attrMapRepo             *attributeMappingRepo
+	pool                    *pgxpool.Pool
+	rdb                     *redis.Client
+	delRepo                 *delegationRepo
+	tapPolicyRepo           *repository.TAPPolicyRepository
+	capRepo                 *repository.ConditionalAccessRepository
+	caeRepo                 *repository.CAERepository
+	policyCheckFn           PolicyCheckFunc
+	smsSender               service.SMSSender
+	otpService              *service.OTPService
+	memMapRepo              *authMemoryMapRepo
+	verificationRepo        *verificationRepo
+	emailRepo               *emailRepo
+	keyRotationRepo         *keyRotationRepo
+	registrationConfigRepo  *registrationConfigRepo
+	internalSecret          string
+	internalPrevSecret      string
 }
 
 // New creates a new Auth Service HTTP handler.
@@ -121,6 +121,7 @@ func (h *Handler) SetInternalAuthSecret(secret, prevSecret string) {
 	h.internalSecret = secret
 	h.internalPrevSecret = prevSecret
 }
+
 // SetSysconfigStore injects the system config store for hot-reloadable settings.
 func (h *Handler) SetSysconfigStore(store sysconfig.Store) {
 	h.sysconfigStore = store
@@ -222,7 +223,7 @@ func (h *Handler) registerRoutes() {
 	h.mux.HandleFunc("/api/v1/auth/mfa/backup-codes", h.backupCodesRemaining) // GET alias
 	h.mux.HandleFunc("/api/v1/auth/mfa/backup-codes/generate", h.backupCodesGenerate)
 	h.mux.HandleFunc("/api/v1/auth/mfa/backup-codes/remaining", h.backupCodesRemaining)
-h.mux.HandleFunc("/api/v1/auth/mfa/backup", h.backupCodesGenerate) // Console alias
+	h.mux.HandleFunc("/api/v1/auth/mfa/backup", h.backupCodesGenerate) // Console alias
 
 	// Password policy config endpoint
 	h.mux.HandleFunc("/api/v1/auth/password/policy", h.passwordPolicy)
@@ -708,7 +709,12 @@ func (h *Handler) verifyCredentials(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		if h.authSvc.IsAccountLocked(r.Context(), tc.TenantID, req.Username) {
-			writeError(w, http.StatusLocked, "account locked")
+			writeJSON(w, http.StatusLocked, map[string]any{
+				"error":       "account locked",
+				"locked":      true,
+				"retry_after": 300,
+				"recovery":    "Use 'Forgot Password' or contact your administrator.",
+			})
 			return
 		}
 	}
@@ -719,7 +725,16 @@ func (h *Handler) verifyCredentials(w http.ResponseWriter, r *http.Request) {
 			_ = h.authSvc.RecordFailedLogin(r.Context(), tc.TenantID, req.Username)
 		}
 		h.authSvc.RecordLoginAttempt(r.Context(), req.Username, ip, userAgent, false, err.Error())
-		writeError(w, http.StatusUnauthorized, "invalid credentials")
+		// Provide remaining attempts for better UX
+		remaining := 5
+		if tc, terr := ggidtenant.FromContext(r.Context()); terr == nil {
+			remaining = h.authSvc.RemainingLoginAttempts(r.Context(), tc.TenantID, req.Username)
+		}
+		writeJSON(w, http.StatusUnauthorized, map[string]any{
+			"error":              "invalid credentials",
+			"remaining_attempts": remaining,
+			"max_attempts":       5,
+		})
 		return
 	}
 
@@ -1010,7 +1025,10 @@ func (h *Handler) changePassword(w http.ResponseWriter, r *http.Request) {
 		tokenStr := strings.TrimPrefix(authHeader, "Bearer ")
 		claims := jwt.MapClaims{}
 		_, err := jwt.ParseWithClaims(tokenStr, claims, func(tok *jwt.Token) (any, error) {
-			if _, ok := tok.Method.(*jwt.SigningMethodRSA); !ok { return nil, fmt.Errorf("unexpected signing method: %s", tok.Header["alg"]) }; return h.authSvc.PublicKey(), nil
+			if _, ok := tok.Method.(*jwt.SigningMethodRSA); !ok {
+				return nil, fmt.Errorf("unexpected signing method: %s", tok.Header["alg"])
+			}
+			return h.authSvc.PublicKey(), nil
 		})
 		if err != nil {
 			writeError(w, http.StatusUnauthorized, "invalid token")
@@ -1070,7 +1088,10 @@ func (h *Handler) handleSessions(w http.ResponseWriter, r *http.Request) {
 		tokenStr := strings.TrimPrefix(authHeader, "Bearer ")
 		claims := jwt.MapClaims{}
 		_, parseErr := jwt.ParseWithClaims(tokenStr, claims, func(tok *jwt.Token) (any, error) {
-			if _, ok := tok.Method.(*jwt.SigningMethodRSA); !ok { return nil, fmt.Errorf("unexpected signing method: %s", tok.Header["alg"]) }; return h.authSvc.PublicKey(), nil
+			if _, ok := tok.Method.(*jwt.SigningMethodRSA); !ok {
+				return nil, fmt.Errorf("unexpected signing method: %s", tok.Header["alg"])
+			}
+			return h.authSvc.PublicKey(), nil
 		})
 		if parseErr != nil {
 			writeError(w, http.StatusUnauthorized, "invalid token")
@@ -1170,7 +1191,10 @@ func (h *Handler) mfaSetup(w http.ResponseWriter, r *http.Request) {
 		tokenStr := strings.TrimPrefix(authHeader, "Bearer ")
 		claims := jwt.MapClaims{}
 		_, err := jwt.ParseWithClaims(tokenStr, claims, func(tok *jwt.Token) (any, error) {
-			if _, ok := tok.Method.(*jwt.SigningMethodRSA); !ok { return nil, fmt.Errorf("unexpected signing method: %s", tok.Header["alg"]) }; return h.authSvc.PublicKey(), nil
+			if _, ok := tok.Method.(*jwt.SigningMethodRSA); !ok {
+				return nil, fmt.Errorf("unexpected signing method: %s", tok.Header["alg"])
+			}
+			return h.authSvc.PublicKey(), nil
 		})
 		if err != nil {
 			writeError(w, http.StatusUnauthorized, "invalid token")
@@ -1474,13 +1498,13 @@ func (h *Handler) lockoutPolicy(w http.ResponseWriter, r *http.Request) {
 	case http.MethodGet:
 		policy := h.authSvc.PasswordPolicy()
 		writeJSON(w, http.StatusOK, map[string]any{
-			"max_attempts":  policy.MaxAttempts,
-			"lock_duration": policy.LockDuration.String(),
+			"max_attempts":          policy.MaxAttempts,
+			"lock_duration":         policy.LockDuration.String(),
 			"require_captcha_after": policy.MaxAttempts - 1,
 		})
 	case http.MethodPut, http.MethodPost:
 		var req struct {
-			MaxAttempts  *int `json:"max_attempts"`
+			MaxAttempts  *int    `json:"max_attempts"`
 			LockDuration *string `json:"lock_duration"`
 		}
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -1505,8 +1529,8 @@ func (h *Handler) lockoutPolicy(w http.ResponseWriter, r *http.Request) {
 		}
 		h.authSvc.SetPasswordPolicy(policy)
 		writeJSON(w, http.StatusOK, map[string]any{
-			"max_attempts":  policy.MaxAttempts,
-			"lock_duration": policy.LockDuration.String(),
+			"max_attempts":          policy.MaxAttempts,
+			"lock_duration":         policy.LockDuration.String(),
 			"require_captcha_after": policy.MaxAttempts - 1,
 		})
 	default:
@@ -1602,14 +1626,14 @@ func (h *Handler) handleWebAuthnListCredentials(w http.ResponseWriter, r *http.R
 	}
 
 	type credInfo struct {
-		ID           string    `json:"id"`
-		Name         string    `json:"name"`
-		DeviceType   string    `json:"device_type"`
-		Attachment   string    `json:"attachment,omitempty"`
-		CreatedAt    time.Time `json:"created_at"`
-		LastUsedAt   *time.Time `json:"last_used_at,omitempty"`
-		Transports   []string  `json:"transports,omitempty"`
-		BackupEligible bool    `json:"backup_eligible,omitempty"`
+		ID             string     `json:"id"`
+		Name           string     `json:"name"`
+		DeviceType     string     `json:"device_type"`
+		Attachment     string     `json:"attachment,omitempty"`
+		CreatedAt      time.Time  `json:"created_at"`
+		LastUsedAt     *time.Time `json:"last_used_at,omitempty"`
+		Transports     []string   `json:"transports,omitempty"`
+		BackupEligible bool       `json:"backup_eligible,omitempty"`
 	}
 	var list []credInfo = []credInfo{}
 	for _, c := range creds {
@@ -1687,6 +1711,7 @@ func (h *Handler) handleWebAuthnDeleteCredential(w http.ResponseWriter, r *http.
 }
 
 type ctxUserIDKey struct{}
+
 // The browser will show available passkeys in the credential picker.
 func (h *Handler) passkeyAutofill(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
@@ -1704,11 +1729,11 @@ func (h *Handler) passkeyAutofill(w http.ResponseWriter, r *http.Request) {
 	}
 
 	writeJSON(w, http.StatusOK, map[string]any{
-		"mediation":  "conditional",
-		"challenge":  challenge,
-		"rpId":       "ggid.dev",
-		"login_url":  "/api/v1/webauthn/auth/finish",
-		"timeout":    60000,
+		"mediation":        "conditional",
+		"challenge":        challenge,
+		"rpId":             "ggid.dev",
+		"login_url":        "/api/v1/webauthn/auth/finish",
+		"timeout":          60000,
 		"userVerification": "preferred",
 	})
 }
@@ -1815,8 +1840,8 @@ func (h *Handler) sendVerification(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var body struct {
-		Email   string `json:"email"`
-		UserID  string `json:"user_id"`
+		Email  string `json:"email"`
+		UserID string `json:"user_id"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
 		writeError(w, http.StatusBadRequest, "invalid request body")
@@ -2172,8 +2197,8 @@ func (h *Handler) stepUpVerify(w http.ResponseWriter, r *http.Request) {
 
 	var body struct {
 		Challenge string `json:"challenge"`
-		Code      string `json:"code"`      // for MFA method
-		Password  string `json:"password"`  // for password method
+		Code      string `json:"code"`     // for MFA method
+		Password  string `json:"password"` // for password method
 	}
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
 		writeError(w, http.StatusBadRequest, "invalid request body")
@@ -2233,7 +2258,9 @@ func (h *Handler) stepUpCheck(w http.ResponseWriter, r *http.Request) {
 
 // stepUpTrigger handles step-up authentication.
 // GET: checks if current session meets requested ACR level (via acr_values query param).
-//      Returns 200 if sufficient, 403 + acr_values hint if step-up required.
+//
+//	Returns 200 if sufficient, 403 + acr_values hint if step-up required.
+//
 // POST: initiates a step-up challenge (password or MFA).
 func (h *Handler) stepUpTrigger(w http.ResponseWriter, r *http.Request) {
 	if r.Method == http.MethodGet {
@@ -2325,11 +2352,11 @@ func (h *Handler) stepUpACRCheck(w http.ResponseWriter, r *http.Request) {
 
 	// Step-up required — return 403 with hint.
 	writeJSON(w, http.StatusForbidden, map[string]any{
-		"error":             "insufficient_authentication",
-		"step_up_required":  true,
-		"acr_values":        acrValues,
-		"max_age":           300,
-		"challenge":         challenge,
+		"error":            "insufficient_authentication",
+		"step_up_required": true,
+		"acr_values":       acrValues,
+		"max_age":          300,
+		"challenge":        challenge,
 	})
 }
 
@@ -2503,10 +2530,10 @@ func (h *Handler) riskAssess(w http.ResponseWriter, r *http.Request) {
 	assessment := h.authSvc.AssessLoginRisk(r.Context(), tc.TenantID, userID, ip, req.UserAgent)
 
 	writeJSON(w, http.StatusOK, map[string]any{
-		"level":               string(assessment.Level),
-		"score":               assessment.Score,
-		"reasons":             assessment.Reasons,
-		"requires_step_up":    assessment.RequiresStepUp,
+		"level":                string(assessment.Level),
+		"score":                assessment.Score,
+		"reasons":              assessment.Reasons,
+		"requires_step_up":     assessment.RequiresStepUp,
 		"requires_admin_alert": assessment.RequiresAdminAlert,
 		"recommended_action": func() string {
 			if assessment.RequiresStepUp {
@@ -2554,7 +2581,7 @@ func (h *Handler) rememberDevice(w http.ResponseWriter, r *http.Request) {
 	}
 
 	writeJSON(w, http.StatusOK, map[string]any{
-		"status": "trusted",
+		"status":  "trusted",
 		"message": "Device registered as trusted. MFA will be skipped for 30 days.",
 	})
 }
@@ -2669,8 +2696,8 @@ func (h *Handler) mfaWebAuthnBegin(w http.ResponseWriter, r *http.Request) {
 
 	// Redirect to WebAuthn begin registration endpoint.
 	writeJSON(w, http.StatusOK, map[string]string{
-		"status":   "mfa_webauthn_challenge",
-		"message":  "Complete WebAuthn registration as second factor",
+		"status":    "mfa_webauthn_challenge",
+		"message":   "Complete WebAuthn registration as second factor",
 		"begin_url": "/api/v1/webauthn/register/begin?user_id=" + body.UserID,
 	})
 }
@@ -2745,7 +2772,10 @@ func (h *Handler) logoutAll(w http.ResponseWriter, r *http.Request) {
 	var body struct {
 		UserID string `json:"user_id"`
 	}
-	if err := json.NewDecoder(r.Body).Decode(&body); err != nil { writeError(w, http.StatusBadRequest, "invalid request body"); return }
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		writeError(w, http.StatusBadRequest, "invalid request body")
+		return
+	}
 
 	userID, err := uuid.Parse(body.UserID)
 	if err != nil {
@@ -2882,10 +2912,10 @@ func (h *Handler) dbConnectionsSignup(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var body struct {
-		Email    string `json:"email"`
-		Password string `json:"password"`
+		Email      string `json:"email"`
+		Password   string `json:"password"`
 		Connection string `json:"connection"`
-		ClientID  string `json:"client_id"`
+		ClientID   string `json:"client_id"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
 		writeError(w, http.StatusBadRequest, "invalid request body")
@@ -2911,11 +2941,10 @@ func (h *Handler) dbConnectionsSignup(w http.ResponseWriter, r *http.Request) {
 	}
 
 	writeJSON(w, http.StatusOK, map[string]string{
-		"_id":  userID.String(),
+		"_id":   userID.String(),
 		"email": body.Email,
 	})
 }
-
 
 // handleSocial routes social login requests: /api/v1/auth/social/{provider} and /api/v1/auth/social/{provider}/callback
 func (h *Handler) listSocialConnectors(w http.ResponseWriter, _ *http.Request) {
@@ -2927,9 +2956,9 @@ func (h *Handler) listSocialConnectors(w http.ResponseWriter, _ *http.Request) {
 			continue
 		}
 		connectors = append(connectors, map[string]string{
-			"id":          conn.ID(),
-			"name":        conn.DisplayName(),
-			"provider":    conn.ID(),
+			"id":       conn.ID(),
+			"name":     conn.DisplayName(),
+			"provider": conn.ID(),
 		})
 	}
 	writeJSON(w, http.StatusOK, map[string]any{
@@ -3097,4 +3126,3 @@ func (h *Handler) issueAuthTicket(ctx context.Context, tenantID, userID uuid.UUI
 
 	return ticket, nil
 }
-
