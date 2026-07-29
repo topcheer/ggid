@@ -240,25 +240,43 @@ func (r *pgClientRepo) DeleteClient(ctx context.Context, tenantID uuid.UUID, cli
 		return err
 	}
 
+	// SECURITY: Resolve clientID (gcid_xxx format) to internal UUID id.
+	// The token tables (refresh_tokens, oidc_refresh_tokens, oauth_authorization_codes,
+	// oidc_id_tokens) store client_id as UUID referencing oauth_clients.id, NOT the
+	// gcid_xxx string. Using the string directly in WHERE clauses causes type mismatch
+	// and silent cascade cleanup failure, leaving orphaned tokens that remain usable.
+	var internalClientID uuid.UUID
+	err = tx.QueryRow(ctx, `
+		SELECT id FROM oauth_clients
+		WHERE tenant_id = $1 AND (client_id = $2 OR id::text = $2)
+	`, tenantID, clientID).Scan(&internalClientID)
+	if err != nil {
+		if isNoRows(err) {
+			return ggiderrors.NotFound("client", clientID)
+		}
+		return ggiderrors.Wrap(ggiderrors.ErrInternal, "resolve client id", err)
+	}
+
 	// SECURITY: Cascade cleanup — revoke/delete all tokens and codes for this client.
+	// Use the resolved UUID id, not the gcid_xxx string.
 	cleanupTables := []struct{ name, sql string }{
-		{"refresh_tokens", `UPDATE refresh_tokens SET revoked = true WHERE client_id = $2`},
-		{"oidc_refresh_tokens", `UPDATE oidc_refresh_tokens SET revoked = true WHERE client_id = $2`},
+		{"refresh_tokens", `UPDATE refresh_tokens SET revoked_at = now() WHERE client_id = $2 AND revoked_at IS NULL`},
+		{"oidc_refresh_tokens", `UPDATE oidc_refresh_tokens SET revoked_at = now() WHERE client_id = $2 AND revoked_at IS NULL`},
 		{"oauth_authorization_codes", `DELETE FROM oauth_authorization_codes WHERE client_id = $2`},
 		{"oidc_id_tokens", `DELETE FROM oidc_id_tokens WHERE client_id = $2`},
 	}
 	for _, c := range cleanupTables {
-		if _, err := tx.Exec(ctx, c.sql, tenantID, clientID); err != nil {
+		if _, err := tx.Exec(ctx, c.sql, tenantID, internalClientID); err != nil {
 			// Best-effort: log but don't fail the delete
 			log.Printf("DeleteClient: cascade cleanup failed table=%s err=%v", c.name, err)
 		}
 	}
 
-	// Support both client_id (gcid_xxx) and internal id (UUID) for deletion
+	// Delete the client using the resolved UUID id
 	tag, err := tx.Exec(ctx, `
 		DELETE FROM oauth_clients
-		WHERE tenant_id = $1 AND (client_id = $2 OR id::text = $2)
-	`, tenantID, clientID)
+		WHERE id = $1
+	`, internalClientID)
 	if err != nil {
 		return ggiderrors.Wrap(ggiderrors.ErrInternal, "delete client", err)
 	}
