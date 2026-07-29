@@ -1,9 +1,9 @@
 package retention
 
 import (
-	"github.com/google/uuid"
 	"context"
 	"errors"
+	"github.com/google/uuid"
 	"testing"
 	"time"
 )
@@ -48,7 +48,7 @@ func (m *mockDeleter) DeleteExcess(_ context.Context, keep int64) (int64, error)
 
 // 1. TestApply_Disabled
 func TestApply_Disabled(t *testing.T) {
-	p := &RetentionPolicy{Enabled: false}
+	p := &RetentionPolicy{TenantID: uuid.MustParse("00000000-0000-0000-0000-000000000001"), Enabled: false}
 	d := &mockDeleter{events: []time.Time{time.Now()}}
 	r, err := p.Apply(context.Background(), d)
 	if err != nil {
@@ -63,8 +63,9 @@ func TestApply_Disabled(t *testing.T) {
 func TestApply_AgeBased(t *testing.T) {
 	now := time.Now()
 	p := &RetentionPolicy{
-		MaxAge:  30 * 24 * time.Hour,
-		Enabled: true,
+		TenantID: uuid.MustParse("00000000-0000-0000-0000-000000000001"),
+		MaxAge:   30 * 24 * time.Hour,
+		Enabled:  true,
 	}
 	d := &mockDeleter{
 		events: []time.Time{
@@ -86,6 +87,7 @@ func TestApply_AgeBased(t *testing.T) {
 func TestApply_CountBased(t *testing.T) {
 	now := time.Now()
 	p := &RetentionPolicy{
+		TenantID:  uuid.MustParse("00000000-0000-0000-0000-000000000001"),
 		MaxEvents: 2,
 		Enabled:   true,
 	}
@@ -105,6 +107,7 @@ func TestApply_CountBased(t *testing.T) {
 func TestApply_BothAgeAndCount(t *testing.T) {
 	now := time.Now()
 	p := &RetentionPolicy{
+		TenantID:  uuid.MustParse("00000000-0000-0000-0000-000000000001"),
 		MaxAge:    30 * 24 * time.Hour,
 		MaxEvents: 2,
 		Enabled:   true,
@@ -130,7 +133,7 @@ func TestApply_BothAgeAndCount(t *testing.T) {
 
 // 5. TestApply_DeleteOlderError
 func TestApply_DeleteOlderError(t *testing.T) {
-	p := &RetentionPolicy{MaxAge: time.Hour, Enabled: true}
+	p := &RetentionPolicy{TenantID: uuid.MustParse("00000000-0000-0000-0000-000000000001"), MaxAge: time.Hour, Enabled: true}
 	d := &mockDeleter{deleteOldErr: errors.New("db error")}
 	_, err := p.Apply(context.Background(), d)
 	if err == nil {
@@ -140,7 +143,7 @@ func TestApply_DeleteOlderError(t *testing.T) {
 
 // 6. TestApply_CountError
 func TestApply_CountError(t *testing.T) {
-	p := &RetentionPolicy{MaxEvents: 10, Enabled: true}
+	p := &RetentionPolicy{TenantID: uuid.MustParse("00000000-0000-0000-0000-000000000001"), MaxEvents: 10, Enabled: true}
 	d := &mockDeleter{countErr: errors.New("count failed")}
 	_, err := p.Apply(context.Background(), d)
 	if err == nil {
