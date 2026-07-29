@@ -533,7 +533,7 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 				"requested_scopes": scopes,
 				"state":            state,
 				"message":          "User consent is required for the requested scopes.",
-				"consent_url":      "/oauth/authorize?consent=true&client_id=" + url.QueryEscape(clientID) + "&redirect_uri=" + url.QueryEscape(redirectURI) + "&response_type=code&scope=" + url.QueryEscape(scopeParam) + "&user_id=" + url.QueryEscape(userIDStr),
+				"consent_url":      "/oauth/authorize?consent=true&client_id=" + url.QueryEscape(clientID) + "&redirect_uri=" + url.QueryEscape(redirectURI) + "&response_type=code&scope=" + url.QueryEscape(scopeParam) + "&state=" + url.QueryEscape(state),
 			})
 			return
 		}
