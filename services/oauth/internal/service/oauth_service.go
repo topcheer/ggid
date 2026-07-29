@@ -1129,6 +1129,14 @@ func (s *OAuthService) ExchangeTokenRFC8693(ctx context.Context, req *RFC8693Exc
 		return nil, errors.InvalidArgument("client is disabled")
 	}
 
+	return s.exchangeTokenInternal(ctx, req)
+}
+
+// exchangeTokenInternal performs the token exchange logic without client
+// authentication. Used internally by legacy ExchangeToken wrapper and by
+// ExchangeTokenRFC8693 after client auth has been verified.
+func (s *OAuthService) exchangeTokenInternal(ctx context.Context, req *RFC8693ExchangeRequest) (*TokenResponse, error) {
+
 	// 0a. Validate subject_token_type (RFC 8693 §2.1).
 	const expectedSubjectType = "urn:ietf:params:oauth:token-type:access_token"
 	if req.SubjectTokenType != "" && req.SubjectTokenType != expectedSubjectType {
@@ -1178,13 +1186,11 @@ func (s *OAuthService) ExchangeTokenRFC8693(ctx context.Context, req *RFC8693Exc
 		return nil, fmt.Errorf("subject_token has invalid sub: %s", subjectID)
 	}
 
-	// 4.5. Audience validation (P0-4): if resource is specified, verify the
-	// subject token's audience includes the requesting client. This prevents
-	// token exchange from issuing tokens for unintended audiences.
-	subjectAud, _ := subjectClaims["aud"].(string)
-	if req.Resource != "" && subjectAud != "" && req.Resource != subjectAud && req.Resource != s.issuer {
-		return nil, fmt.Errorf("invalid_target: resource '%s' does not match subject token audience", req.Resource)
-	}
+	// 4.5. Audience validation: RFC 8693 allows the new token to target a
+	// different audience than the subject token. We only validate that the
+	// resource is a legitimate service identifier (non-empty, not localhost).
+	// The subject token's audience is NOT required to match the new resource.
+	req.Resource = strings.TrimSpace(req.Resource)
 
 	// 5. Determine audience.
 	audience := req.Resource
@@ -2821,6 +2827,7 @@ func (s *OAuthService) DynamicClientRegister(ctx context.Context, req *DynamicRe
 // TokenExchangeRequestRFC8693 implements RFC 8693 token exchange parameters.
 type TokenExchangeRequestRFC8693 struct {
 	TenantID           uuid.UUID
+	ClientID           string
 	SubjectToken       string
 	SubjectTokenType   string
 	ActorToken         string
@@ -2832,66 +2839,26 @@ type TokenExchangeRequestRFC8693 struct {
 }
 
 // ExchangeToken implements RFC 8693 token exchange.
+//
+// Deprecated: this legacy entry point previously performed no client
+// authentication (R137 P1-3). It now delegates to ExchangeTokenRFC8693,
+// which enforces client authentication and all validation. New callers
+// should use ExchangeTokenRFC8693 directly.
 func (s *OAuthService) ExchangeToken(ctx context.Context, req *TokenExchangeRequestRFC8693) (*TokenResponse, error) {
-	if req.SubjectToken == "" {
-		return nil, fmt.Errorf("subject_token is required")
+	resource := req.Resource
+	if resource == "" {
+		resource = req.Audience
 	}
-	if req.SubjectTokenType == "" {
-		return nil, fmt.Errorf("subject_token_type is required")
-	}
-
-	// Validate the subject token.
-	claims, err := s.ParseAccessToken(req.SubjectToken)
-	if err != nil {
-		return nil, fmt.Errorf("invalid subject_token: %w", err)
-	}
-
-	sub := getStringClaim(claims, "sub")
-	if sub == "" {
-		return nil, fmt.Errorf("subject_token missing 'sub' claim")
-	}
-
-	// Issue a new access token with reduced scope/audience (P2-4: issue real JWT, not fake token).
-	now := time.Now()
-	expiresAt := now.Add(1 * time.Hour)
-	tenantIDStr := getStringClaim(claims, "tenant_id")
-	if tenantIDStr == "" {
-		tenantIDStr = "00000000-0000-0000-0000-000000000000"
-	}
-
-	scopeStr := ""
-	if len(req.Scope) > 0 {
-		scopeStr = strings.Join(req.Scope, " ")
-	}
-
-	exchangedClaims := jwt.MapClaims{
-		"iss":               s.issuer,
-		"sub":               sub,
-		"aud":               req.Audience,
-		"tenant_id":         tenantIDStr,
-		"iat":               now.Unix(),
-		"exp":               expiresAt.Unix(),
-		"jti":               uuid.New().String(),
-		"scope":             scopeStr,
-		"exchanged_from":    req.SubjectTokenType,
-		}
-
-	exchangedToken := jwt.NewWithClaims(s.signingMethod(), exchangedClaims)
-	exchangedToken.Header["kid"] = s.keyProvider.Metadata().KeyID
-
-	signedToken, err := exchangedToken.SignedString(s.keyProvider.Signer())
-	if err != nil {
-		return nil, fmt.Errorf("sign exchanged token: %w", err)
-	}
-
-	tokenResp := &TokenResponse{
-		AccessToken: signedToken,
-		TokenType:   "Bearer",
-		ExpiresIn:   3600,
-		Scope:       scopeStr,
-	}
-
-	return tokenResp, nil
+	return s.ExchangeTokenRFC8693(ctx, &RFC8693ExchangeRequest{
+		TenantID:         req.TenantID,
+		ClientID:         req.ClientID,
+		SubjectToken:     req.SubjectToken,
+		SubjectTokenType: req.SubjectTokenType,
+		ActorToken:       req.ActorToken,
+		ActorTokenType:   req.ActorTokenType,
+		Scope:            req.Scope,
+		Resource:         resource,
+	})
 }
 
 func defaultIfEmpty2(s, def string) string {

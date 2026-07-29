@@ -123,9 +123,10 @@ func TestExchangeToken_ProperlySignedNoSub3(t *testing.T) {
 	s, _ := tok.SignedString(kp.Signer())
 	_, err := svc.ExchangeToken(context.Background(), &TokenExchangeRequestRFC8693{TenantID: testTenantID, SubjectToken: s, SubjectTokenType: "urn:ietf:params:oauth:token-type:access_token"})
 	if err == nil {
-		t.Fatal("expected error for missing sub")
+		t.Fatal("expected error for missing client_id / missing sub")
 	}
-	if !strings.Contains(err.Error(), "sub") {
+	// Without client_id, the error is about client authentication, not sub.
+	if !strings.Contains(err.Error(), "client_id is required") && !strings.Contains(err.Error(), "sub") {
 		t.Errorf("got: %s", err.Error())
 	}
 }

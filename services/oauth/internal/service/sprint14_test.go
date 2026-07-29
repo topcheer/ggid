@@ -13,18 +13,21 @@ import (
 func TestSprint14_ExchangeToken_Success(t *testing.T) {
 	svc, clientRepo, _, _ := newTestOAuthService()
 	// Register a client for token exchange authentication.
-	_, _ = svc.CreateClient(context.Background(), &CreateClientInput{
+	txClient, err := svc.CreateClient(context.Background(), &CreateClientInput{
 		TenantID: testTenantID, Name: "tx-client", Type: domain.ClientTypePublic,
 		GrantTypes: []string{"urn:ietf:params:oauth:grant-type:token-exchange"},
 		Scopes:     []string{"openid"},
 	})
+	if err != nil {
+		t.Fatalf("CreateClient: %v", err)
+	}
 	_ = clientRepo
 	subjectToken := signTestToken(svc, map[string]interface{}{
-		"sub": "delegation-user", "exp": time.Now().Add(1 * time.Hour).Unix(), "iss": "https://test.ggid.dev", "aud": "https://test.ggid.dev",
+		"sub": uuid.New().String(), "exp": time.Now().Add(1 * time.Hour).Unix(), "iss": "https://test.ggid.dev", "aud": "https://test.ggid.dev",
 	})
 	resp, err := svc.ExchangeToken(context.Background(), &TokenExchangeRequestRFC8693{
 		TenantID:         testTenantID,
-		ClientID:         "tx-client",
+		ClientID:         txClient.Client.ClientID,
 		SubjectToken:     subjectToken,
 		SubjectTokenType: "urn:ietf:params:oauth:token-type:access_token",
 		Scope:            []string{"openid"},
