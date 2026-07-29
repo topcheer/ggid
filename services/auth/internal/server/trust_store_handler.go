@@ -62,14 +62,14 @@ func (h *TrustStoreHandler) addCA(w http.ResponseWriter, r *http.Request) {
 	}
 
 	uploadedBy := "admin"
-		ca, err := h.store.AddCA(req.Name, req.PEMData, uploadedBy)
-		if err != nil {
-			writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid CA certificate"})
-			return
-		}
-
-		writeJSON(w, http.StatusCreated, ca)
+	ca, err := h.store.AddCA(req.Name, req.PEMData, uploadedBy)
+	if err != nil {
+		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid CA certificate"})
+		return
 	}
+
+	writeJSON(w, http.StatusCreated, ca)
+}
 
 func (h *TrustStoreHandler) listCAs(w http.ResponseWriter, r *http.Request) {
 	cas, err := h.store.ListCAs()
@@ -88,7 +88,7 @@ func (h *TrustStoreHandler) removeCA(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := h.store.RemoveCA(id); err != nil {
-		writeJSON(w, http.StatusNotFound, map[string]string{"error": err.Error()})
+		writeJSON(w, http.StatusNotFound, map[string]string{"error": "operation failed"})
 		return
 	}
 
@@ -158,7 +158,7 @@ func (h *TrustStoreHandler) uploadCertificate(w http.ResponseWriter, r *http.Req
 
 	cert, err := truststore.ParseCertificateFromPEM(req.Name, req.Type, req.PEMData, req.KeyPEMData)
 	if err != nil {
-		writeJSON(w, http.StatusBadRequest, map[string]string{"error": err.Error()})
+		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "operation failed"})
 		return
 	}
 	cert.AutoRenew = req.AutoRenew
@@ -183,7 +183,7 @@ func (h *TrustStoreHandler) getCertificate(w http.ResponseWriter, r *http.Reques
 
 	cert, err := h.store.GetCertificate(id)
 	if err != nil {
-		writeJSON(w, http.StatusNotFound, map[string]string{"error": err.Error()})
+		writeJSON(w, http.StatusNotFound, map[string]string{"error": "operation failed"})
 		return
 	}
 	writeJSON(w, http.StatusOK, cert)
@@ -193,7 +193,7 @@ func (h *TrustStoreHandler) removeCertificate(w http.ResponseWriter, r *http.Req
 	id := strings.TrimPrefix(r.URL.Path, "/api/v1/auth/certificates/")
 
 	if err := h.store.RemoveCertificate(id); err != nil {
-		writeJSON(w, http.StatusNotFound, map[string]string{"error": err.Error()})
+		writeJSON(w, http.StatusNotFound, map[string]string{"error": "operation failed"})
 		return
 	}
 
@@ -206,7 +206,7 @@ func (h *TrustStoreHandler) renewCertificate(w http.ResponseWriter, r *http.Requ
 
 	cert, err := h.store.GetCertificate(id)
 	if err != nil {
-		writeJSON(w, http.StatusNotFound, map[string]string{"error": err.Error()})
+		writeJSON(w, http.StatusNotFound, map[string]string{"error": "operation failed"})
 		return
 	}
 
@@ -251,13 +251,13 @@ func (h *TrustStoreHandler) generateCSR(w http.ResponseWriter, r *http.Request) 
 
 	csrPEM, keyPEM, err := truststore.GenerateCSR(req.CommonName, req.Organization, req.KeyType)
 	if err != nil {
-		writeJSON(w, http.StatusBadRequest, map[string]string{"error": err.Error()})
+		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "operation failed"})
 		return
 	}
 
 	writeJSON(w, http.StatusOK, map[string]string{
-		"csr":      csrPEM,
-		"key_pem":  keyPEM,
+		"csr":     csrPEM,
+		"key_pem": keyPEM,
 	})
 }
 
@@ -267,10 +267,10 @@ func (h *TrustStoreHandler) generateCSR(w http.ResponseWriter, r *http.Request) 
 func (h *TrustStoreHandler) certExpiryTracker(w http.ResponseWriter, r *http.Request) {
 	certs := h.store.ListCertificates()
 
-	healthy := 0    // >90 days
-	expiring := 0   // 30-90 days
-	critical := 0   // 1-30 days
-	expired := 0    // <=0 days
+	healthy := 0  // >90 days
+	expiring := 0 // 30-90 days
+	critical := 0 // 1-30 days
+	expired := 0  // <=0 days
 
 	for _, c := range certs {
 		if c.DaysToExpiry <= 0 {
@@ -286,11 +286,11 @@ func (h *TrustStoreHandler) certExpiryTracker(w http.ResponseWriter, r *http.Req
 
 	writeJSON(w, http.StatusOK, map[string]any{
 		"summary": map[string]int{
-			"healthy":   healthy,
-			"expiring":  expiring,
-			"critical":  critical,
-			"expired":   expired,
-			"total":     len(certs),
+			"healthy":  healthy,
+			"expiring": expiring,
+			"critical": critical,
+			"expired":  expired,
+			"total":    len(certs),
 		},
 		"certs": certs,
 	})
@@ -305,12 +305,12 @@ func (h *TrustStoreHandler) HandleMTLSConfig(w http.ResponseWriter, r *http.Requ
 	case http.MethodGet:
 		cas, _ := h.store.ListCAs()
 		result := map[string]any{
-			"require_mtls":             h.mtls.RequireMTLS,
-			"trusted_ca_certs":         cas,
-			"per_client_cert_binding":  h.mtls.PerClientCertBinding,
-			"revocation_check":         h.mtls.RevocationCheck,
-			"allow_self_signed":        h.mtls.AllowSelfSigned,
-			"fallback_to_bearer":       h.mtls.FallbackToBearer,
+			"require_mtls":            h.mtls.RequireMTLS,
+			"trusted_ca_certs":        cas,
+			"per_client_cert_binding": h.mtls.PerClientCertBinding,
+			"revocation_check":        h.mtls.RevocationCheck,
+			"allow_self_signed":       h.mtls.AllowSelfSigned,
+			"fallback_to_bearer":      h.mtls.FallbackToBearer,
 		}
 		writeJSON(w, http.StatusOK, result)
 
@@ -376,7 +376,7 @@ func (h *TrustStoreHandler) HandleVerifyCert(w http.ResponseWriter, r *http.Requ
 
 	cert, err := x509.ParseCertificate(block.Bytes)
 	if err != nil {
-		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "failed to parse certificate: " + err.Error()})
+		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "failed to parse certificate"})
 		return
 	}
 

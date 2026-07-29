@@ -836,11 +836,11 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 				w.Header().Set("WWW-Authenticate", "Basic")
 				writeJSON(w, http.StatusUnauthorized, map[string]string{
 					"error":             "invalid_client",
-					"error_description": errMsg,
+					"error_description": "client authentication failed",
 				})
 				return
 			}
-			writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid_grant", "error_description": errMsg})
+			writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid_grant", "error_description": "authentication failed"})
 			return
 		}
 

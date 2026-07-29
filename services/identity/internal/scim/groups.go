@@ -8,18 +8,18 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/jackc/pgx/v5/pgxpool"
 	ggidtenant "github.com/ggid/ggid/pkg/tenant"
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 // SCIMGroup is the RFC 7643 Group resource representation.
 type SCIMGroup struct {
-	Schemas    []string          `json:"schemas"`
-	ID         string            `json:"id"`
-	DisplayName string           `json:"displayName"`
-	Members    []SCIMGroupMember `json:"members,omitempty"`
-	Meta       SCIMMeta          `json:"meta"`
+	Schemas     []string          `json:"schemas"`
+	ID          string            `json:"id"`
+	DisplayName string            `json:"displayName"`
+	Members     []SCIMGroupMember `json:"members,omitempty"`
+	Meta        SCIMMeta          `json:"meta"`
 }
 
 // SCIMGroupMember represents a member reference in a SCIM group.
@@ -149,8 +149,8 @@ func (h *Handler) createGroup(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var req struct {
-		DisplayName string             `json:"displayName"`
-		Members     []SCIMGroupMember  `json:"members"`
+		DisplayName string            `json:"displayName"`
+		Members     []SCIMGroupMember `json:"members"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		writeSCIMError(w, http.StatusBadRequest, "invalid request body")
@@ -451,7 +451,10 @@ func (h *Handler) deleteGroup(w http.ResponseWriter, r *http.Request, id string)
 		return
 	}
 	if pool := h.dbPool(r.Context()); pool != nil {
-		_ = dbDeleteGroup(r.Context(), pool, tc.TenantID, id)
+		if err := dbDeleteGroup(r.Context(), pool, tc.TenantID, id); err != nil {
+			writeSCIMError(w, http.StatusNotFound, "group not found")
+			return
+		}
 	}
 	w.WriteHeader(http.StatusNoContent)
 }

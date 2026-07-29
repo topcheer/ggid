@@ -94,7 +94,7 @@ type socialLoginConfig struct {
 func (h *Handler) handleSocialLogin(w http.ResponseWriter, r *http.Request) {
 	provider, redirectURI, err := parseSocialPath(r.URL.Path)
 	if err != nil {
-		writeJSON(w, http.StatusBadRequest, map[string]string{"error": err.Error()})
+		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "request failed"})
 		return
 	}
 
@@ -118,7 +118,7 @@ func (h *Handler) handleSocialLogin(w http.ResponseWriter, r *http.Request) {
 	// Create connector instance.
 	connector, err := createSocialConnector(provider, cfg)
 	if err != nil {
-		writeJSON(w, http.StatusBadRequest, map[string]string{"error": err.Error()})
+		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "request failed"})
 		return
 	}
 
@@ -169,7 +169,7 @@ func (h *Handler) handleSocialLogin(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) handleSocialCallback(w http.ResponseWriter, r *http.Request) {
 	provider, _, err := parseSocialPath(r.URL.Path)
 	if err != nil {
-		writeJSON(w, http.StatusBadRequest, map[string]string{"error": err.Error()})
+		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "request failed"})
 		return
 	}
 
@@ -203,7 +203,7 @@ func (h *Handler) handleSocialCallback(w http.ResponseWriter, r *http.Request) {
 
 	connector, err := createSocialConnector(provider, cfg)
 	if err != nil {
-		writeJSON(w, http.StatusBadRequest, map[string]string{"error": err.Error()})
+		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "request failed"})
 		return
 	}
 
