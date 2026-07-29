@@ -3379,10 +3379,24 @@ func (s *OAuthService) JWTBearerGrant(ctx context.Context, req *JWTBearerRequest
 	}
 
 	// P1-4 (RFC 7523 §3): Validate audience if AS issuer is configured
+	// P1-3: Handle aud as both string ("aud":"x") and array ("aud":["x","y"])
 	if s.issuer != "" {
-		aud, _ := verifiedClaims["aud"].(string)
-		if aud != "" && aud != s.issuer {
-			return nil, fmt.Errorf("assertion audience %q does not match issuer %q", aud, s.issuer)
+		audMatched := false
+		switch aud := verifiedClaims["aud"].(type) {
+		case string:
+			audMatched = aud == "" || aud == s.issuer
+		case []any:
+			for _, a := range aud {
+				if as, ok := a.(string); ok && (as == "" || as == s.issuer) {
+					audMatched = true
+					break
+				}
+			}
+		default:
+			audMatched = true // no aud claim = skip check
+		}
+		if !audMatched {
+			return nil, fmt.Errorf("assertion audience does not include issuer %q", s.issuer)
 		}
 	}
 
@@ -3392,8 +3406,8 @@ func (s *OAuthService) JWTBearerGrant(ctx context.Context, req *JWTBearerRequest
 		return nil, fmt.Errorf("assertion missing 'sub' claim")
 	}
 
-	// Verify expiration.
-	exp, ok := claims["exp"].(float64)
+	// Verify expiration from VERIFIED claims (not original unverified claims).
+	exp, ok := verifiedClaims["exp"].(float64)
 	if !ok {
 		return nil, fmt.Errorf("assertion missing 'exp' claim")
 	}
