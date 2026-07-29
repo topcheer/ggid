@@ -8,6 +8,18 @@ import (
 	"github.com/google/uuid"
 )
 
+// hasScope checks if a specific scope exists in the X-Scopes header using
+// exact comma-delimited matching (not substring) to avoid false positives
+// like "notplatform:admin" matching "platform:admin".
+func hasScope(scopesHeader, target string) bool {
+	for _, s := range strings.Split(scopesHeader, ",") {
+		if strings.TrimSpace(s) == target {
+			return true
+		}
+	}
+	return false
+}
+
 // handleSuspendTenant suspends a tenant, blocking all logins and API access.
 // POST /api/v1/org/tenants/suspend
 // Body: {"tenant_id": "<uuid>", "reason": "optional"}
@@ -26,7 +38,7 @@ func (s *HTTPServer) handleSuspendTenant(w http.ResponseWriter, r *http.Request)
 	// operation. The gateway strips and re-derives X-Scopes from verified
 	// JWT claims, so it is trustworthy here. Previously ANY caller could
 	// DoS an entire tenant.
-	if !strings.Contains(r.Header.Get("X-Scopes"), "platform:admin") {
+	if !hasScope(r.Header.Get("X-Scopes"), "platform:admin") {
 		writeJSONError(w, http.StatusForbidden, "platform:admin scope required")
 		return
 	}
@@ -81,7 +93,7 @@ func (s *HTTPServer) handleActivateTenant(w http.ResponseWriter, r *http.Request
 	}
 
 	// SECURITY (P0): platform-admin only — see handleSuspendTenant.
-	if !strings.Contains(r.Header.Get("X-Scopes"), "platform:admin") {
+	if !hasScope(r.Header.Get("X-Scopes"), "platform:admin") {
 		writeJSONError(w, http.StatusForbidden, "platform:admin scope required")
 		return
 	}

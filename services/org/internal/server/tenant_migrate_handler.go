@@ -3,7 +3,6 @@ package httpserver
 import (
 	"encoding/json"
 	"net/http"
-	"strings"
 )
 
 type TenantMigrationResult struct {
@@ -30,7 +29,7 @@ func (s *HTTPServer) handleTenantMigrate(w http.ResponseWriter, r *http.Request)
 	}
 	// SECURITY: cross-tenant migration is platform-admin only. X-Scopes is
 	// stripped and re-derived by the gateway from verified JWT claims.
-	if !strings.Contains(r.Header.Get("X-Scopes"), "platform:admin") {
+	if !hasScope(r.Header.Get("X-Scopes"), "platform:admin") {
 		writeJSONError(w, http.StatusForbidden, "platform:admin scope required")
 		return
 	}

@@ -16,6 +16,12 @@ func (s *HTTPServer) handleOrgTreeWithMembers(w http.ResponseWriter, r *http.Req
 		return
 	}
 
+	// SECURITY: fail-closed tenant check
+	tid, ok := s.requireTenant(w, r)
+	if !ok {
+		return
+	}
+
 	// Extract org ID from path
 	orgIDStr := r.URL.Query().Get("org_id")
 	if orgIDStr == "" {
@@ -28,10 +34,15 @@ func (s *HTTPServer) handleOrgTreeWithMembers(w http.ResponseWriter, r *http.Req
 		return
 	}
 
+	// SECURITY: verify org belongs to caller's tenant
+	if !s.checkOrgOwnership(w, r, orgID) {
+		return
+	}
+
 	includeMembers := r.URL.Query().Get("include_members") == "true"
 
 	// Get sub-tree
-	subTree, err := s.orgSvc.GetSubTree(r.Context(), s.getTenantID(r), orgID)
+	subTree, err := s.orgSvc.GetSubTree(r.Context(), tid, orgID)
 	if err != nil {
 		writeJSONError(w, http.StatusInternalServerError, "failed to load org tree")
 		return
