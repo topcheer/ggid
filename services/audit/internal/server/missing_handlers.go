@@ -98,8 +98,9 @@ func (s *HTTPServer) handleWebhooksList(w http.ResponseWriter, r *http.Request) 
 			isActive = *req.Active
 		}
 		webhook := map[string]any{
-			"id":     fmt.Sprintf("whk_%d", time.Now().UnixNano()),
-			"name":   req.Name,
+			"id":         fmt.Sprintf("whk_%d", time.Now().UnixNano()),
+			"tenant_id":  r.Header.Get("X-Tenant-ID"),
+			"name":       req.Name,
 			"url":    req.URL,
 			"events": req.Events,
 			"secret": req.Secret,

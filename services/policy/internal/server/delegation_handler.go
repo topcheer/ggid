@@ -30,9 +30,16 @@ func (s *HTTPServer) handleDelegate(w http.ResponseWriter, r *http.Request) {
 	if hours <= 0 {
 		hours = 24 * time.Hour // default 24h
 	}
+	// SECURITY: Use caller's identity as delegator, not request body value.
+	delegatorIDStr := r.Header.Get("X-User-ID")
+	if delegatorIDStr == "" {
+		writeJSON(w, http.StatusUnauthorized, map[string]string{"error": "authentication required"})
+		return
+	}
+	delegatorID := parseUUIDSafe(delegatorIDStr)
 	d, err := s.policySvc.DelegatePermissions(
-		context.Background(),
-		parseUUIDSafe(req.DelegatorID),
+		r.Context(),
+		delegatorID,
 		parseUUIDSafe(req.DelegateeID),
 		req.Permissions, hours,
 	)

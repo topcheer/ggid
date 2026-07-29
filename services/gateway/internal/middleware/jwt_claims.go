@@ -151,6 +151,7 @@ func JWTClaimExtraction(next http.Handler) http.Handler {
 			// SECURITY: no scopes → definitely not admin, clear headers.
 			r.Header.Del("X-Is-Admin")
 			r.Header.Del("X-User-Role")
+			r.Header.Del("X-Scopes")
 		}
 		// Store in context
 		ctx := context.WithValue(r.Context(), claimsKey, claims)
