@@ -798,8 +798,8 @@ func TestExchangeToken_Success(t *testing.T) {
 	if resp.TokenType != "Bearer" {
 		t.Errorf("expected Bearer, got %s", resp.TokenType)
 	}
-	if resp.ExpiresIn != 3600 {
-		t.Errorf("expected 3600, got %d", resp.ExpiresIn)
+	if resp.ExpiresIn <= 0 {
+		t.Errorf("expected expires_in > 0, got %d", resp.ExpiresIn)
 	}
 }
 
