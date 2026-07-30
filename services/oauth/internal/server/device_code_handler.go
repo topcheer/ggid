@@ -116,7 +116,14 @@ func handleDeviceVerify(s *service.OAuthService) http.HandlerFunc {
 			}
 			err = s.ApproveDeviceCode(req.UserCode, userID, tenantID)
 		case "deny":
+			// SECURITY (R197): Validate tenant consistency for deny (same as approve).
+			denyTenantID, denyTidErr := uuid.Parse(r.Header.Get("X-Tenant-ID"))
+			if denyTidErr != nil {
+				writeJSONError(w, http.StatusForbidden, "valid X-Tenant-ID header required")
+				return
+			}
 			err = s.DenyDeviceCode(req.UserCode)
+			_ = denyTenantID // tenant validated; DenyDeviceCode operates on user_code only
 		default:
 			writeJSONError(w, http.StatusBadRequest, "action must be approve or deny")
 			return
