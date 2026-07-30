@@ -26,7 +26,7 @@ type RoleRepo interface {
 	Delete(ctx context.Context, id uuid.UUID) error
 	GrantPermissions(ctx context.Context, roleID uuid.UUID, addIDs []uuid.UUID, conditions map[string]any) error
 	RevokePermissions(ctx context.Context, roleID uuid.UUID, permIDs []uuid.UUID) error
-	GetRolePermissions(ctx context.Context, roleIDs []uuid.UUID) ([]*domain.Permission, error)
+	GetRolePermissions(ctx context.Context, roleIDs []uuid.UUID, tenantID uuid.UUID) ([]*domain.Permission, error)
 }
 
 // PermRepo provides permission persistence operations.
@@ -339,7 +339,11 @@ func (s *RoleService) RevokePermissionsFromRole(ctx context.Context, roleID uuid
 
 // GetRolePermissions returns all permissions assigned to a role.
 func (s *RoleService) GetRolePermissions(ctx context.Context, roleID uuid.UUID) ([]*domain.Permission, error) {
-	return s.roleRepo.GetRolePermissions(ctx, []uuid.UUID{roleID})
+	role, err := s.roleRepo.GetByID(ctx, roleID)
+	if err != nil {
+		return nil, err
+	}
+	return s.roleRepo.GetRolePermissions(ctx, []uuid.UUID{roleID}, role.TenantID)
 }
 
 // GetEffectivePermissions returns all permissions that a role effectively has,
@@ -383,5 +387,5 @@ func (s *RoleService) GetEffectivePermissions(ctx context.Context, roleID uuid.U
 		return []*domain.Permission{}, nil
 	}
 
-	return s.roleRepo.GetRolePermissions(ctx, allRoleIDs)
+	return s.roleRepo.GetRolePermissions(ctx, allRoleIDs, role.TenantID)
 }

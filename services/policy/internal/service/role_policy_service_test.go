@@ -84,7 +84,7 @@ func (m *mockRoleRepo) GrantPermissions(_ context.Context, _ uuid.UUID, _ []uuid
 func (m *mockRoleRepo) RevokePermissions(_ context.Context, _ uuid.UUID, _ []uuid.UUID) error {
 	return m.revokeErr
 }
-func (m *mockRoleRepo) GetRolePermissions(_ context.Context, _ []uuid.UUID) ([]*domain.Permission, error) {
+func (m *mockRoleRepo) GetRolePermissions(_ context.Context, _ []uuid.UUID, _ uuid.UUID) ([]*domain.Permission, error) {
 	return nil, nil
 }
 func (m *mockRoleRepo) GetAncestorChain(_ context.Context, _ uuid.UUID) ([]uuid.UUID, error) {
@@ -563,7 +563,11 @@ func TestPolicyService_DetachPolicy_Error(t *testing.T) {
 
 func TestGetRolePermissions_Success(t *testing.T) {
 	svc := NewRoleService(&mockRoleRepo{}, &mockPermRepo{}, nil)
-	_, err := svc.GetRolePermissions(context.Background(), uuid.New())
+	r, err := svc.CreateRole(context.Background(), uuid.New(), "p", "P", "", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	_, err = svc.GetRolePermissions(context.Background(), r.ID)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -879,7 +883,7 @@ type mockRoleRepoWithPerms struct {
 	rolePerms map[uuid.UUID][]*domain.Permission
 }
 
-func (m *mockRoleRepoWithPerms) GetRolePermissions(_ context.Context, roleIDs []uuid.UUID) ([]*domain.Permission, error) {
+func (m *mockRoleRepoWithPerms) GetRolePermissions(_ context.Context, roleIDs []uuid.UUID, _ uuid.UUID) ([]*domain.Permission, error) {
 	if m.permErr != nil {
 		return nil, m.permErr
 	}

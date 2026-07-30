@@ -171,13 +171,13 @@ func (r *RoleRepository) RevokePermissions(ctx context.Context, roleID uuid.UUID
 
 // GetRolePermissions retrieves all permissions for a role (including inherited).
 // roleIDs should include the role and all its ancestors.
-func (r *RoleRepository) GetRolePermissions(ctx context.Context, roleIDs []uuid.UUID) ([]*domain.Permission, error) {
+func (r *RoleRepository) GetRolePermissions(ctx context.Context, roleIDs []uuid.UUID, tenantID uuid.UUID) ([]*domain.Permission, error) {
 	query := `
 		SELECT p.id, p.tenant_id, p.key, p.name, p.resource_type, p.action, p.description, p.system_perm, p.level
 		FROM permissions p
 		JOIN role_permissions rp ON p.id = rp.permission_id
-		WHERE rp.role_id = ANY($1)`
-	rows, err := r.db.Query(ctx, query, roleIDs)
+		WHERE rp.role_id = ANY($1) AND (p.tenant_id = $2 OR p.system_perm = true)`
+	rows, err := r.db.Query(ctx, query, roleIDs, tenantID)
 	if err != nil {
 		return nil, fmt.Errorf("get role permissions: %w", err)
 	}

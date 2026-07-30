@@ -105,7 +105,7 @@ func (m *testRoleRepo) RevokePermissions(_ context.Context, _ uuid.UUID, _ []uui
 	return nil
 }
 
-func (m *testRoleRepo) GetRolePermissions(_ context.Context, roleIDs []uuid.UUID) ([]*domain.Permission, error) {
+func (m *testRoleRepo) GetRolePermissions(_ context.Context, roleIDs []uuid.UUID, _ uuid.UUID) ([]*domain.Permission, error) {
 	if m.getRolePermErr != nil {
 		return nil, m.getRolePermErr
 	}
@@ -244,7 +244,7 @@ type testUserRoleReader struct {
 	userRoles map[uuid.UUID][]uuid.UUID
 }
 
-func (m *testUserRoleReader) GetUserRoles(_ context.Context, userID uuid.UUID) ([]*domain.UserRole, error) {
+func (m *testUserRoleReader) GetUserRoles(_ context.Context, userID uuid.UUID, _ uuid.UUID) ([]*domain.UserRole, error) {
 	ids := m.userRoles[userID]
 	var roles []*domain.UserRole
 	for _, id := range ids {
@@ -304,6 +304,9 @@ func newTestHarness() *testHarness {
 	srv.RegisterRoutes(mux)
 	testMux = mux
 
+	harnessTID := uuid.New()
+	testTenantHeader = harnessTID.String()
+
 	return &testHarness{
 		srv:            srv,
 		roleRepo:       roleRepo,
@@ -313,11 +316,13 @@ func newTestHarness() *testHarness {
 		policySvc:      policySvc,
 		evaluator:      evaluator,
 		userRoleReader: userRoleReader,
-		tenantID:       uuid.New(),
+		tenantID:       harnessTID,
 	}
 }
 
 // doReq sends a request with an optional JSON body string.
+var testTenantHeader string
+
 func doReq(method, path, body string) *httptest.ResponseRecorder {
 	if testMux == nil {
 		newTestHarness() // lazy-init if a test calls doReq without setup
@@ -327,6 +332,9 @@ func doReq(method, path, body string) *httptest.ResponseRecorder {
 		r = strings.NewReader(body)
 	}
 	req := httptest.NewRequest(method, path, r)
+	if testTenantHeader != "" {
+		req.Header.Set("X-Tenant-ID", testTenantHeader)
+	}
 	w := httptest.NewRecorder()
 	testMux.ServeHTTP(w, req)
 	return w
@@ -655,8 +663,10 @@ func TestHandlePolicies_CreateInvalidJSON(t *testing.T) {
 }
 
 func TestHandlePolicies_CreateInvalidTenant(t *testing.T) {
+	// Body tenant_id is now ignored (header authoritative, R14 P0) —
+	// an invalid body value must not break creation.
 	w := doReq("POST", "/api/v1/policies", `{"tenant_id":"bad","name":"X","effect":"allow"}`)
-	assertStatus(t, w, http.StatusBadRequest)
+	assertStatus(t, w, http.StatusCreated)
 }
 
 func TestHandlePolicies_List(t *testing.T) {
@@ -674,8 +684,10 @@ func TestHandlePolicies_List(t *testing.T) {
 }
 
 func TestHandlePolicies_ListMissingTenant(t *testing.T) {
+	// Query param optional — the X-Tenant-ID header (set by doReq) is
+	// authoritative since R14 P0, so listing succeeds.
 	w := doReq("GET", "/api/v1/policies", "")
-	assertStatus(t, w, http.StatusBadRequest)
+	assertStatus(t, w, http.StatusOK)
 }
 
 func TestHandlePolicies_MethodNotAllowed(t *testing.T) {

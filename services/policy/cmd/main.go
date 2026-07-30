@@ -15,14 +15,14 @@ import (
 	pb "github.com/ggid/ggid/api/gen/policy/v1"
 	"github.com/ggid/ggid/pkg/audit"
 	"github.com/ggid/ggid/pkg/middleware"
+	"github.com/ggid/ggid/pkg/shutdown"
 	"github.com/ggid/ggid/services/policy/internal/config"
 	"github.com/ggid/ggid/services/policy/internal/data"
 	"github.com/ggid/ggid/services/policy/internal/handler"
 	"github.com/ggid/ggid/services/policy/internal/repository"
 	httpserver "github.com/ggid/ggid/services/policy/internal/server"
-	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/ggid/ggid/services/policy/internal/service"
-	"github.com/ggid/ggid/pkg/shutdown"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 )
@@ -136,6 +136,9 @@ func main() {
 		log.Printf("JIT schema ensure error (non-fatal): %v", err)
 	}
 	httpAPI.SetJITRepo(jitRepo)
+
+	// Start background JIT expiry cleanup (P1-5: expired roles must be revoked).
+	go httpserver.StartJITExpiryJanitor(httpAPI, ctx)
 
 	// Policy memory map repo (conditional_access, access_requests, optimization, auto_assign).
 	pmRepo := httpserver.NewPolicyMapRepo(db)

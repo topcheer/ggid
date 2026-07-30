@@ -117,6 +117,6 @@ type expiredRoleReader struct {
 	roles []*domain.UserRole
 }
 
-func (m *expiredRoleReader) GetUserRoles(_ context.Context, _ uuid.UUID) ([]*domain.UserRole, error) {
+func (m *expiredRoleReader) GetUserRoles(_ context.Context, _ uuid.UUID, _ uuid.UUID) ([]*domain.UserRole, error) {
 	return m.roles, nil
 }

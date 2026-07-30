@@ -105,7 +105,7 @@ type mockEvalRoleReader struct{}
 func (m *mockEvalRoleReader) GetAncestorChain(_ context.Context, _ uuid.UUID) ([]uuid.UUID, error) {
 	return nil, nil
 }
-func (m *mockEvalRoleReader) GetRolePermissions(_ context.Context, _ []uuid.UUID) ([]*domain.Permission, error) {
+func (m *mockEvalRoleReader) GetRolePermissions(_ context.Context, _ []uuid.UUID, _ uuid.UUID) ([]*domain.Permission, error) {
 	return nil, nil
 }
 
@@ -132,7 +132,7 @@ type mockEvalUserRoleReader struct {
 	roleIDs []uuid.UUID
 }
 
-func (m *mockEvalUserRoleReader) GetUserRoles(_ context.Context, _ uuid.UUID) ([]*domain.UserRole, error) {
+func (m *mockEvalUserRoleReader) GetUserRoles(_ context.Context, _ uuid.UUID, _ uuid.UUID) ([]*domain.UserRole, error) {
 	var roles []*domain.UserRole
 	for _, id := range m.roleIDs {
 		roles = append(roles, &domain.UserRole{RoleID: id})

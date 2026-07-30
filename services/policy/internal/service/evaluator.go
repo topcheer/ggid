@@ -18,13 +18,13 @@ import (
 // Implemented by *repository.RoleRepository; mocked in tests.
 type RoleReader interface {
 	GetAncestorChain(ctx context.Context, roleID uuid.UUID) ([]uuid.UUID, error)
-	GetRolePermissions(ctx context.Context, roleIDs []uuid.UUID) ([]*domain.Permission, error)
+	GetRolePermissions(ctx context.Context, roleIDs []uuid.UUID, tenantID uuid.UUID) ([]*domain.Permission, error)
 }
 
 // UserRoleReader provides read access to user-role assignments.
 // Implemented by *repository.UserRoleRepository; mocked in tests.
 type UserRoleReader interface {
-	GetUserRoles(ctx context.Context, userID uuid.UUID) ([]*domain.UserRole, error)
+	GetUserRoles(ctx context.Context, userID uuid.UUID, tenantID uuid.UUID) ([]*domain.UserRole, error)
 }
 
 // PolicyReader provides read access to ABAC policies.
@@ -153,7 +153,7 @@ func (e *Evaluator) Check(ctx context.Context, req *domain.CheckRequest) (*domai
 	}
 
 	// Step 1: Get the user's direct role assignments (with ExpiresAt for filtering).
-	userRoles, err := e.userRoleReader.GetUserRoles(ctx, req.UserID)
+	userRoles, err := e.userRoleReader.GetUserRoles(ctx, req.UserID, req.TenantID)
 	if err != nil {
 		return nil, errors.Wrap(errors.ErrInternal, "get user roles", err)
 	}
@@ -193,7 +193,7 @@ func (e *Evaluator) Check(ctx context.Context, req *domain.CheckRequest) (*domai
 
 	// Step 3: RBAC check — see if any permission matches.
 	rbacAllowed := false
-	perms, err := e.roleReader.GetRolePermissions(ctx, resolvedIDs)
+	perms, err := e.roleReader.GetRolePermissions(ctx, resolvedIDs, req.TenantID)
 	if err != nil {
 		return nil, errors.Wrap(errors.ErrInternal, "get role permissions", err)
 	}

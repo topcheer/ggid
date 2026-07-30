@@ -886,6 +886,15 @@ func (s *HTTPServer) handlePolicyByID(w http.ResponseWriter, r *http.Request) {
 			writeServiceError(w, err)
 			return
 		}
+		// SECURITY (R14 P0): tenant ownership on the main CRUD path
+		tid, ok := requireTenantHeader(w, r)
+		if !ok {
+			return
+		}
+		if policy.TenantID.String() != tid {
+			writeJSONError(w, http.StatusNotFound, "policy not found")
+			return
+		}
 		writeJSON(w, http.StatusOK, policyToJSON(policy))
 	case http.MethodPut, http.MethodPatch:
 		// Update policy: delete old + create new with same ID
@@ -902,11 +911,22 @@ func (s *HTTPServer) handlePolicyByID(w http.ResponseWriter, r *http.Request) {
 			writeJSONError(w, http.StatusBadRequest, "invalid JSON body")
 			return
 		}
-		tenantID, err := uuid.Parse(req.TenantID)
-		if err != nil {
-			writeJSONError(w, http.StatusBadRequest, "invalid tenant_id")
+		tidStr, ok := requireTenantHeader(w, r)
+		if !ok {
 			return
 		}
+		// SECURITY (R14 P0): verify ownership before delete+recreate;
+		// tenant comes from the verified header, never the body
+		existing, err := s.policySvc.GetPolicy(r.Context(), id)
+		if err != nil {
+			writeServiceError(w, err)
+			return
+		}
+		if existing.TenantID.String() != tidStr {
+			writeJSONError(w, http.StatusNotFound, "policy not found")
+			return
+		}
+		tenantID := existing.TenantID
 		// Delete existing, then create updated
 		_ = s.policySvc.DeletePolicy(r.Context(), id) // best-effort delete on update path
 		policy, err := s.policySvc.CreatePolicy(r.Context(), &domain.Policy{
@@ -925,11 +945,24 @@ func (s *HTTPServer) handlePolicyByID(w http.ResponseWriter, r *http.Request) {
 		}
 		writeJSON(w, http.StatusOK, policyToJSON(policy))
 	case http.MethodDelete:
+		tidStr, ok := requireTenantHeader(w, r)
+		if !ok {
+			return
+		}
+		existing, err := s.policySvc.GetPolicy(r.Context(), id)
+		if err != nil {
+			writeServiceError(w, err)
+			return
+		}
+		if existing.TenantID.String() != tidStr {
+			writeJSONError(w, http.StatusNotFound, "policy not found")
+			return
+		}
 		if err := s.policySvc.DeletePolicy(r.Context(), id); err != nil {
 			writeServiceError(w, err)
 			return
 		}
-		s.publishAuditEvent("policy.delete", "success", "policy", id, uuid.Nil)
+		s.publishAuditEvent("policy.delete", "success", "policy", id, existing.TenantID)
 		writeJSON(w, http.StatusOK, map[string]string{"status": "deleted"})
 	default:
 		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
@@ -951,9 +984,15 @@ func (s *HTTPServer) createPolicy(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	tenantID, err := uuid.Parse(req.TenantID)
+	// SECURITY (R14 P0): tenant from verified header — body tenant_id
+	// previously allowed creating policies in any tenant.
+	tidStr, ok := requireTenantHeader(w, r)
+	if !ok {
+		return
+	}
+	tenantID, err := uuid.Parse(tidStr)
 	if err != nil {
-		writeJSONError(w, http.StatusBadRequest, "invalid tenant_id")
+		writeJSONError(w, http.StatusBadRequest, "invalid tenant context")
 		return
 	}
 
@@ -975,9 +1014,14 @@ func (s *HTTPServer) createPolicy(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *HTTPServer) listPolicies(w http.ResponseWriter, r *http.Request) {
-	tenantIDStr := r.URL.Query().Get("tenant_id")
-	if tenantIDStr == "" {
-		writeJSONError(w, http.StatusBadRequest, "tenant_id query parameter is required")
+	// SECURITY (R14 P0): header tenant is authoritative — the query
+	// param previously let callers list any tenant's policies
+	tenantIDStr, ok := requireTenantHeader(w, r)
+	if !ok {
+		return
+	}
+	if q := r.URL.Query().Get("tenant_id"); q != "" && q != tenantIDStr {
+		writeJSONError(w, http.StatusForbidden, "tenant mismatch")
 		return
 	}
 	tenantID, err := uuid.Parse(tenantIDStr)

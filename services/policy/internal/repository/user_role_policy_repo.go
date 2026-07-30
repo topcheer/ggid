@@ -88,13 +88,13 @@ func (r *UserRoleRepository) GetRoleIDsForUser(ctx context.Context, userID uuid.
 
 // GetUserRoles returns all role assignments for a user including ExpiresAt metadata.
 // The evaluator uses this to enforce role expiration independently of the SQL filter.
-func (r *UserRoleRepository) GetUserRoles(ctx context.Context, userID uuid.UUID) ([]*domain.UserRole, error) {
+func (r *UserRoleRepository) GetUserRoles(ctx context.Context, userID uuid.UUID, tenantID uuid.UUID) ([]*domain.UserRole, error) {
 	query := `
 		SELECT ur.user_id, ur.role_id, ur.scope_type, ur.scope_id, ur.granted_by, ur.expires_at, ur.created_at
 		FROM user_roles ur
 		JOIN roles r ON r.id = ur.role_id
-		WHERE ur.user_id = $1`
-	rows, err := r.db.Query(ctx, query, userID)
+		WHERE ur.user_id = $1 AND (r.tenant_id = $2 OR r.system_role = true)`
+	rows, err := r.db.Query(ctx, query, userID, tenantID)
 	if err != nil {
 		return nil, fmt.Errorf("get user roles: %w", err)
 	}

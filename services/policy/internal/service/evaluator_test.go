@@ -28,7 +28,7 @@ func (m *mockRoleReader) GetAncestorChain(_ context.Context, roleID uuid.UUID) (
 	return []uuid.UUID{roleID}, nil // default: just the role itself
 }
 
-func (m *mockRoleReader) GetRolePermissions(_ context.Context, roleIDs []uuid.UUID) ([]*domain.Permission, error) {
+func (m *mockRoleReader) GetRolePermissions(_ context.Context, roleIDs []uuid.UUID, _ uuid.UUID) ([]*domain.Permission, error) {
 	if m.permissionsErr != nil {
 		return nil, m.permissionsErr
 	}
@@ -44,7 +44,7 @@ type mockUserRoleReader struct {
 	err     error
 }
 
-func (m *mockUserRoleReader) GetUserRoles(_ context.Context, userID uuid.UUID) ([]*domain.UserRole, error) {
+func (m *mockUserRoleReader) GetUserRoles(_ context.Context, userID uuid.UUID, _ uuid.UUID) ([]*domain.UserRole, error) {
 	if m.err != nil {
 		return nil, m.err
 	}
