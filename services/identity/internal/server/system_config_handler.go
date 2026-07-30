@@ -14,10 +14,34 @@ import (
 
 // handleSystemConfig handles GET/PUT /api/v1/system/config
 // Reads or writes key-value system configuration from sys_config table.
+// SECURITY: requires admin privileges — system config is tenant-wide.
 func (h *HTTPHandler) handleSystemConfig(w http.ResponseWriter, r *http.Request) {
 	pool := h.svc.Pool()
 	if pool == nil {
 		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "database not available"})
+		return
+	}
+
+	// SECURITY: only admins can read or write system config.
+	isAdmin := r.Header.Get("X-Is-Admin") == "true"
+	if !isAdmin {
+		scopes := r.Header.Get("X-Scopes")
+		for _, s := range strings.Split(scopes, ",") {
+			if strings.TrimSpace(s) == "admin" || strings.TrimSpace(s) == "system:config" {
+				isAdmin = true
+				break
+			}
+		}
+	}
+	if !isAdmin {
+		writeJSON(w, http.StatusForbidden, map[string]string{"error": "admin privileges required"})
+		return
+	}
+
+	// SECURITY: require tenant context.
+	tenantIDStr := r.Header.Get("X-Tenant-ID")
+	if tenantIDStr == "" {
+		writeJSON(w, http.StatusForbidden, map[string]string{"error": "tenant context required"})
 		return
 	}
 
@@ -33,8 +57,16 @@ func (h *HTTPHandler) handleSystemConfig(w http.ResponseWriter, r *http.Request)
 
 func (h *HTTPHandler) systemConfigGet(w http.ResponseWriter, r *http.Request) {
 	// SECURITY: system config contains sensitive global settings — restrict to platform:admin.
+	// Use exact scope matching (comma-separated) to prevent substring bypass like "notplatform:admin".
 	scopes := r.Header.Get("X-Scopes")
-	if !strings.Contains(scopes, "platform:admin") {
+	hasPlatformAdmin := false
+	for _, s := range strings.Split(scopes, ",") {
+		if strings.TrimSpace(s) == "platform:admin" {
+			hasPlatformAdmin = true
+			break
+		}
+	}
+	if !hasPlatformAdmin {
 		writeJSON(w, http.StatusForbidden, map[string]string{"error": "platform:admin scope required"})
 		return
 	}
