@@ -1528,10 +1528,13 @@ func (gw *Gateway) handlePostureGet(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	deviceID := strings.TrimPrefix(r.URL.Path, "/api/v1/devices/posture/")
-	tenantID := r.Header.Get("X-Tenant-ID")
-	if tenantID == "" {
-		w.WriteHeader(http.StatusBadRequest)
-		_ = json.NewEncoder(w).Encode(map[string]string{"error": "X-Tenant-ID header required"})
+	// SECURITY (R19 P1): Use JWT-verified tenant from context, not the
+	// client-supplied X-Tenant-ID header (posture routes are local and
+	// do not go through the proxy Director's header stripping).
+	tenantID, ok := middleware.TenantIDFromRequest(r)
+	if !ok || tenantID == "" {
+		w.WriteHeader(http.StatusForbidden)
+		_ = json.NewEncoder(w).Encode(map[string]string{"error": "tenant context required"})
 		return
 	}
 	result, _ := gw.postureEngine.GetLatestScore(r.Context(), tenantID, deviceID)
@@ -1549,10 +1552,11 @@ func (gw *Gateway) handlePostureGetPolicy(w http.ResponseWriter, r *http.Request
 		_ = json.NewEncoder(w).Encode(map[string]string{"error": "posture engine not configured"})
 		return
 	}
-	tenantID := r.Header.Get("X-Tenant-ID")
-	if tenantID == "" {
-		w.WriteHeader(http.StatusBadRequest)
-		_ = json.NewEncoder(w).Encode(map[string]string{"error": "X-Tenant-ID header required"})
+	// SECURITY (R19 P1): Use JWT-verified tenant from context.
+	tenantID, ok := middleware.TenantIDFromRequest(r)
+	if !ok || tenantID == "" {
+		w.WriteHeader(http.StatusForbidden)
+		_ = json.NewEncoder(w).Encode(map[string]string{"error": "tenant context required"})
 		return
 	}
 	_ = json.NewEncoder(w).Encode(gw.postureEngine.GetPolicy(tenantID))
