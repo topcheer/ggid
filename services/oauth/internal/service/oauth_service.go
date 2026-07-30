@@ -803,6 +803,11 @@ func padBytes(b []byte, length int) []byte {
 // provided — preserving the pre-existing default behavior.
 func resolveAudience(requested, fallback string) string {
 	if requested != "" {
+		// SECURITY: Reject reserved AS-internal audiences from caller-supplied values.
+		// This prevents regular users from minting tokens that can introspect other tokens.
+		if requested == "ggid" || requested == "introspection" {
+			return fallback
+		}
 		return requested
 	}
 	return fallback
@@ -1282,6 +1287,9 @@ func (s *OAuthService) exchangeTokenInternal(ctx context.Context, req *RFC8693Ex
 func (s *OAuthService) parseAndValidateJWT(raw string) (jwt.MapClaims, error) {
 	claims := jwt.MapClaims{}
 	_, err := jwt.ParseWithClaims(raw, claims, func(t *jwt.Token) (any, error) {
+		if !isSupportedSigningMethod(t.Method) {
+			return nil, fmt.Errorf("unexpected signing method: %s", t.Header["alg"])
+		}
 		return s.keyProvider.Public(), nil
 	})
 	if err != nil {
@@ -1594,6 +1602,59 @@ func (s *OAuthService) IssueSAMLToken(tenantID uuid.UUID, nameID, email, display
 // revokedTokens stores revoked token hashes (thread-safe).
 var revokedTokens sync.Map
 var stateStore sync.Map // stateKey -> expiry time
+
+// init starts a background goroutine that periodically sweeps expired entries
+// from the in-memory stateStore, revokedTokens, and deviceCodeStore.
+func init() {
+	go startExpiredEntryReaper()
+}
+
+func startExpiredEntryReaper() {
+	ticker := time.NewTicker(5 * time.Minute)
+	defer ticker.Stop()
+	for range ticker.C {
+		now := time.Now()
+
+		// Sweep stateStore: delete entries whose expiry is in the past.
+		stateStore.Range(func(k, v any) bool {
+			if exp, ok := v.(time.Time); ok && now.After(exp) {
+				stateStore.Delete(k)
+			}
+			return true
+		})
+
+		// Sweep revokedTokens: delete entries whose stored expiry is in the past.
+		revokedTokens.Range(func(k, v any) bool {
+			if exp, ok := v.(time.Time); ok && now.After(exp) {
+				revokedTokens.Delete(k)
+			} else if m, ok := v.(map[string]any); ok {
+				if expStr, ok := m["exp"].(time.Time); ok && now.After(expStr) {
+					revokedTokens.Delete(k)
+				}
+			}
+			return true
+		})
+
+		// Sweep deviceCodeStore: delete expired entries.
+		deviceCodeMu.Lock()
+		for code, info := range deviceCodeStore {
+			if now.After(info.ExpiresAt) {
+				delete(deviceCodeStore, code)
+				delete(userCodeIndex, info.UserCode)
+			}
+		}
+		deviceCodeMu.Unlock()
+
+		// Sweep backchannelLogoutList: delete entries older than 7 days.
+		cutoff := now.Unix() - 7*24*3600
+		backchannelLogoutList.Range(func(k, v any) bool {
+			if ts, ok := v.(int64); ok && ts < cutoff {
+				backchannelLogoutList.Delete(k)
+			}
+			return true
+		})
+	}
+}
 
 // ValidateState checks whether a state parameter was previously stored during /authorize.
 
@@ -2070,7 +2131,8 @@ func (s *OAuthService) RefreshToken(ctx context.Context, req *RefreshTokenReques
 // then construct a RefreshTokenRecord so the caller can issue new tokens.
 func (s *OAuthService) lookupAuthRefreshToken(ctx context.Context, tenantID uuid.UUID, tokenHash, plaintext string, requestingClientID uuid.UUID) (*domain.RefreshTokenRecord, error) {
 	redisKey := "ggid:rt:" + tokenHash
-	tokenIDStr, err := s.rdb.Get(ctx, redisKey)
+	// SECURITY: Use GetDel for one-time use semantics — prevents indefinite token reuse.
+	tokenIDStr, err := s.rdb.GetDel(ctx, redisKey)
 	if err != nil || tokenIDStr == "" {
 		return nil, fmt.Errorf("refresh token not found in auth redis")
 	}
@@ -2803,13 +2865,27 @@ func (s *OAuthService) DynamicClientRegister(ctx context.Context, req *DynamicRe
 	}
 	scopes := safeScopes
 
+	// SECURITY: Restrict DCR grant types to safe subset — prevent password grant abuse.
+	safeGrants := map[string]bool{
+		"authorization_code": true, "refresh_token": true, "client_credentials": true,
+	}
+	var filteredGrants []string
+	for _, g := range req.GrantTypes {
+		if safeGrants[g] {
+			filteredGrants = append(filteredGrants, g)
+		}
+	}
+	if len(filteredGrants) == 0 {
+		filteredGrants = []string{"authorization_code", "refresh_token"}
+	}
+
 	client := &domain.OAuthClient{
 		ID:                      uuid.New(),
 		TenantID:                tc.TenantID,
 		ClientID:                clientID,
 		Name:                    defaultIfEmpty(req.ClientName, "Dynamic Client"),
 		Type:                    domain.ClientTypeConfidential,
-		GrantTypes:              req.GrantTypes,
+		GrantTypes:              filteredGrants,
 		ResponseTypes:           req.ResponseTypes,
 		RedirectURIs:            req.RedirectURIs,
 		Scopes:                  scopes,
@@ -3031,17 +3107,23 @@ func (s *OAuthService) PollDeviceToken(ctx context.Context, deviceCode, clientID
 	}
 
 	if status == "approved" && userID != nil {
+		// SECURITY: Atomically consume the device code under write lock to prevent
+		// TOCTOU race where two concurrent polls both see "approved" and issue tokens.
+		deviceCodeMu.Lock()
+		info2, ok2 := deviceCodeStore[deviceCode]
+		if !ok2 || info2.Status != "approved" {
+			deviceCodeMu.Unlock()
+			return nil, fmt.Errorf("authorization_pending")
+		}
+		delete(deviceCodeStore, deviceCode)
+		delete(userCodeIndex, info2.UserCode)
+		deviceCodeMu.Unlock()
+
 		// Issue tokens for the authorized user.
 		accessToken, expiresIn, err := s.issueDeviceAccessToken(tenantID, *userID)
 		if err != nil {
 			return nil, err
 		}
-
-		// Clean up.
-		deviceCodeMu.Lock()
-		delete(deviceCodeStore, deviceCode)
-		delete(userCodeIndex, info.UserCode)
-		deviceCodeMu.Unlock()
 
 		scopeStr := ""
 		if len(info.Scope) > 0 {
