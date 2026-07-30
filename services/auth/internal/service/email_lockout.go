@@ -45,13 +45,12 @@ func (s *EmailService) IssueVerificationToken(ctx context.Context, tenantID, use
 // The token is consumed (deleted) after successful verification.
 func (s *EmailService) VerifyEmailToken(ctx context.Context, token string) (tenantID, userID uuid.UUID, email string, err error) {
 	key := fmt.Sprintf("ggid:emailverify:%s", hashToken(token))
-	val, err := s.rdb.Get(ctx, key).Result()
+	// Use GetDel for atomic get+delete (prevents TOCTOU token replay).
+	// Consistent with ConsumeResetToken and OTP service.
+	val, err := s.rdb.GetDel(ctx, key).Result()
 	if err != nil {
 		return uuid.Nil, uuid.Nil, "", fmt.Errorf("invalid or expired verification token")
 	}
-
-	// Delete the token (one-time use).
-	s.rdb.Del(ctx, key)
 
 	parts := strings.SplitN(val, ":", 3)
 	if len(parts) != 3 {
