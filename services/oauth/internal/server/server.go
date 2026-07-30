@@ -1693,7 +1693,7 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 		}
 		// Sub-path: secret rotation
 		if strings.HasSuffix(r.URL.Path, "/rotate-secret") || strings.HasSuffix(r.URL.Path, "/secret-status") {
-			handleClientSecretRotation(w, r)
+			handleClientSecretRotation(w, r, oauthSvc)
 			return
 		}
 		// Sub-path: analytics

@@ -6,6 +6,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/ggid/ggid/services/oauth/internal/service"
 	"github.com/google/uuid"
 )
 
@@ -25,13 +26,31 @@ var (
 
 // POST /api/v1/oauth/clients/{id}/rotate-secret
 // GET /api/v1/oauth/clients/{id}/secret-status
-func handleClientSecretRotation(w http.ResponseWriter, r *http.Request) {
+func handleClientSecretRotation(w http.ResponseWriter, r *http.Request, oauthSvc *service.OAuthService) {
 	if !strings.Contains(r.URL.Path, "/rotate-secret") && !strings.Contains(r.URL.Path, "/secret-status") {
 		writeJSON(w, http.StatusNotFound, map[string]any{"error": "not found"})
 		return
 	}
 
 	clientID := extractIDFromPath(r.URL.Path)
+
+	// SECURITY: verify tenant context + client belongs to caller's tenant (P0)
+	callerTenant := r.Header.Get("X-Tenant-ID")
+	if callerTenant == "" {
+		writeJSON(w, http.StatusForbidden, map[string]any{"error": map[string]string{"code": "forbidden", "message": "tenant context required"}})
+		return
+	}
+	if oauthSvc != nil {
+		client, err := oauthSvc.GetClientForAuth(r.Context(), clientID)
+		if err != nil || client == nil {
+			writeJSON(w, http.StatusNotFound, map[string]any{"error": "client not found"})
+			return
+		}
+		if client.TenantID.String() != callerTenant {
+			writeJSON(w, http.StatusNotFound, map[string]any{"error": "client not found"})
+			return
+		}
+	}
 
 	if strings.HasSuffix(r.URL.Path, "/secret-status") && r.Method == http.MethodGet {
 		secretStatusMu.RLock()
@@ -48,13 +67,6 @@ func handleClientSecretRotation(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if strings.HasSuffix(r.URL.Path, "/rotate-secret") && r.Method == http.MethodPost {
-		// SECURITY: Verify caller's tenant matches the client's tenant.
-		callerTenant := r.Header.Get("X-Tenant-ID")
-		if callerTenant == "" {
-			writeJSON(w, http.StatusForbidden, map[string]any{"error": map[string]string{"code": "forbidden", "message": "tenant context required"}})
-			return
-		}
-		// TODO: verify clientID belongs to callerTenant via oauthSvc when available
 		newSecret := uuid.New().String() + uuid.New().String()
 		graceExpiry := time.Now().UTC().Add(24 * time.Hour)
 		status := &SecretStatus{
