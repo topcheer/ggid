@@ -10,6 +10,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/ggid/ggid/services/policy/internal/domain"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
@@ -24,14 +25,14 @@ type AuthorizeRequest struct {
 
 // AuthorizeResponse is the unified authorization decision.
 type AuthorizeResponse struct {
-	Allowed     bool           `json:"allowed"`
-	DenyReason  string         `json:"deny_reason,omitempty"`
-	RiskOverlay string         `json:"risk_overlay,omitempty"` // none, step_up, block
-	RiskScore   int            `json:"risk_score"`
-	EvaluatedBy []string       `json:"evaluated_by"` // rbac, abac, rebac, risk
-	CacheHit    bool           `json:"cache_hit"`
-	LatencyMs   int64          `json:"latency_ms"`
-	DecisionID  string         `json:"decision_id"`
+	Allowed     bool     `json:"allowed"`
+	DenyReason  string   `json:"deny_reason,omitempty"`
+	RiskOverlay string   `json:"risk_overlay,omitempty"` // none, step_up, block
+	RiskScore   int      `json:"risk_score"`
+	EvaluatedBy []string `json:"evaluated_by"` // rbac, abac, rebac, risk
+	CacheHit    bool     `json:"cache_hit"`
+	LatencyMs   int64    `json:"latency_ms"`
+	DecisionID  string   `json:"decision_id"`
 }
 
 // pdpRepo manages PDP decision audit logs in PostgreSQL.
@@ -132,7 +133,7 @@ type cacheEntry struct {
 }
 
 var (
-	pdpCache   sync.Map // cacheKey → cacheEntry
+	pdpCache    sync.Map // cacheKey → cacheEntry
 	pdpCacheTTL = 5 * time.Second
 )
 
@@ -185,17 +186,42 @@ func (s *HTTPServer) EvaluateAuthorize(ctx context.Context, req *AuthorizeReques
 	rbacReason, abacReason, rebacReason := "", "", ""
 	evaluatedBy := []string{}
 
-	// RBAC check (uses role service if available).
+	// RBAC check: use evaluator if available, otherwise default deny.
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		if s.roleSvc != nil {
-			// Simplified: if we can list roles, RBAC is available.
-			roles, err := s.roleSvc.ListRoles(ctx, uuid.Nil, 1, 1)
-			if err == nil && roles != nil {
-				rbacAllow = true // RBAC allows by default when no explicit deny rules
-				evaluatedBy = append(evaluatedBy, "rbac")
+		if s.evaluator != nil && req.Subject != "" {
+			subjectUUID, err := uuid.Parse(req.Subject)
+			if err != nil {
+				rbacAllow = false
+				rbacReason = "invalid subject UUID"
+				return
 			}
+			tenantID := uuid.Nil
+			if req.Context != nil {
+				if tid, ok := req.Context["tenant_id"].(string); ok {
+					tenantID, _ = uuid.Parse(tid)
+				}
+			}
+			result, err := s.evaluator.Check(ctx, &domain.CheckRequest{
+				UserID:       subjectUUID,
+				TenantID:     tenantID,
+				ResourceType: req.Resource,
+				Action:       req.Action,
+			})
+			if err != nil {
+				rbacAllow = false
+				rbacReason = "RBAC evaluation error"
+			} else if result != nil && result.Allowed {
+				rbacAllow = true
+				evaluatedBy = append(evaluatedBy, "rbac")
+			} else {
+				rbacAllow = false
+				rbacReason = "RBAC policy denied"
+			}
+		} else {
+			rbacAllow = false
+			rbacReason = "no RBAC evaluator configured"
 		}
 	}()
 
@@ -229,10 +255,18 @@ func (s *HTTPServer) EvaluateAuthorize(ctx context.Context, req *AuthorizeReques
 	allowed := rbacAllow && abacAllow && rebacAllow
 	denyReason := ""
 	if !allowed {
-		if !rbacAllow { denyReason = rbacReason }
-		if !abacAllow { denyReason = abacReason }
-		if !rebacAllow { denyReason = rebacReason }
-		if denyReason == "" { denyReason = "denied by authorization policy" }
+		if !rbacAllow {
+			denyReason = rbacReason
+		}
+		if !abacAllow {
+			denyReason = abacReason
+		}
+		if !rebacAllow {
+			denyReason = rebacReason
+		}
+		if denyReason == "" {
+			denyReason = "denied by authorization policy"
+		}
 	}
 
 	// Risk overlay.
@@ -306,7 +340,9 @@ func (s *HTTPServer) handlePDPDecisions(w http.ResponseWriter, r *http.Request) 
 	if s.pdpRepo != nil {
 		decisions, _ = s.pdpRepo.ListDecisions(r.Context(), limit, 0)
 	}
-	if decisions == nil { decisions = []map[string]any{} }
+	if decisions == nil {
+		decisions = []map[string]any{}
+	}
 	writeJSON(w, http.StatusOK, map[string]any{"decisions": decisions, "count": len(decisions)})
 }
 

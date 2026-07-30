@@ -9,34 +9,36 @@ import (
 type ReviewDecision string
 
 const (
-	ReviewApprove  ReviewDecision = "approve"
-	ReviewReject   ReviewDecision = "reject"
-	ReviewPending  ReviewDecision = "pending"
+	ReviewApprove ReviewDecision = "approve"
+	ReviewReject  ReviewDecision = "reject"
+	ReviewPending ReviewDecision = "pending"
 )
 
 type AccessReviewRecord struct {
-	ReviewID   string         `json:"review_id"`
-	UserID     string         `json:"user_id"`
-	Reviewer   string         `json:"reviewer"`
-	Scopes     []string       `json:"scopes"`
-	Roles      []string       `json:"roles"`
-	Decision   ReviewDecision `json:"decision"`
-	Comment    string         `json:"comment"`
-	Timestamp  time.Time      `json:"timestamp"`
-	Scheduled  bool           `json:"scheduled"`
+	ReviewID  string         `json:"review_id"`
+	TenantID  string         `json:"tenant_id"`
+	UserID    string         `json:"user_id"`
+	Reviewer  string         `json:"reviewer"`
+	Scopes    []string       `json:"scopes"`
+	Roles     []string       `json:"roles"`
+	Decision  ReviewDecision `json:"decision"`
+	Comment   string         `json:"comment"`
+	Timestamp time.Time      `json:"timestamp"`
+	Scheduled bool           `json:"scheduled"`
 }
 
 type ReviewFilter struct {
+	TenantID string `json:"tenant_id,omitempty"`
 	UserID   string `json:"user_id,omitempty"`
 	Reviewer string `json:"reviewer,omitempty"`
 	Decision string `json:"decision,omitempty"`
 }
 
 type AccessReviewService struct {
-	mu       sync.RWMutex
-	reviews  map[string]*AccessReviewRecord
-	byUser   map[string][]string
-	seq      int
+	mu           sync.RWMutex
+	reviews      map[string]*AccessReviewRecord
+	byUser       map[string][]string
+	seq          int
 	intervalDays int
 }
 
@@ -48,12 +50,13 @@ func NewAccessReviewService(intervalDays int) *AccessReviewService {
 	}
 }
 
-func (s *AccessReviewService) CreateAccessReview(userID, reviewer string, scopes, roles []string) *AccessReviewRecord {
+func (s *AccessReviewService) CreateAccessReview(tenantID, userID, reviewer string, scopes, roles []string) *AccessReviewRecord {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	s.seq++
 	r := &AccessReviewRecord{
 		ReviewID:  fmt.Sprintf("rev_%d", s.seq),
+		TenantID:  tenantID,
 		UserID:    userID,
 		Reviewer:  reviewer,
 		Scopes:    scopes,
@@ -71,6 +74,9 @@ func (s *AccessReviewService) ListAccessReviews(filter ReviewFilter) []*AccessRe
 	defer s.mu.RUnlock()
 	var list []*AccessReviewRecord
 	for _, r := range s.reviews {
+		if filter.TenantID != "" && r.TenantID != filter.TenantID {
+			continue
+		}
 		if filter.UserID != "" && r.UserID != filter.UserID {
 			continue
 		}
@@ -104,10 +110,10 @@ func (s *AccessReviewService) UpdateAccessReview(id string, decision ReviewDecis
 	return r
 }
 
-func (s *AccessReviewService) GenerateScheduledReviews(userIDs []string, reviewer string) []*AccessReviewRecord {
+func (s *AccessReviewService) GenerateScheduledReviews(tenantID string, userIDs []string, reviewer string) []*AccessReviewRecord {
 	var created []*AccessReviewRecord
 	for _, uid := range userIDs {
-		r := s.CreateAccessReview(uid, reviewer, nil, nil)
+		r := s.CreateAccessReview(tenantID, uid, reviewer, nil, nil)
 		r.Scheduled = true
 		created = append(created, r)
 	}

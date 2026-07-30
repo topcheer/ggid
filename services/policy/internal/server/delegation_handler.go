@@ -7,7 +7,6 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/ggid/ggid/services/policy/internal/service"
 	"github.com/google/uuid"
 )
 
@@ -44,8 +43,11 @@ func (s *HTTPServer) handleDelegate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	delegatorID := parseUUIDSafe(delegatorIDStr)
+	// SECURITY: extract tenant from header for isolation
+	tenantID := parseUUIDSafe(r.Header.Get("X-Tenant-ID"))
 	d, err := s.policySvc.DelegatePermissions(
 		r.Context(),
+		tenantID,
 		delegatorID,
 		parseUUIDSafe(req.DelegateeID),
 		req.Permissions, hours,
@@ -69,20 +71,14 @@ func (s *HTTPServer) handleListDelegations(w http.ResponseWriter, r *http.Reques
 		return
 	}
 	userID := parseUUIDSafe(r.URL.Query().Get("user_id"))
-	delegations, err := s.policySvc.ListDelegations(context.Background(), userID)
+	tenantUUID := parseUUIDSafe(tid)
+	delegations, err := s.policySvc.ListDelegations(context.Background(), tenantUUID, userID)
 	if err != nil {
 		log.Printf("delegation list error: %v", err)
 		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "internal server error"})
 		return
 	}
-	// SECURITY: filter to caller's tenant
-	filtered := []*service.Delegation{}
-	for _, d := range delegations {
-		if d.TenantID.String() == tid {
-			filtered = append(filtered, d)
-		}
-	}
-	writeJSON(w, http.StatusOK, map[string]any{"delegations": filtered})
+	writeJSON(w, http.StatusOK, map[string]any{"delegations": delegations})
 }
 
 func parseUUIDSafe(s string) uuid.UUID {
