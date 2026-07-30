@@ -128,10 +128,11 @@ func DefaultBucketRateLimitConfig() *BucketRateLimitConfig {
 
 // TenantBucketLimiter enforces per-tenant + IP token-bucket rate limits.
 type TenantBucketLimiter struct {
-	cfg     *BucketRateLimitConfig
-	mu      sync.RWMutex
-	buckets map[string]*TokenBucket // key: tenantID:ip
-	store   sysconfig.Store
+	cfg         *BucketRateLimitConfig
+	mu          sync.RWMutex
+	buckets     map[string]*TokenBucket // key: tenantID:ip
+	store       sysconfig.Store
+	cleanupDone chan struct{}
 }
 
 // NewTenantBucketLimiter creates a new per-tenant bucket limiter.
@@ -276,6 +277,33 @@ func (tbl *TenantBucketLimiter) Cleanup(maxAge time.Duration) {
 		if b.lastRefill.Before(cutoff) {
 			delete(tbl.buckets, k)
 		}
+	}
+}
+
+// StartCleanup launches a background goroutine that periodically removes
+// expired idle buckets to prevent unbounded memory growth.
+// Call StopCleanup to terminate the goroutine on graceful shutdown.
+func (tbl *TenantBucketLimiter) StartCleanup(interval, maxAge time.Duration) {
+	tbl.cleanupDone = make(chan struct{})
+	go func() {
+		ticker := time.NewTicker(interval)
+		defer ticker.Stop()
+		for {
+			select {
+			case <-ticker.C:
+				tbl.Cleanup(maxAge)
+			case <-tbl.cleanupDone:
+				return
+			}
+		}
+	}()
+}
+
+// StopCleanup signals the cleanup goroutine to exit.
+func (tbl *TenantBucketLimiter) StopCleanup() {
+	if tbl.cleanupDone != nil {
+		close(tbl.cleanupDone)
+		tbl.cleanupDone = nil
 	}
 }
 
