@@ -71,13 +71,13 @@ export default function LoginPage() {
         fetch(`${API_BASE}/api/v1/tenants/resolve?slug=default`)
           .then((r) => r.ok ? r.json() : null)
           .then((d) => {
-            const fallbackId = d?.id || d?.tenant_id || "fb44ca98-2a8a-498b-a9b2-00fc014524ce";
+            const fallbackId = d?.id || d?.tenant_id || DEFAULT_TENANT_ID;
             setResolvedTenantId(fallbackId);
             localStorage.setItem("ggid_tenant_id", fallbackId);
           })
           .catch(() => {
-            // Last resort: use hardcoded platform tenant
-            setResolvedTenantId("fb44ca98-2a8a-498b-a9b2-00fc014524ce");
+            // Last resort: use configured default tenant
+            setResolvedTenantId(DEFAULT_TENANT_ID);
           });
       }
     });

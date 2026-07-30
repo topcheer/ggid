@@ -7,6 +7,7 @@ import {
   ChevronRight, ChevronDown, Users, DollarSign, Hash,
 } from "lucide-react";
 import { useTranslations } from "@/lib/i18n";
+import { DEFAULT_TENANT_ID } from "@/lib/api-config";
 
 interface Department {
   id: string;
@@ -35,7 +36,7 @@ export default function DepartmentsPage() {
     setLoading(true);
     setError(null);
     try {
-      const tid = typeof window !== 'undefined' ? (localStorage.getItem("ggid_tenant_id") || "fb44ca98-2a8a-498b-a9b2-00fc014524ce") : "fb44ca98-2a8a-498b-a9b2-00fc014524ce";
+      const tid = typeof window !== 'undefined' ? (localStorage.getItem("ggid_tenant_id") || DEFAULT_TENANT_ID) : DEFAULT_TENANT_ID;
       const treeData = await apiFetch<{ tree?: any[]; departments?: any[] }>(`/api/v1/orgs/tree?tenant_id=${tid}`).catch(() => null);
       // Extract departments from org tree
       const orgs = treeData?.tree ?? [];
