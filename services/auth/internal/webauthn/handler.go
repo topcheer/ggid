@@ -142,6 +142,22 @@ func (s *sessionStore) get(key string) (*sessionData, bool) {
 	return sd, true
 }
 
+// getAndDelete atomically retrieves and removes a session entry.
+// This prevents TOCTOU replay of WebAuthn challenges by concurrent requests.
+func (s *sessionStore) getAndDelete(key string) (*sessionData, bool) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	sd, ok := s.sessions[key]
+	if !ok {
+		return nil, false
+	}
+	delete(s.sessions, key)
+	if time.Since(sd.createdAt) > 5*time.Minute {
+		return nil, false
+	}
+	return sd, true
+}
+
 func (s *sessionStore) delete(key string) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -648,14 +664,13 @@ func (h *Handler) finishRegistration(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Find the session by challenge.
+	// Find the session by challenge and atomically consume it (one-time use).
 	challenge := parsedResponse.Response.CollectedClientData.Challenge
-	sd, ok := h.sessions.get("reg:" + challenge)
+	sd, ok := h.sessions.getAndDelete("reg:" + challenge)
 	if !ok {
 		writeError(w, http.StatusBadRequest, "session expired or not found")
 		return
 	}
-	defer h.sessions.delete("reg:" + challenge)
 
 	user, err := h.buildWebAuthnUser(ctx, tenantID, userID)
 	if err != nil {
@@ -849,14 +864,14 @@ func (h *Handler) finishAuthentication(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Find the session by challenge.
+	// Find the session by challenge and atomically consume it (one-time use).
+	// Using getAndDelete prevents challenge replay via concurrent requests.
 	challenge := parsedResponse.Response.CollectedClientData.Challenge
-	sd, ok := h.sessions.get("auth:" + challenge)
+	sd, ok := h.sessions.getAndDelete("auth:" + challenge)
 	if !ok {
 		writeError(w, http.StatusBadRequest, "session expired or not found")
 		return
 	}
-	defer h.sessions.delete("auth:" + challenge)
 
 	// Look up the credential to build the user for verification.
 	ctx := ggidtenant.WithContext(r.Context(), &ggidtenant.Context{
