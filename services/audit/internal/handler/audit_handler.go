@@ -153,10 +153,10 @@ func toGRPCError(err error) error {
 		case errors.ErrPermissionDenied:
 			return status.Error(codes.PermissionDenied, ge.Message)
 		default:
-			return status.Error(codes.Internal, ge.Message)
+			return status.Error(codes.Internal, "internal error")
 		}
 	}
-	return status.Error(codes.Internal, err.Error())
+	return status.Error(codes.Internal, "internal error")
 }
 
 // Ensure time import is used (needed for potential future time parsing).

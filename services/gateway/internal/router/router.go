@@ -733,6 +733,8 @@ func (gw *Gateway) Handler() http.Handler {
 	// RequestID must be first (after recovery) so all downstream middleware have request_id in logs.
 	logger := middleware.NewStructuredLogger("ggid-gateway")
 	handler := middleware.MaxBodySize(gw.maxBodySize())(inner)
+	handler = middleware.RouteBodySizeMiddleware(middleware.NewRouteBodySizeConfig())(handler)
+	handler = middleware.InputValidationMiddleware(handler)
 	handler = middleware.TimeoutMiddleware(middleware.DefaultTimeoutConfig())(handler)
 	handler = middleware.TenantResolver(gw.cfg.DomainSuffix)(handler)
 	handler = middleware.BotDetect(handler)

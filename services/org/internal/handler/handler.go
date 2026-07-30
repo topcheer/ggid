@@ -29,10 +29,10 @@ func toGRPCError(err error) error {
 		case errors.ErrInvalidArgument:
 			return status.Error(codes.InvalidArgument, ge.Message)
 		default:
-			return status.Error(codes.Internal, ge.Message)
+			return status.Error(codes.Internal, "internal error")
 		}
 	}
-	return status.Error(codes.Internal, err.Error())
+	return status.Error(codes.Internal, "internal error")
 }
 
 func parseUUID(s string, field string) (uuid.UUID, error) {
@@ -634,10 +634,12 @@ func membershipToProto(m *domain.Membership) *pb.Membership {
 		Metadata: string(metaJSON),
 	}
 	if m.DeptID != nil {
-		s := m.DeptID.String(); p.DeptId = &s
+		s := m.DeptID.String()
+		p.DeptId = &s
 	}
 	if m.TeamID != nil {
-		s2 := m.TeamID.String(); p.TeamId = &s2
+		s2 := m.TeamID.String()
+		p.TeamId = &s2
 	}
 	return p
 }
