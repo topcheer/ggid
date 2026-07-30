@@ -8,6 +8,7 @@ import (
 	"log/slog"
 	"net/http"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/ggid/ggid/pkg/crypto"
@@ -69,7 +70,16 @@ type TenantBranding struct {
 	CSS          string `json:"css,omitempty"`
 }
 
-var tenantBrandingStore = map[uuid.UUID]*TenantBranding{}
+var (
+	tenantBrandingStore   = map[uuid.UUID]*TenantBranding{}
+	tenantBrandingStoreMu sync.RWMutex
+)
+
+func tenantBrandingStoreLen() int {
+	tenantBrandingStoreMu.RLock()
+	defer tenantBrandingStoreMu.RUnlock()
+	return len(tenantBrandingStore)
+}
 
 // handleSelfRegister handles B2B tenant self-registration.
 // POST /api/v1/identity/tenants/self-register
@@ -240,8 +250,8 @@ func (h *HTTPHandler) handleCIAMMetrics(w http.ResponseWriter, r *http.Request) 
 	// In production: query tenant count from DB, user count, MFA enrollment, etc.
 	// For now returns a structured response ready for DB wiring.
 	writeJSON(w, http.StatusOK, CIAMMetrics{
-		TotalTenants:    len(tenantBrandingStore),
-		ActiveTenants:   len(tenantBrandingStore),
+		TotalTenants:    tenantBrandingStoreLen(),
+		ActiveTenants:   tenantBrandingStoreLen(),
 		TotalUsers:      0,
 		MAU:             0,
 		MFACoveragePct:  0,
@@ -277,7 +287,9 @@ func (h *HTTPHandler) handleTenantBranding(w http.ResponseWriter, r *http.Reques
 			}
 		}
 		// Fallback: in-memory or default
+		tenantBrandingStoreMu.RLock()
 		branding, ok := tenantBrandingStore[tenantID]
+		tenantBrandingStoreMu.RUnlock()
 		if !ok {
 			branding = &TenantBranding{
 				PrimaryColor: "#6366f1",
@@ -305,7 +317,9 @@ func (h *HTTPHandler) handleTenantBranding(w http.ResponseWriter, r *http.Reques
 				return
 			}
 		} else {
+			tenantBrandingStoreMu.Lock()
 			tenantBrandingStore[tenantID] = &branding
+			tenantBrandingStoreMu.Unlock()
 		}
 		slog.Info("CIAM branding updated", "tenant_id", tenantID, "color", branding.PrimaryColor, "domain", branding.CustomDomain)
 		writeJSON(w, http.StatusOK, branding)

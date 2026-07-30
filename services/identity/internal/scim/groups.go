@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"sync"
 
 	ggidtenant "github.com/ggid/ggid/pkg/tenant"
 	"github.com/google/uuid"
@@ -228,7 +229,10 @@ func (h *Handler) getGroup(w http.ResponseWriter, r *http.Request, id string) {
 
 // patchGroupStore is kept only for backward-compatible test access.
 // Production code uses DB via h.svc.Pool().
-var patchGroupStore = map[string]*SCIMGroup{}
+var (
+	patchGroupStore   = map[string]*SCIMGroup{}
+	patchGroupStoreMu sync.RWMutex
+)
 
 func (h *Handler) patchGroup(w http.ResponseWriter, r *http.Request, id string) {
 	var patch struct {
@@ -316,6 +320,8 @@ func (h *Handler) patchGroup(w http.ResponseWriter, r *http.Request, id string) 
 	}
 
 	// Fallback: in-memory store for tests
+	patchGroupStoreMu.Lock()
+	defer patchGroupStoreMu.Unlock()
 	if len(patchGroupStore) == 0 {
 		for _, g := range h.getMockGroups("", "") {
 			gc := g
