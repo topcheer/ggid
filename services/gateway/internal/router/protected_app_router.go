@@ -230,27 +230,51 @@ func (r *ProtectedAppRouter) evaluatePolicy(app *ProtectedApp, req *http.Request
 		return PDPResult{Decision: "allow"}
 	}
 
-	// SECURITY (R185): Clear forged headers BEFORE evaluating policy.
-	// These are set by gateway middleware from JWT context — never trust client.
+	// SECURITY (R187): Clear ALL identity headers before evaluating policy.
+	// These are set by gateway JWT middleware — but ZTNA route may not
+	// have JWT middleware in chain, so client can forge them.
 	forgedPolicyHeaders := []string{
-		"X-Device-Trusted", "X-Device-ID", "X-User-Role",
+		"X-Device-Trusted", "X-Device-ID", "X-Device-JWT-ID", "X-User-Role",
+		"X-User-ID", "X-User-Email", "X-User-Roles", "X-Scopes", "X-Tenant-ID",
 	}
 	for _, h := range forgedPolicyHeaders {
 		req.Header.Del(h)
 	}
 
-	// Extract user info from JWT claims (injected by gateway JWT middleware).
-	userID := req.Header.Get("X-User-ID")
-	userRole := "" // X-User-Role is now stripped; derive from X-Scopes if needed
-	scopes := req.Header.Get("X-Scopes")
-	if strings.Contains(scopes, "admin") || strings.Contains(scopes, "platform:admin") {
-		userRole = "admin"
+	// Re-derive identity from JWT claims (injected by middleware.JWTClaimExtraction).
+	jwtClaims := middleware.ExtractJWTClaims(req)
+	userID := jwtClaims.Subject
+	userRole := ""
+	if jwtClaims.Permissions != nil {
+		for _, s := range jwtClaims.Permissions {
+			if s == "admin" || s == "platform:admin" {
+				userRole = "admin"
+				break
+			}
+		}
 	}
+	if userRole == "" && jwtClaims.Roles != nil {
+		for _, s := range jwtClaims.Roles {
+			if s == "admin" || s == "platform:admin" {
+				userRole = "admin"
+				break
+			}
+		}
+	}
+	tenantID := jwtClaims.TenantID
 
+	// Re-set headers from verified JWT for downstream use.
+	if userID != "" {
+		req.Header.Set("X-User-ID", userID)
+	}
+	if tenantID != "" {
+		req.Header.Set("X-Tenant-ID", tenantID)
+	}
+	if len(jwtClaims.Scopes) > 0 {
+		req.Header.Set("X-Scopes", strings.Join(jwtClaims.Scopes, ","))
+	}
 	// Resolve device posture from identity service (cached 5min).
-	// Device ID comes from the JWT "device_id" claim (set by JWT middleware).
-	deviceID := req.Header.Get("X-Device-JWT-ID") // internal-only header from JWT extraction
-	tenantID, _ := middleware.TenantIDFromRequest(req)
+	deviceID := ""         // R186 P2: no middleware injects X-Device-JWT-ID yet — posture disabled by default
 	deviceTrusted := false // SECURITY: default deny — never trust client header
 	complianceScore := 0
 
@@ -367,35 +391,31 @@ type PDPResult struct {
 
 // injectHeaders clears forged inbound headers and injects GGID identity headers.
 func (r *ProtectedAppRouter) injectHeaders(app *ProtectedApp, req *http.Request) {
-	// Clear any inbound forged identity headers.
+	// SECURITY (R187): Clear ALL inbound identity headers — both GGID and legacy.
 	forgedHeaders := []string{
 		"X-GGID-User", "X-GGID-Roles", "X-GGID-Tenant",
 		"X-WebAuth-User", "X-WebAuth-Roles", "X-Forwarded-User",
 		"X-Step-Up-Token",
+		"X-User-ID", "X-User-Email", "X-User-Roles", "X-Scopes", "X-Tenant-ID",
 	}
 	for _, h := range forgedHeaders {
 		req.Header.Del(h)
 	}
 
-	// Extract identity from gateway JWT middleware headers.
-	userID := req.Header.Get("X-User-ID")
-	userEmail := req.Header.Get("X-User-Email")
-	userRoles := req.Header.Get("X-User-Roles")
-	tenantID := req.Header.Get("X-Tenant-ID")
+	// Re-derive identity from verified JWT claims only.
+	jwtClaims := middleware.ExtractJWTClaims(req)
+	userID := jwtClaims.Subject
+	tenantID := jwtClaims.TenantID
 
 	// Inject GGID identity headers (trusted by upstream apps).
 	if userID != "" {
 		req.Header.Set("X-GGID-User", userID)
 	}
-	if userEmail != "" {
-		req.Header.Set("X-WebAuth-User", userEmail)
-	}
-	if userRoles != "" {
-		req.Header.Set("X-GGID-Roles", userRoles)
-		req.Header.Set("X-WebAuth-Roles", userRoles)
-	}
 	if tenantID != "" {
 		req.Header.Set("X-GGID-Tenant", tenantID)
+	}
+	if len(jwtClaims.Roles) > 0 {
+		req.Header.Set("X-GGID-Roles", strings.Join(jwtClaims.Roles, ","))
 	}
 
 	// Apply app-specific custom header injection config.
@@ -406,9 +426,9 @@ func (r *ProtectedAppRouter) injectHeaders(app *ProtectedApp, req *http.Request)
 			continue
 		}
 		// Template substitution: $user.email → actual email.
-		value = strings.ReplaceAll(value, "$user.email", userEmail)
+		value = strings.ReplaceAll(value, "$user.email", jwtClaims.Email)
 		value = strings.ReplaceAll(value, "$user.id", userID)
-		value = strings.ReplaceAll(value, "$user.roles_csv", userRoles)
+		value = strings.ReplaceAll(value, "$user.roles_csv", strings.Join(jwtClaims.Roles, ","))
 		req.Header.Set(name, value)
 	}
 }

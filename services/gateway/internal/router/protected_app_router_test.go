@@ -1,6 +1,7 @@
 package router
 
 import (
+	"encoding/base64"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -123,13 +124,16 @@ func TestProtectedAppRouter_HeaderInjection(t *testing.T) {
 		},
 	})
 
+	// Create a fake JWT with matching claims (ExtractJWTClaims parses without verification).
+	jwtPayload := `{"sub":"user-123","tenant_id":"tenant-456","email":"alice@example.com","roles":["admin","sre"],"scopes":["openid"]}`
+	jwtB64 := base64.RawURLEncoding.EncodeToString([]byte(jwtPayload))
+	fakeJWT := "eyJhbGciOiJSUzI1NiJ9." + jwtB64 + ".fake-sig"
+
 	req := httptest.NewRequest("GET", "/app/echo/", nil)
-	req.Header.Set("X-User-ID", "user-123")
-	req.Header.Set("X-User-Email", "alice@example.com")
-	req.Header.Set("X-User-Roles", "admin,sre")
-	req.Header.Set("X-Tenant-ID", "tenant-456")
-	// Attempt to forge headers.
+	req.Header.Set("Authorization", "Bearer "+fakeJWT)
+	// Attempt to forge headers — must be stripped.
 	req.Header.Set("X-GGID-User", "forged")
+	req.Header.Set("X-User-ID", "forged-user")
 
 	w := httptest.NewRecorder()
 	router.HandleRequest(w, req)
