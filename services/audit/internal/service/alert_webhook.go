@@ -28,10 +28,10 @@ type WebhookStats struct {
 }
 
 type DeadLetterEntry struct {
-	Alert      []byte    `json:"alert"`
-	Error      string    `json:"error"`
-	Attempts   int       `json:"attempts"`
-	LastTried  time.Time `json:"last_tried"`
+	Alert     []byte    `json:"alert"`
+	Error     string    `json:"error"`
+	Attempts  int       `json:"attempts"`
+	LastTried time.Time `json:"last_tried"`
 }
 
 type AlertWebhookService struct {
@@ -180,7 +180,15 @@ func (w *AlertWebhookSender) Post(ctx context.Context, payload []byte) error {
 		mac.Write(payload)
 		req.Header.Set("X-GGID-Signature", "sha256="+hex.EncodeToString(mac.Sum(nil)))
 	}
-	client := &http.Client{Timeout: 10 * time.Second}
+	client := &http.Client{
+		Timeout: 10 * time.Second,
+		Transport: &http.Transport{
+			DialContext: ssrfSafeDialContext,
+		},
+		CheckRedirect: func(req *http.Request, via []*http.Request) error {
+			return http.ErrUseLastResponse
+		},
+	}
 	resp, err := client.Do(req)
 	if err != nil {
 		return err

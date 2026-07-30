@@ -2,9 +2,11 @@ package service
 
 import (
 	"bytes"
+	"context"
 	"crypto/tls"
 	"crypto/x509"
 	"fmt"
+	"net"
 	"net/http"
 	"os"
 	"sync"
@@ -52,6 +54,27 @@ type ForwardStats struct {
 	Retried   int `json:"retried"`
 }
 
+// ssrfSafeDialContext blocks connections to private/loopback/link-local IPs.
+// In test mode (GGID_ENV=test), localhost is allowed for integration tests.
+func ssrfSafeDialContext(ctx context.Context, network, addr string) (net.Conn, error) {
+	host, port, _ := net.SplitHostPort(addr)
+	ips, err := net.LookupIP(host)
+	if err != nil {
+		return nil, err
+	}
+	testMode := os.Getenv("GGID_ENV") == "test"
+	for _, ip := range ips {
+		if ip.IsLoopback() || ip.IsPrivate() || ip.IsLinkLocalUnicast() || ip.IsUnspecified() {
+			if testMode && ip.IsLoopback() {
+				continue // allow localhost in tests
+			}
+			return nil, fmt.Errorf("SSRF blocked: %s resolves to private IP %s", host, ip)
+		}
+	}
+	dialer := &net.Dialer{Timeout: 10 * time.Second}
+	return dialer.DialContext(ctx, network, net.JoinHostPort(ips[0].String(), port))
+}
+
 func NewSIEMForwarder() *SIEMForwarder {
 	return &SIEMForwarder{
 		destinations:  make(map[string]*SIEMDestination),
@@ -62,6 +85,10 @@ func NewSIEMForwarder() *SIEMForwarder {
 			Timeout: 10 * time.Second,
 			Transport: &http.Transport{
 				TLSClientConfig: &tls.Config{MinVersion: tls.VersionTLS12},
+				DialContext:     ssrfSafeDialContext,
+			},
+			CheckRedirect: func(req *http.Request, via []*http.Request) error {
+				return http.ErrUseLastResponse
 			},
 		},
 	}
