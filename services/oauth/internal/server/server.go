@@ -208,6 +208,7 @@ func NewWithKeyProvider(cfg *conf.Config, kp crypto.KeyProvider) (*Server, error
 			rdb := redis.NewClient(opts)
 			if err := rdb.Ping(ctx).Err(); err == nil {
 				oauthSvc.SetRedisClient(&redisAdapter{rdb: rdb})
+				consentRdb = rdb // package-level for cross-instance consent token replay prevention
 				log.Printf("OAuth Redis connected for refresh token lookup")
 			} else {
 				log.Printf("warning: Redis ping failed: %v (refresh token fallback disabled)", err)
@@ -2989,6 +2990,9 @@ const consentTTL = 5 * time.Minute
 // usedConsentTokens tracks consumed consent tokens to enforce one-time use.
 var usedConsentTokens sync.Map // token string -> expiry time.Time
 
+// consentRdb is set when Redis is available, enabling cross-instance consent token replay prevention.
+var consentRdb *redis.Client
+
 // consentSecret returns the HMAC key for consent tokens.
 // SECURITY: fail-closed — returns nil if GGID_INTERNAL_SECRET is not set.
 func consentSecret() []byte {
@@ -3054,6 +3058,17 @@ func validateConsentToken(token, clientID, userID, scope string) bool {
 		return false
 	}
 	// P2: One-time use — reject replayed consent tokens.
+	// Use Redis SetNX for cross-instance replay prevention in multi-replica deployments.
+	ttl := time.Until(time.Unix(expiresAt, 0))
+	if ttl > 0 && consentRdb != nil {
+		consentKey := fmt.Sprintf("oauth:used_consent:%s", token)
+		set, err := consentRdb.SetNX(context.Background(), consentKey, "1", ttl).Result()
+		if err != nil || !set {
+			return false // already used or error = replay
+		}
+		return true
+	}
+	// Fallback: in-process sync.Map (single-instance mode).
 	now := time.Now()
 	usedConsentTokens.Range(func(k, v any) bool {
 		if exp, ok := v.(time.Time); ok && now.After(exp) {
