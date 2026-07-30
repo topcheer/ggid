@@ -40,9 +40,18 @@ func (h *HTTPHandler) handleJITProvision(ctx context.Context, w http.ResponseWri
 		return
 	}
 
-	tenantID := uuid.Nil
-	if req.TenantID != "" {
-		tenantID, _ = uuid.Parse(req.TenantID)
+	// SECURITY (R10): derive the tenant from the caller context — never
+	// trust body tenant_id (a tenant admin could provision users into
+	// other tenants; a parse failure silently produced uuid.Nil).
+	callerTenant := r.Header.Get("X-Tenant-ID")
+	if callerTenant == "" {
+		writeJSONError(w, http.StatusForbidden, "tenant context required")
+		return
+	}
+	tenantID, err := uuid.Parse(callerTenant)
+	if err != nil {
+		writeJSONError(w, http.StatusBadRequest, "invalid tenant context")
+		return
 	}
 	if req.Username == "" {
 		req.Username = req.Email

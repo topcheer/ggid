@@ -21,7 +21,11 @@ func (h *HTTPHandler) scimTokenAuth(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// Only apply SCIM token auth to /scim/v2/ paths.
 		// Exception: /scim/v2/Me uses JWT auth (via gateway X-User-ID), not SCIM tokens.
-		if !strings.HasPrefix(r.URL.Path, "/scim/v2/") || r.URL.Path == "/scim/v2/Me" {
+		// Cover both the canonical /scim/v2/ routes and the /api/v1/scim/
+		// aliases — the aliases previously bypassed SCIM token auth and
+		// trusted only the X-Tenant-ID header (R10 P1).
+		isSCIM := strings.HasPrefix(r.URL.Path, "/scim/v2/") || strings.HasPrefix(r.URL.Path, "/api/v1/scim/")
+		if !isSCIM || r.URL.Path == "/scim/v2/Me" {
 			next.ServeHTTP(w, r)
 			return
 		}

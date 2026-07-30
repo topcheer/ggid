@@ -20,7 +20,7 @@ type DLPPolicy struct {
 	Name        string         `json:"name"`
 	Description string         `json:"description"`
 	Trigger     string         `json:"trigger"` // export, download, share, api_call
-	Conditions map[string]any `json:"conditions"`
+	Conditions  map[string]any `json:"conditions"`
 	Action      string         `json:"action"` // block, mask, log
 	Enabled     bool           `json:"enabled"`
 	CreatedAt   time.Time      `json:"created_at"`
@@ -29,17 +29,17 @@ type DLPPolicy struct {
 
 // DLPEvent records a DLP enforcement action.
 type DLPEvent struct {
-	ID                uuid.UUID `json:"id"`
-	TenantID          uuid.UUID `json:"tenant_id"`
-	PolicyID          *uuid.UUID `json:"policy_id,omitempty"`
-	UserID            string    `json:"user_id,omitempty"`
-	UserName          string    `json:"user_name,omitempty"`
-	Trigger           string    `json:"trigger"`
-	ResourceType      string    `json:"resource_type,omitempty"`
-	DataClassification string  `json:"data_classification,omitempty"`
-	ActionTaken       string    `json:"action_taken"`
-	Reason            string    `json:"reason,omitempty"`
-	CreatedAt         time.Time `json:"created_at"`
+	ID                 uuid.UUID  `json:"id"`
+	TenantID           uuid.UUID  `json:"tenant_id"`
+	PolicyID           *uuid.UUID `json:"policy_id,omitempty"`
+	UserID             string     `json:"user_id,omitempty"`
+	UserName           string     `json:"user_name,omitempty"`
+	Trigger            string     `json:"trigger"`
+	ResourceType       string     `json:"resource_type,omitempty"`
+	DataClassification string     `json:"data_classification,omitempty"`
+	ActionTaken        string     `json:"action_taken"`
+	Reason             string     `json:"reason,omitempty"`
+	CreatedAt          time.Time  `json:"created_at"`
 }
 
 // DLPTestResult is the outcome of a policy simulation.
@@ -87,8 +87,12 @@ func (r *dlpRepo) EnsureSchema(ctx context.Context) error {
 }
 
 func (r *dlpRepo) Create(ctx context.Context, p *DLPPolicy) error {
-	if r.pool == nil { return nil }
-	if p.ID == uuid.Nil { p.ID = uuid.New() }
+	if r.pool == nil {
+		return nil
+	}
+	if p.ID == uuid.Nil {
+		p.ID = uuid.New()
+	}
 	condJSON, _ := json.Marshal(p.Conditions)
 	_, err := r.pool.Exec(ctx, `INSERT INTO dlp_policies (id,tenant_id,name,description,trigger,conditions,action,enabled) VALUES ($1,$2,$3,$4,$5,$6,$7,$8)`,
 		p.ID, p.TenantID, p.Name, p.Description, p.Trigger, condJSON, p.Action, p.Enabled)
@@ -96,15 +100,21 @@ func (r *dlpRepo) Create(ctx context.Context, p *DLPPolicy) error {
 }
 
 func (r *dlpRepo) List(ctx context.Context, tenantID uuid.UUID) ([]*DLPPolicy, error) {
-	if r.pool == nil { return []*DLPPolicy{}, nil }
+	if r.pool == nil {
+		return []*DLPPolicy{}, nil
+	}
 	rows, err := r.pool.Query(ctx, `SELECT id,name,description,trigger,conditions,action,enabled,created_at,updated_at FROM dlp_policies WHERE tenant_id=$1 ORDER BY created_at DESC`, tenantID)
-	if err != nil { return nil, err }
+	if err != nil {
+		return nil, err
+	}
 	defer rows.Close()
 	var result []*DLPPolicy
 	for rows.Next() {
 		var p DLPPolicy
 		var condJSON []byte
-		if err := rows.Scan(&p.ID, &p.Name, &p.Description, &p.Trigger, &condJSON, &p.Action, &p.Enabled, &p.CreatedAt, &p.UpdatedAt); err != nil { continue }
+		if err := rows.Scan(&p.ID, &p.Name, &p.Description, &p.Trigger, &condJSON, &p.Action, &p.Enabled, &p.CreatedAt, &p.UpdatedAt); err != nil {
+			continue
+		}
 		json.Unmarshal(condJSON, &p.Conditions)
 		result = append(result, &p)
 	}
@@ -112,7 +122,9 @@ func (r *dlpRepo) List(ctx context.Context, tenantID uuid.UUID) ([]*DLPPolicy, e
 }
 
 func (r *dlpRepo) Update(ctx context.Context, p *DLPPolicy) error {
-	if r.pool == nil { return nil }
+	if r.pool == nil {
+		return nil
+	}
 	condJSON, _ := json.Marshal(p.Conditions)
 	_, err := r.pool.Exec(ctx, `UPDATE dlp_policies SET name=$2,description=$3,trigger=$4,conditions=$5,action=$6,enabled=$7,updated_at=now() WHERE id=$1`,
 		p.ID, p.Name, p.Description, p.Trigger, condJSON, p.Action, p.Enabled)
@@ -120,31 +132,46 @@ func (r *dlpRepo) Update(ctx context.Context, p *DLPPolicy) error {
 }
 
 func (r *dlpRepo) Delete(ctx context.Context, id, tenantID uuid.UUID) error {
-	if r.pool == nil { return nil }
+	if r.pool == nil {
+		return nil
+	}
 	_, err := r.pool.Exec(ctx, `DELETE FROM dlp_policies WHERE id=$1 AND tenant_id=$2`, id, tenantID)
 	return err
 }
 
 func (r *dlpRepo) LogEvent(ctx context.Context, e *DLPEvent) {
-	if r.pool == nil { return }
-	if e.ID == uuid.Nil { e.ID = uuid.New() }
+	if r.pool == nil {
+		return
+	}
+	if e.ID == uuid.Nil {
+		e.ID = uuid.New()
+	}
 	r.pool.Exec(ctx, `INSERT INTO dlp_events (id,tenant_id,policy_id,user_id,user_name,trigger,resource_type,data_classification,action_taken,reason) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)`,
 		e.ID, e.TenantID, e.PolicyID, e.UserID, e.UserName, e.Trigger, e.ResourceType, e.DataClassification, e.ActionTaken, e.Reason)
 }
 
 func (r *dlpRepo) ListEvents(ctx context.Context, tenantID uuid.UUID, action string) ([]*DLPEvent, error) {
-	if r.pool == nil { return []*DLPEvent{}, nil }
+	if r.pool == nil {
+		return []*DLPEvent{}, nil
+	}
 	q := `SELECT id,tenant_id,policy_id,user_id,user_name,trigger,resource_type,data_classification,action_taken,reason,created_at FROM dlp_events WHERE tenant_id=$1`
 	args := []any{tenantID}
-	if action != "" { q += ` AND action_taken=$2`; args = append(args, action) }
+	if action != "" {
+		q += ` AND action_taken=$2`
+		args = append(args, action)
+	}
 	q += ` ORDER BY created_at DESC LIMIT 100`
 	rows, err := r.pool.Query(ctx, q, args...)
-	if err != nil { return nil, err }
+	if err != nil {
+		return nil, err
+	}
 	defer rows.Close()
 	var result []*DLPEvent
 	for rows.Next() {
 		var e DLPEvent
-		if err := rows.Scan(&e.ID, &e.TenantID, &e.PolicyID, &e.UserID, &e.UserName, &e.Trigger, &e.ResourceType, &e.DataClassification, &e.ActionTaken, &e.Reason, &e.CreatedAt); err != nil { continue }
+		if err := rows.Scan(&e.ID, &e.TenantID, &e.PolicyID, &e.UserID, &e.UserName, &e.Trigger, &e.ResourceType, &e.DataClassification, &e.ActionTaken, &e.Reason, &e.CreatedAt); err != nil {
+			continue
+		}
 		result = append(result, &e)
 	}
 	return result, nil
@@ -188,20 +215,32 @@ func EvaluateDLP(policies []*DLPPolicy, trigger, resourceType, dataClassificatio
 }
 
 func matchesDLPConditions(conditions map[string]any, classification, userRole string) bool {
-	if len(conditions) == 0 { return true }
+	if len(conditions) == 0 {
+		return true
+	}
 	andConds, ok := conditions["and"].([]any)
-	if !ok { return true }
+	if !ok {
+		return true
+	}
 	for _, cond := range andConds {
 		condMap, ok := cond.(map[string]any)
-		if !ok { continue }
+		if !ok {
+			continue
+		}
 		for key, expected := range condMap {
 			switch key {
 			case "$data.classification":
-				if fmt.Sprintf("%v", expected) != classification { return false }
+				if fmt.Sprintf("%v", expected) != classification {
+					return false
+				}
 			case "$user.role":
 				if expMap, ok := expected.(map[string]any); ok {
-					if ne, has := expMap["$ne"]; has && fmt.Sprintf("%v", ne) == userRole { return false }
-				} else if fmt.Sprintf("%v", expected) != userRole { return false }
+					if ne, has := expMap["$ne"]; has && fmt.Sprintf("%v", ne) == userRole {
+						return false
+					}
+				} else if fmt.Sprintf("%v", expected) != userRole {
+					return false
+				}
 			}
 		}
 	}
@@ -235,12 +274,20 @@ func (h *HTTPHandler) handleDLP(w http.ResponseWriter, r *http.Request) {
 			writeJSONError(w, http.StatusBadRequest, "invalid body")
 			return
 		}
-		if tc != nil { p.TenantID = tc.TenantID }
+		// SECURITY (R10): tenant context mandatory — previously a nil tc
+		// silently trusted the body's tenant_id.
+		if tc == nil {
+			writeJSONError(w, http.StatusForbidden, "tenant context required")
+			return
+		}
+		p.TenantID = tc.TenantID
 		if p.Name == "" || p.Trigger == "" {
 			writeJSONError(w, http.StatusBadRequest, "name and trigger required")
 			return
 		}
-		if p.Action == "" { p.Action = "log" }
+		if p.Action == "" {
+			p.Action = "log"
+		}
 		p.Enabled = true
 		if h.dlpPolicyRepo != nil {
 			if err := h.dlpPolicyRepo.Create(r.Context(), &p); err != nil {
@@ -254,23 +301,37 @@ func (h *HTTPHandler) handleDLP(w http.ResponseWriter, r *http.Request) {
 		if h.dlpPolicyRepo != nil && tc != nil {
 			policies, _ = h.dlpPolicyRepo.List(r.Context(), tc.TenantID)
 		}
-		if policies == nil { policies = []*DLPPolicy{} }
+		if policies == nil {
+			policies = []*DLPPolicy{}
+		}
 		writeJSON(w, http.StatusOK, map[string]any{"policies": policies, "total": len(policies)})
 	case http.MethodPut:
 		parts := strings.Split(path, "/")
 		id, err := uuid.Parse(parts[len(parts)-1])
-		if err != nil { writeJSONError(w, http.StatusBadRequest, "invalid id"); return }
+		if err != nil {
+			writeJSONError(w, http.StatusBadRequest, "invalid id")
+			return
+		}
 		var p DLPPolicy
 		json.NewDecoder(r.Body).Decode(&p)
 		p.ID = id
-		if tc != nil { p.TenantID = tc.TenantID }
-		if h.dlpPolicyRepo != nil { h.dlpPolicyRepo.Update(r.Context(), &p) }
+		if tc != nil {
+			p.TenantID = tc.TenantID
+		}
+		if h.dlpPolicyRepo != nil {
+			h.dlpPolicyRepo.Update(r.Context(), &p)
+		}
 		writeJSON(w, http.StatusOK, p)
 	case http.MethodDelete:
 		parts := strings.Split(path, "/")
 		id, err := uuid.Parse(parts[len(parts)-1])
-		if err != nil { writeJSONError(w, http.StatusBadRequest, "invalid id"); return }
-		if h.dlpPolicyRepo != nil && tc != nil { h.dlpPolicyRepo.Delete(r.Context(), id, tc.TenantID) }
+		if err != nil {
+			writeJSONError(w, http.StatusBadRequest, "invalid id")
+			return
+		}
+		if h.dlpPolicyRepo != nil && tc != nil {
+			h.dlpPolicyRepo.Delete(r.Context(), id, tc.TenantID)
+		}
 		writeJSON(w, http.StatusOK, map[string]bool{"deleted": true})
 	}
 }
@@ -278,12 +339,16 @@ func (h *HTTPHandler) handleDLP(w http.ResponseWriter, r *http.Request) {
 func (h *HTTPHandler) dlpListEvents(w http.ResponseWriter, r *http.Request) {
 	tc, _ := ggidtenant.FromContext(r.Context())
 	action := r.URL.Query().Get("severity")
-	if action == "" { action = r.URL.Query().Get("action") }
+	if action == "" {
+		action = r.URL.Query().Get("action")
+	}
 	var events []*DLPEvent
 	if h.dlpPolicyRepo != nil && tc != nil {
 		events, _ = h.dlpPolicyRepo.ListEvents(r.Context(), tc.TenantID, action)
 	}
-	if events == nil { events = []*DLPEvent{} }
+	if events == nil {
+		events = []*DLPEvent{}
+	}
 	writeJSON(w, http.StatusOK, map[string]any{"events": events, "total": len(events)})
 }
 
@@ -291,8 +356,8 @@ func (h *HTTPHandler) dlpHeatmap(w http.ResponseWriter, r *http.Request) {
 	tc, _ := ggidtenant.FromContext(r.Context())
 	_ = tc
 	writeJSON(w, http.StatusOK, map[string]any{
-		"entries": []map[string]any{},
-		"total": 0,
+		"entries":      []map[string]any{},
+		"total":        0,
 		"generated_at": time.Now().UTC(),
 	})
 }
@@ -330,7 +395,9 @@ func (h *HTTPHandler) dlpTestPolicy(w http.ResponseWriter, r *http.Request) {
 	// Log the test event.
 	if h.dlpPolicyRepo != nil && tc != nil && result.Matched {
 		var polID *uuid.UUID
-		if pid, err := uuid.Parse(result.PolicyID); err == nil { polID = &pid }
+		if pid, err := uuid.Parse(result.PolicyID); err == nil {
+			polID = &pid
+		}
 		h.dlpPolicyRepo.LogEvent(r.Context(), &DLPEvent{
 			TenantID: tc.TenantID, PolicyID: polID, UserID: req.UserID,
 			Trigger: req.Trigger, ResourceType: req.ResourceType,

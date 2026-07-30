@@ -23,6 +23,12 @@ func (h *HTTPHandler) handleDelegations(ctx context.Context, userID uuid.UUID, w
 	uid := userID.String()
 	switch r.Method {
 	case http.MethodPost:
+		// SECURITY (R10): tenant context mandatory — empty-tenant rows were
+		// previously created and then visible to every tenant in GET.
+		if r.Header.Get("X-Tenant-ID") == "" {
+			writeJSONError(w, http.StatusForbidden, "tenant context required")
+			return
+		}
 		var req struct {
 			DelegatedTo string   `json:"delegated_to"`
 			Scope       []string `json:"scope"`

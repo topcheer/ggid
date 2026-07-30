@@ -10,17 +10,17 @@ import (
 
 // ImpersonationRecord tracks an impersonation session for audit purposes.
 type ImpersonationRecord struct {
-	ID            string     `json:"id"`
-	Impersonator  string     `json:"impersonator"`
-	Target        string     `json:"target"`
-	TenantID      string     `json:"tenant_id"`
-	StartedAt     time.Time  `json:"started_at"`
-	EndedAt       *time.Time `json:"ended_at,omitempty"`
-	Duration      string     `json:"duration,omitempty"`
-	ActionsTaken  []string   `json:"actions_taken"`
-	Reason        string     `json:"reason"`
-	IPAddress     string     `json:"ip_address"`
-	UserAgent     string     `json:"user_agent"`
+	ID           string     `json:"id"`
+	Impersonator string     `json:"impersonator"`
+	Target       string     `json:"target"`
+	TenantID     string     `json:"tenant_id"`
+	StartedAt    time.Time  `json:"started_at"`
+	EndedAt      *time.Time `json:"ended_at,omitempty"`
+	Duration     string     `json:"duration,omitempty"`
+	ActionsTaken []string   `json:"actions_taken"`
+	Reason       string     `json:"reason"`
+	IPAddress    string     `json:"ip_address"`
+	UserAgent    string     `json:"user_agent"`
 }
 
 // impersonationStore holds impersonation audit records.
@@ -60,7 +60,14 @@ func (h *HTTPHandler) handleImpersonationAudit(w http.ResponseWriter, r *http.Re
 
 	impersonator := r.URL.Query().Get("impersonator")
 	target := r.URL.Query().Get("target")
-	tenantID := r.URL.Query().Get("tenant_id")
+	// SECURITY (R10): caller tenant from context is mandatory and always
+	// applied — the optional query param previously let a tenant admin
+	// enumerate every tenant's impersonation records.
+	tenantID := r.Header.Get("X-Tenant-ID")
+	if tenantID == "" {
+		writeJSONError(w, http.StatusForbidden, "tenant context required")
+		return
+	}
 	fromStr := r.URL.Query().Get("from")
 	toStr := r.URL.Query().Get("to")
 
@@ -87,7 +94,7 @@ func (h *HTTPHandler) handleImpersonationAudit(w http.ResponseWriter, r *http.Re
 		if target != "" && rec.Target != target {
 			continue
 		}
-		if tenantID != "" && rec.TenantID != tenantID {
+		if tenantID != rec.TenantID {
 			continue
 		}
 		if fromTime != nil && rec.StartedAt.Before(*fromTime) {
@@ -97,9 +104,12 @@ func (h *HTTPHandler) handleImpersonationAudit(w http.ResponseWriter, r *http.Re
 			continue
 		}
 
-		// Compute duration if ended
+		// Compute duration if ended — on a local copy, never mutate the
+		// shared record under RLock (data race, R10).
 		if rec.EndedAt != nil {
-			rec.Duration = rec.EndedAt.Sub(rec.StartedAt).String()
+			recCopy := *rec
+			recCopy.Duration = recCopy.EndedAt.Sub(recCopy.StartedAt).String()
+			rec = &recCopy
 		}
 
 		result = append(result, rec)
