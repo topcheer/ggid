@@ -114,7 +114,12 @@ func (s *HTTPServer) handleUsageQuery(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	tenantID := r.URL.Query().Get("tenant_id")
+	// SECURITY (R194): Validate tenant from header, not query param.
+	tenantUUID, ok := resolveValidatedTenant(w, r)
+	if !ok {
+		return
+	}
+	tenantID := tenantUUID.String()
 	daysStr := r.URL.Query().Get("days")
 	if daysStr == "" {
 		daysStr = "30"

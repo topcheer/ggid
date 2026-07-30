@@ -1256,10 +1256,11 @@ func (s *OAuthService) exchangeTokenInternal(ctx context.Context, req *RFC8693Ex
 	subjectPerms := getStringSliceClaim(subjectClaims, "permissions")
 	subjectRoles := getStringSliceClaim(subjectClaims, "roles")
 
-	// When scopes are requested, filter permissions to only those matching
-	// the requested scopes. Match scope as a namespace boundary:
+	// When scopes are requested, filter permissions and roles to only those
+	// matching the requested scopes. Match scope as a namespace boundary:
 	// "user" matches "user:read" but not "user_management:write".
 	var filteredPerms []string
+	var filteredRoles []string
 	if len(req.Scope) > 0 {
 		for _, perm := range subjectPerms {
 			for _, sc := range req.Scope {
@@ -1269,8 +1270,18 @@ func (s *OAuthService) exchangeTokenInternal(ctx context.Context, req *RFC8693Ex
 				}
 			}
 		}
+		// Filter roles similarly — only carry roles matching requested scopes.
+		for _, role := range subjectRoles {
+			for _, sc := range req.Scope {
+				if role == sc || strings.HasPrefix(role, sc+":") {
+					filteredRoles = append(filteredRoles, role)
+					break
+				}
+			}
+		}
 	} else {
 		filteredPerms = subjectPerms
+		filteredRoles = subjectRoles
 	}
 
 	claimsMap := jwt.MapClaims{
@@ -1283,7 +1294,7 @@ func (s *OAuthService) exchangeTokenInternal(ctx context.Context, req *RFC8693Ex
 		"tenant_id":   req.TenantID.String(),
 		"scope":       scopeStr,      // OAuth scopes only
 		"permissions": filteredPerms, // Only permissions matching requested scopes
-		"roles":       subjectRoles,  // Carry forward role names
+		"roles":       filteredRoles, // Only roles matching requested scopes
 	}
 	if actClaim != nil {
 		claimsMap["act"] = actClaim
