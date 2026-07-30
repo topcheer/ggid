@@ -1508,9 +1508,12 @@ func (gw *Gateway) handlePostureEvaluate(w http.ResponseWriter, r *http.Request)
 	// Posture drop: when device is non-compliant or blocked, revoke sessions.
 	if !result.Compliant || result.Action == "block" {
 		if gw.postureDropFn != nil {
-			userID := r.Header.Get("X-User-ID")
-			if userID != "" {
-				gw.postureDropFn(r.Context(), tenantID, userID, result.Score)
+			// SECURITY (R18 P1): Use JWT-verified user ID, not the
+			// client-supplied X-User-ID header (same-tenant DoS via
+			// forged posture drop on other users).
+			userID, ok := middleware.UserIDFromRequest(r)
+			if ok {
+				gw.postureDropFn(r.Context(), tenantID, userID.String(), result.Score)
 			}
 		}
 	}
