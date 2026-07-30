@@ -66,7 +66,7 @@ func (s *HTTPServer) incidentListFromDB(r *http.Request, tenantID string) []*Sec
 	if s.pool == nil {
 		return nil
 	}
-	rows, err := s.pool.Query(r.Context(), `SELECT data::text FROM audit_incidents WHERE tenant_id = $1 ORDER BY created_at DESC`, tenantID)
+	rows, err := s.pool.Query(r.Context(), `SELECT data::text FROM audit_incidents WHERE data->>'tenant_id' = $1 ORDER BY created_at DESC`, tenantID)
 	if err != nil {
 		return nil
 	}

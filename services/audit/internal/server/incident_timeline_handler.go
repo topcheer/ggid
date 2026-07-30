@@ -13,10 +13,27 @@ func (s *HTTPServer) handleIncidentTimeline(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
+	// SECURITY: verify tenant ownership of the incident.
+	tenantID, ok := resolveValidatedTenant(w, r)
+	if !ok {
+		return
+	}
+
 	incidentID := strings.TrimPrefix(r.URL.Path, "/api/v1/audit/incidents/")
 	incidentID = strings.TrimSuffix(incidentID, "/timeline")
 	if incidentID == "" {
 		writeJSONError(w, http.StatusBadRequest, "incident_id required")
+		return
+	}
+
+	// Verify the incident belongs to the caller's tenant.
+	inc := s.incidentGetFromDB(r, incidentID)
+	if inc == nil {
+		writeJSONError(w, http.StatusNotFound, "incident not found")
+		return
+	}
+	if inc.TenantID != tenantID.String() {
+		writeJSONError(w, http.StatusForbidden, "cross-tenant access denied")
 		return
 	}
 
