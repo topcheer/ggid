@@ -167,6 +167,15 @@ func (r *ProtectedAppRouter) HandleRequest(w http.ResponseWriter, req *http.Requ
 		return true
 	}
 
+	// SECURITY (R185): Verify app belongs to caller's tenant.
+	callerTenantID, _ := middleware.TenantIDFromRequest(req)
+	if app.TenantID != "" && callerTenantID != "" && app.TenantID != callerTenantID {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusForbidden)
+		json.NewEncoder(w).Encode(map[string]string{"error": "cross-tenant application access denied"})
+		return true
+	}
+
 	start := time.Now()
 
 	// --- PDP: Evaluate access policy ---
@@ -221,15 +230,28 @@ func (r *ProtectedAppRouter) evaluatePolicy(app *ProtectedApp, req *http.Request
 		return PDPResult{Decision: "allow"}
 	}
 
+	// SECURITY (R185): Clear forged headers BEFORE evaluating policy.
+	// These are set by gateway middleware from JWT context — never trust client.
+	forgedPolicyHeaders := []string{
+		"X-Device-Trusted", "X-Device-ID", "X-User-Role",
+	}
+	for _, h := range forgedPolicyHeaders {
+		req.Header.Del(h)
+	}
+
 	// Extract user info from JWT claims (injected by gateway JWT middleware).
 	userID := req.Header.Get("X-User-ID")
-	userRole := req.Header.Get("X-User-Role")
+	userRole := "" // X-User-Role is now stripped; derive from X-Scopes if needed
+	scopes := req.Header.Get("X-Scopes")
+	if strings.Contains(scopes, "admin") || strings.Contains(scopes, "platform:admin") {
+		userRole = "admin"
+	}
 
 	// Resolve device posture from identity service (cached 5min).
-	// Device ID comes from the JWT "device_id" claim or X-Device-ID header.
-	deviceID := req.Header.Get("X-Device-ID")
-	tenantID := req.Header.Get("X-Tenant-ID")
-	deviceTrusted := req.Header.Get("X-Device-Trusted") == "true"
+	// Device ID comes from the JWT "device_id" claim (set by JWT middleware).
+	deviceID := req.Header.Get("X-Device-JWT-ID") // internal-only header from JWT extraction
+	tenantID, _ := middleware.TenantIDFromRequest(req)
+	deviceTrusted := false // SECURITY: default deny — never trust client header
 	complianceScore := 0
 
 	// If device ID present, query posture API for real-time trust.
