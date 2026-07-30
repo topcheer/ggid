@@ -12,9 +12,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
-	"net"
 	"net/http"
-	"net/url"
 	"os"
 	"strconv"
 	"strings"
@@ -457,10 +455,13 @@ func (s *HTTPServer) handleEventByID(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// SECURITY: verify the event belongs to the caller's tenant (BOLA fix).
+	// SECURITY: fail-closed tenant check (R11 P0) — the query-param
+	// fallback and the empty-tenant skip previously let a caller read
+	// any tenant's audit events.
 	tenantIDStr := r.Header.Get("X-Tenant-ID")
 	if tenantIDStr == "" {
-		tenantIDStr = r.URL.Query().Get("tenant_id")
+		writeJSONError(w, http.StatusForbidden, "tenant context required")
+		return
 	}
 
 	event, err := s.svc.GetEvent(r.Context(), id)
@@ -469,9 +470,8 @@ func (s *HTTPServer) handleEventByID(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	// Cross-tenant check: reject if event tenant doesn't match caller tenant.
-	if tenantIDStr != "" && event != nil && event.TenantID != uuid.Nil {
-		eventTID := event.TenantID.String()
-		if eventTID != tenantIDStr {
+	if event != nil && event.TenantID != uuid.Nil {
+		if event.TenantID.String() != tenantIDStr {
 			writeJSONError(w, http.StatusNotFound, "event not found")
 			return
 		}
@@ -808,7 +808,7 @@ func (s *HTTPServer) handleCorrelate(w http.ResponseWriter, r *http.Request) {
 	// Fetch events
 	events, _, err := s.svc.ListEvents(r.Context(), domain.ListFilter{
 		TenantID: tenantID,
-	}, 500, 0)
+	}, 1, 500) // page=1, pageSize=500 (was offset 24950 bug)
 	if err != nil {
 		writeServiceError(w, err)
 		return
@@ -1008,11 +1008,12 @@ func (s *HTTPServer) handleAuditWebhooks(w http.ResponseWriter, r *http.Request)
 		// Persist to DB
 		if s.pool != nil {
 			var dbID string
+			var createdAt time.Time
 			err := s.pool.QueryRow(r.Context(), `
 				INSERT INTO audit_webhooks (tenant_id, url, events, secret, enabled)
 				VALUES ($1, $2, $3, $4, $5)
 				RETURNING id::text, created_at`,
-				tenantID, req.URL, events, secretHash, isActive).Scan(&dbID)
+				tenantID, req.URL, events, secretHash, isActive).Scan(&dbID, &createdAt)
 			if err == nil {
 				cfg := map[string]any{
 					"id":                 dbID,
@@ -1114,7 +1115,7 @@ func (s *HTTPServer) handleSearch(w http.ResponseWriter, r *http.Request) {
 	// Fetch events
 	events, _, err := s.svc.ListEvents(r.Context(), domain.ListFilter{
 		TenantID: tenantID,
-	}, 500, 0)
+	}, 1, 500) // page=1, pageSize=500 (was offset 24950 bug)
 	if err != nil {
 		writeServiceError(w, err)
 		return
@@ -1189,8 +1190,18 @@ func (s *HTTPServer) handleSearch(w http.ResponseWriter, r *http.Request) {
 // Verifies the HMAC chain across all audit events for the given tenant.
 // Each event's hash includes the previous event's hash, creating a tamper-evident chain.
 
-// integritySecret is the HMAC key (in production, this should be configured via env).
-var integritySecret = []byte("ggid-audit-integrity-key-v1")
+// integritySecret is the HMAC key, loaded from env at startup
+// (fail-closed when unset) — a hardcoded key lets anyone recompute
+// the chain and forge tamper-evident hashes (R11 P1).
+var integritySecret = func() []byte {
+	if k := os.Getenv("GGID_AUDIT_INTEGRITY_KEY"); k != "" {
+		return []byte(k)
+	}
+	if os.Getenv("GGID_AUDIT_INTEGRITY_ALLOW_INSECURE_DEFAULT") == "true" {
+		return []byte("ggid-audit-integrity-key-v1") // dev/test only
+	}
+	return nil
+}()
 
 func (s *HTTPServer) handleVerifyIntegrity(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
@@ -1205,7 +1216,7 @@ func (s *HTTPServer) handleVerifyIntegrity(w http.ResponseWriter, r *http.Reques
 
 	events, total, err := s.svc.ListEvents(r.Context(), domain.ListFilter{
 		TenantID: tenantID,
-	}, 500, 0)
+	}, 1, 500) // page=1, pageSize=500 (was offset 24950 bug)
 	if err != nil {
 		writeServiceError(w, err)
 		return
@@ -1551,7 +1562,7 @@ func (s *HTTPServer) dispatchAlert(alert map[string]any) {
 	// Fire webhook (async, non-blocking)
 	if webhookURL != "" && isSafeWebhookURL(webhookURL) {
 		go func() {
-			client := &http.Client{Timeout: 10 * time.Second}
+			client := &http.Client{Timeout: 10 * time.Second, CheckRedirect: func(req *http.Request, via []*http.Request) error { return http.ErrUseLastResponse }}
 			resp, err := client.Post(webhookURL, "application/json", strings.NewReader(string(payload)))
 			if err != nil {
 				return
@@ -1568,6 +1579,9 @@ func (s *HTTPServer) dispatchAlert(alert map[string]any) {
 			alertTenant, _ := alert["tenant_id"].(string)
 			query := `SELECT url, secret FROM audit_webhooks WHERE enabled = true`
 			args := []any{}
+			if alertTenant == "" {
+				return // never fan out alerts across all tenants (R11 P1)
+			}
 			if alertTenant != "" {
 				query += ` AND tenant_id = $1`
 				args = append(args, alertTenant)
@@ -1577,7 +1591,7 @@ func (s *HTTPServer) dispatchAlert(alert map[string]any) {
 				return
 			}
 			defer rows.Close()
-			client := &http.Client{Timeout: 10 * time.Second}
+			client := &http.Client{Timeout: 10 * time.Second, CheckRedirect: func(req *http.Request, via []*http.Request) error { return http.ErrUseLastResponse }}
 			for rows.Next() {
 				var whURL, whSecret string
 				if err := rows.Scan(&whURL, &whSecret); err != nil {
@@ -2117,30 +2131,8 @@ func maskSecret(s string) string {
 	return s[:2] + "****"
 }
 
-// isSafeWebhookURL validates that a webhook URL is safe to call (SSRF protection).
-// Blocks: non-HTTP(S) schemes, localhost, loopback, link-local, private IP ranges.
+// isSafeWebhookURL delegates to validateWebhookURL — the single,
+// DNS-resolving SSRF check (R11: three divergent weak copies unified).
 func isSafeWebhookURL(rawURL string) bool {
-	u, err := url.Parse(rawURL)
-	if err != nil {
-		return false
-	}
-	if u.Scheme != "http" && u.Scheme != "https" {
-		return false
-	}
-	host := u.Hostname()
-	if host == "localhost" || host == "127.0.0.1" || host == "::1" || host == "0.0.0.0" {
-		return false
-	}
-	// Block link-local (169.254.x.x — cloud metadata)
-	if strings.HasPrefix(host, "169.254.") {
-		return false
-	}
-	// Block private IP ranges (RFC 1918)
-	ip := net.ParseIP(host)
-	if ip != nil {
-		if ip.IsLoopback() || ip.IsPrivate() || ip.IsLinkLocalUnicast() || ip.IsUnspecified() {
-			return false
-		}
-	}
-	return true
+	return validateWebhookURL(rawURL) == nil
 }

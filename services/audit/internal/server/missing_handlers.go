@@ -1,6 +1,7 @@
 package httpserver
 
 import (
+	"crypto/rand"
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
@@ -40,6 +41,10 @@ func (s *HTTPServer) handleWebhooksList(w http.ResponseWriter, r *http.Request) 
 		// DB-backed: query audit_webhooks table directly.
 		if s.pool != nil {
 			tenantID := r.Header.Get("X-Tenant-ID")
+			if tenantID == "" {
+				writeJSONError(w, http.StatusForbidden, "tenant context required")
+				return
+			}
 			query := `SELECT id, url, events, secret, enabled, created_at FROM audit_webhooks`
 			args := []any{}
 			if tenantID != "" {
@@ -64,7 +69,7 @@ func (s *HTTPServer) handleWebhooksList(w http.ResponseWriter, r *http.Request) 
 						"id":         id,
 						"url":        url,
 						"events":     events,
-						"secret":     secret,
+						"secret":     maskSecret(secret), // never return the stored value (R11)
 						"active":     enabled,
 						"enabled":    enabled,
 						"created_at": createdAt,
@@ -309,11 +314,21 @@ func (s *HTTPServer) handleComplianceSchedulesList(w http.ResponseWriter, r *htt
 
 // handleWebhookTest - POST /api/v1/webhooks/{id}/test
 func (s *HTTPServer) handleWebhookTest(w http.ResponseWriter, r *http.Request, whID string) {
+	// SECURITY (R11): caller tenant required and must own the webhook —
+	// previously any caller knowing the ID could trigger deliveries.
+	callerTenant := r.Header.Get("X-Tenant-ID")
+	if callerTenant == "" {
+		writeJSONError(w, http.StatusForbidden, "tenant context required")
+		return
+	}
 	// Find the webhook
 	globalAlertWebhooks.mu.RLock()
 	var webhook map[string]any
 	for _, wh := range globalAlertWebhooks.webhooks {
 		if wh["id"] == whID {
+			if tid, _ := wh["tenant_id"].(string); tid != "" && tid != callerTenant {
+				continue
+			}
 			webhook = wh
 			break
 		}
@@ -348,7 +363,7 @@ func (s *HTTPServer) handleWebhookTest(w http.ResponseWriter, r *http.Request, w
 	}
 	body, _ := json.Marshal(testPayload)
 
-	client := &http.Client{Timeout: 10 * time.Second}
+	client := &http.Client{Timeout: 10 * time.Second, CheckRedirect: func(req *http.Request, via []*http.Request) error { return http.ErrUseLastResponse }}
 	resp, err := client.Post(url, "application/json", strings.NewReader(string(body)))
 	if err != nil {
 		writeJSON(w, http.StatusOK, map[string]any{
@@ -387,26 +402,50 @@ func (s *HTTPServer) handleWebhookDeliveryRetry(w http.ResponseWriter, r *http.R
 
 // handleWebhookRotateSecret - POST /api/v1/webhooks/{id}/rotate-secret
 func (s *HTTPServer) handleWebhookRotateSecret(w http.ResponseWriter, r *http.Request, whID string) {
-	// Generate a new secret
-	secret := "whsec_" + fmt.Sprintf("%d", time.Now().UnixNano())
+	// SECURITY (R11): caller tenant required and must own the webhook —
+	// rotating another tenant's secret DoSes their signature verification.
+	callerTenant := r.Header.Get("X-Tenant-ID")
+	if callerTenant == "" {
+		writeJSONError(w, http.StatusForbidden, "tenant context required")
+		return
+	}
+	// Generate a new secret (crypto/rand, not timestamp — R11 P2)
+	secret := "whsec_" + func() string {
+		b := make([]byte, 24)
+		if _, err := rand.Read(b); err != nil {
+			return fmt.Sprintf("%d", time.Now().UnixNano())
+		}
+		return hex.EncodeToString(b)
+	}()
 	// SECURITY: hash before storage
 	h := sha256.Sum256([]byte(secret))
 	secretHash := hex.EncodeToString(h[:])
 
-	// Update the webhook in memory
+	// Update the webhook in memory (tenant-ownership enforced, R11)
 	globalAlertWebhooks.mu.Lock()
+	rotated := false
 	for _, wh := range globalAlertWebhooks.webhooks {
 		if wh["id"] == whID {
+			if tid, _ := wh["tenant_id"].(string); tid != "" && tid != callerTenant {
+				continue
+			}
 			wh["secret"] = secretHash
 			if s.memMapRepo2 != nil {
 				_ = s.memMapRepo2.StoreJSON(r.Context(), "audit_webhook_configs", whID, wh)
 			}
+			rotated = true
 			break
 		}
 	}
 	globalAlertWebhooks.mu.Unlock()
+	if !rotated {
+		writeJSONError(w, http.StatusNotFound, "webhook not found")
+		return
+	}
 
+	// Return the new plaintext secret exactly once — it is stored hashed
+	// and cannot be recovered later (R11 P2).
 	writeJSON(w, http.StatusOK, map[string]any{
-		"secret": "", // never return secret hash; client should use the returned secret
+		"secret": secret,
 	})
 }

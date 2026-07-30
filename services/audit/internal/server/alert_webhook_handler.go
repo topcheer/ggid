@@ -5,9 +5,11 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"net"
 	"net/http"
 	"net/netip"
 	neturl "net/url"
+	"os"
 	"sync"
 
 	"github.com/google/uuid"
@@ -165,6 +167,26 @@ func validateWebhookURL(rawURL string) error {
 	if ip, err := netip.ParseAddr(host); err == nil {
 		if ip.IsLoopback() || ip.IsPrivate() || ip.IsLinkLocalUnicast() || ip.IsUnspecified() {
 			return fmt.Errorf("internal network URLs not allowed")
+		}
+		return nil
+	}
+	// Hostnames (e.g. kubernetes.default.svc, metadata.google.internal)
+	// must not resolve to internal addresses (R11 P1: literal-IP check
+	// alone let every internal DNS name through). The DNS check can be
+	// disabled explicitly for tests/dev via env.
+	if os.Getenv("GGID_WEBHOOK_SKIP_DNS") == "true" {
+		return nil
+	}
+	ips, err := net.LookupIP(host)
+	if err != nil || len(ips) == 0 {
+		return fmt.Errorf("webhook host does not resolve")
+	}
+	for _, ip := range ips {
+		if addr, ok := netip.AddrFromSlice(ip); ok {
+			a := addr.Unmap()
+			if a.IsLoopback() || a.IsPrivate() || a.IsLinkLocalUnicast() || a.IsLinkLocalMulticast() || a.IsUnspecified() {
+				return fmt.Errorf("webhook host resolves to internal address")
+			}
 		}
 	}
 	return nil
