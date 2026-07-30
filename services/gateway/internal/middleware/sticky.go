@@ -38,8 +38,8 @@ func DefaultStickyConfig() *StickySessionConfig {
 // StickyRouter routes requests to backends based on a sticky key.
 // The same sticky key always maps to the same backend until the TTL expires.
 type StickyRouter struct {
-	mu      sync.RWMutex
-	config  *StickySessionConfig
+	mu       sync.RWMutex
+	config   *StickySessionConfig
 	bindings map[string]*stickyBinding
 }
 
@@ -119,6 +119,7 @@ func (sr *StickyRouter) SetStickyCookie(w http.ResponseWriter, r *http.Request) 
 		Path:     "/",
 		MaxAge:   int(sr.config.TTL.Seconds()),
 		HttpOnly: true,
+		Secure:   true,
 		SameSite: http.SameSiteLaxMode,
 	})
 }

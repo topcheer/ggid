@@ -6,6 +6,7 @@ import (
 	"crypto/x509"
 	"fmt"
 	"net/http"
+	"os"
 	"sync"
 	"time"
 )
@@ -13,19 +14,19 @@ import (
 type SIEMType string
 
 const (
-	SIEMSplunk     SIEMType = "splunk"
-	SIEMQRadar     SIEMType = "qradar"
-	SIEMElastic    SIEMType = "elastic"
-	SIEMSyslog     SIEMType = "syslog"
+	SIEMSplunk  SIEMType = "splunk"
+	SIEMQRadar  SIEMType = "qradar"
+	SIEMElastic SIEMType = "elastic"
+	SIEMSyslog  SIEMType = "syslog"
 )
 
 type SIEMDestination struct {
-	Name      string    `json:"name"`
-	Type      SIEMType  `json:"type"`
-	URL       string    `json:"url"`
-	AuthToken string    `json:"auth_token"`
-	BatchSize int       `json:"batch_size"`
-	Enabled   bool      `json:"enabled"`
+	Name      string   `json:"name"`
+	Type      SIEMType `json:"type"`
+	URL       string   `json:"url"`
+	AuthToken string   `json:"auth_token"`
+	BatchSize int      `json:"batch_size"`
+	Enabled   bool     `json:"enabled"`
 }
 
 type CircuitState string
@@ -86,6 +87,11 @@ func (f *SIEMForwarder) SetCAPool(pool *x509.CertPool) {
 // SetTLSConfig configures custom TLS settings for SIEM connections.
 // This is the production equivalent of the test-only TLSConfig struct.
 func (f *SIEMForwarder) SetTLSConfig(enabled bool, clientCert, clientKey, caCert []byte, serverName string, insecureSkipVerify bool) error {
+	// SECURITY: InsecureSkipVerify must NEVER be true in production.
+	if insecureSkipVerify && os.Getenv("GGID_ENV") != "test" {
+		return fmt.Errorf("InsecureSkipVerify is not allowed in production")
+	}
+
 	f.mu.Lock()
 	defer f.mu.Unlock()
 
@@ -242,4 +248,3 @@ func (f *SIEMForwarder) GetStats(destName string) *ForwardStats {
 	defer f.mu.RUnlock()
 	return f.stats[destName]
 }
-

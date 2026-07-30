@@ -10,11 +10,11 @@ import (
 
 // CanaryConfig defines a per-route canary deployment.
 type CanaryConfig struct {
-	StableURL    string // primary backend URL
-	CanaryURL    string // canary backend URL
-	Percentage   int    // 0–100, percent of traffic to the canary
-	Header       string // optional header name to force canary (e.g. "X-Canary")
-	CookieName   string // optional cookie name for sticky canary
+	StableURL  string // primary backend URL
+	CanaryURL  string // canary backend URL
+	Percentage int    // 0–100, percent of traffic to the canary
+	Header     string // optional header name to force canary (e.g. "X-Canary")
+	CookieName string // optional cookie name for sticky canary
 }
 
 // CanaryRouter routes a percentage of requests to the canary backend.
@@ -77,6 +77,7 @@ func SetCanaryCookie(w http.ResponseWriter, name, value string) {
 		Value:    value,
 		Path:     "/",
 		HttpOnly: true,
+		Secure:   true,
 		SameSite: http.SameSiteLaxMode,
 	})
 }

@@ -39,6 +39,10 @@ type Options struct {
 	OnUnauthorized http.HandlerFunc
 	// JWKSURL overrides the auto-detected JWKS URL (default: baseURL+/.well-known/jwks.json).
 	JWKSURL string
+	// Issuer is the expected JWT issuer (iss claim). If set, tokens from other issuers are rejected.
+	Issuer string
+	// Audience is the expected JWT audience (aud claim). If set, tokens for other audiences are rejected.
+	Audience string
 }
 
 // UserInfo holds the authenticated user information extracted from the JWT.
@@ -76,6 +80,8 @@ func Auth(baseURL string, opts Options) func(http.Handler) http.Handler {
 	}
 
 	verifier := newJWKSCache(opts.JWKSURL)
+	verifier.issuer = opts.Issuer
+	verifier.audience = opts.Audience
 
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -175,11 +181,13 @@ type jwk struct {
 
 // jwksCache caches JWKS keys with periodic refresh.
 type jwksCache struct {
-	url     string
-	mu      sync.RWMutex
-	keys    map[string]*rsa.PublicKey
-	updated time.Time
-	client  *http.Client
+	url      string
+	issuer   string
+	audience string
+	mu       sync.RWMutex
+	keys     map[string]*rsa.PublicKey
+	updated  time.Time
+	client   *http.Client
 }
 
 func newJWKSCache(jwksURL string) *jwksCache {
@@ -274,6 +282,34 @@ func (c *jwksCache) verify(tokenString string) (*UserInfo, error) {
 	claims, ok := token.Claims.(jwt.MapClaims)
 	if !ok {
 		return nil, fmt.Errorf("invalid claims")
+	}
+
+	// Validate issuer if configured.
+	if c.issuer != "" {
+		if iss, _ := claims["iss"].(string); iss != c.issuer {
+			return nil, fmt.Errorf("invalid issuer: expected %s, got %s", c.issuer, iss)
+		}
+	}
+	// Validate audience if configured.
+	if c.audience != "" {
+		aud, _ := claims["aud"].(string)
+		if aud != c.audience {
+			// Also check if aud is a slice (JWT spec allows multiple audiences).
+			if audSlice, ok := claims["aud"].([]any); ok {
+				found := false
+				for _, a := range audSlice {
+					if fmt.Sprintf("%v", a) == c.audience {
+						found = true
+						break
+					}
+				}
+				if !found {
+					return nil, fmt.Errorf("invalid audience: expected %s", c.audience)
+				}
+			} else {
+				return nil, fmt.Errorf("invalid audience: expected %s, got %s", c.audience, aud)
+			}
+		}
 	}
 
 	info := &UserInfo{}

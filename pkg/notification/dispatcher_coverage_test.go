@@ -30,7 +30,7 @@ func (m *mockSender2) SendBatch(ctx context.Context, msgs []*email.Message) erro
 }
 
 func TestNewDispatcher_WithCustomTimeout(t *testing.T) {
-	cfg := &WebhookConfig{URL: "http://example.com", Timeout: 30 * time.Second}
+	cfg := &WebhookConfig{URL: "https://example.com", Timeout: 30 * time.Second}
 	d := NewDispatcher(nil, cfg)
 	if d.webhook != cfg {
 		t.Error("expected webhook config to be set")

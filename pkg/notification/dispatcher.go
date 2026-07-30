@@ -3,13 +3,15 @@
 package notification
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
+	"log/slog"
 	"net/http"
+	"strings"
 	"sync"
 	"time"
-	"bytes"
 
 	"github.com/ggid/ggid/pkg/email"
 )
@@ -30,7 +32,7 @@ type WebhookConfig struct {
 
 // Notification represents a notification to be dispatched.
 type Notification struct {
-	Type     string                 `json:"type"`     // e.g., "password_reset", "user_registered"
+	Type     string                 `json:"type"` // e.g., "password_reset", "user_registered"
 	TenantID string                 `json:"tenant_id"`
 	UserID   string                 `json:"user_id,omitempty"`
 	Email    string                 `json:"email,omitempty"`
@@ -52,11 +54,23 @@ func NewDispatcher(emailSender email.Sender, webhookCfg *WebhookConfig) *Dispatc
 	if webhookCfg != nil && webhookCfg.Timeout > 0 {
 		timeout = webhookCfg.Timeout
 	}
-	return &Dispatcher{
+	d := &Dispatcher{
 		email:   emailSender,
 		webhook: webhookCfg,
 		client:  &http.Client{Timeout: timeout},
 	}
+	// SECURITY: enforce HTTPS for webhook URLs to prevent PII leakage over plaintext.
+	// Allow http:// only for localhost (testing/development).
+	if webhookCfg != nil && webhookCfg.URL != "" {
+		if !strings.HasPrefix(webhookCfg.URL, "https://") {
+			isLocal := strings.Contains(webhookCfg.URL, "127.0.0.1") || strings.Contains(webhookCfg.URL, "localhost")
+			if !isLocal {
+				slog.Warn("webhook URL is not HTTPS; notifications will not be sent", "url", webhookCfg.URL)
+				d.webhook = nil // disable insecure webhook
+			}
+		}
+	}
+	return d
 }
 
 // Dispatch sends a notification via all configured channels concurrently.
