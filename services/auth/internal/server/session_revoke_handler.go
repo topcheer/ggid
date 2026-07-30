@@ -11,6 +11,7 @@ import (
 type RevocableSession struct {
 	SessionID string     `json:"session_id"`
 	UserID    string     `json:"user_id"`
+	TenantID  string     `json:"tenant_id"`
 	TokenJTI  string     `json:"token_jti"`
 	CreatedAt time.Time  `json:"created_at"`
 	Revoked   bool       `json:"revoked"`
@@ -53,6 +54,14 @@ func (h *Handler) handleRevokeSessions(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// SECURITY: tenant isolation — verify caller's tenant.
+	callerTenant := r.Header.Get("X-Tenant-ID")
+	isPlatformAdmin := hasPlatformAdminScope(r)
+	if callerTenant == "" && !isPlatformAdmin {
+		writeError(w, http.StatusForbidden, "X-Tenant-ID header required")
+		return
+	}
+
 	var req struct {
 		UserIDs    []string `json:"user_ids"`
 		SessionIDs []string `json:"session_ids"`
@@ -83,6 +92,14 @@ func (h *Handler) handleRevokeSessions(w http.ResponseWriter, r *http.Request) {
 			})
 			continue
 		}
+		// SECURITY: tenant ownership check — skip sessions from other tenants.
+		if !isPlatformAdmin && callerTenant != "" && sess.TenantID != "" && sess.TenantID != callerTenant {
+			failed = append(failed, map[string]string{
+				"session_id": sid,
+				"error":      "cross-tenant revocation denied",
+			})
+			continue
+		}
 		if sess.Revoked {
 			failed = append(failed, map[string]string{
 				"session_id": sid,
@@ -110,6 +127,10 @@ func (h *Handler) handleRevokeSessions(w http.ResponseWriter, r *http.Request) {
 		for _, sid := range sids {
 			sess := sessionStore.sessions[sid]
 			if sess == nil || sess.Revoked {
+				continue
+			}
+			// SECURITY: tenant ownership check.
+			if !isPlatformAdmin && callerTenant != "" && sess.TenantID != "" && sess.TenantID != callerTenant {
 				continue
 			}
 			now := time.Now().UTC()

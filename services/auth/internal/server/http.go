@@ -10,6 +10,7 @@ import (
 	"log/slog"
 	"net"
 	"net/http"
+	"net/mail"
 	"os"
 	"strings"
 	"time"
@@ -594,6 +595,9 @@ func (h *Handler) registerRoutes() {
 	h.mux.HandleFunc("/api/v1/self-service/sessions", h.handleSelfServiceSessions)
 	h.mux.HandleFunc("/api/v1/self-service/mfa/", h.handleMFASelfRemove)
 
+	// Admin MFA reset — allows admin to reset a user's MFA factors
+	h.mux.HandleFunc("/api/v1/admin/mfa/reset", h.handleAdminMFAReset)
+
 	// Per-tenant registration configuration (admin)
 	h.mux.HandleFunc("/api/v1/auth/registration/config", h.handleRegistrationConfig)
 	h.mux.HandleFunc("/api/v1/providers/status", h.handleProviderStatus)
@@ -839,6 +843,32 @@ func (h *Handler) register(w http.ResponseWriter, r *http.Request) {
 	}
 
 	userID := uuid.New()
+
+	// Validate email format before creating any records.
+	if _, err := mail.ParseAddress(req.Email); err != nil {
+		h.writeErrorT(w, r, http.StatusBadRequest, "error.invalid_email")
+		return
+	}
+
+	// P1: Username validation — consistent with registration_handler.go.
+	// Reject leading/trailing special chars, enforce allowed charset.
+	if len(req.Username) < 3 || len(req.Username) > 64 {
+		h.writeErrorT(w, r, http.StatusBadRequest, "error.username_length")
+		return
+	}
+	firstChar := req.Username[0]
+	lastChar := req.Username[len(req.Username)-1]
+	if firstChar == '.' || firstChar == '-' || firstChar == '_' ||
+		lastChar == '.' || lastChar == '-' || lastChar == '_' {
+		h.writeErrorT(w, r, http.StatusBadRequest, "error.username_invalid_chars")
+		return
+	}
+	for _, c := range req.Username {
+		if !((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9') || c == '_' || c == '-' || c == '.') {
+			h.writeErrorT(w, r, http.StatusBadRequest, "error.username_invalid_chars")
+			return
+		}
+	}
 
 	// KB-082: Password strength gate — reject weak passwords (score < 2).
 	if ok, _ := checkPasswordStrengthGate(req.Password); !ok {
@@ -1205,23 +1235,29 @@ func (h *Handler) mfaSetup(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Extract user_id from JWT if not provided in body
-	if req.UserID == "" {
-		authHeader := r.Header.Get("Authorization")
-		tokenStr := strings.TrimPrefix(authHeader, "Bearer ")
-		claims := jwt.MapClaims{}
-		_, err := jwt.ParseWithClaims(tokenStr, claims, func(tok *jwt.Token) (any, error) {
-			if _, ok := tok.Method.(*jwt.SigningMethodRSA); !ok {
-				return nil, fmt.Errorf("unexpected signing method: %s", tok.Header["alg"])
-			}
-			return h.authSvc.PublicKey(), nil
-		})
-		if err != nil {
-			writeError(w, http.StatusUnauthorized, "invalid token")
-			return
+	// SECURITY: Always extract user_id from JWT. Never trust request body user_id.
+	authHeader := r.Header.Get("Authorization")
+	tokenStr := strings.TrimPrefix(authHeader, "Bearer ")
+	claims := jwt.MapClaims{}
+	_, err := jwt.ParseWithClaims(tokenStr, claims, func(tok *jwt.Token) (any, error) {
+		if _, ok := tok.Method.(*jwt.SigningMethodRSA); !ok {
+			return nil, fmt.Errorf("unexpected signing method: %s", tok.Header["alg"])
 		}
-		req.UserID, _ = claims["sub"].(string)
+		return h.authSvc.PublicKey(), nil
+	})
+	if err != nil {
+		writeError(w, http.StatusUnauthorized, "invalid token")
+		return
 	}
+	jwtUserID, _ := claims["sub"].(string)
+	// Reject if body provides a different user_id than the authenticated JWT subject.
+	if req.UserID != "" && req.UserID != jwtUserID {
+		slog.Error("MFA setup IDOR attempt: body user_id does not match JWT subject",
+			"body_user_id", req.UserID, "jwt_sub", jwtUserID)
+		writeError(w, http.StatusForbidden, "user_id does not match authenticated identity")
+		return
+	}
+	req.UserID = jwtUserID
 
 	user, err := uuid.Parse(req.UserID)
 	if err != nil {
@@ -1229,6 +1265,7 @@ func (h *Handler) mfaSetup(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// SECURITY: Ensure tenant context matches the authenticated user's tenant.
 	resp, err := h.authSvc.MFAService().SetupMFA(r.Context(), user, req.DeviceName)
 	if err != nil {
 		log.Printf("MFA setup error for user %s: %v", req.UserID, err)
@@ -1345,6 +1382,32 @@ func (h *Handler) mfaDisable(w http.ResponseWriter, r *http.Request) {
 	deviceID, err := uuid.Parse(req.DeviceID)
 	if err != nil {
 		writeError(w, http.StatusBadRequest, "invalid device_id")
+		return
+	}
+
+	// SECURITY: Verify device ownership before disabling.
+	// The authenticated user (re-authenticated via password) must own the device.
+	ownerUUID, err := uuid.Parse(userID)
+	if err != nil {
+		writeError(w, http.StatusBadRequest, "invalid user_id")
+		return
+	}
+	devices, err := h.authSvc.MFAService().ListDevices(r.Context(), ownerUUID)
+	if err != nil {
+		writeInternalError(w, "auth handler", err)
+		return
+	}
+	deviceOwned := false
+	for _, d := range devices {
+		if d.ID == deviceID {
+			deviceOwned = true
+			break
+		}
+	}
+	if !deviceOwned {
+		slog.Error("MFA disable: device does not belong to authenticated user",
+			"user_id", userID, "device_id", req.DeviceID)
+		writeError(w, http.StatusForbidden, "device does not belong to authenticated user")
 		return
 	}
 

@@ -241,6 +241,14 @@ func (s *HTTPServer) handleRoles(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *HTTPServer) handleRoleByID(w http.ResponseWriter, r *http.Request) {
+	// SECURITY: Inject tenant context from gateway-verified X-Tenant-ID header
+	// so service-layer validateRoleTenant can enforce isolation.
+	if tidStr := r.Header.Get("X-Tenant-ID"); tidStr != "" {
+		if tid, err := uuid.Parse(tidStr); err == nil {
+			r = r.WithContext(service.WithTenantContext(r.Context(), tid))
+		}
+	}
+
 	idStr := strings.TrimPrefix(r.URL.Path, "/api/v1/roles/")
 	if idStr == "" {
 		writeJSONError(w, http.StatusBadRequest, "role ID is required")
@@ -568,6 +576,13 @@ func (s *HTTPServer) handleBulkAssign(w http.ResponseWriter, r *http.Request, ro
 		return
 	}
 
+	// SECURITY: Require tenant context for cross-tenant protection.
+	tenantID, err := uuid.Parse(r.Header.Get("X-Tenant-ID"))
+	if err != nil {
+		writeJSONError(w, http.StatusForbidden, "valid X-Tenant-ID header required")
+		return
+	}
+
 	var req struct {
 		UserIDs []string `json:"user_ids"`
 	}
@@ -580,7 +595,8 @@ func (s *HTTPServer) handleBulkAssign(w http.ResponseWriter, r *http.Request, ro
 		return
 	}
 
-	// Verify the role exists
+	// Verify the role exists (tenant-scoped via injected context)
+	r = r.WithContext(service.WithTenantContext(r.Context(), tenantID))
 	if _, err := s.roleSvc.GetRole(r.Context(), roleID); err != nil {
 		writeServiceError(w, err)
 		return
@@ -633,8 +649,14 @@ var bulkAssignments = struct {
 }{data: make(map[string]time.Time)}
 
 func (s *HTTPServer) createRole(w http.ResponseWriter, r *http.Request) {
+	// SECURITY: Use gateway-verified X-Tenant-ID header, not body tenant_id.
+	tenantID, err := uuid.Parse(r.Header.Get("X-Tenant-ID"))
+	if err != nil {
+		writeJSONError(w, http.StatusForbidden, "valid X-Tenant-ID header required")
+		return
+	}
+
 	var req struct {
-		TenantID     string `json:"tenant_id"`
 		Key          string `json:"key"`
 		Name         string `json:"name"`
 		Description  string `json:"description"`
@@ -642,12 +664,6 @@ func (s *HTTPServer) createRole(w http.ResponseWriter, r *http.Request) {
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		writeJSONError(w, http.StatusBadRequest, "invalid JSON body")
-		return
-	}
-
-	tenantID, err := uuid.Parse(req.TenantID)
-	if err != nil {
-		writeJSONError(w, http.StatusBadRequest, "invalid tenant_id")
 		return
 	}
 
@@ -699,14 +715,10 @@ func (s *HTTPServer) createRole(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *HTTPServer) listRoles(w http.ResponseWriter, r *http.Request) {
-	tenantIDStr := r.URL.Query().Get("tenant_id")
-	if tenantIDStr == "" {
-		writeJSONError(w, http.StatusBadRequest, "tenant_id query parameter is required")
-		return
-	}
-	tenantID, err := uuid.Parse(tenantIDStr)
+	// SECURITY: Use gateway-verified X-Tenant-ID header, not query param.
+	tenantID, err := uuid.Parse(r.Header.Get("X-Tenant-ID"))
 	if err != nil {
-		writeJSONError(w, http.StatusBadRequest, "invalid tenant_id")
+		writeJSONError(w, http.StatusForbidden, "valid X-Tenant-ID header required")
 		return
 	}
 
@@ -1212,6 +1224,13 @@ func (s *HTTPServer) handleEvaluate(w http.ResponseWriter, r *http.Request) {
 // --- Role-Permission management ---
 
 func (s *HTTPServer) handleRolePermissions(w http.ResponseWriter, r *http.Request, roleID uuid.UUID) {
+	// SECURITY: Inject tenant context so service layer can enforce ownership.
+	if tidStr := r.Header.Get("X-Tenant-ID"); tidStr != "" {
+		if tid, err := uuid.Parse(tidStr); err == nil {
+			r = r.WithContext(service.WithTenantContext(r.Context(), tid))
+		}
+	}
+
 	switch r.Method {
 	case http.MethodGet:
 		perms, err := s.roleSvc.GetRolePermissions(r.Context(), roleID)
@@ -1396,19 +1415,11 @@ func (s *HTTPServer) handleFromTemplate(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	var req struct {
-		TenantID string `json:"tenant_id"`
-	}
-	if r.ContentLength > 0 {
-		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-			writeJSONError(w, http.StatusBadRequest, "invalid JSON body")
-			return
-		}
-	}
-
-	tenantID, err := uuid.Parse(req.TenantID)
+	// SECURITY: Use gateway-verified X-Tenant-ID header, not body tenant_id.
+	tenantID, err := uuid.Parse(r.Header.Get("X-Tenant-ID"))
 	if err != nil {
-		tenantID = uuid.New()
+		writeJSONError(w, http.StatusForbidden, "valid X-Tenant-ID header required")
+		return
 	}
 
 	policies := selected["policies"].([]map[string]any)
@@ -1468,6 +1479,12 @@ var (
 // POST /api/v1/policies/versions?policy_id=X — snapshot current policy as new version
 // POST /api/v1/policies/versions/rollback?policy_id=X&version=N — rollback to version
 func (s *HTTPServer) handlePolicyVersions(w http.ResponseWriter, r *http.Request) {
+	// SECURITY: Require valid tenant for all operations.
+	if _, err := uuid.Parse(r.Header.Get("X-Tenant-ID")); err != nil {
+		writeJSONError(w, http.StatusForbidden, "valid X-Tenant-ID header required")
+		return
+	}
+
 	policyID := r.URL.Query().Get("policy_id")
 	if policyID == "" {
 		writeJSONError(w, http.StatusBadRequest, "policy_id is required")
@@ -1565,6 +1582,12 @@ func (s *HTTPServer) handlePolicyVersions(w http.ResponseWriter, r *http.Request
 // POST /api/v1/policies/attribute-mapping
 // Body: { "attribute": "department", "value": "Engineering", "role_id": "uuid", "tenant_id": "uuid" }
 func (s *HTTPServer) handleAttributeMapping(w http.ResponseWriter, r *http.Request) {
+	// SECURITY: Require valid tenant header for this policy configuration endpoint.
+	if _, err := uuid.Parse(r.Header.Get("X-Tenant-ID")); err != nil {
+		writeJSONError(w, http.StatusForbidden, "valid X-Tenant-ID header required")
+		return
+	}
+
 	switch r.Method {
 	case http.MethodGet:
 		writeJSON(w, http.StatusOK, map[string]any{"mappings": func() []map[string]any {
@@ -1642,14 +1665,10 @@ func (s *HTTPServer) handlePolicyExport(w http.ResponseWriter, r *http.Request) 
 		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
-	tenantIDStr := r.URL.Query().Get("tenant_id")
-	if tenantIDStr == "" {
-		writeJSONError(w, http.StatusBadRequest, "tenant_id is required")
-		return
-	}
-	tenantID, err := uuid.Parse(tenantIDStr)
+	// SECURITY: Use gateway-verified X-Tenant-ID header, not query param.
+	tenantID, err := uuid.Parse(r.Header.Get("X-Tenant-ID"))
 	if err != nil {
-		writeJSONError(w, http.StatusBadRequest, "invalid tenant_id")
+		writeJSONError(w, http.StatusForbidden, "valid X-Tenant-ID header required")
 		return
 	}
 
@@ -1679,14 +1698,10 @@ func (s *HTTPServer) handlePolicyImport(w http.ResponseWriter, r *http.Request) 
 		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
-	tenantIDStr := r.URL.Query().Get("tenant_id")
-	if tenantIDStr == "" {
-		writeJSONError(w, http.StatusBadRequest, "tenant_id is required")
-		return
-	}
-	tenantID, err := uuid.Parse(tenantIDStr)
+	// SECURITY: Use gateway-verified X-Tenant-ID header, not query param.
+	tenantID, err := uuid.Parse(r.Header.Get("X-Tenant-ID"))
 	if err != nil {
-		writeJSONError(w, http.StatusBadRequest, "invalid tenant_id")
+		writeJSONError(w, http.StatusForbidden, "valid X-Tenant-ID header required")
 		return
 	}
 
@@ -1843,6 +1858,12 @@ var defaultPolicyAction = struct {
 // GET /api/v1/policies/default-action
 // PUT /api/v1/policies/default-action  {"default_action": "deny"}
 func (s *HTTPServer) handleDefaultAction(w http.ResponseWriter, r *http.Request) {
+	// SECURITY: Require valid tenant header for this policy configuration endpoint.
+	if _, err := uuid.Parse(r.Header.Get("X-Tenant-ID")); err != nil {
+		writeJSONError(w, http.StatusForbidden, "valid X-Tenant-ID header required")
+		return
+	}
+
 	switch r.Method {
 	case http.MethodGet:
 		defaultPolicyAction.RLock()
@@ -1898,6 +1919,12 @@ var timeConditions = struct {
 //
 //	{"name": "business-hours", "time_between": "09:00-17:00", "days_of_week": [1,2,3,4,5], "timezone": "America/New_York", "effect": "allow"}
 func (s *HTTPServer) handleTimeConditions(w http.ResponseWriter, r *http.Request) {
+	// SECURITY: Require valid tenant header for this policy configuration endpoint.
+	if _, err := uuid.Parse(r.Header.Get("X-Tenant-ID")); err != nil {
+		writeJSONError(w, http.StatusForbidden, "valid X-Tenant-ID header required")
+		return
+	}
+
 	switch r.Method {
 	case http.MethodGet:
 		timeConditions.RLock()
@@ -1977,9 +2004,10 @@ func (s *HTTPServer) handleDryRun(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	tenantID, err := uuid.Parse(req.TenantID)
+	tenantID, err := uuid.Parse(r.Header.Get("X-Tenant-ID"))
 	if err != nil {
-		tenantID = uuid.New()
+		writeJSONError(w, http.StatusForbidden, "valid X-Tenant-ID header required")
+		return
 	}
 
 	// Evaluate against policies using the evaluator
