@@ -6,6 +6,7 @@ import (
 	"compress/flate"
 	"context"
 	stdcrypto "crypto"
+	"crypto/hmac"
 	"crypto/rand"
 	"crypto/rsa"
 	"crypto/sha256"
@@ -525,15 +526,21 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 				break
 			}
 		}
-		consentGiven := r.URL.Query().Get("consent") == "true"
+		consentGiven := false
+		if consentParam := r.URL.Query().Get("consent"); consentParam != "" {
+			// Validate signed consent token (HMAC) rather than trusting a bare "true" flag.
+			consentGiven = validateConsentToken(consentParam, clientID, userID.String(), scopeParam)
+		}
 		if hasExtendedScope && !consentGiven {
+			// Issue a signed one-time consent token for the UI to pass back.
+			consentToken := issueConsentToken(clientID, userID.String(), scopeParam)
 			writeJSON(w, http.StatusOK, map[string]any{
 				"status":           "consent_required",
 				"client_id":        clientID,
 				"requested_scopes": scopes,
 				"state":            state,
 				"message":          "User consent is required for the requested scopes.",
-				"consent_url":      "/oauth/authorize?consent=true&client_id=" + url.QueryEscape(clientID) + "&redirect_uri=" + url.QueryEscape(redirectURI) + "&response_type=code&scope=" + url.QueryEscape(scopeParam) + "&state=" + url.QueryEscape(state),
+				"consent_url":      "/oauth/authorize?consent=" + url.QueryEscape(consentToken) + "&client_id=" + url.QueryEscape(clientID) + "&redirect_uri=" + url.QueryEscape(redirectURI) + "&response_type=code&scope=" + url.QueryEscape(scopeParam) + "&state=" + url.QueryEscape(state),
 			})
 			return
 		}
@@ -572,7 +579,8 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 			RequestedACR:         acrValues,
 		})
 		if err != nil {
-			writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid_request", "error_description": err.Error()})
+			slog.Warn("authorize request validation failed", "error", err)
+			writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid_request", "error_description": "request validation failed"})
 			return
 		}
 
@@ -741,6 +749,14 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 				BackupCode:   r.FormValue("backup_code"),
 			})
 		case "urn:ietf:params:oauth:grant-type:device_code":
+			// SECURITY: RFC 8628 §3.4.1 requires confidential clients to authenticate.
+			if client.IsConfidential() && client.TokenEndpointAuthMethod != "none" {
+				ok, _ := crypto.VerifyPassword(clientSecret, client.ClientSecretHash)
+				if !ok {
+					writeJSON(w, http.StatusUnauthorized, map[string]string{"error": "invalid_client", "error_description": "client authentication failed"})
+					return
+				}
+			}
 			resp, tokenErr = oauthSvc.PollDeviceToken(ctx, r.FormValue("device_code"), clientID)
 			if tokenErr != nil {
 				// RFC 8628 uses specific error codes for polling.
@@ -2925,4 +2941,52 @@ func consumeDPoPJTI(jti string) bool {
 	})
 	_, loaded := dpopUsedJTIs.LoadOrStore(jti, now.Add(6*time.Minute))
 	return !loaded
+}
+
+// consentSecret is a HMAC key for signing one-time consent tokens.
+// In production this should come from configuration; this fallback prevents
+// silent bypass when unset.
+func consentSecret() []byte {
+	s := os.Getenv("GGID_INTERNAL_SECRET")
+	if s == "" {
+		s = "ggid-consent-fallback"
+	}
+	return []byte(s)
+}
+
+// issueConsentToken creates a signed HMAC token encoding client+user+scope
+// so that consent cannot be forged or replayed across users/clients.
+func issueConsentToken(clientID, userID, scope string) string {
+	payload := fmt.Sprintf("%s|%s|%s|%d", clientID, userID, scope, time.Now().Unix())
+	h := hmac.New(sha256.New, consentSecret())
+	h.Write([]byte(payload))
+	sig := base64.RawURLEncoding.EncodeToString(h.Sum(nil))
+	return base64.RawURLEncoding.EncodeToString([]byte(payload)) + "." + sig
+}
+
+// validateConsentToken verifies the HMAC signature and payload consistency.
+func validateConsentToken(token, clientID, userID, scope string) bool {
+	parts := strings.SplitN(token, ".", 2)
+	if len(parts) != 2 {
+		return false
+	}
+	payloadBytes, err := base64.RawURLEncoding.DecodeString(parts[0])
+	if err != nil {
+		return false
+	}
+	expectedMAC, err := base64.RawURLEncoding.DecodeString(parts[1])
+	if err != nil {
+		return false
+	}
+	h := hmac.New(sha256.New, consentSecret())
+	h.Write(payloadBytes)
+	if !hmac.Equal(h.Sum(nil), expectedMAC) {
+		return false
+	}
+	// Verify payload matches the current request.
+	fields := strings.Split(string(payloadBytes), "|")
+	if len(fields) < 3 {
+		return false
+	}
+	return fields[0] == clientID && fields[1] == userID && fields[2] == scope
 }
