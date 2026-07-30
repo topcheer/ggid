@@ -1190,18 +1190,26 @@ func (s *HTTPServer) handleSearch(w http.ResponseWriter, r *http.Request) {
 // Verifies the HMAC chain across all audit events for the given tenant.
 // Each event's hash includes the previous event's hash, creating a tamper-evident chain.
 
-// integritySecret is the HMAC key, loaded from env at startup
+// integritySecret is the HMAC key, loaded from env lazily on first use
 // (fail-closed when unset) — a hardcoded key lets anyone recompute
 // the chain and forge tamper-evident hashes (R11 P1).
-var integritySecret = func() []byte {
-	if k := os.Getenv("GGID_AUDIT_INTEGRITY_KEY"); k != "" {
-		return []byte(k)
-	}
-	if os.Getenv("GGID_AUDIT_INTEGRITY_ALLOW_INSECURE_DEFAULT") == "true" {
-		return []byte("ggid-audit-integrity-key-v1") // dev/test only
-	}
-	return nil
-}()
+var (
+	integritySecretKey  []byte
+	integritySecretOnce sync.Once
+)
+
+func getIntegritySecret() []byte {
+	integritySecretOnce.Do(func() {
+		if k := os.Getenv("GGID_AUDIT_INTEGRITY_KEY"); k != "" {
+			integritySecretKey = []byte(k)
+			return
+		}
+		if os.Getenv("GGID_AUDIT_INTEGRITY_ALLOW_INSECURE_DEFAULT") == "true" {
+			integritySecretKey = []byte("ggid-audit-integrity-key-v1") // dev/test only
+		}
+	})
+	return integritySecretKey
+}
 
 func (s *HTTPServer) handleVerifyIntegrity(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
@@ -1216,7 +1224,8 @@ func (s *HTTPServer) handleVerifyIntegrity(w http.ResponseWriter, r *http.Reques
 
 	// Fail closed when no integrity key is configured — an empty HMAC
 	// key would report misleading "tampered"/"valid" verdicts (sa-2).
-	if len(integritySecret) == 0 {
+	secret := getIntegritySecret()
+	if len(secret) == 0 {
 		writeJSONError(w, http.StatusServiceUnavailable, "integrity verification not configured (GGID_AUDIT_INTEGRITY_KEY unset)")
 		return
 	}
@@ -1274,7 +1283,7 @@ func computeEventHash(e *domain.AuditEvent, prevHash string) string {
 	if prevHash != "" {
 		data += "|" + prevHash
 	}
-	h := hmac.New(sha256.New, integritySecret)
+	h := hmac.New(sha256.New, getIntegritySecret())
 	h.Write([]byte(data))
 	return hex.EncodeToString(h.Sum(nil))
 }

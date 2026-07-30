@@ -402,12 +402,17 @@ func (h *Handler) handleProfileUpdate(w http.ResponseWriter, r *http.Request) {
 	needsReverification := req.Email != ""
 
 	// Extract user ID from JWT for the UPDATE.
+	// SECURITY: verify token signature (defense-in-depth — gateway already validates).
 	authHeader := r.Header.Get("Authorization")
 	tokenStr := strings.TrimPrefix(authHeader, "Bearer ")
 	claims := jwt.MapClaims{}
-	_, _ = jwt.ParseWithClaims(tokenStr, claims, func(tok *jwt.Token) (any, error) {
+	_, err := jwt.ParseWithClaims(tokenStr, claims, func(tok *jwt.Token) (any, error) {
 		return h.authSvc.PublicKey(), nil
 	})
+	if err != nil {
+		writeError(w, http.StatusUnauthorized, "invalid token")
+		return
+	}
 	userSub, _ := claims["sub"].(string)
 
 	// Persist profile changes to the database.
