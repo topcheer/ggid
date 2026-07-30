@@ -2962,6 +2962,9 @@ func extractUserIDForConsent(r *http.Request) string {
 // consentTTL is the maximum age of a consent token before it expires.
 const consentTTL = 5 * time.Minute
 
+// usedConsentTokens tracks consumed consent tokens to enforce one-time use.
+var usedConsentTokens sync.Map // token string -> expiry time.Time
+
 // consentSecret returns the HMAC key for consent tokens.
 // SECURITY: fail-closed — returns nil if GGID_INTERNAL_SECRET is not set.
 func consentSecret() []byte {
@@ -3023,5 +3026,17 @@ func validateConsentToken(token, clientID, userID, scope string) bool {
 	if err != nil {
 		return false
 	}
-	return time.Now().Unix() < expiresAt
+	if time.Now().Unix() >= expiresAt {
+		return false
+	}
+	// P2: One-time use — reject replayed consent tokens.
+	now := time.Now()
+	usedConsentTokens.Range(func(k, v any) bool {
+		if exp, ok := v.(time.Time); ok && now.After(exp) {
+			usedConsentTokens.Delete(k)
+		}
+		return true
+	})
+	_, loaded := usedConsentTokens.LoadOrStore(token, time.Unix(expiresAt, 0))
+	return !loaded
 }
