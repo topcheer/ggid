@@ -122,7 +122,7 @@ func (r *GroupRepo) ListGroups(ctx context.Context, filter *domain.GroupListFilt
 	argIdx := 2
 
 	if filter.Search != "" {
-		where = append(where, fmt.Sprintf("display_name ILIKE $%d ESCAPE '\\\\'", argIdx))
+		where = append(where, fmt.Sprintf("display_name ILIKE $%d ESCAPE '\\'", argIdx))
 		// Escape LIKE wildcards to prevent unbounded matching.
 		escapedSearch := strings.NewReplacer("\\", "\\\\", "%", "\\%", "_", "\\_").Replace(filter.Search)
 		args = append(args, "%"+escapedSearch+"%")
