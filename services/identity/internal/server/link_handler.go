@@ -27,8 +27,8 @@ func (h *HTTPHandler) handleLinkAccount(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 	writeJSON(w, http.StatusCreated, map[string]any{
-		"linked":     true,
-		"provider":   req.Provider,
+		"linked":      true,
+		"provider":    req.Provider,
 		"external_id": req.ExternalID,
 	})
 }
@@ -48,8 +48,8 @@ func (h *HTTPHandler) handleUnlinkAccount(w http.ResponseWriter, r *http.Request
 		return
 	}
 	writeJSON(w, http.StatusOK, map[string]any{
-		"unlinked":  true,
-		"provider":  req.Provider,
+		"unlinked": true,
+		"provider": req.Provider,
 	})
 }
 
@@ -109,6 +109,10 @@ func (h *HTTPHandler) handleBulkStatus(w http.ResponseWriter, r *http.Request) {
 	}
 	if req.Status != "active" && req.Status != "inactive" && req.Status != "locked" && req.Status != "suspended" {
 		writeJSONError(w, http.StatusBadRequest, "invalid status")
+		return
+	}
+	if len(req.UserIDs) > 1000 {
+		writeJSONError(w, http.StatusBadRequest, "batch size exceeds maximum of 1000")
 		return
 	}
 	writeJSON(w, http.StatusOK, map[string]any{

@@ -241,13 +241,19 @@ func (s *HTTPServer) handleRoles(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *HTTPServer) handleRoleByID(w http.ResponseWriter, r *http.Request) {
-	// SECURITY: Inject tenant context from gateway-verified X-Tenant-ID header
+	// SECURITY: Require X-Tenant-ID header (fail-closed) and inject into context
 	// so service-layer validateRoleTenant can enforce isolation.
-	if tidStr := r.Header.Get("X-Tenant-ID"); tidStr != "" {
-		if tid, err := uuid.Parse(tidStr); err == nil {
-			r = r.WithContext(service.WithTenantContext(r.Context(), tid))
-		}
+	tidStr := r.Header.Get("X-Tenant-ID")
+	if tidStr == "" {
+		writeJSONError(w, http.StatusForbidden, "valid X-Tenant-ID header required")
+		return
 	}
+	tid, err := uuid.Parse(tidStr)
+	if err != nil {
+		writeJSONError(w, http.StatusForbidden, "valid X-Tenant-ID header required")
+		return
+	}
+	r = r.WithContext(service.WithTenantContext(r.Context(), tid))
 
 	idStr := strings.TrimPrefix(r.URL.Path, "/api/v1/roles/")
 	if idStr == "" {
@@ -592,6 +598,10 @@ func (s *HTTPServer) handleBulkAssign(w http.ResponseWriter, r *http.Request, ro
 	}
 	if len(req.UserIDs) == 0 {
 		writeJSONError(w, http.StatusBadRequest, "user_ids is required and must not be empty")
+		return
+	}
+	if len(req.UserIDs) > 1000 {
+		writeJSONError(w, http.StatusBadRequest, "batch size exceeds maximum of 1000")
 		return
 	}
 
@@ -988,6 +998,12 @@ func (s *HTTPServer) handlePolicyByID(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *HTTPServer) createPolicy(w http.ResponseWriter, r *http.Request) {
+	// SECURITY: Policy creation requires admin privileges — unattached policies
+	// become tenant-global and can bypass all RBAC checks.
+	if !isAdminRequest(r) {
+		writeJSONError(w, http.StatusForbidden, "admin privileges required to create policies")
+		return
+	}
 	var req struct {
 		TenantID    string   `json:"tenant_id"`
 		Name        string   `json:"name"`
@@ -1224,12 +1240,18 @@ func (s *HTTPServer) handleEvaluate(w http.ResponseWriter, r *http.Request) {
 // --- Role-Permission management ---
 
 func (s *HTTPServer) handleRolePermissions(w http.ResponseWriter, r *http.Request, roleID uuid.UUID) {
-	// SECURITY: Inject tenant context so service layer can enforce ownership.
-	if tidStr := r.Header.Get("X-Tenant-ID"); tidStr != "" {
-		if tid, err := uuid.Parse(tidStr); err == nil {
-			r = r.WithContext(service.WithTenantContext(r.Context(), tid))
-		}
+	// SECURITY: Fail-closed — require valid X-Tenant-ID (consistent with handleRoleByID).
+	tidStr := r.Header.Get("X-Tenant-ID")
+	if tidStr == "" {
+		writeJSONError(w, http.StatusForbidden, "valid X-Tenant-ID header required")
+		return
 	}
+	tid, err := uuid.Parse(tidStr)
+	if err != nil {
+		writeJSONError(w, http.StatusForbidden, "valid X-Tenant-ID header required")
+		return
+	}
+	r = r.WithContext(service.WithTenantContext(r.Context(), tid))
 
 	switch r.Method {
 	case http.MethodGet:
@@ -1266,7 +1288,9 @@ func (s *HTTPServer) handleRolePermissions(w http.ResponseWriter, r *http.Reques
 		if len(req.Permissions) > 0 && s.pool != nil {
 			for _, key := range req.Permissions {
 				var pid uuid.UUID
-				err := s.pool.QueryRow(r.Context(), `SELECT id FROM permissions WHERE key = $1`, key).Scan(&pid)
+				// Resolve within caller's tenant and system permissions only.
+				queryTid := r.Header.Get("X-Tenant-ID")
+				err := s.pool.QueryRow(r.Context(), `SELECT id FROM permissions WHERE key = $1 AND (tenant_id = $2 OR system_perm = true)`, key, queryTid).Scan(&pid)
 				if err != nil {
 					writeJSONError(w, http.StatusBadRequest, "unknown permission: "+key)
 					return
@@ -1858,9 +1882,14 @@ var defaultPolicyAction = struct {
 // GET /api/v1/policies/default-action
 // PUT /api/v1/policies/default-action  {"default_action": "deny"}
 func (s *HTTPServer) handleDefaultAction(w http.ResponseWriter, r *http.Request) {
-	// SECURITY: Require valid tenant header for this policy configuration endpoint.
+	// SECURITY: Require valid tenant header.
 	if _, err := uuid.Parse(r.Header.Get("X-Tenant-ID")); err != nil {
 		writeJSONError(w, http.StatusForbidden, "valid X-Tenant-ID header required")
+		return
+	}
+	// SECURITY: PUT requires platform:admin scope — default policy is a global singleton.
+	if r.Method == http.MethodPut && !isAdminRequest(r) {
+		writeJSONError(w, http.StatusForbidden, "platform:admin scope required to modify default policy")
 		return
 	}
 
@@ -2157,6 +2186,18 @@ func (s *HTTPServer) handleAnalyze(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// SECURITY: tenant context required for role lookup.
+	tidStr, ok := requireTenantHeader(w, r)
+	if !ok {
+		return
+	}
+	tid, err := uuid.Parse(tidStr)
+	if err != nil {
+		writeJSONError(w, http.StatusForbidden, "valid X-Tenant-ID header required")
+		return
+	}
+	r = r.WithContext(service.WithTenantContext(r.Context(), tid))
+
 	// Get the role
 	role, err := s.roleSvc.GetRole(r.Context(), roleID)
 	if err != nil {
@@ -2304,25 +2345,19 @@ func (s *HTTPServer) handleDecisionLog(w http.ResponseWriter, r *http.Request) {
 }
 
 // isAdminRequest checks if the request comes from an admin user.
-// Checks X-User-Role header (set by gateway JWT middleware) or X-Is-Admin flag.
+// SECURITY: Only trust X-Scopes header (set by gateway from verified JWT claims).
+// Legacy X-User-Role and X-Is-Admin headers are removed because they don't
+// distinguish platform:admin from tenant:admin — a tenant admin could use
+// X-User-Role: "admin" to create platform-wide policies.
 func isAdminRequest(r *http.Request) bool {
-	// Check X-User-Role header (set by gateway for legacy compatibility).
-	role := r.Header.Get("X-User-Role")
-	if role == "admin" || role == "superadmin" {
-		return true
-	}
-	if r.Header.Get("X-Is-Admin") == "true" {
-		return true
-	}
-	// Check X-Scopes header (set by gateway JWTClaimExtraction middleware).
-	// JWT scopes include "admin" for admin users.
 	scopes := r.Header.Get("X-Scopes")
-	if scopes != "" {
-		for _, s := range strings.Split(scopes, ",") {
-			s = strings.TrimSpace(s)
-			if s == "admin" || s == "superadmin" {
-				return true
-			}
+	if scopes == "" {
+		return false
+	}
+	for _, s := range strings.Split(scopes, ",") {
+		s = strings.TrimSpace(s)
+		if s == "platform:admin" || s == "tenant:admin" {
+			return true
 		}
 	}
 	return false
