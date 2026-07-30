@@ -2982,6 +2982,17 @@ func (s *OAuthService) CreateDeviceAuthorization(req *DeviceAuthorizationRequest
 func (s *OAuthService) PollDeviceToken(ctx context.Context, deviceCode, clientID string) (*TokenResponse, error) {
 	deviceCodeMu.RLock()
 	info, ok := deviceCodeStore[deviceCode]
+	// Snapshot fields under lock to prevent data race with ApproveDeviceCode
+	status := ""
+	var userID *uuid.UUID
+	var tenantID uuid.UUID
+	var clientIDStored string
+	if ok {
+		status = info.Status
+		userID = info.UserID
+		tenantID = info.TenantID
+		clientIDStored = info.ClientID
+	}
 	deviceCodeMu.RUnlock()
 
 	if !ok {
@@ -2989,8 +3000,7 @@ func (s *OAuthService) PollDeviceToken(ctx context.Context, deviceCode, clientID
 	}
 
 	// SECURITY: verify the polling client matches the one that initiated the flow.
-	// Without this, client B can poll client A's device code and steal tokens.
-	if clientID != "" && info.ClientID != "" && clientID != info.ClientID {
+	if clientID != "" && clientIDStored != "" && clientID != clientIDStored {
 		return nil, fmt.Errorf("invalid_client")
 	}
 
@@ -3002,7 +3012,7 @@ func (s *OAuthService) PollDeviceToken(ctx context.Context, deviceCode, clientID
 		return nil, fmt.Errorf("expired_token")
 	}
 
-	if info.Status == "pending" {
+	if status == "pending" {
 		// Check if client is polling too fast (interval enforcement).
 		// Hold write lock for read-modify-write to prevent data race on LastPoll.
 		deviceCodeMu.Lock()
@@ -3016,13 +3026,13 @@ func (s *OAuthService) PollDeviceToken(ctx context.Context, deviceCode, clientID
 		return nil, fmt.Errorf("authorization_pending")
 	}
 
-	if info.Status == "denied" {
+	if status == "denied" {
 		return nil, fmt.Errorf("access_denied")
 	}
 
-	if info.Status == "approved" && info.UserID != nil {
+	if status == "approved" && userID != nil {
 		// Issue tokens for the authorized user.
-		accessToken, expiresIn, err := s.issueDeviceAccessToken(info.TenantID, *info.UserID)
+		accessToken, expiresIn, err := s.issueDeviceAccessToken(tenantID, *userID)
 		if err != nil {
 			return nil, err
 		}
