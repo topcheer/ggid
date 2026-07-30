@@ -7,6 +7,8 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/ggid/ggid/pkg/tenant"
 )
 
 // ExportJobV2 represents an on-demand audit data export job for the frontend exports page.
@@ -18,6 +20,7 @@ type ExportJobV2 struct {
 	CreatedAt time.Time `json:"created_at"`
 	Size      int64     `json:"size"`
 	Records   int       `json:"records"`
+	TenantID  string    `json:"-"` // internal: tenant isolation
 }
 
 var (
@@ -29,13 +32,22 @@ var (
 // GET /api/v1/audit/exports/{id}/download
 // Routed via gateway /api/v1/exports prefix → audit service.
 func (s *HTTPServer) handleExportsV2(w http.ResponseWriter, r *http.Request) {
+	tc, err := tenant.FromContext(r.Context())
+	tenantIDStr := ""
+	if err == nil && tc != nil {
+		tenantIDStr = tc.TenantID.String()
+	}
 	switch {
 	case r.URL.Path == "/api/v1/audit/exports" && r.Method == http.MethodGet:
 		exportJobsV2Mu.RLock()
-		jobs := make([]ExportJobV2, len(exportJobsV2))
-		copy(jobs, exportJobsV2)
+		var tenantJobs []ExportJobV2
+		for _, job := range exportJobsV2 {
+			if job.TenantID == tenantIDStr {
+				tenantJobs = append(tenantJobs, job)
+			}
+		}
 		exportJobsV2Mu.RUnlock()
-		writeJSON(w, http.StatusOK, map[string]any{"exports": jobs, "total": len(jobs)})
+		writeJSON(w, http.StatusOK, map[string]any{"exports": tenantJobs, "total": len(tenantJobs)})
 
 	case r.URL.Path == "/api/v1/audit/exports" && r.Method == http.MethodPost:
 		var req struct {
@@ -55,6 +67,7 @@ func (s *HTTPServer) handleExportsV2(w http.ResponseWriter, r *http.Request) {
 			Format:    req.Format,
 			Status:    "completed",
 			CreatedAt: time.Now(),
+			TenantID:  tenantIDStr,
 		}
 		exportJobsV2Mu.Lock()
 		exportJobsV2 = append(exportJobsV2, job)
