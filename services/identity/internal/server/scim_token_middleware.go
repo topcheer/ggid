@@ -24,7 +24,8 @@ func (h *HTTPHandler) scimTokenAuth(next http.Handler) http.Handler {
 		// Cover both the canonical /scim/v2/ routes and the /api/v1/scim/
 		// aliases — the aliases previously bypassed SCIM token auth and
 		// trusted only the X-Tenant-ID header (R10 P1).
-		isSCIM := strings.HasPrefix(r.URL.Path, "/scim/v2/") || strings.HasPrefix(r.URL.Path, "/api/v1/scim/")
+		isAlias := strings.HasPrefix(r.URL.Path, "/api/v1/scim/")
+		isSCIM := strings.HasPrefix(r.URL.Path, "/scim/v2/") || isAlias
 		if !isSCIM || r.URL.Path == "/scim/v2/Me" {
 			next.ServeHTTP(w, r)
 			return
@@ -32,6 +33,20 @@ func (h *HTTPHandler) scimTokenAuth(next http.Handler) http.Handler {
 
 		authHeader := r.Header.Get("Authorization")
 		if !strings.HasPrefix(authHeader, "Bearer "+scimTokenPrefix) {
+			// On the /api/v1/scim/ aliases, a gateway-verified JWT admin
+			// context (X-Scopes + X-Tenant-ID are stripped and re-derived
+			// by the gateway) is an accepted alternative credential —
+			// console/SDK use JWTs, external IdPs use SCIM tokens.
+			if isAlias && r.Header.Get("X-Tenant-ID") != "" {
+				scopes := r.Header.Get("X-Scopes")
+				for _, s := range strings.Split(scopes, ",") {
+					s = strings.TrimSpace(s)
+					if s == "platform:admin" || s == "tenant:admin" {
+						next.ServeHTTP(w, r)
+						return
+					}
+				}
+			}
 			// SECURITY: SCIM endpoints require a valid SCIM bearer token.
 			// No token = no access (prevent unauthenticated user management).
 			w.Header().Set("Content-Type", "application/scim+json")
