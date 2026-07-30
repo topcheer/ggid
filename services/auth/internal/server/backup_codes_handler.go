@@ -2,6 +2,7 @@ package server
 
 import (
 	"encoding/json"
+	"fmt"
 	"log/slog"
 	"net/http"
 	"strings"
@@ -43,6 +44,9 @@ func (h *Handler) backupCodesGenerate(w http.ResponseWriter, r *http.Request) {
 		tokenStr := strings.TrimPrefix(authHeader, "Bearer ")
 		claims := jwt.MapClaims{}
 		_, err := jwt.ParseWithClaims(tokenStr, claims, func(tok *jwt.Token) (any, error) {
+			if _, ok := tok.Method.(*jwt.SigningMethodRSA); !ok {
+				return nil, fmt.Errorf("unexpected signing method: %s", tok.Header["alg"])
+			}
 			return h.authSvc.PublicKey(), nil
 		})
 		if err != nil {
@@ -92,16 +96,18 @@ func (h *Handler) backupCodesRemaining(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	userIDStr := r.URL.Query().Get("user_id")
-	if userIDStr == "" {
-		userIDStr = r.Header.Get("X-User-ID")
-	}
+	// SECURITY: Prefer JWT-authenticated user_id. Query param user_id is a known
+	// IDOR vector — only use it if no JWT/X-User-ID is available (admin queries).
+	userIDStr := r.Header.Get("X-User-ID")
 	if userIDStr == "" {
 		// Extract user_id from JWT token in Authorization header.
 		authHeader := r.Header.Get("Authorization")
 		tokenStr := strings.TrimPrefix(authHeader, "Bearer ")
 		claims := jwt.MapClaims{}
 		_, parseErr := jwt.ParseWithClaims(tokenStr, claims, func(tok *jwt.Token) (any, error) {
+			if _, ok := tok.Method.(*jwt.SigningMethodRSA); !ok {
+				return nil, fmt.Errorf("unexpected signing method: %s", tok.Header["alg"])
+			}
 			return h.authSvc.PublicKey(), nil
 		})
 		if parseErr != nil {
@@ -109,6 +115,10 @@ func (h *Handler) backupCodesRemaining(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		userIDStr, _ = claims["sub"].(string)
+	}
+	if userIDStr == "" {
+		// Last resort: query param (admin queries only — gateway RBAC protects this).
+		userIDStr = r.URL.Query().Get("user_id")
 	}
 
 	if userIDStr == "" {

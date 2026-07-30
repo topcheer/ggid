@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/base64"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"strings"
 
@@ -40,6 +41,9 @@ func (h *Handler) handleWebAuthnValidIDs(w http.ResponseWriter, r *http.Request)
 
 	claims := jwt.MapClaims{}
 	_, err := jwt.ParseWithClaims(tokenStr, claims, func(tok *jwt.Token) (any, error) {
+		if _, ok := tok.Method.(*jwt.SigningMethodRSA); !ok {
+			return nil, fmt.Errorf("unexpected signing method: %s", tok.Header["alg"])
+		}
 		return h.authSvc.PublicKey(), nil
 	})
 	if err != nil {

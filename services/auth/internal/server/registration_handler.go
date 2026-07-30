@@ -368,9 +368,16 @@ func (h *Handler) handleProfileUpdate(w http.ResponseWriter, r *http.Request) {
 		authHeader := r.Header.Get("Authorization")
 		tokenStr := strings.TrimPrefix(authHeader, "Bearer ")
 		claims := jwt.MapClaims{}
-		_, _ = jwt.ParseWithClaims(tokenStr, claims, func(tok *jwt.Token) (any, error) {
+		_, profileErr := jwt.ParseWithClaims(tokenStr, claims, func(tok *jwt.Token) (any, error) {
+			if _, ok := tok.Method.(*jwt.SigningMethodRSA); !ok {
+				return nil, fmt.Errorf("unexpected signing method: %s", tok.Header["alg"])
+			}
 			return h.authSvc.PublicKey(), nil
 		})
+		if profileErr != nil {
+			writeError(w, http.StatusUnauthorized, "invalid token")
+			return
+		}
 		userSub, _ := claims["sub"].(string)
 		tenantIDStr := r.Header.Get("X-Tenant-ID")
 		writeJSON(w, http.StatusOK, map[string]any{

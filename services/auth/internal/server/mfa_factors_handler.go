@@ -43,6 +43,9 @@ func (h *Handler) handleMFAFactors(w http.ResponseWriter, r *http.Request) {
 		tokenStr := strings.TrimPrefix(authHeader, "Bearer ")
 		claims := jwt.MapClaims{}
 		_, parseErr := jwt.ParseWithClaims(tokenStr, claims, func(tok *jwt.Token) (any, error) {
+			if _, ok := tok.Method.(*jwt.SigningMethodRSA); !ok {
+				return nil, fmt.Errorf("unexpected signing method: %s", tok.Header["alg"])
+			}
 			return h.authSvc.PublicKey(), nil
 		})
 		if parseErr != nil {
@@ -83,6 +86,9 @@ func (h *Handler) handleMFAFactors(w http.ResponseWriter, r *http.Request) {
 		tokenStr := strings.TrimPrefix(authHeader, "Bearer ")
 		claims := jwt.MapClaims{}
 		_, parseErr := jwt.ParseWithClaims(tokenStr, claims, func(tok *jwt.Token) (any, error) {
+			if _, ok := tok.Method.(*jwt.SigningMethodRSA); !ok {
+				return nil, fmt.Errorf("unexpected signing method: %s", tok.Header["alg"])
+			}
 			return h.authSvc.PublicKey(), nil
 		})
 		if parseErr != nil {
@@ -139,6 +145,9 @@ func (h *Handler) handleMFAFactors(w http.ResponseWriter, r *http.Request) {
 		tokenStr := strings.TrimPrefix(authHeader, "Bearer ")
 		claims := jwt.MapClaims{}
 		_, parseErr := jwt.ParseWithClaims(tokenStr, claims, func(tok *jwt.Token) (any, error) {
+			if _, ok := tok.Method.(*jwt.SigningMethodRSA); !ok {
+				return nil, fmt.Errorf("unexpected signing method: %s", tok.Header["alg"])
+			}
 			return h.authSvc.PublicKey(), nil
 		})
 		if parseErr != nil {
