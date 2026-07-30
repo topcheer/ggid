@@ -418,6 +418,7 @@ func main() {
 	if grpcAddr == "" {
 		grpcAddr = ":50052"
 	}
+	var grpcServerRef *grpc.Server
 	go func() {
 		lis, err := net.Listen("tcp", grpcAddr)
 		if err != nil {
@@ -426,6 +427,7 @@ func main() {
 		}
 
 		grpcServer := grpc.NewServer()
+		grpcServerRef = grpcServer
 
 		// TLS support: when GRPC_TLS_ENABLED=true, attempt TLS credentials.
 		if os.Getenv("GRPC_TLS_ENABLED") == "true" {
@@ -476,6 +478,12 @@ func main() {
 	// Mark draining state.
 	shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer shutdownCancel()
+
+	// Graceful stop gRPC server (allows in-flight requests to complete).
+	if grpcServerRef != nil {
+		grpcServerRef.GracefulStop()
+		log.Println("Auth gRPC server stopped")
+	}
 
 	if err := httpServer.Shutdown(shutdownCtx); err != nil {
 		log.Fatalf("forced shutdown: %v", err)
