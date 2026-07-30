@@ -169,10 +169,12 @@ func (s *HTTPServer) handleIncidents(w http.ResponseWriter, r *http.Request) {
 			// Try DB first
 			result := s.incidentListFromDB(r, tenantIDStr)
 			if result == nil && s.memMapRepo2 != nil {
-				// Fallback to memMapRepo
+				// Fallback to memMapRepo — SECURITY: filter by tenant.
 				rows, _ := s.memMapRepo2.ListJSON(r.Context(), "audit_incidents")
 				for _, row := range rows {
-					result = append(result, mapToIncident(row))
+					if amGetString(row, "tenant_id") == tenantIDStr {
+						result = append(result, mapToIncident(row))
+					}
 				}
 			}
 			if result == nil {
@@ -213,6 +215,11 @@ func (s *HTTPServer) handleIncidents(w http.ResponseWriter, r *http.Request) {
 		}
 		if inc == nil {
 			writeJSONError(w, http.StatusNotFound, "incident not found")
+			return
+		}
+		// SECURITY: tenant ownership check — deny cross-tenant resolution.
+		if inc.TenantID != tenantIDStr {
+			writeJSONError(w, http.StatusForbidden, "cross-tenant incident access denied")
 			return
 		}
 		now := time.Now().UTC()
