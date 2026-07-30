@@ -5,7 +5,7 @@
 #   docker run -p 8080:8080 -p 3000:3000 ggid/ggid-all-in-one:latest
 
 # ---------------- Stage 1: Go service builder ----------------
-FROM golang:1.25-alpine AS go-builder
+FROM golang:1.26-alpine AS go-builder
 WORKDIR /build
 
 # Install build dependencies
