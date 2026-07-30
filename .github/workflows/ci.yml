@@ -10,7 +10,7 @@ permissions:
   contents: read
 
 env:
-  GO_VERSION: '1.25'
+  GO_VERSION: '1.26'
 
 jobs:
   lint:
@@ -36,7 +36,7 @@ jobs:
       - name: golangci-lint
         uses: golangci/golangci-lint-action@v6
         with:
-          version: v1.64.8
+          version: v2.12.2
           args: --timeout=5m
           install-mode: goinstall
 
