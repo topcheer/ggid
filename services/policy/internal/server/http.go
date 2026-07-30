@@ -1105,14 +1105,8 @@ func (s *HTTPServer) handleEvaluate(w http.ResponseWriter, r *http.Request) {
 
 	start := time.Now()
 	result, err := s.evaluator.Check(r.Context(), &domain.CheckRequest{
-		UserID: userID,
-		TenantID: func() uuid.UUID {
-			tid, _ := uuid.Parse(req.TenantID)
-			if tid == uuid.Nil {
-				tid = tenantIDFromHeader(r)
-			}
-			return tid
-		}(),
+		UserID:       userID,
+		TenantID:     tenantIDFromHeader(r),
 		ResourceType: req.ResourceType,
 		Action:       req.Action,
 		Resource:     req.Resource,
