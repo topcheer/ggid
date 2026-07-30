@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"log/slog"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -31,6 +32,12 @@ func (h *HTTPHandler) handleSystemConfig(w http.ResponseWriter, r *http.Request)
 }
 
 func (h *HTTPHandler) systemConfigGet(w http.ResponseWriter, r *http.Request) {
+	// SECURITY: system config contains sensitive global settings — restrict to platform:admin.
+	scopes := r.Header.Get("X-Scopes")
+	if !strings.Contains(scopes, "platform:admin") {
+		writeJSON(w, http.StatusForbidden, map[string]string{"error": "platform:admin scope required"})
+		return
+	}
 	// Fetch all config keys
 	rows, err := h.svc.Pool().Query(r.Context(), `
 		SELECT key, value::text, updated_at, COALESCE(updated_by::text, '')

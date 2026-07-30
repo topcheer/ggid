@@ -84,7 +84,7 @@ func TestHandleComplianceReport_InvalidFormat(t *testing.T) {
 func TestHandleComplianceReport_MissingTenantID(t *testing.T) {
 	srv := newTestServer(nil, nil)
 	body := `{"format":"soc2"}`
-	w := doRequest(srv, "POST", "/api/v1/audit/reports", body)
+	w := doRequestNoTenant(srv, "POST", "/api/v1/audit/reports", body)
 	if w.Code != http.StatusBadRequest {
 		t.Fatalf("expected 400, got %d", w.Code)
 	}
@@ -93,7 +93,8 @@ func TestHandleComplianceReport_MissingTenantID(t *testing.T) {
 func TestHandleComplianceReport_InvalidTenantID(t *testing.T) {
 	srv := newTestServer(nil, nil)
 	body := `{"tenant_id":"not-a-uuid","format":"soc2"}`
-	w := doRequest(srv, "POST", "/api/v1/audit/reports", body)
+	// Now uses X-Tenant-ID header (not body) — send invalid header to trigger 400.
+	w := doRequestWithTenant(srv, "POST", "/api/v1/audit/reports", body, "not-a-uuid")
 	if w.Code != http.StatusBadRequest {
 		t.Fatalf("expected 400, got %d", w.Code)
 	}

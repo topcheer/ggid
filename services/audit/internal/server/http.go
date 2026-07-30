@@ -1742,15 +1742,12 @@ func (s *HTTPServer) handleComplianceReport(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	if req.TenantID == "" {
-		writeJSONError(w, http.StatusBadRequest, "tenant_id is required")
+	// SECURITY: use gateway-validated tenant header, not client-controlled body field.
+	tenantID, ok := resolveValidatedTenant(w, r)
+	if !ok {
 		return
 	}
-	tenantID, err := uuid.Parse(req.TenantID)
-	if err != nil {
-		writeJSONError(w, http.StatusBadRequest, "invalid tenant_id")
-		return
-	}
+	_ = req.TenantID // ignore body tenant_id — header is authoritative
 
 	if req.Format == "" {
 		req.Format = "soc2"

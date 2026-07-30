@@ -84,14 +84,9 @@ func (s *HTTPServer) handleFullTree(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	tenantIDStr := r.URL.Query().Get("tenant_id")
-	if tenantIDStr == "" {
-		writeJSONError(w, http.StatusBadRequest, "tenant_id query parameter is required")
-		return
-	}
-	tenantID, err := uuid.Parse(tenantIDStr)
-	if err != nil {
-		writeJSONError(w, http.StatusBadRequest, "invalid tenant_id")
+	// SECURITY: use gateway-validated X-Tenant-ID header, not client-controlled query param.
+	tenantID, ok := s.requireTenant(w, r)
+	if !ok {
 		return
 	}
 
@@ -407,14 +402,8 @@ func (s *HTTPServer) handleOrgMembers(w http.ResponseWriter, r *http.Request, or
 }
 
 func (s *HTTPServer) handleOrgTree(w http.ResponseWriter, r *http.Request, orgID uuid.UUID) {
-	tenantIDStr := r.URL.Query().Get("tenant_id")
-	if tenantIDStr == "" {
-		writeJSONError(w, http.StatusBadRequest, "tenant_id required")
-		return
-	}
-	tenantID, err := uuid.Parse(tenantIDStr)
-	if err != nil {
-		writeJSONError(w, http.StatusBadRequest, "invalid tenant_id")
+	tenantID, ok := s.requireTenant(w, r)
+	if !ok {
 		return
 	}
 	subTree, err := s.orgSvc.GetSubTree(r.Context(), tenantID, orgID)
@@ -445,14 +434,8 @@ func (s *HTTPServer) handleOrgSubtree(w http.ResponseWriter, r *http.Request, or
 		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
-	tenantIDStr := r.URL.Query().Get("tenant_id")
-	if tenantIDStr == "" {
-		writeJSONError(w, http.StatusBadRequest, "tenant_id required")
-		return
-	}
-	tenantID, err := uuid.Parse(tenantIDStr)
-	if err != nil {
-		writeJSONError(w, http.StatusBadRequest, "invalid tenant_id")
+	tenantID, ok := s.requireTenant(w, r)
+	if !ok {
 		return
 	}
 	subTree, err := s.orgSvc.GetSubTree(r.Context(), tenantID, orgID)
@@ -569,14 +552,8 @@ func (s *HTTPServer) createOrg(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *HTTPServer) listOrgs(w http.ResponseWriter, r *http.Request) {
-	tenantIDStr := r.URL.Query().Get("tenant_id")
-	if tenantIDStr == "" {
-		writeJSONError(w, http.StatusBadRequest, "tenant_id query parameter is required")
-		return
-	}
-	tenantID, err := uuid.Parse(tenantIDStr)
-	if err != nil {
-		writeJSONError(w, http.StatusBadRequest, "invalid tenant_id")
+	tenantID, ok := s.requireTenant(w, r)
+	if !ok {
 		return
 	}
 
@@ -1123,8 +1100,11 @@ func (s *HTTPServer) handleOrgMemberByID(w http.ResponseWriter, r *http.Request,
 		return
 	}
 
-	tenantIDStr := r.URL.Query().Get("tenant_id")
-	tenantID, _ := uuid.Parse(tenantIDStr)
+	// SECURITY: use gateway-validated X-Tenant-ID header.
+	tenantID, ok := s.requireTenant(w, r)
+	if !ok {
+		return
+	}
 
 	// Find and remove the membership
 	members, err := s.memberSvc.List(r.Context(), repository.ListMembersFilter{
@@ -1160,8 +1140,12 @@ func (s *HTTPServer) handleOrgStats(w http.ResponseWriter, r *http.Request, orgI
 		return
 	}
 
-	tenantIDStr := r.URL.Query().Get("tenant_id")
-	tenantID, _ := uuid.Parse(tenantIDStr)
+	// SECURITY: use gateway-validated X-Tenant-ID header.
+	tenantID, ok := s.requireTenant(w, r)
+	if !ok {
+		return
+	}
+	_ = tenantID // used below
 
 	// Get org
 	org, err := s.orgSvc.Get(r.Context(), orgID)
@@ -1322,6 +1306,10 @@ var orgInheritance = struct {
 }{data: make(map[uuid.UUID]uuid.UUID)}
 
 func (s *HTTPServer) handleOrgInherit(w http.ResponseWriter, r *http.Request, orgID uuid.UUID, parentIDStr string) {
+	// SECURITY: verify caller's tenant before allowing inheritance modification.
+	if _, ok := s.requireTenant(w, r); !ok {
+		return
+	}
 	switch r.Method {
 	case http.MethodPost:
 		parentID, err := uuid.Parse(parentIDStr)
