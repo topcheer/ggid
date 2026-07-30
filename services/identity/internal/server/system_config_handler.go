@@ -101,6 +101,19 @@ func (h *HTTPHandler) systemConfigGet(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *HTTPHandler) systemConfigPut(w http.ResponseWriter, r *http.Request) {
+	// SECURITY: PUT requires platform:admin (GET allows tenant:admin)
+	scopes := r.Header.Get("X-Scopes")
+	isPlatformAdmin := false
+	for _, s := range strings.Split(scopes, ",") {
+		if strings.TrimSpace(s) == "platform:admin" {
+			isPlatformAdmin = true
+			break
+		}
+	}
+	if !isPlatformAdmin {
+		writeJSON(w, http.StatusForbidden, map[string]string{"error": "platform:admin scope required"})
+		return
+	}
 	var req map[string]any
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid body"})

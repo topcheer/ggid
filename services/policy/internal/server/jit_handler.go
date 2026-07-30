@@ -1,6 +1,7 @@
 package httpserver
 
 import (
+	"context"
 	"encoding/json"
 	"log"
 	"net/http"
@@ -221,6 +222,17 @@ func (s *HTTPServer) jitReject(w http.ResponseWriter, r *http.Request, reqID uui
 		return
 	}
 
+	// SECURITY: verify the JIT request belongs to the caller's tenant.
+	jitReq, err := s.jitRepo.GetByID(r.Context(), reqID)
+	if err != nil || jitReq == nil {
+		writeJSONError(w, http.StatusNotFound, "JIT request not found")
+		return
+	}
+	if jitReq.TenantID != tc.TenantID {
+		writeJSONError(w, http.StatusNotFound, "JIT request not found")
+		return
+	}
+
 	var approverID uuid.UUID
 	if uidStr := r.Header.Get("X-User-ID"); uidStr != "" {
 		approverID, _ = uuid.Parse(uidStr)
@@ -256,6 +268,11 @@ func (s *HTTPServer) jitRevoke(w http.ResponseWriter, r *http.Request, reqID uui
 		writeJSONError(w, http.StatusNotFound, "JIT request not found")
 		return
 	}
+	// SECURITY: verify ownership
+	if jitReq.TenantID != tc.TenantID {
+		writeJSONError(w, http.StatusNotFound, "JIT request not found")
+		return
+	}
 
 	if err := s.jitRepo.Revoke(r.Context(), reqID, body.Reason); err != nil {
 		writeJSONError(w, http.StatusInternalServerError, "failed to revoke JIT request")
@@ -269,4 +286,45 @@ func (s *HTTPServer) jitRevoke(w http.ResponseWriter, r *http.Request, reqID uui
 
 	s.publishAuditEvent("jit.revoke", "success", "jit_request", reqID, tc.TenantID)
 	writeJSON(w, http.StatusOK, map[string]string{"status": "revoked"})
+}
+
+// StartJITExpiryJanitor runs a background goroutine that periodically cleans up
+// expired JIT requests and revokes their temporary role bindings.
+// Call once at server startup: go StartJITExpiryJanitor(s, ctx)
+func StartJITExpiryJanitor(s *HTTPServer, ctx context.Context) {
+	ticker := time.NewTicker(5 * time.Minute)
+	defer ticker.Stop()
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-ticker.C:
+			cleanupExpiredJIT(s, ctx)
+		}
+	}
+}
+
+// cleanupExpiredJIT finds active JIT requests past their expiry, marks them expired,
+// and revokes the corresponding role bindings.
+func cleanupExpiredJIT(s *HTTPServer, ctx context.Context) {
+	if s.jitRepo == nil {
+		return
+	}
+	expired, err := s.jitRepo.ListExpired(ctx)
+	if err != nil {
+		log.Printf("JIT expiry cleanup: ListExpired error: %v", err)
+		return
+	}
+	for _, jitReq := range expired {
+		if err := s.jitRepo.MarkExpired(ctx, jitReq.ID); err != nil {
+			log.Printf("JIT expiry cleanup: MarkExpired %s error: %v", jitReq.ID, err)
+			continue
+		}
+		// Revoke the temporary role binding.
+		if s.roleSvc != nil {
+			_ = s.roleSvc.RevokeRole(ctx, jitReq.UserID, jitReq.RoleID, domain.ScopeGlobal, jitReq.TenantID)
+		}
+		s.publishAuditEvent("jit.expired", "success", "jit_request", jitReq.ID, jitReq.TenantID)
+		log.Printf("JIT expiry cleanup: expired request %s (user=%s role=%s)", jitReq.ID, jitReq.UserID, jitReq.RoleID)
+	}
 }
