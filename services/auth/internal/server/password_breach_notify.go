@@ -12,12 +12,12 @@ import (
 
 // BreachNotification tracks a password breach notification sent to users.
 type BreachNotification struct {
-	ID         string    `json:"id"`
-	BreachName string    `json:"breach_name"`
-	UserIDs    []string  `json:"user_ids"`
+	ID          string            `json:"id"`
+	BreachName  string            `json:"breach_name"`
+	UserIDs     []string          `json:"user_ids"`
 	ResetTokens map[string]string `json:"reset_tokens"` // user_id → token
-	Status     string    `json:"status"`
-	NotifiedAt time.Time `json:"notified_at"`
+	Status      string            `json:"status"`
+	NotifiedAt  time.Time         `json:"notified_at"`
 }
 
 var (
@@ -30,6 +30,13 @@ var (
 func (h *Handler) handlePasswordBreachNotify(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+		return
+	}
+	// SECURITY (R9): admin-only — previously any authenticated caller could
+	// mint reset tokens for arbitrary users and read them back in the
+	// response (account-takeover primitive once wired into reset).
+	if !hasAdminScope(r) {
+		writeError(w, http.StatusForbidden, "admin scope required")
 		return
 	}
 
@@ -79,11 +86,12 @@ func (h *Handler) handlePasswordBreachNotify(w http.ResponseWriter, r *http.Requ
 	}
 
 	writeJSON(w, http.StatusOK, map[string]any{
-		"status":            "notified",
-		"notification_id":   notif.ID,
-		"breach_name":       req.BreachName,
-		"notified_count":    len(req.UserIDs),
-		"reset_tokens":      resetTokens,
-		"message":           "Password reset tokens generated and notifications queued",
+		"status":          "notified",
+		"notification_id": notif.ID,
+		"breach_name":     req.BreachName,
+		"notified_count":  len(req.UserIDs),
+		// reset_tokens deliberately omitted — tokens are delivered to users
+		// out-of-band (email), never returned in the API response (R9).
+		"message": "Password reset tokens generated and notifications queued",
 	})
 }

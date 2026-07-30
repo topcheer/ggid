@@ -60,7 +60,14 @@ func (h *Handler) handleImpersonate(w http.ResponseWriter, r *http.Request) {
 		req.ImpersonatorID = r.Header.Get("X-User-ID")
 	}
 	// SECURITY: verify the impersonator belongs to the same tenant as the target.
+	// Fail-closed when the tenant header is absent (R9: the entire check
+	// used to be skipped, enabling cross-tenant impersonation with just
+	// tenant:admin on an M2M token).
 	headerTenantID := r.Header.Get("X-Tenant-ID")
+	if headerTenantID == "" {
+		writeJSON(w, http.StatusForbidden, map[string]string{"error": "tenant context required"})
+		return
+	}
 	if headerTenantID != "" {
 		// Defense-in-depth: validate UUID format
 		if _, err := uuid.Parse(headerTenantID); err != nil {
@@ -69,10 +76,9 @@ func (h *Handler) handleImpersonate(w http.ResponseWriter, r *http.Request) {
 		}
 		if req.TenantID != "" && headerTenantID != req.TenantID {
 			// Cross-tenant impersonation requires platform:admin scope.
-			scopesStr := r.Header.Get("X-User-Scopes")
-			if scopesStr == "" {
-				scopesStr = r.Header.Get("X-User-Role")
-			}
+			// X-Scopes is the gateway-derived (stripped + re-set) header;
+			// X-User-Scopes/X-User-Role are no longer consulted (R9 P0).
+			scopesStr := r.Header.Get("X-Scopes")
 			scopes := strings.Split(scopesStr, ",")
 			isPlatformAdmin := false
 			for _, sc := range scopes {

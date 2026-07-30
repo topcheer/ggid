@@ -236,6 +236,7 @@ func (gw *Gateway) buildProxies() {
 			req.Header.Del("X-Scopes")
 			req.Header.Del("X-User-Role")
 			req.Header.Del("X-User-Roles")
+			req.Header.Del("X-User-Scopes")
 			req.Header.Del("X-Is-Admin")
 			// Forward JWT scopes so backend services can check admin authorization.
 			jwtClaims := middleware.ExtractJWTClaims(req)
@@ -1270,6 +1271,7 @@ func (gw *Gateway) buildProxiesLocked() {
 			req.Header.Del("X-Scopes")
 			req.Header.Del("X-User-Role")
 			req.Header.Del("X-User-Roles")
+			req.Header.Del("X-User-Scopes")
 			req.Header.Del("X-Is-Admin")
 			jwtClaims := middleware.ExtractJWTClaims(req)
 			if len(jwtClaims.Scopes) > 0 {
