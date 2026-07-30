@@ -1248,7 +1248,7 @@ func (s *HTTPServer) handleBulkAddMembers(w http.ResponseWriter, r *http.Request
 			Status:   domain.MembershipActive,
 		}
 		if _, err := s.memberSvc.Invite(r.Context(), membership); err != nil {
-			errors = append(errors, map[string]any{"user_id": uidStr, "error": err.Error()})
+			errors = append(errors, map[string]any{"user_id": uidStr, "error": "import failed"})
 			continue
 		}
 		added++
@@ -1415,7 +1415,7 @@ func (s *HTTPServer) handleMemberImport(w http.ResponseWriter, r *http.Request, 
 	reader := csv.NewReader(strings.NewReader(string(body)))
 	records, err := reader.ReadAll()
 	if err != nil {
-		writeJSONError(w, http.StatusBadRequest, "failed to parse CSV: "+err.Error())
+		writeJSONError(w, http.StatusBadRequest, "failed to parse CSV")
 		return
 	}
 
@@ -1472,7 +1472,7 @@ func (s *HTTPServer) handleMemberImport(w http.ResponseWriter, r *http.Request, 
 			Status:   domain.MembershipActive,
 		}
 		if _, err := s.memberSvc.Invite(r.Context(), membership); err != nil {
-			importErrors = append(importErrors, map[string]any{"line": lineNo + 2, "user_id": uidStr, "error": err.Error()})
+			importErrors = append(importErrors, map[string]any{"line": lineNo + 2, "user_id": uidStr, "error": "import failed"})
 			continue
 		}
 		imported++

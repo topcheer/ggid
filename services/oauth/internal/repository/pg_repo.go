@@ -152,7 +152,9 @@ func (r *pgClientRepo) GetClientByID(ctx context.Context, tenantID uuid.UUID, cl
 		return nil, ggiderrors.Wrap(ggiderrors.ErrInternal, "get client", err)
 	}
 
-	tx.Commit(ctx)
+	if err := tx.Commit(ctx); err != nil {
+		return nil, fmt.Errorf("commit: %w", err)
+	}
 	return client, nil
 }
 
@@ -192,7 +194,9 @@ func (r *pgClientRepo) ListClients(ctx context.Context, tenantID uuid.UUID, page
 		clients = append(clients, c)
 	}
 
-	tx.Commit(ctx)
+	if err := tx.Commit(ctx); err != nil {
+		return nil, 0, fmt.Errorf("commit: %w", err)
+	}
 	return clients, total, nil
 }
 
@@ -225,7 +229,9 @@ func (r *pgClientRepo) UpdateClient(ctx context.Context, tenantID uuid.UUID, cli
 		return nil, ggiderrors.Wrap(ggiderrors.ErrInternal, "update client", err)
 	}
 
-	tx.Commit(ctx)
+	if err := tx.Commit(ctx); err != nil {
+		return nil, fmt.Errorf("commit: %w", err)
+	}
 	return updated, nil
 }
 

@@ -240,7 +240,7 @@ func toGRPCError(err error) error {
 			return status.Error(codes.Internal, ge.Message)
 		}
 	}
-	return status.Error(codes.Internal, err.Error())
+	return status.Error(codes.Internal, "internal error")
 }
 
 // emitAudit publishes an audit event if the publisher is configured.
