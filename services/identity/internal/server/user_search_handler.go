@@ -28,7 +28,7 @@ func (h *HTTPHandler) handleUserSearch(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	if offsetStr != "" {
-		if n, err := strconv.Atoi(offsetStr); err == nil && n >= 0 {
+		if n, err := strconv.Atoi(offsetStr); err == nil && n >= 0 && n <= 100000 {
 			offset = n
 		}
 	}
