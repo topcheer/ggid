@@ -1491,11 +1491,10 @@ func (gw *Gateway) handlePostureEvaluate(w http.ResponseWriter, r *http.Request)
 		_ = json.NewEncoder(w).Encode(map[string]string{"error": "invalid JSON"})
 		return
 	}
-	tenantID := r.Header.Get("X-Tenant-ID")
-	if tenantID == "" {
-		if ctxTid, ok := middleware.TenantIDFromRequest(r); ok {
-			tenantID = ctxTid
-		}
+	// SECURITY (R182): Use JWT-verified tenant context first, not client header.
+	var tenantID string
+	if ctxTid, ok := middleware.TenantIDFromRequest(r); ok {
+		tenantID = ctxTid
 	}
 	if tenantID == "" {
 		w.WriteHeader(http.StatusForbidden)
