@@ -1092,11 +1092,9 @@ func (h *Handler) handleSessions(w http.ResponseWriter, r *http.Request) {
 		tenantID, _ = uuid.Parse(tidStr)
 	}
 
-	userIDStr := r.URL.Query().Get("user_id")
-	if userIDStr == "" {
-		// Gateway JWTAuth middleware already validated the token and injected X-User-ID.
-		userIDStr = r.Header.Get("X-User-ID")
-	}
+	// SECURITY: Only allow querying own sessions — no user_id query param override.
+	// Admin access should go through a separate admin endpoint with RBAC.
+	userIDStr := r.Header.Get("X-User-ID")
 	if userIDStr == "" {
 		// Fallback: extract user_id from JWT token (direct service-to-service calls without gateway).
 		authHeader := r.Header.Get("Authorization")
@@ -1170,13 +1168,14 @@ func (h *Handler) handleSessions(w http.ResponseWriter, r *http.Request) {
 			writeError(w, http.StatusBadRequest, "invalid session_id")
 			return
 		}
-		// SECURITY: Verify session belongs to caller's tenant before revoking.
+		// SECURITY: Verify session belongs to caller's tenant AND user before revoking.
 		callerTenant := r.Header.Get("X-Tenant-ID")
-		if callerTenant == "" {
-			writeError(w, http.StatusForbidden, "tenant context required")
+		callerUserID := r.Header.Get("X-User-ID")
+		if callerTenant == "" || callerUserID == "" {
+			writeError(w, http.StatusForbidden, "tenant and user context required")
 			return
 		}
-		if err := h.authSvc.RevokeSessionScoped(r.Context(), sessionID, callerTenant); err != nil {
+		if err := h.authSvc.RevokeSessionScoped(r.Context(), sessionID, callerTenant, callerUserID); err != nil {
 			writeError(w, http.StatusInternalServerError, "failed to revoke session")
 			return
 		}
@@ -1328,7 +1327,9 @@ func (h *Handler) mfaDisable(w http.ResponseWriter, r *http.Request) {
 	if h.pool != nil {
 		var storedHash string
 		err := h.pool.QueryRow(r.Context(),
-			`SELECT secret FROM credentials WHERE identifier = (SELECT username FROM users WHERE id::text = $1) AND type = 'password' AND enabled = true`,
+			`SELECT c.secret FROM credentials c
+		 JOIN users u ON u.id::text = $1 AND u.tenant_id = c.tenant_id
+		 WHERE c.identifier = u.username AND c.type = 'password' AND c.enabled = true`,
 			userID).Scan(&storedHash)
 		if err == nil && storedHash != "" {
 			match, _ := crypto.VerifyPassword(req.Password, storedHash)
@@ -1398,7 +1399,9 @@ func (h *Handler) handleAccountDeletion(w http.ResponseWriter, r *http.Request) 
 	if h.pool != nil {
 		var storedHash string
 		err := h.pool.QueryRow(r.Context(),
-			`SELECT secret FROM credentials WHERE identifier = (SELECT username FROM users WHERE id::text = $1) AND type = 'password' AND enabled = true`,
+			`SELECT c.secret FROM credentials c
+		 JOIN users u ON u.id::text = $1 AND u.tenant_id = c.tenant_id
+		 WHERE c.identifier = u.username AND c.type = 'password' AND c.enabled = true`,
 			userID).Scan(&storedHash)
 		if err == nil && storedHash != "" {
 			match, _ := crypto.VerifyPassword(req.Password, storedHash)

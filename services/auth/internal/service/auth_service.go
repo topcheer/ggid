@@ -150,6 +150,18 @@ func (s *AuthService) VerifyCredentials(ctx context.Context, username, password,
 	}
 	userID = *result.LinkedUser
 
+	// SECURITY: Check user status — locked/disabled/deleted users must not log in.
+	// The credential provider's IsLocked check only covers brute-force lockout (Redis),
+	// not admin-initiated status changes in the identity service.
+	userInfo, err := s.identityClient.GetUserByID(ctx, tc.TenantID, userID)
+	if err == nil && userInfo != nil {
+		if userInfo.Status != "active" {
+			return uuid.Nil, false, fmt.Errorf("account is %s", userInfo.Status)
+		}
+	}
+	// If GetUserByID fails, we proceed (fail-open for backward compat — the credential
+	// check already passed, and not all deployments have identity service connectivity).
+
 	// SECURITY: Check password expiration policy (MaxAgeDays).
 	// If expired, return userID with MustChangePassword flag in the response.
 	if s.passwordService != nil && s.passwordService.MustChangePassword(ctx, tc.TenantID, userID) {
@@ -410,8 +422,8 @@ func (s *AuthService) RevokeSession(ctx context.Context, sessionID uuid.UUID) er
 	return s.sessionService.Revoke(ctx, sessionID)
 }
 
-// RevokeSessionScoped revokes a session after verifying it belongs to the caller's tenant.
-func (s *AuthService) RevokeSessionScoped(ctx context.Context, sessionID uuid.UUID, tenantIDStr string) error {
+// RevokeSessionScoped revokes a session after verifying it belongs to the caller's tenant and user.
+func (s *AuthService) RevokeSessionScoped(ctx context.Context, sessionID uuid.UUID, tenantIDStr string, callerUserIDStr string) error {
 	// Verify session belongs to caller's tenant via session service
 	session, err := s.sessionService.FindByID(ctx, sessionID)
 	if err != nil || session == nil {
@@ -419,6 +431,10 @@ func (s *AuthService) RevokeSessionScoped(ctx context.Context, sessionID uuid.UU
 	}
 	if session.TenantID.String() != tenantIDStr {
 		return fmt.Errorf("session does not belong to caller's tenant")
+	}
+	// SECURITY: verify session belongs to the caller (or caller is admin — checked at HTTP layer).
+	if callerUserIDStr != "" && session.UserID.String() != callerUserIDStr {
+		return fmt.Errorf("session does not belong to caller")
 	}
 	return s.RevokeSession(ctx, sessionID)
 }
