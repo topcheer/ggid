@@ -257,8 +257,9 @@ func TestOrgServer_ListOrgs(t *testing.T) {
 	createReq := httptest.NewRequest(http.MethodPost, "/api/v1/orgs", strings.NewReader(createBody))
 	mux.ServeHTTP(httptest.NewRecorder(), createReq)
 
-	// List
-	req := httptest.NewRequest(http.MethodGet, "/api/v1/orgs?tenant_id="+testTenantID, nil)
+	// List — now requires X-Tenant-ID header instead of query param
+	req := httptest.NewRequest(http.MethodGet, "/api/v1/orgs", nil)
+	req.Header.Set("X-Tenant-ID", testTenantID)
 	rr := httptest.NewRecorder()
 	mux.ServeHTTP(rr, req)
 
@@ -337,11 +338,12 @@ func TestOrgServer_CreateDepartment(t *testing.T) {
 func TestOrgServer_TreeMissingTenant(t *testing.T) {
 	mux := newTestOrgMux()
 
+	// No X-Tenant-ID header → should fail
 	req := httptest.NewRequest(http.MethodGet, "/api/v1/orgs/tree", nil)
 	rr := httptest.NewRecorder()
 	mux.ServeHTTP(rr, req)
 
-	if rr.Code != http.StatusBadRequest {
-		t.Errorf("expected 400 for missing tenant_id, got %d", rr.Code)
+	if rr.Code != http.StatusForbidden {
+		t.Errorf("expected 403 for missing tenant, got %d", rr.Code)
 	}
 }
