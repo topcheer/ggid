@@ -541,6 +541,12 @@ func (s *HTTPServer) handleAssignRole(w http.ResponseWriter, r *http.Request) {
 		// Fallback to X-Tenant-ID header if context not set.
 		scopeID, _ = uuid.Parse(r.Header.Get("X-Tenant-ID"))
 	}
+	if scopeID == uuid.Nil {
+		// Fail closed (R14 P2): Nil scope skips the service-layer
+		// tenant-consistency check.
+		writeJSONError(w, http.StatusForbidden, "tenant context required")
+		return
+	}
 	if err := s.roleSvc.AssignRole(r.Context(), userID, roleID, "tenant", scopeID, grantedBy, nil); err != nil {
 		writeServiceError(w, err)
 		return

@@ -167,6 +167,10 @@ func (s *HTTPServer) jitListActive(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *HTTPServer) jitApprove(w http.ResponseWriter, r *http.Request, reqID uuid.UUID) {
+	if !isAdminRequest(r) {
+		writeJSONError(w, http.StatusForbidden, "admin scope required")
+		return
+	}
 	tc, err := ggidtenant.FromContext(r.Context())
 	if err != nil {
 		writeJSONError(w, http.StatusBadRequest, "tenant context required")
@@ -216,6 +220,10 @@ func (s *HTTPServer) jitApprove(w http.ResponseWriter, r *http.Request, reqID uu
 }
 
 func (s *HTTPServer) jitReject(w http.ResponseWriter, r *http.Request, reqID uuid.UUID) {
+	if !isAdminRequest(r) {
+		writeJSONError(w, http.StatusForbidden, "admin scope required")
+		return
+	}
 	tc, err := ggidtenant.FromContext(r.Context())
 	if err != nil {
 		writeJSONError(w, http.StatusBadRequest, "tenant context required")
@@ -248,6 +256,10 @@ func (s *HTTPServer) jitReject(w http.ResponseWriter, r *http.Request, reqID uui
 }
 
 func (s *HTTPServer) jitRevoke(w http.ResponseWriter, r *http.Request, reqID uuid.UUID) {
+	if !isAdminRequest(r) {
+		writeJSONError(w, http.StatusForbidden, "admin scope required")
+		return
+	}
 	tc, err := ggidtenant.FromContext(r.Context())
 	if err != nil {
 		writeJSONError(w, http.StatusBadRequest, "tenant context required")
