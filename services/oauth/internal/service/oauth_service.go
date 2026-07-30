@@ -61,6 +61,7 @@ type PoolQuerier interface {
 // This allows mocking in tests without a real Redis server.
 type RedisCmdable interface {
 	Set(ctx context.Context, key string, value any, ttl time.Duration) error
+	SetNX(ctx context.Context, key string, value any, ttl time.Duration) (bool, error)
 	Get(ctx context.Context, key string) (string, error)
 	GetDel(ctx context.Context, key string) (string, error)
 	Del(ctx context.Context, key string) error
@@ -3363,12 +3364,20 @@ func (s *OAuthService) ParseBackchannelLogoutToken(tokenStr string) (jwt.MapClai
 	}
 
 	// Replay prevention: check jti uniqueness (OIDC Back-Channel Logout §2.4).
+	// Use Redis SetNX for cross-instance replay detection in multi-replica deployments.
 	if jti, ok := claims["jti"].(string); ok && jti != "" {
 		jtiKey := fmt.Sprintf("ggid:backchannel_logout_jti:%s", jti)
-		if _, seen := backchannelLogoutList.Load(jtiKey); seen {
-			return nil, fmt.Errorf("logout token replay detected (duplicate jti)")
+		if s.rdb != nil {
+			set, err := s.rdb.SetNX(context.Background(), jtiKey, "1", 7*24*time.Hour)
+			if err != nil || !set {
+				return nil, fmt.Errorf("logout token replay detected (duplicate jti)")
+			}
+		} else {
+			if _, seen := backchannelLogoutList.Load(jtiKey); seen {
+				return nil, fmt.Errorf("logout token replay detected (duplicate jti)")
+			}
+			backchannelLogoutList.Store(jtiKey, time.Now().Unix())
 		}
-		backchannelLogoutList.Store(jtiKey, time.Now().Unix())
 	}
 
 	return claims, nil

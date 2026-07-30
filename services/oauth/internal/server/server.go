@@ -20,6 +20,7 @@ import (
 	"log"
 	"log/slog"
 	"math/big"
+	"mime"
 	"net"
 	"net/http"
 	"net/url"
@@ -613,12 +614,15 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 
 		// SECURITY (RFC 6749 §2.3.1): token endpoint MUST accept form-urlencoded only.
 		// Reject other Content-Types to prevent confusion attacks.
-		if ct := r.Header.Get("Content-Type"); ct != "" && !strings.Contains(ct, "application/x-www-form-urlencoded") {
-			writeJSON(w, http.StatusUnsupportedMediaType, map[string]string{
-				"error":             "invalid_request",
-				"error_description": "Content-Type must be application/x-www-form-urlencoded",
-			})
-			return
+		if ct := r.Header.Get("Content-Type"); ct != "" {
+			mediatype, _, err := mime.ParseMediaType(ct)
+			if err != nil || mediatype != "application/x-www-form-urlencoded" {
+				writeJSON(w, http.StatusUnsupportedMediaType, map[string]string{
+					"error":             "invalid_request",
+					"error_description": "Content-Type must be application/x-www-form-urlencoded",
+				})
+				return
+			}
 		}
 
 		// Resolve tenant ID from X-Tenant-ID header, or tenant_id query param.
@@ -2616,6 +2620,10 @@ type redisAdapter struct {
 
 func (a *redisAdapter) Set(ctx context.Context, key string, value any, ttl time.Duration) error {
 	return a.rdb.Set(ctx, key, value, ttl).Err()
+}
+
+func (a *redisAdapter) SetNX(ctx context.Context, key string, value any, ttl time.Duration) (bool, error) {
+	return a.rdb.SetNX(ctx, key, value, ttl).Result()
 }
 
 func (a *redisAdapter) Get(ctx context.Context, key string) (string, error) {

@@ -21,6 +21,10 @@ func (f *failingRedis) Set(_ context.Context, _ string, _ any, _ time.Duration) 
 	return errors.New("redis: connection refused")
 }
 
+func (f *failingRedis) SetNX(_ context.Context, _ string, _ any, _ time.Duration) (bool, error) {
+	return false, errors.New("redis: connection refused")
+}
+
 func (f *failingRedis) Get(_ context.Context, _ string) (string, error) {
 	return "", errors.New("redis: connection refused")
 }
@@ -48,6 +52,15 @@ func (s *slowRedis) Set(ctx context.Context, _ string, _ any, _ time.Duration) e
 		return nil
 	case <-ctx.Done():
 		return ctx.Err()
+	}
+}
+
+func (s *slowRedis) SetNX(ctx context.Context, _ string, _ any, _ time.Duration) (bool, error) {
+	select {
+	case <-time.After(s.delay):
+		return true, nil
+	case <-ctx.Done():
+		return false, ctx.Err()
 	}
 }
 
@@ -121,7 +134,7 @@ func TestStateStore_RedisFailureStoreAndValidate(t *testing.T) {
 	// Since the code in GenerateAuthCode checks `if s.rdb != nil`, it will try Redis.
 	// When Redis fails, it falls back to sync.Map.
 	// For the test, we directly store in sync.Map to simulate the fallback path.
-	stateStore.Store(stateKey, time.Now().Add(10 * time.Minute))
+	stateStore.Store(stateKey, time.Now().Add(10*time.Minute))
 
 	// ValidateState should succeed via fallback
 	if !svc.ValidateState(clientID, state) {

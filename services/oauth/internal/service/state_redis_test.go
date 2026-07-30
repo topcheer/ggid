@@ -37,6 +37,17 @@ func (m *mockRedisStateStore) Set(_ context.Context, key string, value any, _ ti
 	return nil
 }
 
+func (m *mockRedisStateStore) SetNX(_ context.Context, key string, value any, _ time.Duration) (bool, error) {
+	if m.err != nil {
+		return false, m.err
+	}
+	if _, exists := m.data[key]; exists {
+		return false, nil
+	}
+	m.data[key] = "1"
+	return true, nil
+}
+
 func (m *mockRedisStateStore) Get(_ context.Context, key string) (string, error) {
 	if m.err != nil {
 		return "", m.err
