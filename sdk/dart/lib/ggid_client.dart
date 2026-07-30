@@ -554,15 +554,16 @@ class GGIDClient {
   }
 
   GGIDException _createException(int statusCode, String body) {
-    var msg = body;
+    var msg = 'HTTP $statusCode';
     try {
       final json = jsonDecode(body) as Map<String, dynamic>;
       msg = json['detail']?.toString() ??
           json['message']?.toString() ??
           json['error']?.toString() ??
-          body;
+          'HTTP $statusCode';
     } catch (_) {
-      // use raw body
+      // Non-JSON body: don't expose raw HTML/error pages to callers.
+      msg = 'HTTP $statusCode';
     }
     return GGIDException(statusCode, msg);
   }
