@@ -35,6 +35,7 @@ type Client struct {
 	clientSecret string
 	jwksURL      string
 	issuer       string
+	audience     string
 	useDiscovery bool
 
 	// JWKS cache for JWT signature verification.
@@ -42,7 +43,8 @@ type Client struct {
 	jwks          map[string]*rsa.PublicKey
 	jwksExpiry    time.Time
 	jwksTTL       time.Duration
-	discoveryOnce sync.Once
+	discoveryMu   sync.Mutex
+	discoveryDone bool
 
 	// Refresh deduplication: prevents multiple goroutines from racing to refresh.
 	refreshMu       sync.Mutex
@@ -87,6 +89,12 @@ func WithJWKS(ttl time.Duration) Option {
 // When set, verifyTokenOnline rejects tokens from other issuers.
 func WithIssuer(issuer string) Option {
 	return func(c *Client) { c.issuer = issuer }
+}
+
+// WithAudience sets the expected audience (aud) claim for token verification.
+// When set, verifyTokenOnline rejects tokens intended for a different audience.
+func WithAudience(audience string) Option {
+	return func(c *Client) { c.audience = audience }
 }
 
 // OIDCDiscovery holds the OpenID Connect discovery document.
@@ -542,23 +550,26 @@ func (c *Client) RefreshToken(ctx context.Context, refreshToken string) (*TokenS
 // Requires JWKS to be configured via WithJWKS(). Without JWKS, signature
 // verification is impossible and the call returns an error.
 func (c *Client) VerifyToken(ctx context.Context, accessToken string) (*UserInfo, error) {
-	// Auto-configure from OIDC discovery if enabled (thread-safe via sync.Once)
-	c.discoveryOnce.Do(func() {
-		if c.useDiscovery && c.jwksURL == "" {
-			disc, err := c.GetDiscovery(ctx)
-			if err != nil || disc.JwksURI == "" {
-				return
-			}
-			if strings.HasPrefix(disc.JwksURI, c.baseURL) {
-				c.jwksURL = strings.TrimPrefix(disc.JwksURI, c.baseURL)
-			} else {
-				c.jwksURL = disc.JwksURI
-			}
-			if c.jwksTTL == 0 {
-				c.jwksTTL = 15 * time.Minute
-			}
+	// Auto-configure from OIDC discovery if enabled.
+	// Use a mutex-guarded flag instead of sync.Once so transient failures allow retry.
+	c.discoveryMu.Lock()
+	defer c.discoveryMu.Unlock()
+	if c.useDiscovery && c.jwksURL == "" && !c.discoveryDone {
+		disc, err := c.GetDiscovery(ctx)
+		if err != nil || disc.JwksURI == "" {
+			// Discovery failed — do NOT set discoveryDone so the next call retries.
+			return nil, fmt.Errorf("OIDC discovery failed: %w", err)
 		}
-	})
+		if strings.HasPrefix(disc.JwksURI, c.baseURL) {
+			c.jwksURL = strings.TrimPrefix(disc.JwksURI, c.baseURL)
+		} else {
+			c.jwksURL = disc.JwksURI
+		}
+		if c.jwksTTL == 0 {
+			c.jwksTTL = 15 * time.Minute
+		}
+		c.discoveryDone = true
+	}
 	if c.jwksURL == "" {
 		return nil, fmt.Errorf("JWKS not configured: call WithJWKS() or WithDiscovery() to enable")
 	}
@@ -638,7 +649,27 @@ func (c *Client) verifyTokenOnline(ctx context.Context, accessToken string) (*Us
 		return nil, fmt.Errorf("token missing iss claim")
 	}
 	if c.issuer != "" && iss != c.issuer {
-		return nil, fmt.Errorf("token issuer mismatch: expected %q, got %q", c.issuer, iss)
+		return nil, fmt.Errorf("token issuer mismatch")
+	}
+
+	// Verify aud claim if configured (prevents cross-service token replay).
+	if c.audience != "" {
+		// Handle both string and []string forms per RFC 7519.
+		audMatch := false
+		switch v := claims["aud"].(type) {
+		case string:
+			audMatch = v == c.audience
+		case []any:
+			for _, a := range v {
+				if fmt.Sprintf("%v", a) == c.audience {
+					audMatch = true
+					break
+				}
+			}
+		}
+		if !audMatch {
+			return nil, fmt.Errorf("token audience mismatch")
+		}
 	}
 
 	return claimsToUserInfo(token)
@@ -807,7 +838,10 @@ func (c *Client) getJWKSPublicKey(ctx context.Context, kid string) (*rsa.PublicK
 	if key, ok := c.jwks[kid]; ok {
 		return key, nil
 	}
-	return nil, fmt.Errorf("key ID %q not found in JWKS", kid)
+	// Kid not found after refetch — invalidate cache for next call.
+	// NOTE: Already holding write lock from line 822, do not re-lock (deadlock).
+	c.jwks = nil
+	return nil, fmt.Errorf("key ID not found in JWKS")
 }
 
 func jwkToRSAPublicKey(nB64, eB64 string) (*rsa.PublicKey, error) {
