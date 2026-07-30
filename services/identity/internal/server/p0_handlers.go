@@ -80,14 +80,14 @@ func (h *HTTPHandler) handleSelfServiceDevices(w http.ResponseWriter, r *http.Re
 			return
 		}
 		deviceID := pathParts[4]
-			tenantIDStr := r.Header.Get("X-Tenant-ID")
-			tag, err := pool.Exec(r.Context(), `
+		tenantIDStr := r.Header.Get("X-Tenant-ID")
+		tag, err := pool.Exec(r.Context(), `
 				DELETE FROM passkey_credentials WHERE id::text = $1 AND user_id::text = $2 AND tenant_id::text = $3`,
-				deviceID, userIDStr, tenantIDStr)
-			if err != nil || tag.RowsAffected() == 0 {
-				writeJSON(w, http.StatusOK, map[string]any{"deleted": false, "error": "device not found or not owned by user"})
-				return
-			}
+			deviceID, userIDStr, tenantIDStr)
+		if err != nil || tag.RowsAffected() == 0 {
+			writeJSON(w, http.StatusOK, map[string]any{"deleted": false, "error": "device not found or not owned by user"})
+			return
+		}
 		writeJSON(w, http.StatusOK, map[string]any{"deleted": true, "device_id": deviceID})
 		return
 	}
@@ -214,9 +214,9 @@ func (h *HTTPHandler) handleGDPRDeleteAccount(w http.ResponseWriter, r *http.Req
 	}
 
 	writeJSON(w, http.StatusOK, map[string]any{
-		"deleted":  true,
-		"user_id":  userIDStr,
-		"message":  "Account scheduled for deletion. All personal data has been anonymized.",
+		"deleted": true,
+		"user_id": userIDStr,
+		"message": "Account scheduled for deletion. All personal data has been anonymized.",
 	})
 }
 
@@ -315,7 +315,7 @@ func (h *HTTPHandler) handleWebhookCRUD(w http.ResponseWriter, r *http.Request) 
 			VALUES ($1, $2, $3, $4) RETURNING id::text`,
 			tenantIDStr, req.URL, req.Events, enabled).Scan(&whID)
 		if err != nil {
-			writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "failed to create webhook: " + err.Error()})
+			writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "failed to create webhook"})
 			return
 		}
 		writeJSON(w, http.StatusCreated, map[string]any{

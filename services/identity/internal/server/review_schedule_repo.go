@@ -16,16 +16,16 @@ import (
 
 // ReviewSchedule defines an automated recurring access review.
 type ReviewSchedule struct {
-	ID              string     `json:"id"`
-	TenantID        string     `json:"tenant_id"`
-	ScopeType       string     `json:"scope_type"`       // user, group, role, app
-	ScopeID         string     `json:"scope_id"`
-	FrequencyDays   int        `json:"frequency_days"`   // 30, 90, 180, 365
-	NextRunAt       time.Time  `json:"next_run_at"`
-	LastRunAt       *time.Time `json:"last_run_at,omitempty"`
-	Enabled         bool       `json:"enabled"`
-	ReviewerUserID  string     `json:"reviewer_user_id"`
-	CreatedAt       time.Time  `json:"created_at"`
+	ID             string     `json:"id"`
+	TenantID       string     `json:"tenant_id"`
+	ScopeType      string     `json:"scope_type"` // user, group, role, app
+	ScopeID        string     `json:"scope_id"`
+	FrequencyDays  int        `json:"frequency_days"` // 30, 90, 180, 365
+	NextRunAt      time.Time  `json:"next_run_at"`
+	LastRunAt      *time.Time `json:"last_run_at,omitempty"`
+	Enabled        bool       `json:"enabled"`
+	ReviewerUserID string     `json:"reviewer_user_id"`
+	CreatedAt      time.Time  `json:"created_at"`
 }
 
 // reviewScheduleRepo manages review_schedules in PostgreSQL.
@@ -278,7 +278,7 @@ func (h *HTTPHandler) reviewSchedCreate(w http.ResponseWriter, r *http.Request) 
 	}
 	s.TenantID = tc.TenantID.String()
 	if err := validateSchedule(&s); err != nil {
-		writeJSONError(w, http.StatusBadRequest, err.Error())
+		writeJSONError(w, http.StatusBadRequest, "invalid schedule configuration")
 		return
 	}
 	if err := h.reviewSchedRepo.Create(r.Context(), &s); err != nil {
@@ -300,7 +300,7 @@ func (h *HTTPHandler) reviewSchedUpdate(w http.ResponseWriter, r *http.Request, 
 	}
 	s.ID = id
 	if err := validateSchedule(&s); err != nil {
-		writeJSONError(w, http.StatusBadRequest, err.Error())
+		writeJSONError(w, http.StatusBadRequest, "invalid schedule configuration")
 		return
 	}
 	if err := h.reviewSchedRepo.Update(r.Context(), &s); err != nil {
@@ -333,7 +333,7 @@ func (h *HTTPHandler) reviewSchedRun(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	writeJSON(w, http.StatusOK, map[string]any{
-		"status":   "completed",
+		"status":            "completed",
 		"campaigns_created": created,
 	})
 }

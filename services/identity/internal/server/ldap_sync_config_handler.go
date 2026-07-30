@@ -139,10 +139,10 @@ func (h *HTTPHandler) handleLDAPSyncConfigTest(w http.ResponseWriter, r *http.Re
 
 	if err != nil {
 		writeJSON(w, http.StatusOK, map[string]any{
-			"status":      "failed",
-			"error":       err.Error(),
-			"latency_ms":  latency,
-			"users_found": 0,
+			"status":       "failed",
+			"error":        "LDAP sync failed",
+			"latency_ms":   latency,
+			"users_found":  0,
 			"groups_found": 0,
 		})
 		return
@@ -230,9 +230,9 @@ func (h *HTTPHandler) handleLDAPSyncStatus(w http.ResponseWriter, r *http.Reques
 
 	ldapSyncState.RLock()
 	resp := map[string]any{
-		"provider":    "ldap",
-		"status":      ldapSyncState.status,
-		"last_sync":   ldapSyncState.lastRun.Format(time.RFC3339),
+		"provider":     "ldap",
+		"status":       ldapSyncState.status,
+		"last_sync":    ldapSyncState.lastRun.Format(time.RFC3339),
 		"synced_users": ldapSyncState.synced,
 		"total_users":  ldapSyncState.totalFound,
 		"errors":       ldapSyncState.errs,

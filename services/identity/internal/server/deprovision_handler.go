@@ -19,12 +19,15 @@ import (
 // POST /api/v1/users/{id}/deprovision
 func (h *HTTPHandler) handleDeprovision(ctx context.Context, userID uuid.UUID, w http.ResponseWriter, r *http.Request) {
 	var req struct {
-		Reason    string `json:"reason"`
-		ExportAudit bool  `json:"export_audit"`
+		Reason      string `json:"reason"`
+		ExportAudit bool   `json:"export_audit"`
 	}
 	// Body is optional
 	if r.ContentLength > 0 {
-		if err := json.NewDecoder(r.Body).Decode(&req); err != nil { writeJSONError(w, http.StatusBadRequest, "invalid request body"); return }
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			writeJSONError(w, http.StatusBadRequest, "invalid request body")
+			return
+		}
 	}
 
 	steps := []map[string]any{}
@@ -42,12 +45,12 @@ func (h *HTTPHandler) handleDeprovision(ctx context.Context, userID uuid.UUID, w
 		steps = append(steps, map[string]any{
 			"step":   "deactivate",
 			"status": "failed",
-			"error":  err.Error(),
+			"error":  "deprovisioning failed",
 		})
 	} else {
 		steps = append(steps, map[string]any{
-			"step":      "deactivate",
-			"status":    "completed",
+			"step":       "deactivate",
+			"status":     "completed",
 			"new_status": "disabled",
 		})
 	}
@@ -77,11 +80,11 @@ func (h *HTTPHandler) handleDeprovision(ctx context.Context, userID uuid.UUID, w
 	var auditExport map[string]any
 	if req.ExportAudit {
 		auditExport = map[string]any{
-			"user_id":    userID.String(),
-			"username":   user.Username,
-			"email":      user.Email,
+			"user_id":     userID.String(),
+			"username":    user.Username,
+			"email":       user.Email,
 			"exported_at": time.Now().UTC().Format(time.RFC3339),
-			"note":       "audit trail export via audit service /api/v1/audit/export",
+			"note":        "audit trail export via audit service /api/v1/audit/export",
 		}
 		steps = append(steps, map[string]any{
 			"step":   "export_audit",

@@ -10,14 +10,14 @@ import (
 )
 
 // UserRoleAssignment represents a role assigned to a user.
-	type UserRoleAssignment struct {
-		ID         string    `json:"id"`
-		UserID     string    `json:"user_id"`
-		RoleID     string    `json:"role_id"`
-		RoleName   string    `json:"role_name"`
-		AssignedAt time.Time `json:"assigned_at"`
-		AssignedBy string    `json:"assigned_by"`
-	}
+type UserRoleAssignment struct {
+	ID         string    `json:"id"`
+	UserID     string    `json:"user_id"`
+	RoleID     string    `json:"role_id"`
+	RoleName   string    `json:"role_name"`
+	AssignedAt time.Time `json:"assigned_at"`
+	AssignedBy string    `json:"assigned_by"`
+}
 
 // GET /api/v1/users/{id}/roles — list roles for a user (from DB)
 // POST /api/v1/users/{id}/roles — assign a role to a user (writes to DB)
@@ -36,7 +36,11 @@ func (h *HTTPHandler) handleUserRoles(ctx context.Context, userID uuid.UUID, w h
 			return
 		}
 		// SECURITY: filter by caller's tenant to prevent cross-tenant role access.
-		var rows interface{ Next() bool; Scan(...any) error; Close() }
+		var rows interface {
+			Next() bool
+			Scan(...any) error
+			Close()
+		}
 		var err error
 		if callerTenantID != "" {
 			rows, err = pool.Query(ctx, `
@@ -138,7 +142,7 @@ func (h *HTTPHandler) handleUserRoles(ctx context.Context, userID uuid.UUID, w h
 			ON CONFLICT DO NOTHING
 		`, userID, roleUUID, roleTenant, grantedBy)
 		if err != nil {
-			writeJSONError(w, http.StatusInternalServerError, "failed to assign role: "+err.Error())
+			writeJSONError(w, http.StatusInternalServerError, "failed to assign role")
 			return
 		}
 		writeJSON(w, http.StatusCreated, assignment)

@@ -14,18 +14,18 @@ import (
 
 // BulkOperationRequest represents a single operation in a SCIM bulk request.
 type BulkOperationRequest struct {
-	Method   string          `json:"method"`   // POST, PUT, PATCH, DELETE
-	Path     string          `json:"path"`     // /Users, /Users/{id}, /Groups, /Groups/{id}
-	BulkID   string          `json:"bulkId"`   // client-generated correlation ID
-	Data     json.RawMessage `json:"data"`     // resource body for POST/PUT/PATCH
-	Version  string          `json:"version,omitempty"`
+	Method  string          `json:"method"` // POST, PUT, PATCH, DELETE
+	Path    string          `json:"path"`   // /Users, /Users/{id}, /Groups, /Groups/{id}
+	BulkID  string          `json:"bulkId"` // client-generated correlation ID
+	Data    json.RawMessage `json:"data"`   // resource body for POST/PUT/PATCH
+	Version string          `json:"version,omitempty"`
 }
 
 // BulkRequest is the top-level SCIM bulk request.
 type BulkRequest struct {
-	Schemas          []string              `json:"schemas"`
-	Operations       []BulkOperationRequest `json:"Operations"`
-	FailOnErrors     *int                  `json:"failOnErrors,omitempty"`
+	Schemas      []string               `json:"schemas"`
+	Operations   []BulkOperationRequest `json:"Operations"`
+	FailOnErrors *int                   `json:"failOnErrors,omitempty"`
 }
 
 // BulkOperationResponse represents the result of one bulk operation.
@@ -34,19 +34,19 @@ type BulkOperationResponse struct {
 	Method   string          `json:"method"`
 	BulkID   string          `json:"bulkId,omitempty"`
 	Version  string          `json:"version,omitempty"`
-	Status   string          `json:"status"` // HTTP status as string
+	Status   string          `json:"status"`             // HTTP status as string
 	Response json.RawMessage `json:"response,omitempty"` // error detail on failure
 }
 
 // BulkResponse is the top-level SCIM bulk response.
 type BulkResponse struct {
-	Schemas    []string                 `json:"schemas"`
-	Operations []BulkOperationResponse  `json:"Operations"`
+	Schemas    []string                `json:"schemas"`
+	Operations []BulkOperationResponse `json:"Operations"`
 }
 
 const (
-	maxBulkOperations = 1000
-	bulkSchema        = "urn:ietf:params:scim:api:messages:2.0:BulkRequest"
+	maxBulkOperations  = 1000
+	bulkSchema         = "urn:ietf:params:scim:api:messages:2.0:BulkRequest"
 	bulkResponseSchema = "urn:ietf:params:scim:api:messages:2.0:BulkResponse"
 )
 
@@ -83,7 +83,7 @@ func (h *Handler) HandleBulk(ctx context.Context, w http.ResponseWriter, r *http
 			errorCount++
 			resp.Response, _ = json.Marshal(ErrorResponse{
 				Schemas: []string{scimErrSchema},
-				Detail:  err.Error(),
+				Detail:  "operation failed",
 				Status:  resp.Status,
 			})
 		}

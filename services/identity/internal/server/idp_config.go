@@ -72,7 +72,7 @@ func (h *HTTPHandler) handleIdPConfig(w http.ResponseWriter, r *http.Request) {
 			}
 			cfg, err := h.idpConfigSvc.Create(ctx, tenantID, idpconfig.IdPType(req.IdPType), req.Name, req.ConfigJSON)
 			if err != nil {
-				writeJSONError(w, http.StatusBadRequest, err.Error())
+				writeJSONError(w, http.StatusBadRequest, "invalid IdP configuration")
 				return
 			}
 			writeJSON(w, http.StatusCreated, cfg)
@@ -88,7 +88,7 @@ func (h *HTTPHandler) handleIdPConfig(w http.ResponseWriter, r *http.Request) {
 	case http.MethodGet:
 		cfg, err := h.idpConfigSvc.Get(ctx, *configID)
 		if err != nil {
-			writeJSONError(w, http.StatusNotFound, err.Error())
+			writeJSONError(w, http.StatusNotFound, "IdP configuration not found")
 			return
 		}
 		writeJSON(w, http.StatusOK, cfg)
@@ -105,7 +105,7 @@ func (h *HTTPHandler) handleIdPConfig(w http.ResponseWriter, r *http.Request) {
 		}
 		cfg, err := h.idpConfigSvc.Update(ctx, *configID, req.Name, req.ConfigJSON, req.Enabled)
 		if err != nil {
-			writeJSONError(w, http.StatusBadRequest, err.Error())
+			writeJSONError(w, http.StatusBadRequest, "invalid IdP configuration")
 			return
 		}
 		writeJSON(w, http.StatusOK, cfg)

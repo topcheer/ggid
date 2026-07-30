@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log/slog"
 	"net/http"
 	"strconv"
 	"strings"
@@ -583,7 +584,8 @@ func (h *Handler) replaceUser(ctx context.Context, w http.ResponseWriter, r *htt
 	var user *domain.User
 	_, err = h.svc.UpdateUser(ctx, userID, input)
 	if err != nil {
-		writeSCIMErrorWithType(w, http.StatusBadRequest, ScimTypeInvalidValue, err.Error())
+		slog.Warn("SCIM user patch validation error", "error", err)
+		writeSCIMErrorWithType(w, http.StatusBadRequest, ScimTypeInvalidValue, "invalid patch request")
 		return
 	}
 
@@ -686,7 +688,8 @@ func (h *Handler) patchUser(ctx context.Context, w http.ResponseWriter, r *http.
 
 func (h *Handler) deleteUser(ctx context.Context, w http.ResponseWriter, r *http.Request, userID uuid.UUID) {
 	if err := h.svc.DeleteUser(ctx, userID); err != nil {
-		writeSCIMError(w, http.StatusNotFound, err.Error())
+		slog.Warn("SCIM delete user error", "error", err)
+		writeSCIMError(w, http.StatusNotFound, "user not found")
 		return
 	}
 	w.WriteHeader(http.StatusNoContent)
@@ -869,7 +872,8 @@ func (h *Handler) handleMe(w http.ResponseWriter, r *http.Request) {
 	}
 	userID, tenantID, err := extractVerifiedUser(r)
 	if err != nil {
-		writeSCIMError(w, http.StatusUnauthorized, err.Error())
+		slog.Warn("SCIM auth error", "error", err)
+		writeSCIMError(w, http.StatusUnauthorized, "authentication failed")
 		return
 	}
 	// Set tenant context from token (not from header — BOLA safe)

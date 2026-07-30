@@ -9,8 +9,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/google/uuid"
 	ggidtenant "github.com/ggid/ggid/pkg/tenant"
+	"github.com/google/uuid"
 )
 
 // handleImportAsync creates a new async import job.
@@ -63,7 +63,8 @@ func (h *HTTPHandler) handleImportAsync(w http.ResponseWriter, r *http.Request) 
 
 		records, err = parseRecords(data, format)
 		if err != nil {
-			writeJSONError(w, http.StatusBadRequest, err.Error())
+			slog.Warn("import validation error", "error", err)
+			writeJSONError(w, http.StatusBadRequest, "invalid import request")
 			return
 		}
 	} else {
@@ -254,11 +255,11 @@ func parseCSVRecords(data []byte) ([]ImportUserRecord, error) {
 
 // ValidationReport is returned for dry-run import validation.
 type ValidationReport struct {
-	Total     int               `json:"total"`
-	Valid     int               `json:"valid"`
-	Invalid   int               `json:"invalid"`
-	Errors    []ImportRowError  `json:"errors,omitempty"`
-	Preview   PreviewRows       `json:"preview"`
+	Total   int              `json:"total"`
+	Valid   int              `json:"valid"`
+	Invalid int              `json:"invalid"`
+	Errors  []ImportRowError `json:"errors,omitempty"`
+	Preview PreviewRows      `json:"preview"`
 }
 
 // PreviewRows contains sample valid rows for the frontend to display.
