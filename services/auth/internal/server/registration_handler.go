@@ -193,7 +193,17 @@ func (h *Handler) handleRegister(w http.ResponseWriter, r *http.Request) {
 			`SELECT id FROM users WHERE username = $1 AND tenant_id = $2`,
 			req.Username, tenantID).Scan(&existingID)
 		if err == nil {
-			writeError(w, http.StatusConflict, "username already exists")
+			writeError(w, http.StatusConflict, "registration conflict")
+			return
+		}
+
+		// Check if email already exists within the same tenant
+		var existingEmailID string
+		err = h.pool.QueryRow(r.Context(),
+			`SELECT id FROM users WHERE email = $1 AND tenant_id = $2`,
+			req.Email, tenantID).Scan(&existingEmailID)
+		if err == nil {
+			writeError(w, http.StatusConflict, "registration conflict")
 			return
 		}
 
