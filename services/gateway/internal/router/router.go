@@ -238,6 +238,7 @@ func (gw *Gateway) buildProxies() {
 			req.Header.Del("X-User-Roles")
 			req.Header.Del("X-User-Scopes")
 			req.Header.Del("X-Is-Admin")
+			req.Header.Del("X-Step-Up-Token")
 			// Forward JWT scopes so backend services can check admin authorization.
 			jwtClaims := middleware.ExtractJWTClaims(req)
 			if len(jwtClaims.Scopes) > 0 {
@@ -1051,7 +1052,7 @@ func (gw *Gateway) handleReloadRoutes(w http.ResponseWriter, _ *http.Request) {
 		w.WriteHeader(http.StatusInternalServerError)
 		_ = json.NewEncoder(w).Encode(ReloadResponse{
 			Status:  "error",
-			Message: "reload failed: " + err.Error(),
+			Message: "route reload failed",
 		})
 		return
 	}
@@ -1275,6 +1276,7 @@ func (gw *Gateway) buildProxiesLocked() {
 			req.Header.Del("X-User-Roles")
 			req.Header.Del("X-User-Scopes")
 			req.Header.Del("X-Is-Admin")
+			req.Header.Del("X-Step-Up-Token")
 			jwtClaims := middleware.ExtractJWTClaims(req)
 			if len(jwtClaims.Scopes) > 0 {
 				req.Header.Set("X-Scopes", strings.Join(jwtClaims.Scopes, ","))
@@ -1491,8 +1493,13 @@ func (gw *Gateway) handlePostureEvaluate(w http.ResponseWriter, r *http.Request)
 	}
 	tenantID := r.Header.Get("X-Tenant-ID")
 	if tenantID == "" {
-		w.WriteHeader(http.StatusBadRequest)
-		_ = json.NewEncoder(w).Encode(map[string]string{"error": "X-Tenant-ID header required"})
+		if ctxTid, ok := middleware.TenantIDFromRequest(r); ok {
+			tenantID = ctxTid
+		}
+	}
+	if tenantID == "" {
+		w.WriteHeader(http.StatusForbidden)
+		_ = json.NewEncoder(w).Encode(map[string]string{"error": "authenticated tenant context required"})
 		return
 	}
 	result := gw.postureEngine.Evaluate(tenantID, input)
@@ -1555,10 +1562,11 @@ func (gw *Gateway) handlePostureUpdatePolicy(w http.ResponseWriter, r *http.Requ
 		_ = json.NewEncoder(w).Encode(map[string]string{"error": "posture engine not configured"})
 		return
 	}
-	tenantID := strings.TrimPrefix(r.URL.Path, "/api/v1/devices/posture/policies/")
-	if tenantID == "" {
-		w.WriteHeader(http.StatusBadRequest)
-		_ = json.NewEncoder(w).Encode(map[string]string{"error": "tenant_id required"})
+	// SECURITY: Extract tenant from JWT-validated context, not URL path (prevents BOLA).
+	tenantID, ok := middleware.TenantIDFromRequest(r)
+	if !ok || tenantID == "" {
+		w.WriteHeader(http.StatusForbidden)
+		_ = json.NewEncoder(w).Encode(map[string]string{"error": "authenticated tenant context required"})
 		return
 	}
 	var policy posture.PosturePolicy

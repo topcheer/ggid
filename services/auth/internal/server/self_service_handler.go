@@ -139,10 +139,21 @@ func (h *Handler) revokeSelfServiceDevice(w http.ResponseWriter, r *http.Request
 		}
 	}
 
-	// Try to disable MFA device
+	// Try to disable MFA device — requires step-up authentication (password)
 	if !revoked {
 		mfaSvc := h.authSvc.MFAService()
 		if mfaSvc != nil {
+			// SECURITY: Require valid step-up token (password re-auth) before disabling MFA.
+			// Validate the token, not just check presence — prevents forged headers.
+			stepUp := r.Header.Get("X-Step-Up-Token")
+			if stepUp == "" {
+				writeError(w, http.StatusForbidden, "password re-authentication required to revoke MFA device")
+				return
+			}
+			if err := h.authSvc.ValidateStepUpToken(r.Context(), stepUp, userID); err != nil {
+				writeError(w, http.StatusForbidden, "invalid or expired step-up token")
+				return
+			}
 			parsedDevID, parseErr := uuid.Parse(deviceID)
 			if parseErr == nil {
 				devices, _ := mfaSvc.ListDevices(r.Context(), userID)
