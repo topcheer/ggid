@@ -40,13 +40,28 @@ func (h *Handler) handleRevokeUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// SECURITY: admin-only endpoint.
+	if !hasAdminScope(r) {
+		writeError(w, http.StatusForbidden, "admin scope required")
+		return
+	}
+
+	// SECURITY: tenant_id from body must match caller's tenant (from gateway-set header).
+	// Only platform:admin can operate cross-tenant.
+	callerTenantStr := r.Header.Get("X-Tenant-ID")
 	tenantID, err := uuid.Parse(req.TenantID)
 	if err != nil {
-		if tidStr := r.Header.Get("X-Tenant-ID"); tidStr != "" {
-			tenantID, err = uuid.Parse(tidStr)
-		}
+		// Fall back to header tenant if body tenant_id is empty.
+		tenantID, err = uuid.Parse(callerTenantStr)
 		if err != nil {
 			writeError(w, http.StatusBadRequest, "valid tenant_id is required")
+			return
+		}
+	}
+	// If body tenant_id differs from caller's tenant, require platform:admin.
+	if callerTenantStr != "" && tenantID.String() != callerTenantStr {
+		if !hasPlatformAdminScope(r) {
+			writeError(w, http.StatusForbidden, "cross-tenant revocation requires platform:admin scope")
 			return
 		}
 	}

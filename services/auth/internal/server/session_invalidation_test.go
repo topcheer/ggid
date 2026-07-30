@@ -11,6 +11,8 @@ func TestInvalidateSessions_InvalidReason(t *testing.T) {
 	req := httptest.NewRequest("POST", "/api/v1/auth/invalidate-sessions/550e8400-e29b-41d4-a716-446655440000",
 		strings.NewReader(`{"reason":"bad_reason"}`))
 	req.Header.Set("X-Tenant-ID", "550e8400-e29b-41d4-a716-446655440001")
+	req.Header.Set("X-Scopes", "tenant:admin")
+	req.Header.Set("X-User-ID", "550e8400-e29b-41d4-a716-446655440000")
 	w := httptest.NewRecorder()
 
 	h := &Handler{}
@@ -25,6 +27,8 @@ func TestInvalidateSessions_MissingUserID(t *testing.T) {
 	req := httptest.NewRequest("POST", "/api/v1/auth/invalidate-sessions/",
 		strings.NewReader(`{"reason":"password_change"}`))
 	req.Header.Set("X-Tenant-ID", "550e8400-e29b-41d4-a716-446655440001")
+	req.Header.Set("X-Scopes", "tenant:admin")
+	req.Header.Set("X-User-ID", "550e8400-e29b-41d4-a716-446655440000")
 	w := httptest.NewRecorder()
 
 	h := &Handler{}
@@ -39,6 +43,8 @@ func TestInvalidateSessions_NoRevocationMgr(t *testing.T) {
 	req := httptest.NewRequest("POST", "/api/v1/auth/invalidate-sessions/550e8400-e29b-41d4-a716-446655440000",
 		strings.NewReader(`{"reason":"password_change"}`))
 	req.Header.Set("X-Tenant-ID", "550e8400-e29b-41d4-a716-446655440001")
+	req.Header.Set("X-Scopes", "tenant:admin")
+	req.Header.Set("X-User-ID", "550e8400-e29b-41d4-a716-446655440000")
 	w := httptest.NewRecorder()
 
 	h := &Handler{}
@@ -69,6 +75,8 @@ func TestInvalidateSessions_BadUserID(t *testing.T) {
 	req := httptest.NewRequest("POST", "/api/v1/auth/invalidate-sessions/not-a-uuid",
 		strings.NewReader(`{"reason":"password_change"}`))
 	req.Header.Set("X-Tenant-ID", "550e8400-e29b-41d4-a716-446655440001")
+	req.Header.Set("X-Scopes", "tenant:admin")
+	req.Header.Set("X-User-ID", "550e8400-e29b-41d4-a716-446655440000")
 	w := httptest.NewRecorder()
 
 	h := &Handler{}
@@ -83,6 +91,8 @@ func TestInvalidateSessions_BadTenantID(t *testing.T) {
 	req := httptest.NewRequest("POST", "/api/v1/auth/invalidate-sessions/550e8400-e29b-41d4-a716-446655440000",
 		strings.NewReader(`{"reason":"password_change"}`))
 	req.Header.Set("X-Tenant-ID", "not-a-uuid")
+	req.Header.Set("X-User-ID", "550e8400-e29b-41d4-a716-446655440000")
+	req.Header.Set("X-Scopes", "tenant:admin")
 	w := httptest.NewRecorder()
 
 	h := &Handler{}
@@ -98,6 +108,8 @@ func TestInvalidateSessions_DefaultReason(t *testing.T) {
 	req := httptest.NewRequest("POST", "/api/v1/auth/invalidate-sessions/550e8400-e29b-41d4-a716-446655440000",
 		strings.NewReader(`{}`))
 	req.Header.Set("X-Tenant-ID", "550e8400-e29b-41d4-a716-446655440001")
+	req.Header.Set("X-Scopes", "tenant:admin")
+	req.Header.Set("X-User-ID", "550e8400-e29b-41d4-a716-446655440000")
 	w := httptest.NewRecorder()
 
 	h := &Handler{}

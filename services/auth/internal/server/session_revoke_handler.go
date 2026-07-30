@@ -9,20 +9,20 @@ import (
 
 // RevocableSession represents a trackable session for admin revocation.
 type RevocableSession struct {
-	SessionID string    `json:"session_id"`
-	UserID    string    `json:"user_id"`
-	TokenJTI  string    `json:"token_jti"`
-	CreatedAt time.Time `json:"created_at"`
-	Revoked   bool      `json:"revoked"`
+	SessionID string     `json:"session_id"`
+	UserID    string     `json:"user_id"`
+	TokenJTI  string     `json:"token_jti"`
+	CreatedAt time.Time  `json:"created_at"`
+	Revoked   bool       `json:"revoked"`
 	RevokedAt *time.Time `json:"revoked_at,omitempty"`
 }
 
 // sessionRevocationStore holds sessions for revocation tracking.
 type sessionRevocationStore struct {
-	mu       sync.RWMutex
-	sessions map[string]*RevocableSession // keyed by session_id
-	byUser   map[string][]string          // user_id → session_ids
-	revokedJTIs map[string]bool            // revoked token JTIs
+	mu          sync.RWMutex
+	sessions    map[string]*RevocableSession // keyed by session_id
+	byUser      map[string][]string          // user_id → session_ids
+	revokedJTIs map[string]bool              // revoked token JTIs
 }
 
 var sessionStore = &sessionRevocationStore{
@@ -44,6 +44,12 @@ func IsSessionRevoked(jti string) bool {
 func (h *Handler) handleRevokeSessions(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+		return
+	}
+
+	// SECURITY: admin-only endpoint — requires platform:admin or tenant:admin scope.
+	if !hasAdminScope(r) {
+		writeError(w, http.StatusForbidden, "admin scope required")
 		return
 	}
 

@@ -27,12 +27,12 @@ type InvalidationRequest struct {
 
 // InvalidationAudit tracks session invalidation events.
 type InvalidationAudit struct {
-	ID             string    `json:"id"`
-	UserID         string    `json:"user_id"`
-	Reason         string    `json:"reason"`
-	SessionsRevoked int      `json:"sessions_revoked"`
-	InitiatedBy    string    `json:"initiated_by"`
-	Timestamp      time.Time `json:"timestamp"`
+	ID              string    `json:"id"`
+	UserID          string    `json:"user_id"`
+	Reason          string    `json:"reason"`
+	SessionsRevoked int       `json:"sessions_revoked"`
+	InitiatedBy     string    `json:"initiated_by"`
+	Timestamp       time.Time `json:"timestamp"`
 }
 
 // POST /api/v1/auth/invalidate-sessions/:user_id
@@ -46,6 +46,13 @@ func (h *Handler) handleInvalidateSessions(w http.ResponseWriter, r *http.Reques
 	userIDStr := strings.TrimPrefix(r.URL.Path, "/api/v1/auth/invalidate-sessions/")
 	if userIDStr == "" || strings.Contains(userIDStr, "/") {
 		writeError(w, http.StatusBadRequest, "valid user_id required in path")
+		return
+	}
+
+	// SECURITY: Only the user themselves or an admin can invalidate their sessions.
+	callerUserID := r.Header.Get("X-User-ID")
+	if callerUserID != userIDStr && !hasAdminScope(r) {
+		writeError(w, http.StatusForbidden, "can only invalidate your own sessions (admin scope required for others)")
 		return
 	}
 
@@ -132,11 +139,11 @@ func (h *Handler) handleInvalidateSessions(w http.ResponseWriter, r *http.Reques
 // It does NOT need HTTP context — called from service layer.
 func (h *Handler) TriggerInvalidation(tenantID, userID uuid.UUID, reason InvalidationReason, exceptSessionID string) *InvalidationAudit {
 	audit := &InvalidationAudit{
-		ID:           uuid.New().String(),
-		UserID:       userID.String(),
-		Reason:       string(reason),
-		InitiatedBy:  "system",
-		Timestamp:    time.Now().UTC(),
+		ID:          uuid.New().String(),
+		UserID:      userID.String(),
+		Reason:      string(reason),
+		InitiatedBy: "system",
+		Timestamp:   time.Now().UTC(),
 	}
 
 	if h.revocationMgr != nil {

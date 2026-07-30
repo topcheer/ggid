@@ -74,6 +74,8 @@ func TestInvalidationEndpointHandlesPostureDrop(t *testing.T) {
 	req := httptest.NewRequest("POST", "/api/v1/auth/invalidate-sessions/"+userID,
 		strings.NewReader(`{"reason":"posture_drop"}`))
 	req.Header.Set("X-Tenant-ID", tenantID)
+	req.Header.Set("X-User-ID", userID)
+	req.Header.Set("X-Scopes", "tenant:admin")
 	w := httptest.NewRecorder()
 
 	h := &Handler{}
@@ -92,6 +94,8 @@ func TestInvalidationEndpointHandlesMFAEnrollment(t *testing.T) {
 	req := httptest.NewRequest("POST", "/api/v1/auth/invalidate-sessions/"+userID,
 		strings.NewReader(`{"reason":"mfa_enrollment","except_session_id":"keep-this"}`))
 	req.Header.Set("X-Tenant-ID", tenantID)
+	req.Header.Set("X-User-ID", userID)
+	req.Header.Set("X-Scopes", "tenant:admin")
 	w := httptest.NewRecorder()
 
 	h := &Handler{}
@@ -110,7 +114,8 @@ func TestInvalidationEndpointHandlesPasswordChange(t *testing.T) {
 	req := httptest.NewRequest("POST", "/api/v1/auth/invalidate-sessions/"+userID,
 		strings.NewReader(`{"reason":"password_change","except_session_id":"current-session"}`))
 	req.Header.Set("X-Tenant-ID", tenantID)
-	req.Header.Set("X-User-ID", "admin-user")
+	req.Header.Set("X-User-ID", userID)
+	req.Header.Set("X-Scopes", "tenant:admin")
 	w := httptest.NewRecorder()
 
 	h := &Handler{}
