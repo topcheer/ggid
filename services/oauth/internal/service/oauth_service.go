@@ -297,8 +297,11 @@ func (s *OAuthService) DeleteClient(ctx context.Context, clientID string) error 
 }
 
 // ResolveClientTenant finds the tenant_id for an OAuth client by client_id.
-// This bypasses RLS because it's a cross-tenant lookup needed for the authorize
-// endpoint when MCP clients (RFC 9728) don't send tenant_id.
+// This bypasses RLS because it's needed for the authorize/token endpoints
+// when MCP clients (RFC 9728) don't send tenant_id.
+// SECURITY: The query only returns tenant_id (a UUID), not other tenant data.
+// Tenant enumeration via client_id is low-risk: client_ids are not secret
+// and are already exposed in authorize redirects.
 func (s *OAuthService) ResolveClientTenant(ctx context.Context, clientID string) (uuid.UUID, error) {
 	if s.pool == nil {
 		return uuid.Nil, fmt.Errorf("database not configured")
@@ -1246,10 +1249,29 @@ func (s *OAuthService) exchangeTokenInternal(ctx context.Context, req *RFC8693Ex
 	expiresAt := now.Add(15 * time.Minute)
 	scopeStr := strings.Join(req.Scope, " ")
 
-	// Carry forward permissions and roles from the subject token (if present)
-	// so that the delegated token preserves the user's authorization context.
+	// SECURITY: Carry forward permissions from the subject token, but only
+	// those relevant to the requested scopes. This prevents privilege escalation
+	// where a high-privilege token exchanges for a scoped token that still
+	// carries all original permissions.
 	subjectPerms := getStringSliceClaim(subjectClaims, "permissions")
 	subjectRoles := getStringSliceClaim(subjectClaims, "roles")
+
+	// When scopes are requested, filter permissions to only those matching
+	// the requested scopes. Match scope as a namespace boundary:
+	// "user" matches "user:read" but not "user_management:write".
+	var filteredPerms []string
+	if len(req.Scope) > 0 {
+		for _, perm := range subjectPerms {
+			for _, sc := range req.Scope {
+				if perm == sc || strings.HasPrefix(perm, sc+":") {
+					filteredPerms = append(filteredPerms, perm)
+					break
+				}
+			}
+		}
+	} else {
+		filteredPerms = subjectPerms
+	}
 
 	claimsMap := jwt.MapClaims{
 		"iss":         s.issuer,
@@ -1259,9 +1281,9 @@ func (s *OAuthService) exchangeTokenInternal(ctx context.Context, req *RFC8693Ex
 		"exp":         expiresAt.Unix(),
 		"jti":         uuid.New().String(),
 		"tenant_id":   req.TenantID.String(),
-		"scope":       scopeStr,     // OAuth scopes only
-		"permissions": subjectPerms, // Carry forward fine-grained permissions
-		"roles":       subjectRoles, // Carry forward role names
+		"scope":       scopeStr,      // OAuth scopes only
+		"permissions": filteredPerms, // Only permissions matching requested scopes
+		"roles":       subjectRoles,  // Carry forward role names
 	}
 	if actClaim != nil {
 		claimsMap["act"] = actClaim
@@ -1631,6 +1653,8 @@ func startExpiredEntryReaper() {
 				if expStr, ok := m["exp"].(time.Time); ok && now.After(expStr) {
 					revokedTokens.Delete(k)
 				}
+			} else if expUnix, ok := v.(int64); ok && expUnix > 0 && now.Unix() > expUnix {
+				revokedTokens.Delete(k)
 			}
 			return true
 		})
@@ -3020,6 +3044,23 @@ var (
 
 // CreateDeviceAuthorization generates device_code + user_code and stores them.
 func (s *OAuthService) CreateDeviceAuthorization(req *DeviceAuthorizationRequest) (*DeviceAuthorizationResponse, error) {
+	// SECURITY: Rate limit device code creation per client to prevent memory exhaustion DoS.
+	// Use a simple in-memory counter with cleanup via the device code expiry.
+	deviceCodeMu.Lock()
+	now := time.Now()
+	cutoff := now.Add(-time.Hour)
+	active := 0
+	for _, info := range deviceCodeStore {
+		if info.CreatedAt.After(cutoff) && info.ClientID == req.ClientID {
+			active++
+		}
+	}
+	if active >= 10 {
+		deviceCodeMu.Unlock()
+		return nil, fmt.Errorf("too many pending device authorization requests, please try again later")
+	}
+	deviceCodeMu.Unlock()
+
 	deviceCode := generateDeviceCode(40)
 	userCode := generateUserCode()
 
@@ -3142,7 +3183,7 @@ func (s *OAuthService) PollDeviceToken(ctx context.Context, deviceCode, clientID
 }
 
 // ApproveDeviceCode is called when the user enters their user_code and approves.
-func (s *OAuthService) ApproveDeviceCode(userCode string, userID uuid.UUID) error {
+func (s *OAuthService) ApproveDeviceCode(userCode string, userID uuid.UUID, tenantID uuid.UUID) error {
 	// Defense in depth: approving as the nil user would issue tokens for the
 	// all-zero subject (R-cron P1-2).
 	if userID == uuid.Nil {
@@ -3165,6 +3206,12 @@ func (s *OAuthService) ApproveDeviceCode(userCode string, userID uuid.UUID) erro
 		delete(deviceCodeStore, deviceCode)
 		delete(userCodeIndex, userCode)
 		return fmt.Errorf("expired user_code")
+	}
+
+	// SECURITY (R22 P1): Verify approver belongs to the same tenant as
+	// the device authorization request.
+	if info.TenantID != uuid.Nil && tenantID != uuid.Nil && info.TenantID != tenantID {
+		return fmt.Errorf("tenant mismatch")
 	}
 
 	info.Status = "approved"
