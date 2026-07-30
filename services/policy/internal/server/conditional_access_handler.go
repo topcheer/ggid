@@ -156,7 +156,7 @@ func (s *HTTPServer) handleConditionalAccess(w http.ResponseWriter, r *http.Requ
 				}
 			}
 			update := map[string]any{"name": req.Name, "conditions": req.Conditions,
-				"actions": req.Actions, "priority": req.Priority}
+				"actions": req.Actions, "priority": req.Priority, "tenant_id": callerTenantID.String()}
 			if req.Enabled != nil {
 				update["enabled"] = *req.Enabled
 			}
@@ -204,7 +204,13 @@ func (s *HTTPServer) handleConditionalAccessEvaluate(w http.ResponseWriter, r *h
 		writeJSONError(w, http.StatusBadRequest, "invalid JSON body")
 		return
 	}
-	action, matched := s.EvaluateConditionalAccess(req.TenantID, req.Context)
+	// SECURITY (R21 P1): tenant from verified header — body tenant_id
+	// previously allowed cross-tenant CAE evaluation.
+	tenantID, ok := requireTenantHeader(w, r)
+	if !ok {
+		return
+	}
+	action, matched := s.EvaluateConditionalAccess(tenantID, req.Context)
 	resp := map[string]any{"action": action}
 	if matched != nil {
 		resp["matched_policy"] = matched.Name

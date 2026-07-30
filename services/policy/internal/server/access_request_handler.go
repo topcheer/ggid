@@ -47,6 +47,10 @@ func (s *HTTPServer) handleAccessRequests(w http.ResponseWriter, r *http.Request
 			if s.policyMap != nil {
 				ar, _ := s.policyMap.Get(r.Context(), "access_requests_store", reqID)
 				if ar != nil {
+					if pmGetString(ar, "tenant_id") != callerTenant(r) {
+						writeJSONError(w, http.StatusNotFound, "access request not found")
+						return
+					}
 					writeJSON(w, http.StatusOK, ar)
 					return
 				}
@@ -173,6 +177,12 @@ func (s *HTTPServer) reviewAccessRequest(w http.ResponseWriter, r *http.Request,
 		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
+	// SECURITY (R21 P1): Require admin + tenant ownership.
+	if !isAdminRequest(r) {
+		writeJSONError(w, http.StatusForbidden, "admin privileges required")
+		return
+	}
+	tid := callerTenant(r)
 	var req struct {
 		ApproverID string `json:"approver_id"`
 		Note       string `json:"review_note"`
@@ -184,8 +194,12 @@ func (s *HTTPServer) reviewAccessRequest(w http.ResponseWriter, r *http.Request,
 			writeJSONError(w, http.StatusNotFound, "access request not found")
 			return
 		}
+		if pmGetString(existing, "tenant_id") != tid {
+			writeJSONError(w, http.StatusNotFound, "access request not found")
+			return
+		}
 		existing["status"] = decision
-		existing["approver_id"] = req.ApproverID
+		existing["approver_id"] = r.Header.Get("X-User-ID")
 		existing["review_note"] = req.Note
 		existing["reviewed_at"] = time.Now().UTC()
 		s.policyMap.Store(r.Context(), "access_requests_store", reqID, existing)

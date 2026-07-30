@@ -19,6 +19,12 @@ type Certification struct {
 }
 
 func (s *HTTPServer) handleCertify(w http.ResponseWriter, r *http.Request) {
+	// SECURITY (R21 P1): Require admin + tenant context.
+	if !isAdminRequest(r) {
+		writeJSONError(w, http.StatusForbidden, "admin privileges required")
+		return
+	}
+	tid := callerTenant(r)
 	switch r.Method {
 	case http.MethodPost:
 		var req struct {
@@ -33,12 +39,12 @@ func (s *HTTPServer) handleCertify(w http.ResponseWriter, r *http.Request) {
 		}
 		cert := &Certification{
 			ID: uuid.New().String(), ResourceID: req.ResourceID, Status: "certified",
-			Reviewer: req.Reviewer, Decision: req.Decision, Comment: req.Comment,
+			Reviewer: r.Header.Get("X-User-ID"), Decision: req.Decision, Comment: req.Comment,
 			CreatedAt: time.Now().UTC(),
 		}
 		if s.policyMap != nil {
 			s.policyMap.Store(r.Context(), "policy_certifications", cert.ID, map[string]any{
-				"resource_id": cert.ResourceID, "status": cert.Status,
+				"tenant_id": tid, "resource_id": cert.ResourceID, "status": cert.Status,
 				"reviewer": cert.Reviewer, "decision": cert.Decision, "comment": cert.Comment,
 			})
 		}
@@ -47,9 +53,15 @@ func (s *HTTPServer) handleCertify(w http.ResponseWriter, r *http.Request) {
 		var result []map[string]any
 		if s.policyMap != nil {
 			rows, _ := s.policyMap.List(r.Context(), "policy_certifications")
-			result = rows
+			for _, row := range rows {
+				if pmGetString(row, "tenant_id") == tid {
+					result = append(result, row)
+				}
+			}
 		}
-		if result == nil { result = []map[string]any{} }
+		if result == nil {
+			result = []map[string]any{}
+		}
 		writeJSON(w, http.StatusOK, map[string]any{"certifications": result, "count": len(result)})
 	default:
 		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")

@@ -40,15 +40,17 @@ func (s *HTTPServer) handleDelegatedAdmin(w http.ResponseWriter, r *http.Request
 			writeJSONError(w, http.StatusBadRequest, "delegator, delegate, scope_type required")
 			return
 		}
-		if req.ExpiryHours <= 0 { req.ExpiryHours = 72 }
+		if req.ExpiryHours <= 0 {
+			req.ExpiryHours = 72
+		}
 		now := time.Now().UTC()
 		da := &DelegatedAdmin{
-			ID: uuid.New().String(), TenantID: req.TenantID,
+			ID: uuid.New().String(), TenantID: callerTenant(r),
 			Delegator: req.Delegator, Delegate: req.Delegate,
 			ScopeType: req.ScopeType, ScopeID: req.ScopeID,
 			Permissions: req.Permissions,
-			ExpiresAt: now.Add(time.Duration(req.ExpiryHours) * time.Hour),
-			CreatedAt: now,
+			ExpiresAt:   now.Add(time.Duration(req.ExpiryHours) * time.Hour),
+			CreatedAt:   now,
 		}
 		if s.policyMap != nil {
 			s.policyMap.Store(r.Context(), "policy_delegated_admins", da.ID, map[string]any{
@@ -59,12 +61,20 @@ func (s *HTTPServer) handleDelegatedAdmin(w http.ResponseWriter, r *http.Request
 		}
 		writeJSON(w, http.StatusCreated, da)
 	case http.MethodGet:
+		// SECURITY (R21 P1): Filter by caller's tenant.
+		tid := callerTenant(r)
 		var result []map[string]any
 		if s.policyMap != nil {
 			rows, _ := s.policyMap.List(r.Context(), "policy_delegated_admins")
-			result = rows
+			for _, row := range rows {
+				if pmGetString(row, "tenant_id") == tid {
+					result = append(result, row)
+				}
+			}
 		}
-		if result == nil { result = []map[string]any{} }
+		if result == nil {
+			result = []map[string]any{}
+		}
 		writeJSON(w, http.StatusOK, map[string]any{"delegations": result, "count": len(result)})
 	default:
 		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
