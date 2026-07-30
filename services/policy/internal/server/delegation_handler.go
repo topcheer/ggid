@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/ggid/ggid/services/policy/internal/service"
 	"github.com/google/uuid"
 )
 
@@ -62,6 +63,11 @@ func (s *HTTPServer) handleListDelegations(w http.ResponseWriter, r *http.Reques
 		writeJSON(w, http.StatusMethodNotAllowed, map[string]string{"error": "method not allowed"})
 		return
 	}
+	// SECURITY: require tenant context
+	tid, ok := requireTenantHeader(w, r)
+	if !ok {
+		return
+	}
 	userID := parseUUIDSafe(r.URL.Query().Get("user_id"))
 	delegations, err := s.policySvc.ListDelegations(context.Background(), userID)
 	if err != nil {
@@ -69,7 +75,14 @@ func (s *HTTPServer) handleListDelegations(w http.ResponseWriter, r *http.Reques
 		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "internal server error"})
 		return
 	}
-	writeJSON(w, http.StatusOK, map[string]any{"delegations": delegations})
+	// SECURITY: filter to caller's tenant
+	filtered := []*service.Delegation{}
+	for _, d := range delegations {
+		if d.TenantID.String() == tid {
+			filtered = append(filtered, d)
+		}
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"delegations": filtered})
 }
 
 func parseUUIDSafe(s string) uuid.UUID {

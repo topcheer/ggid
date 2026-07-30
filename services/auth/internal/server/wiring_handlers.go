@@ -93,7 +93,7 @@ func (h *Handler) handleImpersonate(w http.ResponseWriter, r *http.Request) {
 		parseUUIDSafe(req.TenantID), req.Reason,
 	)
 	if err != nil {
-		writeJSON(w, http.StatusBadRequest, map[string]string{"error": err.Error()})
+		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "request failed"})
 		return
 	}
 	// Sign an impersonation JWT using RS256 (same keypair as OAuth tokens)
@@ -197,7 +197,7 @@ func (h *Handler) handleImpersonateRevoke(w http.ResponseWriter, r *http.Request
 	// Get token info before revoking (to get expiry for Redis TTL)
 	tok, _ := service.GetImpersonationToken(parseUUIDSafe(req.TokenID))
 	if err := service.RevokeImpersonationToken(parseUUIDSafe(req.TokenID)); err != nil {
-		writeJSON(w, http.StatusBadRequest, map[string]string{"error": err.Error()})
+		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "request failed"})
 		return
 	}
 	// Push JTI to Redis ZSET so the gateway CAECheck middleware blocks the token.

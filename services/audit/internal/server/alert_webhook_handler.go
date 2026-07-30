@@ -4,7 +4,10 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
+	"fmt"
 	"net/http"
+	"net/netip"
+	neturl "net/url"
 	"sync"
 
 	"github.com/google/uuid"
@@ -74,6 +77,11 @@ func (s *HTTPServer) handleAlertWebhooks(w http.ResponseWriter, r *http.Request)
 			writeJSON(w, http.StatusBadRequest, map[string]string{"error": "url required"})
 			return
 		}
+		// SECURITY: SSRF prevention — reject localhost, private IPs, link-local
+		if err := validateWebhookURL(req.URL); err != nil {
+			writeJSON(w, http.StatusBadRequest, map[string]string{"error": err.Error()})
+			return
+		}
 		hookID := uuid.New().String()
 		// SECURITY: hash the secret before storing (never store plaintext)
 		secretHash := ""
@@ -137,4 +145,27 @@ func (s *HTTPServer) handleAlertWebhooks(w http.ResponseWriter, r *http.Request)
 	default:
 		writeJSON(w, http.StatusMethodNotAllowed, map[string]string{"error": "method not allowed"})
 	}
+}
+
+// validateWebhookURL prevents SSRF by rejecting localhost, private IPs,
+// link-local, and non-HTTP(S) schemes.
+func validateWebhookURL(rawURL string) error {
+	u, err := neturl.Parse(rawURL)
+	if err != nil {
+		return fmt.Errorf("invalid URL")
+	}
+	if u.Scheme != "http" && u.Scheme != "https" {
+		return fmt.Errorf("only http/https URLs allowed")
+	}
+	host := u.Hostname()
+	if host == "localhost" || host == "127.0.0.1" || host == "::1" || host == "0.0.0.0" {
+		return fmt.Errorf("localhost URLs not allowed")
+	}
+	// Reject private network ranges
+	if ip, err := netip.ParseAddr(host); err == nil {
+		if ip.IsLoopback() || ip.IsPrivate() || ip.IsLinkLocalUnicast() || ip.IsUnspecified() {
+			return fmt.Errorf("internal network URLs not allowed")
+		}
+	}
+	return nil
 }
