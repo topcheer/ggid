@@ -55,8 +55,9 @@ func (h *HTTPHandler) handleBranding(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	if tc.TenantID.String() != tenantID {
-		// Check if user has platform:admin scope
-		scopes := strings.Split(r.Header.Get("X-User-Scopes"), ",")
+		// Check if user has platform:admin scope — X-Scopes is the
+		// gateway-derived (stripped + re-set from verified JWT) header.
+		scopes := strings.Split(r.Header.Get("X-Scopes"), ",")
 		isPlatformAdmin := false
 		for _, sc := range scopes {
 			if strings.TrimSpace(sc) == "platform:admin" {

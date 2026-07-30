@@ -30,9 +30,6 @@ func (h *Handler) handleImpersonate(w http.ResponseWriter, r *http.Request) {
 	// cross-tenant needs platform:admin (checked below). Without this, any authenticated
 	// user could impersonate anyone in their tenant.
 	scopesStr := r.Header.Get("X-Scopes")
-	if scopesStr == "" {
-		scopesStr = r.Header.Get("X-User-Scopes")
-	}
 	isAdmin := false
 	for _, sc := range strings.Split(scopesStr, ",") {
 		s := strings.TrimSpace(sc)
