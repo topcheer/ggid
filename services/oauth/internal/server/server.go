@@ -517,7 +517,7 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 
 		// Consent screen: if client requests non-basic scopes and user hasn't
 		// explicitly consented, return consent_required response.
-		basicScopes := map[string]bool{"openid": true, "profile": true, "email": true, "offline_access": true}
+		basicScopes := map[string]bool{"openid": true, "profile": true, "email": true}
 		hasExtendedScope := false
 		for _, s := range scopes {
 			if !basicScopes[s] {

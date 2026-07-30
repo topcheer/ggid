@@ -444,6 +444,12 @@ func (s *OAuthService) CreateAuthorizationCode(ctx context.Context, req *Authori
 		return "", errors.Internal("generate auth code", err)
 	}
 
+	// SECURITY: Intersect requested scopes with client's allowed scopes to prevent escalation.
+	// If client has no scopes configured (empty), allow all requested (backward compat).
+	if len(client.Scopes) > 0 {
+		req.Scope = intersectScopes(req.Scope, client.Scopes)
+	}
+
 	code := &domain.AuthorizationCode{
 		ID:                  uuid.New(),
 		TenantID:            req.TenantID,
@@ -2998,11 +3004,15 @@ func (s *OAuthService) PollDeviceToken(ctx context.Context, deviceCode, clientID
 
 	if info.Status == "pending" {
 		// Check if client is polling too fast (interval enforcement).
+		// Hold write lock for read-modify-write to prevent data race on LastPoll.
+		deviceCodeMu.Lock()
 		if info.LastPoll != nil && time.Since(*info.LastPoll) < 5*time.Second {
+			deviceCodeMu.Unlock()
 			return nil, fmt.Errorf("slow_down")
 		}
 		now := time.Now()
 		info.LastPoll = &now
+		deviceCodeMu.Unlock()
 		return nil, fmt.Errorf("authorization_pending")
 	}
 
