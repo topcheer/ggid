@@ -1006,6 +1006,10 @@ var orgRoles = struct {
 }{data: make(map[uuid.UUID][]string)}
 
 func (s *HTTPServer) handleOrgRoles(w http.ResponseWriter, r *http.Request, orgID uuid.UUID) {
+	// SECURITY (R20 P1): Verify org belongs to caller's tenant.
+	if !s.checkOrgOwnership(w, r, orgID) {
+		return
+	}
 	switch r.Method {
 	case http.MethodPost:
 		var req struct {

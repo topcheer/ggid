@@ -9,14 +9,14 @@ import (
 
 // deptTreeNode represents a department in the tree with budget info.
 type deptTreeNode struct {
-	ID         string        `json:"id"`
-	Name       string        `json:"name"`
-	ParentID   *string       `json:"parent_id,omitempty"`
-	ManagerID  *string       `json:"manager_id,omitempty"`
-	Budget     *float64      `json:"budget,omitempty"`
-	Headcount  int           `json:"headcount"`
-	CostCenter string        `json:"cost_center,omitempty"`
-	Active     bool          `json:"active"`
+	ID         string          `json:"id"`
+	Name       string          `json:"name"`
+	ParentID   *string         `json:"parent_id,omitempty"`
+	ManagerID  *string         `json:"manager_id,omitempty"`
+	Budget     *float64        `json:"budget,omitempty"`
+	Headcount  int             `json:"headcount"`
+	CostCenter string          `json:"cost_center,omitempty"`
+	Active     bool            `json:"active"`
 	Children   []*deptTreeNode `json:"children,omitempty"`
 }
 
@@ -27,7 +27,6 @@ func (s *HTTPServer) handleDeptTree(w http.ResponseWriter, r *http.Request) {
 		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
-
 	// Extract org ID from path: /api/v1/organizations/{id}/departments/tree
 	pathParts := strings.Split(strings.Trim(r.URL.Path, "/"), "/")
 	// Expected: ["api", "v1", "organizations", "{id}", "departments", "tree"]
@@ -39,6 +38,10 @@ func (s *HTTPServer) handleDeptTree(w http.ResponseWriter, r *http.Request) {
 	orgID, err := uuid.Parse(orgIDStr)
 	if err != nil {
 		writeJSONError(w, http.StatusBadRequest, "invalid organization ID")
+		return
+	}
+	// SECURITY (R20 P1): Verify org belongs to caller's tenant.
+	if !s.checkOrgOwnership(w, r, orgID) {
 		return
 	}
 
@@ -66,10 +69,10 @@ func (s *HTTPServer) handleDeptTree(w http.ResponseWriter, r *http.Request) {
 		}
 
 		node := &deptTreeNode{
-			ID:        dept.ID.String(),
-			Name:      dept.Name,
-			Active:    active,
-			Children:  []*deptTreeNode{},
+			ID:       dept.ID.String(),
+			Name:     dept.Name,
+			Active:   active,
+			Children: []*deptTreeNode{},
 		}
 
 		if dept.ParentID != nil {
@@ -119,7 +122,7 @@ func (s *HTTPServer) handleDeptTree(w http.ResponseWriter, r *http.Request) {
 	}
 
 	writeJSON(w, http.StatusOK, map[string]any{
-		"organization_id": orgIDStr,
+		"organization_id":   orgIDStr,
 		"total_departments": len(nodeMap),
 		"tree":              roots,
 	})
