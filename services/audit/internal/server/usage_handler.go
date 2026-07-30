@@ -5,6 +5,7 @@ package httpserver
 import (
 	"context"
 	"encoding/json"
+	"log/slog"
 	"net/http"
 	"strconv"
 	"time"
@@ -12,20 +13,20 @@ import (
 
 // UsageSummary represents aggregated API usage for a tenant.
 type UsageSummary struct {
-	TenantID     string  `json:"tenant_id"`
-	TotalRequests int64  `json:"total_requests"`
-	TotalErrors   int64  `json:"total_errors"`
-	AvgLatencyMs float64 `json:"avg_latency_ms"`
-	TopEndpoints []EndpointUsage `json:"top_endpoints,omitempty"`
+	TenantID      string          `json:"tenant_id"`
+	TotalRequests int64           `json:"total_requests"`
+	TotalErrors   int64           `json:"total_errors"`
+	AvgLatencyMs  float64         `json:"avg_latency_ms"`
+	TopEndpoints  []EndpointUsage `json:"top_endpoints,omitempty"`
 }
 
 // EndpointUsage shows per-endpoint breakdown.
 type EndpointUsage struct {
-	Path        string `json:"path"`
-	Method      string `json:"method"`
-	Requests    int64  `json:"requests"`
-	Errors      int64  `json:"errors"`
-	AvgLatency  float64 `json:"avg_latency_ms"`
+	Path       string  `json:"path"`
+	Method     string  `json:"method"`
+	Requests   int64   `json:"requests"`
+	Errors     int64   `json:"errors"`
+	AvgLatency float64 `json:"avg_latency_ms"`
 }
 
 // In-memory usage store (production would use PG).
@@ -96,7 +97,9 @@ func (s *HTTPServer) handleUsageIngest(w http.ResponseWriter, r *http.Request) {
 					VALUES ($1, $2, $3, $4, $5)`,
 					rec.TenantID, rec.Method, rec.Path, rec.Status, int(rec.Duration))
 			}
-			_ = tx.Commit(ctx)
+			if err := tx.Commit(ctx); err != nil {
+				slog.Warn("usage handler tx commit failed", "error", err)
+			}
 		}
 	}
 
