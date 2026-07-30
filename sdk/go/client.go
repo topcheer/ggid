@@ -537,6 +537,10 @@ func (c *Client) IntrospectToken(ctx context.Context, accessToken string) (map[s
 		return nil, err
 	}
 	defer resp.Body.Close()
+	// SECURITY: Check for error status codes before parsing response body.
+	if resp.StatusCode >= 400 {
+		return nil, &APIError{StatusCode: resp.StatusCode, Message: fmt.Sprintf("introspect failed: HTTP %d", resp.StatusCode)}
+	}
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return nil, err

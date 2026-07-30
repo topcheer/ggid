@@ -487,7 +487,7 @@ class GGIDClient {
     final resp = await _http.get(
       Uri.parse('$baseUrl$path'),
       headers: _headers(token),
-    );
+    ).timeout(const Duration(seconds: 30));
     return _handleResponse(resp);
   }
 
@@ -496,7 +496,7 @@ class GGIDClient {
       Uri.parse('$baseUrl$path'),
       headers: _headers(token),
       body: jsonEncode(body),
-    );
+    ).timeout(const Duration(seconds: 30));
     return _handleResponse(resp);
   }
 
@@ -508,7 +508,7 @@ class GGIDClient {
         'X-Tenant-ID': tenantId,
       },
       body: form,
-    );
+    ).timeout(const Duration(seconds: 30));
     return _handleResponse(resp);
   }
 
@@ -516,7 +516,7 @@ class GGIDClient {
     final resp = await _http.delete(
       Uri.parse('$baseUrl$path'),
       headers: _headers(token),
-    );
+    ).timeout(const Duration(seconds: 30));
     if (resp.statusCode >= 400) {
       throw _createException(resp.statusCode, resp.body);
     }
@@ -526,7 +526,7 @@ class GGIDClient {
     final req = http.Request('DELETE', Uri.parse('$baseUrl$path'));
     req.headers.addAll(_headers(token));
     req.body = jsonEncode(body);
-    final streamed = await _http.send(req);
+    final streamed = await _http.send(req).timeout(const Duration(seconds: 30));
     final resp = await http.Response.fromStream(streamed);
     if (resp.statusCode >= 400) {
       throw _createException(resp.statusCode, resp.body);
