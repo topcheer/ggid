@@ -449,6 +449,7 @@ func main() {
 						return
 					}
 					grpcServer = grpc.NewServer(grpc.Creds(creds))
+					grpcServerRef = grpcServer // sync ref so GracefulStop targets the right server
 					log.Printf("Auth gRPC: TLS enabled (cert=%s)", certFile)
 				}
 			}
