@@ -1211,7 +1211,15 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 			_ = r.ParseForm()
 			decision := r.FormValue("decision")
 			if decision == "approve" {
-				authURL := "/oauth/authorize?consent=true&client_id=" + clientID + "&redirect_uri=" + redirectURI + "&response_type=code&scope=" + scopeParam + "&state=" + state
+				// P1-1: Issue a signed consent token instead of bare consent=true.
+				// Extract userID from JWT context (set by gateway).
+				userID := extractUserIDForConsent(r)
+				consentToken := issueConsentToken(clientID, userID, scopeParam)
+				if consentToken == "" {
+					writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "consent signing unavailable"})
+					return
+				}
+				authURL := "/oauth/authorize?consent=" + url.QueryEscape(consentToken) + "&client_id=" + url.QueryEscape(clientID) + "&redirect_uri=" + url.QueryEscape(redirectURI) + "&response_type=code&scope=" + url.QueryEscape(scopeParam) + "&state=" + url.QueryEscape(state)
 				writeJSON(w, http.StatusOK, map[string]string{
 					"status":       "approved",
 					"redirect_url": authURL,
@@ -2946,10 +2954,20 @@ func consumeDPoPJTI(jti string) bool {
 // consentSecret is a HMAC key for signing one-time consent tokens.
 // In production this should come from configuration; this fallback prevents
 // silent bypass when unset.
+// extractUserIDForConsent returns the user ID from the gateway-verified X-User-ID header.
+func extractUserIDForConsent(r *http.Request) string {
+	return r.Header.Get("X-User-ID")
+}
+
+// consentTTL is the maximum age of a consent token before it expires.
+const consentTTL = 5 * time.Minute
+
+// consentSecret returns the HMAC key for consent tokens.
+// SECURITY: fail-closed — returns nil if GGID_INTERNAL_SECRET is not set.
 func consentSecret() []byte {
 	s := os.Getenv("GGID_INTERNAL_SECRET")
 	if s == "" {
-		s = "ggid-consent-fallback"
+		return nil
 	}
 	return []byte(s)
 }
@@ -2957,8 +2975,13 @@ func consentSecret() []byte {
 // issueConsentToken creates a signed HMAC token encoding client+user+scope
 // so that consent cannot be forged or replayed across users/clients.
 func issueConsentToken(clientID, userID, scope string) string {
-	payload := fmt.Sprintf("%s|%s|%s|%d", clientID, userID, scope, time.Now().Unix())
-	h := hmac.New(sha256.New, consentSecret())
+	secret := consentSecret()
+	if secret == nil {
+		return "" // caller must handle empty token as error
+	}
+	expiresAt := time.Now().Add(consentTTL).Unix()
+	payload := fmt.Sprintf("%s|%s|%s|%d", clientID, userID, scope, expiresAt)
+	h := hmac.New(sha256.New, secret)
 	h.Write([]byte(payload))
 	sig := base64.RawURLEncoding.EncodeToString(h.Sum(nil))
 	return base64.RawURLEncoding.EncodeToString([]byte(payload)) + "." + sig
@@ -2966,6 +2989,10 @@ func issueConsentToken(clientID, userID, scope string) string {
 
 // validateConsentToken verifies the HMAC signature and payload consistency.
 func validateConsentToken(token, clientID, userID, scope string) bool {
+	secret := consentSecret()
+	if secret == nil {
+		return false // fail-closed without configured secret
+	}
 	parts := strings.SplitN(token, ".", 2)
 	if len(parts) != 2 {
 		return false
@@ -2978,15 +3005,23 @@ func validateConsentToken(token, clientID, userID, scope string) bool {
 	if err != nil {
 		return false
 	}
-	h := hmac.New(sha256.New, consentSecret())
+	h := hmac.New(sha256.New, secret)
 	h.Write(payloadBytes)
 	if !hmac.Equal(h.Sum(nil), expectedMAC) {
 		return false
 	}
 	// Verify payload matches the current request.
 	fields := strings.Split(string(payloadBytes), "|")
-	if len(fields) < 3 {
+	if len(fields) < 4 {
 		return false
 	}
-	return fields[0] == clientID && fields[1] == userID && fields[2] == scope
+	if fields[0] != clientID || fields[1] != userID || fields[2] != scope {
+		return false
+	}
+	// P2: TTL check — reject expired tokens.
+	expiresAt, err := strconv.ParseInt(fields[3], 10, 64)
+	if err != nil {
+		return false
+	}
+	return time.Now().Unix() < expiresAt
 }
