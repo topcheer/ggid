@@ -9,7 +9,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/ggid/ggid/pkg/crypto"
+	ggidcrypto "github.com/ggid/ggid/pkg/crypto"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -407,6 +407,10 @@ func (h *Handler) handleProfileUpdate(w http.ResponseWriter, r *http.Request) {
 	tokenStr := strings.TrimPrefix(authHeader, "Bearer ")
 	claims := jwt.MapClaims{}
 	_, err := jwt.ParseWithClaims(tokenStr, claims, func(tok *jwt.Token) (any, error) {
+		// SECURITY: verify signing method to prevent algorithm confusion
+		if !ggidcrypto.IsSupportedAlg(tok.Method.Alg()) {
+			return nil, fmt.Errorf("unexpected signing method: %v", tok.Header["alg"])
+		}
 		return h.authSvc.PublicKey(), nil
 	})
 	if err != nil {
@@ -417,14 +421,19 @@ func (h *Handler) handleProfileUpdate(w http.ResponseWriter, r *http.Request) {
 
 	// Persist profile changes to the database.
 	if h.pool != nil && userSub != "" {
+		var execErr error
 		if req.Email != "" {
-			_, _ = h.pool.Exec(r.Context(),
+			_, execErr = h.pool.Exec(r.Context(),
 				`UPDATE users SET display_name = $1, phone = $2, email = $3, email_verified = false WHERE id = $4`,
 				req.DisplayName, req.Phone, req.Email, userSub)
 		} else {
-			_, _ = h.pool.Exec(r.Context(),
+			_, execErr = h.pool.Exec(r.Context(),
 				`UPDATE users SET display_name = $1, phone = $2 WHERE id = $3`,
 				req.DisplayName, req.Phone, userSub)
+		}
+		if execErr != nil {
+			writeError(w, http.StatusInternalServerError, "failed to update profile")
+			return
 		}
 	}
 
