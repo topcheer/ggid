@@ -12,10 +12,10 @@ import (
 type Dimension string
 
 const (
-	DimTenant  Dimension = "tenant"
-	DimUser    Dimension = "user"
-	DimAPIKey  Dimension = "api_key"
-	DimIP      Dimension = "ip"
+	DimTenant   Dimension = "tenant"
+	DimUser     Dimension = "user"
+	DimAPIKey   Dimension = "api_key"
+	DimIP       Dimension = "ip"
 	DimEndpoint Dimension = "endpoint"
 )
 
@@ -63,9 +63,9 @@ func DefaultMultiDimConfigs() map[Tier]MultiDimTierConfig {
 
 // dimBucket tracks burst (1-min) and sustained (1-hour) counters.
 type dimBucket struct {
-	burstCount    int
-	burstExpireAt time.Time
-	sustainedCount int
+	burstCount        int
+	burstExpireAt     time.Time
+	sustainedCount    int
 	sustainedExpireAt time.Time
 }
 
@@ -74,6 +74,7 @@ type MultiDimRateLimiter struct {
 	mu      sync.Mutex
 	tiers   map[Tier]MultiDimTierConfig
 	buckets map[string]*dimBucket // key: dimension:value
+	done    chan struct{}
 }
 
 // NewMultiDimRateLimiter creates a new 5-dimensional rate limiter.
@@ -84,9 +85,15 @@ func NewMultiDimRateLimiter(configs map[Tier]MultiDimTierConfig) *MultiDimRateLi
 	rl := &MultiDimRateLimiter{
 		tiers:   configs,
 		buckets: make(map[string]*dimBucket),
+		done:    make(chan struct{}),
 	}
 	go rl.cleanup()
 	return rl
+}
+
+// StopCleanup terminates the background cleanup goroutine.
+func (rl *MultiDimRateLimiter) StopCleanup() {
+	close(rl.done)
 }
 
 // UpdateTier updates the limits for a specific tier.
@@ -214,7 +221,7 @@ func (rl *MultiDimRateLimiter) getOrCreate(key string, now time.Time) *dimBucket
 	b, ok := rl.buckets[key]
 	if !ok {
 		b = &dimBucket{
-			burstExpireAt:    now.Add(time.Minute),
+			burstExpireAt:     now.Add(time.Minute),
 			sustainedExpireAt: now.Add(time.Hour),
 		}
 		rl.buckets[key] = b
@@ -233,12 +240,12 @@ func (rl *MultiDimRateLimiter) getOrCreate(key string, now time.Time) *dimBucket
 
 // GetUsage returns current usage stats for the caller's dimensions.
 type DimensionUsage struct {
-	Dimension     Dimension `json:"dimension"`
-	Value         string    `json:"value"`
-	BurstUsed     int       `json:"burst_used"`
-	BurstLimit    int       `json:"burst_limit"`
-	SustainedUsed int       `json:"sustained_used"`
-	SustainedLimit int      `json:"sustained_limit"`
+	Dimension      Dimension `json:"dimension"`
+	Value          string    `json:"value"`
+	BurstUsed      int       `json:"burst_used"`
+	BurstLimit     int       `json:"burst_limit"`
+	SustainedUsed  int       `json:"sustained_used"`
+	SustainedLimit int       `json:"sustained_limit"`
 }
 
 func (rl *MultiDimRateLimiter) GetUsage(tier Tier, tenantID, userID, apiKey, ip, endpoint string) []DimensionUsage {
@@ -292,15 +299,20 @@ func (rl *MultiDimRateLimiter) GetUsage(tier Tier, tenantID, userID, apiKey, ip,
 func (rl *MultiDimRateLimiter) cleanup() {
 	ticker := time.NewTicker(5 * time.Minute)
 	defer ticker.Stop()
-	for range ticker.C {
-		rl.mu.Lock()
-		now := time.Now()
-		for k, b := range rl.buckets {
-			if now.After(b.burstExpireAt) && now.After(b.sustainedExpireAt) {
-				delete(rl.buckets, k)
+	for {
+		select {
+		case <-rl.done:
+			return
+		case <-ticker.C:
+			rl.mu.Lock()
+			now := time.Now()
+			for k, b := range rl.buckets {
+				if now.After(b.burstExpireAt) && now.After(b.sustainedExpireAt) {
+					delete(rl.buckets, k)
+				}
 			}
+			rl.mu.Unlock()
 		}
-		rl.mu.Unlock()
 	}
 }
 

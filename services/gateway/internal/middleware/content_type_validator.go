@@ -1,9 +1,24 @@
 package middleware
 
 import (
+	"mime"
 	"net/http"
 	"strings"
 )
+
+// isContentTypeAllowed checks whether the parsed media type is in the allowed set.
+func isContentTypeAllowed(ct string, allowed ...string) bool {
+	mediaType, _, err := mime.ParseMediaType(ct)
+	if err != nil {
+		return false
+	}
+	for _, a := range allowed {
+		if mediaType == a {
+			return true
+		}
+	}
+	return false
+}
 
 // ContentTypeValidator enforces Content-Type header on POST/PUT/PATCH requests.
 // It returns 400 Bad Request if a write-method request is missing or has a
@@ -21,21 +36,21 @@ func ContentTypeValidator(next http.Handler) http.Handler {
 				}
 				// OAuth endpoints accept application/x-www-form-urlencoded (RFC 6749)
 				if strings.HasPrefix(r.URL.Path, "/oauth/") || strings.HasPrefix(r.URL.Path, "/api/v1/oauth/") {
-					if !strings.HasPrefix(ct, "application/x-www-form-urlencoded") && !strings.HasPrefix(ct, "application/json") {
+					if !isContentTypeAllowed(ct, "application/x-www-form-urlencoded", "application/json") {
 						WriteErrorNoRequest(w, http.StatusUnsupportedMediaType, "unsupported_media_type",
 							"Content-Type must be application/x-www-form-urlencoded or application/json, got: "+ct)
 						return
 					}
 				} else if strings.HasPrefix(r.URL.Path, "/scim/") {
 					// SCIM endpoints accept application/scim+json (RFC 7644 Section 3.1)
-					if !strings.HasPrefix(ct, "application/scim+json") && !strings.HasPrefix(ct, "application/json") {
+					if !isContentTypeAllowed(ct, "application/scim+json", "application/json") {
 						WriteErrorNoRequest(w, http.StatusUnsupportedMediaType, "unsupported_media_type",
 							"Content-Type must be application/scim+json or application/json, got: "+ct)
 						return
 					}
 				} else {
 					// Accept application/json and variants like application/json; charset=utf-8
-					if !strings.HasPrefix(ct, "application/json") {
+					if !isContentTypeAllowed(ct, "application/json") {
 						WriteErrorNoRequest(w, http.StatusUnsupportedMediaType, "unsupported_media_type",
 							"Content-Type must be application/json, got: "+ct)
 						return
