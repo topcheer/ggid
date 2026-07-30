@@ -1671,7 +1671,18 @@ func (s *OAuthService) ValidateTokenOwnership(tokenStr, clientID string) bool {
 		return true // unparseable token — let RevokeToken handle it
 	}
 	aud := getStringClaim(claims, "aud")
-	return aud == clientID
+	if aud == clientID {
+		return true
+	}
+	// Also check aud as array type (RFC 7519 §4.1.3)
+	if audArr, ok := claims["aud"].([]any); ok {
+		for _, a := range audArr {
+			if s, ok := a.(string); ok && s == clientID {
+				return true
+			}
+		}
+	}
+	return false
 }
 
 // RevokeToken marks a token as revoked. The token's JWT ID is extracted and

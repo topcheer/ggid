@@ -1,6 +1,8 @@
 package server
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
 	"net/http"
 	"strings"
@@ -9,6 +11,12 @@ import (
 
 	"github.com/google/uuid"
 )
+
+// hashResetToken returns SHA-256 hex of a reset token for at-rest storage.
+func hashResetToken(token string) string {
+	h := sha256.Sum256([]byte(token))
+	return hex.EncodeToString(h[:])
+}
 
 type PasswordResetToken struct {
 	Token     string
@@ -41,25 +49,26 @@ func (h *Handler) handlePasswordReset(w http.ResponseWriter, r *http.Request) {
 		// If user exists, generate token and "send email"
 		if req.Email != "" {
 			token := uuid.New().String()
+			tokenHash := hashResetToken(token)
 			pwdResetMu.Lock()
-			pwdResetTokens[token] = &PasswordResetToken{
-				Token: token, Email: req.Email,
+			pwdResetTokens[tokenHash] = &PasswordResetToken{
+				Token: tokenHash, Email: req.Email,
 				ExpiresAt: time.Now().UTC().Add(30 * time.Minute),
 			}
 			pwdResetMu.Unlock()
 
-			// PG write-through
+			// PG write-through (store hash, not plaintext)
 			if h.memMapRepo != nil {
-				h.memMapRepo.StoreJSON(r.Context(), "auth_pwd_reset_tokens", token, map[string]any{
-					"token": token, "email": req.Email,
+				h.memMapRepo.StoreJSON(r.Context(), "auth_pwd_reset_tokens", tokenHash, map[string]any{
+					"token": tokenHash, "email": req.Email,
 					"expires_at": time.Now().UTC().Add(30 * time.Minute), "used": false,
 				})
 			}
 		}
 
 		writeJSON(w, http.StatusOK, map[string]any{
-			"status":   "sent",
-			"message":  "If an account exists for this email, a reset link has been sent.",
+			"status":     "sent",
+			"message":    "If an account exists for this email, a reset link has been sent.",
 			"expires_in": 1800,
 		})
 		return
@@ -80,23 +89,23 @@ func (h *Handler) handlePasswordReset(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		// PG-first lookup
+		// PG-first lookup (using hashed token)
 		if h.memMapRepo != nil {
-			row, _ := h.memMapRepo.GetJSON(r.Context(), "auth_pwd_reset_tokens", req.Token)
+			row, _ := h.memMapRepo.GetJSON(r.Context(), "auth_pwd_reset_tokens", hashResetToken(req.Token))
 			if row != nil {
 				if used, _ := row["used"].(bool); used {
 					writeError(w, http.StatusBadRequest, "token already used")
 					return
 				}
 				// Valid token in PG — proceed to reset.
-				writeJSON(w, http.StatusOK, map[string]any{"status": "verified", "token": req.Token})
+				writeJSON(w, http.StatusOK, map[string]any{"status": "verified"})
 				return
 			}
 		}
 
-		// Fallback: in-memory map
+		// Fallback: in-memory map (using hashed token)
 		pwdResetMu.Lock()
-		rt, ok := pwdResetTokens[req.Token]
+		rt, ok := pwdResetTokens[hashResetToken(req.Token)]
 		if !ok {
 			pwdResetMu.Unlock()
 			writeError(w, http.StatusBadRequest, "invalid or expired token")
@@ -122,8 +131,8 @@ func (h *Handler) handlePasswordReset(w http.ResponseWriter, r *http.Request) {
 		}
 
 		writeJSON(w, http.StatusOK, map[string]any{
-			"status":    "completed",
-			"email":     rt.Email,
+			"status":       "completed",
+			"email":        rt.Email,
 			"completed_at": time.Now().UTC().Format(time.RFC3339),
 		})
 		return

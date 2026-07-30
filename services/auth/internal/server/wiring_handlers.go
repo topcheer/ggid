@@ -65,29 +65,27 @@ func (h *Handler) handleImpersonate(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusForbidden, map[string]string{"error": "tenant context required"})
 		return
 	}
-	if headerTenantID != "" {
-		// Defense-in-depth: validate UUID format
-		if _, err := uuid.Parse(headerTenantID); err != nil {
-			writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid X-Tenant-ID header"})
-			return
+	// Defense-in-depth: validate UUID format
+	if _, err := uuid.Parse(headerTenantID); err != nil {
+		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid X-Tenant-ID header"})
+		return
+	}
+	if req.TenantID != "" && headerTenantID != req.TenantID {
+		// Cross-tenant impersonation requires platform:admin scope.
+		// X-Scopes is the gateway-derived (stripped + re-set) header;
+		// X-User-Scopes/X-User-Role are no longer consulted (R9 P0).
+		scopesStr := r.Header.Get("X-Scopes")
+		scopes := strings.Split(scopesStr, ",")
+		isPlatformAdmin := false
+		for _, sc := range scopes {
+			if strings.TrimSpace(sc) == "platform:admin" {
+				isPlatformAdmin = true
+				break
+			}
 		}
-		if req.TenantID != "" && headerTenantID != req.TenantID {
-			// Cross-tenant impersonation requires platform:admin scope.
-			// X-Scopes is the gateway-derived (stripped + re-set) header;
-			// X-User-Scopes/X-User-Role are no longer consulted (R9 P0).
-			scopesStr := r.Header.Get("X-Scopes")
-			scopes := strings.Split(scopesStr, ",")
-			isPlatformAdmin := false
-			for _, sc := range scopes {
-				if strings.TrimSpace(sc) == "platform:admin" {
-					isPlatformAdmin = true
-					break
-				}
-			}
-			if !isPlatformAdmin {
-				writeJSON(w, http.StatusForbidden, map[string]string{"error": "cross-tenant impersonation requires platform:admin scope"})
-				return
-			}
+		if !isPlatformAdmin {
+			writeJSON(w, http.StatusForbidden, map[string]string{"error": "cross-tenant impersonation requires platform:admin scope"})
+			return
 		}
 	}
 
