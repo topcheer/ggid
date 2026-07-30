@@ -1063,6 +1063,10 @@ func (s *HTTPServer) handleOrgRoles(w http.ResponseWriter, r *http.Request, orgI
 }
 
 func (s *HTTPServer) handleOrgRoleByID(w http.ResponseWriter, r *http.Request, orgID uuid.UUID, roleIDStr string) {
+	// SECURITY (R20 P1): Verify org belongs to caller's tenant.
+	if !s.checkOrgOwnership(w, r, orgID) {
+		return
+	}
 	if r.Method != http.MethodDelete {
 		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
