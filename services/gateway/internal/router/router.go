@@ -148,7 +148,14 @@ func New(cfg *config.Config, jwks *middleware.JWKSClient) *Gateway {
 	}
 	gw.buildProxies()
 	gw.buildHealthChecker()
+	// Start background cleanup for rate limiter buckets (10min interval, 30min maxAge).
+	gw.rateLimiter.StartCleanup(10*time.Minute, 30*time.Minute)
 	return gw
+}
+
+// StopRateLimiterCleanup gracefully stops the rate limiter cleanup goroutine.
+func (gw *Gateway) StopRateLimiterCleanup() {
+	gw.rateLimiter.StopCleanup()
 }
 
 // SetHealthChecker allows injecting a pre-configured health checker.
