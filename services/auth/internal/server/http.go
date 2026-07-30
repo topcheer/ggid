@@ -1287,6 +1287,23 @@ func (h *Handler) mfaVerify(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// SECURITY: Require JWT authentication to prevent IDOR.
+	authHeader := r.Header.Get("Authorization")
+	tokenStr := strings.TrimPrefix(authHeader, "Bearer ")
+	claims := jwt.MapClaims{}
+	_, parseErr := jwt.ParseWithClaims(tokenStr, claims, func(tok *jwt.Token) (any, error) {
+		return h.authSvc.PublicKey(), nil
+	})
+	if parseErr != nil {
+		writeError(w, http.StatusUnauthorized, "authentication required")
+		return
+	}
+	authUserID, _ := claims["sub"].(string)
+	if authUserID == "" {
+		writeError(w, http.StatusUnauthorized, "invalid token: missing subject")
+		return
+	}
+
 	var req mfaVerifyRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		writeError(w, http.StatusBadRequest, "invalid request body")
@@ -1296,6 +1313,20 @@ func (h *Handler) mfaVerify(w http.ResponseWriter, r *http.Request) {
 	deviceID, err := uuid.Parse(req.DeviceID)
 	if err != nil {
 		writeError(w, http.StatusBadRequest, "invalid device_id")
+		return
+	}
+
+	// SECURITY: Verify device ownership before allowing MFA verification.
+	devices, _ := h.authSvc.MFAService().ListDevices(r.Context(), uuid.MustParse(authUserID))
+	owned := false
+	for _, d := range devices {
+		if d.ID == deviceID {
+			owned = true
+			break
+		}
+	}
+	if !owned {
+		writeError(w, http.StatusForbidden, "device does not belong to authenticated user")
 		return
 	}
 
@@ -1314,13 +1345,10 @@ func (h *Handler) mfaVerify(w http.ResponseWriter, r *http.Request) {
 	if wasFirstEnrollment {
 		tc, terr := ggidtenant.FromContext(r.Context())
 		if terr == nil {
-			// Extract userID from device via MFA service (scoped to tenant).
-			devices, _ := h.authSvc.MFAService().ListDevices(r.Context(), tc.TenantID)
-			for _, d := range devices {
-				if d.ID == deviceID {
-					h.TriggerInvalidation(tc.TenantID, d.UserID, InvReasonMFAEnrollment, "")
-					break
-				}
+			// SECURITY: Use authenticated user ID from header, not tenant ID.
+			uidStr := r.Header.Get("X-User-ID")
+			if uid, err := uuid.Parse(uidStr); err == nil {
+				h.TriggerInvalidation(tc.TenantID, uid, InvReasonMFAEnrollment, "")
 			}
 		}
 	}
@@ -1477,31 +1505,76 @@ func (h *Handler) handleAccountDeletion(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	// Soft-delete user
+	// SECURITY: Extract tenant from JWT-validated header, not just X-User-ID.
+	tenantIDStr := r.Header.Get("X-Tenant-ID")
+	if tenantIDStr == "" {
+		writeError(w, http.StatusForbidden, "tenant context required")
+		return
+	}
+
+	// Soft-delete user (tenant-scoped)
 	if h.pool != nil {
 		_, err := h.pool.Exec(r.Context(),
-			`UPDATE users SET deleted_at = NOW(), status = 'deleted' WHERE id::text = $1 AND deleted_at IS NULL`,
-			userID)
+			`UPDATE users SET deleted_at = NOW(), status = 'deleted' WHERE id::text = $1 AND tenant_id::text = $2 AND deleted_at IS NULL`,
+			userID, tenantIDStr)
 		if err != nil {
 			slog.Error("Account deletion: DB error", "user_id", userID, "error", err)
 			writeInternalError(w, "account deletion", err)
 			return
 		}
 
-		// Revoke all sessions
+		// Revoke all sessions (tenant-scoped)
 		_, sErr := h.pool.Exec(r.Context(),
-			`UPDATE sessions SET revoked_at = NOW() WHERE user_id::text = $1 AND revoked_at IS NULL`,
-			userID)
+			`UPDATE sessions SET revoked_at = NOW() WHERE user_id::text = $1 AND tenant_id::text = $2 AND revoked_at IS NULL`,
+			userID, tenantIDStr)
 		if sErr != nil {
 			slog.Error("Account deletion: session revoke failed", "user_id", userID, "error", sErr)
 		}
 
-		// Disable all credentials
+		// Disable all credentials (tenant-scoped)
 		_, cErr := h.pool.Exec(r.Context(),
-			`UPDATE credentials SET enabled = false WHERE identifier = (SELECT username FROM users WHERE id::text = $1)`,
-			userID)
+			`UPDATE credentials SET enabled = false WHERE identifier = (SELECT username FROM users WHERE id::text = $1 AND tenant_id::text = $2) AND tenant_id::text = $2`,
+			userID, tenantIDStr)
 		if cErr != nil {
 			slog.Error("Account deletion: credential disable failed", "user_id", userID, "error", cErr)
+		}
+
+		// SECURITY: Revoke all refresh tokens to prevent post-deletion token replay.
+		_, rtErr := h.pool.Exec(r.Context(),
+			`UPDATE refresh_tokens SET revoked_at = NOW() WHERE user_id::text = $1 AND tenant_id::text = $2 AND revoked_at IS NULL`,
+			userID, tenantIDStr)
+		if rtErr != nil {
+			slog.Error("Account deletion: refresh token revoke failed", "user_id", userID, "error", rtErr)
+		}
+		_, ortErr := h.pool.Exec(r.Context(),
+			`UPDATE oidc_refresh_tokens SET revoked_at = NOW() WHERE user_id::text = $1 AND tenant_id::text = $2 AND revoked_at IS NULL`,
+			userID, tenantIDStr)
+		if ortErr != nil {
+			slog.Error("Account deletion: OAuth refresh token revoke failed", "user_id", userID, "error", ortErr)
+		}
+
+		// GDPR Art. 17: Purge password history for deleted user.
+		_, phErr := h.pool.Exec(r.Context(),
+			`DELETE FROM password_history WHERE user_id::text = $1 AND tenant_id::text = $2`,
+			userID, tenantIDStr)
+		if phErr != nil {
+			slog.Error("Account deletion: password history purge failed", "user_id", userID, "error", phErr)
+		}
+
+		// GDPR Art. 17: Purge backup codes for deleted user.
+		_, bcErr := h.pool.Exec(r.Context(),
+			`DELETE FROM backup_codes WHERE user_id::text = $1 AND tenant_id::text = $2`,
+			userID, tenantIDStr)
+		if bcErr != nil {
+			slog.Error("Account deletion: backup codes purge failed", "user_id", userID, "error", bcErr)
+		}
+
+		// GDPR Art. 17: Purge MFA devices for deleted user.
+		_, mfaErr := h.pool.Exec(r.Context(),
+			`DELETE FROM mfa_devices WHERE user_id::text = $1 AND tenant_id::text = $2`,
+			userID, tenantIDStr)
+		if mfaErr != nil {
+			slog.Error("Account deletion: MFA devices purge failed", "user_id", userID, "error", mfaErr)
 		}
 	}
 
