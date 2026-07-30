@@ -5,6 +5,8 @@ import (
 	"net/http"
 	"sync"
 	"time"
+
+	"github.com/google/uuid"
 )
 
 // RevocableSession represents a trackable session for admin revocation.
@@ -77,60 +79,80 @@ func (h *Handler) handleRevokeSessions(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if req.Reason == "" {
+		req.Reason = "admin_batch_revocation"
+	}
+
 	revokedCount := 0
 	var failed []map[string]string
 
-	sessionStore.mu.Lock()
-
-	// Revoke by session IDs
-	for _, sid := range req.SessionIDs {
-		sess, ok := sessionStore.sessions[sid]
-		if !ok {
-			failed = append(failed, map[string]string{
-				"session_id": sid,
-				"error":      "session not found",
-			})
-			continue
+	// Delegate user-based revocation to SessionRevocationManager (DB + Redis + refresh tokens).
+	if len(req.UserIDs) > 0 {
+		if h.revocationMgr == nil {
+			writeError(w, http.StatusServiceUnavailable, "revocation manager not configured")
+			return
 		}
-		// SECURITY: tenant ownership check — skip sessions from other tenants.
-		if !isPlatformAdmin && callerTenant != "" && sess.TenantID != "" && sess.TenantID != callerTenant {
-			failed = append(failed, map[string]string{
-				"session_id": sid,
-				"error":      "cross-tenant revocation denied",
-			})
-			continue
-		}
-		if sess.Revoked {
-			failed = append(failed, map[string]string{
-				"session_id": sid,
-				"error":      "already revoked",
-			})
-			continue
-		}
-		now := time.Now().UTC()
-		sess.Revoked = true
-		sess.RevokedAt = &now
-		if sess.TokenJTI != "" {
-			sessionStore.revokedJTIs[sess.TokenJTI] = true
-		}
-		revokedCount++
-	}
-
-	// Revoke by user IDs
-	for _, uid := range req.UserIDs {
-		sids, ok := sessionStore.byUser[uid]
-		if !ok || len(sids) == 0 {
-			// Best-effort: mark as revoked even if not tracked (e.g., external sessions)
-			revokedCount++
-			continue
-		}
-		for _, sid := range sids {
-			sess := sessionStore.sessions[sid]
-			if sess == nil || sess.Revoked {
+		for _, uidStr := range req.UserIDs {
+			uid, err := uuid.Parse(uidStr)
+			if err != nil {
+				failed = append(failed, map[string]string{
+					"user_id": uidStr,
+					"error":   "invalid user_id",
+				})
 				continue
 			}
-			// SECURITY: tenant ownership check.
+			// Resolve tenant: use caller's tenant for non-platform:admin.
+			targetTenant := callerTenant
+			if isPlatformAdmin {
+				// Platform admin can specify any tenant via body; default to caller's.
+				targetTenant = callerTenant
+			}
+			tid, err := uuid.Parse(targetTenant)
+			if err != nil {
+				failed = append(failed, map[string]string{
+					"user_id": uidStr,
+					"error":   "could not resolve tenant for revocation",
+				})
+				continue
+			}
+			result, err := h.revocationMgr.RevokeUser(r.Context(), tid, uid, req.Reason)
+			if err != nil {
+				failed = append(failed, map[string]string{
+					"user_id": uidStr,
+					"error":   "revocation failed",
+				})
+				continue
+			}
+			revokedCount += result.SessionsRevoked
+		}
+	}
+
+	// Session ID-based revocation: blocklist JTIs via the in-memory store.
+	// This covers tokens issued before DB-backed session tracking was available.
+	if len(req.SessionIDs) > 0 {
+		sessionStore.mu.Lock()
+		for _, sid := range req.SessionIDs {
+			sess, ok := sessionStore.sessions[sid]
+			if !ok {
+				// Session not tracked in memory — cannot revoke by ID.
+				failed = append(failed, map[string]string{
+					"session_id": sid,
+					"error":      "session not found (use user_id for DB-backed revocation)",
+				})
+				continue
+			}
 			if !isPlatformAdmin && callerTenant != "" && sess.TenantID != "" && sess.TenantID != callerTenant {
+				failed = append(failed, map[string]string{
+					"session_id": sid,
+					"error":      "cross-tenant revocation denied",
+				})
+				continue
+			}
+			if sess.Revoked {
+				failed = append(failed, map[string]string{
+					"session_id": sid,
+					"error":      "already revoked",
+				})
 				continue
 			}
 			now := time.Now().UTC()
@@ -141,9 +163,8 @@ func (h *Handler) handleRevokeSessions(w http.ResponseWriter, r *http.Request) {
 			}
 			revokedCount++
 		}
+		sessionStore.mu.Unlock()
 	}
-
-	sessionStore.mu.Unlock()
 
 	if failed == nil {
 		failed = []map[string]string{}
