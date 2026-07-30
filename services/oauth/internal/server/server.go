@@ -2446,7 +2446,9 @@ func introspectRequestAuthenticated(oauthSvc *service.OAuthService, r *http.Requ
 		return authenticateIntrospectClient(oauthSvc, r, clientID, clientSecret)
 	}
 
-	// Method 3: Bearer token (RFC 6750) — must be an active token.
+	// Method 3: Bearer token (RFC 6750) — must be an active token issued
+	// to this AS or a registered resource server. SECURITY: Don't allow any
+	// arbitrary active token to introspect other tokens (RFC 7662 §2.1).
 	authHeader := r.Header.Get("Authorization")
 	if strings.HasPrefix(authHeader, "Bearer ") {
 		token := strings.TrimSpace(strings.TrimPrefix(authHeader, "Bearer "))
@@ -2454,7 +2456,13 @@ func introspectRequestAuthenticated(oauthSvc *service.OAuthService, r *http.Requ
 			return false
 		}
 		resp := oauthSvc.IntrospectToken(token)
-		return resp != nil && resp.Active
+		if resp == nil || !resp.Active {
+			return false
+		}
+		// SECURITY: Only allow tokens whose audience is the AS itself
+		// (e.g., tokens minted for introspection/resource-server access).
+		// Regular user access tokens must NOT be able to introspect others.
+		return resp.Aud == "ggid" || resp.Aud == "introspection"
 	}
 
 	return false
