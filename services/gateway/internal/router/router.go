@@ -1489,7 +1489,9 @@ func (gw *Gateway) handlePostureEvaluate(w http.ResponseWriter, r *http.Request)
 	}
 	tenantID := r.Header.Get("X-Tenant-ID")
 	if tenantID == "" {
-		tenantID = "default"
+		w.WriteHeader(http.StatusBadRequest)
+		_ = json.NewEncoder(w).Encode(map[string]string{"error": "X-Tenant-ID header required"})
+		return
 	}
 	result := gw.postureEngine.Evaluate(tenantID, input)
 	gw.postureEngine.PersistResult(r.Context(), tenantID, result)
@@ -1516,7 +1518,9 @@ func (gw *Gateway) handlePostureGet(w http.ResponseWriter, r *http.Request) {
 	deviceID := strings.TrimPrefix(r.URL.Path, "/api/v1/devices/posture/")
 	tenantID := r.Header.Get("X-Tenant-ID")
 	if tenantID == "" {
-		tenantID = "default"
+		w.WriteHeader(http.StatusBadRequest)
+		_ = json.NewEncoder(w).Encode(map[string]string{"error": "X-Tenant-ID header required"})
+		return
 	}
 	result, _ := gw.postureEngine.GetLatestScore(r.Context(), tenantID, deviceID)
 	if result == nil {
@@ -1535,7 +1539,9 @@ func (gw *Gateway) handlePostureGetPolicy(w http.ResponseWriter, r *http.Request
 	}
 	tenantID := r.Header.Get("X-Tenant-ID")
 	if tenantID == "" {
-		tenantID = "default"
+		w.WriteHeader(http.StatusBadRequest)
+		_ = json.NewEncoder(w).Encode(map[string]string{"error": "X-Tenant-ID header required"})
+		return
 	}
 	_ = json.NewEncoder(w).Encode(gw.postureEngine.GetPolicy(tenantID))
 }

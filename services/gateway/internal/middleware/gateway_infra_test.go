@@ -551,8 +551,9 @@ func TestClientIP_XForwardedFor(t *testing.T) {
 	req := httptest.NewRequest("GET", "/", nil)
 	req.Header.Set("X-Forwarded-For", "1.2.3.4, 5.6.7.8")
 	ip := ClientIP(req)
-	if ip != "1.2.3.4" {
-		t.Errorf("ClientIP: want '1.2.3.4', got '%s'", ip)
+	// Security: use RIGHTMOST entry (added by trusted proxy), not client-controlled leftmost
+	if ip != "5.6.7.8" {
+		t.Errorf("ClientIP: want '5.6.7.8' (rightmost), got '%s'", ip)
 	}
 }
 

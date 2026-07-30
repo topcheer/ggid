@@ -790,6 +790,9 @@ func (h *HTTPHandler) listUsers(ctx context.Context, w http.ResponseWriter, r *h
 	if ps := q.Get("page_size"); ps != "" {
 		var n int
 		fmt.Sscanf(ps, "%d", &n)
+		if n > 1000 {
+			n = 1000 // cap to prevent DoS
+		}
 		if n > 0 {
 			filter.PageSize = n
 		}
@@ -798,6 +801,9 @@ func (h *HTTPHandler) listUsers(ctx context.Context, w http.ResponseWriter, r *h
 	if ps := q.Get("limit"); ps != "" {
 		var n int
 		fmt.Sscanf(ps, "%d", &n)
+		if n > 1000 {
+			n = 1000 // cap to prevent DoS
+		}
 		if n > 0 {
 			filter.PageSize = n
 		}

@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"os"
 	"strconv"
+	"strings"
 	"sync"
 	"time"
 
@@ -76,9 +77,9 @@ func (tb *TokenBucket) RetryAfter() int {
 
 // BucketRateLimitConfig configures the token-bucket rate limiter per tenant tier.
 type BucketRateLimitConfig struct {
-	DefaultMaxTokens   float64
+	DefaultMaxTokens    float64
 	DefaultRefillPerSec float64
-	TierOverrides      map[string]BucketTierConfig
+	TierOverrides       map[string]BucketTierConfig
 }
 
 // BucketTierConfig defines rate limits for a specific tier.
@@ -94,8 +95,8 @@ func DefaultBucketRateLimitConfig() *BucketRateLimitConfig {
 		DefaultMaxTokens:    100,
 		DefaultRefillPerSec: 10, // 600/min sustained
 		TierOverrides: map[string]BucketTierConfig{
-			"free":       {MaxTokens: 20, RefillPerSec: 2},    // 120/min
-			"pro":        {MaxTokens: 100, RefillPerSec: 10},  // 600/min
+			"free":       {MaxTokens: 20, RefillPerSec: 2},     // 120/min
+			"pro":        {MaxTokens: 100, RefillPerSec: 10},   // 600/min
 			"enterprise": {MaxTokens: 1000, RefillPerSec: 100}, // 6000/min
 		},
 	}
@@ -244,15 +245,16 @@ func (tbl *TenantBucketLimiter) Middleware(next http.Handler) http.Handler {
 
 // ClientIP extracts the real client IP from common proxy headers.
 func ClientIP(r *http.Request) string {
-	// Check X-Forwarded-For first
+	// Check X-Forwarded-For: use the RIGHTMOST entry (added by the last trusted proxy).
+	// The leftmost entry is client-controlled and can be spoofed to bypass rate limiting.
 	if xff := r.Header.Get("X-Forwarded-For"); xff != "" {
-		// Use the first IP in the list
-		for i := 0; i < len(xff); i++ {
-			if xff[i] == ',' {
-				return xff[:i]
+		parts := strings.Split(xff, ",")
+		for i := len(parts) - 1; i >= 0; i-- {
+			ip := strings.TrimSpace(parts[i])
+			if ip != "" {
+				return ip
 			}
 		}
-		return xff
 	}
 	// Check X-Real-IP
 	if xri := r.Header.Get("X-Real-IP"); xri != "" {
