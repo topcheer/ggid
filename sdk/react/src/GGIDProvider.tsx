@@ -85,13 +85,16 @@ export function GGIDProvider({
     if (!current?.refresh_token) return;
 
     try {
-      const resp = await fetch(`${config.apiBaseUrl}/api/v1/auth/refresh`, {
+      const resp = await fetch(`${config.apiBaseUrl}/api/v1/oauth/token`, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
+          'Content-Type': 'application/x-www-form-urlencoded',
           'X-Tenant-ID': config.tenantId,
         },
-        body: JSON.stringify({ refresh_token: current.refresh_token }),
+        body: new URLSearchParams({
+          grant_type: 'refresh_token',
+          refresh_token: current.refresh_token,
+        }),
       });
 
       if (!resp.ok) throw new Error('Token refresh failed');
