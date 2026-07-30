@@ -43,6 +43,12 @@ type Client struct {
 	jwksExpiry    time.Time
 	jwksTTL       time.Duration
 	discoveryOnce sync.Once
+
+	// Refresh deduplication: prevents multiple goroutines from racing to refresh.
+	refreshMu       sync.Mutex
+	refreshInFlight bool
+	refreshResult   *TokenSet
+	refreshErr      error
 }
 
 // Option configures the Client.
@@ -373,10 +379,6 @@ func (c *Client) ClientCredentials(ctx context.Context, clientID, clientSecret, 
 	if tenantID != "" {
 		req.Header.Set("X-Tenant-ID", tenantID)
 	}
-	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-	if tenantID != "" {
-		req.Header.Set("X-Tenant-ID", tenantID)
-	}
 
 	var ts TokenSet
 	if err := c.do(req, &ts); err != nil {
@@ -472,7 +474,33 @@ func WithCodeChallenge(challenge string) AuthorizeOpt {
 }
 
 // RefreshToken refreshes an access token using a refresh token (RFC 6749 §6).
+// Uses mutex-based deduplication to prevent multiple goroutines from racing
+// to refresh the same token (which would invalidate the refresh token on
+// rotation-enabled servers).
 func (c *Client) RefreshToken(ctx context.Context, refreshToken string) (*TokenSet, error) {
+	c.refreshMu.Lock()
+	if c.refreshInFlight {
+		c.refreshMu.Unlock()
+		// Wait for the in-flight refresh to complete by polling.
+		for i := 0; i < 100; i++ {
+			time.Sleep(10 * time.Millisecond)
+			c.refreshMu.Lock()
+			if !c.refreshInFlight {
+				ts, err := c.refreshResult, c.refreshErr
+				c.refreshMu.Unlock()
+				if err != nil {
+					return nil, err
+				}
+				return ts, nil
+			}
+			c.refreshMu.Unlock()
+		}
+		return nil, fmt.Errorf("token refresh timed out waiting for in-flight request")
+	}
+	c.refreshInFlight = true
+	c.refreshMu.Unlock()
+
+	// Perform the actual refresh.
 	form := url.Values{}
 	form.Set("grant_type", "refresh_token")
 	form.Set("refresh_token", refreshToken)
@@ -482,6 +510,10 @@ func (c *Client) RefreshToken(ctx context.Context, refreshToken string) (*TokenS
 	}
 	req, err := http.NewRequestWithContext(ctx, "POST", c.baseURL+"/api/v1/oauth/token", strings.NewReader(form.Encode()))
 	if err != nil {
+		c.refreshMu.Lock()
+		c.refreshInFlight = false
+		c.refreshErr = err
+		c.refreshMu.Unlock()
 		return nil, err
 	}
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
@@ -490,8 +522,19 @@ func (c *Client) RefreshToken(ctx context.Context, refreshToken string) (*TokenS
 	}
 	var ts TokenSet
 	if err := c.do(req, &ts); err != nil {
-		return nil, err // returns *APIError with code/message for structured error handling
+		c.refreshMu.Lock()
+		c.refreshInFlight = false
+		c.refreshErr = err
+		c.refreshMu.Unlock()
+		return nil, err
 	}
+
+	c.refreshMu.Lock()
+	c.refreshInFlight = false
+	c.refreshResult = &ts
+	c.refreshErr = nil
+	c.refreshMu.Unlock()
+
 	return &ts, nil
 }
 
