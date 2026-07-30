@@ -33,9 +33,12 @@ func (r *UserRoleRepository) Assign(ctx context.Context, ur *domain.UserRole) er
 }
 
 // Revoke removes a user-role assignment.
+// For JIT-sourced revocations, only removes temporary (expires_at IS NOT NULL) rows
+// to avoid destroying standing (permanent) role assignments.
 func (r *UserRoleRepository) Revoke(ctx context.Context, userID, roleID uuid.UUID, scopeType domain.ScopeType, scopeID uuid.UUID) error {
 	_, err := r.db.Exec(ctx,
-		`DELETE FROM user_roles WHERE user_id = $1 AND role_id = $2 AND scope_type = $3 AND scope_id = $4`,
+		`DELETE FROM user_roles WHERE user_id = $1 AND role_id = $2 AND scope_type = $3 AND scope_id = $4
+		 AND expires_at IS NOT NULL`,
 		userID, roleID, scopeType, scopeID)
 	return err
 }
@@ -135,14 +138,14 @@ func (r *PolicyRepository) Create(ctx context.Context, policy *domain.Policy) er
 	).Scan(&policy.ID, &policy.CreatedAt)
 }
 
-// GetByID retrieves a policy by ID.
-func (r *PolicyRepository) GetByID(ctx context.Context, id uuid.UUID) (*domain.Policy, error) {
+// GetByID retrieves a policy by ID with tenant scope (defense-in-depth BOLA protection).
+func (r *PolicyRepository) GetByID(ctx context.Context, tenantID, id uuid.UUID) (*domain.Policy, error) {
 	policy := &domain.Policy{}
 	var condBytes []byte
 	query := `
 		SELECT id, tenant_id, name, description, effect, actions, resources, conditions, priority, created_at
-		FROM policies WHERE id = $1`
-	err := r.db.QueryRow(ctx, query, id).Scan(
+		FROM policies WHERE id = $1 AND tenant_id = $2`
+	err := r.db.QueryRow(ctx, query, id, tenantID).Scan(
 		&policy.ID, &policy.TenantID, &policy.Name, &policy.Description, &policy.Effect,
 		&policy.Actions, &policy.Resources, &condBytes, &policy.Priority, &policy.CreatedAt,
 	)
@@ -182,9 +185,9 @@ func (r *PolicyRepository) ListByTenant(ctx context.Context, tenantID uuid.UUID,
 	return policies, nil
 }
 
-// Delete removes a policy and its attachments (cascade).
-func (r *PolicyRepository) Delete(ctx context.Context, id uuid.UUID) error {
-	cmd, err := r.db.Exec(ctx, `DELETE FROM policies WHERE id = $1`, id)
+// Delete removes a policy and its attachments (cascade) with tenant scope.
+func (r *PolicyRepository) Delete(ctx context.Context, tenantID, id uuid.UUID) error {
+	cmd, err := r.db.Exec(ctx, `DELETE FROM policies WHERE id = $1 AND tenant_id = $2`, id, tenantID)
 	if err != nil {
 		return fmt.Errorf("delete policy: %w", err)
 	}

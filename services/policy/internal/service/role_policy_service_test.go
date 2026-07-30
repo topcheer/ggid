@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/ggid/ggid/pkg/errors"
+	"github.com/ggid/ggid/pkg/tenant"
 	"github.com/ggid/ggid/services/policy/internal/domain"
 	"github.com/google/uuid"
 )
@@ -172,7 +173,7 @@ func (m *mockPolicyRepo) Create(_ context.Context, p *domain.Policy) error {
 	m.policies[p.ID] = p
 	return nil
 }
-func (m *mockPolicyRepo) GetByID(_ context.Context, id uuid.UUID) (*domain.Policy, error) {
+func (m *mockPolicyRepo) GetByID(_ context.Context, _ uuid.UUID, id uuid.UUID) (*domain.Policy, error) {
 	if m.getErr != nil {
 		return nil, m.getErr
 	}
@@ -197,7 +198,7 @@ func (m *mockPolicyRepo) ListByTenant(_ context.Context, tid uuid.UUID, limit, o
 	}
 	return res, nil
 }
-func (m *mockPolicyRepo) Delete(_ context.Context, id uuid.UUID) error {
+func (m *mockPolicyRepo) Delete(_ context.Context, _ uuid.UUID, id uuid.UUID) error {
 	if m.deleteErr != nil {
 		return m.deleteErr
 	}
@@ -216,7 +217,7 @@ func (m *mockPolicyRepo) DetachPolicy(_ context.Context, _ uuid.UUID, _ domain.P
 func TestRoleService_CreateRole(t *testing.T) {
 	svc := NewRoleService(&mockRoleRepo{}, &mockPermRepo{}, &mockUserRoleRepo{})
 	pid := uuid.New()
-	r, err := svc.CreateRole(context.Background(), uuid.New(), "admin", "Admin", "desc", &pid)
+	r, err := svc.CreateRole(context.Background(), uuid.Nil, "admin", "Admin", "desc", &pid)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -230,7 +231,7 @@ func TestRoleService_CreateRole(t *testing.T) {
 
 func TestRoleService_CreateRole_NoParent(t *testing.T) {
 	svc := NewRoleService(&mockRoleRepo{}, &mockPermRepo{}, &mockUserRoleRepo{})
-	r, err := svc.CreateRole(context.Background(), uuid.New(), "v", "V", "", nil)
+	r, err := svc.CreateRole(context.Background(), uuid.Nil, "v", "V", "", nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -241,7 +242,7 @@ func TestRoleService_CreateRole_NoParent(t *testing.T) {
 
 func TestRoleService_CreateRole_Error(t *testing.T) {
 	svc := NewRoleService(&mockRoleRepo{createErr: errors.New(errors.ErrInternal, "x")}, &mockPermRepo{}, &mockUserRoleRepo{})
-	_, err := svc.CreateRole(context.Background(), uuid.New(), "k", "n", "", nil)
+	_, err := svc.CreateRole(context.Background(), uuid.Nil, "k", "n", "", nil)
 	if err == nil {
 		t.Fatal("expected error")
 	}
@@ -250,7 +251,7 @@ func TestRoleService_CreateRole_Error(t *testing.T) {
 func TestRoleService_GetRole(t *testing.T) {
 	repo := &mockRoleRepo{}
 	svc := NewRoleService(repo, &mockPermRepo{}, &mockUserRoleRepo{})
-	c, _ := svc.CreateRole(context.Background(), uuid.New(), "editor", "Editor", "", nil)
+	c, _ := svc.CreateRole(context.Background(), uuid.Nil, "editor", "Editor", "", nil)
 	g, err := svc.GetRole(context.Background(), c.ID)
 	if err != nil {
 		t.Fatal(err)
@@ -298,7 +299,7 @@ func TestRoleService_ListRoles_DefaultPageSize(t *testing.T) {
 func TestRoleService_UpdateRole(t *testing.T) {
 	repo := &mockRoleRepo{}
 	svc := NewRoleService(repo, &mockPermRepo{}, &mockUserRoleRepo{})
-	c, _ := svc.CreateRole(context.Background(), uuid.New(), "old", "Old", "", nil)
+	c, _ := svc.CreateRole(context.Background(), uuid.Nil, "old", "Old", "", nil)
 	n := "New"
 	u, err := svc.UpdateRole(context.Background(), c.ID, &n, nil, nil)
 	if err != nil {
@@ -321,7 +322,7 @@ func TestRoleService_UpdateRole_NotFound(t *testing.T) {
 func TestRoleService_DeleteRole(t *testing.T) {
 	repo := &mockRoleRepo{}
 	svc := NewRoleService(repo, &mockPermRepo{}, &mockUserRoleRepo{})
-	c, _ := svc.CreateRole(context.Background(), uuid.New(), "t", "T", "", nil)
+	c, _ := svc.CreateRole(context.Background(), uuid.Nil, "t", "T", "", nil)
 	if err := svc.DeleteRole(context.Background(), c.ID); err != nil {
 		t.Fatal(err)
 	}
@@ -424,16 +425,26 @@ func TestRoleService_ListPermissions(t *testing.T) {
 }
 
 func TestRoleService_GrantPermissions(t *testing.T) {
-	svc := NewRoleService(&mockRoleRepo{}, &mockPermRepo{}, &mockUserRoleRepo{})
-	if err := svc.GrantPermissionsToRole(context.Background(), uuid.New(), []uuid.UUID{uuid.New()}); err != nil {
+	roleID := uuid.New()
+	repo := &mockRoleRepo{roles: map[uuid.UUID]*domain.Role{
+		roleID: {ID: roleID, TenantID: uuid.Nil, Key: "test", Name: "Test"},
+	}}
+	svc := NewRoleService(repo, &mockPermRepo{}, &mockUserRoleRepo{})
+	if err := svc.GrantPermissionsToRole(context.Background(), roleID, []uuid.UUID{uuid.New()}); err != nil {
 		t.Fatal(err)
 	}
 }
 
 func TestRoleService_RevokePermissions(t *testing.T) {
-	repo := &mockRoleRepo{revokeErr: errors.New(errors.ErrInternal, "fail")}
+	roleID := uuid.New()
+	repo := &mockRoleRepo{
+		roles: map[uuid.UUID]*domain.Role{
+			roleID: {ID: roleID, TenantID: uuid.Nil, Key: "test", Name: "Test"},
+		},
+		revokeErr: errors.New(errors.ErrInternal, "fail"),
+	}
 	svc := NewRoleService(repo, &mockPermRepo{}, &mockUserRoleRepo{})
-	if err := svc.RevokePermissionsFromRole(context.Background(), uuid.New(), []uuid.UUID{uuid.New()}); err == nil {
+	if err := svc.RevokePermissionsFromRole(context.Background(), roleID, []uuid.UUID{uuid.New()}); err == nil {
 		t.Fatal("expected error")
 	}
 }
@@ -482,7 +493,8 @@ func TestPolicyService_GetPolicy(t *testing.T) {
 	repo := &mockPolicyRepo{}
 	svc := NewPolicyService(repo)
 	c, _ := svc.CreatePolicy(context.Background(), &domain.Policy{Effect: domain.EffectAllow})
-	_, err := svc.GetPolicy(context.Background(), c.ID)
+	ctx := tenant.WithContext(context.Background(), &tenant.Context{TenantID: uuid.New()})
+	_, err := svc.GetPolicy(ctx, c.ID)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -490,7 +502,8 @@ func TestPolicyService_GetPolicy(t *testing.T) {
 
 func TestPolicyService_GetPolicy_NotFound(t *testing.T) {
 	svc := NewPolicyService(&mockPolicyRepo{})
-	_, err := svc.GetPolicy(context.Background(), uuid.New())
+	ctx := tenant.WithContext(context.Background(), &tenant.Context{TenantID: uuid.New()})
+	_, err := svc.GetPolicy(ctx, uuid.New())
 	if err == nil {
 		t.Fatal("expected error")
 	}
@@ -526,7 +539,8 @@ func TestPolicyService_DeletePolicy(t *testing.T) {
 	repo := &mockPolicyRepo{}
 	svc := NewPolicyService(repo)
 	c, _ := svc.CreatePolicy(context.Background(), &domain.Policy{Effect: domain.EffectAllow})
-	if err := svc.DeletePolicy(context.Background(), c.ID); err != nil {
+	ctx := tenant.WithContext(context.Background(), &tenant.Context{TenantID: uuid.New()})
+	if err := svc.DeletePolicy(ctx, c.ID); err != nil {
 		t.Fatal(err)
 	}
 }
@@ -535,14 +549,16 @@ func TestPolicyService_AttachPolicy(t *testing.T) {
 	repo := &mockPolicyRepo{}
 	svc := NewPolicyService(repo)
 	p, _ := svc.CreatePolicy(context.Background(), &domain.Policy{Effect: domain.EffectAllow})
-	if err := svc.AttachPolicy(context.Background(), p.ID, domain.PrincipalUser, uuid.New()); err != nil {
+	ctx := tenant.WithContext(context.Background(), &tenant.Context{TenantID: uuid.New()})
+	if err := svc.AttachPolicy(ctx, p.ID, domain.PrincipalUser, uuid.New()); err != nil {
 		t.Fatal(err)
 	}
 }
 
 func TestPolicyService_AttachPolicy_NotFound(t *testing.T) {
 	svc := NewPolicyService(&mockPolicyRepo{})
-	if err := svc.AttachPolicy(context.Background(), uuid.New(), domain.PrincipalUser, uuid.New()); err == nil {
+	ctx := tenant.WithContext(context.Background(), &tenant.Context{TenantID: uuid.New()})
+	if err := svc.AttachPolicy(ctx, uuid.New(), domain.PrincipalUser, uuid.New()); err == nil {
 		t.Fatal("expected error")
 	}
 }
@@ -563,7 +579,7 @@ func TestPolicyService_DetachPolicy_Error(t *testing.T) {
 
 func TestGetRolePermissions_Success(t *testing.T) {
 	svc := NewRoleService(&mockRoleRepo{}, &mockPermRepo{}, nil)
-	r, err := svc.CreateRole(context.Background(), uuid.New(), "p", "P", "", nil)
+	r, err := svc.CreateRole(context.Background(), uuid.Nil, "p", "P", "", nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -599,7 +615,7 @@ func TestListRoles_Error(t *testing.T) {
 
 func TestCreateRole_Error(t *testing.T) {
 	svc := NewRoleService(&mockRoleRepo{createErr: errors.New(errors.ErrInternal, "db error")}, &mockPermRepo{}, nil)
-	_, err := svc.CreateRole(context.Background(), uuid.New(), "test", "test", "", nil)
+	_, err := svc.CreateRole(context.Background(), uuid.Nil, "test", "test", "", nil)
 	if err == nil {
 		t.Fatal("expected error")
 	}
@@ -676,16 +692,24 @@ func TestListPermissions_PageSizeNormalization(t *testing.T) {
 }
 
 func TestGrantPermissionsToRole_Success(t *testing.T) {
-	svc := NewRoleService(&mockRoleRepo{}, &mockPermRepo{}, nil)
-	err := svc.GrantPermissionsToRole(context.Background(), uuid.New(), []uuid.UUID{uuid.New()})
+	roleID := uuid.New()
+	repo := &mockRoleRepo{roles: map[uuid.UUID]*domain.Role{
+		roleID: {ID: roleID, TenantID: uuid.Nil, Key: "test", Name: "Test"},
+	}}
+	svc := NewRoleService(repo, &mockPermRepo{}, nil)
+	err := svc.GrantPermissionsToRole(context.Background(), roleID, []uuid.UUID{uuid.New()})
 	if err != nil {
 		t.Fatalf("unexpected: %v", err)
 	}
 }
 
 func TestRevokePermissionsFromRole_Success(t *testing.T) {
-	svc := NewRoleService(&mockRoleRepo{}, &mockPermRepo{}, nil)
-	err := svc.RevokePermissionsFromRole(context.Background(), uuid.New(), []uuid.UUID{uuid.New()})
+	roleID := uuid.New()
+	repo := &mockRoleRepo{roles: map[uuid.UUID]*domain.Role{
+		roleID: {ID: roleID, TenantID: uuid.Nil, Key: "test", Name: "Test"},
+	}}
+	svc := NewRoleService(repo, &mockPermRepo{}, nil)
+	err := svc.RevokePermissionsFromRole(context.Background(), roleID, []uuid.UUID{uuid.New()})
 	if err != nil {
 		t.Fatalf("unexpected: %v", err)
 	}
