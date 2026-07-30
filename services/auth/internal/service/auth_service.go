@@ -150,6 +150,12 @@ func (s *AuthService) VerifyCredentials(ctx context.Context, username, password,
 	}
 	userID = *result.LinkedUser
 
+	// SECURITY: Check password expiration policy (MaxAgeDays).
+	// If expired, return userID with MustChangePassword flag in the response.
+	if s.passwordService != nil && s.passwordService.MustChangePassword(ctx, tc.TenantID, userID) {
+		return userID, false, ErrPasswordExpired
+	}
+
 	// Check MFA.
 	if s.mfaService != nil && s.mfaService.HasMFAEnabled(ctx, tc.TenantID, userID) {
 		return userID, true, nil
