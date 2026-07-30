@@ -335,6 +335,8 @@ func doReq(method, path, body string) *httptest.ResponseRecorder {
 	if testTenantHeader != "" {
 		req.Header.Set("X-Tenant-ID", testTenantHeader)
 	}
+	req.Header.Set("X-Scopes", "platform:admin") // R16 D5: createPolicy/admin requires admin scope
+	req.Header.Set("X-User-ID", "00000000-0000-0000-0000-000000000001")
 	w := httptest.NewRecorder()
 	testMux.ServeHTTP(w, req)
 	return w
@@ -377,11 +379,15 @@ func TestHandleRoles_CreateInvalidJSON(t *testing.T) {
 }
 
 func TestHandleRoles_CreateInvalidTenant(t *testing.T) {
-	origHeader := testTenantHeader
-	testTenantHeader = "" // clear header so no valid X-Tenant-ID
-	defer func() { testTenantHeader = origHeader }()
-	w := doReq("POST", "/api/v1/roles", `{"key":"k","name":"N"}`)
-	assertStatus(t, w, http.StatusForbidden)
+	// Directly test handler without X-Tenant-ID header.
+	req := httptest.NewRequest("POST", "/api/v1/roles", strings.NewReader(`{"key":"k","name":"N"}`))
+	w := httptest.NewRecorder()
+	if testMux != nil {
+		testMux.ServeHTTP(w, req)
+	}
+	if w.Code != http.StatusForbidden {
+		t.Errorf("expected 403, got %d (body: %s)", w.Code, w.Body.String())
+	}
 }
 
 func TestHandleRoles_CreateInvalidParent(t *testing.T) {
@@ -658,7 +664,11 @@ func TestHandlePermissions_MethodNotAllowed(t *testing.T) {
 func TestHandlePolicies_Create(t *testing.T) {
 	h := newTestHarness()
 	body := `{"tenant_id":"` + h.tenantID.String() + `","name":"DenyAll","effect":"deny","actions":["*"],"resources":["*"]}`
-	w := doReq("POST", "/api/v1/policies", body)
+	req := httptest.NewRequest("POST", "/api/v1/policies", strings.NewReader(body))
+	req.Header.Set("X-Tenant-ID", h.tenantID.String())
+	req.Header.Set("X-Scopes", "platform:admin")
+	w := httptest.NewRecorder()
+	testMux.ServeHTTP(w, req)
 	assertStatus(t, w, http.StatusCreated)
 	resp := parseJSON(t, w)
 	if resp["name"] != "DenyAll" {
@@ -667,14 +677,24 @@ func TestHandlePolicies_Create(t *testing.T) {
 }
 
 func TestHandlePolicies_CreateInvalidJSON(t *testing.T) {
-	w := doReq("POST", "/api/v1/policies", "bad")
+	h := newTestHarness()
+	req := httptest.NewRequest("POST", "/api/v1/policies", strings.NewReader("bad"))
+	req.Header.Set("X-Tenant-ID", h.tenantID.String())
+	req.Header.Set("X-Scopes", "platform:admin")
+	w := httptest.NewRecorder()
+	testMux.ServeHTTP(w, req)
 	assertStatus(t, w, http.StatusBadRequest)
 }
 
 func TestHandlePolicies_CreateInvalidTenant(t *testing.T) {
 	// Body tenant_id is now ignored (header authoritative, R14 P0) —
-	// an invalid body value must not break creation.
-	w := doReq("POST", "/api/v1/policies", `{"tenant_id":"bad","name":"X","effect":"allow"}`)
+	// an invalid body value must not break creation. Requires admin.
+	h := newTestHarness()
+	req := httptest.NewRequest("POST", "/api/v1/policies", strings.NewReader(`{"tenant_id":"bad","name":"X","effect":"allow"}`))
+	req.Header.Set("X-Tenant-ID", h.tenantID.String())
+	req.Header.Set("X-Scopes", "platform:admin")
+	w := httptest.NewRecorder()
+	testMux.ServeHTTP(w, req)
 	assertStatus(t, w, http.StatusCreated)
 }
 
@@ -882,23 +902,41 @@ func TestHandleDefaultAction_Get(t *testing.T) {
 }
 
 func TestHandleDefaultAction_Put(t *testing.T) {
-	w := doReq("PUT", "/api/v1/policies/default-action", `{"default_action":"allow"}`)
+	// Requires platform:admin scope
+	h := newTestHarness()
+	req := httptest.NewRequest("PUT", "/api/v1/policies/default-action", strings.NewReader(`{"default_action":"allow"}`))
+	req.Header.Set("X-Tenant-ID", h.tenantID.String())
+	req.Header.Set("X-Scopes", "platform:admin")
+	w := httptest.NewRecorder()
+	testMux.ServeHTTP(w, req)
 	assertStatus(t, w, http.StatusOK)
 	resp := parseJSON(t, w)
 	if resp["default_action"] != "allow" {
 		t.Errorf("expected allow, got %v", resp["default_action"])
 	}
 	// Reset to deny for other tests
-	_ = doReq("PUT", "/api/v1/policies/default-action", `{"default_action":"deny"}`)
+	req2 := httptest.NewRequest("PUT", "/api/v1/policies/default-action", strings.NewReader(`{"default_action":"deny"}`))
+	req2.Header.Set("X-Tenant-ID", h.tenantID.String())
+	req2.Header.Set("X-Scopes", "platform:admin")
+	w2 := httptest.NewRecorder()
+	testMux.ServeHTTP(w2, req2)
 }
 
 func TestHandleDefaultAction_PutInvalid(t *testing.T) {
-	w := doReq("PUT", "/api/v1/policies/default-action", `{"default_action":"bad"}`)
+	req := httptest.NewRequest("PUT", "/api/v1/policies/default-action", strings.NewReader(`{"default_action":"bad"}`))
+	req.Header.Set("X-Tenant-ID", newTestHarness().tenantID.String())
+	req.Header.Set("X-Scopes", "platform:admin")
+	w := httptest.NewRecorder()
+	testMux.ServeHTTP(w, req)
 	assertStatus(t, w, http.StatusBadRequest)
 }
 
 func TestHandleDefaultAction_PutInvalidJSON(t *testing.T) {
-	w := doReq("PUT", "/api/v1/policies/default-action", "bad")
+	req := httptest.NewRequest("PUT", "/api/v1/policies/default-action", strings.NewReader("bad"))
+	req.Header.Set("X-Tenant-ID", newTestHarness().tenantID.String())
+	req.Header.Set("X-Scopes", "platform:admin")
+	w := httptest.NewRecorder()
+	testMux.ServeHTTP(w, req)
 	assertStatus(t, w, http.StatusBadRequest)
 }
 
@@ -1059,7 +1097,7 @@ func TestHandleAnalyze(t *testing.T) {
 	w := doReq("GET", "/api/v1/policies/analyze?role_id="+role.ID.String(), "")
 	assertStatus(t, w, http.StatusOK)
 	resp := parseJSON(t, w)
-	if resp["total_direct"].(float64) != 2 {
+	if totalDirect, ok := resp["total_direct"].(float64); !ok || totalDirect != 2 {
 		t.Errorf("expected 2 direct perms, got %v", resp["total_direct"])
 	}
 }
@@ -1465,7 +1503,11 @@ func TestHandlePolicies_CreateRepoError(t *testing.T) {
 	h := newTestHarness()
 	h.policyRepo.createErr = fmt.Errorf("create failed")
 	body := `{"tenant_id":"` + h.tenantID.String() + `","name":"X","effect":"allow"}`
-	w := doReq("POST", "/api/v1/policies", body)
+	req := httptest.NewRequest("POST", "/api/v1/policies", strings.NewReader(body))
+	req.Header.Set("X-Tenant-ID", h.tenantID.String())
+	req.Header.Set("X-Scopes", "platform:admin")
+	w := httptest.NewRecorder()
+	testMux.ServeHTTP(w, req)
 	assertStatus(t, w, http.StatusInternalServerError)
 }
 
