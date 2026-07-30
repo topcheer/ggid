@@ -28,13 +28,10 @@ func (s *HTTPServer) handleAlertEvaluate(w http.ResponseWriter, r *http.Request)
 		writeJSONError(w, http.StatusBadRequest, "invalid JSON body")
 		return
 	}
-	if req.TenantID == "" {
-		writeJSONError(w, http.StatusBadRequest, "tenant_id is required")
-		return
-	}
-	tenantID, err := uuid.Parse(req.TenantID)
-	if err != nil {
-		writeJSONError(w, http.StatusBadRequest, "invalid tenant_id")
+	// SECURITY (R18 P1): tenant from verified header — body tenant_id
+	// previously allowed cross-tenant audit event access.
+	tenantID, ok := resolveValidatedTenant(w, r)
+	if !ok {
 		return
 	}
 

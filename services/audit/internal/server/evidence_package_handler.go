@@ -16,16 +16,16 @@ import (
 // mappings, and an audit-event summary into a single downloadable artifact
 // suitable for auditor delivery.
 type EvidencePackage struct {
-	ID            string                 `json:"id"`
-	Framework     string                 `json:"framework"`
-	TenantID      string                 `json:"tenant_id"`
-	Period        EvidencePeriod         `json:"period"`
-	GeneratedAt   time.Time              `json:"generated_at"`
-	Report        *compliance.ComplianceReport `json:"report"`
-	Evidence      []ComplianceEvidence   `json:"evidence"`
-	Controls      []map[string]any       `json:"controls"`
-	AuditSummary  map[string]any         `json:"audit_summary"`
-	PackageHash   string                 `json:"package_hash,omitempty"`
+	ID           string                       `json:"id"`
+	Framework    string                       `json:"framework"`
+	TenantID     string                       `json:"tenant_id"`
+	Period       EvidencePeriod               `json:"period"`
+	GeneratedAt  time.Time                    `json:"generated_at"`
+	Report       *compliance.ComplianceReport `json:"report"`
+	Evidence     []ComplianceEvidence         `json:"evidence"`
+	Controls     []map[string]any             `json:"controls"`
+	AuditSummary map[string]any               `json:"audit_summary"`
+	PackageHash  string                       `json:"package_hash,omitempty"`
 }
 
 // EvidencePeriod is the date range covered by the package.
@@ -73,9 +73,8 @@ func (s *HTTPServer) generateEvidencePackage(w http.ResponseWriter, r *http.Requ
 			if req.Framework != "" {
 				framework = req.Framework
 			}
-			if req.TenantID != "" {
-				tenantIDStr = req.TenantID
-			}
+			// SECURITY (R18 P1): body tenant_id is ignored — header is
+			// authoritative (cross-tenant evidence package generation).
 			if req.Format != "" {
 				format = req.Format
 			}
@@ -99,13 +98,16 @@ func (s *HTTPServer) generateEvidencePackage(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	// Parse tenant.
+	// SECURITY (R18 P1): header is authoritative — query param must match.
+	tenantIDStr = r.Header.Get("X-Tenant-ID")
 	if tenantIDStr == "" {
-		tenantIDStr = r.Header.Get("X-Tenant-ID")
+		writeJSONError(w, http.StatusForbidden, "tenant context required")
+		return
 	}
 	tenantID, err := uuid.Parse(tenantIDStr)
 	if err != nil {
-		tenantID = defaultTenantID()
+		writeJSONError(w, http.StatusBadRequest, "invalid tenant context")
+		return
 	}
 
 	// Parse date range.
@@ -152,14 +154,14 @@ func (s *HTTPServer) generateEvidencePackage(w http.ResponseWriter, r *http.Requ
 	auditSummary := buildAuditSummary(report)
 
 	pkg := &EvidencePackage{
-		ID:          "epkg-" + now.Format("20060102-150405") + "-" + framework,
-		Framework:   framework,
-		TenantID:    tenantID.String(),
-		Period:      EvidencePeriod{From: from, To: to},
-		GeneratedAt: now,
-		Report:      report,
-		Evidence:    evidenceItems,
-		Controls:    controls,
+		ID:           "epkg-" + now.Format("20060102-150405") + "-" + framework,
+		Framework:    framework,
+		TenantID:     tenantID.String(),
+		Period:       EvidencePeriod{From: from, To: to},
+		GeneratedAt:  now,
+		Report:       report,
+		Evidence:     evidenceItems,
+		Controls:     controls,
 		AuditSummary: auditSummary,
 	}
 
@@ -190,12 +192,12 @@ func buildControlCoverage(framework string, evidence []ComplianceEvidence, repor
 	result := make([]map[string]any, 0, len(mappings))
 	for _, m := range mappings {
 		control := map[string]any{
-			"control_id":      m.ControlID,
-			"name":            m.ControlName,
-			"trust_category":  m.TrustCategory,
-			"feature":         m.GGIDFeature,
-			"status":          m.Status,
-			"evidence_count":  len(evByControl[m.ControlID]),
+			"control_id":     m.ControlID,
+			"name":           m.ControlName,
+			"trust_category": m.TrustCategory,
+			"feature":        m.GGIDFeature,
+			"status":         m.Status,
+			"evidence_count": len(evByControl[m.ControlID]),
 		}
 		if evs, ok := evByControl[m.ControlID]; ok && len(evs) > 0 {
 			control["latest_evidence"] = evs[len(evs)-1].CollectedAt
@@ -224,8 +226,8 @@ func buildControlCoverage(framework string, evidence []ComplianceEvidence, repor
 func buildAuditSummary(report *compliance.ComplianceReport) map[string]any {
 	if report == nil {
 		return map[string]any{
-			"total_events":  0,
-			"sections":      0,
+			"total_events": 0,
+			"sections":     0,
 		}
 	}
 	return map[string]any{

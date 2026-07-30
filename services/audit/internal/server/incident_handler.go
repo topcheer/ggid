@@ -62,11 +62,11 @@ func mapToIncident(row map[string]any) *SecurityIncident {
 }
 
 // incidentListFromDB reads all incidents from the audit_incidents table.
-func (s *HTTPServer) incidentListFromDB(r *http.Request) []*SecurityIncident {
+func (s *HTTPServer) incidentListFromDB(r *http.Request, tenantID string) []*SecurityIncident {
 	if s.pool == nil {
 		return nil
 	}
-	rows, err := s.pool.Query(r.Context(), `SELECT data::text FROM audit_incidents ORDER BY created_at DESC`)
+	rows, err := s.pool.Query(r.Context(), `SELECT data::text FROM audit_incidents WHERE tenant_id = $1 ORDER BY created_at DESC`, tenantID)
 	if err != nil {
 		return nil
 	}
@@ -120,6 +120,13 @@ func (s *HTTPServer) incidentSaveDB(r *http.Request, inc *SecurityIncident) bool
 func (s *HTTPServer) handleIncidents(w http.ResponseWriter, r *http.Request) {
 	path := strings.TrimPrefix(r.URL.Path, "/api/v1/audit/incidents")
 
+	// SECURITY (R18 P1): tenant from verified header for all incident ops.
+	tenantID, ok := resolveValidatedTenant(w, r)
+	if !ok {
+		return
+	}
+	tenantIDStr := tenantID.String()
+
 	if path == "" || path == "/" {
 		switch r.Method {
 		case http.MethodPost:
@@ -147,7 +154,7 @@ func (s *HTTPServer) handleIncidents(w http.ResponseWriter, r *http.Request) {
 				req.Type = "anomaly"
 			}
 			inc := &SecurityIncident{
-				ID: uuid.New().String(), TenantID: req.TenantID,
+				ID: uuid.New().String(), TenantID: tenantIDStr,
 				Severity: req.Severity, Type: req.Type, Title: req.Title,
 				Description: req.Description, AffectedUsers: req.AffectedUsers,
 				Status: "open", AssignedTo: req.AssignedTo, CreatedAt: time.Now().UTC(),
@@ -160,7 +167,7 @@ func (s *HTTPServer) handleIncidents(w http.ResponseWriter, r *http.Request) {
 			writeJSON(w, http.StatusCreated, inc)
 		case http.MethodGet:
 			// Try DB first
-			result := s.incidentListFromDB(r)
+			result := s.incidentListFromDB(r, tenantIDStr)
 			if result == nil && s.memMapRepo2 != nil {
 				// Fallback to memMapRepo
 				rows, _ := s.memMapRepo2.ListJSON(r.Context(), "audit_incidents")
@@ -231,10 +238,15 @@ func (s *HTTPServer) handleIncidentsActive(w http.ResponseWriter, r *http.Reques
 		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
-	tenantID := r.URL.Query().Get("tenant_id")
+	// SECURITY (R18 P1): tenant from verified header.
+	tid, ok := resolveValidatedTenant(w, r)
+	if !ok {
+		return
+	}
+	tenantID := tid.String()
 
 	// Try DB first
-	all := s.incidentListFromDB(r)
+	all := s.incidentListFromDB(r, tenantID)
 	if all == nil && s.memMapRepo2 != nil {
 		rows, _ := s.memMapRepo2.ListJSON(r.Context(), "audit_incidents")
 		for _, row := range rows {

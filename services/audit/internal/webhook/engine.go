@@ -22,13 +22,13 @@ import (
 
 // Endpoint represents a configured webhook destination.
 type Endpoint struct {
-	ID         string   `json:"id"`
-	URL        string   `json:"url"`
-	Events     []string `json:"events"`       // event types to subscribe to
-	Secret     string   `json:"secret,omitempty"` // HMAC signing secret
-	MaxRetries int      `json:"max_retries"`  // default 5
-	BatchSize  int      `json:"batch_size"`   // max events per delivery (default 100)
-	Enabled    bool     `json:"enabled"`
+	ID         string    `json:"id"`
+	URL        string    `json:"url"`
+	Events     []string  `json:"events"`           // event types to subscribe to
+	Secret     string    `json:"secret,omitempty"` // HMAC signing secret
+	MaxRetries int       `json:"max_retries"`      // default 5
+	BatchSize  int       `json:"batch_size"`       // max events per delivery (default 100)
+	Enabled    bool      `json:"enabled"`
 	CreatedAt  time.Time `json:"created_at"`
 }
 
@@ -58,8 +58,16 @@ type Engine struct {
 // NewEngine creates a webhook delivery engine.
 func NewEngine(pool *pgxpool.Pool) *Engine {
 	return &Engine{
-		pool:      pool,
-		client:    &http.Client{Timeout: 15 * time.Second},
+		pool: pool,
+		client: &http.Client{
+			Timeout: 15 * time.Second,
+			Transport: &http.Transport{
+				DialContext: ssrfSafeDialContext,
+			},
+			CheckRedirect: func(req *http.Request, via []*http.Request) error {
+				return http.ErrUseLastResponse
+			},
+		},
 		endpoints: make(map[string]*Endpoint),
 	}
 }
@@ -413,4 +421,26 @@ func validateWebhookURL(rawURL string) error {
 		}
 	}
 	return nil
+}
+
+// ssrfSafeDialContext blocks connections to private/loopback/link-local
+// addresses to prevent SSRF via webhook endpoints. It also pins the
+// resolved IP to prevent DNS rebinding TOCTOU.
+func ssrfSafeDialContext(ctx context.Context, network, addr string) (net.Conn, error) {
+	host, port, _ := net.SplitHostPort(addr)
+	ips, err := net.LookupIP(host)
+	if err != nil {
+		return nil, err
+	}
+	testMode := os.Getenv("GGID_ENV") == "test"
+	for _, ip := range ips {
+		if ip.IsLoopback() || ip.IsPrivate() || ip.IsLinkLocalUnicast() || ip.IsUnspecified() {
+			if testMode && ip.IsLoopback() {
+				continue
+			}
+			return nil, fmt.Errorf("SSRF blocked: %s resolves to private IP %s", host, ip)
+		}
+	}
+	dialer := &net.Dialer{Timeout: 10 * time.Second}
+	return dialer.DialContext(ctx, network, net.JoinHostPort(ips[0].String(), port))
 }
