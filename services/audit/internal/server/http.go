@@ -2114,7 +2114,7 @@ func isSafeWebhookURL(rawURL string) bool {
 		return false
 	}
 	host := u.Hostname()
-	if host == "localhost" || host == "127.0.0.1" || host == "::1" {
+	if host == "localhost" || host == "127.0.0.1" || host == "::1" || host == "0.0.0.0" {
 		return false
 	}
 	// Block link-local (169.254.x.x — cloud metadata)

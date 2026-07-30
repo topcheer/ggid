@@ -1,6 +1,8 @@
 package httpserver
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -97,13 +99,28 @@ func (s *HTTPServer) handleWebhooksList(w http.ResponseWriter, r *http.Request) 
 		if req.Active != nil {
 			isActive = *req.Active
 		}
+		if req.URL == "" {
+			writeJSONError(w, http.StatusBadRequest, "url required")
+			return
+		}
+		// SECURITY: SSRF prevention
+		if err := validateWebhookURL(req.URL); err != nil {
+			writeJSONError(w, http.StatusBadRequest, err.Error())
+			return
+		}
+		// SECURITY: hash secret before storage (never store plaintext)
+		secretHash := ""
+		if req.Secret != "" {
+			h := sha256.Sum256([]byte(req.Secret))
+			secretHash = hex.EncodeToString(h[:])
+		}
 		webhook := map[string]any{
 			"id":         fmt.Sprintf("whk_%d", time.Now().UnixNano()),
 			"tenant_id":  r.Header.Get("X-Tenant-ID"),
 			"name":       req.Name,
 			"url":        req.URL,
 			"events":     req.Events,
-			"secret":     req.Secret,
+			"secret":     "", // never return secret
 			"active":     isActive,
 			"created_at": time.Now().UTC().Format(time.RFC3339),
 		}
@@ -116,7 +133,7 @@ func (s *HTTPServer) handleWebhooksList(w http.ResponseWriter, r *http.Request) 
 			_, _ = s.pool.Exec(r.Context(), `
 				INSERT INTO audit_webhooks (tenant_id, url, events, secret, enabled)
 				VALUES ($1, $2, $3, $4, $5)`,
-				tenantID, req.URL, req.Events, req.Secret, isActive)
+				tenantID, req.URL, req.Events, secretHash, isActive)
 		}
 		writeJSON(w, http.StatusCreated, webhook)
 	case http.MethodDelete:
@@ -190,6 +207,12 @@ func (s *HTTPServer) handleWebhooksList(w http.ResponseWriter, r *http.Request) 
 					wh["name"] = *update.Name
 				}
 				if update.URL != nil {
+					// SECURITY: SSRF prevention on URL update
+					if err := validateWebhookURL(*update.URL); err != nil {
+						globalAlertWebhooks.mu.Unlock()
+						writeJSONError(w, http.StatusBadRequest, err.Error())
+						return
+					}
 					wh["url"] = *update.URL
 				}
 				if update.Events != nil {
