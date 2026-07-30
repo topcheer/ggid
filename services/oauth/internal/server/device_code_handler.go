@@ -28,11 +28,6 @@ func handleDeviceAuthorize(s *service.OAuthService) http.HandlerFunc {
 			return
 		}
 		scope := r.FormValue("scope")
-		tenantID := r.Header.Get("X-Tenant-ID")
-		if tenantID == "" {
-			tenantID = r.FormValue("tenant_id")
-		}
-
 		tenantIDStr := r.Header.Get("X-Tenant-ID")
 		if tenantIDStr == "" {
 			tenantIDStr = r.FormValue("tenant_id")

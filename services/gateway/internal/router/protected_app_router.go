@@ -435,7 +435,12 @@ func (r *ProtectedAppRouter) injectHeaders(app *ProtectedApp, req *http.Request)
 
 // logAccess records an access log entry via NATS (consumed by identity service → app_access_logs table).
 func (r *ProtectedAppRouter) logAccess(app *ProtectedApp, req *http.Request, statusCode int, duration time.Duration, decision, reason string) {
+	// R191: X-User-ID may be stripped by injectHeaders; derive from JWT.
 	userID := req.Header.Get("X-User-ID")
+	if userID == "" {
+		jwtClaims := middleware.ExtractJWTClaims(req)
+		userID = jwtClaims.Subject
+	}
 
 	// Log to stdout (always).
 	log.Printf("ZTNA access: app=%s user=%s %s %s → %d (%s, %dms)",
