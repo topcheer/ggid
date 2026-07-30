@@ -374,9 +374,11 @@ func TestRoleService_ListUserRoles(t *testing.T) {
 	repo := &mockRoleRepo{}
 	ur := &mockUserRoleRepo{}
 	svc := NewRoleService(repo, &mockPermRepo{}, ur)
-	r, _ := svc.CreateRole(context.Background(), uuid.New(), "r", "R", "", nil)
+	tenantID := uuid.New()
+	r, _ := svc.CreateRole(context.Background(), tenantID, "r", "R", "", nil)
 	uid := uuid.New()
-	svc.AssignRole(context.Background(), uid, r.ID, domain.ScopeOrganization, uuid.New(), uuid.New(), nil)
+	// Pass tenantID as scopeID so the cross-tenant check passes.
+	svc.AssignRole(context.Background(), uid, r.ID, domain.ScopeOrganization, tenantID, uuid.New(), nil)
 	list, err := svc.ListUserRoles(context.Background(), uid)
 	if err != nil {
 		t.Fatal(err)

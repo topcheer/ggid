@@ -7,9 +7,9 @@ import (
 	"strings"
 	"time"
 
+	ggidtenant "github.com/ggid/ggid/pkg/tenant"
 	"github.com/ggid/ggid/services/policy/internal/domain"
 	"github.com/ggid/ggid/services/policy/internal/repository"
-	ggidtenant "github.com/ggid/ggid/pkg/tenant"
 	"github.com/google/uuid"
 )
 
@@ -182,6 +182,11 @@ func (s *HTTPServer) jitApprove(w http.ResponseWriter, r *http.Request, reqID uu
 	jitReq, err := s.jitRepo.GetByID(r.Context(), reqID)
 	if err != nil || jitReq == nil {
 		writeJSONError(w, http.StatusNotFound, "JIT request not found")
+		return
+	}
+	// SECURITY: verify the JIT request belongs to the caller's tenant.
+	if tc != nil && jitReq.TenantID != tc.TenantID {
+		writeJSONError(w, http.StatusForbidden, "JIT request does not belong to caller's tenant")
 		return
 	}
 	if jitReq.Status != "pending" {

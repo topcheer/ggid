@@ -268,16 +268,21 @@ func tenantIDFromHTTPRequest(ctx context.Context) uuid.UUID {
 }
 
 // AssignRole assigns a role to a user within a specific scope.
-// SECURITY: Prevents self-assignment to avoid privilege escalation.
+// SECURITY: Prevents self-assignment and cross-tenant role assignment.
 func (s *RoleService) AssignRole(ctx context.Context, userID, roleID uuid.UUID, scopeType domain.ScopeType, scopeID, grantedBy uuid.UUID, expiresAt *time.Time) error {
 	// SECURITY FIX: Prevent self-assignment to avoid privilege escalation
 	if userID == grantedBy {
 		return errors.New(errors.ErrPermissionDenied, "cannot assign roles to yourself")
 	}
 
-	// Verify role exists.
-	if _, err := s.roleRepo.GetByID(ctx, roleID); err != nil {
+	// Verify role exists AND belongs to the same tenant as the scope.
+	role, err := s.roleRepo.GetByID(ctx, roleID)
+	if err != nil {
 		return err
+	}
+	// SECURITY: If scopeID is a real tenant ID, the role must belong to that tenant.
+	if scopeID != uuid.Nil && role.TenantID != uuid.Nil && role.TenantID != scopeID {
+		return errors.New(errors.ErrPermissionDenied, "role does not belong to the target tenant")
 	}
 	ur := &domain.UserRole{
 		UserID:    userID,
