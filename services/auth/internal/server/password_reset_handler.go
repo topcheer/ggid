@@ -75,10 +75,13 @@ func (h *Handler) handlePasswordReset(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if strings.HasSuffix(path, "/complete") && r.Method == http.MethodPost {
+		// SECURITY (R16 P1): Delegate to the service-layer resetPassword
+		// which uses GETDEL atomic token consumption + SetPassword +
+		// RevokeAllForUser. The previous stub did not check expiry, did
+		// not mark tokens as used, and never actually changed the password.
 		var req struct {
 			Token       string `json:"token"`
 			NewPassword string `json:"new_password"`
-			UserID      string `json:"user_id"`
 		}
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 			writeError(w, http.StatusBadRequest, "invalid JSON")
@@ -88,51 +91,12 @@ func (h *Handler) handlePasswordReset(w http.ResponseWriter, r *http.Request) {
 			writeError(w, http.StatusBadRequest, "token and new_password required")
 			return
 		}
-
-		// PG-first lookup (using hashed token)
-		if h.memMapRepo != nil {
-			row, _ := h.memMapRepo.GetJSON(r.Context(), "auth_pwd_reset_tokens", hashResetToken(req.Token))
-			if row != nil {
-				if used, _ := row["used"].(bool); used {
-					writeError(w, http.StatusBadRequest, "token already used")
-					return
-				}
-				// Valid token in PG — proceed to reset.
-				writeJSON(w, http.StatusOK, map[string]any{"status": "verified"})
-				return
-			}
-		}
-
-		// Fallback: in-memory map (using hashed token)
-		pwdResetMu.Lock()
-		rt, ok := pwdResetTokens[hashResetToken(req.Token)]
-		if !ok {
-			pwdResetMu.Unlock()
-			writeError(w, http.StatusBadRequest, "invalid or expired token")
+		if err := h.authSvc.ResetPassword(r.Context(), req.Token, req.NewPassword); err != nil {
+			writeAuthError(w, err)
 			return
 		}
-		if rt.Used {
-			pwdResetMu.Unlock()
-			writeError(w, http.StatusBadRequest, "token already used")
-			return
-		}
-		if time.Now().UTC().After(rt.ExpiresAt) {
-			pwdResetMu.Unlock()
-			writeError(w, http.StatusBadRequest, "token expired")
-			return
-		}
-		rt.Used = true
-		pwdResetMu.Unlock()
-
-		// Validate password strength
-		if len(req.NewPassword) < 8 {
-			writeError(w, http.StatusBadRequest, "password must be at least 8 characters")
-			return
-		}
-
 		writeJSON(w, http.StatusOK, map[string]any{
 			"status":       "completed",
-			"email":        rt.Email,
 			"completed_at": time.Now().UTC().Format(time.RFC3339),
 		})
 		return
