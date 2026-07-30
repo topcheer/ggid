@@ -276,6 +276,11 @@ func (h *Handler) handleVerifyEmail(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		h.verificationRepo.MarkUsed(r.Context(), token.ID)
+		// Update email_verified flag in the users table.
+		if h.pool != nil {
+			_, _ = h.pool.Exec(r.Context(),
+				`UPDATE users SET email_verified = true WHERE id = $1`, token.UserID)
+		}
 		writeJSON(w, http.StatusOK, map[string]any{
 			"status": "verified", "user_id": token.UserID,
 			"state": "active", "message": "email verified successfully",
@@ -395,6 +400,29 @@ func (h *Handler) handleProfileUpdate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	needsReverification := req.Email != ""
+
+	// Extract user ID from JWT for the UPDATE.
+	authHeader := r.Header.Get("Authorization")
+	tokenStr := strings.TrimPrefix(authHeader, "Bearer ")
+	claims := jwt.MapClaims{}
+	_, _ = jwt.ParseWithClaims(tokenStr, claims, func(tok *jwt.Token) (any, error) {
+		return h.authSvc.PublicKey(), nil
+	})
+	userSub, _ := claims["sub"].(string)
+
+	// Persist profile changes to the database.
+	if h.pool != nil && userSub != "" {
+		if req.Email != "" {
+			_, _ = h.pool.Exec(r.Context(),
+				`UPDATE users SET display_name = $1, phone = $2, email = $3, email_verified = false WHERE id = $4`,
+				req.DisplayName, req.Phone, req.Email, userSub)
+		} else {
+			_, _ = h.pool.Exec(r.Context(),
+				`UPDATE users SET display_name = $1, phone = $2 WHERE id = $3`,
+				req.DisplayName, req.Phone, userSub)
+		}
+	}
+
 	writeJSON(w, http.StatusOK, map[string]any{
 		"status":                  "updated",
 		"display_name":            req.DisplayName,

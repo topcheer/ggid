@@ -558,7 +558,7 @@ func (s *AuthService) SetForceMFA(ctx context.Context, tenantID uuid.UUID, enabl
 
 // IsAccountLocked checks if an account is locked due to too many failed attempts.
 func (s *AuthService) IsAccountLocked(ctx context.Context, tenantID uuid.UUID, identifier string) bool {
-	key := fmt.Sprintf("ggid:lockout:%s:%s", tenantID, identifier)
+	key := fmt.Sprintf("ggid:lockout:%s:%s", tenantID, strings.ToLower(identifier))
 	count, err := s.rateLimiter.rdb.Get(ctx, key).Int()
 	if err != nil {
 		return false
@@ -568,7 +568,7 @@ func (s *AuthService) IsAccountLocked(ctx context.Context, tenantID uuid.UUID, i
 
 // RemainingLoginAttempts returns how many more failed attempts before lockout.
 func (s *AuthService) RemainingLoginAttempts(ctx context.Context, tenantID uuid.UUID, identifier string) int {
-	key := fmt.Sprintf("ggid:lockout:%s:%s", tenantID, identifier)
+	key := fmt.Sprintf("ggid:lockout:%s:%s", tenantID, strings.ToLower(identifier))
 	count, err := s.rateLimiter.rdb.Get(ctx, key).Int()
 	if err != nil || count < 0 {
 		count = 0
@@ -598,7 +598,7 @@ func (s *AuthService) LockoutDurationSeconds() int {
 
 // RecordFailedLogin increments the failed attempt counter and locks if threshold reached.
 func (s *AuthService) RecordFailedLogin(ctx context.Context, tenantID uuid.UUID, identifier string) error {
-	key := fmt.Sprintf("ggid:lockout:%s:%s", tenantID, identifier)
+	key := fmt.Sprintf("ggid:lockout:%s:%s", tenantID, strings.ToLower(identifier))
 	count, err := s.rateLimiter.rdb.Incr(ctx, key).Result()
 	if err != nil {
 		return fmt.Errorf("increment lockout counter: %w", err)
@@ -611,7 +611,7 @@ func (s *AuthService) RecordFailedLogin(ctx context.Context, tenantID uuid.UUID,
 
 // ResetFailedLogins clears the failed attempt counter after successful login.
 func (s *AuthService) ResetFailedLogins(ctx context.Context, tenantID uuid.UUID, identifier string) {
-	key := fmt.Sprintf("ggid:lockout:%s:%s", tenantID, identifier)
+	key := fmt.Sprintf("ggid:lockout:%s:%s", tenantID, strings.ToLower(identifier))
 	s.rateLimiter.rdb.Del(ctx, key)
 }
 
