@@ -185,6 +185,9 @@ func (s *HTTPServer) executeCampaignRevoke(ctx context.Context, c *ReviewCampaig
 		return
 	}
 
+	// Parse tenant ID once for consistent scope in RevokeRole calls.
+	tenantScopeID, _ := uuid.Parse(c.TenantID)
+
 	// Execute revoke for each item.
 	for _, item := range items {
 		userID, err := uuid.Parse(item.UserID)
@@ -198,18 +201,16 @@ func (s *HTTPServer) executeCampaignRevoke(ctx context.Context, c *ReviewCampaig
 			continue
 		}
 
-		if err := s.roleSvc.RevokeRole(ctx, userID, roleID, "tenant", uuid.Nil); err != nil {
+		if err := s.roleSvc.RevokeRole(ctx, userID, roleID, "tenant", tenantScopeID); err != nil {
 			log.Printf("campaign revoke: failed to revoke role %s for user %s: %v",
 				item.RoleID, item.UserID, err)
 			// Audit: revoke failure.
-			tenantUUID, _ := uuid.Parse(c.TenantID)
-			s.publishAuditEvent("iga.role.revoke", "failure", "role", roleID, tenantUUID)
+			s.publishAuditEvent("iga.role.revoke", "failure", "role", roleID, tenantScopeID)
 			continue
 		}
 
 		// Audit: successful revoke — one event per item.
-		tenantUUID, _ := uuid.Parse(c.TenantID)
-		s.publishAuditEvent("iga.role.revoke", "success", "role", roleID, tenantUUID)
+		s.publishAuditEvent("iga.role.revoke", "success", "role", roleID, tenantScopeID)
 		log.Printf("campaign revoke: revoked role %s for user %s (campaign %s)",
 			item.RoleID, item.UserID, c.ID)
 	}
