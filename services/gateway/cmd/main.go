@@ -139,7 +139,6 @@ func main() {
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 	<-quit
 	log.Println("received shutdown signal, draining in-flight requests...")
-	gw.StopRateLimiterCleanup()
 	shutdown.New(&shutdown.Resources{HTTPServer: srv}).Execute()
 
 	// srv.Shutdown closes the listener (no new connections accepted)
