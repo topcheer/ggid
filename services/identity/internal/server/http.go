@@ -1360,7 +1360,7 @@ func (h *HTTPHandler) handleImportCSV(w http.ResponseWriter, r *http.Request) {
 			Password: password,
 		})
 		if err != nil {
-			results = append(results, importResult{Line: i + 1, Status: "error", Message: err.Error()})
+			results = append(results, importResult{Line: i + 1, Status: "error", Message: "user creation failed"})
 			continue
 		}
 

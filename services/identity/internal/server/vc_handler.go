@@ -55,7 +55,7 @@ func (h *HTTPHandler) handleVCVerify(w http.ResponseWriter, r *http.Request) {
 	err := vcIssuer.VerifyVC(&req.VC, req.IssuerDID)
 	result := map[string]any{"valid": err == nil}
 	if err != nil {
-		result["error"] = err.Error()
+		result["error"] = "credential verification failed"
 	}
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(result)
@@ -98,9 +98,9 @@ func (h *HTTPHandler) handleVCPresent(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var req struct {
-		HolderDID string         `json:"holder_did"`
-		VCIDs     []string       `json:"vc_ids"`
-		Challenge string         `json:"challenge"`
+		HolderDID string   `json:"holder_did"`
+		VCIDs     []string `json:"vc_ids"`
+		Challenge string   `json:"challenge"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		writeJSONError(w, http.StatusBadRequest, "invalid request body")
