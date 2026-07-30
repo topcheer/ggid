@@ -410,6 +410,19 @@ func (s *AuthService) RevokeSession(ctx context.Context, sessionID uuid.UUID) er
 	return s.sessionService.Revoke(ctx, sessionID)
 }
 
+// RevokeSessionScoped revokes a session after verifying it belongs to the caller's tenant.
+func (s *AuthService) RevokeSessionScoped(ctx context.Context, sessionID uuid.UUID, tenantIDStr string) error {
+	// Verify session belongs to caller's tenant via session service
+	session, err := s.sessionService.FindByID(ctx, sessionID)
+	if err != nil || session == nil {
+		return fmt.Errorf("session not found")
+	}
+	if session.TenantID.String() != tenantIDStr {
+		return fmt.Errorf("session does not belong to caller's tenant")
+	}
+	return s.RevokeSession(ctx, sessionID)
+}
+
 // CleanupExpired removes expired sessions. Intended to be called by a background goroutine.
 func (s *AuthService) CleanupExpired(ctx context.Context) (int64, error) {
 	return s.sessionService.CleanupExpired(ctx, 7*24*time.Hour)

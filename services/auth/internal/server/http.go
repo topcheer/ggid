@@ -1170,7 +1170,13 @@ func (h *Handler) handleSessions(w http.ResponseWriter, r *http.Request) {
 			writeError(w, http.StatusBadRequest, "invalid session_id")
 			return
 		}
-		if err := h.authSvc.RevokeSession(r.Context(), sessionID); err != nil {
+		// SECURITY: Verify session belongs to caller's tenant before revoking.
+		callerTenant := r.Header.Get("X-Tenant-ID")
+		if callerTenant == "" {
+			writeError(w, http.StatusForbidden, "tenant context required")
+			return
+		}
+		if err := h.authSvc.RevokeSessionScoped(r.Context(), sessionID, callerTenant); err != nil {
 			writeError(w, http.StatusInternalServerError, "failed to revoke session")
 			return
 		}

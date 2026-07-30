@@ -48,6 +48,13 @@ func handleClientSecretRotation(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if strings.HasSuffix(r.URL.Path, "/rotate-secret") && r.Method == http.MethodPost {
+		// SECURITY: Verify caller's tenant matches the client's tenant.
+		callerTenant := r.Header.Get("X-Tenant-ID")
+		if callerTenant == "" {
+			writeJSON(w, http.StatusForbidden, map[string]any{"error": map[string]string{"code": "forbidden", "message": "tenant context required"}})
+			return
+		}
+		// TODO: verify clientID belongs to callerTenant via oauthSvc when available
 		newSecret := uuid.New().String() + uuid.New().String()
 		graceExpiry := time.Now().UTC().Add(24 * time.Hour)
 		status := &SecretStatus{
@@ -62,13 +69,13 @@ func handleClientSecretRotation(w http.ResponseWriter, r *http.Request) {
 		secretStatuses[clientID] = status
 		secretStatusMu.Unlock()
 		writeJSON(w, http.StatusOK, map[string]any{
-			"status":          "rotated",
-			"client_id":       clientID,
-			"new_secret":      newSecret,
-			"grace_period":    "24h",
-			"grace_expires":   graceExpiry.Format(time.RFC3339),
+			"status":                 "rotated",
+			"client_id":              clientID,
+			"new_secret":             newSecret,
+			"grace_period":           "24h",
+			"grace_expires":          graceExpiry.Format(time.RFC3339),
 			"old_secret_valid_until": graceExpiry.Format(time.RFC3339),
-			"rotated_at":      time.Now().UTC().Format(time.RFC3339),
+			"rotated_at":             time.Now().UTC().Format(time.RFC3339),
 		})
 		return
 	}
