@@ -348,8 +348,9 @@ func TestRoleService_AssignRole(t *testing.T) {
 	repo := &mockRoleRepo{}
 	ur := &mockUserRoleRepo{}
 	svc := NewRoleService(repo, &mockPermRepo{}, ur)
-	r, _ := svc.CreateRole(context.Background(), uuid.New(), "e", "E", "", nil)
-	err := svc.AssignRole(context.Background(), uuid.New(), r.ID, domain.ScopeOrganization, uuid.New(), uuid.New(), nil)
+	tenantID := uuid.New() // role and assignment scope must share the tenant (RBAC R9 P0-2)
+	r, _ := svc.CreateRole(context.Background(), tenantID, "e", "E", "", nil)
+	err := svc.AssignRole(context.Background(), uuid.New(), r.ID, domain.ScopeOrganization, tenantID, uuid.New(), nil)
 	if err != nil {
 		t.Fatal(err)
 	}
