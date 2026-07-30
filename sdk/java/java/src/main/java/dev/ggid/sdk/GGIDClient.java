@@ -48,12 +48,25 @@ public class GGIDClient {
     }
 
     public TokenSet refreshToken(String refreshToken) throws GGIDException, IOException {
-        // OAuth2 token endpoint with form-encoded body (not JSON).
-        FormBody form = new FormBody.Builder()
+        return refreshToken(refreshToken, null, null);
+    }
+
+    /**
+     * Refreshes an access token using a refresh token.
+     * For confidential clients, provide clientId and clientSecret per RFC 6749 §6.
+     */
+    public TokenSet refreshToken(String refreshToken, String clientId, String clientSecret)
+            throws GGIDException, IOException {
+        FormBody.Builder fb = new FormBody.Builder()
                 .add("grant_type", "refresh_token")
-                .add("refresh_token", refreshToken)
-                .build();
-        return postForm("/api/v1/oauth/token", form, TokenSet.class);
+                .add("refresh_token", refreshToken);
+        if (clientId != null && !clientId.isEmpty()) {
+            fb.add("client_id", clientId);
+        }
+        if (clientSecret != null && !clientSecret.isEmpty()) {
+            fb.add("client_secret", clientSecret);
+        }
+        return postForm("/api/v1/oauth/token", fb.build(), TokenSet.class);
     }
 
     public void logout(String accessToken) throws GGIDException, IOException {
