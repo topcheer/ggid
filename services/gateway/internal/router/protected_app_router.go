@@ -19,16 +19,16 @@ var postureHTTPClient = &http.Client{Timeout: 10 * time.Second}
 
 // ProtectedApp represents a ZTNA-protected application loaded into the gateway.
 type ProtectedApp struct {
-	ID            string                   `json:"id"`
-	TenantID      string                   `json:"tenant_id"`
-	Name          string                   `json:"name"`
-	Slug          string                   `json:"slug"`
-	UpstreamURL   string                   `json:"upstream_url"`
-	AuthMode      string                   `json:"auth_mode"`
-	AccessPolicy  map[string]any           `json:"access_policy"`
-	InjectHeaders []map[string]any         `json:"inject_headers"`
-	HealthStatus  string                   `json:"health_status"`
-	RateLimitPerMin int                    `json:"rate_limit_per_min"`
+	ID              string           `json:"id"`
+	TenantID        string           `json:"tenant_id"`
+	Name            string           `json:"name"`
+	Slug            string           `json:"slug"`
+	UpstreamURL     string           `json:"upstream_url"`
+	AuthMode        string           `json:"auth_mode"`
+	AccessPolicy    map[string]any   `json:"access_policy"`
+	InjectHeaders   []map[string]any `json:"inject_headers"`
+	HealthStatus    string           `json:"health_status"`
+	RateLimitPerMin int              `json:"rate_limit_per_min"`
 }
 
 // AppAccessLogEntry records a single proxied request.
@@ -51,11 +51,11 @@ type AppAccessLogEntry struct {
 // Routes are matched by /app/{slug}/* prefix and proxied to upstream_url
 // after PDP evaluation and header injection.
 type ProtectedAppRouter struct {
-	mu       sync.RWMutex
-	apps     map[string]*ProtectedApp // slug → app
-	proxies  map[string]*httputil.ReverseProxy // slug → reverse proxy
-	auditPub middleware.AuditPublisher // NATS publisher for access logs
-	postureCache sync.Map // tenantID:deviceID → postureCacheEntry
+	mu           sync.RWMutex
+	apps         map[string]*ProtectedApp          // slug → app
+	proxies      map[string]*httputil.ReverseProxy // slug → reverse proxy
+	auditPub     middleware.AuditPublisher         // NATS publisher for access logs
+	postureCache sync.Map                          // tenantID:deviceID → postureCacheEntry
 }
 
 func NewProtectedAppRouter() *ProtectedAppRouter {
@@ -349,6 +349,7 @@ func (r *ProtectedAppRouter) injectHeaders(app *ProtectedApp, req *http.Request)
 	forgedHeaders := []string{
 		"X-GGID-User", "X-GGID-Roles", "X-GGID-Tenant",
 		"X-WebAuth-User", "X-WebAuth-Roles", "X-Forwarded-User",
+		"X-Step-Up-Token",
 	}
 	for _, h := range forgedHeaders {
 		req.Header.Del(h)
