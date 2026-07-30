@@ -1686,7 +1686,9 @@ func (s *OAuthService) RevokeToken(tokenStr string, tokenTypeHint ...string) err
 		}
 		// Also blacklist the hash in Redis (covers cross-instance checks).
 		if s.rdb != nil {
-			if err := s.rdb.Set(context.Background(), "oauth:revoked:"+tokenHash, "0", 0); err != nil {
+			// SECURITY: Use TTL to prevent unbounded Redis memory growth from
+			// invalid token revocation attempts. 24h is sufficient for propagation.
+			if err := s.rdb.Set(context.Background(), "oauth:revoked:"+tokenHash, "0", 24*time.Hour); err != nil {
 				slog.Warn("oauth: failed to blacklist revoked token hash in redis", "err", err)
 			}
 		}
@@ -1700,7 +1702,8 @@ func (s *OAuthService) RevokeToken(tokenStr string, tokenTypeHint ...string) err
 		// so IsTokenRevoked can report it as revoked.
 		// Try Redis first (for HA/multi-instance).
 		if s.rdb != nil {
-			if e := s.rdb.Set(context.Background(), "oauth:revoked:"+tokenHash, "0", 0); e == nil {
+			// SECURITY: TTL prevents unbounded growth from repeated invalid revokes.
+			if e := s.rdb.Set(context.Background(), "oauth:revoked:"+tokenHash, "0", 24*time.Hour); e == nil {
 				return nil
 			}
 		}
