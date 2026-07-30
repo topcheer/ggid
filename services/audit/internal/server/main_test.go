@@ -11,5 +11,7 @@ import (
 // literal IPs and localhost.
 func TestMain(m *testing.M) {
 	_ = os.Setenv("GGID_WEBHOOK_SKIP_DNS", "true")
+	// Keep the legacy integrity key for chain-verification tests.
+	_ = os.Setenv("GGID_AUDIT_INTEGRITY_ALLOW_INSECURE_DEFAULT", "true")
 	os.Exit(m.Run())
 }

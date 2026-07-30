@@ -79,11 +79,32 @@ func (s *HTTPServer) handleWebhooksList(w http.ResponseWriter, r *http.Request) 
 				return
 			}
 		}
-		// Memory fallback
+		// Memory fallback — same fail-closed semantics as the DB path:
+		// tenant required, filtered, secrets masked (sa-2).
+		tenantID := r.Header.Get("X-Tenant-ID")
+		if tenantID == "" {
+			writeJSONError(w, http.StatusForbidden, "tenant context required")
+			return
+		}
 		globalAlertWebhooks.mu.RLock()
-		result := make([]map[string]any, len(globalAlertWebhooks.webhooks))
-		copy(result, globalAlertWebhooks.webhooks)
+		var result []map[string]any
+		for _, wh := range globalAlertWebhooks.webhooks {
+			if tid, _ := wh["tenant_id"].(string); tid != "" && tid != tenantID {
+				continue
+			}
+			cp := map[string]any{}
+			for k, v := range wh {
+				cp[k] = v
+			}
+			if s, ok := cp["secret"].(string); ok {
+				cp["secret"] = maskSecret(s)
+			}
+			result = append(result, cp)
+		}
 		globalAlertWebhooks.mu.RUnlock()
+		if result == nil {
+			result = []map[string]any{}
+		}
 		writeJSON(w, http.StatusOK, map[string]any{"webhooks": result, "count": len(result)})
 	case http.MethodPost:
 		var req struct {

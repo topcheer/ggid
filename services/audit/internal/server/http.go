@@ -1214,6 +1214,13 @@ func (s *HTTPServer) handleVerifyIntegrity(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
+	// Fail closed when no integrity key is configured — an empty HMAC
+	// key would report misleading "tampered"/"valid" verdicts (sa-2).
+	if len(integritySecret) == 0 {
+		writeJSONError(w, http.StatusServiceUnavailable, "integrity verification not configured (GGID_AUDIT_INTEGRITY_KEY unset)")
+		return
+	}
+
 	events, total, err := s.svc.ListEvents(r.Context(), domain.ListFilter{
 		TenantID: tenantID,
 	}, 1, 500) // page=1, pageSize=500 (was offset 24950 bug)

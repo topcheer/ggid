@@ -163,8 +163,10 @@ func validateWebhookURL(rawURL string) error {
 	if host == "localhost" || host == "127.0.0.1" || host == "::1" || host == "0.0.0.0" {
 		return fmt.Errorf("localhost URLs not allowed")
 	}
-	// Reject private network ranges
+	// Reject private network ranges (Unmap: 4-in-6 literals like
+	// [::ffff:127.0.0.1] must not bypass the checks, sa-2)
 	if ip, err := netip.ParseAddr(host); err == nil {
+		ip = ip.Unmap()
 		if ip.IsLoopback() || ip.IsPrivate() || ip.IsLinkLocalUnicast() || ip.IsUnspecified() {
 			return fmt.Errorf("internal network URLs not allowed")
 		}
