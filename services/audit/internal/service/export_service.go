@@ -40,12 +40,12 @@ type ExportFilter struct {
 // ExportResult is the result of an export operation.
 type ExportResult struct {
 	Format      ExportFormat `json:"format"`
-	RecordCount int         `json:"record_count"`
-	FilePath    string      `json:"file_path"`
-	DownloadURL string      `json:"download_url"`
-	ExportedAt  time.Time   `json:"exported_at"`
-	FileSize    int64       `json:"file_size"`
-	Truncated   bool        `json:"truncated"` // true if MaxRecords limit was hit
+	RecordCount int          `json:"record_count"`
+	FilePath    string       `json:"file_path"`
+	DownloadURL string       `json:"download_url"`
+	ExportedAt  time.Time    `json:"exported_at"`
+	FileSize    int64        `json:"file_size"`
+	Truncated   bool         `json:"truncated"` // true if MaxRecords limit was hit
 }
 
 // ExportAuditEntry tracks the audit trail of export operations themselves.
@@ -59,10 +59,10 @@ type ExportAuditEntry struct {
 
 // ExportService handles exporting audit events to various formats.
 type ExportService struct {
-	mu           sync.RWMutex
-	exportLog    []ExportAuditEntry
-	maxRecords   int
-	outputDir    string
+	mu         sync.RWMutex
+	exportLog  []ExportAuditEntry
+	maxRecords int
+	outputDir  string
 }
 
 // NewExportService creates a new ExportService.
@@ -147,13 +147,16 @@ func (s *ExportService) ExportEvents(ctx context.Context, events []domain.AuditE
 		Truncated:   truncated,
 	}
 
-	// Log the export.
+	// Log the export (cap at 1000 entries to prevent unbounded growth).
 	s.mu.Lock()
+	if len(s.exportLog) >= 1000 {
+		s.exportLog = s.exportLog[1:] // drop oldest
+	}
 	s.exportLog = append(s.exportLog, ExportAuditEntry{
-		ExportID:    uuid.New(),
-		Filter:      filter,
-		Result:      result,
-		CreatedAt:   time.Now(),
+		ExportID:  uuid.New(),
+		Filter:    filter,
+		Result:    result,
+		CreatedAt: time.Now(),
 	})
 	s.mu.Unlock()
 

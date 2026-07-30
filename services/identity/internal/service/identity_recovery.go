@@ -25,15 +25,15 @@ const (
 )
 
 type RecoveryRequest struct {
-	RequestID  string         `json:"request_id"`
-	UserID     string         `json:"user_id"`
-	Method     RecoveryMethod `json:"method"`
-	Token      string         `json:"token"`
-	Status     RecoveryStatus `json:"status"`
-	ExpiresAt  time.Time      `json:"expires_at"`
-	WaitUntil  time.Time      `json:"wait_until"` // time-delayed recovery
-	CreatedAt  time.Time      `json:"created_at"`
-	CompletedAt time.Time     `json:"completed_at,omitempty"`
+	RequestID   string         `json:"request_id"`
+	UserID      string         `json:"user_id"`
+	Method      RecoveryMethod `json:"method"`
+	Token       string         `json:"token"`
+	Status      RecoveryStatus `json:"status"`
+	ExpiresAt   time.Time      `json:"expires_at"`
+	WaitUntil   time.Time      `json:"wait_until"` // time-delayed recovery
+	CreatedAt   time.Time      `json:"created_at"`
+	CompletedAt time.Time      `json:"completed_at,omitempty"`
 }
 
 type RecoveryAuditEntry struct {
@@ -147,10 +147,14 @@ func (s *IdentityRecoveryService) CleanupExpired() int {
 	defer s.mu.Unlock()
 	count := 0
 	now := time.Now()
-	for _, req := range s.requests {
+	for id, req := range s.requests {
 		if now.After(req.ExpiresAt) && req.Status == RecoveryInitiated {
 			req.Status = RecoveryExpired
 			count++
+		}
+		// Remove expired or completed requests from memory to prevent unbounded growth.
+		if now.After(req.ExpiresAt) {
+			delete(s.requests, id)
 		}
 	}
 	return count

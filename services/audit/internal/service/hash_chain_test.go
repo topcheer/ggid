@@ -13,6 +13,7 @@ import (
 // TestMain sets a hash chain secret so that IsHashChainEnabled() returns true
 // during tests, allowing ComputeHash/VerifyHash to work correctly.
 func TestMain(m *testing.M) {
+	os.Setenv("GGID_ENV", "test") // allow localhost for SSRF-protected webhook tests
 	domain.SetHashChainSecret([]byte("test-hash-chain-secret"))
 	os.Exit(m.Run())
 }

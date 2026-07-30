@@ -17,6 +17,7 @@ import (
 
 	"github.com/ggid/ggid/pkg/audit"
 	"github.com/ggid/ggid/pkg/errors"
+	ggidtenant "github.com/ggid/ggid/pkg/tenant"
 	"github.com/ggid/ggid/services/policy/internal/domain"
 	"github.com/ggid/ggid/services/policy/internal/repository"
 	"github.com/ggid/ggid/services/policy/internal/service"
@@ -530,7 +531,17 @@ func (s *HTTPServer) handleAssignRole(w http.ResponseWriter, r *http.Request) {
 	if grantedByStr != "" {
 		grantedBy, _ = uuid.Parse(grantedByStr)
 	}
-	if err := s.roleSvc.AssignRole(r.Context(), userID, roleID, "global", uuid.Nil, grantedBy, nil); err != nil {
+	// SECURITY: extract tenant ID from context for scopeID — NOT uuid.Nil which bypasses the
+	// AssignRole cross-tenant check in role_service.go.
+	var scopeID uuid.UUID
+	if tc, terr := ggidtenant.FromContext(r.Context()); terr == nil {
+		scopeID = tc.TenantID
+	}
+	if scopeID == uuid.Nil {
+		// Fallback to X-Tenant-ID header if context not set.
+		scopeID, _ = uuid.Parse(r.Header.Get("X-Tenant-ID"))
+	}
+	if err := s.roleSvc.AssignRole(r.Context(), userID, roleID, "tenant", scopeID, grantedBy, nil); err != nil {
 		writeServiceError(w, err)
 		return
 	}
