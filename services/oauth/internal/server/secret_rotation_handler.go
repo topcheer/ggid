@@ -40,16 +40,18 @@ func handleClientSecretRotation(w http.ResponseWriter, r *http.Request, oauthSvc
 		writeJSON(w, http.StatusForbidden, map[string]any{"error": map[string]string{"code": "forbidden", "message": "tenant context required"}})
 		return
 	}
-	if oauthSvc != nil {
-		client, err := oauthSvc.GetClientForAuth(r.Context(), clientID)
-		if err != nil || client == nil {
-			writeJSON(w, http.StatusNotFound, map[string]any{"error": "client not found"})
-			return
-		}
-		if client.TenantID.String() != callerTenant {
-			writeJSON(w, http.StatusNotFound, map[string]any{"error": "client not found"})
-			return
-		}
+	if oauthSvc == nil {
+		writeJSON(w, http.StatusServiceUnavailable, map[string]any{"error": "service unavailable"})
+		return
+	}
+	client, err := oauthSvc.GetClientForAuth(r.Context(), clientID)
+	if err != nil || client == nil {
+		writeJSON(w, http.StatusNotFound, map[string]any{"error": "client not found"})
+		return
+	}
+	if client.TenantID.String() != callerTenant {
+		writeJSON(w, http.StatusNotFound, map[string]any{"error": "client not found"})
+		return
 	}
 
 	if strings.HasSuffix(r.URL.Path, "/secret-status") && r.Method == http.MethodGet {

@@ -46,6 +46,7 @@ type PolicyReader interface {
 //  3. Collect ABAC policies attached to the user and their roles.
 //  4. Deny policies always override allow.
 //  5. Default deny if no explicit allow.
+//
 // DecisionLogger is an optional callback invoked after every Check() call
 // to record the policy decision (e.g. to an audit pipeline).
 type DecisionLogger func(ctx context.Context, req *domain.CheckRequest, result *domain.CheckResult)
@@ -60,14 +61,14 @@ var (
 
 // DecisionEntry records a single policy evaluation.
 type DecisionEntry struct {
-	Timestamp  time.Time
-	UserID     uuid.UUID
-	TenantID   uuid.UUID
-	Action     string
-	Resource   string
-	Allowed    bool
-	Reason     string
-	MatchedBy  string
+	Timestamp time.Time
+	UserID    uuid.UUID
+	TenantID  uuid.UUID
+	Action    string
+	Resource  string
+	Allowed   bool
+	Reason    string
+	MatchedBy string
 }
 
 // SetDecisionLogger installs a custom decision logger callback.
@@ -140,6 +141,11 @@ func NewEvaluator(roleReader RoleReader, userRoleReader UserRoleReader, policyRe
 func (e *Evaluator) Check(ctx context.Context, req *domain.CheckRequest) (*domain.CheckResult, error) {
 	if req.UserID == uuid.Nil {
 		return &domain.CheckResult{Allowed: false, Reason: "anonymous user"}, nil
+	}
+
+	// SECURITY: reject nil tenant — no tenant context = deny (P2 R164)
+	if req.TenantID == uuid.Nil {
+		return &domain.CheckResult{Allowed: false, Reason: "missing tenant context"}, nil
 	}
 
 	if e.userRoleReader == nil {

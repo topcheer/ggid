@@ -90,9 +90,10 @@ func (r *UserRoleRepository) GetRoleIDsForUser(ctx context.Context, userID uuid.
 // The evaluator uses this to enforce role expiration independently of the SQL filter.
 func (r *UserRoleRepository) GetUserRoles(ctx context.Context, userID uuid.UUID) ([]*domain.UserRole, error) {
 	query := `
-		SELECT user_id, role_id, scope_type, scope_id, granted_by, expires_at, created_at
-		FROM user_roles
-		WHERE user_id = $1`
+		SELECT ur.user_id, ur.role_id, ur.scope_type, ur.scope_id, ur.granted_by, ur.expires_at, ur.created_at
+		FROM user_roles ur
+		JOIN roles r ON r.id = ur.role_id
+		WHERE ur.user_id = $1`
 	rows, err := r.db.Query(ctx, query, userID)
 	if err != nil {
 		return nil, fmt.Errorf("get user roles: %w", err)
@@ -180,6 +181,7 @@ func (r *PolicyRepository) ListByTenant(ctx context.Context, tenantID uuid.UUID,
 	}
 	return policies, nil
 }
+
 // Delete removes a policy and its attachments (cascade).
 func (r *PolicyRepository) Delete(ctx context.Context, id uuid.UUID) error {
 	cmd, err := r.db.Exec(ctx, `DELETE FROM policies WHERE id = $1`, id)

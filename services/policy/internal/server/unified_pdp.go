@@ -203,6 +203,12 @@ func (s *HTTPServer) EvaluateAuthorize(ctx context.Context, req *AuthorizeReques
 					tenantID, _ = uuid.Parse(tid)
 				}
 			}
+			// SECURITY: deny if no valid tenant context (P2 R164)
+			if tenantID == uuid.Nil {
+				rbacAllow = false
+				rbacReason = "missing tenant context"
+				return
+			}
 			result, err := s.evaluator.Check(ctx, &domain.CheckRequest{
 				UserID:       subjectUUID,
 				TenantID:     tenantID,
