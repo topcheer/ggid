@@ -748,8 +748,8 @@ func TestHandleCheck_AllowedTrue(t *testing.T) {
 	}
 	h.userRoleReader.userRoles[uid] = []uuid.UUID{roleID}
 
-	body := `{"user_id":"` + uid.String() + `","resource_type":"docs","action":"read","resource":"doc:1"}`
-	w := doReq("POST", "/api/v1/policies/check", body)
+	body := `{"user_id":"` + uid.String() + `","resource_type":"docs","action":"read","resource":"doc:1","tenant_id":"00000000-0000-0000-0000-000000000001"}`
+	w := doReq("POST", "/api/v1/policies/check?tenant_id=00000000-0000-0000-0000-000000000001", body)
 	assertStatus(t, w, http.StatusOK)
 	resp := parseJSON(t, w)
 	if resp["allowed"] != true {
@@ -769,8 +769,8 @@ func TestHandleEvaluate(t *testing.T) {
 	}
 	h.userRoleReader.userRoles[uid] = []uuid.UUID{roleID}
 
-	body := `{"user_id":"` + uid.String() + `","resource_type":"docs","action":"read","attributes":{"dept":"eng"}}`
-	w := doReq("POST", "/api/v1/policies/evaluate", body)
+	body := `{"user_id":"` + uid.String() + `","resource_type":"docs","action":"read","attributes":{"dept":"eng"},"tenant_id":"00000000-0000-0000-0000-000000000001"}`
+	w := doReq("POST", "/api/v1/policies/evaluate?tenant_id=00000000-0000-0000-0000-000000000001", body)
 	assertStatus(t, w, http.StatusOK)
 	resp := parseJSON(t, w)
 	if resp["allowed"] != true {

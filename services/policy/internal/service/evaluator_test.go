@@ -95,6 +95,7 @@ func newPolicy(effect domain.Effect, name string, actions, resources []string) *
 func newRequest(userID uuid.UUID, resourceType, action string) *domain.CheckRequest {
 	return &domain.CheckRequest{
 		UserID:       userID,
+		TenantID:     uuid.New(),
 		ResourceType: resourceType,
 		Action:       action,
 	}
@@ -357,6 +358,7 @@ func TestCheck_ABAC_ResourceGlobMatch(t *testing.T) {
 	// Should match: resource starts with the ARN prefix
 	result, err := e.Check(context.Background(), &domain.CheckRequest{
 		UserID:       userID,
+		TenantID:     uuid.New(),
 		ResourceType: "users",
 		Action:       "users:read",
 		Resource:     "arn:ggid:iam::tenant:user/abc-123",
@@ -392,6 +394,7 @@ func TestCheck_ABAC_ResourceGlobNoMatch(t *testing.T) {
 	// Should NOT match: different org prefix
 	result, err := e.Check(context.Background(), &domain.CheckRequest{
 		UserID:       userID,
+		TenantID:     uuid.New(),
 		ResourceType: "users",
 		Action:       "users:read",
 		Resource:     "arn:ggid:iam::tenant:org-b:user/xyz",
@@ -590,6 +593,7 @@ func newPolicyWithConditions(effect domain.Effect, name string, actions []string
 func newRequestWithConditions(userID uuid.UUID, resourceType, action string, conds map[string]any) *domain.CheckRequest {
 	return &domain.CheckRequest{
 		UserID:       userID,
+		TenantID:     uuid.New(),
 		ResourceType: resourceType,
 		Action:       action,
 		Conditions:   conds,
