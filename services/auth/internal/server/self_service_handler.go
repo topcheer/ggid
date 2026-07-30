@@ -2,10 +2,13 @@ package server
 
 import (
 	"encoding/json"
+	"fmt"
+	"log/slog"
 	"net/http"
 	"strings"
 	"time"
 
+	ggidtenant "github.com/ggid/ggid/pkg/tenant"
 	"github.com/google/uuid"
 )
 
@@ -93,7 +96,7 @@ func (h *Handler) revokeSelfServiceDevice(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-// revoked holds whether any device was successfully removed.
+	// revoked holds whether any device was successfully removed.
 	revoked := false
 
 	// Try to remove from device fingerprints (DB) — verify ownership + tenant
@@ -207,6 +210,106 @@ func (h *Handler) handleSelfServiceSessions(w http.ResponseWriter, r *http.Reque
 	})
 }
 
+// handleAdminMFAReset allows an administrator to reset all MFA factors for a user.
+// POST /api/v1/admin/mfa/reset
+// Body: {"user_id": "...", "reason": "..."}
+// Requires admin scope (X-Is-Admin: true or X-Scopes containing "admin").
+func (h *Handler) handleAdminMFAReset(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+		return
+	}
+
+	// Verify admin privileges.
+	// SECURITY (R16 P1): Use precise admin scope check — the previous
+	// substring match ("admin"/"mfa:reset") was too broad.
+	if !hasAdminScope(r) {
+		writeError(w, http.StatusForbidden, "admin privileges required")
+		return
+	}
+
+	// Parse tenant from header.
+	tenantIDStr := r.Header.Get("X-Tenant-ID")
+	if tenantIDStr == "" {
+		writeError(w, http.StatusBadRequest, "X-Tenant-ID header required")
+		return
+	}
+	tenantID, err := uuid.Parse(tenantIDStr)
+	if err != nil {
+		writeError(w, http.StatusBadRequest, "invalid tenant_id")
+		return
+	}
+
+	var req struct {
+		UserID string `json:"user_id"`
+		Reason string `json:"reason"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		writeError(w, http.StatusBadRequest, "invalid JSON body")
+		return
+	}
+	if req.UserID == "" {
+		writeError(w, http.StatusBadRequest, "user_id is required")
+		return
+	}
+	if req.Reason == "" {
+		req.Reason = "admin_reset"
+	}
+
+	targetUserID, err := uuid.Parse(req.UserID)
+	if err != nil {
+		writeError(w, http.StatusBadRequest, "invalid user_id format")
+		return
+	}
+
+	// Get admin user ID for audit.
+	adminUserIDStr := r.Header.Get("X-User-ID")
+	ctx := ggidtenant.WithContext(r.Context(), &ggidtenant.Context{TenantID: tenantID})
+
+	mfaSvc := h.authSvc.MFAService()
+	if mfaSvc == nil {
+		writeError(w, http.StatusServiceUnavailable, "MFA service not available")
+		return
+	}
+
+	// List all MFA devices for the target user and disable each one.
+	devices, err := mfaSvc.ListDevices(ctx, targetUserID)
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, "failed to list MFA devices")
+		return
+	}
+
+	resetCount := 0
+	for _, d := range devices {
+		if err := mfaSvc.DisableMFA(ctx, d.ID); err == nil {
+			resetCount++
+		}
+	}
+
+	// Clean up backup codes if no MFA devices remain.
+	if !mfaSvc.HasMFAEnabled(ctx, tenantID, targetUserID) {
+		// Backup code cleanup is handled inside DisableMFA when last device is removed.
+	}
+
+	// Audit the admin action.
+	h.publishAuditEventWithMeta(r, "admin.mfa.reset", "success", "user", req.UserID, targetUserID, map[string]any{
+		"reason":      req.Reason,
+		"reset_count": fmt.Sprintf("%d", resetCount),
+		"admin_user":  adminUserIDStr,
+	})
+
+	slog.Info("admin MFA reset", "target_user", req.UserID, "admin", adminUserIDStr, "reset_count", resetCount, "reason", req.Reason)
+
+	writeJSON(w, http.StatusOK, map[string]any{
+		"reset":       true,
+		"user_id":     req.UserID,
+		"reset_count": resetCount,
+		"reason":      req.Reason,
+		"admin":       adminUserIDStr,
+		"timestamp":   time.Now().UTC(),
+	})
+}
+
 // handleMFASelfRemove lets a user remove their own MFA factor after re-auth.
 // DELETE /api/v1/self-service/mfa/{factor_id}
 // Requires step-up verification token in request.
@@ -290,9 +393,9 @@ func (h *Handler) handleMFASelfRemove(w http.ResponseWriter, r *http.Request) {
 	h.publishAuditEvent("self_service.mfa.remove", "success", tenantID, userID)
 
 	writeJSON(w, http.StatusOK, map[string]any{
-		"removed":    true,
-		"factor_id":  factorID,
-		"user_id":    userID.String(),
-		"timestamp":  time.Now().UTC(),
+		"removed":   true,
+		"factor_id": factorID,
+		"user_id":   userID.String(),
+		"timestamp": time.Now().UTC(),
 	})
 }

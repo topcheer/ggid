@@ -38,11 +38,28 @@ var (
 // DELETE /api/v1/auth/mfa/factors/{id}
 func (h *Handler) handleMFAFactors(w http.ResponseWriter, r *http.Request) {
 	if r.Method == http.MethodGet {
-		userID := r.URL.Query().Get("user_id")
+		// SECURITY (R16 P2): Require JWT — never trust query user_id
+		authHeader := r.Header.Get("Authorization")
+		tokenStr := strings.TrimPrefix(authHeader, "Bearer ")
+		claims := jwt.MapClaims{}
+		_, parseErr := jwt.ParseWithClaims(tokenStr, claims, func(tok *jwt.Token) (any, error) {
+			return h.authSvc.PublicKey(), nil
+		})
+		if parseErr != nil {
+			writeError(w, http.StatusUnauthorized, "authentication required")
+			return
+		}
+		userID, _ := claims["sub"].(string)
+		if userID == "" {
+			writeError(w, http.StatusUnauthorized, "invalid token: missing subject")
+			return
+		}
 		mfaFactorMu.RLock()
 		var result []MFAFactor
 		for _, f := range mfaFactors {
-			if userID == "" || f.UserID == userID { result = append(result, f) }
+			if userID == "" || f.UserID == userID {
+				result = append(result, f)
+			}
 		}
 		mfaFactorMu.RUnlock()
 		writeJSON(w, http.StatusOK, map[string]any{"factors": result, "count": len(result)})
@@ -61,16 +78,21 @@ func (h *Handler) handleMFAFactors(w http.ResponseWriter, r *http.Request) {
 			req.Type = "totp"
 		}
 
-		// Extract user_id from JWT
+		// SECURITY: Require valid JWT — never allow query-param user_id fallback.
 		authHeader := r.Header.Get("Authorization")
 		tokenStr := strings.TrimPrefix(authHeader, "Bearer ")
 		claims := jwt.MapClaims{}
 		_, parseErr := jwt.ParseWithClaims(tokenStr, claims, func(tok *jwt.Token) (any, error) {
 			return h.authSvc.PublicKey(), nil
 		})
+		if parseErr != nil {
+			writeError(w, http.StatusUnauthorized, "authentication required")
+			return
+		}
 		userID, _ := claims["sub"].(string)
-		if parseErr != nil || userID == "" {
-			userID = r.URL.Query().Get("user_id")
+		if userID == "" {
+			writeError(w, http.StatusUnauthorized, "invalid token: missing subject")
+			return
 		}
 
 		factorID := uuid.NewString()
@@ -103,19 +125,37 @@ func (h *Handler) handleMFAFactors(w http.ResponseWriter, r *http.Request) {
 		mfaFactorMu.Unlock()
 
 		writeJSON(w, http.StatusCreated, map[string]any{
-			"factor_id":      factorID,
-			"type":           req.Type,
-			"secret":         secret,
-			"otpauth_uri":    fmt.Sprintf("otpauth://totp/GGID:%s?secret=%s&issuer=GGID", userID, secret),
-			"status":         "pending_verification",
+			"factor_id":   factorID,
+			"type":        req.Type,
+			"secret":      secret,
+			"otpauth_uri": fmt.Sprintf("otpauth://totp/GGID:%s?secret=%s&issuer=GGID", userID, secret),
+			"status":      "pending_verification",
 		})
 		return
 	}
 	if r.Method == http.MethodDelete {
+		// SECURITY: Require valid JWT and verify factor ownership before deletion.
+		authHeader := r.Header.Get("Authorization")
+		tokenStr := strings.TrimPrefix(authHeader, "Bearer ")
+		claims := jwt.MapClaims{}
+		_, parseErr := jwt.ParseWithClaims(tokenStr, claims, func(tok *jwt.Token) (any, error) {
+			return h.authSvc.PublicKey(), nil
+		})
+		if parseErr != nil {
+			writeError(w, http.StatusUnauthorized, "authentication required")
+			return
+		}
+		authUserID, _ := claims["sub"].(string)
+
 		factorID := strings.TrimPrefix(r.URL.Path, "/api/v1/auth/mfa/factors/")
 		mfaFactorMu.Lock()
 		for i, f := range mfaFactors {
 			if f.ID == factorID {
+				if f.UserID != authUserID {
+					mfaFactorMu.Unlock()
+					writeError(w, http.StatusForbidden, "factor does not belong to authenticated user")
+					return
+				}
 				mfaFactors = append(mfaFactors[:i], mfaFactors[i+1:]...)
 				break
 			}

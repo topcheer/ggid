@@ -33,10 +33,10 @@ func (h *Handler) backupCodesGenerate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Extract user_id from X-User-ID header (set by gateway after JWT validation)
-	if req.UserID == "" {
-		req.UserID = r.Header.Get("X-User-ID")
-	}
+	// SECURITY (R16 P0): Never trust body user_id — always extract from
+	// JWT (gateway-verified). body user_id is ignored entirely.
+	req.UserID = "" // discard any body-supplied user_id
+	req.UserID = r.Header.Get("X-User-ID")
 	if req.UserID == "" {
 		// Fallback: parse from JWT
 		authHeader := r.Header.Get("Authorization")
@@ -93,6 +93,9 @@ func (h *Handler) backupCodesRemaining(w http.ResponseWriter, r *http.Request) {
 	}
 
 	userIDStr := r.URL.Query().Get("user_id")
+	if userIDStr == "" {
+		userIDStr = r.Header.Get("X-User-ID")
+	}
 	if userIDStr == "" {
 		// Extract user_id from JWT token in Authorization header.
 		authHeader := r.Header.Get("Authorization")
