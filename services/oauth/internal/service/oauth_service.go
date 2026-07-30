@@ -1158,6 +1158,14 @@ func (s *OAuthService) exchangeTokenInternal(ctx context.Context, req *RFC8693Ex
 		return nil, fmt.Errorf("subject_token missing sub claim")
 	}
 
+	// Cross-tenant laundering guard: the subject token's tenant must match
+	// the requesting client's tenant — otherwise tenant B's client could
+	// exchange tenant A's token into a B-scoped token carrying A's
+	// permissions/roles (R8 P1).
+	if st, _ := subjectClaims["tenant_id"].(string); st != "" && st != req.TenantID.String() {
+		return nil, fmt.Errorf("subject_token tenant does not match requesting client tenant")
+	}
+
 	// 2. Extract subject scopes — requested scope must be a subset.
 	subjectScopeStr, _ := subjectClaims["scope"].(string)
 	subjectScopes := strings.Fields(subjectScopeStr)
@@ -3381,22 +3389,21 @@ func (s *OAuthService) JWTBearerGrant(ctx context.Context, req *JWTBearerRequest
 		return nil, fmt.Errorf("invalid assertion claims after verification")
 	}
 
-	// P1-4 (RFC 7523 §3): Validate audience if AS issuer is configured
-	// P1-3: Handle aud as both string ("aud":"x") and array ("aud":["x","y"])
+	// P1-4 (RFC 7523 §3): aud MUST identify the AS — empty string, missing
+	// claim, or wrong type are all rejections (an empty aud previously
+	// bypassed the check entirely).
 	if s.issuer != "" {
 		audMatched := false
 		switch aud := verifiedClaims["aud"].(type) {
 		case string:
-			audMatched = aud == "" || aud == s.issuer
+			audMatched = aud == s.issuer
 		case []any:
 			for _, a := range aud {
-				if as, ok := a.(string); ok && (as == "" || as == s.issuer) {
+				if as, ok := a.(string); ok && as == s.issuer {
 					audMatched = true
 					break
 				}
 			}
-		default:
-			audMatched = true // no aud claim = skip check
 		}
 		if !audMatched {
 			return nil, fmt.Errorf("assertion audience does not include issuer %q", s.issuer)

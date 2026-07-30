@@ -39,28 +39,45 @@ func (h *HTTPHandler) handleDelegations(ctx context.Context, userID uuid.UUID, w
 		}
 		now := time.Now().UTC()
 		end, _ := time.Parse(time.RFC3339, req.EndDate)
-		if end.IsZero() { end = now.Add(7 * 24 * time.Hour) }
+		if end.IsZero() {
+			end = now.Add(7 * 24 * time.Hour)
+		}
 		start, _ := time.Parse(time.RFC3339, req.StartDate)
-		if start.IsZero() { start = now }
+		if start.IsZero() {
+			start = now
+		}
 		d := &Delegation{ID: "dlg-" + uuid.New().String()[:8], DelegatedTo: req.DelegatedTo, Scope: req.Scope, StartDate: start, EndDate: end, Status: "active", CreatedAt: now}
 		if h.identityPolicyMap != nil {
 			h.identityPolicyMap.Store(r.Context(), "identity_delegations", d.ID, map[string]any{
-				"user_id": uid, "delegated_to": d.DelegatedTo, "scope": d.Scope,
+				"user_id": uid, "tenant_id": r.Header.Get("X-Tenant-ID"), "delegated_to": d.DelegatedTo, "scope": d.Scope,
 				"start_date": d.StartDate, "end_date": d.EndDate, "status": d.Status,
 			})
 		}
 		writeJSON(w, http.StatusCreated, d)
 	case http.MethodGet:
+		// Tenant context mandatory — rows are filtered by it (R158: the
+		// list previously matched user_id only across ALL tenants).
+		callerTenant := r.Header.Get("X-Tenant-ID")
+		if callerTenant == "" {
+			writeJSONError(w, http.StatusForbidden, "tenant context required")
+			return
+		}
 		var result []map[string]any
 		if h.identityPolicyMap != nil {
 			rows, _ := h.identityPolicyMap.List(r.Context(), "identity_delegations")
 			for _, row := range rows {
-				if getString(row, "user_id") == uid {
-					result = append(result, row)
+				if getString(row, "user_id") != uid {
+					continue
 				}
+				if tid := getString(row, "tenant_id"); tid != "" && tid != callerTenant {
+					continue
+				}
+				result = append(result, row)
 			}
 		}
-		if result == nil { result = []map[string]any{} }
+		if result == nil {
+			result = []map[string]any{}
+		}
 		writeJSON(w, http.StatusOK, map[string]any{"delegations": result, "count": len(result)})
 	default:
 		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")

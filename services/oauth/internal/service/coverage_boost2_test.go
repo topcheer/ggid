@@ -291,6 +291,7 @@ func TestJWTBearerGrant_Success(t *testing.T) {
 	assertion := makeTestAssertion(t, svc, jwt.MapClaims{
 		"iss": "test-client",
 		"sub": userID.String(),
+		"aud": "https://test.ggid.dev", // RFC 7523 §3: aud must name the AS
 		"exp": now.Add(1 * time.Hour).Unix(),
 	})
 
@@ -1078,12 +1079,12 @@ func TestExchangeAuthorizationCode_CodeIssuedToDifferentClient(t *testing.T) {
 
 	// Create code for client A.
 	plainCode, err := svc.CreateAuthorizationCode(context.Background(), &AuthorizeRequest{
-		TenantID:    testTenantID,
-		ClientID:    "client_a",
-		RedirectURI: "https://a.example.com/cb",
+		TenantID:     testTenantID,
+		ClientID:     "client_a",
+		RedirectURI:  "https://a.example.com/cb",
 		ResponseType: "code",
-		State:       "test-state",
-		UserID:      uuid.New(),
+		State:        "test-state",
+		UserID:       uuid.New(),
 	})
 	if err != nil {
 		t.Fatalf("CreateAuthorizationCode: %v", err)

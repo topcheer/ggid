@@ -25,6 +25,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/ggid/ggid/pkg/audit"
@@ -861,6 +862,16 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 				writeJSON(w, http.StatusBadRequest, map[string]string{
 					"error":             "invalid_dpop_proof",
 					"error_description": "DPoP proof expired or missing nonce",
+				})
+				return
+			}
+			// RFC 9449 §11.1: jti is single-use within the freshness window.
+			// The dedicated DPoPVerifier with usedNonces was never wired in —
+			// this enforces it at the actual consumption point.
+			if !consumeDPoPJTI(proof.JTI) {
+				writeJSON(w, http.StatusBadRequest, map[string]string{
+					"error":             "invalid_dpop_proof",
+					"error_description": "DPoP proof replay detected",
 				})
 				return
 			}
@@ -2889,4 +2900,21 @@ func writeJSONError(w http.ResponseWriter, status int, msg string) {
 	writeJSON(w, status, map[string]any{
 		"error": map[string]string{"code": code, "message": msg},
 	})
+}
+
+// dpopUsedJTIs tracks consumed DPoP proof IDs (jti) within the freshness
+// window. LoadOrStore makes the check-and-record atomic (R8 P1).
+var dpopUsedJTIs sync.Map // jti string -> expiry time.Time
+
+func consumeDPoPJTI(jti string) bool {
+	now := time.Now()
+	// Occasional lazy sweep of expired entries (bounded work, no goroutine).
+	dpopUsedJTIs.Range(func(k, v any) bool {
+		if exp, ok := v.(time.Time); ok && now.After(exp) {
+			dpopUsedJTIs.Delete(k)
+		}
+		return true
+	})
+	_, loaded := dpopUsedJTIs.LoadOrStore(jti, now.Add(6*time.Minute))
+	return !loaded
 }

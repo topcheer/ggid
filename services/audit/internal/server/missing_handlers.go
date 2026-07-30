@@ -80,11 +80,11 @@ func (s *HTTPServer) handleWebhooksList(w http.ResponseWriter, r *http.Request) 
 		writeJSON(w, http.StatusOK, map[string]any{"webhooks": result, "count": len(result)})
 	case http.MethodPost:
 		var req struct {
-			Name    string   `json:"name"`
-			URL     string   `json:"url"`
-			Events  []string `json:"events"`
-			Secret  string   `json:"secret"`
-			Active  *bool    `json:"active"`
+			Name   string   `json:"name"`
+			URL    string   `json:"url"`
+			Events []string `json:"events"`
+			Secret string   `json:"secret"`
+			Active *bool    `json:"active"`
 		}
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 			writeJSONError(w, http.StatusBadRequest, "invalid request body")
@@ -101,10 +101,10 @@ func (s *HTTPServer) handleWebhooksList(w http.ResponseWriter, r *http.Request) 
 			"id":         fmt.Sprintf("whk_%d", time.Now().UnixNano()),
 			"tenant_id":  r.Header.Get("X-Tenant-ID"),
 			"name":       req.Name,
-			"url":    req.URL,
-			"events": req.Events,
-			"secret": req.Secret,
-			"active": isActive,
+			"url":        req.URL,
+			"events":     req.Events,
+			"secret":     req.Secret,
+			"active":     isActive,
 			"created_at": time.Now().UTC().Format(time.RFC3339),
 		}
 		globalAlertWebhooks.mu.Lock()
@@ -163,10 +163,10 @@ func (s *HTTPServer) handleWebhooksList(w http.ResponseWriter, r *http.Request) 
 			whID = pathParts[len(pathParts)-1]
 		}
 		var update struct {
-			Name   *string  `json:"name"`
-			URL    *string  `json:"url"`
+			Name   *string   `json:"name"`
+			URL    *string   `json:"url"`
 			Events *[]string `json:"events"`
-			Active *bool    `json:"active"`
+			Active *bool     `json:"active"`
 		}
 		if err := json.NewDecoder(r.Body).Decode(&update); err != nil {
 			writeJSONError(w, http.StatusBadRequest, "invalid request body")
@@ -186,10 +186,18 @@ func (s *HTTPServer) handleWebhooksList(w http.ResponseWriter, r *http.Request) 
 					continue // skip other tenants' webhooks
 				}
 				found = true
-				if update.Name != nil { wh["name"] = *update.Name }
-				if update.URL != nil { wh["url"] = *update.URL }
-				if update.Events != nil { wh["events"] = *update.Events }
-				if update.Active != nil { wh["active"] = *update.Active }
+				if update.Name != nil {
+					wh["name"] = *update.Name
+				}
+				if update.URL != nil {
+					wh["url"] = *update.URL
+				}
+				if update.Events != nil {
+					wh["events"] = *update.Events
+				}
+				if update.Active != nil {
+					wh["active"] = *update.Active
+				}
 				if s.memMapRepo2 != nil {
 					_ = s.memMapRepo2.StoreJSON(r.Context(), "audit_webhook_configs", whID, wh)
 				}
@@ -213,8 +221,8 @@ func (s *HTTPServer) handleHashChainStatus(w http.ResponseWriter, r *http.Reques
 		return
 	}
 	writeJSON(w, http.StatusOK, map[string]any{
-		"enabled":               true,
-		"algorithm":             globalAuditHashChainConfig.ChainAlgorithm,
+		"enabled":                true,
+		"algorithm":              globalAuditHashChainConfig.ChainAlgorithm,
 		"anchor_interval_blocks": globalAuditHashChainConfig.AnchorIntervalBlocks,
 		"checkpoint_frequency":   globalAuditHashChainConfig.CheckpointFrequency,
 		"tamper_detection_mode":  globalAuditHashChainConfig.TamperDetectionMode,
@@ -299,6 +307,12 @@ func (s *HTTPServer) handleWebhookTest(w http.ResponseWriter, r *http.Request, w
 		writeJSONError(w, http.StatusBadRequest, "webhook has no URL")
 		return
 	}
+	// SSRF guard (R158): test deliveries must pass the same URL validation
+	// as creation — stored URLs may predate the creation-time check.
+	if !isSafeWebhookURL(url) {
+		writeJSONError(w, http.StatusBadRequest, "webhook URL failed safety validation")
+		return
+	}
 
 	// Send a test payload
 	testPayload := map[string]any{
@@ -315,9 +329,9 @@ func (s *HTTPServer) handleWebhookTest(w http.ResponseWriter, r *http.Request, w
 	resp, err := client.Post(url, "application/json", strings.NewReader(string(body)))
 	if err != nil {
 		writeJSON(w, http.StatusOK, map[string]any{
-			"status":   "failed",
-			"error":    "internal server error",
-			"success":  false,
+			"status":  "failed",
+			"error":   "internal server error",
+			"success": false,
 		})
 		return
 	}
