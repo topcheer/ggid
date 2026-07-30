@@ -208,7 +208,7 @@ func (h *Handler) handleRegister(w http.ResponseWriter, r *http.Request) {
 		}
 
 		// Hash password and create credential
-		hash, err := crypto.HashPassword(req.Password)
+		hash, err := ggidcrypto.HashPassword(req.Password)
 		if err != nil {
 			writeError(w, http.StatusInternalServerError, "failed to hash password")
 			return
