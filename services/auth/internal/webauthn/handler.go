@@ -85,27 +85,38 @@ type sessionData struct {
 type sessionStore struct {
 	mu       sync.Mutex
 	sessions map[string]*sessionData
+	done     chan struct{}
 }
 
 func newSessionStore() *sessionStore {
-	s := &sessionStore{sessions: make(map[string]*sessionData)}
+	s := &sessionStore{sessions: make(map[string]*sessionData), done: make(chan struct{})}
 	// Background cleanup goroutine: evict expired sessions every 2 minutes
 	// to prevent unbounded memory growth from abandoned registration attempts.
 	go s.cleanupLoop()
 	return s
 }
 
+// Close stops the cleanup goroutine.
+func (s *sessionStore) Close() {
+	close(s.done)
+}
+
 func (s *sessionStore) cleanupLoop() {
 	ticker := time.NewTicker(2 * time.Minute)
 	defer ticker.Stop()
-	for range ticker.C {
-		s.mu.Lock()
-		for k, sd := range s.sessions {
-			if time.Since(sd.createdAt) > 10*time.Minute {
-				delete(s.sessions, k)
+	for {
+		select {
+		case <-s.done:
+			return
+		case <-ticker.C:
+			s.mu.Lock()
+			for k, sd := range s.sessions {
+				if time.Since(sd.createdAt) > 10*time.Minute {
+					delete(s.sessions, k)
+				}
 			}
+			s.mu.Unlock()
 		}
-		s.mu.Unlock()
 	}
 }
 
@@ -153,25 +164,25 @@ type CredentialStore interface {
 
 // Handler implements WebAuthn HTTP endpoints with full go-webauthn verification.
 type Handler struct {
-	wbn           *webauthn.WebAuthn
-	creds         CredentialStore
-	sessions      *sessionStore
-	origins       []string       // WA-11: allowed RP origins for ROR
-	androidPkg    string         // WA-12: Android package name for asset links
-	androidSHA256 string         // WA-12: Android app SHA-256 fingerprint
-	iosAppIDs     []string       // WA-12: iOS app IDs for universal links
-	ticketIssuer  AuthTicketIssuer  // Creates auth ticket after passkey verification
-	sessionBackend SessionBackend // Redis-backed session persistence
+	wbn            *webauthn.WebAuthn
+	creds          CredentialStore
+	sessions       *sessionStore
+	origins        []string         // WA-11: allowed RP origins for ROR
+	androidPkg     string           // WA-12: Android package name for asset links
+	androidSHA256  string           // WA-12: Android app SHA-256 fingerprint
+	iosAppIDs      []string         // WA-12: iOS app IDs for universal links
+	ticketIssuer   AuthTicketIssuer // Creates auth ticket after passkey verification
+	sessionBackend SessionBackend   // Redis-backed session persistence
 }
 
 // HandlerOption configures a Handler at construction time.
 type HandlerOption func(*handlerConfig)
 
 type handlerConfig struct {
-	origins       []string
-	androidPkg    string   // WA-12
-	androidSHA256 string   // WA-12
-	iosAppIDs     []string // WA-12
+	origins        []string
+	androidPkg     string   // WA-12
+	androidSHA256  string   // WA-12
+	iosAppIDs      []string // WA-12
 	ticketIssuer   AuthTicketIssuer
 	sessionBackend SessionBackend
 }
@@ -237,13 +248,13 @@ func NewHandler(rpID, rpName string, store CredentialStore, opts ...HandlerOptio
 	}
 
 	return &Handler{
-		wbn:           wbn,
-		creds:         store,
-		sessions:      newSessionStore(),
-		origins:       origins,
-		androidPkg:    cfg.androidPkg,
-		androidSHA256: cfg.androidSHA256,
-		iosAppIDs:     cfg.iosAppIDs,
+		wbn:            wbn,
+		creds:          store,
+		sessions:       newSessionStore(),
+		origins:        origins,
+		androidPkg:     cfg.androidPkg,
+		androidSHA256:  cfg.androidSHA256,
+		iosAppIDs:      cfg.iosAppIDs,
 		ticketIssuer:   cfg.ticketIssuer,
 		sessionBackend: cfg.sessionBackend,
 	}, nil
@@ -322,10 +333,18 @@ func (h *Handler) RegisterRoutes(mux *http.ServeMux) {
 }
 
 // Proxy methods for backwards-compatible alias routes registered by the auth server.
-func (h *Handler) BeginRegistrationProxy(w http.ResponseWriter, r *http.Request)  { h.beginRegistration(w, r) }
-func (h *Handler) FinishRegistrationProxy(w http.ResponseWriter, r *http.Request) { h.finishRegistration(w, r) }
-func (h *Handler) BeginAuthenticationProxy(w http.ResponseWriter, r *http.Request)  { h.beginAuthentication(w, r) }
-func (h *Handler) FinishAuthenticationProxy(w http.ResponseWriter, r *http.Request) { h.finishAuthentication(w, r) }
+func (h *Handler) BeginRegistrationProxy(w http.ResponseWriter, r *http.Request) {
+	h.beginRegistration(w, r)
+}
+func (h *Handler) FinishRegistrationProxy(w http.ResponseWriter, r *http.Request) {
+	h.finishRegistration(w, r)
+}
+func (h *Handler) BeginAuthenticationProxy(w http.ResponseWriter, r *http.Request) {
+	h.beginAuthentication(w, r)
+}
+func (h *Handler) FinishAuthenticationProxy(w http.ResponseWriter, r *http.Request) {
+	h.finishAuthentication(w, r)
+}
 
 // --- Well-Known Endpoints (WA-11, WA-12) ---
 
@@ -365,8 +384,8 @@ func (h *Handler) wellKnownAssetLinks(w http.ResponseWriter, r *http.Request) {
 		{
 			"relation": []string{"delegate_permission/common.get_login_creds"},
 			"target": map[string]any{
-				"namespace":          "android",
-				"package_name":       h.androidPkg,
+				"namespace":                "android",
+				"package_name":             h.androidPkg,
 				"sha256_cert_fingerprints": []string{h.androidSHA256},
 			},
 		},
@@ -392,7 +411,7 @@ func (h *Handler) wellKnownAppleAppSiteAssociation(w http.ResponseWriter, r *htt
 	details := make([]map[string]any, 0, len(h.iosAppIDs))
 	for _, appID := range h.iosAppIDs {
 		details = append(details, map[string]any{
-			"apps": []string{appID},
+			"apps":       []string{appID},
 			"components": []string{"/*"},
 		})
 	}
@@ -653,7 +672,7 @@ func (h *Handler) finishRegistration(w http.ResponseWriter, r *http.Request) {
 
 	log.Printf("WebAuthn finishRegistration: CreateCredential OK, user=%s cred_id_len=%d", userID, len(credential.ID))
 
-		// Persist the credential if store is available.
+	// Persist the credential if store is available.
 	if h.creds != nil {
 		// WA-7: auto-generate credential name from User-Agent if not provided.
 		name := r.URL.Query().Get("name")
@@ -695,9 +714,9 @@ func (h *Handler) finishRegistration(w http.ResponseWriter, r *http.Request) {
 	}
 
 	writeJSON(w, http.StatusCreated, map[string]any{
-		"status":         "registered",
-		"credential_id":  base64.RawURLEncoding.EncodeToString(credential.ID),
-		"sign_count":     credential.Authenticator.SignCount,
+		"status":        "registered",
+		"credential_id": base64.RawURLEncoding.EncodeToString(credential.ID),
+		"sign_count":    credential.Authenticator.SignCount,
 	})
 }
 
@@ -988,11 +1007,11 @@ func (h *Handler) listCredentials(w http.ResponseWriter, r *http.Request) {
 	result := make([]map[string]any, 0, len(creds))
 	for _, c := range creds {
 		result = append(result, map[string]any{
-			"id":             c.ID.String(),
-			"name":           c.Name,
-			"credential_id":  base64.RawURLEncoding.EncodeToString(c.CredentialID),
-			"created_at":     c.CreatedAt,
-			"transports":     c.Transports,
+			"id":              c.ID.String(),
+			"name":            c.Name,
+			"credential_id":   base64.RawURLEncoding.EncodeToString(c.CredentialID),
+			"created_at":      c.CreatedAt,
+			"transports":      c.Transports,
 			"backup_eligible": c.BackupEligible,
 			"backup_state":    c.BackupState,
 		})
