@@ -3,8 +3,8 @@ package server
 import (
 	"encoding/json"
 	"net/http"
-	"strings"
 	"os"
+	"strings"
 
 	"github.com/ggid/ggid/pkg/hierarchy"
 	"github.com/google/uuid"
@@ -45,13 +45,10 @@ func validateTenantAccess(w http.ResponseWriter, r *http.Request, requestedTenan
 }
 
 // isAdminScope checks if the request has platform:admin or tenant:admin scope.
-// The gateway sets X-User-Scopes (plural) from the verified JWT scope claim.
+// The gateway strips X-User-Scopes and sets X-Scopes from the verified JWT.
 func isAdminScope(r *http.Request) bool {
-	scopes := r.Header.Get("X-User-Scopes")
-	if scopes == "" {
-		scopes = r.Header.Get("X-User-Role") // backward compat fallback
-	}
-	for _, s := range strings.Split(scopes, " ") {
+	scopes := r.Header.Get("X-Scopes")
+	for _, s := range strings.Split(scopes, ",") {
 		switch strings.TrimSpace(s) {
 		case "platform:admin", "tenant:admin":
 			return true
