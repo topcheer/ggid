@@ -427,7 +427,7 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 		// Federation TrustChainValidator: reject untrusted OIDC federation clients.
 		if trustValidator != nil {
 			if err := trustValidator.ValidateOIDCClient(r.Context(), tenantIDStr, clientID); err != nil {
-				writeJSON(w, http.StatusForbidden, map[string]string{"error": "untrusted_federation_client", "detail": err.Error()})
+				writeJSON(w, http.StatusForbidden, map[string]string{"error": "untrusted_federation_client", "detail": "validation failed"})
 				return
 			}
 		}
@@ -507,7 +507,7 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 			return
 		}
 		if err := enforceFAPIAuthorize(client, r); err != nil {
-			writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid_request", "error_description": err.Error()})
+			writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid_request", "error_description": "request validation failed"})
 			return
 		}
 
@@ -595,6 +595,10 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 			redirectURL += "&state=" + url.QueryEscape(state)
 		}
 
+		// SECURITY: Prevent code leakage via browser cache and Referer header.
+		w.Header().Set("Cache-Control", "no-store")
+		w.Header().Set("Pragma", "no-cache")
+		w.Header().Set("Referrer-Policy", "no-referrer")
 		// HTTP 302 redirect to the client's redirect_uri with code and state
 		http.Redirect(w, r, redirectURL, http.StatusFound)
 	})
@@ -607,9 +611,14 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 		}
 		_ = r.ParseForm()
 
-		// P3 (RFC 6749 §2.3.1): warn on non-form Content-Type
+		// SECURITY (RFC 6749 §2.3.1): token endpoint MUST accept form-urlencoded only.
+		// Reject other Content-Types to prevent confusion attacks.
 		if ct := r.Header.Get("Content-Type"); ct != "" && !strings.Contains(ct, "application/x-www-form-urlencoded") {
-			log.Printf("[oauth] warning: token endpoint Content-Type: %s", ct)
+			writeJSON(w, http.StatusUnsupportedMediaType, map[string]string{
+				"error":             "invalid_request",
+				"error_description": "Content-Type must be application/x-www-form-urlencoded",
+			})
+			return
 		}
 
 		// Resolve tenant ID from X-Tenant-ID header, or tenant_id query param.
@@ -684,7 +693,7 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 			return
 		}
 		if err := enforceFAPIToken(client, r); err != nil {
-			writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid_request", "error_description": err.Error()})
+			writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid_request", "error_description": "request validation failed"})
 			return
 		}
 
@@ -694,6 +703,7 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 		switch grantType {
 		case "authorization_code":
 			// SECURITY (RFC 6749 §10.12): Validate state parameter for CSRF protection.
+			// State is generated at /authorize and must match at token exchange.
 			stateParam := r.FormValue("state")
 			if stateParam != "" {
 				if !oauthSvc.ValidateState(clientID, stateParam) {
@@ -869,7 +879,7 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 			if err != nil {
 				writeJSON(w, http.StatusBadRequest, map[string]string{
 					"error":             "invalid_dpop_proof",
-					"error_description": "DPoP proof validation failed: " + err.Error(),
+					"error_description": "DPoP proof validation failed",
 				})
 				return
 			}
@@ -935,7 +945,7 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 		userInfo, err := oauthSvc.GetUserInfo(token)
 		if err != nil {
 			w.Header().Set("WWW-Authenticate", "Bearer error=\"invalid_token\"")
-			writeJSON(w, http.StatusUnauthorized, map[string]string{"error": "invalid_token", "error_description": err.Error()})
+			writeJSON(w, http.StatusUnauthorized, map[string]string{"error": "invalid_token", "error_description": "request validation failed"})
 			return
 		}
 
@@ -1079,7 +1089,7 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 		// Parse the logout token (JWT) to extract sub/sid for session cleanup.
 		claims, err := oauthSvc.ParseBackchannelLogoutToken(logoutToken)
 		if err != nil {
-			writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid_logout_token", "error_description": err.Error()})
+			writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid_logout_token", "error_description": "request validation failed"})
 			return
 		}
 
@@ -1106,12 +1116,12 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 		// Inject tenant context from header or query param.
 		ctx, err := injectTenantContext(r)
 		if err != nil {
-			writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid_request", "error_description": err.Error()})
+			writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid_request", "error_description": "request validation failed"})
 			return
 		}
 		result, err := oauthSvc.DynamicClientRegister(ctx, &req)
 		if err != nil {
-			writeJSON(w, http.StatusBadRequest, map[string]string{"error": err.Error()})
+			writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid_request"})
 			return
 		}
 		writeJSON(w, http.StatusCreated, result)
@@ -1180,12 +1190,12 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 		// Inject tenant context from header or query param.
 		ctx, err := injectTenantContext(r)
 		if err != nil {
-			writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid_request", "error_description": err.Error()})
+			writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid_request", "error_description": "request validation failed"})
 			return
 		}
 		result, err := oauthSvc.DynamicClientRegister(ctx, &req)
 		if err != nil {
-			writeJSON(w, http.StatusBadRequest, map[string]string{"error": err.Error()})
+			writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid_request"})
 			return
 		}
 		// RFC 7591: public clients (token_endpoint_auth_method=none) must not receive a client_secret.
@@ -1281,7 +1291,7 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 			if samlIssuer != "" {
 				tenantIDStr := r.Header.Get("X-Tenant-ID")
 				if err := trustValidator.ValidateSAMLIssuer(r.Context(), tenantIDStr, samlIssuer); err != nil {
-					writeJSON(w, http.StatusForbidden, map[string]string{"error": "untrusted_saml_issuer", "detail": err.Error()})
+					writeJSON(w, http.StatusForbidden, map[string]string{"error": "untrusted_saml_issuer", "detail": "validation failed"})
 					return
 				}
 			}
@@ -1477,7 +1487,7 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 		// Verify the bearer token to get user info
 		claims, err := oauthSvc.ParseAccessTokenWithAudience(bearerToken, oauthSvc.GetIssuer())
 		if err != nil {
-			writeJSON(w, http.StatusUnauthorized, map[string]string{"error": "invalid token", "detail": err.Error()})
+			writeJSON(w, http.StatusUnauthorized, map[string]string{"error": "invalid token", "detail": "validation failed"})
 			return
 		}
 
@@ -1877,8 +1887,14 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 			return
 		}
 
-		if err := oauthSvc.ApproveDeviceCode(userCode, userID); err != nil {
-			writeJSON(w, http.StatusBadRequest, map[string]string{"error": err.Error()})
+		tenantID, tidErr := uuid.Parse(r.Header.Get("X-Tenant-ID"))
+		if tidErr != nil {
+			writeJSON(w, http.StatusForbidden, map[string]string{"error": "valid X-Tenant-ID header required"})
+			return
+		}
+
+		if err := oauthSvc.ApproveDeviceCode(userCode, userID, tenantID); err != nil {
+			writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid_request"})
 			return
 		}
 		writeJSON(w, http.StatusOK, map[string]string{"status": "approved"})
@@ -1910,7 +1926,7 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 		}
 		resp, err := oauthSvc.PushAuthorizationRequest(r.Context(), req)
 		if err != nil {
-			writeJSON(w, http.StatusBadRequest, map[string]string{"error": err.Error()})
+			writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid_request"})
 			return
 		}
 		writeJSON(w, http.StatusCreated, resp)
@@ -2043,7 +2059,7 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 		}
 		resp, err := oauthSvc.BackchannelAuthentication(r.Context(), req)
 		if err != nil {
-			writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid_request", "error_description": err.Error()})
+			writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid_request", "error_description": "request validation failed"})
 			return
 		}
 		writeJSON(w, http.StatusOK, resp)
@@ -2091,7 +2107,7 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 					return
 				}
 				if err := oauthSvc.UpdateAgentScopes(r.Context(), agentID, body.Scopes); err != nil {
-					writeJSON(w, http.StatusBadRequest, map[string]string{"error": err.Error()})
+					writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid_request"})
 					return
 				}
 				updated, _ := oauthSvc.GetAgentScopes(r.Context(), agentID)
@@ -2104,7 +2120,7 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 			case http.MethodGet:
 				scopes, err := oauthSvc.GetAgentScopes(r.Context(), agentID)
 				if err != nil {
-					writeJSON(w, http.StatusNotFound, map[string]string{"error": err.Error()})
+					writeJSON(w, http.StatusNotFound, map[string]string{"error": "invalid_request"})
 					return
 				}
 				writeJSON(w, http.StatusOK, map[string]any{
@@ -2133,7 +2149,7 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 				return
 			}
 			if err := oauthSvc.UpdateAgentStatus(r.Context(), agentID, service.AgentStatus(body.Status)); err != nil {
-				writeJSON(w, http.StatusBadRequest, map[string]string{"error": err.Error()})
+				writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid_request"})
 				return
 			}
 			writeJSON(w, http.StatusOK, map[string]any{"status": "updated", "agent_id": agentIDStr})
@@ -2194,7 +2210,7 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 		}
 		uris, err := service.FrontChannelLogout(req.SessionID)
 		if err != nil {
-			writeJSON(w, http.StatusBadRequest, map[string]string{"error": err.Error()})
+			writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid_request"})
 			return
 		}
 		writeJSON(w, http.StatusOK, map[string]any{"logout_uris": uris})
@@ -2215,7 +2231,7 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 		}
 		agent, err := oauthSvc.RegisterAgent(r.Context(), &req)
 		if err != nil {
-			writeJSON(w, http.StatusBadRequest, map[string]string{"error": err.Error()})
+			writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid_request"})
 			return
 		}
 		writeJSON(w, http.StatusCreated, agent)
@@ -2284,7 +2300,7 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 			Audience:       body.Audience,
 		})
 		if err != nil {
-			writeJSON(w, http.StatusBadRequest, map[string]string{"error": err.Error()})
+			writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid_request"})
 			return
 		}
 		writeJSON(w, http.StatusOK, resp)
@@ -2305,7 +2321,7 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 		}
 		claims, err := oauthSvc.VerifyAgentToken(r.Context(), body.Token)
 		if err != nil {
-			writeJSON(w, http.StatusUnauthorized, map[string]string{"error": err.Error(), "active": "false"})
+			writeJSON(w, http.StatusUnauthorized, map[string]string{"error": "invalid_request", "active": "false"})
 			return
 		}
 		writeJSON(w, http.StatusOK, map[string]any{

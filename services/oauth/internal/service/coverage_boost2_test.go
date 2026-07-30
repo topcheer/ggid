@@ -147,7 +147,7 @@ func TestPollDeviceToken_Approved(t *testing.T) {
 	userID := uuid.New()
 
 	// Approve the device code.
-	if err := svc.ApproveDeviceCode(resp.UserCode, userID); err != nil {
+	if err := svc.ApproveDeviceCode(resp.UserCode, userID, uuid.Nil); err != nil {
 		t.Fatalf("ApproveDeviceCode: %v", err)
 	}
 
@@ -210,7 +210,7 @@ func TestPollDeviceToken_Expired(t *testing.T) {
 func TestApproveDeviceCode_InvalidUserCode(t *testing.T) {
 	svc, _, _, _ := newTestOAuthService()
 
-	err := svc.ApproveDeviceCode("INVALID-CODE", uuid.New())
+	err := svc.ApproveDeviceCode("INVALID-CODE", uuid.New(), uuid.Nil)
 	if err == nil {
 		t.Fatal("expected error for invalid user_code")
 	}
@@ -237,7 +237,7 @@ func TestApproveDeviceCode_ExpiredUserCode(t *testing.T) {
 	info.ExpiresAt = time.Now().Add(-1 * time.Minute)
 	deviceCodeMu.Unlock()
 
-	err = svc.ApproveDeviceCode(resp.UserCode, uuid.New())
+	err = svc.ApproveDeviceCode(resp.UserCode, uuid.New(), uuid.Nil)
 	if err == nil {
 		t.Fatal("expected error for expired user_code")
 	}

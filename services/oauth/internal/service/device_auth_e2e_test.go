@@ -51,7 +51,7 @@ func TestDeviceAuthorization_FullFlow(t *testing.T) {
 	}
 
 	// Step 3: User approves via user_code
-	if err := svc.ApproveDeviceCode(resp.UserCode, userID); err != nil {
+	if err := svc.ApproveDeviceCode(resp.UserCode, userID, uuid.Nil); err != nil {
 		t.Fatalf("ApproveDeviceCode: %v", err)
 	}
 
@@ -177,7 +177,7 @@ func TestDeviceAuthorization_SlowDown(t *testing.T) {
 func TestDeviceAuthorization_ApproveInvalidUserCode(t *testing.T) {
 	svc := NewOAuthService(newMockClientRepo(), newMockCodeRepo(), &mockTokenRepo{}, newMockKeyProvider(), "https://test.ggid.dev")
 
-	err := svc.ApproveDeviceCode("BAD-CODE", uuid.New())
+	err := svc.ApproveDeviceCode("BAD-CODE", uuid.New(), uuid.Nil)
 	if err == nil {
 		t.Fatal("expected error for invalid user_code")
 	}

@@ -66,7 +66,7 @@ func TestDeviceAuth_FullFlow(t *testing.T) {
 
 	// 3. User approves via user_code
 	userID := uuid.New()
-	if err := svc.ApproveDeviceCode(resp.UserCode, userID); err != nil {
+	if err := svc.ApproveDeviceCode(resp.UserCode, userID, uuid.Nil); err != nil {
 		t.Fatalf("ApproveDeviceCode: %v", err)
 	}
 
@@ -188,7 +188,7 @@ func TestDeviceAuth_InvalidDeviceCode(t *testing.T) {
 func TestDeviceAuth_InvalidUserCode(t *testing.T) {
 	svc, _, _, _ := newTestOAuthService()
 
-	err := svc.ApproveDeviceCode("INVA-LID", uuid.New())
+	err := svc.ApproveDeviceCode("INVA-LID", uuid.New(), uuid.Nil)
 	if err == nil {
 		t.Fatal("expected error for invalid user_code")
 	}

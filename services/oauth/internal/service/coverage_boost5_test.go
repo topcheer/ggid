@@ -245,7 +245,7 @@ func TestSec_Device_Approved(t *testing.T) {
 		TenantID: testTenantID, ClientID: "dc4",
 	})
 	userID := uuid.New()
-	_ = svc.ApproveDeviceCode(resp.UserCode, userID)
+	_ = svc.ApproveDeviceCode(resp.UserCode, userID, uuid.Nil)
 	tok, err := svc.PollDeviceToken(context.Background(), resp.DeviceCode, "dc4")
 	if err != nil {
 		t.Fatalf("PollDeviceToken: %v", err)
@@ -293,7 +293,7 @@ func TestSec_Device_InvalidCode(t *testing.T) {
 
 func TestSec_Device_ApproveBadUserCode(t *testing.T) {
 	svc, _, _, _ := newTestOAuthService()
-	err := svc.ApproveDeviceCode("BADCODE", uuid.New())
+	err := svc.ApproveDeviceCode("BADCODE", uuid.New(), uuid.Nil)
 	if err == nil {
 		t.Fatal("expected error")
 	}

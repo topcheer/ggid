@@ -127,7 +127,7 @@ func TestCovSprint11_DeviceAuth_ApproveAndPoll(t *testing.T) {
 		Scope:    []string{"openid"},
 	})
 
-	err := svc.ApproveDeviceCode(resp.UserCode, uuid.New())
+	err := svc.ApproveDeviceCode(resp.UserCode, uuid.New(), uuid.Nil)
 	if err != nil {
 		t.Fatalf("ApproveDeviceCode: %v", err)
 	}
@@ -143,7 +143,7 @@ func TestCovSprint11_DeviceAuth_ApproveAndPoll(t *testing.T) {
 
 func TestCovSprint11_DeviceAuth_ApproveUnknown(t *testing.T) {
 	svc, _, _, _ := newTestOAuthService()
-	err := svc.ApproveDeviceCode("UNKNOWN-CODE", uuid.New())
+	err := svc.ApproveDeviceCode("UNKNOWN-CODE", uuid.New(), uuid.Nil)
 	if err == nil {
 		t.Error("expected error for unknown user_code")
 	}

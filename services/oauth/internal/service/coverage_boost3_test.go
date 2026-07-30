@@ -161,7 +161,7 @@ func TestApproveDeviceCode_DeviceCodeMissing3(t *testing.T) {
 	userCodeIndex["TM3"] = "no-such-code"
 	delete(deviceCodeStore, "no-such-code")
 	deviceCodeMu.Unlock()
-	err := svc.ApproveDeviceCode("TM3", uuid.New())
+	err := svc.ApproveDeviceCode("TM3", uuid.New(), uuid.Nil)
 	if err == nil {
 		t.Fatal("expected error")
 	}

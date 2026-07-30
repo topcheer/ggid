@@ -37,7 +37,13 @@ func handleDeviceAuthorize(s *service.OAuthService) http.HandlerFunc {
 		if tenantIDStr == "" {
 			tenantIDStr = r.FormValue("tenant_id")
 		}
-		tenantUUID, _ := uuid.Parse(tenantIDStr)
+		// SECURITY (R22 P1): Fail-closed on missing/invalid tenant —
+		// previously uuid.Nil was silently used, polluting JWT claims.
+		tenantUUID, err := uuid.Parse(tenantIDStr)
+		if err != nil {
+			writeJSONError(w, http.StatusBadRequest, "valid tenant context required")
+			return
+		}
 
 		var scopes []string
 		if scope != "" {
@@ -50,7 +56,7 @@ func handleDeviceAuthorize(s *service.OAuthService) http.HandlerFunc {
 			Scope:    scopes,
 		})
 		if err != nil {
-			writeJSONError(w, http.StatusInternalServerError, err.Error())
+			writeJSONError(w, http.StatusInternalServerError, "internal error")
 			return
 		}
 
@@ -108,7 +114,12 @@ func handleDeviceVerify(s *service.OAuthService) http.HandlerFunc {
 		var err error
 		switch req.Action {
 		case "approve":
-			err = s.ApproveDeviceCode(req.UserCode, userID)
+			tenantID, tidErr := uuid.Parse(r.Header.Get("X-Tenant-ID"))
+			if tidErr != nil {
+				writeJSONError(w, http.StatusForbidden, "valid X-Tenant-ID header required")
+				return
+			}
+			err = s.ApproveDeviceCode(req.UserCode, userID, tenantID)
 		case "deny":
 			err = s.DenyDeviceCode(req.UserCode)
 		default:
