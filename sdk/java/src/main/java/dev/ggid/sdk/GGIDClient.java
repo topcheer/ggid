@@ -73,8 +73,16 @@ public class GGIDClient {
     }
 
     public TokenSet refreshToken(String refreshToken) throws GGIDException, IOException {
-        return post("/api/v1/auth/refresh", Map.of("refresh_token", refreshToken),
-                TokenSet.class);
+        FormBody.Builder fb = new FormBody.Builder()
+                .add("grant_type", "refresh_token")
+                .add("refresh_token", refreshToken);
+        FormBody formBody = fb.build();
+        Request request = new Request.Builder()
+                .url(gatewayUrl + "/api/v1/oauth/token")
+                .header("X-Tenant-ID", tenantId)
+                .post(formBody)
+                .build();
+        return execute(request, TokenSet.class);
     }
 
     /**
