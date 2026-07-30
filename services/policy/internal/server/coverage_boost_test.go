@@ -175,6 +175,9 @@ func (m *testUserRoleRepo) Assign(_ context.Context, _ *domain.UserRole) error {
 func (m *testUserRoleRepo) Revoke(_ context.Context, _, _ uuid.UUID, _ domain.ScopeType, _ uuid.UUID) error {
 	return nil
 }
+func (m *testUserRoleRepo) RevokeTemporaryOnly(_ context.Context, _, _ uuid.UUID, _ domain.ScopeType, _ uuid.UUID) error {
+	return nil
+}
 func (m *testUserRoleRepo) ListByUser(_ context.Context, _ uuid.UUID) ([]*domain.UserRole, error) {
 	return nil, nil
 }
@@ -200,7 +203,7 @@ func (m *testPolicyRepo) Create(_ context.Context, p *domain.Policy) error {
 	return nil
 }
 
-func (m *testPolicyRepo) GetByID(_ context.Context, id uuid.UUID) (*domain.Policy, error) {
+func (m *testPolicyRepo) GetByID(_ context.Context, _ uuid.UUID, id uuid.UUID) (*domain.Policy, error) {
 	if p, ok := m.policies[id]; ok {
 		return p, nil
 	}
@@ -224,7 +227,7 @@ func (m *testPolicyRepo) ListByTenant(_ context.Context, tid uuid.UUID, limit, o
 	return res, nil
 }
 
-func (m *testPolicyRepo) Delete(_ context.Context, id uuid.UUID) error {
+func (m *testPolicyRepo) Delete(_ context.Context, _ uuid.UUID, id uuid.UUID) error {
 	if m.deleteErr != nil {
 		return m.deleteErr
 	}

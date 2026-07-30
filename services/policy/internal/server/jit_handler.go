@@ -90,6 +90,11 @@ func (s *HTTPServer) jitCreateRequest(w http.ResponseWriter, r *http.Request) {
 		writeJSONError(w, http.StatusBadRequest, "user_id, role_id, and reason are required")
 		return
 	}
+
+	// SECURITY: Override body user_id with authenticated identity to prevent cross-user JIT submission.
+	if uidStr := r.Header.Get("X-User-ID"); uidStr != "" {
+		req.UserID = uidStr
+	}
 	if req.DurationMin <= 0 || req.DurationMin > 480 {
 		req.DurationMin = 60 // default 1h, max 8h
 	}
@@ -199,7 +204,35 @@ func (s *HTTPServer) jitApprove(w http.ResponseWriter, r *http.Request, reqID uu
 		return
 	}
 
+	// SECURITY: Prevent self-approval (separation of duties).
+	if approverID == jitReq.UserID {
+		writeJSONError(w, http.StatusForbidden, "cannot approve your own JIT request")
+		return
+	}
+
 	expiresAt := time.Now().Add(time.Duration(jitReq.DurationMin) * time.Minute)
+
+	// SECURITY: Prevent granting instance-level system roles via JIT.
+	// Check BEFORE committing DB approval to avoid irreconcilable state.
+	if s.roleSvc != nil {
+		role, _ := s.roleSvc.GetRole(r.Context(), jitReq.RoleID)
+		if role != nil {
+			// Check SystemRole flag instead of hardcoded key list —
+			// covers all system roles including custom keys.
+			if role.SystemRole {
+				writeJSONError(w, http.StatusForbidden, "cannot grant system role via JIT")
+				return
+			}
+			// Also reject known privileged role keys as defense-in-depth.
+			privilegedKeys := map[string]bool{
+				"platform:admin": true, "system:admin": true, "tenant:admin": true, "administrator": true,
+			}
+			if privilegedKeys[role.Key] {
+				writeJSONError(w, http.StatusForbidden, "cannot grant instance-level role via JIT")
+				return
+			}
+		}
+	}
 
 	if err := s.jitRepo.Approve(r.Context(), reqID, approverID, expiresAt); err != nil {
 		log.Printf("JIT approve error: %v", err)
@@ -293,7 +326,7 @@ func (s *HTTPServer) jitRevoke(w http.ResponseWriter, r *http.Request, reqID uui
 
 	// Revoke the role binding.
 	if s.roleSvc != nil {
-		_ = s.roleSvc.RevokeRole(r.Context(), jitReq.UserID, jitReq.RoleID, domain.ScopeGlobal, tc.TenantID)
+		_ = s.roleSvc.RevokeRoleTemporaryOnly(r.Context(), jitReq.UserID, jitReq.RoleID, domain.ScopeGlobal, tc.TenantID)
 	}
 
 	s.publishAuditEvent("jit.revoke", "success", "jit_request", reqID, tc.TenantID)
@@ -334,7 +367,7 @@ func cleanupExpiredJIT(s *HTTPServer, ctx context.Context) {
 		}
 		// Revoke the temporary role binding.
 		if s.roleSvc != nil {
-			_ = s.roleSvc.RevokeRole(ctx, jitReq.UserID, jitReq.RoleID, domain.ScopeGlobal, jitReq.TenantID)
+			_ = s.roleSvc.RevokeRoleTemporaryOnly(ctx, jitReq.UserID, jitReq.RoleID, domain.ScopeGlobal, jitReq.TenantID)
 		}
 		s.publishAuditEvent("jit.expired", "success", "jit_request", jitReq.ID, jitReq.TenantID)
 		log.Printf("JIT expiry cleanup: expired request %s (user=%s role=%s)", jitReq.ID, jitReq.UserID, jitReq.RoleID)

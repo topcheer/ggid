@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/ggid/ggid/pkg/errors"
+	ggidtenant "github.com/ggid/ggid/pkg/tenant"
 	"github.com/ggid/ggid/services/policy/internal/domain"
 	"github.com/google/uuid"
 )
@@ -13,8 +14,17 @@ import (
 // tenantCtxKey is the context key for tenant isolation.
 type tenantCtxKey struct{}
 
+// TenantCtxKey is the exported version for use by HTTP handlers.
+var TenantCtxKey = tenantCtxKey{}
+
 type tenantCtx struct {
 	tenantID uuid.UUID
+}
+
+// WithTenantContext returns a new context with the tenant ID embedded,
+// so service methods can enforce tenant isolation.
+func WithTenantContext(ctx context.Context, tenantID uuid.UUID) context.Context {
+	return context.WithValue(ctx, TenantCtxKey, &tenantCtx{tenantID: tenantID})
 }
 
 // RoleRepo provides role persistence operations.
@@ -39,6 +49,7 @@ type PermRepo interface {
 type UserRoleRepo interface {
 	Assign(ctx context.Context, ur *domain.UserRole) error
 	Revoke(ctx context.Context, userID, roleID uuid.UUID, scopeType domain.ScopeType, scopeID uuid.UUID) error
+	RevokeTemporaryOnly(ctx context.Context, userID, roleID uuid.UUID, scopeType domain.ScopeType, scopeID uuid.UUID) error
 	ListByUser(ctx context.Context, userID uuid.UUID) ([]*domain.UserRole, error)
 }
 
@@ -219,6 +230,16 @@ func (s *RoleService) SetParent(ctx context.Context, roleID, parentID uuid.UUID)
 	if err != nil {
 		return nil, err
 	}
+
+	// SECURITY: Parent role must belong to the same tenant as the child role.
+	parent, err := s.roleRepo.GetByID(ctx, parentID)
+	if err != nil {
+		return nil, errors.Wrap(errors.ErrNotFound, "parent role not found", err)
+	}
+	if parent.TenantID != role.TenantID {
+		return nil, errors.New(errors.ErrPermissionDenied, "parent role must belong to the same tenant")
+	}
+
 	role.ParentRoleID = &parentID
 	if err := s.roleRepo.Update(ctx, role); err != nil {
 		return nil, errors.Wrap(errors.ErrInternal, "update role parent", err)
@@ -244,26 +265,41 @@ func (s *RoleService) DeleteRole(ctx context.Context, id uuid.UUID) error {
 // validateRoleTenant ensures the role belongs to the caller's tenant.
 // This prevents cross-tenant BOLA via UUID enumeration.
 func validateRoleTenant(ctx context.Context, role *domain.Role) error {
-	// tenantCtxKey is also defined in handler package; try both.
+	// System roles (tenant_id = uuid.Nil) are shared across tenants — allow access.
+	if role.TenantID == uuid.Nil || role.SystemRole {
+		return nil
+	}
+	// SECURITY: Fail-closed — require tenant context to match.
+	// Check service-level context first, then fall back to pkg/tenant context.
 	if tc, ok := ctx.Value(tenantCtxKey{}).(*tenantCtx); ok && tc != nil && tc.tenantID != uuid.Nil {
 		if role.TenantID != tc.tenantID {
 			return errors.New(errors.ErrNotFound, "role not found")
 		}
+		return nil
 	}
-	// Also check handler's tenantCtxKey via interface check.
-	if tenantID := tenantIDFromHTTPRequest(ctx); tenantID != uuid.Nil && role.TenantID != tenantID {
-		return errors.New(errors.ErrNotFound, "role not found")
+	// Fall back to pkg/tenant context (set by ggidtenant.WithContext).
+	if ptc, err := ggidtenant.FromContext(ctx); err == nil && ptc != nil && ptc.TenantID != uuid.Nil {
+		if role.TenantID != ptc.TenantID {
+			return errors.New(errors.ErrNotFound, "role not found")
+		}
+		return nil
 	}
-	return nil
+	if tenantID := tenantIDFromHTTPRequest(ctx); tenantID != uuid.Nil {
+		if role.TenantID != tenantID {
+			return errors.New(errors.ErrNotFound, "role not found")
+		}
+		return nil
+	}
+	// No tenant context at all — deny.
+	return errors.New(errors.ErrPermissionDenied, "tenant context required")
 }
 
-// tenantIDFromHTTPRequest tries to extract tenantID from the request context.
-// The HTTP handler stores it via handler.tenantCtxKey which is a different type,
-// so we check by iterating context values (best effort fallback).
+// tenantIDFromHTTPRequest extracts tenantID from the request context.
+// The HTTP handler must inject it via WithTenantContext.
 func tenantIDFromHTTPRequest(ctx context.Context) uuid.UUID {
-	// The service layer doesn't have direct access to handler types.
-	// In practice, the HTTP layer sets tenant in the request query param
-	// and the middleware sets it in context. We rely on the shared key type.
+	if tc, ok := ctx.Value(TenantCtxKey).(*tenantCtx); ok && tc != nil {
+		return tc.tenantID
+	}
 	return uuid.Nil
 }
 
@@ -300,6 +336,12 @@ func (s *RoleService) RevokeRole(ctx context.Context, userID, roleID uuid.UUID, 
 	return s.userRoleRepo.Revoke(ctx, userID, roleID, scopeType, scopeID)
 }
 
+// RevokeRoleTemporaryOnly removes only temporary (JIT-sourced) role assignments,
+// preserving standing roles. Used by JIT revoke paths.
+func (s *RoleService) RevokeRoleTemporaryOnly(ctx context.Context, userID, roleID uuid.UUID, scopeType domain.ScopeType, scopeID uuid.UUID) error {
+	return s.userRoleRepo.RevokeTemporaryOnly(ctx, userID, roleID, scopeType, scopeID)
+}
+
 // ListUserRoles returns all roles assigned to a user.
 func (s *RoleService) ListUserRoles(ctx context.Context, userID uuid.UUID) ([]*domain.UserRole, error) {
 	return s.userRoleRepo.ListByUser(ctx, userID)
@@ -307,8 +349,18 @@ func (s *RoleService) ListUserRoles(ctx context.Context, userID uuid.UUID) ([]*d
 
 // --- Permission management ---
 
+// reservedPermissionKeys are keys that must never be user-created because
+// they trigger universal bypass in rbac.HasPermission.
+var reservedPermissionKeys = map[string]bool{
+	"admin": true, "system:admin": true, "superadmin": true,
+}
+
 // CreatePermission creates a new permission.
 func (s *RoleService) CreatePermission(ctx context.Context, perm *domain.Permission) (*domain.Permission, error) {
+	// SECURITY: Prevent creation of reserved permission keys that trigger admin bypass.
+	if reservedPermissionKeys[perm.Key] {
+		return nil, errors.New(errors.ErrInvalidArgument, "permission key '"+perm.Key+"' is reserved")
+	}
 	if err := s.permRepo.Create(ctx, perm); err != nil {
 		return nil, errors.Wrap(errors.ErrInternal, "create permission", err)
 	}
@@ -329,11 +381,27 @@ func (s *RoleService) ListPermissions(ctx context.Context, tenantID uuid.UUID, p
 
 // GrantPermissionsToRole assigns permissions to a role.
 func (s *RoleService) GrantPermissionsToRole(ctx context.Context, roleID uuid.UUID, permissionIDs []uuid.UUID) error {
+	// SECURITY: Validate the role belongs to the caller's tenant before modifying.
+	role, err := s.roleRepo.GetByID(ctx, roleID)
+	if err != nil {
+		return errors.Wrap(errors.ErrNotFound, "role not found", err)
+	}
+	if err := validateRoleTenant(ctx, role); err != nil {
+		return err
+	}
 	return s.roleRepo.GrantPermissions(ctx, roleID, permissionIDs, nil)
 }
 
 // RevokePermissionsFromRole removes permissions from a role.
 func (s *RoleService) RevokePermissionsFromRole(ctx context.Context, roleID uuid.UUID, permissionIDs []uuid.UUID) error {
+	// SECURITY: Validate the role belongs to the caller's tenant before modifying.
+	role, err := s.roleRepo.GetByID(ctx, roleID)
+	if err != nil {
+		return errors.Wrap(errors.ErrNotFound, "role not found", err)
+	}
+	if err := validateRoleTenant(ctx, role); err != nil {
+		return err
+	}
 	return s.roleRepo.RevokePermissions(ctx, roleID, permissionIDs)
 }
 
@@ -341,6 +409,10 @@ func (s *RoleService) RevokePermissionsFromRole(ctx context.Context, roleID uuid
 func (s *RoleService) GetRolePermissions(ctx context.Context, roleID uuid.UUID) ([]*domain.Permission, error) {
 	role, err := s.roleRepo.GetByID(ctx, roleID)
 	if err != nil {
+		return nil, err
+	}
+	// SECURITY: Validate role belongs to caller's tenant.
+	if err := validateRoleTenant(ctx, role); err != nil {
 		return nil, err
 	}
 	return s.roleRepo.GetRolePermissions(ctx, []uuid.UUID{roleID}, role.TenantID)

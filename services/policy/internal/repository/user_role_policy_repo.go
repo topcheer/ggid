@@ -32,10 +32,18 @@ func (r *UserRoleRepository) Assign(ctx context.Context, ur *domain.UserRole) er
 	).Scan(&ur.CreatedAt)
 }
 
-// Revoke removes a user-role assignment.
-// For JIT-sourced revocations, only removes temporary (expires_at IS NOT NULL) rows
-// to avoid destroying standing (permanent) role assignments.
+// Revoke removes a user-role assignment (both standing and temporary).
+// Used by Access Review Campaign and gRPC admin operations.
 func (r *UserRoleRepository) Revoke(ctx context.Context, userID, roleID uuid.UUID, scopeType domain.ScopeType, scopeID uuid.UUID) error {
+	_, err := r.db.Exec(ctx,
+		`DELETE FROM user_roles WHERE user_id = $1 AND role_id = $2 AND scope_type = $3 AND scope_id = $4`,
+		userID, roleID, scopeType, scopeID)
+	return err
+}
+
+// RevokeTemporaryOnly removes only JIT-sourced temporary role assignments
+// (expires_at IS NOT NULL), preserving standing (permanent) roles.
+func (r *UserRoleRepository) RevokeTemporaryOnly(ctx context.Context, userID, roleID uuid.UUID, scopeType domain.ScopeType, scopeID uuid.UUID) error {
 	_, err := r.db.Exec(ctx,
 		`DELETE FROM user_roles WHERE user_id = $1 AND role_id = $2 AND scope_type = $3 AND scope_id = $4
 		 AND expires_at IS NOT NULL`,

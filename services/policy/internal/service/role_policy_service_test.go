@@ -142,6 +142,10 @@ func (m *mockUserRoleRepo) Assign(_ context.Context, ur *domain.UserRole) error 
 func (m *mockUserRoleRepo) Revoke(_ context.Context, _, _ uuid.UUID, _ domain.ScopeType, _ uuid.UUID) error {
 	return m.revokeErr
 }
+
+func (m *mockUserRoleRepo) RevokeTemporaryOnly(_ context.Context, _, _ uuid.UUID, _ domain.ScopeType, _ uuid.UUID) error {
+	return m.revokeErr
+}
 func (m *mockUserRoleRepo) ListByUser(_ context.Context, uid uuid.UUID) ([]*domain.UserRole, error) {
 	var res []*domain.UserRole
 	for _, a := range m.assignments {
