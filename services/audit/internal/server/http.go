@@ -999,6 +999,11 @@ func (s *HTTPServer) handleAuditWebhooks(w http.ResponseWriter, r *http.Request)
 		}
 		// SECURITY: always use header tenant_id (never trust body)
 		tenantID := r.Header.Get("X-Tenant-ID")
+		// SECURITY: SSRF validation before persisting the URL (R160).
+		if err := validateWebhookURL(req.URL); err != nil {
+			writeJSONError(w, http.StatusBadRequest, err.Error())
+			return
+		}
 		// SECURITY: hash secret before storage
 		secretHash := ""
 		if req.Secret != "" {
