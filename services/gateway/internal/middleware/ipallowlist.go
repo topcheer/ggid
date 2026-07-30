@@ -53,23 +53,12 @@ func (al *IPAllowlist) Middleware(next http.Handler) http.Handler {
 }
 
 // extractClientIP gets the real client IP from headers or RemoteAddr.
+// Aligned with clientIPFromRequest (R12 P1): only the rightmost XFF
+// entry (added by our trusted ingress) is trusted; X-Real-IP and the
+// leftmost XFF entries are client-spoofable and must not unlock the
+// IP allowlist.
 func extractClientIP(r *http.Request) string {
-	// Check X-Forwarded-For (first IP)
-	if xff := r.Header.Get("X-Forwarded-For"); xff != "" {
-		if idx := strings.Index(xff, ","); idx > 0 {
-			return strings.TrimSpace(xff[:idx])
-		}
-		return strings.TrimSpace(xff)
-	}
-	// Check X-Real-IP
-	if xri := r.Header.Get("X-Real-IP"); xri != "" {
-		return xri
-	}
-	// Fall back to RemoteAddr (strip port)
-	if idx := strings.LastIndex(r.RemoteAddr, ":"); idx > 0 {
-		return r.RemoteAddr[:idx]
-	}
-	return r.RemoteAddr
+	return clientIPFromRequest(r)
 }
 
 // ParseCIDRs converts a list of CIDR strings to net.IPNet.

@@ -762,6 +762,25 @@ func JWTAuth(jwks *JWKSClient, required bool, issuer, audience string) func(http
 					return
 				}
 			}
+			// R12 P0: JWT without a tenant claim (M2M client_credentials
+			// etc.) — any tenant in context came from the CLIENT's
+			// X-Tenant-ID header via TenantResolver, and the Director
+			// would backfill it, undoing header stripping. Clear it
+			// unless the caller is a verifiable platform:admin.
+			if jwtTenantID == "" {
+				isPlatformAdmin := false
+				if scopes, ok := claims["scope"].(string); ok {
+					for _, sc := range strings.Fields(scopes) {
+						if strings.EqualFold(sc, "platform:admin") {
+							isPlatformAdmin = true
+							break
+						}
+					}
+				}
+				if !isPlatformAdmin {
+					ctx = context.WithValue(ctx, TenantIDKey, "")
+				}
+			}
 			// Set tenant_id from JWT into context (preserve existing if set by TenantResolver).
 			if jwtTenantID != "" {
 				if existing, ok := ctx.Value(TenantIDKey).(string); !ok || existing == "" {
