@@ -11,6 +11,7 @@ import (
 	"golang.org/x/crypto/bcrypt"
 
 	ggidcrypto "github.com/ggid/ggid/pkg/crypto"
+	"github.com/ggid/ggid/pkg/pii"
 	ggidtenant "github.com/ggid/ggid/pkg/tenant"
 	"github.com/ggid/ggid/services/identity/internal/domain"
 	"github.com/google/uuid"
@@ -20,9 +21,9 @@ import (
 type BulkImportUser struct {
 	Email        string `json:"email"`
 	Username     string `json:"username"`
-	Password     string `json:"password"`       // plaintext password (will be hashed)
-	PasswordHash string `json:"password_hash"`  // pre-hashed from source system
-	HashType     string `json:"hash_type"`      // argon2id, bcrypt, pbkdf2, scrypt, ssha, plaintext
+	Password     string `json:"password"`      // plaintext password (will be hashed)
+	PasswordHash string `json:"password_hash"` // pre-hashed from source system
+	HashType     string `json:"hash_type"`     // argon2id, bcrypt, pbkdf2, scrypt, ssha, plaintext
 	FirstName    string `json:"first_name"`
 	LastName     string `json:"last_name"`
 	Phone        string `json:"phone"`
@@ -38,18 +39,18 @@ type BulkImportRequest struct {
 
 // BulkImportResult reports the import outcome.
 type BulkImportResult struct {
-	Total       int              `json:"total"`
-	Imported    int              `json:"imported"`
-	Skipped     int              `json:"skipped"`
-	Failed      int              `json:"failed"`
-	Errors      []ImportError    `json:"errors,omitempty"`
-	Duration    string           `json:"duration"`
-	DryRun      bool             `json:"dry_run"`
+	Total    int           `json:"total"`
+	Imported int           `json:"imported"`
+	Skipped  int           `json:"skipped"`
+	Failed   int           `json:"failed"`
+	Errors   []ImportError `json:"errors,omitempty"`
+	Duration string        `json:"duration"`
+	DryRun   bool          `json:"dry_run"`
 }
 
 type ImportError struct {
-	Email   string `json:"email"`
-	Reason  string `json:"reason"`
+	Email  string `json:"email"`
+	Reason string `json:"reason"`
 }
 
 // handleBulkImport handles POST /api/v1/identity/users/bulk-import.
@@ -138,7 +139,7 @@ func (h *HTTPHandler) handleBulkImport(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			result.Failed++
 			result.Errors = append(result.Errors, ImportError{Email: user.Email, Reason: fmt.Sprintf("create user failed: %v", err)})
-			slog.Warn("bulk import: CreateUser failed", "email", user.Email, "error", err)
+			slog.Warn("bulk import: CreateUser failed", "email", pii.MaskEmail(user.Email), "error", err)
 			continue
 		}
 		// If password_hash was provided (pre-hashed), store it directly in credentials.
@@ -155,7 +156,7 @@ func (h *HTTPHandler) handleBulkImport(w http.ResponseWriter, r *http.Request) {
 					createdUser.ID, roleUUID)
 			}
 		}
-		slog.Info("bulk import user created", "email", user.Email, "user_id", createdUser.ID, "role", user.RoleID)
+		slog.Info("bulk import user created", "email", pii.MaskEmail(user.Email), "user_id", createdUser.ID, "role", user.RoleID)
 		result.Imported++
 	}
 

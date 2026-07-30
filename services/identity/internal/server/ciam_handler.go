@@ -10,22 +10,23 @@ import (
 	"strings"
 	"time"
 
-	"github.com/google/uuid"
 	"github.com/ggid/ggid/pkg/crypto"
+	"github.com/ggid/ggid/pkg/pii"
 	"github.com/ggid/ggid/pkg/tenant"
 	"github.com/ggid/ggid/services/identity/internal/domain"
+	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 // SelfRegisterRequest is the B2B self-registration payload.
 type SelfRegisterRequest struct {
-	OrgName      string             `json:"org_name"`
-	OrgSize      string             `json:"org_size"`
-	Industry     string             `json:"industry"`
-	Admin        AdminAccount       `json:"admin"`
-	Branding     *RegisterBranding  `json:"branding,omitempty"`
-	CustomDomain string             `json:"custom_domain,omitempty"`
+	OrgName      string            `json:"org_name"`
+	OrgSize      string            `json:"org_size"`
+	Industry     string            `json:"industry"`
+	Admin        AdminAccount      `json:"admin"`
+	Branding     *RegisterBranding `json:"branding,omitempty"`
+	CustomDomain string            `json:"custom_domain,omitempty"`
 }
 
 type AdminAccount struct {
@@ -41,23 +42,23 @@ type RegisterBranding struct {
 
 // SelfRegisterResponse is returned after successful registration.
 type SelfRegisterResponse struct {
-	TenantID    string            `json:"tenant_id"`
-	OrgName     string            `json:"org_name"`
-	AdminUserID string            `json:"admin_user_id"`
-	LoginURL    string            `json:"login_url"`
-	Status      string            `json:"status"`
+	TenantID    string `json:"tenant_id"`
+	OrgName     string `json:"org_name"`
+	AdminUserID string `json:"admin_user_id"`
+	LoginURL    string `json:"login_url"`
+	Status      string `json:"status"`
 }
 
 // CIAMMetrics aggregates CIAM-relevant metrics.
 type CIAMMetrics struct {
-	TotalTenants     int                    `json:"total_tenants"`
-	ActiveTenants    int                    `json:"active_tenants"`
-	TotalUsers       int                    `json:"total_users"`
-	MAU              int                    `json:"mau"`
-	MFACoveragePct   int                    `json:"mfa_coverage_pct"`
-	Registrations7d  int                    `json:"registrations_7d"`
-	B2BSignups30d    int                    `json:"b2b_signups_30d"`
-	GeneratedAt      string                 `json:"generated_at"`
+	TotalTenants    int    `json:"total_tenants"`
+	ActiveTenants   int    `json:"active_tenants"`
+	TotalUsers      int    `json:"total_users"`
+	MAU             int    `json:"mau"`
+	MFACoveragePct  int    `json:"mfa_coverage_pct"`
+	Registrations7d int    `json:"registrations_7d"`
+	B2BSignups30d   int    `json:"b2b_signups_30d"`
+	GeneratedAt     string `json:"generated_at"`
 }
 
 // TenantBranding holds per-tenant brand customization.
@@ -108,7 +109,7 @@ func (h *HTTPHandler) handleSelfRegister(w http.ResponseWriter, r *http.Request)
 	}
 	var tenantIDStr string
 	err := pool.QueryRow(ctx,
-		 `INSERT INTO tenants (name, slug, status, plan)
+		`INSERT INTO tenants (name, slug, status, plan)
 		 VALUES ($1, $2, 'active', 'free')
 		 ON CONFLICT (slug) DO NOTHING
 		 RETURNING id::text`,
@@ -184,7 +185,7 @@ func (h *HTTPHandler) handleSelfRegister(w http.ResponseWriter, r *http.Request)
 			tenantID, req.Branding.PrimaryColor, req.Branding.LogoURL, req.CustomDomain)
 	}
 
-	slog.Info("B2B self-register complete", "org", req.OrgName, "tenant_id", tenantIDStr, "admin", req.Admin.Email)
+	slog.Info("B2B self-register complete", "org", req.OrgName, "tenant_id", tenantIDStr, "admin", pii.MaskEmail(req.Admin.Email))
 
 	writeJSON(w, http.StatusCreated, SelfRegisterResponse{
 		TenantID:    tenantIDStr,

@@ -35,7 +35,11 @@ func (s *SessionService) TrackDevice(ctx context.Context, rdb *redis.Client, ten
 	}
 
 	// Store in a Redis hash keyed by session ID.
-	return rdb.HSet(ctx, key, sessionID.String(), device.Fingerprint+":"+device.IPAddress+":"+device.LastSeen).Err()
+	if err := rdb.HSet(ctx, key, sessionID.String(), device.Fingerprint+":"+device.IPAddress+":"+device.LastSeen).Err(); err != nil {
+		return err
+	}
+	// Set TTL to prevent infinite growth (90 days).
+	return rdb.Expire(ctx, key, 90*24*time.Hour).Err()
 }
 
 // ListDevices returns all tracked devices for a user.

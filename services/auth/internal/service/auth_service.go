@@ -548,7 +548,8 @@ func (s *AuthService) IsForceMFA(ctx context.Context, tenantID uuid.UUID) bool {
 func (s *AuthService) SetForceMFA(ctx context.Context, tenantID uuid.UUID, enabled bool) error {
 	key := fmt.Sprintf("ggid:force_mfa:%s", tenantID)
 	if enabled {
-		return s.rateLimiter.rdb.Set(ctx, key, "true", 0).Err()
+		// TTL of 365 days to prevent permanent key residue after tenant deletion.
+		return s.rateLimiter.rdb.Set(ctx, key, "true", 365*24*time.Hour).Err()
 	}
 	return s.rateLimiter.rdb.Del(ctx, key).Err()
 }

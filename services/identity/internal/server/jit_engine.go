@@ -12,6 +12,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/ggid/ggid/pkg/pii"
 	ggidtenant "github.com/ggid/ggid/pkg/tenant"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -21,10 +22,10 @@ import (
 type JITMapping struct {
 	ID            uuid.UUID      `json:"id"`
 	TenantID      uuid.UUID      `json:"tenant_id"`
-	Protocol      string         `json:"protocol"`       // saml, oidc, ldap, scim
+	Protocol      string         `json:"protocol"` // saml, oidc, ldap, scim
 	IdpEntityID   string         `json:"idp_entity_id"`
-	AttributeMap  map[string]any `json:"attribute_map"`   // source_attr → GGID field
-	GroupMap      map[string]any `json:"group_map"`       // external_group → GGID role_id
+	AttributeMap  map[string]any `json:"attribute_map"` // source_attr → GGID field
+	GroupMap      map[string]any `json:"group_map"`     // external_group → GGID role_id
 	DefaultRoleID string         `json:"default_role_id,omitempty"`
 	Enabled       bool           `json:"enabled"`
 	CreatedAt     time.Time      `json:"created_at"`
@@ -32,12 +33,12 @@ type JITMapping struct {
 
 // JITResult is the outcome of a JIT provisioning pipeline run.
 type JITResult struct {
-	Action       string   `json:"action"`         // created, updated, no_change, error
-	UserID       string   `json:"user_id,omitempty"`
-	Username     string   `json:"username,omitempty"`
+	Action        string   `json:"action"` // created, updated, no_change, error
+	UserID        string   `json:"user_id,omitempty"`
+	Username      string   `json:"username,omitempty"`
 	AssignedRoles []string `json:"assigned_roles,omitempty"`
-	DryRun       bool     `json:"dry_run"`
-	Log          []string `json:"log,omitempty"`
+	DryRun        bool     `json:"dry_run"`
+	Log           []string `json:"log,omitempty"`
 }
 
 // jitRepo manages JIT mappings.
@@ -209,7 +210,7 @@ func runJITPipelineInternal(h *HTTPHandler, mapping *JITMapping, externalAttrs m
 		result.UserID = userID
 		result.Action = action
 		result.Log = append(result.Log, fmt.Sprintf("user %s %s with %d roles", result.UserID, action, len(assignedRoles)))
-		slog.Info("JIT provisioned user", "user_id", result.UserID, "email", email, "roles", assignedRoles, "protocol", mapping.Protocol, "action", action)
+		slog.Info("JIT provisioned user", "user_id", result.UserID, "email", pii.MaskEmail(email), "roles", assignedRoles, "protocol", mapping.Protocol, "action", action)
 	} else {
 		// Standalone mode (no handler) — simulate creation.
 		result.UserID = uuid.New().String()

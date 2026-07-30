@@ -12,6 +12,7 @@ import (
 	"time"
 
 	ggidcrypto "github.com/ggid/ggid/pkg/crypto"
+	"github.com/ggid/ggid/pkg/pii"
 	"github.com/ggid/ggid/pkg/social"
 	"github.com/ggid/ggid/pkg/tenant"
 	"github.com/golang-jwt/jwt/v5"
@@ -295,7 +296,7 @@ func (h *Handler) jitProvisionUser(ctx context.Context, tenantID uuid.UUID, info
 	// account instead of merging — prevents account takeover via unverified email.
 	if !info.EmailVerified && info.Email != "" {
 		slog.Warn("social JIT: email not verified by IdP, creating new account instead of merging",
-			"provider", info.Provider, "email", info.Email)
+			"provider", info.Provider, "email", pii.MaskEmail(info.Email))
 	}
 
 	// 3. Create new user via identity client (JIT provisioning).

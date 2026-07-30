@@ -5,9 +5,18 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"regexp"
 	"strings"
 	"time"
 )
+
+// validIdentifier matches safe SQL identifiers (table/column names).
+var validIdentifier = regexp.MustCompile(`^[a-zA-Z_][a-zA-Z0-9_]*$`)
+
+// isValidIdentifier returns true if the name is a safe SQL identifier.
+func isValidIdentifier(name string) bool {
+	return validIdentifier.MatchString(name)
+}
 
 // BackupFormat specifies the output format for database exports.
 type BackupFormat string
@@ -27,9 +36,9 @@ type TableData struct {
 
 // DatabaseExport represents a full database export.
 type DatabaseExport struct {
-	Driver    string       `json:"driver"`
-	Timestamp string       `json:"timestamp"`
-	Tables    []TableData  `json:"tables"`
+	Driver    string      `json:"driver"`
+	Timestamp string      `json:"timestamp"`
+	Tables    []TableData `json:"tables"`
 }
 
 // ExportDatabase exports all table data from the database.
@@ -63,6 +72,11 @@ func RestoreTable(ctx context.Context, p Pool, tableName string, data *TableData
 		return nil
 	}
 
+	// SECURITY: validate table name to prevent SQL injection via malicious import files.
+	if !isValidIdentifier(tableName) {
+		return fmt.Errorf("invalid table name: %q", tableName)
+	}
+
 	// Truncate existing data
 	_, err := p.Exec(ctx, fmt.Sprintf("DELETE FROM %s", tableName))
 	if err != nil {
@@ -74,6 +88,10 @@ func RestoreTable(ctx context.Context, p Pool, tableName string, data *TableData
 		cols := make([]string, 0, len(row))
 		vals := make([]any, 0, len(row))
 		for col, val := range row {
+			// SECURITY: validate column names to prevent SQL injection.
+			if !isValidIdentifier(col) {
+				return fmt.Errorf("invalid column name: %q", col)
+			}
 			cols = append(cols, col)
 			vals = append(vals, val)
 		}

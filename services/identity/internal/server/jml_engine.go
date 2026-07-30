@@ -10,6 +10,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/ggid/ggid/pkg/pii"
 	ggidtenant "github.com/ggid/ggid/pkg/tenant"
 	"github.com/google/uuid"
 )
@@ -40,9 +41,9 @@ func eventToTrigger(eventType string) string {
 
 // JMLEngine evaluates lifecycle events against rules and executes actions.
 type JMLEngine struct {
-	repo     *lifecycleRepo
+	repo      *lifecycleRepo
 	policyURL string   // policy service base URL for role assign/revoke
-	natsConn natsConn  // NATS connection for session revoke + notifications
+	natsConn  natsConn // NATS connection for session revoke + notifications
 }
 
 // natsConn is a minimal interface for NATS publish (avoids hard dependency).
@@ -162,7 +163,7 @@ func (e *JMLEngine) executeAction(action LifecycleAction, event LifecycleEvent, 
 		if email == "" {
 			return "failed: missing email in event attrs"
 		}
-		slog.Info("JML: create_account", "user_id", event.UserID, "email", email, "name", name)
+		slog.Info("JML: create_account", "user_id", event.UserID, "email", pii.MaskEmail(email), "name", name)
 		// In production: call h.svc.CreateUser(ctx, ...) with attrs from event.
 		return "success"
 
