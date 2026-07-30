@@ -980,6 +980,11 @@ func (s *HTTPServer) handleAuditWebhooks(w http.ResponseWriter, r *http.Request)
 			writeJSONError(w, http.StatusBadRequest, "url is required")
 			return
 		}
+		// SECURITY: SSRF prevention
+		if err := validateWebhookURL(req.URL); err != nil {
+			writeJSONError(w, http.StatusBadRequest, err.Error())
+			return
+		}
 		if req.SeverityThreshold == "" {
 			req.SeverityThreshold = "warning"
 		}
@@ -992,9 +997,13 @@ func (s *HTTPServer) handleAuditWebhooks(w http.ResponseWriter, r *http.Request)
 		if req.Active != nil {
 			isActive = *req.Active
 		}
-		// Auto-detect tenant_id from header if not in body
-		if req.TenantID == "" {
-			req.TenantID = r.Header.Get("X-Tenant-ID")
+		// SECURITY: always use header tenant_id (never trust body)
+		tenantID := r.Header.Get("X-Tenant-ID")
+		// SECURITY: hash secret before storage
+		secretHash := ""
+		if req.Secret != "" {
+			h := sha256.Sum256([]byte(req.Secret))
+			secretHash = hex.EncodeToString(h[:])
 		}
 		// Persist to DB
 		if s.pool != nil {
@@ -1003,15 +1012,15 @@ func (s *HTTPServer) handleAuditWebhooks(w http.ResponseWriter, r *http.Request)
 				INSERT INTO audit_webhooks (tenant_id, url, events, secret, enabled)
 				VALUES ($1, $2, $3, $4, $5)
 				RETURNING id::text, created_at`,
-				req.TenantID, req.URL, events, req.Secret, isActive).Scan(&dbID)
+				tenantID, req.URL, events, secretHash, isActive).Scan(&dbID)
 			if err == nil {
 				cfg := map[string]any{
 					"id":                 dbID,
-					"tenant_id":          req.TenantID,
+					"tenant_id":          tenantID,
 					"url":                req.URL,
 					"events":             events,
 					"event_types":        events,
-					"secret":             maskSecret(req.Secret),
+					"secret":             "", // never return secret
 					"active":             isActive,
 					"enabled":            isActive,
 					"severity_threshold": req.SeverityThreshold,
@@ -1024,11 +1033,11 @@ func (s *HTTPServer) handleAuditWebhooks(w http.ResponseWriter, r *http.Request)
 		// Memory fallback
 		cfg := map[string]any{
 			"id":                 uuid.New().String(),
-			"tenant_id":          req.TenantID,
+			"tenant_id":          tenantID,
 			"url":                req.URL,
 			"events":             events,
 			"event_types":        events,
-			"secret":             maskSecret(req.Secret),
+			"secret":             "",
 			"active":             isActive,
 			"enabled":            isActive,
 			"severity_threshold": req.SeverityThreshold,
@@ -1634,6 +1643,11 @@ func (s *HTTPServer) handleAlertConfig(w http.ResponseWriter, r *http.Request) {
 			alertCfg.enabled = *req.Enabled
 		}
 		if req.WebhookURL != "" {
+			// SECURITY: SSRF prevention
+			if err := validateWebhookURL(req.WebhookURL); err != nil {
+				writeJSONError(w, http.StatusBadRequest, err.Error())
+				return
+			}
 			alertCfg.webhookURL = req.WebhookURL
 		}
 		if req.EmailTo != "" {

@@ -389,12 +389,15 @@ func (s *HTTPServer) handleWebhookDeliveryRetry(w http.ResponseWriter, r *http.R
 func (s *HTTPServer) handleWebhookRotateSecret(w http.ResponseWriter, r *http.Request, whID string) {
 	// Generate a new secret
 	secret := "whsec_" + fmt.Sprintf("%d", time.Now().UnixNano())
+	// SECURITY: hash before storage
+	h := sha256.Sum256([]byte(secret))
+	secretHash := hex.EncodeToString(h[:])
 
 	// Update the webhook in memory
 	globalAlertWebhooks.mu.Lock()
 	for _, wh := range globalAlertWebhooks.webhooks {
 		if wh["id"] == whID {
-			wh["secret"] = secret
+			wh["secret"] = secretHash
 			if s.memMapRepo2 != nil {
 				_ = s.memMapRepo2.StoreJSON(r.Context(), "audit_webhook_configs", whID, wh)
 			}
@@ -404,6 +407,6 @@ func (s *HTTPServer) handleWebhookRotateSecret(w http.ResponseWriter, r *http.Re
 	globalAlertWebhooks.mu.Unlock()
 
 	writeJSON(w, http.StatusOK, map[string]any{
-		"secret": secret,
+		"secret": "", // never return secret hash; client should use the returned secret
 	})
 }

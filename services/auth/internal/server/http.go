@@ -721,6 +721,21 @@ func (h *Handler) verifyCredentials(w http.ResponseWriter, r *http.Request) {
 
 	userID, mfaRequired, err := h.authSvc.VerifyCredentials(r.Context(), req.Username, req.Password, ip)
 	if err != nil {
+		// SECURITY: ErrPasswordExpired is NOT an auth failure — the credentials
+		// were valid, the password just needs rotation. Don't count as failed login
+		// (which would trigger account lockout) and provide a clear error message.
+		if stderrors.Is(err, service.ErrPasswordExpired) {
+			// Reset failed logins since credentials are valid
+			if tc, terr := ggidtenant.FromContext(r.Context()); terr == nil {
+				h.authSvc.ResetFailedLogins(r.Context(), tc.TenantID, req.Username)
+			}
+			writeJSON(w, http.StatusOK, map[string]any{
+				"user_id":              userID,
+				"must_change_password": true,
+				"mfa_required":         false,
+			})
+			return
+		}
 		if tc, terr := ggidtenant.FromContext(r.Context()); terr == nil {
 			_ = h.authSvc.RecordFailedLogin(r.Context(), tc.TenantID, req.Username)
 		}
