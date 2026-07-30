@@ -432,7 +432,7 @@ func ssrfSafeDialContext(ctx context.Context, network, addr string) (net.Conn, e
 	if err != nil {
 		return nil, err
 	}
-	testMode := os.Getenv("GGID_ENV") == "test"
+	testMode := os.Getenv("GGID_ENV") == "test" || os.Getenv("GGID_DEV_MODE") == "true"
 	for _, ip := range ips {
 		if ip.IsLoopback() || ip.IsPrivate() || ip.IsLinkLocalUnicast() || ip.IsUnspecified() {
 			if testMode && ip.IsLoopback() {
