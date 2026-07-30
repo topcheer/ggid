@@ -1215,6 +1215,11 @@ func (s *OAuthService) exchangeTokenInternal(ctx context.Context, req *RFC8693Ex
 		if err != nil {
 			return nil, fmt.Errorf("invalid actor_token: %w", err)
 		}
+		// Same tenant guard as the subject token — a cross-tenant actor
+		// identity must not be mixed into the delegation chain.
+		if at, _ := actorClaims["tenant_id"].(string); at != "" && at != req.TenantID.String() {
+			return nil, fmt.Errorf("actor_token tenant does not match requesting client tenant")
+		}
 		actorSub, _ := actorClaims["sub"].(string)
 		actClaim = map[string]any{
 			"sub": actorSub,
