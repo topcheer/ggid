@@ -526,9 +526,10 @@ func (s *HTTPServer) createOrg(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	tenantID, err := uuid.Parse(req.TenantID)
-	if err != nil {
-		writeJSONError(w, http.StatusBadRequest, "invalid tenant_id")
+	// SECURITY (R13): tenant from verified header — body tenant_id is
+	// ignored (cross-tenant org creation, R6/R9 residual).
+	tenantID, ok := s.requireTenant(w, r)
+	if !ok {
 		return
 	}
 
@@ -1147,10 +1148,15 @@ func (s *HTTPServer) handleOrgStats(w http.ResponseWriter, r *http.Request, orgI
 	}
 	_ = tenantID // used below
 
-	// Get org
+	// Get org — with tenant-ownership check (R13: cross-tenant org
+	// metadata leak through stats)
 	org, err := s.orgSvc.Get(r.Context(), orgID)
 	if err != nil {
 		writeServiceError(w, err)
+		return
+	}
+	if org.TenantID != tenantID {
+		writeJSONError(w, http.StatusNotFound, "organization not found")
 		return
 	}
 
@@ -1267,7 +1273,10 @@ func (s *HTTPServer) handleBulkRemoveMembers(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	tenantID, _ := uuid.Parse(req.TenantID)
+	if !s.checkOrgOwnership(w, r, orgID) {
+		return
+	}
+	tenantID := s.getTenantID(r)
 
 	// Get all members for this org
 	members, _ := s.memberSvc.List(r.Context(), repository.ListMembersFilter{
@@ -1341,7 +1350,11 @@ func (s *HTTPServer) handleOrgInherit(w http.ResponseWriter, r *http.Request, or
 		}
 		orgInheritance.RUnlock()
 
-		// Set inheritance
+		// Set inheritance — both orgs must belong to the caller's tenant
+		// (R13: cross-tenant role grafting via unverified parentID)
+		if !s.checkOrgOwnership(w, r, orgID) || !s.checkOrgOwnership(w, r, parentID) {
+			return
+		}
 		orgInheritance.Lock()
 		orgInheritance.data[orgID] = parentID
 		orgInheritance.Unlock()

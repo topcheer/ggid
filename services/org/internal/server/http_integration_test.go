@@ -238,6 +238,7 @@ func TestOrgServer_CreateOrg(t *testing.T) {
 
 	body := `{"name":"Engineering","tenant_id":"` + testTenantID + `"}`
 	req := httptest.NewRequest(http.MethodPost, "/api/v1/orgs", strings.NewReader(body))
+	req.Header.Set("X-Tenant-ID", testTenantID) // tenant now comes from the verified header (R13)
 	rr := httptest.NewRecorder()
 	mux.ServeHTTP(rr, req)
 
