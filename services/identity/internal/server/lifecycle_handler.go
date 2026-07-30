@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"time"
 
+	ggidtenant "github.com/ggid/ggid/pkg/tenant"
 	"github.com/google/uuid"
 )
 
@@ -15,7 +16,7 @@ type LifecycleRule struct {
 	ID         string            `json:"id"`
 	TenantID   string            `json:"tenant_id"`
 	Name       string            `json:"name"`
-	Trigger    string            `json:"trigger"`  // joiner, mover, leaver
+	Trigger    string            `json:"trigger"` // joiner, mover, leaver
 	Conditions map[string]any    `json:"conditions,omitempty"`
 	Actions    []LifecycleAction `json:"actions"`
 	Enabled    bool              `json:"enabled"`
@@ -24,7 +25,7 @@ type LifecycleRule struct {
 
 // LifecycleAction represents a single action in a lifecycle rule.
 type LifecycleAction struct {
-	Type  string         `json:"type"`  // assign_role, revoke_access, notify_manager
+	Type   string         `json:"type"` // assign_role, revoke_access, notify_manager
 	Params map[string]any `json:"params,omitempty"`
 }
 
@@ -32,6 +33,21 @@ type LifecycleAction struct {
 // GET  /api/v1/users/lifecycle/rules          — list rules
 // GET  /api/v1/users/{id}/lifecycle-preview   — preview applicable rules for user
 func (h *HTTPHandler) handleLifecycleRules(w http.ResponseWriter, r *http.Request) {
+	// SECURITY (R17 P1): Require tenant context from verified header.
+	tc, err := ggidtenant.FromContext(r.Context())
+	if err != nil {
+		// Try injecting from X-Tenant-ID header.
+		tidStr := r.Header.Get("X-Tenant-ID")
+		tid, perr := uuid.Parse(tidStr)
+		if tidStr == "" || perr != nil {
+			writeJSONError(w, http.StatusForbidden, "tenant context required")
+			return
+		}
+		tc = &ggidtenant.Context{TenantID: tid, IsolationLevel: ggidtenant.IsolationShared}
+		r = r.WithContext(ggidtenant.WithContext(r.Context(), tc))
+	}
+	tenantIDStr := tc.TenantID.String()
+
 	switch r.Method {
 	case http.MethodPost:
 		var req struct {
@@ -60,7 +76,7 @@ func (h *HTTPHandler) handleLifecycleRules(w http.ResponseWriter, r *http.Reques
 		}
 		rule := &LifecycleRule{
 			ID:         uuid.New().String(),
-			TenantID:   req.TenantID,
+			TenantID:   tenantIDStr,
 			Name:       req.Name,
 			Trigger:    req.Trigger,
 			Conditions: req.Conditions,
@@ -81,23 +97,24 @@ func (h *HTTPHandler) handleLifecycleRules(w http.ResponseWriter, r *http.Reques
 
 	case http.MethodGet:
 		trigger := r.URL.Query().Get("trigger")
-		tenantID := r.URL.Query().Get("tenant_id")
+		// SECURITY (R17 P1): Always filter by caller's tenant — the
+		// previous query-only filter returned all tenants when empty.
 		var rules []*LifecycleRule
 		if h.identityPolicyMap != nil {
 			rows, _ := h.identityPolicyMap.List(r.Context(), "lifecycle_rules_store")
 			for _, row := range rows {
 				rl := &LifecycleRule{
-					ID:        getString(row, "id"),
-					TenantID:  getString(row, "tenant_id"),
-					Name:      getString(row, "name"),
-					Trigger:   getString(row, "trigger"),
+					ID:         getString(row, "id"),
+					TenantID:   getString(row, "tenant_id"),
+					Name:       getString(row, "name"),
+					Trigger:    getString(row, "trigger"),
 					Conditions: getMap(row, "conditions"),
-					Enabled:   getBool(row, "enabled"),
+					Enabled:    getBool(row, "enabled"),
 				}
-				if trigger != "" && rl.Trigger != trigger {
+				if rl.TenantID != tenantIDStr {
 					continue
 				}
-				if tenantID != "" && rl.TenantID != tenantID {
+				if trigger != "" && rl.Trigger != trigger {
 					continue
 				}
 				rules = append(rules, rl)
@@ -170,11 +187,11 @@ func (h *HTTPHandler) handleLifecyclePreview(ctx context.Context, userID uuid.UU
 	for _, rl := range applicableRules {
 		for _, a := range rl.Actions {
 			previewActions = append(previewActions, map[string]any{
-				"rule_id":        rl.ID,
-				"rule_name":      rl.Name,
-				"trigger":        rl.Trigger,
-				"action":         a.Type,
-				"params":         a.Params,
+				"rule_id":       rl.ID,
+				"rule_name":     rl.Name,
+				"trigger":       rl.Trigger,
+				"action":        a.Type,
+				"params":        a.Params,
 				"would_execute": true,
 			})
 		}
