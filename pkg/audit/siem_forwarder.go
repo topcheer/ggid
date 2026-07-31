@@ -110,14 +110,18 @@ func (f *SIEMForwarder) Forward(event Event) {
 	// Bounded by semaphore to prevent unbounded goroutine creation.
 	if shouldFlush {
 		go func() {
+			acquired := false
 			defer func() {
 				if r := recover(); r != nil {
 					f.logger.Error("SIEM flush panic", "error", r)
 				}
-				<-f.flushSem
+				if acquired {
+					<-f.flushSem
+				}
 			}()
 			select {
 			case f.flushSem <- struct{}{}:
+				acquired = true
 				f.flush()
 			default:
 				// Skip if a flush is already running
