@@ -102,7 +102,7 @@ func (s *AuthService) VerifyStepUp(ctx context.Context, challenge, code, passwor
 			return nil, fmt.Errorf("MFA service not configured")
 		}
 		if err := s.mfaService.VerifyUserCode(ctx, tenantID, userID, code); err != nil {
-			return nil, err
+			return nil, ErrInvalidCredentials
 		}
 
 	default:
@@ -143,6 +143,11 @@ func (s *AuthService) ValidateStepUpToken(ctx context.Context, token string, use
 		return ErrInvalidCredentials
 	}
 
+	// P2-1: Verify stored tenantID is valid (defense-in-depth).
+	_, err = uuid.Parse(parts[0])
+	if err != nil {
+		return ErrInvalidCredentials
+	}
 	uid, err := uuid.Parse(parts[1])
 	if err != nil {
 		return ErrInvalidCredentials

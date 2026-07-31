@@ -98,11 +98,14 @@ func (s *AuthService) ConfirmEmailChange(ctx context.Context, token, step string
 		return false, nil
 	}
 
-	// Both confirmed — apply the change.
+	// Both confirmed — apply the change atomically (prevent double-application race).
 	dataKey := fmt.Sprintf("ggid:emailchange:%s", changeID)
-	val, err := s.rateLimiter.rdb.Get(ctx, dataKey).Result()
+	// P2-3: Use GetDel to atomically consume the data — prevents concurrent
+	// double-confirmation from applying the change twice.
+	val, err := s.rateLimiter.rdb.GetDel(ctx, dataKey).Result()
 	if err != nil {
-		return false, fmt.Errorf("email change expired")
+		// Already consumed by concurrent confirmation — safe to return as not applied.
+		return false, nil
 	}
 
 	parts := splitColon(val, 4)
