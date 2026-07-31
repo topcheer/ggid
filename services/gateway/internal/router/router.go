@@ -19,6 +19,7 @@ import (
 
 	pkgmiddleware "github.com/ggid/ggid/pkg/middleware"
 	"github.com/ggid/ggid/pkg/posture"
+	"github.com/ggid/ggid/pkg/shutdown"
 	"github.com/ggid/ggid/pkg/sysconfig"
 	"github.com/ggid/ggid/services/gateway/internal/config"
 	"github.com/ggid/ggid/services/gateway/internal/healthcheck"
@@ -795,6 +796,9 @@ func (gw *Gateway) Handler() http.Handler {
 	handler = middleware.SecurityHeaders(handler)
 	handler = middleware.RequestID(handler)
 	handler = middleware.PanicRecovery(logger)(handler)
+	// Shutdown: return 503 during graceful drain so k8s/load balancer
+	// stops sending traffic before the process exits.
+	handler = shutdown.HealthCheckMiddleware(handler)
 
 	return handler
 }
