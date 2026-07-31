@@ -91,7 +91,14 @@ func (h *HTTPHandler) scimTokenAuth(next http.Handler) http.Handler {
 		ctx = ggidtenant.WithContext(ctx, tc)
 
 		// Update last_used_at (async, best-effort).
-		go h.scimRepo.UpdateLastUsed(context.Background(), scimToken.ID)
+		go func() {
+			defer func() {
+				if r := recover(); r != nil {
+					slog.Error("scim UpdateLastUsed panic", "error", r)
+				}
+			}()
+			h.scimRepo.UpdateLastUsed(context.Background(), scimToken.ID)
+		}()
 
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
