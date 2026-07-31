@@ -205,6 +205,16 @@ func NewWithKeyProvider(cfg *conf.Config, kp crypto.KeyProvider) (*Server, error
 	if redisURL := os.Getenv("REDIS_URL"); redisURL != "" {
 		opts, err := redis.ParseURL(redisURL)
 		if err == nil {
+			// SECURITY (P0-4): explicit pool sizing to prevent connection
+			// exhaustion under load. Default go-redis pool is 10*GOMAXPROCS
+			// with 0 min idle — can starve under burst.
+			opts.PoolSize = 20
+			opts.MinIdleConns = 5
+			opts.MaxRetries = 3
+			opts.DialTimeout = 5 * time.Second
+			opts.ReadTimeout = 3 * time.Second
+			opts.WriteTimeout = 3 * time.Second
+			opts.PoolTimeout = 4 * time.Second
 			rdb := redis.NewClient(opts)
 			if err := rdb.Ping(ctx).Err(); err == nil {
 				oauthSvc.SetRedisClient(&redisAdapter{rdb: rdb})
