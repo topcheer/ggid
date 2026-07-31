@@ -16,10 +16,10 @@ import (
 // --- DTOs ---
 
 type tapIssueRequest struct {
-	UserID   string `json:"user_id"`
-	Reason   string `json:"reason"`
-	GroupID  string `json:"group_id"`
-	TTLMin   int    `json:"ttl_minutes"`
+	UserID  string `json:"user_id"`
+	Reason  string `json:"reason"`
+	GroupID string `json:"group_id"`
+	TTLMin  int    `json:"ttl_minutes"`
 }
 
 type tapBatchRequest struct {
@@ -36,14 +36,14 @@ type tapPolicyRequest struct {
 }
 
 type tapBatchResponse struct {
-	Issued []tapIssueResult   `json:"issued"`
-	Errors []tapBatchError    `json:"errors,omitempty"`
+	Issued []tapIssueResult `json:"issued"`
+	Errors []tapBatchError  `json:"errors,omitempty"`
 }
 
 type tapIssueResult struct {
-	UserID string `json:"user_id"`
-	TAPID  string `json:"tap_id"`
-	Code   string `json:"code"`
+	UserID    string `json:"user_id"`
+	TAPID     string `json:"tap_id"`
+	Code      string `json:"code"`
 	ExpiresAt string `json:"expires_at"`
 }
 
@@ -118,7 +118,8 @@ func (h *Handler) tapIssue(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if h.tapEngine == nil {
-		writeJSON(w, http.StatusOK, []interface{}{}); return
+		writeJSON(w, http.StatusOK, []interface{}{})
+		return
 	}
 
 	code, rec, err := h.tapEngine.Issue(r.Context(), req.UserID, "admin", req.Reason, ttl)
@@ -179,14 +180,15 @@ func (h *Handler) tapBatch(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if h.tapEngine == nil {
-		writeJSON(w, http.StatusOK, []interface{}{}); return
+		writeJSON(w, http.StatusOK, []interface{}{})
+		return
 	}
 
 	resp := tapBatchResponse{}
 	for _, uid := range req.UserIDs {
 		code, rec, err := h.tapEngine.Issue(r.Context(), uid, "admin", req.Reason, ttl)
 		if err != nil {
-			resp.Errors = append(resp.Errors, tapBatchError{UserID: uid, Error: err.Error()})
+			resp.Errors = append(resp.Errors, tapBatchError{UserID: uid, Error: "failed to issue TAP code"})
 			continue
 		}
 		resp.Issued = append(resp.Issued, tapIssueResult{

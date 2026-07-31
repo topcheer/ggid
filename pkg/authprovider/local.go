@@ -2,7 +2,6 @@ package authprovider
 
 import (
 	"context"
-	"fmt"
 	"log/slog"
 
 	"github.com/ggid/ggid/pkg/auth/multihash"
@@ -41,8 +40,8 @@ type RehashCallback func(ctx context.Context, userID uuid.UUID, plainPassword, o
 var dummyArgon2Hash = "argon2id$2$19456$1$1muvN4Duh4uBJcbYpvpk7g.IKg2Zr+K8NMPQkJlzFZ2m34K6SWRTSFQeS27S0ZtVUg"
 
 type LocalProvider struct {
-	store     LocalCredentialStore
-	rehashCb  RehashCallback
+	store    LocalCredentialStore
+	rehashCb RehashCallback
 }
 
 // NewLocalProvider creates a new LocalProvider.
@@ -99,7 +98,7 @@ func (p *LocalProvider) Authenticate(ctx context.Context, creds Credentials) (*A
 			// Hash is corrupted or uses an unrecognized format — this is an
 			// infrastructure error, not an authentication failure.
 			return nil, errors.New(errors.ErrInternal,
-				fmt.Sprintf("corrupted or unrecognized password hash for user %s", lc.UserID))
+				"corrupted or unrecognized password hash format")
 		}
 
 		if mhErr != nil || !mhOK {
@@ -135,7 +134,7 @@ func (p *LocalProvider) Authenticate(ctx context.Context, creds Credentials) (*A
 		LinkedUser: &uid,
 		Attributes: map[string]any{
 			"username": lc.Username,
-			"email":     lc.Email,
+			"email":    lc.Email,
 		},
 	}, nil
 }

@@ -4,6 +4,7 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
+	"log/slog"
 	"net/http"
 	"strings"
 	"sync"
@@ -45,24 +46,27 @@ func (h *Handler) handlePasswordReset(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		// Always return same response to prevent user enumeration
-		// If user exists, generate token and "send email"
+		// Always return same response to prevent user enumeration.
+		// Use the service-layer IssueResetToken which stores in Redis
+		// (consumed atomically by ConsumeResetToken in /complete).
 		if req.Email != "" {
-			token := uuid.New().String()
-			tokenHash := hashResetToken(token)
-			pwdResetMu.Lock()
-			pwdResetTokens[tokenHash] = &PasswordResetToken{
-				Token: tokenHash, Email: req.Email,
-				ExpiresAt: time.Now().UTC().Add(30 * time.Minute),
-			}
-			pwdResetMu.Unlock()
-
-			// PG write-through (store hash, not plaintext)
-			if h.memMapRepo != nil {
-				h.memMapRepo.StoreJSON(r.Context(), "auth_pwd_reset_tokens", tokenHash, map[string]any{
-					"token": tokenHash, "email": req.Email,
-					"expires_at": time.Now().UTC().Add(30 * time.Minute), "used": false,
-				})
+			// Look up user by email to get userID + tenantID for token issuance.
+			if h.pool != nil {
+				var userID, tenantID uuid.UUID
+				err := h.pool.QueryRow(r.Context(),
+					`SELECT user_id, tenant_id FROM auth_credentials
+					 WHERE email = $1 AND status = 'active' LIMIT 1`, req.Email).Scan(&userID, &tenantID)
+				if err == nil {
+					// Issue token via service layer (Redis-backed).
+					if pwdSvc := h.authSvc.GetPasswordService(); pwdSvc != nil {
+						token, terr := pwdSvc.IssueResetToken(r.Context(), userID, tenantID)
+						if terr == nil && token != "" {
+							// In production: send via email (pkg/email).
+							slog.Info("password reset token issued",
+								"user_id", userID, "expires_in", "1h")
+						}
+					}
+				}
 			}
 		}
 
