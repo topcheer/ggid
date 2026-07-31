@@ -40,6 +40,19 @@ func validateTenantFromMetadata(ctx context.Context, tenantID string) error {
 	return nil
 }
 
+// validateOrgTenant fetches the org for an OrgID and validates its tenant
+// against the caller's metadata (for Dept/Team which have no TenantID field).
+func validateOrgTenant(ctx context.Context, orgSvc *service.OrgService, orgID uuid.UUID) error {
+	org, err := orgSvc.Get(ctx, orgID)
+	if err != nil {
+		return toGRPCError(err)
+	}
+	if org == nil {
+		return status.Error(codes.NotFound, "organization not found")
+	}
+	return validateObjectTenant(ctx, org.TenantID)
+}
+
 // validateObjectTenant checks that a fetched object's tenant matches the
 // caller's metadata tenant (IDOR guard for Get/Update/Delete by id).
 func validateObjectTenant(ctx context.Context, objTenant uuid.UUID) error {
@@ -370,11 +383,12 @@ func orgToProto(o *domain.Organization) *pb.Organization {
 
 type DeptHandler struct {
 	pb.UnimplementedDepartmentServiceServer
-	svc *service.DeptService
+	svc    *service.DeptService
+	orgSvc *service.OrgService
 }
 
-func NewDeptHandler(svc *service.DeptService) *DeptHandler {
-	return &DeptHandler{svc: svc}
+func NewDeptHandler(svc *service.DeptService, orgSvc *service.OrgService) *DeptHandler {
+	return &DeptHandler{svc: svc, orgSvc: orgSvc}
 }
 
 func (h *DeptHandler) CreateDepartment(ctx context.Context, req *pb.CreateDeptRequest) (*pb.Department, error) {
@@ -413,6 +427,12 @@ func (h *DeptHandler) GetDepartment(ctx context.Context, req *pb.GetDeptRequest)
 	if err != nil {
 		return nil, toGRPCError(err)
 	}
+	if dept == nil {
+		return nil, status.Error(codes.NotFound, "department not found")
+	}
+	if err := validateOrgTenant(ctx, h.orgSvc, dept.OrgID); err != nil {
+		return nil, err
+	}
 	return deptToProto(dept), nil
 }
 
@@ -437,7 +457,17 @@ func (h *DeptHandler) UpdateDepartment(ctx context.Context, req *pb.UpdateDeptRe
 	if err != nil {
 		return nil, err
 	}
-	dept := &domain.Department{ID: id}
+	existing, err := h.svc.Get(ctx, id)
+	if err != nil {
+		return nil, toGRPCError(err)
+	}
+	if existing == nil {
+		return nil, status.Error(codes.NotFound, "department not found")
+	}
+	if err := validateOrgTenant(ctx, h.orgSvc, existing.OrgID); err != nil {
+		return nil, err
+	}
+	dept := &domain.Department{ID: id, OrgID: existing.OrgID}
 	if req.Name != nil {
 		dept.Name = *req.Name
 	}
@@ -458,6 +488,16 @@ func (h *DeptHandler) UpdateDepartment(ctx context.Context, req *pb.UpdateDeptRe
 func (h *DeptHandler) DeleteDepartment(ctx context.Context, req *pb.DeleteDeptRequest) (*pb.DeleteDeptResponse, error) {
 	id, err := parseUUID(req.GetId(), "id")
 	if err != nil {
+		return nil, err
+	}
+	existing, err := h.svc.Get(ctx, id)
+	if err != nil {
+		return nil, toGRPCError(err)
+	}
+	if existing == nil {
+		return nil, status.Error(codes.NotFound, "department not found")
+	}
+	if err := validateOrgTenant(ctx, h.orgSvc, existing.OrgID); err != nil {
 		return nil, err
 	}
 	if err := h.svc.Delete(ctx, id); err != nil {
@@ -490,11 +530,12 @@ func deptToProto(d *domain.Department) *pb.Department {
 
 type TeamHandler struct {
 	pb.UnimplementedTeamServiceServer
-	svc *service.TeamService
+	svc    *service.TeamService
+	orgSvc *service.OrgService
 }
 
-func NewTeamHandler(svc *service.TeamService) *TeamHandler {
-	return &TeamHandler{svc: svc}
+func NewTeamHandler(svc *service.TeamService, orgSvc *service.OrgService) *TeamHandler {
+	return &TeamHandler{svc: svc, orgSvc: orgSvc}
 }
 
 func (h *TeamHandler) CreateTeam(ctx context.Context, req *pb.CreateTeamRequest) (*pb.Team, error) {
@@ -528,6 +569,12 @@ func (h *TeamHandler) GetTeam(ctx context.Context, req *pb.GetTeamRequest) (*pb.
 	if err != nil {
 		return nil, toGRPCError(err)
 	}
+	if team == nil {
+		return nil, status.Error(codes.NotFound, "team not found")
+	}
+	if err := validateOrgTenant(ctx, h.orgSvc, team.OrgID); err != nil {
+		return nil, err
+	}
 	return teamToProto(team), nil
 }
 
@@ -556,6 +603,16 @@ func (h *TeamHandler) ListTeams(ctx context.Context, req *pb.ListTeamsRequest) (
 func (h *TeamHandler) DeleteTeam(ctx context.Context, req *pb.DeleteTeamRequest) (*pb.DeleteTeamResponse, error) {
 	id, err := parseUUID(req.GetId(), "id")
 	if err != nil {
+		return nil, err
+	}
+	existing, err := h.svc.Get(ctx, id)
+	if err != nil {
+		return nil, toGRPCError(err)
+	}
+	if existing == nil {
+		return nil, status.Error(codes.NotFound, "team not found")
+	}
+	if err := validateOrgTenant(ctx, h.orgSvc, existing.OrgID); err != nil {
 		return nil, err
 	}
 	if err := h.svc.Delete(ctx, id); err != nil {
@@ -639,6 +696,16 @@ func (h *MembershipHandler) AcceptInvitation(ctx context.Context, req *pb.Accept
 	if err != nil {
 		return nil, err
 	}
+	existing, err := h.svc.Get(ctx, id)
+	if err != nil {
+		return nil, toGRPCError(err)
+	}
+	if existing == nil {
+		return nil, status.Error(codes.NotFound, "membership not found")
+	}
+	if err := validateObjectTenant(ctx, existing.TenantID); err != nil {
+		return nil, err
+	}
 	if err := h.svc.AcceptInvitation(ctx, id); err != nil {
 		return nil, toGRPCError(err)
 	}
@@ -650,6 +717,16 @@ func (h *MembershipHandler) RemoveMember(ctx context.Context, req *pb.RemoveMemb
 	if err != nil {
 		return nil, err
 	}
+	existing, err := h.svc.Get(ctx, id)
+	if err != nil {
+		return nil, toGRPCError(err)
+	}
+	if existing == nil {
+		return nil, status.Error(codes.NotFound, "membership not found")
+	}
+	if err := validateObjectTenant(ctx, existing.TenantID); err != nil {
+		return nil, err
+	}
 	if err := h.svc.Remove(ctx, id); err != nil {
 		return nil, toGRPCError(err)
 	}
@@ -659,6 +736,9 @@ func (h *MembershipHandler) RemoveMember(ctx context.Context, req *pb.RemoveMemb
 func (h *MembershipHandler) ListMembers(ctx context.Context, req *pb.ListMembersRequest) (*pb.ListMembersResponse, error) {
 	tenantID, err := parseUUID(req.GetTenantId(), "tenant_id")
 	if err != nil {
+		return nil, err
+	}
+	if err := validateTenantFromMetadata(ctx, req.GetTenantId()); err != nil {
 		return nil, err
 	}
 	filter := repository.ListMembersFilter{

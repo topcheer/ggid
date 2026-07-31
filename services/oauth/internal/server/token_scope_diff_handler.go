@@ -7,18 +7,14 @@ import (
 
 // scopeDiffResult holds the comparison of two tokens' scopes.
 type scopeDiffResult struct {
-	TokenID  string
-	Scopes   map[string]bool
+	TokenID string
+	Scopes  map[string]bool
 }
 
 var tokenScopeStore = struct {
 	sync.RWMutex
 	tokens map[string]*scopeDiffResult
-}{tokens: map[string]*scopeDiffResult{
-	"tok-001": {TokenID: "tok-001", Scopes: map[string]bool{"openid": true, "profile": true, "email": true, "read:users": true, "admin": false}},
-	"tok-002": {TokenID: "tok-002", Scopes: map[string]bool{"openid": true, "profile": true, "email": true, "read:audit": true, "write:users": true, "admin": true}},
-	"tok-003": {TokenID: "tok-003", Scopes: map[string]bool{"openid": true, "profile": true}},
-}}
+}{tokens: make(map[string]*scopeDiffResult)}
 
 // GET /api/v1/oauth/token-scope-diff?token_a=X&token_b=Y
 func handleTokenScopeDiff(w http.ResponseWriter, r *http.Request) {

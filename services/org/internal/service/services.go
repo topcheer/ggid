@@ -304,6 +304,11 @@ func (s *MembershipService) Invite(ctx context.Context, m *domain.Membership) (*
 	return m, nil
 }
 
+// Get retrieves a membership by ID (for tenant validation).
+func (s *MembershipService) Get(ctx context.Context, id uuid.UUID) (*domain.Membership, error) {
+	return s.repo.GetByID(ctx, id)
+}
+
 func (s *MembershipService) AcceptInvitation(ctx context.Context, id uuid.UUID) error {
 	return s.repo.Activate(ctx, id)
 }

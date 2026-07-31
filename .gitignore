@@ -76,3 +76,5 @@ transform_pages_v2.py
 wire_pages.py
 # Added by ggshield
 .cache_ggshield
+examples/saml-demo/saml-demo
+examples/demo-app/demo-app

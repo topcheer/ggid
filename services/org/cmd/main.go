@@ -97,8 +97,8 @@ func main() {
 
 	tenantHandler := handler.NewTenantHandler(tenantSvc, auditor)
 	orgHandler := handler.NewOrgHandler(orgSvc)
-	deptHandler := handler.NewDeptHandler(deptSvc)
-	teamHandler := handler.NewTeamHandler(teamSvc)
+	deptHandler := handler.NewDeptHandler(deptSvc, orgSvc)
+	teamHandler := handler.NewTeamHandler(teamSvc, orgSvc)
 	memberHandler := handler.NewMembershipHandler(memberSvc, auditor)
 
 	// Start gRPC server
