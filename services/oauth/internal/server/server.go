@@ -396,7 +396,7 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 		if requestURI != "" {
 			parClaims, err := oauthSvc.ValidateAuthorizationRequest(r.Context(), clientID, r.URL.Query().Get("request"), requestURI)
 			if err != nil {
-				writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid_request_uri", "error_description": err.Error()})
+				writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid_request_uri", "error_description": "pushed authorization request validation failed"})
 				return
 			}
 			if parClaims != nil {
@@ -688,7 +688,10 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 			}
 		}
 		if tenantIDStr == "" {
-			tenantIDStr = os.Getenv("DEFAULT_TENANT_ID")
+			// SECURITY (R26 P0): removed DEFAULT_TENANT_ID env fallback —
+			// it let attackers bypass tenant isolation by omitting
+			// X-Tenant-ID, landing in the default tenant. Let the
+			// code-based resolution below handle it, or reject.
 		}
 		tenantID, _ := uuid.Parse(tenantIDStr)
 
