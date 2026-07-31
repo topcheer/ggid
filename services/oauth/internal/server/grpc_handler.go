@@ -227,6 +227,7 @@ func (s *Server) startGRPCServer(addr string) (*grpc.Server, net.Listener, error
 }
 
 func newOAuthGRPCServer() *grpc.Server {
+	mwSecret, _ := middleware.LoadInternalSecrets()
 	// TLS support: when GRPC_TLS_ENABLED=true, attempt TLS credentials.
 	if os.Getenv("GRPC_TLS_ENABLED") == "true" {
 		certFile := os.Getenv("GRPC_TLS_CERT")
@@ -239,11 +240,11 @@ func newOAuthGRPCServer() *grpc.Server {
 				}
 				slog.Info("GRPC TLS cert/key invalid, falling back to plaintext", "error", err)
 			} else {
-				return grpc.NewServer(append(middleware.GRPCRecoveryOpts(), grpc.Creds(creds))...)
+				return grpc.NewServer(append(middleware.SecureGRPCOpts(mwSecret), grpc.Creds(creds))...)
 			}
 		}
 	}
-	return grpc.NewServer(middleware.GRPCRecoveryOpts()...)
+	return grpc.NewServer(middleware.SecureGRPCOpts(mwSecret)...)
 }
 
 // unused but kept for reference

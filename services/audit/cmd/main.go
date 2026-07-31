@@ -39,6 +39,7 @@ import (
 
 // newGRPCServer creates a gRPC server with optional TLS based on GRPC_TLS_ENABLED env var.
 func newGRPCServer() *grpc.Server {
+	mwSecret, _ := middleware.LoadInternalSecrets()
 	if os.Getenv("GRPC_TLS_ENABLED") == "true" {
 		certFile := os.Getenv("GRPC_TLS_CERT")
 		keyFile := os.Getenv("GRPC_TLS_KEY")
@@ -56,7 +57,7 @@ func newGRPCServer() *grpc.Server {
 			log.Printf("Warning: GRPC_TLS_ENABLED but cert/key invalid: %v, falling back to plaintext because GRPC_TLS_ALLOW_PLAINTEXT_FALLBACK=true", err)
 		}
 	}
-	return grpc.NewServer(middleware.GRPCRecoveryOpts()...)
+	return grpc.NewServer(middleware.SecureGRPCOpts(mwSecret)...)
 }
 
 func main() {

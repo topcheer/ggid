@@ -22,26 +22,37 @@ import (
 
 // Server encapsulates the gRPC and HTTP servers for the Identity Service.
 type Server struct {
-	cfg      *conf.Config
-	grpcSrv  *grpc.Server
-	httpSrv  *http.Server
-	idSvc    *service.IdentityService
+	cfg     *conf.Config
+	grpcSrv *grpc.Server
+	httpSrv *http.Server
+	idSvc   *service.IdentityService
 }
 
 // newGRPCServer creates a gRPC server with optional TLS based on GRPC_TLS_ENABLED env var.
 // When TLS is explicitly enabled but cert/key is invalid, the server fails secure by default.
 // Set GRPC_TLS_ALLOW_PLAINTEXT_FALLBACK=true only in development environments to allow fallback.
+// SECURITY (R25 P1): internal-auth unary interceptor (HMAC metadata) is
+// enforced on every call regardless of TLS — plaintext with no secret is
+// dev-only (LoadInternalSecrets returns dev secret in non-production).
 func newGRPCServer() *grpc.Server {
+	secret, prev := middleware.LoadInternalSecrets()
+	secureOpts := middleware.SecureGRPCOpts(secret)
+	if len(prev) > 0 {
+		// extend SecureGRPCOpts with prev-secret support
+		secureOpts = append(secureOpts, grpc.ChainUnaryInterceptor(
+			middleware.GRPCInternalAuthUnary(middleware.InternalAuthConfig{Secret: secret, PrevSecret: prev}),
+		))
+	}
 	if os.Getenv("GRPC_TLS_ENABLED") == "true" {
 		certFile := os.Getenv("GRPC_TLS_CERT")
 		keyFile := os.Getenv("GRPC_TLS_KEY")
 		if certFile != "" && keyFile != "" {
 			tlsCfg, err := tls.LoadX509KeyPair(certFile, keyFile)
 			if err == nil {
-				return grpc.NewServer(grpc.Creds(credentials.NewTLS(&tls.Config{
+				return grpc.NewServer(append(secureOpts, grpc.Creds(credentials.NewTLS(&tls.Config{
 					Certificates: []tls.Certificate{tlsCfg},
 					MinVersion:   tls.VersionTLS12,
-				})))
+				})))...)
 			}
 			if os.Getenv("GRPC_TLS_ALLOW_PLAINTEXT_FALLBACK") != "true" {
 				log.Fatalf("GRPC_TLS_ENABLED but cert/key invalid: %v; refusing to start with plaintext fallback. Set GRPC_TLS_ALLOW_PLAINTEXT_FALLBACK=true only in dev.", err)
@@ -49,7 +60,7 @@ func newGRPCServer() *grpc.Server {
 			log.Printf("Warning: GRPC_TLS_ENABLED but cert/key invalid: %v, falling back to plaintext because GRPC_TLS_ALLOW_PLAINTEXT_FALLBACK=true", err)
 		}
 	}
-	return grpc.NewServer(middleware.GRPCRecoveryOpts()...)
+	return grpc.NewServer(secureOpts...)
 }
 
 // New constructs a new Server with all dependencies wired up.
