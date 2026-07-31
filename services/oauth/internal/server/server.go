@@ -16,6 +16,7 @@ import (
 	"encoding/json"
 	"encoding/pem"
 	"fmt"
+	"html"
 	"io"
 	"log"
 	"log/slog"
@@ -1593,7 +1594,10 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 
 		// Return SAML Response via HTTP-POST binding
 		encoded := saml.EncodeResponseForPOST(respXML)
-		html := fmt.Sprintf(`<!DOCTYPE html><html><body onload="document.forms[0].submit()"><form method="POST" action="%s"><input type="hidden" name="SAMLResponse" value="%s"/><input type="hidden" name="RelayState" value="%s"/></form></body></html>`, spACSURL, encoded, relayState)
+		// SECURITY: HTML-escape all user-influenced values to prevent reflected XSS.
+		// RelayState and ACS URL come from user-controlled SAML requests.
+		html := fmt.Sprintf(`<!DOCTYPE html><html><body onload="document.forms[0].submit()"><form method="POST" action="%s"><input type="hidden" name="SAMLResponse" value="%s"/><input type="hidden" name="RelayState" value="%s"/></form></body></html>`,
+			html.EscapeString(spACSURL), html.EscapeString(encoded), html.EscapeString(relayState))
 		w.Header().Set("Content-Type", "text/html")
 		w.WriteHeader(http.StatusOK)
 		_, _ = w.Write([]byte(html))
