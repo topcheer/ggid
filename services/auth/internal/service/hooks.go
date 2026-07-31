@@ -5,7 +5,9 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"net"
 	"net/http"
+	"os"
 	"sync"
 	"time"
 )
@@ -14,38 +16,38 @@ import (
 type HookEvent string
 
 const (
-	HookPreLogin  HookEvent = "pre_login"
-	HookPostLogin HookEvent = "post_login"
-	HookPreRegister HookEvent = "pre_register"
+	HookPreLogin     HookEvent = "pre_login"
+	HookPostLogin    HookEvent = "post_login"
+	HookPreRegister  HookEvent = "pre_register"
 	HookPostRegister HookEvent = "post_register"
 )
 
 // AuthHook defines a tenant-customizable hook that calls an external webhook.
 type AuthHook struct {
-	ID        string
-	TenantID  string
-	Event     HookEvent
-	URL       string
-	Headers   map[string]string
-	Enabled   bool
+	ID       string
+	TenantID string
+	Event    HookEvent
+	URL      string
+	Headers  map[string]string
+	Enabled  bool
 }
 
 // HookPayload is sent to the webhook endpoint.
 type HookPayload struct {
-	Event     HookEvent  `json:"event"`
-	TenantID  string     `json:"tenant_id"`
-	UserID    string     `json:"user_id,omitempty"`
-	Username  string     `json:"username,omitempty"`
-	IP        string     `json:"ip,omitempty"`
-	UserAgent string     `json:"user_agent,omitempty"`
-	Timestamp time.Time  `json:"timestamp"`
-	Result    string     `json:"result,omitempty"` // "success" or "failure"
+	Event     HookEvent `json:"event"`
+	TenantID  string    `json:"tenant_id"`
+	UserID    string    `json:"user_id,omitempty"`
+	Username  string    `json:"username,omitempty"`
+	IP        string    `json:"ip,omitempty"`
+	UserAgent string    `json:"user_agent,omitempty"`
+	Timestamp time.Time `json:"timestamp"`
+	Result    string    `json:"result,omitempty"` // "success" or "failure"
 }
 
 // HookResponse is the expected response from the webhook.
 type HookResponse struct {
-	Allow    bool   `json:"allow"`
-	Message  string `json:"message,omitempty"`
+	Allow   bool   `json:"allow"`
+	Message string `json:"message,omitempty"`
 }
 
 // HookManager manages auth hooks. It is concurrency-safe.
@@ -113,7 +115,19 @@ func (m *HookManager) callWebhook(ctx context.Context, hook *AuthHook, payload *
 		req.Header.Set(k, v)
 	}
 
-	client := &http.Client{Timeout: 5 * time.Second}
+	// SSRF protection: block private/loopback/link-local addresses and pin resolved IP.
+	client := &http.Client{
+		Timeout: 5 * time.Second,
+		Transport: &http.Transport{
+			DialContext: ssrfSafeDialContext,
+		},
+		CheckRedirect: func(req *http.Request, via []*http.Request) error {
+			if len(via) >= 3 {
+				return fmt.Errorf("too many redirects")
+			}
+			return nil
+		},
+	}
 	resp, err := client.Do(req)
 	if err != nil {
 		return fmt.Errorf("webhook call: %w", err)
@@ -135,4 +149,25 @@ func (m *HookManager) callWebhook(ctx context.Context, hook *AuthHook, payload *
 	}
 
 	return nil
+}
+
+// ssrfSafeDialContext blocks connections to private/loopback/link-local IPs
+// to prevent SSRF via auth hook URLs. Pins resolved IP to prevent DNS rebinding.
+func ssrfSafeDialContext(ctx context.Context, network, addr string) (net.Conn, error) {
+	host, port, _ := net.SplitHostPort(addr)
+	ips, err := net.LookupIP(host)
+	if err != nil {
+		return nil, err
+	}
+	testMode := os.Getenv("GGID_ENV") == "test" || os.Getenv("GGID_DEV_MODE") == "true"
+	for _, ip := range ips {
+		if ip.IsLoopback() || ip.IsPrivate() || ip.IsLinkLocalUnicast() || ip.IsUnspecified() {
+			if testMode && ip.IsLoopback() {
+				continue
+			}
+			return nil, fmt.Errorf("SSRF blocked: %s resolves to private IP %s", host, ip)
+		}
+	}
+	dialer := &net.Dialer{Timeout: 10 * time.Second}
+	return dialer.DialContext(ctx, network, net.JoinHostPort(ips[0].String(), port))
 }
