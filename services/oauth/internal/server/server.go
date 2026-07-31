@@ -2248,9 +2248,6 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 			return
 		}
 		tenantIDStr := r.Header.Get("X-Tenant-ID")
-		if tenantIDStr == "" {
-			tenantIDStr = r.URL.Query().Get("tenant_id")
-		}
 		tenantID, err := uuid.Parse(tenantIDStr)
 		if err != nil {
 			writeJSON(w, http.StatusBadRequest, map[string]any{"error": map[string]string{"code": "invalid_argument", "message": "valid X-Tenant-ID header or tenant_id query param required"}})
@@ -2271,9 +2268,6 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 			return
 		}
 		tenantIDStr := r.Header.Get("X-Tenant-ID")
-		if tenantIDStr == "" {
-			tenantIDStr = r.URL.Query().Get("tenant_id")
-		}
 		tenantID, err := uuid.Parse(tenantIDStr)
 		if err != nil {
 			writeJSON(w, http.StatusBadRequest, map[string]any{"error": map[string]string{"code": "invalid_argument", "message": "valid X-Tenant-ID header required"}})
