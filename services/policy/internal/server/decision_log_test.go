@@ -3,9 +3,11 @@ package httpserver
 import (
 	"encoding/json"
 	"net/http"
+	"net/http/httptest"
 	"testing"
 
 	"github.com/ggid/ggid/services/policy/internal/service"
+	"github.com/google/uuid"
 )
 
 // TestHandleDecisionLog_Empty tests the endpoint when no decisions exist.
@@ -51,12 +53,13 @@ func TestHandleDecisionLog_WithDecisions(t *testing.T) {
 	// Clear any previous decisions
 	clearTestDecisions()
 
-	// Record a few test decisions via the service layer
-	recordTestDecision(true, "rbac", "user.read")
-	recordTestDecision(false, "deny policy:restrict", "")
-	recordTestDecision(true, "rbac", "user.write")
+	h := newTestHarness()
 
-	newTestHarness()
+	// Record a few test decisions with the test tenant
+	recordTestDecision(h.tenantID, true, "rbac", "user.read")
+	recordTestDecision(h.tenantID, false, "deny policy:restrict", "")
+	recordTestDecision(h.tenantID, true, "rbac", "user.write")
+
 	w := doReq("GET", "/api/v1/policies/decision-log?limit=10", "")
 	if w.Code != http.StatusOK {
 		t.Fatalf("expected 200, got %d", w.Code)
@@ -92,14 +95,18 @@ func TestHandleDecisionLog_InvalidLimit(t *testing.T) {
 
 // TestHandleDecisionLog_MissingTenant verifies fail-closed when no header.
 func TestHandleDecisionLog_MissingTenant(t *testing.T) {
-	newTestHarness()
+	h := newTestHarness()
 	origHeader := testTenantHeader
 	testTenantHeader = ""
 	defer func() { testTenantHeader = origHeader }()
-	w := doReq("GET", "/api/v1/policies/decision-log", "")
+	// Use raw httptest to ensure no X-Tenant-ID header is set.
+	req := httptest.NewRequest("GET", "/api/v1/policies/decision-log", nil)
+	w := httptest.NewRecorder()
+	testMux.ServeHTTP(w, req)
 	if w.Code != http.StatusForbidden {
 		t.Fatalf("expected 403, got %d", w.Code)
 	}
+	_ = h
 }
 
 // --- Test helpers ---
@@ -112,6 +119,6 @@ func clearTestDecisions() {
 }
 
 // recordTestDecision adds a synthetic decision entry for testing.
-func recordTestDecision(allowed bool, matchedBy, action string) {
-	service.AddTestDecisionForTest(allowed, matchedBy, action)
+func recordTestDecision(tenantID uuid.UUID, allowed bool, matchedBy, action string) {
+	service.AddTestDecisionForTest(tenantID, allowed, matchedBy, action)
 }
