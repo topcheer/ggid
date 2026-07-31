@@ -111,5 +111,14 @@ spec:
             periodSeconds: 5
           resources:
             {{- toYaml $svc.resources | nindent 12 }}
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 1001
+            runAsGroup: 1001
+            readOnlyRootFilesystem: false
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
 {{- end }}
 {{- end }}
