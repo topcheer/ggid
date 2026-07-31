@@ -10,13 +10,13 @@ import (
 
 // SAMLAssertion represents a parsed SAML 2.0 assertion.
 type SAMLAssertion struct {
-	XMLName        xml.Name `xml:"Assertion"`
-	ID             string   `xml:"ID,attr"`
-	IssueInstant   string   `xml:"IssueInstant,attr"`
-	Version        string   `xml:"Version,attr"`
-	Issuer         string   `xml:"Issuer"`
-	Subject        Subject  `xml:"Subject"`
-	Conditions     Conditions `xml:"Conditions"`
+	XMLName            xml.Name           `xml:"Assertion"`
+	ID                 string             `xml:"ID,attr"`
+	IssueInstant       string             `xml:"IssueInstant,attr"`
+	Version            string             `xml:"Version,attr"`
+	Issuer             string             `xml:"Issuer"`
+	Subject            Subject            `xml:"Subject"`
+	Conditions         Conditions         `xml:"Conditions"`
 	AttributeStatement AttributeStatement `xml:"AttributeStatement"`
 	// Raw XML for signature verification.
 	RawXML []byte `xml:"-"`
@@ -24,13 +24,13 @@ type SAMLAssertion struct {
 
 // Subject holds the assertion subject (name identifier).
 type Subject struct {
-	NameID string `xml:"NameID"`
+	NameID              string              `xml:"NameID"`
 	SubjectConfirmation SubjectConfirmation `xml:"SubjectConfirmation"`
 }
 
 // SubjectConfirmation describes how the relying party may confirm the subject.
 type SubjectConfirmation struct {
-	Method string `xml:"Method,attr"`
+	Method                  string                  `xml:"Method,attr"`
 	SubjectConfirmationData SubjectConfirmationData `xml:"SubjectConfirmationData"`
 }
 
@@ -62,7 +62,7 @@ type AttributeStatement struct {
 type Attribute struct {
 	Name       string   `xml:"Name,attr"`
 	NameFormat string   `xml:"NameFormat,attr"`
-	Values    []string `xml:"AttributeValue"`
+	Values     []string `xml:"AttributeValue"`
 }
 
 // ParseAssertion parses a raw SAML 2.0 assertion XML document.
@@ -92,7 +92,7 @@ func (a *SAMLAssertion) ValidateConditionsWithAudience(expectedAudience string) 
 	// --- Conditions: time window ---
 	if a.Conditions.NotBefore != "" {
 		notBefore, err := time.Parse(time.RFC3339, a.Conditions.NotBefore)
-		if err == nil && now.Before(notBefore.Add(-2 * time.Minute)) {
+		if err == nil && now.Before(notBefore.Add(-2*time.Minute)) {
 			return fmt.Errorf("assertion not yet valid (NotBefore=%s)", a.Conditions.NotBefore)
 		}
 	}
@@ -186,4 +186,87 @@ func GetAttribute(assertion *SAMLAssertion, name string) string {
 		}
 	}
 	return ""
+}
+
+// samlResponse is a minimal struct for parsing a <samlp:Response> envelope.
+type samlResponse struct {
+	XMLName      xml.Name       `xml:"Response"`
+	ID           string         `xml:"ID,attr"`
+	Destination  string         `xml:"Destination,attr"`
+	InResponseTo string         `xml:"InResponseTo,attr"`
+	Issuer       string         `xml:"Issuer"`
+	Status       responseStatus `xml:"Status"`
+	Assertions   []rawAssertion `xml:"Assertion"`
+}
+
+type responseStatus struct {
+	StatusCode responseStatusCode `xml:"StatusCode"`
+}
+
+type responseStatusCode struct {
+	Value string `xml:"Value,attr"`
+}
+
+type rawAssertion struct {
+	XMLName xml.Name `xml:"Assertion"`
+	Raw     string   `xml:",innerxml"`
+}
+
+// ExtractAssertionFromResponse extracts the first signed Assertion element
+// from a <samlp:Response> envelope. It also validates the Response status
+// is Success. Returns the raw Assertion XML bytes suitable for
+// VerifySignedAssertion.
+func ExtractAssertionFromResponse(responseXML []byte) ([]byte, error) {
+	var resp samlResponse
+	if err := xml.Unmarshal(responseXML, &resp); err != nil {
+		return nil, fmt.Errorf("parse SAML Response envelope: %w", err)
+	}
+
+	// Validate Response status
+	if resp.Status.StatusCode.Value != "urn:oasis:names:tc:SAML:2.0:status:Success" {
+		return nil, fmt.Errorf("SAML Response status is not Success: %s", resp.Status.StatusCode.Value)
+	}
+
+	if len(resp.Assertions) == 0 {
+		return nil, fmt.Errorf("no Assertion found in SAML Response")
+	}
+
+	// Reconstruct the Assertion XML from the inner XML
+	assertionXML := []byte("<Assertion" + extractAssertionAttrs(string(responseXML)) + ">" + resp.Assertions[0].Raw + "</Assertion>")
+	return assertionXML, nil
+}
+
+// extractAssertionAttrs extracts the namespace declarations and attributes
+// from the first <Assertion ...> opening tag in the response XML.
+func extractAssertionAttrs(responseXML string) string {
+	// Find the first <Assertion occurrence and extract its attributes
+	// up to the closing >
+	idx := indexOfByte(responseXML, "<Assertion")
+	if idx < 0 {
+		return ""
+	}
+	end := indexOfByteFrom(responseXML, ">", idx)
+	if end < 0 {
+		return ""
+	}
+	// Include everything between "<Assertion" and ">"
+	return responseXML[idx+len("<Assertion") : end]
+}
+
+func indexOfByte(s string, substr string) int {
+	for i := 0; i+len(substr) <= len(s); i++ {
+		if s[i:i+len(substr)] == substr {
+			return i
+		}
+	}
+	return -1
+}
+
+func indexOfByteFrom(s string, substr string, from int) int {
+	for i := from; i+len(substr) <= len(s); i++ {
+		if s[i:i+len(substr)] == substr {
+			return i
+		}
+	}
+	return -1
 }

@@ -114,8 +114,17 @@ func (h *Handler) handleSAMLACS(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Parse and verify SAML assertion
-	assertion, err := ggidSAML.VerifySignedAssertion(responseXML, idpCert)
+	// Extract Assertion from Response envelope, then verify signature.
+	// SECURITY (P1-5): Previously passed full Response XML to
+	// VerifySignedAssertion which expects bare <Assertion> root —
+	// standard SAML Responses would fail to parse.
+	assertionXML, err := ggidSAML.ExtractAssertionFromResponse(responseXML)
+	if err != nil {
+		slog.Error("SAML ACS: failed to extract assertion from response", "error", err)
+		writeError(w, http.StatusBadRequest, "SAML response does not contain a valid assertion")
+		return
+	}
+	assertion, err := ggidSAML.VerifySignedAssertion(assertionXML, idpCert)
 	if err != nil {
 		slog.Error("SAML ACS: assertion verification failed", "error", err)
 		writeError(w, http.StatusUnauthorized, "SAML assertion verification failed")
