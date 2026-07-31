@@ -3456,12 +3456,14 @@ func (s *OAuthService) fetchExternalIssuerKey(ctx context.Context, issuer, clien
 		return nil, fmt.Errorf("no jwks_uri registered for client %s: %w", clientID, err)
 	}
 
-	// Fetch JWKS from the client's endpoint.
+	// Fetch JWKS from the client's endpoint with a timeout to prevent
+	// goroutine leaks from hanging external IdPs.
+	jwksClient := &http.Client{Timeout: 10 * time.Second}
 	req, err := http.NewRequestWithContext(ctx, "GET", jwksURI, nil)
 	if err != nil {
 		return nil, fmt.Errorf("create JWKS request: %w", err)
 	}
-	resp, err := http.DefaultClient.Do(req)
+	resp, err := jwksClient.Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("fetch JWKS from %s: %w", jwksURI, err)
 	}
