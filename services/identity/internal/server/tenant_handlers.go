@@ -285,6 +285,29 @@ func (h *HTTPHandler) handleTenantCRUD(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// tenantBoundaryOK returns true if the caller may access the given target
+// tenant: either the request is same-tenant (X-Tenant-ID header matches the
+// target UUID) or the caller holds platform:admin (gateway-injected
+// X-Scopes, with legacy X-User-Role fallback matching tenantList).
+// Fail-closed: missing header + no platform:admin → denied.
+func tenantBoundaryOK(r *http.Request, targetTenantID string) bool {
+	if headerTenant := r.Header.Get("X-Tenant-ID"); headerTenant != "" && headerTenant == targetTenantID {
+		return true
+	}
+	for _, s := range strings.Split(r.Header.Get("X-Scopes"), ",") {
+		if strings.TrimSpace(s) == "platform:admin" {
+			return true
+		}
+	}
+	for _, role := range strings.Split(r.Header.Get("X-User-Role"), ",") {
+		role = strings.TrimSpace(role)
+		if role == "platform:admin" || role == "Platform Administrator" {
+			return true
+		}
+	}
+	return false
+}
+
 func (h *HTTPHandler) tenantList(w http.ResponseWriter, r *http.Request) {
 	// P1-4: Non-platform-admins can only see their own tenant.
 	roles := r.Header.Get("X-User-Role")
@@ -424,6 +447,13 @@ func (h *HTTPHandler) tenantDetail(w http.ResponseWriter, r *http.Request, tenan
 		writeJSON(w, http.StatusNotFound, map[string]string{"error": "tenant not found"})
 		return
 	}
+	// SECURITY (R227 P1-1): tenant detail is tenant-scoped — a caller may
+	// only read their own tenant (X-Tenant-ID header) unless platform:admin.
+	// tenantList already filters; the {id} detail path was missing this.
+	if !tenantBoundaryOK(r, id) {
+		writeJSON(w, http.StatusForbidden, map[string]string{"error": "cross-tenant access requires platform:admin scope"})
+		return
+	}
 	writeJSON(w, http.StatusOK, map[string]any{
 		"tenant_id":  id,
 		"id":         id,
@@ -462,6 +492,15 @@ func (h *HTTPHandler) tenantDelete(w http.ResponseWriter, r *http.Request, tenan
 	err = tx.QueryRow(r.Context(), `SELECT id::text FROM tenants WHERE id::text = $1 OR slug = $1`, tenantID).Scan(&tenantUUID)
 	if err != nil {
 		writeJSON(w, http.StatusNotFound, map[string]string{"error": "tenant not found"})
+		return
+	}
+
+	// SECURITY (R227 P0): cross-tenant delete is forbidden — the caller may
+	// only delete their own tenant (X-Tenant-ID header == target) unless
+	// platform:admin. Without this, any tenant admin could delete arbitrary
+	// tenants (cascade wipes users/roles/credentials).
+	if !tenantBoundaryOK(r, tenantUUID) {
+		writeJSON(w, http.StatusForbidden, map[string]string{"error": "cross-tenant delete requires platform:admin scope"})
 		return
 	}
 

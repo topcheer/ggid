@@ -1455,6 +1455,14 @@ func (gw *Gateway) handleRateLimitStatus(w http.ResponseWriter, r *http.Request)
 // handleUpdateRateLimit updates limits for a specific tier.
 func (gw *Gateway) handleUpdateRateLimit(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
+	// SECURITY (R227 P1-2): rate-limit tiers are platform-level config —
+	// require admin scope (same pattern as other admin gateway handlers).
+	// Without this, any authenticated caller could weaken rate limits.
+	if !gw.hasAdminScope(r) {
+		w.WriteHeader(http.StatusForbidden)
+		_ = json.NewEncoder(w).Encode(map[string]string{"error": "admin scope required"})
+		return
+	}
 	if gw.multiDimLimiter == nil {
 		w.WriteHeader(http.StatusServiceUnavailable)
 		_ = json.NewEncoder(w).Encode(map[string]string{"error": "multi-dimensional rate limiter not configured"})
