@@ -10,18 +10,18 @@ import (
 	"strings"
 	"time"
 
+	"github.com/ggid/ggid/pkg/rbac"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
-	"github.com/ggid/ggid/pkg/rbac"
 )
 
 // --- Webhook Event Catalog ---
 
 // WebhookEventCatalogEntry describes a subscribable event.
 type WebhookEventCatalogEntry struct {
-	Type        string         `json:"type"`
-	Description string         `json:"description"`
-	Category    string         `json:"category"`
+	Type           string         `json:"type"`
+	Description    string         `json:"description"`
+	Category       string         `json:"category"`
 	PayloadExample map[string]any `json:"payload_example"`
 }
 
@@ -30,7 +30,7 @@ var webhookEventCatalog = []WebhookEventCatalogEntry{
 		Type: "user.created", Category: "identity",
 		Description: "Fired when a new user is created",
 		PayloadExample: map[string]any{
-			"event":   "user.created",
+			"event":     "user.created",
 			"tenant_id": "example-tenant-id",
 			"user_id":   "550e8400-e29b-41d4-a716-446655440000",
 			"username":  "john.doe",
@@ -75,36 +75,36 @@ var webhookEventCatalog = []WebhookEventCatalogEntry{
 		Type: "session.revoked", Category: "auth",
 		Description: "Fired when a session is revoked (admin, password change, posture drop)",
 		PayloadExample: map[string]any{
-			"event":      "session.revoked",
-			"tenant_id":  "example-tenant-id",
-			"user_id":    "550e8400-e29b-41d4-a716-446655440000",
-			"reason":     "password_change",
-			"timestamp":  "2026-01-15T10:30:00Z",
+			"event":     "session.revoked",
+			"tenant_id": "example-tenant-id",
+			"user_id":   "550e8400-e29b-41d4-a716-446655440000",
+			"reason":    "password_change",
+			"timestamp": "2026-01-15T10:30:00Z",
 		},
 	},
 	{
 		Type: "role.assigned", Category: "identity",
 		Description: "Fired when a role is assigned to a user",
 		PayloadExample: map[string]any{
-			"event":      "role.assigned",
-			"tenant_id":  "example-tenant-id",
-			"user_id":    "550e8400-e29b-41d4-a716-446655440000",
-			"role":       "admin",
-			"assigned_by":"550e8400-e29b-41d4-a716-446655440001",
-			"timestamp":  "2026-01-15T10:30:00Z",
+			"event":       "role.assigned",
+			"tenant_id":   "example-tenant-id",
+			"user_id":     "550e8400-e29b-41d4-a716-446655440000",
+			"role":        "admin",
+			"assigned_by": "550e8400-e29b-41d4-a716-446655440001",
+			"timestamp":   "2026-01-15T10:30:00Z",
 		},
 	},
 	{
 		Type: "policy.violation", Category: "policy",
 		Description: "Fired when a policy violation is detected (SoD, CAE, privilege creep)",
 		PayloadExample: map[string]any{
-			"event":      "policy.violation",
-			"tenant_id":  "example-tenant-id",
-			"type":       "sod_violation",
-			"user_id":    "550e8400-e29b-41d4-a716-446655440000",
-			"severity":   "high",
-			"detail":     "User holds admin + auditor roles",
-			"timestamp":  "2026-01-15T10:30:00Z",
+			"event":     "policy.violation",
+			"tenant_id": "example-tenant-id",
+			"type":      "sod_violation",
+			"user_id":   "550e8400-e29b-41d4-a716-446655440000",
+			"severity":  "high",
+			"detail":    "User holds admin + auditor roles",
+			"timestamp": "2026-01-15T10:30:00Z",
 		},
 	},
 	{
@@ -135,12 +135,12 @@ func (gw *Gateway) handleWebhookCatalog(w http.ResponseWriter, _ *http.Request) 
 
 // BootstrapRequest is the body for POST /api/v1/system/bootstrap.
 type BootstrapRequest struct {
-	AdminUsername     string `json:"admin_username"`
-	AdminEmail        string `json:"admin_email"`
-	AdminPassword     string `json:"admin_password"`
-	TenantName        string `json:"tenant_name"`
-	WebAuthnRPID      string `json:"webauthn_rp_id"`
-	WebAuthnOrigins   string `json:"webauthn_origins"`
+	AdminUsername      string `json:"admin_username"`
+	AdminEmail         string `json:"admin_email"`
+	AdminPassword      string `json:"admin_password"`
+	TenantName         string `json:"tenant_name"`
+	WebAuthnRPID       string `json:"webauthn_rp_id"`
+	WebAuthnOrigins    string `json:"webauthn_origins"`
 	ConsoleRedirectURI string `json:"console_redirect_uri"`
 }
 
@@ -287,7 +287,7 @@ func (gw *Gateway) handleSystemBootstrap(w http.ResponseWriter, r *http.Request)
 	regResp, err := client.Post(authURL+"/api/v1/auth/register", "application/json", bytes.NewReader(regBody))
 	if err != nil {
 		log.Printf("bootstrap: register call failed: %v", err)
-		writeGatewayJSONError(w, http.StatusBadGateway, "auth service unreachable: "+err.Error())
+		writeGatewayJSONError(w, http.StatusBadGateway, "auth service unavailable")
 		return
 	}
 	regRespBody, _ := io.ReadAll(regResp.Body)
@@ -408,7 +408,7 @@ func (gw *Gateway) handleSystemBootstrap(w http.ResponseWriter, r *http.Request)
 	verifyReq.Header.Set("X-Tenant-ID", tenantID.String())
 	verifyResp, err := client.Do(verifyReq)
 	if err != nil {
-		writeGatewayJSONError(w, http.StatusBadGateway, "credential verification failed: "+err.Error())
+		writeGatewayJSONError(w, http.StatusBadGateway, "credential verification failed")
 		return
 	}
 	verifyRespBody, _ := io.ReadAll(verifyResp.Body)
@@ -436,13 +436,14 @@ func (gw *Gateway) handleSystemBootstrap(w http.ResponseWriter, r *http.Request)
 			origins = []string{"https://" + req.WebAuthnRPID}
 		}
 		configJSON, _ := json.Marshal(map[string]any{
-			"rp_id":     req.WebAuthnRPID,
+			"rp_id":      req.WebAuthnRPID,
 			"rp_origins": origins,
-			"rp_name":   req.TenantName,
+			"rp_name":    req.TenantName,
 		})
 		dbURL := gw.cfg.DatabaseURL
 		if dbURL == "" {
-			writeGatewayJSONError(w, http.StatusServiceUnavailable, "database not configured"); return
+			writeGatewayJSONError(w, http.StatusServiceUnavailable, "database not configured")
+			return
 		}
 		if conn, err := pgx.Connect(r.Context(), dbURL); err == nil {
 			conn.Exec(r.Context(),
@@ -515,7 +516,8 @@ func (gw *Gateway) handleTenantCreate(w http.ResponseWriter, r *http.Request) {
 	// Write to DB
 	dbURL := gw.cfg.DatabaseURL
 	if dbURL == "" {
-		writeGatewayJSONError(w, http.StatusServiceUnavailable, "database not configured"); return
+		writeGatewayJSONError(w, http.StatusServiceUnavailable, "database not configured")
+		return
 	}
 	conn, err := pgx.Connect(r.Context(), dbURL)
 	if err != nil {
@@ -553,7 +555,8 @@ func (gw *Gateway) handleTenantCreate(w http.ResponseWriter, r *http.Request) {
 func (gw *Gateway) handleTenantList(w http.ResponseWriter, r *http.Request) {
 	dbURL := gw.cfg.DatabaseURL
 	if dbURL == "" {
-		writeGatewayJSONError(w, http.StatusServiceUnavailable, "database not configured"); return
+		writeGatewayJSONError(w, http.StatusServiceUnavailable, "database not configured")
+		return
 	}
 	conn, err := pgx.Connect(r.Context(), dbURL)
 	if err != nil {
@@ -607,7 +610,8 @@ func (gw *Gateway) handleTenantDetail(w http.ResponseWriter, r *http.Request) {
 
 	dbURL := gw.cfg.DatabaseURL
 	if dbURL == "" {
-		writeGatewayJSONError(w, http.StatusServiceUnavailable, "database not configured"); return
+		writeGatewayJSONError(w, http.StatusServiceUnavailable, "database not configured")
+		return
 	}
 	conn, err := pgx.Connect(r.Context(), dbURL)
 	if err != nil {
@@ -694,10 +698,10 @@ func (gw *Gateway) handleSystemHealth(w http.ResponseWriter, r *http.Request) {
 	}
 
 	writeGatewayJSON(w, http.StatusOK, map[string]any{
-		"status":    "healthy",
-		"version":   "v1.0-beta",
-		"timestamp": time.Now().UTC().Format(time.RFC3339),
-		"services":  services,
+		"status":         "healthy",
+		"version":        "v1.0-beta",
+		"timestamp":      time.Now().UTC().Format(time.RFC3339),
+		"services":       services,
 		"infrastructure": infra,
 	})
 }

@@ -60,6 +60,14 @@ func (r *hashChainTestRepo) DeleteOlderThan(_ context.Context, _ uuid.UUID, _ ti
 	return 0, nil
 }
 
+func (r *hashChainTestRepo) GetBoundaryEventID(_ context.Context, _ uuid.UUID, _ time.Time) (uuid.UUID, error) {
+	return uuid.Nil, nil
+}
+
+func (r *hashChainTestRepo) DeleteOlderThanExcept(_ context.Context, _ uuid.UUID, _ time.Time, _ uuid.UUID) (int64, error) {
+	return 0, nil
+}
+
 func makeChainEvent(tenantID uuid.UUID, action string) *domain.AuditEvent {
 	return &domain.AuditEvent{
 		ID:        uuid.New(),

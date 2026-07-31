@@ -544,3 +544,144 @@ No `slog`/`log.Printf` calls include token or code values.
 | P2-8 | Medium | PKCE not enforced for confidential clients | New |
 | Info-2 | Info | No token leakage to logs found | Clean |
 | Info-3 | Info | redirect_uri validation is exact match (correct) | Clean |
+
+---
+
+## Attack Surface #4: BOLA/IDOR — Cross-Tenant Access
+
+### P1-001: `forceLogout` — Missing Authorization + Cross-Tenant BOLA
+
+**Severity:** P1 (High)
+**Endpoint:** `POST /api/v1/auth/sessions/force-logout`
+**File:** `services/auth/internal/server/http.go:3146-3192`
+
+**Finding:** The handler accepts `tenant_id` and `user_id` from the request body with **no admin scope check** (`hasAdminScope` is never called). The endpoint path `/api/v1/auth/sessions/force-logout` is not listed in gateway `adminOnlyPaths` or `defaultAdminPrefixes`, so any authenticated user can reach it.
+
+**Impact:** A low-privilege authenticated user can force-logout **any user in any tenant** by supplying arbitrary `tenant_id` and `user_id` in the request body. Cross-tenant BOLA leading to targeted denial-of-service.
+
+**PoC:**
+```
+POST /api/v1/auth/sessions/force-logout
+Authorization: Bearer <any valid JWT>
+Content-Type: application/json
+
+{"tenant_id": "<target-tenant-uuid>", "user_id": "<target-user-uuid>"}
+```
+
+**Root cause:** `forceLogout` does not call `hasAdminScope(r)` or verify that `body.TenantID` matches the caller's `X-Tenant-ID` header. Compare with `handleRevokeSessions` (line 54) and `handleRevokeUser` (line 44) which both enforce admin scope and tenant matching.
+
+---
+
+### P1-002: `sessionLimit` — Missing Authorization + Cross-Tenant BOLA
+
+**Severity:** P1 (High)
+**Endpoint:** `POST /api/v1/auth/sessions/limit`
+**File:** `services/auth/internal/server/http.go:3194-3231`
+
+**Finding:** Identical pattern to P1-001. No admin scope check, no tenant ownership verification. Not in gateway admin path lists.
+
+**Impact:** Any authenticated user can trigger concurrent session limit enforcement against arbitrary users across tenants.
+
+---
+
+### P2-003: ITDR Detection by ID — Missing Tenant Ownership Check
+
+**Severity:** P2 (Medium)
+**Endpoint:** `GET/POST /api/v1/audit/itdr/detections/{id}`
+**File:** `services/audit/internal/server/itdr_handler.go:83-160`
+
+**Finding:** `handleITDRDetectionByID`, `handleITDRAcknowledge`, and `handleITDRResolve` fetch/modify a detection by path UUID without verifying the detection's `tenant_id` matches the caller's tenant.
+
+**Mitigating factor:** The `/api/v1/audit/` prefix is in gateway `adminOnlyPaths`, so only admin-scoped users can reach these endpoints. Defense-in-depth gap, not directly exploitable by non-admin users.
+
+---
+
+### Areas Checked — No Issues Found
+
+1. **`handleSessions` (GET/DELETE)** — Session list/revoke correctly extracts user_id from JWT/X-User-ID. DELETE uses `RevokeSessionScoped` verifying tenant + user ownership.
+2. **`handleRevokeSessions`** — Requires `hasAdminScope`, uses caller's tenant for non-platform-admin.
+3. **`handleRevokeUser`** — Requires `hasAdminScope`, enforces cross-tenant check.
+4. **`handleInvalidateSessions`** — Checks callerUserID vs path userID, or hasAdminScope.
+5. **Identity service user CRUD** — `injectTenant` prefers auth middleware context. Service layer passes tenantID to repo for all queries.
+6. **Audit `resolveValidatedTenant`** — Only trusts X-Tenant-ID header, rejects query param mismatch. Secure.
+7. **Audit `handleEventByID`** — Post-fetch cross-tenant check. Secure.
+
+| ID | Severity | Finding | Status |
+|----|----------|---------|--------|
+| P1-001 | High | forceLogout missing auth + cross-tenant BOLA | New |
+| P1-002 | High | sessionLimit missing auth + cross-tenant BOLA | New |
+| P2-003 | Medium | ITDR detection by ID missing tenant ownership check | New |
+
+---
+
+## Round 2 — Attack Surface #1: Authentication Bypass (Deep Dive)
+
+### R2-FINDING-1 (P2): ExtractJWTClaims Priority 2 unsigned header parsing remains exploitable on public paths and API key fast-path
+
+**Severity**: P2 (Medium) — currently no backend endpoint on a public path trusts X-Scopes for authorization, but the gateway injects forged scopes into backend requests, creating a latent privilege escalation vector.
+
+**Code locations**:
+- `services/gateway/internal/middleware/jwt_claims.go:35-116` — ExtractJWTClaims Priority 2
+- `services/gateway/internal/middleware/middleware.go:642-664` — JWTAuth API key fast-path (does not set claimsKey)
+- `services/gateway/internal/middleware/middleware.go:713-719` — JWTAuth(required=false) on invalid token (does not set claimsKey)
+- `services/gateway/internal/router/router.go:250-261` — proxy.Director injects X-Scopes/X-Is-Admin from ExtractJWTClaims
+
+**Root cause**: S3 fix (commit r164) added `claimsKey` to context when JWTAuth verifies a token successfully, and `ExtractJWTClaims` Priority 1 reads from context. However, two code paths skip JWT verification **without setting claimsKey**:
+
+1. **API key fast-path** (middleware.go:642-664): When `IsAPIKeyRequest(r) && APIKeyScopesKey != nil`, JWTAuth calls `next.ServeHTTP(w, r)` directly without setting `claimsKey`. The `Authorization: Bearer <forged JWT>` header remains in the request.
+
+2. **Public path with invalid JWT** (middleware.go:713-719): When `required=false` and `jwt.Parse` fails, JWTAuth calls `next.ServeHTTP(w, r)` without setting `claimsKey`. The forged JWT remains in the `Authorization` header.
+
+In both cases, `ExtractJWTClaims` falls through to Priority 2, which **unsigned-parses** the JWT payload from the `Authorization` header and returns forged `Scopes`, `Subject`, `TenantID` etc.
+
+**Attack path (API key + forged JWT)**:
+1. Attacker has a low-privilege API key (e.g. `users:read` scope)
+2. Sends: `X-API-Key: <valid key>` + `Authorization: Bearer <forged JWT with scope: "platform:admin">`
+3. APIKeyAuth validates the key → sets APIKeyScopesKey
+4. JWTAuth(required=false) → API key fast-path → skips JWT verification → does NOT set claimsKey
+5. proxy.Director → ExtractJWTClaims → Priority 2 reads forged `platform:admin` from JWT payload
+6. Director sets `X-Scopes: platform:admin` + `X-Is-Admin: true` on backend request
+7. Backend trusts X-Scopes for authorization decisions
+
+**Attack path (public path + forged JWT, no API key needed)**:
+1. Attacker sends `Authorization: Bearer <forged JWT with scope: "platform:admin">` to any public path
+2. JWTAuth(required=false) → jwt.Parse fails (invalid signature) → next.ServeHTTP without claimsKey
+3. proxy.Director → ExtractJWTClaims → Priority 2 → reads forged scopes → injects X-Scopes to backend
+
+**Current mitigating factor**: All backend endpoints that trust `X-Scopes` for authorization decisions are on protected paths (not public paths):
+- `/api/v1/auth/impersonate` — protected
+- `/api/v1/admin/feature-flags` — protected
+- `/api/v1/org/tenants/suspend` — protected
+- `/api/v1/identity/scim/config` — protected
+- `/api/v1/auth/credentials/` — protected
+- `/api/v1/scim/` aliases — protected (only `/scim/v2/` is public, and SCIM token middleware requires SCIM token, not X-Scopes)
+
+On protected paths, `JWTAuth(required=true)` rejects forged JWTs at line 714 (`writeUnauthorized`), so the forged JWT never reaches `ExtractJWTClaims`.
+
+**Risk**: This is a latent P2 vulnerability. If a future endpoint is added to a public path and its backend handler trusts `X-Scopes`, it becomes a P0 authentication bypass. The gateway's Director unconditionally injects `X-Scopes` from `ExtractJWTClaims` without distinguishing verified vs unverified sources.
+
+**Recommendation (not fixing, audit only)**:
+- Option A: Remove Priority 2 entirely from `ExtractJWTClaims` — require `claimsKey` to be set by JWTAuth. This breaks legacy paths that don't use JWTAuth, but those may not exist.
+- Option B: In `proxy.Director`, only inject `X-Scopes` when `claimsKey` is present in context (i.e., JWT was signature-verified). For API key requests, derive scopes from `APIKeyScopesKey` context instead.
+- Option C: In JWTAuth API key fast-path, set `claimsKey` to an empty `JWTCClaims{}` to prevent Priority 2 fallback.
+
+### R2-FINDING-2 (P3): apiKeyHasWriteAccess is dead code with incomplete logic
+
+**Severity**: P3 (Info) — function is defined but never called.
+
+**Code location**: `services/gateway/internal/middleware/middleware.go:936-962`
+
+**Finding**: `apiKeyHasWriteAccess` is defined but never called anywhere in the codebase. It contains an incomplete loop body at line 944 (`if s == "*" || s == "platform:admin" || s == "tenant:admin" { }` — empty body, no `return true`). This appears to be dead code from a refactoring that moved scope enforcement to `HasPermissionForRoute` in the JWTAuth API key fast-path (line 645).
+
+### R2-FINDING-3 (NEEDS-VERIFY): checkRouteScope claims.Subject bypass on public path
+
+**Severity**: NEEDS-VERIFY — the `claims.Subject == ""` skip logic in checkRouteScope (router.go:811) is designed to let anonymous requests pass through to JWTAuth for 401. But on public paths where JWTAuth(required=false) passes through invalid JWTs, ExtractJWTClaims Priority 2 returns forged `Subject != ""`, causing checkRouteScope to proceed with RBAC checks using forged scopes.
+
+**Analysis**: On public paths, `RequireAdminScope` (which runs before `checkRouteScope`) calls `isRBACExempt` which returns true for all public paths, skipping RBAC entirely. Then `checkRouteScope` runs inside `gw.ServeHTTP` and also checks `adminOnlyPaths`/`platformOnlyPaths`. If a public path matches an admin prefix (e.g. `/api/v1/tenants/resolve` matches `/api/v1/tenants`), `checkRouteScope` would use the forged `platform:admin` scope from Priority 2 to grant access.
+
+However, this is not independently exploitable because:
+1. `checkRouteScope` only does prefix-based scope checks (no backend action)
+2. The actual backend authorization happens via `X-Scopes` header (covered in R2-FINDING-1)
+3. The forged scopes would need to reach a backend that trusts them
+
+This finding is recorded for completeness but does not represent an independent attack vector beyond R2-FINDING-1.

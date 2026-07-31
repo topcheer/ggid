@@ -17,7 +17,7 @@ import (
 // --- Mock repo ---
 
 type mockAuditRepo struct {
-	events   []*domain.AuditEvent
+	events    []*domain.AuditEvent
 	insertErr error
 	listErr   error
 	getErr    error
@@ -71,6 +71,14 @@ func (m *mockAuditRepo) GetStats(_ context.Context, _ uuid.UUID, _ time.Time) (*
 }
 
 func (m *mockAuditRepo) DeleteOlderThan(_ context.Context, _ uuid.UUID, _ time.Time) (int64, error) {
+	return 0, nil
+}
+
+func (m *mockAuditRepo) GetBoundaryEventID(_ context.Context, _ uuid.UUID, _ time.Time) (uuid.UUID, error) {
+	return uuid.Nil, nil
+}
+
+func (m *mockAuditRepo) DeleteOlderThanExcept(_ context.Context, _ uuid.UUID, _ time.Time, _ uuid.UUID) (int64, error) {
 	return 0, nil
 }
 

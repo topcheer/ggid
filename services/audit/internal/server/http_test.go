@@ -62,6 +62,17 @@ func (m *mockRepo) DeleteOlderThan(_ context.Context, _ uuid.UUID, _ time.Time) 
 	return m.cleanupN, nil
 }
 
+func (m *mockRepo) GetBoundaryEventID(_ context.Context, _ uuid.UUID, _ time.Time) (uuid.UUID, error) {
+	return uuid.New(), nil // return a non-nil boundary so cleanup proceeds
+}
+
+func (m *mockRepo) DeleteOlderThanExcept(_ context.Context, _ uuid.UUID, _ time.Time, _ uuid.UUID) (int64, error) {
+	if m.cleanupErr != nil {
+		return 0, m.cleanupErr
+	}
+	return m.cleanupN, nil
+}
+
 // --- Test helpers ---
 
 var testTenantID = uuid.MustParse("00000000-0000-0000-0000-000000000001")
@@ -880,8 +891,8 @@ type simpleErr struct{ msg string }
 
 func (e simpleErr) Error() string { return e.msg }
 
-func errSimple(msg string) error                  { return simpleErr{msg: msg} }
-func errorsNotFound(msg string) error             { return ggiderrors.New(ggiderrors.ErrNotFound, msg) }
+func errSimple(msg string) error      { return simpleErr{msg: msg} }
+func errorsNotFound(msg string) error { return ggiderrors.New(ggiderrors.ErrNotFound, msg) }
 
 func defaultStats() *domain.Stats {
 	return &domain.Stats{

@@ -613,6 +613,19 @@ func (s *HTTPServer) handleExport(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// sanitizeCSVCell prevents CSV formula injection by prefixing dangerous
+// leading characters (=, +, -, @, tab, CR) with a single quote.
+func sanitizeCSVCell(s string) string {
+	if len(s) == 0 {
+		return s
+	}
+	switch s[0] {
+	case '=', '+', '-', '@', '\t', '\r':
+		return "'" + s
+	}
+	return s
+}
+
 // writeAuditCSV writes audit events as CSV to the given writer.
 func writeAuditCSV(w http.ResponseWriter, events []*domain.AuditEvent) {
 	wr := csv.NewWriter(w)
@@ -630,18 +643,18 @@ func writeAuditCSV(w http.ResponseWriter, events []*domain.AuditEvent) {
 			resourceID = e.ResourceID.String()
 		}
 		wr.Write([]string{
-			e.ID.String(),
-			e.CreatedAt.Format(time.RFC3339),
-			string(e.ActorType),
-			actorID,
-			e.ActorName,
-			e.Action,
-			e.ResourceType,
-			resourceID,
-			e.ResourceName,
-			string(e.Result),
-			e.IPAddress,
-			e.UserAgent,
+			sanitizeCSVCell(e.ID.String()),
+			sanitizeCSVCell(e.CreatedAt.Format(time.RFC3339)),
+			sanitizeCSVCell(string(e.ActorType)),
+			sanitizeCSVCell(actorID),
+			sanitizeCSVCell(e.ActorName),
+			sanitizeCSVCell(e.Action),
+			sanitizeCSVCell(e.ResourceType),
+			sanitizeCSVCell(resourceID),
+			sanitizeCSVCell(e.ResourceName),
+			sanitizeCSVCell(string(e.Result)),
+			sanitizeCSVCell(e.IPAddress),
+			sanitizeCSVCell(e.UserAgent),
 		})
 	}
 	wr.Flush()

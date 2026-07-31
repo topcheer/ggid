@@ -40,11 +40,12 @@ func (c *HTTPIdentityClient) GetUser(ctx context.Context, tenantID uuid.UUID, id
 	defer resp.Body.Close()
 	if resp.StatusCode == http.StatusOK {
 		var u struct {
-			ID          string `json:"id"`
-			Username    string `json:"username"`
-			Email       string `json:"email"`
-			Status      string `json:"status"`
-			DisplayName string `json:"display_name"`
+			ID            string `json:"id"`
+			Username      string `json:"username"`
+			Email         string `json:"email"`
+			Status        string `json:"status"`
+			DisplayName   string `json:"display_name"`
+			EmailVerified bool   `json:"email_verified"`
 		}
 		if err := json.NewDecoder(resp.Body).Decode(&u); err == nil && u.ID != "" {
 			uid, err := uuid.Parse(u.ID)
@@ -52,6 +53,7 @@ func (c *HTTPIdentityClient) GetUser(ctx context.Context, tenantID uuid.UUID, id
 				return &UserInfo{
 					ID: uid, TenantID: tenantID, Username: u.Username,
 					Email: u.Email, Status: u.Status, DisplayName: u.DisplayName,
+					EmailVerified: u.EmailVerified,
 				}, nil
 			}
 		}
@@ -71,11 +73,12 @@ func (c *HTTPIdentityClient) GetUser(ctx context.Context, tenantID uuid.UUID, id
 	}
 	var list struct {
 		Users []struct {
-			ID          string `json:"id"`
-			Username    string `json:"username"`
-			Email       string `json:"email"`
-			Status      string `json:"status"`
-			DisplayName string `json:"display_name"`
+			ID            string `json:"id"`
+			Username      string `json:"username"`
+			Email         string `json:"email"`
+			Status        string `json:"status"`
+			DisplayName   string `json:"display_name"`
+			EmailVerified bool   `json:"email_verified"`
 		} `json:"users"`
 	}
 	if err := json.NewDecoder(resp2.Body).Decode(&list); err != nil {
@@ -90,6 +93,7 @@ func (c *HTTPIdentityClient) GetUser(ctx context.Context, tenantID uuid.UUID, id
 			return &UserInfo{
 				ID: uid, TenantID: tenantID, Username: u.Username,
 				Email: u.Email, Status: u.Status, DisplayName: u.DisplayName,
+				EmailVerified: u.EmailVerified,
 			}, nil
 		}
 	}
@@ -109,11 +113,12 @@ func (c *HTTPIdentityClient) GetUserByID(ctx context.Context, tenantID, userID u
 		return nil, fmt.Errorf("identity service returned %d", resp.StatusCode)
 	}
 	var u struct {
-		ID          string `json:"id"`
-		Username    string `json:"username"`
-		Email       string `json:"email"`
-		Status      string `json:"status"`
-		DisplayName string `json:"display_name"`
+		ID            string `json:"id"`
+		Username      string `json:"username"`
+		Email         string `json:"email"`
+		Status        string `json:"status"`
+		DisplayName   string `json:"display_name"`
+		EmailVerified bool   `json:"email_verified"`
 	}
 	if err := json.NewDecoder(resp.Body).Decode(&u); err != nil {
 		return nil, fmt.Errorf("failed to decode user: %w", err)
@@ -122,6 +127,7 @@ func (c *HTTPIdentityClient) GetUserByID(ctx context.Context, tenantID, userID u
 	return &UserInfo{
 		ID: uid, TenantID: tenantID, Username: u.Username,
 		Email: u.Email, Status: u.Status, DisplayName: u.DisplayName,
+		EmailVerified: u.EmailVerified,
 	}, nil
 }
 
@@ -160,9 +166,9 @@ func (c *HTTPIdentityClient) GetUserRoles(ctx context.Context, tenantID, userID 
 	// grants platform-level access. Only the platform tenant (ID checked
 	// by the caller via X-Tenant-ID) may legitimately hold these roles.
 	platformReservedScopes := map[string]bool{
-		"platform:admin":     true,
+		"platform:admin":         true,
 		"platform administrator": true,
-		"tenant:admin":       true,
+		"tenant:admin":           true,
 		"tenant administrator":   true,
 	}
 
@@ -247,10 +253,10 @@ func (c *HTTPIdentityClient) CreateUserFromSocial(ctx context.Context, tenantID 
 	// separately by the auth service's Register method.
 	randomPass := fmt.Sprintf("Xq-Lp-%s-%d!Z", externalID[:8], time.Now().UnixNano())
 	body, _ := json.Marshal(map[string]string{
-		"username":      username,
-		"email":         email,
-		"password":      randomPass,
-		"display_name":  displayName,
+		"username":     username,
+		"email":        email,
+		"password":     randomPass,
+		"display_name": displayName,
 	})
 	url := fmt.Sprintf("%s/api/v1/users", c.baseURL)
 	req, _ := http.NewRequestWithContext(ctx, "POST", url, bytes.NewReader(body))

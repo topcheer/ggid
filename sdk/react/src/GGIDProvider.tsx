@@ -79,34 +79,46 @@ export function GGIDProvider({
 
   // --- Token auto-refresh (60s before expiry) ---
   const refreshTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const refreshPromiseRef = useRef<Promise<GGIDTokenSet | null> | null>(null);
 
-  const refreshToken = useCallback(async () => {
+  const refreshToken = useCallback(async (): Promise<GGIDTokenSet | null> => {
+    // Dedup concurrent refresh calls to prevent race conditions with token rotation.
+    if (refreshPromiseRef.current) return refreshPromiseRef.current;
+
     const current = loadTokenSet(storageKey);
-    if (!current?.refresh_token) return;
+    if (!current?.refresh_token) return null;
 
-    try {
-      const resp = await fetch(`${config.apiBaseUrl}/api/v1/oauth/token`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
-          'X-Tenant-ID': config.tenantId,
-        },
-        body: new URLSearchParams({
-          grant_type: 'refresh_token',
-          refresh_token: current.refresh_token,
-        }),
-      });
+    refreshPromiseRef.current = (async () => {
+      try {
+        const resp = await fetch(`${config.apiBaseUrl}/api/v1/oauth/token`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'X-Tenant-ID': config.tenantId,
+          },
+          body: new URLSearchParams({
+            grant_type: 'refresh_token',
+            refresh_token: current.refresh_token,
+          }),
+        });
 
-      if (!resp.ok) throw new Error('Token refresh failed');
+        if (!resp.ok) throw new Error('Token refresh failed');
 
-      const newTokenSet: GGIDTokenSet = await resp.json();
-      saveTokenSet(storageKey, newTokenSet);
-      setState((prev) => ({ ...prev, tokenSet: newTokenSet }));
-    } catch {
-      // Refresh failed — logout
-      saveTokenSet(storageKey, null);
-      setState({ user: null, tokenSet: null, isLoading: false, isAuthenticated: false, error: 'Session expired' });
-    }
+        const newTokenSet: GGIDTokenSet = await resp.json();
+        saveTokenSet(storageKey, newTokenSet);
+        setState((prev) => ({ ...prev, tokenSet: newTokenSet }));
+        return newTokenSet;
+      } catch {
+        // Refresh failed — logout
+        saveTokenSet(storageKey, null);
+        setState({ user: null, tokenSet: null, isLoading: false, isAuthenticated: false, error: 'Session expired' });
+        return null;
+      } finally {
+        refreshPromiseRef.current = null;
+      }
+    })();
+
+    return refreshPromiseRef.current;
   }, [config.apiBaseUrl, config.tenantId, storageKey]);
 
   useEffect(() => {

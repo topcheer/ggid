@@ -5,10 +5,17 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"testing"
 
 	"github.com/ggid/ggid/pkg/email"
 )
+
+// TestMain sets GGID_ENV=test so the SSRF dialer allows localhost for tests.
+func TestMain(m *testing.M) {
+	os.Setenv("GGID_ENV", "test")
+	os.Exit(m.Run())
+}
 
 func TestNewDispatcher(t *testing.T) {
 	d := NewDispatcher(email.NewNoopSender(), &WebhookConfig{URL: "http://localhost/hook"})

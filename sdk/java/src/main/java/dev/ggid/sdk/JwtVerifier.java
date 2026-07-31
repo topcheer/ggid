@@ -12,6 +12,7 @@ import com.auth0.jwt.interfaces.Verification;
 
 import java.net.URL;
 import java.security.interfaces.RSAPublicKey;
+import java.util.logging.Logger;
 
 /**
  * Verifies RS256-signed JWT tokens against the GGID JWKS endpoint.
@@ -25,8 +26,11 @@ import java.security.interfaces.RSAPublicKey;
  */
 public class JwtVerifier {
 
+    private static final Logger log = Logger.getLogger(JwtVerifier.class.getName());
+
     private final JwkProvider jwkProvider;
     private final String issuer;
+    private final String audience;
     private final int leewaySeconds;
 
     /**
@@ -35,13 +39,20 @@ public class JwtVerifier {
      * This enables OIDC-style auto-discovery — just pass the base URL.
      */
     public JwtVerifier(String baseURL) {
-        this(baseURL, null, 0);
+        this(baseURL, null, null, 0);
     }
 
     /**
      * Creates a JwtVerifier from a GGID base URL with issuer validation.
      */
     public JwtVerifier(String baseURL, String issuer, int leewaySeconds) {
+        this(baseURL, issuer, null, leewaySeconds);
+    }
+
+    /**
+     * Creates a JwtVerifier with issuer and audience validation.
+     */
+    public JwtVerifier(String baseURL, String issuer, String audience, int leewaySeconds) {
         String jwksUrl = baseURL.endsWith("/")
                 ? baseURL + ".well-known/jwks.json"
                 : baseURL + "/.well-known/jwks.json";
@@ -51,6 +62,7 @@ public class JwtVerifier {
             throw new IllegalArgumentException("Invalid GGID base URL: " + baseURL, e);
         }
         this.issuer = issuer;
+        this.audience = audience;
         this.leewaySeconds = leewaySeconds;
     }
 
@@ -81,14 +93,20 @@ public class JwtVerifier {
             if (issuer != null && !issuer.isEmpty()) {
                 verification.withIssuer(issuer);
             }
+            // SECURITY: Validate audience to prevent cross-service token replay.
+            if (audience != null && !audience.isEmpty()) {
+                verification.withAudience(audience);
+            }
             if (leewaySeconds > 0) {
                 verification.acceptLeeway(leewaySeconds);
             }
 
             return verification.build().verify(token);
         } catch (JWTVerificationException | JwkException e) {
+            log.warning("JWT verification failed: " + e.getMessage());
             return null;
         } catch (Exception e) {
+            log.warning("Unexpected error during JWT verification: " + e.getMessage());
             return null;
         }
     }

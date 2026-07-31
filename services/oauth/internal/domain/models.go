@@ -3,6 +3,7 @@ package domain
 
 import (
 	"crypto/sha256"
+	"crypto/subtle"
 	"encoding/base64"
 	"encoding/json"
 	"time"
@@ -15,7 +16,7 @@ type ClientType string
 
 const (
 	ClientTypeConfidential ClientType = "confidential"
-	ClientTypePublic      ClientType = "public"
+	ClientTypePublic       ClientType = "public"
 )
 
 // IsValid returns true if the client type is recognised.
@@ -27,7 +28,7 @@ func (t ClientType) IsValid() bool {
 type OAuthClient struct {
 	ID                      uuid.UUID      `json:"id"`
 	TenantID                uuid.UUID      `json:"tenant_id"`
-	ClientID                string         `json:"client_id"`       // public identifier
+	ClientID                string         `json:"client_id"`                    // public identifier
 	ClientSecretHash        string         `json:"client_secret_hash,omitempty"` // Argon2id hash; empty for public clients
 	Name                    string         `json:"name"`
 	Description             string         `json:"description,omitempty"`
@@ -39,7 +40,7 @@ type OAuthClient struct {
 	Scopes                  []string       `json:"scopes"`
 	TokenEndpointAuthMethod string         `json:"token_endpoint_auth_method"`
 	Metadata                map[string]any `json:"metadata,omitempty"`
-	RequirePKCE             bool           `json:"require_pkce"` // enforce PKCE for this client
+	RequirePKCE             bool           `json:"require_pkce"`           // enforce PKCE for this client
 	AuthMethods             []string       `json:"auth_methods,omitempty"` // allowed auth: password, passkey, sms_otp, email_otp
 	Enabled                 bool           `json:"enabled"`
 	CreatedAt               time.Time      `json:"created_at"`
@@ -126,7 +127,7 @@ type RefreshTokenRecord struct {
 	// FamilyID groups tokens created through rotation (RFC 6749 §10.4).
 	// All tokens in a family descend from one initial grant; reuse of any
 	// rotated token revokes the whole family.
-	FamilyID  string
+	FamilyID string
 }
 
 // AuthorizationCode represents a short-lived OAuth2 authorization code.
@@ -145,10 +146,10 @@ type AuthorizationCode struct {
 	Used                bool
 	CreatedAt           time.Time
 	// NIST 800-63B AAL/AMR support
-	AMR      []string  // Authentication Method References
-	ACR      string    // Authentication Context Class Reference (AAL1/AAL2/AAL3)
-	AuthTime time.Time // When authentication occurred
-	RequestedACR string // acr_values from /authorize
+	AMR          []string  // Authentication Method References
+	ACR          string    // Authentication Context Class Reference (AAL1/AAL2/AAL3)
+	AuthTime     time.Time // When authentication occurred
+	RequestedACR string    // acr_values from /authorize
 }
 
 // IsExpired returns true if the authorization code has expired.
@@ -178,7 +179,8 @@ func (c *AuthorizationCode) ValidatePKCE(verifier string) bool {
 		// OAuth 2.1: S256 is the only supported method. Empty defaults to S256.
 		h := sha256.Sum256([]byte(verifier))
 		encoded := base64.RawURLEncoding.EncodeToString(h[:])
-		return encoded == c.CodeChallenge
+		// Use constant-time comparison to prevent timing side-channel.
+		return subtle.ConstantTimeCompare([]byte(encoded), []byte(c.CodeChallenge)) == 1
 	default:
 		// "plain" and any other methods are not supported per OAuth 2.1
 		return false
@@ -201,29 +203,29 @@ type IDTokenRecord struct {
 
 // OIDCDiscoveryConfig is the /.well-known/openid-configuration response.
 type OIDCDiscoveryConfig struct {
-	Issuer                            string   `json:"issuer"`
-	AuthorizationEndpoint             string   `json:"authorization_endpoint"`
-	TokenEndpoint                     string   `json:"token_endpoint"`
-	UserInfoEndpoint                  string   `json:"userinfo_endpoint"`
-	JwksURI                           string   `json:"jwks_uri"`
-	RevocationEndpoint                string   `json:"revocation_endpoint"`
-	IntrospectionEndpoint             string   `json:"introspection_endpoint"`
-	ResponseTypesSupported            []string `json:"response_types_supported"`
-	GrantTypesSupported               []string `json:"grant_types_supported"`
-	SubjectTypesSupported             []string `json:"subject_types_supported"`
-	IDTokenSigningAlgValues           []string `json:"id_token_signing_alg_values_supported"`
-	ScopesSupported                   []string `json:"scopes_supported"`
-	ClaimsSupported                   []string `json:"claims_supported"`
-	TokenEndpointAuthMethodsSupported []string `json:"token_endpoint_auth_methods_supported"`
-	CodeChallengeMethodsSupported     []string `json:"code_challenge_methods_supported"`
-	CheckSessionIFrame                string   `json:"check_session_iframe,omitempty"`
-	BackchannelLogoutSupported        bool     `json:"backchannel_logout_supported"`
-	FrontchannelLogoutSupported       bool     `json:"frontchannel_logout_supported,omitempty"`
-	EndSessionEndpoint                string   `json:"end_session_endpoint,omitempty"`
-	DeviceAuthorizationEndpoint       string   `json:"device_authorization_endpoint,omitempty"`
-	RegistrationEndpoint              string   `json:"registration_endpoint,omitempty"`
-	PushedAuthorizationRequestEndpoint string  `json:"pushed_authorization_request_endpoint,omitempty"`
-	BackchannelAuthenticationEndpoint string   `json:"backchannel_authentication_endpoint,omitempty"`
+	Issuer                             string   `json:"issuer"`
+	AuthorizationEndpoint              string   `json:"authorization_endpoint"`
+	TokenEndpoint                      string   `json:"token_endpoint"`
+	UserInfoEndpoint                   string   `json:"userinfo_endpoint"`
+	JwksURI                            string   `json:"jwks_uri"`
+	RevocationEndpoint                 string   `json:"revocation_endpoint"`
+	IntrospectionEndpoint              string   `json:"introspection_endpoint"`
+	ResponseTypesSupported             []string `json:"response_types_supported"`
+	GrantTypesSupported                []string `json:"grant_types_supported"`
+	SubjectTypesSupported              []string `json:"subject_types_supported"`
+	IDTokenSigningAlgValues            []string `json:"id_token_signing_alg_values_supported"`
+	ScopesSupported                    []string `json:"scopes_supported"`
+	ClaimsSupported                    []string `json:"claims_supported"`
+	TokenEndpointAuthMethodsSupported  []string `json:"token_endpoint_auth_methods_supported"`
+	CodeChallengeMethodsSupported      []string `json:"code_challenge_methods_supported"`
+	CheckSessionIFrame                 string   `json:"check_session_iframe,omitempty"`
+	BackchannelLogoutSupported         bool     `json:"backchannel_logout_supported"`
+	FrontchannelLogoutSupported        bool     `json:"frontchannel_logout_supported,omitempty"`
+	EndSessionEndpoint                 string   `json:"end_session_endpoint,omitempty"`
+	DeviceAuthorizationEndpoint        string   `json:"device_authorization_endpoint,omitempty"`
+	RegistrationEndpoint               string   `json:"registration_endpoint,omitempty"`
+	PushedAuthorizationRequestEndpoint string   `json:"pushed_authorization_request_endpoint,omitempty"`
+	BackchannelAuthenticationEndpoint  string   `json:"backchannel_authentication_endpoint,omitempty"`
 }
 
 // JWKSKey represents a single key in a JWKS response.

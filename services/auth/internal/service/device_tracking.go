@@ -4,7 +4,9 @@ import (
 	"context"
 	"crypto/sha256"
 	"encoding/hex"
+	"encoding/json"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -34,8 +36,12 @@ func (s *SessionService) TrackDevice(ctx context.Context, rdb *redis.Client, ten
 		LastSeen:    time.Now().Format(time.RFC3339),
 	}
 
-	// Store in a Redis hash keyed by session ID.
-	if err := rdb.HSet(ctx, key, sessionID.String(), device.Fingerprint+":"+device.IPAddress+":"+device.LastSeen).Err(); err != nil {
+	// Store as JSON to handle IPv6 addresses and colons in timestamps correctly.
+	data, err := json.Marshal(device)
+	if err != nil {
+		return err
+	}
+	if err := rdb.HSet(ctx, key, sessionID.String(), data).Err(); err != nil {
 		return err
 	}
 	// Set TTL to prevent infinite growth (90 days).
@@ -52,15 +58,18 @@ func (s *SessionService) ListDevices(ctx context.Context, rdb *redis.Client, ten
 
 	var devices []DeviceInfo
 	for sessionID, data := range sessions {
-		parts := splitDeviceData(data)
-		d := DeviceInfo{
-			SessionID:   sessionID,
-			Fingerprint: parts[0],
-			IPAddress:   parts[1],
-			LastSeen:    parts[2],
-		}
-		if len(parts) > 3 {
-			d.UserAgent = parts[3]
+		d := DeviceInfo{SessionID: sessionID}
+		// Try JSON first (new format); fall back to colon-delimited (legacy).
+		if json.Unmarshal([]byte(data), &d) != nil {
+			parts := splitDeviceData(data)
+			if len(parts) >= 3 {
+				d.Fingerprint = parts[0]
+				d.IPAddress = parts[1]
+				d.LastSeen = parts[2]
+				if len(parts) > 3 {
+					d.UserAgent = strings.Join(parts[3:], ":")
+				}
+			}
 		}
 		devices = append(devices, d)
 	}

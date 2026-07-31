@@ -9,13 +9,14 @@ import (
 
 // Config is the root configuration for the Auth Service.
 type Config struct {
-	Server          ServerConfig       `yaml:"server"`
-	Database        DatabaseConfig     `yaml:"database"`
-	Redis           RedisConfig        `yaml:"redis"`
-	JWT             JWTConfig          `yaml:"jwt"`
-	Password        PasswordPolicy     `yaml:"password_policy"`
-	RateLimit       RateLimitConfig    `yaml:"rate_limit"`
-	SessionTimeout  SessionTimeoutConfig `yaml:"session_timeout"`
+	Server                   ServerConfig         `yaml:"server"`
+	Database                 DatabaseConfig       `yaml:"database"`
+	Redis                    RedisConfig          `yaml:"redis"`
+	JWT                      JWTConfig            `yaml:"jwt"`
+	Password                 PasswordPolicy       `yaml:"password_policy"`
+	RateLimit                RateLimitConfig      `yaml:"rate_limit"`
+	SessionTimeout           SessionTimeoutConfig `yaml:"session_timeout"`
+	RequireEmailVerification bool                 `yaml:"require_email_verification"` // when true, local password login requires email_verified=true
 }
 
 type ServerConfig struct {
@@ -69,9 +70,9 @@ type RateLimitConfig struct {
 
 // SessionTimeoutConfig controls session expiration and concurrency policy.
 type SessionTimeoutConfig struct {
-	AbsoluteTimeout time.Duration `yaml:"absolute_timeout"`   // max session lifetime (e.g. 8h)
-	IdleTimeout     time.Duration `yaml:"idle_timeout"`       // inactivity timeout (e.g. 30m)
-	MaxSessions     int           `yaml:"max_sessions"`       // max concurrent sessions per user (0 = unlimited)
+	AbsoluteTimeout time.Duration `yaml:"absolute_timeout"` // max session lifetime (e.g. 8h)
+	IdleTimeout     time.Duration `yaml:"idle_timeout"`     // inactivity timeout (e.g. 30m)
+	MaxSessions     int           `yaml:"max_sessions"`     // max concurrent sessions per user (0 = unlimited)
 }
 
 // Default returns the default configuration with sensible production values.
@@ -115,6 +116,7 @@ func Default() *Config {
 		RateLimit: RateLimitConfig{
 			LoginPerMinute: 5,
 		},
+		RequireEmailVerification: false, // safe default: do not block existing unverified users
 		SessionTimeout: SessionTimeoutConfig{
 			AbsoluteTimeout: 8 * time.Hour,
 			IdleTimeout:     30 * time.Minute,
@@ -161,6 +163,10 @@ func LoadFromEnv(cfg *Config) *Config {
 		if n, err := parseIntDefault(v, cfg.RateLimit.LoginPerMinute); err == nil {
 			cfg.RateLimit.LoginPerMinute = n
 		}
+	}
+	// Email verification enforcement for local password logins
+	if v := os.Getenv("AUTH_REQUIRE_EMAIL_VERIFICATION"); v == "true" || v == "1" {
+		cfg.RequireEmailVerification = true
 	}
 	return cfg
 }

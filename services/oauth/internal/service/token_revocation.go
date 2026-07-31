@@ -83,6 +83,11 @@ func (s *TokenRevocationService) RevokeByClient(ctx context.Context, clientID st
 			return 0, fmt.Errorf("revoke by client: %w", err)
 		}
 		count = int(tag.RowsAffected())
+		// Also revoke OAuth-issued refresh tokens.
+		tag2, _ := s.pool.Exec(ctx, `
+			UPDATE oidc_refresh_tokens SET revoked = true, revoked_at = NOW()
+			WHERE client_id = $1 AND revoked = false`, clientID)
+		count += int(tag2.RowsAffected())
 	}
 	return count, nil
 }
@@ -101,6 +106,11 @@ func (s *TokenRevocationService) RevokeByUser(ctx context.Context, userID uuid.U
 			return 0, fmt.Errorf("revoke by user: %w", err)
 		}
 		count = int(tag.RowsAffected())
+		// Also revoke OAuth-issued refresh tokens.
+		tag2, _ := s.pool.Exec(ctx, `
+			UPDATE oidc_refresh_tokens SET revoked = true, revoked_at = NOW()
+			WHERE user_id = $1 AND revoked = false`, userID)
+		count += int(tag2.RowsAffected())
 	}
 	return count, nil
 }

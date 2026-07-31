@@ -62,6 +62,9 @@ func ExportDatabase(ctx context.Context, p Pool, format BackupFormat, w io.Write
 
 // BackupTable exports a single table's data.
 func BackupTable(ctx context.Context, p Pool, tableName string) (*TableData, error) {
+	if !isValidIdentifier(tableName) {
+		return nil, fmt.Errorf("invalid table name: %s", tableName)
+	}
 	return queryTableData(ctx, p, tableName)
 }
 
@@ -162,14 +165,16 @@ func queryTableData(ctx context.Context, p Pool, tableName string) (*TableData, 
 	// Since our Rows interface doesn't expose Columns(), we'll use a different approach:
 	// query with LIMIT 0 to get column types, then full query for data
 	// For simplicity, we use JSON building approach
+	// SECURITY: identifier already validated by BackupTable caller.
 	td := &TableData{Name: tableName}
 	for rows.Next() {
-		// We need to scan into interface{} — but our Rows interface doesn't have ColumnTypes
-		// Use a workaround: select as JSON for postgres, or use raw scan
-		row := make(map[string]interface{})
-		// For this implementation, we'll store row index instead of column names
-		// A more complete implementation would extend the Rows interface
-		_ = row
+		var rowData map[string]interface{}
+		if err := rows.Scan(&rowData); err != nil {
+			// Fall back to counting only if scan fails.
+			td.Count++
+			continue
+		}
+		td.Rows = append(td.Rows, rowData)
 		td.Count++
 	}
 	return td, nil

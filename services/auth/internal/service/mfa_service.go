@@ -139,16 +139,11 @@ func (s *MFAService) VerifyMFA(ctx context.Context, deviceID uuid.UUID, code str
 		now := time.Now()
 		device.Enabled = true
 		device.VerifiedAt = &now
+		wasFirstEnrollment = true
 	}
 	device.LastUsedCode = code
 	if err := s.repo.UpdateDevice(ctx, device); err != nil {
 		return false, fmt.Errorf("update device: %w", err)
-	}
-	if device.Enabled && device.VerifiedAt != nil && !wasFirstEnrollment {
-		// Already enabled — just updated LastUsedCode
-	}
-	if !device.Enabled {
-		wasFirstEnrollment = true
 	}
 
 	return wasFirstEnrollment, nil
@@ -170,8 +165,18 @@ func (s *MFAService) VerifyUserCode(ctx context.Context, tenantID, userID uuid.U
 		return ErrInvalidMFACode
 	}
 
-	valid := totp.Validate(code, device.Secret)
-	if !valid {
+	// Use ValidateCustom with Skew=1 to match VerifyMFA behavior — tolerates
+	// ±1 time step (30s) of clock drift between user's authenticator and server.
+	// Using totp.Validate() (Skew=0) here would reject legitimate codes that
+	// VerifyMFA accepts, causing login MFA failures for users with slight clock skew.
+	valid, err := totp.ValidateCustom(code, device.Secret, time.Now().UTC(),
+		totp.ValidateOpts{
+			Period:    30,
+			Skew:      1,
+			Digits:    otp.DigitsSix,
+			Algorithm: otp.AlgorithmSHA1,
+		})
+	if err != nil || !valid {
 		return ErrInvalidMFACode
 	}
 

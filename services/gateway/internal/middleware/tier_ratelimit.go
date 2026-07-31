@@ -41,6 +41,7 @@ type TierRateLimiter struct {
 	cfg     TierRateLimitConfig
 	mu      sync.Mutex
 	buckets map[string]*tierBucket // key: tenantID
+	done    chan struct{}
 }
 
 type tierBucket struct {
@@ -53,9 +54,15 @@ func NewTierRateLimiter(cfg TierRateLimitConfig) *TierRateLimiter {
 	trl := &TierRateLimiter{
 		cfg:     cfg,
 		buckets: make(map[string]*tierBucket),
+		done:    make(chan struct{}),
 	}
 	go trl.cleanup()
 	return trl
+}
+
+// StopCleanup signals the cleanup goroutine to exit.
+func (trl *TierRateLimiter) StopCleanup() {
+	close(trl.done)
 }
 
 // Middleware returns HTTP middleware that enforces tier-based rate limits.
@@ -126,15 +133,20 @@ func (trl *TierRateLimiter) allow(key string, limit int) bool {
 func (trl *TierRateLimiter) cleanup() {
 	ticker := time.NewTicker(5 * time.Minute)
 	defer ticker.Stop()
-	for range ticker.C {
-		trl.mu.Lock()
-		now := time.Now()
-		for k, b := range trl.buckets {
-			if now.After(b.expireAt) {
-				delete(trl.buckets, k)
+	for {
+		select {
+		case <-ticker.C:
+			trl.mu.Lock()
+			now := time.Now()
+			for k, b := range trl.buckets {
+				if now.After(b.expireAt) {
+					delete(trl.buckets, k)
+				}
 			}
+			trl.mu.Unlock()
+		case <-trl.done:
+			return
 		}
-		trl.mu.Unlock()
 	}
 }
 

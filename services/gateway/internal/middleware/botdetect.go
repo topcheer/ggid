@@ -59,6 +59,7 @@ type BehavioralBotDetect struct {
 type botRateStore struct {
 	mu      sync.Mutex
 	buckets map[string]*botRequestLog
+	done    chan struct{}
 }
 
 type botRequestLog struct {
@@ -74,6 +75,7 @@ func NewBehavioralBotDetect(threshold int, window time.Duration) *BehavioralBotD
 		threshold: threshold,
 		store: &botRateStore{
 			buckets: make(map[string]*botRequestLog),
+			done:    make(chan struct{}),
 		},
 	}
 	// Start background cleanup to prevent unbounded map growth.
@@ -81,19 +83,29 @@ func NewBehavioralBotDetect(threshold int, window time.Duration) *BehavioralBotD
 	return b
 }
 
+// StopCleanup signals the cleanup goroutine to exit.
+func (b *BehavioralBotDetect) StopCleanup() {
+	close(b.store.done)
+}
+
 // cleanupLoop periodically removes expired entries from the store.
 func (s *botRateStore) cleanupLoop(window time.Duration) {
 	ticker := time.NewTicker(window * 2)
 	defer ticker.Stop()
-	for range ticker.C {
-		s.mu.Lock()
-		now := time.Now()
-		for key, log := range s.buckets {
-			if now.After(log.expires) {
-				delete(s.buckets, key)
+	for {
+		select {
+		case <-ticker.C:
+			s.mu.Lock()
+			now := time.Now()
+			for key, log := range s.buckets {
+				if now.After(log.expires) {
+					delete(s.buckets, key)
+				}
 			}
+			s.mu.Unlock()
+		case <-s.done:
+			return
 		}
-		s.mu.Unlock()
 	}
 }
 

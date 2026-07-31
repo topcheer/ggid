@@ -27,6 +27,7 @@ public class JwtVerifier {
 
     private final JwkProvider jwkProvider;
     private final String issuer;
+    private final String audience;
     private final int leewaySeconds;
 
     /**
@@ -42,12 +43,20 @@ public class JwtVerifier {
      * @param leewaySeconds Clock skew tolerance in seconds
      */
     public JwtVerifier(String jwksUrl, String issuer, int leewaySeconds) {
+        this(jwksUrl, issuer, null, leewaySeconds);
+    }
+
+    /**
+     * Full constructor with audience verification.
+     */
+    public JwtVerifier(String jwksUrl, String issuer, String audience, int leewaySeconds) {
         try {
             this.jwkProvider = new UrlJwkProvider(new URL(jwksUrl));
         } catch (Exception e) {
             throw new IllegalArgumentException("Invalid JWKS URL: " + jwksUrl, e);
         }
         this.issuer = issuer;
+        this.audience = audience;
         this.leewaySeconds = leewaySeconds;
     }
 
@@ -78,14 +87,19 @@ public class JwtVerifier {
             if (issuer != null && !issuer.isEmpty()) {
                 verification.withIssuer(issuer);
             }
+            if (audience != null && !audience.isEmpty()) {
+                verification.withAudience(audience);
+            }
             if (leewaySeconds > 0) {
                 verification.acceptLeeway(leewaySeconds);
             }
 
             return verification.build().verify(token);
         } catch (JWTVerificationException | JwkException e) {
+            java.util.logging.Logger.getLogger("GGID-JWT").warning("JWT verification failed: " + e.getMessage());
             return null;
         } catch (Exception e) {
+            java.util.logging.Logger.getLogger("GGID-JWT").warning("Unexpected JWT error: " + e.getMessage());
             return null;
         }
     }

@@ -99,6 +99,11 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
           "/admin/settings": "tenant",
           "/admin/feature-flags": "tenant",
           "/admin/health": "tenant",
+          "/devices": "tenant",
+          "/access-reviews": "tenant",
+          "/activity": "user",
+          "/exports": "tenant",
+          "/providers/config": "tenant",
         };
         const userScopes = JSON.parse(localStorage.getItem("ggid_user_scopes") || '["user:self"]');
         const isPlatform = userScopes.some((s: string) => {

@@ -11,13 +11,14 @@ import (
 
 // UserInfo represents the minimal user data the Auth Service needs from Identity Service.
 type UserInfo struct {
-	ID          uuid.UUID
-	TenantID    uuid.UUID
-	Username    string
-	Email       string
-	Status      string // active, locked, disabled, deleted
-	DisplayName string
-	AvatarURL   string
+	ID            uuid.UUID
+	TenantID      uuid.UUID
+	Username      string
+	Email         string
+	Status        string // active, locked, disabled, deleted
+	DisplayName   string
+	AvatarURL     string
+	EmailVerified bool // true if the user's primary email has been verified
 }
 
 // ExternalIdentityLink represents a linked external identity.
@@ -62,9 +63,9 @@ type IdentityClient interface {
 // The local cache is process-scoped and will be lost on restart — when the
 // Identity Service comes back, a sync should reconcile these records.
 type NoopIdentityClient struct {
-	mu          sync.RWMutex
-	users       map[uuid.UUID]*UserInfo
-	byIdentifier map[string]*UserInfo
+	mu            sync.RWMutex
+	users         map[uuid.UUID]*UserInfo
+	byIdentifier  map[string]*UserInfo
 	externalLinks map[string]*ExternalIdentityLink
 }
 
@@ -81,10 +82,18 @@ func (n *NoopIdentityClient) init() {
 // NewNoopIdentityClient creates a new NoopIdentityClient with initialized caches.
 func NewNoopIdentityClient() *NoopIdentityClient {
 	return &NoopIdentityClient{
-		users:        make(map[uuid.UUID]*UserInfo),
-		byIdentifier: make(map[string]*UserInfo),
+		users:         make(map[uuid.UUID]*UserInfo),
+		byIdentifier:  make(map[string]*UserInfo),
 		externalLinks: make(map[string]*ExternalIdentityLink),
 	}
+}
+
+// AddUser adds a user to the in-memory store (for testing).
+func (n *NoopIdentityClient) AddUser(u *UserInfo) {
+	n.mu.Lock()
+	n.init()
+	defer n.mu.Unlock()
+	n.users[u.ID] = u
 }
 
 func (n *NoopIdentityClient) GetUser(_ context.Context, tenantID uuid.UUID, identifier string) (*UserInfo, error) {

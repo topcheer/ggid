@@ -1,6 +1,9 @@
 package service
 
 import (
+	"crypto/rand"
+	"crypto/subtle"
+	"encoding/base64"
 	"fmt"
 	"sync"
 	"time"
@@ -51,6 +54,16 @@ type IdentityRecoveryService struct {
 	seq      int
 }
 
+const maxRecoveryAuditEntries = 1000
+
+// appendAudit appends an entry and caps the slice to prevent unbounded growth.
+func (s *IdentityRecoveryService) appendAudit(entry RecoveryAuditEntry) {
+	s.audit = append(s.audit, entry)
+	if len(s.audit) > maxRecoveryAuditEntries {
+		s.audit = s.audit[len(s.audit)-maxRecoveryAuditEntries:]
+	}
+}
+
 func NewIdentityRecoveryService() *IdentityRecoveryService {
 	return &IdentityRecoveryService{
 		requests: make(map[string]*RecoveryRequest),
@@ -62,19 +75,22 @@ func (s *IdentityRecoveryService) InitiateRecovery(userID string, method Recover
 	defer s.mu.Unlock()
 	s.seq++
 	reqID := fmt.Sprintf("rec_%d", s.seq)
-	token := fmt.Sprintf("rtok_%d_%d", s.seq, time.Now().UnixNano())
+	token, err := generateRecoveryToken()
+	if err != nil {
+		return nil, fmt.Errorf("failed to generate recovery token: %w", err)
+	}
 	req := &RecoveryRequest{
 		RequestID: reqID,
 		UserID:    userID,
 		Method:    method,
 		Token:     token,
 		Status:    RecoveryInitiated,
-		ExpiresAt: time.Now().Add(30 * time.Minute),
+		ExpiresAt: time.Now().Add(48 * time.Hour), // must exceed WaitUntil
 		WaitUntil: time.Now().Add(24 * time.Hour), // 24h time-delayed recovery
 		CreatedAt: time.Now(),
 	}
 	s.requests[reqID] = req
-	s.audit = append(s.audit, RecoveryAuditEntry{
+	s.appendAudit(RecoveryAuditEntry{
 		RequestID: reqID, UserID: userID, Action: "initiate", Method: method, Timestamp: time.Now(),
 	})
 	return req, nil
@@ -84,7 +100,7 @@ func (s *IdentityRecoveryService) VerifyRecoveryToken(userID, token string) (*Re
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 	for _, req := range s.requests {
-		if req.UserID == userID && req.Token == token {
+		if req.UserID == userID && subtle.ConstantTimeCompare([]byte(req.Token), []byte(token)) == 1 {
 			if req.Status != RecoveryInitiated {
 				return nil, fmt.Errorf("recovery request not in initiated state")
 			}
@@ -113,7 +129,7 @@ func (s *IdentityRecoveryService) CompleteRecovery(requestID string, newCredenti
 	}
 	req.Status = RecoveryCompleted
 	req.CompletedAt = time.Now()
-	s.audit = append(s.audit, RecoveryAuditEntry{
+	s.appendAudit(RecoveryAuditEntry{
 		RequestID: requestID, UserID: req.UserID, Action: "complete", Method: req.Method, Timestamp: time.Now(),
 	})
 	return req, nil
@@ -130,7 +146,7 @@ func (s *IdentityRecoveryService) CancelRecovery(requestID string) error {
 		return fmt.Errorf("cannot cancel completed recovery")
 	}
 	req.Status = RecoveryCancelled
-	s.audit = append(s.audit, RecoveryAuditEntry{
+	s.appendAudit(RecoveryAuditEntry{
 		RequestID: requestID, UserID: req.UserID, Action: "cancel", Method: req.Method, Timestamp: time.Now(),
 	})
 	return nil
@@ -158,4 +174,14 @@ func (s *IdentityRecoveryService) CleanupExpired() int {
 		}
 	}
 	return count
+}
+
+// generateRecoveryToken creates a cryptographically random recovery token
+// with at least 256 bits of entropy (32 random bytes, base64url-encoded).
+func generateRecoveryToken() (string, error) {
+	b := make([]byte, 32)
+	if _, err := rand.Read(b); err != nil {
+		return "", err
+	}
+	return "rtok_" + base64.RawURLEncoding.EncodeToString(b), nil
 }

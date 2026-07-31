@@ -11,9 +11,9 @@ import (
 
 // InputValidationConfig controls which endpoints get input validation.
 type InputValidationConfig struct {
-	Enabled        bool
-	ExemptPaths    map[string]bool
-	MaxBodySize    int64 // bytes
+	Enabled     bool
+	ExemptPaths map[string]bool
+	MaxBodySize int64 // bytes
 }
 
 var (
@@ -42,10 +42,10 @@ var (
 	defaultValidationConfig = InputValidationConfig{
 		Enabled: true,
 		ExemptPaths: map[string]bool{
-			"/api/v1/audit/pii-scan":     true, // needs raw input
-			"/api/v1/crypto/fields":      true, // may contain encoded data
-			"/api/v1/dlp/scan":           true, // DLP scanner needs raw input
-			"/graphql":                   true, // GraphQL has its own validation
+			"/api/v1/audit/pii-scan": true, // needs raw input
+			"/api/v1/crypto/fields":  true, // may contain encoded data
+			"/api/v1/dlp/scan":       true, // DLP scanner needs raw input
+			"/graphql":               true, // GraphQL has its own validation
 		},
 		MaxBodySize: 10 * 1024 * 1024, // 10MB
 	}
@@ -99,10 +99,10 @@ func InputValidationMiddleware(next http.Handler) http.Handler {
 
 		// Check request body (for POST/PUT/PATCH with JSON).
 		if r.Method == http.MethodPost || r.Method == http.MethodPut || r.Method == http.MethodPatch {
-			if r.Header.Get("Content-Type") == "application/json" && r.ContentLength < cfg.MaxBodySize {
+			if strings.HasPrefix(r.Header.Get("Content-Type"), "application/json") && r.ContentLength < cfg.MaxBodySize {
 				body, err := io.ReadAll(r.Body)
 				if err != nil {
-					next.ServeHTTP(w, r)
+					http.Error(w, `{"error":"failed to read request body"}`, http.StatusBadRequest)
 					return
 				}
 				r.Body.Close()

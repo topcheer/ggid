@@ -40,10 +40,10 @@ func (s *IdentityService) CreateUser(ctx context.Context, input *domain.CreateUs
 
 	// Check for existing username or email.
 	if existing, _ := s.repo.GetUserByUsername(ctx, tc.TenantID, input.Username); existing != nil {
-		return nil, gerr.AlreadyExists("user", input.Username)
+		return nil, gerr.AlreadyExists("user", "")
 	}
 	if existing, _ := s.repo.GetUserByEmail(ctx, tc.TenantID, input.Email); existing != nil {
-		return nil, gerr.AlreadyExists("email", input.Email)
+		return nil, gerr.AlreadyExists("email", "")
 	}
 
 	// Validate password.
@@ -62,17 +62,17 @@ func (s *IdentityService) CreateUser(ctx context.Context, input *domain.CreateUs
 	}
 
 	user := &domain.User{
-		ID:           uuid.New(),
-		TenantID:     tc.TenantID,
-		Username:     input.Username,
-		Email:        input.Email,
-		Phone:        input.Phone,
-		Status:       domain.UserStatusActive,
+		ID:            uuid.New(),
+		TenantID:      tc.TenantID,
+		Username:      input.Username,
+		Email:         input.Email,
+		Phone:         input.Phone,
+		Status:        domain.UserStatusActive,
 		EmailVerified: false,
-		DisplayName:  input.DisplayName,
-		Locale:       input.Locale,
-		Timezone:     input.Timezone,
-		PasswordHash: hash,
+		DisplayName:   input.DisplayName,
+		Locale:        input.Locale,
+		Timezone:      input.Timezone,
+		PasswordHash:  hash,
 	}
 
 	if err := s.repo.CreateUser(ctx, user); err != nil {
@@ -353,14 +353,14 @@ func (s *IdentityService) ProvisionFromLDAP(ctx context.Context, result *authpro
 	}
 
 	user := &domain.User{
-		ID:           uuid.New(),
-		TenantID:     tc.TenantID,
-		Username:     username,
-		Email:        email,
-		Status:       domain.UserStatusActive,
+		ID:            uuid.New(),
+		TenantID:      tc.TenantID,
+		Username:      username,
+		Email:         email,
+		Status:        domain.UserStatusActive,
 		EmailVerified: true, // LDAP emails are considered verified
-		DisplayName:  displayName,
-		Locale:       "en",
+		DisplayName:   displayName,
+		Locale:        "en",
 		// No PasswordHash — LDAP users authenticate via LDAP
 	}
 

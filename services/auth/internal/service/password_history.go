@@ -76,6 +76,14 @@ func (s *PasswordHistoryService) PurgeOldEntries(userID string) int {
 	return purged
 }
 
+// PurgeUser removes all password history entries for a user.
+// Called during account deletion to comply with data minimization (GDPR).
+func (s *PasswordHistoryService) PurgeUser(userID string) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	delete(s.history, userID)
+}
+
 func hashPassword(pw string) string {
 	h := sha256.Sum256([]byte(pw))
 	return hex.EncodeToString(h[:])

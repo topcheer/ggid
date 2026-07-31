@@ -183,7 +183,13 @@ func (s *BackupCodeService) VerifyBackupCode(ctx context.Context, tenantID, user
 	for _, bc := range codes {
 		ok, _ := crypto.VerifyPassword(code, bc.CodeHash)
 		if ok {
-			return s.repo.MarkUsed(ctx, bc.ID)
+			// Atomic single-use: MarkUsed has WHERE used_at IS NULL,
+			// so concurrent requests racing on the same code will get
+			// "already used" error — treat that as invalid.
+			if err := s.repo.MarkUsed(ctx, bc.ID); err != nil {
+				continue // Another goroutine already consumed this code
+			}
+			return nil
 		}
 	}
 

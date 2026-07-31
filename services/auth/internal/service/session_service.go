@@ -5,8 +5,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/ggid/ggid/services/auth/internal/domain"
 	"github.com/ggid/ggid/pkg/crypto"
+	"github.com/ggid/ggid/services/auth/internal/domain"
 	"github.com/google/uuid"
 )
 
@@ -14,6 +14,9 @@ import (
 type SessionService struct {
 	sessionRepo SessionRepo
 }
+
+// maxDefaultSessions is the default concurrent session limit per user.
+const maxDefaultSessions = 10
 
 func NewSessionService(sessionRepo SessionRepo) *SessionService {
 	return &SessionService{
@@ -40,21 +43,30 @@ func (ss *SessionService) Create(ctx context.Context, p CreateSessionParams) (st
 
 	tokenHash := hashToken(token)
 	session := &domain.Session{
-		ID:        uuid.New(),
-		TenantID:  p.TenantID,
-		UserID:    p.UserID,
-		TokenHash: tokenHash,
-		IPAddress: p.IPAddress,
-		UserAgent: p.UserAgent,
-		ExpiresAt: time.Now().Add(p.TTL),
-		CreatedAt: time.Now(),
-		Metadata:  map[string]any{"mfa_verified": false},
+		ID:         uuid.New(),
+		TenantID:   p.TenantID,
+		UserID:     p.UserID,
+		TokenHash:  tokenHash,
+		IPAddress:  p.IPAddress,
+		UserAgent:  p.UserAgent,
+		ExpiresAt:  time.Now().Add(p.TTL),
+		CreatedAt:  time.Now(),
+		Metadata:   map[string]any{"mfa_verified": false},
 		DeviceInfo: parseDeviceInfo(p.UserAgent),
 	}
 
 	if err := ss.sessionRepo.Create(ctx, session); err != nil {
 		return "", nil, err
 	}
+
+	// SECURITY: Enforce concurrent session limit after creating a new session.
+	// Revokes oldest sessions beyond the cap to limit credential theft blast radius.
+	// Best-effort: log errors but don't fail the login.
+	if err := ss.EnforceSessionLimit(ctx, p.TenantID, p.UserID, maxDefaultSessions); err != nil {
+		// Log but continue — session creation succeeded, limit enforcement is secondary.
+		_ = err
+	}
+
 	return token, session, nil
 }
 

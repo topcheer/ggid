@@ -11,6 +11,7 @@ import (
 	"io"
 	"log/slog"
 	"os"
+	"strings"
 	"sync"
 )
 
@@ -18,6 +19,10 @@ var (
 	keyCache   []byte
 	keyCacheMu sync.Mutex
 )
+
+// encryptedPrefix marks TOTP secrets that were encrypted with AES-GCM.
+// Values without this prefix are treated as legacy plaintext for backward compat.
+const encryptedPrefix = "enc:"
 
 // getKey resolves the AES-256 encryption key from GGID_ENCRYPTION_KEY env.
 // Returns nil if not set (caller must handle — EncryptTOTPSecret is fail-closed).
@@ -64,37 +69,45 @@ func EncryptTOTPSecret(plaintext string) (string, error) {
 		return "", fmt.Errorf("generate nonce: %w", err)
 	}
 	ciphertext := gcm.Seal(nonce, nonce, []byte(plaintext), nil)
-	return base64.StdEncoding.EncodeToString(ciphertext), nil
+	return encryptedPrefix + base64.StdEncoding.EncodeToString(ciphertext), nil
 }
 
-// DecryptTOTPSecret decrypts. Falls back to plaintext for pre-migration rows.
+// DecryptTOTPSecret decrypts. Falls back to plaintext only for legacy rows
+// (values without the "enc:" prefix). Encrypted values that fail decryption
+// return an error rather than silently exposing potentially tampered data.
 func DecryptTOTPSecret(stored string) (string, error) {
 	if stored == "" {
 		return "", nil
 	}
-	key := getKey()
-	if key == nil {
+	// Legacy plaintext: no prefix. Safe fallback for pre-migration rows.
+	if !strings.HasPrefix(stored, encryptedPrefix) {
 		return stored, nil
 	}
-	raw, err := base64.StdEncoding.DecodeString(stored)
+	// Encrypted value: strip prefix and decrypt. Fail on errors — don't
+	// silently return tampered data as plaintext.
+	key := getKey()
+	if key == nil {
+		return "", fmt.Errorf("encryption key not configured")
+	}
+	raw, err := base64.StdEncoding.DecodeString(strings.TrimPrefix(stored, encryptedPrefix))
 	if err != nil {
-		return stored, nil // not base64 = plaintext
+		return "", fmt.Errorf("invalid TOTP secret encoding: %w", err)
 	}
 	block, err := aes.NewCipher(key)
 	if err != nil {
-		return stored, err
+		return "", fmt.Errorf("create cipher: %w", err)
 	}
 	gcm, err := cipher.NewGCM(block)
 	if err != nil {
-		return stored, err
+		return "", fmt.Errorf("create gcm: %w", err)
 	}
 	ns := gcm.NonceSize()
 	if len(raw) < ns {
-		return stored, nil // too short = plaintext
+		return "", fmt.Errorf("TOTP secret too short")
 	}
 	plaintext, err := gcm.Open(nil, raw[:ns], raw[ns:], nil)
 	if err != nil {
-		return stored, nil // wrong key = backward compat
+		return "", fmt.Errorf("TOTP secret decryption failed: %w", err)
 	}
 	return string(plaintext), nil
 }

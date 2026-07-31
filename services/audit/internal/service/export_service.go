@@ -109,7 +109,8 @@ func (s *ExportService) ExportEvents(ctx context.Context, events []domain.AuditE
 	filename := fmt.Sprintf("audit_export_%s_%d.%s", filter.TenantID, time.Now().Unix(), format)
 	filePath := filepath.Join(s.outputDir, filename)
 
-	file, err := os.Create(filePath)
+	// SECURITY: Create with restrictive permissions (0600) to prevent world-readable audit data.
+	file, err := os.OpenFile(filePath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0600)
 	if err != nil {
 		return nil, fmt.Errorf("create export file: %w", err)
 	}
@@ -245,21 +246,24 @@ func (s *ExportService) exportCSV(w io.Writer, events []domain.AuditEvent, maskP
 			actorName = maskString(actorName)
 			ipAddress = maskIP(ipAddress)
 		}
+		// SECURITY: Sanitize CSV formula injection — prefix dangerous chars.
+		userAgent := sanitizeCSVCell(e.UserAgent)
+		resourceName := sanitizeCSVCell(e.ResourceName)
 		row := []string{
-			e.ID.String(),
-			e.TenantID.String(),
-			string(e.ActorType),
-			actorID,
-			actorName,
-			e.Action,
-			e.ResourceType,
-			resourceID,
-			e.ResourceName,
-			string(e.Result),
-			ipAddress,
-			e.UserAgent,
-			e.RequestID,
-			e.CreatedAt.Format(time.RFC3339),
+			sanitizeCSVCell(e.ID.String()),
+			sanitizeCSVCell(e.TenantID.String()),
+			sanitizeCSVCell(string(e.ActorType)),
+			sanitizeCSVCell(actorID),
+			sanitizeCSVCell(actorName),
+			sanitizeCSVCell(e.Action),
+			sanitizeCSVCell(e.ResourceType),
+			sanitizeCSVCell(resourceID),
+			sanitizeCSVCell(resourceName),
+			sanitizeCSVCell(string(e.Result)),
+			sanitizeCSVCell(ipAddress),
+			sanitizeCSVCell(userAgent),
+			sanitizeCSVCell(e.RequestID),
+			sanitizeCSVCell(e.CreatedAt.Format(time.RFC3339)),
 		}
 		if err := cwt.Write(row); err != nil {
 			return count, err
@@ -360,4 +364,39 @@ func (s *ExportService) Reset() {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	s.exportLog = nil
+}
+
+// CleanupOldExports deletes export files older than the given duration.
+func (s *ExportService) CleanupOldExports(maxAge time.Duration) (int, error) {
+	entries, err := os.ReadDir(s.outputDir)
+	if err != nil {
+		return 0, err
+	}
+	cutoff := time.Now().Add(-maxAge)
+	removed := 0
+	for _, entry := range entries {
+		info, err := entry.Info()
+		if err != nil {
+			continue
+		}
+		if info.ModTime().Before(cutoff) && strings.HasPrefix(entry.Name(), "audit_export_") {
+			if err := os.Remove(filepath.Join(s.outputDir, entry.Name())); err == nil {
+				removed++
+			}
+		}
+	}
+	return removed, nil
+}
+
+// sanitizeCSVCell prevents CSV formula injection by prefixing dangerous
+// leading characters (=, +, -, @, tab, CR) with a single quote.
+func sanitizeCSVCell(s string) string {
+	if len(s) == 0 {
+		return s
+	}
+	switch s[0] {
+	case '=', '+', '-', '@', '\t', '\r':
+		return "'" + s
+	}
+	return s
 }

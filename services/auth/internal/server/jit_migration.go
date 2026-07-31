@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log/slog"
+	"regexp"
 	"strings"
 	"time"
 
@@ -17,27 +18,27 @@ import (
 
 // LegacyMigrationConfig configures JIT migration from a legacy system.
 type LegacyMigrationConfig struct {
-	SourceDBConn    string            `json:"source_db_conn"`
-	HashFormat      string            `json:"hash_format"` // bcrypt, pbkdf2, scrypt, ssha, argon2id, auto
+	SourceDBConn     string            `json:"source_db_conn"`
+	HashFormat       string            `json:"hash_format"`       // bcrypt, pbkdf2, scrypt, ssha, argon2id, auto
 	AttributeMapping map[string]string `json:"attribute_mapping"` // legacy_field -> ggid_field
-	Enabled         bool              `json:"enabled"`
+	Enabled          bool              `json:"enabled"`
 }
 
 // MigrationStats tracks JIT migration progress.
 type MigrationStats struct {
-	TotalMigrated int  `json:"total_migrated"`
-	TotalFailed   int  `json:"total_failed"`
-	TotalAttempted int `json:"total_attempted"`
-	LastMigration *time.Time `json:"last_migration,omitempty"`
+	TotalMigrated  int        `json:"total_migrated"`
+	TotalFailed    int        `json:"total_failed"`
+	TotalAttempted int        `json:"total_attempted"`
+	LastMigration  *time.Time `json:"last_migration,omitempty"`
 }
 
 // LegacyUser represents a user record from the legacy system.
 type LegacyUser struct {
-	Username    string            `json:"username"`
-	Email       string            `json:"email"`
-	DisplayName string            `json:"display_name"`
-	PasswordHash string           `json:"password_hash"`
-	Attributes  map[string]string `json:"attributes"`
+	Username     string            `json:"username"`
+	Email        string            `json:"email"`
+	DisplayName  string            `json:"display_name"`
+	PasswordHash string            `json:"password_hash"`
+	Attributes   map[string]string `json:"attributes"`
 }
 
 // jitMigrationEngine handles just-in-time user migration from legacy systems.
@@ -178,6 +179,22 @@ func (e *jitMigrationEngine) LookupLegacyUser(ctx context.Context, username stri
 	if _, ok := colMap["password_hash"]; !ok {
 		cols = append(cols, "password_hash")
 		colMap["password_hash"] = "password_hash"
+	}
+
+	// SECURITY: validate SQL identifiers to prevent injection via config.
+	// tableName, usernameCol, and cols come from database config and are used
+	// in raw SQL string formatting — must be valid identifiers only.
+	validIdent := regexp.MustCompile(`^[a-zA-Z_][a-zA-Z0-9_]*$`)
+	if !validIdent.MatchString(tableName) {
+		return nil, fmt.Errorf("invalid table name in migration config")
+	}
+	if !validIdent.MatchString(usernameCol) {
+		return nil, fmt.Errorf("invalid username column in migration config")
+	}
+	for _, c := range cols {
+		if !validIdent.MatchString(c) {
+			return nil, fmt.Errorf("invalid column name in migration config: %s", c)
+		}
 	}
 
 	query := fmt.Sprintf("SELECT %s FROM %s WHERE %s = $1 LIMIT 1",

@@ -142,8 +142,8 @@ func (r *pgClientRepo) GetClientByID(ctx context.Context, tenantID uuid.UUID, cl
 		return nil, err
 	}
 
-	query := fmt.Sprintf(`SELECT %s FROM oauth_clients WHERE client_id = $1`, clientColumns)
-	row := tx.QueryRow(ctx, query, clientID)
+	query := fmt.Sprintf(`SELECT %s FROM oauth_clients WHERE client_id = $1 AND tenant_id = $2`, clientColumns)
+	row := tx.QueryRow(ctx, query, clientID, tenantID)
 	client, err := scanClient(row)
 	if err != nil {
 		if isNoRows(err) {
@@ -170,7 +170,7 @@ func (r *pgClientRepo) ListClients(ctx context.Context, tenantID uuid.UUID, page
 	}
 
 	var total int
-	if err := tx.QueryRow(ctx, `SELECT count(*) FROM oauth_clients`).Scan(&total); err != nil {
+	if err := tx.QueryRow(ctx, `SELECT count(*) FROM oauth_clients WHERE tenant_id = $1`, tenantID).Scan(&total); err != nil {
 		return nil, 0, ggiderrors.Wrap(ggiderrors.ErrInternal, "count clients", err)
 	}
 
@@ -178,8 +178,8 @@ func (r *pgClientRepo) ListClients(ctx context.Context, tenantID uuid.UUID, page
 		pageSize = 20
 	}
 
-	query := fmt.Sprintf(`SELECT %s FROM oauth_clients ORDER BY created_at DESC LIMIT $1 OFFSET $2`, clientColumns)
-	rows, err := tx.Query(ctx, query, pageSize, offset)
+	query := fmt.Sprintf(`SELECT %s FROM oauth_clients WHERE tenant_id = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3`, clientColumns)
+	rows, err := tx.Query(ctx, query, tenantID, pageSize, offset)
 	if err != nil {
 		return nil, 0, ggiderrors.Wrap(ggiderrors.ErrInternal, "list clients", err)
 	}
@@ -278,11 +278,11 @@ func (r *pgClientRepo) DeleteClient(ctx context.Context, tenantID uuid.UUID, cli
 		}
 	}
 
-	// Delete the client using the resolved UUID id
+	// Delete the client using the resolved UUID id (tenant-scoped for defense-in-depth)
 	tag, err := tx.Exec(ctx, `
 		DELETE FROM oauth_clients
-		WHERE id = $1
-	`, internalClientID)
+		WHERE id = $1 AND tenant_id = $2
+	`, internalClientID, tenantID)
 	if err != nil {
 		return ggiderrors.Wrap(ggiderrors.ErrInternal, "delete client", err)
 	}

@@ -9,12 +9,12 @@ import (
 	"testing"
 	"time"
 
+	"github.com/alicebob/miniredis/v2"
 	"github.com/ggid/ggid/pkg/authprovider"
 	ggidcrypto "github.com/ggid/ggid/pkg/crypto"
 	"github.com/ggid/ggid/pkg/tenant"
 	"github.com/ggid/ggid/services/auth/internal/conf"
 	"github.com/ggid/ggid/services/auth/internal/domain"
-	"github.com/alicebob/miniredis/v2"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/redis/go-redis/v9"
@@ -110,7 +110,9 @@ type taSessionRepo struct {
 	sessions map[uuid.UUID]*domain.Session
 }
 
-func newTaSessionRepo() *taSessionRepo { return &taSessionRepo{sessions: map[uuid.UUID]*domain.Session{}} }
+func newTaSessionRepo() *taSessionRepo {
+	return &taSessionRepo{sessions: map[uuid.UUID]*domain.Session{}}
+}
 
 func (m *taSessionRepo) Create(_ context.Context, s *domain.Session) error {
 	if s.ID == uuid.Nil {
@@ -195,7 +197,9 @@ type taRefreshRepo struct {
 	tokens map[string]*domain.RefreshToken
 }
 
-func newTaRefreshRepo() *taRefreshRepo { return &taRefreshRepo{tokens: map[string]*domain.RefreshToken{}} }
+func newTaRefreshRepo() *taRefreshRepo {
+	return &taRefreshRepo{tokens: map[string]*domain.RefreshToken{}}
+}
 
 func (m *taRefreshRepo) Create(_ context.Context, t *domain.RefreshToken) error {
 	m.tokens[t.TokenHash] = t
@@ -269,14 +273,15 @@ func (s *taLocalStore) GetCredentialByUsername(_ context.Context, tenantID uuid.
 
 // taTestEnv bundles a fully wired AuthService with mock backends.
 type taTestEnv struct {
-	svc       *AuthService
-	rdb       *redis.Client
-	mr        *miniredis.Miniredis
-	credRepo  *taCredRepo
-	sessRepo  *taSessionRepo
-	mfaRepo   *mockMFARepo
-	localCred *taLocalStore
-	tenantID  uuid.UUID
+	svc            *AuthService
+	rdb            *redis.Client
+	mr             *miniredis.Miniredis
+	credRepo       *taCredRepo
+	sessRepo       *taSessionRepo
+	mfaRepo        *mockMFARepo
+	localCred      *taLocalStore
+	tenantID       uuid.UUID
+	identityClient *NoopIdentityClient
 }
 
 func newTaTestEnv(t *testing.T) *taTestEnv {
@@ -304,11 +309,13 @@ func newTaTestEnv(t *testing.T) *taTestEnv {
 	mfaSvc := NewMFAService(mfaRepo)
 	chain := authprovider.NewChain(authprovider.NewLocalProvider(localStore))
 
-	svc := NewAuthService(cfg, chain, credRepo, tokenSvc, sessionSvc, passwordSvc, rateLimiter, NewNoopIdentityClient(), mfaSvc)
+	identityClient := NewNoopIdentityClient()
+	svc := NewAuthService(cfg, chain, credRepo, tokenSvc, sessionSvc, passwordSvc, rateLimiter, identityClient, mfaSvc)
 
 	return &taTestEnv{
 		svc: svc, rdb: rdb, mr: mr, credRepo: credRepo, sessRepo: sessRepo,
 		mfaRepo: mfaRepo, localCred: localStore, tenantID: uuid.New(),
+		identityClient: identityClient,
 	}
 }
 
@@ -335,6 +342,14 @@ func (e *taTestEnv) addLocalUser(t *testing.T, username, password string, userID
 	e.localCred.creds[e.tenantID.String()+":"+username] = &authprovider.LocalCredential{
 		UserID: userID, Username: username, Email: username + "@example.com",
 		Status: "active", PasswordHash: mustHashT(t, password),
+	}
+	// Also register in identity client so fail-closed status check passes.
+	if e.identityClient != nil {
+		e.identityClient.AddUser(&UserInfo{
+			ID:     userID,
+			Status: "active",
+			Email:  username + "@example.com",
+		})
 	}
 }
 
@@ -410,11 +425,14 @@ func TestVerifyCredentials_RateLimited(t *testing.T) {
 
 func TestVerifyCredentials_AutoProvision(t *testing.T) {
 	env := newTaTestEnv(t)
+	bobID := uuid.New()
 	// LDAP-style provider result: no LinkedUser → auto-provision via identity client.
 	env.localCred.creds[env.tenantID.String()+":bob"] = &authprovider.LocalCredential{
-		UserID: uuid.New(), Username: "bob", Status: "active",
+		UserID: bobID, Username: "bob", Status: "active",
 		PasswordHash: mustHashT(t, "Str0ng!Passw0rd"),
 	}
+	// Register in identity client for fail-closed status check.
+	env.identityClient.AddUser(&UserInfo{ID: bobID, Status: "active", Email: "bob@example.com"})
 	// Remove LinkedUser linkage by using a provider result without local user:
 	// LocalProvider always sets LinkedUser, so instead verify the normal path resolves IDs.
 	gotID, _, err := env.svc.VerifyCredentials(env.ctx(), "bob", "Str0ng!Passw0rd", "1.2.3.4")

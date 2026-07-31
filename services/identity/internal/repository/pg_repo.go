@@ -315,8 +315,8 @@ func (r *pgRepo) ListUsers(ctx context.Context, filter *domain.ListUsersFilter) 
 	}
 
 	if filter.Search != "" {
-		where = append(where, fmt.Sprintf("(username ILIKE $%d OR email ILIKE $%d)", argIdx, argIdx))
-		args = append(args, "%"+filter.Search+"%")
+		where = append(where, fmt.Sprintf("(username ILIKE $%d OR email ILIKE $%d) ESCAPE '\\'", argIdx, argIdx))
+		args = append(args, "%"+escapeLikeWildcards(filter.Search)+"%")
 		argIdx++
 	}
 	if filter.Status != nil {
@@ -687,8 +687,8 @@ func (r *pgRepo) GetUserByEmailID(ctx context.Context, tenantID, emailID uuid.UU
 		return nil, err
 	}
 
-	query := fmt.Sprintf(`SELECT %s FROM user_emails WHERE id = $1`, userEmailColumns)
-	row := tx.QueryRow(ctx, query, emailID)
+	query := fmt.Sprintf(`SELECT %s FROM user_emails WHERE id = $1 AND user_id IN (SELECT id FROM users WHERE tenant_id = $2)`, userEmailColumns)
+	row := tx.QueryRow(ctx, query, emailID, tenantID)
 	ue, err := scanUserEmail(row)
 	if err != nil {
 		if isNoRows(err) {
@@ -901,4 +901,15 @@ func (r *pgRepo) FindExternalIdentity(ctx context.Context, tenantID uuid.UUID, p
 
 	tx.Commit(ctx)
 	return ei, nil
+}
+
+// escapeLikeWildcards escapes LIKE/ILIKE wildcard characters (% and _) and the
+// escape character backslash in user-supplied search input. This prevents
+// attackers from injecting % to match all records or _ to match single chars,
+// which could cause information leakage or DoS via full-table scans.
+func escapeLikeWildcards(s string) string {
+	s = strings.ReplaceAll(s, "\\", "\\\\")
+	s = strings.ReplaceAll(s, "%", "\\%")
+	s = strings.ReplaceAll(s, "_", "\\_")
+	return s
 }

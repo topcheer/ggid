@@ -8,7 +8,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"log/slog"
+	"net"
 	"net/http"
+	"os"
 	"strings"
 	"sync"
 	"time"
@@ -57,7 +59,16 @@ func NewDispatcher(emailSender email.Sender, webhookCfg *WebhookConfig) *Dispatc
 	d := &Dispatcher{
 		email:   emailSender,
 		webhook: webhookCfg,
-		client:  &http.Client{Timeout: timeout},
+		client: &http.Client{
+			Timeout: timeout,
+			// SECURITY: Prevent SSRF via redirect to internal IPs.
+			CheckRedirect: func(req *http.Request, via []*http.Request) error {
+				return http.ErrUseLastResponse
+			},
+			Transport: &http.Transport{
+				DialContext: ssrfSafeDialContext,
+			},
+		},
 	}
 	// SECURITY: enforce HTTPS for webhook URLs to prevent PII leakage over plaintext.
 	// Allow http:// only for localhost (testing/development).
@@ -158,4 +169,34 @@ func (d *Dispatcher) sendWebhook(ctx context.Context, n *Notification) error {
 		return fmt.Errorf("notification: webhook returned %d", resp.StatusCode)
 	}
 	return nil
+}
+
+// ssrfSafeDialContext blocks connections to private/link-local/loopback IPs
+// to prevent SSRF attacks via webhook URLs.
+func ssrfSafeDialContext(ctx context.Context, network, addr string) (net.Conn, error) {
+	// Allow localhost in test mode for unit tests using httptest.Server.
+	if os.Getenv("GGID_ENV") == "test" {
+		dialer := &net.Dialer{Timeout: 10 * time.Second}
+		return dialer.DialContext(ctx, network, addr)
+	}
+	host, port, err := net.SplitHostPort(addr)
+	if err != nil {
+		return nil, fmt.Errorf("invalid address: %w", err)
+	}
+	ip := net.ParseIP(host)
+	if ip == nil {
+		ips, err := net.DefaultResolver.LookupIPAddr(ctx, host)
+		if err != nil {
+			return nil, fmt.Errorf("DNS resolution failed: %w", err)
+		}
+		if len(ips) == 0 {
+			return nil, fmt.Errorf("no DNS records for %s", host)
+		}
+		ip = ips[0].IP
+	}
+	if ip.IsLoopback() || ip.IsPrivate() || ip.IsLinkLocalUnicast() || ip.IsLinkLocalMulticast() || ip.IsUnspecified() {
+		return nil, fmt.Errorf("connection to %s blocked by SSRF protection", ip)
+	}
+	dialer := &net.Dialer{Timeout: 10 * time.Second}
+	return dialer.DialContext(ctx, network, net.JoinHostPort(ip.String(), port))
 }

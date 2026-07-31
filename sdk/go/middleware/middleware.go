@@ -87,7 +87,9 @@ func Auth(baseURL string, opts Options) func(http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			// Skip whitelisted paths
 			for _, p := range opts.SkipPaths {
-				if r.URL.Path == p || strings.HasPrefix(r.URL.Path, p) {
+				// SECURITY: Match exact path or path segment boundary to prevent
+				// prefix bypass (e.g. "/public" shouldn't match "/publicadmin").
+				if r.URL.Path == p || strings.HasPrefix(r.URL.Path, p+"/") {
 					next.ServeHTTP(w, r)
 					return
 				}
@@ -197,6 +199,13 @@ func newJWKSCache(jwksURL string) *jwksCache {
 	}
 }
 
+// invalidate forces a JWKS refresh on next getKeys() call.
+func (c *jwksCache) invalidate() {
+	c.mu.Lock()
+	c.updated = time.Time{}
+	c.mu.Unlock()
+}
+
 func (c *jwksCache) getKeys() (map[string]*rsa.PublicKey, error) {
 	c.mu.RLock()
 	if c.keys != nil && time.Since(c.updated) < 15*time.Minute {
@@ -271,7 +280,16 @@ func (c *jwksCache) verify(tokenString string) (*UserInfo, error) {
 		kid, _ := token.Header["kid"].(string)
 		key, ok := keys[kid]
 		if !ok {
-			return nil, fmt.Errorf("key not found for kid: %s", kid)
+			// SECURITY: Key may have been rotated — force a JWKS refresh.
+			c.invalidate()
+			keys, err = c.getKeys()
+			if err != nil {
+				return nil, fmt.Errorf("jwks refresh: %w", err)
+			}
+			key, ok = keys[kid]
+			if !ok {
+				return nil, fmt.Errorf("key not found for kid: %s", kid)
+			}
 		}
 		return key, nil
 	})
@@ -287,7 +305,7 @@ func (c *jwksCache) verify(tokenString string) (*UserInfo, error) {
 	// Validate issuer if configured.
 	if c.issuer != "" {
 		if iss, _ := claims["iss"].(string); iss != c.issuer {
-			return nil, fmt.Errorf("invalid issuer: expected %s, got %s", c.issuer, iss)
+			return nil, fmt.Errorf("invalid token issuer")
 		}
 	}
 	// Validate audience if configured.
@@ -304,10 +322,10 @@ func (c *jwksCache) verify(tokenString string) (*UserInfo, error) {
 					}
 				}
 				if !found {
-					return nil, fmt.Errorf("invalid audience: expected %s", c.audience)
+					return nil, fmt.Errorf("invalid token audience")
 				}
 			} else {
-				return nil, fmt.Errorf("invalid audience: expected %s, got %s", c.audience, aud)
+				return nil, fmt.Errorf("invalid token audience")
 			}
 		}
 	}

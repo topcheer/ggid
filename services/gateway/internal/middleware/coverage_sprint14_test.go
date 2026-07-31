@@ -93,7 +93,6 @@ func TestRateLimiter_RefillTiming(t *testing.T) {
 	}
 }
 
-
 func TestRateLimiter_LoginEndpoint(t *testing.T) {
 	cfg := RateLimitConfig{LoginLimit: 2, Window: time.Minute}
 	rl := NewRateLimiter(cfg)
@@ -227,6 +226,7 @@ func TestCORSPreflight_OriginValidation(t *testing.T) {
 }
 
 func TestCORSPreflight_CredentialsHeaders(t *testing.T) {
+	// SECURITY FIX: Wildcard + credentials is invalid. Verify credentials NOT set.
 	cfg := CORSConfig{
 		AllowedOrigins:   []string{"*"},
 		AllowCredentials: true,
@@ -239,8 +239,8 @@ func TestCORSPreflight_CredentialsHeaders(t *testing.T) {
 	req.Header.Set("Origin", "https://example.com")
 	rr := httptest.NewRecorder()
 	handler.ServeHTTP(rr, req)
-	if rr.Header().Get("Access-Control-Allow-Credentials") != "true" {
-		t.Error("Missing ACA-Credentials")
+	if rr.Header().Get("Access-Control-Allow-Credentials") == "true" {
+		t.Error("Credentials should NOT be set with wildcard origins")
 	}
 }
 

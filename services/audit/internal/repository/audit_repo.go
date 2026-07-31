@@ -160,8 +160,8 @@ func (r *AuditRepository) List(ctx context.Context, filter domain.ListFilter, li
 		n++
 	}
 	if filter.Action != "" {
-		where += fmt.Sprintf(" AND action LIKE $%d", n)
-		args = append(args, "%"+filter.Action+"%")
+		where += fmt.Sprintf(" AND action LIKE $%d ESCAPE '\\'", n)
+		args = append(args, "%"+escapeLikeWildcards(filter.Action)+"%")
 		n++
 	}
 	if filter.ResourceType != "" {
@@ -379,6 +379,54 @@ func (r *AuditRepository) DeleteOlderThan(ctx context.Context, tenantID uuid.UUI
 	return tag.RowsAffected(), nil
 }
 
+// GetBoundaryEventID returns the newest event ID older than 'before' for
+// hash chain continuity preservation during retention cleanup.
+func (r *AuditRepository) GetBoundaryEventID(ctx context.Context, tenantID uuid.UUID, before time.Time) (uuid.UUID, error) {
+	var tid any
+	if tenantID != uuid.Nil {
+		tid = tenantID
+	}
+	var id uuid.UUID
+	err := r.db.QueryRow(ctx,
+		`SELECT id FROM audit_events
+		 WHERE created_at < $1 AND ($2::uuid IS NULL OR tenant_id = $2)
+		 ORDER BY created_at DESC LIMIT 1`,
+		before, tid).Scan(&id)
+	if err != nil {
+		return uuid.Nil, err
+	}
+	return id, nil
+}
+
+// DeleteOlderThanExcept deletes events older than 'before' except the event
+// with the given exceptID (preserved as chain anchor for integrity).
+func (r *AuditRepository) DeleteOlderThanExcept(ctx context.Context, tenantID uuid.UUID, before time.Time, exceptID uuid.UUID) (int64, error) {
+	tx, err := r.db.Begin(ctx)
+	if err != nil {
+		return 0, fmt.Errorf("begin retention tx: %w", err)
+	}
+	defer func() { _ = tx.Rollback(ctx) }()
+
+	if _, err := tx.Exec(ctx, `SET LOCAL app.allow_audit_mutation = 'on'`); err != nil {
+		return 0, fmt.Errorf("allow audit mutation: %w", err)
+	}
+	var tid any
+	if tenantID != uuid.Nil {
+		tid = tenantID
+	}
+	tag, err := tx.Exec(ctx,
+		`DELETE FROM audit_events WHERE created_at < $1 AND id != $3 AND ($2::uuid IS NULL OR tenant_id = $2)`,
+		before, tid, exceptID,
+	)
+	if err != nil {
+		return 0, fmt.Errorf("delete old audit events: %w", err)
+	}
+	if err := tx.Commit(ctx); err != nil {
+		return 0, fmt.Errorf("commit retention tx: %w", err)
+	}
+	return tag.RowsAffected(), nil
+}
+
 // AnonymizeOlderThan nullifies PII fields (actor_ip, user_agent, metadata)
 // for events older than the cutoff time. Keeps the event row for compliance.
 func (r *AuditRepository) AnonymizeOlderThan(ctx context.Context, before time.Time) (int64, error) {
@@ -409,4 +457,14 @@ func mapErr(err error, resource, id string) error {
 		return errors.NotFound(resource, id)
 	}
 	return errors.Wrap(errors.ErrInternal, "database error", err)
+}
+
+// escapeLikeWildcards escapes LIKE wildcard characters (% and _) and the
+// escape character backslash in user-supplied search input to prevent
+// pattern injection that could cause information leakage or DoS.
+func escapeLikeWildcards(s string) string {
+	s = strings.ReplaceAll(s, "\\", "\\\\")
+	s = strings.ReplaceAll(s, "%", "\\%")
+	s = strings.ReplaceAll(s, "_", "\\_")
+	return s
 }

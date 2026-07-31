@@ -106,8 +106,8 @@ func TestCORS_SpecificOriginNotAllowed(t *testing.T) {
 }
 
 func TestCORS_CredentialsWithWildcard(t *testing.T) {
-	// P1-2 fix: When AllowCredentials=true with wildcard origins,
-	// the specific origin must be echoed (not "*") per CORS spec.
+	// SECURITY FIX: When AllowCredentials=true with wildcard origins,
+	// wildcard * must be used WITHOUT credentials (per CORS spec, *+credentials is invalid).
 	cfg := CORSConfig{
 		AllowedOrigins:   []string{"*"},
 		AllowCredentials: true,
@@ -122,10 +122,10 @@ func TestCORS_CredentialsWithWildcard(t *testing.T) {
 	w := httptest.NewRecorder()
 	handler.ServeHTTP(w, req)
 
-	if w.Header().Get("Access-Control-Allow-Credentials") != "true" {
-		t.Error("expected Access-Control-Allow-Credentials: true")
+	// SECURITY: Wildcard + credentials is invalid. Credentials must NOT be set.
+	if w.Header().Get("Access-Control-Allow-Credentials") == "true" {
+		t.Error("Access-Control-Allow-Credentials should NOT be set with wildcard origin")
 	}
-	// SECURITY: With wildcard + credentials, use * without credentials (no origin reflection)
 	if got := w.Header().Get("Access-Control-Allow-Origin"); got != "*" {
 		t.Errorf("expected wildcard * (no reflection with credentials), got %q", got)
 	}
