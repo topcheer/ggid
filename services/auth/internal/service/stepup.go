@@ -65,25 +65,23 @@ func (s *AuthService) InitStepUp(ctx context.Context, userID uuid.UUID, method s
 func (s *AuthService) VerifyStepUp(ctx context.Context, challenge, code, password string) (*StepUpResult, error) {
 	key := fmt.Sprintf("ggid:stepup:%s", challenge)
 
-	val, err := s.rateLimiter.rdb.Get(ctx, key).Result()
+	// Use GetDel for atomic get+delete (prevents TOCTOU replay + brute-force within TTL).
+	val, err := s.rateLimiter.rdb.GetDel(ctx, key).Result()
 	if err != nil {
 		return nil, ErrInvalidCredentials
 	}
 
 	parts := splitColon(val, 3)
 	if len(parts) != 3 {
-		s.rateLimiter.rdb.Del(ctx, key)
 		return nil, ErrInvalidCredentials
 	}
 
 	tenantID, err := uuid.Parse(parts[0])
 	if err != nil {
-		s.rateLimiter.rdb.Del(ctx, key)
 		return nil, ErrInvalidCredentials
 	}
 	userID, err := uuid.Parse(parts[1])
 	if err != nil {
-		s.rateLimiter.rdb.Del(ctx, key)
 		return nil, ErrInvalidCredentials
 	}
 	method := parts[2]
@@ -92,7 +90,6 @@ func (s *AuthService) VerifyStepUp(ctx context.Context, challenge, code, passwor
 	case "password":
 		cred, err := s.credentialRepo.FindByUserID(ctx, tenantID, userID)
 		if err != nil || cred == nil {
-			s.rateLimiter.rdb.Del(ctx, key)
 			return nil, ErrInvalidCredentials
 		}
 		match, err := crypto.VerifyPassword(password, cred.Secret)
@@ -102,7 +99,6 @@ func (s *AuthService) VerifyStepUp(ctx context.Context, challenge, code, passwor
 
 	case "mfa":
 		if s.mfaService == nil {
-			s.rateLimiter.rdb.Del(ctx, key)
 			return nil, fmt.Errorf("MFA service not configured")
 		}
 		if err := s.mfaService.VerifyUserCode(ctx, tenantID, userID, code); err != nil {
@@ -110,12 +106,10 @@ func (s *AuthService) VerifyStepUp(ctx context.Context, challenge, code, passwor
 		}
 
 	default:
-		s.rateLimiter.rdb.Del(ctx, key)
 		return nil, fmt.Errorf("unsupported step-up method: %s", method)
 	}
 
-	// Challenge verified — delete the challenge.
-	s.rateLimiter.rdb.Del(ctx, key)
+	// Challenge already consumed via GetDel above.
 
 	// Issue step-up token (separate from JWT, checked by gateway middleware).
 	stepUpToken, err := crypto.GenerateRandomToken(32)

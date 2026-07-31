@@ -75,13 +75,12 @@ func (s *AuthService) ConfirmEmailChange(ctx context.Context, token, step string
 	}
 
 	tokenKey := fmt.Sprintf("ggid:emailchange:%s:%s", step, hashToken(token))
-	changeID, err := s.rateLimiter.rdb.Get(ctx, tokenKey).Result()
+	changeID, err := s.rateLimiter.rdb.GetDel(ctx, tokenKey).Result()
 	if err != nil {
 		return false, fmt.Errorf("invalid or expired confirmation token")
 	}
 
-	// Consume this token (one-time use).
-	s.rateLimiter.rdb.Del(ctx, tokenKey)
+	// Token consumed atomically via GetDel (prevents TOCTOU replay).
 
 	// Mark this step as confirmed.
 	confirmedKey := fmt.Sprintf("ggid:emailchange:confirmed:%s:%s", changeID, step)
