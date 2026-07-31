@@ -213,6 +213,12 @@ func (e *Engine) Send(ctx context.Context, eventType string, payload any) []*Del
 			defer func() {
 				if r := recover(); r != nil {
 					slog.Error("webhook deliver panic", "endpoint", ep.ID, "error", r)
+					// Must send a result to prevent the collection loop from
+					// deadlocking waiting for len(endpoints) results.
+					results <- result{idx: idx, delivery: &Delivery{
+						EndpointID: ep.ID,
+						Status:     "failed",
+					}}
 				}
 			}()
 			d := e.deliver(ctx, ep, eventType, payloadBytes)
