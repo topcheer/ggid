@@ -190,7 +190,12 @@ func (s *HTTPServer) EvaluateAuthorize(ctx context.Context, req *AuthorizeReques
 	// RBAC check: use evaluator if available, otherwise default deny.
 	wg.Add(1)
 	go func() {
-		defer wg.Done()
+		defer func() {
+			if r := recover(); r != nil {
+				slog.Error("goroutine panic", "location", "RBAC check", "error", r)
+			}
+			defer wg.Done()
+		}()
 		if s.evaluator != nil && req.Subject != "" {
 			subjectUUID, err := uuid.Parse(req.Subject)
 			if err != nil {
@@ -235,7 +240,12 @@ func (s *HTTPServer) EvaluateAuthorize(ctx context.Context, req *AuthorizeReques
 	// ABAC check (simplified — uses policy service for conditions).
 	wg.Add(1)
 	go func() {
-		defer wg.Done()
+		defer func() {
+			if r := recover(); r != nil {
+				slog.Error("goroutine panic", "location", "ABAC check", "error", r)
+			}
+			defer wg.Done()
+		}()
 		// ABAC evaluates context conditions. Default allow.
 		abacAllow = true
 		if req.Context != nil {
@@ -250,7 +260,12 @@ func (s *HTTPServer) EvaluateAuthorize(ctx context.Context, req *AuthorizeReques
 	// ReBAC check (simplified — would query rebac_cache).
 	wg.Add(1)
 	go func() {
-		defer wg.Done()
+		defer func() {
+			if r := recover(); r != nil {
+				slog.Error("goroutine panic", "location", "ReBAC check", "error", r)
+			}
+			defer wg.Done()
+		}()
 		// ReBAC evaluates relationship-based permissions. Default allow.
 		rebacAllow = true
 		evaluatedBy = append(evaluatedBy, "rebac")

@@ -435,6 +435,11 @@ func (s *Server) startGRPCServer(addr string) (*grpc.Server, net.Listener, error
 	}
 
 	go func() {
+		defer func() {
+			if r := recover(); r != nil {
+				slog.Error("goroutine panic", "location", "identity grpc server", "error", r)
+			}
+		}()
 		slog.Info("Identity gRPC server listening", "addr", addr)
 		if err := grpcSrv.Serve(lis); err != nil {
 			slog.Info("Identity gRPC server stopped", "error", err)

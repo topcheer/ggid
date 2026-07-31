@@ -12,6 +12,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"log/slog"
 	"net/http"
 	"os"
 	"strconv"
@@ -1591,6 +1592,11 @@ func (s *HTTPServer) dispatchAlert(alert map[string]any) {
 	// Fire webhook (async, non-blocking)
 	if webhookURL != "" && isSafeWebhookURL(webhookURL) {
 		go func() {
+			defer func() {
+				if r := recover(); r != nil {
+					slog.Error("goroutine panic", "location", "fireWebhook", "error", r)
+				}
+			}()
 			client := &http.Client{Timeout: 10 * time.Second, CheckRedirect: func(req *http.Request, via []*http.Request) error { return http.ErrUseLastResponse }}
 			resp, err := client.Post(webhookURL, "application/json", strings.NewReader(string(payload)))
 			if err != nil {
@@ -1605,6 +1611,11 @@ func (s *HTTPServer) dispatchAlert(alert map[string]any) {
 	// tenant's endpoints (P1).
 	if s.pool != nil {
 		go func() {
+			defer func() {
+				if r := recover(); r != nil {
+					slog.Error("goroutine panic", "location", "fireDBWebhooks", "error", r)
+				}
+			}()
 			alertTenant, _ := alert["tenant_id"].(string)
 			query := `SELECT url, secret FROM audit_webhooks WHERE enabled = true`
 			args := []any{}
@@ -1651,6 +1662,11 @@ func (s *HTTPServer) dispatchAlert(alert map[string]any) {
 	// Email notification would use the email package; log for now
 	if emailTo != "" {
 		go func() {
+			defer func() {
+				if r := recover(); r != nil {
+					slog.Error("goroutine panic", "location", "emailAlert", "error", r)
+				}
+			}()
 			// In production: use pkg/email to send notification
 			fmt.Printf("[ALERT EMAIL] To: %s, Alert: %s\n", emailTo, string(payload))
 		}()

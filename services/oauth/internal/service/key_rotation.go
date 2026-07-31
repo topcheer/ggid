@@ -19,13 +19,13 @@ import (
 // key rotation. The old key remains valid for a configurable grace period
 // after a new key is generated, allowing in-flight tokens to be verified.
 type RotatingKeyProvider struct {
-	mu       sync.RWMutex
-	current  *rsa.PrivateKey
-	currentID string
-	previous *rsa.PrivateKey
-	previousID string
-	rotatedAt time.Time
-	createdAt time.Time
+	mu          sync.RWMutex
+	current     *rsa.PrivateKey
+	currentID   string
+	previous    *rsa.PrivateKey
+	previousID  string
+	rotatedAt   time.Time
+	createdAt   time.Time
 	gracePeriod time.Duration
 }
 
@@ -36,10 +36,10 @@ func NewRotatingKeyProvider(initialKey *rsa.PrivateKey, gracePeriod time.Duratio
 	}
 	now := time.Now()
 	return &RotatingKeyProvider{
-		current:    initialKey,
-		currentID:  generateKeyID(initialKey),
-		createdAt:  now,
-		rotatedAt:  now, // initialize so KeyAge works from startup
+		current:     initialKey,
+		currentID:   generateKeyID(initialKey),
+		createdAt:   now,
+		rotatedAt:   now, // initialize so KeyAge works from startup
 		gracePeriod: gracePeriod,
 	}
 }
@@ -158,7 +158,7 @@ func (r *RotatingKeyProvider) CleanupExpired() {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 	if r.previous != nil && time.Since(r.rotatedAt) > r.gracePeriod {
-	slog.Info("JWT previous key grace period expired, removing", "kid", r.previousID)
+		slog.Info("JWT previous key grace period expired, removing", "kid", r.previousID)
 		r.previous = nil
 		r.previousID = ""
 	}
@@ -170,6 +170,11 @@ func (r *RotatingKeyProvider) StartRotationTicker(interval time.Duration) func()
 	ticker := time.NewTicker(interval)
 	done := make(chan struct{})
 	go func() {
+		defer func() {
+			if r := recover(); r != nil {
+				slog.Error("goroutine panic", "location", "key rotation ticker", "error", r)
+			}
+		}()
 		for {
 			select {
 			case <-ticker.C:
@@ -192,6 +197,7 @@ func (r *RotatingKeyProvider) RotatedAt() time.Time {
 	defer r.mu.RUnlock()
 	return r.rotatedAt
 }
+
 // KeyAge returns how long the current key has been in use.
 func (r *RotatingKeyProvider) KeyAge() time.Duration {
 	r.mu.RLock()
@@ -213,6 +219,11 @@ func (r *RotatingKeyProvider) StartAutoRotation(checkInterval, maxAge time.Durat
 	ticker := time.NewTicker(checkInterval)
 	done := make(chan struct{})
 	go func() {
+		defer func() {
+			if r := recover(); r != nil {
+				slog.Error("goroutine panic", "location", "auto key rotation", "error", r)
+			}
+		}()
 		for {
 			select {
 			case <-ticker.C:

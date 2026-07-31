@@ -5,6 +5,7 @@ import (
 	"crypto/tls"
 	"encoding/json"
 	"fmt"
+	"log/slog"
 	"net/http"
 	"net/smtp"
 	"strings"
@@ -16,7 +17,7 @@ import (
 
 // EmailConfig holds email provider settings.
 type EmailConfig struct {
-	Provider  string `json:"provider"`  // smtp, sendgrid, ses, mailgun
+	Provider string `json:"provider"` // smtp, sendgrid, ses, mailgun
 	Host     string `json:"host"`
 	Port     int    `json:"port"`
 	Username string `json:"username"`
@@ -41,13 +42,15 @@ type emailRepo struct {
 
 func newEmailRepo(pool *pgxpool.Pool) *emailRepo {
 	return &emailRepo{
-		pool: pool,
+		pool:   pool,
 		config: EmailConfig{Provider: "smtp", Host: "localhost", Port: 587, UseTLS: true, From: "noreply@ggid.local"},
 	}
 }
 
 func (r *emailRepo) EnsureSchema(ctx context.Context) error {
-	if r.pool == nil { return nil }
+	if r.pool == nil {
+		return nil
+	}
 	_, err := r.pool.Exec(ctx, `
 		CREATE TABLE IF NOT EXISTS email_log (
 			id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -62,7 +65,9 @@ func (r *emailRepo) EnsureSchema(ctx context.Context) error {
 }
 
 func (r *emailRepo) LogEmail(ctx context.Context, to, subject, template, status, errMsg string) {
-	if r.pool == nil { return }
+	if r.pool == nil {
+		return
+	}
 	r.pool.Exec(ctx, `INSERT INTO email_log (to_addr,subject,template,status,error,sent_at) VALUES ($1,$2,$3,$4,$5,$6)`,
 		to, subject, template, status, errMsg, time.Now().UTC())
 }
@@ -101,14 +106,30 @@ func (r *emailRepo) sendSMTP(to, msg string) error {
 
 func sendEmailTLS(addr string, auth smtp.Auth, from string, to []string, msg []byte) error {
 	client, err := smtp.Dial(addr)
-	if err != nil { return err }
+	if err != nil {
+		return err
+	}
 	defer client.Close()
-	if err := client.StartTLS(&tls.Config{ServerName: strings.Split(addr, ":")[0]}); err != nil { return err }
-	if auth != nil { if err := client.Auth(auth); err != nil { return err } }
-	if err := client.Mail(from); err != nil { return err }
-	for _, r := range to { if err := client.Rcpt(r); err != nil { return err } }
+	if err := client.StartTLS(&tls.Config{ServerName: strings.Split(addr, ":")[0]}); err != nil {
+		return err
+	}
+	if auth != nil {
+		if err := client.Auth(auth); err != nil {
+			return err
+		}
+	}
+	if err := client.Mail(from); err != nil {
+		return err
+	}
+	for _, r := range to {
+		if err := client.Rcpt(r); err != nil {
+			return err
+		}
+	}
 	w, err := client.Data()
-	if err != nil { return err }
+	if err != nil {
+		return err
+	}
 	defer w.Close()
 	_, err = w.Write(msg)
 	return err
@@ -139,7 +160,9 @@ func (h *Handler) handleEmailConfig(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case http.MethodGet:
 		cfg := EmailConfig{Provider: "smtp", Host: "localhost", Port: 587, UseTLS: true, From: "noreply@ggid.local"}
-		if h.emailRepo != nil { cfg = h.emailRepo.config }
+		if h.emailRepo != nil {
+			cfg = h.emailRepo.config
+		}
 		writeJSON(w, http.StatusOK, cfg)
 	case http.MethodPut, http.MethodPost:
 		var cfg EmailConfig
@@ -152,7 +175,9 @@ func (h *Handler) handleEmailConfig(w http.ResponseWriter, r *http.Request) {
 			writeError(w, http.StatusBadRequest, "provider must be smtp, sendgrid, ses, or mailgun")
 			return
 		}
-		if h.emailRepo != nil { h.emailRepo.config = cfg }
+		if h.emailRepo != nil {
+			h.emailRepo.config = cfg
+		}
 		writeJSON(w, http.StatusOK, map[string]any{"status": "updated", "provider": cfg.Provider})
 	default:
 		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
@@ -164,10 +189,12 @@ func (h *Handler) handleEmailTest(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
-	var req struct{ To string `json:"to"` }
+	var req struct {
+		To string `json:"to"`
+	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		writeError(w, http.StatusBadRequest, "invalid JSON")
-			return
+		return
 	}
 	if req.To == "" {
 		writeError(w, http.StatusBadRequest, "to address required")
@@ -175,6 +202,11 @@ func (h *Handler) handleEmailTest(w http.ResponseWriter, r *http.Request) {
 	}
 	if h.emailRepo != nil {
 		go func() {
+			defer func() {
+				if r := recover(); r != nil {
+					slog.Error("goroutine panic", "location", "sendTestEmail", "error", r)
+				}
+			}()
 			ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 			defer cancel()
 			_ = h.emailRepo.SendEmail(ctx, &EmailMessage{

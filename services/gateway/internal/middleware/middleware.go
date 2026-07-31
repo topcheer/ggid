@@ -487,6 +487,11 @@ func NewJWKSClient(jwksURL, publicKeyPath string) (*JWKSClient, error) {
 // StartRefresh starts a background goroutine to periodically refresh the JWKS.
 func (c *JWKSClient) StartRefresh(ctx context.Context, interval time.Duration) {
 	go func() {
+		defer func() {
+			if r := recover(); r != nil {
+				slog.Error("goroutine panic", "location", "JWKS refresh", "error", r)
+			}
+		}()
 		ticker := time.NewTicker(interval)
 		defer ticker.Stop()
 		for {

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/ggid/ggid/pkg/middleware"
 	"log"
+	"log/slog"
 	"net"
 	"os"
 
@@ -165,6 +166,11 @@ func StartAuthGRPCServer(addr string, svc *service.AuthService) (*grpc.Server, n
 	}
 
 	go func() {
+		defer func() {
+			if r := recover(); r != nil {
+				slog.Error("goroutine panic", "location", "auth grpc server", "error", r)
+			}
+		}()
 		log.Printf("Auth gRPC server listening on %s", addr)
 		if err := grpcSrv.Serve(lis); err != nil {
 			log.Printf("Auth gRPC server stopped: %v", err)

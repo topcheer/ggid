@@ -77,7 +77,12 @@ func WebSocketProxy(target string) http.HandlerFunc {
 
 		// client → backend
 		go func() {
-			defer wg.Done()
+			defer func() {
+				if r := recover(); r != nil {
+					slog.Error("goroutine panic", "location", "wsproxy client→backend", "error", r)
+				}
+				defer wg.Done()
+			}()
 			io.Copy(backendConn, clientBuf) // clientBuf includes any buffered bytes from the hijacked reader
 			// Half-close the backend write side so the backend knows the
 			// client direction is done. TCPConn supports CloseWrite.
@@ -88,7 +93,12 @@ func WebSocketProxy(target string) http.HandlerFunc {
 
 		// backend → client
 		go func() {
-			defer wg.Done()
+			defer func() {
+				if r := recover(); r != nil {
+					slog.Error("goroutine panic", "location", "wsproxy backend→client", "error", r)
+				}
+				defer wg.Done()
+			}()
 			io.Copy(clientConn, backendConn)
 			if tcp, ok := clientConn.(*net.TCPConn); ok {
 				_ = tcp.CloseWrite()

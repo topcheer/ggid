@@ -3,6 +3,7 @@ package server
 import (
 	"context"
 	"log"
+	"log/slog"
 	"time"
 
 	"github.com/google/uuid"
@@ -21,6 +22,11 @@ func (h *Handler) StartCAEScanner(ctx context.Context, pool *pgxpool.Pool, inter
 	}
 
 	go func() {
+		defer func() {
+			if r := recover(); r != nil {
+				slog.Error("goroutine panic", "location", "CAE scanner", "error", r)
+			}
+		}()
 		log.Printf("CAE: background scanner started (interval=%s)", interval)
 		ticker := time.NewTicker(interval)
 		defer ticker.Stop()
