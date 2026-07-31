@@ -29,6 +29,17 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
+// noRedirectClient is a shared HTTP client that does not follow redirects.
+// Used by webhook delivery in alert handlers for connection pooling.
+var noRedirectClient = &http.Client{
+	Timeout:       10 * time.Second,
+	CheckRedirect: func(req *http.Request, via []*http.Request) error { return http.ErrUseLastResponse },
+	Transport: &http.Transport{
+		MaxIdleConnsPerHost: 5,
+		IdleConnTimeout:     90 * time.Second,
+	},
+}
+
 // retentionConfig holds audit log retention settings.
 type retentionConfig struct {
 	mu          sync.RWMutex
@@ -1618,8 +1629,8 @@ func (s *HTTPServer) dispatchAlert(alert map[string]any) {
 					slog.Error("goroutine panic", "location", "fireWebhook", "error", r)
 				}
 			}()
-			client := &http.Client{Timeout: 10 * time.Second, CheckRedirect: func(req *http.Request, via []*http.Request) error { return http.ErrUseLastResponse }}
-			resp, err := client.Post(webhookURL, "application/json", strings.NewReader(string(payload)))
+			// Use shared client with no-redirect policy for connection reuse.
+			resp, err := noRedirectClient.Post(webhookURL, "application/json", strings.NewReader(string(payload)))
 			if err != nil {
 				return
 			}
@@ -1652,7 +1663,6 @@ func (s *HTTPServer) dispatchAlert(alert map[string]any) {
 				return
 			}
 			defer rows.Close()
-			client := &http.Client{Timeout: 10 * time.Second, CheckRedirect: func(req *http.Request, via []*http.Request) error { return http.ErrUseLastResponse }}
 			for rows.Next() {
 				var whURL, whSecret string
 				if err := rows.Scan(&whURL, &whSecret); err != nil {
@@ -1672,7 +1682,7 @@ func (s *HTTPServer) dispatchAlert(alert map[string]any) {
 					mac.Write(payload)
 					req.Header.Set("X-GGID-Signature", hex.EncodeToString(mac.Sum(nil)))
 				}
-				resp, err := client.Do(req)
+				resp, err := noRedirectClient.Do(req)
 				if err == nil {
 					resp.Body.Close()
 				}

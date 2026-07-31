@@ -17,6 +17,7 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials"
+	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
@@ -190,10 +191,14 @@ func domainToPbClient(c *domain.OAuthClient) *oauthv1.OAuthClient {
 }
 
 func tenantIDFromContext(ctx context.Context) uuid.UUID {
-	// SECURITY (R26 P0): removed env var fallback — gRPC callers must
-	// provide tenant via metadata. Gateway always sets X-Tenant-ID from
-	// JWT context; absence means unauthenticated/internal caller that
-	// should be rejected by the handler.
+	// Read tenant ID from gRPC metadata (set by gateway from JWT claims).
+	if md, ok := metadata.FromIncomingContext(ctx); ok {
+		if v := md.Get("x-tenant-id"); len(v) > 0 {
+			if id, err := uuid.Parse(v[0]); err == nil {
+				return id
+			}
+		}
+	}
 	return uuid.Nil
 }
 
