@@ -1002,12 +1002,10 @@ func injectTenantIntoBody(req *http.Request, tenantID string) {
 		restore()
 		return
 	}
-	// Skip if tenant_id already present
-	if _, exists := bodyMap["tenant_id"]; exists {
-		restore()
-		return
-	}
-
+	// SECURITY (R26 P1): Always overwrite client-provided tenant_id with
+	// the JWT-validated value. Previously skipped injection if tenant_id
+	// was already present in the body — a client could send a different
+	// tenant_id to bypass JWT-validated tenant isolation.
 	bodyMap["tenant_id"] = tenantID
 	newBody, err := json.Marshal(bodyMap)
 	if err != nil {

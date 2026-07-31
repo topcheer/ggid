@@ -210,13 +210,17 @@ func TestInjectTenantIntoBody_InvalidJSON(t *testing.T) {
 }
 
 func TestInjectTenantIntoBody_AlreadyHasTenant(t *testing.T) {
-	original := `{"name":"test","tenant_id":"existing"}`
-	req := httptest.NewRequest("POST", "/", strings.NewReader(original))
+	req := httptest.NewRequest("POST", "/", strings.NewReader(`{"name":"test","tenant_id":"existing"}`))
 	req.Header.Set("Content-Type", "application/json")
 	injectTenantIntoBody(req, "new-tenant")
 	body, _ := io.ReadAll(req.Body)
-	if string(body) != original {
-		t.Error("body with existing tenant_id should not be modified")
+	var result map[string]any
+	if err := json.Unmarshal(body, &result); err != nil {
+		t.Fatalf("body should be valid JSON: %v", err)
+	}
+	// SECURITY: client-provided tenant_id must be overwritten with JWT-validated value
+	if result["tenant_id"] != "new-tenant" {
+		t.Errorf("expected new-tenant (JWT-validated), got %v", result["tenant_id"])
 	}
 }
 

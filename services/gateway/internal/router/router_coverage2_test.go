@@ -101,11 +101,11 @@ func TestInjectTenant_AlreadyHasTenant_RestoresBody(t *testing.T) {
 
 	injectTenantIntoBody(r, "new-tenant")
 
-	// Should NOT override existing tenant_id
+	// SECURITY: Should ALWAYS override client-provided tenant_id with JWT-validated value
 	var body map[string]string
 	json.NewDecoder(r.Body).Decode(&body)
-	if body["tenant_id"] != "existing-tenant" {
-		t.Errorf("expected existing-tenant, got %s", body["tenant_id"])
+	if body["tenant_id"] != "new-tenant" {
+		t.Errorf("expected new-tenant (JWT-validated), got %s", body["tenant_id"])
 	}
 }
 
