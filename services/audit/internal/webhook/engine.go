@@ -193,9 +193,43 @@ func (e *Engine) Send(ctx context.Context, eventType string, payload any) []*Del
 	e.mu.RUnlock()
 
 	var deliveries []*Delivery
-	for _, ep := range endpoints {
-		delivery := e.deliver(ctx, ep, eventType, payloadBytes)
-		deliveries = append(deliveries, delivery)
+	if len(endpoints) == 0 {
+		return deliveries
+	}
+
+	// Parallel delivery with bounded concurrency to avoid
+	// serial blocking from slow/dead endpoints.
+	type result struct {
+		idx      int
+		delivery *Delivery
+	}
+	results := make(chan result, len(endpoints))
+	sem := make(chan struct{}, 5) // max 5 concurrent deliveries
+
+	for i, ep := range endpoints {
+		sem <- struct{}{}
+		go func(idx int, ep *Endpoint) {
+			defer func() { <-sem }()
+			defer func() {
+				if r := recover(); r != nil {
+					slog.Error("webhook deliver panic", "endpoint", ep.ID, "error", r)
+				}
+			}()
+			d := e.deliver(ctx, ep, eventType, payloadBytes)
+			results <- result{idx: idx, delivery: d}
+		}(i, ep)
+	}
+
+	// Collect results preserving order
+	deliveryMap := make(map[int]*Delivery, len(endpoints))
+	for i := 0; i < len(endpoints); i++ {
+		r := <-results
+		deliveryMap[r.idx] = r.delivery
+	}
+	for i := 0; i < len(endpoints); i++ {
+		if d, ok := deliveryMap[i]; ok {
+			deliveries = append(deliveries, d)
+		}
 	}
 	return deliveries
 }

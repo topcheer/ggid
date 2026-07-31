@@ -7,6 +7,8 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log/slog"
+	"sync"
 	"time"
 
 	"github.com/google/uuid"
@@ -25,14 +27,14 @@ const (
 type Event struct {
 	ID           uuid.UUID      `json:"id"`
 	TenantID     uuid.UUID      `json:"tenant_id"`
-	ActorType    string         `json:"actor_type"`    // user | api_key | system | anonymous
+	ActorType    string         `json:"actor_type"` // user | api_key | system | anonymous
 	ActorID      uuid.UUID      `json:"actor_id"`
 	ActorName    string         `json:"actor_name"`
-	Action       string         `json:"action"`        // e.g. "user.login", "role.assign"
+	Action       string         `json:"action"` // e.g. "user.login", "role.assign"
 	ResourceType string         `json:"resource_type"`
 	ResourceID   uuid.UUID      `json:"resource_id"`
 	ResourceName string         `json:"resource_name"`
-	Result       string         `json:"result"`        // success | failure | denied
+	Result       string         `json:"result"` // success | failure | denied
 	IPAddress    string         `json:"ip_address"`
 	UserAgent    string         `json:"user_agent"`
 	RequestID    string         `json:"request_id"`
@@ -42,10 +44,13 @@ type Event struct {
 
 // Publisher publishes audit events to NATS JetStream.
 type Publisher struct {
-	nc      *nats.Conn
-	js      jetstream.JetStream
-	stream  string
-	subject string
+	nc        *nats.Conn
+	js        jetstream.JetStream
+	stream    string
+	subject   string
+	ch        chan []byte
+	done      chan struct{}
+	closeOnce sync.Once
 }
 
 // NewPublisher creates a new audit event publisher connected to NATS.
@@ -68,23 +73,27 @@ func NewPublisher(ctx context.Context, natsURL string) (*Publisher, error) {
 
 	// Ensure the audit stream exists.
 	_, err = js.CreateOrUpdateStream(ctx, jetstream.StreamConfig{
-		Name:     DefaultStreamName,
-		Subjects: []string{DefaultSubjectName},
+		Name:      DefaultStreamName,
+		Subjects:  []string{DefaultSubjectName},
 		Retention: jetstream.LimitsPolicy,
-		Storage:  jetstream.FileStorage,
-		MaxAge:   72 * time.Hour,
+		Storage:   jetstream.FileStorage,
+		MaxAge:    72 * time.Hour,
 	})
 	if err != nil {
 		nc.Close()
 		return nil, fmt.Errorf("ensure audit stream: %w", err)
 	}
 
-	return &Publisher{
+	p := &Publisher{
 		nc:      nc,
 		js:      js,
 		stream:  DefaultStreamName,
 		subject: DefaultSubjectName,
-	}, nil
+		ch:      make(chan []byte, 1024),
+		done:    make(chan struct{}),
+	}
+	go p.startWorker()
+	return p, nil
 }
 
 // Publish publishes a single audit event to NATS.
@@ -110,11 +119,11 @@ func (p *Publisher) Publish(ctx context.Context, event Event) error {
 	return nil
 }
 
-// PublishAsync publishes an audit event. Uses synchronous Publish to ensure
-// the message reaches JetStream before returning (PublishAsync was unreliable
-// in practice — messages could be lost if the request goroutine exited).
+// PublishAsync publishes an audit event without blocking the caller.
+// Events are buffered in a channel and published by a background worker.
+// If the buffer is full, the event is dropped (best-effort audit).
 func (p *Publisher) PublishAsync(event Event) {
-	if p.js == nil {
+	if p.js == nil || p.ch == nil {
 		return
 	}
 	if event.ID == uuid.Nil {
@@ -129,22 +138,41 @@ func (p *Publisher) PublishAsync(event Event) {
 		return
 	}
 
-	// Use synchronous Publish with a short timeout — audit events are best-effort
-	// but should at least reach JetStream.
-	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
-	defer cancel()
-	_, err = p.js.Publish(ctx, p.subject, data)
-	if err != nil {
-		// Best-effort: don't block the request on audit failures.
-		return
+	select {
+	case p.ch <- data:
+	default:
+		// Channel full — drop event (best-effort audit, don't block).
+		slog.Warn("audit: event buffer full, dropping event")
 	}
 }
 
-// Close closes the underlying NATS connection.
-func (p *Publisher) Close() {
-	if p.nc != nil {
-		p.nc.Close()
+// startWorker consumes events from the channel and publishes to NATS.
+func (p *Publisher) startWorker() {
+	for {
+		select {
+		case data := <-p.ch:
+			ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+			_, err := p.js.Publish(ctx, p.subject, data)
+			cancel()
+			if err != nil {
+				slog.Warn("audit: publish failed", "error", err)
+			}
+		case <-p.done:
+			return
+		}
 	}
+}
+
+// Close stops the worker and closes the underlying NATS connection.
+func (p *Publisher) Close() {
+	p.closeOnce.Do(func() {
+		if p.done != nil {
+			close(p.done)
+		}
+		if p.nc != nil {
+			p.nc.Close()
+		}
+	})
 }
 
 // NewEvent is a convenience function to create an audit event with defaults.

@@ -2082,10 +2082,20 @@ func (s *HTTPServer) resolveActorNames(ctx context.Context, ids map[uuid.UUID]bo
 	if len(ids) == 0 || s.pool == nil {
 		return result
 	}
+	// Batch query: single SELECT with ANY($1) instead of N per-actor queries.
+	idList := make([]uuid.UUID, 0, len(ids))
 	for id := range ids {
+		idList = append(idList, id)
+	}
+	rows, err := s.pool.Query(ctx, `SELECT id, username FROM users WHERE id = ANY($1)`, idList)
+	if err != nil {
+		return result
+	}
+	defer rows.Close()
+	for rows.Next() {
+		var id uuid.UUID
 		var username string
-		err := s.pool.QueryRow(ctx, `SELECT username FROM users WHERE id = $1`, id).Scan(&username)
-		if err == nil && username != "" {
+		if err := rows.Scan(&id, &username); err == nil && username != "" {
 			result[id] = username
 		}
 	}
