@@ -27,6 +27,9 @@ func (h *PermissionHandler) CreatePermission(ctx context.Context, req *pb.Create
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, "invalid tenant_id")
 	}
+	if err := validateTenantFromMetadata(ctx, req.GetTenantId()); err != nil {
+		return nil, err
+	}
 	perm := &domain.Permission{
 		TenantID:     tenantID,
 		Key:          req.GetKey(),
