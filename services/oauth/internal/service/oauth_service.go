@@ -181,6 +181,9 @@ func (s *OAuthService) CreateClient(ctx context.Context, input *CreateClientInpu
 		Metadata:                input.Metadata,
 		Enabled:                 true,
 	}
+	// SECURITY: Filter admin scopes to prevent privilege escalation.
+	input.Scopes = filterSafeScopes(input.Scopes)
+	client.Scopes = input.Scopes
 	if client.Scopes == nil {
 		client.Scopes = []string{"openid", "profile", "email"}
 	}
@@ -344,7 +347,8 @@ func (s *OAuthService) UpdateClientMetadata(ctx context.Context, clientID string
 		client.ResponseTypes = updates.ResponseTypes
 	}
 	if updates.Scopes != nil {
-		client.Scopes = updates.Scopes
+		// SECURITY: Filter admin scopes to prevent privilege escalation.
+		client.Scopes = filterSafeScopes(updates.Scopes)
 	}
 	if updates.TokenEndpointAuthMethod != nil {
 		client.TokenEndpointAuthMethod = *updates.TokenEndpointAuthMethod
