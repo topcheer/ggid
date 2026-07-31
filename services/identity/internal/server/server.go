@@ -49,7 +49,7 @@ func newGRPCServer() *grpc.Server {
 			log.Printf("Warning: GRPC_TLS_ENABLED but cert/key invalid: %v, falling back to plaintext because GRPC_TLS_ALLOW_PLAINTEXT_FALLBACK=true", err)
 		}
 	}
-	return grpc.NewServer()
+	return grpc.NewServer(middleware.GRPCRecoveryOpts()...)
 }
 
 // New constructs a new Server with all dependencies wired up.

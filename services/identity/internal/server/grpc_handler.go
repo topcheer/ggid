@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/ggid/ggid/pkg/middleware"
 	"log/slog"
 	"net"
 	"os"
@@ -95,7 +96,7 @@ func (h *IdentityGRPCHandler) CreateUser(ctx context.Context, req *identityv1.Cr
 	}
 	user, err := h.svc.CreateUser(ctx, input)
 	if err != nil {
-	return nil, mapGRPCErr("create user", err)
+		return nil, mapGRPCErr("create user", err)
 	}
 	return domainToPbUser(user), nil
 }
@@ -136,7 +137,7 @@ func (h *IdentityGRPCHandler) ListUsers(ctx context.Context, req *identityv1.Lis
 
 	result, err := h.svc.ListUsers(ctx, filter)
 	if err != nil {
-	return nil, mapGRPCErr("list users", err)
+		return nil, mapGRPCErr("list users", err)
 	}
 
 	pbUsers := make([]*identityv1.User, 0, len(result.Users))
@@ -170,7 +171,7 @@ func (h *IdentityGRPCHandler) UpdateUser(ctx context.Context, req *identityv1.Up
 	}
 	user, err := h.svc.UpdateUser(ctx, id, input)
 	if err != nil {
-	return nil, mapGRPCErr("update user", err)
+		return nil, mapGRPCErr("update user", err)
 	}
 	return domainToPbUser(user), nil
 }
@@ -181,7 +182,7 @@ func (h *IdentityGRPCHandler) DeleteUser(ctx context.Context, req *identityv1.De
 		return nil, status.Error(codes.InvalidArgument, "invalid user id")
 	}
 	if err := h.svc.DeleteUser(ctx, id); err != nil {
-	return nil, mapGRPCErr("delete user", err)
+		return nil, mapGRPCErr("delete user", err)
 	}
 	return &identityv1.DeleteUserResponse{}, nil
 }
@@ -193,7 +194,7 @@ func (h *IdentityGRPCHandler) LockUser(ctx context.Context, req *identityv1.Lock
 	}
 	user, err := h.svc.LockUser(ctx, id)
 	if err != nil {
-	return nil, mapGRPCErr("lock user", err)
+		return nil, mapGRPCErr("lock user", err)
 	}
 	return domainToPbUser(user), nil
 }
@@ -205,7 +206,7 @@ func (h *IdentityGRPCHandler) UnlockUser(ctx context.Context, req *identityv1.Un
 	}
 	user, err := h.svc.UnlockUser(ctx, id)
 	if err != nil {
-	return nil, mapGRPCErr("unlock user", err)
+		return nil, mapGRPCErr("unlock user", err)
 	}
 	return domainToPbUser(user), nil
 }
@@ -220,7 +221,7 @@ func (h *IdentityGRPCHandler) RegisterUser(ctx context.Context, req *identityv1.
 	}
 	user, token, err := h.svc.RegisterUser(ctx, input)
 	if err != nil {
-	return nil, mapGRPCErr("register user", err)
+		return nil, mapGRPCErr("register user", err)
 	}
 	return &identityv1.RegisterUserResponse{
 		User:              domainToPbUser(user),
@@ -243,7 +244,7 @@ func (h *IdentityGRPCHandler) ListUserEmails(ctx context.Context, req *identityv
 	}
 	emails, err := h.svc.ListUserEmails(ctx, userID)
 	if err != nil {
-	return nil, mapGRPCErr("list emails", err)
+		return nil, mapGRPCErr("list emails", err)
 	}
 	pbEmails := make([]*identityv1.UserEmail, 0, len(emails))
 	for _, e := range emails {
@@ -259,7 +260,7 @@ func (h *IdentityGRPCHandler) AddUserEmail(ctx context.Context, req *identityv1.
 	}
 	email, err := h.svc.AddUserEmail(ctx, userID, req.GetEmail())
 	if err != nil {
-	return nil, mapGRPCErr("add email", err)
+		return nil, mapGRPCErr("add email", err)
 	}
 	return domainToPbUserEmail(email), nil
 }
@@ -420,7 +421,7 @@ func domainToPbExternalIdentity(ei *domain.ExternalIdentity) *identityv1.Externa
 
 // startGRPCServer starts a gRPC server for the Identity service.
 func (s *Server) startGRPCServer(addr string) (*grpc.Server, net.Listener, error) {
-	grpcSrv := grpc.NewServer()
+	grpcSrv := grpc.NewServer(middleware.GRPCRecoveryOpts()...)
 	// The IdentityService is created in New() and available via s.idSvc.
 	// We retrieve it from the server struct if available.
 	if s.idSvc != nil {
