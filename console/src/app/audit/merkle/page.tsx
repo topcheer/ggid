@@ -1,8 +1,8 @@
 "use client";
 import { useState, useEffect } from "react";
 import {
-  GitBranch, Loader2, Play, Check,
-  CheckCircle2Circle, Clock, ChevronRight, Activity,
+  GitBranch, Loader2, Play,
+  CheckCircle2, Clock, ChevronRight, Activity,
   Database, Lock,
 } from "lucide-react";
 import { authHeader } from "@/lib/auth-helpers";
