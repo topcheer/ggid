@@ -58,6 +58,7 @@ type SIEMForwarder struct {
 	stopCh   chan struct{}
 	doneCh   chan struct{}
 	stopOnce sync.Once
+	flushSem chan struct{} // limits concurrent flush goroutines
 }
 
 // NewSIEMForwarder creates a new SIEM forwarder.
@@ -75,11 +76,12 @@ func NewSIEMForwarder(cfg SIEMConfig) *SIEMForwarder {
 		cfg.Timeout = 10 * time.Second
 	}
 	return &SIEMForwarder{
-		config: cfg,
-		client: &http.Client{Timeout: cfg.Timeout},
-		logger: slog.Default(),
-		stopCh: make(chan struct{}),
-		doneCh: make(chan struct{}),
+		config:   cfg,
+		client:   &http.Client{Timeout: cfg.Timeout},
+		logger:   slog.Default(),
+		stopCh:   make(chan struct{}),
+		doneCh:   make(chan struct{}),
+		flushSem: make(chan struct{}, 1), // max 1 concurrent flush
 	}
 }
 
@@ -105,8 +107,22 @@ func (f *SIEMForwarder) Forward(event Event) {
 
 	// Launch flush OUTSIDE the lock to prevent deadlock
 	// (flush() itself acquires f.mu).
+	// Bounded by semaphore to prevent unbounded goroutine creation.
 	if shouldFlush {
-		go f.flush()
+		go func() {
+			defer func() {
+				if r := recover(); r != nil {
+					f.logger.Error("SIEM flush panic", "error", r)
+				}
+				<-f.flushSem
+			}()
+			select {
+			case f.flushSem <- struct{}{}:
+				f.flush()
+			default:
+				// Skip if a flush is already running
+			}
+		}()
 	}
 }
 
