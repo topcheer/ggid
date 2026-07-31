@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
+	"sync"
 	"time"
 
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -14,7 +15,7 @@ type SyncSchedule struct {
 	TenantID   string        `json:"tenant_id"`
 	TargetID   string        `json:"target_id"`
 	TargetName string        `json:"target_name"`
-	Interval   time.Duration `json:"interval"`   // e.g. 5m, 15m, 1h
+	Interval   time.Duration `json:"interval"` // e.g. 5m, 15m, 1h
 	Enabled    bool          `json:"enabled"`
 	LastSyncAt time.Time     `json:"last_sync_at"`
 	NextSyncAt time.Time     `json:"next_sync_at"`
@@ -25,7 +26,9 @@ type Scheduler struct {
 	client    *Client
 	pool      *pgxpool.Pool
 	schedules map[string]*SyncSchedule // target name → schedule
+	mu        sync.RWMutex             // protects schedules map (nil-pool mode)
 	stopCh    chan struct{}
+	stopOnce  sync.Once // prevents double-close panic
 }
 
 // NewScheduler creates a SCIM outbound sync scheduler.
@@ -74,14 +77,16 @@ func (s *Scheduler) SetSchedule(ctx context.Context, schedule *SyncSchedule) err
 				   enabled = EXCLUDED.enabled,
 				   next_sync_at = EXCLUDED.next_sync_at,
 				   updated_at = now()`,
-				schedule.TenantID, schedule.TargetName, schedule.TargetID, int(schedule.Interval.Seconds()),
-				schedule.Enabled, schedule.NextSyncAt)
+			schedule.TenantID, schedule.TargetName, schedule.TargetID, int(schedule.Interval.Seconds()),
+			schedule.Enabled, schedule.NextSyncAt)
 		if err != nil {
-				return err
+			return err
 		}
 	}
 	key := schedule.TenantID + ":" + schedule.TargetName
+	s.mu.Lock()
 	s.schedules[key] = schedule
+	s.mu.Unlock()
 	return nil
 }
 
@@ -89,9 +94,11 @@ func (s *Scheduler) SetSchedule(ctx context.Context, schedule *SyncSchedule) err
 func (s *Scheduler) ListSchedules(ctx context.Context) ([]*SyncSchedule, error) {
 	if s.pool == nil {
 		var result []*SyncSchedule
+		s.mu.RLock()
 		for _, sched := range s.schedules {
 			result = append(result, sched)
 		}
+		s.mu.RUnlock()
 		return result, nil
 	}
 
@@ -115,7 +122,7 @@ func (s *Scheduler) ListSchedules(ctx context.Context) ([]*SyncSchedule, error) 
 		sched.Interval = time.Duration(intervalSecs) * time.Second
 		result = append(result, &sched)
 	}
-	return result, nil
+	return result, rows.Err()
 }
 
 // Start begins the scheduler loop. It runs until Stop is called.
@@ -145,7 +152,9 @@ func (s *Scheduler) Start(ctx context.Context, checkInterval time.Duration) {
 
 // Stop signals the scheduler to exit.
 func (s *Scheduler) Stop() {
-	close(s.stopCh)
+	s.stopOnce.Do(func() {
+		close(s.stopCh)
+	})
 }
 
 // tick checks all schedules and runs due syncs.
@@ -161,11 +170,11 @@ func (s *Scheduler) tick(ctx context.Context) {
 		if !sched.Enabled {
 			continue
 		}
-			if sched.NextSyncAt.IsZero() || now.After(sched.NextSyncAt) {
-				slog.Info("SCIM scheduler: syncing target",
+		if sched.NextSyncAt.IsZero() || now.After(sched.NextSyncAt) {
+			slog.Info("SCIM scheduler: syncing target",
 				"target", sched.TargetName, "target_id", sched.TargetID,
 				"tenant_id", sched.TenantID)
-				if err := s.syncTarget(ctx, sched); err != nil {
+			if err := s.syncTarget(ctx, sched); err != nil {
 				slog.Warn("SCIM scheduler: sync failed",
 					"target", sched.TargetName, "error", err)
 			}

@@ -52,18 +52,22 @@ func (b *JTIBlocklist) RevokeAll(ctx context.Context, jtis []string, jwtExp time
 }
 
 // IsRevoked checks if a jti is in the blocklist. O(1), ~0.3ms.
-// Returns false (allow) if Redis is unavailable (graceful degradation).
+// SECURITY: fail-closed on Redis errors — if we can't check the blocklist,
+// we assume the token is revoked rather than allowing a potentially
+// revoked token through during Redis outages.
 func (b *JTIBlocklist) IsRevoked(ctx context.Context, jti string) bool {
 	if b.rdb == nil || jti == "" {
-		return false
+		return false // no Redis configured — rely on JWT expiry only
 	}
 	score, err := b.rdb.ZScore(ctx, revokedJTIKey, jti).Result()
 	if err != nil {
-		// Key doesn't exist or Redis error — allow (degrade gracefully).
-		if err != redis.Nil {
-			log.Printf("jti blocklist: redis error, allowing: %v", err)
+		if err == redis.Nil {
+			// Key doesn't exist — token is NOT revoked
+			return false
 		}
-		return false
+		// Redis error — fail-closed: treat as potentially revoked
+		log.Printf("jti blocklist: redis error, fail-closed (treating as revoked): %v", err)
+		return true
 	}
 	return score > 0
 }

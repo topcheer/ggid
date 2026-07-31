@@ -13,6 +13,7 @@ import (
 // they wait for the first response and share the result.
 type RequestCoalescer struct {
 	done     chan struct{}
+	doneOnce sync.Once // prevents double-close panic
 	mu       sync.Mutex
 	inflight map[string]*coalescedCall
 	ttl      time.Duration // how long to cache successful responses
@@ -50,7 +51,9 @@ func NewRequestCoalescer(ttl time.Duration) *RequestCoalescer {
 
 // StopCleanup terminates the background cleanup goroutine.
 func (rc *RequestCoalescer) StopCleanup() {
-	close(rc.done)
+	rc.doneOnce.Do(func() {
+		close(rc.done)
+	})
 }
 
 func (rc *RequestCoalescer) cleanupLoop() {
