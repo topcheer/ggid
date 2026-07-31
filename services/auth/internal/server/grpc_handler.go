@@ -15,9 +15,24 @@ import (
 	"github.com/google/uuid"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
+
+// authTenantFromMetadata extracts X-Tenant-ID from gRPC metadata, falling
+// back to env only when absent. SECURITY (R27 P0): prevents cross-tenant
+// access via env-only fallback.
+func authTenantFromMetadata(ctx context.Context) uuid.UUID {
+	if md, ok := metadata.FromIncomingContext(ctx); ok {
+		if v := md.Get("x-tenant-id"); len(v) > 0 {
+			if id, err := uuid.Parse(v[0]); err == nil {
+				return id
+			}
+		}
+	}
+	return defaultAuthTenantID()
+}
 
 // AuthGRPCHandler implements AuthServiceServer by delegating to AuthService.
 type AuthGRPCHandler struct {
@@ -38,7 +53,7 @@ func (h *AuthGRPCHandler) Login(ctx context.Context, req *authv1.LoginRequest) (
 }
 
 func (h *AuthGRPCHandler) Register(ctx context.Context, req *authv1.RegisterRequest) (*authv1.RegisterResponse, error) {
-	tenantID := defaultAuthTenantID()
+	tenantID := authTenantFromMetadata(ctx)
 	userID := uuid.New()
 
 	if err := h.svc.Register(ctx, tenantID, userID, req.GetUsername(), req.GetPassword()); err != nil {
@@ -60,7 +75,7 @@ func (h *AuthGRPCHandler) RefreshToken(ctx context.Context, req *authv1.RefreshT
 }
 
 func (h *AuthGRPCHandler) ForgotPassword(ctx context.Context, req *authv1.ForgotPasswordRequest) (*authv1.ForgotPasswordResponse, error) {
-	tenantID := defaultAuthTenantID()
+	tenantID := authTenantFromMetadata(ctx)
 	if err := h.svc.ForgotPassword(ctx, tenantID, req.GetEmail()); err != nil {
 		// Always return success to prevent email enumeration.
 		return &authv1.ForgotPasswordResponse{ResetInitiated: true}, nil
@@ -76,7 +91,7 @@ func (h *AuthGRPCHandler) ResetPassword(ctx context.Context, req *authv1.ResetPa
 }
 
 func (h *AuthGRPCHandler) ChangePassword(ctx context.Context, req *authv1.ChangePasswordRequest) (*authv1.ChangePasswordResponse, error) {
-	tenantID := defaultAuthTenantID()
+	tenantID := authTenantFromMetadata(ctx)
 	userID, err := uuid.Parse(req.GetUserId())
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, "invalid user id")
@@ -88,7 +103,7 @@ func (h *AuthGRPCHandler) ChangePassword(ctx context.Context, req *authv1.Change
 }
 
 func (h *AuthGRPCHandler) ListSessions(ctx context.Context, req *authv1.ListSessionsRequest) (*authv1.ListSessionsResponse, error) {
-	tenantID := defaultAuthTenantID()
+	tenantID := authTenantFromMetadata(ctx)
 	userID, err := uuid.Parse(req.GetUserId())
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, "invalid user id")
