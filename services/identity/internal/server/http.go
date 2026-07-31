@@ -479,7 +479,20 @@ func (h *HTTPHandler) healthz(w http.ResponseWriter, r *http.Request) {
 }
 
 // readyz checks readiness for serving requests (readiness probe).
+// Returns 503 if the database connection is unhealthy.
 func (h *HTTPHandler) readyz(w http.ResponseWriter, r *http.Request) {
+	if h.svc != nil {
+		if pool := h.svc.Pool(); pool != nil {
+			ctx, cancel := context.WithTimeout(r.Context(), 2*time.Second)
+			defer cancel()
+			if err := pool.Ping(ctx); err != nil {
+				w.Header().Set("Content-Type", "application/json")
+				w.WriteHeader(http.StatusServiceUnavailable)
+				json.NewEncoder(w).Encode(map[string]string{"status": "not ready", "error": "database unreachable"})
+				return
+			}
+		}
+	}
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(map[string]string{"status": "ready"})
 }

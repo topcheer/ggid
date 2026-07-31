@@ -10,6 +10,12 @@ metadata:
     app.kubernetes.io/component: {{ $name }}
 spec:
   replicas: {{ $svc.replicaCount | default 2 }}
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 0
+      maxSurge: 1
+  terminationGracePeriodSeconds: 60
   selector:
     matchLabels:
       {{- include "ggid.selectorLabels" $ | nindent 6 }}

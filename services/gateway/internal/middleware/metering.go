@@ -51,11 +51,11 @@ type usageRecord struct {
 
 // usageAggregator buffers records and flushes async to the audit service.
 type usageAggregator struct {
-	mu         sync.Mutex
-	buffer     []usageRecord
-	config     MeteringConfig
-	client     *http.Client
-	stopCh     chan struct{}
+	mu     sync.Mutex
+	buffer []usageRecord
+	config MeteringConfig
+	client *http.Client
+	stopCh chan struct{}
 }
 
 // APIMetering creates a middleware that records per-tenant API usage.
@@ -123,6 +123,13 @@ func (a *usageAggregator) record(r usageRecord) {
 }
 
 func (a *usageAggregator) flushLoop() {
+	defer func() {
+		if r := recover(); r != nil {
+			log.Printf("[metering] flushLoop panic recovered: %v", r)
+			// Restart the loop to prevent metering data loss
+			go a.flushLoop()
+		}
+	}()
 	if a.config.FlushInterval == 0 {
 		a.config.FlushInterval = 30 * time.Second
 	}
@@ -218,4 +225,3 @@ func (w *usageStatusWriter) Flush() {
 		f.Flush()
 	}
 }
-

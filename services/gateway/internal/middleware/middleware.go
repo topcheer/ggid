@@ -971,8 +971,10 @@ func apiKeyHasWriteAccess(method string, scopes []string) bool {
 	if len(scopes) == 0 {
 		return false // SECURITY: no scopes = no access (fail-closed)
 	}
+	// Admin scopes grant all access
 	for _, s := range scopes {
 		if s == "*" || s == "platform:admin" || s == "tenant:admin" {
+			return true
 		}
 	}
 	// Read-only methods need any ":read" scope
