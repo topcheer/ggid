@@ -406,11 +406,10 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 			return
 		}
 
-		// Inject tenant context from header or query param (public endpoint).
+		// Inject tenant context from gateway-verified header (public endpoint).
+		// SECURITY (R30 P1-2): header-only — no query param fallback that lets
+		// M2M tokens specify arbitrary tenant.
 		tenantIDStr := r.Header.Get("X-Tenant-ID")
-		if tenantIDStr == "" {
-			tenantIDStr = r.URL.Query().Get("tenant_id")
-		}
 
 		// If tenant_id not provided, try to resolve from the OAuth client's tenant.
 		// This is critical for MCP clients (RFC 9728 DCR flow) that don't send tenant_id.

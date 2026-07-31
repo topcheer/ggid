@@ -3,7 +3,6 @@ package httpserver
 import (
 	"encoding/json"
 	"net/http"
-	"net/http/httptest"
 	"testing"
 
 	"github.com/ggid/ggid/services/policy/internal/service"
@@ -96,9 +95,10 @@ func TestHandleDecisionLog_InvalidLimit(t *testing.T) {
 // TestHandleDecisionLog_MissingTenant verifies fail-closed when no header.
 func TestHandleDecisionLog_MissingTenant(t *testing.T) {
 	newTestHarness()
-	req := httptest.NewRequest("GET", "/api/v1/policies/decision-log", nil)
-	w := httptest.NewRecorder()
-	testMux.ServeHTTP(w, req)
+	orig := testTenantHeader
+	testTenantHeader = ""
+	defer func() { testTenantHeader = orig }()
+	w := doReq("GET", "/api/v1/policies/decision-log", "")
 	if w.Code != http.StatusForbidden {
 		t.Fatalf("expected 403, got %d", w.Code)
 	}
@@ -110,6 +110,7 @@ var testMux *http.ServeMux
 
 // clearTestDecisions resets the decision log between tests.
 func clearTestDecisions() {
+	// Reset the in-memory decision log.
 	service.ClearDecisionLogForTest()
 }
 
