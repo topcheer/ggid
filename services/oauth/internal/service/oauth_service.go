@@ -2178,6 +2178,26 @@ func (s *OAuthService) lookupAuthRefreshToken(ctx context.Context, tenantID uuid
 		return nil, fmt.Errorf("invalid token ID in redis: %s", tokenIDStr)
 	}
 
+	// SECURITY (R24 P1): Restore UserID from the Auth service's refresh_tokens
+	// table. Without this, record.UserID = uuid.Nil → production user-status
+	// check fails (token rotation broken) / dev issues nil-subject tokens.
+	var userID, userTenantID uuid.UUID
+	if s.pool != nil {
+		err = s.pool.QueryRow(ctx,
+			`SELECT user_id, tenant_id FROM refresh_tokens WHERE id = $1`,
+			tokenID).Scan(&userID, &userTenantID)
+		if err != nil {
+			return nil, fmt.Errorf("refresh token not found in auth store")
+		}
+		// SECURITY: Verify the token belongs to the requesting tenant.
+		if userTenantID != tenantID {
+			return nil, fmt.Errorf("refresh token tenant mismatch")
+		}
+	} else {
+		// dev/test: no DB, cannot verify user — fail-closed.
+		return nil, fmt.Errorf("auth store unavailable")
+	}
+
 	// SECURITY (P2-56): Bind the token to the requesting client so the
 	// caller's client_id binding check (L1654) applies. Auth-issued tokens
 	// are first-party (gcid-console), so binding to the requesting client
@@ -2185,6 +2205,7 @@ func (s *OAuthService) lookupAuthRefreshToken(ctx context.Context, tenantID uuid
 	return &domain.RefreshTokenRecord{
 		ID:        tokenID,
 		TenantID:  tenantID,
+		UserID:    userID,
 		ClientID:  requestingClientID,
 		TokenHash: tokenHash,
 		ExpiresAt: time.Now().Add(30 * 24 * time.Hour), // Auth tokens expire in 30 days
@@ -3072,6 +3093,14 @@ func (s *OAuthService) CreateDeviceAuthorization(req *DeviceAuthorizationRequest
 		return nil, fmt.Errorf("too many pending device authorization requests, please try again later")
 	}
 	deviceCodeMu.Unlock()
+
+	// SECURITY (R24 P1): Validate client_id exists and tenant is valid.
+	if req.ClientID == "" {
+		return nil, fmt.Errorf("client_id is required")
+	}
+	if req.TenantID == uuid.Nil {
+		return nil, fmt.Errorf("tenant_id is required")
+	}
 
 	deviceCode := generateDeviceCode(40)
 	userCode := generateUserCode()
