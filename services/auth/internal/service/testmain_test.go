@@ -12,5 +12,6 @@ import (
 // when hundreds of tests call HashPassword under the race detector.
 func TestMain(m *testing.M) {
 	crypto.EnableTestFastHash()
+	os.Setenv("GGID_ENV", "test") // allow localhost for SSRF-protected hook tests
 	os.Exit(m.Run())
 }
