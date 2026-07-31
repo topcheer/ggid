@@ -3149,6 +3149,18 @@ func (h *Handler) forceLogout(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// SECURITY: admin scope required for force logout.
+	if !hasAdminScope(r) {
+		writeError(w, http.StatusForbidden, "admin scope required")
+		return
+	}
+
+	headerTenant := r.Header.Get("X-Tenant-ID")
+	if headerTenant == "" {
+		writeError(w, http.StatusForbidden, "X-Tenant-ID header required")
+		return
+	}
+
 	var body struct {
 		TenantID        string `json:"tenant_id"`
 		UserID          string `json:"user_id"`
@@ -3159,16 +3171,17 @@ func (h *Handler) forceLogout(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	headerTenant := r.Header.Get("X-Tenant-ID")
-	if headerTenant == "" {
-		writeError(w, http.StatusForbidden, "X-Tenant-ID header required")
-		return
-	}
+	// SECURITY: body tenant_id must match caller's tenant.
+	// Only platform:admin can operate cross-tenant.
+	tenantIDStr := headerTenant
 	if body.TenantID != "" && body.TenantID != headerTenant {
-		writeError(w, http.StatusForbidden, "tenant_id mismatch")
-		return
+		if !hasPlatformAdminScope(r) {
+			writeError(w, http.StatusForbidden, "cross-tenant force logout requires platform:admin scope")
+			return
+		}
+		tenantIDStr = body.TenantID
 	}
-	tenantID, err := uuid.Parse(headerTenant)
+	tenantID, err := uuid.Parse(tenantIDStr)
 	if err != nil {
 		writeError(w, http.StatusBadRequest, "invalid X-Tenant-ID header")
 		return
@@ -3208,6 +3221,18 @@ func (h *Handler) sessionLimit(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// SECURITY: admin scope required for session limit enforcement.
+	if !hasAdminScope(r) {
+		writeError(w, http.StatusForbidden, "admin scope required")
+		return
+	}
+
+	headerTenant := r.Header.Get("X-Tenant-ID")
+	if headerTenant == "" {
+		writeError(w, http.StatusForbidden, "X-Tenant-ID header required")
+		return
+	}
+
 	var body struct {
 		TenantID string `json:"tenant_id"`
 		UserID   string `json:"user_id"`
@@ -3217,16 +3242,17 @@ func (h *Handler) sessionLimit(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	headerTenant := r.Header.Get("X-Tenant-ID")
-	if headerTenant == "" {
-		writeError(w, http.StatusForbidden, "X-Tenant-ID header required")
-		return
-	}
+	// SECURITY: body tenant_id must match caller's tenant.
+	// Only platform:admin can operate cross-tenant.
+	tenantIDStr := headerTenant
 	if body.TenantID != "" && body.TenantID != headerTenant {
-		writeError(w, http.StatusForbidden, "tenant_id mismatch")
-		return
+		if !hasPlatformAdminScope(r) {
+			writeError(w, http.StatusForbidden, "cross-tenant session limit requires platform:admin scope")
+			return
+		}
+		tenantIDStr = body.TenantID
 	}
-	tenantID, err := uuid.Parse(headerTenant)
+	tenantID, err := uuid.Parse(tenantIDStr)
 	if err != nil {
 		writeError(w, http.StatusBadRequest, "invalid X-Tenant-ID header")
 		return
