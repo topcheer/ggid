@@ -648,13 +648,24 @@ func TestHandlePermissions_List(t *testing.T) {
 }
 
 func TestHandlePermissions_MissingTenant(t *testing.T) {
-	w := doReq("GET", "/api/v1/permissions", "")
-	assertStatus(t, w, http.StatusBadRequest)
+	// SECURITY (R28 P1): Without X-Tenant-ID header, returns 403.
+	newTestHarness()
+	req := httptest.NewRequest("GET", "/api/v1/permissions", nil)
+	req.Header.Set("X-Scopes", "platform:admin")
+	w := httptest.NewRecorder()
+	testMux.ServeHTTP(w, req)
+	assertStatus(t, w, http.StatusForbidden)
 }
 
 func TestHandlePermissions_InvalidTenant(t *testing.T) {
-	w := doReq("GET", "/api/v1/permissions?tenant_id=bad", "")
-	assertStatus(t, w, http.StatusBadRequest)
+	// SECURITY (R28 P1): Invalid X-Tenant-ID header returns 403.
+	newTestHarness()
+	req := httptest.NewRequest("GET", "/api/v1/permissions", nil)
+	req.Header.Set("X-Tenant-ID", "bad")
+	req.Header.Set("X-Scopes", "platform:admin")
+	w := httptest.NewRecorder()
+	testMux.ServeHTTP(w, req)
+	assertStatus(t, w, http.StatusForbidden)
 }
 
 func TestHandlePermissions_MethodNotAllowed(t *testing.T) {

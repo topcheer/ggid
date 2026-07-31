@@ -253,7 +253,7 @@ func (s *HTTPServer) handleRoleByID(w http.ResponseWriter, r *http.Request) {
 		writeJSONError(w, http.StatusForbidden, "valid X-Tenant-ID header required")
 		return
 	}
-	r = r.WithContext(service.WithTenantContext(r.Context(), tid))
+	r = r.WithContext(ggidtenant.WithContext(r.Context(), &ggidtenant.Context{TenantID: tid}))
 
 	idStr := strings.TrimPrefix(r.URL.Path, "/api/v1/roles/")
 	if idStr == "" {
@@ -606,7 +606,7 @@ func (s *HTTPServer) handleBulkAssign(w http.ResponseWriter, r *http.Request, ro
 	}
 
 	// Verify the role exists (tenant-scoped via injected context)
-	r = r.WithContext(service.WithTenantContext(r.Context(), tenantID))
+	r = r.WithContext(ggidtenant.WithContext(r.Context(), &ggidtenant.Context{TenantID: tenantID}))
 	if _, err := s.roleSvc.GetRole(r.Context(), roleID); err != nil {
 		writeServiceError(w, err)
 		return
@@ -775,14 +775,18 @@ func (s *HTTPServer) handlePermissions(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *HTTPServer) createPermission(w http.ResponseWriter, r *http.Request) {
-	tenantIDStr := r.URL.Query().Get("tenant_id")
-	if tenantIDStr == "" {
-		writeJSONError(w, http.StatusBadRequest, "tenant_id query parameter is required")
+	// SECURITY (R28 P1): Require admin auth + authoritative header tenant.
+	if !isAdminRequest(r) {
+		writeJSONError(w, http.StatusForbidden, "admin role required to create permissions")
+		return
+	}
+	tenantIDStr, ok := requireTenantHeader(w, r)
+	if !ok {
 		return
 	}
 	tenantID, err := uuid.Parse(tenantIDStr)
 	if err != nil {
-		writeJSONError(w, http.StatusBadRequest, "invalid tenant_id")
+		writeJSONError(w, http.StatusForbidden, "invalid tenant_id")
 		return
 	}
 
@@ -821,14 +825,18 @@ func (s *HTTPServer) createPermission(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *HTTPServer) listPermissions(w http.ResponseWriter, r *http.Request) {
-	tenantIDStr := r.URL.Query().Get("tenant_id")
-	if tenantIDStr == "" {
-		writeJSONError(w, http.StatusBadRequest, "tenant_id query parameter is required")
+	// SECURITY (R28 P1): Require admin auth + authoritative header tenant.
+	if !isAdminRequest(r) {
+		writeJSONError(w, http.StatusForbidden, "admin role required to list permissions")
+		return
+	}
+	tenantIDStr, ok := requireTenantHeader(w, r)
+	if !ok {
 		return
 	}
 	tenantID, err := uuid.Parse(tenantIDStr)
 	if err != nil {
-		writeJSONError(w, http.StatusBadRequest, "invalid tenant_id")
+		writeJSONError(w, http.StatusForbidden, "invalid tenant_id")
 		return
 	}
 
@@ -906,6 +914,20 @@ func (s *HTTPServer) handlePolicyByID(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// SECURITY: Require X-Tenant-ID header (fail-closed) and inject into context
+	// so service-layer tenant.FromContext can enforce isolation.
+	tidStr := r.Header.Get("X-Tenant-ID")
+	if tidStr == "" {
+		writeJSONError(w, http.StatusForbidden, "valid X-Tenant-ID header required")
+		return
+	}
+	tid, err := uuid.Parse(tidStr)
+	if err != nil {
+		writeJSONError(w, http.StatusForbidden, "valid X-Tenant-ID header required")
+		return
+	}
+	r = r.WithContext(ggidtenant.WithContext(r.Context(), &ggidtenant.Context{TenantID: tid}))
+
 	switch r.Method {
 	case http.MethodGet:
 		// Get policy by ID
@@ -914,12 +936,7 @@ func (s *HTTPServer) handlePolicyByID(w http.ResponseWriter, r *http.Request) {
 			writeServiceError(w, err)
 			return
 		}
-		// SECURITY (R14 P0): tenant ownership on the main CRUD path
-		tid, ok := requireTenantHeader(w, r)
-		if !ok {
-			return
-		}
-		if policy.TenantID.String() != tid {
+		if policy.TenantID.String() != tid.String() {
 			writeJSONError(w, http.StatusNotFound, "policy not found")
 			return
 		}
@@ -939,18 +956,14 @@ func (s *HTTPServer) handlePolicyByID(w http.ResponseWriter, r *http.Request) {
 			writeJSONError(w, http.StatusBadRequest, "invalid JSON body")
 			return
 		}
-		tidStr, ok := requireTenantHeader(w, r)
-		if !ok {
-			return
-		}
-		// SECURITY (R14 P0): verify ownership before delete+recreate;
+		// SECURITY: verify ownership before delete+recreate;
 		// tenant comes from the verified header, never the body
 		existing, err := s.policySvc.GetPolicy(r.Context(), id)
 		if err != nil {
 			writeServiceError(w, err)
 			return
 		}
-		if existing.TenantID.String() != tidStr {
+		if existing.TenantID.String() != tid.String() {
 			writeJSONError(w, http.StatusNotFound, "policy not found")
 			return
 		}
@@ -973,16 +986,12 @@ func (s *HTTPServer) handlePolicyByID(w http.ResponseWriter, r *http.Request) {
 		}
 		writeJSON(w, http.StatusOK, policyToJSON(policy))
 	case http.MethodDelete:
-		tidStr, ok := requireTenantHeader(w, r)
-		if !ok {
-			return
-		}
 		existing, err := s.policySvc.GetPolicy(r.Context(), id)
 		if err != nil {
 			writeServiceError(w, err)
 			return
 		}
-		if existing.TenantID.String() != tidStr {
+		if existing.TenantID.String() != tid.String() {
 			writeJSONError(w, http.StatusNotFound, "policy not found")
 			return
 		}
@@ -1251,7 +1260,7 @@ func (s *HTTPServer) handleRolePermissions(w http.ResponseWriter, r *http.Reques
 		writeJSONError(w, http.StatusForbidden, "valid X-Tenant-ID header required")
 		return
 	}
-	r = r.WithContext(service.WithTenantContext(r.Context(), tid))
+	r = r.WithContext(ggidtenant.WithContext(r.Context(), &ggidtenant.Context{TenantID: tid}))
 
 	switch r.Method {
 	case http.MethodGet:
@@ -1504,10 +1513,13 @@ var (
 // POST /api/v1/policies/versions/rollback?policy_id=X&version=N — rollback to version
 func (s *HTTPServer) handlePolicyVersions(w http.ResponseWriter, r *http.Request) {
 	// SECURITY: Require valid tenant for all operations.
-	if _, err := uuid.Parse(r.Header.Get("X-Tenant-ID")); err != nil {
+	tidStr := r.Header.Get("X-Tenant-ID")
+	tid, err := uuid.Parse(tidStr)
+	if err != nil {
 		writeJSONError(w, http.StatusForbidden, "valid X-Tenant-ID header required")
 		return
 	}
+	r = r.WithContext(ggidtenant.WithContext(r.Context(), &ggidtenant.Context{TenantID: tid}))
 
 	policyID := r.URL.Query().Get("policy_id")
 	if policyID == "" {
@@ -2196,7 +2208,7 @@ func (s *HTTPServer) handleAnalyze(w http.ResponseWriter, r *http.Request) {
 		writeJSONError(w, http.StatusForbidden, "valid X-Tenant-ID header required")
 		return
 	}
-	r = r.WithContext(service.WithTenantContext(r.Context(), tid))
+	r = r.WithContext(ggidtenant.WithContext(r.Context(), &ggidtenant.Context{TenantID: tid}))
 
 	// Get the role
 	role, err := s.roleSvc.GetRole(r.Context(), roleID)
