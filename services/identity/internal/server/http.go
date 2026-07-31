@@ -194,7 +194,11 @@ func (h *HTTPHandler) registerRoutes() {
 	h.mux.HandleFunc("/api/v1/users/timeline", h.handleUserTimeline)
 	h.mux.HandleFunc("/api/v1/users/bulk-provision", h.handleBulkProvision)
 	h.mux.HandleFunc("/api/v1/users/attribute-history", func(w http.ResponseWriter, r *http.Request) {
-		uid := uuid.MustParse(r.URL.Query().Get("user_id"))
+		uid, err := uuid.Parse(r.URL.Query().Get("user_id"))
+		if err != nil {
+			writeJSONError(w, http.StatusBadRequest, "valid user_id query param required")
+			return
+		}
 		h.handleAttributeHistory(r.Context(), uid, w, r)
 	})
 	h.mux.HandleFunc("/api/v1/users/attestation/pending", h.handleAttestationPending)
@@ -811,7 +815,7 @@ func (h *HTTPHandler) listUsers(ctx context.Context, w http.ResponseWriter, r *h
 	if off := q.Get("offset"); off != "" {
 		var n int
 		fmt.Sscanf(off, "%d", &n)
-		if n >= 0 {
+		if n >= 0 && n <= 100000 {
 			filter.Offset = n
 		}
 	}
