@@ -42,9 +42,8 @@ export default function AdminSettingsPage() {
   // Shutdown state
   const [draining, setDraining] = useState(false);
   const [shutdownProgress, setShutdownProgress] = useState(0);
-  const [shuttingDown, setShuttingDown] = useState(false);
+  const [] = useState(false);
 
-  const H = { ...authHeader(), "Content-Type": "application/json", "X-Tenant-ID": TENANT_ID };
   const card = "rounded-xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-700 dark:bg-gray-800";
 
   useEffect(() => { setLoading(false); }, []);

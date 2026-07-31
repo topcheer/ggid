@@ -1,9 +1,9 @@
 "use client";
 import { useState, useEffect } from "react";
 import {
-  Database, Loader2, AlertCircle, X, RefreshCw, Check, Ban,
+  Database, Loader2, AlertCircle, X, Ban,
   CheckCircle2, XCircle, Clock, HardDrive, RotateCcw, Activity,
-  Shield, Zap, ChevronRight, AlertTriangle,
+  Shield, Zap, AlertTriangle,
 } from "lucide-react";
 import { authHeader } from "@/lib/auth-helpers";
 import { useTranslations } from "@/lib/i18n";

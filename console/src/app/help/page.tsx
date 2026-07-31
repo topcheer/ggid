@@ -1,9 +1,9 @@
 "use client";
 import { useState } from "react";
 import {
-  HelpCircle, Loader2, AlertCircle, X, Search, Plus, Check,
+  HelpCircle, Search, Plus, Check,
   ChevronRight, FileText, Ticket, Activity, CheckCircle2,
-  XCircle, Clock, ExternalLink, AlertTriangle, Wrench,
+  XCircle, Clock, Wrench,
 } from "lucide-react";
 import { useTranslations } from "@/lib/i18n";
 

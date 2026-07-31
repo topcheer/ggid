@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import {
   Server, Loader2, AlertCircle, X, ChevronRight, Activity,
   Database, KeyRound, Flag, Globe, Power, CheckCircle2,
-  Shield, Clock, Rocket, GitCommit, Cpu, HardDrive, Zap,
+  Shield, Clock, Rocket, Zap,
 } from "lucide-react";
 import { useTranslations } from "@/lib/i18n";
 

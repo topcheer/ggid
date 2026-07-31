@@ -5,13 +5,13 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   Users, Shield, Building2, ScrollText, KeyRound, Settings,
-  LayoutDashboard, Webhook, Sun, Moon, Globe, Server, Send,
-  Monitor, BookOpen, TrendingUp, Bot, FileCheck, Cloud, Network,
+  LayoutDashboard, Webhook, Sun, Moon, Globe, Send,
+  Monitor, BookOpen, FileCheck, Cloud, Network,
   RefreshCw, X, Menu, AlertCircle, Loader2, LogOut, Gauge, Radar,
   Fingerprint, Share2, ArrowUpCircle, Search, ChevronDown, ChevronRight,
-  Activity, PieChart, Database, Lock, Crown, Zap, ShieldCheck,
+  Activity, PieChart, Database, Lock, Zap, ShieldCheck,
   Scroll, FileText, Terminal, Building, HelpCircle, AlertTriangle,
-  Layers, Grid3x3, CalendarClock, GitBranch, ExternalLink,
+  CalendarClock, ExternalLink,
   Rocket, Info,
 } from "lucide-react";
 import { useTheme } from "@/lib/theme";
