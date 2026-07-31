@@ -2745,21 +2745,26 @@ func (s *OAuthService) verifyBackupCode(ctx context.Context, tenantID, userID uu
 	return uuid.Nil, fmt.Errorf("invalid backup code")
 }
 
-// filterSafeScopes returns only standard OAuth scopes from the input,
-// stripping any admin scopes (platform:*, tenant:*) that should only
-// come from DB role keys. This prevents scope escalation attacks.
+// filterSafeScopes strips privileged scopes (platform:*, tenant:*, admin)
+// from client-defined scopes. Custom business scopes (audit:read,
+// reports:read) are preserved — they are legitimate M2M permissions that
+// come from the client's configured scopes. Only privileged scopes that
+// must originate from DB role keys are removed (prevents escalation).
+// SECURITY (R230): strict 4-scope whitelist here broke M2M
+// client_credentials tokens — custom scopes were stripped, downstream
+// authz failed.
 func filterSafeScopes(scopes []string) []string {
-	safeOAuthScopes := map[string]bool{
-		"openid":         true,
-		"profile":        true,
-		"email":          true,
-		"offline_access": true,
-	}
 	var filtered []string
 	for _, sc := range scopes {
-		if safeOAuthScopes[sc] {
-			filtered = append(filtered, sc)
+		if sc == "" {
+			continue
 		}
+		if sc == "admin" ||
+			strings.HasPrefix(sc, "platform:") ||
+			strings.HasPrefix(sc, "tenant:") {
+			continue
+		}
+		filtered = append(filtered, sc)
 	}
 	return filtered
 }
