@@ -422,6 +422,16 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 				if v, _ := parClaims["nonce"].(string); v != "" {
 					nonce = v
 				}
+				// PKCE params can also be pushed via PAR (RFC 9126 §4.4) —
+				// without this, public clients pushing PKCE lose the binding
+				// and are rejected, while confidential clients could get a
+				// code without PKCE. (sa-14 finding, R228 follow-up)
+				if v, _ := parClaims["code_challenge"].(string); v != "" {
+					codeChallenge = v
+				}
+				if v, _ := parClaims["code_challenge_method"].(string); v != "" {
+					codeChallengeMethod = v
+				}
 			}
 		}
 

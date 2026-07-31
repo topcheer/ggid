@@ -32,12 +32,14 @@ func (s *OAuthService) ValidateAuthorizationRequest(ctx context.Context, clientI
 			return nil, errors.InvalidArgument("unable to resolve request_uri")
 		}
 		return jwt.MapClaims{
-			"iss":           pushed.ClientID,
-			"response_type": pushed.ResponseType,
-			"redirect_uri":  pushed.RedirectURI,
-			"scope":         pushed.Scope,
-			"state":         pushed.State,
-			"nonce":         pushed.Nonce,
+			"iss":                   pushed.ClientID,
+			"response_type":         pushed.ResponseType,
+			"redirect_uri":          pushed.RedirectURI,
+			"scope":                 pushed.Scope,
+			"state":                 pushed.State,
+			"nonce":                 pushed.Nonce,
+			"code_challenge":        pushed.CodeChallenge,
+			"code_challenge_method": pushed.CodeChallengeMethod,
 		}, nil
 	}
 
