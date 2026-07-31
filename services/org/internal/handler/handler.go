@@ -396,6 +396,9 @@ func (h *DeptHandler) CreateDepartment(ctx context.Context, req *pb.CreateDeptRe
 	if err != nil {
 		return nil, err
 	}
+	if err := validateOrgTenant(ctx, h.orgSvc, orgID); err != nil {
+		return nil, err
+	}
 	parentID, err := parseOptionalUUID(req.GetParentId())
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, "invalid parent_id")
@@ -544,6 +547,9 @@ func NewTeamHandler(svc *service.TeamService, orgSvc *service.OrgService) *TeamH
 func (h *TeamHandler) CreateTeam(ctx context.Context, req *pb.CreateTeamRequest) (*pb.Team, error) {
 	orgID, err := parseUUID(req.GetOrgId(), "org_id")
 	if err != nil {
+		return nil, err
+	}
+	if err := validateOrgTenant(ctx, h.orgSvc, orgID); err != nil {
 		return nil, err
 	}
 	createdBy, err := parseUUID(req.GetCreatedBy(), "created_by")
