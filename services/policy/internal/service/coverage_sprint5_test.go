@@ -82,7 +82,10 @@ func TestToDate_Formats(t *testing.T) {
 }
 
 func TestMatchIP_AllPaths(t *testing.T) {
-	cases := []struct{ cidr, ip string; expected bool }{
+	cases := []struct {
+		cidr, ip string
+		expected bool
+	}{
 		{"192.168.1.1", "192.168.1.1", true},
 		{"192.168.1.1", "10.0.0.1", false},
 		{"192.168.1.0/24", "192.168.1.100", true},
@@ -174,8 +177,8 @@ func TestSetDecisionLogger(t *testing.T) {
 
 func TestGetRecentDecisions(t *testing.T) {
 	ClearDecisionLogForTest()
-	AddTestDecisionForTest(true, "rbac", "user.read")
-	AddTestDecisionForTest(false, "deny", "user.delete")
+	AddTestDecisionForTest(uuid.Nil, true, "rbac", "user.read")
+	AddTestDecisionForTest(uuid.Nil, false, "deny", "user.delete")
 	if len(GetRecentDecisions(10)) < 2 {
 		t.Fatal("expected at least 2 decisions")
 	}
