@@ -142,7 +142,8 @@ func main() {
 	})(mux)
 
 	httpServer := &http.Server{
-		Addr: cfg.HTTPAddr,
+		Addr:           cfg.HTTPAddr,
+		MaxHeaderBytes: 1 << 20, // 1MB max headers
 		Handler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			defer func() {
 				if rvr := recover(); rvr != nil {

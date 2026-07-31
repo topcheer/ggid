@@ -398,11 +398,12 @@ func main() {
 	})
 
 	httpServer := &http.Server{
-		Addr:         cfg.Server.HTTP.Addr,
-		Handler:      internalMW(handler),
-		ReadTimeout:  cfg.Server.HTTP.ReadTimeout,
-		WriteTimeout: cfg.Server.HTTP.WriteTimeout,
-		IdleTimeout:  120 * time.Second,
+		Addr:           cfg.Server.HTTP.Addr,
+		MaxHeaderBytes: 1 << 20, // 1MB max headers
+		Handler:        internalMW(handler),
+		ReadTimeout:    cfg.Server.HTTP.ReadTimeout,
+		WriteTimeout:   cfg.Server.HTTP.WriteTimeout,
+		IdleTimeout:    120 * time.Second,
 	}
 
 	go func() {

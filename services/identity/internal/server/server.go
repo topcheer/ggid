@@ -271,10 +271,11 @@ func New(cfg *conf.Config) (*Server, error) {
 	})
 
 	httpSrv := &http.Server{
-		Addr:         cfg.HTTP.Addr,
-		Handler:      internalMW(httpHandler),
-		ReadTimeout:  10 * time.Second,
-		WriteTimeout: 30 * time.Second,
+		Addr:           cfg.HTTP.Addr,
+		MaxHeaderBytes: 1 << 20, // 1MB max headers
+		Handler:        internalMW(httpHandler),
+		ReadTimeout:    10 * time.Second,
+		WriteTimeout:   30 * time.Second,
 	}
 
 	return &Server{
