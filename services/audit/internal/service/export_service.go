@@ -390,12 +390,19 @@ func (s *ExportService) CleanupOldExports(maxAge time.Duration) (int, error) {
 
 // sanitizeCSVCell prevents CSV formula injection by prefixing dangerous
 // leading characters (=, +, -, @, tab, CR) with a single quote.
+// SECURITY (R25): Excel trims leading whitespace and truncates at NUL —
+// " =cmd()" or "\x00=cmd()" bypassed prefix checks. Trim both before
+// inspecting the first byte; keep the original value otherwise.
 func sanitizeCSVCell(s string) string {
 	if len(s) == 0 {
 		return s
 	}
-	switch s[0] {
-	case '=', '+', '-', '@', '\t', '\r':
+	trimmed := strings.TrimLeft(s, " \t\r\n\x00")
+	if len(trimmed) == 0 {
+		return s
+	}
+	switch trimmed[0] {
+	case '=', '+', '-', '@':
 		return "'" + s
 	}
 	return s

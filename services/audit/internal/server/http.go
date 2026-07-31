@@ -616,12 +616,18 @@ func (s *HTTPServer) handleExport(w http.ResponseWriter, r *http.Request) {
 
 // sanitizeCSVCell prevents CSV formula injection by prefixing dangerous
 // leading characters (=, +, -, @, tab, CR) with a single quote.
+// SECURITY (R25): trim leading whitespace/NUL before checking (Excel
+// trims and truncates at NUL — " =cmd()" / "\x00=cmd()" bypass).
 func sanitizeCSVCell(s string) string {
 	if len(s) == 0 {
 		return s
 	}
-	switch s[0] {
-	case '=', '+', '-', '@', '\t', '\r':
+	trimmed := strings.TrimLeft(s, " \t\r\n\x00")
+	if len(trimmed) == 0 {
+		return s
+	}
+	switch trimmed[0] {
+	case '=', '+', '-', '@':
 		return "'" + s
 	}
 	return s

@@ -11,6 +11,7 @@ import (
 	"github.com/ggid/ggid/services/audit/internal/domain"
 	"github.com/google/uuid"
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/structpb"
 	"google.golang.org/protobuf/types/known/timestamppb"
@@ -37,6 +38,13 @@ func (h *AuditHandler) ListEvents(ctx context.Context, req *pb.ListEventsRequest
 	tenantID, err := uuid.Parse(req.GetTenantId())
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, "invalid tenant_id")
+	}
+	// SECURITY (R25): tenant in request body is not trustworthy — the
+	// caller's tenant must come from gRPC metadata (set by the gateway /
+	// internal caller). Cross-check when present; fail closed if the
+	// caller's metadata tenant differs from the requested one.
+	if mdTenant := tenantFromMetadata(ctx); mdTenant != "" && mdTenant != tenantID.String() {
+		return nil, status.Error(codes.PermissionDenied, "tenant mismatch")
 	}
 
 	filter := domain.ListFilter{
@@ -96,7 +104,23 @@ func (h *AuditHandler) GetEvent(ctx context.Context, req *pb.GetEventRequest) (*
 	if err != nil {
 		return nil, toGRPCError(err)
 	}
+	// SECURITY (R25): cross-tenant event read (IDOR) — GetByID had no
+	// tenant filter. Reject when the caller's metadata tenant doesn't
+	// match the event's tenant.
+	if mdTenant := tenantFromMetadata(ctx); mdTenant != "" && mdTenant != event.TenantID.String() {
+		return nil, status.Error(codes.PermissionDenied, "tenant mismatch")
+	}
 	return eventToProto(event), nil
+}
+
+// tenantFromMetadata extracts X-Tenant-ID from gRPC incoming metadata.
+func tenantFromMetadata(ctx context.Context) string {
+	if md, ok := metadata.FromIncomingContext(ctx); ok {
+		if v := md.Get("x-tenant-id"); len(v) > 0 {
+			return v[0]
+		}
+	}
+	return ""
 }
 
 func eventToProto(e *domain.AuditEvent) *pb.AuditEvent {
