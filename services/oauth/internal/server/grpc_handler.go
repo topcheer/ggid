@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/ggid/ggid/pkg/middleware"
 	"log"
 	"log/slog"
 	"net"
@@ -238,11 +239,11 @@ func newOAuthGRPCServer() *grpc.Server {
 				}
 				slog.Info("GRPC TLS cert/key invalid, falling back to plaintext", "error", err)
 			} else {
-				return grpc.NewServer(grpc.Creds(creds))
+				return grpc.NewServer(append(middleware.GRPCRecoveryOpts(), grpc.Creds(creds))...)
 			}
 		}
 	}
-	return grpc.NewServer()
+	return grpc.NewServer(middleware.GRPCRecoveryOpts()...)
 }
 
 // unused but kept for reference

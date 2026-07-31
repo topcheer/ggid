@@ -426,7 +426,7 @@ func main() {
 			return
 		}
 
-		grpcServer := grpc.NewServer()
+		grpcServer := grpc.NewServer(middleware.GRPCRecoveryOpts()...)
 		grpcServerRef = grpcServer
 
 		// TLS support: when GRPC_TLS_ENABLED=true, attempt TLS credentials.
@@ -448,7 +448,7 @@ func main() {
 						log.Printf("Auth gRPC: failed to re-listen on %s: %v", grpcAddr, err)
 						return
 					}
-					grpcServer = grpc.NewServer(grpc.Creds(creds))
+					grpcServer = grpc.NewServer(append(middleware.GRPCRecoveryOpts(), grpc.Creds(creds))...)
 					grpcServerRef = grpcServer // sync ref so GracefulStop targets the right server
 					log.Printf("Auth gRPC: TLS enabled (cert=%s)", certFile)
 				}

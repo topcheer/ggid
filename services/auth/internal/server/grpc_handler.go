@@ -3,6 +3,7 @@ package server
 import (
 	"context"
 	"fmt"
+	"github.com/ggid/ggid/pkg/middleware"
 	"log"
 	"net"
 	"os"
@@ -154,7 +155,7 @@ func defaultAuthTenantID() uuid.UUID {
 // AuthGRPCServer starts a gRPC server for the Auth service on the given address.
 // It returns the server so the caller can GracefulStop on shutdown.
 func StartAuthGRPCServer(addr string, svc *service.AuthService) (*grpc.Server, net.Listener, error) {
-	grpcSrv := grpc.NewServer()
+	grpcSrv := grpc.NewServer(middleware.GRPCRecoveryOpts()...)
 	handler := NewAuthGRPCHandler(svc)
 	handler.RegisterGRPC(grpcSrv)
 

@@ -35,10 +35,10 @@ func newGRPCServer() *grpc.Server {
 		if certFile != "" && keyFile != "" {
 			tlsCfg, err := tls.LoadX509KeyPair(certFile, keyFile)
 			if err == nil {
-				return grpc.NewServer(grpc.Creds(credentials.NewTLS(&tls.Config{
+				return grpc.NewServer(append(middleware.GRPCRecoveryOpts(), grpc.Creds(credentials.NewTLS(&tls.Config{
 					Certificates: []tls.Certificate{tlsCfg},
 					MinVersion:   tls.VersionTLS12,
-				})))
+				})))...)
 			}
 			if os.Getenv("GRPC_TLS_ALLOW_PLAINTEXT_FALLBACK") != "true" {
 				log.Fatalf("GRPC_TLS_ENABLED but cert/key invalid: %v; refusing to start with plaintext fallback. Set GRPC_TLS_ALLOW_PLAINTEXT_FALLBACK=true only in dev.", err)
@@ -46,7 +46,7 @@ func newGRPCServer() *grpc.Server {
 			log.Printf("Warning: GRPC_TLS_ENABLED but cert/key invalid: %v, falling back to plaintext because GRPC_TLS_ALLOW_PLAINTEXT_FALLBACK=true", err)
 		}
 	}
-	return grpc.NewServer()
+	return grpc.NewServer(middleware.GRPCRecoveryOpts()...)
 }
 
 func main() {
