@@ -11,12 +11,12 @@ import (
 
 // passwordlessSession tracks WebAuthn passwordless login in-progress sessions.
 type passwordlessSession struct {
-	SessionID   string    `json:"session_id"`
-	Challenge   string    `json:"challenge"`
-	TenantID    string    `json:"tenant_id"`
-	Username    string    `json:"username"`
-	CreatedAt   time.Time `json:"created_at"`
-	ExpiresAt   time.Time `json:"expires_at"`
+	SessionID string    `json:"session_id"`
+	Challenge string    `json:"challenge"`
+	TenantID  string    `json:"tenant_id"`
+	Username  string    `json:"username"`
+	CreatedAt time.Time `json:"created_at"`
+	ExpiresAt time.Time `json:"expires_at"`
 }
 
 var (
@@ -74,12 +74,12 @@ func (h *Handler) handleWebAuthnPasswordlessBegin(w http.ResponseWriter, r *http
 	}
 
 	writeJSON(w, http.StatusOK, map[string]any{
-		"session_id":   sessionID,
-		"challenge":    challenge,
-		"rp_id":        "ggid.dev",
-		"timeout":      300000, // 5 min in ms
+		"session_id":        sessionID,
+		"challenge":         challenge,
+		"rp_id":             "ggid.dev",
+		"timeout":           300000, // 5 min in ms
 		"user_verification": "required",
-		"expires_at":   sess.ExpiresAt.Format(time.RFC3339),
+		"expires_at":        sess.ExpiresAt.Format(time.RFC3339),
 	})
 }
 
@@ -149,14 +149,10 @@ func (h *Handler) handleWebAuthnPasswordlessFinish(w http.ResponseWriter, r *htt
 		return
 	}
 
-	// In production: verify WebAuthn assertion via webauthn.FinishLogin
-	// For now, return success with a simulated JWT
-	writeJSON(w, http.StatusOK, map[string]any{
-		"status":     "authenticated",
-		"username":   sess.Username,
-		"tenant_id":  sess.TenantID,
-		"method":     "webauthn_passwordless",
-		"token_type": "Bearer",
-		"expires_in": 3600,
-	})
+	// SECURITY (P0-5): WebAuthn assertion verification is NOT implemented.
+	// Previously this returned success with a JWT after only checking the
+	// session — a complete authentication bypass. Until assertion
+	// verification (webauthn.FinishLogin) is implemented, this endpoint
+	// MUST fail-closed. Returning 501 to prevent any authentication.
+	writeError(w, http.StatusNotImplemented, "webauthn passwordless login is not yet implemented")
 }
