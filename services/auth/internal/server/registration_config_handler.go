@@ -111,6 +111,15 @@ func (h *Handler) SetRegistrationConfigRepo(repo *registrationConfigRepo) {
 // PUT  /api/v1/auth/registration/config
 // POST /api/v1/auth/registration/config  (alias for PUT)
 func (h *Handler) handleRegistrationConfig(w http.ResponseWriter, r *http.Request) {
+	// SECURITY (R42 P1-3): admin scope required for registration config
+	// management (prevents disabling email verification, tampering with
+	// domain allowlist, or setting high-privilege default_role).
+	// Defense-in-depth: gateway defaultAdminPrefixes also enforces this.
+	if !hasAdminScope(r) {
+		writeError(w, http.StatusForbidden, "admin scope required")
+		return
+	}
+
 	switch r.Method {
 	case http.MethodGet:
 		h.getRegistrationConfig(w, r)

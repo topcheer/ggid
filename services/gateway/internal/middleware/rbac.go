@@ -52,6 +52,7 @@ var defaultAdminPrefixes = []string{
 	"/api/v1/auth/mfa/admin/",           // Admin MFA management for other users
 	"/api/v1/auth/credentials/",         // Credential vault
 	"/api/v1/auth/credential-stuffing/", // Credential stuffing config
+	"/api/v1/auth/registration/config",  // Registration config management (R42 P1-3)
 	"/api/v1/mdm/devices",               // MDM device management
 	"/api/v1/identity/devices/",         // Device posture management
 	// Paths rewritten to /api/v1/audit/* before proxying — must be
