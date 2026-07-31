@@ -2511,11 +2511,10 @@ func injectTenantContext(r *http.Request) (context.Context, error) {
 	if tenantIDStr == "" {
 		tenantIDStr = r.URL.Query().Get("tenant_id")
 	}
-	// Fallback to default tenant for DCR flows where MCP clients
-	// don't send X-Tenant-ID header (RFC 7591 DCR is tenant-agnostic).
-	if tenantIDStr == "" {
-		tenantIDStr = os.Getenv("DEFAULT_TENANT_ID")
-	}
+	// SECURITY (R26 P0): removed DEFAULT_TENANT_ID env fallback —
+	// it allowed DCR clients without X-Tenant-ID to land in the
+	// default tenant, bypassing isolation. Callers must provide
+	// X-Tenant-ID header or tenant_id query param.
 	tenantID, err := uuid.Parse(tenantIDStr)
 	if err != nil {
 		return nil, fmt.Errorf("invalid tenant_id: %s", tenantIDStr)

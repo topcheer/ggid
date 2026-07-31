@@ -189,19 +189,12 @@ func domainToPbClient(c *domain.OAuthClient) *oauthv1.OAuthClient {
 	}
 }
 
-func tenantIDFromContext(_ context.Context) uuid.UUID {
-	// Default tenant for gRPC calls without explicit tenant context.
-	// Configured via GGID_TENANT_ID (preferred) or DEFAULT_TENANT_ID;
-	// uuid.Nil when unset — never a hardcoded tenant UUID.
-	tenantStr := os.Getenv("GGID_TENANT_ID")
-	if tenantStr == "" {
-		tenantStr = os.Getenv("DEFAULT_TENANT_ID")
-	}
-	id, err := uuid.Parse(tenantStr)
-	if err != nil {
-		return uuid.Nil
-	}
-	return id
+func tenantIDFromContext(ctx context.Context) uuid.UUID {
+	// SECURITY (R26 P0): removed env var fallback — gRPC callers must
+	// provide tenant via metadata. Gateway always sets X-Tenant-ID from
+	// JWT context; absence means unauthenticated/internal caller that
+	// should be rejected by the handler.
+	return uuid.Nil
 }
 
 // startGRPCServer starts a gRPC server for the OAuth service on the given address.
