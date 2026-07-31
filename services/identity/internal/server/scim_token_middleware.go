@@ -38,12 +38,18 @@ func (h *HTTPHandler) scimTokenAuth(next http.Handler) http.Handler {
 			// by the gateway) is an accepted alternative credential —
 			// console/SDK use JWTs, external IdPs use SCIM tokens.
 			if isAlias && r.Header.Get("X-Tenant-ID") != "" {
-				scopes := r.Header.Get("X-Scopes")
-				for _, s := range strings.Split(scopes, ",") {
-					s = strings.TrimSpace(s)
-					if s == "platform:admin" || s == "tenant:admin" {
-						next.ServeHTTP(w, r)
-						return
+				// SECURITY: Only accept X-Scopes from gateway-verified requests.
+				// Gateway strips and re-sets X-Scopes from signature-verified JWT.
+				// Require GGID_INTERNAL_SECRET to prevent direct-to-service bypass.
+				internalSecret := r.Header.Get("X-Internal-Secret")
+				if internalSecret != "" && internalSecret == os.Getenv("GGID_INTERNAL_SECRET") {
+					scopes := r.Header.Get("X-Scopes")
+					for _, s := range strings.Split(scopes, ",") {
+						s = strings.TrimSpace(s)
+						if s == "platform:admin" || s == "tenant:admin" {
+							next.ServeHTTP(w, r)
+							return
+						}
 					}
 				}
 			}

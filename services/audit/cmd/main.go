@@ -19,6 +19,7 @@ import (
 
 	"github.com/ggid/ggid/pkg/audit"
 	"github.com/ggid/ggid/pkg/middleware"
+	"github.com/ggid/ggid/pkg/shutdown"
 	"github.com/ggid/ggid/services/audit/internal/alerting"
 	"github.com/ggid/ggid/services/audit/internal/config"
 	"github.com/ggid/ggid/services/audit/internal/consumer"
@@ -29,7 +30,6 @@ import (
 	"github.com/ggid/ggid/services/audit/internal/repository"
 	httpserver "github.com/ggid/ggid/services/audit/internal/server"
 	"github.com/ggid/ggid/services/audit/internal/service"
-	"github.com/ggid/ggid/pkg/shutdown"
 	"github.com/nats-io/nats.go"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/redis/go-redis/v9"
@@ -76,13 +76,19 @@ func main() {
 	defer db.Close()
 	log.Println("Audit Service: database connected")
 
-	// Initialize hash chain for tamper-evident audit events
+	// Initialize hash chain for tamper-evident audit events.
+	// In production (GGID_ENV != "test" and != "dev"), a missing secret is fatal —
+	// audit events without hash chain have no legal/compliance integrity guarantee.
 	if cfg.HashChainSecret != "" {
-			domain.SetHashChainSecret([]byte(cfg.HashChainSecret))
+		domain.SetHashChainSecret([]byte(cfg.HashChainSecret))
 		log.Println("Audit Service: hash chain enabled")
 	} else {
-		log.Println("Audit Service: ERROR — AUDIT_HASH_CHAIN_SECRET not set, hash chain disabled")
-		log.Println("Audit Service: WARNING — audit events will NOT be tamper-evident. Set AUDIT_HASH_CHAIN_SECRET in production.")
+		env := os.Getenv("GGID_ENV")
+		if env == "test" || env == "dev" {
+			log.Println("Audit Service: WARNING — AUDIT_HASH_CHAIN_SECRET not set, hash chain disabled (acceptable in test/dev)")
+		} else {
+			log.Fatalf("Audit Service: FATAL — AUDIT_HASH_CHAIN_SECRET not set in production. Audit events cannot be tamper-evident. Set AUDIT_HASH_CHAIN_SECRET or GGID_ENV=test/dev to override.")
+		}
 	}
 
 	// Initialize repository and service
@@ -215,7 +221,7 @@ func main() {
 		go collector.Run(ctx, 10*time.Minute)
 
 		log.Println("Audit Service: ITDR + Threat Intel API enabled")
-}
+	}
 
 	httpAPI.RegisterRoutes(mux)
 
