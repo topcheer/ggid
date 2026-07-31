@@ -1434,14 +1434,21 @@ func (h *HTTPHandler) handleExportUsers(w http.ResponseWriter, r *http.Request) 
 		w.Header().Set("Content-Disposition", `attachment; filename="users_export.csv"`)
 		wr := csv.NewWriter(w)
 		wr.Write([]string{"id", "username", "email", "phone", "status", "display_name", "created_at"})
+		sanitize := func(s string) string {
+			trimmed := strings.TrimLeft(s, " \t\r\n\x00")
+			if len(trimmed) > 0 && (trimmed[0] == '=' || trimmed[0] == '+' || trimmed[0] == '-' || trimmed[0] == '@') {
+				return "'" + s
+			}
+			return s
+		}
 		for _, u := range users {
 			wr.Write([]string{
 				u.ID.String(),
-				u.Username,
-				u.Email,
-				u.Phone,
+				sanitize(u.Username),
+				sanitize(u.Email),
+				sanitize(u.Phone),
 				string(u.Status),
-				u.DisplayName,
+				sanitize(u.DisplayName),
 				u.CreatedAt.Format(time.RFC3339),
 			})
 		}
