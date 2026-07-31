@@ -36,6 +36,31 @@ type WebhookConfig struct {
 	Secret  string // HMAC-SHA256 signing secret for payload verification
 }
 
+// NewWebhookConfigFromEnv creates a WebhookConfig from environment variables.
+// Reads NOTIFICATION_WEBHOOK_URL, NOTIFICATION_WEBHOOK_SECRET, and
+// NOTIFICATION_WEBHOOK_TIMEOUT (seconds). Returns nil if no URL is set.
+// SECURITY: logs a warning if URL is set but Secret is empty in production.
+func NewWebhookConfigFromEnv() *WebhookConfig {
+	url := os.Getenv("NOTIFICATION_WEBHOOK_URL")
+	if url == "" {
+		return nil
+	}
+	cfg := &WebhookConfig{
+		URL:    url,
+		Secret: os.Getenv("NOTIFICATION_WEBHOOK_SECRET"),
+	}
+	if secs := os.Getenv("NOTIFICATION_WEBHOOK_TIMEOUT"); secs != "" {
+		if d, err := time.ParseDuration(secs + "s"); err == nil {
+			cfg.Timeout = d
+		}
+	}
+	env := os.Getenv("GGID_ENV")
+	if cfg.Secret == "" && env != "test" && env != "dev" {
+		slog.Warn("NOTIFICATION_WEBHOOK_SECRET not set — webhook payloads will be unsigned (unauthenticated)")
+	}
+	return cfg
+}
+
 // Notification represents a notification to be dispatched.
 type Notification struct {
 	Type     string                 `json:"type"` // e.g., "password_reset", "user_registered"
