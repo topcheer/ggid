@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log/slog"
+	"net"
 	"net/http"
 	"sync"
 	"time"
@@ -16,14 +17,14 @@ import (
 
 // Target represents a downstream SCIM endpoint.
 type Target struct {
-	ID          string `json:"id"`
-	TenantID    string `json:"tenant_id"`
-	Name        string `json:"name"`
-	Endpoint    string `json:"endpoint"`     // e.g. https://scim.aws.amazon.com/...
-	AuthTokenRef string `json:"auth_token_ref"` // vault://scim/aws
-	Mapping     map[string]string `json:"mapping,omitempty"` // GGID attr → SCIM attr
-	Enabled     bool   `json:"enabled"`
-	CreatedAt   time.Time `json:"created_at"`
+	ID           string            `json:"id"`
+	TenantID     string            `json:"tenant_id"`
+	Name         string            `json:"name"`
+	Endpoint     string            `json:"endpoint"`          // e.g. https://scim.aws.amazon.com/...
+	AuthTokenRef string            `json:"auth_token_ref"`    // vault://scim/aws
+	Mapping      map[string]string `json:"mapping,omitempty"` // GGID attr → SCIM attr
+	Enabled      bool              `json:"enabled"`
+	CreatedAt    time.Time         `json:"created_at"`
 }
 
 // SCIMUser is the SCIM 2.0 user resource (RFC 7643).
@@ -33,7 +34,7 @@ type SCIMUser struct {
 	DisplayName string      `json:"displayName,omitempty"`
 	Active      bool        `json:"active"`
 	Emails      []SCIMEmail `json:"emails,omitempty"`
- Groups     []SCIMGroup  `json:"groups,omitempty"`
+	Groups      []SCIMGroup `json:"groups,omitempty"`
 }
 
 type SCIMEmail struct {
@@ -51,34 +52,34 @@ type SCIMGroup struct {
 type SCIMOperation string
 
 const (
-	OpCreateUser       SCIMOperation = "create_user"
-	OpUpdateUser       SCIMOperation = "update_user"
-	OpDisableUser      SCIMOperation = "disable_user"
-	OpDeleteUser       SCIMOperation = "delete_user"
-	OpAddToGroup       SCIMOperation = "add_to_group"
-	OpRemoveFromGroup  SCIMOperation = "remove_from_group"
+	OpCreateUser      SCIMOperation = "create_user"
+	OpUpdateUser      SCIMOperation = "update_user"
+	OpDisableUser     SCIMOperation = "disable_user"
+	OpDeleteUser      SCIMOperation = "delete_user"
+	OpAddToGroup      SCIMOperation = "add_to_group"
+	OpRemoveFromGroup SCIMOperation = "remove_from_group"
 )
 
 // GGIDUser is the GGID user representation for mapping.
 type GGIDUser struct {
-	ID          string `json:"id"`
-	UserName    string `json:"user_name"`
-	DisplayName string `json:"display_name"`
-	Email       string `json:"email"`
-	Active      bool   `json:"active"`
+	ID          string   `json:"id"`
+	UserName    string   `json:"user_name"`
+	DisplayName string   `json:"display_name"`
+	Email       string   `json:"email"`
+	Active      bool     `json:"active"`
 	Groups      []string `json:"groups"`
 }
 
 // SyncLog records a single SCIM sync operation.
 type SyncLog struct {
-	ID          string        `json:"id"`
-	Target      string        `json:"target"`
-	Operation   SCIMOperation `json:"operation"`
-	GGIDUserID  string        `json:"ggid_user_id"`
-	SCIMUserID  string        `json:"scim_user_id,omitempty"`
-	Status      string        `json:"status"` // ok | failed | retried
-	Error       string        `json:"error,omitempty"`
-	ExecutedAt  time.Time     `json:"executed_at"`
+	ID         string        `json:"id"`
+	Target     string        `json:"target"`
+	Operation  SCIMOperation `json:"operation"`
+	GGIDUserID string        `json:"ggid_user_id"`
+	SCIMUserID string        `json:"scim_user_id,omitempty"`
+	Status     string        `json:"status"` // ok | failed | retried
+	Error      string        `json:"error,omitempty"`
+	ExecutedAt time.Time     `json:"executed_at"`
 }
 
 // Client sends SCIM 2.0 requests to downstream apps.
@@ -90,13 +91,37 @@ type Client struct {
 	breakers   map[string]*circuitBreaker // target name → breaker
 }
 
+// ssrfSafeDialContext blocks connections to private/loopback/link-local IPs.
+func ssrfSafeDialContext(ctx context.Context, network, addr string) (net.Conn, error) {
+	host, port, _ := net.SplitHostPort(addr)
+	if host == "localhost" || host == "127.0.0.1" || host == "::1" || host == "0.0.0.0" {
+		return nil, fmt.Errorf("SSRF blocked: localhost")
+	}
+	ips, err := net.LookupIP(host)
+	if err != nil {
+		return nil, err
+	}
+	for _, ip := range ips {
+		if ip.IsLoopback() || ip.IsPrivate() || ip.IsLinkLocalUnicast() || ip.IsLinkLocalMulticast() {
+			return nil, fmt.Errorf("SSRF blocked: %s", ip)
+		}
+	}
+	dialer := &net.Dialer{}
+	return dialer.DialContext(ctx, network, net.JoinHostPort(ips[0].String(), port))
+}
+
 // NewClient creates a SCIM outbound client.
 func NewClient(pool *pgxpool.Pool) *Client {
 	return &Client{
-		pool:       pool,
-		httpClient: &http.Client{Timeout: 15 * time.Second},
-		targets:    make(map[string]*Target),
-		breakers:   make(map[string]*circuitBreaker),
+		pool: pool,
+		httpClient: &http.Client{
+			Timeout: 15 * time.Second,
+			Transport: &http.Transport{
+				DialContext: ssrfSafeDialContext,
+			},
+		},
+		targets:  make(map[string]*Target),
+		breakers: make(map[string]*circuitBreaker),
 	}
 }
 
@@ -105,7 +130,7 @@ func (c *Client) EnsureSchema(ctx context.Context) error {
 	if c.pool == nil {
 		return nil
 	}
-		_, err := c.pool.Exec(ctx, `
+	_, err := c.pool.Exec(ctx, `
 		CREATE TABLE IF NOT EXISTS scim_targets (
 			id TEXT PRIMARY KEY,
 			tenant_id UUID NOT NULL,
@@ -394,12 +419,12 @@ func (c *Client) persistLog(ctx context.Context, log *SyncLog) {
 // --- Circuit Breaker ---
 
 type circuitBreaker struct {
-	mu             sync.Mutex
-	failures       int
-	threshold      int
-	resetTimeout   time.Duration
+	mu            sync.Mutex
+	failures      int
+	threshold     int
+	resetTimeout  time.Duration
 	lastFailureAt time.Time
-	state          string // closed | open | half-open
+	state         string // closed | open | half-open
 }
 
 func newCircuitBreaker(threshold int, resetTimeout time.Duration) *circuitBreaker {

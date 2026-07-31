@@ -1,9 +1,11 @@
 package service
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
+	"net"
 	"net/http"
 	"strings"
 	"sync"
@@ -11,18 +13,18 @@ import (
 )
 
 type DIDDocument struct {
-	ID              string         `json:"id"`
-	AlsoKnownAs     []string       `json:"alsoKnownAs,omitempty"`
-	VerificationMethod []VMMethod  `json:"verificationMethod"`
-	Services        []DIDService   `json:"service,omitempty"`
-	Raw             map[string]any `json:"raw,omitempty"`
-	ResolvedAt      time.Time      `json:"resolvedAt"`
+	ID                 string         `json:"id"`
+	AlsoKnownAs        []string       `json:"alsoKnownAs,omitempty"`
+	VerificationMethod []VMMethod     `json:"verificationMethod"`
+	Services           []DIDService   `json:"service,omitempty"`
+	Raw                map[string]any `json:"raw,omitempty"`
+	ResolvedAt         time.Time      `json:"resolvedAt"`
 }
 
 type VMMethod struct {
-	ID           string `json:"id"`
-	Type         string `json:"type"`
-	Controller   string `json:"controller"`
+	ID           string            `json:"id"`
+	Type         string            `json:"type"`
+	Controller   string            `json:"controller"`
 	PublicKeyJwk map[string]string `json:"publicKeyJwk,omitempty"`
 }
 
@@ -86,7 +88,28 @@ func (r *DIDResolver) ResolveDID(did string) (*DIDDocument, error) {
 func (r *DIDResolver) resolveDIDWeb(suffix string) (*DIDDocument, error) {
 	domain := strings.ReplaceAll(suffix, "/", "/.well-known/")
 	url := fmt.Sprintf("https://%s/.well-known/did.json", strings.SplitN(domain, "/", 2)[0])
-	var didHTTPClient = &http.Client{Timeout: 10 * time.Second}
+	// SECURITY (R210): SSRF protection — block private/loopback/link-local IPs.
+	dialer := &net.Dialer{Timeout: 5 * time.Second}
+	transport := &http.Transport{
+		DialContext: func(ctx context.Context, network, addr string) (net.Conn, error) {
+			host, port, _ := net.SplitHostPort(addr)
+			// Block localhost and private IPs.
+			if host == "localhost" || host == "127.0.0.1" || host == "::1" || host == "0.0.0.0" {
+				return nil, fmt.Errorf("did:web SSRF blocked: localhost")
+			}
+			ips, err := net.LookupIP(host)
+			if err != nil {
+				return nil, err
+			}
+			for _, ip := range ips {
+				if ip.IsLoopback() || ip.IsPrivate() || ip.IsLinkLocalUnicast() || ip.IsLinkLocalMulticast() {
+					return nil, fmt.Errorf("did:web SSRF blocked: %s", ip)
+				}
+			}
+			return dialer.DialContext(ctx, network, net.JoinHostPort(ips[0].String(), port))
+		},
+	}
+	didHTTPClient := &http.Client{Timeout: 10 * time.Second, Transport: transport}
 
 	resp, err := didHTTPClient.Get(url)
 	if err != nil {
@@ -113,7 +136,7 @@ func (r *DIDResolver) resolveDIDWeb(suffix string) (*DIDDocument, error) {
 
 func (r *DIDResolver) resolveDIDKey(suffix string) (*DIDDocument, error) {
 	return &DIDDocument{
-		ID:         fmt.Sprintf("did:key:%s", suffix),
+		ID: fmt.Sprintf("did:key:%s", suffix),
 		VerificationMethod: []VMMethod{
 			{ID: fmt.Sprintf("did:key:%s#%s", suffix, suffix[:8]), Type: "Ed25519VerificationKey2020", Controller: fmt.Sprintf("did:key:%s", suffix)},
 		},
@@ -123,7 +146,7 @@ func (r *DIDResolver) resolveDIDKey(suffix string) (*DIDDocument, error) {
 
 func (r *DIDResolver) resolveDIDIon(suffix string) (*DIDDocument, error) {
 	return &DIDDocument{
-		ID:         fmt.Sprintf("did:ion:%s", suffix),
+		ID: fmt.Sprintf("did:ion:%s", suffix),
 		VerificationMethod: []VMMethod{
 			{ID: fmt.Sprintf("did:ion:%s#%s", suffix, suffix[:8]), Type: "JsonWebKey2020", Controller: fmt.Sprintf("did:ion:%s", suffix)},
 		},
