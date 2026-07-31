@@ -61,9 +61,11 @@ var defaultAdminPrefixes = []string{
 	"/api/v1/exports",          // → /api/v1/audit/exports
 	"/api/v1/providers/config", // Provider config CRUD (admin only; /status stays public)
 	// Additional admin paths (merged from former isAdminOnlyPath list — R139 fix)
-	"/api/v1/api-keys",           // API key management
-	"/api/v1/access-keys",        // Access key management
-	"/api/v1/identity/dashboard", // Identity dashboard (admin metrics)
+	"/api/v1/api-keys",                   // API key management
+	"/api/v1/access-keys",                // Access key management
+	"/api/v1/identity/dashboard",         // Identity dashboard (admin metrics)
+	"/api/v1/auth/sessions/force-logout", // Admin-only: force logout any user
+	"/api/v1/auth/sessions/limit",        // Admin-only: enforce session limits
 }
 
 // SelfServicePaths are /users/me sub-paths exempt from admin checks.
