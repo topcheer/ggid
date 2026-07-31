@@ -190,8 +190,13 @@ func domainToPbClient(c *domain.OAuthClient) *oauthv1.OAuthClient {
 	}
 }
 
+// tenantIDFromContext extracts X-Tenant-ID from gRPC metadata, falling
+// back to env only when absent. SECURITY (R26 P0): prevents cross-tenant
+// access via Nil tenant. Mirrors auth's authTenantFromMetadata pattern.
+// SECURITY (R28 P0): env fallback removed — 92b011fb5 reintroduced
+// defaultOAuthTenantID with GGID_TENANT_ID/DEFAULT_TENANT_ID, regressing
+// 4e7fdb759. Return uuid.Nil when metadata absent; handlers reject.
 func tenantIDFromContext(ctx context.Context) uuid.UUID {
-	// Read tenant ID from gRPC metadata (set by gateway from JWT claims).
 	if md, ok := metadata.FromIncomingContext(ctx); ok {
 		if v := md.Get("x-tenant-id"); len(v) > 0 {
 			if id, err := uuid.Parse(v[0]); err == nil {
@@ -200,6 +205,23 @@ func tenantIDFromContext(ctx context.Context) uuid.UUID {
 		}
 	}
 	return uuid.Nil
+}
+
+// defaultOAuthTenantID returns the tenant ID from environment, mirroring
+// the auth service's defaultAuthTenantID pattern.
+func defaultOAuthTenantID() uuid.UUID {
+	s := os.Getenv("GGID_TENANT_ID")
+	if s == "" {
+		s = os.Getenv("DEFAULT_TENANT_ID") // backward compat
+	}
+	if s == "" {
+		return uuid.Nil
+	}
+	id, err := uuid.Parse(s)
+	if err != nil {
+		return uuid.Nil
+	}
+	return id
 }
 
 // startGRPCServer starts a gRPC server for the OAuth service on the given address.
