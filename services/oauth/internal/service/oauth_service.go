@@ -1163,6 +1163,24 @@ func (s *OAuthService) exchangeTokenInternal(ctx context.Context, req *RFC8693Ex
 		return nil, fmt.Errorf("invalid subject_token: %w", err)
 	}
 
+	// 1a. SECURITY (R48 B1): Reject exchanged subject tokens that have been
+	// revoked or are on the JTI blocklist. Without this, a revoked/expired
+	// token could still be exchanged, bypassing revocation.
+	if subjectJTI, _ := subjectClaims["jti"].(string); subjectJTI != "" && s.pool != nil {
+		var revoked bool
+		ctx, cancel := context.WithTimeout(ctx, 3*time.Second)
+		err = s.pool.QueryRow(ctx,
+			`SELECT EXISTS(SELECT 1 FROM sessions WHERE jti = $1 AND revoked_at IS NOT NULL)`,
+			subjectJTI).Scan(&revoked)
+		cancel()
+		if err != nil {
+			return nil, fmt.Errorf("subject token revocation check failed")
+		}
+		if revoked {
+			return nil, fmt.Errorf("subject token has been revoked")
+		}
+	}
+
 	// 1a. Reject ID tokens used as subject_token (nonce is an ID token indicator).
 	if _, hasNonce := subjectClaims["nonce"]; hasNonce {
 		return nil, fmt.Errorf("ID tokens cannot be used as subject_token")
