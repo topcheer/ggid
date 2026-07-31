@@ -6,6 +6,8 @@ import (
 	"encoding/json"
 	"net/http"
 	"strings"
+
+	"github.com/golang-jwt/jwt/v5"
 )
 
 // jwtClaimsCtxKey is the context key for extracted JWT claims.
@@ -17,17 +19,25 @@ const claimsKey jwtClaimsCtxKey = "jwt_claims"
 type JWTCClaims struct {
 	Subject     string   `json:"sub"`
 	TenantID    string   `json:"tenant_id"`
-	Scopes      []string `json:"scopes"`         // OAuth scopes (openid, profile, email)
-	Permissions []string `json:"permissions"`   // Fine-grained permissions (inventory:read)
-	Roles       []string `json:"roles"`         // Role names (ERP Manager)
+	Scopes      []string `json:"scopes"`      // OAuth scopes (openid, profile, email)
+	Permissions []string `json:"permissions"` // Fine-grained permissions (inventory:read)
+	Roles       []string `json:"roles"`       // Role names (ERP Manager)
 	Email       string   `json:"email"`
 	Issuer      string   `json:"iss"`
 }
 
-// ExtractJWTClaims parses the Bearer JWT from Authorization header
-// without signature verification (the JWT middleware already verified it).
-// Returns empty struct if no JWT is present.
+// ExtractJWTClaims retrieves JWT claims for routing decisions.
+// SECURITY: Prefers context claims (set by JWTAuth after signature verification)
+// over raw header parsing. Falls back to unsigned header parsing ONLY when the
+// JWTAuth middleware has not run (e.g., legacy paths without JWTAuth). This
+// prevents forged JWT injection on public paths where JWTAuth(required=false)
+// passes through invalid tokens without setting context claims.
 func ExtractJWTClaims(r *http.Request) JWTCClaims {
+	// Priority 1: Use signature-verified claims from JWTAuth middleware context.
+	if c, ok := r.Context().Value(claimsKey).(JWTCClaims); ok && c.Subject != "" {
+		return c
+	}
+	// Priority 2: Parse from Authorization header (unsigned — for legacy paths).
 	authHeader := r.Header.Get("Authorization")
 	if authHeader == "" {
 		return JWTCClaims{}
@@ -104,6 +114,55 @@ func ExtractJWTClaims(r *http.Request) JWTCClaims {
 		}
 	}
 	return claims
+}
+
+// buildVerifiedClaims constructs JWTCClaims from jwt.MapClaims (already signature-verified).
+func buildVerifiedClaims(claims jwt.MapClaims) JWTCClaims {
+	c := JWTCClaims{}
+	if v, ok := claims["sub"].(string); ok {
+		c.Subject = v
+	}
+	if v, ok := claims["tenant_id"].(string); ok {
+		c.TenantID = v
+	}
+	if v, ok := claims["email"].(string); ok {
+		c.Email = v
+	}
+	if v, ok := claims["iss"].(string); ok {
+		c.Issuer = v
+	}
+	switch v := claims["scope"].(type) {
+	case string:
+		c.Scopes = strings.Fields(v)
+	case []any:
+		for _, s := range v {
+			if str, ok := s.(string); ok {
+				c.Scopes = append(c.Scopes, str)
+			}
+		}
+	}
+	if v, ok := claims["scopes"].([]any); ok {
+		for _, s := range v {
+			if str, ok := s.(string); ok {
+				c.Scopes = append(c.Scopes, str)
+			}
+		}
+	}
+	if v, ok := claims["permissions"].([]any); ok {
+		for _, p := range v {
+			if str, ok := p.(string); ok {
+				c.Permissions = append(c.Permissions, str)
+			}
+		}
+	}
+	if v, ok := claims["roles"].([]any); ok {
+		for _, r := range v {
+			if str, ok := r.(string); ok {
+				c.Roles = append(c.Roles, str)
+			}
+		}
+	}
+	return c
 }
 
 // ClaimsFromContext retrieves JWT claims from context.

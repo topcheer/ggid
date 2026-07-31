@@ -185,6 +185,10 @@ func CORSWithConfig(cfg CORSConfig) func(http.Handler) http.Handler {
 					if subtle.ConstantTimeCompare([]byte(origin), []byte(allowed)) == 1 {
 						w.Header().Set("Access-Control-Allow-Origin", origin)
 						w.Header().Set("Vary", "Origin")
+						// Only set credentials for explicit origin matches (not wildcard).
+						if cfg.AllowCredentials {
+							w.Header().Set("Access-Control-Allow-Credentials", "true")
+						}
 						break
 					}
 				}
@@ -194,10 +198,6 @@ func CORSWithConfig(cfg CORSConfig) func(http.Handler) http.Handler {
 			w.Header().Set("Access-Control-Allow-Headers", "Authorization, Content-Type, X-Tenant-ID, X-Request-ID, X-API-Key")
 			w.Header().Set("Access-Control-Expose-Headers", "X-Request-ID, X-Tenant-ID")
 			w.Header().Set("Access-Control-Max-Age", "3600")
-
-			if cfg.AllowCredentials {
-				w.Header().Set("Access-Control-Allow-Credentials", "true")
-			}
 
 			if r.Method == http.MethodOptions {
 				w.WriteHeader(http.StatusNoContent)
@@ -799,6 +799,10 @@ func JWTAuth(jwks *JWKSClient, required bool, issuer, audience string) func(http
 					ctx = context.WithValue(ctx, ImpByKey, impBy)
 				}
 			}
+			// Store verified claims struct so downstream ExtractJWTClaims
+			// uses signature-verified values, not raw header re-parse.
+			verifiedClaims := buildVerifiedClaims(claims)
+			ctx = context.WithValue(ctx, claimsKey, verifiedClaims)
 			next.ServeHTTP(w, r.WithContext(ctx))
 		})
 	}
