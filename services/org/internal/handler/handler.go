@@ -14,9 +14,41 @@ import (
 	"github.com/ggid/ggid/services/org/internal/service"
 	"github.com/google/uuid"
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
+
+// tenantFromMetadata extracts X-Tenant-ID from gRPC incoming metadata.
+func tenantFromMetadata(ctx context.Context) string {
+	if md, ok := metadata.FromIncomingContext(ctx); ok {
+		if v := md.Get("x-tenant-id"); len(v) > 0 {
+			return v[0]
+		}
+	}
+	return ""
+}
+
+// validateTenantFromMetadata cross-checks the body-supplied tenant_id against
+// the gRPC metadata tenant. Fail-closed on mismatch; passthrough if metadata
+// is absent (backward compatibility).
+func validateTenantFromMetadata(ctx context.Context, tenantID string) error {
+	md := tenantFromMetadata(ctx)
+	if md != "" && md != tenantID {
+		return status.Error(codes.PermissionDenied, "tenant mismatch")
+	}
+	return nil
+}
+
+// validateObjectTenant checks that a fetched object's tenant matches the
+// caller's metadata tenant (IDOR guard for Get/Update/Delete by id).
+func validateObjectTenant(ctx context.Context, objTenant uuid.UUID) error {
+	md := tenantFromMetadata(ctx)
+	if md != "" && md != objTenant.String() {
+		return status.Error(codes.PermissionDenied, "tenant mismatch")
+	}
+	return nil
+}
 
 // toGRPCError converts a GGIDError to a gRPC status error.
 func toGRPCError(err error) error {
@@ -179,6 +211,9 @@ func (h *OrgHandler) CreateOrganization(ctx context.Context, req *pb.CreateOrgRe
 	if err != nil {
 		return nil, err
 	}
+	if err := validateTenantFromMetadata(ctx, req.GetTenantId()); err != nil {
+		return nil, err
+	}
 	parentID, err := parseOptionalUUID(req.GetParentId())
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, "invalid parent_id")
@@ -208,12 +243,18 @@ func (h *OrgHandler) GetOrganization(ctx context.Context, req *pb.GetOrgRequest)
 	if org == nil {
 		return nil, status.Error(codes.NotFound, "organization not found")
 	}
+	if err := validateObjectTenant(ctx, org.TenantID); err != nil {
+		return nil, err
+	}
 	return orgToProto(org), nil
 }
 
 func (h *OrgHandler) ListOrganizations(ctx context.Context, req *pb.ListOrgsRequest) (*pb.ListOrgsResponse, error) {
 	tenantID, err := parseUUID(req.GetTenantId(), "tenant_id")
 	if err != nil {
+		return nil, err
+	}
+	if err := validateTenantFromMetadata(ctx, req.GetTenantId()); err != nil {
 		return nil, err
 	}
 	page := parsePageToken(req.GetPageToken())
@@ -238,6 +279,9 @@ func (h *OrgHandler) GetSubTree(ctx context.Context, req *pb.GetSubTreeRequest) 
 	if err != nil {
 		return nil, err
 	}
+	if err := validateTenantFromMetadata(ctx, req.GetTenantId()); err != nil {
+		return nil, err
+	}
 	rootID, err := parseUUID(req.GetRootId(), "root_id")
 	if err != nil {
 		return nil, err
@@ -258,7 +302,17 @@ func (h *OrgHandler) UpdateOrganization(ctx context.Context, req *pb.UpdateOrgRe
 	if err != nil {
 		return nil, err
 	}
-	org := &domain.Organization{ID: id}
+	existing, err := h.svc.Get(ctx, id)
+	if err != nil {
+		return nil, toGRPCError(err)
+	}
+	if existing == nil {
+		return nil, status.Error(codes.NotFound, "organization not found")
+	}
+	if err := validateObjectTenant(ctx, existing.TenantID); err != nil {
+		return nil, err
+	}
+	org := &domain.Organization{ID: id, TenantID: existing.TenantID}
 	if req.Name != nil {
 		org.Name = *req.Name
 	}
@@ -275,6 +329,16 @@ func (h *OrgHandler) UpdateOrganization(ctx context.Context, req *pb.UpdateOrgRe
 func (h *OrgHandler) DeleteOrganization(ctx context.Context, req *pb.DeleteOrgRequest) (*pb.DeleteOrgResponse, error) {
 	id, err := parseUUID(req.GetId(), "id")
 	if err != nil {
+		return nil, err
+	}
+	existing, err := h.svc.Get(ctx, id)
+	if err != nil {
+		return nil, toGRPCError(err)
+	}
+	if existing == nil {
+		return nil, status.Error(codes.NotFound, "organization not found")
+	}
+	if err := validateObjectTenant(ctx, existing.TenantID); err != nil {
 		return nil, err
 	}
 	if err := h.svc.Delete(ctx, id); err != nil {
@@ -533,6 +597,9 @@ func (h *MembershipHandler) InviteMember(ctx context.Context, req *pb.InviteMemb
 	}
 	tenantID, err := parseUUID(req.GetTenantId(), "tenant_id")
 	if err != nil {
+		return nil, err
+	}
+	if err := validateTenantFromMetadata(ctx, req.GetTenantId()); err != nil {
 		return nil, err
 	}
 	orgID, err := parseUUID(req.GetOrgId(), "org_id")
