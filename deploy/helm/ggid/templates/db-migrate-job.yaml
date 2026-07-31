@@ -38,7 +38,7 @@ spec:
           echo "Running GGID database migrations..."
           for f in /migrations/*.sql; do
             echo "Applying $(basename $f)..."
-            psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -q -f "$f" || echo "  (skipped, may already exist)"
+            psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -q -f "$f"
           done
           echo "Migrations complete."
         volumeMounts:

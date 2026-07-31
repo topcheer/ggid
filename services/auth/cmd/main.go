@@ -62,9 +62,16 @@ func main() {
 
 	// 2. Connect to Redis
 	rdb := redis.NewClient(&redis.Options{
-		Addr:     cfg.Redis.Addr,
-		Password: cfg.Redis.Password,
-		DB:       cfg.Redis.DB,
+		Addr:         cfg.Redis.Addr,
+		Password:     cfg.Redis.Password,
+		DB:           cfg.Redis.DB,
+		PoolSize:     20,
+		MinIdleConns: 5,
+		MaxRetries:   3,
+		DialTimeout:  5 * time.Second,
+		ReadTimeout:  3 * time.Second,
+		WriteTimeout: 3 * time.Second,
+		PoolTimeout:  4 * time.Second,
 	})
 	if err := rdb.Ping(ctx).Err(); err != nil {
 		log.Fatalf("redis ping failed: %v", err)

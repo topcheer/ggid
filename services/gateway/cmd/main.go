@@ -91,7 +91,16 @@ func main() {
 	if redisAddr == "" {
 		redisAddr = "localhost:6379"
 	}
-	rdb := redis.NewClient(&redis.Options{Addr: redisAddr})
+	rdb := redis.NewClient(&redis.Options{
+		Addr:         redisAddr,
+		PoolSize:     20,
+		MinIdleConns: 5,
+		MaxRetries:   3,
+		DialTimeout:  5 * time.Second,
+		ReadTimeout:  3 * time.Second,
+		WriteTimeout: 3 * time.Second,
+		PoolTimeout:  4 * time.Second,
+	})
 	var store sysconfig.Store
 	if err := rdb.Ping(ctx).Err(); err != nil {
 		log.Printf("Warning: Redis not available for gateway sysconfig (using defaults): %v", err)

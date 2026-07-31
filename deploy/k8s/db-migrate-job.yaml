@@ -26,7 +26,7 @@ spec:
           echo "Running GGID database migrations..."
           for f in /migrations/*.sql; do
             echo "Applying $(basename $f)..."
-            psql -h ggid-postgresql -U ggid -d ggid -v ON_ERROR_STOP=1 -q -f "$f" || echo "  (skipped, may already exist)"
+            psql -h ggid-postgresql -U ggid -d ggid -v ON_ERROR_STOP=1 -q -f "$f"
           done
           echo "Migrations complete."
         volumeMounts:
