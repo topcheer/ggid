@@ -102,6 +102,14 @@ func ClaimsFromContext(ctx context.Context) JWTCClaims {
 	return JWTCClaims{}
 }
 
+// WithVerifiedClaims returns a context carrying signature-verified JWT
+// claims, the same representation JWTAuth stores on successful validation.
+// Used by callers that run their own token verification (e.g. tests,
+// alternate routers) before routing decisions call ExtractJWTClaims.
+func WithVerifiedClaims(ctx context.Context, claims JWTCClaims) context.Context {
+	return context.WithValue(ctx, claimsKey, claims)
+}
+
 // JWTClaimExtraction middleware extracts JWT claims and sets downstream headers
 // (X-User-ID, X-Tenant-ID, X-Scopes) for backend services.
 func JWTClaimExtraction(next http.Handler) http.Handler {

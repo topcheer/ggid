@@ -679,7 +679,12 @@ func JWTAuth(jwks *JWKSClient, required bool, issuer, audience string) func(http
 					writeUnauthorized(w, "invalid Authorization header format")
 					return
 				}
-				next.ServeHTTP(w, r)
+				// SECURITY (R226 P0): token present but invalid — clear the
+				// Authorization header so the forged token never reaches the
+				// backend, and record a failed-claims marker so downstream
+				// ExtractJWTClaims never falls back to trusting it.
+				r.Header.Del("Authorization")
+				next.ServeHTTP(w, r.WithContext(context.WithValue(r.Context(), claimsKey, JWTCClaims{})))
 				return
 			}
 
@@ -707,6 +712,11 @@ func JWTAuth(jwks *JWKSClient, required bool, issuer, audience string) func(http
 						return key, nil
 					}
 				}
+				if jwks.publicKey == nil {
+					// No verification key configured — fail validation instead
+					// of returning a nil key (which panics in jwt.Parse).
+					return nil, fmt.Errorf("no verification key configured")
+				}
 				return jwks.publicKey, nil
 			}, parseOpts...)
 
@@ -715,7 +725,11 @@ func JWTAuth(jwks *JWKSClient, required bool, issuer, audience string) func(http
 					writeUnauthorized(w, "invalid or expired token")
 					return
 				}
-				next.ServeHTTP(w, r)
+				// SECURITY (R226 P0): signature/validation failure — strip the
+				// forged token before it reaches the backend and mark claims
+				// context as failed (ExtractJWTClaims is fail-closed).
+				r.Header.Del("Authorization")
+				next.ServeHTTP(w, r.WithContext(context.WithValue(r.Context(), claimsKey, JWTCClaims{})))
 				return
 			}
 
@@ -725,7 +739,10 @@ func JWTAuth(jwks *JWKSClient, required bool, issuer, audience string) func(http
 					writeUnauthorized(w, "invalid token claims")
 					return
 				}
-				next.ServeHTTP(w, r)
+				// SECURITY (R226 P0): unparseable claims — same fail-closed
+				// handling as other validation failures.
+				r.Header.Del("Authorization")
+				next.ServeHTTP(w, r.WithContext(context.WithValue(r.Context(), claimsKey, JWTCClaims{})))
 				return
 			}
 

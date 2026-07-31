@@ -23,7 +23,7 @@ func TestAdminStats_WithStatsCollector(t *testing.T) {
 			"/api/v1/roles": "http://localhost:19002",
 		},
 	}
-	gw := New(cfg, nil)
+	gw := New(cfg, mustTestJWKS(t))
 
 	// Set stats collector and record some data
 	sc := middleware.NewStatsCollector()
@@ -68,7 +68,7 @@ func TestAdminStats_NoStatsCollector(t *testing.T) {
 			"/api/v1/test": "http://localhost:19003",
 		},
 	}
-	gw := New(cfg, nil)
+	gw := New(cfg, mustTestJWKS(t))
 
 	req := httptest.NewRequest(http.MethodGet, "/api/v1/admin/stats", nil)
 	req.Header.Set("Authorization", adminAuthHeader)
@@ -96,7 +96,7 @@ func TestAdminToggleRoute_EnableAfterDisable(t *testing.T) {
 			"/api/v1/users": "http://localhost:19010",
 		},
 	}
-	gw := New(cfg, nil)
+	gw := New(cfg, mustTestJWKS(t))
 
 	// First: disable the route
 	req := httptest.NewRequest(http.MethodPost, "/api/v1/admin/routes//api/v1/users/toggle", nil)
@@ -144,7 +144,7 @@ func TestAdminToggleRoute_EmptyPrefix(t *testing.T) {
 			"/api/v1/users": "http://localhost:19010",
 		},
 	}
-	gw := New(cfg, nil)
+	gw := New(cfg, mustTestJWKS(t))
 
 	// Toggle with just "/toggle" → empty prefix
 	req := httptest.NewRequest(http.MethodPost, "/api/v1/admin/routes//toggle", nil)
@@ -166,7 +166,7 @@ func TestBuildProxies_InvalidURL(t *testing.T) {
 			"/api/v1/invalid": "://bad-url-no-scheme",
 		},
 	}
-	gw := New(cfg, nil)
+	gw := New(cfg, mustTestJWKS(t))
 
 	// Invalid URL should be skipped (no proxy created)
 	gw.mu.RLock()
@@ -199,7 +199,7 @@ func TestBuildProxiesLocked_DirectorExercised(t *testing.T) {
 			"/api/v1/old": "http://localhost:19030",
 		},
 	}
-	gw := New(cfg, nil)
+	gw := New(cfg, mustTestJWKS(t))
 
 	// Set reload func that returns new config pointing to test backend
 	newCfg := &config.Config{
@@ -249,7 +249,7 @@ func TestBuildProxiesLocked_ErrorHandlerExercised(t *testing.T) {
 			"/api/v1/bad": "http://localhost:1", // unreachable port
 		},
 	}
-	gw := New(cfg, nil)
+	gw := New(cfg, mustTestJWKS(t))
 
 	// Reload to trigger buildProxiesLocked with same config
 	gw.SetReloadFunc(func() (*config.Config, error) {
@@ -283,7 +283,7 @@ func TestHandler_ProtectedPathWithoutJWT(t *testing.T) {
 			"/api/v1/users": "http://localhost:19040",
 		},
 	}
-	gw := New(cfg, nil)
+	gw := New(cfg, mustTestJWKS(t))
 	handler := gw.Handler()
 
 	// Access a protected path without JWT
@@ -303,7 +303,7 @@ func TestHandler_PublicPathSkipsJWT(t *testing.T) {
 			"/api/v1/auth": "http://localhost:19041",
 		},
 	}
-	gw := New(cfg, nil)
+	gw := New(cfg, mustTestJWKS(t))
 	handler := gw.Handler()
 
 	// Access a public path — should not require JWT
@@ -326,7 +326,7 @@ func TestBuildHealthChecker_WithRootPrefix(t *testing.T) {
 			"/api/v1/test": "http://localhost:19051",
 		},
 	}
-	gw := New(cfg, nil)
+	gw := New(cfg, mustTestJWKS(t))
 
 	if gw.healthChecker == nil {
 		t.Fatal("expected health checker to be built")

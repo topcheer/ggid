@@ -5,50 +5,41 @@ package router
 // Method: Dedicated unit tests for hasAdminScope covering admin scope present/absent,
 //         non-admin scope, empty context, multiple scopes, wildcard.
 // Date: 2026-07-25
+//
+// NOTE (R226 P0): claims are injected via WithVerifiedClaims (the same
+// representation JWTAuth stores after signature verification). The gateway
+// no longer parses unsigned JWTs from the Authorization header, so these
+// tests exercise the hasAdminScope logic without bypassing verification.
 
 import (
-	"encoding/base64"
-	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
+
+	"github.com/ggid/ggid/services/gateway/internal/middleware"
 )
 
-// makeFakeJWT builds a minimal unsigned JWT with the given payload.
-// The signature is a dummy "." — ExtractJWTClaims only decodes the payload.
-func makeFakeJWT(t *testing.T, payload map[string]any) string {
-	t.Helper()
-	header := map[string]string{"alg": "none", "typ": "JWT"}
-	headerB, _ := json.Marshal(header)
-	payloadB, _ := json.Marshal(payload)
-	return base64.RawURLEncoding.EncodeToString(headerB) + "." +
-		base64.RawURLEncoding.EncodeToString(payloadB) + "."
-}
-
-// makeRequestWithScopes creates a request with a Bearer JWT containing the given scopes.
+// makeRequestWithScopes creates a request carrying verified JWT claims with
+// the given scopes (equivalent to a signature-verified token's context).
 func makeRequestWithScopes(t *testing.T, scopes []string) *http.Request {
 	t.Helper()
-	payload := map[string]any{
-		"sub":   "user-123",
-		"scope": scopes,
-	}
-	token := makeFakeJWT(t, payload)
 	req := httptest.NewRequest(http.MethodGet, "/api/v1/admin/routes", nil)
-	req.Header.Set("Authorization", "Bearer "+token)
-	return req
+	return req.WithContext(middleware.WithVerifiedClaims(req.Context(), middleware.JWTCClaims{
+		Subject: "user-123",
+		Scopes:  scopes,
+	}))
 }
 
-// makeRequestWithScopeString creates a request with scopes as a space-delimited string.
+// makeRequestWithScopeString creates a request carrying verified JWT claims
+// parsed from a space-delimited scope string.
 func makeRequestWithScopeString(t *testing.T, scopeStr string) *http.Request {
 	t.Helper()
-	payload := map[string]any{
-		"sub":   "user-123",
-		"scope": scopeStr,
+	var scopes []string
+	for _, s := range strings.Fields(scopeStr) {
+		scopes = append(scopes, s)
 	}
-	token := makeFakeJWT(t, payload)
-	req := httptest.NewRequest(http.MethodGet, "/api/v1/admin/routes", nil)
-	req.Header.Set("Authorization", "Bearer "+token)
-	return req
+	return makeRequestWithScopes(t, scopes)
 }
 
 // ========== GAP #14: hasAdminScope — Dedicated Unit Tests ==========
@@ -89,7 +80,7 @@ func TestHasAdminScope_ForgeableNamesRejected(t *testing.T) {
 func TestHasAdminScope_EmptyContext(t *testing.T) {
 	gw := &Gateway{}
 	req := httptest.NewRequest(http.MethodGet, "/api/v1/admin/routes", nil)
-	// No Authorization header
+	// No claims in context
 
 	if gw.hasAdminScope(req) {
 		t.Error("hasAdminScope should return false when no JWT is present")
@@ -116,11 +107,11 @@ func TestHasAdminScope_ScopeString(t *testing.T) {
 	}
 }
 
-// TestHasAdminScope_MalformedJWT verifies that a malformed JWT is rejected.
+// TestHasAdminScope_MalformedJWT verifies that an invalid token yields no claims.
 func TestHasAdminScope_MalformedJWT(t *testing.T) {
 	gw := &Gateway{}
 	req := httptest.NewRequest(http.MethodGet, "/api/v1/admin/routes", nil)
-	req.Header.Set("Authorization", "Bearer not.a.valid.jwt.token")
+	req.Header.Set("Authorization", "Bearer not.a.jwt")
 
 	if gw.hasAdminScope(req) {
 		t.Error("hasAdminScope should return false for malformed JWT")

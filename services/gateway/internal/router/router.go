@@ -464,24 +464,43 @@ func (gw *Gateway) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	// --- Admin API (requires admin scope) ---
 	if strings.HasPrefix(r.URL.Path, "/api/v1/admin/") {
-		if !gw.hasAdminScope(r) {
+		// SECURITY (R226 P0): the admin API previously ran before JWTAuth
+		// and relied on ExtractJWTClaims' unsigned JWT parsing, letting a
+		// forged token with scope=platform:admin reach admin handlers.
+		// Run JWTAuth here so hasAdminScope reads signature-verified
+		// context claims only (fail-closed: invalid/missing token → 403).
+		if gw.jwks == nil {
+			// No verification key configured — fail closed rather than panic.
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusForbidden)
 			_ = json.NewEncoder(w).Encode(map[string]string{"error": "admin scope required"})
 			return
 		}
-		if r.URL.Path == "/api/v1/admin/routes" && r.Method == http.MethodGet {
-			gw.handleAdminRoutes(w, r)
-			return
-		}
-		if r.URL.Path == "/api/v1/admin/stats" && r.Method == http.MethodGet {
-			gw.handleAdminStats(w, r)
-			return
-		}
-		if strings.HasSuffix(r.URL.Path, "/toggle") && r.Method == http.MethodPost {
-			gw.handleAdminToggleRoute(w, r)
-			return
-		}
+		jwtMW := middleware.JWTAuth(gw.jwks, false, gw.cfg.JWTIssuer, gw.cfg.JWTAudience)
+		jwtMW(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			if !gw.hasAdminScope(r) {
+				w.Header().Set("Content-Type", "application/json")
+				w.WriteHeader(http.StatusForbidden)
+				_ = json.NewEncoder(w).Encode(map[string]string{"error": "admin scope required"})
+				return
+			}
+			if r.URL.Path == "/api/v1/admin/routes" && r.Method == http.MethodGet {
+				gw.handleAdminRoutes(w, r)
+				return
+			}
+			if r.URL.Path == "/api/v1/admin/stats" && r.Method == http.MethodGet {
+				gw.handleAdminStats(w, r)
+				return
+			}
+			if strings.HasSuffix(r.URL.Path, "/toggle") && r.Method == http.MethodPost {
+				gw.handleAdminToggleRoute(w, r)
+				return
+			}
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusNotFound)
+			_ = json.NewEncoder(w).Encode(map[string]string{"error": "not found"})
+		})).ServeHTTP(w, r)
+		return
 	}
 
 	// --- Gateway management API ---

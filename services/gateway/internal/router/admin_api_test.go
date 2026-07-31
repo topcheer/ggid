@@ -1,27 +1,72 @@
 package router
 
 import (
-	"encoding/base64"
+	"crypto/rand"
+	"crypto/rsa"
+	"crypto/x509"
 	"encoding/json"
+	"encoding/pem"
 	"net/http"
 	"net/http/httptest"
+	"os"
+	"path/filepath"
 	"testing"
+
+	"github.com/ggid/ggid/services/gateway/internal/middleware"
+	"github.com/golang-jwt/jwt/v5"
 )
 
-// adminAuthHeader is a Bearer token with admin scope for tests.
-var adminAuthHeader = func() string {
-	payload, _ := json.Marshal(map[string]any{
-		"sub":    "admin-user",
-		"scopes": []string{"platform:admin", "tenant:admin"},
-	})
-	return "Bearer eyJhbGciOiJSUzI1NiJ9." + base64.RawURLEncoding.EncodeToString(payload) + ".sig"
-}()
+// testAdminKey is a throwaway RSA key for signing admin test JWTs, with the
+// matching public key written to testAdminPubPath for the JWKS client.
+// Signed tokens are required since R226 P0 removed unsigned JWT parsing.
+var (
+	testAdminKey, testAdminPubPath = func() (*rsa.PrivateKey, string) {
+		privKey, err := rsa.GenerateKey(rand.Reader, 2048)
+		if err != nil {
+			panic("generate admin test key: " + err.Error())
+		}
+		pubDER, err := x509.MarshalPKIXPublicKey(&privKey.PublicKey)
+		if err != nil {
+			panic("marshal admin test pubkey: " + err.Error())
+		}
+		pubPEM := pem.EncodeToMemory(&pem.Block{Type: "PUBLIC KEY", Bytes: pubDER})
+		path := filepath.Join(os.TempDir(), "ggid_test_admin_pub.pem")
+		if err := os.WriteFile(path, pubPEM, 0o600); err != nil {
+			panic("write admin test pubkey: " + err.Error())
+		}
+		return privKey, path
+	}()
+
+	// adminAuthHeader is a signature-verified Bearer token with admin scopes.
+	adminAuthHeader = func() string {
+		token := jwt.NewWithClaims(jwt.SigningMethodRS256, jwt.MapClaims{
+			"sub":   "admin-user",
+			"scope": "platform:admin tenant:admin",
+		})
+		signed, err := token.SignedString(testAdminKey)
+		if err != nil {
+			panic("sign admin test JWT: " + err.Error())
+		}
+		return "Bearer " + signed
+	}()
+)
 
 // adminRequest creates a request with admin JWT auth header.
 func adminRequest(method, url string) *http.Request {
 	r := httptest.NewRequest(method, url, nil)
 	r.Header.Set("Authorization", adminAuthHeader)
 	return r
+}
+
+// mustTestJWKS builds a JWKS client wired to the shared test public key,
+// so signed test JWTs verify (R226 P0 removed unsigned JWT parsing).
+func mustTestJWKS(t *testing.T) *middleware.JWKSClient {
+	t.Helper()
+	jwks, err := middleware.NewJWKSClient("", testAdminPubPath)
+	if err != nil {
+		t.Fatalf("failed to create JWKS client: %v", err)
+	}
+	return jwks
 }
 
 func TestAdminRoutes_ListRoutes(t *testing.T) {

@@ -5,6 +5,8 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+
+	"github.com/ggid/ggid/services/gateway/internal/middleware"
 )
 
 func TestProtectedAppRouter_AllowWithNoPolicy(t *testing.T) {
@@ -129,11 +131,22 @@ func TestProtectedAppRouter_HeaderInjection(t *testing.T) {
 	jwtB64 := base64.RawURLEncoding.EncodeToString([]byte(jwtPayload))
 	fakeJWT := "eyJhbGciOiJSUzI1NiJ9." + jwtB64 + ".fake-sig"
 
+	// Verified claims are supplied via context — since R226 P0 the router
+	// never parses unsigned JWTs from the Authorization header. The
+	// production path gets these claims from JWTAuth after signature
+	// verification; the test injects them directly.
 	req := httptest.NewRequest("GET", "/app/echo/", nil)
 	req.Header.Set("Authorization", "Bearer "+fakeJWT)
 	// Attempt to forge headers — must be stripped.
 	req.Header.Set("X-GGID-User", "forged")
 	req.Header.Set("X-User-ID", "forged-user")
+	req = req.WithContext(middleware.WithVerifiedClaims(req.Context(), middleware.JWTCClaims{
+		Subject:  "user-123",
+		TenantID: "tenant-456",
+		Email:    "alice@example.com",
+		Roles:    []string{"admin", "sre"},
+		Scopes:   []string{"openid"},
+	}))
 
 	w := httptest.NewRecorder()
 	router.HandleRequest(w, req)

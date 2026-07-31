@@ -211,14 +211,15 @@ func newTestGateway(t *testing.T) *Gateway {
 
 	cfg := config.Default()
 	cfg.Routes = map[string]string{
-		"/api/v1/users":  mockBackend.URL,
-		"/api/v1/roles":  mockBackend.URL,
-		"/api/v1/orgs":   mockBackend.URL,
-		"/api/v1/audit":  mockBackend.URL,
+		"/api/v1/users": mockBackend.URL,
+		"/api/v1/roles": mockBackend.URL,
+		"/api/v1/orgs":  mockBackend.URL,
+		"/api/v1/audit": mockBackend.URL,
 	}
 
-	// Create a JWKS client with a test key
-	jwks, err := middleware.NewJWKSClient("", "")
+	// Create a JWKS client with the shared test public key so signed
+	// admin test JWTs verify (R226 P0 removed unsigned JWT parsing).
+	jwks, err := middleware.NewJWKSClient("", testAdminPubPath)
 	if err != nil {
 		// If NewJWKSClient fails, try with a generated key
 		t.Fatalf("failed to create JWKS client: %v", err)
