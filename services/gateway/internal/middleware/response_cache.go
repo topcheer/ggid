@@ -10,9 +10,9 @@ import (
 
 // ResponseCacheConfig configures the response caching middleware.
 type ResponseCacheConfig struct {
-	TTL             time.Duration // how long to cache responses
-	MaxBodySize     int           // don't cache bodies larger than this (bytes)
-	EnabledMethods  map[string]bool
+	TTL            time.Duration // how long to cache responses
+	MaxBodySize    int           // don't cache bodies larger than this (bytes)
+	EnabledMethods map[string]bool
 }
 
 // DefaultResponseCacheConfig returns sensible defaults.
@@ -21,28 +21,29 @@ func DefaultResponseCacheConfig() ResponseCacheConfig {
 		TTL:         30 * time.Second,
 		MaxBodySize: 64 * 1024, // 64KB
 		EnabledMethods: map[string]bool{
-			http.MethodGet: true,
+			http.MethodGet:  true,
 			http.MethodHead: true,
 		},
 	}
 }
 
 type rcCachedResponse struct {
-	status      int
-	headers     http.Header
-	body        []byte
-	cachedAt    time.Time
-	expiresAt   time.Time
-	etag        string
+	status       int
+	headers      http.Header
+	body         []byte
+	cachedAt     time.Time
+	expiresAt    time.Time
+	etag         string
 	lastModified string
 }
 
 // ResponseCache provides an in-memory cache for GET responses.
 // Supports ETag and Last-Modified conditional requests (304 Not Modified).
 type ResponseCache struct {
-	cfg    ResponseCacheConfig
-	mu     sync.RWMutex
-	cache  map[string]*rcCachedResponse
+	cfg   ResponseCacheConfig
+	mu    sync.RWMutex
+	cache map[string]*rcCachedResponse
+	done  chan struct{}
 }
 
 // NewResponseCache creates a new response cache.
@@ -50,9 +51,15 @@ func NewResponseCache(cfg ResponseCacheConfig) *ResponseCache {
 	rc := &ResponseCache{
 		cfg:   cfg,
 		cache: make(map[string]*rcCachedResponse),
+		done:  make(chan struct{}),
 	}
 	go rc.cleanup()
 	return rc
+}
+
+// StopCleanup terminates the background cleanup goroutine.
+func (rc *ResponseCache) StopCleanup() {
+	close(rc.done)
 }
 
 // Middleware returns HTTP middleware that caches GET responses.
@@ -167,15 +174,20 @@ func (rc *ResponseCache) Clear() {
 func (rc *ResponseCache) cleanup() {
 	ticker := time.NewTicker(rc.cfg.TTL)
 	defer ticker.Stop()
-	for range ticker.C {
-		rc.mu.Lock()
-		now := time.Now()
-		for k, v := range rc.cache {
-			if now.After(v.expiresAt) {
-				delete(rc.cache, k)
+	for {
+		select {
+		case <-rc.done:
+			return
+		case <-ticker.C:
+			rc.mu.Lock()
+			now := time.Now()
+			for k, v := range rc.cache {
+				if now.After(v.expiresAt) {
+					delete(rc.cache, k)
+				}
 			}
+			rc.mu.Unlock()
 		}
-		rc.mu.Unlock()
 	}
 }
 
