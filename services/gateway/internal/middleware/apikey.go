@@ -55,6 +55,10 @@ func APIKeyAuth(validator APIKeyValidator) func(http.Handler) http.Handler {
 			ctx = context.WithValue(ctx, TenantIDKey, tenantID)
 			ctx = context.WithValue(ctx, UserIDKey, userID)
 			ctx = context.WithValue(ctx, APIKeyScopesKey, scopes)
+			// Store the validated API key so downstream middleware (e.g.
+			// MultiDimRateLimit) can key on it without trusting the raw
+			// client-supplied X-API-Key header (R48 B7).
+			ctx = context.WithValue(ctx, APIKeyContextKey, apiKey)
 
 			next.ServeHTTP(w, r.WithContext(ctx))
 		})
@@ -144,10 +148,23 @@ func writeAPIKeyError(w http.ResponseWriter, msg string) {
 }
 
 var _ = strings.Contains // keep import
-var _ = uuid.New          // keep import
+var _ = uuid.New         // keep import
 
 // context key for API key scopes
 var APIKeyScopesKey apiScopeCtxKey = "api_key_scopes"
+
+// APIKeyContextKey is the context key for the validated API key string
+// (set by APIKeyAuth after successful validation).
+var APIKeyContextKey apiScopeCtxKey = "api_key"
+
+// APIKeyFromContext extracts the validated API key from the request context.
+// Returns "" when the request was not authenticated via an API key.
+func APIKeyFromContext(ctx context.Context) string {
+	if v, ok := ctx.Value(APIKeyContextKey).(string); ok {
+		return v
+	}
+	return ""
+}
 
 // jwtScopesKey is for JWT scopes extracted from token claims.
 var jwtScopesKey apiScopeCtxKey = "jwt_scopes"

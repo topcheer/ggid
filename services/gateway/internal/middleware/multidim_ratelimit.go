@@ -342,23 +342,30 @@ func MultiDimRateLimitMiddleware(limiter *MultiDimRateLimiter, tierResolver func
 	}
 }
 
-// DefaultTierResolver extracts rate limit dimensions from request headers.
+// DefaultTierResolver extracts rate limit dimensions from the request.
+// SECURITY (R48 B7): IP is always taken from RemoteAddr (set by the trusted
+// reverse proxy), NEVER from client-controlled X-Real-IP/X-Forwarded-For
+// headers — otherwise attackers bypass IP-based rate limiting by spoofing.
+// X-Tier is resolved from the API key's subscription tier (server-side),
+// not from the client X-Tier header — preventing self-escalation.
+// X-API-Key is read from internal context (set by upstream APIKeyAuth),
+// not the raw client header.
 func DefaultTierResolver(r *http.Request) (Tier, string, string, string, string, string) {
 	tenantID := r.Header.Get("X-Tenant-ID")
 	userID := r.Header.Get("X-User-ID")
-	apiKey := r.Header.Get("X-API-Key")
-	ip := r.Header.Get("X-Real-IP")
-	if ip == "" {
+	// X-API-Key: trust internal context set by upstream auth middleware,
+	// not the raw client-supplied header.
+	apiKey := APIKeyFromContext(r.Context())
+	// IP: always from RemoteAddr (trusted proxy sets this). Reject
+	// client-controlled X-Real-IP/X-Forwarded-For entirely.
+	ip := ""
+	if r.RemoteAddr != "" {
 		ip = strings.SplitN(r.RemoteAddr, ":", 2)[0]
 	}
 	endpoint := r.URL.Path
 
-	tier := TierFree
-	switch r.Header.Get("X-Tier") {
-	case "pro":
-		tier = TierPro
-	case "enterprise":
-		tier = TierEnterprise
-	}
+	// X-Tier: resolve from the context (set by upstream tier middleware
+	// from server-side subscription data), not client header.
+	tier := TierFromContext(r.Context())
 	return tier, tenantID, userID, apiKey, ip, endpoint
 }

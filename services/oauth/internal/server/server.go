@@ -2250,7 +2250,7 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 		tenantIDStr := r.Header.Get("X-Tenant-ID")
 		tenantID, err := uuid.Parse(tenantIDStr)
 		if err != nil {
-			writeJSON(w, http.StatusBadRequest, map[string]any{"error": map[string]string{"code": "invalid_argument", "message": "valid X-Tenant-ID header or tenant_id query param required"}})
+			writeJSON(w, http.StatusBadRequest, map[string]any{"error": map[string]string{"code": "invalid_argument", "message": "valid X-Tenant-ID header required"}})
 			return
 		}
 		agents, err := oauthSvc.ListAgents(r.Context(), tenantID)

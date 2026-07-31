@@ -1164,21 +1164,14 @@ func (s *OAuthService) exchangeTokenInternal(ctx context.Context, req *RFC8693Ex
 	}
 
 	// 1a. SECURITY (R48 B1): Reject exchanged subject tokens that have been
-	// revoked or are on the JTI blocklist. Without this, a revoked/expired
-	// token could still be exchanged, bypassing revocation.
-	if subjectJTI, _ := subjectClaims["jti"].(string); subjectJTI != "" && s.pool != nil {
-		var revoked bool
-		ctx, cancel := context.WithTimeout(ctx, 3*time.Second)
-		err = s.pool.QueryRow(ctx,
-			`SELECT EXISTS(SELECT 1 FROM sessions WHERE jti = $1 AND revoked_at IS NOT NULL)`,
-			subjectJTI).Scan(&revoked)
-		cancel()
-		if err != nil {
-			return nil, fmt.Errorf("subject token revocation check failed")
-		}
-		if revoked {
-			return nil, fmt.Errorf("subject token has been revoked")
-		}
+	// revoked. IsTokenRevoked checks the authoritative revocation sources:
+	// Redis oauth:revoked:<sha256(token)> (written by RevokeToken) plus the
+	// in-memory fallback, then the DB (sessions.revoked_at via jti). The
+	// previous sessions.jti query never matched — sessions INSERTs did not
+	// populate jti, so the check was a silent fail-open (revoked tokens
+	// could still be exchanged).
+	if s.IsTokenRevoked(req.SubjectToken) {
+		return nil, fmt.Errorf("subject token has been revoked")
 	}
 
 	// 1a. Reject ID tokens used as subject_token (nonce is an ID token indicator).
@@ -1890,6 +1883,13 @@ func (s *OAuthService) RevokeToken(tokenStr string, tokenTypeHint ...string) err
 			// can reject revoked tokens on every request (continuous access evaluation).
 			if jti := getStringClaim(claims, "jti"); jti != "" && exp > 0 {
 				s.rdb.ZAdd(context.Background(), "ggid:revoked_jti", float64(exp), jti)
+				// Mark the sessions row revoked so DB-backed revocation
+				// checks (IsTokenRevoked fallback, token exchange B1)
+				// observe the revocation even after Redis TTL expiry.
+				if s.pool != nil {
+					_, _ = s.pool.Exec(context.Background(),
+						`UPDATE sessions SET revoked_at = NOW() WHERE jti = $1 AND revoked_at IS NULL`, jti)
+				}
 			}
 			return nil
 		}
@@ -2554,11 +2554,16 @@ func (s *OAuthService) PasswordGrant(ctx context.Context, req *PasswordGrantRequ
 		// SECURITY: use parameterized SET LOCAL instead of fmt.Sprintf to prevent
 		// SQL injection. tenantID is a uuid.UUID (safe), but defense-in-depth.
 		_, _ = s.pool.Exec(ctx, "SELECT set_config('app.tenant_id', $1, true)", tenantID.String())
+		// Persist the access token's jti + token_exp so revocation checks
+		// (sessions.revoked_at, IsTokenRevoked DB fallback, exchange B1)
+		// can match this row. Without jti the revocation chain is broken.
+		tokenJTI, _ := claimsMap["jti"].(string)
 		_, sessionErr := s.pool.Exec(ctx, `
-			INSERT INTO sessions (id, tenant_id, user_id, token_hash, ip_address, user_agent, expires_at, created_at)
-			VALUES ($1, $2, $3, $4, NULLIF($5, '')::inet, $6, $7, NOW())`,
+			INSERT INTO sessions (id, tenant_id, user_id, token_hash, jti, token_exp, ip_address, user_agent, expires_at, created_at)
+			VALUES ($1, $2, $3, $4, $5, $6, NULLIF($7, '')::inet, $8, $9, NOW())`,
 			sessionID, tenantID, userID,
 			"jwt:"+signed[:min(64, len(signed))],
+			tokenJTI, expiresAt,
 			ctxIP(ctx), ctxUserAgent(ctx),
 			expiresAt)
 		if sessionErr != nil {

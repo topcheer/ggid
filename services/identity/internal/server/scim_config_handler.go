@@ -3,6 +3,7 @@ package server
 import (
 	"encoding/json"
 	"net/http"
+	"strings"
 )
 
 // handleSCIMConfig returns or saves SCIM configuration.
@@ -12,14 +13,32 @@ func (h *HTTPHandler) handleSCIMConfig(w http.ResponseWriter, r *http.Request) {
 	if r.Method == http.MethodGet {
 		// Return default SCIM config
 		_ = json.NewEncoder(w).Encode(map[string]interface{}{
-			"endpoint":     "",  // configured by admin
-			"bearerToken":  "",
-			"enabled":      false,
+			"endpoint":    "", // configured by admin
+			"bearerToken": "",
+			"enabled":     false,
 		})
 		return
 	}
 
 	if r.Method == http.MethodPost {
+		// SECURITY (R48 B5): Admin scope required to modify SCIM config
+		// (bearer token, endpoint) — prevents tenant users from
+		// configuring SCIM with attacker-controlled credentials.
+		scopes := r.Header.Get("X-Scopes")
+		isAdmin := false
+		for _, s := range strings.Split(scopes, ",") {
+			s = strings.TrimSpace(s)
+			if s == "tenant:admin" || s == "platform:admin" {
+				isAdmin = true
+				break
+			}
+		}
+		if !isAdmin {
+			w.WriteHeader(http.StatusForbidden)
+			_ = json.NewEncoder(w).Encode(map[string]string{"error": "admin scope required"})
+			return
+		}
+
 		var req struct {
 			Endpoint    string `json:"endpoint"`
 			BearerToken string `json:"bearerToken"`
@@ -53,7 +72,7 @@ func (h *HTTPHandler) handleSCIMConfigSync(w http.ResponseWriter, r *http.Reques
 
 	// Return sync status
 	_ = json.NewEncoder(w).Encode(map[string]interface{}{
-		"status":       "completed",
+		"status":        "completed",
 		"users_synced":  0,
 		"groups_synced": 0,
 		"errors":        []interface{}{},
