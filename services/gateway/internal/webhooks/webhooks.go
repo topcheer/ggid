@@ -111,6 +111,7 @@ func (s *MemoryStore) ListByEvent(_ context.Context, event string) ([]*Webhook, 
 type Handler struct {
 	store     Store
 	deliverer Deliverer
+	sem       chan struct{} // limits concurrent webhook deliveries
 }
 
 // Deliverer sends webhook payloads to external URLs.
@@ -174,7 +175,7 @@ func (d *HTTPDeliverer) Deliver(ctx context.Context, url, secret string, payload
 
 // NewHandler creates a webhook handler.
 func NewHandler(store Store, deliverer Deliverer) *Handler {
-	return &Handler{store: store, deliverer: deliverer}
+	return &Handler{store: store, deliverer: deliverer, sem: make(chan struct{}, 10)}
 }
 
 // Create handles POST /api/v1/webhooks
@@ -293,12 +294,25 @@ func (h *Handler) DeliverEvent(ctx context.Context, event string, payload []byte
 		return
 	}
 	for _, wh := range webhooks {
-		go func(w *Webhook) {
+		w := wh
+		go func() {
 			defer func() {
 				if r := recover(); r != nil {
 					log.Printf("webhook %s delivery panic recovered: %v", w.ID, r)
 				}
+				if h.sem != nil {
+					<-h.sem
+				}
 			}()
+			// Acquire semaphore slot before proceeding.
+			if h.sem != nil {
+				select {
+				case h.sem <- struct{}{}:
+				default:
+					log.Printf("webhook %s delivery skipped: concurrency limit reached", w.ID)
+					return
+				}
+			}
 			// Detach from the caller's context: if ctx is a request context,
 			// deliveries would be silently cancelled when the request ends;
 			// without a timeout, a hung endpoint would leak the goroutine
@@ -308,7 +322,7 @@ func (h *Handler) DeliverEvent(ctx context.Context, event string, payload []byte
 			if err := h.deliverer.Deliver(dctx, w.URL, w.Secret, payload); err != nil {
 				log.Printf("webhook %s delivery failed for event %s: %v", w.ID, event, err)
 			}
-		}(wh)
+		}()
 	}
 }
 
