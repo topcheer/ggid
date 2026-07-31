@@ -83,7 +83,7 @@ func (e *Engine) WithdrawCascade(ctx context.Context, userID, tenantID, scope st
 	}
 
 	// 1. Revoke OAuth tokens containing that scope.
-	tokens := e.revokeTokensForScope(ctx, userID, scope)
+	tokens, _ := e.revokeTokensForScope(ctx, userID, scope)
 	result.AffectedTokens = len(tokens)
 	for _, tok := range tokens {
 		result.Actions = append(result.Actions, CascadeAction{
@@ -240,22 +240,22 @@ func (e *Engine) GetCascadeLog(ctx context.Context, userID string, limit int) ([
 		_ = json.Unmarshal(actionsJSON, &r.Actions)
 		results = append(results, r)
 	}
-	return results, nil
+	return results, rows.Err()
 }
 
 // --- Internal helpers (log-only for nil pool, real DB for production) ---
 
-func (e *Engine) revokeTokensForScope(ctx context.Context, userID, scope string) []string {
+func (e *Engine) revokeTokensForScope(ctx context.Context, userID, scope string) ([]string, error) {
 	if e.pool == nil {
 		slog.Info("consent cascade: revoke tokens for scope (dev mode)", "user", userID, "scope", scope)
-		return []string{"tok_mock_1", "tok_mock_2"}
+		return []string{"tok_mock_1", "tok_mock_2"}, nil
 	}
 	// Revoke refresh tokens containing the scope.
 	rows, err := e.pool.Query(ctx,
 		`UPDATE refresh_tokens SET revoked_at = now() WHERE revoked_at IS NULL AND user_id = $1 AND scope @> $2::text[] RETURNING id::text`,
 		userID, []string{scope})
 	if err != nil {
-		return nil
+		return nil, err
 	}
 	defer rows.Close()
 	var tokens []string
@@ -264,16 +264,22 @@ func (e *Engine) revokeTokensForScope(ctx context.Context, userID, scope string)
 		rows.Scan(&id)
 		tokens = append(tokens, id)
 	}
-	return tokens
+	return tokens, rows.Err()
 }
 
 func (e *Engine) invalidateSessions(ctx context.Context, userID, scope string) []string {
 	if e.pool == nil {
 		return []string{"sess_mock_1"}
 	}
+	// SECURITY: Use json.Marshal to safely encode scope into JSONB array,
+	// preventing injection of " or \ characters that could break JSON or add extra scopes.
+	scopeJSON, err := json.Marshal([]string{scope})
+	if err != nil {
+		return nil
+	}
 	rows, err := e.pool.Query(ctx,
 		`UPDATE sessions SET revoked_at = now() WHERE user_id = $1 AND metadata->'scopes' @> $2::jsonb RETURNING id::text`,
-		userID, []byte(`["`+scope+`"]`))
+		userID, scopeJSON)
 	if err != nil {
 		return nil
 	}

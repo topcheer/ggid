@@ -3,8 +3,20 @@ package httpserver
 import (
 	"fmt"
 	"net/http"
+	"strings"
 	"time"
 )
+
+// containsAdminScope checks if X-Scopes header contains platform:admin or tenant:admin.
+func containsAdminScope(scopes string) bool {
+	for _, s := range strings.Split(scopes, ",") {
+		s = strings.TrimSpace(s)
+		if s == "platform:admin" || s == "tenant:admin" {
+			return true
+		}
+	}
+	return false
+}
 
 // handleGlobalAuditDashboard provides a cross-tenant audit view for super admins.
 // GET /api/v1/admin/audit/global
@@ -12,6 +24,12 @@ import (
 func (s *HTTPServer) handleGlobalAuditDashboard(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
 		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
+		return
+	}
+	// SECURITY: Explicit platform:admin check (defense-in-depth beyond gateway admin prefix).
+	scopes := r.Header.Get("X-Scopes")
+	if !containsAdminScope(scopes) {
+		writeJSONError(w, http.StatusForbidden, "platform:admin scope required")
 		return
 	}
 
@@ -61,7 +79,7 @@ func (s *HTTPServer) handleGlobalAuditDashboard(w http.ResponseWriter, r *http.R
 			for rows.Next() {
 				var (
 					id, tenantID, actorType, actorID, action, result, resourceType, resourceID, detail string
-					createdAt                                                                 time.Time
+					createdAt                                                                          time.Time
 				)
 				if err := rows.Scan(&id, &tenantID, &actorType, &actorID, &action, &result, &resourceType, &resourceID, &detail, &createdAt); err != nil {
 					continue
@@ -84,12 +102,12 @@ func (s *HTTPServer) handleGlobalAuditDashboard(w http.ResponseWriter, r *http.R
 
 	// Summary statistics
 	summary := map[string]any{
-		"total_events":  len(events),
-		"limit":         limit,
-		"offset":        offset,
-		"actions":       countByField(events, "action"),
-		"results":       countByField(events, "result"),
-		"tenants":       countByField(events, "tenant_id"),
+		"total_events":   len(events),
+		"limit":          limit,
+		"offset":         offset,
+		"actions":        countByField(events, "action"),
+		"results":        countByField(events, "result"),
+		"tenants":        countByField(events, "tenant_id"),
 		"resource_types": countByField(events, "resource_type"),
 	}
 
@@ -198,7 +216,7 @@ func (s *HTTPServer) handleGlobalThreatDashboard(w http.ResponseWriter, r *http.
 					continue
 				}
 				tenantThreats = append(tenantThreats, map[string]any{
-					"tenant_id":    tenantID,
+					"tenant_id":     tenantID,
 					"critical_high": criticalHigh,
 					"total":         total,
 				})
@@ -217,14 +235,14 @@ func (s *HTTPServer) handleGlobalThreatDashboard(w http.ResponseWriter, r *http.
 	}
 
 	writeJSON(w, http.StatusOK, map[string]any{
-		"threat_level":       threatLevel,
-		"itdr_stats":         itdrStats,
-		"threat_intel":       threatIndicators,
-		"active_incidents":   activeIncidents,
-		"tenant_threats":     tenantThreats,
-		"tenant_count":       len(tenantThreats),
-		"window":             "24h",
-		"generated_at":       now,
+		"threat_level":     threatLevel,
+		"itdr_stats":       itdrStats,
+		"threat_intel":     threatIndicators,
+		"active_incidents": activeIncidents,
+		"tenant_threats":   tenantThreats,
+		"tenant_count":     len(tenantThreats),
+		"window":           "24h",
+		"generated_at":     now,
 	})
 }
 
