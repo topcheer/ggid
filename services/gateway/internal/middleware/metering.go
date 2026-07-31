@@ -118,7 +118,14 @@ func (a *usageAggregator) record(r usageRecord) {
 	defer a.mu.Unlock()
 	a.buffer = append(a.buffer, r)
 	if len(a.buffer) >= a.config.MaxBufferSize {
-		go a.flush()
+		go func() {
+			defer func() {
+				if r := recover(); r != nil {
+					log.Printf("[metering] flush panic recovered: %v", r)
+				}
+			}()
+			a.flush()
+		}()
 	}
 }
 
