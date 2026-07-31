@@ -673,6 +673,27 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 			}
 		}
 
+		// Pre-parse client_id/client_secret from Basic auth so tenant
+		// resolution can use client_id for M2M (client_secret_basic) clients
+		// whose client_id is in the Authorization header, not the form body.
+		clientID := r.FormValue("client_id")
+		clientSecret := r.FormValue("client_secret")
+		if clientID == "" || clientSecret == "" {
+			if authHeader := r.Header.Get("Authorization"); strings.HasPrefix(authHeader, "Basic ") {
+				if decoded, err := base64.StdEncoding.DecodeString(strings.TrimPrefix(authHeader, "Basic ")); err == nil {
+					parts := strings.SplitN(string(decoded), ":", 2)
+					if len(parts) == 2 {
+						if clientID == "" {
+							clientID = parts[0]
+						}
+						if clientSecret == "" {
+							clientSecret = parts[1]
+						}
+					}
+				}
+			}
+		}
+
 		// Resolve tenant ID from X-Tenant-ID header, or tenant_id query param.
 		// Fallback to default tenant for DCR flows (MCP clients don't send headers).
 		tenantIDStr := r.Header.Get("X-Tenant-ID")
@@ -680,8 +701,9 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 			tenantIDStr = r.URL.Query().Get("tenant_id")
 		}
 		if tenantIDStr == "" {
-			// Try to resolve from client_id (for MCP RFC 9728 DCR clients)
-			if cid := r.FormValue("client_id"); cid != "" {
+			// Try to resolve from client_id (for MCP RFC 9728 DCR clients
+			// and M2M Basic-auth clients whose client_id is in Authorization header)
+			if cid := clientID; cid != "" {
 				if resolvedTID, err := oauthSvc.ResolveClientTenant(r.Context(), cid); err == nil {
 					tenantIDStr = resolvedTID.String()
 				}
@@ -714,27 +736,6 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 			TenantID:       tenantID,
 			IsolationLevel: tenant.IsolationShared,
 		})
-
-		clientID := r.FormValue("client_id")
-		clientSecret := r.FormValue("client_secret")
-
-		// RFC 6749 §2.3.1: If client_id/client_secret not in form body,
-		// try HTTP Basic auth header (client_secret_basic method).
-		if clientID == "" || clientSecret == "" {
-			if authHeader := r.Header.Get("Authorization"); strings.HasPrefix(authHeader, "Basic ") {
-				if decoded, err := base64.StdEncoding.DecodeString(strings.TrimPrefix(authHeader, "Basic ")); err == nil {
-					parts := strings.SplitN(string(decoded), ":", 2)
-					if len(parts) == 2 {
-						if clientID == "" {
-							clientID = parts[0]
-						}
-						if clientSecret == "" {
-							clientSecret = parts[1]
-						}
-					}
-				}
-			}
-		}
 
 		scopeParam := r.FormValue("scope")
 		scopes := []string{}
