@@ -121,12 +121,12 @@ func handleDPoPTokenVerify(w http.ResponseWriter, r *http.Request) {
 	}
 	proof, err := service.ParseDPoPHeader(req.DPoPProof, "POST", "https://example.com/token")
 	if err != nil {
-		writeJSON(w, http.StatusUnauthorized, map[string]any{"is_bound": true, "valid": false, "error": "invalid DPoP proof: " + err.Error()})
+		writeJSON(w, http.StatusUnauthorized, map[string]any{"is_bound": true, "valid": false, "error": "invalid DPoP proof"})
 		return
 	}
 	actualJKT := computeKeyThumbprint(proof.PublicKey)
 	if actualJKT != boundJKT {
-		writeJSON(w, http.StatusUnauthorized, map[string]any{"is_bound": true, "valid": false, "error": "DPoP key thumbprint mismatch", "expected": boundJKT, "actual": actualJKT})
+		writeJSON(w, http.StatusUnauthorized, map[string]any{"is_bound": true, "valid": false, "error": "DPoP key thumbprint mismatch"})
 		return
 	}
 	writeJSON(w, http.StatusOK, map[string]any{"is_bound": true, "valid": true, "jkt": boundJKT})

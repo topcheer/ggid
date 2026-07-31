@@ -46,7 +46,7 @@ func handleDPoPVerify(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		writeJSON(w, http.StatusOK, map[string]any{
 			"is_valid": false,
-			"error":    err.Error(),
+			"error":    "invalid DPoP proof",
 		})
 		return
 	}
