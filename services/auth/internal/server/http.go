@@ -1633,7 +1633,7 @@ func (h *Handler) passwordPolicy(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		if err := h.authSvc.UpdatePasswordPolicy(req.MinLength, req.RequireUpper, req.RequireLower, req.RequireDigit, req.RequireSpecial, req.Blacklist); err != nil {
-			writeError(w, http.StatusBadRequest, err.Error())
+			writeError(w, http.StatusBadRequest, "invalid password policy configuration")
 			return
 		}
 		policy := h.authSvc.PasswordPolicy()
@@ -3031,7 +3031,7 @@ func (h *Handler) emailChangeConfirm(w http.ResponseWriter, r *http.Request) {
 
 	applied, err := h.authSvc.ConfirmEmailChange(r.Context(), body.Token, body.Step)
 	if err != nil {
-		writeError(w, http.StatusBadRequest, err.Error())
+		writeError(w, http.StatusBadRequest, "email change confirmation failed")
 		return
 	}
 
