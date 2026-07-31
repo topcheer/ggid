@@ -3159,9 +3159,18 @@ func (h *Handler) forceLogout(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	tenantID, err := uuid.Parse(body.TenantID)
+	headerTenant := r.Header.Get("X-Tenant-ID")
+	if headerTenant == "" {
+		writeError(w, http.StatusForbidden, "X-Tenant-ID header required")
+		return
+	}
+	if body.TenantID != "" && body.TenantID != headerTenant {
+		writeError(w, http.StatusForbidden, "tenant_id mismatch")
+		return
+	}
+	tenantID, err := uuid.Parse(headerTenant)
 	if err != nil {
-		writeError(w, http.StatusBadRequest, "invalid tenant_id")
+		writeError(w, http.StatusBadRequest, "invalid X-Tenant-ID header")
 		return
 	}
 	userID, err := uuid.Parse(body.UserID)
@@ -3208,9 +3217,18 @@ func (h *Handler) sessionLimit(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	tenantID, err := uuid.Parse(body.TenantID)
+	headerTenant := r.Header.Get("X-Tenant-ID")
+	if headerTenant == "" {
+		writeError(w, http.StatusForbidden, "X-Tenant-ID header required")
+		return
+	}
+	if body.TenantID != "" && body.TenantID != headerTenant {
+		writeError(w, http.StatusForbidden, "tenant_id mismatch")
+		return
+	}
+	tenantID, err := uuid.Parse(headerTenant)
 	if err != nil {
-		writeError(w, http.StatusBadRequest, "invalid tenant_id")
+		writeError(w, http.StatusBadRequest, "invalid X-Tenant-ID header")
 		return
 	}
 	userID, err := uuid.Parse(body.UserID)
