@@ -104,6 +104,8 @@ func TestHandleDecisionLog_MissingTenant(t *testing.T) {
 
 // --- Test helpers ---
 
+var testMux *http.ServeMux
+
 // clearTestDecisions resets the decision log between tests.
 func clearTestDecisions() {
 	service.ClearDecisionLogForTest()
