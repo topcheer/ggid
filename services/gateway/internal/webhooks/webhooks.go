@@ -296,11 +296,12 @@ func (h *Handler) DeliverEvent(ctx context.Context, event string, payload []byte
 	for _, wh := range webhooks {
 		w := wh
 		go func() {
+			acquired := false
 			defer func() {
 				if r := recover(); r != nil {
 					log.Printf("webhook %s delivery panic recovered: %v", w.ID, r)
 				}
-				if h.sem != nil {
+				if acquired && h.sem != nil {
 					<-h.sem
 				}
 			}()
@@ -308,6 +309,7 @@ func (h *Handler) DeliverEvent(ctx context.Context, event string, payload []byte
 			if h.sem != nil {
 				select {
 				case h.sem <- struct{}{}:
+					acquired = true
 				default:
 					log.Printf("webhook %s delivery skipped: concurrency limit reached", w.ID)
 					return
