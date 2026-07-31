@@ -117,6 +117,7 @@ func main() {
 	rbacResolver := middleware.NewRBACResolver(rdb, cfg.DatabaseURL)
 	middleware.SetRBACResolver(rbacResolver)
 	go rbacResolver.WarmStart(ctx)
+	middleware.StartRBACInvalidationListener(ctx, rdb)
 	log.Println("Gateway: dynamic RBAC resolver enabled (hardcoded fallback active)")
 
 	// DB-backed API key validation

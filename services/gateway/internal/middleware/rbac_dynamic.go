@@ -56,16 +56,16 @@ func permLevelRank(level string) int {
 // RBACResolver resolves route access decisions from role_route_permissions,
 // cached in Redis and memory. It is safe for concurrent use.
 type RBACResolver struct {
-	rdb  *redis.Client
+	rdb   *redis.Client
 	dbURL string
 
-	mu        sync.RWMutex
-	pool      *pgxpool.Pool
-	poolTried bool
-	snapshot  []routePermRow
-	loadedAt  time.Time
+	mu         sync.RWMutex
+	pool       *pgxpool.Pool
+	poolTried  bool
+	snapshot   []routePermRow
+	loadedAt   time.Time
 	everLoaded bool
-	sf        singleflight.Group
+	sf         singleflight.Group
 }
 
 // NewRBACResolver creates a resolver. Either rdb or databaseURL may be empty;
@@ -120,6 +120,48 @@ func SetRBACResolver(r *RBACResolver) {
 	resolverMu.Lock()
 	defer resolverMu.Unlock()
 	resolver = r
+}
+
+// InvalidateRBACCache drops the in-memory RBAC snapshot across all gateway pods.
+// Services (identity/policy) call this after role/permission changes by publishing
+// to the "ggid:rbac:invalidate" Redis pub/sub channel.
+func InvalidateRBACCache() {
+	resolverMu.RLock()
+	r := resolver
+	resolverMu.RUnlock()
+	if r != nil {
+		r.Invalidate()
+		slog.Info("RBAC cache invalidated")
+	}
+}
+
+// StartRBACInvalidationListener subscribes to Redis pub/sub for cross-pod
+// RBAC cache invalidation. Call once at startup; cancels when ctx is done.
+func StartRBACInvalidationListener(ctx context.Context, rdb *redis.Client) {
+	if rdb == nil {
+		return
+	}
+	go func() {
+		defer func() {
+			if r := recover(); r != nil {
+				slog.Error("RBAC invalidation listener panic", "error", r)
+			}
+		}()
+		pubsub := rdb.Subscribe(ctx, "ggid:rbac:invalidate")
+		defer pubsub.Close()
+		ch := pubsub.Channel()
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case msg := <-ch:
+				if msg != nil {
+					slog.Info("RBAC invalidation received via pub/sub", "pattern", msg.Payload)
+					InvalidateRBACCache()
+				}
+			}
+		}
+	}()
 }
 
 // getRBACResolver returns the installed resolver (may be nil).
