@@ -50,6 +50,8 @@ func TestHandleFAPIConfigGet(t *testing.T) {
 	mux.HandleFunc("/api/v1/oauth/fapi-config", handleFAPIConfig(newTestOAuthService(clients)))
 
 	req := newTestRequest(http.MethodGet, "/api/v1/oauth/fapi-config", nil)
+	req.Header.Set("X-Scopes", "tenant:admin")
+	req.Header.Set("X-Tenant-ID", "00000000-0000-0000-0000-000000000001")
 	rec := httptest.NewRecorder()
 	mux.ServeHTTP(rec, req)
 
@@ -85,6 +87,8 @@ func TestHandleFAPIConfigPut(t *testing.T) {
 	body := `{"client_id":"c-001","enabled":true}`
 	req := newTestRequest(http.MethodPut, "/api/v1/oauth/fapi-config", []byte(body))
 	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("X-Scopes", "tenant:admin")
+	req.Header.Set("X-Tenant-ID", "00000000-0000-0000-0000-000000000001")
 	rec := httptest.NewRecorder()
 	mux.ServeHTTP(rec, req)
 
@@ -110,6 +114,8 @@ func TestHandleFAPIConfigPut_NotFound(t *testing.T) {
 	body := `{"client_id":"c-missing","enabled":true}`
 	req := newTestRequest(http.MethodPut, "/api/v1/oauth/fapi-config", []byte(body))
 	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("X-Scopes", "tenant:admin")
+	req.Header.Set("X-Tenant-ID", "00000000-0000-0000-0000-000000000001")
 	rec := httptest.NewRecorder()
 	mux.ServeHTTP(rec, req)
 

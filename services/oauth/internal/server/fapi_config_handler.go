@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/ggid/ggid/pkg/tenant"
@@ -16,17 +17,17 @@ import (
 
 // FAPIConfigResponse represents the FAPI 2.0 configuration and enabled clients.
 type FAPIConfigResponse struct {
-	Enabled           bool                     `json:"enabled"`
-	RequiredRules     []string                 `json:"required_rules"`
-	EnabledClients    []FAPIEnabledClient      `json:"enabled_clients"`
-	GlobalEnforcement bool                     `json:"global_enforcement"`
+	Enabled           bool                `json:"enabled"`
+	RequiredRules     []string            `json:"required_rules"`
+	EnabledClients    []FAPIEnabledClient `json:"enabled_clients"`
+	GlobalEnforcement bool                `json:"global_enforcement"`
 }
 
 // FAPIEnabledClient describes a client with FAPI 2.0 enabled.
 type FAPIEnabledClient struct {
-	ClientID   string `json:"client_id"`
-	Name       string `json:"name"`
-	EnabledAt  string `json:"enabled_at"`
+	ClientID  string `json:"client_id"`
+	Name      string `json:"name"`
+	EnabledAt string `json:"enabled_at"`
 }
 
 // FAPIConfigUpdateRequest toggles FAPI 2.0 for a specific client.
@@ -35,8 +36,30 @@ type FAPIConfigUpdateRequest struct {
 	Enabled  bool   `json:"enabled"`
 }
 
+// hasAdminScopeHeader reports whether the gateway-injected X-Scopes header
+// carries an admin scope (exact match, no substring bypass).
+func hasAdminScopeHeader(r *http.Request) bool {
+	for _, s := range strings.Split(r.Header.Get("X-Scopes"), ",") {
+		s = strings.TrimSpace(s)
+		if s == "tenant:admin" || s == "platform:admin" {
+			return true
+		}
+	}
+	return false
+}
+
 func handleFAPIConfig(oauthSvc *service.OAuthService) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		// SECURITY (R227-style): FAPI config is platform-level policy — require
+		// admin scope on both read and write. No gateway prefix covers this
+		// path, so enforce here (X-Scopes is gateway-injected, verified since
+		// R226). Also fixes cross-tenant query-param fallback in
+		// parseTenantContext (header-only below).
+		if !hasAdminScopeHeader(r) {
+			writeJSON(w, http.StatusForbidden, map[string]string{"error": "invalid_request", "error_description": "admin scope required"})
+			return
+		}
+
 		ctx, err := parseTenantContext(r)
 		if err != nil {
 			writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid_request", "error_description": err.Error()})
@@ -73,15 +96,15 @@ func handleFAPIConfigGet(w http.ResponseWriter, ctx context.Context, oauthSvc *s
 	}
 
 	resp := FAPIConfigResponse{
-		Enabled:        true,
-		RequiredRules:  []string{
+		Enabled: true,
+		RequiredRules: []string{
 			"PKCE_S256",
 			"PAR_REQUIRED",
 			"DPOP_REQUIRED",
 			"RESPONSE_TYPE_CODE_ONLY",
 			"NO_IMPLICIT_PASSWORD_GRANTS",
 		},
-		EnabledClients: enabledClients,
+		EnabledClients:    enabledClients,
 		GlobalEnforcement: false,
 	}
 
@@ -193,11 +216,10 @@ func parseTenantContext(r *http.Request) (context.Context, error) {
 	}
 
 	tenantIDStr := r.Header.Get("X-Tenant-ID")
+	// SECURITY: header-only — query tenant_id lets any caller pick an
+	// arbitrary tenant (BOLA) when the gateway-stripped header is absent.
 	if tenantIDStr == "" {
-		tenantIDStr = r.URL.Query().Get("tenant_id")
-	}
-	if tenantIDStr == "" {
-		return nil, fmt.Errorf("X-Tenant-ID header or tenant_id query param required")
+		return nil, fmt.Errorf("X-Tenant-ID header required")
 	}
 
 	tenantID, err := uuid.Parse(tenantIDStr)

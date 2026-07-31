@@ -421,7 +421,7 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 
 		tenantID, err := uuid.Parse(tenantIDStr)
 		if err != nil {
-			writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid_request", "error_description": "valid X-Tenant-ID header or tenant_id query param required"})
+			writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid_request", "error_description": "valid X-Tenant-ID header required"})
 			return
 		}
 
@@ -1915,7 +1915,11 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 			return
 		}
 		// Resolve tenant from X-Tenant-ID header (set by gateway from JWT).
-		tenantID, _ := uuid.Parse(r.Header.Get("X-Tenant-ID"))
+		tenantID, err := uuid.Parse(r.Header.Get("X-Tenant-ID"))
+		if err != nil {
+			writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid_request", "error_description": "valid X-Tenant-ID header required"})
+			return
+		}
 		req := &service.PushedAuthorizationRequest{
 			TenantID:            tenantID,
 			ClientID:            r.Form.Get("client_id"),
