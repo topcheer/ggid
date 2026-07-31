@@ -422,7 +422,17 @@ func (h *Handler) searchUsers(ctx context.Context, w http.ResponseWriter, r *htt
 	sortDesc := strings.ToLower(body.SortOrder) == "descending"
 	offset := body.StartIndex - 1
 
+	// SECURITY: Apply SCIM filter to prevent returning all users unfiltered.
+	searchQuery := ""
+	if body.Filter != "" {
+		searchQuery = parseSCIMFilter(body.Filter, "userName")
+		if searchQuery == "" {
+			searchQuery = parseSCIMFilter(body.Filter, "emails.value")
+		}
+	}
+
 	result, err := h.svc.ListUsers(ctx, &domain.ListUsersFilter{
+		Search:   searchQuery,
 		PageSize: body.Count,
 		Offset:   offset,
 		SortBy:   sortBy,
