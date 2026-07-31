@@ -5,6 +5,9 @@ package notification
 import (
 	"bytes"
 	"context"
+	"crypto/hmac"
+	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"log/slog"
@@ -30,6 +33,7 @@ type WebhookConfig struct {
 	URL     string
 	Headers map[string]string
 	Timeout time.Duration
+	Secret  string // HMAC-SHA256 signing secret for payload verification
 }
 
 // Notification represents a notification to be dispatched.
@@ -154,6 +158,14 @@ func (d *Dispatcher) sendWebhook(ctx context.Context, n *Notification) error {
 		return fmt.Errorf("notification: create webhook request: %w", err)
 	}
 	req.Header.Set("Content-Type", "application/json")
+
+	// HMAC-SHA256 signature for payload authenticity verification.
+	if d.webhook.Secret != "" {
+		mac := hmac.New(sha256.New, []byte(d.webhook.Secret))
+		mac.Write(payload)
+		sig := hex.EncodeToString(mac.Sum(nil))
+		req.Header.Set("X-GGID-Signature", "sha256="+sig)
+	}
 
 	for k, v := range d.webhook.Headers {
 		req.Header.Set(k, v)
