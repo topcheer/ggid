@@ -77,12 +77,18 @@ func (r *CredentialRepository) Create(ctx context.Context, c *domain.Credential)
 // UpdateFailedAttempts atomically increments failed attempt count and sets lock state.
 // Uses atomic SQL increment to prevent race condition where concurrent requests
 // read the same count and overwrite each other, bypassing lockout.
+// SECURITY (R231 P2-2): attempts==0 means successful login — reset the
+// counter to 0 (not +1), preserving the atomic race-safe increment for
+// failure increments. ea8be126e's unconditional +1 broke this: a success
+// passing 0 incremented instead of clearing.
 func (r *CredentialRepository) UpdateFailedAttempts(ctx context.Context, id uuid.UUID, attempts int, lockedUntil *time.Time) error {
-	_, err := r.db.Exec(ctx, `
-		UPDATE credentials SET failed_attempts = failed_attempts + 1, locked_until = $2, updated_at = NOW()
-		WHERE id = $1`,
-		id, lockedUntil,
-	)
+	var q string
+	if attempts == 0 {
+		q = `UPDATE credentials SET failed_attempts = 0, locked_until = $2, updated_at = NOW() WHERE id = $1`
+	} else {
+		q = `UPDATE credentials SET failed_attempts = failed_attempts + 1, locked_until = $2, updated_at = NOW() WHERE id = $1`
+	}
+	_, err := r.db.Exec(ctx, q, id, lockedUntil)
 	return err
 }
 

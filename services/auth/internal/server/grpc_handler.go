@@ -156,7 +156,8 @@ func defaultAuthTenantID() uuid.UUID {
 // AuthGRPCServer starts a gRPC server for the Auth service on the given address.
 // It returns the server so the caller can GracefulStop on shutdown.
 func StartAuthGRPCServer(addr string, svc *service.AuthService) (*grpc.Server, net.Listener, error) {
-	grpcSrv := grpc.NewServer(middleware.GRPCRecoveryOpts()...)
+	secret, prev := middleware.LoadInternalSecrets()
+	grpcSrv := grpc.NewServer(middleware.SecureGRPCOptsWithPrev(secret, prev)...)
 	handler := NewAuthGRPCHandler(svc)
 	handler.RegisterGRPC(grpcSrv)
 

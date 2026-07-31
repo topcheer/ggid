@@ -46,7 +46,7 @@ func newGRPCServer() *grpc.Server {
 		if certFile != "" && keyFile != "" {
 			tlsCfg, err := tls.LoadX509KeyPair(certFile, keyFile)
 			if err == nil {
-				return grpc.NewServer(append(middleware.GRPCRecoveryOpts(), grpc.Creds(credentials.NewTLS(&tls.Config{
+				return grpc.NewServer(append(middleware.SecureGRPCOpts(mwSecret), grpc.Creds(credentials.NewTLS(&tls.Config{
 					Certificates: []tls.Certificate{tlsCfg},
 					MinVersion:   tls.VersionTLS12,
 				})))...)
