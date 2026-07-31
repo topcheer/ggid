@@ -332,26 +332,35 @@ func SecurityHeaders(next http.Handler) http.Handler {
 // --- Tenant Resolution ---
 
 // TenantResolver extracts tenant ID from multiple sources in priority order:
-// 1. X-Tenant-ID header (explicit)
-// 2. JWT claim "tenant_id" (parsed without verification — verified later by JWTAuth)
+// 1. JWT claim "tenant_id" (parsed without verification — verified later by JWTAuth)
+// 2. X-Tenant-ID header (explicit, only used when JWT has no tenant claim)
 // 3. Subdomain (acme.iam.com → tenant "acme", or UUID subdomain)
+// SECURITY (R25 P0): JWT claim is now authoritative — the previous
+// X-Tenant-ID-first priority let any client spoof a victim tenant by
+// setting the header before JWTAuth ran. The Director (router.go:266)
+// strips and re-derives X-Tenant-ID from context, so a spoofed header
+// value written to context propagated through. JWT-first means the
+// unverified-but-signed payload is used for routing context; JWTAuth
+// will reject forged tokens downstream. The header is now only a
+// fallback for tokens without a tenant_id claim (e.g. legacy/service
+// tokens), where it will be overwritten by the Director if a verified
+// claim materialises.
 // The domainSuffix is used for subdomain extraction (e.g. ".iam.com").
 func TenantResolver(domainSuffix string) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			var tenantID uuid.UUID
 
-			// 1. Try X-Tenant-ID header first (allows platform admin cross-tenant access)
-			// This is the explicit tenant selector — JWT claims are the user's home tenant.
-			if tidStr := r.Header.Get("X-Tenant-ID"); tidStr != "" {
+			// 1. JWT claim tenant_id first (user's home tenant — authoritative)
+			if tidStr := extractTenantFromJWT(r); tidStr != "" {
 				if id, err := uuid.Parse(tidStr); err == nil {
 					tenantID = id
 				}
 			}
 
-			// 2. Fallback to JWT claim tenant_id (user's home tenant)
+			// 2. Fallback to X-Tenant-ID header (only when JWT has no claim)
 			if tenantID == uuid.Nil {
-				if tidStr := extractTenantFromJWT(r); tidStr != "" {
+				if tidStr := r.Header.Get("X-Tenant-ID"); tidStr != "" {
 					if id, err := uuid.Parse(tidStr); err == nil {
 						tenantID = id
 					}

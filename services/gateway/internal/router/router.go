@@ -268,6 +268,8 @@ func (gw *Gateway) buildProxies() {
 			req.Header.Del("X-Tier")
 			req.Header.Del("X-API-Key")
 			req.Header.Del("X-Real-IP")
+			// SECURITY (R25 P1): strip X-Forwarded-For to prevent IP spoofing.
+			req.Header.Del("X-Forwarded-For")
 			if tenantID, ok := middleware.TenantIDFromRequest(req); ok {
 				req.Header.Set("X-Tenant-ID", tenantID)
 				// SECURITY: always overwrite client-provided tenant_id query param
@@ -1336,6 +1338,8 @@ func (gw *Gateway) buildProxiesLocked() {
 			req.Header.Del("X-Tier")
 			req.Header.Del("X-API-Key")
 			req.Header.Del("X-Real-IP")
+			// SECURITY (R25 P1): strip X-Forwarded-For to prevent IP spoofing.
+			req.Header.Del("X-Forwarded-For")
 			if tenantID, ok := middleware.TenantIDFromRequest(req); ok {
 				req.Header.Set("X-Tenant-ID", tenantID)
 				// Match the primary Director: unconditionally overwrite the

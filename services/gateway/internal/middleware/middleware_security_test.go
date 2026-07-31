@@ -51,9 +51,11 @@ func TestTenantResolver_HeaderPriority(t *testing.T) {
 			t.Error("expected tenant ID in context")
 		}
 
-		// BUG: The header value (tenantB) takes priority over JWT claim (tenantA)!
-		if tenantID != tenantB.String() {
-			t.Errorf("expected tenant %s from header, got %s", tenantB, tenantID)
+		// SECURITY (R25 P0 fix): JWT claim (tenantA) MUST take priority
+		// over client-supplied X-Tenant-ID header (tenantB).
+		if tenantID != tenantA.String() {
+			t.Errorf("SECURITY: expected JWT tenant %s to override header tenant %s, got %s",
+				tenantA, tenantB, tenantID)
 		}
 
 		w.WriteHeader(http.StatusOK)
@@ -66,7 +68,7 @@ func TestTenantResolver_HeaderPriority(t *testing.T) {
 		t.Errorf("unexpected status: %d", w.Code)
 	}
 
-	t.Logf("SECURITY ISSUE: Request with JWT for tenant %s was able to set context to tenant %s via X-Tenant-ID header",
+	t.Logf("PASS: Request with JWT for tenant %s correctly ignored spoofed X-Tenant-ID header for tenant %s",
 		tenantA, tenantB)
 }
 
@@ -184,7 +186,7 @@ func TestJWTAuth_PlatformAdminInRolesClaim(t *testing.T) {
 	claims := jwt.MapClaims{
 		"sub":       userID.String(),
 		"tenant_id": tenantA.String(),
-		"scope":     "openid profile", // No platform:admin in scopes
+		"scope":     "openid profile",                // No platform:admin in scopes
 		"roles":     []interface{}{"platform:admin"}, // But in roles!
 		"exp":       jwt.NewNumericDate(time.Now().Add(time.Hour)),
 		"iss":       "test-issuer",
