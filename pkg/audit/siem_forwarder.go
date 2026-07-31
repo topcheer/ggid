@@ -17,22 +17,22 @@ import (
 type SIEMProvider string
 
 const (
-	SIEMProviderSplunk      SIEMProvider = "splunk"
-	SIEMProviderDatadog     SIEMProvider = "datadog"
+	SIEMProviderSplunk        SIEMProvider = "splunk"
+	SIEMProviderDatadog       SIEMProvider = "datadog"
 	SIEMProviderElasticsearch SIEMProvider = "elasticsearch"
-	SIEMProviderGeneric     SIEMProvider = "generic"
+	SIEMProviderGeneric       SIEMProvider = "generic"
 )
 
 // SIEMConfig configures the SIEM forwarder.
 type SIEMConfig struct {
-	Provider    SIEMProvider
-	Endpoint    string        // HEC URL, Datadog API endpoint, Elasticsearch _bulk URL
-	APIKey      string        // Splunk HEC token, Datadog API key, Elasticsearch auth
-	IndexName   string        // Splunk index, Datadog service name, Elasticsearch index
-	BatchSize   int           // events per batch (default: 100)
+	Provider      SIEMProvider
+	Endpoint      string        // HEC URL, Datadog API endpoint, Elasticsearch _bulk URL
+	APIKey        string        // Splunk HEC token, Datadog API key, Elasticsearch auth
+	IndexName     string        // Splunk index, Datadog service name, Elasticsearch index
+	BatchSize     int           // events per batch (default: 100)
 	FlushInterval time.Duration // how often to flush (default: 5s)
-	MaxRetries  int           // retry count on failure (default: 3)
-	Timeout     time.Duration // HTTP client timeout (default: 10s)
+	MaxRetries    int           // retry count on failure (default: 3)
+	Timeout       time.Duration // HTTP client timeout (default: 10s)
 }
 
 // DefaultSIEMConfig returns a config with sensible defaults.
@@ -49,9 +49,9 @@ func DefaultSIEMConfig() SIEMConfig {
 // SIEMForwarder subscribes to audit events and forwards them to an external SIEM.
 // It batches events for efficiency and retries on failure.
 type SIEMForwarder struct {
-	config   SIEMConfig
-	client   *http.Client
-	logger   *slog.Logger
+	config SIEMConfig
+	client *http.Client
+	logger *slog.Logger
 
 	mu       sync.Mutex
 	buffer   []Event
@@ -99,11 +99,13 @@ func (f *SIEMForwarder) SetCAPool(pool *x509.CertPool) {
 // Forward adds an event to the buffer for batch forwarding.
 func (f *SIEMForwarder) Forward(event Event) {
 	f.mu.Lock()
-	defer f.mu.Unlock()
-
 	f.buffer = append(f.buffer, event)
+	shouldFlush := len(f.buffer) >= f.config.BatchSize
+	f.mu.Unlock()
 
-	if len(f.buffer) >= f.config.BatchSize {
+	// Launch flush OUTSIDE the lock to prevent deadlock
+	// (flush() itself acquires f.mu).
+	if shouldFlush {
 		go f.flush()
 	}
 }
@@ -216,12 +218,12 @@ func (f *SIEMForwarder) formatDatadog(events []Event) ([]byte, error) {
 	logs := make([]map[string]any, 0, len(events))
 	for _, e := range events {
 		logs = append(logs, map[string]any{
-			"message":  fmt.Sprintf("%s %s %s", e.Action, e.ResourceType, e.Result),
-			"ddsource": "ggid",
-			"service":  f.config.IndexName,
+			"message":   fmt.Sprintf("%s %s %s", e.Action, e.ResourceType, e.Result),
+			"ddsource":  "ggid",
+			"service":   f.config.IndexName,
 			"timestamp": e.CreatedAt.UnixMilli(),
-			"ddtags":   fmt.Sprintf("tenant:%s,actor:%s,result:%s", e.TenantID, e.ActorType, e.Result),
-			"audit":    e,
+			"ddtags":    fmt.Sprintf("tenant:%s,actor:%s,result:%s", e.TenantID, e.ActorType, e.Result),
+			"audit":     e,
 		})
 	}
 	return json.Marshal(logs)
