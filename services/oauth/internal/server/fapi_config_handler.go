@@ -224,7 +224,7 @@ func parseTenantContext(r *http.Request) (context.Context, error) {
 
 	tenantID, err := uuid.Parse(tenantIDStr)
 	if err != nil {
-		return nil, fmt.Errorf("valid X-Tenant-ID header or tenant_id query param required")
+		return nil, fmt.Errorf("valid X-Tenant-ID header required")
 	}
 
 	return tenant.WithContext(ctx, &tenant.Context{
