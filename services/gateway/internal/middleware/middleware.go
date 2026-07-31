@@ -969,7 +969,7 @@ func jwkToRSAPublicKey(nStr, eStr string) (*rsa.PublicKey, error) {
 // A wildcard "*" scope grants all access.
 func apiKeyHasWriteAccess(method string, scopes []string) bool {
 	if len(scopes) == 0 {
-		return true // no scopes defined = full access (backward compat)
+		return false // SECURITY: no scopes = no access (fail-closed)
 	}
 	for _, s := range scopes {
 		if s == "*" || s == "platform:admin" || s == "tenant:admin" {
