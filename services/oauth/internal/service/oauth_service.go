@@ -1862,20 +1862,27 @@ func (s *OAuthService) RevokeToken(tokenStr string, tokenTypeHint ...string) err
 			ttl = 0 // already expired, no TTL needed
 		}
 	}
-	// SECURITY: Cascade — revoke all refresh tokens for this user so the
-	// attacker can't simply mint a new access token after logout.
-	// This MUST run regardless of Redis availability.
+	// SECURITY: Cascade — revoke refresh tokens for this user AND client only,
+	// not ALL the user's refresh tokens across all clients/sessions.
+	// Revoking one stolen token should not DoS the victim's other sessions.
 	if s.pool != nil {
 		tenantIDStr := getStringClaim(claims, "tenant_id")
 		subStr := getStringClaim(claims, "sub")
+		clientID := getStringClaim(claims, "aud") // audience = client_id
 		if tenantIDStr != "" && subStr != "" {
 			tenantID, _ := uuid.Parse(tenantIDStr)
 			userID, _ := uuid.Parse(subStr)
 			if tenantID != uuid.Nil && userID != uuid.Nil {
 				ctx := context.Background()
-				_, _ = s.pool.Exec(ctx,
-					`UPDATE oidc_refresh_tokens SET revoked = true WHERE tenant_id = $1 AND user_id = $2 AND revoked = false`,
-					tenantID, userID)
+				if clientID != "" {
+					_, _ = s.pool.Exec(ctx,
+						`UPDATE oidc_refresh_tokens SET revoked = true WHERE tenant_id = $1 AND user_id = $2 AND client_id = $3 AND revoked = false`,
+						tenantID, userID, clientID)
+				} else {
+					_, _ = s.pool.Exec(ctx,
+						`UPDATE oidc_refresh_tokens SET revoked = true WHERE tenant_id = $1 AND user_id = $2 AND revoked = false`,
+						tenantID, userID)
+				}
 			}
 		}
 	}
