@@ -22,6 +22,7 @@ type JWTCClaims struct {
 	Roles       []string `json:"roles"`       // Role names (ERP Manager)
 	Email       string   `json:"email"`
 	Issuer      string   `json:"iss"`
+	Imp         bool     `json:"imp"` // impersonation marker
 }
 
 // ExtractJWTClaims retrieves JWT claims for routing decisions.
@@ -145,6 +146,11 @@ func JWTClaimExtraction(next http.Handler) http.Handler {
 			r.Header.Del("X-Is-Admin")
 			r.Header.Del("X-User-Role")
 			r.Header.Del("X-Scopes")
+		}
+		// SECURITY: Clear spoofed X-Impersonated header, then set from verified JWT.
+		r.Header.Del("X-Impersonated")
+		if claims.Imp {
+			r.Header.Set("X-Impersonated", "true")
 		}
 		// Store in context
 		ctx := context.WithValue(r.Context(), claimsKey, claims)

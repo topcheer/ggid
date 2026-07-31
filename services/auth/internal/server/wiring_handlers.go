@@ -42,6 +42,12 @@ func (h *Handler) handleImpersonate(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusForbidden, map[string]string{"error": "admin scope required for impersonation"})
 		return
 	}
+	// SECURITY: Block nested impersonation — an already-impersonated token
+	// must not be used to impersonate another user (prevents privilege chains).
+	if r.Header.Get("X-Impersonated") == "true" {
+		writeJSON(w, http.StatusForbidden, map[string]string{"error": "nested impersonation is not allowed"})
+		return
+	}
 	var req struct {
 		ImpersonatorID string `json:"impersonator_id"`
 		TargetUserID   string `json:"target_user_id"`
@@ -195,8 +201,25 @@ func (h *Handler) handleImpersonateRevoke(w http.ResponseWriter, r *http.Request
 		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid JSON"})
 		return
 	}
-	// Get token info before revoking (to get expiry for Redis TTL)
+	// SECURITY: Verify the caller is the original impersonator or a platform:admin.
+	// Prevents any authenticated user from revoking another admin's impersonation session.
 	tok, _ := service.GetImpersonationToken(parseUUIDSafe(req.TokenID))
+	if tok == nil {
+		writeJSON(w, http.StatusNotFound, map[string]string{"error": "token not found"})
+		return
+	}
+	callerID := r.Header.Get("X-User-ID")
+	isPlatformAdmin := false
+	for _, sc := range strings.Split(r.Header.Get("X-Scopes"), ",") {
+		if strings.TrimSpace(sc) == "platform:admin" {
+			isPlatformAdmin = true
+			break
+		}
+	}
+	if tok.ImpersonatorID != parseUUIDSafe(callerID) && !isPlatformAdmin {
+		writeJSON(w, http.StatusForbidden, map[string]string{"error": "only the impersonator or platform:admin can revoke"})
+		return
+	}
 	if err := service.RevokeImpersonationToken(parseUUIDSafe(req.TokenID)); err != nil {
 		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "request failed"})
 		return
