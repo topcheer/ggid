@@ -24,14 +24,14 @@ type GeneratedReport struct {
 
 func reportToMap(r *GeneratedReport) map[string]any {
 	m := map[string]any{
-		"id":         r.ID,
-		"tenant_id":  r.TenantID,
-		"framework":  r.Framework,
-		"from_date":  r.FromDate,
-		"to_date":    r.ToDate,
-		"format":     r.Format,
-		"status":     r.Status,
-		"content":    r.Content,
+		"id":        r.ID,
+		"tenant_id": r.TenantID,
+		"framework": r.Framework,
+		"from_date": r.FromDate,
+		"to_date":   r.ToDate,
+		"format":    r.Format,
+		"status":    r.Status,
+		"content":   r.Content,
 	}
 	if r.CompletedAt != nil {
 		m["completed_at"] = *r.CompletedAt
@@ -61,7 +61,6 @@ func (s *HTTPServer) handleReportGenerate(w http.ResponseWriter, r *http.Request
 	}
 
 	var req struct {
-		TenantID  string `json:"tenant_id"`
 		Framework string `json:"framework"`
 		FromDate  string `json:"from_date"`
 		ToDate    string `json:"to_date"`
@@ -71,6 +70,12 @@ func (s *HTTPServer) handleReportGenerate(w http.ResponseWriter, r *http.Request
 		writeJSONError(w, http.StatusBadRequest, "invalid JSON body")
 		return
 	}
+	// SECURITY (R206): Use validated tenant from header, not body.
+	tenantUUID, ok := resolveValidatedTenant(w, r)
+	if !ok {
+		return
+	}
+	tenantIDStr := tenantUUID.String()
 	if req.Framework == "" {
 		req.Framework = "soc2"
 	}
@@ -80,7 +85,7 @@ func (s *HTTPServer) handleReportGenerate(w http.ResponseWriter, r *http.Request
 
 	now := time.Now().UTC()
 	report := &GeneratedReport{
-		ID: uuid.NewString(), TenantID: req.TenantID,
+		ID: uuid.NewString(), TenantID: tenantIDStr,
 		Framework: req.Framework, FromDate: req.FromDate, ToDate: req.ToDate,
 		Format: req.Format, Status: "ready", CreatedAt: now,
 	}
@@ -110,10 +115,12 @@ func (s *HTTPServer) handleReportDownload(w http.ResponseWriter, r *http.Request
 	}
 
 	var report *GeneratedReport
+	tenantUUID, _ := resolveValidatedTenant(w, r)
+	tenantIDStr := tenantUUID.String()
 	if s.memMapRepo2 != nil {
 		rows, _ := s.memMapRepo2.ListJSON(r.Context(), "audit_reports")
 		for _, row := range rows {
-			if amGetString(row, "id") == reportID {
+			if amGetString(row, "id") == reportID && amGetString(row, "tenant_id") == tenantIDStr {
 				report = mapToReport(row)
 				break
 			}

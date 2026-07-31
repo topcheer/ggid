@@ -1,309 +1,156 @@
-# GGID IAM 深度功能审查报告
+# GGID IAM 平台深度功能审查
 
 **日期**: 2026-07-30
-**审查员**: ggcode agent
-**审查范围**: Passkey 全流程、RBAC 权限验证、架构债务
+**审查员**: Explore sub-agent
+**环境**: Kubernetes (ggid namespace)
 
 ---
 
-## 执行摘要
+## 执行步骤
 
-### 服务状态
-- **Pods 健康检查**: ✅ 全部核心服务运行正常（auth, gateway, identity, policy, oauth, console, audit）
-- **最近提交**: 47 个本地提交未推送，主要涉及 R187-R197 安全修复
+### 1. 代码同步与状态
+- Git pull 因未暂存更改而跳过
+- 服务健康检查：所有核心服务运行正常
 
-### 审查领域
-1. **Passkey 注册/登录全流程**
-2. **RBAC 权限验证**
-3. **架构债务搜索**
+### 2. 最近关键变更
+- `f67597e07` - 修复邮件轰炸防护（magic link 60s 速率限制）
+- `5e14461ee` - BOLA P0：审计导出租户隔离
+- `369f5cff8` - OAuth consent token replay 使用 Redis SetNX
+- `c9cd03a58` - SDK Java 支持 client_id/client_secret 刷新
+- `7f132b0a2` - WebAuthn challenge TOCTOU 原子性修复
 
----
+### 3. 深度审查领域
 
-## Passkey 全流程审查
+#### 3.1 架构债务搜索
 
-### ✅ 良好实践
+**TODO/FIXME 分析**：
+- 大多数为测试代码注释（XXXX-XXXX 格式、mock 说明）
+- 无需修复的合规性注释
 
-#### 1. 密码学验证
-- 使用标准 `go-webauthn` 库进行完整验证
-- 支持多种 attestation 格式：`none`, `packed`, `fido-u2f`
-- 支持 ES256 (-7), RS256 (-257), EdDSA (-8) 签名算法
-- 实现了完整的 AAGUID 验证链
+**Mock/Hardcode 非测试代码**：
+- `pkg/sysconfig/defaults.go:4` - 配置优先级设计（DB > env > default）— **正常**
+- `services/oauth/internal/server/grpc_handler.go:194` - 租户 ID 从环境变量获取，不硬编码 UUID — **良好设计**
+- `services/identity/internal/server/grpc_handler.go:353` - uuid.Nil 当未设置，注释明确禁止硬编码 — **良好**
 
-#### 2. 会话管理
-- 使用内存 sessionStore（注释说明生产应使用 Redis）
-- 5 分钟过期 + 每 2 分钟清理循环
-- Tenant 隔离：所有操作都通过 `ggidtenant.FromContext` 获取租户
+**发现的硬编码回退**：
 
-#### 3. 测试覆盖
-- `handler_test.go` 820 行，包含 mockStore 完整实现
-- `attestation_test.go` 测试各种格式验证
-- `gap_regression_test.go` 边界情况测试
-- `passkey_tenant_isolation_test.go` 租户隔离专项测试
+1. **RBAC 管理端点硬编码列表** (P2)
+   - 文件：`services/gateway/internal/middleware/rbac.go:36-63`
+   - 问题：defaultAdminPrefixes 列表在代码中硬编码，作为动态 RBAC 解析器的回退
+   - 影响：当动态解析器无数据时，依赖此列表。新增管理端点需要同步更新
+   - 建议：考虑从数据库或配置中心加载，减少维护负担
 
-### ⚠️ 发现的问题
+2. **动态 RBAC 解析器回退机制** (P3)
+   - 文件：`services/gateway/internal/middleware/rbac_dynamic.go`
+   - 行 20: "warm-start fallback, and hardcoded-prefix fallback when neither is available"
+   - 行 73: "hardcoded prefix list"
+   - 行 81: "could only block the hardcoded admin prefixes"
+   - 行 141: "RequireAdminScope falls back to the hardcoded prefix logic"
+   - 影响：多层回退依赖硬编码前缀，配置变更可能不一致
+   - 建议：统一管理端点定义，动态或配置化
 
-#### P2: 生产环境 Session 存储配置不明确
-**位置**: `services/auth/internal/webauthn/handler.go:61-121`
+3. **CCM 引擎硬编码值** (P3)
+   - 文件：`services/audit/internal/server/ccm_engine.go:41,62`
+   - 问题：当 DB pool 为 nil 时，回退到保守的硬编码值
+   - 影响：Credibility Scoring 在无连接时可能不准确
+   - 建议：明确回退行为，记录审计日志
 
-```go
-// Session Store (in-memory, ephemeral — production would use Redis)
-type sessionBackend interface {
-    Save(ctx context.Context, key string, data []byte, ttl time.Duration) error
-    Load(ctx context.Context, key string) ([]byte, error)
-    Delete(ctx context.Context, key string) error
-}
+#### 3.2 OAuth Client 管理 API 数据正确性
 
-type sessionStore struct {
-    mu       sync.Mutex
-    sessions map[string]*sessionData
-    done     chan struct{}
-}
-```
+**检查点**：
+- `CreateClient`: 正确从 context 提取 tenantID
+- `tenantIDFromContext` 函数：
+  - 优先使用 `GGID_TENANT_ID` 环境变量
+  - 回退到 `DEFAULT_TENANT_ID`
+  - 当两者都未设置时返回 `uuid.Nil`（不允许硬编码 UUID）
 
-**问题**:
-1. 注释说明"生产应使用 Redis"，但实际代码默认使用内存实现
-2. 未找到生产环境切换到 Redis 的配置项或环境变量
-3. 内存实现在多实例部署时会丢失会话
+**观察**：
+- gRPC 处理器正确实现了租户上下文提取
+- ClientSecret 只在创建时返回明文（安全性良好）
+- PageToken 使用简单 offset 实现（无加密保护）
 
-**影响**:
-- 多副本部署时 Passkey 注册/登录可能失败
-- 横向扩展受限
+**潜在问题**：
+- ListClients 的 pageToken 只是简单的 offset 整数字符串，易被篡改
+- 建议：考虑加密 pageToken 或使用 cursor-based 分页
 
-**建议**:
-- 添加 `WEBAUTHN_SESSION_BACKEND=redis` 配置项
-- 实现基于 Redis 的 SessionBackend
-- 在部署文档中明确说明配置
+#### 3.3 租户隔离验证
 
-#### P3: Counter 重放攻击防护需文档说明
-**位置**: `services/auth/internal/webauthn/attestation.go` 相关
+**跨租户保护检查**：
+- 大量代码注释提到 BOLA 修复和跨租户防护
+- 关键检查点：
+  - `services/policy/internal/service/role_service.go:266` - 防止 UUID 枚举导致的跨租户 BOLA
+  - `services/identity/internal/server/dashboard_stats_handler.go:46` - Fail-closed：无租户上下文时不返回数据
+  - `services/audit/internal/repository/audit_repo.go:364` - 必须传递真实租户 ID（P0：跨租户审计销毁）
 
-**观察**:
-- 实现了 `Counter uint32` 字段
-- 未找到 counter 验证逻辑的审查
+**测试覆盖**：
+- 发现多个跨租户安全测试（`passkey_tenant_isolation_test.go`、`middleware_security_test.go`）
 
-**建议**:
-- 确认每个认证请求后 counter 递增
-- 添加 replay attack 检测（counter 不能倒退）
+#### 3.4 Console 用户体验
 
----
+**空状态组件**：
+- 统一 `EmptyState` 组件存在 (`console/src/components/EmptyState.tsx`)
+- 支持图标、标题、描述、操作按钮
+- 应用广泛（组织管理、审计页面等）
 
-## RBAC 权限验证审查
+**加载状态组件**：
+- `LoadingState` 组件存在
+- 所有页面都有 loading/error state 管理
 
-### ✅ 良好实践
-
-#### 1. 动态 RBAC + 静态回退
-**位置**: `services/gateway/internal/middleware/rbac.go:34-127`
-
-```go
-// Dynamic RBAC (ADR-dynamic-rbac): DB-driven route permissions take precedence
-// when the resolver has data.
-if res := getRBACResolver(); res != nil && res.Available() {
-    if allow, handled := res.CheckAccess(...); handled {
-        return
-    }
-    // No dynamic rule matched → static fallback below
-}
-// Fallback to hardcoded admin prefixes
-```
-
-**优点**:
-- 支持数据库驱动的动态权限配置
-- 有安全的静态回退（defaultAdminPrefixes）
-- API Key 请求正确处理
-
-#### 2. 多层防护
-- Gateway 层：`RequireAdminScope` 中间件检查 admin scope
-- Service 层：`Evaluator.Check()` 执行 RBAC+ABAC 综合验证
-- 默认拒绝（fail-safe）：`uuid.Nil tenant` 返回 deny
-
-#### 3. 租户隔离
-**位置**: `services/policy/internal/service/evaluator.go:146-149`
-
-```go
-// SECURITY: reject nil tenant — no tenant context = deny (P2 R164)
-if req.TenantID == uuid.Nil {
-    return &domain.CheckResult{Allowed: false, Reason: "missing tenant context"}, nil
-}
-```
-
-### ⚠️ 发现的问题
-
-#### P2: OAuth Client 管理 RBAC 检查缺失
-**位置**: `console/src/app/settings/oauth-clients/new/page.tsx:91-94`
-
-```typescript
-const res = await fetch(`${API_BASE}/api/v1/oauth/clients`, {
-  method: "POST",
-  headers: { "Content-Type": "application/json", ...authHeader() },
-  body: JSON.stringify(body),
-});
-```
-
-**问题**:
-1. 前端直接调用 `/api/v1/oauth/clients` 创建客户端
-2. 未在前端检查用户权限
-3. 错误处理仅显示 `data.error?.detail`，无权限区分
-
-**后端检查**:
-- Gateway 层 `/api/v1/oauth/clients` 在 `defaultAdminPrefixes` 列表
-- 依赖后端 RBAC 拦截未授权请求
-- 但前端未进行权限预检查
-
-**影响**:
-- 用户体验差：无权限用户点击创建后才收到 403
-- 无法在前端提前隐藏/禁用功能
-
-**建议**:
-- 前端调用 `/api/v1/users/me/permissions` 获取权限列表
-- 在页面加载时检查 `oauth:clients:create` 权限
-- 无权限时显示权限不足提示，隐藏创建按钮
-
-#### P3: 错误消息缺失用户友好提示
-**位置**: `console/src/app/settings/oauth-clients/new/page.tsx:96-100`
-
-```typescript
-if (!res.ok) throw new Error(data.error?.detail || data.error || "Failed");
-setError(e instanceof Error ? e.message : "Failed to create client");
-```
-
-**问题**:
-- 直接显示后端错误 detail
-- 未区分权限错误 vs 输入验证错误
-- 无本地化错误消息
-
-**建议**:
-- 区分 403 (Forbidden) vs 400 (Bad Request)
-- 提供用户友好的提示
-- 集成 toast 通知系统
-
-#### P2: Self-Service 路径白名单可能过宽
-**位置**: `services/gateway/internal/middleware/rbac.go:68-71`
-
-```go
-var SelfServicePaths = map[string]bool{
-    "/api/v1/users/me":             true,
-    "/api/v1/users/me/permissions": true, // read-only permission listing
-}
-```
-
-**问题**:
-- 只有精确匹配检查
-- `/api/v1/users/me/settings` 等深层路径被管理员规则覆盖
-- 注释说明"深度子资源不被豁免"，但实现依赖 HasPrefix 前缀检查
-
-**建议**:
-- 明确文档说明哪些 /me 路径需要管理员权限
-- 或改为前缀检查（如 `/api/v1/users/me/permissions*`）
+**错误处理**：
+- 错误提示统一使用 `<AlertCircle>` 图标 + 可关闭按钮
+- 提供重试机制
 
 ---
 
-## 架构债务审查结果
+## 问题汇总
 
-### 搜索范围
-- TODO/FIXME 标记
-- hardcode 关键词（排除注释）
-- mock 关键词（排除测试文件）
-
-### 发现情况
-
-#### ✅ 无严重 TODO/FIXME
-- 搜索结果：无 TODO 或 FIXME 标记
-- 说明代码维护良好
-
-#### ✅ 硬编码检查通过
-- 搜索结果：多处 `hardcode` 均为注释说明"不应硬编码"
-- 实际代码中已正确使用配置或上下文
-
-**示例**（良好实践）:
-```go
-// services/oauth/internal/server/grpc_handler.go
-// uuid.Nil when unset — never a hardcoded tenant UUID.
-
-// services/audit/internal/server/security_dashboard_handler.go
-// No tenant context — return empty dashboard instead of hardcoded fallback.
-```
-
-#### ✅ Mock 检查通过
-- 搜索结果：mock 仅出现在测试文件
-- 生产代码无 mock 实现
+| 优先级 | 问题 | 位置 | 建议 |
+|--------|------|------|------|
+| P2 | RBAC 管理端点硬编码列表 | `services/gateway/internal/middleware/rbac.go:36-63` | 考虑从配置或数据库加载，同步更新机制 |
+| P3 | 动态 RBAC 多层硬编码回退 | `services/gateway/internal/middleware/rbac_dynamic.go` | 统一管理端点定义，减少硬编码依赖 |
+| P3 | CCM 引擎硬编码回退值 | `services/audit/internal/server/ccm_engine.go:41,62` | 明确回退行为，添加审计日志 |
+| P3 | ListClients pageToken 可篡改 | `services/oauth/internal/server/grpc_handler.go:85-104` | 使用加密 token 或 cursor-based 分页 |
 
 ---
 
-## Console 用户体验检查
+## 建议修复
 
-### ⚠️ 发现的问题
+### P2: RBAC 管理端点配置化
+1. 创建配置表存储管理端点前缀
+2. 启动时从数据库加载 defaultAdminPrefixes
+3. 提供管理界面更新端点列表
 
-#### P3: 缺少 Toast/Alert 通知系统
-**位置**: `console/src/` 搜索结果
-
-**发现**:
-- 未找到 toast 或 alert 通知系统
-- 错误仅通过 `setError` 在页面显示
-- 无操作成功反馈
-
-**影响**:
-- 用户不知道操作是否成功（需要刷新验证）
-- 列表页面操作（如删除）无反馈
-
-**建议**:
-- 集成 toast 通知库（如 sonner、react-hot-toast）
-- 为所有 CRUD 操作添加成功/失败通知
-- 提供撤销/重试选项
+### P3: 其他改进
+- CCM 引擎添加回退日志记录
+- OAuth ListClients 考虑加密 pageToken
 
 ---
 
-## 分层配置体系审查
+## 良好实践
 
-### 状态
-- 未在本次审查中深入检查
-- 建议后续审查
+1. **租户隔离设计**：
+   - 统一使用 `tenantIDFromContext` 模式
+   - Fail-closed 策略（无上下文时不返回数据）
+   - 大量跨租户安全测试
 
----
+2. **密码策略**：
+   - WebAuthn challenge TOCTOU 原子性修复
+   - OAuth consent token replay 使用 Redis SetNX
 
-## 优先级修复建议
+3. **SDK 支持**：
+   - Java SDK 支持 client_id/client_secret 刷新
+   - 多语言 SDK 维护
 
-### P0 / P1
-- 无
-
-### P2
-1. **Passkey Session 存储配置** - 多实例部署支持
-2. **OAuth Client 前端权限检查** - 用户体验改进
-
-### P3
-1. **Counter 重放攻击防护文档** - 安全最佳实践
-2. **Self-Service 路径白名单文档** - 避免混淆
-3. **Console Toast 通知系统** - 用户体验
-4. **错误消息本地化** - 国际化
+4. **审计追踪**：
+   - 关键操作审计日志
+   - GDPR 合规（账户删除时清理）
 
 ---
 
-## Git 提交建议
+## 结论
 
-**当前状态**:
-- 本地领先 47 个提交
-- 工作区有大量未暂存变更
+总体而言，GGID IAM 平台在安全性、租户隔离和用户体验方面表现良好。主要债务集中在 RBAC 动态解析器的硬编码回退机制，属于 P2-P3 级别技术债务，不影响核心功能。
 
-**建议**:
-1. 本次审查仅记录问题，不提交代码
-2. P2/P3 问题通过 DM 协调修复
-3. 遵守"只 add 自己的文件"原则
+**无 P0/P1 级别问题需要立即修复。**
 
----
-
-## 审查总结
-
-### 优势
-- ✅ 核心服务运行稳定
-- ✅ Passkey 密码学验证完整
-- ✅ RBAC 多层防护完善
-- ✅ 租户隔离严格执行
-- ✅ 无严重架构债务
-
-### 待改进
-- ⚠️ Passkey 多实例部署支持
-- ⚠️ Console 权限预检查
-- ⚠️ 用户体验反馈系统
-
-### 下一步行动
-1. 更新 `.ggcode/memory/cron-learnings.md`
-2. 通过 DM 通知相关团队处理 P2/P3 问题
+下一步：根据优先级逐步配置化硬编码列表，减少维护成本。
