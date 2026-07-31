@@ -3,7 +3,6 @@ package httpserver
 import (
 	"encoding/json"
 	"net/http"
-	"net/http/httptest"
 	"testing"
 
 	"github.com/ggid/ggid/services/policy/internal/service"
@@ -11,9 +10,8 @@ import (
 
 // TestHandleDecisionLog_Empty tests the endpoint when no decisions exist.
 func TestHandleDecisionLog_Empty(t *testing.T) {
-	srv := newTestServer()
-
-	w := doRequest(srv, "GET", "/api/v1/policies/decision-log", "")
+	newTestHarness()
+	w := doReq("GET", "/api/v1/policies/decision-log", "")
 	if w.Code != http.StatusOK {
 		t.Fatalf("expected 200, got %d", w.Code)
 	}
@@ -26,9 +24,8 @@ func TestHandleDecisionLog_Empty(t *testing.T) {
 }
 
 func TestHandleDecisionLog_WithLimit(t *testing.T) {
-	srv := newTestServer()
-
-	w := doRequest(srv, "GET", "/api/v1/policies/decision-log?limit=10", "")
+	newTestHarness()
+	w := doReq("GET", "/api/v1/policies/decision-log?limit=10", "")
 	if w.Code != http.StatusOK {
 		t.Fatalf("expected 200, got %d", w.Code)
 	}
@@ -41,8 +38,8 @@ func TestHandleDecisionLog_WithLimit(t *testing.T) {
 }
 
 func TestHandleDecisionLog_MethodNotAllowed(t *testing.T) {
-	srv := newTestServer()
-	w := doRequest(srv, "POST", "/api/v1/policies/decision-log", "")
+	newTestHarness()
+	w := doReq("POST", "/api/v1/policies/decision-log", "")
 	if w.Code != http.StatusMethodNotAllowed {
 		t.Fatalf("expected 405, got %d", w.Code)
 	}
@@ -59,8 +56,8 @@ func TestHandleDecisionLog_WithDecisions(t *testing.T) {
 	recordTestDecision(false, "deny policy:restrict", "")
 	recordTestDecision(true, "rbac", "user.write")
 
-	srv := newTestServer()
-	w := doRequest(srv, "GET", "/api/v1/policies/decision-log?limit=10", "")
+	newTestHarness()
+	w := doReq("GET", "/api/v1/policies/decision-log?limit=10", "")
 	if w.Code != http.StatusOK {
 		t.Fatalf("expected 200, got %d", w.Code)
 	}
@@ -85,56 +82,27 @@ func TestHandleDecisionLog_WithDecisions(t *testing.T) {
 }
 
 func TestHandleDecisionLog_InvalidLimit(t *testing.T) {
-	srv := newTestServer()
+	newTestHarness()
 	// Invalid limit should fall back to default (50), not error
-	w := doRequest(srv, "GET", "/api/v1/policies/decision-log?limit=abc", "")
+	w := doReq("GET", "/api/v1/policies/decision-log?limit=abc", "")
 	if w.Code != http.StatusOK {
 		t.Fatalf("expected 200 for invalid limit, got %d", w.Code)
 	}
 }
 
+// TestHandleDecisionLog_MissingTenant verifies fail-closed when no header.
+func TestHandleDecisionLog_MissingTenant(t *testing.T) {
+	newTestHarness()
+	origHeader := testTenantHeader
+	testTenantHeader = ""
+	defer func() { testTenantHeader = origHeader }()
+	w := doReq("GET", "/api/v1/policies/decision-log", "")
+	if w.Code != http.StatusForbidden {
+		t.Fatalf("expected 403, got %d", w.Code)
+	}
+}
+
 // --- Test helpers ---
-
-// newTestServer creates a minimal HTTPServer for decision-log tests.
-func newTestServer() *HTTPServer {
-	srv := &HTTPServer{}
-	mux := http.NewServeMux()
-	srv.RegisterRoutes(mux)
-	// Override httptest handler
-	testMux = mux
-	return srv
-}
-
-var testMux *http.ServeMux
-
-// doRequest creates and executes an HTTP request against the test mux.
-func doRequest(srv *HTTPServer, method, path, body string) *httptest.ResponseRecorder {
-	req := httptest.NewRequest(method, path, nil)
-	if body != "" {
-		req = httptest.NewRequest(method, path, stringReader(body))
-	}
-	w := httptest.NewRecorder()
-	testMux.ServeHTTP(w, req)
-	return w
-}
-
-func stringReader(s string) *stringReaderImpl {
-	return &stringReaderImpl{data: []byte(s)}
-}
-
-type stringReaderImpl struct {
-	data []byte
-	pos  int
-}
-
-func (r *stringReaderImpl) Read(p []byte) (int, error) {
-	if r.pos >= len(r.data) {
-		return 0, nil
-	}
-	n := copy(p, r.data[r.pos:])
-	r.pos += n
-	return n, nil
-}
 
 // clearTestDecisions resets the decision log between tests.
 func clearTestDecisions() {
