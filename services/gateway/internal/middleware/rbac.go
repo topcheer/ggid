@@ -60,6 +60,10 @@ var defaultAdminPrefixes = []string{
 	"/api/v1/activity",         // → /api/v1/audit/activity
 	"/api/v1/exports",          // → /api/v1/audit/exports
 	"/api/v1/providers/config", // Provider config CRUD (admin only; /status stays public)
+	// Additional admin paths (merged from former isAdminOnlyPath list — R139 fix)
+	"/api/v1/api-keys",           // API key management
+	"/api/v1/access-keys",        // Access key management
+	"/api/v1/identity/dashboard", // Identity dashboard (admin metrics)
 }
 
 // SelfServicePaths are /users/me sub-paths exempt from admin checks.
@@ -225,18 +229,7 @@ func hasPlatformAdminScope(scopes []string) bool {
 // isAdminOnlyPath returns true for admin-protected path prefixes where
 // permission-key fallback must NOT apply. These paths require platform:admin
 // or tenant:admin OAuth scope, not just resource-level permissions.
+// Uses defaultAdminPrefixes as single source of truth (R139 fix).
 func isAdminOnlyPath(path string) bool {
-	adminPrefixes := []string{
-		"/api/v1/users", "/api/v1/roles", "/api/v1/audit/",
-		"/api/v1/policies", "/api/v1/policy/", "/api/v1/webhooks", "/api/v1/oauth/clients",
-		"/api/v1/settings/", "/api/v1/admin/", "/api/v1/identity/dashboard",
-		"/api/v1/tenants", "/api/v1/impersonate",
-		"/api/v1/api-keys", "/api/v1/access-keys",
-	}
-	for _, prefix := range adminPrefixes {
-		if strings.HasPrefix(path, prefix) {
-			return true
-		}
-	}
-	return false
+	return isAdminEndpoint(path)
 }
