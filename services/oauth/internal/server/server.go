@@ -386,6 +386,44 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 		codeChallenge := r.URL.Query().Get("code_challenge")
 		codeChallengeMethod := r.URL.Query().Get("code_challenge_method")
 		acrValues := r.URL.Query().Get("acr_values") // NIST 800-63-3 requested AAL level
+		requestURI := r.URL.Query().Get("request_uri")
+
+		// SECURITY (R228): consume PAR (RFC 9126) before validating required
+		// params — pushed params (redirect_uri/scope/state/nonce) are stored
+		// server-side and must override any client-supplied query values.
+		// ValidateAuthorizationRequest resolves the request_uri (single-use,
+		// expired entries rejected) and returns the pushed claims.
+		if requestURI != "" {
+			parClaims, err := oauthSvc.ValidateAuthorizationRequest(r.Context(), clientID, r.URL.Query().Get("request"), requestURI)
+			if err != nil {
+				writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid_request_uri", "error_description": err.Error()})
+				return
+			}
+			if parClaims != nil {
+				// RFC 9126 §3: the pushed params belong to a specific client —
+				// ValidateAuthorizationRequest does not compare iss to clientID
+				// for the request_uri branch; enforce it here.
+				if iss, _ := parClaims["iss"].(string); iss != "" && iss != clientID {
+					writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid_request_uri", "error_description": "request_uri belongs to a different client"})
+					return
+				}
+				if v, _ := parClaims["redirect_uri"].(string); v != "" {
+					redirectURI = v
+				}
+				if v, _ := parClaims["response_type"].(string); v != "" {
+					responseType = v
+				}
+				if v, _ := parClaims["scope"].(string); v != "" {
+					scopeParam = v
+				}
+				if v, _ := parClaims["state"].(string); v != "" {
+					state = v
+				}
+				if v, _ := parClaims["nonce"].(string); v != "" {
+					nonce = v
+				}
+			}
+		}
 
 		if clientID == "" || redirectURI == "" || responseType == "" {
 			writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid_request", "error_description": "client_id, redirect_uri, and response_type are required"})
