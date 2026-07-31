@@ -154,13 +154,23 @@ func (s *AuthService) VerifyCredentials(ctx context.Context, username, password,
 	// The credential provider's IsLocked check only covers brute-force lockout (Redis),
 	// not admin-initiated status changes in the identity service.
 	userInfo, err := s.identityClient.GetUserByID(ctx, tc.TenantID, userID)
-	if err == nil && userInfo != nil {
-		if userInfo.Status != "active" {
-			return uuid.Nil, false, fmt.Errorf("account is %s", userInfo.Status)
-		}
+	if err != nil {
+		// SECURITY: Fail closed — if identity service is unavailable, deny login
+		// rather than allowing locked/disabled/deleted users to authenticate.
+		slog.Error("identity service unavailable during login, denying for security", "user_id", userID, "error", err)
+		return uuid.Nil, false, fmt.Errorf("unable to verify account status, please try again")
 	}
-	// If GetUserByID fails, we proceed (fail-open for backward compat — the credential
-	// check already passed, and not all deployments have identity service connectivity).
+	if userInfo != nil && userInfo.Status != "active" {
+		return uuid.Nil, false, fmt.Errorf("account is %s", userInfo.Status)
+	}
+
+	// SECURITY: Enforce email verification for local password logins when enabled.
+	// Social/LDAP providers verify emails externally, so this check only applies
+	// to users who authenticated via the local credential provider.
+	if s.cfg.RequireEmailVerification && result.Provider == authprovider.ProviderLocal &&
+		userInfo != nil && !userInfo.EmailVerified {
+		return uuid.Nil, false, fmt.Errorf("email verification required, please verify your email before logging in")
+	}
 
 	// SECURITY: Check password expiration policy (MaxAgeDays).
 	// If expired, return userID with MustChangePassword flag in the response.
@@ -379,6 +389,19 @@ func (s *AuthService) ResetPassword(ctx context.Context, resetToken, newPassword
 
 	// 5. Revoke all sessions (force re-login everywhere)
 	_ = s.sessionService.RevokeAllForUser(ctx, tenantID, userID, uuid.Nil)
+
+	// 6. SECURITY: Clear trusted devices so MFA bypass can't survive password reset.
+	if s.rateLimiter != nil && s.rateLimiter.rdb != nil {
+		pattern := fmt.Sprintf("ggid:trusted_device:%s:%s:*", tenantID, userID)
+		iter := s.rateLimiter.rdb.Scan(ctx, 0, pattern, 100).Iterator()
+		var keys []string
+		for iter.Next(ctx) {
+			keys = append(keys, iter.Val())
+		}
+		if len(keys) > 0 {
+			s.rateLimiter.rdb.Del(ctx, keys...)
+		}
+	}
 	return nil
 }
 
@@ -405,7 +428,28 @@ func (s *AuthService) ChangePassword(ctx context.Context, tenantID, userID uuid.
 	}
 
 	// 4. Set new password
-	return s.passwordService.SetPassword(ctx, cred, newPassword)
+	if err := s.passwordService.SetPassword(ctx, cred, newPassword); err != nil {
+		return err
+	}
+
+	// SECURITY: Invalidate all existing sessions after password change.
+	// This ensures stolen sessions are terminated when a user changes their password.
+	if s.sessionService != nil {
+		_ = s.sessionService.RevokeAllForUser(ctx, tenantID, userID, uuid.Nil)
+	}
+	// SECURITY: Clear trusted devices — prevents MFA bypass after password change.
+	if s.rateLimiter != nil && s.rateLimiter.rdb != nil {
+		pattern := fmt.Sprintf("ggid:trusted_device:%s:%s:*", tenantID, userID)
+		iter := s.rateLimiter.rdb.Scan(ctx, 0, pattern, 100).Iterator()
+		var keys []string
+		for iter.Next(ctx) {
+			keys = append(keys, iter.Val())
+		}
+		if len(keys) > 0 {
+			s.rateLimiter.rdb.Del(ctx, keys...)
+		}
+	}
+	return nil
 }
 
 // ListSessions returns all active sessions for a user.
@@ -664,6 +708,15 @@ func (s *AuthService) ResetLoginAttempts(ctx context.Context, username string) e
 // The token is stored in Redis with a 15-minute TTL.
 // Returns the plaintext token (to be embedded in an email link).
 func (s *AuthService) IssueMagicLink(ctx context.Context, tenantID, userID uuid.UUID, email string) (string, error) {
+	// Rate limit: 1 magic link per email per 60 seconds (prevents email bombing).
+	if s.rateLimiter != nil && s.rateLimiter.rdb != nil {
+		rateKey := fmt.Sprintf("ggid:magiclink_rate:%s:%s", tenantID, hashToken(email))
+		set, err := s.rateLimiter.rdb.SetNX(ctx, rateKey, "1", 60*time.Second).Result()
+		if err == nil && !set {
+			return "", fmt.Errorf("rate limit: please wait before requesting another magic link")
+		}
+	}
+
 	token, err := crypto.GenerateRandomToken(32)
 	if err != nil {
 		return "", fmt.Errorf("generate magic link token: %w", err)
