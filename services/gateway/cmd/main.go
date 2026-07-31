@@ -30,6 +30,8 @@ import (
 func init() {
 	if pepper := os.Getenv("PASSWORD_PEPPER"); pepper != "" {
 		crypto.SetPepper(pepper)
+	} else {
+		log.Println("WARNING: PASSWORD_PEPPER not set — password verification may be inconsistent with auth service")
 	}
 }
 

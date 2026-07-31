@@ -29,19 +29,20 @@ const (
 // InternalAuthConfig configures the internal auth middleware.
 type InternalAuthConfig struct {
 	Secret       []byte
-	PrevSecret   []byte // optional, for key rotation
-	ReplayWindow int64  // seconds; defaults to 120
+	PrevSecret   []byte   // optional, for key rotation
+	ReplayWindow int64    // seconds; defaults to 120
 	Whitelist    []string // paths that skip internal auth
 }
 
 // LoadInternalSecret loads the internal auth secret from env vars.
-// In production (GGID_ENV=production), missing secret is fatal.
-// In dev, uses a default and logs a warning.
+// SECURITY: fail-closed unless GGID_ENV is explicitly "test" or "dev".
+// Any other value (prod/production/live/staging/empty) requires explicit secret.
 func LoadInternalSecret() []byte {
 	secret := os.Getenv("GGID_INTERNAL_SECRET")
 	if secret == "" {
-		if os.Getenv("GGID_ENV") == "production" {
-			log.Fatal("GGID_INTERNAL_SECRET must be set in production")
+		env := os.Getenv("GGID_ENV")
+		if env != "test" && env != "dev" {
+			log.Fatal("GGID_INTERNAL_SECRET must be set when GGID_ENV is not 'test' or 'dev'")
 		}
 		secret = "dev-internal-secret"
 		log.Println("WARNING: using default internal secret — not for production")

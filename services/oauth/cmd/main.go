@@ -34,6 +34,8 @@ func init() {
 	// Password pepper must match auth service for PasswordGrant to verify hashes.
 	if pepper := os.Getenv("PASSWORD_PEPPER"); pepper != "" {
 		crypto.SetPepper(pepper)
+	} else {
+		log.Println("WARNING: PASSWORD_PEPPER not set — password verification may be inconsistent with auth service")
 	}
 }
 
