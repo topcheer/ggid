@@ -332,7 +332,16 @@ func (s *RoleService) AssignRole(ctx context.Context, userID, roleID uuid.UUID, 
 }
 
 // RevokeRole removes a role assignment from a user.
+// SECURITY (R27 P1): validate role ownership before revoke — prevents
+// cross-tenant role revocation by guessing UUIDs.
 func (s *RoleService) RevokeRole(ctx context.Context, userID, roleID uuid.UUID, scopeType domain.ScopeType, scopeID uuid.UUID) error {
+	role, err := s.roleRepo.GetByID(ctx, roleID)
+	if err != nil {
+		return err
+	}
+	if scopeID != uuid.Nil && role.TenantID != uuid.Nil && role.TenantID != scopeID {
+		return errors.New(errors.ErrPermissionDenied, "role does not belong to the target tenant")
+	}
 	return s.userRoleRepo.Revoke(ctx, userID, roleID, scopeType, scopeID)
 }
 
@@ -343,8 +352,26 @@ func (s *RoleService) RevokeRoleTemporaryOnly(ctx context.Context, userID, roleI
 }
 
 // ListUserRoles returns all roles assigned to a user.
+// SECURITY (R27 P1): tenant-scoped — only return roles belonging to the
+// caller's tenant. Prevents cross-tenant role enumeration.
 func (s *RoleService) ListUserRoles(ctx context.Context, userID uuid.UUID) ([]*domain.UserRole, error) {
-	return s.userRoleRepo.ListByUser(ctx, userID)
+	allRoles, err := s.userRoleRepo.ListByUser(ctx, userID)
+	if err != nil {
+		return nil, err
+	}
+	tenantID := tenantIDFromHTTPRequest(ctx)
+	if tenantID == uuid.Nil {
+		return allRoles, nil // internal/admin callers without tenant context
+	}
+	filtered := make([]*domain.UserRole, 0, len(allRoles))
+	for _, ur := range allRoles {
+		role, err := s.roleRepo.GetByID(ctx, ur.RoleID)
+		if err != nil || role.TenantID != tenantID {
+			continue
+		}
+		filtered = append(filtered, ur)
+	}
+	return filtered, nil
 }
 
 // --- Permission management ---

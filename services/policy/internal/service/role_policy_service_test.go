@@ -370,8 +370,11 @@ func TestRoleService_AssignRole_RoleNotFound(t *testing.T) {
 }
 
 func TestRoleService_RevokeRole(t *testing.T) {
-	svc := NewRoleService(&mockRoleRepo{}, &mockPermRepo{}, &mockUserRoleRepo{})
-	if err := svc.RevokeRole(context.Background(), uuid.New(), uuid.New(), domain.ScopeOrganization, uuid.New()); err != nil {
+	tenantID := uuid.New()
+	roleID := uuid.New()
+	repo := &mockRoleRepo{roles: map[uuid.UUID]*domain.Role{roleID: {ID: roleID, TenantID: tenantID}}}
+	svc := NewRoleService(repo, &mockPermRepo{}, &mockUserRoleRepo{})
+	if err := svc.RevokeRole(context.Background(), uuid.New(), roleID, domain.ScopeOrganization, tenantID); err != nil {
 		t.Fatal(err)
 	}
 }
