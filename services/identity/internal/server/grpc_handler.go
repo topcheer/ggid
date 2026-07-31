@@ -17,9 +17,33 @@ import (
 	"github.com/google/uuid"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
+
+// tenantFromMetadata extracts X-Tenant-ID from gRPC incoming metadata.
+func tenantFromMetadata(ctx context.Context) string {
+	if md, ok := metadata.FromIncomingContext(ctx); ok {
+		if v := md.Get("x-tenant-id"); len(v) > 0 {
+			return v[0]
+		}
+	}
+	return ""
+}
+
+// tenantFromContextOrEnv resolves tenant from gRPC metadata first, falling
+// back to env only when metadata is absent (internal callers without tenant
+// context). This prevents cross-tenant access when an external caller sets
+// a different tenant via the env var.
+func tenantFromContextOrEnv(ctx context.Context) uuid.UUID {
+	if tid := tenantFromMetadata(ctx); tid != "" {
+		if id, err := uuid.Parse(tid); err == nil {
+			return id
+		}
+	}
+	return defaultTenantID()
+}
 
 // IdentityGRPCHandler implements IdentityServiceServer by delegating to IdentityService.
 type IdentityGRPCHandler struct {
@@ -85,7 +109,7 @@ func (h *IdentityGRPCHandler) RegisterGRPC(s *grpc.Server) {
 
 func (h *IdentityGRPCHandler) CreateUser(ctx context.Context, req *identityv1.CreateUserRequest) (*identityv1.User, error) {
 	input := &domain.CreateUserInput{
-		TenantID:    defaultTenantID(),
+		TenantID:    tenantFromContextOrEnv(ctx),
 		Username:    req.GetUsername(),
 		Email:       req.GetEmail(),
 		Phone:       req.GetPhone(),
@@ -127,7 +151,7 @@ func (h *IdentityGRPCHandler) ListUsers(ctx context.Context, req *identityv1.Lis
 	}
 
 	filter := &domain.ListUsersFilter{
-		TenantID: defaultTenantID(),
+		TenantID: tenantFromContextOrEnv(ctx),
 		Search:   req.GetSearch(),
 		PageSize: pageSize,
 		Offset:   offset,
@@ -213,7 +237,7 @@ func (h *IdentityGRPCHandler) UnlockUser(ctx context.Context, req *identityv1.Un
 
 func (h *IdentityGRPCHandler) RegisterUser(ctx context.Context, req *identityv1.RegisterUserRequest) (*identityv1.RegisterUserResponse, error) {
 	input := &domain.CreateUserInput{
-		TenantID: defaultTenantID(),
+		TenantID: tenantFromContextOrEnv(ctx),
 		Username: req.GetUsername(),
 		Email:    req.GetEmail(),
 		Password: req.GetPassword(),
@@ -315,7 +339,7 @@ func (h *IdentityGRPCHandler) LinkExternalIdentity(ctx context.Context, req *ide
 	}
 	ei := &domain.ExternalIdentity{
 		UserID:     userID,
-		TenantID:   defaultTenantID(),
+		TenantID:   tenantFromContextOrEnv(ctx),
 		Provider:   req.GetProvider(),
 		ExternalID: req.GetExternalId(),
 	}

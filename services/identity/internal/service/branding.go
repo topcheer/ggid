@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"sync"
 	"time"
 
 	"github.com/ggid/ggid/services/identity/internal/domain"
@@ -11,8 +12,10 @@ import (
 )
 
 // BrandingStore is a DB-backed branding store with in-memory fallback for tests.
+// The in-memory map is guarded by mu to prevent data races in concurrent use.
 type BrandingStore struct {
 	db       *pgxpool.Pool
+	mu       sync.RWMutex
 	inMemory map[string]*domain.TenantBranding // fallback when db is nil
 }
 
@@ -24,6 +27,8 @@ func NewBrandingStore(db *pgxpool.Pool) *BrandingStore {
 // GetBranding retrieves branding config for a tenant from DB.
 func (bs *BrandingStore) GetBranding(ctx context.Context, tenantID string) (*domain.TenantBranding, error) {
 	if bs.db == nil {
+		bs.mu.RLock()
+		defer bs.mu.RUnlock()
 		if b, ok := bs.inMemory[tenantID]; ok {
 			return b, nil
 		}
@@ -55,6 +60,8 @@ func (bs *BrandingStore) UpdateBranding(ctx context.Context, tenantID string, re
 	req.UpdatedAt = time.Now()
 
 	if bs.db == nil {
+		bs.mu.Lock()
+		defer bs.mu.Unlock()
 		bs.inMemory[tenantID] = req
 		return req, nil // in-memory fallback
 	}

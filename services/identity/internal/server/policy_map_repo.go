@@ -61,7 +61,7 @@ func (r *identityPolicyMapRepo) EnsureSchema(ctx context.Context) error {
 }
 
 func (r *identityPolicyMapRepo) Store(ctx context.Context, table, id string, data map[string]any) error {
-	if r.pool == nil {
+	if r.pool == nil || !validTable(table) {
 		return nil
 	}
 	if id == "" {
@@ -75,7 +75,7 @@ func (r *identityPolicyMapRepo) Store(ctx context.Context, table, id string, dat
 }
 
 func (r *identityPolicyMapRepo) List(ctx context.Context, table string) ([]map[string]any, error) {
-	if r.pool == nil {
+	if r.pool == nil || !validTable(table) {
 		return []map[string]any{}, nil
 	}
 	rows, err := r.pool.Query(ctx, fmt.Sprintf(`SELECT id, data, created_at FROM %s ORDER BY created_at DESC`, table))

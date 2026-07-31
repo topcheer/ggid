@@ -34,16 +34,10 @@ func (h *HTTPHandler) handleDashboardStats(w http.ResponseWriter, r *http.Reques
 	// Real DB queries when pool is available
 	if pool := h.svc.Pool(); pool != nil {
 		tenantID := tenantIDFromContext(ctx)
-		// Fallback: parse from X-Tenant-ID header
-		if tenantID == nil {
-			if tidStr := r.Header.Get("X-Tenant-ID"); tidStr != "" {
-				if tid, err := uuid.Parse(tidStr); err == nil {
-					tenantID = &tid
-				}
-			}
-		}
 
-		// SECURITY: Fail-closed — require tenant context, never return cross-tenant data.
+		// SECURITY (R26 P2): removed X-Tenant-ID header fallback —
+		// it allowed tenant spoofing. Require authenticated tenant
+		// context only; fail-closed when absent.
 		if tenantID == nil {
 			writeJSON(w, http.StatusForbidden, map[string]string{"error": "tenant context required"})
 			return
