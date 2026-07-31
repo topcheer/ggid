@@ -32,6 +32,11 @@ func (h *RoleHandler) CreateRole(ctx context.Context, req *pb.CreateRoleRequest)
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, "invalid tenant_id")
 	}
+	// SECURITY (R232): cross-check body tenant_id against gRPC metadata
+	// (same pattern as ListRoles L68).
+	if err := validateTenantFromMetadata(ctx, req.GetTenantId()); err != nil {
+		return nil, err
+	}
 	var parentID *uuid.UUID
 	if req.ParentRoleId != nil && *req.ParentRoleId != "" {
 		pid, err := uuid.Parse(*req.ParentRoleId)
@@ -56,6 +61,12 @@ func (h *RoleHandler) GetRole(ctx context.Context, req *pb.GetRoleRequest) (*pb.
 	role, err := h.roleSvc.GetRole(ctx, id)
 	if err != nil {
 		return nil, toGRPCError(err)
+	}
+	// SECURITY (R232): GetRoleRequest has no tenant_id field — verify
+	// the caller's metadata tenant matches the role's tenant (IDOR,
+	// same pattern as audit GetEvent in f5aa68fbb).
+	if err := validateTenantFromMetadata(ctx, role.TenantID.String()); err != nil {
+		return nil, err
 	}
 	return roleToProto(role), nil
 }
