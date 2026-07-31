@@ -167,6 +167,15 @@ func main() {
 		w.Write([]byte("ok"))
 	})
 	mux.HandleFunc("/readyz", func(w http.ResponseWriter, r *http.Request) {
+		if db != nil {
+			ctx, cancel := context.WithTimeout(r.Context(), 2*time.Second)
+			defer cancel()
+			if err := db.Ping(ctx); err != nil {
+				w.WriteHeader(http.StatusServiceUnavailable)
+				w.Write([]byte("not ready"))
+				return
+			}
+		}
 		w.WriteHeader(http.StatusOK)
 		w.Write([]byte("ready"))
 	})

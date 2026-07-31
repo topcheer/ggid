@@ -635,9 +635,16 @@ func (h *Handler) healthz(w http.ResponseWriter, r *http.Request) {
 }
 
 // readyz checks if the service is ready to serve requests (readiness probe).
-// Returns 200 if the database/redis connections are healthy, 503 otherwise.
+// Returns 200 if the database connection is healthy, 503 otherwise.
 func (h *Handler) readyz(w http.ResponseWriter, r *http.Request) {
-	// For now, same as healthz — extend to check DB/Redis when wired
+	if h.pool != nil {
+		ctx, cancel := context.WithTimeout(r.Context(), 2*time.Second)
+		defer cancel()
+		if err := h.pool.Ping(ctx); err != nil {
+			writeJSON(w, http.StatusServiceUnavailable, map[string]string{"status": "not ready", "error": "database unreachable"})
+			return
+		}
+	}
 	writeJSON(w, http.StatusOK, map[string]string{"status": "ready"})
 }
 

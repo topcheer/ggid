@@ -5,6 +5,7 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
+	"log/slog"
 	"net/http"
 	"strings"
 	"sync"
@@ -125,6 +126,11 @@ func (v *DBAPIKeyValidator) Validate(ctx context.Context, key string) (string, s
 
 	// Async: update last_used_at (best-effort)
 	go func() {
+		defer func() {
+			if r := recover(); r != nil {
+				slog.Error("apikey last_used_at update panic", "key_id", keyID, "error", r)
+			}
+		}()
 		v.pool.Exec(context.Background(),
 			`UPDATE api_keys SET last_used_at = NOW() WHERE id = $1`,
 			keyID)
