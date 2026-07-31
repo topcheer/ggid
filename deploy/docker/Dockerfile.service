@@ -13,6 +13,9 @@ FROM alpine:3.20
 
 RUN apk add --no-cache ca-certificates tzdata curl
 
+# Create non-root user for security (avoid running as root)
+RUN addgroup -g 1001 -S appgroup && adduser -u 1001 -S appuser -G appgroup
+
 # Optional: copy migration files (only if they exist at build time)
 ARG MIGRATIONS_DIR=deploy/migrations
 COPY ${MIGRATIONS_DIR} /app/migrations
@@ -24,6 +27,12 @@ RUN chmod +x /app/service
 
 WORKDIR /app
 RUN mkdir -p /app/configs && ln -s /configs/rsa_public.pem /app/configs/rsa_public.pem && ln -s /configs/rsa_private.pem /app/configs/rsa_private.pem || true
+
+# Ensure appuser owns the application files
+RUN chown -R appuser:appgroup /app
+
+USER appuser
+
 EXPOSE 8080
 
 HEALTHCHECK --interval=30s --timeout=5s --retries=3 --start-period=10s \

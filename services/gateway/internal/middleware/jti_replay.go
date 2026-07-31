@@ -8,9 +8,10 @@ import (
 // JTIReplayTracker prevents JWT replay attacks by tracking used jti values.
 // Uses an in-memory map with expiry cleanup. In production, replace with Redis SETNX.
 type JTIReplayTracker struct {
-	mu      sync.Mutex
-	seen    map[string]time.Time // jti -> expiry
-	maxAge  time.Duration
+	mu     sync.Mutex
+	seen   map[string]time.Time // jti -> expiry
+	maxAge time.Duration
+	done   chan struct{}
 }
 
 // NewJTIReplayTracker creates a tracker with the given max token lifetime.
@@ -18,9 +19,15 @@ func NewJTIReplayTracker(maxAge time.Duration) *JTIReplayTracker {
 	t := &JTIReplayTracker{
 		seen:   make(map[string]time.Time),
 		maxAge: maxAge,
+		done:   make(chan struct{}),
 	}
 	go t.cleanupLoop()
 	return t
+}
+
+// StopCleanup terminates the background cleanup goroutine.
+func (t *JTIReplayTracker) StopCleanup() {
+	close(t.done)
 }
 
 // IsReplayed returns true if the jti has already been seen.
@@ -52,14 +59,19 @@ func (t *JTIReplayTracker) IsReplayed(jti string, expiresAt time.Time) bool {
 func (t *JTIReplayTracker) cleanupLoop() {
 	ticker := time.NewTicker(t.maxAge / 2)
 	defer ticker.Stop()
-	for range ticker.C {
-		t.mu.Lock()
-		now := time.Now()
-		for jti, exp := range t.seen {
-			if now.After(exp) {
-				delete(t.seen, jti)
+	for {
+		select {
+		case <-t.done:
+			return
+		case <-ticker.C:
+			t.mu.Lock()
+			now := time.Now()
+			for jti, exp := range t.seen {
+				if now.After(exp) {
+					delete(t.seen, jti)
+				}
 			}
+			t.mu.Unlock()
 		}
-		t.mu.Unlock()
 	}
 }

@@ -12,6 +12,7 @@ import (
 // When multiple requests arrive for the same URL while one is in-flight,
 // they wait for the first response and share the result.
 type RequestCoalescer struct {
+	done     chan struct{}
 	mu       sync.Mutex
 	inflight map[string]*coalescedCall
 	ttl      time.Duration // how long to cache successful responses
@@ -39,6 +40,7 @@ func NewRequestCoalescer(ttl time.Duration) *RequestCoalescer {
 		inflight: make(map[string]*coalescedCall),
 		cache:    make(map[string]*cachedResponse),
 		ttl:      ttl,
+		done:     make(chan struct{}),
 	}
 	if ttl > 0 {
 		go rc.cleanupLoop()
@@ -46,22 +48,30 @@ func NewRequestCoalescer(ttl time.Duration) *RequestCoalescer {
 	return rc
 }
 
+// StopCleanup terminates the background cleanup goroutine.
+func (rc *RequestCoalescer) StopCleanup() {
+	close(rc.done)
+}
+
 func (rc *RequestCoalescer) cleanupLoop() {
 	ticker := time.NewTicker(rc.ttl)
 	defer ticker.Stop()
-	for range ticker.C {
-		rc.mu.Lock()
-		now := time.Now()
-		for k, v := range rc.cache {
-			if now.After(v.expires) {
-				delete(rc.cache, k)
+	for {
+		select {
+		case <-rc.done:
+			return
+		case <-ticker.C:
+			rc.mu.Lock()
+			now := time.Now()
+			for k, v := range rc.cache {
+				if now.After(v.expires) {
+					delete(rc.cache, k)
+				}
 			}
+			rc.mu.Unlock()
 		}
-		rc.mu.Unlock()
 	}
 }
-
-// coalesceKey generates a deduplication key from method + URL.
 func coalesceKey(method, path, query string) string {
 	return method + " " + path + "?" + query
 }
