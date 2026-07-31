@@ -36,13 +36,7 @@ type Server struct {
 // dev-only (LoadInternalSecrets returns dev secret in non-production).
 func newGRPCServer() *grpc.Server {
 	secret, prev := middleware.LoadInternalSecrets()
-	secureOpts := middleware.SecureGRPCOpts(secret)
-	if len(prev) > 0 {
-		// extend SecureGRPCOpts with prev-secret support
-		secureOpts = append(secureOpts, grpc.ChainUnaryInterceptor(
-			middleware.GRPCInternalAuthUnary(middleware.InternalAuthConfig{Secret: secret, PrevSecret: prev}),
-		))
-	}
+	secureOpts := middleware.SecureGRPCOptsWithPrev(secret, prev)
 	if os.Getenv("GRPC_TLS_ENABLED") == "true" {
 		certFile := os.Getenv("GRPC_TLS_CERT")
 		keyFile := os.Getenv("GRPC_TLS_KEY")

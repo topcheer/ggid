@@ -422,9 +422,7 @@ func domainToPbExternalIdentity(ei *domain.ExternalIdentity) *identityv1.Externa
 // startGRPCServer starts a gRPC server for the Identity service.
 func (s *Server) startGRPCServer(addr string) (*grpc.Server, net.Listener, error) {
 	secret, prev := middleware.LoadInternalSecrets()
-	grpcSrv := grpc.NewServer(append(middleware.SecureGRPCOpts(secret),
-		grpc.ChainUnaryInterceptor(middleware.GRPCInternalAuthUnary(middleware.InternalAuthConfig{Secret: secret, PrevSecret: prev})),
-	)...)
+	grpcSrv := grpc.NewServer(middleware.SecureGRPCOptsWithPrev(secret, prev)...)
 	// The IdentityService is created in New() and available via s.idSvc.
 	// We retrieve it from the server struct if available.
 	if s.idSvc != nil {

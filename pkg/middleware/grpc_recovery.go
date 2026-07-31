@@ -98,11 +98,18 @@ func firstMeta(md metadata.MD, key string) string {
 
 // SecureGRPCOpts combines panic recovery with optional internal auth.
 // authSecret may be nil to keep recovery-only (dev/test).
+// authPrevSecret enables key-rotation: signatures valid under either
+// current or previous secret are accepted.
 func SecureGRPCOpts(authSecret []byte) []grpc.ServerOption {
+	return SecureGRPCOptsWithPrev(authSecret, nil)
+}
+
+// SecureGRPCOptsWithPrev is SecureGRPCOpts with prev-secret rotation support.
+func SecureGRPCOptsWithPrev(authSecret, authPrevSecret []byte) []grpc.ServerOption {
 	opts := GRPCRecoveryOpts()
 	if len(authSecret) > 0 {
 		opts = append(opts, grpc.ChainUnaryInterceptor(
-			GRPCInternalAuthUnary(InternalAuthConfig{Secret: authSecret}),
+			GRPCInternalAuthUnary(InternalAuthConfig{Secret: authSecret, PrevSecret: authPrevSecret}),
 		))
 	}
 	return opts
