@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"crypto/subtle"
 	"fmt"
 	"time"
 
@@ -129,7 +130,8 @@ func (s *MFAService) VerifyMFA(ctx context.Context, deviceID uuid.UUID, code str
 	}
 
 	// Replay protection (RFC 6238 §5.2): reject reuse of the same TOTP code.
-	if device.LastUsedCode == code {
+	// Constant-time compare prevents timing attacks.
+	if len(device.LastUsedCode) > 0 && subtle.ConstantTimeCompare([]byte(device.LastUsedCode), []byte(code)) == 1 {
 		return false, ErrInvalidMFACode
 	}
 
@@ -161,7 +163,8 @@ func (s *MFAService) VerifyUserCode(ctx context.Context, tenantID, userID uuid.U
 	}
 
 	// SECURITY (RFC 6238 §5.2): reject replay of previously used codes.
-	if device.LastUsedCode == code {
+	// Constant-time compare prevents timing attacks.
+	if len(device.LastUsedCode) > 0 && subtle.ConstantTimeCompare([]byte(device.LastUsedCode), []byte(code)) == 1 {
 		return ErrInvalidMFACode
 	}
 
