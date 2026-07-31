@@ -9,10 +9,14 @@ import (
 func MaxBodySize(maxBytes int64) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			// Early Content-Length check to prevent slow-body resource exhaustion.
+			if r.ContentLength > maxBytes {
+				w.WriteHeader(http.StatusRequestEntityTooLarge)
+				return
+			}
 			if r.Body != nil {
 				r.Body = http.MaxBytesReader(w, r.Body, maxBytes)
 			}
-			// Wrap writer to catch MaxBytesError and return proper status
 			mw := &maxBodyWriter{ResponseWriter: w}
 			next.ServeHTTP(mw, r)
 		})
