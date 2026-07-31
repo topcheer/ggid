@@ -6,6 +6,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"log/slog"
 	"net/http"
 	"sync"
 	"time"
@@ -305,7 +306,14 @@ func (s *HTTPServer) EvaluateAuthorize(ctx context.Context, req *AuthorizeReques
 
 	// Audit log (async via repo).
 	if s.pdpRepo != nil {
-		go s.pdpRepo.LogDecision(context.Background(), resp, req)
+		go func() {
+			defer func() {
+				if r := recover(); r != nil {
+					slog.Error("pdp log decision panic recovered", "error", r)
+				}
+			}()
+			s.pdpRepo.LogDecision(context.Background(), resp, req)
+		}()
 	}
 
 	return resp

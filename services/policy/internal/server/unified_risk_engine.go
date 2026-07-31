@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log/slog"
 	"net/http"
 	"sort"
 	"time"
@@ -28,8 +29,8 @@ type SignalDef struct {
 	ID       string         `json:"id"`
 	Name     string         `json:"name"`
 	Category SignalCategory `json:"category"`
-	Weight   float64        `json:"weight"`   // 0.0-1.0
-	Default  float64        `json:"default"`  // default value 0.0 (no risk)
+	Weight   float64        `json:"weight"`  // 0.0-1.0
+	Default  float64        `json:"default"` // default value 0.0 (no risk)
 }
 
 var signalRegistry = []SignalDef{
@@ -69,11 +70,11 @@ var signalRegistry = []SignalDef{
 // --- Types ---
 
 type RiskPolicy struct {
-	TenantID         uuid.UUID      `json:"tenant_id"`
-	AllowThreshold   int            `json:"allow_threshold"`
-	StepUpThreshold  int            `json:"step_up_threshold"`
-	StrongThreshold  int            `json:"strong_threshold"`
-	Weights          map[string]float64 `json:"weights"`
+	TenantID        uuid.UUID          `json:"tenant_id"`
+	AllowThreshold  int                `json:"allow_threshold"`
+	StepUpThreshold int                `json:"step_up_threshold"`
+	StrongThreshold int                `json:"strong_threshold"`
+	Weights         map[string]float64 `json:"weights"`
 }
 
 type RiskEvaluationRequest struct {
@@ -84,12 +85,12 @@ type RiskEvaluationRequest struct {
 }
 
 type RiskEvaluationResponse struct {
-	Score       int            `json:"score"`
-	Level       string         `json:"level"`       // low, medium, high, critical
-	Decision    string         `json:"decision"`    // allow, step_up, step_up_strong, block
-	Signals     []SignalResult `json:"signals"`
-	EvaluatedAt time.Time      `json:"evaluated_at"`
-	EvaluationID string        `json:"evaluation_id"`
+	Score        int            `json:"score"`
+	Level        string         `json:"level"`    // low, medium, high, critical
+	Decision     string         `json:"decision"` // allow, step_up, step_up_strong, block
+	Signals      []SignalResult `json:"signals"`
+	EvaluatedAt  time.Time      `json:"evaluated_at"`
+	EvaluationID string         `json:"evaluation_id"`
 }
 
 type SignalResult struct {
@@ -139,8 +140,7 @@ func (r *riskRepo) GetPolicy(ctx context.Context, tenantID uuid.UUID) (*RiskPoli
 	}
 	var p RiskPolicy
 	var weightsJSON []byte
-	err := r.pool.QueryRow(ctx, `SELECT allow_threshold, step_up_threshold, strong_threshold, weights FROM risk_policies WHERE tenant_id=$1 AND enabled=TRUE`, tenantID,
-	).Scan(&p.AllowThreshold, &p.StepUpThreshold, &p.StrongThreshold, &weightsJSON)
+	err := r.pool.QueryRow(ctx, `SELECT allow_threshold, step_up_threshold, strong_threshold, weights FROM risk_policies WHERE tenant_id=$1 AND enabled=TRUE`, tenantID).Scan(&p.AllowThreshold, &p.StepUpThreshold, &p.StrongThreshold, &weightsJSON)
 	if err != nil {
 		return defaultPolicy(tenantID), nil
 	}
@@ -177,8 +177,7 @@ func (r *riskRepo) GetLatestScore(ctx context.Context, userID string) (map[strin
 	var level, decision string
 	var evaluatedAt time.Time
 	var signalsJSON []byte
-	err := r.pool.QueryRow(ctx, `SELECT score, level, decision, signals, evaluated_at FROM risk_scores WHERE user_id=$1 ORDER BY evaluated_at DESC LIMIT 1`, userID,
-	).Scan(&score, &level, &decision, &signalsJSON, &evaluatedAt)
+	err := r.pool.QueryRow(ctx, `SELECT score, level, decision, signals, evaluated_at FROM risk_scores WHERE user_id=$1 ORDER BY evaluated_at DESC LIMIT 1`, userID).Scan(&score, &level, &decision, &signalsJSON, &evaluatedAt)
 	if err != nil {
 		return nil, fmt.Errorf("not found")
 	}
@@ -207,7 +206,9 @@ func (s *HTTPServer) EvaluateRisk(ctx context.Context, req *RiskEvaluationReques
 			case int:
 				value = float64(val)
 			case bool:
-				if val { value = 1.0 }
+				if val {
+					value = 1.0
+				}
 			}
 		}
 		weight := sig.Weight
@@ -221,8 +222,12 @@ func (s *HTTPServer) EvaluateRisk(ctx context.Context, req *RiskEvaluationReques
 
 	// Clamp score 0-100.
 	finalScore := int(totalScore * 100)
-	if finalScore < 0 { finalScore = 0 }
-	if finalScore > 100 { finalScore = 100 }
+	if finalScore < 0 {
+		finalScore = 0
+	}
+	if finalScore > 100 {
+		finalScore = 100
+	}
 
 	// Determine level + decision.
 	level, decision := "low", "allow"
@@ -243,7 +248,14 @@ func (s *HTTPServer) EvaluateRisk(ctx context.Context, req *RiskEvaluationReques
 
 	// Audit log (async).
 	if s.riskRepo != nil {
-		go s.riskRepo.LogScore(context.Background(), resp, req)
+		go func() {
+			defer func() {
+				if r := recover(); r != nil {
+					slog.Error("risk log score panic recovered", "error", r)
+				}
+			}()
+			s.riskRepo.LogScore(context.Background(), resp, req)
+		}()
 	}
 	return resp
 }
@@ -295,10 +307,18 @@ func (s *HTTPServer) handleRiskPolicy(w http.ResponseWriter, r *http.Request) {
 			writeJSONError(w, http.StatusBadRequest, "invalid JSON")
 			return
 		}
-		if p.AllowThreshold == 0 { p.AllowThreshold = 30 }
-		if p.StepUpThreshold == 0 { p.StepUpThreshold = 60 }
-		if p.StrongThreshold == 0 { p.StrongThreshold = 85 }
-		if p.Weights == nil { p.Weights = map[string]float64{} }
+		if p.AllowThreshold == 0 {
+			p.AllowThreshold = 30
+		}
+		if p.StepUpThreshold == 0 {
+			p.StepUpThreshold = 60
+		}
+		if p.StrongThreshold == 0 {
+			p.StrongThreshold = 85
+		}
+		if p.Weights == nil {
+			p.Weights = map[string]float64{}
+		}
 		if s.riskRepo != nil {
 			s.riskRepo.UpsertPolicy(r.Context(), &p)
 		}

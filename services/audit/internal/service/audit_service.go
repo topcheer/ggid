@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log/slog"
 	"sort"
 	"strings"
 	"sync"
@@ -24,6 +25,12 @@ type AuditRepo interface {
 	List(ctx context.Context, filter domain.ListFilter, limit, offset int) ([]*domain.AuditEvent, int, error)
 	GetStats(ctx context.Context, tenantID uuid.UUID, since time.Time) (*domain.Stats, error)
 	DeleteOlderThan(ctx context.Context, tenantID uuid.UUID, before time.Time) (int64, error)
+	// GetBoundaryEventID returns the newest event ID older than 'before' for
+	// hash chain continuity preservation during retention cleanup.
+	GetBoundaryEventID(ctx context.Context, tenantID uuid.UUID, before time.Time) (uuid.UUID, error)
+	// DeleteOlderThanExcept deletes events older than 'before' except the event
+	// with the given boundaryID (preserved as chain anchor).
+	DeleteOlderThanExcept(ctx context.Context, tenantID uuid.UUID, before time.Time, exceptID uuid.UUID) (int64, error)
 }
 
 // hashChainShardCount is the number of lock shards for the per-tenant hash
@@ -104,7 +111,14 @@ func (s *AuditService) InsertEvent(ctx context.Context, event *domain.AuditEvent
 
 	// Asynchronously deliver to registered webhooks (best-effort, non-blocking).
 	if s.webhookEngine != nil {
-		go s.webhookEngine.Send(context.Background(), event.Action, event)
+		go func() {
+			defer func() {
+				if r := recover(); r != nil {
+					slog.Error("webhook delivery panic recovered", "error", r)
+				}
+			}()
+			s.webhookEngine.Send(context.Background(), event.Action, event)
+		}()
 	}
 
 	return nil
@@ -145,13 +159,25 @@ func (s *AuditService) GetStats(ctx context.Context, tenantID uuid.UUID) (*domai
 }
 
 // CleanupOldEvents deletes audit events older than the retention period.
+// SECURITY: preserves hash chain integrity by keeping the newest event within
+// the deletion window — its prev_hash links to the deleted range, so the chain
+// can still be verified from that point forward.
 // Returns the number of deleted events.
 func (s *AuditService) CleanupOldEvents(ctx context.Context, tenantID uuid.UUID, retentionDays int) (int64, error) {
 	if retentionDays <= 0 {
 		retentionDays = 90 // default 90 days
 	}
 	before := time.Now().UTC().Add(-time.Duration(retentionDays) * 24 * time.Hour)
-	return s.repo.DeleteOlderThan(ctx, tenantID, before)
+
+	// Preserve chain continuity: keep the newest event at or before the cutoff.
+	// This event's prev_hash references the deleted range, serving as the chain
+	// boundary anchor for verification of all subsequent events.
+	boundaryID, err := s.repo.GetBoundaryEventID(ctx, tenantID, before)
+	if err != nil || boundaryID == uuid.Nil {
+		// No events in deletion window — nothing to clean.
+		return 0, nil
+	}
+	return s.repo.DeleteOlderThanExcept(ctx, tenantID, before, boundaryID)
 }
 
 // computeHashChain delegates to the domain layer's ComputeHash which uses
