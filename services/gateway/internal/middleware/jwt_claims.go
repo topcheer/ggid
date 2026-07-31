@@ -2,8 +2,6 @@ package middleware
 
 import (
 	"context"
-	"encoding/base64"
-	"encoding/json"
 	"net/http"
 	"strings"
 
@@ -33,87 +31,15 @@ type JWTCClaims struct {
 // prevents forged JWT injection on public paths where JWTAuth(required=false)
 // passes through invalid tokens without setting context claims.
 func ExtractJWTClaims(r *http.Request) JWTCClaims {
-	// Priority 1: Use signature-verified claims from JWTAuth middleware context.
+	// SECURITY (R226 P0): Only use signature-verified claims from JWTAuth
+	// middleware context. Never parse unsigned JWT payload from Authorization
+	// header — forged tokens on public paths (no JWTAuth) would inject
+	// arbitrary sub/scopes into downstream headers.
 	if c, ok := r.Context().Value(claimsKey).(JWTCClaims); ok && c.Subject != "" {
 		return c
 	}
-	// Priority 2: Parse from Authorization header (unsigned — for legacy paths).
-	authHeader := r.Header.Get("Authorization")
-	if authHeader == "" {
-		return JWTCClaims{}
-	}
-
-	parts := strings.SplitN(authHeader, " ", 2)
-	if len(parts) != 2 || !strings.EqualFold(parts[0], "Bearer") {
-		return JWTCClaims{}
-	}
-
-	token := parts[1]
-	tokenParts := strings.Split(token, ".")
-	if len(tokenParts) != 3 {
-		return JWTCClaims{}
-	}
-
-	// Decode the payload (second part)
-	payload, err := base64.RawURLEncoding.DecodeString(tokenParts[1])
-	if err != nil {
-		return JWTCClaims{}
-	}
-
-	var raw map[string]any
-	if err := json.Unmarshal(payload, &raw); err != nil {
-		return JWTCClaims{}
-	}
-
-	claims := JWTCClaims{}
-	if v, ok := raw["sub"].(string); ok {
-		claims.Subject = v
-	}
-	if v, ok := raw["tenant_id"].(string); ok {
-		claims.TenantID = v
-	}
-	if v, ok := raw["email"].(string); ok {
-		claims.Email = v
-	}
-	if v, ok := raw["iss"].(string); ok {
-		claims.Issuer = v
-	}
-	// Scopes can be a string or array
-	switch v := raw["scope"].(type) {
-	case string:
-		claims.Scopes = strings.Fields(v)
-	case []any:
-		for _, s := range v {
-			if str, ok := s.(string); ok {
-				claims.Scopes = append(claims.Scopes, str)
-			}
-		}
-	}
-	// Also check "scopes" (array)
-	if v, ok := raw["scopes"].([]any); ok {
-		for _, s := range v {
-			if str, ok := s.(string); ok {
-				claims.Scopes = append(claims.Scopes, str)
-			}
-		}
-	}
-	// Extract permissions claim (fine-grained authorization)
-	if v, ok := raw["permissions"].([]any); ok {
-		for _, p := range v {
-			if str, ok := p.(string); ok {
-				claims.Permissions = append(claims.Permissions, str)
-			}
-		}
-	}
-	// Extract roles claim
-	if v, ok := raw["roles"].([]any); ok {
-		for _, r := range v {
-			if str, ok := r.(string); ok {
-				claims.Roles = append(claims.Roles, str)
-			}
-		}
-	}
-	return claims
+	// No verified claims available — return empty (fail-closed).
+	return JWTCClaims{}
 }
 
 // buildVerifiedClaims constructs JWTCClaims from jwt.MapClaims (already signature-verified).

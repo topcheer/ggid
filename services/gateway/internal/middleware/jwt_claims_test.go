@@ -17,6 +17,9 @@ func makeJWT(payload map[string]any) string {
 }
 
 func TestExtractJWTClaims_FullToken(t *testing.T) {
+	// R226 P0: ExtractJWTClaims no longer parses unsigned JWT from Authorization
+	// header. Only signature-verified claims from JWTAuth context are trusted.
+	// A raw Bearer token without JWTAuth context must return empty claims.
 	token := makeJWT(map[string]any{
 		"sub":       "user-123",
 		"tenant_id": "tenant-abc",
@@ -28,20 +31,11 @@ func TestExtractJWTClaims_FullToken(t *testing.T) {
 	req.Header.Set("Authorization", "Bearer "+token)
 
 	claims := ExtractJWTClaims(req)
-	if claims.Subject != "user-123" {
-		t.Errorf("sub: want 'user-123', got '%s'", claims.Subject)
+	if claims.Subject != "" {
+		t.Errorf("R226 P0: unsigned JWT must return empty claims, got sub='%s'", claims.Subject)
 	}
-	if claims.TenantID != "tenant-abc" {
-		t.Errorf("tenant_id: want 'tenant-abc', got '%s'", claims.TenantID)
-	}
-	if len(claims.Scopes) != 2 {
-		t.Errorf("scopes: want 2, got %d", len(claims.Scopes))
-	}
-	if claims.Email != "test@example.com" {
-		t.Errorf("email: got '%s'", claims.Email)
-	}
-	if claims.Issuer != "ggid" {
-		t.Errorf("iss: got '%s'", claims.Issuer)
+	if len(claims.Scopes) != 0 {
+		t.Errorf("R226 P0: unsigned JWT must return empty scopes, got %d", len(claims.Scopes))
 	}
 }
 
@@ -63,6 +57,7 @@ func TestExtractJWTClaims_Malformed(t *testing.T) {
 }
 
 func TestExtractJWTClaims_ScopesArray(t *testing.T) {
+	// R226 P0: unsigned JWT parsing disabled — must return empty.
 	token := makeJWT(map[string]any{
 		"sub":    "user-1",
 		"scopes": []any{"read", "write", "admin"},
@@ -70,8 +65,8 @@ func TestExtractJWTClaims_ScopesArray(t *testing.T) {
 	req := httptest.NewRequest("GET", "/api/data", nil)
 	req.Header.Set("Authorization", "Bearer "+token)
 	claims := ExtractJWTClaims(req)
-	if len(claims.Scopes) != 3 {
-		t.Errorf("scopes array: want 3, got %d", len(claims.Scopes))
+	if len(claims.Scopes) != 0 {
+		t.Errorf("R226 P0: unsigned JWT must return empty scopes, got %d", len(claims.Scopes))
 	}
 }
 
@@ -84,6 +79,7 @@ func TestExtractJWTClaims_NoAuthHeader(t *testing.T) {
 }
 
 func TestJWTClaimExtraction_SetsHeaders(t *testing.T) {
+	// R226 P0: unsigned JWT no longer parsed — headers not set.
 	token := makeJWT(map[string]any{
 		"sub":       "user-1",
 		"tenant_id": "t-1",
@@ -101,14 +97,12 @@ func TestJWTClaimExtraction_SetsHeaders(t *testing.T) {
 	rr := httptest.NewRecorder()
 	handler.ServeHTTP(rr, req)
 
-	if capturedHeaders.Get("X-User-ID") != "user-1" {
-		t.Errorf("X-User-ID: got '%s'", capturedHeaders.Get("X-User-ID"))
+	// R226 P0: unsigned JWT must not inject headers.
+	if capturedHeaders.Get("X-User-ID") != "" {
+		t.Errorf("R226 P0: unsigned JWT must not set X-User-ID, got '%s'", capturedHeaders.Get("X-User-ID"))
 	}
-	if capturedHeaders.Get("X-Tenant-ID") != "t-1" {
-		t.Errorf("X-Tenant-ID: got '%s'", capturedHeaders.Get("X-Tenant-ID"))
-	}
-	if capturedHeaders.Get("X-Scopes") != "read" {
-		t.Errorf("X-Scopes: got '%s'", capturedHeaders.Get("X-Scopes"))
+	if capturedHeaders.Get("X-Tenant-ID") != "" {
+		t.Errorf("R226 P0: unsigned JWT must not set X-Tenant-ID, got '%s'", capturedHeaders.Get("X-Tenant-ID"))
 	}
 }
 
@@ -129,6 +123,8 @@ func TestJWTClaimExtraction_NoToken(t *testing.T) {
 }
 
 func TestClaimsFromContext(t *testing.T) {
+	// R226 P0: JWTClaimExtraction uses ExtractJWTClaims which no longer
+	// parses unsigned JWT — must return empty without JWTAuth context.
 	token := makeJWT(map[string]any{"sub": "ctx-test"})
 
 	var ctxClaims JWTCClaims
@@ -142,8 +138,8 @@ func TestClaimsFromContext(t *testing.T) {
 	rr := httptest.NewRecorder()
 	handler.ServeHTTP(rr, req)
 
-	if ctxClaims.Subject != "ctx-test" {
-		t.Errorf("Context claims sub: got '%s'", ctxClaims.Subject)
+	if ctxClaims.Subject != "" {
+		t.Errorf("R226 P0: unsigned JWT must return empty, got sub='%s'", ctxClaims.Subject)
 	}
 }
 
@@ -153,4 +149,3 @@ func TestClaimsFromContext_Empty(t *testing.T) {
 		t.Error("Should be empty")
 	}
 }
-

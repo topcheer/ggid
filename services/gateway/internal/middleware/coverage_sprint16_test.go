@@ -138,7 +138,8 @@ func TestInjectTenantContext_FromHeader(t *testing.T) {
 }
 
 func TestInjectTenantContext_FromJWT(t *testing.T) {
-	// Build JWT with tenant_id
+	// R226 P0: ExtractJWTClaims no longer parses unsigned JWT.
+	// Tenant must NOT be extracted from unverified JWT payload.
 	payload, _ := json.Marshal(map[string]string{"tenant_id": "from-jwt"})
 	payloadB64 := base64.RawURLEncoding.EncodeToString(payload)
 	token := base64.RawURLEncoding.EncodeToString([]byte(`{"alg":"HS256"}`)) + "." + payloadB64 + "." + base64.RawURLEncoding.EncodeToString([]byte("sig"))
@@ -154,8 +155,9 @@ func TestInjectTenantContext_FromJWT(t *testing.T) {
 	rr := httptest.NewRecorder()
 	handler.ServeHTTP(rr, req)
 
-	if tid != "from-jwt" {
-		t.Errorf("want 'from-jwt', got '%s'", tid)
+	// R226 P0: unsigned JWT must not inject tenant — expect empty.
+	if tid != "" {
+		t.Errorf("R226 P0: unsigned JWT must not inject tenant, got '%s'", tid)
 	}
 }
 

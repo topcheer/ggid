@@ -199,14 +199,20 @@ func TestRequireAdminScope_DynamicAndFallback(t *testing.T) {
 		w.WriteHeader(http.StatusOK)
 	})
 
-	mkJWT := func(roles ...string) string {
-		payload, _ := json.Marshal(map[string]any{"sub": "u1", "roles": roles})
-		return "Bearer x." + b64url(payload) + ".y"
+	_ = okHandler // used below
+
+	// R226 P0: Use context claims instead of unsigned JWT.
+	mkCtx := func(roles ...string) *http.Request {
+		req := httptest.NewRequest(http.MethodGet, "/api/v1/users", nil)
+		// Set verified claims in context (simulates JWTAuth).
+		claims := JWTCClaims{Subject: "u1", Roles: roles, Scopes: []string{"viewer"}}
+		ctx := context.WithValue(req.Context(), claimsKey, claims)
+		return req.WithContext(ctx)
 	}
 
 	// Dynamic allow: viewer GET.
-	req := httptest.NewRequest(http.MethodGet, "/api/v1/users", nil)
-	req.Header.Set("Authorization", mkJWT("Viewer"))
+	req := mkCtx("Viewer")
+	req.Method = http.MethodGet
 	rec := httptest.NewRecorder()
 	RequireAdminScope(okHandler).ServeHTTP(rec, req)
 	if rec.Code != http.StatusOK {
@@ -214,8 +220,8 @@ func TestRequireAdminScope_DynamicAndFallback(t *testing.T) {
 	}
 
 	// Dynamic deny: viewer POST.
-	req = httptest.NewRequest(http.MethodPost, "/api/v1/users", nil)
-	req.Header.Set("Authorization", mkJWT("Viewer"))
+	req = mkCtx("Viewer")
+	req.Method = http.MethodPost
 	rec = httptest.NewRecorder()
 	RequireAdminScope(okHandler).ServeHTTP(rec, req)
 	if rec.Code != http.StatusForbidden {
@@ -223,9 +229,8 @@ func TestRequireAdminScope_DynamicAndFallback(t *testing.T) {
 	}
 
 	// Fallback path: resolver has no rule for /api/v1/audit/ → static admin
-	// prefix list applies; non-admin role denied.
-	req = httptest.NewRequest(http.MethodGet, "/api/v1/audit/events", nil)
-	req.Header.Set("Authorization", mkJWT("Viewer"))
+	req = mkCtx("Viewer")
+	req.URL.Path = "/api/v1/audit/events"
 	rec = httptest.NewRecorder()
 	RequireAdminScope(okHandler).ServeHTTP(rec, req)
 	if rec.Code != http.StatusForbidden {
@@ -233,8 +238,8 @@ func TestRequireAdminScope_DynamicAndFallback(t *testing.T) {
 	}
 
 	// Fallback path: non-admin path passes.
-	req = httptest.NewRequest(http.MethodGet, "/api/v1/flows", nil)
-	req.Header.Set("Authorization", mkJWT("Viewer"))
+	req = mkCtx("Viewer")
+	req.URL.Path = "/api/v1/flows"
 	rec = httptest.NewRecorder()
 	RequireAdminScope(okHandler).ServeHTTP(rec, req)
 	if rec.Code != http.StatusOK {

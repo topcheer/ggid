@@ -39,8 +39,16 @@ func (h *HTTPHandler) handleSCIMTokens(w http.ResponseWriter, r *http.Request) {
 
 	// SECURITY (R226 P1-5): Admin scope required for token mutations.
 	if r.Method == http.MethodPost || r.Method == http.MethodDelete || r.Method == http.MethodPut {
-		scopes := r.Header.Get("X-Scopes")
-		if !strings.Contains(scopes, "admin") && !strings.Contains(scopes, "platform:admin") {
+		scopes := strings.Split(r.Header.Get("X-Scopes"), ",")
+		isAdmin := false
+		for _, s := range scopes {
+			s = strings.TrimSpace(s)
+			if s == "admin" || s == "platform:admin" || s == "tenant:admin" {
+				isAdmin = true
+				break
+			}
+		}
+		if !isAdmin {
 			writeJSONError(w, http.StatusForbidden, "admin scope required for SCIM token management")
 			return
 		}
