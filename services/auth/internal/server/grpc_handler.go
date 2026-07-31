@@ -21,8 +21,9 @@ import (
 )
 
 // authTenantFromMetadata extracts X-Tenant-ID from gRPC metadata, falling
-// back to env only when absent. SECURITY (R27 P0): prevents cross-tenant
-// access via env-only fallback.
+// back to env only when absent. SECURITY (R28 P0): env fallback removed —
+// prevents cross-tenant access via env var. Return uuid.Nil when metadata
+// absent; handlers reject Nil tenant.
 func authTenantFromMetadata(ctx context.Context) uuid.UUID {
 	if md, ok := metadata.FromIncomingContext(ctx); ok {
 		if v := md.Get("x-tenant-id"); len(v) > 0 {
@@ -31,7 +32,7 @@ func authTenantFromMetadata(ctx context.Context) uuid.UUID {
 			}
 		}
 	}
-	return defaultAuthTenantID()
+	return uuid.Nil
 }
 
 // AuthGRPCHandler implements AuthServiceServer by delegating to AuthService.

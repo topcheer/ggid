@@ -42,7 +42,7 @@ func tenantFromContextOrEnv(ctx context.Context) uuid.UUID {
 			return id
 		}
 	}
-	return defaultTenantID()
+	return uuid.Nil
 }
 
 // IdentityGRPCHandler implements IdentityServiceServer by delegating to IdentityService.
