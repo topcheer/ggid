@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"testing"
 	"time"
 
@@ -133,6 +134,10 @@ func TestDeviceFingerprint_SessionBinding(t *testing.T) {
 // --- hooks.go ---
 
 func TestHookManager_PreHookAllowAndDeny(t *testing.T) {
+	// SSRF protection blocks loopback in non-test mode.
+	os.Setenv("GGID_ENV", "test")
+	defer os.Unsetenv("GGID_ENV")
+
 	mgr := NewHookManager()
 
 	allowSrv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
