@@ -162,8 +162,11 @@ func (h *Handler) handleSAMLACS(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	} else if h.rdb == nil {
-		// Replay protection is silently OFF without Redis — surface it.
-		slog.Error("SAML ACS: redis unavailable, assertion replay protection disabled")
+		// SECURITY: fail-closed — without Redis, replay protection cannot
+		// operate. Reject the assertion rather than allowing potential replay.
+		slog.Error("SAML ACS: redis unavailable, assertion replay protection required")
+		writeError(w, http.StatusServiceUnavailable, "SAML replay protection unavailable")
+		return
 	}
 
 	attrs := ggidSAML.ExtractAttributes(assertion)
