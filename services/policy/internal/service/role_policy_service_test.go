@@ -568,15 +568,20 @@ func TestPolicyService_AttachPolicy_NotFound(t *testing.T) {
 }
 
 func TestPolicyService_DetachPolicy(t *testing.T) {
-	svc := NewPolicyService(&mockPolicyRepo{})
-	if err := svc.DetachPolicy(context.Background(), uuid.New(), domain.PrincipalRole, uuid.New()); err != nil {
+	policyID := uuid.New()
+	tenantID := uuid.New()
+	repo := &mockPolicyRepo{policies: map[uuid.UUID]*domain.Policy{policyID: {ID: policyID, TenantID: tenantID}}}
+	svc := NewPolicyService(repo)
+	ctx := tenant.WithContext(context.Background(), &tenant.Context{TenantID: tenantID})
+	if err := svc.DetachPolicy(ctx, policyID, domain.PrincipalRole, uuid.New()); err != nil {
 		t.Fatal(err)
 	}
 }
 
 func TestPolicyService_DetachPolicy_Error(t *testing.T) {
 	svc := NewPolicyService(&mockPolicyRepo{detachErr: errors.New(errors.ErrInternal, "x")})
-	if err := svc.DetachPolicy(context.Background(), uuid.New(), domain.PrincipalRole, uuid.New()); err == nil {
+	ctx := tenant.WithContext(context.Background(), &tenant.Context{TenantID: uuid.New()})
+	if err := svc.DetachPolicy(ctx, uuid.New(), domain.PrincipalRole, uuid.New()); err == nil {
 		t.Fatal("expected error")
 	}
 }

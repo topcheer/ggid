@@ -94,5 +94,15 @@ func (s *PolicyService) AttachPolicy(ctx context.Context, policyID uuid.UUID, pr
 
 // DetachPolicy removes a policy attachment.
 func (s *PolicyService) DetachPolicy(ctx context.Context, policyID uuid.UUID, principalType domain.PrincipalType, principalID uuid.UUID) error {
+	// SECURITY (R26 P0): Verify tenant context and policy ownership —
+	// previously allowed cross-tenant detachment by guessing UUIDs,
+	// stripping RBAC protections from any tenant's principals.
+	tc, err := tenant.FromContext(ctx)
+	if err != nil {
+		return errors.Wrap(errors.ErrInternal, "tenant context required", err)
+	}
+	if _, err := s.policyRepo.GetByID(ctx, tc.TenantID, policyID); err != nil {
+		return err
+	}
 	return s.policyRepo.DetachPolicy(ctx, policyID, principalType, principalID)
 }
