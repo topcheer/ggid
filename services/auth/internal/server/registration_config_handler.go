@@ -10,11 +10,11 @@ import (
 
 // RegistrationConfig controls per-tenant self-registration behavior.
 type RegistrationConfig struct {
-	TenantID      string   `json:"tenant_id"`
-	Enabled       bool     `json:"enabled"`
-	AllowedDomains []string `json:"allowed_domains,omitempty"`
-	DefaultRole   string   `json:"default_role,omitempty"`
-	RequireVerification bool `json:"require_email_verification"`
+	TenantID            string   `json:"tenant_id"`
+	Enabled             bool     `json:"enabled"`
+	AllowedDomains      []string `json:"allowed_domains,omitempty"`
+	DefaultRole         string   `json:"default_role,omitempty"`
+	RequireVerification bool     `json:"require_email_verification"`
 }
 
 // registrationConfigRepo manages per-tenant registration settings in PG.
@@ -122,18 +122,11 @@ func (h *Handler) handleRegistrationConfig(w http.ResponseWriter, r *http.Reques
 }
 
 func (h *Handler) getRegistrationConfig(w http.ResponseWriter, r *http.Request) {
-	tenantID := r.URL.Query().Get("tenant_id")
+	// SECURITY (R36 P1): Use gateway-verified X-Tenant-ID header only.
+	// Query param ?tenant_id= allowed arbitrary cross-tenant reads (BOLA).
+	tenantID := r.Header.Get("X-Tenant-ID")
 	if tenantID == "" {
-		// Try from JWT context
-		claims, err := h.parseTokenFromHeader(r)
-		if err == nil {
-			if tid, ok := claims["tenant_id"].(string); ok {
-				tenantID = tid
-			}
-		}
-	}
-	if tenantID == "" {
-		writeError(w, http.StatusBadRequest, "tenant_id is required")
+		writeError(w, http.StatusForbidden, "X-Tenant-ID header required")
 		return
 	}
 
@@ -159,15 +152,20 @@ func (h *Handler) getRegistrationConfig(w http.ResponseWriter, r *http.Request) 
 }
 
 func (h *Handler) updateRegistrationConfig(w http.ResponseWriter, r *http.Request) {
+	// SECURITY (R36 P1): tenant from authenticated header only — body
+	// tenant_id is ignored to prevent cross-tenant config tampering.
+	tenantID := r.Header.Get("X-Tenant-ID")
+	if tenantID == "" {
+		writeError(w, http.StatusForbidden, "X-Tenant-ID header required")
+		return
+	}
+
 	var req RegistrationConfig
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		writeError(w, http.StatusBadRequest, "invalid JSON body")
 		return
 	}
-	if req.TenantID == "" {
-		writeError(w, http.StatusBadRequest, "tenant_id is required")
-		return
-	}
+	req.TenantID = tenantID
 	if req.DefaultRole == "" {
 		req.DefaultRole = "viewer"
 	}
@@ -180,7 +178,7 @@ func (h *Handler) updateRegistrationConfig(w http.ResponseWriter, r *http.Reques
 	}
 
 	writeJSON(w, http.StatusOK, map[string]any{
-		"status":   "updated",
-		"config":   &req,
+		"status": "updated",
+		"config": &req,
 	})
 }

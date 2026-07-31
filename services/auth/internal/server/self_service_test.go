@@ -52,12 +52,12 @@ func TestRegistrationConfig_GetNoTenantID(t *testing.T) {
 	h := New(nil)
 	h.registerRoutes()
 
-	// GET without tenant_id should return 400
+	// SECURITY (R36 P1): GET without X-Tenant-ID header → 403 (fail-closed).
 	req := httptest.NewRequest(http.MethodGet, "/api/v1/auth/registration/config", nil)
 	rr := httptest.NewRecorder()
 	h.ServeHTTP(rr, req)
 
-	if rr.Code != http.StatusBadRequest {
-		t.Fatalf("expected 400 for missing tenant_id, got %d", rr.Code)
+	if rr.Code != http.StatusForbidden {
+		t.Fatalf("expected 403 for missing X-Tenant-ID header, got %d", rr.Code)
 	}
 }
