@@ -95,18 +95,13 @@ func TestHandleDecisionLog_InvalidLimit(t *testing.T) {
 
 // TestHandleDecisionLog_MissingTenant verifies fail-closed when no header.
 func TestHandleDecisionLog_MissingTenant(t *testing.T) {
-	h := newTestHarness()
-	origHeader := testTenantHeader
-	testTenantHeader = ""
-	defer func() { testTenantHeader = origHeader }()
-	// Use raw httptest to ensure no X-Tenant-ID header is set.
+	newTestHarness()
 	req := httptest.NewRequest("GET", "/api/v1/policies/decision-log", nil)
 	w := httptest.NewRecorder()
 	testMux.ServeHTTP(w, req)
 	if w.Code != http.StatusForbidden {
 		t.Fatalf("expected 403, got %d", w.Code)
 	}
-	_ = h
 }
 
 // --- Test helpers ---

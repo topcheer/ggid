@@ -16,14 +16,14 @@ func ClearDecisionLogForTest() {
 }
 
 // AddTestDecisionForTest adds a synthetic decision entry for testing. Test-only helper.
-func AddTestDecisionForTest(allowed bool, matchedBy, action string) {
+func AddTestDecisionForTest(tenantID uuid.UUID, allowed bool, matchedBy, action string) {
 	decisionMu.Lock()
 	defer decisionMu.Unlock()
 
 	decisionLog = append(decisionLog, DecisionEntry{
 		Timestamp: time.Now().UTC(),
 		UserID:    uuid.New(),
-		TenantID:  uuid.New(),
+		TenantID:  tenantID,
 		Action:    action,
 		Resource:  "test-resource",
 		Allowed:   allowed,
@@ -36,7 +36,7 @@ func AddTestDecisionForTest(allowed bool, matchedBy, action string) {
 		decisionLoggerFn(context.Background(), &domain.CheckRequest{
 			Action:   action,
 			UserID:   uuid.New(),
-			TenantID: uuid.New(),
+			TenantID: tenantID,
 		}, &domain.CheckResult{
 			Allowed:   allowed,
 			MatchedBy: matchedBy,

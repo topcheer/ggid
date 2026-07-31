@@ -1847,13 +1847,11 @@ func writeServiceError(w http.ResponseWriter, err error) {
 	errors.WriteAPIError(w, err, "")
 }
 
-// tenantIDFromHeader extracts the tenant ID from the X-Tenant-ID header.
-// Returns uuid.Nil if the header is missing or invalid.
+// tenantIDFromHeader extracts the tenant ID from the gateway-verified
+// X-Tenant-ID header only. Does NOT fall back to query param — M2M tokens
+// must not override the JWT-derived tenant (R30 P1-2 fix).
 func tenantIDFromHeader(r *http.Request) uuid.UUID {
 	idStr := r.Header.Get("X-Tenant-ID")
-	if idStr == "" {
-		idStr = r.URL.Query().Get("tenant_id")
-	}
 	if idStr == "" {
 		return uuid.Nil
 	}
@@ -2307,6 +2305,13 @@ func (s *HTTPServer) handleDecisionLog(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	// SECURITY (R30 P1): Filter decision log by authenticated tenant only.
+	tenantID := tenantIDFromHeader(r)
+	if tenantID == uuid.Nil {
+		writeJSONError(w, http.StatusForbidden, "valid X-Tenant-ID header required")
+		return
+	}
+
 	decisions := service.GetRecentDecisions(limit)
 
 	// Apply optional filters
@@ -2315,6 +2320,9 @@ func (s *HTTPServer) handleDecisionLog(w http.ResponseWriter, r *http.Request) {
 
 	filtered := make([]map[string]any, 0, len(decisions))
 	for _, d := range decisions {
+		if d.TenantID != tenantID {
+			continue
+		}
 		if userIDFilter != "" && d.UserID.String() != userIDFilter {
 			continue
 		}
