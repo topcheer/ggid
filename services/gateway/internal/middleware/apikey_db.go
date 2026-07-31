@@ -29,6 +29,7 @@ type DBAPIKeyValidator struct {
 }
 
 type cachedKey struct {
+	keyID    string // UUID extracted from the full key, for invalidation
 	tenantID string
 	scopes   []string
 	status   string
@@ -93,7 +94,7 @@ func (v *DBAPIKeyValidator) Validate(ctx context.Context, key string) (string, s
 
 	if err == pgx.ErrNoRows {
 		// P2-5: Cache negative result to prevent repeated Argon2id DoS
-		v.cache.Store(keyHash, &cachedKey{status: "not_found", cachedAt: time.Now()})
+		v.cache.Store(keyHash, &cachedKey{keyID: keyID, status: "not_found", cachedAt: time.Now()})
 		return "", "", nil, fmt.Errorf("invalid api key")
 	}
 	if err != nil {
@@ -115,6 +116,7 @@ func (v *DBAPIKeyValidator) Validate(ctx context.Context, key string) (string, s
 
 	// Cache the result (key verified)
 	v.cache.Store(keyHash, &cachedKey{
+		keyID:    keyID,
 		tenantID: tenantID,
 		scopes:   scopes,
 		status:   status,
@@ -131,10 +133,16 @@ func (v *DBAPIKeyValidator) Validate(ctx context.Context, key string) (string, s
 	return tenantID, "", scopes, nil
 }
 
-// Invalidate removes a cached API key entry. Call this when a key is revoked
-// or its scopes change to ensure the next Validate() hits the DB.
+// Invalidate removes cached API key entries for the given keyID (UUID).
+// Cache keys are sha256Hex(fullKey), but we only have keyID at invalidation
+// time, so we Range to find and delete all matching entries for that UUID.
 func (v *DBAPIKeyValidator) Invalidate(keyID string) {
-	v.cache.Delete(keyID)
+	v.cache.Range(func(cacheKey, val any) bool {
+		if ck, ok := val.(*cachedKey); ok && ck.keyID == keyID {
+			v.cache.Delete(cacheKey)
+		}
+		return true
+	})
 }
 
 // InvalidateAll clears all cached API key entries. Call this when the gateway
@@ -227,9 +235,11 @@ func APIKeyCacheInvalidator(validator *DBAPIKeyValidator) func(http.Handler) htt
 }
 
 // extractKeyIDFromPath parses the API key UUID from paths like:
-//   /api/v1/auth/api-keys/{uuid}
-//   /api/v1/api-keys/{uuid}
-//   /api/v1/access-keys/{uuid}
+//
+//	/api/v1/auth/api-keys/{uuid}
+//	/api/v1/api-keys/{uuid}
+//	/api/v1/access-keys/{uuid}
+//
 // Returns empty string if the path doesn't match or the ID is not a valid UUID.
 func extractKeyIDFromPath(path string) string {
 	parts := strings.Split(path, "/")

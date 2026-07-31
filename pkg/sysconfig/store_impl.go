@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"log/slog"
 	"strconv"
 	"sync"
 	"time"
@@ -33,9 +34,9 @@ type Store interface {
 
 // pgStore is the production Store backed by PostgreSQL + Redis Pub/Sub.
 type pgStore struct {
-	pool   *pgxpool.Pool
-	rdb    *redis.Client
-	cache  sync.Map // tenantID → *SystemConfig
+	pool  *pgxpool.Pool
+	rdb   *redis.Client
+	cache sync.Map // tenantID → *SystemConfig
 }
 
 // NewStore creates a new config store.
@@ -97,6 +98,8 @@ func (s *pgStore) Set(ctx context.Context, tenantID, key, value string) error {
 	if err != nil {
 		return fmt.Errorf("failed to update config: %w", err)
 	}
+	// SECURITY: log config changes for audit trail.
+	slog.Info("sysconfig updated", "tenant_id", tenantID, "key", key, "value_type", valueType)
 	// Refresh cache
 	cfg := s.loadFromDB(ctx, tenantID)
 	s.cache.Store(tenantID, &cfg)

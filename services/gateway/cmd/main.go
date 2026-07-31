@@ -36,6 +36,19 @@ func init() {
 func main() {
 	cfg := config.LoadFromEnv(config.Default())
 
+	// SECURITY: warn on empty JWT issuer/audience in production.
+	// Empty values cause jwt/v5 to skip issuer/audience validation entirely,
+	// enabling cross-environment token replay attacks.
+	env := os.Getenv("GGID_ENV")
+	if env != "test" && env != "dev" {
+		if cfg.JWTIssuer == "" {
+			log.Println("WARNING: GATEWAY_JWT_ISSUER not set — JWT issuer validation is disabled. Set GATEWAY_JWT_ISSUER in production.")
+		}
+		if cfg.JWTAudience == "" {
+			log.Println("WARNING: GATEWAY_JWT_AUDIENCE not set — JWT audience validation is disabled. Set GATEWAY_JWT_AUDIENCE in production.")
+		}
+	}
+
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 

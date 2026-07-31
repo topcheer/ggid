@@ -15,9 +15,13 @@ func TestAPIKeyCacheInvalidator_DeleteInvalidates(t *testing.T) {
 		ttl:  5 * time.Second,
 	}
 	keyID := uuid.New().String()
+	// Cache key is sha256Hex(fullKey), not keyID itself.
+	// Simulate a realistic cache entry with keyID field for Range-based invalidation.
+	cacheKey := sha256Hex("ggid_sk_" + keyID + "_testsecret")
 
 	// Seed the cache
-	validator.cache.Store(keyID, &cachedKey{
+	validator.cache.Store(cacheKey, &cachedKey{
+		keyID:    keyID,
 		tenantID: "test-tenant",
 		scopes:   []string{"read"},
 		status:   "active",
@@ -25,7 +29,7 @@ func TestAPIKeyCacheInvalidator_DeleteInvalidates(t *testing.T) {
 	})
 
 	// Verify cached
-	if _, ok := validator.cache.Load(keyID); !ok {
+	if _, ok := validator.cache.Load(cacheKey); !ok {
 		t.Fatal("expected key in cache before invalidation")
 	}
 
@@ -40,8 +44,8 @@ func TestAPIKeyCacheInvalidator_DeleteInvalidates(t *testing.T) {
 	w := httptest.NewRecorder()
 	handler.ServeHTTP(w, req)
 
-	// Cache should be invalidated
-	if _, ok := validator.cache.Load(keyID); ok {
+	// Cache should be invalidated (Range-based by keyID field)
+	if _, ok := validator.cache.Load(cacheKey); ok {
 		t.Error("expected cache entry to be invalidated after successful DELETE")
 	}
 }
