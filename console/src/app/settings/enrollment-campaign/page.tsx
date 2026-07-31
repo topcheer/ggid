@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useTranslations } from "@/lib/i18n";
-import { useConfirm } from "@/components/ConfirmDialog";
 import { authHeader } from "@/lib/auth-helpers";
 import {
   Megaphone, Plus, Users, KeyRound, Calendar, Mail, Check,
@@ -42,7 +41,6 @@ const METHODS = [
 
 export default function EnrollmentCampaignPage() {
   const t = useTranslations();
-  const { confirm } = useConfirm();
   const [activeTab, setActiveTab] = useState<TabId>("campaigns");
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [loading, setLoading] = useState(true);
@@ -118,17 +116,11 @@ function CampaignsList({ campaigns, onRefresh }: { campaigns: Campaign[]; onRefr
   };
 
   const handleDelete = async (id: string) => {
-    confirm({
-      title: "Delete this campaign?",
-      variant: "danger",
-      confirmLabel: "Delete",
-      onConfirm: async () => {
-        try {
-          await fetch(`${API_BASE}/api/v1/auth/enrollment/campaigns/${id}`, { method: "DELETE", headers: { ...authHeader() } });
-        } catch { /* ok */ }
-        onRefresh();
-      },
-    });
+    if (!window.confirm("Delete this campaign?")) return;
+    try {
+      await fetch(`${API_BASE}/api/v1/auth/enrollment/campaigns/${id}`, { method: "DELETE", headers: { ...authHeader() } });
+    } catch { /* ok */ }
+    onRefresh();
   };
 
   if (campaigns.length === 0) {

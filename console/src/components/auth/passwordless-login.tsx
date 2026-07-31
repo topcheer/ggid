@@ -159,7 +159,7 @@ export function PasswordlessLogin({ apiBase, tenantId, authMethod, onSuccess, on
 
       await exchangeTicketForToken(result.auth_ticket);
     } catch (err) {
-      if (err.name === "NotAllowedError") onError("Passkey authentication cancelled");
+      if (err instanceof Error && err.name === "NotAllowedError") onError("Passkey authentication cancelled");
       else onError(err instanceof Error ? err.message : "Passkey login failed");
     }
     setLoading(false);
