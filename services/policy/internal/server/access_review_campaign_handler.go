@@ -262,11 +262,21 @@ func (s *HTTPServer) submitReviewCampaign(w http.ResponseWriter, r *http.Request
 		return
 	}
 
+	// SECURITY (R22 P1): Require admin + tenant ownership for campaign submit.
+	if !isAdminRequest(r) {
+		writeJSONError(w, http.StatusForbidden, "admin privileges required")
+		return
+	}
+	tid := callerTenant(r)
 	var c *ReviewCampaign
 	if s.campaignRepo != nil {
 		var err error
 		c, err = s.campaignRepo.GetByID(r.Context(), campaignID)
 		if err != nil || c == nil {
+			writeJSONError(w, http.StatusNotFound, "campaign not found")
+			return
+		}
+		if c.TenantID != tid {
 			writeJSONError(w, http.StatusNotFound, "campaign not found")
 			return
 		}

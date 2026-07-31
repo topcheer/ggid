@@ -215,22 +215,26 @@ func (s *HTTPServer) jitApprove(w http.ResponseWriter, r *http.Request, reqID uu
 	// SECURITY: Prevent granting instance-level system roles via JIT.
 	// Check BEFORE committing DB approval to avoid irreconcilable state.
 	if s.roleSvc != nil {
-		role, _ := s.roleSvc.GetRole(r.Context(), jitReq.RoleID)
-		if role != nil {
-			// Check SystemRole flag instead of hardcoded key list —
-			// covers all system roles including custom keys.
-			if role.SystemRole {
-				writeJSONError(w, http.StatusForbidden, "cannot grant system role via JIT")
-				return
-			}
-			// Also reject known privileged role keys as defense-in-depth.
-			privilegedKeys := map[string]bool{
-				"platform:admin": true, "system:admin": true, "tenant:admin": true, "administrator": true,
-			}
-			if privilegedKeys[role.Key] {
-				writeJSONError(w, http.StatusForbidden, "cannot grant instance-level role via JIT")
-				return
-			}
+		role, err := s.roleSvc.GetRole(r.Context(), jitReq.RoleID)
+		if err != nil || role == nil {
+			// SECURITY (R22 P1): fail-closed — if we can't resolve the role,
+			// don't risk granting a system role.
+			writeJSONError(w, http.StatusForbidden, "cannot resolve role for JIT approval")
+			return
+		}
+		// Check SystemRole flag instead of hardcoded key list —
+		// covers all system roles including custom keys.
+		if role.SystemRole {
+			writeJSONError(w, http.StatusForbidden, "cannot grant system role via JIT")
+			return
+		}
+		// Also reject known privileged role keys as defense-in-depth.
+		privilegedKeys := map[string]bool{
+			"platform:admin": true, "system:admin": true, "tenant:admin": true, "administrator": true,
+		}
+		if privilegedKeys[role.Key] {
+			writeJSONError(w, http.StatusForbidden, "cannot grant instance-level role via JIT")
+			return
 		}
 	}
 

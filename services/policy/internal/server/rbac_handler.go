@@ -64,6 +64,19 @@ func (s *HTTPServer) handleRoleRoutePermissions(w http.ResponseWriter, r *http.R
 		writeJSONError(w, http.StatusBadRequest, "role ID is required")
 		return
 	}
+	// SECURITY (R22 P1): Verify role belongs to caller's tenant.
+	tid := callerTenant(r)
+	if s.pool != nil {
+		var roleTenantID string
+		if err := s.pool.QueryRow(r.Context(), `SELECT tenant_id FROM roles WHERE id = $1`, roleID).Scan(&roleTenantID); err != nil {
+			writeJSONError(w, http.StatusNotFound, "role not found")
+			return
+		}
+		if roleTenantID != "" && roleTenantID != tid {
+			writeJSONError(w, http.StatusNotFound, "role not found")
+			return
+		}
+	}
 
 	switch r.Method {
 	case http.MethodGet:
