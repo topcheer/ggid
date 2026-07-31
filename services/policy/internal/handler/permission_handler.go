@@ -47,6 +47,9 @@ func (h *PermissionHandler) ListPermissions(ctx context.Context, req *pb.ListPer
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, "invalid tenant_id")
 	}
+	if err := validateTenantFromMetadata(ctx, req.GetTenantId()); err != nil {
+		return nil, err
+	}
 	pageSize := int(req.GetPageSize())
 	page := parsePageToken(req.GetPageToken())
 	perms, err := h.roleSvc.ListPermissions(ctx, tenantID, page, pageSize)

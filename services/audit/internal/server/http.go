@@ -471,8 +471,23 @@ func (s *HTTPServer) handleEventByID(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	// Cross-tenant check: reject if event tenant doesn't match caller tenant.
+	// SECURITY: events with uuid.Nil tenant are system-level and should only
+	// be accessible to platform:admin. Events with a real tenant must match.
 	if event != nil && event.TenantID != uuid.Nil {
 		if event.TenantID.String() != tenantIDStr {
+			writeJSONError(w, http.StatusNotFound, "event not found")
+			return
+		}
+	} else if event != nil && event.TenantID == uuid.Nil && tenantIDStr != "" {
+		// System-level event (no tenant) — only accessible via platform:admin context.
+		isPlatformAdmin := false
+		for _, sc := range strings.Split(r.Header.Get("X-Scopes"), ",") {
+			if strings.TrimSpace(sc) == "platform:admin" {
+				isPlatformAdmin = true
+				break
+			}
+		}
+		if !isPlatformAdmin {
 			writeJSONError(w, http.StatusNotFound, "event not found")
 			return
 		}

@@ -19,8 +19,8 @@ import (
 // RoleHandler implements the RoleService gRPC interface.
 type RoleHandler struct {
 	pb.UnimplementedRoleServiceServer
-	roleSvc   *service.RoleService
-	auditor   *audit.Publisher
+	roleSvc *service.RoleService
+	auditor *audit.Publisher
 }
 
 func NewRoleHandler(roleSvc *service.RoleService, auditor *audit.Publisher) *RoleHandler {
@@ -64,6 +64,9 @@ func (h *RoleHandler) ListRoles(ctx context.Context, req *pb.ListRolesRequest) (
 	tenantID, err := uuid.Parse(req.GetTenantId())
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, "invalid tenant_id")
+	}
+	if err := validateTenantFromMetadata(ctx, req.GetTenantId()); err != nil {
+		return nil, err
 	}
 	pageSize := int(req.GetPageSize())
 	page := parsePageToken(req.GetPageToken())

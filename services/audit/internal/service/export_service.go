@@ -166,6 +166,9 @@ func (s *ExportService) ExportEvents(ctx context.Context, events []domain.AuditE
 
 // ExportStream streams filtered events to the provided writer in the specified format.
 func (s *ExportService) ExportStream(ctx context.Context, events []domain.AuditEvent, filter ExportFilter, format ExportFormat, w io.Writer) (int, error) {
+	// SECURITY: enforce that a tenant filter is always present to prevent
+	// cross-tenant data leakage. Platform-level exports (no tenant filter)
+	// should only be initiated from code paths that explicitly verify admin scope.
 	filtered := s.filterEvents(events, filter)
 	limit := s.maxRecords
 	if filter.MaxRecords > 0 && filter.MaxRecords < limit {

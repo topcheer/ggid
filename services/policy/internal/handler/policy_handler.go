@@ -28,6 +28,9 @@ func (h *PolicyHandler) CreatePolicy(ctx context.Context, req *pb.CreatePolicyRe
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, "invalid tenant_id")
 	}
+	if err := validateTenantFromMetadata(ctx, req.GetTenantId()); err != nil {
+		return nil, err
+	}
 	policy := &domain.Policy{
 		TenantID:    tenantID,
 		Name:        req.GetName(),
@@ -60,6 +63,9 @@ func (h *PolicyHandler) ListPolicies(ctx context.Context, req *pb.ListPoliciesRe
 	tenantID, err := uuid.Parse(req.GetTenantId())
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, "invalid tenant_id")
+	}
+	if err := validateTenantFromMetadata(ctx, req.GetTenantId()); err != nil {
+		return nil, err
 	}
 	pageSize := int(req.GetPageSize())
 	page := parsePageToken(req.GetPageToken())

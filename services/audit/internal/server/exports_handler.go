@@ -75,8 +75,32 @@ func (s *HTTPServer) handleExportsV2(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusCreated, job)
 
 	case strings.HasSuffix(r.URL.Path, "/download") && r.Method == http.MethodGet:
+		// Extract export ID from path: /api/v1/audit/exports/{id}/download
+		pathParts := strings.Split(strings.TrimSuffix(r.URL.Path, "/download"), "/")
+		exportID := pathParts[len(pathParts)-1]
+
+		// SECURITY: verify the export job belongs to the caller's tenant.
+		exportJobsV2Mu.RLock()
+		var matchedJob *ExportJobV2
+		for i := range exportJobsV2 {
+			if exportJobsV2[i].ID == exportID {
+				matchedJob = &exportJobsV2[i]
+				break
+			}
+		}
+		exportJobsV2Mu.RUnlock()
+
+		if matchedJob == nil {
+			writeJSONError(w, http.StatusNotFound, "export not found")
+			return
+		}
+		if matchedJob.TenantID != tenantIDStr {
+			writeJSONError(w, http.StatusForbidden, "access denied: export does not belong to your tenant")
+			return
+		}
+
 		w.Header().Set("Content-Type", "application/octet-stream")
-		w.Header().Set("Content-Disposition", "attachment; filename=export.csv")
+		w.Header().Set("Content-Disposition", "attachment; filename="+matchedJob.Name+".csv")
 		w.WriteHeader(http.StatusOK)
 
 	default:
