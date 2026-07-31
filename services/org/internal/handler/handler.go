@@ -441,6 +441,9 @@ func (h *DeptHandler) ListDepartments(ctx context.Context, req *pb.ListDeptsRequ
 	if err != nil {
 		return nil, err
 	}
+	if err := validateOrgTenant(ctx, h.orgSvc, orgID); err != nil {
+		return nil, err
+	}
 	depts, err := h.svc.ListByOrg(ctx, orgID)
 	if err != nil {
 		return nil, toGRPCError(err)
@@ -581,6 +584,9 @@ func (h *TeamHandler) GetTeam(ctx context.Context, req *pb.GetTeamRequest) (*pb.
 func (h *TeamHandler) ListTeams(ctx context.Context, req *pb.ListTeamsRequest) (*pb.ListTeamsResponse, error) {
 	orgID, err := parseUUID(req.GetOrgId(), "org_id")
 	if err != nil {
+		return nil, err
+	}
+	if err := validateOrgTenant(ctx, h.orgSvc, orgID); err != nil {
 		return nil, err
 	}
 	page := parsePageToken(req.GetPageToken())

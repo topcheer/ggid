@@ -78,3 +78,8 @@ wire_pages.py
 .cache_ggshield
 examples/saml-demo/saml-demo
 examples/demo-app/demo-app
+demo-app
+saml-demo
+/repair-chain
+/verify-chain
+/auto-review

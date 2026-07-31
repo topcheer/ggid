@@ -11,6 +11,10 @@ type scopeDiffResult struct {
 	Scopes  map[string]bool
 }
 
+// tokenScopeStore is currently a stub — the store is never populated.
+// This handler is a placeholder for a future token scope diff feature.
+// When implemented, populate the store from actual OAuth token introspection
+// (not hardcoded mock data).
 var tokenScopeStore = struct {
 	sync.RWMutex
 	tokens map[string]*scopeDiffResult
