@@ -251,7 +251,13 @@ func (c *HTTPIdentityClient) CreateUserFromSocial(ctx context.Context, tenantID 
 	// (uppercase, lowercase, digit, special char) since identity service enforces
 	// DB-driven policy. This password is a placeholder — real credential is set
 	// separately by the auth service's Register method.
-	randomPass := fmt.Sprintf("Xq-Lp-%s-%d!Z", externalID[:8], time.Now().UnixNano())
+	// SECURITY (R25): externalID is provider-supplied with no length guarantee —
+	// slicing [:8] panics on short values (whole-process DoS).
+	externalIDPart := externalID
+	if len(externalID) > 8 {
+		externalIDPart = externalID[:8]
+	}
+	randomPass := fmt.Sprintf("Xq-Lp-%s-%d!Z", externalIDPart, time.Now().UnixNano())
 	body, _ := json.Marshal(map[string]string{
 		"username":     username,
 		"email":        email,

@@ -11,7 +11,6 @@ import (
 	"time"
 
 	"github.com/ggid/ggid/pkg/auth/multihash"
-	"github.com/ggid/ggid/pkg/crypto"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
@@ -256,35 +255,20 @@ func (e *jitMigrationEngine) MigrateUser(ctx context.Context, tenantID uuid.UUID
 	}
 
 	// 2. Verify password against legacy hash.
-	match, format, err := multihash.VerifyPassword(plainPassword, legacy.PasswordHash)
+	match, _, err := multihash.VerifyPassword(plainPassword, legacy.PasswordHash)
 	if err != nil || !match {
 		e.logMigration(ctx, tenantID, uuid.Nil, username, false, "password verification failed")
 		return uuid.Nil, fmt.Errorf("invalid credentials")
 	}
 
-	// 3. Create user in GGID with Argon2id hash.
-	argonHash, err := crypto.HashPassword(plainPassword)
-	if err != nil {
-		e.logMigration(ctx, tenantID, uuid.Nil, username, false, "argon2id hashing failed")
-		return uuid.Nil, fmt.Errorf("hash failed: %w", err)
-	}
-
-	// 4. Create user via auth service's register.
-	// The actual user creation happens through the identity service client.
-	_ = argonHash // hash stored via credential creation
-
-	slog.Info("JIT migration successful",
-		"username", username,
-		"source_format", format,
-		"tenant_id", tenantID,
-		"email", legacy.Email,
-		"display_name", legacy.DisplayName)
-
-	// 5. Log the migration.
-	newUserID := uuid.New()
-	e.logMigration(ctx, tenantID, newUserID, username, true, "")
-
-	return newUserID, nil
+	// SECURITY (R25): Step 4 (provisioning) was never implemented — the
+	// old code claimed "create user via auth service's register" but no
+	// call exists: the Argon2id hash was discarded, a random UUID
+	// fabricated, and the migration logged as successful. The "migrated"
+	// user had no credential row. Fail closed until real provisioning
+	// (identity-service user + credential creation) is wired up.
+	e.logMigration(ctx, tenantID, uuid.Nil, username, false, "user provisioning not implemented")
+	return uuid.Nil, fmt.Errorf("user provisioning not implemented for JIT migration")
 }
 
 // logMigration records a migration attempt in the DB.
