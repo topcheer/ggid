@@ -238,8 +238,18 @@ func (e *Evaluator) Check(ctx context.Context, req *domain.CheckRequest) (*domai
 			continue
 		}
 
-		// Evaluate ABAC conditions if the policy or request has them.
+		// Evaluate ABAC conditions if the policy has them.
 		if len(p.Conditions) > 0 {
+			// SECURITY (R48 B6): When a deny policy has conditions but the
+			// request provides no conditions (req.Conditions == nil), the
+			// deny must still apply — fail-closed. Otherwise an attacker
+			// sends an empty-conditions request to bypass conditional denies
+			// (the old `continue` skipped the deny, producing fail-open).
+			if p.Effect == domain.EffectDeny && len(req.Conditions) == 0 {
+				abacDenied = true
+				denyReason = fmt.Sprintf("policy:%s", p.Name)
+				continue
+			}
 			if !matchConditions(p.Conditions, req.Conditions) {
 				continue
 			}

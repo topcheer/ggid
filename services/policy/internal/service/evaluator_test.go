@@ -12,10 +12,10 @@ import (
 // --- Mock implementations ---
 
 type mockRoleReader struct {
-	ancestorChain    map[uuid.UUID][]uuid.UUID // roleID -> ancestor IDs (including self)
-	rolePermissions  map[uuid.UUID][]*domain.Permission
-	ancestorErr      error
-	permissionsErr   error
+	ancestorChain   map[uuid.UUID][]uuid.UUID // roleID -> ancestor IDs (including self)
+	rolePermissions map[uuid.UUID][]*domain.Permission
+	ancestorErr     error
+	permissionsErr  error
 }
 
 func (m *mockRoleReader) GetAncestorChain(_ context.Context, roleID uuid.UUID) ([]uuid.UUID, error) {
@@ -84,10 +84,10 @@ func newPerm(resourceType, action string) *domain.Permission {
 
 func newPolicy(effect domain.Effect, name string, actions, resources []string) *domain.Policy {
 	return &domain.Policy{
-		ID:       uuid.New(),
-		Name:     name,
-		Effect:   effect,
-		Actions:  actions,
+		ID:        uuid.New(),
+		Name:      name,
+		Effect:    effect,
+		Actions:   actions,
 		Resources: resources,
 	}
 }
@@ -198,7 +198,7 @@ func TestCheck_RBAC_RoleInheritance(t *testing.T) {
 	rr := &mockRoleReader{
 		// child inherits from parent
 		ancestorChain: map[uuid.UUID][]uuid.UUID{
-			childRole: {childRole, parentRole},
+			childRole:  {childRole, parentRole},
 			parentRole: {parentRole},
 		},
 		// Only parent has the permission; child inherits it
@@ -229,9 +229,9 @@ func TestCheck_RBAC_MultiLevelInheritance(t *testing.T) {
 	rr := &mockRoleReader{
 		// child → parent → grandparent chain
 		ancestorChain: map[uuid.UUID][]uuid.UUID{
-			child:        {child, parent, grandparent},
-			parent:       {parent, grandparent},
-			grandparent:  {grandparent},
+			child:       {child, parent, grandparent},
+			parent:      {parent, grandparent},
+			grandparent: {grandparent},
 		},
 		// Only grandparent has the permission
 		rolePermissions: map[uuid.UUID][]*domain.Permission{
@@ -517,10 +517,10 @@ func TestMatchActions(t *testing.T) {
 
 func TestMatchResources(t *testing.T) {
 	tests := []struct {
-		name      string
-		patterns  []string
-		resource  string
-		want      bool
+		name     string
+		patterns []string
+		resource string
+		want     bool
 	}{
 		{"exact match", []string{"arn:ggid:iam::t:resource/1"}, "arn:ggid:iam::t:resource/1", true},
 		{"no match", []string{"arn:ggid:iam::t:resource/1"}, "arn:ggid:iam::t:resource/2", false},
@@ -791,7 +791,7 @@ func TestABAC_MultipleConditions_AllMustMatch(t *testing.T) {
 			userID: {
 				newPolicyWithConditions(domain.EffectAllow, "multi-cond", []string{"*"},
 					map[string]any{
-						"StringEquals":      map[string]any{"department": "eng"},
+						"StringEquals":       map[string]any{"department": "eng"},
 						"NumericGreaterThan": map[string]any{"clearance": float64(5)},
 					}),
 			},
@@ -847,16 +847,23 @@ func TestABAC_DenyWithConditions(t *testing.T) {
 	if !result2.Allowed {
 		t.Error("Deny policy with non-matching condition should not block RBAC allow")
 	}
+
+	// SECURITY (R48 B6): deny policy with conditions + empty req.Conditions
+	// must deny (fail-closed), not be skipped (fail-open).
+	result3, _ := e.Check(context.Background(), newRequest(userID, "users", "delete"))
+	if result3.Allowed {
+		t.Error("Conditional deny policy must apply when req.Conditions is empty (fail-closed)")
+	}
 }
 
 // --- matchConditions unit tests ---
 
 func TestMatchConditions(t *testing.T) {
 	tests := []struct {
-		name       string
+		name        string
 		policyConds map[string]any
-		reqConds   map[string]any
-		want       bool
+		reqConds    map[string]any
+		want        bool
 	}{
 		{
 			"empty policy conditions = always match",
@@ -977,43 +984,83 @@ func TestEvaluateOperator_EdgeCases(t *testing.T) {
 }
 
 func TestTypeCoercionHelpers(t *testing.T) {
-	if toStr(float64(3.14)) != "3.14" { t.Error("toStr float64 failed") }
-	if toStr(true) != "true" { t.Error("toStr bool failed") }
-	if toFloat64("42") != float64(42) { t.Error("toFloat64 string failed") }
-	if toFloat64(int64(7)) != float64(7) { t.Error("toFloat64 int64 failed") }
-	if !toBool("true") { t.Error("toBool true failed") }
-	if !toBool("1") { t.Error("toBool 1 failed") }
-	if toBool("false") { t.Error("toBool false failed") }
+	if toStr(float64(3.14)) != "3.14" {
+		t.Error("toStr float64 failed")
+	}
+	if toStr(true) != "true" {
+		t.Error("toStr bool failed")
+	}
+	if toFloat64("42") != float64(42) {
+		t.Error("toFloat64 string failed")
+	}
+	if toFloat64(int64(7)) != float64(7) {
+		t.Error("toFloat64 int64 failed")
+	}
+	if !toBool("true") {
+		t.Error("toBool true failed")
+	}
+	if !toBool("1") {
+		t.Error("toBool 1 failed")
+	}
+	if toBool("false") {
+		t.Error("toBool false failed")
+	}
 	d := toDate("2024-01-15T10:00:00Z")
-	if d.Year() != 2024 { t.Error("toDate year failed") }
-	if !matchIP("10.0.0.0/8", "10.1.2.3") { t.Error("matchIP CIDR match failed") }
-	if matchIP("10.0.0.0/8", "192.168.1.1") { t.Error("matchIP CIDR no-match failed") }
+	if d.Year() != 2024 {
+		t.Error("toDate year failed")
+	}
+	if !matchIP("10.0.0.0/8", "10.1.2.3") {
+		t.Error("matchIP CIDR match failed")
+	}
+	if matchIP("10.0.0.0/8", "192.168.1.1") {
+		t.Error("matchIP CIDR no-match failed")
+	}
 }
 
 func TestTypeCoercion_EdgeCases(t *testing.T) {
 	// toStr with various types
-	if toStr(int64(42)) != "42" { t.Error("toStr int64 failed") }
-	if toStr(false) != "false" { t.Error("toStr false failed") }
+	if toStr(int64(42)) != "42" {
+		t.Error("toStr int64 failed")
+	}
+	if toStr(false) != "false" {
+		t.Error("toStr false failed")
+	}
 	// toFloat64 error paths
-	if toFloat64("not_a_number") != 0 { t.Error("toFloat64 invalid string should be 0") }
+	if toFloat64("not_a_number") != 0 {
+		t.Error("toFloat64 invalid string should be 0")
+	}
 	// toBool error path
-	if toBool("") { t.Error("toBool empty should be false") }
-	if toBool("anything") { t.Error("toBool non-matching should be false") }
+	if toBool("") {
+		t.Error("toBool empty should be false")
+	}
+	if toBool("anything") {
+		t.Error("toBool non-matching should be false")
+	}
 	// toDate error path
 	d := toDate("invalid-date")
-	if !d.IsZero() { t.Error("toDate invalid should be zero") }
+	if !d.IsZero() {
+		t.Error("toDate invalid should be zero")
+	}
 	// matchIP error path
-	if matchIP("invalid-cidr", "1.2.3.4") { t.Error("matchIP invalid CIDR should be false") }
-	if matchIP("10.0.0.1", "10.0.0.2") { t.Error("matchIP exact mismatch should be false") }
+	if matchIP("invalid-cidr", "1.2.3.4") {
+		t.Error("matchIP invalid CIDR should be false")
+	}
+	if matchIP("10.0.0.1", "10.0.0.2") {
+		t.Error("matchIP exact mismatch should be false")
+	}
 }
 
 func TestToFloat64_FloatInput(t *testing.T) {
-	if toFloat64(float64(3.14)) != 3.14 { t.Error("toFloat64 float64 passthrough failed") }
+	if toFloat64(float64(3.14)) != 3.14 {
+		t.Error("toFloat64 float64 passthrough failed")
+	}
 }
 
 func TestMatchConditions_NoPolicyConditions(t *testing.T) {
 	got := matchConditions(nil, map[string]any{"dept": "eng"})
-	if !got { t.Error("nil policy conditions should match") }
+	if !got {
+		t.Error("nil policy conditions should match")
+	}
 }
 
 func TestMatchConditions_MissingReqKey(t *testing.T) {
@@ -1021,5 +1068,7 @@ func TestMatchConditions_MissingReqKey(t *testing.T) {
 		map[string]any{"dept": map[string]any{"StringEquals": "eng"}},
 		map[string]any{},
 	)
-	if got { t.Error("missing required key should not match") }
+	if got {
+		t.Error("missing required key should not match")
+	}
 }
