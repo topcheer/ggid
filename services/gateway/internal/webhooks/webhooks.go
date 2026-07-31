@@ -199,7 +199,7 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if err := validateURL(req.URL); err != nil {
-		writeJSON(w, 400, map[string]string{"error": err.Error()})
+		writeJSON(w, 400, map[string]string{"error": "webhook delivery failed"})
 		return
 	}
 
@@ -294,6 +294,11 @@ func (h *Handler) DeliverEvent(ctx context.Context, event string, payload []byte
 	}
 	for _, wh := range webhooks {
 		go func(w *Webhook) {
+			defer func() {
+				if r := recover(); r != nil {
+					log.Printf("webhook %s delivery panic recovered: %v", w.ID, r)
+				}
+			}()
 			// Detach from the caller's context: if ctx is a request context,
 			// deliveries would be silently cancelled when the request ends;
 			// without a timeout, a hung endpoint would leak the goroutine
