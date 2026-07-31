@@ -11,9 +11,10 @@ import (
 )
 
 // handleSCIMTokens manages SCIM bearer token CRUD.
-//   POST   /api/v1/identity/scim/tokens         — create (returns plaintext once)
-//   GET    /api/v1/identity/scim/tokens         — list (no hash)
-//   DELETE /api/v1/identity/scim/tokens/{id}    — revoke
+//
+//	POST   /api/v1/identity/scim/tokens         — create (returns plaintext once)
+//	GET    /api/v1/identity/scim/tokens         — list (no hash)
+//	DELETE /api/v1/identity/scim/tokens/{id}    — revoke
 func (h *HTTPHandler) handleSCIMTokens(w http.ResponseWriter, r *http.Request) {
 	tc, err := ggidtenant.FromContext(r.Context())
 	if err != nil {
@@ -34,6 +35,15 @@ func (h *HTTPHandler) handleSCIMTokens(w http.ResponseWriter, r *http.Request) {
 	if h.scimRepo == nil {
 		writeJSONError(w, http.StatusServiceUnavailable, "SCIM token storage not configured")
 		return
+	}
+
+	// SECURITY (R226 P1-5): Admin scope required for token mutations.
+	if r.Method == http.MethodPost || r.Method == http.MethodDelete || r.Method == http.MethodPut {
+		scopes := r.Header.Get("X-Scopes")
+		if !strings.Contains(scopes, "admin") && !strings.Contains(scopes, "platform:admin") {
+			writeJSONError(w, http.StatusForbidden, "admin scope required for SCIM token management")
+			return
+		}
 	}
 
 	path := strings.TrimPrefix(r.URL.Path, "/api/v1/identity/scim/tokens")
@@ -98,12 +108,12 @@ func (h *HTTPHandler) createSCIMToken(w http.ResponseWriter, r *http.Request, te
 	slog.Info("SCIM token created", "tenant", tenantID, "name", req.Name, "id", token.ID)
 
 	writeJSON(w, http.StatusCreated, map[string]any{
-		"id":          token.ID,
-		"name":        token.Name,
-		"token":       plaintext,
-		"scopes":      token.Scopes,
-		"created_at":  token.CreatedAt,
-		"message":     "Save this token now — it will not be shown again.",
+		"id":         token.ID,
+		"name":       token.Name,
+		"token":      plaintext,
+		"scopes":     token.Scopes,
+		"created_at": token.CreatedAt,
+		"message":    "Save this token now — it will not be shown again.",
 	})
 }
 
