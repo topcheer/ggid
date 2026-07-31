@@ -579,6 +579,20 @@ func (gw *Gateway) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if strings.HasPrefix(r.URL.Path, "/api/v1/gateway/rate-limits/") && r.Method == http.MethodPut {
+		// SECURITY (R227 P1): Require admin scope for rate limit changes.
+		claims := middleware.ExtractJWTClaims(r)
+		isAdmin := false
+		for _, s := range claims.Scopes {
+			if s == "admin" || s == "platform:admin" {
+				isAdmin = true
+				break
+			}
+		}
+		if !isAdmin {
+			w.WriteHeader(http.StatusForbidden)
+			_ = json.NewEncoder(w).Encode(map[string]string{"error": "admin scope required"})
+			return
+		}
 		gw.handleUpdateRateLimit(w, r)
 		return
 	}
