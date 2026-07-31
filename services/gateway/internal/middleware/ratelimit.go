@@ -42,6 +42,7 @@ type RateLimiter struct {
 	cfg     RateLimitConfig
 	mu      sync.Mutex
 	buckets map[string]*rateBucket
+	done    chan struct{}
 }
 
 // NewRateLimiter creates a new rate limiter with the given config.
@@ -49,10 +50,16 @@ func NewRateLimiter(cfg RateLimitConfig) *RateLimiter {
 	rl := &RateLimiter{
 		cfg:     cfg,
 		buckets: make(map[string]*rateBucket),
+		done:    make(chan struct{}),
 	}
 	// Background cleanup of expired buckets
 	go rl.cleanup()
 	return rl
+}
+
+// StopCleanup terminates the background cleanup goroutine.
+func (rl *RateLimiter) StopCleanup() {
+	close(rl.done)
 }
 
 // Middleware returns an HTTP middleware that enforces rate limits.
@@ -164,14 +171,19 @@ func (rl *RateLimiter) allow(key string, limit int) (allowed bool, remaining int
 func (rl *RateLimiter) cleanup() {
 	ticker := time.NewTicker(5 * time.Minute)
 	defer ticker.Stop()
-	for range ticker.C {
-		rl.mu.Lock()
-		now := time.Now()
-		for k, b := range rl.buckets {
-			if now.After(b.expireAt) {
-				delete(rl.buckets, k)
+	for {
+		select {
+		case <-rl.done:
+			return
+		case <-ticker.C:
+			rl.mu.Lock()
+			now := time.Now()
+			for k, b := range rl.buckets {
+				if now.After(b.expireAt) {
+					delete(rl.buckets, k)
+				}
 			}
+			rl.mu.Unlock()
 		}
-		rl.mu.Unlock()
 	}
 }
