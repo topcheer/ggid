@@ -6,7 +6,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"log/slog"
+	"net"
 	"net/http"
+	"os"
 	"strings"
 	"time"
 
@@ -53,8 +55,33 @@ type natsConn interface {
 
 // jmlHTTPClient is the shared HTTP client for JML outbound calls (policy service,
 // webhooks). The 10s timeout prevents goroutine leaks when downstream services
-// are slow or unresponsive.
-var jmlHTTPClient = &http.Client{Timeout: 10 * time.Second}
+// are slow or unresponsive. Uses SSRF-safe dial to block private/loopback IPs.
+var jmlHTTPClient = &http.Client{
+	Timeout: 10 * time.Second,
+	Transport: &http.Transport{
+		DialContext: ssrfSafeDialContext,
+	},
+}
+
+// ssrfSafeDialContext blocks connections to private/loopback/link-local IPs.
+func ssrfSafeDialContext(ctx context.Context, network, addr string) (net.Conn, error) {
+	host, port, _ := net.SplitHostPort(addr)
+	ips, err := net.LookupIP(host)
+	if err != nil {
+		return nil, err
+	}
+	testMode := os.Getenv("GGID_ENV") == "test" || os.Getenv("GGID_DEV_MODE") == "true"
+	for _, ip := range ips {
+		if ip.IsLoopback() || ip.IsPrivate() || ip.IsLinkLocalUnicast() || ip.IsUnspecified() {
+			if testMode && ip.IsLoopback() {
+				continue
+			}
+			return nil, fmt.Errorf("SSRF blocked: %s resolves to private IP %s", host, ip)
+		}
+	}
+	dialer := &net.Dialer{Timeout: 10 * time.Second}
+	return dialer.DialContext(ctx, network, net.JoinHostPort(ips[0].String(), port))
+}
 
 func newJMLEngine(repo *lifecycleRepo) *JMLEngine {
 	return &JMLEngine{repo: repo}
