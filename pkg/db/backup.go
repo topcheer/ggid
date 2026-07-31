@@ -150,7 +150,7 @@ func listTables(ctx context.Context, p Pool) ([]string, error) {
 		}
 		tables = append(tables, name)
 	}
-	return tables, nil
+	return tables, rows.Err()
 }
 
 // queryTableData fetches all rows from a table as a TableData structure.
@@ -177,7 +177,7 @@ func queryTableData(ctx context.Context, p Pool, tableName string) (*TableData, 
 		td.Rows = append(td.Rows, rowData)
 		td.Count++
 	}
-	return td, nil
+	return td, rows.Err()
 }
 
 // exportJSON writes the full database export as JSON.

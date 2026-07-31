@@ -24,27 +24,27 @@ const (
 
 // Device represents an MDM-enrolled device.
 type Device struct {
-	ID              string           `json:"id"`
-	DeviceID        string           `json:"device_id"`         // GGID device ID
-	ConnectorID     string           `json:"connector_id"`
-	OSVersion       string           `json:"os_version"`
-	OS              string           `json:"os"`                 // iOS/macOS/Android/Windows
+	ID               string           `json:"id"`
+	DeviceID         string           `json:"device_id"` // GGID device ID
+	ConnectorID      string           `json:"connector_id"`
+	OSVersion        string           `json:"os_version"`
+	OS               string           `json:"os"` // iOS/macOS/Android/Windows
 	ComplianceStatus ComplianceStatus `json:"compliance_status"`
-	Managed         bool             `json:"managed"`
-	Jailbroken      bool             `json:"jailbroken"`
-	Encrypted       bool             `json:"encrypted"`
-	PostureData     map[string]any   `json:"posture_data,omitempty"`
-	LastSeen        time.Time        `json:"last_seen"`
+	Managed          bool             `json:"managed"`
+	Jailbroken       bool             `json:"jailbroken"`
+	Encrypted        bool             `json:"encrypted"`
+	PostureData      map[string]any   `json:"posture_data,omitempty"`
+	LastSeen         time.Time        `json:"last_seen"`
 }
 
 // ConnectorConfig holds MDM connector configuration.
 type ConnectorConfig struct {
-	Name       string `json:"name"`
-	Type       string `json:"type"`        // intune/jamf/android_management
-	Endpoint   string `json:"endpoint"`    // API base URL
-	AuthToken  string `json:"auth_token"`  // bearer token
-	TenantID   string `json:"tenant_id"`   // Intune tenant or Jamf instance
-	Enabled    bool   `json:"enabled"`
+	Name      string `json:"name"`
+	Type      string `json:"type"`       // intune/jamf/android_management
+	Endpoint  string `json:"endpoint"`   // API base URL
+	AuthToken string `json:"auth_token"` // bearer token
+	TenantID  string `json:"tenant_id"`  // Intune tenant or Jamf instance
+	Enabled   bool   `json:"enabled"`
 }
 
 // MDMConnector is the interface for MDM platform adapters.
@@ -249,7 +249,10 @@ func (e *Engine) persistDevice(ctx context.Context, d *Device) {
 }
 
 // scanDevices converts pgx rows to Device slice.
-func scanDevices(rows interface{ Next() bool; Scan(...any) error }) ([]Device, error) {
+func scanDevices(rows interface {
+	Next() bool
+	Scan(...any) error
+}) ([]Device, error) {
 	var devices []Device
 	for rows.Next() {
 		var d Device

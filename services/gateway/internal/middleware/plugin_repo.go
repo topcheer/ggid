@@ -118,7 +118,7 @@ func (r *pluginRepo) List(ctx context.Context, tenantID uuid.UUID) ([]*PluginRec
 		}
 		result = append(result, p)
 	}
-	return result, nil
+	return result, rows.Err()
 }
 
 func (r *pluginRepo) GetByName(ctx context.Context, name string) (*PluginRecord, error) {
@@ -198,7 +198,7 @@ func (r *pluginRepo) ListHookBindings(ctx context.Context, tenantID uuid.UUID, h
 		}
 		result = append(result, &hb)
 	}
-	return result, nil
+	return result, rows.Err()
 }
 
 // --- scan helpers ---
@@ -207,7 +207,10 @@ type rowScanner interface {
 	Scan(dest ...any) error
 }
 
-func scanPluginRow(rows interface{ Scan(...any) error; Next() bool }) (*PluginRecord, error) {
+func scanPluginRow(rows interface {
+	Scan(...any) error
+	Next() bool
+}) (*PluginRecord, error) {
 	p := &PluginRecord{}
 	var cfgJSON []byte
 	if err := rows.Scan(&p.ID, &p.TenantID, &p.Name, &p.Version, &p.Author, &p.Description,

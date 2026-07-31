@@ -100,7 +100,7 @@ func (s *PluginStore) ListPlugins(ctx context.Context) ([]WasmPluginRecord, erro
 		}
 		result = append(result, p)
 	}
-	return result, nil
+	return result, rows.Err()
 }
 
 // GetPlugin returns a plugin by name.
@@ -145,7 +145,7 @@ type LifecycleManager struct {
 	hookPlugins map[LifecycleHook][]string
 	// pluginHooks maps plugin name → hooks it subscribes to.
 	pluginHooks map[string][]LifecycleHook
-	mu   sync.RWMutex
+	mu          sync.RWMutex
 	// reloadVersion for hot reload detection.
 	reloadVersion atomic.Int64
 }
@@ -246,7 +246,7 @@ func (m *LifecycleManager) ReloadFromStore(ctx context.Context) error {
 		}
 		// Load into host (replaces existing if same name).
 		cfg := WasmPluginConfig{
-			Name:    p.Name,
+			Name:     p.Name,
 			WasmPath: "", // loaded from bytes
 		}
 		_ = cfg // Host.LoadPlugin expects file path; for hot reload we'd need a bytes loader.
@@ -329,9 +329,9 @@ func contextFromRequest(r *http.Request) PluginContext {
 		}
 	}
 	return PluginContext{
-		Method:  r.Method,
-		Path:    r.URL.Path,
-		Headers: headers,
+		Method:   r.Method,
+		Path:     r.URL.Path,
+		Headers:  headers,
 		TenantID: r.Header.Get("X-Tenant-ID"),
 	}
 }

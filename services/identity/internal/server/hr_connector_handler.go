@@ -70,8 +70,12 @@ func (r *hrConnectorRepo) EnsureSchema(ctx context.Context) error {
 }
 
 func (r *hrConnectorRepo) CreateConnector(ctx context.Context, c *HRConnectorConfig) error {
-	if r.pool == nil { return nil }
-	if c.ID == uuid.Nil { c.ID = uuid.New() }
+	if r.pool == nil {
+		return nil
+	}
+	if c.ID == uuid.Nil {
+		c.ID = uuid.New()
+	}
 	cfgJSON, _ := json.Marshal(c.Config)
 	_, err := r.pool.Exec(ctx, `INSERT INTO hr_connectors (id,name,type,config,enabled) VALUES ($1,$2,$3,$4,$5)`,
 		c.ID, c.Name, c.Type, cfgJSON, c.Enabled)
@@ -79,15 +83,21 @@ func (r *hrConnectorRepo) CreateConnector(ctx context.Context, c *HRConnectorCon
 }
 
 func (r *hrConnectorRepo) ListConnectors(ctx context.Context) ([]*HRConnectorConfig, error) {
-	if r.pool == nil { return []*HRConnectorConfig{}, nil }
+	if r.pool == nil {
+		return []*HRConnectorConfig{}, nil
+	}
 	rows, err := r.pool.Query(ctx, `SELECT id,name,type,config,enabled,last_sync_at,created_at FROM hr_connectors ORDER BY created_at DESC`)
-	if err != nil { return nil, err }
+	if err != nil {
+		return nil, err
+	}
 	defer rows.Close()
 	var result []*HRConnectorConfig
 	for rows.Next() {
 		c := &HRConnectorConfig{}
 		var cfgJSON []byte
-		if err := rows.Scan(&c.ID, &c.Name, &c.Type, &cfgJSON, &c.Enabled, &c.LastSyncAt, &c.CreatedAt); err != nil { continue }
+		if err := rows.Scan(&c.ID, &c.Name, &c.Type, &cfgJSON, &c.Enabled, &c.LastSyncAt, &c.CreatedAt); err != nil {
+			continue
+		}
 		json.Unmarshal(cfgJSON, &c.Config)
 		result = append(result, c)
 	}
@@ -95,30 +105,45 @@ func (r *hrConnectorRepo) ListConnectors(ctx context.Context) ([]*HRConnectorCon
 }
 
 func (r *hrConnectorRepo) LogSyncEvent(ctx context.Context, connectorID uuid.UUID, event *HREvent, ggidUserID string) {
-	if r.pool == nil { return }
+	if r.pool == nil {
+		return
+	}
 	detailsJSON, _ := json.Marshal(event.Details)
 	r.pool.Exec(ctx, `INSERT INTO hr_sync_log (connector_id,source,event_type,employee_id,ggid_user_id,status,details) VALUES ($1,$2,$3,$4,$5,$6,$7)`,
 		connectorID, "hr_sync", event.EventType, event.EmployeeID, ggidUserID, "processed", detailsJSON)
 }
 
 func (r *hrConnectorRepo) ListSyncLog(ctx context.Context, limit int) ([]map[string]any, error) {
-	if r.pool == nil { return []map[string]any{}, nil }
-	if limit <= 0 || limit > 100 { limit = 50 }
+	if r.pool == nil {
+		return []map[string]any{}, nil
+	}
+	if limit <= 0 || limit > 100 {
+		limit = 50
+	}
 	rows, err := r.pool.Query(ctx, `SELECT id,connector_id,source,event_type,employee_id,ggid_user_id,status,synced_at FROM hr_sync_log ORDER BY synced_at DESC LIMIT $1`, limit)
-	if err != nil { return nil, err }
+	if err != nil {
+		return nil, err
+	}
 	defer rows.Close()
 	var result []map[string]any
 	for rows.Next() {
 		m := map[string]any{}
 		var id, connID, source, eventType, employeeID, ggidUserID, status string
 		var syncedAt time.Time
-		if err := rows.Scan(&id, &connID, &source, &eventType, &employeeID, &ggidUserID, &status, &syncedAt); err != nil { continue }
-		m["id"] = id; m["connector_id"] = connID; m["source"] = source
-		m["event_type"] = eventType; m["employee_id"] = employeeID
-		m["ggid_user_id"] = ggidUserID; m["status"] = status; m["synced_at"] = syncedAt
+		if err := rows.Scan(&id, &connID, &source, &eventType, &employeeID, &ggidUserID, &status, &syncedAt); err != nil {
+			continue
+		}
+		m["id"] = id
+		m["connector_id"] = connID
+		m["source"] = source
+		m["event_type"] = eventType
+		m["employee_id"] = employeeID
+		m["ggid_user_id"] = ggidUserID
+		m["status"] = status
+		m["synced_at"] = syncedAt
 		result = append(result, m)
 	}
-	return result, nil
+	return result, rows.Err()
 }
 
 // --- Simulated Connector Implementations ---
@@ -162,7 +187,9 @@ func (h *HTTPHandler) handleHRConnectors(w http.ResponseWriter, r *http.Request)
 		if h.hrConnectorRepo != nil {
 			connectors, _ = h.hrConnectorRepo.ListConnectors(r.Context())
 		}
-		if connectors == nil { connectors = []*HRConnectorConfig{} }
+		if connectors == nil {
+			connectors = []*HRConnectorConfig{}
+		}
 		writeJSON(w, http.StatusOK, map[string]any{"connectors": connectors, "count": len(connectors)})
 	default:
 		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
@@ -178,7 +205,9 @@ func (h *HTTPHandler) handleHRSync(w http.ResponseWriter, r *http.Request) {
 	connectors, _ := h.hrConnectorRepo.ListConnectors(r.Context())
 	totalEvents := 0
 	for _, c := range connectors {
-		if !c.Enabled { continue }
+		if !c.Enabled {
+			continue
+		}
 		events := syncHREvents(c)
 		for _, event := range events {
 			h.hrConnectorRepo.LogSyncEvent(r.Context(), c.ID, &event, "")
@@ -204,7 +233,9 @@ func (h *HTTPHandler) handleHRSyncLog(w http.ResponseWriter, r *http.Request) {
 	if h.hrConnectorRepo != nil {
 		log, _ = h.hrConnectorRepo.ListSyncLog(r.Context(), limit)
 	}
-	if log == nil { log = []map[string]any{} }
+	if log == nil {
+		log = []map[string]any{}
+	}
 	writeJSON(w, http.StatusOK, map[string]any{"log": log, "count": len(log)})
 }
 
@@ -217,7 +248,9 @@ func (h *HTTPHandler) handleHRDormant(w http.ResponseWriter, r *http.Request) {
 	if h.dormantRepo != nil {
 		dormant, _ = h.dormantRepo.ListDormant(r.Context())
 	}
-	if dormant == nil { dormant = []*UserLifecycleState{} }
+	if dormant == nil {
+		dormant = []*UserLifecycleState{}
+	}
 	writeJSON(w, http.StatusOK, map[string]any{"dormant_accounts": dormant, "count": len(dormant)})
 }
 
@@ -230,7 +263,9 @@ func (h *HTTPHandler) handleHRReconcile(w http.ResponseWriter, r *http.Request) 
 	if h.dormantRepo != nil {
 		ghosts, _ = h.dormantRepo.ListGhosts(r.Context())
 	}
-	if ghosts == nil { ghosts = []*GhostAccount{} }
+	if ghosts == nil {
+		ghosts = []*GhostAccount{}
+	}
 	writeJSON(w, http.StatusOK, map[string]any{
 		"status": "reconciled", "ghosts_found": len(ghosts),
 		"ghost_accounts": ghosts, "reconciled_at": time.Now().UTC(),

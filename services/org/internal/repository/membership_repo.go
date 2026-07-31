@@ -130,5 +130,5 @@ func (r *MembershipRepository) List(ctx context.Context, filter ListMembersFilte
 		}
 		memberships = append(memberships, m)
 	}
-	return memberships, nil
+	return memberships, rows.Err()
 }

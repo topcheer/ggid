@@ -150,5 +150,5 @@ func scanOrgRows(rows pgx.Rows) ([]*domain.Organization, error) {
 		}
 		orgs = append(orgs, org)
 	}
-	return orgs, nil
+	return orgs, rows.Err()
 }

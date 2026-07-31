@@ -118,7 +118,7 @@ func (r *dlpRepo) List(ctx context.Context, tenantID uuid.UUID) ([]*DLPPolicy, e
 		json.Unmarshal(condJSON, &p.Conditions)
 		result = append(result, &p)
 	}
-	return result, nil
+	return result, rows.Err()
 }
 
 func (r *dlpRepo) Update(ctx context.Context, p *DLPPolicy) error {

@@ -65,7 +65,7 @@ func (s *pgScopeStore) List(ctx context.Context) ([]*CustomScope, error) {
 		}
 		result = append(result, sc)
 	}
-	return result, nil
+	return result, rows.Err()
 }
 
 func (s *pgScopeStore) Create(ctx context.Context, scope *CustomScope) error {
@@ -113,7 +113,7 @@ func (s *pgScopeStore) scanScope(row scanner) (*CustomScope, error) {
 // scopeStoreAdapter provides a unified interface that tries PostgreSQL first,
 // then falls back to the in-memory store.
 type scopeStoreAdapter struct {
-	pg    *pgScopeStore
+	pg *pgScopeStore
 }
 
 // newScopeStoreAdapter creates an adapter that uses PG if available, else memory.

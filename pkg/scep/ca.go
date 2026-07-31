@@ -20,35 +20,35 @@ import (
 type CertificateStatus string
 
 const (
-	StatusActive   CertificateStatus = "active"
-	StatusRevoked  CertificateStatus = "revoked"
-	StatusExpired  CertificateStatus = "expired"
+	StatusActive  CertificateStatus = "active"
+	StatusRevoked CertificateStatus = "revoked"
+	StatusExpired CertificateStatus = "expired"
 )
 
 // DeviceCertificate is a record of an issued device certificate.
 type DeviceCertificate struct {
-	ID         string            `json:"id"`
-	DeviceID   string            `json:"device_id"`
-	UserID     string            `json:"user_id"`
-	Serial     *big.Int          `json:"serial"`
-	CertPEM    string            `json:"cert_pem"`
-	Status     CertificateStatus `json:"status"`
-	IssuedAt   time.Time         `json:"issued_at"`
-	ExpiresAt  time.Time         `json:"expires_at"`
-	RevokedAt  *time.Time        `json:"revoked_at,omitempty"`
+	ID        string            `json:"id"`
+	DeviceID  string            `json:"device_id"`
+	UserID    string            `json:"user_id"`
+	Serial    *big.Int          `json:"serial"`
+	CertPEM   string            `json:"cert_pem"`
+	Status    CertificateStatus `json:"status"`
+	IssuedAt  time.Time         `json:"issued_at"`
+	ExpiresAt time.Time         `json:"expires_at"`
+	RevokedAt *time.Time        `json:"revoked_at,omitempty"`
 }
 
 // CA is the internal Certificate Authority for device identity certs.
 type CA struct {
-	key       *ecdsa.PrivateKey
-	cert      *x509.Certificate
-	certDER   []byte
-	certPEM   string
-	pool      *pgxpool.Pool
-	mu        sync.Mutex
-	serial    int64
-	revoked   map[string]bool // serial hex string → revoked
-	crlMu     sync.RWMutex
+	key     *ecdsa.PrivateKey
+	cert    *x509.Certificate
+	certDER []byte
+	certPEM string
+	pool    *pgxpool.Pool
+	mu      sync.Mutex
+	serial  int64
+	revoked map[string]bool // serial hex string → revoked
+	crlMu   sync.RWMutex
 }
 
 // NewCA generates a new self-signed ECDSA P-256 root CA.
@@ -303,7 +303,7 @@ func (ca *CA) ListDeviceCerts(ctx context.Context, deviceID string) ([]DeviceCer
 		c.Serial, _ = new(big.Int).SetString(serialStr, 10)
 		certs = append(certs, c)
 	}
-	return certs, nil
+	return certs, rows.Err()
 }
 
 // ValidateDeviceCert verifies a device certificate against the CA.

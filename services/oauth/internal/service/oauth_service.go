@@ -851,9 +851,9 @@ func (s *OAuthService) fetchUserClaims(ctx context.Context, tenantID, userID uui
 // fetchUserPermissions retrieves the fine-grained permission keys (e.g. "inventory:read")
 // for all roles assigned to a user. These are merged into the JWT scopes so that
 // SDK demos can check permissions directly from the access token.
-func (s *OAuthService) fetchUserPermissions(ctx context.Context, tenantID, userID uuid.UUID) []string {
+func (s *OAuthService) fetchUserPermissions(ctx context.Context, tenantID, userID uuid.UUID) ([]string, error) {
 	if s.pool == nil {
-		return nil
+		return nil, nil
 	}
 	rows, err := s.pool.Query(ctx, `
 		SELECT DISTINCT p.key
@@ -864,7 +864,7 @@ func (s *OAuthService) fetchUserPermissions(ctx context.Context, tenantID, userI
 		WHERE ur.user_id = $1 AND r.tenant_id = $2`,
 		userID, tenantID)
 	if err != nil {
-		return nil
+		return nil, err
 	}
 	defer rows.Close()
 	perms := []string{}
@@ -875,7 +875,7 @@ func (s *OAuthService) fetchUserPermissions(ctx context.Context, tenantID, userI
 		}
 		perms = append(perms, key)
 	}
-	return perms
+	return perms, rows.Err()
 }
 
 // mergeOAuthScopes returns the OAuth scopes as-is (openid, profile, email, etc.).
@@ -1047,7 +1047,7 @@ func (s *OAuthService) issueAccessTokenWithAMR(userID, tenantID uuid.UUID, audie
 	expiresAt := now.Add(15 * time.Minute)
 
 	// Fetch fine-grained permissions and roles from DB for separate claims.
-	permissions := s.fetchUserPermissions(context.Background(), tenantID, userID)
+	permissions, _ := s.fetchUserPermissions(context.Background(), tenantID, userID)
 	roles := s.fetchUserRoles(context.Background(), tenantID, userID)
 
 	claims := jwt.RegisteredClaims{
@@ -2498,7 +2498,7 @@ func (s *OAuthService) PasswordGrant(ctx context.Context, req *PasswordGrantRequ
 	}
 
 	// 2. Fetch user permissions and roles.
-	permissions := s.fetchUserPermissions(ctx, tenantID, userID)
+	permissions, _ := s.fetchUserPermissions(ctx, tenantID, userID)
 	roles := s.fetchUserRoles(ctx, tenantID, userID)
 
 	// SECURITY: Admin scopes (platform:*, tenant:*) come ONLY from the user's

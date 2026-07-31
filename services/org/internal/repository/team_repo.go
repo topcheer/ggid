@@ -58,7 +58,7 @@ func (r *TeamRepository) ListByOrg(ctx context.Context, orgID uuid.UUID, limit, 
 		}
 		teams = append(teams, t)
 	}
-	return teams, nil
+	return teams, rows.Err()
 }
 
 // Delete removes a team.

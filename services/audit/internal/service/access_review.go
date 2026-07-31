@@ -111,5 +111,5 @@ func (repo *AccessReviewRepo) ListPending(ctx context.Context, tenantID uuid.UUI
 	if out == nil {
 		out = []*AccessReview{}
 	}
-	return out, nil
+	return out, rows.Err()
 }

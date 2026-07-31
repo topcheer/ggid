@@ -261,6 +261,9 @@ func MigrateStatus(ctx context.Context, p Pool, migrationsDir string) ([]Migrati
 		}
 		appliedMap[version] = appliedAt
 	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
 
 	var statuses []MigrationStatus
 	for _, mig := range migrations {

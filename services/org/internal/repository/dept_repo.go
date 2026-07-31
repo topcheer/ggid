@@ -136,5 +136,5 @@ func scanDepts(rows pgx.Rows) ([]*domain.Department, error) {
 		}
 		depts = append(depts, d)
 	}
-	return depts, nil
+	return depts, rows.Err()
 }
