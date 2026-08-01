@@ -7,6 +7,7 @@ import (
 	"log/slog"
 	"net/http"
 	"net/url"
+	"os"
 	"strings"
 	"sync"
 	"time"
@@ -41,21 +42,52 @@ type socialStateEntry struct {
 var socialStates = &socialStateStore{entries: make(map[string]socialStateEntry)}
 
 // isAllowedRedirectURI validates that the redirect_uri is a safe destination.
-// Prevents open redirect attacks (P2-11).
+// Prevents open redirect attacks (P1-6): validates against CONSOLE_BASE_URL
+// or GGID_ALLOWED_REDIRECT_DOMAINS (comma-separated) allowlist.
+// localhost is always allowed for development.
 func isAllowedRedirectURI(uri string) bool {
 	parsed, err := url.Parse(uri)
 	if err != nil {
 		return false
 	}
-	if parsed.Scheme != "https" {
-		if parsed.Host != "localhost" && !strings.HasPrefix(parsed.Host, "localhost:") {
-			return false
-		}
-	}
 	if parsed.Host == "" {
 		return false
 	}
-	return true
+
+	// Always allow localhost for development.
+	if parsed.Host == "localhost" || strings.HasPrefix(parsed.Host, "localhost:") ||
+		parsed.Host == "127.0.0.1" || strings.HasPrefix(parsed.Host, "127.0.0.1:") {
+		return parsed.Scheme == "http" || parsed.Scheme == "https"
+	}
+
+	if parsed.Scheme != "https" {
+		return false
+	}
+
+	// Build allowlist from env vars.
+	allowed := map[string]bool{}
+
+	// CONSOLE_BASE_URL is the primary frontend URL.
+	if consoleURL := os.Getenv("CONSOLE_BASE_URL"); consoleURL != "" {
+		if u, err := url.Parse(consoleURL); err == nil && u.Host != "" {
+			allowed[u.Host] = true
+		}
+	}
+
+	// GGID_ALLOWED_REDIRECT_DOMAINS for multi-domain setups.
+	for _, domain := range strings.Split(os.Getenv("GGID_ALLOWED_REDIRECT_DOMAINS"), ",") {
+		domain = strings.TrimSpace(domain)
+		if domain != "" {
+			allowed[domain] = true
+		}
+	}
+
+	// If no allowlist configured, allow same host as CONSOLE_BASE_URL default.
+	if len(allowed) == 0 {
+		allowed["ggid-console.iot2.win"] = true
+	}
+
+	return allowed[parsed.Host]
 }
 
 func (s *socialStateStore) Set(key string, val *socialState, ttl time.Duration) {
