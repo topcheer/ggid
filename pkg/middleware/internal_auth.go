@@ -46,8 +46,26 @@ func LoadInternalSecret() []byte {
 		}
 		secret = "dev-internal-secret"
 		log.Println("WARNING: using default internal secret — not for production")
+	} else if len(secret) < 16 || isWeakSecret(secret) {
+		env := os.Getenv("GGID_ENV")
+		if env != "test" && env != "dev" {
+			log.Fatal("GGID_INTERNAL_SECRET is too weak (min 16 chars, no common values like 'changeme', 'secret')")
+		}
+		log.Println("WARNING: GGID_INTERNAL_SECRET is weak — not for production")
 	}
 	return []byte(secret)
+}
+
+// isWeakSecret checks against common weak values.
+func isWeakSecret(s string) bool {
+	weak := []string{"changeme", "secret", "password", "ggid", "internal", "default"}
+	lower := strings.ToLower(s)
+	for _, w := range weak {
+		if lower == w {
+			return true
+		}
+	}
+	return false
 }
 
 // LoadInternalSecrets loads current + previous secrets for rotation.

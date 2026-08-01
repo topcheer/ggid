@@ -20,6 +20,10 @@ func init() {
 	if pepper := os.Getenv("PASSWORD_PEPPER"); pepper != "" {
 		crypto.SetPepper(pepper)
 	} else {
+		env := os.Getenv("GGID_ENV")
+		if env != "test" && env != "dev" {
+			log.Fatal("PASSWORD_PEPPER must be set in non-dev environments")
+		}
 		log.Println("WARNING: PASSWORD_PEPPER not set — password verification may be inconsistent with auth service")
 	}
 }
