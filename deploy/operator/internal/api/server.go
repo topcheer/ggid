@@ -257,7 +257,7 @@ func (s *APIServer) listInstances(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	list := &iamv1alpha1.GGIDInstanceList{}
 	if err := s.client.List(ctx, list); err != nil {
-		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "failed to list instances: ")
+		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "failed to list instances"})
 		return
 	}
 
@@ -276,7 +276,7 @@ func (s *APIServer) getInstance(w http.ResponseWriter, r *http.Request, name str
 	ctx := r.Context()
 	inst := &iamv1alpha1.GGIDInstance{}
 	if err := s.client.Get(ctx, types.NamespacedName{Name: name}, inst); err != nil {
-		writeJSON(w, http.StatusNotFound, map[string]string{"error": "instance not found: ")
+		writeJSON(w, http.StatusNotFound, map[string]string{"error": "instance not found"})
 		return
 	}
 	writeJSON(w, http.StatusOK, instanceToInfo(inst))
@@ -287,7 +287,7 @@ func (s *APIServer) createInstance(w http.ResponseWriter, r *http.Request) {
 
 	var req CreateInstanceRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid request body: ")
+		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid request body"})
 		return
 	}
 
@@ -353,7 +353,7 @@ func (s *APIServer) createInstance(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := s.client.Create(ctx, instance); err != nil {
-		writeJSON(w, http.StatusConflict, map[string]string{"error": "failed to create instance: ")
+		writeJSON(w, http.StatusConflict, map[string]string{"error": "failed to create instance"})
 		return
 	}
 
@@ -366,7 +366,7 @@ func (s *APIServer) deleteInstance(w http.ResponseWriter, r *http.Request, name 
 		ObjectMeta: metav1.ObjectMeta{Name: name},
 	}
 	if err := s.client.Delete(ctx, inst); err != nil {
-		writeJSON(w, http.StatusNotFound, map[string]string{"error": "failed to delete instance: ")
+		writeJSON(w, http.StatusNotFound, map[string]string{"error": "failed to delete instance"})
 		return
 	}
 	writeJSON(w, http.StatusOK, map[string]string{"status": "deleted", "name": name})
@@ -453,7 +453,7 @@ func (s *APIServer) listTenants(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	list := &iamv1alpha1.GGIDTenantList{}
 	if err := s.client.List(ctx, list); err != nil {
-		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "failed to list tenants: ")
+		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "failed to list tenants"})
 		return
 	}
 
@@ -472,7 +472,7 @@ func (s *APIServer) getTenant(w http.ResponseWriter, r *http.Request, name strin
 	ctx := r.Context()
 	t := &iamv1alpha1.GGIDTenant{}
 	if err := s.client.Get(ctx, types.NamespacedName{Name: name}, t); err != nil {
-		writeJSON(w, http.StatusNotFound, map[string]string{"error": "tenant not found: ")
+		writeJSON(w, http.StatusNotFound, map[string]string{"error": "tenant not found"})
 		return
 	}
 	writeJSON(w, http.StatusOK, tenantToInfo(t))
@@ -483,7 +483,7 @@ func (s *APIServer) createTenant(w http.ResponseWriter, r *http.Request) {
 
 	var req CreateTenantRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid request body: ")
+		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid request body"})
 		return
 	}
 
@@ -527,7 +527,7 @@ func (s *APIServer) createTenant(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := s.client.Create(ctx, tenant); err != nil {
-		writeJSON(w, http.StatusConflict, map[string]string{"error": "failed to create tenant: ")
+		writeJSON(w, http.StatusConflict, map[string]string{"error": "failed to create tenant"})
 		return
 	}
 
@@ -540,7 +540,7 @@ func (s *APIServer) deleteTenant(w http.ResponseWriter, r *http.Request, name st
 		ObjectMeta: metav1.ObjectMeta{Name: name},
 	}
 	if err := s.client.Delete(ctx, tenant); err != nil {
-		writeJSON(w, http.StatusNotFound, map[string]string{"error": "failed to delete tenant: ")
+		writeJSON(w, http.StatusNotFound, map[string]string{"error": "failed to delete tenant"})
 		return
 	}
 	writeJSON(w, http.StatusOK, map[string]string{"status": "deleted", "name": name})
