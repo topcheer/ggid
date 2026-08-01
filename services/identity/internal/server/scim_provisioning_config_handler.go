@@ -6,15 +6,15 @@ import (
 )
 
 type ProvisioningConfig struct {
-	Endpoint              string            `json:"endpoint"`
-	MappingRules          map[string]string `json:"mapping_rules"`
-	Triggers              []string          `json:"triggers"`
-	SyncDirection         string            `json:"sync_direction"`
-	DeprovisionOnDisable  bool              `json:"deprovision_on_disable"`
-	TestConnection        struct {
-		Status     string `json:"status"`
-		LatencyMs  int    `json:"latency_ms"`
-		UsersSync  int    `json:"users_synced"`
+	Endpoint             string            `json:"endpoint"`
+	MappingRules         map[string]string `json:"mapping_rules"`
+	Triggers             []string          `json:"triggers"`
+	SyncDirection        string            `json:"sync_direction"`
+	DeprovisionOnDisable bool              `json:"deprovision_on_disable"`
+	TestConnection       struct {
+		Status    string `json:"status"`
+		LatencyMs int    `json:"latency_ms"`
+		UsersSync int    `json:"users_synced"`
 	} `json:"test_connection"`
 }
 
@@ -35,7 +35,10 @@ func (h *HTTPHandler) handleSCIMProvisioningConfig(w http.ResponseWriter, r *htt
 		json.NewEncoder(w).Encode(result)
 	case http.MethodPut:
 		var req ProvisioningConfig
-		json.NewDecoder(r.Body).Decode(&req)
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			writeJSONError(w, http.StatusBadRequest, "invalid request body")
+			return
+		}
 		w.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(w).Encode(map[string]any{"status": "updated"})
 	default:

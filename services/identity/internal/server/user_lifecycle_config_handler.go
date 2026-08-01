@@ -20,20 +20,23 @@ func (h *HTTPHandler) handleUserLifecycleConfig(w http.ResponseWriter, r *http.R
 			AutoDeactivateAfterDays: 180,
 			DormantDetectionRules:   []string{"no_login_90d", "no_api_calls_90d", "no_session_90d"},
 			StageTransitions: map[string]string{
-				"active→dormant":     "no_activity_90d",
-				"dormant→active":     "any_login",
-				"dormant→suspended":  "no_activity_180d",
+				"active→dormant":        "no_activity_90d",
+				"dormant→active":        "any_login",
+				"dormant→suspended":     "no_activity_180d",
 				"suspended→deactivated": "admin_confirm_30d",
-				"pending→active":     "email_verified",
+				"pending→active":        "email_verified",
 			},
 			NotificationBeforeDays: 14,
-			PerRoleOverride: map[string]int{"admin": 90, "service": 365, "viewer": 120},
+			PerRoleOverride:        map[string]int{"admin": 90, "service": 365, "viewer": 120},
 		}
 		w.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(w).Encode(result)
 	case http.MethodPut:
 		var req UserLifecycleConfig
-		json.NewDecoder(r.Body).Decode(&req)
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			writeJSONError(w, http.StatusBadRequest, "invalid request body")
+			return
+		}
 		w.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(w).Encode(map[string]any{"status": "updated", "config": req})
 	default:

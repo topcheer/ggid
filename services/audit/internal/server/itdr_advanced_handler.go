@@ -139,7 +139,10 @@ func (s *HTTPServer) handleITDRComposite(w http.ResponseWriter, r *http.Request)
 		parts := strings.Split(r.URL.Path, "/")
 		id := parts[len(parts)-1]
 		var update CompositeRule
-		json.NewDecoder(r.Body).Decode(&update)
+		if err := json.NewDecoder(r.Body).Decode(&update); err != nil {
+			writeJSON2(w, http.StatusBadRequest, map[string]string{"error": "invalid request body"})
+			return
+		}
 		update.ID = id
 		if s.compositeRepo != nil {
 			s.compositeRepo.Update(r.Context(), &update)

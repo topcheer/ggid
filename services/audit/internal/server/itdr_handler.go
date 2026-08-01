@@ -140,7 +140,10 @@ func (s *HTTPServer) handleITDRResolve(w http.ResponseWriter, r *http.Request) {
 	var body struct {
 		FalsePositive bool `json:"false_positive"`
 	}
-	json.NewDecoder(r.Body).Decode(&body)
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid request body"})
+		return
+	}
 
 	parts := strings.Split(r.URL.Path, "/")
 	if len(parts) < 5 {

@@ -6,13 +6,13 @@ import (
 )
 
 type IdPMetadataImport struct {
-	ImportMethod    string   `json:"import_method"`
-	EntityID        string   `json:"entity_id"`
-	SSOURL          string   `json:"sso_url"`
-	SLOURL          string   `json:"slo_url"`
-	Certificates    []string `json:"certificates"`
-	NameIDFormat    string   `json:"name_id_format"`
-	ValidationStatus string  `json:"validation_status"`
+	ImportMethod     string   `json:"import_method"`
+	EntityID         string   `json:"entity_id"`
+	SSOURL           string   `json:"sso_url"`
+	SLOURL           string   `json:"slo_url"`
+	Certificates     []string `json:"certificates"`
+	NameIDFormat     string   `json:"name_id_format"`
+	ValidationStatus string   `json:"validation_status"`
 }
 
 type IdPMetadataImportResult struct {
@@ -25,12 +25,12 @@ func (h *HTTPHandler) handleIdPMetadataImport(w http.ResponseWriter, r *http.Req
 	case http.MethodGet:
 		result := IdPMetadataImportResult{
 			Imported: IdPMetadataImport{
-				ImportMethod:    "URL",
-				EntityID:        "https://idp.example.com/metadata",
-				SSOURL:          "https://idp.example.com/sso",
-				SLOURL:          "https://idp.example.com/slo",
-				Certificates:    []string{"MIIDazCCAl...base64...", "MIIEvAIBADAN...base64..."},
-				NameIDFormat:    "urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress",
+				ImportMethod:     "URL",
+				EntityID:         "https://idp.example.com/metadata",
+				SSOURL:           "https://idp.example.com/sso",
+				SLOURL:           "https://idp.example.com/slo",
+				Certificates:     []string{"MIIDazCCAl...base64...", "MIIEvAIBADAN...base64..."},
+				NameIDFormat:     "urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress",
 				ValidationStatus: "valid",
 			},
 			Warnings: []string{"Certificate #2 expires in 30 days"},
@@ -43,7 +43,10 @@ func (h *HTTPHandler) handleIdPMetadataImport(w http.ResponseWriter, r *http.Req
 			URL          string `json:"url"`
 			XML          string `json:"xml"`
 		}
-		json.NewDecoder(r.Body).Decode(&req)
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			writeJSONError(w, http.StatusBadRequest, "invalid request body")
+			return
+		}
 		result := IdPMetadataImportResult{
 			Imported: IdPMetadataImport{
 				ImportMethod:     req.ImportMethod,

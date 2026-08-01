@@ -357,7 +357,11 @@ func (h *Handler) handleMFASelfRemove(w http.ResponseWriter, r *http.Request) {
 		StepUpToken string `json:"step_up_token"`
 	}
 	// Body is optional (token may be in query param)
-	json.NewDecoder(r.Body).Decode(&req)
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil && err.Error() != "EOF" {
+		// Only fail on JSON decode errors, not on empty body
+		writeError(w, http.StatusBadRequest, "invalid request body")
+		return
+	}
 	if req.StepUpToken == "" {
 		req.StepUpToken = r.URL.Query().Get("step_up_token")
 	}

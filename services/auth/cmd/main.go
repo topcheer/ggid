@@ -407,10 +407,13 @@ func main() {
 	httpServer := &http.Server{
 		Addr:           cfg.Server.HTTP.Addr,
 		MaxHeaderBytes: 1 << 20, // 1MB max headers
-		Handler:        internalMW(handler),
-		ReadTimeout:    cfg.Server.HTTP.ReadTimeout,
-		WriteTimeout:   cfg.Server.HTTP.WriteTimeout,
-		IdleTimeout:    120 * time.Second,
+		Handler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			r.Body = http.MaxBytesReader(w, r.Body, 10<<20) // 10MB max body
+			internalMW(handler).ServeHTTP(w, r)
+		}),
+		ReadTimeout:  cfg.Server.HTTP.ReadTimeout,
+		WriteTimeout: cfg.Server.HTTP.WriteTimeout,
+		IdleTimeout:  120 * time.Second,
 	}
 
 	go func() {

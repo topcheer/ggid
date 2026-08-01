@@ -39,7 +39,10 @@ func (s *HTTPServer) handleTenantMigrate(w http.ResponseWriter, r *http.Request)
 		Scope             []string `json:"scope"`
 		DryRun            bool     `json:"dry_run"`
 	}
-	json.NewDecoder(r.Body).Decode(&req)
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		writeJSONError(w, http.StatusBadRequest, "invalid request body")
+		return
+	}
 
 	result := TenantMigrationResult{
 		SourceTenant:      req.SourceTenant,

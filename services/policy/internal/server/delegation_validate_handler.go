@@ -11,11 +11,14 @@ func (s *HTTPServer) handleDelegationValidate(w http.ResponseWriter, r *http.Req
 		return
 	}
 	var req struct {
-		DelegatorID string `json:"delegator_id"`
-		DelegateeID string `json:"delegatee_id"`
+		DelegatorID string   `json:"delegator_id"`
+		DelegateeID string   `json:"delegatee_id"`
 		Permissions []string `json:"permissions"`
 	}
-	json.NewDecoder(r.Body).Decode(&req)
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid request body"})
+		return
+	}
 	writeJSON(w, http.StatusOK, map[string]any{
 		"valid":          true,
 		"chain_depth":    1,

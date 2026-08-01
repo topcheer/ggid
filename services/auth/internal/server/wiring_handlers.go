@@ -327,7 +327,10 @@ func (h *Handler) handlePasswordHistoryCheck(w http.ResponseWriter, r *http.Requ
 		UserID   string `json:"user_id"`
 		Password string `json:"password"`
 	}
-	json.NewDecoder(r.Body).Decode(&req)
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid request body"})
+		return
+	}
 	writeJSON(w, http.StatusOK, map[string]any{
 		"is_repeated":   false,
 		"history_count": 5,

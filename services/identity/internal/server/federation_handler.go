@@ -123,7 +123,10 @@ func (h *HTTPHandler) fedRouteEmail(w http.ResponseWriter, r *http.Request) {
 	var req struct {
 		Email string `json:"email"`
 	}
-	json.NewDecoder(r.Body).Decode(&req)
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		writeJSONError(w, http.StatusBadRequest, "invalid request body")
+		return
+	}
 	if req.Email == "" || !strings.Contains(req.Email, "@") {
 		writeJSONError(w, http.StatusBadRequest, "valid email required")
 		return
@@ -135,10 +138,10 @@ func (h *HTTPHandler) fedRouteEmail(w http.ResponseWriter, r *http.Request) {
 		entityID, _ = h.fedRepo.RouteEmailDomain(r.Context(), tc.TenantID, domain)
 	}
 	writeJSON(w, http.StatusOK, map[string]any{
-		"email":      req.Email,
-		"domain":     domain,
-		"entity_id":  entityID,
-		"routed":     entityID != "",
+		"email":     req.Email,
+		"domain":    domain,
+		"entity_id": entityID,
+		"routed":    entityID != "",
 	})
 }
 

@@ -6,12 +6,12 @@ import (
 )
 
 type CIBAConfig struct {
-	Enabled               bool              `json:"enabled"`
-	BindingMessage        string            `json:"binding_message"`
-	MaxPollingInterval    int               `json:"max_polling_interval_seconds"`
-	RequestedExpiryMax    int               `json:"requested_expiry_max_seconds"`
-	TokenDeliveryMode     string            `json:"token_delivery_mode"`
-	PerClientConfig       map[string]string `json:"per_client_config"`
+	Enabled            bool              `json:"enabled"`
+	BindingMessage     string            `json:"binding_message"`
+	MaxPollingInterval int               `json:"max_polling_interval_seconds"`
+	RequestedExpiryMax int               `json:"requested_expiry_max_seconds"`
+	TokenDeliveryMode  string            `json:"token_delivery_mode"`
+	PerClientConfig    map[string]string `json:"per_client_config"`
 }
 
 func handleCIBAConfig(w http.ResponseWriter, r *http.Request) {
@@ -29,7 +29,10 @@ func handleCIBAConfig(w http.ResponseWriter, r *http.Request) {
 		json.NewEncoder(w).Encode(result)
 	case http.MethodPut:
 		var req CIBAConfig
-		json.NewDecoder(r.Body).Decode(&req)
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			writeJSONError(w, http.StatusBadRequest, "invalid request body")
+			return
+		}
 		w.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(w).Encode(map[string]any{"status": "updated", "config": req})
 	default:

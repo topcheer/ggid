@@ -11,9 +11,9 @@ type SoDConflictDetectionConfig struct {
 		ByPermission []string `json:"by_permission"`
 		ByResource   []string `json:"by_resource"`
 	} `json:"rules"`
-	SensitivityLevels   map[string]string `json:"sensitivity_levels"`
-	AutoRemediate       string            `json:"auto_remediate"`
-	ExceptionWorkflow   bool              `json:"exception_workflow"`
+	SensitivityLevels map[string]string `json:"sensitivity_levels"`
+	AutoRemediate     string            `json:"auto_remediate"`
+	ExceptionWorkflow bool              `json:"exception_workflow"`
 }
 
 func (s *HTTPServer) handleSoDConflictDetectionConfig(w http.ResponseWriter, r *http.Request) {
@@ -30,7 +30,10 @@ func (s *HTTPServer) handleSoDConflictDetectionConfig(w http.ResponseWriter, r *
 		json.NewEncoder(w).Encode(result)
 	case http.MethodPut:
 		var req SoDConflictDetectionConfig
-		json.NewDecoder(r.Body).Decode(&req)
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			writeJSONError(w, http.StatusBadRequest, "invalid request body")
+			return
+		}
 		w.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(w).Encode(map[string]any{"status": "updated"})
 	default:

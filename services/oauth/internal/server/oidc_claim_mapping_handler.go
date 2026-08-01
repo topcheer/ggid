@@ -6,10 +6,10 @@ import (
 )
 
 type ClaimMappingEntry struct {
-	ClaimName          string            `json:"claim_name"`
-	Source             string            `json:"source"`
-	Transform          string            `json:"transform"`
-	PerClientOverride  map[string]string `json:"per_client_override"`
+	ClaimName         string            `json:"claim_name"`
+	Source            string            `json:"source"`
+	Transform         string            `json:"transform"`
+	PerClientOverride map[string]string `json:"per_client_override"`
 }
 
 type ScopeToClaims struct {
@@ -44,7 +44,10 @@ func handleOIDCClaimMapping(w http.ResponseWriter, r *http.Request) {
 		json.NewEncoder(w).Encode(result)
 	case http.MethodPut:
 		var req OIDCClaimMappingResult
-		json.NewDecoder(r.Body).Decode(&req)
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			writeJSONError(w, http.StatusBadRequest, "invalid request body")
+			return
+		}
 		w.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(w).Encode(map[string]any{"status": "updated", "count": len(req.Mappings)})
 	default:

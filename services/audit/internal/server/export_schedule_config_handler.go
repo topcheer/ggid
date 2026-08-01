@@ -6,11 +6,11 @@ import (
 )
 
 type ExportJob struct {
-	Name       string `json:"name"`
-	Cron       string `json:"cron"`
-	Format     string `json:"format"`
-	Filters    string `json:"filters"`
-	Retention  int    `json:"retention_days"`
+	Name        string `json:"name"`
+	Cron        string `json:"cron"`
+	Format      string `json:"format"`
+	Filters     string `json:"filters"`
+	Retention   int    `json:"retention_days"`
 	Destination string `json:"destination"`
 }
 
@@ -48,7 +48,10 @@ func (s *HTTPServer) handleExportScheduleConfig(w http.ResponseWriter, r *http.R
 		json.NewEncoder(w).Encode(result)
 	case http.MethodPut:
 		var req ExportScheduleConfig
-		json.NewDecoder(r.Body).Decode(&req)
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			writeJSONError(w, http.StatusBadRequest, "invalid request body")
+			return
+		}
 		w.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(w).Encode(map[string]any{"status": "updated"})
 	default:

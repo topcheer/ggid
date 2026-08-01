@@ -21,8 +21,8 @@ type FailoverEvent struct {
 }
 
 type FailoverConfigResult struct {
-	Primary    IdPEndpoint   `json:"primary"`
-	Secondary  IdPEndpoint   `json:"secondary"`
+	Primary       IdPEndpoint `json:"primary"`
+	Secondary     IdPEndpoint `json:"secondary"`
 	FailoverRules []struct {
 		Trigger string `json:"trigger"`
 		Action  string `json:"action"`
@@ -60,7 +60,10 @@ func (h *HTTPHandler) handleIdPFailoverConfig(w http.ResponseWriter, r *http.Req
 			AutoFallback *bool  `json:"auto_fallback"`
 			ManualSwitch string `json:"manual_switch"`
 		}
-		json.NewDecoder(r.Body).Decode(&req)
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			writeJSONError(w, http.StatusBadRequest, "invalid request body")
+			return
+		}
 		w.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(w).Encode(map[string]any{"status": "updated", "active": "okta-prod"})
 	default:

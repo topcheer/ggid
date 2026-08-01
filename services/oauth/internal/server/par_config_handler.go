@@ -6,11 +6,11 @@ import (
 )
 
 type PARConfig struct {
-	RequirePAR         bool              `json:"require_par"`
-	PARLifetimeSeconds int               `json:"par_lifetime_seconds"`
-	MaxRequestSizeKB   int               `json:"max_request_size_kb"`
-	PerClientOverride  map[string]bool   `json:"per_client_override"`
-	ExemptedClients    []string          `json:"exempted_clients"`
+	RequirePAR         bool            `json:"require_par"`
+	PARLifetimeSeconds int             `json:"par_lifetime_seconds"`
+	MaxRequestSizeKB   int             `json:"max_request_size_kb"`
+	PerClientOverride  map[string]bool `json:"per_client_override"`
+	ExemptedClients    []string        `json:"exempted_clients"`
 	PARUsageStats      struct {
 		TotalAuthzReqs int     `json:"total_authz_requests"`
 		PARRequests    int     `json:"par_requests"`
@@ -35,7 +35,10 @@ func handlePARConfig(w http.ResponseWriter, r *http.Request) {
 		json.NewEncoder(w).Encode(result)
 	case http.MethodPut:
 		var req PARConfig
-		json.NewDecoder(r.Body).Decode(&req)
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			writeJSONError(w, http.StatusBadRequest, "invalid request body")
+			return
+		}
 		w.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(w).Encode(map[string]any{"status": "updated", "config": req})
 	default:

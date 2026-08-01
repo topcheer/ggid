@@ -6,16 +6,16 @@ import (
 )
 
 type TokenRotationClientConfig struct {
-	ClientID           string `json:"client_id"`
-	RotationIntervalDays int  `json:"rotation_interval_days"`
-	MaxAgeDays         int    `json:"max_age_days"`
-	NotifyBeforeDays   int    `json:"notify_before_days"`
-	AutoRotate         bool   `json:"auto_rotate"`
-	GracePeriodHours   int    `json:"grace_period_hours"`
+	ClientID             string `json:"client_id"`
+	RotationIntervalDays int    `json:"rotation_interval_days"`
+	MaxAgeDays           int    `json:"max_age_days"`
+	NotifyBeforeDays     int    `json:"notify_before_days"`
+	AutoRotate           bool   `json:"auto_rotate"`
+	GracePeriodHours     int    `json:"grace_period_hours"`
 }
 
 type TokenRotationConfig struct {
-	PerClient    []TokenRotationClientConfig `json:"per_client"`
+	PerClient      []TokenRotationClientConfig `json:"per_client"`
 	GlobalDefaults struct {
 		DefaultRotationDays int  `json:"default_rotation_days"`
 		DefaultMaxAgeDays   int  `json:"default_max_age_days"`
@@ -43,7 +43,10 @@ func handleTokenRotationConfig(w http.ResponseWriter, r *http.Request) {
 		json.NewEncoder(w).Encode(result)
 	case http.MethodPut:
 		var req TokenRotationConfig
-		json.NewDecoder(r.Body).Decode(&req)
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			writeJSONError(w, http.StatusBadRequest, "invalid request body")
+			return
+		}
 		w.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(w).Encode(map[string]any{"status": "updated"})
 	default:

@@ -35,8 +35,13 @@ func (h *HTTPHandler) handleSCIMGroupMapping(w http.ResponseWriter, r *http.Requ
 		w.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(w).Encode(result)
 	case http.MethodPut:
-		var req struct{ Mappings []GroupMappingEntry `json:"mappings"` }
-		json.NewDecoder(r.Body).Decode(&req)
+		var req struct {
+			Mappings []GroupMappingEntry `json:"mappings"`
+		}
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			writeJSONError(w, http.StatusBadRequest, "invalid request body")
+			return
+		}
 		w.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(w).Encode(map[string]any{"status": "updated", "count": len(req.Mappings)})
 	default:

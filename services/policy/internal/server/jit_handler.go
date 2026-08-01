@@ -306,7 +306,10 @@ func (s *HTTPServer) jitRevoke(w http.ResponseWriter, r *http.Request, reqID uui
 	var body struct {
 		Reason string `json:"reason"`
 	}
-	_ = json.NewDecoder(r.Body).Decode(&body)
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		writeJSONError(w, http.StatusBadRequest, "invalid request body")
+		return
+	}
 	if body.Reason == "" {
 		body.Reason = "manual_revoke"
 	}

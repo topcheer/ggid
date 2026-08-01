@@ -32,7 +32,10 @@ func handleClientOnboarding(w http.ResponseWriter, r *http.Request) {
 		RedirectURIs []string `json:"redirect_uris"`
 		Scopes       []string `json:"scopes"`
 	}
-	json.NewDecoder(r.Body).Decode(&req)
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		writeJSONError(w, http.StatusBadRequest, "invalid request body")
+		return
+	}
 
 	b := make([]byte, 16)
 	rand.Read(b)

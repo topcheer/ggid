@@ -13,14 +13,14 @@ type ImportLogEntry struct {
 }
 
 type PolicyImportExportResult struct {
-	ExportedPolicyIDs   []string        `json:"exported_policy_ids,omitempty"`
-	Format              string          `json:"format"`
-	ImportLog           []ImportLogEntry `json:"import_log,omitempty"`
-	ConflictsFound      int             `json:"conflicts_found,omitempty"`
-	ConflictResolution  string          `json:"conflict_resolution,omitempty"`
-	VersionCompat       string          `json:"version_compatibility"`
-	TotalProcessed      int             `json:"total_processed"`
-	Status              string          `json:"status"`
+	ExportedPolicyIDs  []string         `json:"exported_policy_ids,omitempty"`
+	Format             string           `json:"format"`
+	ImportLog          []ImportLogEntry `json:"import_log,omitempty"`
+	ConflictsFound     int              `json:"conflicts_found,omitempty"`
+	ConflictResolution string           `json:"conflict_resolution,omitempty"`
+	VersionCompat      string           `json:"version_compatibility"`
+	TotalProcessed     int              `json:"total_processed"`
+	Status             string           `json:"status"`
 }
 
 func (s *HTTPServer) handlePolicyImportExport(w http.ResponseWriter, r *http.Request) {
@@ -44,7 +44,10 @@ func (s *HTTPServer) handlePolicyImportExport(w http.ResponseWriter, r *http.Req
 			Format             string `json:"format"`
 			ConflictResolution string `json:"conflict_resolution"`
 		}
-		json.NewDecoder(r.Body).Decode(&req)
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			writeJSONError(w, http.StatusBadRequest, "invalid request body")
+			return
+		}
 		result := PolicyImportExportResult{
 			Format: req.Format,
 			ImportLog: []ImportLogEntry{

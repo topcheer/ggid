@@ -181,6 +181,7 @@ func main() {
 		Addr:           cfg.HTTPAddr,
 		MaxHeaderBytes: 1 << 20, // 1MB max headers
 		Handler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			r.Body = http.MaxBytesReader(w, r.Body, 10<<20) // 10MB max body
 			defer func() {
 				if rvr := recover(); rvr != nil {
 					log.Printf("PANIC recovered in policy handler: %v", rvr)

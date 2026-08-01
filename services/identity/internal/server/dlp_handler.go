@@ -313,7 +313,10 @@ func (h *HTTPHandler) handleDLP(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		var p DLPPolicy
-		json.NewDecoder(r.Body).Decode(&p)
+		if err := json.NewDecoder(r.Body).Decode(&p); err != nil {
+			writeJSONError(w, http.StatusBadRequest, "invalid request body")
+			return
+		}
 		p.ID = id
 		if tc != nil {
 			p.TenantID = tc.TenantID
@@ -372,7 +375,10 @@ func (h *HTTPHandler) dlpTestPolicy(w http.ResponseWriter, r *http.Request) {
 		ResourceType string `json:"resource_type"`
 		Trigger      string `json:"trigger"`
 	}
-	json.NewDecoder(r.Body).Decode(&req)
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		writeJSONError(w, http.StatusBadRequest, "invalid request body")
+		return
+	}
 
 	tc, _ := ggidtenant.FromContext(r.Context())
 	userRole := r.Header.Get("X-User-Role")

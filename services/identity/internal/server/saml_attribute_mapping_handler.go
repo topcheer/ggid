@@ -13,11 +13,11 @@ type AttributeMapping struct {
 }
 
 type AttributeMappingResult struct {
-	Mappings    []AttributeMapping `json:"mappings"`
-	TestResult  struct {
-		Input   string `json:"input"`
-		Output  string `json:"output"`
-		Valid   bool   `json:"valid"`
+	Mappings   []AttributeMapping `json:"mappings"`
+	TestResult struct {
+		Input  string `json:"input"`
+		Output string `json:"output"`
+		Valid  bool   `json:"valid"`
 	} `json:"test_mapping"`
 }
 
@@ -38,8 +38,13 @@ func (h *HTTPHandler) handleSAMLAttributeMapping(w http.ResponseWriter, r *http.
 		w.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(w).Encode(result)
 	case http.MethodPut:
-		var req struct{ Mappings []AttributeMapping `json:"mappings"` }
-		json.NewDecoder(r.Body).Decode(&req)
+		var req struct {
+			Mappings []AttributeMapping `json:"mappings"`
+		}
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			writeJSONError(w, http.StatusBadRequest, "invalid request body")
+			return
+		}
 		w.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(w).Encode(map[string]any{"status": "updated", "count": len(req.Mappings)})
 	default:

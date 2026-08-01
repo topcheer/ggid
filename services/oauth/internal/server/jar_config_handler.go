@@ -6,14 +6,14 @@ import (
 )
 
 type JARConfig struct {
-	RequireJAR           bool              `json:"require_jar"`
-	JARLifetimeSeconds   int               `json:"jar_lifetime_seconds"`
-	SigningAlg           string            `json:"signing_alg"`
-	PerClientOverride    map[string]string `json:"per_client_override"`
-	EncryptionOptional   bool              `json:"encryption_optional"`
-	UsageStats           struct {
-		TotalRequests int `json:"total_requests"`
-		JARRequests   int `json:"jar_requests"`
+	RequireJAR         bool              `json:"require_jar"`
+	JARLifetimeSeconds int               `json:"jar_lifetime_seconds"`
+	SigningAlg         string            `json:"signing_alg"`
+	PerClientOverride  map[string]string `json:"per_client_override"`
+	EncryptionOptional bool              `json:"encryption_optional"`
+	UsageStats         struct {
+		TotalRequests int     `json:"total_requests"`
+		JARRequests   int     `json:"jar_requests"`
 		AdoptionRate  float64 `json:"adoption_rate"`
 	} `json:"usage_stats"`
 }
@@ -35,7 +35,10 @@ func handleJARConfig(w http.ResponseWriter, r *http.Request) {
 		json.NewEncoder(w).Encode(result)
 	case http.MethodPut:
 		var req JARConfig
-		json.NewDecoder(r.Body).Decode(&req)
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			writeJSONError(w, http.StatusBadRequest, "invalid request body")
+			return
+		}
 		w.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(w).Encode(map[string]any{"status": "updated", "config": req})
 	default:

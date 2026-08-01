@@ -6,11 +6,11 @@ import (
 )
 
 type ABACConditionConfig struct {
-	AttributeSources     map[string]string `json:"attribute_sources"`
-	OperatorsPerType     map[string][]string `json:"operators_per_type"`
-	ConditionTemplates   []string          `json:"condition_templates"`
-	EvaluationCacheTTL   int               `json:"evaluation_cache_ttl_seconds"`
-	DefaultDeny          bool              `json:"default_deny"`
+	AttributeSources   map[string]string   `json:"attribute_sources"`
+	OperatorsPerType   map[string][]string `json:"operators_per_type"`
+	ConditionTemplates []string            `json:"condition_templates"`
+	EvaluationCacheTTL int                 `json:"evaluation_cache_ttl_seconds"`
+	DefaultDeny        bool                `json:"default_deny"`
 }
 
 func (s *HTTPServer) handleABACConditionConfig(w http.ResponseWriter, r *http.Request) {
@@ -18,13 +18,13 @@ func (s *HTTPServer) handleABACConditionConfig(w http.ResponseWriter, r *http.Re
 	case http.MethodGet:
 		result := ABACConditionConfig{
 			AttributeSources: map[string]string{
-				"user.department":  "ldap",
-				"user.role":        "database",
-				"user.location":    "ip_geolocation",
-				"resource.owner":   "database",
-				"resource.tag":     "metadata",
-				"env.time":         "system",
-				"env.risk_score":   "risk_engine",
+				"user.department": "ldap",
+				"user.role":       "database",
+				"user.location":   "ip_geolocation",
+				"resource.owner":  "database",
+				"resource.tag":    "metadata",
+				"env.time":        "system",
+				"env.risk_score":  "risk_engine",
 			},
 			OperatorsPerType: map[string][]string{
 				"string": {"eq", "ne", "in", "not_in", "contains", "regex"},
@@ -46,7 +46,10 @@ func (s *HTTPServer) handleABACConditionConfig(w http.ResponseWriter, r *http.Re
 		json.NewEncoder(w).Encode(result)
 	case http.MethodPut:
 		var req ABACConditionConfig
-		json.NewDecoder(r.Body).Decode(&req)
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			writeJSONError(w, http.StatusBadRequest, "invalid request body")
+			return
+		}
 		w.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(w).Encode(map[string]any{"status": "updated", "config": req})
 	default:

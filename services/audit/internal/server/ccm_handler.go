@@ -12,12 +12,12 @@ func (s *HTTPServer) handleCCM(w http.ResponseWriter, r *http.Request) {
 
 	// Known CCM paths.
 	knownPaths := map[string]bool{
-		"/api/v1/audit/ccm/results":  true,
-		"/api/v1/audit/ccm/latest":   true,
-		"/api/v1/audit/ccm/history":  true,
-		"/api/v1/audit/ccm/run":      true,
-		"/api/v1/audit/ccm/scan":     true,
-		"/api/v1/audit/ccm/summary":  true,
+		"/api/v1/audit/ccm/results": true,
+		"/api/v1/audit/ccm/latest":  true,
+		"/api/v1/audit/ccm/history": true,
+		"/api/v1/audit/ccm/run":     true,
+		"/api/v1/audit/ccm/scan":    true,
+		"/api/v1/audit/ccm/summary": true,
 	}
 
 	switch {
@@ -34,18 +34,18 @@ func (s *HTTPServer) handleCCM(w http.ResponseWriter, r *http.Request) {
 		// Known path but wrong HTTP method.
 		errors.WriteSimpleAPIError(w, http.StatusMethodNotAllowed, "METHOD_NOT_ALLOWED", "method not allowed")
 	default:
-	knownCCMPaths := map[string]bool{
-		"/api/v1/audit/ccm/results": true,
-		"/api/v1/audit/ccm/history": true,
-		"/api/v1/audit/ccm/run":     true,
-		"/api/v1/audit/ccm/scan":    true,
-		"/api/v1/audit/ccm/summary": true,
-	}
-	if knownCCMPaths[path] {
-		errors.WriteSimpleAPIError(w, http.StatusMethodNotAllowed, "METHOD_NOT_ALLOWED", "method not allowed")
-	} else {
-		errors.WriteSimpleAPIError(w, http.StatusNotFound, "NOT_FOUND", "unknown CCM endpoint: "+path)
-	}
+		knownCCMPaths := map[string]bool{
+			"/api/v1/audit/ccm/results": true,
+			"/api/v1/audit/ccm/history": true,
+			"/api/v1/audit/ccm/run":     true,
+			"/api/v1/audit/ccm/scan":    true,
+			"/api/v1/audit/ccm/summary": true,
+		}
+		if knownCCMPaths[path] {
+			errors.WriteSimpleAPIError(w, http.StatusMethodNotAllowed, "METHOD_NOT_ALLOWED", "method not allowed")
+		} else {
+			errors.WriteSimpleAPIError(w, http.StatusNotFound, "NOT_FOUND", "unknown CCM endpoint: "+path)
+		}
 	}
 }
 
@@ -86,14 +86,17 @@ func (s *HTTPServer) ccmRun(w http.ResponseWriter, r *http.Request) {
 		Controls []string `json:"controls"`
 	}
 	// Body is optional — empty body runs all controls.
-	_ = json.NewDecoder(r.Body).Decode(&req)
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid request body"})
+		return
+	}
 
 	results := s.ccmEngine.RunAll()
 
 	writeJSON(w, http.StatusOK, map[string]any{
-		"results":        results,
-		"controls_run":   len(results),
-		"summary":        s.ccmEngine.GetSummary(),
+		"results":      results,
+		"controls_run": len(results),
+		"summary":      s.ccmEngine.GetSummary(),
 	})
 }
 
