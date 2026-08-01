@@ -56,7 +56,8 @@ func NewWebhookConfigFromEnv() *WebhookConfig {
 	}
 	env := os.Getenv("GGID_ENV")
 	if cfg.Secret == "" && env != "test" && env != "dev" {
-		slog.Warn("NOTIFICATION_WEBHOOK_SECRET not set — webhook payloads will be unsigned (unauthenticated)")
+		slog.Error("NOTIFICATION_WEBHOOK_SECRET not set in non-dev environment — webhook disabled for security")
+		return nil
 	}
 	return cfg
 }

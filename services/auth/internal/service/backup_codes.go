@@ -67,6 +67,11 @@ func (r *inMemBackupCodeRepo) MarkUsed(_ context.Context, id uuid.UUID) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 	if c, ok := r.codes[id]; ok {
+		// SECURITY: Only mark as used if not already used. Prevents concurrent
+		// requests from consuming the same backup code (MFA bypass).
+		if c.UsedAt != nil {
+			return fmt.Errorf("backup code already used")
+		}
 		now := time.Now()
 		c.UsedAt = &now
 		return nil
