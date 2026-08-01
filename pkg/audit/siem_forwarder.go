@@ -134,7 +134,12 @@ func (f *SIEMForwarder) Forward(event Event) {
 // Call Stop() to cleanly shut down.
 func (f *SIEMForwarder) Start(ctx context.Context) {
 	go func() {
-		defer close(f.doneCh)
+		defer func() {
+			if r := recover(); r != nil {
+				f.logger.Error("SIEM start goroutine panic", "error", r)
+			}
+			close(f.doneCh)
+		}()
 		ticker := time.NewTicker(f.config.FlushInterval)
 		defer ticker.Stop()
 

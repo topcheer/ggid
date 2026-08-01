@@ -39,10 +39,11 @@ type rateBucket struct {
 }
 
 type RateLimiter struct {
-	cfg     RateLimitConfig
-	mu      sync.Mutex
-	buckets map[string]*rateBucket
-	done    chan struct{}
+	cfg       RateLimitConfig
+	mu        sync.Mutex
+	buckets   map[string]*rateBucket
+	done      chan struct{}
+	closeOnce sync.Once
 }
 
 // NewRateLimiter creates a new rate limiter with the given config.
@@ -59,7 +60,7 @@ func NewRateLimiter(cfg RateLimitConfig) *RateLimiter {
 
 // StopCleanup terminates the background cleanup goroutine.
 func (rl *RateLimiter) StopCleanup() {
-	close(rl.done)
+	rl.closeOnce.Do(func() { close(rl.done) })
 }
 
 // Middleware returns an HTTP middleware that enforces rate limits.
