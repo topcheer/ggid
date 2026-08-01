@@ -2,7 +2,9 @@ package middleware
 
 import (
 	"math"
+	"net"
 	"net/http"
+	"strings"
 	"sync"
 	"time"
 )
@@ -12,12 +14,12 @@ import (
 // it gradually increases it. This protects backends from overload without
 // manual tuning.
 type AdaptiveRateLimiter struct {
-	mu             sync.Mutex
-	limits         map[string]*adaptiveBucket
-	baseLimit      float64       // starting QPS
-	minLimit       float64       // floor
-	maxLimit       float64       // ceiling
-	adjustInterval time.Duration // how often to adjust
+	mu               sync.Mutex
+	limits           map[string]*adaptiveBucket
+	baseLimit        float64       // starting QPS
+	minLimit         float64       // floor
+	maxLimit         float64       // ceiling
+	adjustInterval   time.Duration // how often to adjust
 	latencyThreshold time.Duration // above this → decrease
 }
 
@@ -43,11 +45,11 @@ func NewAdaptiveRateLimiter(baseLimit float64, minLimit, maxLimit float64) *Adap
 		maxLimit = 1000
 	}
 	return &AdaptiveRateLimiter{
-		limits:          make(map[string]*adaptiveBucket),
-		baseLimit:       baseLimit,
-		minLimit:        minLimit,
-		maxLimit:        maxLimit,
-		adjustInterval:  10 * time.Second,
+		limits:           make(map[string]*adaptiveBucket),
+		baseLimit:        baseLimit,
+		minLimit:         minLimit,
+		maxLimit:         maxLimit,
+		adjustInterval:   10 * time.Second,
 		latencyThreshold: 500 * time.Millisecond,
 	}
 }
@@ -347,22 +349,26 @@ func GeoEnrichMiddleware(enricher *GeoEnricher) func(http.Handler) http.Handler 
 }
 
 // clientIP extracts the client IP from request, respecting X-Forwarded-For.
+// SECURITY (R48 P1): Use RIGHTMOST XFF entry (added by last trusted proxy).
+// The leftmost is client-controlled and spoofable, allowing geo-dedup
+// anomaly detection bypass. Aligned with token_bucket.go ClientIP().
 func clientIP(r *http.Request) string {
 	if xff := r.Header.Get("X-Forwarded-For"); xff != "" {
-		// Use first IP in the list
-		for i := 0; i < len(xff); i++ {
-			if xff[i] == ',' {
-				return xff[:i]
+		parts := strings.Split(xff, ",")
+		for i := len(parts) - 1; i >= 0; i-- {
+			ip := strings.TrimSpace(parts[i])
+			if ip != "" {
+				return ip
 			}
 		}
-		return xff
 	}
-	// Strip port from RemoteAddr
-	addr := r.RemoteAddr
-	for i := len(addr) - 1; i >= 0; i-- {
-		if addr[i] == ':' {
-			return addr[:i]
-		}
+	// Check X-Real-IP
+	if xri := r.Header.Get("X-Real-IP"); xri != "" {
+		return strings.TrimSpace(xri)
 	}
-	return addr
+	// Fall back to RemoteAddr (strip port)
+	if host, _, err := net.SplitHostPort(r.RemoteAddr); err == nil {
+		return host
+	}
+	return r.RemoteAddr
 }
