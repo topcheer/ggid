@@ -1350,7 +1350,7 @@ func (s *OAuthService) ValidateTokenOwnership(tokenStr, clientID string) bool {
 	}
 	claims, err := s.ParseAccessToken(tokenStr)
 	if err != nil {
-		return true // unparseable token — let RevokeToken handle it
+		return false // SECURITY: fail-closed — unparseable token must not allow revocation
 	}
 	aud := getStringClaim(claims, "aud")
 	if aud == clientID {
