@@ -211,12 +211,21 @@ var (
 const jtiTTL = 2 * time.Hour
 
 func init() {
-	// Periodic cleanup of expired JTI blocklist entries to prevent OOM.
+	// Periodic cleanup of expired JTI blocklist, expiry notifications,
+	// and stale impersonation tokens to prevent OOM.
 	go func() {
-		t := time.NewTicker(10 * time.Minute)
-		defer t.Stop()
-		for range t.C {
-			cleanupJTIBlocklist()
+		jtiTicker := time.NewTicker(10 * time.Minute)
+		defer jtiTicker.Stop()
+		otherTicker := time.NewTicker(5 * time.Minute)
+		defer otherTicker.Stop()
+		for {
+			select {
+			case <-jtiTicker.C:
+				cleanupJTIBlocklist()
+			case <-otherTicker.C:
+				cleanupExpiryNotifs()
+				cleanupImpersonationStore()
+			}
 		}
 	}()
 }
@@ -321,18 +330,6 @@ func ResetExpiryNotifs() {
 		close(ch)
 	}
 	expiryChannels = make(map[uuid.UUID]chan *ExpiryNotification)
-}
-
-func init() {
-	// Periodic cleanup of expired expiry notifications and stale impersonation tokens.
-	go func() {
-		t := time.NewTicker(5 * time.Minute)
-		defer t.Stop()
-		for range t.C {
-			cleanupExpiryNotifs()
-			cleanupImpersonationStore()
-		}
-	}()
 }
 
 func cleanupExpiryNotifs() {

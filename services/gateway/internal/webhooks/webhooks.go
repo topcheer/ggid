@@ -199,10 +199,6 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, 400, map[string]string{"error": "url and events required"})
 		return
 	}
-	if req.Secret == "" {
-		writeJSON(w, 400, map[string]string{"error": "webhook secret required"})
-		return
-	}
 	// SECURITY: require non-empty secret — unsigned webhooks can be forged.
 	if req.Secret == "" {
 		writeJSON(w, 400, map[string]string{"error": "webhook secret required"})
