@@ -5,7 +5,6 @@ package webauthn
 import (
 	"context"
 	"encoding/base64"
-	"encoding/json"
 	"fmt"
 	"log"
 	"log/slog"
@@ -14,6 +13,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/ggid/ggid/pkg/httputil"
 	ggidtenant "github.com/ggid/ggid/pkg/tenant"
 	"github.com/go-webauthn/webauthn/protocol"
 	"github.com/go-webauthn/webauthn/webauthn"
@@ -440,9 +440,7 @@ func (h *Handler) wellKnownAppleAppSiteAssociation(w http.ResponseWriter, r *htt
 // --- Helpers ---
 
 func writeJSON(w http.ResponseWriter, status int, v any) {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(status)
-	_ = json.NewEncoder(w).Encode(v)
+	httputil.WriteJSON(w, status, v)
 }
 
 func writeError(w http.ResponseWriter, status int, msg string) {

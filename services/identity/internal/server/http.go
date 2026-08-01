@@ -19,6 +19,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 
 	ggiderrors "github.com/ggid/ggid/pkg/errors"
+	"github.com/ggid/ggid/pkg/httputil"
 	ggidtenant "github.com/ggid/ggid/pkg/tenant"
 	"github.com/ggid/ggid/services/identity/internal/domain"
 	"github.com/ggid/ggid/services/identity/internal/idpconfig"
@@ -1254,9 +1255,7 @@ func (h *HTTPHandler) batchGetUserRoles(ctx context.Context, users []*domain.Use
 }
 
 func writeJSON(w http.ResponseWriter, status int, data any) {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(status)
-	json.NewEncoder(w).Encode(data)
+	httputil.WriteJSON(w, status, data)
 }
 
 func writeError(w http.ResponseWriter, status int, msg string) {

@@ -17,6 +17,7 @@ import (
 
 	"github.com/ggid/ggid/pkg/audit"
 	"github.com/ggid/ggid/pkg/errors"
+	"github.com/ggid/ggid/pkg/httputil"
 	ggidtenant "github.com/ggid/ggid/pkg/tenant"
 	"github.com/ggid/ggid/services/policy/internal/domain"
 	"github.com/ggid/ggid/services/policy/internal/repository"
@@ -1834,9 +1835,7 @@ func policyToJSON(p *domain.Policy) map[string]any {
 }
 
 func writeJSON(w http.ResponseWriter, status int, data any) {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(status)
-	json.NewEncoder(w).Encode(data)
+	httputil.WriteJSON(w, status, data)
 }
 
 func writeJSONError(w http.ResponseWriter, status int, msg string) {

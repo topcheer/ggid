@@ -23,6 +23,7 @@ import (
 	"github.com/ggid/ggid/pkg/audit"
 	"github.com/ggid/ggid/pkg/crypto"
 	ggiderrors "github.com/ggid/ggid/pkg/errors"
+	"github.com/ggid/ggid/pkg/httputil"
 	"github.com/ggid/ggid/pkg/i18n"
 	"github.com/ggid/ggid/pkg/social"
 	"github.com/ggid/ggid/pkg/sysconfig"
@@ -2162,9 +2163,7 @@ func parseDeviceInfo(ua string) string {
 }
 
 func writeJSON(w http.ResponseWriter, status int, data any) {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(status)
-	_ = json.NewEncoder(w).Encode(data)
+	httputil.WriteJSON(w, status, data)
 }
 
 func writeError(w http.ResponseWriter, status int, msg string) {

@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/ggid/ggid/pkg/httputil"
 	"github.com/ggid/ggid/pkg/sysconfig"
 	"github.com/google/uuid"
 	"github.com/redis/go-redis/v9"
@@ -222,16 +223,14 @@ func writeSessionError(w http.ResponseWriter, msg string) {
 }
 
 func writeJSONError(w http.ResponseWriter, code int, msg string) {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(code)
-	json.NewEncoder(w).Encode(map[string]string{"error": msg})
+	httputil.WriteJSONError(w, code, msg)
 }
 
 // context keys
 type sessionCtxKey string
 
 var (
-	SessionIDKey   sessionCtxKey = "session_id"
+	SessionIDKey    sessionCtxKey = "session_id"
 	SessionValidKey sessionCtxKey = "session_valid"
 )
 

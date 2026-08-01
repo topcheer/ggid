@@ -21,6 +21,7 @@ import (
 	"time"
 
 	"github.com/ggid/ggid/pkg/errors"
+	"github.com/ggid/ggid/pkg/httputil"
 	"github.com/ggid/ggid/services/audit/internal/compliance"
 	"github.com/ggid/ggid/services/audit/internal/domain"
 	"github.com/ggid/ggid/services/audit/internal/repository"
@@ -2151,9 +2152,7 @@ func resolveValidatedTenant(w http.ResponseWriter, r *http.Request) (uuid.UUID, 
 }
 
 func writeJSON(w http.ResponseWriter, status int, data any) {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(status)
-	json.NewEncoder(w).Encode(data)
+	httputil.WriteJSON(w, status, data)
 }
 
 func writeJSONError(w http.ResponseWriter, status int, msg string) {

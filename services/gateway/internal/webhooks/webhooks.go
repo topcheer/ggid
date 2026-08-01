@@ -16,6 +16,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/ggid/ggid/pkg/httputil"
 	"github.com/google/uuid"
 )
 
@@ -329,9 +330,7 @@ func (h *Handler) DeliverEvent(ctx context.Context, event string, payload []byte
 }
 
 func writeJSON(w http.ResponseWriter, code int, v any) {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(code)
-	json.NewEncoder(w).Encode(v)
+	httputil.WriteJSON(w, code, v)
 }
 
 var _ io.Reader = (*bytes.Reader)(nil)

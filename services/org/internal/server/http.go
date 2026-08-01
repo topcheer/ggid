@@ -19,6 +19,7 @@ import (
 
 	"github.com/ggid/ggid/pkg/audit"
 	"github.com/ggid/ggid/pkg/errors"
+	"github.com/ggid/ggid/pkg/httputil"
 	"github.com/ggid/ggid/services/org/internal/domain"
 	"github.com/ggid/ggid/services/org/internal/repository"
 	"github.com/ggid/ggid/services/org/internal/service"
@@ -1550,9 +1551,7 @@ func (s *HTTPServer) handleMemberExport(w http.ResponseWriter, r *http.Request, 
 // ===== Helpers =====
 
 func writeJSON(w http.ResponseWriter, status int, data any) {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(status)
-	json.NewEncoder(w).Encode(data)
+	httputil.WriteJSON(w, status, data)
 }
 
 func writeJSONError(w http.ResponseWriter, status int, msg string) {
