@@ -26,6 +26,11 @@ spec:
       containers:
         - name: mcp
           image: registry.iot2.win/ggid/mcp:latest
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 1001
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: false
           ports:
             - containerPort: 9060
           env:

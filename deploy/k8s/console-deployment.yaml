@@ -39,6 +39,11 @@ spec:
         - name: console
           image: registry.iot2.win/ggid/console:latest
           imagePullPolicy: Always
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 1001
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: false
           ports:
             - containerPort: 3000
               name: http
