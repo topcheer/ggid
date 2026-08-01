@@ -126,7 +126,7 @@ func TestBackupCodes_Regenerate(t *testing.T) {
 func TestBackupCodes_UniqueFormat(t *testing.T) {
 	seen := make(map[string]bool)
 	for i := 0; i < 100; i++ {
-		code := generateBackupCode()
+		code, _ := generateBackupCode()
 		if seen[code] {
 			t.Fatalf("duplicate code generated: %s", code)
 		}
@@ -140,7 +140,7 @@ func TestBackupCodes_UniqueFormat(t *testing.T) {
 func TestBackupCodes_NoAmbiguousChars(t *testing.T) {
 	ambiguous := "O0Il1"
 	for i := 0; i < 100; i++ {
-		code := generateBackupCode()
+		code, _ := generateBackupCode()
 		for _, ch := range ambiguous {
 			if strings.ContainsRune(code, ch) {
 				t.Errorf("code %q contains ambiguous char %q", code, ch)

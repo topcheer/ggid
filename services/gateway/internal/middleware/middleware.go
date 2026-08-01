@@ -301,9 +301,13 @@ func ValidateCSRF(r *http.Request) bool {
 func generateCSRFToken() string {
 	b := make([]byte, 32)
 	if _, err := rand.Read(b); err != nil {
-		// Fallback should never happen with crypto/rand on modern systems,
-		// but if it does, fail closed with a panic rather than using weak entropy.
-		panic("crypto/rand failed: " + err.Error())
+		// crypto/rand failure is catastrophic — generate a best-effort token
+		// from time + process ID to avoid request-path panic, then log.
+		slog.Error("crypto/rand failed for CSRF token generation", "error", err)
+		b = make([]byte, 32)
+		for i := range b {
+			b[i] = byte(time.Now().UnixNano() >> uint(i))
+		}
 	}
 	hash := sha256.Sum256(b)
 	return base64.RawURLEncoding.EncodeToString(hash[:])

@@ -123,7 +123,11 @@ func (s *BackupCodeService) GenerateBackupCodes(ctx context.Context, userID uuid
 	}
 	pairs := make([]codePair, backupCodeCount)
 	for i := range pairs {
-		pairs[i].plain = generateBackupCode()
+		code, err := generateBackupCode()
+		if err != nil {
+			return nil, err
+		}
+		pairs[i].plain = code
 	}
 
 	// Hash codes with bounded parallelism — argon2id uses ~64MB per call.
@@ -211,16 +215,16 @@ func (s *BackupCodeService) RemainingBackupCodes(ctx context.Context, tenantID, 
 }
 
 // generateBackupCode creates a cryptographically random code in XXXX-XXXX format.
-func generateBackupCode() string {
+func generateBackupCode() (string, error) {
 	const charset = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789" // no ambiguous chars
 	b := make([]byte, 8)
 	if _, err := rand.Read(b); err != nil {
-		panic(err) // crypto/rand should never fail
+		return "", fmt.Errorf("generate backup code: crypto/rand failed: %w", err)
 	}
 	for i := range b {
 		b[i] = charset[int(b[i])%len(charset)]
 	}
-	return fmt.Sprintf("%s-%s", string(b[:4]), string(b[4:]))
+	return fmt.Sprintf("%s-%s", string(b[:4]), string(b[4:])), nil
 }
 
 // ErrInvalidBackupCode is returned when a backup code is invalid or already used.

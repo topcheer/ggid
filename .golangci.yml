@@ -6,6 +6,11 @@ linters:
   disable-all: true
   enable:
     - govet
+    - errcheck
+    - errorlint
+    - errcheck
+    - rowserrcheck
+    - errorlint
 
 linters-settings:
   errcheck:
