@@ -147,12 +147,29 @@ func (p *Publisher) PublishAsync(event Event) {
 }
 
 // startWorker consumes events from the channel and publishes to NATS.
+// Restarts once after panic to avoid silent audit loss.
 func (p *Publisher) startWorker() {
 	defer func() {
 		if r := recover(); r != nil {
-			slog.Error("audit publisher worker panic recovered", "panic", r)
+			slog.Error("audit publisher worker panic recovered — restarting", "panic", r)
+			go p.startWorkerNoRestart()
 		}
 	}()
+	p.workerLoop()
+}
+
+// startWorkerNoRestart runs the worker without auto-restart on panic.
+func (p *Publisher) startWorkerNoRestart() {
+	defer func() {
+		if r := recover(); r != nil {
+			slog.Error("audit publisher worker second panic — giving up", "panic", r)
+		}
+	}()
+	p.workerLoop()
+}
+
+// workerLoop is the core publish loop shared by startWorker and startWorkerNoRestart.
+func (p *Publisher) workerLoop() {
 	for {
 		select {
 		case data := <-p.ch:

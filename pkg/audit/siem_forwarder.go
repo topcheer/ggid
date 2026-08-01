@@ -136,26 +136,41 @@ func (f *SIEMForwarder) Start(ctx context.Context) {
 	go func() {
 		defer func() {
 			if r := recover(); r != nil {
-				f.logger.Error("SIEM start goroutine panic", "error", r)
+				f.logger.Error("SIEM start goroutine panic — restarting once", "error", r)
+				go func() {
+					defer func() {
+						if r2 := recover(); r2 != nil {
+							f.logger.Error("SIEM start second panic — giving up", "error", r2)
+						}
+						close(f.doneCh)
+					}()
+					f.runFlushLoop(ctx)
+				}()
+				return
 			}
 			close(f.doneCh)
 		}()
-		ticker := time.NewTicker(f.config.FlushInterval)
-		defer ticker.Stop()
-
-		for {
-			select {
-			case <-ticker.C:
-				f.flush()
-			case <-f.stopCh:
-				f.flush() // final flush
-				return
-			case <-ctx.Done():
-				f.flush()
-				return
-			}
-		}
+		f.runFlushLoop(ctx)
 	}()
+}
+
+// runFlushLoop runs the periodic flush loop. Extracted from Start for restart.
+func (f *SIEMForwarder) runFlushLoop(ctx context.Context) {
+	ticker := time.NewTicker(f.config.FlushInterval)
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-ticker.C:
+			f.flush()
+		case <-f.stopCh:
+			f.flush() // final flush
+			return
+		case <-ctx.Done():
+			f.flush()
+			return
+		}
+	}
 }
 
 // Stop gracefully shuts down the forwarder, flushing remaining events.

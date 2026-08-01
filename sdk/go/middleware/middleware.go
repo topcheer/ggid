@@ -215,14 +215,17 @@ func (c *jwksCache) getKeys() (map[string]*rsa.PublicKey, error) {
 	}
 	c.mu.RUnlock()
 
+	// Check again under write lock — another goroutine may have refreshed.
 	c.mu.Lock()
-	defer c.mu.Unlock()
-
-	// Double-check after acquiring write lock
 	if c.keys != nil && time.Since(c.updated) < 15*time.Minute {
-		return c.keys, nil
+		keys := c.keys
+		c.mu.Unlock()
+		return keys, nil
 	}
+	c.mu.Unlock()
 
+	// SECURITY: Fetch JWKS outside the lock to avoid blocking all JWT
+	// verification during HTTP latency (up to 5s timeout).
 	resp, err := c.client.Get(c.url)
 	if err != nil {
 		return nil, fmt.Errorf("fetch JWKS: %w", err)
@@ -260,8 +263,11 @@ func (c *jwksCache) getKeys() (map[string]*rsa.PublicKey, error) {
 		keys[k.Kid] = pub
 	}
 
+	// Swap under write lock to protect concurrent readers
+	c.mu.Lock()
 	c.keys = keys
 	c.updated = time.Now()
+	c.mu.Unlock()
 	return keys, nil
 }
 
