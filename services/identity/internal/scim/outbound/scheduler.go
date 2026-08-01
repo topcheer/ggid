@@ -178,8 +178,10 @@ func (s *Scheduler) tick(ctx context.Context) {
 				slog.Warn("SCIM scheduler: sync failed",
 					"target", sched.TargetName, "error", err)
 			}
+			s.mu.Lock()
 			sched.LastSyncAt = now
 			sched.NextSyncAt = now.Add(sched.Interval)
+			s.mu.Unlock()
 			s.updateScheduleStatus(ctx, sched)
 		}
 	}

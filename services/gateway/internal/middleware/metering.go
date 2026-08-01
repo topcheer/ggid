@@ -51,11 +51,12 @@ type usageRecord struct {
 
 // usageAggregator buffers records and flushes async to the audit service.
 type usageAggregator struct {
-	mu     sync.Mutex
-	buffer []usageRecord
-	config MeteringConfig
-	client *http.Client
-	stopCh chan struct{}
+	mu       sync.Mutex
+	buffer   []usageRecord
+	config   MeteringConfig
+	client   *http.Client
+	stopCh   chan struct{}
+	flushSem chan struct{} // bounded semaphore (cap=1) to prevent goroutine explosion
 }
 
 // APIMetering creates a middleware that records per-tenant API usage.
@@ -73,10 +74,11 @@ var (
 func APIMetering(dbURL string, config MeteringConfig) func(http.Handler) http.Handler {
 	meteringAggOnce.Do(func() {
 		meteringAgg = &usageAggregator{
-			buffer: make([]usageRecord, 0, config.MaxBufferSize),
-			config: config,
-			client: &http.Client{Timeout: 10 * time.Second},
-			stopCh: make(chan struct{}),
+			buffer:   make([]usageRecord, 0, config.MaxBufferSize),
+			config:   config,
+			client:   &http.Client{Timeout: 10 * time.Second},
+			stopCh:   make(chan struct{}),
+			flushSem: make(chan struct{}, 1), // cap=1: at most one concurrent flush
 		}
 		go meteringAgg.flushLoop()
 		slog.Info("[metering] initialized", "audit_url", config.AuditURL, "flush_interval", config.FlushInterval, "buffer_size", config.MaxBufferSize)
@@ -117,13 +119,21 @@ func (a *usageAggregator) record(r usageRecord) {
 	defer a.mu.Unlock()
 	a.buffer = append(a.buffer, r)
 	if len(a.buffer) >= a.config.MaxBufferSize {
+		// Bounded goroutine — prevents OOM from thousands of flush goroutines
+		// under burst load. Uses non-blocking select to skip if already flushing.
 		go func() {
 			defer func() {
 				if r := recover(); r != nil {
 					slog.Error("[metering] flush panic recovered", "panic", r)
 				}
 			}()
-			a.flush()
+			select {
+			case a.flushSem <- struct{}{}:
+				defer func() { <-a.flushSem }()
+				a.flush()
+			default:
+				// flush already in progress — skip this trigger
+			}
 		}()
 	}
 }

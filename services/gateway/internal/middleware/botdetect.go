@@ -57,9 +57,10 @@ type BehavioralBotDetect struct {
 }
 
 type botRateStore struct {
-	mu      sync.Mutex
-	buckets map[string]*botRequestLog
-	done    chan struct{}
+	mu       sync.Mutex
+	buckets  map[string]*botRequestLog
+	done     chan struct{}
+	doneOnce sync.Once
 }
 
 type botRequestLog struct {
@@ -85,7 +86,7 @@ func NewBehavioralBotDetect(threshold int, window time.Duration) *BehavioralBotD
 
 // StopCleanup signals the cleanup goroutine to exit.
 func (b *BehavioralBotDetect) StopCleanup() {
-	close(b.store.done)
+	b.store.doneOnce.Do(func() { close(b.store.done) })
 }
 
 // cleanupLoop periodically removes expired entries from the store.

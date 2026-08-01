@@ -183,13 +183,14 @@ type jwk struct {
 
 // jwksCache caches JWKS keys with periodic refresh.
 type jwksCache struct {
-	url      string
-	issuer   string
-	audience string
-	mu       sync.RWMutex
-	keys     map[string]*rsa.PublicKey
-	updated  time.Time
-	client   *http.Client
+	url       string
+	issuer    string
+	audience  string
+	mu        sync.RWMutex
+	keys      map[string]*rsa.PublicKey
+	updated   time.Time
+	client    *http.Client
+	refreshMu sync.Mutex // serializes refresh without blocking readers
 }
 
 func newJWKSCache(jwksURL string) *jwksCache {
@@ -215,16 +216,21 @@ func (c *jwksCache) getKeys() (map[string]*rsa.PublicKey, error) {
 	}
 	c.mu.RUnlock()
 
-	// Check again under write lock — another goroutine may have refreshed.
-	c.mu.Lock()
+	// Only one goroutine refreshes at a time (prevents thundering herd).
+	// refreshMu does NOT block readers — they can still access stale keys.
+	c.refreshMu.Lock()
+	defer c.refreshMu.Unlock()
+
+	// Re-check after acquiring refreshMu — another goroutine may have refreshed.
+	c.mu.RLock()
 	if c.keys != nil && time.Since(c.updated) < 15*time.Minute {
 		keys := c.keys
-		c.mu.Unlock()
+		c.mu.RUnlock()
 		return keys, nil
 	}
-	c.mu.Unlock()
+	c.mu.RUnlock()
 
-	// SECURITY: Fetch JWKS outside the lock to avoid blocking all JWT
+	// SECURITY: Fetch JWKS outside the mu lock to avoid blocking all JWT
 	// verification during HTTP latency (up to 5s timeout).
 	resp, err := c.client.Get(c.url)
 	if err != nil {
