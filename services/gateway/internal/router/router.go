@@ -738,41 +738,10 @@ func (gw *Gateway) Handler() http.Handler {
 			isPublic = true
 		}
 
-		if isPublic {
-			// Public path: no JWT required, but still validate if token present
-			jwtMW := middleware.JWTAuth(gw.jwks, false, gw.cfg.JWTIssuer, gw.cfg.JWTAudience)
-			h := middleware.RequireAdminScope(gw)              // RBAC: block non-admin from management endpoints
-			h = middleware.CheckConsent(gw.cfg.DatabaseURL)(h) // Consent: block platform admin from tenant data without consent
-			// CAE: check jti blocklist AFTER JWTAuth (needs jti in context)
-			if gw.caeCheck != nil {
-				h = gw.caeCheck(h)
-			}
-			h = jwtMW(h) // JWT auth layer
-			if gw.apiKeyValidator != nil {
-				h = middleware.WithDBAPIKeyAuth(gw.apiKeyValidator)(h) // API key wraps JWT (runs first)
-			}
-			if gw.sessionMgr != nil {
-				h = gw.sessionMgr.SessionTimeoutMiddleware(middleware.DefaultSessionTimeoutConfig())(h)
-			}
-			h.ServeHTTP(w, r)
-		} else {
-			// Protected path: JWT required
-			jwtMW := middleware.JWTAuth(gw.jwks, true, gw.cfg.JWTIssuer, gw.cfg.JWTAudience)
-			h := middleware.RequireAdminScope(gw)              // RBAC: block non-admin from management endpoints
-			h = middleware.CheckConsent(gw.cfg.DatabaseURL)(h) // Consent: block platform admin from tenant data without consent
-			// CAE: check jti blocklist AFTER JWTAuth (needs jti in context)
-			if gw.caeCheck != nil {
-				h = gw.caeCheck(h)
-			}
-			h = jwtMW(h) // JWT auth layer
-			if gw.apiKeyValidator != nil {
-				h = middleware.WithDBAPIKeyAuth(gw.apiKeyValidator)(h) // API key wraps JWT (runs first)
-			}
-			if gw.sessionMgr != nil {
-				h = gw.sessionMgr.SessionTimeoutMiddleware(middleware.DefaultSessionTimeoutConfig())(h)
-			}
-			h.ServeHTTP(w, r)
-		}
+		// Build the auth middleware chain. Public paths use JWTAuth(required=false);
+		// protected paths use JWTAuth(required=true). The rest of the chain is identical.
+		jwtRequired := !isPublic
+		gw.buildAuthChain(jwtRequired).ServeHTTP(w, r)
 	})
 
 	// Apply outer middleware: PanicRecovery → RequestID → SecurityHeaders → CORS → StructuredLogging → RateLimit → BotDetect → TenantResolver → Timeout → MaxBodySize → Metering → inner
@@ -802,6 +771,26 @@ func (gw *Gateway) Handler() http.Handler {
 	handler = shutdown.HealthCheckMiddleware(handler)
 
 	return handler
+}
+
+// buildAuthChain constructs the authentication middleware chain for a request.
+// jwtRequired controls whether JWTAuth rejects missing tokens (protected paths)
+// or passes through (public paths). All other middleware layers are identical.
+func (gw *Gateway) buildAuthChain(jwtRequired bool) http.Handler {
+	jwtMW := middleware.JWTAuth(gw.jwks, jwtRequired, gw.cfg.JWTIssuer, gw.cfg.JWTAudience)
+	h := middleware.RequireAdminScope(gw)
+	h = middleware.CheckConsent(gw.cfg.DatabaseURL)(h)
+	if gw.caeCheck != nil {
+		h = gw.caeCheck(h)
+	}
+	h = jwtMW(h)
+	if gw.apiKeyValidator != nil {
+		h = middleware.WithDBAPIKeyAuth(gw.apiKeyValidator)(h)
+	}
+	if gw.sessionMgr != nil {
+		h = gw.sessionMgr.SessionTimeoutMiddleware(middleware.DefaultSessionTimeoutConfig())(h)
+	}
+	return h
 }
 
 // maxBodySize returns the configured maximum request body size.
