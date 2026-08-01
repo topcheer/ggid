@@ -148,6 +148,11 @@ func (p *Publisher) PublishAsync(event Event) {
 
 // startWorker consumes events from the channel and publishes to NATS.
 func (p *Publisher) startWorker() {
+	defer func() {
+		if r := recover(); r != nil {
+			slog.Error("audit publisher worker panic recovered", "panic", r)
+		}
+	}()
 	for {
 		select {
 		case data := <-p.ch:

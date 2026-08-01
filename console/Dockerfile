@@ -30,12 +30,15 @@ ENV GATEWAY_URL=$GATEWAY_URL
 RUN npm run build
 
 FROM node:22-alpine
+RUN addgroup -g 1001 -S appgroup && adduser -u 1001 -S appuser -G appgroup
 WORKDIR /app
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV NODE_ENV=production
 COPY --from=builder /app/.next/standalone ./
 COPY --from=builder /app/.next/static ./.next/static
 COPY --from=builder /app/public ./public
+RUN chown -R appuser:appgroup /app
+USER appuser
 EXPOSE 3000
 ENV HOSTNAME=0.0.0.0
 CMD ["node", "server.js"]

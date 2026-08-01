@@ -132,8 +132,32 @@ func (a *usageAggregator) flushLoop() {
 	defer func() {
 		if r := recover(); r != nil {
 			slog.Error("[metering] flushLoop panic recovered", "panic", r)
-			// Restart the loop to prevent metering data loss
-			go a.flushLoop()
+			// Single restart attempt; if it panics again, the goroutine dies
+			// to prevent infinite restart loops.
+			go a.flushLoopNoRestart()
+		}
+	}()
+	if a.config.FlushInterval == 0 {
+		a.config.FlushInterval = 30 * time.Second
+	}
+	ticker := time.NewTicker(a.config.FlushInterval)
+	defer ticker.Stop()
+	for {
+		select {
+		case <-ticker.C:
+			a.flush()
+		case <-a.stopCh:
+			a.flush()
+			return
+		}
+	}
+}
+
+// flushLoopNoRestart runs flush loop without auto-restart on panic.
+func (a *usageAggregator) flushLoopNoRestart() {
+	defer func() {
+		if r := recover(); r != nil {
+			slog.Error("[metering] flushLoop second panic — giving up", "panic", r)
 		}
 	}()
 	if a.config.FlushInterval == 0 {

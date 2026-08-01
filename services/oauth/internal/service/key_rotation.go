@@ -169,6 +169,7 @@ func (r *RotatingKeyProvider) CleanupExpired() {
 func (r *RotatingKeyProvider) StartRotationTicker(interval time.Duration) func() {
 	ticker := time.NewTicker(interval)
 	done := make(chan struct{})
+	var stopOnce sync.Once
 	go func() {
 		defer func() {
 			if r := recover(); r != nil {
@@ -188,7 +189,7 @@ func (r *RotatingKeyProvider) StartRotationTicker(interval time.Duration) func()
 			}
 		}
 	}()
-	return func() { close(done) }
+	return func() { stopOnce.Do(func() { close(done) }) }
 }
 
 // RotatedAt returns when the key was last rotated.
@@ -218,6 +219,7 @@ func (r *RotatingKeyProvider) StartAutoRotation(checkInterval, maxAge time.Durat
 	}
 	ticker := time.NewTicker(checkInterval)
 	done := make(chan struct{})
+	var stopOnce sync.Once
 	go func() {
 		defer func() {
 			if r := recover(); r != nil {
@@ -249,7 +251,7 @@ func (r *RotatingKeyProvider) StartAutoRotation(checkInterval, maxAge time.Durat
 			}
 		}
 	}()
-	return func() { close(done) }
+	return func() { stopOnce.Do(func() { close(done) }) }
 }
 
 // ResolveKeyByID returns the private key matching the given kid, checking both

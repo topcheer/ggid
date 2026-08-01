@@ -38,10 +38,11 @@ func DefaultTierRateLimitConfig() TierRateLimitConfig {
 // TierRateLimiter enforces per-tenant-tier rate limits.
 // Tier is extracted from JWT claims (set by TenantResolver middleware).
 type TierRateLimiter struct {
-	cfg     TierRateLimitConfig
-	mu      sync.Mutex
-	buckets map[string]*tierBucket // key: tenantID
-	done    chan struct{}
+	cfg      TierRateLimitConfig
+	mu       sync.Mutex
+	buckets  map[string]*tierBucket // key: tenantID
+	done     chan struct{}
+	stopOnce sync.Once
 }
 
 type tierBucket struct {
@@ -62,7 +63,7 @@ func NewTierRateLimiter(cfg TierRateLimitConfig) *TierRateLimiter {
 
 // StopCleanup signals the cleanup goroutine to exit.
 func (trl *TierRateLimiter) StopCleanup() {
-	close(trl.done)
+	trl.stopOnce.Do(func() { close(trl.done) })
 }
 
 // Middleware returns HTTP middleware that enforces tier-based rate limits.

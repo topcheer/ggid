@@ -71,10 +71,11 @@ type dimBucket struct {
 
 // MultiDimRateLimiter enforces 5-dimensional rate limits with burst + sustained windows.
 type MultiDimRateLimiter struct {
-	mu      sync.Mutex
-	tiers   map[Tier]MultiDimTierConfig
-	buckets map[string]*dimBucket // key: dimension:value
-	done    chan struct{}
+	mu       sync.Mutex
+	tiers    map[Tier]MultiDimTierConfig
+	buckets  map[string]*dimBucket // key: dimension:value
+	done     chan struct{}
+	stopOnce sync.Once
 }
 
 // NewMultiDimRateLimiter creates a new 5-dimensional rate limiter.
@@ -93,7 +94,7 @@ func NewMultiDimRateLimiter(configs map[Tier]MultiDimTierConfig) *MultiDimRateLi
 
 // StopCleanup terminates the background cleanup goroutine.
 func (rl *MultiDimRateLimiter) StopCleanup() {
-	close(rl.done)
+	rl.stopOnce.Do(func() { close(rl.done) })
 }
 
 // UpdateTier updates the limits for a specific tier.
