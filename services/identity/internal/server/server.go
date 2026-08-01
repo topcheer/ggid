@@ -273,9 +273,12 @@ func New(cfg *conf.Config) (*Server, error) {
 	httpSrv := &http.Server{
 		Addr:           cfg.HTTP.Addr,
 		MaxHeaderBytes: 1 << 20, // 1MB max headers
-		Handler:        internalMW(httpHandler),
-		ReadTimeout:    10 * time.Second,
-		WriteTimeout:   30 * time.Second,
+		Handler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			r.Body = http.MaxBytesReader(w, r.Body, 10<<20) // 10MB max body
+			internalMW(httpHandler).ServeHTTP(w, r)
+		}),
+		ReadTimeout:  10 * time.Second,
+		WriteTimeout: 30 * time.Second,
 	}
 
 	return &Server{
