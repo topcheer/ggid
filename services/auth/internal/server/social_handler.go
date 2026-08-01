@@ -82,9 +82,15 @@ func isAllowedRedirectURI(uri string) bool {
 		}
 	}
 
-	// If no allowlist configured, allow same host as CONSOLE_BASE_URL default.
+	// SECURITY: fail-closed — if no allowlist is configured, only permit
+	// localhost for development. Never fall back to a hardcoded domain that
+	// could expire and be taken over by an attacker to steal JWT tokens.
 	if len(allowed) == 0 {
-		allowed["ggid-console.iot2.win"] = true
+		host := parsed.Hostname()
+		if host == "localhost" || host == "127.0.0.1" || host == "::1" {
+			return true
+		}
+		return false
 	}
 
 	return allowed[parsed.Host]
