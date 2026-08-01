@@ -76,11 +76,11 @@ func (rc *RequestCoalescer) cleanupLoop() {
 	}
 }
 
-// coalesceKey builds a cache key from method, path, query, and tenant ID.
-// SECURITY: tenant ID must be included to prevent cross-tenant data leakage
-// where two tenants requesting the same path would share a cached response.
-func coalesceKey(method, path, query, tenantID string) string {
-	return tenantID + ":" + method + " " + path + "?" + query
+// coalesceKey builds a cache key from method, path, query, tenant ID, and user ID.
+// SECURITY: tenant ID + user ID must be included to prevent cross-user data leakage
+// where two users requesting the same path would share a coalesced response.
+func coalesceKey(method, path, query, tenantID, userID string) string {
+	return tenantID + ":" + userID + ":" + method + " " + path + "?" + query
 }
 
 // CoalesceMiddleware deduplicates concurrent identical GET requests.
@@ -91,13 +91,12 @@ func CoalesceMiddleware(rc *RequestCoalescer) func(http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			// Only coalesce safe GET requests or POST with idempotency key
 			tenantID := r.Header.Get("X-Tenant-ID")
+			userID := r.Header.Get("X-User-ID")
 			var key string
 			if r.Method == http.MethodGet {
-				key = coalesceKey(r.Method, r.URL.Path, r.URL.RawQuery, tenantID)
+				key = coalesceKey(r.Method, r.URL.Path, r.URL.RawQuery, tenantID, userID)
 			} else if idemKey := r.Header.Get("Idempotency-Key"); idemKey != "" {
-				// POST/PUT/PATCH with Idempotency-Key header (RFC draft)
-				// Key includes method + path + idempotency key to ensure uniqueness
-				key = coalesceKey(r.Method, r.URL.Path, "", tenantID) + "&idem=" + idemKey
+				key = coalesceKey(r.Method, r.URL.Path, "", tenantID, userID) + "&idem=" + idemKey
 			} else {
 				next.ServeHTTP(w, r)
 				return
