@@ -304,6 +304,15 @@ func (s *AuthService) IdentityClient() IdentityClient {
 }
 
 func (s *AuthService) ForgotPassword(ctx context.Context, tenantID uuid.UUID, email string) error {
+	// Rate limit: 1 password reset per email per 60 seconds (prevents email bombing).
+	if s.rateLimiter != nil && s.rateLimiter.rdb != nil {
+		rateKey := fmt.Sprintf("ggid:forgotpw_rate:%s:%s", tenantID, hashToken(email))
+		set, err := s.rateLimiter.rdb.SetNX(ctx, rateKey, "1", 60*time.Second).Result()
+		if err == nil && !set {
+			return nil // silently ignore rate-limited requests (don't leak info)
+		}
+	}
+
 	// 1. Look up credential by identifier (username or email)
 	cred, err := s.credentialRepo.FindByIDentifier(ctx, tenantID, email)
 	if err != nil {
