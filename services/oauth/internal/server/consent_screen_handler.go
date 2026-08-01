@@ -67,6 +67,9 @@ func handleConsentScreen(w http.ResponseWriter, r *http.Request) {
 		// Previous ReplaceAll("<script>","") was trivially bypassed by <SCRIPT>, <img onerror>, <svg onload>, etc.
 		req.Description = html.EscapeString(req.Description)
 		req.DataSharingSummary = html.EscapeString(req.DataSharingSummary)
+		req.Title = html.EscapeString(req.Title)
+		req.PrivacyURL = html.EscapeString(req.PrivacyURL)
+		req.TermsURL = html.EscapeString(req.TermsURL)
 
 		if mapRepoVar != nil {
 			b, _ := json.Marshal(req)
