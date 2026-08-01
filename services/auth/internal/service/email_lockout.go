@@ -105,14 +105,15 @@ func (s *AccountLockoutService) IsLocked(ctx context.Context, tenantID uuid.UUID
 // If the threshold is reached, the account is locked for lockDuration.
 func (s *AccountLockoutService) RecordFailedAttempt(ctx context.Context, tenantID uuid.UUID, identifier string) error {
 	key := fmt.Sprintf("ggid:lockout:%s:%s", tenantID, identifier)
-	count, err := s.rdb.Incr(ctx, key).Result()
-	if err != nil {
+	// SECURITY: Use pipeline for atomic INCR+EXPIRE. Separate calls risk
+	// INCR succeeding but EXPIRE failing (e.g., Redis failover) → permanent lock.
+	pipe := s.rdb.Pipeline()
+	incr := pipe.Incr(ctx, key)
+	pipe.Expire(ctx, key, s.lockDuration)
+	if _, err := pipe.Exec(ctx); err != nil {
 		return fmt.Errorf("increment lockout counter: %w", err)
 	}
-	// Set TTL on first failure.
-	if count == 1 {
-		s.rdb.Expire(ctx, key, s.lockDuration)
-	}
+	_ = incr
 	return nil
 }
 
