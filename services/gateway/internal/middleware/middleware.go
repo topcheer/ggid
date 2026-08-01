@@ -779,7 +779,7 @@ func JWTAuth(jwks *JWKSClient, required bool, issuer, audience string) func(http
 				isPlatformAdmin := false
 				if scopes, ok := claims["scope"].(string); ok {
 					for _, sc := range strings.Fields(scopes) {
-						if strings.EqualFold(sc, "platform:admin") {
+						if sc == "platform:admin" {
 							isPlatformAdmin = true
 							break
 						}
@@ -801,7 +801,7 @@ func JWTAuth(jwks *JWKSClient, required bool, issuer, audience string) func(http
 				isPlatformAdmin := false
 				if scopes, ok := claims["scope"].(string); ok {
 					for _, sc := range strings.Fields(scopes) {
-						if strings.EqualFold(sc, "platform:admin") {
+						if sc == "platform:admin" {
 							isPlatformAdmin = true
 							break
 						}

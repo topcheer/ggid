@@ -222,7 +222,7 @@ func hasAdminScope(scopes []string) bool {
 // Use this for platform-only operations that should not be accessible to tenant admins.
 func hasPlatformAdminScope(scopes []string) bool {
 	for _, sc := range scopes {
-		if strings.EqualFold(sc, "platform:admin") {
+		if sc == "platform:admin" {
 			return true
 		}
 	}
