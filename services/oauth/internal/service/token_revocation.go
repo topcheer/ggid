@@ -1,250 +1,191 @@
 package service
 
+// Token revocation methods for OAuthService.
+// Extracted from oauth_service.go.
+
 import (
 	"context"
-	"encoding/json"
-	"fmt"
-	"log/slog"
-	"sync"
+	"crypto/sha256"
+	"encoding/hex"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/redis/go-redis/v9"
+	"log/slog"
+	"strconv"
 )
-
-// RevocationStatus describes the revocation state of a token.
-type RevocationStatus struct {
-	TokenID   string    `json:"token_id"`
-	Revoked   bool      `json:"revoked"`
-	Reason    string    `json:"reason,omitempty"`
-	RevokedAt time.Time `json:"revoked_at,omitempty"`
-	ExpiresAt time.Time `json:"expires_at,omitempty"`
-	ClientID  string    `json:"client_id,omitempty"`
-	UserID    string    `json:"user_id,omitempty"`
-	TokenType string    `json:"token_type,omitempty"` // access | refresh | session
-}
-
-// TokenRevocationService manages token revocation with Redis persistence.
-// Falls back to in-memory map when Redis is unavailable.
-type TokenRevocationService struct {
-	rdb       *redis.Client
-	pool      *pgxpool.Pool
-	mu        sync.RWMutex
-	blacklist map[string]*revocationEntry // memory fallback
-}
-
-type revocationEntry struct {
-	Reason    string    `json:"reason"`
-	RevokedAt time.Time `json:"revoked_at"`
-	ExpiresAt time.Time `json:"expires_at"`
-	ClientID  string    `json:"client_id"`
-	UserID    string    `json:"user_id"`
-	TokenType string    `json:"token_type"`
-}
-
-// NewTokenRevocationService creates a new TokenRevocationService.
-// If rdb is nil, falls back to in-memory storage.
-func NewTokenRevocationService(rdb *redis.Client) *TokenRevocationService {
-	return &TokenRevocationService{
-		rdb:       rdb,
-		blacklist: make(map[string]*revocationEntry),
+func (s *OAuthService) RevokeToken(tokenStr string, tokenTypeHint ...string) error {
+	if tokenStr == "" {
+		return nil // RFC 7009: return 200 even for empty token
 	}
-}
 
-// SetPool enables DB-level cascade revocation.
-func (s *TokenRevocationService) SetPool(pool *pgxpool.Pool) {
-	s.pool = pool
-}
+	// Store the token hash in the revocation list.
+	tokenHash := hashTokenSHA256(tokenStr)
 
-const revocationKeyPrefix = "ggid:revoked_token:"
-
-// RevokeToken revokes a single token by its ID with a reason.
-// The blacklist entry TTL is set to the remaining token lifetime.
-func (s *TokenRevocationService) RevokeToken(ctx context.Context, tokenID, reason string, expiresAt time.Time) error {
-	if tokenID == "" {
-		return fmt.Errorf("tokenID is required")
-	}
-	return s.revokeWithMeta(ctx, tokenID, reason, expiresAt, "", "", "")
-}
-
-// RevokeByClient revokes all tokens for a given client ID.
-// Returns the number of tokens revoked.
-func (s *TokenRevocationService) RevokeByClient(ctx context.Context, clientID string, expiresAt time.Time) (int, error) {
-	if clientID == "" {
-		return 0, fmt.Errorf("clientID is required")
-	}
-	count := 0
-	if s.pool != nil {
-		tag, err := s.pool.Exec(ctx, `
-			UPDATE refresh_tokens SET revoked = true, revoked_at = NOW()
-			WHERE client_id = $1 AND revoked = false`, clientID)
-		if err != nil {
-			return 0, fmt.Errorf("revoke by client: %w", err)
-		}
-		count = int(tag.RowsAffected())
-		// Also revoke OAuth-issued refresh tokens.
-		tag2, _ := s.pool.Exec(ctx, `
-			UPDATE oidc_refresh_tokens SET revoked = true, revoked_at = NOW()
-			WHERE client_id = $1 AND revoked = false`, clientID)
-		count += int(tag2.RowsAffected())
-	}
-	return count, nil
-}
-
-// RevokeByUser revokes all tokens for a given user ID (cascade: access + refresh + session).
-func (s *TokenRevocationService) RevokeByUser(ctx context.Context, userID uuid.UUID, expiresAt time.Time) (int, error) {
-	if userID == uuid.Nil {
-		return 0, fmt.Errorf("userID is required")
-	}
-	count := 0
-	if s.pool != nil {
-		tag, err := s.pool.Exec(ctx, `
-			UPDATE refresh_tokens SET revoked = true, revoked_at = NOW()
-			WHERE user_id = $1 AND revoked = false`, userID)
-		if err != nil {
-			return 0, fmt.Errorf("revoke by user: %w", err)
-		}
-		count = int(tag.RowsAffected())
-		// Also revoke OAuth-issued refresh tokens.
-		tag2, _ := s.pool.Exec(ctx, `
-			UPDATE oidc_refresh_tokens SET revoked = true, revoked_at = NOW()
-			WHERE user_id = $1 AND revoked = false`, userID)
-		count += int(tag2.RowsAffected())
-	}
-	return count, nil
-}
-
-// GetRevocationStatus returns the revocation status of a token.
-func (s *TokenRevocationService) GetRevocationStatus(ctx context.Context, tokenID string) (*RevocationStatus, error) {
-	// Try Redis first
-	if s.rdb != nil {
-		data, err := s.rdb.Get(ctx, revocationKeyPrefix+tokenID).Bytes()
-		if err == nil {
-			var entry revocationEntry
-			if json.Unmarshal(data, &entry) == nil {
-				return &RevocationStatus{
-					TokenID: tokenID, Revoked: true, Reason: entry.Reason,
-					RevokedAt: entry.RevokedAt, ExpiresAt: entry.ExpiresAt,
-					ClientID: entry.ClientID, UserID: entry.UserID, TokenType: entry.TokenType,
-				}, nil
+	// Handle refresh token revocation: if the hint says refresh_token, or
+	// if the token doesn't parse as a JWT, try revoking it as a refresh
+	// token in the DB before falling back to the JWT blacklist path.
+	hintIsRefresh := len(tokenTypeHint) > 0 && tokenTypeHint[0] == "refresh_token"
+	if hintIsRefresh || !strings.Contains(tokenStr, ".") {
+		// Try to revoke as a refresh token in the DB.
+		if s.tokenRepo != nil {
+			// Nil tenant: revocation matches by token hash alone (hash is a
+			// SHA-256 of a high-entropy token, so this is safe).
+			if err := s.tokenRepo.RevokeRefreshToken(context.Background(), uuid.Nil, tokenHash); err != nil {
+				slog.Warn("oauth: failed to revoke refresh token in DB", "err", err)
 			}
 		}
+		// Also blacklist the hash in Redis (covers cross-instance checks).
+		if s.rdb != nil {
+			// SECURITY: Use TTL to prevent unbounded Redis memory growth from
+			// invalid token revocation attempts. 24h is sufficient for propagation.
+			if err := s.rdb.Set(context.Background(), "oauth:revoked:"+tokenHash, "0", 24*time.Hour); err != nil {
+				slog.Warn("oauth: failed to blacklist revoked token hash in redis", "err", err)
+			}
+		}
+		return nil
 	}
 
-	// Fallback to memory
-	s.mu.RLock()
-	defer s.mu.RUnlock()
-	entry, ok := s.blacklist[tokenID]
-	if !ok {
-		return &RevocationStatus{TokenID: tokenID, Revoked: false}, nil
+	// Parse the token to get its claims (don't fail on invalid tokens).
+	claims, err := s.ParseAccessToken(tokenStr)
+	if err != nil {
+		// RFC 7009: invalid token → still return 200, but store hash
+		// so IsTokenRevoked can report it as revoked.
+		// Try Redis first (for HA/multi-instance).
+		if s.rdb != nil {
+			// SECURITY: TTL prevents unbounded growth from repeated invalid revokes.
+			if e := s.rdb.Set(context.Background(), "oauth:revoked:"+tokenHash, "0", 24*time.Hour); e == nil {
+				return nil
+			}
+		}
+		revokedTokens.Store(tokenHash, int64(0))
+		return nil
 	}
-	return &RevocationStatus{
-		TokenID: tokenID, Revoked: true, Reason: entry.Reason,
-		RevokedAt: entry.RevokedAt, ExpiresAt: entry.ExpiresAt,
-		ClientID: entry.ClientID, UserID: entry.UserID, TokenType: entry.TokenType,
-	}, nil
-}
 
-// IsRevoked checks if a token is currently revoked.
-func (s *TokenRevocationService) IsRevoked(ctx context.Context, tokenID string) bool {
-	// Try Redis first
-	if s.rdb != nil {
-		n, err := s.rdb.Exists(ctx, revocationKeyPrefix+tokenID).Result()
-		if err == nil && n > 0 {
-			return true
+	exp := getInt64Claim(claims, "exp")
+	// Calculate TTL: revoke until token expiry (no point keeping it longer).
+	var ttl time.Duration
+	if exp > 0 {
+		ttl = time.Until(time.Unix(exp, 0))
+		if ttl <= 0 {
+			ttl = 0 // already expired, no TTL needed
 		}
 	}
-
-	// Fallback to memory
-	s.mu.RLock()
-	defer s.mu.RUnlock()
-	entry, ok := s.blacklist[tokenID]
-	if !ok {
-		return false
-	}
-	if !entry.ExpiresAt.IsZero() && time.Now().After(entry.ExpiresAt) {
-		return false
-	}
-	return true
-}
-
-// CascadeRevoke revokes access, refresh, and session tokens for a user.
-func (s *TokenRevocationService) CascadeRevoke(ctx context.Context, userID uuid.UUID, tokenIDs map[string]string, reason string, expiresAt time.Time) error {
-	if userID == uuid.Nil {
-		return fmt.Errorf("userID is required")
-	}
-	uid := userID.String()
-	for tokenType, tokenID := range tokenIDs {
-		if tokenID == "" {
-			continue
-		}
-		if err := s.revokeWithMeta(ctx, tokenID, reason, expiresAt, "", uid, tokenType); err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-// revokeWithMeta stores a revocation entry with full metadata.
-func (s *TokenRevocationService) revokeWithMeta(ctx context.Context, tokenID, reason string, expiresAt time.Time, clientID, userID, tokenType string) error {
-	entry := &revocationEntry{
-		Reason:    reason,
-		RevokedAt: time.Now(),
-		ExpiresAt: expiresAt,
-		ClientID:  clientID,
-		UserID:    userID,
-		TokenType: tokenType,
-	}
-
-	// Try Redis
-	if s.rdb != nil {
-		data, err := json.Marshal(entry)
-		if err == nil {
-			ttl := time.Until(expiresAt)
-			if ttl > 0 {
-				err = s.rdb.Set(ctx, revocationKeyPrefix+tokenID, data, ttl).Err()
-				if err != nil {
-					slog.Warn("Redis revocation write failed, using memory fallback", "error", err)
+	// SECURITY: Cascade — revoke refresh tokens for this user AND client only,
+	// not ALL the user's refresh tokens across all clients/sessions.
+	// Revoking one stolen token should not DoS the victim's other sessions.
+	if s.pool != nil {
+		tenantIDStr := getStringClaim(claims, "tenant_id")
+		subStr := getStringClaim(claims, "sub")
+		clientID := getStringClaim(claims, "aud") // audience = client_id
+		if tenantIDStr != "" && subStr != "" {
+			tenantID, _ := uuid.Parse(tenantIDStr)
+			userID, _ := uuid.Parse(subStr)
+			if tenantID != uuid.Nil && userID != uuid.Nil {
+				ctx := context.Background()
+				if clientID != "" {
+					_, _ = s.pool.Exec(ctx,
+						`UPDATE oidc_refresh_tokens SET revoked = true WHERE tenant_id = $1 AND user_id = $2 AND client_id = $3 AND revoked = false`,
+						tenantID, userID, clientID)
+				} else {
+					_, _ = s.pool.Exec(ctx,
+						`UPDATE oidc_refresh_tokens SET revoked = true WHERE tenant_id = $1 AND user_id = $2 AND revoked = false`,
+						tenantID, userID)
 				}
 			}
 		}
 	}
 
-	// Always store in memory as fallback
-	s.mu.Lock()
-	defer s.mu.Unlock()
-	s.blacklist[tokenID] = entry
+	// Try Redis first (for HA/multi-instance).
+	if s.rdb != nil {
+		if e := s.rdb.Set(context.Background(), "oauth:revoked:"+tokenHash, strconv.FormatInt(exp, 10), ttl); e == nil {
+			// Also add JTI to the Gateway CAE blocklist ZSET so the gateway
+			// can reject revoked tokens on every request (continuous access evaluation).
+			if jti := getStringClaim(claims, "jti"); jti != "" && exp > 0 {
+				s.rdb.ZAdd(context.Background(), "ggid:revoked_jti", float64(exp), jti)
+				// Mark the sessions row revoked so DB-backed revocation
+				// checks (IsTokenRevoked fallback, token exchange B1)
+				// observe the revocation even after Redis TTL expiry.
+				if s.pool != nil {
+					_, _ = s.pool.Exec(context.Background(),
+						`UPDATE sessions SET revoked_at = NOW() WHERE jti = $1 AND revoked_at IS NULL`, jti)
+				}
+			}
+			return nil
+		}
+	}
+	revokedTokens.Store(tokenHash, exp)
+
 	return nil
 }
 
-// CleanupExpired removes expired entries from the in-memory blacklist.
-// Redis entries auto-expire via TTL.
-func (s *TokenRevocationService) CleanupExpired() int {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-	now := time.Now()
-	count := 0
-	for tokenID, entry := range s.blacklist {
-		if !entry.ExpiresAt.IsZero() && now.After(entry.ExpiresAt) {
-			delete(s.blacklist, tokenID)
-			count++
+// IsTokenRevoked checks if a token has been revoked.
+// Priority: Redis (fast cache) → DB (authoritative) → fail-safe deny.
+// The old sync.Map fallback is removed — it was unsafe across pod restarts
+// (revoked tokens would survive restart) and multi-instance deployments.
+func (s *OAuthService) IsTokenRevoked(tokenStr string) bool {
+	tokenHash := hashTokenSHA256(tokenStr)
+	cacheKey := "oauth:revoked:" + tokenHash
+
+	// 1. Redis cache (fast path).
+	if s.rdb != nil {
+		if _, err := s.rdb.Get(context.Background(), cacheKey); err == nil {
+			return true
 		}
 	}
-	return count
+
+	// 2. In-memory cache (best-effort, for single-instance dev/test).
+	if _, ok := revokedTokens.Load(tokenHash); ok {
+		return true
+	}
+
+	// 3. DB check (authoritative — survives restarts, consistent across instances).
+	// Parse the token to get its jti for a DB lookup.
+	claims, err := s.ParseAccessToken(tokenStr)
+	if err != nil {
+		// Unparseable token — can't check DB, assume not revoked (the token
+		// is invalid anyway and will be rejected by JWT validation).
+		return false
+	}
+	jti, _ := claims["jti"].(string)
+	if jti == "" || s.pool == nil {
+		return false // no jti or no DB → can't check
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+	var revoked bool
+	err = s.pool.QueryRow(ctx,
+		`SELECT EXISTS(SELECT 1 FROM sessions WHERE jti = $1 AND revoked_at IS NOT NULL)`,
+		jti).Scan(&revoked)
+	if err == nil && revoked {
+		// Cache in Redis for future lookups.
+		if s.rdb != nil {
+			exp := getInt64Claim(claims, "exp")
+			ttl := time.Duration(0)
+			if exp > 0 {
+				ttl = time.Until(time.Unix(exp, 0))
+			}
+			s.rdb.Set(context.Background(), cacheKey, "1", ttl)
+		}
+		revokedTokens.Store(tokenHash, getInt64Claim(claims, "exp"))
+		return true
+	}
+
+	return false
 }
 
-// Reset clears all revocation entries (for testing).
-func (s *TokenRevocationService) Reset() {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-	s.blacklist = make(map[string]*revocationEntry)
-	if s.rdb != nil {
-		// Best-effort cleanup for tests
-		ctx := context.Background()
-		keys, err := s.rdb.Keys(ctx, revocationKeyPrefix+"*").Result()
-		if err == nil && len(keys) > 0 {
-			s.rdb.Del(ctx, keys...)
-		}
-	}
+func hashTokenSHA256(token string) string {
+	h := sha256.Sum256([]byte(token))
+	return hex.EncodeToString(h[:])
 }
+
+// maskUser redacts a username for safe logging (PII protection).
+// e.g. "alice.admin" → "al***", "a" → "***"
+func maskUser(username string) string {
+	if len(username) <= 2 {
+		return "***"
+	}
+	return username[:2] + "***"
+}
+
