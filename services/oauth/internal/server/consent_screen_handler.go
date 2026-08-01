@@ -2,6 +2,7 @@ package server
 
 import (
 	"encoding/json"
+	"html"
 	"net/http"
 	"strings"
 )
@@ -38,13 +39,13 @@ func handleConsentScreen(w http.ResponseWriter, r *http.Request) {
 				privacyURL, _ := data["privacy_url"].(string)
 				termsURL, _ := data["terms_url"].(string)
 				writeJSON(w, http.StatusOK, map[string]any{
-					"client_id":          clientID,
-					"configured":         true,
-					"title":              title,
-					"description":        description,
+					"client_id":            clientID,
+					"configured":           true,
+					"title":                title,
+					"description":          description,
 					"data_sharing_summary": dataSharingSummary,
-					"privacy_url":        privacyURL,
-					"terms_url":          termsURL,
+					"privacy_url":          privacyURL,
+					"terms_url":            termsURL,
 				})
 				return
 			}
@@ -62,11 +63,10 @@ func handleConsentScreen(w http.ResponseWriter, r *http.Request) {
 			writeJSON(w, http.StatusBadRequest, map[string]any{"error": "invalid JSON"})
 			return
 		}
-		// Sanitize: strip script tags from description
-		req.Description = strings.ReplaceAll(req.Description, "<script>", "")
-		req.Description = strings.ReplaceAll(req.Description, "</script>", "")
-		req.DataSharingSummary = strings.ReplaceAll(req.DataSharingSummary, "<script>", "")
-		req.DataSharingSummary = strings.ReplaceAll(req.DataSharingSummary, "</script>", "")
+		// SECURITY: HTML-escape all user-provided content to prevent stored XSS.
+		// Previous ReplaceAll("<script>","") was trivially bypassed by <SCRIPT>, <img onerror>, <svg onload>, etc.
+		req.Description = html.EscapeString(req.Description)
+		req.DataSharingSummary = html.EscapeString(req.DataSharingSummary)
 
 		if mapRepoVar != nil {
 			b, _ := json.Marshal(req)

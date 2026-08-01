@@ -1,6 +1,7 @@
 package server
 
 import (
+	"html"
 	"encoding/json"
 	"net/http"
 	"strings"
@@ -28,9 +29,8 @@ func handleClientBranding(w http.ResponseWriter, r *http.Request) {
 			writeJSON(w, http.StatusBadRequest, map[string]any{"error": "invalid JSON"})
 			return
 		}
-		// Sanitize custom_css: strip script tags
-		b.CustomCSS = strings.ReplaceAll(b.CustomCSS, "<script>", "")
-		b.CustomCSS = strings.ReplaceAll(b.CustomCSS, "</script>", "")
+		// SECURITY: HTML-escape custom CSS to prevent stored XSS.
+		b.CustomCSS = html.EscapeString(b.CustomCSS)
 		if brandingAdapterVar != nil {
 			brandingAdapterVar.Put(clientID, &b)
 		} else if mapRepoVar != nil {
@@ -53,10 +53,10 @@ func handleClientBranding(w http.ResponseWriter, r *http.Request) {
 		if mapRepoVar != nil {
 			if row, _ := mapRepoVar.Get(r.Context(), "oauth_branding", clientID); row != nil {
 				b := ClientBranding{
-					LogoURL: omGetString(row, "logo_url"),
-					PrimaryColor: omGetString(row, "primary_color"),
+					LogoURL:       omGetString(row, "logo_url"),
+					PrimaryColor:  omGetString(row, "primary_color"),
 					BackgroundURL: omGetString(row, "background_url"),
-					CustomCSS: omGetString(row, "custom_css"),
+					CustomCSS:     omGetString(row, "custom_css"),
 				}
 				writeJSON(w, http.StatusOK, map[string]any{"client_id": clientID, "branding": b})
 				return
