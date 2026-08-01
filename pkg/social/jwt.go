@@ -6,7 +6,10 @@ import (
 	"fmt"
 )
 
-// parseJWTClaims extracts claims from a JWT without verification (caller must trust the source).
+// parseJWTClaims extracts claims from a JWT WITHOUT signature verification.
+// SECURITY: This does NOT validate the JWT signature. Only use for ID tokens
+// obtained from trusted identity providers via secure back-channel. Never
+// use this to validate user-supplied tokens — use jwt.ParseWithClaims instead.
 func parseJWTClaims(jwtStr string) (map[string]any, error) {
 	parts := splitJWT(jwtStr)
 	if len(parts) != 3 {
