@@ -5,15 +5,17 @@ package service
 
 import (
 	"context"
+	"net/url"
 	"strings"
 	"time"
 
-	"github.com/ggid/ggid/services/oauth/internal/domain"
 	pkgcrypto "github.com/ggid/ggid/pkg/crypto"
 	"github.com/ggid/ggid/pkg/errors"
 	"github.com/ggid/ggid/pkg/tenant"
+	"github.com/ggid/ggid/services/oauth/internal/domain"
 	"github.com/google/uuid"
 )
+
 func (s *OAuthService) DynamicClientRegister(ctx context.Context, req *DynamicRegistrationRequest) (*DynamicRegistrationResponse, error) {
 	tc, err := tenant.FromContext(ctx)
 	if err != nil {
@@ -44,6 +46,15 @@ func (s *OAuthService) DynamicClientRegister(ctx context.Context, req *DynamicRe
 	}
 	if hasRedirectGrant && len(req.RedirectURIs) == 0 {
 		return nil, errors.New(errors.ErrInvalidArgument, "redirect_uris is required for authorization_code/implicit grants")
+	}
+
+	// SECURITY: Validate redirect URI schemes — only http/https allowed.
+	// Prevents javascript:/data:/file: schemes that enable XSS/open redirect.
+	for _, uri := range req.RedirectURIs {
+		parsed, err := url.Parse(uri)
+		if err != nil || (parsed.Scheme != "http" && parsed.Scheme != "https") {
+			return nil, errors.New(errors.ErrInvalidArgument, "redirect_uri must use http or https scheme: "+uri)
+		}
 	}
 
 	clientID := generateClientID()
@@ -112,6 +123,15 @@ func (s *OAuthService) DynamicClientRegister(ctx context.Context, req *DynamicRe
 			return nil, errors.Internal("hash client secret", err)
 		}
 		client.ClientSecretHash = hash
+	}
+
+	// SECURITY: validate redirect_uri schemes — only http/https allowed.
+	for _, uri := range req.RedirectURIs {
+		parsed, err := url.Parse(uri)
+		if err != nil || (parsed.Scheme != "http" && parsed.Scheme != "https") {
+			return nil, errors.New(errors.ErrInvalidArgument,
+				"redirect_uris must use http or https scheme")
+		}
 	}
 
 	if err := s.clientRepo.CreateClient(ctx, client); err != nil {

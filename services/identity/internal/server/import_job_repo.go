@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log/slog"
+	"net/mail"
 	"time"
 
 	"github.com/ggid/ggid/services/identity/internal/domain"
@@ -14,24 +15,24 @@ import (
 
 // ImportJob represents an async user import job.
 type ImportJob struct {
-	ID          string             `json:"id"`
-	TenantID    uuid.UUID          `json:"tenant_id"`
-	Format      string             `json:"format"` // json or csv
-	Status      string             `json:"status"` // pending, processing, completed, failed
-	Total       int                `json:"total"`
-	Imported    int                `json:"imported"`
-	Failed      int                `json:"failed"`
-	Errors      []ImportRowError   `json:"errors,omitempty"`
-	StartedAt   *time.Time         `json:"started_at,omitempty"`
-	CompletedAt *time.Time         `json:"completed_at,omitempty"`
-	CreatedAt   time.Time          `json:"created_at"`
+	ID          string           `json:"id"`
+	TenantID    uuid.UUID        `json:"tenant_id"`
+	Format      string           `json:"format"` // json or csv
+	Status      string           `json:"status"` // pending, processing, completed, failed
+	Total       int              `json:"total"`
+	Imported    int              `json:"imported"`
+	Failed      int              `json:"failed"`
+	Errors      []ImportRowError `json:"errors,omitempty"`
+	StartedAt   *time.Time       `json:"started_at,omitempty"`
+	CompletedAt *time.Time       `json:"completed_at,omitempty"`
+	CreatedAt   time.Time        `json:"created_at"`
 }
 
 // ImportRowError records a failed row during import.
 type ImportRowError struct {
-	Row     int    `json:"row"`
+	Row      int    `json:"row"`
 	Username string `json:"username,omitempty"`
-	Error   string `json:"error"`
+	Error    string `json:"error"`
 }
 
 // importJobRepo manages import_jobs in PostgreSQL.
@@ -245,18 +246,11 @@ func (h *HTTPHandler) ProcessImportRecords(ctx context.Context, jobID string, te
 
 // isValidEmail performs a basic email format check.
 func isValidEmail(email string) bool {
-	at := -1
-	dot := -1
-	for i, c := range email {
-		if c == '@' {
-			if at != -1 {
-				return false // multiple @
-			}
-			at = i
-		}
-		if c == '.' && at != -1 {
-			dot = i
-		}
-	}
-	return at > 0 && dot > at+1 && dot < len(email)-1
+	return isValidEmailFormat(email)
+}
+
+// isValidEmailFormat validates an email using net/mail.AddressParser.
+func isValidEmailFormat(email string) bool {
+	_, err := mail.ParseAddress(email)
+	return err == nil
 }

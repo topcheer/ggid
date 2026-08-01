@@ -9,6 +9,7 @@ import (
 	"io"
 	"log/slog"
 	"net/http"
+	"net/mail"
 	"strconv"
 	"strings"
 	"time"
@@ -140,6 +141,13 @@ const (
 	scimListSchema = "urn:ietf:params:scim:api:messages:2.0:ListResponse"
 	scimErrSchema  = "urn:ietf:params:scim:api:messages:2.0:Error"
 )
+
+// isValidEmailFormat validates an email using net/mail.AddressParser.
+// Stricter than strings.Contains("@") — rejects malformed addresses.
+func isValidEmailFormat(email string) bool {
+	_, err := mail.ParseAddress(email)
+	return err == nil
+}
 
 func writeSCIMJSON(w http.ResponseWriter, status int, v any) {
 	w.Header().Set("Content-Type", "application/scim+json")
@@ -501,7 +509,7 @@ func (h *Handler) createUser(ctx context.Context, w http.ResponseWriter, r *http
 	if len(scimUser.Emails) > 0 {
 		email = scimUser.Emails[0].Value
 	}
-	if email != "" && !strings.Contains(email, "@") {
+	if email != "" && !isValidEmailFormat(email) {
 		writeSCIMErrorWithType(w, http.StatusBadRequest, ScimTypeInvalidValue, "invalid email format")
 		return
 	}
