@@ -14,7 +14,6 @@ import (
 	"encoding/pem"
 	"fmt"
 	"io"
-	"log"
 	"log/slog"
 	"math/big"
 	"net/http"
@@ -135,14 +134,14 @@ func DefaultCORSConfig() CORSConfig {
 	}
 	// Dev mode: allow localhost origins for development.
 	if isDevMode() {
-		log.Println("[CORS] no explicit config; using localhost-only dev origins")
+		slog.Info("[CORS] no explicit config; using localhost-only dev origins")
 		return CORSConfig{
 			AllowedOrigins:   devLocalhostOrigins(),
 			AllowCredentials: true,
 		}
 	}
 	// Production default: no origins allowed unless explicitly configured.
-	log.Println("[CORS] WARNING: no CORS_ALLOWED_ORIGINS configured; CORS disabled")
+	slog.Warn("[CORS] WARNING: no CORS_ALLOWED_ORIGINS configured; CORS disabled")
 	return CORSConfig{
 		AllowedOrigins:   nil,
 		AllowCredentials: false,
@@ -161,7 +160,7 @@ func CORSWithConfig(cfg CORSConfig) func(http.Handler) http.Handler {
 	}
 	// Empty origins = no CORS allowed (strict default).
 	if len(cfg.AllowedOrigins) == 0 {
-		log.Println("[CORS] WARNING: CORSWithConfig called with no allowed origins; CORS disabled")
+		slog.Warn("[CORS] WARNING: CORSWithConfig called with no allowed origins; CORS disabled")
 	}
 
 	return func(next http.Handler) http.Handler {

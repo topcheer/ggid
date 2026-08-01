@@ -3,7 +3,7 @@ package router
 import (
 	"encoding/json"
 	"fmt"
-	"log"
+	"log/slog"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
@@ -80,7 +80,7 @@ func (r *ProtectedAppRouter) RegisterApp(app *ProtectedApp) {
 	// Create reverse proxy for upstream.
 	upstream, err := url.Parse(app.UpstreamURL)
 	if err != nil {
-		log.Printf("ZTNA: failed to parse upstream URL %s: %v", app.UpstreamURL, err)
+		slog.Error("ZTNA: failed to parse upstream URL", "upstream_url", app.UpstreamURL, "error", err)
 		return
 	}
 
@@ -98,14 +98,14 @@ func (r *ProtectedAppRouter) RegisterApp(app *ProtectedApp) {
 		req.Host = upstream.Host
 	}
 	proxy.ErrorHandler = func(w http.ResponseWriter, req *http.Request, err error) {
-		log.Printf("ZTNA proxy error for app %s: %v", app.Slug, err)
+		slog.Error("ZTNA proxy error", "app", app.Slug, "error", err)
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusBadGateway)
 		json.NewEncoder(w).Encode(map[string]string{"error": "upstream unavailable"})
 	}
 
 	r.proxies[app.Slug] = proxy
-	log.Printf("ZTNA: registered app %s → %s", app.Slug, app.UpstreamURL)
+	slog.Info("ZTNA: registered app", "slug", app.Slug, "upstream", app.UpstreamURL)
 }
 
 // UnregisterApp removes a protected app route.
@@ -114,7 +114,7 @@ func (r *ProtectedAppRouter) UnregisterApp(slug string) {
 	defer r.mu.Unlock()
 	delete(r.apps, slug)
 	delete(r.proxies, slug)
-	log.Printf("ZTNA: unregistered app %s", slug)
+	slog.Info("ZTNA: unregistered app", "slug", slug)
 }
 
 // GetApp returns the protected app for a slug.
@@ -443,8 +443,7 @@ func (r *ProtectedAppRouter) logAccess(app *ProtectedApp, req *http.Request, sta
 	}
 
 	// Log to stdout (always).
-	log.Printf("ZTNA access: app=%s user=%s %s %s → %d (%s, %dms)",
-		app.Slug, userID, req.Method, req.URL.Path, statusCode, decision, duration.Milliseconds())
+	slog.Info("ZTNA access", "app", app.Slug, "user", userID, "method", req.Method, "path", req.URL.Path, "status", statusCode, "decision", decision, "duration_ms", duration.Milliseconds())
 
 	// Publish to NATS for DB persistence (app_access_logs table).
 	if r.auditPub != nil {

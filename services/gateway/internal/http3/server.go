@@ -7,7 +7,7 @@ import (
 	"context"
 	"crypto/tls"
 	"fmt"
-	"log"
+	"log/slog"
 	"net/http"
 
 	"github.com/quic-go/quic-go/http3"
@@ -68,7 +68,7 @@ func New(cfg Config, handler http.Handler) (*Server, error) {
 
 // ListenAndServe starts the HTTP/3 server.
 func (s *Server) ListenAndServe() error {
-	log.Printf("HTTP/3 server listening on %s (QUIC/UDP)", s.addr)
+	slog.Info("HTTP/3 server listening", "addr", s.addr)
 	return s.server.ListenAndServe()
 }
 

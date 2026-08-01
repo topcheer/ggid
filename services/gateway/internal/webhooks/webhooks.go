@@ -10,7 +10,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"log"
 	"log/slog"
 	"net/http"
 	"sync"
@@ -161,7 +160,7 @@ func (d *HTTPDeliverer) Deliver(ctx context.Context, url, secret string, payload
 		resp, err := d.client.Do(req)
 		if err != nil {
 			lastErr = err
-			log.Printf("webhook delivery attempt %d failed: %v", attempt+1, err)
+			slog.Error("webhook delivery attempt failed", "attempt", attempt+1, "error", err)
 			continue
 		}
 		resp.Body.Close()
@@ -300,7 +299,7 @@ func (h *Handler) DeliverEvent(ctx context.Context, event string, payload []byte
 			acquired := false
 			defer func() {
 				if r := recover(); r != nil {
-					log.Printf("webhook %s delivery panic recovered: %v", w.ID, r)
+					slog.Error("webhook delivery panic recovered", "webhook_id", w.ID, "panic", r)
 				}
 				if acquired && h.sem != nil {
 					<-h.sem
@@ -312,7 +311,7 @@ func (h *Handler) DeliverEvent(ctx context.Context, event string, payload []byte
 				case h.sem <- struct{}{}:
 					acquired = true
 				default:
-					log.Printf("webhook %s delivery skipped: concurrency limit reached", w.ID)
+					slog.Warn("webhook delivery skipped: concurrency limit reached", "webhook_id", w.ID)
 					return
 				}
 			}
@@ -323,7 +322,7 @@ func (h *Handler) DeliverEvent(ctx context.Context, event string, payload []byte
 			dctx, cancel := context.WithTimeout(context.WithoutCancel(ctx), 30*time.Second)
 			defer cancel()
 			if err := h.deliverer.Deliver(dctx, w.URL, w.Secret, payload); err != nil {
-				log.Printf("webhook %s delivery failed for event %s: %v", w.ID, event, err)
+				slog.Error("webhook delivery failed", "webhook_id", w.ID, "event", event, "error", err)
 			}
 		}()
 	}

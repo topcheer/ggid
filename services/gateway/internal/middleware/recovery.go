@@ -124,7 +124,7 @@ func PanicRecovery(sl *StructuredLogger) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			defer func() {
-			if rv := recover(); rv != nil {
+				if rv := recover(); rv != nil {
 					requestID, _ := r.Context().Value(RequestIDKey).(string)
 					svcName := ""
 					if sl != nil {

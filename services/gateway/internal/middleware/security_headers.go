@@ -2,7 +2,7 @@ package middleware
 
 import (
 	"fmt"
-	"log"
+	"log/slog"
 	"net/http"
 	"strings"
 )
@@ -134,7 +134,7 @@ func TenantCORSMiddleware(next http.Handler) http.Handler {
 		}
 		// Log warning when no explicit config and origin not allowed.
 		if !allowed && len(cfg.AllowedOrigins) == 0 && origin != "" {
-			log.Printf("[CORS] WARNING: tenant %s has no explicit allowed origins; rejecting origin %s", tenantID, origin)
+			slog.Warn("[CORS] WARNING: tenant has no explicit allowed origins", "tenant_id", tenantID, "origin", origin)
 		}
 		if allowed && origin != "" {
 			w.Header().Set("Access-Control-Allow-Origin", origin)

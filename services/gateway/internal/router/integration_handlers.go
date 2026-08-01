@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"io"
-	"log"
+	"log/slog"
 	"net/http"
 	"regexp"
 	"strings"
@@ -235,11 +235,11 @@ func (gw *Gateway) handleSystemBootstrap(w http.ResponseWriter, r *http.Request)
 	tenantReq.Header.Set("Content-Type", "application/json")
 	tenantResp, err := client.Do(tenantReq)
 	if err != nil {
-		log.Printf("bootstrap: create tenant failed (non-fatal): %v", err)
+		slog.Error("bootstrap: create tenant failed", "error", err)
 	} else {
 		tenantRespBody, _ := io.ReadAll(tenantResp.Body)
 		tenantResp.Body.Close()
-		log.Printf("bootstrap: tenant created (status %d)", tenantResp.StatusCode)
+		slog.Info("bootstrap: tenant created", "status", tenantResp.StatusCode)
 		// Parse the tenant ID from the response.
 		var tenantResult map[string]any
 		if json.Unmarshal(tenantRespBody, &tenantResult) == nil {
@@ -286,7 +286,7 @@ func (gw *Gateway) handleSystemBootstrap(w http.ResponseWriter, r *http.Request)
 	})
 	regResp, err := client.Post(authURL+"/api/v1/auth/register", "application/json", bytes.NewReader(regBody))
 	if err != nil {
-		log.Printf("bootstrap: register call failed: %v", err)
+		slog.Error("bootstrap: register call failed", "error", err)
 		writeGatewayJSONError(w, http.StatusBadGateway, "auth service unavailable")
 		return
 	}
@@ -295,7 +295,7 @@ func (gw *Gateway) handleSystemBootstrap(w http.ResponseWriter, r *http.Request)
 
 	if regResp.StatusCode == http.StatusConflict {
 		// User already exists — try login directly instead of returning early.
-		log.Printf("bootstrap: user %s already exists, attempting login", req.AdminUsername)
+		slog.Info("bootstrap: user already exists", "username", req.AdminUsername)
 	} else if regResp.StatusCode != http.StatusCreated {
 		writeGatewayJSONError(w, http.StatusInternalServerError, "failed to register admin: "+string(regRespBody))
 		return
@@ -318,7 +318,7 @@ func (gw *Gateway) handleSystemBootstrap(w http.ResponseWriter, r *http.Request)
 		roleReq.Header.Set("X-Tenant-ID", tenantID.String())
 		roleResp, err := client.Do(roleReq)
 		if err != nil {
-			log.Printf("bootstrap: create role %s failed: %v", role.key, err)
+			slog.Error("bootstrap: create role failed", "role", role.key, "error", err)
 			continue
 		}
 		io.ReadAll(roleResp.Body)
@@ -332,9 +332,9 @@ func (gw *Gateway) handleSystemBootstrap(w http.ResponseWriter, r *http.Request)
 			assignReq.Header.Set("X-Tenant-ID", tenantID.String())
 			assignResp, err := client.Do(assignReq)
 			if err != nil {
-				log.Printf("bootstrap: assign role %s failed: %v", role.key, err)
+				slog.Error("bootstrap: assign role failed", "role", role.key, "error", err)
 			} else {
-				log.Printf("bootstrap: role %s assigned (status %d)", role.key, assignResp.StatusCode)
+				slog.Info("bootstrap: role assigned", "role", role.key, "status", assignResp.StatusCode)
 				assignResp.Body.Close()
 			}
 		}
@@ -358,7 +358,7 @@ func (gw *Gateway) handleSystemBootstrap(w http.ResponseWriter, r *http.Request)
 				}
 			}
 			conn.Close(r.Context())
-			log.Printf("bootstrap: seeded default role-permission assignments")
+			slog.Info("bootstrap: seeded default role-permission assignments")
 		}
 	}
 
@@ -383,7 +383,7 @@ func (gw *Gateway) handleSystemBootstrap(w http.ResponseWriter, r *http.Request)
 	dcrReq.Header.Set("X-Tenant-ID", tenantID.String())
 	dcrResp, err := client.Do(dcrReq)
 	if err != nil {
-		log.Printf("bootstrap: DCR registration failed (non-fatal): %v", err)
+		slog.Error("bootstrap: DCR registration failed", "error", err)
 	} else {
 		dcrRespBody, _ := io.ReadAll(dcrResp.Body)
 		dcrResp.Body.Close()
@@ -391,9 +391,9 @@ func (gw *Gateway) handleSystemBootstrap(w http.ResponseWriter, r *http.Request)
 		json.Unmarshal(dcrRespBody, &dcrResult)
 		consoleClientID, _ := dcrResult["client_id"].(string)
 		if consoleClientID != "" {
-			log.Printf("bootstrap: Console registered as OAuth client %s", consoleClientID)
+			slog.Info("bootstrap: Console registered", "client_id", consoleClientID)
 		} else {
-			log.Printf("bootstrap: DCR returned status %d: %s", dcrResp.StatusCode, string(dcrRespBody))
+			slog.Info("bootstrap: DCR response", "status", dcrResp.StatusCode, "body", string(dcrRespBody))
 		}
 	}
 
@@ -419,7 +419,7 @@ func (gw *Gateway) handleSystemBootstrap(w http.ResponseWriter, r *http.Request)
 		adminUserID, _ = verifyResult["user_id"].(string)
 	}
 
-	log.Printf("bootstrap: admin user %s verified, status: %d", req.AdminUsername, verifyResp.StatusCode)
+	slog.Info("bootstrap: admin verified", "username", req.AdminUsername, "status", verifyResp.StatusCode)
 
 	// Mark system as initialized.
 	quickstartInitialized = true
@@ -451,7 +451,7 @@ func (gw *Gateway) handleSystemBootstrap(w http.ResponseWriter, r *http.Request)
 				 ON CONFLICT (key) DO UPDATE SET value = $1`,
 				configJSON)
 			conn.Close(r.Context())
-			log.Printf("bootstrap: WebAuthn config saved to DB (rp_id=%s)", req.WebAuthnRPID)
+			slog.Info("bootstrap: WebAuthn config saved", "rp_id", req.WebAuthnRPID)
 		}
 	}
 
@@ -521,7 +521,7 @@ func (gw *Gateway) handleTenantCreate(w http.ResponseWriter, r *http.Request) {
 	}
 	conn, err := pgx.Connect(r.Context(), dbURL)
 	if err != nil {
-		log.Printf("tenant create: failed to connect DB: %v", err)
+		slog.Error("tenant create: DB connection failed", "error", err)
 	} else {
 		defer conn.Close(r.Context())
 		_, _ = conn.Exec(r.Context(), `SET app.tenant_id = $1`, r.Header.Get("X-Tenant-ID")) // set RLS context from admin's tenant
@@ -533,7 +533,7 @@ func (gw *Gateway) handleTenantCreate(w http.ResponseWriter, r *http.Request) {
 				writeGatewayJSONError(w, http.StatusConflict, "subdomain '"+req.Slug+"' is already taken")
 				return
 			}
-			log.Printf("tenant create: DB insert error: %v", err)
+			slog.Error("tenant create: DB insert error", "error", err)
 		}
 	}
 
@@ -560,7 +560,7 @@ func (gw *Gateway) handleTenantList(w http.ResponseWriter, r *http.Request) {
 	}
 	conn, err := pgx.Connect(r.Context(), dbURL)
 	if err != nil {
-		log.Printf("tenant list: failed to connect DB: %v", err)
+		slog.Error("tenant list: DB connection failed", "error", err)
 		writeGatewayJSON(w, http.StatusOK, map[string]any{"tenants": []any{}})
 		return
 	}

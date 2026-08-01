@@ -6,7 +6,7 @@ import (
 	"context"
 	"encoding/json"
 	"io"
-	"log"
+	"log/slog"
 	"net"
 	"net/http"
 	"net/http/httputil"
@@ -199,7 +199,7 @@ func (gw *Gateway) buildProxies() {
 	for prefix, backendURL := range gw.cfg.Routes {
 		parsed, err := url.Parse(backendURL)
 		if err != nil {
-			log.Printf("invalid backend URL %s: %v", backendURL, err)
+			slog.Error("invalid backend URL", "backend_url", backendURL, "error", err)
 			continue
 		}
 		proxy := httputil.NewSingleHostReverseProxy(parsed)
@@ -284,7 +284,7 @@ func (gw *Gateway) buildProxies() {
 			}
 		}
 		proxy.ErrorHandler = func(w http.ResponseWriter, r *http.Request, err error) {
-			log.Printf("proxy error for %s%s: %v", parsed.Host, r.URL.Path, err)
+			slog.Error("proxy error", "host", parsed.Host, "path", r.URL.Path, "error", err)
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusBadGateway)
 			_ = json.NewEncoder(w).Encode(map[string]string{"error": "backend service unavailable"})
@@ -1009,12 +1009,12 @@ func injectTenantIntoBody(req *http.Request, tenantID string) {
 
 // PrintRoutes logs the configured routes at startup.
 func (gw *Gateway) PrintRoutes() {
-	log.Println("API Gateway routes:")
+	slog.Info("API Gateway routes:")
 	for prefix, backend := range gw.cfg.Routes {
-		log.Printf("  %s -> %s", prefix, backend)
+		slog.Info("route", "prefix", prefix, "backend", backend)
 	}
-	log.Println("  /docs -> Swagger UI")
-	log.Println("  /api-docs -> OpenAPI JSON spec")
+	slog.Info("route", "prefix", "/docs", "backend", "Swagger UI")
+	slog.Info("route", "prefix", "/api-docs", "backend", "OpenAPI JSON spec")
 }
 
 // --- Gateway Admin API ---
@@ -1270,7 +1270,7 @@ func (gw *Gateway) buildProxiesLocked() {
 	for prefix, backendURL := range gw.cfg.Routes {
 		parsed, err := url.Parse(backendURL)
 		if err != nil {
-			log.Printf("invalid backend URL %s: %v", backendURL, err)
+			slog.Error("invalid backend URL", "backend_url", backendURL, "error", err)
 			continue
 		}
 		proxy := httputil.NewSingleHostReverseProxy(parsed)
@@ -1344,7 +1344,7 @@ func (gw *Gateway) buildProxiesLocked() {
 			}
 		}
 		proxy.ErrorHandler = func(w http.ResponseWriter, r *http.Request, err error) {
-			log.Printf("proxy error for %s%s: %v", parsed.Host, r.URL.Path, err)
+			slog.Error("proxy error", "host", parsed.Host, "path", r.URL.Path, "error", err)
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusBadGateway)
 			_ = json.NewEncoder(w).Encode(map[string]string{"error": "backend service unavailable"})

@@ -3,7 +3,6 @@ package middleware
 import (
 	"context"
 	"encoding/json"
-	"log"
 	"log/slog"
 	"net/http"
 	"strings"
@@ -175,7 +174,7 @@ func getRBACResolver() *RBACResolver {
 // even if Redis/DB become unavailable later (in-memory fallback).
 func (r *RBACResolver) WarmStart(ctx context.Context) {
 	if _, err := r.load(ctx, true); err != nil {
-		log.Printf("RBAC resolver warm-start: %v (will retry on first request)", err)
+		slog.Error("RBAC resolver warm-start", "error", err)
 	}
 }
 

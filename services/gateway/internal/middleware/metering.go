@@ -9,7 +9,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"log"
+	"log/slog"
 	"net/http"
 	"os"
 	"strings"
@@ -79,8 +79,7 @@ func APIMetering(dbURL string, config MeteringConfig) func(http.Handler) http.Ha
 			stopCh: make(chan struct{}),
 		}
 		go meteringAgg.flushLoop()
-		log.Printf("[metering] initialized (audit_url=%s, flush=%s, buffer=%d)",
-			config.AuditURL, config.FlushInterval, config.MaxBufferSize)
+		slog.Info("[metering] initialized", "audit_url", config.AuditURL, "flush_interval", config.FlushInterval, "buffer_size", config.MaxBufferSize)
 	})
 	agg := meteringAgg
 
@@ -121,7 +120,7 @@ func (a *usageAggregator) record(r usageRecord) {
 		go func() {
 			defer func() {
 				if r := recover(); r != nil {
-					log.Printf("[metering] flush panic recovered: %v", r)
+					slog.Error("[metering] flush panic recovered", "panic", r)
 				}
 			}()
 			a.flush()
@@ -132,7 +131,7 @@ func (a *usageAggregator) record(r usageRecord) {
 func (a *usageAggregator) flushLoop() {
 	defer func() {
 		if r := recover(); r != nil {
-			log.Printf("[metering] flushLoop panic recovered: %v", r)
+			slog.Error("[metering] flushLoop panic recovered", "panic", r)
 			// Restart the loop to prevent metering data loss
 			go a.flushLoop()
 		}
@@ -165,7 +164,7 @@ func (a *usageAggregator) flush() {
 
 	if a.config.AuditURL == "" {
 		// No audit URL configured — silently drop (logged once)
-		log.Printf("[metering] flushed %d records (no audit URL, dropped)", len(batch))
+		slog.Warn("[metering] flushed records (no audit URL, dropped)", "count", len(batch))
 		return
 	}
 
@@ -174,14 +173,14 @@ func (a *usageAggregator) flush() {
 		"events": batch,
 	})
 	if err != nil {
-		log.Printf("[metering] marshal error: %v", err)
+		slog.Error("[metering] marshal error", "error", err)
 		return
 	}
 
 	url := fmt.Sprintf("%s/api/v1/audit/usage", a.config.AuditURL)
 	req, err := http.NewRequest("POST", url, io.NopCloser(bytes.NewReader(payload)))
 	if err != nil {
-		log.Printf("[metering] request error: %v", err)
+		slog.Error("[metering] request error", "error", err)
 		return
 	}
 	req.Header.Set("Content-Type", "application/json")
@@ -189,7 +188,7 @@ func (a *usageAggregator) flush() {
 
 	resp, err := a.client.Do(req)
 	if err != nil {
-		log.Printf("[metering] flush error: %v (batch: %d)", err, len(batch))
+		slog.Error("[metering] flush error", "error", err, "batch_size", len(batch))
 		return
 	}
 	resp.Body.Close()
