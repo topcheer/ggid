@@ -2,10 +2,9 @@
 package config
 
 import (
-	"os"
-	"strconv"
 	"time"
 
+	"github.com/ggid/ggid/pkg/httputil"
 	"github.com/ggid/ggid/services/audit/internal/consumer"
 	"github.com/ggid/ggid/services/audit/internal/data"
 )
@@ -47,17 +46,9 @@ func FromEnv() *Config {
 }
 
 func getEnv(key, def string) string {
-	if v := os.Getenv(key); v != "" {
-		return v
-	}
-	return def
+	return httputil.GetEnv(key, def)
 }
 
 func getEnvInt(key string, def int) int {
-	if v := os.Getenv(key); v != "" {
-		if n, err := strconv.Atoi(v); err == nil {
-			return n
-		}
-	}
-	return def
+	return httputil.GetEnvInt(key, def)
 }

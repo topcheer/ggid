@@ -2,10 +2,9 @@
 package config
 
 import (
-	"os"
-	"strconv"
 	"time"
 
+	"github.com/ggid/ggid/pkg/httputil"
 	"github.com/ggid/ggid/services/org/internal/data"
 )
 
@@ -29,7 +28,7 @@ func FromEnv() *Config {
 			Database:        getEnv("DB_DATABASE", "ggid"),
 			SSLMode:         getEnv("DB_SSL_MODE", "disable"),
 			MaxConns:        int32(getEnvInt("DB_MAX_CONNS", 20)), //nolint:gosec // G115: safe, values are small
-			MinConns:        int32(getEnvInt("DB_MIN_CONNS", 2)),   //nolint:gosec // G115: safe, values are small
+			MinConns:        int32(getEnvInt("DB_MIN_CONNS", 2)),  //nolint:gosec // G115: safe, values are small
 			MaxConnLifetime: time.Duration(getEnvInt("DB_CONN_LIFETIME", 300)) * time.Second,
 		},
 		NATSURL: getEnv("NATS_URL", "nats://localhost:4222"),
@@ -37,17 +36,9 @@ func FromEnv() *Config {
 }
 
 func getEnv(key, def string) string {
-	if v := os.Getenv(key); v != "" {
-		return v
-	}
-	return def
+	return httputil.GetEnv(key, def)
 }
 
 func getEnvInt(key string, def int) int {
-	if v := os.Getenv(key); v != "" {
-		if n, err := strconv.Atoi(v); err == nil {
-			return n
-		}
-	}
-	return def
+	return httputil.GetEnvInt(key, def)
 }
