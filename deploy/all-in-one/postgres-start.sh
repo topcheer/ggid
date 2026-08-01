@@ -7,8 +7,8 @@ DATA_DIR=/var/lib/postgresql/data
 if [ ! -d "$DATA_DIR/base" ]; then
     echo "Initializing PostgreSQL data directory..."
     su - postgres -c "initdb -D $DATA_DIR"
-    su - postgres -c "echo 'host all all 127.0.0.1/32 trust' >> $DATA_DIR/pg_hba.conf"
-    su - postgres -c "echo 'local all all trust' >> $DATA_DIR/pg_hba.conf"
+    su - postgres -c "echo 'host all all 127.0.0.1/32 scram-sha-256' >> $DATA_DIR/pg_hba.conf"
+    su - postgres -c "echo 'local all all scram-sha-256' >> $DATA_DIR/pg_hba.conf"
 
     # Start PostgreSQL temporarily to create role and database
     su - postgres -c "pg_ctl -D $DATA_DIR start -l /var/log/postgresql/postgresql.log"
