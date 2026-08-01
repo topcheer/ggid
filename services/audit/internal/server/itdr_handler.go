@@ -97,7 +97,7 @@ func (s *HTTPServer) handleITDRDetectionByID(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	det, err := s.itdrRepo.GetDetection(r.Context(), id)
+	det, err := s.itdrRepo.GetDetection(r.Context(), id, getTenantID(r))
 	if err != nil {
 		writeJSON(w, http.StatusNotFound, map[string]string{"error": "detection not found"})
 		return
@@ -123,7 +123,7 @@ func (s *HTTPServer) handleITDRAcknowledge(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	if err := s.itdrRepo.UpdateStatus(r.Context(), id, domain.DetectionAcknowledged); err != nil {
+	if err := s.itdrRepo.UpdateStatus(r.Context(), id, getTenantID(r), domain.DetectionAcknowledged); err != nil {
 		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "internal server error"})
 		return
 	}
@@ -158,7 +158,7 @@ func (s *HTTPServer) handleITDRResolve(w http.ResponseWriter, r *http.Request) {
 		status = domain.DetectionFalsePositive
 	}
 
-	if err := s.itdrRepo.UpdateStatus(r.Context(), id, status); err != nil {
+	if err := s.itdrRepo.UpdateStatus(r.Context(), id, getTenantID(r), status); err != nil {
 		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "internal server error"})
 		return
 	}

@@ -186,29 +186,30 @@ func (r *ITDRRepository) ListDetections(ctx context.Context, f domain.DetectionF
 	return detections, total, nil
 }
 
-// GetDetection returns a single detection by ID.
-func (r *ITDRRepository) GetDetection(ctx context.Context, id uuid.UUID) (*domain.Detection, error) {
+// GetDetection returns a single detection by ID, scoped to the given tenant.
+func (r *ITDRRepository) GetDetection(ctx context.Context, id, tenantID uuid.UUID) (*domain.Detection, error) {
 	if r.pool == nil {
 		return nil, fmt.Errorf("not found")
 	}
 
 	row := r.pool.QueryRow(ctx, `
 		SELECT id, tenant_id, rule_id, actor_id, severity, title, detail, event_ids, status, hit_count, detected_at, updated_at
-		FROM itdr_detections WHERE id = $1
-	`, id)
+		FROM itdr_detections WHERE id = $1 AND tenant_id = $2
+	`, id, tenantID)
 
 	return scanDetectionRow(row)
 }
 
-// UpdateStatus updates a detection's status (acknowledge/resolve/false_positive).
-func (r *ITDRRepository) UpdateStatus(ctx context.Context, id uuid.UUID, status domain.DetectionStatus) error {
+// UpdateStatus updates a detection's status (acknowledge/resolve/false_positive),
+// scoped to the given tenant.
+func (r *ITDRRepository) UpdateStatus(ctx context.Context, id, tenantID uuid.UUID, status domain.DetectionStatus) error {
 	if r.pool == nil {
 		return nil
 	}
 
 	_, err := r.pool.Exec(ctx, `
-		UPDATE itdr_detections SET status = $2, updated_at = now() WHERE id = $1
-	`, id, string(status))
+		UPDATE itdr_detections SET status = $3, updated_at = now() WHERE id = $1 AND tenant_id = $2
+	`, id, tenantID, string(status))
 	return err
 }
 
