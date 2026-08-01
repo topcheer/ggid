@@ -51,7 +51,7 @@ func (c *Cache) Middleware(next http.Handler) http.Handler {
 			c.mu.RUnlock()
 			if ok && entry.etag == etag && time.Now().Before(entry.expiresAt) {
 				w.Header().Set("ETag", entry.etag)
-				w.Header().Set("Cache-Control", "public, max-age="+strconv.Itoa(int(c.ttl.Seconds())))
+				w.Header().Set("Cache-Control", "private, max-age="+strconv.Itoa(int(c.ttl.Seconds())))
 				w.WriteHeader(http.StatusNotModified)
 				return
 			}
@@ -67,7 +67,7 @@ func (c *Cache) Middleware(next http.Handler) http.Handler {
 				w.Header()[k] = v
 			}
 			w.Header().Set("ETag", entry.etag)
-			w.Header().Set("Cache-Control", "public, max-age="+strconv.Itoa(int(c.ttl.Seconds())))
+			w.Header().Set("Cache-Control", "private, max-age="+strconv.Itoa(int(c.ttl.Seconds())))
 			w.Header().Set("X-Cache", "HIT")
 			w.WriteHeader(entry.statusCode)
 			w.Write(entry.body)
@@ -104,7 +104,10 @@ func (c *Cache) Invalidate() {
 }
 
 func cacheKey(r *http.Request) string {
-	return r.Method + ":" + r.URL.RequestURI()
+	// SECURITY: Include user ID in cache key to prevent cross-user data leakage.
+	// Without this, User B could receive User A's cached response for the same URL.
+	userID := r.Header.Get("X-User-ID")
+	return userID + ":" + r.Method + ":" + r.URL.RequestURI()
 }
 
 func generateETag(data []byte) string {
