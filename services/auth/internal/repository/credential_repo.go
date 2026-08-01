@@ -6,7 +6,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
-	"log"
+	"log/slog"
 	"time"
 
 	"github.com/ggid/ggid/services/auth/internal/domain"
@@ -168,7 +168,7 @@ func scanCredential(row rowScanner) (*domain.Credential, error) {
 	}
 	if metadata != nil {
 		if err := json.Unmarshal(metadata, &c.Metadata); err != nil {
-			log.Printf("[WARN] credential_repo: failed to unmarshal metadata for credential %s: %v", c.ID, err)
+			slog.Warn("credential_repo: failed to unmarshal metadata", "credential_id", c.ID, "error", err)
 		}
 	}
 	if lockedUntil.Valid {

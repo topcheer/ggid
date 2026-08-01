@@ -6,7 +6,6 @@ import (
 	"context"
 	"encoding/base64"
 	"fmt"
-	"log"
 	"log/slog"
 	"net/http"
 	"strings"
@@ -683,7 +682,7 @@ func (h *Handler) finishRegistration(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	log.Printf("WebAuthn finishRegistration: CreateCredential OK, user=%s cred_id_len=%d", userID, len(credential.ID))
+	slog.Info("WebAuthn finishRegistration: CreateCredential OK", "user_id", userID, "cred_id_len", len(credential.ID))
 
 	// Persist the credential if store is available.
 	if h.creds != nil {

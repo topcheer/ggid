@@ -5,7 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"log"
+	"log/slog"
 	"time"
 
 	"github.com/ggid/ggid/services/audit/internal/detection"
@@ -36,13 +36,13 @@ type Config struct {
 
 // EventConsumer subscribes to audit events from NATS JetStream and persists them.
 type EventConsumer struct {
-	nc       *nats.Conn
-	js       jetstream.JetStream
-	repo     *repository.AuditRepository
-	engine   *detection.Engine
-	cfg      Config
-	ctx      context.Context
-	cancel   context.CancelFunc
+	nc     *nats.Conn
+	js     jetstream.JetStream
+	repo   *repository.AuditRepository
+	engine *detection.Engine
+	cfg    Config
+	ctx    context.Context
+	cancel context.CancelFunc
 }
 
 // New creates a new NATS consumer.
@@ -64,11 +64,11 @@ func New(parentCtx context.Context, cfg Config, repo *repository.AuditRepository
 	ctx, cancel := context.WithCancel(parentCtx)
 
 	return &EventConsumer{
-		nc:    nc,
-		js:    js,
-		repo:  repo,
-		cfg:   cfg,
-		ctx:   ctx,
+		nc:     nc,
+		js:     js,
+		repo:   repo,
+		cfg:    cfg,
+		ctx:    ctx,
 		cancel: cancel,
 	}, nil
 }
@@ -78,7 +78,7 @@ func (c *EventConsumer) ensureStream(ctx context.Context) error {
 	_, err := c.js.CreateOrUpdateStream(ctx, jetstream.StreamConfig{
 		Name:      c.cfg.StreamName,
 		Subjects:  []string{c.cfg.Subject},
-	Retention:  jetstream.LimitsPolicy,
+		Retention: jetstream.LimitsPolicy,
 		Storage:   jetstream.FileStorage,
 		MaxAge:    72 * time.Hour,
 		MaxBytes:  1 << 30, // 1 GB
@@ -113,7 +113,7 @@ func (c *EventConsumer) Start() error {
 
 	// Start consuming in a goroutine.
 	go func() {
-		log.Printf("Audit Consumer: consuming from %s (consumer=%s)", c.cfg.Subject, c.cfg.Consumer)
+		slog.Info("Audit Consumer: consuming", "subject", c.cfg.Subject, "consumer", c.cfg.Consumer)
 
 		for {
 			select {
@@ -128,14 +128,14 @@ func (c *EventConsumer) Start() error {
 					time.Sleep(500 * time.Millisecond)
 					continue
 				}
-				log.Printf("Audit Consumer: fetch error: %v", err)
+				slog.Error("Audit Consumer: fetch error", "error", err)
 				time.Sleep(time.Second)
 				continue
 			}
 
 			for msg := range batch.Messages() {
 				if err := c.processMessage(ctx, msg); err != nil {
-					log.Printf("Audit Consumer: process error: %v", err)
+					slog.Error("Audit Consumer: process error", "error", err)
 					msg.Nak()
 				} else {
 					msg.Ack()
@@ -152,7 +152,7 @@ func (c *EventConsumer) processMessage(ctx context.Context, msg jetstream.Msg) e
 	var event domain.AuditEvent
 	if err := json.Unmarshal(msg.Data(), &event); err != nil {
 		// If we can't decode, ack and drop — don't retry forever.
-		log.Printf("Audit Consumer: failed to decode event: %v", err)
+		slog.Error("Audit Consumer: failed to decode event", "error", err)
 		return nil // returning nil so msg.Ack() is called
 	}
 
@@ -200,15 +200,14 @@ func (c *EventConsumer) SetEngine(engine *detection.Engine) {
 		}
 		data, err := json.Marshal(revokeMsg)
 		if err != nil {
-			log.Printf("ITDR→CAE: failed to marshal session.revoke: %v", err)
+			slog.Error("ITDR→CAE: failed to marshal session.revoke", "error", err)
 			return
 		}
 
 		if err := c.nc.Publish("ggid.session.revoke", data); err != nil {
-			log.Printf("ITDR→CAE: failed to publish session.revoke: %v", err)
+			slog.Error("ITDR→CAE: failed to publish session.revoke", "error", err)
 		} else {
-			log.Printf("ITDR→CAE: published session.revoke for user %s (rule=%s, severity=%s)",
-				det.ActorID, det.RuleID, det.Severity)
+			slog.Info("ITDR→CAE: published session.revoke", "user_id", det.ActorID, "rule", det.RuleID, "severity", det.Severity)
 		}
 	})
 }

@@ -5,7 +5,7 @@ package compliance
 import (
 	"context"
 	"fmt"
-	"log"
+	"log/slog"
 	"sync"
 	"time"
 )
@@ -20,12 +20,12 @@ type ScheduleConfig struct {
 
 // ScheduledReport is a generated report stored by the scheduler.
 type ScheduledReport struct {
-	ID        string        `json:"id"`
-	Type      ReportType    `json:"type"`
-	TenantID  string        `json:"tenant_id"`
-	Period    string        `json:"period"`
-	GeneratedAt time.Time   `json:"generated_at"`
-	Report    *ComplianceReport `json:"report"`
+	ID          string            `json:"id"`
+	Type        ReportType        `json:"type"`
+	TenantID    string            `json:"tenant_id"`
+	Period      string            `json:"period"`
+	GeneratedAt time.Time         `json:"generated_at"`
+	Report      *ComplianceReport `json:"report"`
 }
 
 // EmailSender sends compliance reports via email.
@@ -35,13 +35,13 @@ type EmailSender interface {
 
 // Scheduler generates compliance reports on a schedule and stores/delivers them.
 type Scheduler struct {
-	cfg      ScheduleConfig
-	query    EventQuery
-	emailer  EmailSender
-	mu       sync.RWMutex
-	reports  []*ScheduledReport
-	stopCh   chan struct{}
-	ticker   *time.Ticker
+	cfg     ScheduleConfig
+	query   EventQuery
+	emailer EmailSender
+	mu      sync.RWMutex
+	reports []*ScheduledReport
+	stopCh  chan struct{}
+	ticker  *time.Ticker
 }
 
 // NewScheduler creates a new compliance report scheduler.
@@ -73,7 +73,7 @@ func (s *Scheduler) Start() {
 			}
 		}
 	}()
-	log.Printf("Compliance scheduler started: interval=%v types=%v", s.cfg.Interval, s.cfg.ReportTypes)
+	slog.Info("Compliance scheduler started", "interval", s.cfg.Interval, "types", s.cfg.ReportTypes)
 }
 
 // Stop halts the scheduler.
@@ -95,17 +95,17 @@ func (s *Scheduler) GenerateAll(ctx context.Context) {
 		for _, rt := range s.cfg.ReportTypes {
 			report, err := gen.Generate(ctx, rt, from, now)
 			if err != nil {
-				log.Printf("Compliance scheduler: failed to generate %s for tenant %s: %v", rt, tenantID, err)
+				slog.Error("Compliance scheduler: failed to generate report", "report_type", rt, "tenant_id", tenantID, "error", err)
 				continue
 			}
 
 			sr := &ScheduledReport{
-				ID:        fmt.Sprintf("%s-%s-%d", tenantID, rt, now.Unix()),
-				Type:      rt,
-				TenantID:  tenantID,
-				Period:    fmt.Sprintf("%s to %s", from.Format("2006-01-02"), now.Format("2006-01-02")),
+				ID:          fmt.Sprintf("%s-%s-%d", tenantID, rt, now.Unix()),
+				Type:        rt,
+				TenantID:    tenantID,
+				Period:      fmt.Sprintf("%s to %s", from.Format("2006-01-02"), now.Format("2006-01-02")),
 				GeneratedAt: now,
-				Report:    report,
+				Report:      report,
 			}
 
 			s.mu.Lock()
@@ -116,13 +116,13 @@ func (s *Scheduler) GenerateAll(ctx context.Context) {
 			if s.emailer != nil && len(s.cfg.Recipients) > 0 {
 				subject := fmt.Sprintf("Compliance Report: %s (%s)", rt, sr.Period)
 				body := []byte(fmt.Sprintf("Report ID: %s\nTenant: %s\nPeriod: %s\nSummary: %d total events, %d failed logins\n",
-				sr.ID, tenantID, sr.Period, report.Summary.TotalEvents, report.Summary.FailedLogins))
+					sr.ID, tenantID, sr.Period, report.Summary.TotalEvents, report.Summary.FailedLogins))
 				if err := s.emailer.Send(s.cfg.Recipients, subject, body); err != nil {
-					log.Printf("Compliance scheduler: email delivery failed: %v", err)
+					slog.Error("Compliance scheduler: email delivery failed", "error", err)
 				}
 			}
 
-			log.Printf("Compliance scheduler: generated %s report for tenant %s", rt, tenantID)
+			slog.Info("Compliance scheduler: generated report", "report_type", rt, "tenant_id", tenantID)
 		}
 	}
 }

@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"log"
+	"log/slog"
 	"net/http"
 	"net/url"
 	"os"
@@ -20,7 +20,7 @@ var smsHTTPClient = &http.Client{Timeout: 10 * time.Second}
 type LogSMSSender struct{}
 
 func (s *LogSMSSender) SendSMS(to, message string) error {
-	log.Printf("[DEV SMS] to=%s: %s", to, message)
+	slog.Info("[DEV SMS] sending", "to", to, "message", message)
 	return nil
 }
 
@@ -73,7 +73,7 @@ func (s *TwilioSMSSender) SendSMS(to, message string) error {
 		return fmt.Errorf("twilio error %d: %v", resp.StatusCode, errResp["message"])
 	}
 
-	log.Printf("SMS sent via Twilio to %s", to)
+	slog.Info("SMS sent via Twilio", "to", to)
 	return nil
 }
 
@@ -108,7 +108,7 @@ func (s *AWSSNSSMSSender) SendSMS(to, message string) error {
 	// This implementation logs the intent and returns nil in dev mode.
 	// Production deployment would use: sns.Publish(phoneNumber=to, message=message)
 
-	log.Printf("SMS via AWS SNS to=%s region=%s (requires SDK for SigV4 signing)", to, s.region)
+	slog.Info("SMS via AWS SNS", "to", to, "region", s.region, "note", "requires SDK for SigV4 signing")
 	return fmt.Errorf("AWS SNS SMS requires AWS SDK for SigV4 signing — configure in deployment")
 }
 
@@ -120,14 +120,14 @@ func NewSMSSenderFromEnv() SMSSender {
 	provider := os.Getenv("GGID_SMS_PROVIDER")
 	switch strings.ToLower(provider) {
 	case "twilio":
-		log.Println("SMS provider: Twilio")
+		slog.Info("SMS provider", "provider", "twilio")
 		return NewTwilioSMSSender()
 	case "sns":
-		log.Println("SMS provider: AWS SNS")
+		slog.Info("SMS provider", "provider", "aws sns")
 		return NewAWSSNSSMSSender()
 	default:
 		if os.Getenv("GGID_ENV") == "production" && provider == "" {
-			log.Println("WARNING: no GGID_SMS_PROVIDER set in production — SMS will be logged only")
+			slog.Info("WARNING: no GGID_SMS_PROVIDER set in production — SMS will be logged only")
 		}
 		return &LogSMSSender{}
 	}

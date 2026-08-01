@@ -2,7 +2,7 @@ package httpserver
 
 import (
 	"encoding/json"
-	"log"
+	"log/slog"
 	"net/http"
 	"strings"
 	"time"
@@ -132,7 +132,7 @@ func (s *HTTPServer) generateEvidencePackage(w http.ResponseWriter, r *http.Requ
 		gen := compliance.NewGenerator(adapter)
 		report, err = gen.Generate(r.Context(), reportType, from, to)
 		if err != nil {
-			log.Printf("evidence-package: report generation error: %v", err)
+			slog.Error("evidence-package: report generation error", "error", err)
 			// Continue with nil report — evidence package still useful without it.
 		}
 	}

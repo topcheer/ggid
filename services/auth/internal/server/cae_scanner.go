@@ -2,7 +2,6 @@ package server
 
 import (
 	"context"
-	"log"
 	"log/slog"
 	"time"
 
@@ -27,14 +26,14 @@ func (h *Handler) StartCAEScanner(ctx context.Context, pool *pgxpool.Pool, inter
 				slog.Error("goroutine panic", "location", "CAE scanner", "error", r)
 			}
 		}()
-		log.Printf("CAE: background scanner started (interval=%s)", interval)
+		slog.Info("CAE: background scanner started", "interval", interval)
 		ticker := time.NewTicker(interval)
 		defer ticker.Stop()
 
 		for {
 			select {
 			case <-ctx.Done():
-				log.Println("CAE: background scanner stopped")
+				slog.Info("CAE: background scanner stopped")
 				return
 			case <-ticker.C:
 				h.runCAESweep(ctx, pool)
@@ -61,7 +60,7 @@ func (h *Handler) runCAESweep(ctx context.Context, pool *pgxpool.Pool) {
 		LIMIT 500
 	`)
 	if err != nil {
-		log.Printf("CAE: failed to query sessions: %v", err)
+		slog.Error("CAE: failed to query sessions", "error", err)
 		return
 	}
 	defer rows.Close()
@@ -86,11 +85,11 @@ func (h *Handler) runCAESweep(ctx context.Context, pool *pgxpool.Pool) {
 
 		if action == "deny" || action == "revoke" {
 			denied++
-			log.Printf("CAE: session %s denied for user %s (policy=%s), revoking", sessionID, userID, action)
+			slog.Warn("CAE: session denied", "session_id", sessionID, "user_id", userID, "policy", action)
 
 			// Revoke the session: delete it from the DB and invalidate tokens.
 			if _, err := pool.Exec(ctx, `DELETE FROM sessions WHERE id = $1`, sessionID); err != nil {
-				log.Printf("CAE: failed to delete session %s: %v", sessionID, err)
+				slog.Error("CAE: failed to delete session", "session_id", sessionID, "error", err)
 			}
 
 			// Publish session revocation event for other services.
@@ -108,6 +107,6 @@ func (h *Handler) runCAESweep(ctx context.Context, pool *pgxpool.Pool) {
 	}
 
 	if evaluated > 0 {
-		log.Printf("CAE: sweep completed — %d sessions evaluated, %d denied", evaluated, denied)
+		slog.Info("CAE: sweep completed", "evaluated", evaluated, "denied", denied)
 	}
 }
