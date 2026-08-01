@@ -1942,6 +1942,7 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 			writeJSON(w, http.StatusMethodNotAllowed, map[string]any{"error": map[string]string{"code": "method_not_allowed", "message": "method_not_allowed"}})
 			return
 		}
+
 		_ = r.ParseForm()
 
 		userCode := r.FormValue("user_code")
@@ -2570,10 +2571,10 @@ func introspectRequestAuthenticated(oauthSvc *service.OAuthService, r *http.Requ
 		if resp == nil || !resp.Active {
 			return false
 		}
-		// SECURITY: Only allow tokens whose audience is the AS itself
-		// (e.g., tokens minted for introspection/resource-server access).
-		// Regular user access tokens must NOT be able to introspect others.
-		return resp.Aud == "ggid" || resp.Aud == "introspection"
+		// SECURITY: Only allow tokens explicitly minted for introspection
+		// or resource-server access. Regular user access tokens (aud=ggid)
+		// must NOT be able to introspect other users' tokens (RFC 7662 §2.1).
+		return resp.Aud == "introspection"
 	}
 
 	return false
