@@ -1511,9 +1511,13 @@ func filterSafeScopes(scopes []string) []string {
 		if sc == "" {
 			continue
 		}
-		if sc == "admin" ||
-			strings.HasPrefix(sc, "platform:") ||
-			strings.HasPrefix(sc, "tenant:") {
+		// SECURITY: Case-insensitive comparison — gateway uses ToLower/EqualFold
+		// to check admin scopes, so "Platform:admin" would pass gateway checks
+		// while bypassing this filter if compared case-sensitively.
+		lower := strings.ToLower(sc)
+		if lower == "admin" ||
+			strings.HasPrefix(lower, "platform:") ||
+			strings.HasPrefix(lower, "tenant:") {
 			continue
 		}
 		filtered = append(filtered, sc)
@@ -1536,11 +1540,11 @@ func splitScopes(s string) []string {
 func intersectScopes(requested, allowed []string) []string {
 	allowedSet := make(map[string]bool, len(allowed))
 	for _, s := range allowed {
-		allowedSet[s] = true
+		allowedSet[strings.ToLower(s)] = true
 	}
 	var result []string
 	for _, r := range requested {
-		if allowedSet[r] {
+		if allowedSet[strings.ToLower(r)] {
 			result = append(result, r)
 		}
 	}
