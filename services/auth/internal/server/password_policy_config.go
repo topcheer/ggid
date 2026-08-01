@@ -124,7 +124,7 @@ func (h *Handler) handlePasswordPolicyConfig(w http.ResponseWriter, r *http.Requ
 		}
 
 		if err := service.SetPasswordPolicyHierarchical(r.Context(), pool, scope, tenantID, clientID, body.Policy); err != nil {
-			writeError(w, http.StatusInternalServerError, "failed to save: "+err.Error())
+			writeError(w, http.StatusInternalServerError, "failed to save policy")
 			return
 		}
 

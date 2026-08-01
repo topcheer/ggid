@@ -344,7 +344,7 @@ func (h *HTTPHandler) sbTargetByID(w http.ResponseWriter, r *http.Request, tc *g
 		if h.secretBrokerRepo != nil && tc != nil {
 			h.secretBrokerRepo.DeleteTarget(r.Context(), id, tc.TenantID)
 		}
-		writeJSON(w, http.StatusOK, map[string]bool{"deleted": true})
+		w.WriteHeader(http.StatusNoContent)
 	case http.MethodGet:
 		if h.secretBrokerRepo != nil && tc != nil {
 			t, err := h.secretBrokerRepo.GetTarget(r.Context(), id, tc.TenantID)

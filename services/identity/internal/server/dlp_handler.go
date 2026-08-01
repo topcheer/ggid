@@ -332,7 +332,7 @@ func (h *HTTPHandler) handleDLP(w http.ResponseWriter, r *http.Request) {
 		if h.dlpPolicyRepo != nil && tc != nil {
 			h.dlpPolicyRepo.Delete(r.Context(), id, tc.TenantID)
 		}
-		writeJSON(w, http.StatusOK, map[string]bool{"deleted": true})
+		w.WriteHeader(http.StatusNoContent)
 	}
 }
 

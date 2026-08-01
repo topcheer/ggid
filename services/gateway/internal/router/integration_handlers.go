@@ -627,7 +627,7 @@ func (gw *Gateway) handleTenantDetail(w http.ResponseWriter, r *http.Request) {
 			writeGatewayJSONError(w, http.StatusInternalServerError, "delete failed")
 			return
 		}
-		writeGatewayJSON(w, http.StatusOK, map[string]any{"deleted": true, "tenant_id": tenantIDStr})
+		w.WriteHeader(http.StatusNoContent)
 		return
 	}
 

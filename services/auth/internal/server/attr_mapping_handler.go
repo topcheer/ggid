@@ -92,7 +92,7 @@ func (h *Handler) attrMappingCreate(w http.ResponseWriter, r *http.Request) {
 	}
 	m.TenantID = tc.TenantID.String()
 	if err := ValidateMapping(&m); err != nil {
-		writeError(w, http.StatusBadRequest, err.Error())
+		writeError(w, http.StatusBadRequest, "invalid request")
 		return
 	}
 	if err := h.attrMapRepo.Create(r.Context(), &m); err != nil {
@@ -125,7 +125,7 @@ func (h *Handler) attrMappingUpdate(w http.ResponseWriter, r *http.Request, id s
 	}
 	m.ID = id
 	if err := ValidateMapping(&m); err != nil {
-		writeError(w, http.StatusBadRequest, err.Error())
+		writeError(w, http.StatusBadRequest, "invalid request")
 		return
 	}
 	if err := h.attrMapRepo.Update(r.Context(), &m); err != nil {
@@ -143,7 +143,7 @@ func (h *Handler) attrMappingDelete(w http.ResponseWriter, r *http.Request, id s
 		writeError(w, http.StatusInternalServerError, "failed to delete mapping")
 		return
 	}
-	writeJSON(w, http.StatusOK, map[string]string{"status": "deleted"})
+	w.WriteHeader(http.StatusNoContent)
 }
 
 func (h *Handler) attrMappingTest(w http.ResponseWriter, r *http.Request) {

@@ -197,7 +197,7 @@ func (s *HTTPServer) handleWebhooksList(w http.ResponseWriter, r *http.Request) 
 				_ = s.memMapRepo2.DeleteJSON(r.Context(), "audit_webhook_configs", whID)
 			}
 		}
-		writeJSON(w, http.StatusOK, map[string]any{"status": "deleted", "id": whID})
+		w.WriteHeader(http.StatusNoContent)
 	case http.MethodPut, http.MethodPatch:
 		// Extract webhook ID from path: /api/v1/webhooks/{id}
 		pathParts := strings.Split(r.URL.Path, "/")

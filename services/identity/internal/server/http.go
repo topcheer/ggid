@@ -946,7 +946,7 @@ func (h *HTTPHandler) deleteUser(ctx context.Context, userID uuid.UUID, w http.R
 		writeServiceError(w, err)
 		return
 	}
-	writeJSON(w, http.StatusOK, map[string]string{"status": "deleted", "id": userID.String()})
+	w.WriteHeader(http.StatusNoContent)
 
 	// Invalidate user list cache.
 	globalTTLCache.Invalidate("users:default:")

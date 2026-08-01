@@ -168,7 +168,7 @@ func (h *Handler) handleFeatureFlags(w http.ResponseWriter, r *http.Request) {
 					flagAuditLog = append(flagAuditLog, FlagAuditEntry{
 						FlagName: name, Action: "deleted", Timestamp: time.Now(), Actor: "admin",
 					})
-					writeJSON(w, http.StatusOK, map[string]string{"status": "deleted", "name": name})
+					w.WriteHeader(http.StatusNoContent)
 					return
 				}
 			}

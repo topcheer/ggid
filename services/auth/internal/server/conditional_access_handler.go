@@ -87,7 +87,7 @@ func (h *Handler) capCreate(w http.ResponseWriter, r *http.Request, tenantID uui
 		return
 	}
 	if err := repository.ValidateAction(req.Action); err != nil {
-		errors.WriteSimpleAPIError(w, http.StatusBadRequest, "VALIDATION_ERROR", err.Error())
+		errors.WriteSimpleAPIError(w, http.StatusBadRequest, "VALIDATION_ERROR", "validation failed")
 		return
 	}
 
@@ -148,7 +148,7 @@ func (h *Handler) capUpdate(w http.ResponseWriter, r *http.Request, tenantID, id
 		return
 	}
 	if err := repository.ValidateAction(req.Action); err != nil {
-		errors.WriteSimpleAPIError(w, http.StatusBadRequest, "VALIDATION_ERROR", err.Error())
+		errors.WriteSimpleAPIError(w, http.StatusBadRequest, "VALIDATION_ERROR", "validation failed")
 		return
 	}
 
@@ -192,7 +192,7 @@ func (h *Handler) capDelete(w http.ResponseWriter, r *http.Request, tenantID, id
 		nil,
 	)
 
-	writeJSON(w, http.StatusOK, map[string]string{"status": "deleted"})
+	w.WriteHeader(http.StatusNoContent)
 }
 
 func (h *Handler) capEvaluate(w http.ResponseWriter, r *http.Request) {

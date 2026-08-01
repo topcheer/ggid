@@ -119,7 +119,7 @@ func (h *Handler) deleteDLPPolicy(w http.ResponseWriter, r *http.Request) {
 	if h.memMapRepo != nil {
 		h.memMapRepo.DeleteJSON(r.Context(), "auth_dlp_policies", id)
 	}
-	writeJSON(w, http.StatusOK, map[string]string{"status": "deleted"})
+	w.WriteHeader(http.StatusNoContent)
 }
 
 // handleDLPScan handles POST /api/v1/dlp/scan — test endpoint to scan a response body for PII.

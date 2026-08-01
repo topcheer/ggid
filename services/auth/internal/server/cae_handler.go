@@ -141,7 +141,7 @@ func (h *Handler) caeTriggers(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 		}
-		writeJSON(w, http.StatusOK, map[string]string{"status": "deleted"})
+		w.WriteHeader(http.StatusNoContent)
 
 	default:
 		errors.WriteSimpleAPIError(w, http.StatusMethodNotAllowed, "METHOD_NOT_ALLOWED", "method not allowed")

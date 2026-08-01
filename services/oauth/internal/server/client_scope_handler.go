@@ -70,7 +70,7 @@ func handleClientScopes(w http.ResponseWriter, r *http.Request) {
 			if mapRepoVar != nil {
 				mapRepoVar.Delete(r.Context(), "oauth_client_scopes", clientID)
 			}
-			writeJSON(w, http.StatusOK, map[string]any{"status": "deleted", "client_id": clientID})
+			w.WriteHeader(http.StatusNoContent)
 		}
 
 	default:

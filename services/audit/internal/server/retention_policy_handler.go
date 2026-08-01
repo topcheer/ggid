@@ -152,7 +152,7 @@ func (s *HTTPServer) handleRetentionPolicies(w http.ResponseWriter, r *http.Requ
 			}
 			s.memMapRepo2.DeleteJSON(r.Context(), "audit_retention_policies", id)
 		}
-		writeJSON(w, http.StatusOK, map[string]any{"status": "deleted", "id": id})
+		w.WriteHeader(http.StatusNoContent)
 
 	default:
 		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")

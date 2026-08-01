@@ -116,7 +116,7 @@ func (h *HTTPHandler) handleIdPConfig(w http.ResponseWriter, r *http.Request) {
 			writeJSONError(w, http.StatusInternalServerError, "internal server error")
 			return
 		}
-		writeJSON(w, http.StatusOK, map[string]string{"status": "deleted"})
+		w.WriteHeader(http.StatusNoContent)
 
 	default:
 		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")

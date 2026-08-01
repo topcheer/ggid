@@ -134,5 +134,5 @@ func (h *Handler) deleteAuthMethodPolicy(w http.ResponseWriter, r *http.Request,
 		errors.WriteSimpleAPIError(w, http.StatusInternalServerError, "INTERNAL", "failed to delete policy")
 		return
 	}
-	writeJSON(w, http.StatusOK, map[string]string{"status": "deleted"})
+	w.WriteHeader(http.StatusNoContent)
 }

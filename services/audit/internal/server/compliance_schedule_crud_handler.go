@@ -92,7 +92,7 @@ func (s *HTTPServer) handleComplianceScheduleCRUD(w http.ResponseWriter, r *http
 		id := r.URL.Query().Get("id")
 		if s.pool != nil {
 			_, _ = s.pool.Exec(r.Context(), `DELETE FROM compliance_schedules WHERE id = $1`, id)
-			writeJSON(w, http.StatusOK, map[string]string{"status": "deleted"})
+			w.WriteHeader(http.StatusNoContent)
 			return
 		}
 		globalSchedules.mu.Lock()
@@ -100,7 +100,7 @@ func (s *HTTPServer) handleComplianceScheduleCRUD(w http.ResponseWriter, r *http
 		for i, sc := range globalSchedules.schedules {
 			if sc["id"] == id {
 				globalSchedules.schedules = append(globalSchedules.schedules[:i], globalSchedules.schedules[i+1:]...)
-				writeJSON(w, http.StatusOK, map[string]string{"status": "deleted"})
+				w.WriteHeader(http.StatusNoContent)
 				return
 			}
 		}

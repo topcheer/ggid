@@ -99,7 +99,7 @@ func (h *Handler) handleGeofencing(w http.ResponseWriter, r *http.Request) {
 				ruleID, tenantID)
 		}
 
-		writeJSON(w, http.StatusOK, map[string]any{"deleted": true, "id": ruleID})
+		w.WriteHeader(http.StatusNoContent)
 
 	case http.MethodPost:
 		// Check if this is a /check action

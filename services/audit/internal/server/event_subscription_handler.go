@@ -76,7 +76,7 @@ func (s *HTTPServer) handleEventSubscription(w http.ResponseWriter, r *http.Requ
 			}
 			_ = s.memMapRepo2.DeleteJSON(r.Context(), "audit_event_subscriptions", id)
 		}
-		writeJSON(w, http.StatusOK, map[string]any{"status": "deleted", "id": id})
+		w.WriteHeader(http.StatusNoContent)
 		return
 	}
 	writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")

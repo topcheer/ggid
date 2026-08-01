@@ -319,7 +319,7 @@ func (h *HTTPHandler) reviewSchedDelete(w http.ResponseWriter, r *http.Request, 
 		writeJSONError(w, http.StatusInternalServerError, "failed to delete schedule")
 		return
 	}
-	writeJSON(w, http.StatusOK, map[string]string{"status": "deleted", "id": id})
+	w.WriteHeader(http.StatusNoContent)
 }
 
 func (h *HTTPHandler) reviewSchedRun(w http.ResponseWriter, r *http.Request) {

@@ -118,7 +118,7 @@ func (h *HTTPHandler) ztnaAppByID(w http.ResponseWriter, r *http.Request) {
 			writeJSONError(w, http.StatusInternalServerError, "failed")
 			return
 		}
-		writeJSON(w, http.StatusOK, map[string]bool{"deleted": true})
+		w.WriteHeader(http.StatusNoContent)
 	default:
 		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 	}

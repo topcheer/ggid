@@ -310,7 +310,7 @@ func (s *HTTPServer) handleOrgByID(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		s.publishAuditEvent("org.delete", "success", "organization", id, uuid.Nil)
-		writeJSON(w, http.StatusOK, map[string]string{"status": "deleted"})
+		w.WriteHeader(http.StatusNoContent)
 	case http.MethodPut:
 		s.updateOrg(w, r, id)
 	default:
@@ -636,7 +636,7 @@ func (s *HTTPServer) handleDepartmentByID(w http.ResponseWriter, r *http.Request
 			writeServiceError(w, err)
 			return
 		}
-		writeJSON(w, http.StatusOK, map[string]string{"status": "deleted"})
+		w.WriteHeader(http.StatusNoContent)
 	default:
 		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 	}
@@ -783,7 +783,7 @@ func (s *HTTPServer) handleTeamByID(w http.ResponseWriter, r *http.Request) {
 			writeServiceError(w, err)
 			return
 		}
-		writeJSON(w, http.StatusOK, map[string]string{"status": "deleted"})
+		w.WriteHeader(http.StatusNoContent)
 	default:
 		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 	}

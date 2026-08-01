@@ -518,8 +518,8 @@ func TestHandleAnomalyRules_Delete(t *testing.T) {
 	srv := newTestServer(nil, nil)
 
 	w := doRequest(srv, "DELETE", "/api/v1/audit/rules?id="+ruleID, "")
-	if w.Code != http.StatusOK {
-		t.Fatalf("expected 200, got %d", w.Code)
+	if w.Code != http.StatusNoContent {
+		t.Fatalf("expected 204, got %d", w.Code)
 	}
 
 	if len(anomalyRules) != 0 {
@@ -1146,8 +1146,8 @@ func TestHandleWebhooks_Delete(t *testing.T) {
 
 	// Delete it
 	w2 := doRequest(srv, "DELETE", "/api/v1/audit/webhooks?id="+hookID+"&tenant_id="+testTenantID.String(), "")
-	if w2.Code != http.StatusOK {
-		t.Fatalf("expected 200 on delete, got %d: %s", w2.Code, w2.Body.String())
+	if w2.Code != http.StatusNoContent {
+		t.Fatalf("expected 204 on delete, got %d: %s", w2.Code, w2.Body.String())
 	}
 }
 

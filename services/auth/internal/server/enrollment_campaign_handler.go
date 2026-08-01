@@ -78,7 +78,7 @@ func (h *Handler) handleEnrollmentCampaignByID(w http.ResponseWriter, r *http.Re
 		for i, c := range campaignStore {
 			if c.ID == id {
 				campaignStore = append(campaignStore[:i], campaignStore[i+1:]...)
-				writeJSON(w, http.StatusOK, map[string]string{"status": "deleted"})
+				w.WriteHeader(http.StatusNoContent)
 				return
 			}
 		}

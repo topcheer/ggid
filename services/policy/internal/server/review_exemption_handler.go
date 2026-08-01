@@ -43,7 +43,7 @@ func (s *HTTPServer) handleReviewExemptions(w http.ResponseWriter, r *http.Reque
 		id := strings.TrimPrefix(r.URL.Path, "/api/v1/policies/access-review-exemptions/")
 		if id == "" || id == r.URL.Path { writeJSONError(w, http.StatusBadRequest, "id required"); return }
 		exemptMu.Lock(); delete(exemptions, id); exemptMu.Unlock()
-		writeJSON(w, http.StatusOK, map[string]any{"status": "deleted", "id": id})
+		w.WriteHeader(http.StatusNoContent)
 	default:
 		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 	}

@@ -449,7 +449,7 @@ func TestHandleRoleByID_GetAndDelete(t *testing.T) {
 
 	// DELETE
 	w = doReq("DELETE", "/api/v1/roles/"+role.ID.String(), "")
-	assertStatus(t, w, http.StatusOK)
+	assertStatus(t, w, http.StatusNoContent)
 }
 
 func TestHandleRoleByID_InvalidID(t *testing.T) {
@@ -744,7 +744,7 @@ func TestHandlePolicyByID_Delete(t *testing.T) {
 		TenantID: h.tenantID, Name: "P1", Effect: domain.EffectAllow,
 	})
 	w := doReq("DELETE", "/api/v1/policies/"+policy.ID.String(), "")
-	assertStatus(t, w, http.StatusOK)
+	assertStatus(t, w, http.StatusNoContent)
 }
 
 func TestHandlePolicyByID_InvalidID(t *testing.T) {
@@ -1166,7 +1166,7 @@ func TestHandleAttributeMapping_InvalidJSON(t *testing.T) {
 
 func TestHandleAttributeMapping_Delete(t *testing.T) {
 	w := doReq("DELETE", "/api/v1/policies/attribute-mapping?id=some-id", "")
-	assertStatus(t, w, http.StatusOK)
+	assertStatus(t, w, http.StatusNoContent)
 }
 
 func TestHandleAttributeMapping_DeleteMissingID(t *testing.T) {

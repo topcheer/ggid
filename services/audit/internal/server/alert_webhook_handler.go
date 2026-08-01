@@ -128,7 +128,7 @@ func (s *HTTPServer) handleAlertWebhooks(w http.ResponseWriter, r *http.Request)
 		if s.pool != nil {
 			_, err := s.pool.Exec(r.Context(), `DELETE FROM audit_alert_webhooks WHERE id::text = $1 AND tenant_id::text = $2`, id, tid)
 			if err == nil {
-				writeJSON(w, http.StatusOK, map[string]string{"status": "deleted"})
+				w.WriteHeader(http.StatusNoContent)
 				return
 			}
 		}
@@ -138,7 +138,7 @@ func (s *HTTPServer) handleAlertWebhooks(w http.ResponseWriter, r *http.Request)
 		for i, h := range globalAlertWebhooks.webhooks {
 			if h["id"] == id && h["tenant_id"] == tid {
 				globalAlertWebhooks.webhooks = append(globalAlertWebhooks.webhooks[:i], globalAlertWebhooks.webhooks[i+1:]...)
-				writeJSON(w, http.StatusOK, map[string]string{"status": "deleted"})
+				w.WriteHeader(http.StatusNoContent)
 				return
 			}
 		}

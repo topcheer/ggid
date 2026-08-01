@@ -85,10 +85,10 @@ func (h *HTTPHandler) handleSelfServiceDevices(w http.ResponseWriter, r *http.Re
 				DELETE FROM passkey_credentials WHERE id::text = $1 AND user_id::text = $2 AND tenant_id::text = $3`,
 			deviceID, userIDStr, tenantIDStr)
 		if err != nil || tag.RowsAffected() == 0 {
-			writeJSON(w, http.StatusOK, map[string]any{"deleted": false, "error": "device not found or not owned by user"})
+			w.WriteHeader(http.StatusNoContent)
 			return
 		}
-		writeJSON(w, http.StatusOK, map[string]any{"deleted": true, "device_id": deviceID})
+		w.WriteHeader(http.StatusNoContent)
 		return
 	}
 
@@ -334,7 +334,7 @@ func (h *HTTPHandler) handleWebhookCRUD(w http.ResponseWriter, r *http.Request) 
 			writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "failed to delete webhook"})
 			return
 		}
-		writeJSON(w, http.StatusOK, map[string]any{"deleted": true, "id": webhookID})
+		w.WriteHeader(http.StatusNoContent)
 
 	default:
 		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")

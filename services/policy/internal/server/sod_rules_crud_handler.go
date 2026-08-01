@@ -119,7 +119,7 @@ func (s *HTTPServer) handleSoDRules(w http.ResponseWriter, r *http.Request) {
 		if s.policyMap != nil {
 			s.policyMap.Delete(r.Context(), "policy_sod_rule_pairs", id)
 		}
-		writeJSON(w, http.StatusOK, map[string]any{"status": "deleted", "id": id})
+		w.WriteHeader(http.StatusNoContent)
 
 	default:
 		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")

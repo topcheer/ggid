@@ -89,7 +89,7 @@ func (h *Handler) handleMultiHashRehash(w http.ResponseWriter, r *http.Request) 
 func returnRehashResult(w http.ResponseWriter, password, oldHash string) {
 	resp, err := rehashPassword(password, oldHash)
 	if err != nil {
-		writeError(w, http.StatusBadRequest, err.Error())
+		writeError(w, http.StatusBadRequest, "invalid request")
 		return
 	}
 	writeJSON(w, http.StatusOK, resp)

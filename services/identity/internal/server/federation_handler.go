@@ -70,7 +70,7 @@ func (h *HTTPHandler) fedEntities(w http.ResponseWriter, r *http.Request) {
 		if id, err := uuid.Parse(idStr); err == nil && h.fedRepo != nil && tc != nil {
 			h.fedRepo.DeleteEntity(r.Context(), id, tc.TenantID)
 		}
-		writeJSON(w, http.StatusOK, map[string]bool{"deleted": true})
+		w.WriteHeader(http.StatusNoContent)
 	}
 }
 

@@ -275,7 +275,7 @@ func (h *Handler) handleProviderConfigSet(w http.ResponseWriter, r *http.Request
 	}
 
 	if err := hierarchy.SetConfig(r.Context(), pool, cfg); err != nil {
-		writeError(w, http.StatusInternalServerError, "failed to save provider config: "+err.Error())
+		writeError(w, http.StatusInternalServerError, "failed to save provider config")
 		return
 	}
 

@@ -180,7 +180,7 @@ func (h *HTTPHandler) handleRateLimits(w http.ResponseWriter, r *http.Request) {
 				h.rateLimitRepo.Delete(r.Context(), ruleID, tc.TenantID)
 			}
 		}
-		writeJSON(w, http.StatusOK, map[string]bool{"deleted": true})
+		w.WriteHeader(http.StatusNoContent)
 		return
 	}
 

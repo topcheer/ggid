@@ -319,6 +319,5 @@ func TestDeleteCredential_SuccessWithStore2(t *testing.T) {
 	req.Header.Set("X-Tenant-ID", testTenantIDStr)
 	req.Header.Set("X-User-ID", testUserIDStr)
 	h.deleteCredential(rr, req)
-	assertStatus(t, rr, http.StatusOK)
-	assertBodyContains(t, rr, "deleted")
+	assertStatus(t, rr, http.StatusNoContent)
 }

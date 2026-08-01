@@ -68,7 +68,7 @@ func (h *Handler) handleOTPSend(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := otpSvc.SendOTP(r.Context(), tc.TenantID, req.Identifier, channel); err != nil {
-		writeError(w, http.StatusBadRequest, err.Error())
+		writeError(w, http.StatusBadRequest, "invalid request")
 		return
 	}
 
@@ -133,7 +133,7 @@ func (h *Handler) handleOTPVerify(w http.ResponseWriter, r *http.Request) {
 
 	ticket, err := otpSvc.VerifyOTP(r.Context(), tc.TenantID, req.Identifier, req.Code, channel)
 	if err != nil {
-		writeError(w, http.StatusUnauthorized, err.Error())
+		writeError(w, http.StatusUnauthorized, "authentication failed")
 		return
 	}
 

@@ -170,7 +170,7 @@ func (h *Handler) handleMFAFactors(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 		mfaFactorMu.Unlock()
-		writeJSON(w, http.StatusOK, map[string]any{"status": "deleted", "factor_id": factorID})
+		w.WriteHeader(http.StatusNoContent)
 		return
 	}
 	writeError(w, http.StatusMethodNotAllowed, "method not allowed")

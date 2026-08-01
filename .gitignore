@@ -83,3 +83,6 @@ saml-demo
 /repair-chain
 /verify-chain
 /auto-review
+services/audit/server
+services/gateway/gateway
+*.bak3

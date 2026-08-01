@@ -591,7 +591,7 @@ func (h *Handler) beginRegistration(w http.ResponseWriter, r *http.Request) {
 
 	ctx, tenantID, userID, err := getTenantAndUser(r)
 	if err != nil {
-		writeError(w, http.StatusBadRequest, err.Error())
+		writeError(w, http.StatusBadRequest, "invalid request")
 		return
 	}
 
@@ -649,7 +649,7 @@ func (h *Handler) finishRegistration(w http.ResponseWriter, r *http.Request) {
 
 	ctx, tenantID, userID, err := getTenantAndUser(r)
 	if err != nil {
-		writeError(w, http.StatusBadRequest, err.Error())
+		writeError(w, http.StatusBadRequest, "invalid request")
 		return
 	}
 
@@ -1070,7 +1070,7 @@ func (h *Handler) deleteCredential(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	writeJSON(w, http.StatusOK, map[string]bool{"deleted": true})
+	w.WriteHeader(http.StatusNoContent)
 }
 
 // resolveAttachment returns the protocol attachment type from a stored string.

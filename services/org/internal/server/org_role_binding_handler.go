@@ -146,7 +146,7 @@ func (s *HTTPServer) handleOrgRoleBindings(w http.ResponseWriter, r *http.Reques
 			writeJSONError(w, http.StatusNotFound, "binding not found")
 			return
 		}
-		writeJSON(w, http.StatusOK, map[string]any{"status": "deleted", "binding_id": bindingID})
+		w.WriteHeader(http.StatusNoContent)
 
 	default:
 		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")

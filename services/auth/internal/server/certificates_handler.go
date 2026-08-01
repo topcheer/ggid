@@ -106,7 +106,7 @@ func (h *Handler) handleCertificatesV2(w http.ResponseWriter, r *http.Request) {
 		})
 
 	case strings.HasPrefix(r.URL.Path, "/api/v1/certificates/") && r.Method == http.MethodDelete:
-		writeJSON(w, http.StatusOK, map[string]string{"status": "deleted"})
+		w.WriteHeader(http.StatusNoContent)
 
 	default:
 		writeError(w, http.StatusMethodNotAllowed, "method not allowed")

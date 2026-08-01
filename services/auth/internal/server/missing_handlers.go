@@ -68,12 +68,12 @@ func (h *Handler) handleMFAStatus(w http.ResponseWriter, r *http.Request) {
 
 	claims, err := h.parseTokenFromHeader(r)
 	if err != nil {
-		writeError(w, http.StatusUnauthorized, err.Error())
+		writeError(w, http.StatusUnauthorized, "authentication failed")
 		return
 	}
 	userID, err := userIDFromClaims(claims)
 	if err != nil {
-		writeError(w, http.StatusUnauthorized, err.Error())
+		writeError(w, http.StatusUnauthorized, "authentication failed")
 		return
 	}
 	tenantID, err := tenantIDFromClaimsOrHeader(claims, r)
@@ -111,12 +111,12 @@ func (h *Handler) handleMFAStatus(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) handleTokens(w http.ResponseWriter, r *http.Request) {
 	claims, err := h.parseTokenFromHeader(r)
 	if err != nil {
-		writeError(w, http.StatusUnauthorized, err.Error())
+		writeError(w, http.StatusUnauthorized, "authentication failed")
 		return
 	}
 	userID, err := userIDFromClaims(claims)
 	if err != nil {
-		writeError(w, http.StatusUnauthorized, err.Error())
+		writeError(w, http.StatusUnauthorized, "authentication failed")
 		return
 	}
 	tenantID, err := tenantIDFromClaimsOrHeader(claims, r)
@@ -167,12 +167,12 @@ func (h *Handler) handleAuthMe(w http.ResponseWriter, r *http.Request) {
 
 	claims, err := h.parseTokenFromHeader(r)
 	if err != nil {
-		writeError(w, http.StatusUnauthorized, err.Error())
+		writeError(w, http.StatusUnauthorized, "authentication failed")
 		return
 	}
 	userID, err := userIDFromClaims(claims)
 	if err != nil {
-		writeError(w, http.StatusUnauthorized, err.Error())
+		writeError(w, http.StatusUnauthorized, "authentication failed")
 		return
 	}
 	tenantID, err := tenantIDFromClaimsOrHeader(claims, r)
@@ -242,12 +242,12 @@ func (h *Handler) handleDelegation(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) handleAccountLinking(w http.ResponseWriter, r *http.Request) {
 	claims, err := h.parseTokenFromHeader(r)
 	if err != nil {
-		writeError(w, http.StatusUnauthorized, err.Error())
+		writeError(w, http.StatusUnauthorized, "authentication failed")
 		return
 	}
 	userID, err := userIDFromClaims(claims)
 	if err != nil {
-		writeError(w, http.StatusUnauthorized, err.Error())
+		writeError(w, http.StatusUnauthorized, "authentication failed")
 		return
 	}
 
@@ -384,12 +384,12 @@ func (h *Handler) handleNotifications(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) handleDeviceBindings(w http.ResponseWriter, r *http.Request) {
 	claims, err := h.parseTokenFromHeader(r)
 	if err != nil {
-		writeError(w, http.StatusUnauthorized, err.Error())
+		writeError(w, http.StatusUnauthorized, "authentication failed")
 		return
 	}
 	userID, err := userIDFromClaims(claims)
 	if err != nil {
-		writeError(w, http.StatusUnauthorized, err.Error())
+		writeError(w, http.StatusUnauthorized, "authentication failed")
 		return
 	}
 	tenantID, err := tenantIDFromClaimsOrHeader(claims, r)

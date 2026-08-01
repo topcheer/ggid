@@ -1884,7 +1884,7 @@ func (h *Handler) handleWebAuthnDeleteCredential(w http.ResponseWriter, r *http.
 				writeError(w, http.StatusInternalServerError, "failed to delete credential")
 				return
 			}
-			writeJSON(w, http.StatusOK, map[string]string{"status": "deleted"})
+			w.WriteHeader(http.StatusNoContent)
 			return
 		}
 	}
@@ -1892,7 +1892,7 @@ func (h *Handler) handleWebAuthnDeleteCredential(w http.ResponseWriter, r *http.
 		writeError(w, http.StatusInternalServerError, "failed to delete credential")
 		return
 	}
-	writeJSON(w, http.StatusOK, map[string]string{"status": "deleted"})
+	w.WriteHeader(http.StatusNoContent)
 }
 
 type ctxUserIDKey struct{}
@@ -2217,15 +2217,15 @@ func writeAuthErrorWithTranslator(w http.ResponseWriter, err error, tr *i18n.Tra
 	case stderrors.Is(err, service.ErrAccountLocked):
 		writeError(w, http.StatusLocked, translate("error.account_locked", "account temporarily locked"))
 	case stderrors.Is(err, service.ErrMFASetupRequired):
-		writeError(w, http.StatusForbidden, err.Error())
+		writeError(w, http.StatusForbidden, "permission denied")
 	case stderrors.Is(err, service.ErrRateLimited):
 		writeError(w, http.StatusTooManyRequests, translate("error.rate_limit_exceeded", "rate limit exceeded"))
 	case stderrors.Is(err, service.ErrSessionNotFound):
 		writeError(w, http.StatusNotFound, translate("error.session_not_found", "session not found"))
 	case stderrors.Is(err, service.ErrPasswordTooShort), stderrors.Is(err, service.ErrPasswordTooWeak):
-		writeError(w, http.StatusBadRequest, err.Error())
+		writeError(w, http.StatusBadRequest, "invalid request")
 	case stderrors.Is(err, service.ErrPasswordReused):
-		writeError(w, http.StatusConflict, err.Error())
+		writeError(w, http.StatusConflict, "conflict")
 	case stderrors.Is(err, service.ErrCredentialAlreadyExists):
 		writeError(w, http.StatusConflict, translate("error.credential_already_exists", "username or email already registered"))
 	case stderrors.Is(err, service.ErrInvalidResetToken):
@@ -2576,7 +2576,7 @@ func (h *Handler) changeEmail(w http.ResponseWriter, r *http.Request) {
 
 	result, err := h.authSvc.InitiateEmailChange(r.Context(), userID, body.OldEmail, body.NewEmail)
 	if err != nil {
-		writeError(w, http.StatusBadRequest, err.Error())
+		writeError(w, http.StatusBadRequest, "invalid request")
 		return
 	}
 
@@ -2620,7 +2620,7 @@ func (h *Handler) verifyEmailChange(w http.ResponseWriter, r *http.Request) {
 
 	applied, err := h.authSvc.ConfirmEmailChange(r.Context(), token, step)
 	if err != nil {
-		writeError(w, http.StatusBadRequest, err.Error())
+		writeError(w, http.StatusBadRequest, "invalid request")
 		return
 	}
 
@@ -2795,7 +2795,7 @@ func (h *Handler) manageHooks(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		h.hooks.RemoveHook(id)
-		writeJSON(w, http.StatusOK, map[string]bool{"deleted": true})
+		w.WriteHeader(http.StatusNoContent)
 	default:
 		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
 	}
@@ -2931,7 +2931,7 @@ func (h *Handler) idpConfig(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		delete(h.idpConfigs, id)
-		writeJSON(w, http.StatusOK, map[string]bool{"deleted": true})
+		w.WriteHeader(http.StatusNoContent)
 
 	default:
 		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
@@ -3000,7 +3000,7 @@ func (h *Handler) emailChange(w http.ResponseWriter, r *http.Request) {
 
 	result, err := h.authSvc.InitiateEmailChange(r.Context(), userID, body.OldEmail, body.NewEmail)
 	if err != nil {
-		writeError(w, http.StatusBadRequest, err.Error())
+		writeError(w, http.StatusBadRequest, "invalid request")
 		return
 	}
 

@@ -348,7 +348,7 @@ func (s *HTTPServer) handleRoleByID(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		s.publishAuditEvent("role.delete", "success", "role", id, uuid.Nil)
-		writeJSON(w, http.StatusOK, map[string]string{"status": "deleted"})
+		w.WriteHeader(http.StatusNoContent)
 	default:
 		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 	}
@@ -1001,7 +1001,7 @@ func (s *HTTPServer) handlePolicyByID(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		s.publishAuditEvent("policy.delete", "success", "policy", id, existing.TenantID)
-		writeJSON(w, http.StatusOK, map[string]string{"status": "deleted"})
+		w.WriteHeader(http.StatusNoContent)
 	default:
 		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 	}
@@ -1687,7 +1687,7 @@ func (s *HTTPServer) handleAttributeMapping(w http.ResponseWriter, r *http.Reque
 		}
 		attributeMappings = filtered
 		attrMappingsMu.Unlock()
-		writeJSON(w, http.StatusOK, map[string]string{"status": "deleted"})
+		w.WriteHeader(http.StatusNoContent)
 
 	default:
 		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")

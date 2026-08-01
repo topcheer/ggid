@@ -1880,7 +1880,7 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 				ev.ResourceType = "oauth_client"
 				auditPub.PublishAsync(ev)
 			}
-			writeJSON(w, http.StatusOK, map[string]string{"status": "deleted", "id": clientID})
+			w.WriteHeader(http.StatusNoContent)
 
 		default:
 			writeJSON(w, http.StatusMethodNotAllowed, map[string]any{"error": map[string]string{"code": "method_not_allowed", "message": "method_not_allowed"}})

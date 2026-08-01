@@ -147,7 +147,7 @@ func (h *HTTPHandler) rebacDeleteTuple(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	writeJSON(w, http.StatusOK, map[string]bool{"deleted": true})
+	w.WriteHeader(http.StatusNoContent)
 }
 
 // SetReBACRepo injects the ReBAC tuple repository.

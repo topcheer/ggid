@@ -728,8 +728,7 @@ func TestDeleteCredential_NilStore(t *testing.T) {
 	req.Header.Set("X-Tenant-ID", testTenantIDStr)
 	req.Header.Set("X-User-ID", testUserIDStr)
 	h.deleteCredential(rr, req)
-	assertStatus(t, rr, http.StatusOK)
-	assertBodyContains(t, rr, "deleted")
+	assertStatus(t, rr, http.StatusNoContent)
 }
 
 func TestDeleteCredential_StoreError(t *testing.T) {
@@ -754,8 +753,7 @@ func TestDeleteCredential_Success(t *testing.T) {
 	req.Header.Set("X-Tenant-ID", testTenantIDStr)
 	req.Header.Set("X-User-ID", testUserIDStr)
 	h.deleteCredential(rr, req)
-	assertStatus(t, rr, http.StatusOK)
-	assertBodyContains(t, rr, "deleted")
+	assertStatus(t, rr, http.StatusNoContent)
 }
 
 // ---------------------------------------------------------------------------

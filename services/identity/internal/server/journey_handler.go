@@ -278,7 +278,7 @@ func (h *HTTPHandler) journeyDelete(w http.ResponseWriter, r *http.Request, id s
 	if h.journeyRepo != nil {
 		h.journeyRepo.Delete(r.Context(), id)
 	}
-	writeJSON(w, http.StatusOK, map[string]bool{"deleted": true})
+	w.WriteHeader(http.StatusNoContent)
 }
 
 // journeyDryRun parses JDL YAML and simulates step execution.

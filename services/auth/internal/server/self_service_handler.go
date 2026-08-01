@@ -19,12 +19,12 @@ func (h *Handler) handleSelfServiceDevices(w http.ResponseWriter, r *http.Reques
 	// Authenticate via JWT
 	claims, err := h.parseTokenFromHeader(r)
 	if err != nil {
-		writeError(w, http.StatusUnauthorized, err.Error())
+		writeError(w, http.StatusUnauthorized, "authentication failed")
 		return
 	}
 	userID, err := userIDFromClaims(claims)
 	if err != nil {
-		writeError(w, http.StatusUnauthorized, err.Error())
+		writeError(w, http.StatusUnauthorized, "authentication failed")
 		return
 	}
 	tenantID, err := tenantIDFromClaimsOrHeader(claims, r)
@@ -194,12 +194,12 @@ func (h *Handler) handleSelfServiceSessions(w http.ResponseWriter, r *http.Reque
 
 	claims, err := h.parseTokenFromHeader(r)
 	if err != nil {
-		writeError(w, http.StatusUnauthorized, err.Error())
+		writeError(w, http.StatusUnauthorized, "authentication failed")
 		return
 	}
 	userID, err := userIDFromClaims(claims)
 	if err != nil {
-		writeError(w, http.StatusUnauthorized, err.Error())
+		writeError(w, http.StatusUnauthorized, "authentication failed")
 		return
 	}
 	tenantID, err := tenantIDFromClaimsOrHeader(claims, r)
@@ -332,12 +332,12 @@ func (h *Handler) handleMFASelfRemove(w http.ResponseWriter, r *http.Request) {
 
 	claims, err := h.parseTokenFromHeader(r)
 	if err != nil {
-		writeError(w, http.StatusUnauthorized, err.Error())
+		writeError(w, http.StatusUnauthorized, "authentication failed")
 		return
 	}
 	userID, err := userIDFromClaims(claims)
 	if err != nil {
-		writeError(w, http.StatusUnauthorized, err.Error())
+		writeError(w, http.StatusUnauthorized, "authentication failed")
 		return
 	}
 	tenantID, err := tenantIDFromClaimsOrHeader(claims, r)

@@ -166,7 +166,7 @@ func (s *HTTPServer) handleITDRComposite(w http.ResponseWriter, r *http.Request)
 			delete(compositeRules, id)
 			compositeRulesMu.Unlock()
 		}
-		writeJSON2(w, http.StatusOK, map[string]bool{"deleted": true})
+		w.WriteHeader(http.StatusNoContent)
 	}
 }
 

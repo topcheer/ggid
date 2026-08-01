@@ -127,7 +127,7 @@ func (h *Handler) delegationCreate(w http.ResponseWriter, r *http.Request) {
 		ExpiresAt:   expiresAt,
 	}
 	if err := ValidateDelegation(d); err != nil {
-		writeError(w, http.StatusBadRequest, err.Error())
+		writeError(w, http.StatusBadRequest, "invalid request")
 		return
 	}
 

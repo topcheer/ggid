@@ -71,8 +71,7 @@ func (h *HTTPHandler) handlePluginsRoute(w http.ResponseWriter, r *http.Request)
 
 	// DELETE /api/v1/plugins/:name
 	if r.Method == http.MethodDelete {
-		name := strings.TrimPrefix(path, "/api/v1/plugins/")
-		writeJSON(w, http.StatusOK, map[string]any{"status": "deleted", "plugin": name})
+		w.WriteHeader(http.StatusNoContent)
 		return
 	}
 

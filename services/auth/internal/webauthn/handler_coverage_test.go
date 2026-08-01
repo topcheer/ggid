@@ -1,6 +1,6 @@
 package webauthn
 
-	import (
+import (
 	"context"
 	"encoding/base64"
 	"encoding/json"
@@ -271,7 +271,7 @@ func TestDeleteCredentialV2_SuccessWithStore(t *testing.T) {
 	req.Header.Set("X-Tenant-ID", testTenantIDStr)
 	req.Header.Set("X-User-ID", testUserIDStr)
 	h.deleteCredential(rr, req)
-	assertStatus(t, rr, http.StatusOK)
+	assertStatus(t, rr, http.StatusNoContent)
 }
 
 // ---------------------------------------------------------------------------
@@ -564,5 +564,3 @@ func TestFinishRegistrationV2_StoreGetByUserErr(t *testing.T) {
 	h.finishRegistration(rr, req)
 	t.Logf("status=%d, body=%s", rr.Code, rr.Body.String())
 }
-
-

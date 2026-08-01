@@ -1124,7 +1124,7 @@ func (s *HTTPServer) handleAuditWebhooks(w http.ResponseWriter, r *http.Request)
 			writeJSONError(w, http.StatusNotFound, "webhook not found")
 			return
 		}
-		writeJSON(w, http.StatusOK, map[string]any{"status": "deleted", "id": id})
+		w.WriteHeader(http.StatusNoContent)
 
 	default:
 		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
@@ -1523,7 +1523,7 @@ func (s *HTTPServer) handleAnomalyRules(w http.ResponseWriter, r *http.Request) 
 		}
 		anomalyRules = filtered
 		anomalyRulesMu.Unlock()
-		writeJSON(w, http.StatusOK, map[string]string{"status": "deleted"})
+		w.WriteHeader(http.StatusNoContent)
 
 	default:
 		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")

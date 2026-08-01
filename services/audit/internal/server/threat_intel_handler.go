@@ -99,7 +99,7 @@ func (s *HTTPServer) handleThreatIntelSources(w http.ResponseWriter, r *http.Req
 			writeJSONError(w, http.StatusInternalServerError, "failed to delete source")
 			return
 		}
-		writeJSON(w, http.StatusOK, map[string]string{"status": "deleted"})
+		w.WriteHeader(http.StatusNoContent)
 
 	default:
 		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")

@@ -153,5 +153,12 @@ ENV PGPASSWORD=ggid
 # Do NOT expose backend ports (8081/9001/9005/8070-8072) — they bypass gateway auth.
 EXPOSE 8080 3000
 
+# Run as non-root user for security (CIS Docker benchmark 4.1)
+# PostgreSQL runs as 'postgres' user via supervisord; Go services and console
+# also run unprivileged. Create 'appuser' and add to postgres group for DB access.
+RUN addgroup -S appuser && adduser -S -G appuser appuser && \
+    addgroup appuser postgres
+USER appuser
+
 ENTRYPOINT ["/app/entrypoint.sh"]
 CMD ["/usr/bin/supervisord", "-c", "/etc/supervisor/conf.d/supervisord.conf"]

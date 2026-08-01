@@ -92,7 +92,7 @@ func (s *HTTPServer) handleDashboardWidgets(w http.ResponseWriter, r *http.Reque
 		if s.memMapRepo2 != nil {
 			s.memMapRepo2.DeleteJSON(r.Context(), "dashboard_widgets", widgetID)
 		}
-		writeJSON(w, http.StatusOK, map[string]any{"status": "deleted", "widget_id": widgetID})
+		w.WriteHeader(http.StatusNoContent)
 
 	default:
 		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
