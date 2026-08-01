@@ -15,9 +15,9 @@ import (
 // Covers: branding, client_scopes, dpop_bindings, resource_allow,
 // custom_scopes, delegation_chains.
 type oauthMapRepo struct {
-	pool   *pgxpool.Pool
+	pool     *pgxpool.Pool
 	fallback map[string]map[string]map[string]any // table → id → data (used when pool is nil)
-	mu     sync.RWMutex
+	mu       sync.RWMutex
 }
 
 func newOAuthMapRepo(pool *pgxpool.Pool) *oauthMapRepo {
@@ -75,10 +75,27 @@ func (r *oauthMapRepo) EnsureSchema(ctx context.Context) error {
 	return err
 }
 
+// isValidIdentifier validates that a string is a safe SQL identifier
+// (table name). Only allows lowercase letters, digits, and underscores.
+func isValidIdentifier(s string) bool {
+	if s == "" || len(s) > 63 {
+		return false
+	}
+	for _, c := range s {
+		if !((c >= 'a' && c <= 'z') || (c >= '0' && c <= '9') || c == '_') {
+			return false
+		}
+	}
+	return true
+}
+
 func (r *oauthMapRepo) Store(ctx context.Context, table, id string, data map[string]any) error {
 	if r.pool == nil {
 		if r.fallback == nil {
 			return nil
+		}
+		if !isValidIdentifier(table) {
+			return fmt.Errorf("invalid table name")
 		}
 		if id == "" {
 			id = uuid.New().String()
@@ -95,6 +112,9 @@ func (r *oauthMapRepo) Store(ctx context.Context, table, id string, data map[str
 		r.fallback[table][id] = cp
 		return nil
 	}
+	if !isValidIdentifier(table) {
+		return fmt.Errorf("invalid table name")
+	}
 	if id == "" {
 		id = uuid.New().String()
 	}
@@ -110,6 +130,9 @@ func (r *oauthMapRepo) List(ctx context.Context, table string) ([]map[string]any
 		if r.fallback == nil {
 			return []map[string]any{}, nil
 		}
+		if !isValidIdentifier(table) {
+			return nil, fmt.Errorf("invalid table name")
+		}
 		r.mu.RLock()
 		defer r.mu.RUnlock()
 		var result []map[string]any
@@ -124,6 +147,9 @@ func (r *oauthMapRepo) List(ctx context.Context, table string) ([]map[string]any
 			return []map[string]any{}, nil
 		}
 		return result, nil
+	}
+	if !isValidIdentifier(table) {
+		return nil, fmt.Errorf("invalid table name")
 	}
 	rows, err := r.pool.Query(ctx, fmt.Sprintf(`SELECT id, data, created_at FROM %s ORDER BY created_at DESC`, table))
 	if err != nil {
@@ -152,6 +178,9 @@ func (r *oauthMapRepo) Get(ctx context.Context, table, id string) (map[string]an
 		if r.fallback == nil {
 			return nil, fmt.Errorf("not found")
 		}
+		if !isValidIdentifier(table) {
+			return nil, fmt.Errorf("invalid table name")
+		}
 		r.mu.RLock()
 		defer r.mu.RUnlock()
 		if data, ok := r.fallback[table][id]; ok {
@@ -162,6 +191,9 @@ func (r *oauthMapRepo) Get(ctx context.Context, table, id string) (map[string]an
 			return cp, nil
 		}
 		return nil, fmt.Errorf("not found")
+	}
+	if !isValidIdentifier(table) {
+		return nil, fmt.Errorf("invalid table name")
 	}
 	var data []byte
 	var created time.Time
@@ -181,12 +213,18 @@ func (r *oauthMapRepo) Delete(ctx context.Context, table, id string) error {
 		if r.fallback == nil {
 			return nil
 		}
+		if !isValidIdentifier(table) {
+			return fmt.Errorf("invalid table name")
+		}
 		r.mu.Lock()
 		defer r.mu.Unlock()
 		if r.fallback[table] != nil {
 			delete(r.fallback[table], id)
 		}
 		return nil
+	}
+	if !isValidIdentifier(table) {
+		return fmt.Errorf("invalid table name")
 	}
 	_, err := r.pool.Exec(ctx, fmt.Sprintf(`DELETE FROM %s WHERE id = $1`, table), id)
 	return err

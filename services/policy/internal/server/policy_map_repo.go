@@ -58,9 +58,26 @@ func (r *policyMapRepo) EnsureSchema(ctx context.Context) error {
 	return err
 }
 
+// isValidIdentifier validates that a string is a safe SQL identifier
+// (table name). Only allows lowercase letters, digits, and underscores.
+func isValidIdentifier(s string) bool {
+	if s == "" || len(s) > 63 {
+		return false
+	}
+	for _, c := range s {
+		if !((c >= 'a' && c <= 'z') || (c >= '0' && c <= '9') || c == '_') {
+			return false
+		}
+	}
+	return true
+}
+
 func (r *policyMapRepo) Store(ctx context.Context, table, id string, data map[string]any) error {
 	if r.pool == nil {
 		return nil
+	}
+	if !isValidIdentifier(table) {
+		return fmt.Errorf("invalid table name")
 	}
 	if id == "" {
 		id = uuid.New().String()
@@ -84,6 +101,9 @@ func (r *policyMapRepo) Store(ctx context.Context, table, id string, data map[st
 func (r *policyMapRepo) List(ctx context.Context, table string) ([]map[string]any, error) {
 	if r.pool == nil {
 		return []map[string]any{}, nil
+	}
+	if !isValidIdentifier(table) {
+		return nil, fmt.Errorf("invalid table name")
 	}
 	rows, err := r.pool.Query(ctx, fmt.Sprintf(`SELECT id, data, created_at FROM %s ORDER BY created_at DESC`, table))
 	if err != nil {
@@ -113,6 +133,9 @@ func (r *policyMapRepo) Delete(ctx context.Context, table, id string) error {
 	if r.pool == nil {
 		return nil
 	}
+	if !isValidIdentifier(table) {
+		return fmt.Errorf("invalid table name")
+	}
 	_, err := r.pool.Exec(ctx, fmt.Sprintf(`DELETE FROM %s WHERE id = $1`, table), id)
 	return err
 }
@@ -120,6 +143,9 @@ func (r *policyMapRepo) Delete(ctx context.Context, table, id string) error {
 func (r *policyMapRepo) Get(ctx context.Context, table, id string) (map[string]any, error) {
 	if r.pool == nil {
 		return map[string]any{}, nil
+	}
+	if !isValidIdentifier(table) {
+		return nil, fmt.Errorf("invalid table name")
 	}
 	var data []byte
 	var created time.Time

@@ -255,9 +255,26 @@ func (r *authMemoryMapRepo) EnsureSchema(ctx context.Context) error {
 	return err
 }
 
+// isValidIdentifier validates that a string is a safe SQL identifier
+// (table name). Only allows lowercase letters, digits, and underscores.
+func isValidIdentifier(s string) bool {
+	if s == "" || len(s) > 63 {
+		return false
+	}
+	for _, c := range s {
+		if !((c >= 'a' && c <= 'z') || (c >= '0' && c <= '9') || c == '_') {
+			return false
+		}
+	}
+	return true
+}
+
 func (r *authMemoryMapRepo) StoreJSON(ctx context.Context, table, id string, data map[string]any) error {
 	if r.pool == nil {
 		return nil
+	}
+	if !isValidIdentifier(table) {
+		return fmt.Errorf("invalid table name")
 	}
 	jsonData, _ := json.Marshal(data)
 	_, err := r.pool.Exec(ctx, fmt.Sprintf(
@@ -269,6 +286,9 @@ func (r *authMemoryMapRepo) StoreJSON(ctx context.Context, table, id string, dat
 func (r *authMemoryMapRepo) ListJSON(ctx context.Context, table string) ([]map[string]any, error) {
 	if r.pool == nil {
 		return []map[string]any{}, nil
+	}
+	if !isValidIdentifier(table) {
+		return nil, fmt.Errorf("invalid table name")
 	}
 	rows, err := r.pool.Query(ctx, fmt.Sprintf(`SELECT id, data, created_at FROM %s ORDER BY created_at DESC`, table))
 	if err != nil {
@@ -295,6 +315,9 @@ func (r *authMemoryMapRepo) ListJSON(ctx context.Context, table string) ([]map[s
 func (r *authMemoryMapRepo) DeleteJSON(ctx context.Context, table, id string) error {
 	if r.pool == nil {
 		return nil
+	}
+	if !isValidIdentifier(table) {
+		return fmt.Errorf("invalid table name")
 	}
 	_, err := r.pool.Exec(ctx, fmt.Sprintf(`DELETE FROM %s WHERE id = $1`, table), id)
 	return err
@@ -445,6 +468,9 @@ func (r *authMemoryMapRepo) ListLoginFlows(ctx context.Context, limit int) ([]ma
 func (r *authMemoryMapRepo) GetJSON(ctx context.Context, table, id string) (map[string]any, error) {
 	if r.pool == nil {
 		return nil, nil
+	}
+	if !isValidIdentifier(table) {
+		return nil, fmt.Errorf("invalid table name")
 	}
 	var data []byte
 	var created time.Time
