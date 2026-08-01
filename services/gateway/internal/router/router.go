@@ -859,7 +859,7 @@ func (gw *Gateway) checkRouteScope(w http.ResponseWriter, r *http.Request) bool 
 	// prevents cross-tenant privilege escalation.
 	isPlatformTenant := false
 	for _, sc := range claims.Scopes {
-		if strings.EqualFold(sc, "platform:admin") {
+		if sc == "platform:admin" {
 			isPlatformTenant = true
 			break
 		}
