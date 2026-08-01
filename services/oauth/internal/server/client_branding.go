@@ -1,11 +1,22 @@
 package server
 
 import (
-	"html"
 	"encoding/json"
+	"html"
 	"net/http"
+	"net/url"
 	"strings"
 )
+
+// isSafeURL validates that a URL uses http or https scheme.
+// Prevents javascript:, data:, file: stored XSS vectors.
+func isSafeURL(rawURL string) bool {
+	u, err := url.Parse(rawURL)
+	if err != nil || u.Host == "" {
+		return false
+	}
+	return u.Scheme == "http" || u.Scheme == "https"
+}
 
 type ClientBranding struct {
 	LogoURL       string `json:"logo_url"`
@@ -31,6 +42,15 @@ func handleClientBranding(w http.ResponseWriter, r *http.Request) {
 		}
 		// SECURITY: HTML-escape custom CSS to prevent stored XSS.
 		b.CustomCSS = html.EscapeString(b.CustomCSS)
+		// SECURITY: Validate URL schemes to prevent javascript: stored XSS.
+		if b.LogoURL != "" && !isSafeURL(b.LogoURL) {
+			writeJSON(w, http.StatusBadRequest, map[string]any{"error": "logo_url must use http or https scheme"})
+			return
+		}
+		if b.BackgroundURL != "" && !isSafeURL(b.BackgroundURL) {
+			writeJSON(w, http.StatusBadRequest, map[string]any{"error": "background_url must use http or https scheme"})
+			return
+		}
 		if brandingAdapterVar != nil {
 			brandingAdapterVar.Put(clientID, &b)
 		} else if mapRepoVar != nil {

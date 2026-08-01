@@ -774,16 +774,16 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 		switch grantType {
 		case "authorization_code":
 			// SECURITY (RFC 6749 §10.12): Validate state parameter for CSRF protection.
-			// State is generated at /authorize and must match at token exchange.
+			// State is MANDATORY when sent with /authorize — empty state in token
+			// request means the client didn't send one, which we allow only if the
+			// original /authorize request also didn't include state.
 			stateParam := r.FormValue("state")
-			if stateParam != "" {
-				if !oauthSvc.ValidateState(clientID, stateParam) {
-					writeJSON(w, http.StatusBadRequest, map[string]string{
-						"error":             "invalid_state",
-						"error_description": "state parameter validation failed",
-					})
-					return
-				}
+			if !oauthSvc.ValidateState(clientID, stateParam) {
+				writeJSON(w, http.StatusBadRequest, map[string]string{
+					"error":             "invalid_state",
+					"error_description": "state parameter validation failed",
+				})
+				return
 			}
 			resp, tokenErr = oauthSvc.ExchangeAuthorizationCode(ctx, &service.TokenExchangeRequest{
 				TenantID:     tenantID,
@@ -1314,7 +1314,7 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 			} else {
 				writeJSON(w, http.StatusOK, map[string]string{
 					"status":       "denied",
-					"redirect_url": redirectURI + "?error=access_denied&state=" + state,
+					"redirect_url": sanitizeRedirectURL(redirectURI) + "?error=access_denied&state=" + url.QueryEscape(state),
 				})
 			}
 			return
@@ -2720,6 +2720,16 @@ func (a *redisAdapter) ZAdd(ctx context.Context, key string, score float64, memb
 }
 
 // truncateString limits a string to maxLen characters.
+// sanitizeRedirectURL validates and sanitizes a redirect URL.
+// Only allows http/https schemes to prevent open redirect attacks.
+func sanitizeRedirectURL(rawURL string) string {
+	u, err := url.Parse(rawURL)
+	if err != nil || (u.Scheme != "http" && u.Scheme != "https") {
+		return "/"
+	}
+	return rawURL
+}
+
 func truncateString(s string, maxLen int) string {
 	if len(s) > maxLen {
 		return s[:maxLen]
