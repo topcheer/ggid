@@ -22,14 +22,14 @@ import (
 
 // Server is the MCP protocol server.
 type Server struct {
-	cli        *client.Client
-	registry   *tools.Registry
-	scopes     []string       // default scopes from env (fallback when token has no scope)
-	jwtSecret  []byte
-	jwtIssuer  string
-	jwksURL    string         // JWKS endpoint for RS256 verification (empty = dev bypass)
-	apiKey     string         // static API key for service-to-service auth (no JWT)
-	auditLog   *AgentAuditLog // structured agent audit
+	cli       *client.Client
+	registry  *tools.Registry
+	scopes    []string // default scopes from env (fallback when token has no scope)
+	jwtSecret []byte
+	jwtIssuer string
+	jwksURL   string         // JWKS endpoint for RS256 verification (empty = dev bypass)
+	apiKey    string         // static API key for service-to-service auth (no JWT)
+	auditLog  *AgentAuditLog // structured agent audit
 }
 
 // New creates an MCP server with the given Gateway client.
@@ -128,9 +128,10 @@ func (s *Server) jwtAuth(next http.HandlerFunc) http.HandlerFunc {
 		}
 
 		if isRS256 && s.jwksURL == "" {
-			// Dev bypass: RS256 token without JWKS — parse claims without signature.
-			parser := jwt.NewParser(jwt.WithoutClaimsValidation())
-			_, _, err = parser.ParseUnverified(tokenStr, &claims)
+			// SECURITY: fail-closed — RS256 tokens require JWKS for verification.
+			// Do not accept unsigned tokens in any environment.
+			http.Error(w, `{"error":"jwks_not_configured"}`, http.StatusUnauthorized)
+			return
 		} else {
 			_, err = jwt.ParseWithClaims(tokenStr, claims, func(t *jwt.Token) (any, error) {
 				if _, ok := t.Method.(*jwt.SigningMethodHMAC); ok {
@@ -481,7 +482,7 @@ var _ time.Duration
 // jwksCache caches JWKS keys with a 5-minute TTL.
 var jwksCache struct {
 	sync.RWMutex
-	keys     map[string]*rsa.PublicKey
+	keys      map[string]*rsa.PublicKey
 	fetchedAt time.Time
 }
 
@@ -580,10 +581,10 @@ func (s *Server) handleProtectedResource(w http.ResponseWriter, r *http.Request)
 	baseURL := resolveBaseURL(r)
 
 	writeJSON(w, http.StatusOK, map[string]any{
-		"resource":                  baseURL + "/mcp",
-		"authorization_servers":     []string{baseURL},
-		"bearer_methods_supported":  []string{"header"},
-		"resource_name":             "GGID IAM MCP Server",
-		"resource_documentation":    baseURL + "/docs",
+		"resource":                 baseURL + "/mcp",
+		"authorization_servers":    []string{baseURL},
+		"bearer_methods_supported": []string{"header"},
+		"resource_name":            "GGID IAM MCP Server",
+		"resource_documentation":   baseURL + "/docs",
 	})
 }

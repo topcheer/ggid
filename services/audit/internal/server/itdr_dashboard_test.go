@@ -36,6 +36,7 @@ func TestITDRThreatHeatmap_WithIncidents(t *testing.T) {
 	itdrIncidentsMu.Lock()
 	itdrIncidents["inc-1"] = &IncidentListEntry{
 		ID:       "inc-1",
+		TenantID: testTenantID.String(),
 		Title:    "Test Critical Incident",
 		Severity: "critical",
 		Status:   "open",
@@ -105,6 +106,7 @@ func TestITDRTimelineFeed_WithIncidentTimeline(t *testing.T) {
 	itdrIncidentsMu.Lock()
 	itdrIncidents["inc-tl"] = &IncidentListEntry{
 		ID:       "inc-tl",
+		TenantID: testTenantID.String(),
 		Title:    "Test Incident With Timeline",
 		Severity: "high",
 		Status:   "investigating",
@@ -138,6 +140,7 @@ func TestITDRIncidents_ReturnsBothKeys(t *testing.T) {
 	itdrIncidentsMu.Lock()
 	itdrIncidents["inc-keys"] = &IncidentListEntry{
 		ID:       "inc-keys",
+		TenantID: testTenantID.String(),
 		Title:    "Test",
 		Severity: "medium",
 		Status:   "open",

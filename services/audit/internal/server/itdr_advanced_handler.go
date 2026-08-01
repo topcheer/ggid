@@ -12,31 +12,33 @@ import (
 
 // CompositeRule defines a multi-signal detection rule (N signals × time window → critical).
 type CompositeRule struct {
-	ID          string         `json:"id"`
-	Name        string         `json:"name"`
-	Description string         `json:"description"`
-	Signals     []string       `json:"signals"`     // ITDR rule IDs that must trigger
-	MinSignals  int            `json:"min_signals"`  // threshold (e.g., 3 of 5 signals)
-	WindowMin   int            `json:"window_minutes"` // time window for correlation
-	Severity    string         `json:"severity"`     // resulting severity
-	Actions     []string       `json:"actions"`      // auto-response (isolate, alert, block)
-	Enabled     bool           `json:"enabled"`
-	CreatedAt   time.Time      `json:"created_at"`
+	ID          string    `json:"id"`
+	TenantID    string    `json:"-"`
+	Name        string    `json:"name"`
+	Description string    `json:"description"`
+	Signals     []string  `json:"signals"`        // ITDR rule IDs that must trigger
+	MinSignals  int       `json:"min_signals"`    // threshold (e.g., 3 of 5 signals)
+	WindowMin   int       `json:"window_minutes"` // time window for correlation
+	Severity    string    `json:"severity"`       // resulting severity
+	Actions     []string  `json:"actions"`        // auto-response (isolate, alert, block)
+	Enabled     bool      `json:"enabled"`
+	CreatedAt   time.Time `json:"created_at"`
 }
 
 // IncidentListEntry is a lightweight incident for list view.
 type IncidentListEntry struct {
-	ID           string         `json:"id"`
-	Title        string         `json:"title"`
-	Severity     string         `json:"severity"`
-	Status       string         `json:"status"`
-	TriggeredRules []string     `json:"triggered_rules"`
-	UserIDs      []string       `json:"user_ids,omitempty"`
-	IPAddresses  []string       `json:"ip_addresses,omitempty"`
-	DetectionCount int          `json:"detection_count"`
-	FirstDetected time.Time     `json:"first_detected"`
-	LastUpdated   time.Time     `json:"last_updated"`
-	Timeline     []TimelineEntry `json:"timeline,omitempty"`
+	ID             string          `json:"id"`
+	TenantID       string          `json:"-"`
+	Title          string          `json:"title"`
+	Severity       string          `json:"severity"`
+	Status         string          `json:"status"`
+	TriggeredRules []string        `json:"triggered_rules"`
+	UserIDs        []string        `json:"user_ids,omitempty"`
+	IPAddresses    []string        `json:"ip_addresses,omitempty"`
+	DetectionCount int             `json:"detection_count"`
+	FirstDetected  time.Time       `json:"first_detected"`
+	LastUpdated    time.Time       `json:"last_updated"`
+	Timeline       []TimelineEntry `json:"timeline,omitempty"`
 }
 
 type TimelineEntry struct {
@@ -48,19 +50,20 @@ type TimelineEntry struct {
 
 // Playbook defines automated incident response.
 type Playbook struct {
-	ID          string         `json:"id"`
-	Name        string         `json:"name"`
-	Trigger     string         `json:"trigger"` // rule ID or severity
-	Steps       []PlaybookStep `json:"steps"`
-	Enabled     bool           `json:"enabled"`
-	CreatedAt   time.Time      `json:"created_at"`
+	ID        string         `json:"id"`
+	TenantID  string         `json:"-"`
+	Name      string         `json:"name"`
+	Trigger   string         `json:"trigger"` // rule ID or severity
+	Steps     []PlaybookStep `json:"steps"`
+	Enabled   bool           `json:"enabled"`
+	CreatedAt time.Time      `json:"created_at"`
 }
 
 type PlaybookStep struct {
-	Order   int    `json:"order"`
-	Action  string `json:"action"` // isolate_user, revoke_sessions, notify_soc, disable_account
-	Target  string `json:"target"`
-	Delay   int    `json:"delay_seconds,omitempty"`
+	Order  int    `json:"order"`
+	Action string `json:"action"` // isolate_user, revoke_sessions, notify_soc, disable_account
+	Target string `json:"target"`
+	Delay  int    `json:"delay_seconds,omitempty"`
 }
 
 // ThreatHeatmapEntry represents a cell in the user×resource detection heatmap.
@@ -72,12 +75,12 @@ type ThreatHeatmapEntry struct {
 }
 
 var (
-	compositeRulesMu  sync.RWMutex
-	compositeRules    = map[string]*CompositeRule{}
-	itdrIncidentsMu       sync.RWMutex
-	itdrIncidents      = map[string]*IncidentListEntry{}
-	playbooksMu       sync.RWMutex
-	playbooks         = map[string]*Playbook{}
+	compositeRulesMu sync.RWMutex
+	compositeRules   = map[string]*CompositeRule{}
+	itdrIncidentsMu  sync.RWMutex
+	itdrIncidents    = map[string]*IncidentListEntry{}
+	playbooksMu      sync.RWMutex
+	playbooks        = map[string]*Playbook{}
 )
 
 // handleITDRComposite handles composite detection rules CRUD.
@@ -307,11 +310,17 @@ func (s *HTTPServer) handleITDRTimelineFeed(w http.ResponseWriter, r *http.Reque
 // handleITDRThreatHeatmap returns aggregate threat heatmap data for the dashboard.
 // Returns zones (by severity category) + total_threats + by_severity breakdown.
 func (s *HTTPServer) handleITDRThreatHeatmap(w http.ResponseWriter, r *http.Request) {
+	tid := r.Header.Get("X-Tenant-ID")
 	// Aggregate from incidents in memory; in production this queries the detections table.
 	itdrIncidentsMu.RLock()
 	bySeverity := map[string]int{"critical": 0, "high": 0, "medium": 0, "low": 0}
 	zones := []map[string]any{}
+	threatCount := 0
 	for _, inc := range itdrIncidents {
+		if inc.TenantID != tid {
+			continue
+		}
+		threatCount++
 		bySeverity[inc.Severity]++
 	}
 	itdrIncidentsMu.RUnlock()
@@ -325,8 +334,8 @@ func (s *HTTPServer) handleITDRThreatHeatmap(w http.ResponseWriter, r *http.Requ
 
 	writeJSON2(w, http.StatusOK, map[string]any{
 		"zones":         zones,
-		"total_threats":  len(itdrIncidents),
-		"by_severity":    bySeverity,
+		"total_threats": threatCount,
+		"by_severity":   bySeverity,
 		"generated_at":  time.Now().UTC(),
 	})
 }
