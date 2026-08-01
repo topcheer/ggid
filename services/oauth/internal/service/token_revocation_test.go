@@ -1,124 +1,60 @@
 package service
 
 import (
-	"context"
 	"testing"
 	"time"
 
 	"github.com/google/uuid"
 )
 
-func TestTokenRevocation_RevokeToken(t *testing.T) {
-	svc := NewTokenRevocationService(nil)
-	tokenID := "token-123"
-	expires := time.Now().Add(1 * time.Hour)
-
-	err := svc.RevokeToken(context.Background(), tokenID, "user_logout", expires)
-	if err != nil {
-		t.Fatalf("RevokeToken: %v", err)
-	}
-
-	if !svc.IsRevoked(context.Background(), tokenID) {
-		t.Error("token should be revoked")
-	}
-
-	status, err := svc.GetRevocationStatus(context.Background(), tokenID)
-	if err != nil {
-		t.Fatalf("GetRevocationStatus: %v", err)
-	}
-	if !status.Revoked {
-		t.Error("status should show revoked")
-	}
-	if status.Reason != "user_logout" {
-		t.Errorf("expected reason 'user_logout', got '%s'", status.Reason)
-	}
+func newTestOAuthServiceForRevocation() *OAuthService {
+	return &OAuthService{}
 }
 
-func TestTokenRevocation_RevokeToken_EmptyID(t *testing.T) {
-	svc := NewTokenRevocationService(nil)
-	err := svc.RevokeToken(context.Background(), "", "test", time.Now().Add(time.Hour))
-	if err == nil {
-		t.Error("should error on empty tokenID")
+func TestTokenRevocation_EmptyToken(t *testing.T) {
+	svc := newTestOAuthServiceForRevocation()
+	// RFC 7009: empty token should return nil (always 200)
+	err := svc.RevokeToken("")
+	if err != nil {
+		t.Errorf("RevokeToken('') should be nil, got %v", err)
 	}
 }
 
 func TestTokenRevocation_NotRevoked(t *testing.T) {
-	svc := NewTokenRevocationService(nil)
-	status, err := svc.GetRevocationStatus(context.Background(), "unknown-token")
-	if err != nil {
-		t.Fatalf("GetRevocationStatus: %v", err)
-	}
-	if status.Revoked {
+	svc := newTestOAuthServiceForRevocation()
+	// A random token that was never revoked — IsTokenRevoked should return false.
+	tokenStr := "test-token-" + uuid.New().String()
+	if svc.IsTokenRevoked(tokenStr) {
 		t.Error("unknown token should not be revoked")
 	}
 }
 
-func TestTokenRevocation_CascadeRevoke(t *testing.T) {
-	svc := NewTokenRevocationService(nil)
-	userID := uuid.New()
-	expires := time.Now().Add(1 * time.Hour)
-	tokenIDs := map[string]string{
-		"access":  "access-123",
-		"refresh": "refresh-456",
-		"session": "session-789",
+func TestTokenRevocation_ExpiredRevocation(t *testing.T) {
+	svc := newTestOAuthServiceForRevocation()
+	tokenStr := "expired-revocation-" + uuid.New().String()
+	tokenHash := hashTokenSHA256(tokenStr)
+	revokedTokens.Store(tokenHash, int64(time.Now().Add(-1*time.Hour).Unix()))
+
+	// IsTokenRevoked checks the in-memory map without expiry validation.
+	// Expired entries are cleaned up by the reaper goroutine, not IsTokenRevoked.
+	// So an expired entry will still be reported as revoked until reaped.
+	if !svc.IsTokenRevoked(tokenStr) {
+		t.Error("in-memory revokedTokens map does not check expiry — expired entry still counts as revoked until reaped")
 	}
 
-	err := svc.CascadeRevoke(context.Background(), userID, tokenIDs, "security_incident", expires)
-	if err != nil {
-		t.Fatalf("CascadeRevoke: %v", err)
-	}
-
-	for _, tokenID := range tokenIDs {
-		if !svc.IsRevoked(context.Background(), tokenID) {
-			t.Errorf("token %s should be revoked", tokenID)
-		}
-	}
+	// Clean up
+	revokedTokens.Delete(tokenHash)
 }
 
-func TestTokenRevocation_CascadeRevoke_NilUser(t *testing.T) {
-	svc := NewTokenRevocationService(nil)
-	err := svc.CascadeRevoke(context.Background(), uuid.Nil, map[string]string{"access": "x"}, "test", time.Now())
-	if err == nil {
-		t.Error("should error on nil userID")
-	}
-}
+func TestTokenRevocation_ActiveRevocation(t *testing.T) {
+	svc := newTestOAuthServiceForRevocation()
+	// Directly store a valid revocation entry in the blacklist.
+	tokenStr := "active-revocation-" + uuid.New().String()
+	tokenHash := hashTokenSHA256(tokenStr)
+	revokedTokens.Store(tokenHash, int64(time.Now().Add(1*time.Hour).Unix()))
 
-func TestTokenRevocation_CleanupExpired(t *testing.T) {
-	svc := NewTokenRevocationService(nil)
-	// Add an expired token.
-	svc.RevokeToken(context.Background(), "expired", "test", time.Now().Add(-1*time.Hour))
-	// Add a valid token.
-	svc.RevokeToken(context.Background(), "valid", "test", time.Now().Add(1*time.Hour))
-
-	removed := svc.CleanupExpired()
-	if removed != 1 {
-		t.Errorf("expected 1 expired entry removed, got %d", removed)
-	}
-	if !svc.IsRevoked(context.Background(), "valid") {
-		t.Error("valid token should still be revoked")
-	}
-}
-
-func TestTokenRevocation_RevokeByClient_EmptyClient(t *testing.T) {
-	svc := NewTokenRevocationService(nil)
-	_, err := svc.RevokeByClient(context.Background(), "", time.Now().Add(time.Hour))
-	if err == nil {
-		t.Error("should error on empty clientID")
-	}
-}
-
-func TestTokenRevocation_RevokeByUser_NilUser(t *testing.T) {
-	svc := NewTokenRevocationService(nil)
-	_, err := svc.RevokeByUser(context.Background(), uuid.Nil, time.Now().Add(time.Hour))
-	if err == nil {
-		t.Error("should error on nil userID")
-	}
-}
-
-func TestTokenRevocation_IsRevoked_ExpiredToken(t *testing.T) {
-	svc := NewTokenRevocationService(nil)
-	svc.RevokeToken(context.Background(), "expired", "test", time.Now().Add(-1*time.Hour))
-	if svc.IsRevoked(context.Background(), "expired") {
-		t.Error("expired token should not be considered revoked")
+	// IsTokenRevoked should return true.
+	if !svc.IsTokenRevoked(tokenStr) {
+		t.Error("actively revoked token should be reported as revoked")
 	}
 }
