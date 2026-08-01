@@ -266,10 +266,13 @@ func NewWithKeyProvider(cfg *conf.Config, kp crypto.KeyProvider) (*Server, error
 	httpSrv := &http.Server{
 		Addr:           cfg.HTTP.Addr,
 		MaxHeaderBytes: 1 << 20, // 1MB max headers
-		Handler:        protectedHandler,
-		ReadTimeout:    15 * time.Second,
-		WriteTimeout:   30 * time.Second,
-		IdleTimeout:    120 * time.Second,
+		Handler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			r.Body = http.MaxBytesReader(w, r.Body, 10<<20) // 10MB max body
+			protectedHandler.ServeHTTP(w, r)
+		}),
+		ReadTimeout:  15 * time.Second,
+		WriteTimeout: 30 * time.Second,
+		IdleTimeout:  120 * time.Second,
 	}
 
 	// Initialize OAuth map repo for in-memory stores migration.
@@ -2124,7 +2127,7 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 			LoginHint:      r.FormValue("login_hint"),
 			LoginHintToken: r.FormValue("login_hint_token"),
 			IDTokenHint:    r.FormValue("id_token_hint"),
-			BindingMessage: r.FormValue("binding_message"),
+			BindingMessage: truncateString(r.FormValue("binding_message"), 120),
 			UserCode:       r.FormValue("user_code"),
 			Context:        r.FormValue("context"),
 		}
@@ -2708,6 +2711,14 @@ func (a *redisAdapter) Del(ctx context.Context, key string) error {
 
 func (a *redisAdapter) ZAdd(ctx context.Context, key string, score float64, member string) error {
 	return a.rdb.ZAdd(ctx, key, redis.Z{Score: score, Member: member}).Err()
+}
+
+// truncateString limits a string to maxLen characters.
+func truncateString(s string, maxLen int) string {
+	if len(s) > maxLen {
+		return s[:maxLen]
+	}
+	return s
 }
 
 func writeJSON(w http.ResponseWriter, code int, v any) {

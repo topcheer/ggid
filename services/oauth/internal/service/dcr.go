@@ -145,10 +145,10 @@ func (s *OAuthService) DynamicClientRegister(ctx context.Context, req *DynamicRe
 		ClientIDIssuedAt:        now.Unix(),
 		ClientName:              client.Name,
 		RedirectURIs:            req.RedirectURIs,
-		GrantTypes:              req.GrantTypes,
+		GrantTypes:              filteredGrants,
 		ResponseTypes:           req.ResponseTypes,
 		TokenEndpointAuthMethod: req.TokenEndpointAuthMethod,
-		Scope:                   req.Scope,
+		Scope:                   strings.Join(scopes, " "),
 	}, nil
 }
 
