@@ -40,10 +40,11 @@ type rcCachedResponse struct {
 // ResponseCache provides an in-memory cache for GET responses.
 // Supports ETag and Last-Modified conditional requests (304 Not Modified).
 type ResponseCache struct {
-	cfg   ResponseCacheConfig
-	mu    sync.RWMutex
-	cache map[string]*rcCachedResponse
-	done  chan struct{}
+	cfg      ResponseCacheConfig
+	mu       sync.RWMutex
+	cache    map[string]*rcCachedResponse
+	done     chan struct{}
+	stopOnce sync.Once
 }
 
 // NewResponseCache creates a new response cache.
@@ -59,7 +60,7 @@ func NewResponseCache(cfg ResponseCacheConfig) *ResponseCache {
 
 // StopCleanup terminates the background cleanup goroutine.
 func (rc *ResponseCache) StopCleanup() {
-	close(rc.done)
+	rc.stopOnce.Do(func() { close(rc.done) })
 }
 
 // Middleware returns HTTP middleware that caches GET responses.
@@ -77,7 +78,7 @@ func (rc *ResponseCache) Middleware(next http.Handler) http.Handler {
 			return
 		}
 
-		key := rcCacheKey(r.Method, r.URL.Path, r.URL.RawQuery, r.Header.Get("X-Tenant-ID"))
+		key := rcCacheKey(r.Method, r.URL.Path, r.URL.RawQuery, r.Header.Get("X-Tenant-ID"), r.Header.Get("X-User-ID"))
 
 		// Check conditional request headers
 		if cached := rc.get(key); cached != nil {
@@ -85,6 +86,7 @@ func (rc *ResponseCache) Middleware(next http.Handler) http.Handler {
 			if etag := r.Header.Get("If-None-Match"); etag != "" && etag == cached.etag {
 				w.Header().Set("ETag", cached.etag)
 				w.Header().Set("Last-Modified", cached.lastModified)
+				w.Header().Set("Cache-Control", "private")
 				w.WriteHeader(http.StatusNotModified)
 				return
 			}
@@ -92,6 +94,7 @@ func (rc *ResponseCache) Middleware(next http.Handler) http.Handler {
 			if ims := r.Header.Get("If-Modified-Since"); ims != "" && ims == cached.lastModified {
 				w.Header().Set("ETag", cached.etag)
 				w.Header().Set("Last-Modified", cached.lastModified)
+				w.Header().Set("Cache-Control", "private")
 				w.WriteHeader(http.StatusNotModified)
 				return
 			}
@@ -103,6 +106,7 @@ func (rc *ResponseCache) Middleware(next http.Handler) http.Handler {
 			}
 			w.Header().Set("ETag", cached.etag)
 			w.Header().Set("Last-Modified", cached.lastModified)
+			w.Header().Set("Cache-Control", "private")
 			w.Header().Set("X-Cache", "HIT")
 			w.WriteHeader(cached.status)
 			w.Write(cached.body)
@@ -129,6 +133,7 @@ func (rc *ResponseCache) Middleware(next http.Handler) http.Handler {
 			// Set cache headers on the original response
 			w.Header().Set("ETag", etag)
 			w.Header().Set("Last-Modified", lastMod)
+			w.Header().Set("Cache-Control", "private")
 			w.Header().Set("X-Cache", "MISS")
 		}
 	})
@@ -218,8 +223,10 @@ func (cw *rcCaptureWriter) Header() http.Header {
 
 // --- helpers ---
 
-func rcCacheKey(method, path, query, tenantID string) string {
-	return method + "|" + path + "|" + query + "|" + tenantID
+func rcCacheKey(method, path, query, tenantID, userID string) string {
+	// SECURITY: Include user ID in cache key to prevent cross-user data leakage.
+	// Without this, User B could receive User A's cached response for the same URL.
+	return userID + "|" + method + "|" + path + "|" + query + "|" + tenantID
 }
 
 func rcGenerateETag(body []byte) string {

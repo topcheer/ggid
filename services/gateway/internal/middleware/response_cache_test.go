@@ -207,8 +207,9 @@ func TestResponseCache_Invalidate(t *testing.T) {
 		t.Fatal("expected 1 call before invalidate")
 	}
 
-	// Invalidate
-	rc.Invalidate("GET|/api/v1/x")
+	// Invalidate — key format is userID|method|path|query|tenantID
+	// For this test (no headers set), key is "|GET|/api/v1/x||"
+	rc.Invalidate("|GET|/api/v1/x")
 	handler.ServeHTTP(httptest.NewRecorder(), req)
 	if atomic.LoadInt32(&calls) != 2 {
 		t.Error("expected 2 calls after invalidate")
@@ -229,10 +230,16 @@ func TestResponseCache_Clear(t *testing.T) {
 }
 
 func TestCacheKey_Unique(t *testing.T) {
-	k1 := rcCacheKey("GET", "/api/v1/users", "", "t1")
-	k2 := rcCacheKey("GET", "/api/v1/users", "", "t2")
+	k1 := rcCacheKey("GET", "/api/v1/users", "", "t1", "u1")
+	k2 := rcCacheKey("GET", "/api/v1/users", "", "t2", "u2")
 	if k1 == k2 {
 		t.Error("different tenants should have different keys")
+	}
+	// SECURITY: Same tenant, different users must also have different keys.
+	k3 := rcCacheKey("GET", "/api/v1/users", "", "t1", "u1")
+	k4 := rcCacheKey("GET", "/api/v1/users", "", "t1", "u2")
+	if k3 == k4 {
+		t.Error("same tenant but different users should have different keys")
 	}
 }
 

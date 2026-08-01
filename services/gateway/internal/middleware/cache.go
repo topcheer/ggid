@@ -104,10 +104,12 @@ func (c *Cache) Invalidate() {
 }
 
 func cacheKey(r *http.Request) string {
-	// SECURITY: Include user ID in cache key to prevent cross-user data leakage.
-	// Without this, User B could receive User A's cached response for the same URL.
+	// SECURITY: Include user ID and tenant ID in cache key to prevent cross-user
+	// and cross-tenant data leakage. Without this, User B (or Tenant B) could
+	// receive User A's (or Tenant A's) cached response for the same URL.
 	userID := r.Header.Get("X-User-ID")
-	return userID + ":" + r.Method + ":" + r.URL.RequestURI()
+	tenantID := r.Header.Get("X-Tenant-ID")
+	return tenantID + ":" + userID + ":" + r.Method + ":" + r.URL.RequestURI()
 }
 
 func generateETag(data []byte) string {
