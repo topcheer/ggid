@@ -211,21 +211,14 @@ var (
 const jtiTTL = 2 * time.Hour
 
 func init() {
-	// Periodic cleanup of expired JTI blocklist, expiry notifications,
-	// and stale impersonation tokens to prevent OOM.
+	// Periodic cleanup of expired JTI blocklist to prevent OOM.
+	// Note: expiry notifs + impersonation store cleanup is handled by
+	// StartImpersonationCleanup (1-min ticker, context-cancellable).
 	go func() {
 		jtiTicker := time.NewTicker(10 * time.Minute)
 		defer jtiTicker.Stop()
-		otherTicker := time.NewTicker(5 * time.Minute)
-		defer otherTicker.Stop()
-		for {
-			select {
-			case <-jtiTicker.C:
-				cleanupJTIBlocklist()
-			case <-otherTicker.C:
-				cleanupExpiryNotifs()
-				cleanupImpersonationStore()
-			}
+		for range jtiTicker.C {
+			cleanupJTIBlocklist()
 		}
 	}()
 }
