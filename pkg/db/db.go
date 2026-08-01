@@ -19,11 +19,12 @@ import (
 	"database/sql"
 	"fmt"
 	"os"
+	"time"
 
+	_ "github.com/go-sql-driver/mysql" // register mysql driver
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 	_ "modernc.org/sqlite" // register sqlite driver
-	_ "github.com/go-sql-driver/mysql" // register mysql driver
 )
 
 // DBDriver is the type alias for database driver names.
@@ -93,15 +94,15 @@ func (p *pgxPool) Exec(ctx context.Context, sql string, args ...any) (CommandTag
 	return CommandTag{RowsAffected: tag.RowsAffected()}, nil
 }
 
-func (p *pgxPool) Close() { p.pool.Close() }
+func (p *pgxPool) Close()           { p.pool.Close() }
 func (p *pgxPool) Driver() DBDriver { return DriverPostgres }
 
 type pgxRows struct{ rows pgx.Rows }
 
-func (r *pgxRows) Next() bool        { return r.rows.Next() }
+func (r *pgxRows) Next() bool          { return r.rows.Next() }
 func (r *pgxRows) Scan(d ...any) error { return r.rows.Scan(d...) }
-func (r *pgxRows) Close() error      { r.rows.Close(); return nil }
-func (r *pgxRows) Err() error        { return r.rows.Err() }
+func (r *pgxRows) Close() error        { r.rows.Close(); return nil }
+func (r *pgxRows) Err() error          { return r.rows.Err() }
 
 type pgxRow struct{ row pgx.Row }
 
@@ -134,15 +135,15 @@ func (p *sqlPool) Exec(ctx context.Context, query string, args ...any) (CommandT
 	return CommandTag{RowsAffected: n}, nil
 }
 
-func (p *sqlPool) Close() { p.db.Close() }
+func (p *sqlPool) Close()           { p.db.Close() }
 func (p *sqlPool) Driver() DBDriver { return p.driver }
 
 type sqlRows struct{ rows *sql.Rows }
 
-func (r *sqlRows) Next() bool        { return r.rows.Next() }
+func (r *sqlRows) Next() bool          { return r.rows.Next() }
 func (r *sqlRows) Scan(d ...any) error { return r.rows.Scan(d...) }
-func (r *sqlRows) Close() error      { return r.rows.Close() }
-func (r *sqlRows) Err() error        { return r.rows.Err() }
+func (r *sqlRows) Close() error        { return r.rows.Close() }
+func (r *sqlRows) Err() error          { return r.rows.Err() }
 
 type sqlRow struct{ row *sql.Row }
 
@@ -179,7 +180,26 @@ func NewPool(driver, url string) (Pool, error) {
 
 func newPostgresPool(url string) (Pool, error) {
 	ctx := context.Background()
-	pool, err := pgxpool.New(ctx, url)
+
+	// Configure pool with production-safe defaults via ParseConfig.
+	config, err := pgxpool.ParseConfig(url)
+	if err != nil {
+		return nil, fmt.Errorf("postgres parse config: %w", err)
+	}
+	if config.MaxConns == 0 {
+		config.MaxConns = 20
+	}
+	if config.MinConns == 0 {
+		config.MinConns = 5
+	}
+	if config.MaxConnLifetime == 0 {
+		config.MaxConnLifetime = 30 * time.Minute
+	}
+	if config.MaxConnIdleTime == 0 {
+		config.MaxConnIdleTime = 5 * time.Minute
+	}
+
+	pool, err := pgxpool.NewWithConfig(ctx, config)
 	if err != nil {
 		return nil, fmt.Errorf("postgres connect: %w", err)
 	}
