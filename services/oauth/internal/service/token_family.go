@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"log/slog"
 
 	"github.com/google/uuid"
 )
@@ -37,10 +38,16 @@ func (s *OAuthService) revokeFamily(ctx context.Context, tenantID, clientID uuid
 		if fr, ok := s.tokenRepo.(FamilyRevoker); ok {
 			if err := fr.RevokeRefreshTokensByFamily(ctx, tenantID, familyID); err == nil {
 				return
+			} else {
+				slog.Warn("RevokeRefreshTokensByFamily failed, falling back to client-wide",
+					"family_id", familyID, "error", err)
 			}
 		}
 	}
-	_ = s.tokenRepo.RevokeAllRefreshTokens(ctx, tenantID, clientID)
+	if err := s.tokenRepo.RevokeAllRefreshTokens(ctx, tenantID, clientID); err != nil {
+		slog.Warn("RevokeAllRefreshTokens failed — stolen tokens may remain valid",
+			"tenant_id", tenantID, "client_id", clientID, "error", err)
+	}
 }
 
 // SetTokenFamilyStore injects the family registry (PG-backed in production).
