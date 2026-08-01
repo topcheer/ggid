@@ -149,7 +149,7 @@ func TestHandler_Create_MissingFields(t *testing.T) {
 func TestHandler_Create_StoreError(t *testing.T) {
 	h := NewHandler(&errorStore{}, nil)
 	w := httptest.NewRecorder()
-	body := `{"url":"http://example.com/hook","events":["user.created"]}`
+	body := `{"url":"http://example.com/hook","events":["user.created"],"secret":"s3cr3t"}`
 	r := httptest.NewRequest("POST", "/api/v1/webhooks", strings.NewReader(body))
 	r.Header.Set("X-Tenant-ID", "t1")
 	h.Create(w, r)
@@ -395,10 +395,16 @@ func TestMemoryStore_ListByEvent(t *testing.T) {
 type errorStore struct{}
 
 func (e *errorStore) Create(_ context.Context, _ *Webhook) error { return fmt.Errorf("store error") }
-func (e *errorStore) Get(_ context.Context, _ string) (*Webhook, error) { return nil, fmt.Errorf("not found") }
-func (e *errorStore) List(_ context.Context, _ string) ([]*Webhook, error) { return nil, fmt.Errorf("store error") }
+func (e *errorStore) Get(_ context.Context, _ string) (*Webhook, error) {
+	return nil, fmt.Errorf("not found")
+}
+func (e *errorStore) List(_ context.Context, _ string) ([]*Webhook, error) {
+	return nil, fmt.Errorf("store error")
+}
 func (e *errorStore) Delete(_ context.Context, _, _ string) error { return fmt.Errorf("not found") }
-func (e *errorStore) ListByEvent(_ context.Context, _ string) ([]*Webhook, error) { return nil, fmt.Errorf("store error") }
+func (e *errorStore) ListByEvent(_ context.Context, _ string) ([]*Webhook, error) {
+	return nil, fmt.Errorf("store error")
+}
 
 // suppress unused import warning
 var _ = bytes.NewReader
