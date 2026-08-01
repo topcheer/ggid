@@ -49,9 +49,9 @@ func (h *Handler) handleMigrationConfig(w http.ResponseWriter, r *http.Request) 
 	// Set default attribute mapping if not provided.
 	if cfg.AttributeMapping == nil {
 		cfg.AttributeMapping = map[string]string{
-			"username":     "username",
-			"mail":         "email",
-			"cn":           "display_name",
+			"username":      "username",
+			"mail":          "email",
+			"cn":            "display_name",
 			"password_hash": "password_hash",
 		}
 	}
@@ -117,7 +117,7 @@ func (h *Handler) handleMigrationTest(w http.ResponseWriter, r *http.Request) {
 	if err := h.migrationEngine.TestConnection(r.Context()); err != nil {
 		writeJSON(w, http.StatusOK, map[string]any{
 			"connected": false,
-			"error":     err.Error(),
+			"error":     "database connection failed",
 		})
 		return
 	}
