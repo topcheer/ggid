@@ -938,6 +938,12 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 				})
 				return
 			}
+			// Internal errors (DB failures, etc.) should return 500, not 400.
+			if strings.Contains(errMsg, "internal") || strings.Contains(errMsg, "database") ||
+				strings.Contains(errMsg, "connection") || strings.Contains(errMsg, "timeout") {
+				writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "server_error"})
+				return
+			}
 			writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid_grant", "error_description": "authentication failed"})
 			return
 		}
