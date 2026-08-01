@@ -119,21 +119,30 @@ func (b *BehavioralBotDetect) Middleware(next http.Handler) http.Handler {
 			return
 		}
 
-		b.store.mu.Lock()
-		defer b.store.mu.Unlock()
+		// Check and update bot counter under lock, then release before
+		// calling next to avoid serializing all requests.
+		allowed := func() bool {
+			b.store.mu.Lock()
+			defer b.store.mu.Unlock()
 
-		key := "bot:" + ip
-		log, exists := b.store.buckets[key]
-		now := time.Now()
+			key := "bot:" + ip
+			log, exists := b.store.buckets[key]
+			now := time.Now()
 
-		if !exists || now.After(log.expires) {
-			b.store.buckets[key] = &botRequestLog{count: 1, expires: now.Add(b.window)}
-			next.ServeHTTP(w, r)
-			return
-		}
+			if !exists || now.After(log.expires) {
+				b.store.buckets[key] = &botRequestLog{count: 1, expires: now.Add(b.window)}
+				return true
+			}
 
-		log.count++
-		if log.count > b.threshold {
+			log.count++
+			if log.count > b.threshold {
+				return false
+			}
+
+			return true
+		}()
+
+		if !allowed {
 			w.Header().Set("Content-Type", "application/json")
 			w.Header().Set("Retry-After", strconv.Itoa(int(b.window.Seconds())))
 			w.WriteHeader(http.StatusTooManyRequests)
