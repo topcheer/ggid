@@ -1034,8 +1034,8 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 			return
 		}
 
-		// Parse the logout token to extract sub (user ID) and sid (session ID).
-		claims, err := oauthSvc.ParseAccessToken(logoutToken)
+		// Parse as a back-channel logout token (OIDC Back-Channel Logout spec).
+		claims, err := oauthSvc.ParseBackchannelLogoutToken(logoutToken)
 		if err != nil {
 			writeJSON(w, http.StatusBadRequest, map[string]any{"error": map[string]string{"code": "invalid_argument", "message": "invalid logout token"}})
 			return

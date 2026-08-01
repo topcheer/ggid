@@ -104,7 +104,9 @@ func InternalAuth(cfg InternalAuthConfig) func(http.Handler) http.Handler {
 
 			// Request ID used in signature (reuse X-Request-ID).
 			reqID := r.Header.Get("X-Request-ID")
-			payload := service + "|" + tsStr + "|" + reqID
+			// Bind signature to method + path to prevent replay against
+			// different endpoints within the replay window.
+			payload := service + "|" + tsStr + "|" + reqID + "|" + r.Method + "|" + r.URL.Path
 
 			// Try current secret, then prev.
 			if !verifyHMAC(cfg.Secret, payload, sigHex) {
@@ -133,7 +135,7 @@ func SignInternalRequest(req *http.Request, serviceName string, secret []byte) {
 	if reqID == "" {
 		reqID = ""
 	}
-	payload := serviceName + "|" + tsStr + "|" + reqID
+	payload := serviceName + "|" + tsStr + "|" + reqID + "|" + req.Method + "|" + req.URL.Path
 	mac := hmac.New(sha256.New, secret)
 	mac.Write([]byte(payload))
 	sig := hex.EncodeToString(mac.Sum(nil))
@@ -146,6 +148,15 @@ func SignInternalRequest(req *http.Request, serviceName string, secret []byte) {
 // ComputeSignature computes the HMAC-SHA256 signature for the given inputs.
 func ComputeSignature(secret []byte, service, tsStr, reqID string) string {
 	payload := service + "|" + tsStr + "|" + reqID
+	mac := hmac.New(sha256.New, secret)
+	mac.Write([]byte(payload))
+	return hex.EncodeToString(mac.Sum(nil))
+}
+
+// ComputeSignatureBound computes the HMAC-SHA256 signature including method
+// and path to prevent cross-endpoint replay.
+func ComputeSignatureBound(secret []byte, service, tsStr, reqID, method, path string) string {
+	payload := service + "|" + tsStr + "|" + reqID + "|" + method + "|" + path
 	mac := hmac.New(sha256.New, secret)
 	mac.Write([]byte(payload))
 	return hex.EncodeToString(mac.Sum(nil))

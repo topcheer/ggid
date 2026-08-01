@@ -20,7 +20,7 @@ func TestInternalAuth_ValidSignature(t *testing.T) {
 	cfg := InternalAuthConfig{Secret: secret}
 	ts := time.Now().Unix()
 	reqID := "req-123"
-	sig := ComputeSignature(secret, "gateway", strconv.FormatInt(ts, 10), reqID)
+	sig := ComputeSignatureBound(secret, "gateway", strconv.FormatInt(ts, 10), reqID, "GET", "/api/v1/users")
 
 	req := httptest.NewRequest("GET", "/api/v1/users", nil)
 	req.Header.Set(InternalAuthHeaderService, "gateway")
@@ -50,7 +50,7 @@ func TestInternalAuth_ExpiredTimestamp(t *testing.T) {
 	secret := []byte("test-secret")
 	cfg := InternalAuthConfig{Secret: secret, ReplayWindow: 120}
 	oldTs := time.Now().Unix() - 300 // 5 min ago
-	sig := ComputeSignature(secret, "gateway", strconv.FormatInt(oldTs, 10), "req-1")
+	sig := ComputeSignatureBound(secret, "gateway", strconv.FormatInt(oldTs, 10), "req-1", "GET", "/api/v1/users")
 
 	req := httptest.NewRequest("GET", "/api/v1/users", nil)
 	req.Header.Set(InternalAuthHeaderService, "gateway")
@@ -68,7 +68,7 @@ func TestInternalAuth_WrongSignature(t *testing.T) {
 	cfg := InternalAuthConfig{Secret: []byte("correct")}
 	ts := time.Now().Unix()
 	// Generate a valid signature with a DIFFERENT secret.
-	wrongSig := ComputeSignature([]byte("wrong-secret"), "gateway", strconv.FormatInt(ts, 10), "")
+	wrongSig := ComputeSignatureBound([]byte("wrong-secret"), "gateway", strconv.FormatInt(ts, 10), "", "GET", "/api/v1/users")
 
 	req := httptest.NewRequest("GET", "/api/v1/users", nil)
 	req.Header.Set(InternalAuthHeaderService, "gateway")
@@ -104,7 +104,7 @@ func TestInternalAuth_PrevSecret(t *testing.T) {
 	cfg := InternalAuthConfig{Secret: current, PrevSecret: prev}
 	ts := time.Now().Unix()
 	// Sign with old secret.
-	sig := ComputeSignature(prev, "gateway", strconv.FormatInt(ts, 10), "r1")
+	sig := ComputeSignatureBound(prev, "gateway", strconv.FormatInt(ts, 10), "r1", "GET", "/api/v1/users")
 
 	req := httptest.NewRequest("GET", "/api/v1/users", nil)
 	req.Header.Set(InternalAuthHeaderService, "gateway")
@@ -148,7 +148,7 @@ func TestSignInternalRequest(t *testing.T) {
 	// Verify the signature is valid.
 	ts := req.Header.Get(InternalAuthHeaderTimestamp)
 	sig := req.Header.Get(InternalAuthHeaderSignature)
-	expected := ComputeSignature(secret, "gateway", ts, "req-99")
+	expected := ComputeSignatureBound(secret, "gateway", ts, "req-99", "GET", "/api/v1/users")
 	if sig != expected {
 		t.Error("signature mismatch")
 	}

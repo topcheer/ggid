@@ -18,7 +18,7 @@ func SignInternalRequest(req *http.Request, serviceName string, secret []byte) {
 	ts := time.Now().Unix()
 	tsStr := strconv.FormatInt(ts, 10)
 	reqID := req.Header.Get("X-Request-ID")
-	payload := serviceName + "|" + tsStr + "|" + reqID
+	payload := serviceName + "|" + tsStr + "|" + reqID + "|" + req.Method + "|" + req.URL.Path
 	mac := hmac.New(sha256.New, secret)
 	mac.Write([]byte(payload))
 	sig := hex.EncodeToString(mac.Sum(nil))

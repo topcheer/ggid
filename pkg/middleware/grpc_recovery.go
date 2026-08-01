@@ -76,7 +76,7 @@ func GRPCInternalAuthUnary(cfg InternalAuthConfig) grpc.UnaryServerInterceptor {
 		if math.Abs(float64(time.Now().Unix()-ts)) > float64(cfg.ReplayWindow) {
 			return nil, status.Errorf(codes.PermissionDenied, "internal auth timestamp outside replay window")
 		}
-		payload := svc + "|" + tsStr + "|" + reqID
+		payload := svc + "|" + tsStr + "|" + reqID + "|" + info.FullMethod
 		if !verifyHMAC(cfg.Secret, payload, sigHex) {
 			prevOK := len(cfg.PrevSecret) > 0 && verifyHMAC(cfg.PrevSecret, payload, sigHex)
 			if !prevOK {
