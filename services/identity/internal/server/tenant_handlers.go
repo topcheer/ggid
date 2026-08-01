@@ -44,6 +44,18 @@ type BootstrapResponse struct {
 
 // handleTenantResolve resolves a tenant by slug to its ID.
 // GET /api/v1/tenants/resolve?slug=xxx
+// hasPlatformAdminScope checks if the X-Scopes header contains the exact
+// "platform:admin" scope. SECURITY (R285): strings.Contains was vulnerable to
+// substring bypass (e.g. "xplatform:admin"). Uses strings.Fields for exact match.
+func hasPlatformAdminScope(r *http.Request) bool {
+	for _, sc := range strings.Fields(r.Header.Get("X-Scopes")) {
+		if sc == "platform:admin" {
+			return true
+		}
+	}
+	return false
+}
+
 func (h *HTTPHandler) handleTenantResolve(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
 		writeJSON(w, http.StatusMethodNotAllowed, map[string]string{"error": "method not allowed"})
@@ -431,7 +443,7 @@ func (h *HTTPHandler) tenantCreate(w http.ResponseWriter, r *http.Request) {
 func (h *HTTPHandler) tenantDetail(w http.ResponseWriter, r *http.Request, tenantID string) {
 	// SECURITY (R227 P1): Only platform:admin or same-tenant callers.
 	callerTID := r.Header.Get("X-Tenant-ID")
-	isPlatformAdmin := strings.Contains(r.Header.Get("X-Scopes"), "platform:admin")
+	isPlatformAdmin := hasPlatformAdminScope(r)
 	if !isPlatformAdmin && callerTID != tenantID {
 		writeJSON(w, http.StatusForbidden, map[string]string{"error": "cross-tenant access denied"})
 		return
@@ -469,7 +481,7 @@ func (h *HTTPHandler) tenantDetail(w http.ResponseWriter, r *http.Request, tenan
 
 func (h *HTTPHandler) tenantDelete(w http.ResponseWriter, r *http.Request, tenantID string) {
 	// SECURITY (R227 P0): Only platform:admin can delete tenants.
-	if !strings.Contains(r.Header.Get("X-Scopes"), "platform:admin") {
+	if !hasPlatformAdminScope(r) {
 		writeJSON(w, http.StatusForbidden, map[string]string{"error": "platform:admin scope required to delete tenants"})
 		return
 	}
