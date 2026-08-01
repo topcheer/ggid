@@ -98,7 +98,7 @@ func (h *Handler) handleInvalidateSessions(w http.ResponseWriter, r *http.Reques
 		if err != nil {
 			writeJSON(w, http.StatusOK, map[string]any{
 				"status":  "partial",
-				"error":   err.Error(),
+				"error":   "session revocation failed",
 				"user_id": userIDStr,
 			})
 			return
