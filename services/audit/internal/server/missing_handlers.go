@@ -131,7 +131,7 @@ func (s *HTTPServer) handleWebhooksList(w http.ResponseWriter, r *http.Request) 
 		}
 		// SECURITY: SSRF prevention
 		if err := validateWebhookURL(req.URL); err != nil {
-			writeJSONError(w, http.StatusBadRequest, err.Error())
+			writeJSONError(w, http.StatusBadRequest, "invalid request")
 			return
 		}
 		// SECURITY: hash secret before storage (never store plaintext)
@@ -236,7 +236,7 @@ func (s *HTTPServer) handleWebhooksList(w http.ResponseWriter, r *http.Request) 
 					// SECURITY: SSRF prevention on URL update
 					if err := validateWebhookURL(*update.URL); err != nil {
 						globalAlertWebhooks.mu.Unlock()
-						writeJSONError(w, http.StatusBadRequest, err.Error())
+						writeJSONError(w, http.StatusBadRequest, "invalid request")
 						return
 					}
 					wh["url"] = *update.URL

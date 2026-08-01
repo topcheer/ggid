@@ -62,7 +62,7 @@ func handleFAPIConfig(oauthSvc *service.OAuthService) http.HandlerFunc {
 
 		ctx, err := parseTenantContext(r)
 		if err != nil {
-			writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid_request", "error_description": err.Error()})
+			writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid_request", "error_description": "validation failed"})
 			return
 		}
 

@@ -53,7 +53,7 @@ func (s *HTTPServer) handleDelegate(w http.ResponseWriter, r *http.Request) {
 		req.Permissions, hours,
 	)
 	if err != nil {
-		writeJSON(w, http.StatusBadRequest, map[string]string{"error": err.Error()})
+		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid_request"})
 		return
 	}
 	writeJSON(w, http.StatusCreated, d)

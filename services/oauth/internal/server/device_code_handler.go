@@ -129,7 +129,7 @@ func handleDeviceVerify(s *service.OAuthService) http.HandlerFunc {
 			return
 		}
 		if err != nil {
-			writeJSONError(w, http.StatusBadRequest, err.Error())
+			writeJSONError(w, http.StatusBadRequest, "invalid request")
 			return
 		}
 		writeJSON(w, http.StatusOK, map[string]any{"status": req.Action, "user_code": req.UserCode})

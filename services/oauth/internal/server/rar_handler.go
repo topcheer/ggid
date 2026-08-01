@@ -216,7 +216,7 @@ func RARConsentPreviewHandler(w http.ResponseWriter, r *http.Request) {
 
 	registry := NewRARRegistry()
 	if err := registry.ValidateDetails(req.AuthorizationDetails, ""); err != nil {
-		writeJSON(w, http.StatusBadRequest, map[string]string{"error": err.Error()})
+		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid_request"})
 		return
 	}
 

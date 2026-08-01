@@ -1028,7 +1028,7 @@ func (s *HTTPServer) handleAuditWebhooks(w http.ResponseWriter, r *http.Request)
 		}
 		// SECURITY: SSRF prevention
 		if err := validateWebhookURL(req.URL); err != nil {
-			writeJSONError(w, http.StatusBadRequest, err.Error())
+			writeJSONError(w, http.StatusBadRequest, "invalid request")
 			return
 		}
 		if req.SeverityThreshold == "" {
@@ -1735,7 +1735,7 @@ func (s *HTTPServer) handleAlertConfig(w http.ResponseWriter, r *http.Request) {
 		if req.WebhookURL != "" {
 			// SECURITY: SSRF prevention
 			if err := validateWebhookURL(req.WebhookURL); err != nil {
-				writeJSONError(w, http.StatusBadRequest, err.Error())
+				writeJSONError(w, http.StatusBadRequest, "invalid request")
 				return
 			}
 			alertCfg.webhookURL = req.WebhookURL

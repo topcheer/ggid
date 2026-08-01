@@ -81,7 +81,7 @@ func (s *HTTPServer) handleAlertWebhooks(w http.ResponseWriter, r *http.Request)
 		}
 		// SECURITY: SSRF prevention — reject localhost, private IPs, link-local
 		if err := validateWebhookURL(req.URL); err != nil {
-			writeJSON(w, http.StatusBadRequest, map[string]string{"error": err.Error()})
+			writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid_request"})
 			return
 		}
 		hookID := uuid.New().String()

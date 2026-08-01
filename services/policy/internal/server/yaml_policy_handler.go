@@ -43,7 +43,7 @@ func (s *HTTPServer) handleYAMLPolicy(w http.ResponseWriter, r *http.Request) {
 		var p YAMLPolicy
 		body, _ := readBody(r)
 		if err := yaml.Unmarshal(body, &p); err != nil {
-			writeJSONError(w, http.StatusBadRequest, "invalid YAML: "+err.Error())
+			writeJSONError(w, http.StatusBadRequest, "invalid YAML")
 			return
 		}
 		if p.Name == "" {
