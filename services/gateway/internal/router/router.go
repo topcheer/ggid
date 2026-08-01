@@ -254,7 +254,8 @@ func (gw *Gateway) buildProxies() {
 				req.Header.Set("X-Scopes", strings.Join(jwtClaims.Scopes, ","))
 				for _, s := range jwtClaims.Scopes {
 					sl := strings.ToLower(s)
-					if sl == "admin" || sl == "superadmin" || sl == "platform:admin" || sl == "tenant:admin" || sl == "administrator" || sl == "platform administrator" || sl == "tenant administrator" {
+					// SECURITY: Only standard OAuth scopes grant admin (consistent with rbac.go).
+					if sl == "platform:admin" || sl == "tenant:admin" {
 						req.Header.Set("X-User-Role", s)
 						req.Header.Set("X-Is-Admin", "true")
 						break
@@ -1328,7 +1329,8 @@ func (gw *Gateway) buildProxiesLocked() {
 				req.Header.Set("X-Scopes", strings.Join(jwtClaims.Scopes, ","))
 				for _, s := range jwtClaims.Scopes {
 					sl := strings.ToLower(s)
-					if sl == "admin" || sl == "superadmin" || sl == "platform:admin" || sl == "tenant:admin" || sl == "administrator" || sl == "platform administrator" || sl == "tenant administrator" {
+					// SECURITY: Only standard OAuth scopes grant admin (consistent with rbac.go).
+					if sl == "platform:admin" || sl == "tenant:admin" {
 						req.Header.Set("X-User-Role", s)
 						req.Header.Set("X-Is-Admin", "true")
 						break
