@@ -34,6 +34,45 @@ var (
 	impRedisClient     *redis.Client
 )
 
+// StartImpersonationCleanup starts a background goroutine that removes
+// expired impersonation tokens from the in-memory store.
+func StartImpersonationCleanup(ctx context.Context) {
+	go func() {
+		ticker := time.NewTicker(1 * time.Minute)
+		defer ticker.Stop()
+		for {
+			select {
+			case <-ticker.C:
+				now := time.Now().UTC()
+				impersonationMu.Lock()
+				for id, t := range impersonationStore {
+					if now.After(t.ExpiresAt) {
+						delete(impersonationStore, id)
+					}
+				}
+				expiryNotifMu.Lock()
+				for uid, n := range expiryNotifs {
+					if now.After(n.ExpiresAt) {
+						delete(expiryNotifs, uid)
+					}
+				}
+				for uid, ch := range expiryChannels {
+					select {
+					case <-ch:
+					default:
+						close(ch)
+						delete(expiryChannels, uid)
+					}
+				}
+				expiryNotifMu.Unlock()
+				impersonationMu.Unlock()
+			case <-ctx.Done():
+				return
+			}
+		}
+	}()
+}
+
 // SetImpersonationRedis injects a Redis client for persistent storage.
 // When set, impersonation tokens survive process restarts.
 func SetImpersonationRedis(rdb *redis.Client) {
@@ -167,6 +206,32 @@ var (
 	jtiBlocklist   = make(map[string]time.Time) // jti → revokedAt
 )
 
+// jtiTTL is how long a revoked JTI stays in the blocklist.
+// JWTs expire after at most 1 hour, so entries older than that are stale.
+const jtiTTL = 2 * time.Hour
+
+func init() {
+	// Periodic cleanup of expired JTI blocklist entries to prevent OOM.
+	go func() {
+		t := time.NewTicker(10 * time.Minute)
+		defer t.Stop()
+		for range t.C {
+			cleanupJTIBlocklist()
+		}
+	}()
+}
+
+func cleanupJTIBlocklist() {
+	cutoff := time.Now().UTC().Add(-jtiTTL)
+	jtiBlocklistMu.Lock()
+	defer jtiBlocklistMu.Unlock()
+	for jti, revokedAt := range jtiBlocklist {
+		if revokedAt.Before(cutoff) {
+			delete(jtiBlocklist, jti)
+		}
+	}
+}
+
 // RevokeAllUserSessions blocks all JWTs for a user by adding their jtis to the blocklist.
 func RevokeAllUserSessions(jtis []string) {
 	jtiBlocklistMu.Lock()
@@ -196,11 +261,11 @@ func ResetJTIBlocklist() {
 
 // ExpiryNotification represents a notification to refresh a token before expiry.
 type ExpiryNotification struct {
-	UserID    uuid.UUID
-	TokenID   string
-	ExpiresAt time.Time
+	UserID     uuid.UUID
+	TokenID    string
+	ExpiresAt  time.Time
 	NotifiedAt time.Time
-	Message   string
+	Message    string
 }
 
 var (
@@ -256,4 +321,44 @@ func ResetExpiryNotifs() {
 		close(ch)
 	}
 	expiryChannels = make(map[uuid.UUID]chan *ExpiryNotification)
+}
+
+func init() {
+	// Periodic cleanup of expired expiry notifications and stale impersonation tokens.
+	go func() {
+		t := time.NewTicker(5 * time.Minute)
+		defer t.Stop()
+		for range t.C {
+			cleanupExpiryNotifs()
+			cleanupImpersonationStore()
+		}
+	}()
+}
+
+func cleanupExpiryNotifs() {
+	cutoff := time.Now().UTC().Add(-30 * time.Minute)
+	expiryNotifMu.Lock()
+	defer expiryNotifMu.Unlock()
+	for uid, n := range expiryNotifs {
+		if n.ExpiresAt.Before(cutoff) {
+			delete(expiryNotifs, uid)
+		}
+		if ch, ok := expiryChannels[uid]; ok {
+			select {
+			case <-ch: // drain stale channel
+			default:
+			}
+		}
+	}
+}
+
+func cleanupImpersonationStore() {
+	now := time.Now().UTC()
+	impersonationMu.Lock()
+	defer impersonationMu.Unlock()
+	for id, token := range impersonationStore {
+		if now.After(token.ExpiresAt) {
+			delete(impersonationStore, id)
+		}
+	}
 }

@@ -35,7 +35,29 @@ type MemoryRateLimitStore struct {
 // NewMemoryRateLimitStore creates an in-memory rate limit store suitable for
 // single-instance deployments or testing.
 func NewMemoryRateLimitStore() *MemoryRateLimitStore {
-	return &MemoryRateLimitStore{buckets: make(map[string]*memBucket)}
+	s := &MemoryRateLimitStore{buckets: make(map[string]*memBucket)}
+	// Background goroutine to evict stale buckets and prevent OOM.
+	go func() {
+		t := time.NewTicker(5 * time.Minute)
+		defer t.Stop()
+		for range t.C {
+			s.evictStaleBuckets()
+		}
+	}()
+	return s
+}
+
+// evictStaleBuckets removes buckets whose entries have all expired.
+func (s *MemoryRateLimitStore) evictStaleBuckets() {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	cutoff := time.Now().Add(-1 * time.Hour).UnixNano()
+	for key, b := range s.buckets {
+		// If the latest timestamp is older than 1 hour, remove the bucket.
+		if len(b.timestamps) == 0 || b.timestamps[len(b.timestamps)-1] < cutoff {
+			delete(s.buckets, key)
+		}
+	}
 }
 
 func (s *MemoryRateLimitStore) CountAndAdd(_ context.Context, key string, windowStart, now time.Time) (int64, error) {
@@ -59,6 +81,14 @@ func (s *MemoryRateLimitStore) CountAndAdd(_ context.Context, key string, window
 		}
 	}
 	b.timestamps = b.timestamps[:idx]
+
+	// SECURITY: Remove empty buckets to prevent unbounded map growth.
+	if len(b.timestamps) == 0 {
+		delete(s.buckets, key)
+		// Recreate since we still need to count this request.
+		b = &memBucket{}
+		s.buckets[key] = b
+	}
 
 	count := int64(len(b.timestamps))
 	b.timestamps = append(b.timestamps, nowNs)
@@ -144,9 +174,9 @@ func DefaultSlidingWindowConfig() SlidingWindowConfig {
 // It uses a RateLimitStore (Redis for distributed, in-memory for standalone)
 // and derives the tier from the request context (set by JWT middleware).
 type SlidingWindowLimiter struct {
-	store   RateLimitStore
-	cfg     SlidingWindowConfig
-	clock   func() time.Time
+	store RateLimitStore
+	cfg   SlidingWindowConfig
+	clock func() time.Time
 }
 
 // NewSlidingWindowLimiter creates a new sliding window rate limiter.
