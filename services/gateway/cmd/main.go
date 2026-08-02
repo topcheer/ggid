@@ -22,8 +22,8 @@ import (
 	"github.com/ggid/ggid/pkg/sysconfig"
 	"github.com/ggid/ggid/services/gateway/internal/config"
 	"github.com/ggid/ggid/services/gateway/internal/middleware"
-	"github.com/ggid/ggid/services/gateway/internal/router"
 	"github.com/redis/go-redis/v9"
+	"github.com/ggid/ggid/services/gateway/internal/router"
 )
 
 // Password pepper must match auth/identity/oauth for API key hash verification.
@@ -48,10 +48,18 @@ func main() {
 	env := os.Getenv("GGID_ENV")
 	if env != "test" && env != "dev" {
 		if cfg.JWTIssuer == "" {
-			log.Println("WARNING: GATEWAY_JWT_ISSUER not set — JWT issuer validation is disabled. Set GATEWAY_JWT_ISSUER in production.")
+			env := os.Getenv("GGID_ENV")
+			if env != "test" && env != "dev" {
+				log.Fatal("GATEWAY_JWT_ISSUER must be set in non-dev environments")
+			}
+			log.Println("WARNING: GATEWAY_JWT_ISSUER not set — dev mode")
 		}
 		if cfg.JWTAudience == "" {
-			log.Println("WARNING: GATEWAY_JWT_AUDIENCE not set — JWT audience validation is disabled. Set GATEWAY_JWT_AUDIENCE in production.")
+			env := os.Getenv("GGID_ENV")
+			if env != "test" && env != "dev" {
+				log.Fatal("GATEWAY_JWT_AUDIENCE must be set in non-dev environments")
+			}
+			log.Println("WARNING: GATEWAY_JWT_AUDIENCE not set — dev mode")
 		}
 	}
 
