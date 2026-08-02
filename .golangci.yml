@@ -18,7 +18,7 @@ linters-settings:
       - (net/http.ResponseWriter).Write
       - (io.Writer).Write
     check-type-assertions: false
-    check-blank: false
+    check-blank: true
 
 issues:
   exclude-rules:
