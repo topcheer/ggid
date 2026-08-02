@@ -218,6 +218,11 @@ func (h *Handler) handleSAMLACS(w http.ResponseWriter, r *http.Request) {
 		SameSite: http.SameSiteLaxMode,
 		MaxAge:   3600,
 	})
+	// SECURITY: Validate relayState to prevent open redirect.
+	// Only allow relative paths (starting with /) — block absolute URLs.
+	if !strings.HasPrefix(relayState, "/") || strings.HasPrefix(relayState, "//") {
+		relayState = "/"
+	}
 	http.Redirect(w, r, relayState, http.StatusFound)
 }
 
