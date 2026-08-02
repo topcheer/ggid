@@ -84,9 +84,12 @@ func DecryptTOTPSecret(stored string) (string, error) {
 	if stored == "" {
 		return "", nil
 	}
-	// Legacy plaintext: no prefix. Safe fallback for pre-migration rows.
+	// Legacy plaintext: no prefix. Fail-closed in non-dev environments.
 	if !strings.HasPrefix(stored, encryptedPrefix) {
-		return stored, nil
+		if env := os.Getenv("GGID_ENV"); env != "test" && env != "dev" {
+			return "", fmt.Errorf("TOTP secret has no encryption prefix in non-dev environment — possible tampering")
+		}
+		return stored, nil // dev/test: allow legacy plaintext for migration
 	}
 	// Encrypted value: strip prefix and decrypt. Fail on errors — don't
 	// silently return tampered data as plaintext.
