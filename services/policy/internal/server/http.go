@@ -1687,11 +1687,14 @@ func (s *HTTPServer) handleAttributeMapping(w http.ResponseWriter, r *http.Reque
 			return
 		}
 		attrMappingsMu.Lock()
+		tenantID := r.Header.Get("X-Tenant-ID")
 		filtered := attributeMappings[:0]
 		for _, m := range attributeMappings {
-			if m["id"] != idStr {
-				filtered = append(filtered, m)
+			// SECURITY: Only delete if both id AND tenant_id match.
+			if m["id"] == idStr && m["tenant_id"] == tenantID {
+				continue // skip = delete
 			}
+			filtered = append(filtered, m)
 		}
 		attributeMappings = filtered
 		attrMappingsMu.Unlock()
