@@ -48,8 +48,24 @@ func main() {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	// 1. Connect to PostgreSQL
-	pool, err := pgxpool.New(ctx, cfg.Database.URL)
+	// 1. Connect to PostgreSQL with explicit pool configuration
+	config, err := pgxpool.ParseConfig(cfg.Database.URL)
+	if err != nil {
+		log.Fatalf("failed to parse database config: %v", err)
+	}
+	if config.MaxConns == 0 {
+		config.MaxConns = 20
+	}
+	if config.MinConns == 0 {
+		config.MinConns = 5
+	}
+	if config.MaxConnLifetime == 0 {
+		config.MaxConnLifetime = 30 * time.Minute
+	}
+	if config.MaxConnIdleTime == 0 {
+		config.MaxConnIdleTime = 5 * time.Minute
+	}
+	pool, err := pgxpool.NewWithConfig(ctx, config)
 	if err != nil {
 		log.Fatalf("failed to connect to database: %v", err)
 	}
