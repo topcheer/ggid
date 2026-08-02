@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"google.golang.org/grpc"
+	"github.com/golang-jwt/jwt/v5"
 	"google.golang.org/grpc/metadata"
 )
 
@@ -578,13 +579,21 @@ func TestGRPCUnaryInterceptor_AuthInvalidScheme_C18(t *testing.T) {
 func TestGRPCUnaryInterceptor_AuthValid_C18(t *testing.T) {
 	cfg := &GRPCInterceptorConfig{JWTSecret: "secret"}
 	interceptor := GRPCUnaryInterceptor(cfg)
-	md := newTestMD("authorization", "Bearer valid-token")
+	// Generate a real JWT since the interceptor now validates signatures.
+	claims := jwt.MapClaims{
+		"sub":       "test-user",
+		"exp":       time.Now().Add(time.Hour).Unix(),
+		"tenant_id": "test-tenant",
+	}
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	tokenStr, _ := token.SignedString([]byte("secret"))
+	md := newTestMD("authorization", "Bearer "+tokenStr)
 	ctx := metadata.NewIncomingContext(context.Background(), md)
 	called := false
 	handler := func(ctx context.Context, req any) (any, error) {
 		called = true
 		userID := UserFromGRPCContext(ctx)
-		if userID != "valid-token" {
+		if userID != "test-user" {
 			t.Errorf("user = %q", userID)
 		}
 		return nil, nil
@@ -673,9 +682,9 @@ type mockServerStream struct {
 	ctx context.Context
 }
 
-func (m *mockServerStream) Context() context.Context              { return m.ctx }
-func (m *mockServerStream) SetHeader(metadata.MD) error           { return nil }
-func (m *mockServerStream) SendHeader(metadata.MD) error          { return nil }
-func (m *mockServerStream) SetTrailer(metadata.MD)                {}
-func (m *mockServerStream) SendMsg(any) error                     { return nil }
-func (m *mockServerStream) RecvMsg(any) error                     { return nil }
+func (m *mockServerStream) Context() context.Context     { return m.ctx }
+func (m *mockServerStream) SetHeader(metadata.MD) error  { return nil }
+func (m *mockServerStream) SendHeader(metadata.MD) error { return nil }
+func (m *mockServerStream) SetTrailer(metadata.MD)       {}
+func (m *mockServerStream) SendMsg(any) error            { return nil }
+func (m *mockServerStream) RecvMsg(any) error            { return nil }
