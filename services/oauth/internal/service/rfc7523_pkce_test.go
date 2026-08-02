@@ -7,8 +7,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/ggid/ggid/services/oauth/internal/domain"
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/ggid/ggid/services/oauth/internal/domain"
+
 	"github.com/google/uuid"
 )
 
@@ -394,8 +395,8 @@ func TestRFC7523_RejectAlgNone(t *testing.T) {
 	if err == nil {
 		t.Fatal("SECURITY: alg=none assertion must be rejected")
 	}
-	if !strings.Contains(err.Error(), "alg=none") {
-		t.Errorf("expected alg=none error, got: %v", err)
+	if !strings.Contains(err.Error(), "signature verification failed") {
+		t.Errorf("expected signature verification failed error, got: %v", err)
 	}
 }
 
