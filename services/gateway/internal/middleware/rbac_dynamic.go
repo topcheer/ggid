@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/jackc/pgx/v5/pgxpool"
+
 	"github.com/redis/go-redis/v9"
 	"golang.org/x/sync/singleflight"
 )
@@ -233,8 +234,10 @@ func (r *RBACResolver) load(ctx context.Context, force bool) ([]routePermRow, er
 			return rows, nil
 		}
 
-		// Stale memory fallback — only if cache is not too old (max 5min staleness).
-		if ever && time.Since(r.loadedAt) < 5*time.Minute {
+		// Stale memory fallback — only if cache is not too old (max 60s staleness).
+		// SECURITY: 5min window was too long — permission revocations during Redis
+		// outage would take up to 5min to take effect. Reduced to 60s.
+		if ever && time.Since(r.loadedAt) < 60*time.Second {
 			return snap, nil
 		}
 		return nil, errNoRBACData

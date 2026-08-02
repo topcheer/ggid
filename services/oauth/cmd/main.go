@@ -150,7 +150,19 @@ func startTokenCleanup(ctx context.Context, dbURL string) {
 	if dbURL == "" {
 		return
 	}
-	pool, err := pgxpool.New(ctx, dbURL)
+	// Use ParseConfig for explicit pool settings (max 4 conns for cleanup goroutine)
+	cfg, err := pgxpool.ParseConfig(dbURL)
+	if err != nil {
+		log.Printf("token cleanup: failed to parse DB config: %v", err)
+		return
+	}
+	if cfg.MaxConns == 0 {
+		cfg.MaxConns = 4 // small pool for background cleanup
+	}
+	if cfg.MaxConnLifetime == 0 {
+		cfg.MaxConnLifetime = 30 * time.Minute
+	}
+	pool, err := pgxpool.NewWithConfig(ctx, cfg)
 	if err != nil {
 		log.Printf("token cleanup: failed to connect DB: %v", err)
 		return
