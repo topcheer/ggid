@@ -14,9 +14,9 @@ import (
 func TestCreateAndListEndpoints(t *testing.T) {
 	engine := NewEngine(nil)
 	ep := engine.CreateEndpoint(&Endpoint{
-		URL: "https://hooks.example.com/test",
-		Events: []string{"user.created", "risk.high"},
-		Secret: "whsec_test123",
+		URL:     "https://hooks.example.com/test",
+		Events:  []string{"user.created", "risk.high"},
+		Secret:  "whsec_test123",
 		Enabled: true,
 	})
 
@@ -151,11 +151,11 @@ func TestDeleteEndpoint(t *testing.T) {
 		URL: "https://example.com", Events: []string{"*"}, Enabled: true,
 	})
 
-	if engine.GetEndpoint(ep.ID) == nil {
+	if engine.GetEndpoint(ep.TenantID, ep.ID) == nil {
 		t.Fatal("endpoint should exist")
 	}
-	engine.DeleteEndpoint(ep.ID)
-	if engine.GetEndpoint(ep.ID) != nil {
+	engine.DeleteEndpoint(ep.TenantID, ep.ID)
+	if engine.GetEndpoint(ep.TenantID, ep.ID) != nil {
 		t.Fatal("endpoint should be deleted")
 	}
 }
