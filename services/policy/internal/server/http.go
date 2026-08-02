@@ -1661,6 +1661,7 @@ func (s *HTTPServer) handleAttributeMapping(w http.ResponseWriter, r *http.Reque
 		}
 		mapping := map[string]any{
 			"id":        uuid.New().String(),
+			"tenant_id": r.Header.Get("X-Tenant-ID"),
 			"attribute": req.Attribute,
 			"value":     req.Value,
 			"role_id":   req.RoleID,
@@ -2009,6 +2010,7 @@ func (s *HTTPServer) handleTimeConditions(w http.ResponseWriter, r *http.Request
 		}
 		rule := map[string]any{
 			"id":           uuid.New().String(),
+			"tenant_id":    r.Header.Get("X-Tenant-ID"),
 			"name":         req.Name,
 			"time_between": req.TimeBetween,
 			"days_of_week": req.DaysOfWeek,
