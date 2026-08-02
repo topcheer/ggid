@@ -7,8 +7,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/google/uuid"
 	"github.com/redis/go-redis/v9"
+	"github.com/google/uuid"
 )
 
 // ImpersonationToken represents a delegated admin token for impersonation.
@@ -280,6 +280,11 @@ var (
 func RegisterExpiryChannel(userID uuid.UUID) chan *ExpiryNotification {
 	expiryNotifMu.Lock()
 	defer expiryNotifMu.Unlock()
+	// SECURITY: Close existing channel to prevent goroutine leak.
+	if old, ok := expiryChannels[userID]; ok {
+		close(old)
+		delete(expiryChannels, userID)
+	}
 	ch := make(chan *ExpiryNotification, 1)
 	expiryChannels[userID] = ch
 	return ch
