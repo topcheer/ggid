@@ -16,6 +16,7 @@ import (
 	"github.com/ggid/ggid/pkg/tenant"
 	"github.com/ggid/ggid/services/identity/internal/domain"
 	"github.com/google/uuid"
+
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
@@ -101,6 +102,10 @@ func (h *HTTPHandler) handleSelfRegister(w http.ResponseWriter, r *http.Request)
 	}
 	if req.OrgName == "" || req.Admin.Email == "" || req.Admin.Password == "" {
 		writeJSONError(w, http.StatusBadRequest, "org_name, admin.email, and admin.password are required")
+		return
+	}
+	if len(req.Admin.Password) > 64 {
+		writeJSONError(w, http.StatusBadRequest, "password must be at most 64 characters")
 		return
 	}
 
