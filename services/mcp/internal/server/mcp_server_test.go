@@ -210,10 +210,10 @@ func TestHandleToolCall_InvalidParams(t *testing.T) {
 }
 
 func TestParseScopesFromEnv(t *testing.T) {
-	t.Run("default admin scope", func(t *testing.T) {
+	t.Run("default empty scope", func(t *testing.T) {
 		scopes := parseScopesFromEnv()
-		if len(scopes) != 1 || scopes[0] != "admin" {
-			t.Errorf("expected [admin], got %v", scopes)
+		if len(scopes) != 0 {
+			t.Errorf("expected empty scopes (fail-closed), got %v", scopes)
 		}
 	})
 
@@ -228,11 +228,11 @@ func TestParseScopesFromEnv(t *testing.T) {
 		}
 	})
 
-	t.Run("empty string after trim defaults to admin", func(t *testing.T) {
+	t.Run("empty string after trim defaults to empty", func(t *testing.T) {
 		t.Setenv("MCP_SCOPES", " , , ")
 		scopes := parseScopesFromEnv()
-		if len(scopes) != 1 || scopes[0] != "admin" {
-			t.Errorf("expected [admin] fallback, got %v", scopes)
+		if len(scopes) != 0 {
+			t.Errorf("expected empty fallback, got %v", scopes)
 		}
 	})
 }
