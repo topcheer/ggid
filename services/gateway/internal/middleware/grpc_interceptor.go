@@ -10,6 +10,7 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
+	"github.com/golang-jwt/jwt/v5"
 	"google.golang.org/grpc/status"
 )
 
@@ -17,6 +18,8 @@ import (
 type GRPCInterceptorConfig struct {
 	// JWTSecret is the HMAC secret for JWT validation. If empty, auth is skipped.
 	JWTSecret string
+	// JWTIssuer is the expected JWT issuer (iss claim). If empty, issuer not validated.
+	JWTIssuer string
 	// RequireAuth if true, makes JWTSecret mandatory (fatal on startup if empty).
 	RequireAuth bool
 	// TenantHeader is the gRPC metadata key for tenant ID (default: x-tenant-id).
@@ -94,8 +97,29 @@ func GRPCUnaryInterceptor(cfg *GRPCInterceptorConfig) grpc.UnaryServerIntercepto
 				if token == authVals[0] {
 					return nil, status.Error(codes.Unauthenticated, "invalid authorization scheme")
 				}
-				// In production, validate JWT claims here.
-				ctx = context.WithValue(ctx, grpcUserCtxKey, token)
+				// SECURITY: Validate JWT signature and claims — not just extract token.
+				claims := jwt.MapClaims{}
+				parserOpts := []jwt.ParserOption{
+					jwt.WithValidMethods([]string{"HS256", "RS256"}),
+					jwt.WithExpirationRequired(),
+				}
+				if cfg.JWTIssuer != "" {
+					parserOpts = append(parserOpts, jwt.WithIssuer(cfg.JWTIssuer))
+				}
+				_, err := jwt.NewParser(parserOpts...).ParseWithClaims(token, claims, func(t *jwt.Token) (any, error) {
+					if _, ok := t.Method.(*jwt.SigningMethodHMAC); ok {
+						return []byte(cfg.JWTSecret), nil
+					}
+					return nil, status.Error(codes.Unauthenticated, "unsupported signing method")
+				})
+				if err != nil {
+					return nil, status.Error(codes.Unauthenticated, "invalid token")
+				}
+				// Store verified claims, not raw token.
+				ctx = context.WithValue(ctx, grpcUserCtxKey, claims["sub"])
+				if tid, ok := claims["tenant_id"].(string); ok {
+					ctx = context.WithValue(ctx, grpcTenantCtxKey, tid)
+				}
 			}
 		}
 
