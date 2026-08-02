@@ -28,9 +28,9 @@ import (
 	"github.com/ggid/ggid/pkg/tenant"
 	"github.com/ggid/ggid/services/oauth/internal/domain"
 	"github.com/ggid/ggid/services/oauth/internal/repository"
-	"github.com/golang-jwt/jwt/v5"
+
 	"github.com/google/uuid"
-	"github.com/jackc/pgx/v5"
+
 	"github.com/jackc/pgx/v5/pgconn"
 )
 
@@ -1807,7 +1807,7 @@ func (s *OAuthService) ParseBackchannelLogoutToken(tokenStr string) (jwt.MapClai
 // fetchExternalIssuerKey retrieves the RSA public key for verifying a JWT
 // assertion issued by an external issuer. It queries the OAuth client's
 // jwks_uri if configured, or returns an error.
-func (s *OAuthService) fetchExternalIssuerKey(ctx context.Context, issuer, clientID string, header map[string]any) (any, error) {
+func (s *OAuthService) fetchExternalIssuerKey(ctx context.Context, issuer, clientID string, tenantID uuid.UUID, header map[string]any) (any, error) {
 	if clientID == "" {
 		return nil, fmt.Errorf("client_id required for external issuer assertion")
 	}
@@ -1817,9 +1817,12 @@ func (s *OAuthService) fetchExternalIssuerKey(ctx context.Context, issuer, clien
 	if s.pool == nil {
 		return nil, fmt.Errorf("database not available for external issuer key lookup")
 	}
+	// SECURITY: Filter by tenant_id to prevent cross-tenant JWKS lookup.
+	// Attacker in Tenant A cannot use their client's jwks_uri to verify
+	// assertions targeting users in Tenant B.
 	err := s.pool.QueryRow(ctx,
-		`SELECT COALESCE(jwks_uri, '') FROM oauth_clients WHERE client_id = $1`,
-		clientID).Scan(&jwksURI)
+		`SELECT COALESCE(jwks_uri, '') FROM oauth_clients WHERE client_id = $1 AND tenant_id = $2`,
+		clientID, tenantID).Scan(&jwksURI)
 	if err != nil || jwksURI == "" {
 		return nil, fmt.Errorf("no jwks_uri registered for client %s: %w", clientID, err)
 	}

@@ -50,7 +50,7 @@ func (s *OAuthService) JWTBearerGrant(ctx context.Context, req *JWTBearerRequest
 	}, jwt.WithValidMethods([]string{"RS256", "RS384", "RS512"}))
 	if err != nil {
 		if req.ClientID != "" {
-			externalKey, fetchErr := s.fetchExternalIssuerKey(ctx, iss, req.ClientID, unverifiedToken.Header)
+			externalKey, fetchErr := s.fetchExternalIssuerKey(ctx, iss, req.ClientID, req.TenantID, unverifiedToken.Header)
 			if fetchErr != nil {
 				return nil, fmt.Errorf("assertion signature verification failed (AS key) and no external key available for issuer %q: %w", iss, fetchErr)
 			}
