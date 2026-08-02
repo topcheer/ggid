@@ -153,7 +153,7 @@ func (e *Engine) GDPRErase(ctx context.Context, userID, tenantID string) (*Casca
 	for _, table := range piiTables {
 		if e.pool != nil {
 			_, err := e.pool.Exec(ctx, fmt.Sprintf(
-				`UPDATE %s SET email='[DELETED]', phone='[DELETED]', full_name='[DELETED]' WHERE id = $1`, table), userID)
+				`UPDATE %s SET email='[DELETED]', phone='[DELETED]', full_name='[DELETED]' WHERE id = $1 AND tenant_id = $2`, table), userID, tenantID)
 			status := "ok"
 			detail := fmt.Sprintf("PII deleted from %s", table)
 			if err != nil {
@@ -187,7 +187,7 @@ func (e *Engine) GDPRErase(ctx context.Context, userID, tenantID string) (*Casca
 	// 5. Remove from groups, roles, delegations.
 	for _, table := range []string{"user_roles", "group_members", "delegations"} {
 		if e.pool != nil {
-			_, err := e.pool.Exec(ctx, fmt.Sprintf(`DELETE FROM %s WHERE user_id = $1`, table), userID)
+			_, err := e.pool.Exec(ctx, fmt.Sprintf(`DELETE FROM %s WHERE user_id = $1 AND tenant_id = $2`, table), userID, tenantID)
 			status := "ok"
 			if err != nil {
 				status = "skipped"
