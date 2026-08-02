@@ -14,6 +14,7 @@ import (
 	"log/slog"
 	"strconv"
 )
+
 func (s *OAuthService) RevokeToken(tokenStr string, tokenTypeHint ...string) error {
 	if tokenStr == "" {
 		return nil // RFC 7009: return 200 even for empty token
@@ -41,6 +42,18 @@ func (s *OAuthService) RevokeToken(tokenStr string, tokenTypeHint ...string) err
 			// invalid token revocation attempts. 24h is sufficient for propagation.
 			if err := s.rdb.Set(context.Background(), "oauth:revoked:"+tokenHash, "0", 24*time.Hour); err != nil {
 				slog.Warn("oauth: failed to blacklist revoked token hash in redis", "err", err)
+			}
+			// SECURITY: Also delete Auth service refresh token key (ggid:rt:)
+			// to revoke tokens issued by /api/v1/auth/login via the OAuth endpoint.
+			s.rdb.Del(context.Background(), "ggid:rt:"+tokenHash)
+		}
+		// SECURITY: Also revoke in the Auth service's refresh_tokens table
+		// (separate from oauth's oidc_refresh_tokens).
+		if s.pool != nil {
+			if _, err := s.pool.Exec(context.Background(),
+				`UPDATE refresh_tokens SET revoked = true, revoked_at = NOW() WHERE token_hash = $1 AND revoked = false`,
+				tokenHash); err != nil {
+				slog.Warn("oauth: failed to revoke auth refresh token in DB", "err", err)
 			}
 		}
 		return nil
@@ -188,4 +201,3 @@ func maskUser(username string) string {
 	}
 	return username[:2] + "***"
 }
-
