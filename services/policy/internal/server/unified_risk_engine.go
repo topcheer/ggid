@@ -169,7 +169,7 @@ func (r *riskRepo) LogScore(ctx context.Context, resp *RiskEvaluationResponse, r
 		tenantID, req.UserID, req.SessionID, resp.Score, resp.Level, resp.Decision, signalsJSON)
 }
 
-func (r *riskRepo) GetLatestScore(ctx context.Context, userID string) (map[string]any, error) {
+func (r *riskRepo) GetLatestScore(ctx context.Context, tenantID uuid.UUID, userID string) (map[string]any, error) {
 	if r.pool == nil {
 		return nil, fmt.Errorf("not found")
 	}
@@ -177,7 +177,7 @@ func (r *riskRepo) GetLatestScore(ctx context.Context, userID string) (map[strin
 	var level, decision string
 	var evaluatedAt time.Time
 	var signalsJSON []byte
-	err := r.pool.QueryRow(ctx, `SELECT score, level, decision, signals, evaluated_at FROM risk_scores WHERE user_id=$1 ORDER BY evaluated_at DESC LIMIT 1`, userID).Scan(&score, &level, &decision, &signalsJSON, &evaluatedAt)
+	err := r.pool.QueryRow(ctx, `SELECT score, level, decision, signals, evaluated_at FROM risk_scores WHERE tenant_id=$1 AND user_id=$2 ORDER BY evaluated_at DESC LIMIT 1`, tenantID, userID).Scan(&score, &level, &decision, &signalsJSON, &evaluatedAt)
 	if err != nil {
 		return nil, fmt.Errorf("not found")
 	}
@@ -272,6 +272,8 @@ func (s *HTTPServer) handleRiskEvaluate(w http.ResponseWriter, r *http.Request) 
 		writeJSONError(w, http.StatusBadRequest, "invalid JSON")
 		return
 	}
+	// SECURITY: Force tenant_id from caller context, ignore body value.
+	req.TenantID = tenantIDFromHeader(r).String()
 	if req.UserID == "" {
 		writeJSONError(w, http.StatusBadRequest, "user_id required")
 		return
@@ -290,8 +292,9 @@ func (s *HTTPServer) handleRiskScores(w http.ResponseWriter, r *http.Request) {
 		writeJSONError(w, http.StatusBadRequest, "user_id required")
 		return
 	}
+	tenantID := tenantIDFromHeader(r)
 	if s.riskRepo != nil {
-		if score, _ := s.riskRepo.GetLatestScore(r.Context(), userID); score != nil {
+		if score, _ := s.riskRepo.GetLatestScore(r.Context(), tenantID, userID); score != nil {
 			writeJSON(w, http.StatusOK, score)
 			return
 		}
@@ -300,6 +303,8 @@ func (s *HTTPServer) handleRiskScores(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *HTTPServer) handleRiskPolicy(w http.ResponseWriter, r *http.Request) {
+	// SECURITY: Always use tenant_id from caller context, never from path/body.
+	callerTenantID := tenantIDFromHeader(r)
 	switch r.Method {
 	case http.MethodPut, http.MethodPost:
 		var p RiskPolicy
@@ -307,6 +312,8 @@ func (s *HTTPServer) handleRiskPolicy(w http.ResponseWriter, r *http.Request) {
 			writeJSONError(w, http.StatusBadRequest, "invalid JSON")
 			return
 		}
+		// SECURITY: Override body tenant_id with verified caller tenant_id.
+		p.TenantID = callerTenantID
 		if p.AllowThreshold == 0 {
 			p.AllowThreshold = 30
 		}
@@ -324,14 +331,13 @@ func (s *HTTPServer) handleRiskPolicy(w http.ResponseWriter, r *http.Request) {
 		}
 		writeJSON(w, http.StatusOK, map[string]any{"status": "configured", "policy": p})
 	case http.MethodGet:
-		tenantIDStr := r.URL.Path[len("/api/v1/risk/policies/"):]
-		tenantID, _ := uuid.Parse(tenantIDStr)
+		// SECURITY: Use caller's tenant_id, not path-extracted UUID.
 		if s.riskRepo != nil {
-			p, _ := s.riskRepo.GetPolicy(r.Context(), tenantID)
+			p, _ := s.riskRepo.GetPolicy(r.Context(), callerTenantID)
 			writeJSON(w, http.StatusOK, p)
 			return
 		}
-		writeJSON(w, http.StatusOK, defaultPolicy(tenantID))
+		writeJSON(w, http.StatusOK, defaultPolicy(callerTenantID))
 	default:
 		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 	}
