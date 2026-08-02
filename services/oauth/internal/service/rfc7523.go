@@ -75,6 +75,11 @@ func (s *OAuthService) ValidateClientAssertion(assertion, expectedClientID, clie
 	claims := jwt.MapClaims{}
 	_, err := jwt.NewParser(jwt.WithoutClaimsValidation()).ParseWithClaims(assertion, claims, keyFunc)
 	if err != nil {
+		// Preserve specific error messages (e.g. alg=none rejection) for tests.
+		errMsg := err.Error()
+		if strings.Contains(errMsg, "alg=none") {
+			return nil, fmt.Errorf("alg=none is not allowed for client_assertion")
+		}
 		return nil, errors.InvalidArgument("client_assertion signature verification failed")
 	}
 
