@@ -19,7 +19,7 @@ import (
 
 // AuditSvcReader provides the subset of AuditService methods needed by the handler.
 type AuditSvcReader interface {
-	GetEvent(ctx context.Context, id uuid.UUID) (*domain.AuditEvent, error)
+	GetEvent(ctx context.Context, tenantID, id uuid.UUID) (*domain.AuditEvent, error)
 	ListEvents(ctx context.Context, filter domain.ListFilter, page, pageSize int) ([]*domain.AuditEvent, int, error)
 	InsertEvent(ctx context.Context, event *domain.AuditEvent) error
 }
@@ -100,7 +100,7 @@ func (h *AuditHandler) GetEvent(ctx context.Context, req *pb.GetEventRequest) (*
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, "invalid id")
 	}
-	event, err := h.svc.GetEvent(ctx, id)
+	event, err := h.svc.GetEvent(ctx, uuid.Nil, id)
 	if err != nil {
 		return nil, toGRPCError(err)
 	}

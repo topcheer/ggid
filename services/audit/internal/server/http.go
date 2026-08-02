@@ -476,7 +476,7 @@ func (s *HTTPServer) handleEventByID(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	event, err := s.svc.GetEvent(r.Context(), id)
+	event, err := s.svc.GetEvent(r.Context(), uuid.Nil, id)
 	if err != nil {
 		writeServiceError(w, err)
 		return

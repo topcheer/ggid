@@ -11,6 +11,7 @@ import (
 	"github.com/ggid/ggid/services/audit/internal/domain"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
+
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -109,7 +110,7 @@ func nullableUUID(u *uuid.UUID) any {
 }
 
 // GetByID retrieves a single audit event by ID.
-func (r *AuditRepository) GetByID(ctx context.Context, id uuid.UUID) (*domain.AuditEvent, error) {
+func (r *AuditRepository) GetByID(ctx context.Context, tenantID, id uuid.UUID) (*domain.AuditEvent, error) {
 	event := &domain.AuditEvent{}
 	var metaBytes []byte
 	var actorName, resourceType, resourceName, ipAddr, userAgent, requestID *string
@@ -119,8 +120,8 @@ func (r *AuditRepository) GetByID(ctx context.Context, id uuid.UUID) (*domain.Au
 			    host(ip_address), user_agent, request_id, metadata,
 			    COALESCE(prev_hash, ''), COALESCE(hash, ''),
 			    created_at
-		FROM audit_events WHERE id = $1`
-	err := r.db.QueryRow(ctx, query, id).Scan(
+		    FROM audit_events WHERE id = $1 AND tenant_id = $2`
+	err := r.db.QueryRow(ctx, query, id, tenantID).Scan(
 		&event.ID, &event.TenantID, &event.ActorType, &event.ActorID, &actorName,
 		&event.Action, &resourceType, &event.ResourceID, &resourceName,
 		&event.Result, &ipAddr, &userAgent, &requestID, &metaBytes,

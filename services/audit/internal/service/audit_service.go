@@ -21,7 +21,7 @@ import (
 // Satisfied by *repository.AuditRepository.
 type AuditRepo interface {
 	Insert(ctx context.Context, e *domain.AuditEvent) error
-	GetByID(ctx context.Context, id uuid.UUID) (*domain.AuditEvent, error)
+	GetByID(ctx context.Context, tenantID, id uuid.UUID) (*domain.AuditEvent, error)
 	List(ctx context.Context, filter domain.ListFilter, limit, offset int) ([]*domain.AuditEvent, int, error)
 	GetStats(ctx context.Context, tenantID uuid.UUID, since time.Time) (*domain.Stats, error)
 	DeleteOlderThan(ctx context.Context, tenantID uuid.UUID, before time.Time) (int64, error)
@@ -71,8 +71,8 @@ func (s *AuditService) SetWebhookEngine(engine *webhook.Engine) {
 }
 
 // GetEvent retrieves a single audit event.
-func (s *AuditService) GetEvent(ctx context.Context, id uuid.UUID) (*domain.AuditEvent, error) {
-	return s.repo.GetByID(ctx, id)
+func (s *AuditService) GetEvent(ctx context.Context, tenantID, id uuid.UUID) (*domain.AuditEvent, error) {
+	return s.repo.GetByID(ctx, tenantID, id)
 }
 
 // ListEvents returns audit events matching the filter with pagination.
