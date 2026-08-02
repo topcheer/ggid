@@ -588,7 +588,7 @@ func (gw *Gateway) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		claims := middleware.ExtractJWTClaims(r)
 		isAdmin := false
 		for _, s := range claims.Scopes {
-			if s == "admin" || s == "platform:admin" {
+			if s == "platform:admin" || s == "tenant:admin" {
 				isAdmin = true
 				break
 			}

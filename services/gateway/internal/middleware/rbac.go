@@ -58,6 +58,7 @@ var defaultAdminPrefixes = []string{
 	// Paths rewritten to /api/v1/audit/* before proxying — must be
 	// listed here because RBAC check runs BEFORE the URL rewrite.
 	"/api/v1/access-reviews",   // → /api/v1/audit/access-reviews
+	"/api/v1/gateway/",         // Gateway admin: routes/middleware info + reload (prevents topology leak + DoS)
 	"/api/v1/activity",         // → /api/v1/audit/activity
 	"/api/v1/exports",          // → /api/v1/audit/exports
 	"/api/v1/providers/config", // Provider config CRUD (admin only; /status stays public)

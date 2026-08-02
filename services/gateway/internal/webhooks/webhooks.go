@@ -163,6 +163,7 @@ func (d *HTTPDeliverer) Deliver(ctx context.Context, url, secret string, payload
 			slog.Error("webhook delivery attempt failed", "attempt", attempt+1, "error", err)
 			continue
 		}
+		io.Copy(io.Discard, resp.Body)
 		resp.Body.Close()
 
 		if resp.StatusCode >= 200 && resp.StatusCode < 300 {
