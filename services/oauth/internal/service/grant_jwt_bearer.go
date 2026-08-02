@@ -9,6 +9,8 @@ import (
 	"strings"
 	"time"
 
+	//nolint:all
+
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
 )
@@ -57,7 +59,7 @@ func (s *OAuthService) JWTBearerGrant(ctx context.Context, req *JWTBearerRequest
 					return nil, fmt.Errorf("unexpected signing method: %v", t.Header["alg"])
 				}
 				return externalKey, nil
-			})
+			}, jwt.WithValidMethods([]string{"RS256", "RS384", "RS512"}))
 			if err != nil {
 				return nil, fmt.Errorf("assertion signature verification failed with external key: %w", err)
 			}
@@ -142,7 +144,9 @@ func (s *OAuthService) JWTBearerGrant(ctx context.Context, req *JWTBearerRequest
 
 	scopeStr := ""
 	if len(req.Scope) > 0 {
-		scopeStr = strings.Join(req.Scope, " ")
+		// SECURITY: Filter scopes to prevent admin/platform scope injection.
+		filtered := filterSafeScopes(req.Scope)
+		scopeStr = strings.Join(filtered, " ")
 	}
 
 	return &TokenResponse{
