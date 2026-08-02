@@ -173,7 +173,7 @@ func (e *Engine) GDPRErase(ctx context.Context, userID, tenantID string) (*Casca
 	// 4. Hash user_id in audit logs (irreversible).
 	if e.pool != nil {
 		_, err := e.pool.Exec(ctx,
-			`UPDATE audit_events SET actor_name = 'SHA256:' || encode(digest(actor_name, 'sha256'), 'hex') WHERE actor_name = $1`, userID)
+			`UPDATE audit_events SET actor_name = 'SHA256:' || encode(digest(actor_name, 'sha256'), 'hex') WHERE actor_name = $1 AND tenant_id = $2`, userID, tenantID)
 		status := "ok"
 		if err != nil {
 			status = "skipped"
