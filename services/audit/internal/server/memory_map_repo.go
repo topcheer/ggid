@@ -77,6 +77,13 @@ func (r *auditMemoryMapRepo) storeJSON(ctx context.Context, table, id string, da
 	if r.pool == nil {
 		return nil
 	}
+	if !isValidIdentifier(table) {
+		return fmt.Errorf("invalid table name")
+	}
+	// SECURITY: Validate table name to prevent SQL injection.
+	if !isValidIdentifier(table) {
+		return fmt.Errorf("invalid table name: %s", table)
+	}
 	jsonData, _ := json.Marshal(data)
 	_, err := r.pool.Exec(ctx, fmt.Sprintf(
 		`INSERT INTO %s (id, data, created_at) VALUES ($1, $2, now())
@@ -88,6 +95,9 @@ func (r *auditMemoryMapRepo) storeJSON(ctx context.Context, table, id string, da
 func (r *auditMemoryMapRepo) listJSON(ctx context.Context, table string) ([]map[string]any, error) {
 	if r.pool == nil {
 		return []map[string]any{}, nil
+	}
+	if !isValidIdentifier(table) {
+		return nil, fmt.Errorf("invalid table name")
 	}
 	rows, err := r.pool.Query(ctx, fmt.Sprintf(`SELECT id, data, created_at FROM %s ORDER BY created_at DESC`, table))
 	if err != nil {
@@ -115,6 +125,9 @@ func (r *auditMemoryMapRepo) listJSON(ctx context.Context, table string) ([]map[
 func (r *auditMemoryMapRepo) deleteJSON(ctx context.Context, table, id string) error {
 	if r.pool == nil {
 		return nil
+	}
+	if !isValidIdentifier(table) {
+		return fmt.Errorf("invalid table name")
 	}
 	_, err := r.pool.Exec(ctx, fmt.Sprintf(`DELETE FROM %s WHERE id = $1`, table), id)
 	return err

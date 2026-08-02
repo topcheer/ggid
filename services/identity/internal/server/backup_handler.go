@@ -103,7 +103,7 @@ func (r *backupRepo) MarkVerified(ctx context.Context, id string) error {
 	if r.pool == nil {
 		return nil
 	}
-	_, err := r.pool.Exec(ctx, `UPDATE backup_history SET verified=TRUE WHERE id=$1`, id)
+	_, err := r.pool.Exec(ctx, `UPDATE backup_history SET verified=TRUE WHERE id=$1 AND tenant_id = (SELECT tenant_id FROM backup_history WHERE id=$1)`, id)
 	return err
 }
 
