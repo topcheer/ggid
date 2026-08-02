@@ -93,10 +93,11 @@ func (h *HTTPHandler) handleSelfServiceDevices(w http.ResponseWriter, r *http.Re
 	}
 
 	// GET: list user's registered devices (passkeys, etc.)
+	tenantIDStr := r.Header.Get("X-Tenant-ID")
 	rows, err := pool.Query(r.Context(), `
 		SELECT id::text, COALESCE(name, 'Unnamed Device'), created_at, COALESCE(last_used_at, created_at)
-		FROM passkey_credentials WHERE user_id::text = $1 ORDER BY created_at DESC`,
-		userIDStr)
+		FROM passkey_credentials WHERE user_id::text = $1 AND tenant_id::text = $2 ORDER BY created_at DESC`,
+		userIDStr, tenantIDStr)
 	if err != nil {
 		writeJSON(w, http.StatusOK, map[string]any{"devices": []any{}})
 		return
@@ -388,9 +389,9 @@ func (h *HTTPHandler) handleSelfServiceSessions(w http.ResponseWriter, r *http.R
 
 	rows, err := pool.Query(r.Context(), `
 		SELECT id::text, ip_address, user_agent, created_at, expires_at, revoked_at
-		FROM sessions WHERE user_id::text = $1 AND revoked_at IS NULL
+		FROM sessions WHERE user_id::text = $1 AND tenant_id::text = $2 AND revoked_at IS NULL
 		ORDER BY created_at DESC LIMIT 20`,
-		userIDStr)
+		userIDStr, r.Header.Get("X-Tenant-ID"))
 	if err != nil {
 		writeJSON(w, http.StatusOK, map[string]any{"sessions": []any{}})
 		return
