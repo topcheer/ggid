@@ -34,7 +34,12 @@ func getKey() []byte {
 	}
 	val := os.Getenv("GGID_ENCRYPTION_KEY")
 	if val == "" {
-		slog.Error("GGID_ENCRYPTION_KEY not set — TOTP secrets stored as plaintext")
+		// SECURITY: fail-closed in non-dev/test environments.
+		if env := os.Getenv("GGID_ENV"); env != "test" && env != "dev" {
+			slog.Error("GGID_ENCRYPTION_KEY not set in non-dev environment — refusing to store TOTP secrets as plaintext")
+			return nil // encrypt functions must check for nil key and return error
+		}
+		slog.Warn("GGID_ENCRYPTION_KEY not set — TOTP secrets stored as plaintext (dev/test only)")
 		return nil
 	}
 	if len(val) == 64 {

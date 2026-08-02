@@ -87,6 +87,8 @@ func NewSIEMForwarder(cfg SIEMConfig) *SIEMForwarder {
 
 // SetCAPool configures a custom CA certificate pool for TLS connections to the SIEM endpoint.
 func (f *SIEMForwarder) SetCAPool(pool *x509.CertPool) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
 	f.client = &http.Client{
 		Timeout: f.config.Timeout,
 		Transport: &http.Transport{
