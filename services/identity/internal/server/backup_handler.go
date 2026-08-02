@@ -15,6 +15,7 @@ import (
 // BackupRecord tracks a backup operation.
 type BackupRecord struct {
 	ID          string     `json:"id"`
+	TenantID    string     `json:"tenant_id"`
 	Type        string     `json:"type"`   // full, wal, redis
 	Status      string     `json:"status"` // pending, running, completed, failed
 	SizeBytes   int64      `json:"size_bytes"`
@@ -41,12 +42,14 @@ func (r *backupRepo) EnsureSchema(ctx context.Context) error {
 	_, err := r.pool.Exec(ctx, `
 		CREATE TABLE IF NOT EXISTS backup_history (
 			id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+			tenant_id UUID,
 			type TEXT NOT NULL, status TEXT NOT NULL DEFAULT 'pending',
 			size_bytes BIGINT DEFAULT 0, location TEXT DEFAULT '',
 			encrypted BOOLEAN DEFAULT FALSE, verified BOOLEAN DEFAULT FALSE,
 			started_at TIMESTAMPTZ DEFAULT now(), completed_at TIMESTAMPTZ
 		);
 		CREATE INDEX IF NOT EXISTS idx_backup_started ON backup_history(started_at DESC);
+		CREATE INDEX IF NOT EXISTS idx_backup_tenant ON backup_history(tenant_id);
 	`)
 	return err
 }
@@ -59,8 +62,8 @@ func (r *backupRepo) Create(ctx context.Context, b *BackupRecord) error {
 		b.ID = uuid.New().String()
 	}
 	_, err := r.pool.Exec(ctx,
-		`INSERT INTO backup_history (id,type,status,size_bytes,location,encrypted,verified,started_at) VALUES ($1,$2,$3,$4,$5,$6,$7,$8)`,
-		b.ID, b.Type, b.Status, b.SizeBytes, b.Location, b.Encrypted, b.Verified, b.StartedAt)
+		`INSERT INTO backup_history (id,tenant_id,type,status,size_bytes,location,encrypted,verified,started_at) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)`,
+		b.ID, b.TenantID, b.Type, b.Status, b.SizeBytes, b.Location, b.Encrypted, b.Verified, b.StartedAt)
 	return err
 }
 
@@ -88,30 +91,30 @@ func (r *backupRepo) List(ctx context.Context, limit int) ([]*BackupRecord, erro
 	return result, nil
 }
 
-func (r *backupRepo) MarkCompleted(ctx context.Context, id string, sizeBytes int64, location string) error {
+func (r *backupRepo) MarkCompleted(ctx context.Context, tenantID, id string, sizeBytes int64, location string) error {
 	if r.pool == nil {
 		return nil
 	}
 	now := time.Now().UTC()
 	_, err := r.pool.Exec(ctx,
-		`UPDATE backup_history SET status='completed', size_bytes=$3, location=$4, completed_at=$2 WHERE id=$1 AND tenant_id = (SELECT tenant_id FROM backup_history WHERE id=$1)`,
-		id, now, sizeBytes, location)
+		`UPDATE backup_history SET status='completed', size_bytes=$3, location=$4, completed_at=$2 WHERE id=$1 AND tenant_id=$5`,
+		id, now, sizeBytes, location, tenantID)
 	return err
 }
 
-func (r *backupRepo) MarkVerified(ctx context.Context, id string) error {
+func (r *backupRepo) MarkVerified(ctx context.Context, tenantID, id string) error {
 	if r.pool == nil {
 		return nil
 	}
-	_, err := r.pool.Exec(ctx, `UPDATE backup_history SET verified=TRUE WHERE id=$1 AND tenant_id = (SELECT tenant_id FROM backup_history WHERE id=$1)`, id)
+	_, err := r.pool.Exec(ctx, `UPDATE backup_history SET verified=TRUE WHERE id=$1 AND tenant_id=$2`, id, tenantID)
 	return err
 }
 
 // TriggerBackup simulates running a backup (pg_dump + encrypt + upload).
-func (r *backupRepo) TriggerBackup(ctx context.Context, backupType string) (*BackupRecord, error) {
+func (r *backupRepo) TriggerBackup(ctx context.Context, tenantID, backupType string) (*BackupRecord, error) {
 	now := time.Now().UTC()
 	b := &BackupRecord{
-		ID: uuid.New().String(), Type: backupType,
+		ID: uuid.New().String(), TenantID: tenantID, Type: backupType,
 		Status: "running", Encrypted: true,
 		StartedAt: now,
 	}
@@ -120,7 +123,7 @@ func (r *backupRepo) TriggerBackup(ctx context.Context, backupType string) (*Bac
 	// In production: execute pg_dump, encrypt with AES-256-GCM, upload to S3.
 	// For now, mark as completed with simulated size.
 	location := fmt.Sprintf("s3://ggid-backups/%s/%s.dump", backupType, b.ID)
-	r.MarkCompleted(ctx, b.ID, 0, location)
+	r.MarkCompleted(ctx, tenantID, b.ID, 0, location)
 	b.Status = "completed"
 	b.Location = location
 	b.CompletedAt = &now
@@ -154,9 +157,10 @@ func (h *HTTPHandler) handleBackupTrigger(w http.ResponseWriter, r *http.Request
 	if t := r.URL.Query().Get("type"); t != "" {
 		backupType = t
 	}
+	tenantID := r.Header.Get("X-Tenant-ID")
 	var backup *BackupRecord
 	if h.backupRepo != nil {
-		backup, _ = h.backupRepo.TriggerBackup(r.Context(), backupType)
+		backup, _ = h.backupRepo.TriggerBackup(r.Context(), tenantID, backupType)
 	}
 	if backup == nil {
 		backup = &BackupRecord{ID: uuid.New().String(), Type: backupType, Status: "completed"}
@@ -175,8 +179,9 @@ func (h *HTTPHandler) handleBackupVerify(w http.ResponseWriter, r *http.Request)
 		writeJSONError(w, http.StatusBadRequest, "backup id required")
 		return
 	}
+	tenantID := r.Header.Get("X-Tenant-ID")
 	if h.backupRepo != nil {
-		h.backupRepo.MarkVerified(r.Context(), id)
+		h.backupRepo.MarkVerified(r.Context(), tenantID, id)
 	}
 	writeJSON(w, http.StatusOK, map[string]any{"status": "verified", "id": id, "verified_at": time.Now().UTC()})
 }
