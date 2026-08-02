@@ -133,7 +133,14 @@ func (s *Server) jwtAuth(next http.HandlerFunc) http.HandlerFunc {
 			http.Error(w, `{"error":"jwks_not_configured"}`, http.StatusUnauthorized)
 			return
 		} else {
-			_, err = jwt.ParseWithClaims(tokenStr, claims, func(t *jwt.Token) (any, error) {
+			parserOpts := []jwt.ParserOption{
+				jwt.WithValidMethods([]string{"HS256", "RS256"}),
+				jwt.WithExpirationRequired(),
+			}
+			if s.jwtIssuer != "" {
+				parserOpts = append(parserOpts, jwt.WithIssuer(s.jwtIssuer))
+			}
+			_, err = jwt.NewParser(parserOpts...).ParseWithClaims(tokenStr, claims, func(t *jwt.Token) (any, error) {
 				if _, ok := t.Method.(*jwt.SigningMethodHMAC); ok {
 					return s.jwtSecret, nil
 				}
