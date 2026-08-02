@@ -126,8 +126,13 @@ func (h *HTTPHandler) handleUserRoles(ctx context.Context, userID uuid.UUID, w h
 			grantedBy = uuid.Nil
 		}
 
+		// SECURITY: Prevent self-role-assignment — users cannot elevate their own privileges.
+		if grantedByStr == userID.String() && userID != uuid.Nil {
+			writeJSONError(w, http.StatusForbidden, "cannot assign roles to yourself")
+			return
+		}
+
 		assignment := UserRoleAssignment{
-			ID:         uuid.NewString(),
 			UserID:     userID.String(),
 			RoleID:     req.RoleID,
 			RoleName:   req.RoleName,
