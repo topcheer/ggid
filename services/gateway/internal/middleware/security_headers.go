@@ -5,16 +5,17 @@ import (
 	"log/slog"
 	"net/http"
 	"strings"
+	"sync"
 )
 
 // SecurityHeadersConfig holds configurable security header settings.
 type SecurityHeadersConfig struct {
-	Enabled            bool                          `json:"enabled"`
-	FrameDeny          bool                          `json:"frame_deny"`
-	FrameAllowFrom     string                        `json:"frame_allow_from,omitempty"`
-	CSP                string                        `json:"content_security_policy,omitempty"`
-	ContentTypeNosniff bool                          `json:"content_type_nosniff"`
-	HSTSMaxAge         int                           `json:"hsts_max_age"`
+	Enabled            bool                              `json:"enabled"`
+	FrameDeny          bool                              `json:"frame_deny"`
+	FrameAllowFrom     string                            `json:"frame_allow_from,omitempty"`
+	CSP                string                            `json:"content_security_policy,omitempty"`
+	ContentTypeNosniff bool                              `json:"content_type_nosniff"`
+	HSTSMaxAge         int                               `json:"hsts_max_age"`
 	PerTenantOverrides map[string]*SecurityHeadersConfig `json:"per_tenant_overrides,omitempty"`
 }
 
@@ -28,14 +29,28 @@ func DefaultSecurityHeadersConfig() *SecurityHeadersConfig {
 
 // mergeSecurityHeaders merges an override config onto a base config.
 func mergeSecurityHeaders(base, override *SecurityHeadersConfig) *SecurityHeadersConfig {
-	if base == nil { return override }
-	if override == nil { return base }
+	if base == nil {
+		return override
+	}
+	if override == nil {
+		return base
+	}
 	result := *base
-	if override.CSP != "" { result.CSP = override.CSP }
-	if override.FrameDeny { result.FrameDeny = true }
-	if override.FrameAllowFrom != "" { result.FrameAllowFrom = override.FrameAllowFrom }
-	if override.ContentTypeNosniff { result.ContentTypeNosniff = true }
-	if override.HSTSMaxAge > 0 { result.HSTSMaxAge = override.HSTSMaxAge }
+	if override.CSP != "" {
+		result.CSP = override.CSP
+	}
+	if override.FrameDeny {
+		result.FrameDeny = true
+	}
+	if override.FrameAllowFrom != "" {
+		result.FrameAllowFrom = override.FrameAllowFrom
+	}
+	if override.ContentTypeNosniff {
+		result.ContentTypeNosniff = true
+	}
+	if override.HSTSMaxAge > 0 {
+		result.HSTSMaxAge = override.HSTSMaxAge
+	}
 	result.Enabled = override.Enabled
 	return &result
 }
@@ -105,11 +120,17 @@ var (
 	tenantCORSConfigs = map[string]TenantCORSConfig{}
 )
 
+var tenantCORSConfigsMu sync.RWMutex
+
 func SetTenantCORS(tenantID string, cfg TenantCORSConfig) {
+	tenantCORSConfigsMu.Lock()
+	defer tenantCORSConfigsMu.Unlock()
 	tenantCORSConfigs[tenantID] = cfg
 }
 
 func GetTenantCORS(tenantID string) TenantCORSConfig {
+	tenantCORSConfigsMu.RLock()
+	defer tenantCORSConfigsMu.RUnlock()
 	if cfg, ok := tenantCORSConfigs[tenantID]; ok {
 		return cfg
 	}
@@ -141,7 +162,7 @@ func TenantCORSMiddleware(next http.Handler) http.Handler {
 			w.Header().Set("Access-Control-Allow-Methods", strings.Join(cfg.AllowedMethods, ", "))
 			w.Header().Set("Access-Control-Allow-Headers", strings.Join(cfg.AllowedHeaders, ", "))
 			if cfg.AllowCredentials {
-			w.Header().Set("Access-Control-Allow-Credentials", "true")
+				w.Header().Set("Access-Control-Allow-Credentials", "true")
 			}
 			w.Header().Set("Access-Control-Max-Age", "3600")
 		}
