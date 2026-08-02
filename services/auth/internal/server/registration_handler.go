@@ -10,6 +10,7 @@ import (
 	"time"
 
 	ggidcrypto "github.com/ggid/ggid/pkg/crypto"
+
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -105,7 +106,7 @@ func validateEmail(email string) bool {
 }
 
 func validatePassword(password string) bool {
-	if len(password) < 8 {
+	if len(password) < 8 || len(password) > 64 {
 		return false
 	}
 	hasUpper, hasLower, hasDigit := false, false, false

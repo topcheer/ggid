@@ -45,7 +45,7 @@ func (s *OAuthService) JWTBearerGrant(ctx context.Context, req *JWTBearerRequest
 			return nil, fmt.Errorf("unexpected signing method: %v", t.Header["alg"])
 		}
 		return asPubKey, nil
-	})
+	}, jwt.WithValidMethods([]string{"RS256", "RS384", "RS512"}))
 	if err != nil {
 		if req.ClientID != "" {
 			externalKey, fetchErr := s.fetchExternalIssuerKey(ctx, iss, req.ClientID, unverifiedToken.Header)
