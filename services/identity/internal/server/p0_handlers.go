@@ -195,6 +195,7 @@ func (h *HTTPHandler) handleGDPRDeleteAccount(w http.ResponseWriter, r *http.Req
 	}
 
 	// Anonymize user record (GDPR: keep audit trail but remove PII)
+	// SECURITY: tenant_id scoping prevents cross-tenant data anonymization.
 	_, err = tx.Exec(r.Context(), `
 		UPDATE users SET
 			username = 'deleted_' || id::text,
@@ -204,7 +205,7 @@ func (h *HTTPHandler) handleGDPRDeleteAccount(w http.ResponseWriter, r *http.Req
 			phone = '',
 			status = 'deleted',
 			deleted_at = NOW()
-		WHERE id = $1`, userID)
+		WHERE id = $1 AND tenant_id = $2`, userID, tenantID)
 	if err != nil {
 		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "failed to delete account"})
 		return
