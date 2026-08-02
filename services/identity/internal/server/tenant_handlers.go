@@ -143,7 +143,7 @@ func (h *HTTPHandler) handleSystemBootstrap(w http.ResponseWriter, r *http.Reque
 	}
 
 	// Validate password strength (basic policy).
-	if len(req.AdminPassword) < 8 {
+	if len(req.AdminPassword) < 8 || len(req.AdminPassword) > 64 {
 		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "password must be at least 8 characters"})
 		return
 	}

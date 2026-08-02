@@ -711,7 +711,7 @@ func (h *HTTPHandler) createUser(ctx context.Context, w http.ResponseWriter, r *
 			minLen = dbMinLen
 			requireUpper, requireLower, requireDigit, requireSpecial = dbUp, dbLow, dbDig, dbSpec
 		}
-		if len(req.Password) < minLen {
+		if len(req.Password) < minLen || len(req.Password) > 64 {
 			writeJSONError(w, http.StatusBadRequest, fmt.Sprintf("password must be at least %d characters", minLen))
 			return
 		}
@@ -746,7 +746,7 @@ func (h *HTTPHandler) createUser(ctx context.Context, w http.ResponseWriter, r *
 		}
 	} else {
 		// Fallback: basic validation if no DB pool
-		if len(req.Password) < 8 {
+		if len(req.Password) < 8 || len(req.Password) > 64 {
 			writeJSONError(w, http.StatusBadRequest, "password must be at least 8 characters")
 			return
 		}
@@ -1350,7 +1350,7 @@ func (h *HTTPHandler) handleImportCSV(w http.ResponseWriter, r *http.Request) {
 		}
 
 		// Password strength check (min 8 chars, must have upper+lower+digit).
-		if len(password) < 8 {
+		if len(password) < 8 || len(password) > 64 {
 			results = append(results, importResult{Line: i + 1, Status: "error", Message: "password must be at least 8 characters"})
 			continue
 		}

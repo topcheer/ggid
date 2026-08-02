@@ -309,7 +309,7 @@ func validateRecords(records []ImportUserRecord) *ValidationReport {
 		seenUsernames[rec.Username] = true
 
 		// Validate password strength (min 8 chars).
-		if len(rec.Password) < 8 {
+		if len(rec.Password) < 8 || len(rec.Password) > 64 {
 			report.Invalid++
 			report.Errors = append(report.Errors, ImportRowError{
 				Row: rowNum, Username: rec.Username, Error: "password too short (min 8 chars)",
