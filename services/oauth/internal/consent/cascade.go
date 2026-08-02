@@ -83,7 +83,7 @@ func (e *Engine) WithdrawCascade(ctx context.Context, userID, tenantID, scope st
 	}
 
 	// 1. Revoke OAuth tokens containing that scope.
-	tokens, _ := e.revokeTokensForScope(ctx, userID, scope)
+	tokens, _ := e.revokeTokensForScope(ctx, userID, tenantID, scope)
 	result.AffectedTokens = len(tokens)
 	for _, tok := range tokens {
 		result.Actions = append(result.Actions, CascadeAction{
@@ -93,7 +93,7 @@ func (e *Engine) WithdrawCascade(ctx context.Context, userID, tenantID, scope st
 	}
 
 	// 2. Invalidate sessions where scope was granted.
-	sessions := e.invalidateSessions(ctx, userID, scope)
+	sessions := e.invalidateSessions(ctx, userID, tenantID, scope)
 	result.AffectedSessions = len(sessions)
 	for _, sess := range sessions {
 		result.Actions = append(result.Actions, CascadeAction{
@@ -133,7 +133,7 @@ func (e *Engine) GDPRErase(ctx context.Context, userID, tenantID string) (*Casca
 	}
 
 	// 1. Revoke all tokens.
-	tokens := e.revokeAllTokens(ctx, userID)
+	tokens := e.revokeAllTokens(ctx, userID, tenantID)
 	result.AffectedTokens = len(tokens)
 	result.Actions = append(result.Actions, CascadeAction{
 		Type: "revoke_all_tokens", Status: "ok",
@@ -141,7 +141,7 @@ func (e *Engine) GDPRErase(ctx context.Context, userID, tenantID string) (*Casca
 	})
 
 	// 2. Revoke all sessions.
-	sessions := e.revokeAllSessions(ctx, userID)
+	sessions := e.revokeAllSessions(ctx, userID, tenantID)
 	result.AffectedSessions = len(sessions)
 	result.Actions = append(result.Actions, CascadeAction{
 		Type: "revoke_all_sessions", Status: "ok",
@@ -245,15 +245,15 @@ func (e *Engine) GetCascadeLog(ctx context.Context, userID string, limit int) ([
 
 // --- Internal helpers (log-only for nil pool, real DB for production) ---
 
-func (e *Engine) revokeTokensForScope(ctx context.Context, userID, scope string) ([]string, error) {
+func (e *Engine) revokeTokensForScope(ctx context.Context, userID, tenantID, scope string) ([]string, error) {
 	if e.pool == nil {
 		slog.Info("consent cascade: revoke tokens for scope (dev mode)", "user", userID, "scope", scope)
 		return []string{"tok_mock_1", "tok_mock_2"}, nil
 	}
-	// Revoke refresh tokens containing the scope.
+	// SECURITY (R93 P1): Include tenant_id in WHERE to enforce tenant isolation.
 	rows, err := e.pool.Query(ctx,
-		`UPDATE refresh_tokens SET revoked_at = now() WHERE revoked_at IS NULL AND user_id = $1 AND scope @> $2::text[] RETURNING id::text`,
-		userID, []string{scope})
+		`UPDATE refresh_tokens SET revoked_at = now() WHERE revoked_at IS NULL AND tenant_id = $1 AND user_id = $2 AND scope @> $3::text[] RETURNING id::text`,
+		tenantID, userID, []string{scope})
 	if err != nil {
 		return nil, err
 	}
@@ -267,7 +267,7 @@ func (e *Engine) revokeTokensForScope(ctx context.Context, userID, scope string)
 	return tokens, rows.Err()
 }
 
-func (e *Engine) invalidateSessions(ctx context.Context, userID, scope string) []string {
+func (e *Engine) invalidateSessions(ctx context.Context, userID, tenantID, scope string) []string {
 	if e.pool == nil {
 		return []string{"sess_mock_1"}
 	}
@@ -277,9 +277,10 @@ func (e *Engine) invalidateSessions(ctx context.Context, userID, scope string) [
 	if err != nil {
 		return nil
 	}
+	// SECURITY (R93 P1): Include tenant_id in WHERE to enforce tenant isolation.
 	rows, err := e.pool.Query(ctx,
-		`UPDATE sessions SET revoked_at = now() WHERE user_id = $1 AND metadata->'scopes' @> $2::jsonb RETURNING id::text`,
-		userID, scopeJSON)
+		`UPDATE sessions SET revoked_at = now() WHERE tenant_id = $1 AND user_id = $2 AND metadata->'scopes' @> $3::jsonb RETURNING id::text`,
+		tenantID, userID, scopeJSON)
 	if err != nil {
 		return nil
 	}
@@ -298,11 +299,12 @@ func (e *Engine) notifySCIMApps(ctx context.Context, userID, scope string) []str
 	return []string{"app_salesforce", "app_slack"}
 }
 
-func (e *Engine) revokeAllTokens(ctx context.Context, userID string) []string {
+func (e *Engine) revokeAllTokens(ctx context.Context, userID, tenantID string) []string {
 	if e.pool == nil {
 		return []string{"all_tokens_revoked"}
 	}
-	ct, err := e.pool.Exec(ctx, `UPDATE refresh_tokens SET revoked_at = now() WHERE revoked_at IS NULL AND user_id = $1`, userID)
+	// SECURITY (R93 P1): Include tenant_id to enforce tenant isolation.
+	ct, err := e.pool.Exec(ctx, `UPDATE refresh_tokens SET revoked_at = now() WHERE revoked_at IS NULL AND tenant_id = $1 AND user_id = $2`, tenantID, userID)
 	if err != nil {
 		return nil
 	}
@@ -310,11 +312,12 @@ func (e *Engine) revokeAllTokens(ctx context.Context, userID string) []string {
 	return make([]string, count)
 }
 
-func (e *Engine) revokeAllSessions(ctx context.Context, userID string) []string {
+func (e *Engine) revokeAllSessions(ctx context.Context, userID, tenantID string) []string {
 	if e.pool == nil {
 		return []string{"all_sessions_revoked"}
 	}
-	ct, err := e.pool.Exec(ctx, `UPDATE sessions SET revoked_at = now() WHERE user_id = $1 AND revoked_at IS NULL`, userID)
+	// SECURITY (R93 P1): Include tenant_id to enforce tenant isolation.
+	ct, err := e.pool.Exec(ctx, `UPDATE sessions SET revoked_at = now() WHERE tenant_id = $1 AND user_id = $2 AND revoked_at IS NULL`, tenantID, userID)
 	if err != nil {
 		return nil
 	}

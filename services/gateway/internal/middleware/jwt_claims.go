@@ -119,12 +119,38 @@ func JWTClaimExtraction(next http.Handler) http.Handler {
 		if claims.Subject != "" {
 			r.Header.Set("X-User-ID", claims.Subject)
 		}
-		// Only set X-Tenant-ID from JWT if not already set by TenantResolver
-		// or explicit client request. This allows platform admins to target
-		// other tenants via X-Tenant-ID header.
-		if claims.TenantID != "" && r.Header.Get("X-Tenant-ID") == "" {
-			r.Header.Set("X-Tenant-ID", claims.TenantID)
+
+		// Determine admin status from scopes BEFORE tenant enforcement.
+		isPlatformAdmin := false
+		if len(claims.Scopes) > 0 {
+			for _, sc := range claims.Scopes {
+				if sc == "platform:admin" {
+					isPlatformAdmin = true
+					break
+				}
+			}
 		}
+
+		// SECURITY (R93 P0): Tenant enforcement — prevent cross-tenant escalation
+		// via spoofed X-Tenant-ID header. The JWT tenant_id is authoritative.
+		// Only platform:admin may override their own tenant via header (for
+		// legitimate cross-tenant admin operations). Non-admin users are
+		// always pinned to their JWT tenant regardless of header value.
+		if claims.TenantID != "" {
+			if isPlatformAdmin {
+				// Admin: allow X-Tenant-ID override only if already set
+				// (by EnhancedTenantResolver from header/subdomain).
+				// If not set, default to JWT tenant.
+				if r.Header.Get("X-Tenant-ID") == "" {
+					r.Header.Set("X-Tenant-ID", claims.TenantID)
+				}
+			} else {
+				// Non-admin: JWT tenant_id is authoritative. Override any
+				// client-supplied header to prevent cross-tenant access.
+				r.Header.Set("X-Tenant-ID", claims.TenantID)
+			}
+		}
+
 		if len(claims.Scopes) > 0 {
 			r.Header.Set("X-Scopes", strings.Join(claims.Scopes, ","))
 			isAdmin := false
