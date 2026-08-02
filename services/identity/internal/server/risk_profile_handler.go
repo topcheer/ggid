@@ -19,13 +19,13 @@ type riskFactor struct {
 
 // userRiskProfile aggregates multiple risk factors into a composite score.
 type userRiskProfile struct {
-	UserID     string       `json:"user_id"`
-	RiskScore  int          `json:"risk_score"` // 0-100
-	RiskLevel  string       `json:"risk_level"` // low, moderate, elevated, high, critical
-	Factors    []riskFactor `json:"factors"`
-	Trend      string       `json:"trend"` // improving, stable, worsening
+	UserID       string           `json:"user_id"`
+	RiskScore    int              `json:"risk_score"` // 0-100
+	RiskLevel    string           `json:"risk_level"` // low, moderate, elevated, high, critical
+	Factors      []riskFactor     `json:"factors"`
+	Trend        string           `json:"trend"` // improving, stable, worsening
 	ScoreHistory []map[string]any `json:"score_history"`
-	AssessedAt string       `json:"assessed_at"`
+	AssessedAt   string           `json:"assessed_at"`
 }
 
 var riskProfileStore = struct {
@@ -53,6 +53,12 @@ func (h *HTTPHandler) handleRiskProfile(w http.ResponseWriter, r *http.Request) 
 		writeJSONError(w, http.StatusBadRequest, "user ID is required in path")
 		return
 	}
+	// SECURITY (P1-10C): Validate caller's tenant matches the target user's tenant.
+	callerTenantID := r.Header.Get("X-Tenant-ID")
+	if callerTenantID == "" {
+		writeJSONError(w, http.StatusForbidden, "tenant context required")
+		return
+	}
 	if _, err := uuid.Parse(userID); err != nil {
 		writeJSONError(w, http.StatusBadRequest, "invalid user_id")
 		return
@@ -64,35 +70,35 @@ func (h *HTTPHandler) handleRiskProfile(w http.ResponseWriter, r *http.Request) 
 	// Factor 1: Privileged access
 	factors = append(factors, riskFactor{
 		Type: "privileged_access", Weight: 25,
-		Detail: "User has admin-level role assignments",
+		Detail:   "User has admin-level role assignments",
 		Severity: "high",
 	})
 
 	// Factor 2: Stale password
 	factors = append(factors, riskFactor{
 		Type: "stale_password", Weight: 10,
-		Detail: "Password not changed in 120+ days",
+		Detail:   "Password not changed in 120+ days",
 		Severity: "medium",
 	})
 
 	// Factor 3: No MFA
 	factors = append(factors, riskFactor{
 		Type: "no_mfa", Weight: 20,
-		Detail: "Multi-factor authentication not enrolled",
+		Detail:   "Multi-factor authentication not enrolled",
 		Severity: "high",
 	})
 
 	// Factor 4: Dormant account
 	factors = append(factors, riskFactor{
 		Type: "dormant", Weight: 8,
-		Detail: "No login activity in 45 days",
+		Detail:   "No login activity in 45 days",
 		Severity: "low",
 	})
 
 	// Factor 5: Exposed credentials
 	factors = append(factors, riskFactor{
 		Type: "exposed_credentials", Weight: 15,
-		Detail: "Email found in known breach database",
+		Detail:   "Email found in known breach database",
 		Severity: "critical",
 	})
 
