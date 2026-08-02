@@ -8,7 +8,7 @@ import (
 
 	"github.com/ggid/ggid/services/org/internal/domain"
 	"github.com/google/uuid"
-	"github.com/jackc/pgx/v5"
+
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -50,7 +50,7 @@ func (r *DeptRepository) Create(ctx context.Context, dept *domain.Department) er
 		dept.Path = label
 	}
 
-	_, err = r.db.Exec(ctx, `UPDATE departments SET path = $2::ltree WHERE id = $1`, dept.ID, dept.Path)
+	_, err = r.db.Exec(ctx, `UPDATE departments SET path = $2::ltree WHERE id = $1 AND tenant_id = (SELECT tenant_id FROM departments WHERE id = $1)`, dept.ID, dept.Path)
 	if err != nil {
 		return fmt.Errorf("update dept path: %w", err)
 	}
@@ -90,7 +90,7 @@ func (r *DeptRepository) ListByOrg(ctx context.Context, orgID uuid.UUID) ([]*dom
 // Update modifies a department.
 func (r *DeptRepository) Update(ctx context.Context, dept *domain.Department) error {
 	metadataJSON, _ := json.Marshal(dept.Metadata)
-	query := `UPDATE departments SET name = $2, parent_id = $3, path = $4, manager_id = $5, metadata = $6 WHERE id = $1`
+	query := `UPDATE departments SET name = $2, parent_id = $3, path = $4, manager_id = $5, metadata = $6 WHERE id = $1 AND tenant_id = (SELECT tenant_id FROM departments WHERE id = $1)`
 	_, err := r.db.Exec(ctx, query, dept.ID, dept.Name, dept.ParentID, dept.Path, dept.ManagerID, metadataJSON)
 	if err != nil {
 		return mapErr(err, "department", dept.ID.String())

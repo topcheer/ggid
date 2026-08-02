@@ -39,7 +39,7 @@ func (r *MembershipRepository) Create(ctx context.Context, m *domain.Membership)
 // Activate sets a membership status to active and records join time.
 func (r *MembershipRepository) Activate(ctx context.Context, id uuid.UUID) error {
 	_, err := r.db.Exec(ctx,
-		`UPDATE memberships SET status = 'active', joined_at = $2 WHERE id = $1 AND status = 'invited'`,
+		`UPDATE memberships SET status = 'active', joined_at = $2 WHERE id = $1 AND status = 'invited' AND tenant_id = (SELECT tenant_id FROM memberships WHERE id = $1)`,
 		id, time.Now())
 	if err != nil {
 		return fmt.Errorf("activate membership: %w", err)
@@ -49,7 +49,7 @@ func (r *MembershipRepository) Activate(ctx context.Context, id uuid.UUID) error
 
 // Remove sets a membership status to removed.
 func (r *MembershipRepository) Remove(ctx context.Context, id uuid.UUID) error {
-	_, err := r.db.Exec(ctx, `UPDATE memberships SET status = 'removed' WHERE id = $1`, id)
+	_, err := r.db.Exec(ctx, `UPDATE memberships SET status = 'removed' WHERE id = $1 AND tenant_id = (SELECT tenant_id FROM memberships WHERE id = $1)`, id)
 	if err != nil {
 		return fmt.Errorf("remove membership: %w", err)
 	}

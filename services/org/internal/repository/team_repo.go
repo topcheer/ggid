@@ -63,7 +63,7 @@ func (r *TeamRepository) ListByOrg(ctx context.Context, orgID uuid.UUID, limit, 
 
 // Delete removes a team.
 func (r *TeamRepository) Delete(ctx context.Context, id uuid.UUID) error {
-	cmd, err := r.db.Exec(ctx, `DELETE FROM teams WHERE id = $1`, id)
+	cmd, err := r.db.Exec(ctx, `DELETE FROM teams WHERE id = $1 AND tenant_id = (SELECT tenant_id FROM teams WHERE id = $1)`, id)
 	if err != nil {
 		return fmt.Errorf("delete team: %w", err)
 	}
@@ -75,7 +75,7 @@ func (r *TeamRepository) Delete(ctx context.Context, id uuid.UUID) error {
 
 func (r *TeamRepository) Update(ctx context.Context, team *domain.Team) error {
 	cmd, err := r.db.Exec(ctx,
-		`UPDATE teams SET name = $1, description = $2 WHERE id = $3`,
+		`UPDATE teams SET name = $1, description = $2 WHERE id = $3 AND tenant_id = (SELECT tenant_id FROM teams WHERE id = $3)`,
 		team.Name, team.Description, team.ID)
 	if err != nil {
 		return fmt.Errorf("update team: %w", err)

@@ -8,7 +8,7 @@ import (
 
 	"github.com/ggid/ggid/services/org/internal/domain"
 	"github.com/google/uuid"
-	"github.com/jackc/pgx/v5"
+
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -55,7 +55,7 @@ func (r *OrgRepository) Create(ctx context.Context, org *domain.Organization) er
 		org.Path = label
 	}
 
-	_, err = r.db.Exec(ctx, `UPDATE organizations SET path = $2::ltree WHERE id = $1`, org.ID, org.Path)
+	_, err = r.db.Exec(ctx, `UPDATE organizations SET path = $2::ltree WHERE id = $1 AND tenant_id = (SELECT tenant_id FROM organizations WHERE id = $1)`, org.ID, org.Path)
 	if err != nil {
 		return fmt.Errorf("update org path: %w", err)
 	}
@@ -117,7 +117,7 @@ func (r *OrgRepository) GetSubTree(ctx context.Context, tenantID, rootID uuid.UU
 // Update modifies an organization.
 func (r *OrgRepository) Update(ctx context.Context, org *domain.Organization) error {
 	metaJSON, _ := json.Marshal(org.Metadata)
-	query := `UPDATE organizations SET name = $2, path = $3::ltree, metadata = $4, updated_at = NOW() WHERE id = $1 RETURNING updated_at`
+	query := `UPDATE organizations SET name = $2, path = $3::ltree, metadata = $4, updated_at = NOW() WHERE id = $1 AND tenant_id = (SELECT tenant_id FROM organizations WHERE id = $1) RETURNING updated_at`
 	err := r.db.QueryRow(ctx, query, org.ID, org.Name, org.Path, metaJSON).Scan(&org.UpdatedAt)
 	if err != nil {
 		return mapErr(err, "organization", org.ID.String())
@@ -127,7 +127,7 @@ func (r *OrgRepository) Update(ctx context.Context, org *domain.Organization) er
 
 // Delete removes an organization (cascade deletes children).
 func (r *OrgRepository) Delete(ctx context.Context, id uuid.UUID) error {
-	cmd, err := r.db.Exec(ctx, `DELETE FROM organizations WHERE id = $1`, id)
+	cmd, err := r.db.Exec(ctx, `DELETE FROM organizations WHERE id = $1 AND tenant_id = (SELECT tenant_id FROM organizations WHERE id = $1)`, id)
 	if err != nil {
 		return fmt.Errorf("delete organization: %w", err)
 	}
