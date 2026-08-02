@@ -42,10 +42,10 @@ import (
 	"github.com/ggid/ggid/services/oauth/internal/repository"
 	"github.com/ggid/ggid/services/oauth/internal/service"
 
-	"github.com/golang-jwt/jwt/v5"
-	"github.com/redis/go-redis/v9"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/golang-jwt/jwt/v5"
+	"github.com/redis/go-redis/v9"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
@@ -1456,6 +1456,23 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 		idpSSOURL := r.URL.Query().Get("idp")
 		if idpSSOURL == "" {
 			idpSSOURL = cfg.Issuer + "/saml/idp/sso"
+		} else {
+			// SECURITY: Validate idp URL to prevent open redirect / SSRF.
+			// Only allow https URLs or relative paths starting with /.
+			parsedURL, err := url.Parse(idpSSOURL)
+			if err != nil || (parsedURL.Scheme != "https" && parsedURL.Scheme != "") ||
+				(parsedURL.Scheme == "" && !strings.HasPrefix(idpSSOURL, "/")) {
+				writeJSON(w, http.StatusBadRequest, map[string]any{"error": "invalid idp URL"})
+				return
+			}
+		} else {
+			// SECURITY: Validate idp URL to prevent open redirect.
+			// Only allow https:// or relative / URLs.
+			parsedIDP, err := url.Parse(idpSSOURL)
+			if err != nil || (parsedIDP.Scheme != "https" && parsedIDP.Scheme != "") || (parsedIDP.Scheme == "" && !strings.HasPrefix(idpSSOURL, "/")) {
+				writeJSON(w, http.StatusBadRequest, map[string]any{"error": "invalid idp URL"})
+				return
+			}
 		}
 
 		sp := &saml.ServiceProvider{
