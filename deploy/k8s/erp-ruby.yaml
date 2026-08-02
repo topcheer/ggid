@@ -18,6 +18,10 @@ spec:
       containers:
       - name: erp-ruby
         image: registry.iot2.win/ggid/erp-ruby:latest
+        securityContext:
+          runAsNonRoot: true
+          runAsUser: 1001
+          allowPrivilegeEscalation: false
         ports:
         - containerPort: 9091
         env:

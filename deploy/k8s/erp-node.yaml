@@ -16,6 +16,10 @@ spec:
       containers:
       - name: erp-node
         image: registry.iot2.win/ggid/erp-node:latest
+        securityContext:
+          runAsNonRoot: true
+          runAsUser: 1001
+          allowPrivilegeEscalation: false
         ports:
         - containerPort: 3200
         env:

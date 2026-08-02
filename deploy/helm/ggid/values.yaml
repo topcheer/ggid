@@ -22,7 +22,7 @@ postgresql:
     tag: "16-alpine"
   auth:
     username: ggid
-    password: ggid
+    password: ""
     database: ggid
   primary:
     persistence:
@@ -40,7 +40,7 @@ redis:
     tag: "7-alpine"
   auth:
     enabled: true
-    password: ggid-redis
+    password: ""
   master:
     persistence:
       size: 5Gi

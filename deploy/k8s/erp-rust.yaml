@@ -18,6 +18,10 @@ spec:
       containers:
       - name: erp-rust
         image: registry.iot2.win/ggid/erp-rust:latest
+        securityContext:
+          runAsNonRoot: true
+          runAsUser: 1001
+          allowPrivilegeEscalation: false
         ports:
         - containerPort: 9092
         env:

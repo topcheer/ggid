@@ -18,6 +18,10 @@ spec:
       containers:
       - name: erp-go
         image: registry.iot2.win/ggid/erp-go:latest
+        securityContext:
+          runAsNonRoot: true
+          runAsUser: 1001
+          allowPrivilegeEscalation: false
         ports:
         - containerPort: 9090
         env:
