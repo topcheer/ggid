@@ -46,16 +46,33 @@ func (h *Handler) handlePasswordReset(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
+		// SECURITY (P1-9F): Rate limit via SetNX cooldown — same as /forgot endpoint.
+		if h.rdb != nil {
+			cdKey := "ggid:pwd_reset_cd:" + clientIP(r)
+			if ok, _ := h.rdb.SetNX(r.Context(), cdKey, "1", 60*time.Second).Result(); !ok {
+				writeJSON(w, http.StatusOK, map[string]any{"status": "sent", "message": "If an account exists for this email, a reset link has been sent."})
+				return
+			}
+		}
+
 		// Always return same response to prevent user enumeration.
 		// Use the service-layer IssueResetToken which stores in Redis
 		// (consumed atomically by ConsumeResetToken in /complete).
 		if req.Email != "" {
 			// Look up user by email to get userID + tenantID for token issuance.
+			// SECURITY (P1-9G): Filter by tenant_id from request context.
 			if h.pool != nil {
 				var userID, tenantID uuid.UUID
-				err := h.pool.QueryRow(r.Context(),
-					`SELECT user_id, tenant_id FROM auth_credentials
-					 WHERE email = $1 AND status = 'active' LIMIT 1`, req.Email).Scan(&userID, &tenantID)
+				var err error
+				if tid := r.Header.Get("X-Tenant-ID"); tid != "" {
+					err = h.pool.QueryRow(r.Context(),
+						`SELECT user_id, tenant_id FROM auth_credentials
+						 WHERE email = $1 AND status = 'active' AND tenant_id = $2 LIMIT 1`, req.Email, tid).Scan(&userID, &tenantID)
+				} else {
+					err = h.pool.QueryRow(r.Context(),
+						`SELECT user_id, tenant_id FROM auth_credentials
+						 WHERE email = $1 AND status = 'active' LIMIT 1`, req.Email).Scan(&userID, &tenantID)
+				}
 				if err == nil {
 					// Issue token via service layer (Redis-backed).
 					if pwdSvc := h.authSvc.GetPasswordService(); pwdSvc != nil {
