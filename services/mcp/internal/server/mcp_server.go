@@ -16,8 +16,8 @@ import (
 	"time"
 
 	"github.com/ggid/ggid/services/mcp/internal/client"
-	"github.com/ggid/ggid/services/mcp/internal/tools"
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/ggid/ggid/services/mcp/internal/tools"
 )
 
 // Server is the MCP protocol server.
@@ -415,7 +415,9 @@ func (s *Server) handleToolCall(w http.ResponseWriter, r *http.Request, req *jso
 func parseScopesFromEnv() []string {
 	s := os.Getenv("MCP_SCOPES")
 	if s == "" {
-		return []string{"admin"}
+		// SECURITY: Default to empty (no scopes) rather than "admin".
+		// Tokens without explicit scopes get no MCP tool access.
+		return []string{}
 	}
 	parts := strings.Split(s, ",")
 	result := make([]string, 0, len(parts))
