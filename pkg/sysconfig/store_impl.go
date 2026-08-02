@@ -10,8 +10,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/redis/go-redis/v9"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 // PubSubChannel is the Redis channel name for config change notifications.
@@ -87,8 +87,42 @@ func (s *pgStore) loadFromDB(ctx context.Context, tenantID string) SystemConfig 
 	return cfg
 }
 
+// allowedConfigKeys is the whitelist of keys that can be set via Set().
+// Prevents arbitrary key injection that could overwrite security-critical settings.
+var allowedConfigKeys = map[string]bool{
+	"password_min_length":          true,
+	"password_require_uppercase":   true,
+	"password_require_lowercase":   true,
+	"password_require_digit":       true,
+	"password_require_special":     true,
+	"password_max_age_days":        true,
+	"session_timeout_minutes":      true,
+	"mfa_required":                 true,
+	"mfa_issuer":                   true,
+	"max_login_attempts":           true,
+	"lockout_duration_minutes":     true,
+	"oauth_access_token_ttl":       true,
+	"oauth_refresh_token_ttl":      true,
+	"oauth_authorization_code_ttl": true,
+	"oauth_pkce_required":          true,
+	"oauth_dcr_allowed":            true,
+	"audit_retention_days":         true,
+	"webhook_max_retries":          true,
+	"webhook_timeout_seconds":      true,
+	"saml_idp_metadata_url":        true,
+	"scim_enabled":                 true,
+	"scim_base_url":                true,
+	"email_verification_required":  true,
+	"registration_disabled":        true,
+	"tenant_name":                  true,
+}
+
 // Set updates a config key in the DB, refreshes the cache, and broadcasts via Pub/Sub.
 func (s *pgStore) Set(ctx context.Context, tenantID, key, value string) error {
+	// SECURITY: Enforce key whitelist to prevent arbitrary config injection.
+	if !allowedConfigKeys[key] {
+		return fmt.Errorf("unknown config key: %s", key)
+	}
 	valueType := inferType(key, value)
 	_, err := s.pool.Exec(ctx,
 		`INSERT INTO system_config (tenant_id, key, value, value_type, updated_at)
