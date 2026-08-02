@@ -13,7 +13,7 @@ if [ ! -d "$DATA_DIR/base" ]; then
     # Start PostgreSQL temporarily to create role and database
     su - postgres -c "pg_ctl -D $DATA_DIR start -l /var/log/postgresql/postgresql.log"
     sleep 3
-    su - postgres -c "psql -c \"CREATE USER ggid WITH PASSWORD 'ggid' superuser;\"" || echo "role may already exist"
+    su - postgres -c "psql -c \"CREATE USER ggid WITH PASSWORD 'ggid' CREATEDB;\"" || echo "role may already exist"
     su - postgres -c "psql -c \"CREATE DATABASE ggid OWNER ggid;\"" || echo "database may already exist"
     su - postgres -c "pg_ctl -D $DATA_DIR stop"
 fi
