@@ -458,7 +458,9 @@ func HasPermissionForRoute(path, method string, perms []string) bool {
 	resource := ""
 	bestLen := 0
 	for prefix, res := range routePermissionResource {
-		if strings.HasPrefix(path, prefix) && len(prefix) > bestLen {
+		// SECURITY: Match must be at a path segment boundary to prevent
+		// /api/v1/users-external matching /api/v1/users.
+		if (path == prefix || strings.HasPrefix(path, prefix+"/")) && len(prefix) > bestLen {
 			resource = res
 			bestLen = len(prefix)
 		}

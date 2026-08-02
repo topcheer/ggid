@@ -865,16 +865,10 @@ func (gw *Gateway) checkRouteScope(w http.ResponseWriter, r *http.Request) bool 
 		}
 	}
 	if !isPlatformTenant {
-		for _, role := range claims.Roles {
-			// Only accept the exact scope-style key "platform:admin" from
-			// the roles claim — NOT display names like "Administrator" which
-			// are forgeable by tenant admins. Use exact match to prevent
-			// case-variation bypass (defense-in-depth with filterSafeScopes).
-			if role == "platform:admin" {
-				isPlatformTenant = true
-				break
-			}
-		}
+		// SECURITY: Do NOT check roles claim for platform:admin. Tenant admins
+		// can create roles with arbitrary names including "platform:admin",
+		// which would grant platform access. Platform status comes ONLY from
+		// the scopes claim (set by oauth service, not forgeable by tenant admins).
 	}
 
 	hasPlatform := false
