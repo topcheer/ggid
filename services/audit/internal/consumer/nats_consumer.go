@@ -11,6 +11,7 @@ import (
 	"github.com/ggid/ggid/services/audit/internal/detection"
 	"github.com/ggid/ggid/services/audit/internal/domain"
 	"github.com/ggid/ggid/services/audit/internal/repository"
+	"github.com/ggid/ggid/services/audit/internal/service"
 	"github.com/google/uuid"
 	"github.com/nats-io/nats.go"
 	"github.com/nats-io/nats.go/jetstream"
@@ -164,6 +165,9 @@ func (c *EventConsumer) processMessage(ctx context.Context, msg jetstream.Msg) e
 	if event.CreatedAt.IsZero() {
 		event.CreatedAt = time.Now()
 	}
+
+	// SECURITY: Obfuscate PII before persistence (same as AuditService.InsertEvent).
+	service.ObfuscateEventPII(&event)
 
 	if err := c.repo.Insert(ctx, &event); err != nil {
 		return fmt.Errorf("persist event: %w", err)

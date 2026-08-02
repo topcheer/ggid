@@ -28,8 +28,8 @@ func (t ClientType) IsValid() bool {
 type OAuthClient struct {
 	ID                      uuid.UUID      `json:"id"`
 	TenantID                uuid.UUID      `json:"tenant_id"`
-	ClientID                string         `json:"client_id"`                    // public identifier
-	ClientSecretHash        string         `json:"client_secret_hash,omitempty"` // Argon2id hash; empty for public clients
+	ClientID                string         `json:"client_id"` // public identifier
+	ClientSecretHash        string         `json:"-"`         // Argon2id hash; never exposed in API responses
 	Name                    string         `json:"name"`
 	Description             string         `json:"description,omitempty"`
 	Type                    ClientType     `json:"type"`

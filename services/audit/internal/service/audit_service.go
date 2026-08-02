@@ -100,7 +100,7 @@ func (s *AuditService) ListEvents(ctx context.Context, filter domain.ListFilter,
 // are obfuscated before persistence. A SHA-256 hash chain is computed:
 // hash = SHA256(prev_hash + canonical_event_data).
 func (s *AuditService) InsertEvent(ctx context.Context, event *domain.AuditEvent) error {
-	obfuscateEventPII(event)
+	ObfuscateEventPII(event)
 	// Compute an initial hash using in-memory chain state (for tests/mocks).
 	// repo.Insert will override with the authoritative DB-backed hash using
 	// a FOR UPDATE transaction to prevent race conditions.
@@ -127,7 +127,8 @@ func (s *AuditService) InsertEvent(ctx context.Context, event *domain.AuditEvent
 // obfuscateEventPII masks PII fields in an audit event before storage.
 // This prevents raw emails, phone numbers, and other sensitive data from
 // being persisted in the audit log.
-func obfuscateEventPII(e *domain.AuditEvent) {
+// ObfuscateEventPII masks PII fields in an audit event before storage.
+func ObfuscateEventPII(e *domain.AuditEvent) {
 	e.ActorName = pii.Obfuscate(e.ActorName)
 	e.ResourceName = pii.Obfuscate(e.ResourceName)
 	e.IPAddress = pii.MaskIP(e.IPAddress)
