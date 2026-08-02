@@ -15,8 +15,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/ggid/ggid/services/mcp/internal/client"
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/ggid/ggid/services/mcp/internal/client"
 	"github.com/ggid/ggid/services/mcp/internal/tools"
 )
 
@@ -428,7 +428,7 @@ func parseScopesFromEnv() []string {
 		}
 	}
 	if len(result) == 0 {
-		return []string{"admin"}
+		return []string{} // SECURITY: fail-closed — no scopes from env
 	}
 	return result
 }
