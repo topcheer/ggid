@@ -52,7 +52,7 @@ func TestConsentRepo_PurgeNilPool(t *testing.T) {
 
 func TestConsentRepo_WithdrawNilPool(t *testing.T) {
 	repo := newConsentRepo(nil)
-	if err := repo.Withdraw(nil, uuid.New(), "user request"); err != nil {
+	if err := repo.Withdraw(nil, uuid.New(), uuid.New(), "user request"); err != nil {
 		t.Errorf("nil pool Withdraw should not error: %v", err)
 	}
 }

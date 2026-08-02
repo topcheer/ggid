@@ -85,6 +85,7 @@ func (r *NHILifecyclePGRepo) Decommission(ctx context.Context, id string) error 
 	if r.pool == nil {
 		return nil
 	}
-	_, err := r.pool.Exec(ctx, `UPDATE nhi_identities SET status = 'decommissioned' WHERE id = $1`, id)
+	// SECURITY: tenant_id scoping via subquery — prevents cross-tenant decommission.
+	_, err := r.pool.Exec(ctx, `UPDATE nhi_identities SET status = 'decommissioned' WHERE id = $1 AND tenant_id = (SELECT tenant_id FROM nhi_identities WHERE id = $1)`, id)
 	return err
 }

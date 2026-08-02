@@ -126,8 +126,8 @@ func (r *dlpRepo) Update(ctx context.Context, p *DLPPolicy) error {
 		return nil
 	}
 	condJSON, _ := json.Marshal(p.Conditions)
-	_, err := r.pool.Exec(ctx, `UPDATE dlp_policies SET name=$2,description=$3,trigger=$4,conditions=$5,action=$6,enabled=$7,updated_at=now() WHERE id=$1`,
-		p.ID, p.Name, p.Description, p.Trigger, condJSON, p.Action, p.Enabled)
+	_, err := r.pool.Exec(ctx, `UPDATE dlp_policies SET name=$2,description=$3,trigger=$4,conditions=$5,action=$6,enabled=$7,updated_at=now() WHERE id=$1 AND tenant_id=$8`,
+		p.ID, p.Name, p.Description, p.Trigger, condJSON, p.Action, p.Enabled, p.TenantID)
 	return err
 }
 

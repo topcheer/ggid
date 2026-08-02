@@ -13,28 +13,28 @@ import (
 
 // PrivilegeBaseline defines standard permissions for a role.
 type PrivilegeBaseline struct {
-	RoleID               string   `json:"role_id"`
-	TenantID             string   `json:"tenant_id"`
-	StandardPermissions  []string `json:"standard_permissions"`
-	UpdatedAt            time.Time `json:"updated_at"`
+	RoleID              string    `json:"role_id"`
+	TenantID            string    `json:"tenant_id"`
+	StandardPermissions []string  `json:"standard_permissions"`
+	UpdatedAt           time.Time `json:"updated_at"`
 }
 
 // PrivilegeCreepAlert represents a detected privilege anomaly.
 type PrivilegeCreepAlert struct {
-	ID         string    `json:"id"`
-	TenantID   string    `json:"tenant_id"`
-	UserID     string    `json:"user_id"`
-	Type       string    `json:"type"` // excess_permissions, privilege_growth, orphan_permissions
+	ID         string         `json:"id"`
+	TenantID   string         `json:"tenant_id"`
+	UserID     string         `json:"user_id"`
+	Type       string         `json:"type"` // excess_permissions, privilege_growth, orphan_permissions
 	Detail     map[string]any `json:"detail"`
-	Severity   string    `json:"severity"` // low, medium, high
-	DetectedAt time.Time `json:"detected_at"`
-	Status     string    `json:"status"` // open, resolved, dismissed
+	Severity   string         `json:"severity"` // low, medium, high
+	DetectedAt time.Time      `json:"detected_at"`
+	Status     string         `json:"status"` // open, resolved, dismissed
 }
 
 // PrivilegeDiff is the comparison result for a single user.
 type PrivilegeDiff struct {
-	UserID            string   `json:"user_id"`
-	Roles             []string `json:"roles"`
+	UserID              string   `json:"user_id"`
+	Roles               []string `json:"roles"`
 	ExpectedPermissions []string `json:"expected_permissions"`
 	ActualPermissions   []string `json:"actual_permissions"`
 	ExcessPermissions   []string `json:"excess_permissions"`
@@ -278,7 +278,7 @@ func (r *privilegeCreepRepo) RunScan(ctx context.Context, tenantID uuid.UUID, us
 // ResolveAlert marks an alert as resolved.
 func (r *privilegeCreepRepo) ResolveAlert(ctx context.Context, alertID string) error {
 	_, err := r.pool.Exec(ctx,
-		`UPDATE privilege_creep_alerts SET status = 'resolved' WHERE id = $1`, alertID)
+		`UPDATE privilege_creep_alerts SET status = 'resolved' WHERE id = $1 AND tenant_id = (SELECT tenant_id FROM privilege_creep_alerts WHERE id = $1)`, alertID)
 	return err
 }
 

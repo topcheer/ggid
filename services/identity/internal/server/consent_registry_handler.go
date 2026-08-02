@@ -92,12 +92,13 @@ func (r *consentRepo) Grant(ctx context.Context, c *ConsentRecord) error {
 	return err
 }
 
-func (r *consentRepo) Withdraw(ctx context.Context, id uuid.UUID, reason string) error {
+func (r *consentRepo) Withdraw(ctx context.Context, id, tenantID uuid.UUID, reason string) error {
 	if r.pool == nil {
 		return nil
 	}
 	now := time.Now().UTC()
-	_, err := r.pool.Exec(ctx, `UPDATE consent_records SET status='withdrawn', withdrawn_at=$2, withdrawn_reason=$3, updated_at=now() WHERE id=$1`, id, now, reason)
+	// SECURITY: tenant_id filter prevents cross-tenant consent withdrawal.
+	_, err := r.pool.Exec(ctx, `UPDATE consent_records SET status='withdrawn', withdrawn_at=$2, withdrawn_reason=$3, updated_at=now() WHERE id=$1 AND tenant_id=$4`, id, now, reason, tenantID)
 	return err
 }
 
@@ -266,7 +267,7 @@ func (h *HTTPHandler) handleConsentRegistry(w http.ResponseWriter, r *http.Reque
 				writeJSONError(w, http.StatusNotFound, "consent not found")
 				return
 			}
-			h.consentRepo.Withdraw(r.Context(), id, reason)
+			h.consentRepo.Withdraw(r.Context(), id, tenantID, reason)
 		}
 		writeJSON(w, http.StatusOK, map[string]any{"status": "withdrawn", "id": idStr})
 
