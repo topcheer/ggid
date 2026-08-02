@@ -26,16 +26,16 @@ type ThreatIntelSource struct {
 
 // ThreatIndicator represents a single indicator of compromise.
 type ThreatIndicator struct {
-	ID             uuid.UUID  `json:"id"`
-	TenantID       uuid.UUID  `json:"tenant_id"`
-	SourceID       uuid.UUID  `json:"source_id"`
-	IndicatorType  string     `json:"indicator_type"`  // ip | email | credential_hash | domain | url
-	IndicatorValue string     `json:"indicator_value"`
-	Severity       string     `json:"severity"`       // low | medium | high | critical
-	Confidence     int        `json:"confidence"`     // 0-100
-	FirstSeen      time.Time  `json:"first_seen"`
-	LastSeen       time.Time  `json:"last_seen"`
-	ExpiresAt      *time.Time `json:"expires_at,omitempty"`
+	ID             uuid.UUID      `json:"id"`
+	TenantID       uuid.UUID      `json:"tenant_id"`
+	SourceID       uuid.UUID      `json:"source_id"`
+	IndicatorType  string         `json:"indicator_type"` // ip | email | credential_hash | domain | url
+	IndicatorValue string         `json:"indicator_value"`
+	Severity       string         `json:"severity"`   // low | medium | high | critical
+	Confidence     int            `json:"confidence"` // 0-100
+	FirstSeen      time.Time      `json:"first_seen"`
+	LastSeen       time.Time      `json:"last_seen"`
+	ExpiresAt      *time.Time     `json:"expires_at,omitempty"`
 	Metadata       map[string]any `json:"metadata,omitempty"`
 }
 
@@ -230,10 +230,10 @@ func (r *ThreatIntelRepository) CheckIndicator(ctx context.Context, tenantID uui
 
 // Stats returns aggregate threat intel statistics.
 type ThreatIntelStats struct {
-	SourcesEnabled int            `json:"sources_enabled"`
-	IndicatorsTotal int           `json:"indicators_total"`
-	Hits24h        int            `json:"hits_24h"`
-	ByType         map[string]int `json:"by_type"`
+	SourcesEnabled  int            `json:"sources_enabled"`
+	IndicatorsTotal int            `json:"indicators_total"`
+	Hits24h         int            `json:"hits_24h"`
+	ByType          map[string]int `json:"by_type"`
 }
 
 func (r *ThreatIntelRepository) Stats(ctx context.Context, tenantID uuid.UUID) (*ThreatIntelStats, error) {
@@ -274,7 +274,7 @@ func (r *ThreatIntelRepository) UpdateLastPoll(ctx context.Context, sourceID uui
 	if r.pool == nil {
 		return nil
 	}
-	_, err := r.pool.Exec(ctx, `UPDATE threat_intel_sources SET last_poll = now() WHERE id = $1`, sourceID)
+	_, err := r.pool.Exec(ctx, `UPDATE threat_intel_sources SET last_poll = now() WHERE id = $1 AND tenant_id = (SELECT tenant_id FROM threat_intel_sources WHERE id = $1)`, sourceID)
 	return err
 }
 

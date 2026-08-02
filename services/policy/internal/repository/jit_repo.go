@@ -188,7 +188,7 @@ func (r *JITRequestRepository) MarkExpired(ctx context.Context, id uuid.UUID) er
 	if r.pool == nil {
 		return nil
 	}
-	_, err := r.pool.Exec(ctx, `UPDATE jit_requests SET status = 'expired', updated_at = now() WHERE id = $1 AND status = 'active'`, id)
+	_, err := r.pool.Exec(ctx, `UPDATE jit_requests SET status = 'expired', updated_at = now() WHERE id = $1 AND status = 'active' AND tenant_id = (SELECT tenant_id FROM jit_requests WHERE id = $1)`, id)
 	return err
 }
 

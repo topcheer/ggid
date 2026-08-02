@@ -13,8 +13,9 @@ import (
 	ggiderrors "github.com/ggid/ggid/pkg/errors"
 	"github.com/ggid/ggid/services/oauth/internal/domain"
 	"github.com/google/uuid"
-	"github.com/jackc/pgx/v5"
+
 	"github.com/jackc/pgx/v5/pgconn"
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -266,10 +267,10 @@ func (r *pgClientRepo) DeleteClient(ctx context.Context, tenantID uuid.UUID, cli
 	// SECURITY: Cascade cleanup — revoke/delete all tokens and codes for this client.
 	// Use the resolved UUID id, not the gcid_xxx string.
 	cleanupTables := []struct{ name, sql string }{
-		{"refresh_tokens", `UPDATE refresh_tokens SET revoked_at = now() WHERE client_id = $2 AND revoked_at IS NULL`},
-		{"oidc_refresh_tokens", `UPDATE oidc_refresh_tokens SET revoked_at = now() WHERE client_id = $2 AND revoked_at IS NULL`},
-		{"oauth_authorization_codes", `DELETE FROM oauth_authorization_codes WHERE client_id = $2`},
-		{"oidc_id_tokens", `DELETE FROM oidc_id_tokens WHERE client_id = $2`},
+		{"refresh_tokens", `UPDATE refresh_tokens SET revoked_at = now() WHERE tenant_id = $1 AND client_id = $2 AND revoked_at IS NULL`},
+		{"oidc_refresh_tokens", `UPDATE oidc_refresh_tokens SET revoked_at = now() WHERE tenant_id = $1 AND client_id = $2 AND revoked_at IS NULL`},
+		{"oauth_authorization_codes", `DELETE FROM oauth_authorization_codes WHERE tenant_id = $1 AND client_id = $2`},
+		{"oidc_id_tokens", `DELETE FROM oidc_id_tokens WHERE tenant_id = $1 AND client_id = $2`},
 	}
 	for _, c := range cleanupTables {
 		if _, err := tx.Exec(ctx, c.sql, tenantID, internalClientID); err != nil {
