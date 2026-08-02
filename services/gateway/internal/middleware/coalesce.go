@@ -6,6 +6,9 @@ import (
 	"net/http"
 	"sync"
 	"time"
+
+	ggidtenant "github.com/ggid/ggid/pkg/tenant"
+	"github.com/google/uuid"
 )
 
 // RequestCoalescer deduplicates concurrent identical GET requests.
@@ -90,8 +93,12 @@ func CoalesceMiddleware(rc *RequestCoalescer) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			// Only coalesce safe GET requests or POST with idempotency key
+			// SECURITY: Prefer tenant from JWT-verified context over raw header.
 			tenantID := r.Header.Get("X-Tenant-ID")
 			userID := r.Header.Get("X-User-ID")
+			if tc, err := ggidtenant.FromContext(r.Context()); err == nil && tc.TenantID != uuid.Nil {
+				tenantID = tc.TenantID.String()
+			}
 			var key string
 			if r.Method == http.MethodGet {
 				key = coalesceKey(r.Method, r.URL.Path, r.URL.RawQuery, tenantID, userID)
