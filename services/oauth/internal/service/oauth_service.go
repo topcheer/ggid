@@ -1346,7 +1346,7 @@ func (s *OAuthService) DownscopeToken(userID uuid.UUID, tenantID uuid.UUID, audi
 
 func (s *OAuthService) ValidateTokenOwnership(tokenStr, clientID string) bool {
 	if tokenStr == "" || clientID == "" {
-		return true // can't verify, allow (auth gate still applies)
+		return false // SECURITY: fail-closed — empty values cannot be verified
 	}
 	claims, err := s.ParseAccessToken(tokenStr)
 	if err != nil {

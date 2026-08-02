@@ -80,7 +80,14 @@ var SelfServicePaths = map[string]bool{
 // isAdminEndpoint returns true for endpoints that require admin scope.
 func isAdminEndpoint(path string) bool {
 	for _, prefix := range defaultAdminPrefixes {
-		if strings.HasPrefix(path, prefix) {
+		// Anchor prefix match: either exact or followed by '/' to prevent
+		// '/api/v1/users-external' matching '/api/v1/users'.
+		// Some prefixes already end with '/' (e.g. '/api/v1/audit/').
+		anchored := prefix
+		if !strings.HasSuffix(anchored, "/") {
+			anchored = anchored + "/"
+		}
+		if path == prefix || strings.HasPrefix(path, anchored) {
 			// Allow whitelisted self-service paths (exact match only)
 			if SelfServicePaths[path] {
 				return false
