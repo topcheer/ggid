@@ -182,14 +182,14 @@ func (c *Checker) checkOne(ctx context.Context, name, healthURL string) ServiceS
 	start := time.Now()
 	req, err := http.NewRequestWithContext(ctx, "GET", healthURL, nil)
 	if err != nil {
-		return ServiceStatus{Name: name, Status: "unhealthy", Error: err.Error(), Latency: 0}
+		return ServiceStatus{Name: name, Status: "unhealthy", Error: "connection failed", Latency: 0}
 	}
 
 	resp, err := c.client.Do(req)
 	latency := time.Since(start).Milliseconds()
 
 	if err != nil {
-		return ServiceStatus{Name: name, Status: "unhealthy", Error: err.Error(), Latency: latency}
+		return ServiceStatus{Name: name, Status: "unhealthy", Error: "connection failed", Latency: latency}
 	}
 	defer resp.Body.Close()
 

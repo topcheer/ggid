@@ -51,7 +51,7 @@ func (s *OAuthService) ValidateAuthorizationRequest(ctx context.Context, clientI
 	parser := jwt.NewParser(jwt.WithoutClaimsValidation())
 	_, _, err := parser.ParseUnverified(request, claims)
 	if err != nil {
-		return nil, errors.InvalidArgument("invalid request JWT: " + err.Error())
+		return nil, errors.InvalidArgument("invalid request JWT")
 	}
 
 	iss, _ := claims["iss"].(string)
@@ -107,7 +107,7 @@ func (s *OAuthService) ValidateJARRequest(ctx context.Context, clientID, request
 	parser := jwt.NewParser(jwt.WithoutClaimsValidation())
 	_, _, err := parser.ParseUnverified(requestJWT, claims)
 	if err != nil {
-		return nil, errors.InvalidArgument("invalid request JWT: " + err.Error())
+		return nil, errors.InvalidArgument("invalid request JWT")
 	}
 
 	// Validate iss == client_id.
