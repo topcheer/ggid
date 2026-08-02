@@ -28,23 +28,35 @@ type memBucket struct {
 }
 
 type MemoryRateLimitStore struct {
-	mu      sync.Mutex
-	buckets map[string]*memBucket
+	mu       sync.Mutex
+	buckets  map[string]*memBucket
+	done     chan struct{}
+	stopOnce sync.Once
 }
 
 // NewMemoryRateLimitStore creates an in-memory rate limit store suitable for
 // single-instance deployments or testing.
 func NewMemoryRateLimitStore() *MemoryRateLimitStore {
-	s := &MemoryRateLimitStore{buckets: make(map[string]*memBucket)}
+	s := &MemoryRateLimitStore{buckets: make(map[string]*memBucket), done: make(chan struct{})}
 	// Background goroutine to evict stale buckets and prevent OOM.
 	go func() {
 		t := time.NewTicker(5 * time.Minute)
 		defer t.Stop()
-		for range t.C {
-			s.evictStaleBuckets()
+		for {
+			select {
+			case <-t.C:
+				s.evictStaleBuckets()
+			case <-s.done:
+				return
+			}
 		}
 	}()
 	return s
+}
+
+// StopCleanup terminates the background cleanup goroutine.
+func (s *MemoryRateLimitStore) StopCleanup() {
+	s.stopOnce.Do(func() { close(s.done) })
 }
 
 // evictStaleBuckets removes buckets whose entries have all expired.
