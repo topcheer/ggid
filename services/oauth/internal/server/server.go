@@ -41,11 +41,12 @@ import (
 	"github.com/ggid/ggid/services/oauth/internal/domain"
 	"github.com/ggid/ggid/services/oauth/internal/repository"
 	"github.com/ggid/ggid/services/oauth/internal/service"
+
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/redis/go-redis/v9"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
-	"github.com/redis/go-redis/v9"
 )
 
 // Server encapsulates the OAuth HTTP server.
@@ -852,7 +853,7 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 				case "access_denied":
 					writeJSON(w, http.StatusBadRequest, map[string]string{"error": "access_denied"})
 				default:
-					writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid_grant", "error_description": errMsg})
+					writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid_grant", "error_description": "authentication failed"})
 				}
 				return
 			}
@@ -945,7 +946,6 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 				return
 			}
 			writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid_grant", "error_description": "authentication failed"})
-			return
 		}
 
 		// DPoP proof verification (RFC 9449): if the client sends a DPoP header,

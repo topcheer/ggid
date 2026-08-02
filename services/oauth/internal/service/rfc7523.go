@@ -75,7 +75,7 @@ func (s *OAuthService) ValidateClientAssertion(assertion, expectedClientID, clie
 	claims := jwt.MapClaims{}
 	_, err := jwt.NewParser(jwt.WithoutClaimsValidation()).ParseWithClaims(assertion, claims, keyFunc)
 	if err != nil {
-		return nil, errors.InvalidArgument("client_assertion signature verification failed: " + err.Error())
+		return nil, errors.InvalidArgument("client_assertion signature verification failed")
 	}
 
 	// iss MUST equal client_id (RFC 7523 §3.1.1).
