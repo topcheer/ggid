@@ -23,6 +23,7 @@ import (
 // Endpoint represents a configured webhook destination.
 type Endpoint struct {
 	ID         string    `json:"id"`
+	TenantID   string    `json:"tenant_id,omitempty"`
 	URL        string    `json:"url"`
 	Events     []string  `json:"events"`           // event types to subscribe to
 	Secret     string    `json:"secret,omitempty"` // HMAC signing secret
@@ -111,6 +112,9 @@ func (e *Engine) CreateEndpoint(ep *Endpoint) *Endpoint {
 	if ep.ID == "" {
 		ep.ID = uuid.New().String()
 	}
+	if ep.TenantID == "" {
+		ep.TenantID = uuid.New().String() // generated for legacy callers
+	}
 	if ep.MaxRetries <= 0 {
 		ep.MaxRetries = 5
 	}
@@ -142,20 +146,27 @@ func (e *Engine) ListEndpoints() []*Endpoint {
 	return result
 }
 
-// GetEndpoint returns a single endpoint by ID.
-func (e *Engine) GetEndpoint(id string) *Endpoint {
+// GetEndpoint returns a single endpoint by ID, scoped to tenantID.
+func (e *Engine) GetEndpoint(tenantID, id string) *Endpoint {
 	e.mu.RLock()
 	defer e.mu.RUnlock()
-	return e.endpoints[id]
+	ep := e.endpoints[id]
+	if ep != nil && ep.TenantID == tenantID {
+		return ep
+	}
+	return nil
 }
 
-// DeleteEndpoint removes an endpoint.
-func (e *Engine) DeleteEndpoint(id string) {
+// DeleteEndpoint removes an endpoint, scoped to tenantID.
+func (e *Engine) DeleteEndpoint(tenantID, id string) {
 	e.mu.Lock()
-	delete(e.endpoints, id)
+	ep, ok := e.endpoints[id]
+	if ok && ep.TenantID == tenantID {
+		delete(e.endpoints, id)
+	}
 	e.mu.Unlock()
 	if e.pool != nil {
-		e.pool.Exec(context.Background(), `DELETE FROM webhook_endpoints WHERE id = $1`, id)
+		e.pool.Exec(context.Background(), `DELETE FROM webhook_endpoints WHERE id = $1 AND tenant_id = $2`, id, tenantID)
 	}
 }
 
@@ -315,12 +326,15 @@ func (e *Engine) sendHTTP(ctx context.Context, ep *Endpoint, eventType string, p
 	req.Header.Set("X-GGID-Event", eventType)
 
 	// HMAC-SHA256 signature.
-	if ep.Secret != "" {
-		mac := hmac.New(sha256.New, []byte(ep.Secret))
-		mac.Write(body)
-		sig := hex.EncodeToString(mac.Sum(nil))
-		req.Header.Set("X-GGID-Signature", sig)
+	// SECURITY: fail-closed — if no secret, skip sending rather than delivering
+	// unsigned webhooks that can be forged.
+	if ep.Secret == "" {
+		return 0, fmt.Errorf("webhook endpoint %s has no secret — refusing to send unsigned payload", ep.ID)
 	}
+	mac := hmac.New(sha256.New, []byte(ep.Secret))
+	mac.Write(body)
+	sig := hex.EncodeToString(mac.Sum(nil))
+	req.Header.Set("X-GGID-Signature", sig)
 
 	resp, err := e.client.Do(req)
 	if err != nil {
@@ -377,7 +391,7 @@ func (e *Engine) Replay(ctx context.Context, deliveryID string) (*Delivery, erro
 		return nil, fmt.Errorf("delivery not found: %w", err)
 	}
 
-	ep := e.GetEndpoint(d.EndpointID)
+	ep := e.GetEndpoint("", d.EndpointID) // internal lookup — tenant scoping done at handler layer
 	if ep == nil {
 		return nil, fmt.Errorf("endpoint %s not found", d.EndpointID)
 	}
