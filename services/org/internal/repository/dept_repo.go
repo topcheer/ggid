@@ -114,7 +114,7 @@ func (r *DeptRepository) ListByPathPrefix(ctx context.Context, prefix string) ([
 
 // Delete removes a department.
 func (r *DeptRepository) Delete(ctx context.Context, id uuid.UUID) error {
-	cmd, err := r.db.Exec(ctx, `DELETE FROM departments WHERE id = $1`, id)
+	cmd, err := r.db.Exec(ctx, `DELETE FROM departments WHERE id = $1 AND tenant_id = (SELECT tenant_id FROM departments WHERE id = $1)`, id)
 	if err != nil {
 		return fmt.Errorf("delete department: %w", err)
 	}

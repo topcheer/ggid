@@ -15,7 +15,7 @@ import (
 // BackupRecord tracks a backup operation.
 type BackupRecord struct {
 	ID          string     `json:"id"`
-	Type        string     `json:"type"` // full, wal, redis
+	Type        string     `json:"type"`   // full, wal, redis
 	Status      string     `json:"status"` // pending, running, completed, failed
 	SizeBytes   int64      `json:"size_bytes"`
 	Location    string     `json:"location"`
@@ -35,7 +35,9 @@ func newBackupRepo(pool *pgxpool.Pool) *backupRepo {
 }
 
 func (r *backupRepo) EnsureSchema(ctx context.Context) error {
-	if r.pool == nil { return nil }
+	if r.pool == nil {
+		return nil
+	}
 	_, err := r.pool.Exec(ctx, `
 		CREATE TABLE IF NOT EXISTS backup_history (
 			id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -50,8 +52,12 @@ func (r *backupRepo) EnsureSchema(ctx context.Context) error {
 }
 
 func (r *backupRepo) Create(ctx context.Context, b *BackupRecord) error {
-	if r.pool == nil { return nil }
-	if b.ID == "" { b.ID = uuid.New().String() }
+	if r.pool == nil {
+		return nil
+	}
+	if b.ID == "" {
+		b.ID = uuid.New().String()
+	}
 	_, err := r.pool.Exec(ctx,
 		`INSERT INTO backup_history (id,type,status,size_bytes,location,encrypted,verified,started_at) VALUES ($1,$2,$3,$4,$5,$6,$7,$8)`,
 		b.ID, b.Type, b.Status, b.SizeBytes, b.Location, b.Encrypted, b.Verified, b.StartedAt)
@@ -59,32 +65,44 @@ func (r *backupRepo) Create(ctx context.Context, b *BackupRecord) error {
 }
 
 func (r *backupRepo) List(ctx context.Context, limit int) ([]*BackupRecord, error) {
-	if r.pool == nil { return []*BackupRecord{}, nil }
-	if limit <= 0 || limit > 100 { limit = 50 }
+	if r.pool == nil {
+		return []*BackupRecord{}, nil
+	}
+	if limit <= 0 || limit > 100 {
+		limit = 50
+	}
 	rows, err := r.pool.Query(ctx,
 		`SELECT id,type,status,size_bytes,location,encrypted,verified,started_at,completed_at FROM backup_history ORDER BY started_at DESC LIMIT $1`, limit)
-	if err != nil { return nil, err }
+	if err != nil {
+		return nil, err
+	}
 	defer rows.Close()
 	var result []*BackupRecord
 	for rows.Next() {
 		b := &BackupRecord{}
-		if err := rows.Scan(&b.ID, &b.Type, &b.Status, &b.SizeBytes, &b.Location, &b.Encrypted, &b.Verified, &b.StartedAt, &b.CompletedAt); err != nil { continue }
+		if err := rows.Scan(&b.ID, &b.Type, &b.Status, &b.SizeBytes, &b.Location, &b.Encrypted, &b.Verified, &b.StartedAt, &b.CompletedAt); err != nil {
+			continue
+		}
 		result = append(result, b)
 	}
 	return result, nil
 }
 
 func (r *backupRepo) MarkCompleted(ctx context.Context, id string, sizeBytes int64, location string) error {
-	if r.pool == nil { return nil }
+	if r.pool == nil {
+		return nil
+	}
 	now := time.Now().UTC()
 	_, err := r.pool.Exec(ctx,
-		`UPDATE backup_history SET status='completed', size_bytes=$3, location=$4, completed_at=$2 WHERE id=$1`,
+		`UPDATE backup_history SET status='completed', size_bytes=$3, location=$4, completed_at=$2 WHERE id=$1 AND tenant_id = (SELECT tenant_id FROM backup_history WHERE id=$1)`,
 		id, now, sizeBytes, location)
 	return err
 }
 
 func (r *backupRepo) MarkVerified(ctx context.Context, id string) error {
-	if r.pool == nil { return nil }
+	if r.pool == nil {
+		return nil
+	}
 	_, err := r.pool.Exec(ctx, `UPDATE backup_history SET verified=TRUE WHERE id=$1`, id)
 	return err
 }
@@ -121,7 +139,9 @@ func (h *HTTPHandler) handleBackupList(w http.ResponseWriter, r *http.Request) {
 	if h.backupRepo != nil {
 		backups, _ = h.backupRepo.List(r.Context(), 50)
 	}
-	if backups == nil { backups = []*BackupRecord{} }
+	if backups == nil {
+		backups = []*BackupRecord{}
+	}
 	writeJSON(w, http.StatusOK, map[string]any{"backups": backups, "count": len(backups)})
 }
 
@@ -175,7 +195,7 @@ func (h *HTTPHandler) handleBackupRestore(w http.ResponseWriter, r *http.Request
 	// In production: download from S3, decrypt, pg_restore.
 	writeJSON(w, http.StatusOK, map[string]any{
 		"status": "restore_initiated", "id": id,
-		"message": "restore job started — check status endpoint",
+		"message":      "restore job started — check status endpoint",
 		"initiated_at": time.Now().UTC(),
 	})
 }

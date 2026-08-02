@@ -150,7 +150,7 @@ func (r *reviewScheduleRepo) MarkRun(ctx context.Context, id string, frequencyDa
 	now := time.Now().UTC()
 	nextRun := now.Add(time.Duration(frequencyDays) * 24 * time.Hour)
 	_, err := r.pool.Exec(ctx,
-		`UPDATE review_schedules SET last_run_at = $2, next_run_at = $3 WHERE id = $1`,
+		`UPDATE review_schedules SET last_run_at = $2, next_run_at = $3 WHERE id = $1 AND tenant_id = (SELECT tenant_id FROM review_schedules WHERE id = $1)`,
 		id, now, nextRun)
 	return err
 }
