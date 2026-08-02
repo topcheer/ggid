@@ -80,10 +80,6 @@ func (r *auditMemoryMapRepo) storeJSON(ctx context.Context, table, id string, da
 	if !isValidIdentifier(table) {
 		return fmt.Errorf("invalid table name")
 	}
-	// SECURITY: Validate table name to prevent SQL injection.
-	if !isValidIdentifier(table) {
-		return fmt.Errorf("invalid table name: %s", table)
-	}
 	jsonData, _ := json.Marshal(data)
 	_, err := r.pool.Exec(ctx, fmt.Sprintf(
 		`INSERT INTO %s (id, data, created_at) VALUES ($1, $2, now())
