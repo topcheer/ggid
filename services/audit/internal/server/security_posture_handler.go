@@ -33,13 +33,13 @@ func (s *HTTPServer) handleSecurityPosture(w http.ResponseWriter, r *http.Reques
 	}
 
 	writeJSON(w, http.StatusOK, map[string]any{
-		"score":          overall,
-		"grade":          grade,
-		"model":          "NIST 800-207",
-		"dimensions":     dimensions,
-		"findings":       findings,
+		"score":           overall,
+		"grade":           grade,
+		"model":           "NIST 800-207",
+		"dimensions":      dimensions,
+		"findings":        findings,
 		"recommendations": recs,
-		"evaluated_at":   time.Now().UTC().Format(time.RFC3339),
+		"evaluated_at":    time.Now().UTC().Format(time.RFC3339),
 	})
 }
 
@@ -106,9 +106,10 @@ func (s *HTTPServer) calculatePostureDimensions(tenantID uuid.UUID) postureDimen
 
 	// --- Identity dimension ---
 	var totalUsers, mfaUsers, inactiveUsers int
-	s.pool.QueryRow(ctx, `SELECT count(*) FROM users WHERE deleted_at IS NULL`).Scan(&totalUsers)
-	s.pool.QueryRow(ctx, `SELECT count(DISTINCT user_id) FROM mfa_devices WHERE enabled=true`).Scan(&mfaUsers)
-	s.pool.QueryRow(ctx, `SELECT count(*) FROM users WHERE deleted_at IS NULL AND last_login_at < now() - interval '90 days' OR last_login_at IS NULL`).Scan(&inactiveUsers)
+	// SECURITY (R101 P0): All queries scoped to tenantID to prevent cross-tenant data leak.
+	s.pool.QueryRow(ctx, `SELECT count(*) FROM users WHERE tenant_id = $1 AND deleted_at IS NULL`, tenantID).Scan(&totalUsers)
+	s.pool.QueryRow(ctx, `SELECT count(DISTINCT user_id) FROM mfa_devices WHERE tenant_id = $1 AND enabled=true`, tenantID).Scan(&mfaUsers)
+	s.pool.QueryRow(ctx, `SELECT count(*) FROM users WHERE tenant_id = $1 AND deleted_at IS NULL AND (last_login_at < now() - interval '90 days' OR last_login_at IS NULL)`, tenantID).Scan(&inactiveUsers)
 
 	if totalUsers > 0 {
 		mfaPct := mfaUsers * 100 / totalUsers
@@ -118,14 +119,14 @@ func (s *HTTPServer) calculatePostureDimensions(tenantID uuid.UUID) postureDimen
 
 	// --- Device dimension ---
 	var activeSessions, revokedToday int
-	s.pool.QueryRow(ctx, `SELECT count(*) FROM sessions WHERE revoked_at IS NULL AND expires_at > now()`).Scan(&activeSessions)
-	s.pool.QueryRow(ctx, `SELECT count(*) FROM sessions WHERE revoked_at IS NOT NULL AND revoked_at > now() - interval '24 hours'`).Scan(&revokedToday)
+	s.pool.QueryRow(ctx, `SELECT count(*) FROM sessions WHERE tenant_id = $1 AND revoked_at IS NULL AND expires_at > now()`, tenantID).Scan(&activeSessions)
+	s.pool.QueryRow(ctx, `SELECT count(*) FROM sessions WHERE tenant_id = $1 AND revoked_at IS NOT NULL AND revoked_at > now() - interval '24 hours'`, tenantID).Scan(&revokedToday)
 	d.Device = clampScore(100 - revokedToday*3)
 
 	// --- Network dimension ---
 	var failedLogins, uniqueIPs int
-	s.pool.QueryRow(ctx, `SELECT count(*) FROM audit_events WHERE action LIKE '%login%failed%' AND created_at > now() - interval '24 hours'`).Scan(&failedLogins)
-	s.pool.QueryRow(ctx, `SELECT count(DISTINCT ip_address) FROM audit_events WHERE created_at > now() - interval '24 hours' AND ip_address IS NOT NULL`).Scan(&uniqueIPs)
+	s.pool.QueryRow(ctx, `SELECT count(*) FROM audit_events WHERE tenant_id = $1 AND action LIKE '%login%failed%' AND created_at > now() - interval '24 hours'`, tenantID).Scan(&failedLogins)
+	s.pool.QueryRow(ctx, `SELECT count(DISTINCT ip_address) FROM audit_events WHERE tenant_id = $1 AND created_at > now() - interval '24 hours' AND ip_address IS NOT NULL`, tenantID).Scan(&uniqueIPs)
 	if failedLogins > 10 {
 		d.Network = clampScore(100 - (failedLogins-10)*2)
 	}
@@ -135,13 +136,13 @@ func (s *HTTPServer) calculatePostureDimensions(tenantID uuid.UUID) postureDimen
 
 	// --- Data dimension ---
 	var tamperIssues int
-	s.pool.QueryRow(ctx, `SELECT count(*) FROM audit_incidents WHERE data->>'type' = 'tamper_detected' AND data->>'status' = 'open'`).Scan(&tamperIssues)
+	s.pool.QueryRow(ctx, `SELECT count(*) FROM audit_incidents WHERE tenant_id = $1 AND data->>'type' = 'tamper_detected' AND data->>'status' = 'open'`, tenantID).Scan(&tamperIssues)
 	d.Data = clampScore(100 - tamperIssues*10)
 
 	// --- Workload dimension ---
 	var openIncidents, highSeverityThreats int
-	s.pool.QueryRow(ctx, `SELECT count(*) FROM audit_incidents WHERE data->>'status' IN ('open','investigating')`).Scan(&openIncidents)
-	s.pool.QueryRow(ctx, `SELECT count(*) FROM audit_incidents WHERE data->>'severity' = 'critical' AND data->>'status' = 'open'`).Scan(&highSeverityThreats)
+	s.pool.QueryRow(ctx, `SELECT count(*) FROM audit_incidents WHERE tenant_id = $1 AND data->>'status' IN ('open','investigating')`, tenantID).Scan(&openIncidents)
+	s.pool.QueryRow(ctx, `SELECT count(*) FROM audit_incidents WHERE tenant_id = $1 AND data->>'severity' = 'critical' AND data->>'status' = 'open'`, tenantID).Scan(&highSeverityThreats)
 	d.Workload = clampScore(100 - openIncidents*5 - highSeverityThreats*10)
 
 	return d
@@ -154,11 +155,16 @@ func weightedScore(d postureDimensions) int {
 
 func scoreToGrade(score int) string {
 	switch {
-	case score >= 90: return "A"
-	case score >= 80: return "B"
-	case score >= 70: return "C"
-	case score >= 60: return "D"
-	default: return "F"
+	case score >= 90:
+		return "A"
+	case score >= 80:
+		return "B"
+	case score >= 70:
+		return "C"
+	case score >= 60:
+		return "D"
+	default:
+		return "F"
 	}
 }
 
@@ -171,12 +177,19 @@ type finding struct {
 
 func generateFindings(d postureDimensions) []finding {
 	findings := []finding{}
-	for _, dim := range []struct{ name string; score int }{
+	for _, dim := range []struct {
+		name  string
+		score int
+	}{
 		{"identity", d.Identity}, {"device", d.Device},
 		{"network", d.Network}, {"data", d.Data}, {"workload", d.Workload},
 	} {
 		status := "healthy"
-		if dim.score < 50 { status = "critical" } else if dim.score < 70 { status = "warning" }
+		if dim.score < 50 {
+			status = "critical"
+		} else if dim.score < 70 {
+			status = "warning"
+		}
 		findings = append(findings, finding{
 			Dimension: dim.name, Score: dim.score, Status: status,
 			Detail: dim.name + " posture score: " + itoa(dim.score) + "/100",
@@ -235,5 +248,13 @@ func (s *HTTPServer) savePostureHistory(tenantID uuid.UUID, overall int, d postu
 func contextWithTimeout(d time.Duration) (context.Context, context.CancelFunc) {
 	return context.WithTimeout(context.Background(), d)
 }
-func clampScore(v int) int { if v < 0 { return 0 }; if v > 100 { return 100 }; return v }
+func clampScore(v int) int {
+	if v < 0 {
+		return 0
+	}
+	if v > 100 {
+		return 100
+	}
+	return v
+}
 func itoa(i int) string { return string(rune('0'+i/10)) + string(rune('0'+i%10)) }
