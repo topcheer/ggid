@@ -3,6 +3,7 @@ package crypto
 import (
 	"context"
 	"encoding/json"
+	"sync"
 	"time"
 )
 
@@ -20,6 +21,7 @@ type FieldEncryptionConfig struct {
 // It maintains a registry of which fields need encryption per tenant.
 type FieldEncryptionService struct {
 	provider DataKeyProvider
+	mu       sync.RWMutex
 	configs  map[string][]FieldEncryptionConfig // tenantID → configs
 }
 
@@ -36,11 +38,15 @@ func (s *FieldEncryptionService) RegisterField(cfg FieldEncryptionConfig) {
 	if cfg.TenantID == "" {
 		return
 	}
+	s.mu.Lock()
+	defer s.mu.Unlock()
 	s.configs[cfg.TenantID] = append(s.configs[cfg.TenantID], cfg)
 }
 
 // ListFields returns all encrypted field configs for a tenant.
 func (s *FieldEncryptionService) ListFields(tenantID string) []FieldEncryptionConfig {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
 	if cfgs, ok := s.configs[tenantID]; ok {
 		return cfgs
 	}
@@ -49,6 +55,8 @@ func (s *FieldEncryptionService) ListFields(tenantID string) []FieldEncryptionCo
 
 // RemoveField removes a field from the encryption registry.
 func (s *FieldEncryptionService) RemoveField(tenantID, id string) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
 	cfgs := s.configs[tenantID]
 	for i, c := range cfgs {
 		if c.ID == id {
@@ -60,6 +68,8 @@ func (s *FieldEncryptionService) RemoveField(tenantID, id string) {
 
 // ShouldEncrypt checks if a field should be encrypted.
 func (s *FieldEncryptionService) ShouldEncrypt(tenantID, table, column string) bool {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
 	for _, c := range s.configs[tenantID] {
 		if c.TableName == table && c.ColumnName == column {
 			return true
@@ -74,6 +84,8 @@ func (s *FieldEncryptionService) EncryptRecord(ctx context.Context, tenantID, ta
 	if s.provider == nil {
 		return nil
 	}
+	s.mu.RLock()
+	defer s.mu.RUnlock()
 	for _, cfg := range s.configs[tenantID] {
 		if cfg.TableName != table {
 			continue

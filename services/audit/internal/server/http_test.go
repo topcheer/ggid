@@ -29,7 +29,7 @@ type mockRepo struct {
 
 func (m *mockRepo) Insert(_ context.Context, _ *domain.AuditEvent) error { return nil }
 
-func (m *mockRepo) GetByID(_ context.Context, id uuid.UUID) (*domain.AuditEvent, error) {
+func (m *mockRepo) GetByID(_ context.Context, _ uuid.UUID, id uuid.UUID) (*domain.AuditEvent, error) {
 	if m.getErr != nil {
 		return nil, m.getErr
 	}

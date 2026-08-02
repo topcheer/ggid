@@ -27,7 +27,7 @@ func (r *hashChainTestRepo) Insert(_ context.Context, e *domain.AuditEvent) erro
 	r.events = append(r.events, e)
 	return nil
 }
-func (r *hashChainTestRepo) GetByID(_ context.Context, id uuid.UUID) (*domain.AuditEvent, error) {
+func (r *hashChainTestRepo) GetByID(_ context.Context, _ uuid.UUID, id uuid.UUID) (*domain.AuditEvent, error) {
 	for _, e := range r.events {
 		if e.ID == id {
 			return e, nil

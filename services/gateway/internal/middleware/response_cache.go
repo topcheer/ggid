@@ -9,7 +9,6 @@ import (
 
 	ggidtenant "github.com/ggid/ggid/pkg/tenant"
 	"github.com/google/uuid"
-
 )
 
 // ResponseCacheConfig configures the response caching middleware.
@@ -87,7 +86,13 @@ func (rc *ResponseCache) Middleware(next http.Handler) http.Handler {
 		if tc, err := ggidtenant.FromContext(r.Context()); err == nil && tc.TenantID != uuid.Nil {
 			tenantID = tc.TenantID.String()
 		}
-		key := rcCacheKey(r.Method, r.URL.Path, r.URL.RawQuery, tenantID, r.Header.Get("X-User-ID"))
+		// SECURITY: Prefer user ID from JWT-verified context over raw header
+		// to prevent cross-user cache poisoning via forged X-User-ID.
+		userID := r.Header.Get("X-User-ID")
+		if ctxUID, ok := r.Context().Value(UserIDKey).(string); ok && ctxUID != "" {
+			userID = ctxUID
+		}
+		key := rcCacheKey(r.Method, r.URL.Path, r.URL.RawQuery, tenantID, userID)
 
 		// Check conditional request headers
 		if cached := rc.get(key); cached != nil {

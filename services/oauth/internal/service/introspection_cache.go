@@ -9,17 +9,17 @@ import (
 )
 
 type CachedIntrospection struct {
-	Active    bool       `json:"active"`
-	Scope     string     `json:"scope"`
-	ClientID  string     `json:"client_id"`
-	Expiry    time.Time  `json:"expiry"`
-	CachedAt  time.Time  `json:"cached_at"`
+	Active   bool      `json:"active"`
+	Scope    string    `json:"scope"`
+	ClientID string    `json:"client_id"`
+	Expiry   time.Time `json:"expiry"`
+	CachedAt time.Time `json:"cached_at"`
 }
 
 type CacheStats struct {
-	Hits     int `json:"hits"`
-	Misses   int `json:"misses"`
-	Sets     int `json:"sets"`
+	Hits          int `json:"hits"`
+	Misses        int `json:"misses"`
+	Sets          int `json:"sets"`
 	Invalidations int `json:"invalidations"`
 }
 
@@ -42,8 +42,8 @@ func NewIntrospectionCache() *IntrospectionCache {
 }
 
 func (c *IntrospectionCache) GetCachedIntrospection(token string) (*CachedIntrospection, bool) {
-	c.mu.RLock()
-	defer c.mu.RUnlock()
+	c.mu.Lock()
+	defer c.mu.Unlock()
 	key := hashToken(token)
 	entry, ok := c.cache[key]
 	if !ok {
@@ -107,8 +107,8 @@ func (c *IntrospectionCache) Set(ctx context.Context, key string, data map[strin
 }
 
 func (c *IntrospectionCache) Get(ctx context.Context, key string) map[string]any {
-	c.mu.RLock()
-	defer c.mu.RUnlock()
+	c.mu.Lock()
+	defer c.mu.Unlock()
 	entry, ok := c.cache[key]
 	if !ok {
 		c.stats.Misses++

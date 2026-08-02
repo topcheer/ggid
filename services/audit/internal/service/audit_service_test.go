@@ -30,7 +30,7 @@ func (m *mockAuditRepo) Insert(_ context.Context, e *domain.AuditEvent) error {
 	return nil
 }
 
-func (m *mockAuditRepo) GetByID(_ context.Context, id uuid.UUID) (*domain.AuditEvent, error) {
+func (m *mockAuditRepo) GetByID(_ context.Context, _ uuid.UUID, id uuid.UUID) (*domain.AuditEvent, error) {
 	if m.getErr != nil {
 		return nil, m.getErr
 	}
@@ -365,7 +365,7 @@ func TestListEvents_RepoError(t *testing.T) {
 
 func TestGetEvent_NotFound(t *testing.T) {
 	svc := NewAuditService(&mockAuditRepo{})
-	_, err := svc.GetEvent(context.Background(), uuid.New())
+	_, err := svc.GetEvent(context.Background(), uuid.New(), uuid.New())
 	if err == nil {
 		t.Fatal("expected not found error")
 	}
@@ -377,7 +377,7 @@ func TestGetEvent_Found(t *testing.T) {
 	repo := &mockAuditRepo{events: []*domain.AuditEvent{evt}}
 	svc := NewAuditService(repo)
 
-	found, err := svc.GetEvent(context.Background(), evt.ID)
+	found, err := svc.GetEvent(context.Background(), tenantID, evt.ID)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}

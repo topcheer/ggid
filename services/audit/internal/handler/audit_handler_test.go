@@ -32,7 +32,7 @@ func (m *mockAuditRepo) Insert(_ context.Context, e *domain.AuditEvent) error {
 	return nil
 }
 
-func (m *mockAuditRepo) GetByID(_ context.Context, id uuid.UUID) (*domain.AuditEvent, error) {
+func (m *mockAuditRepo) GetByID(_ context.Context, _ uuid.UUID, id uuid.UUID) (*domain.AuditEvent, error) {
 	if m.getErr != nil {
 		return nil, m.getErr
 	}
