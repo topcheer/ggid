@@ -109,13 +109,13 @@ func (r *reviewScheduleRepo) Update(ctx context.Context, s *ReviewSchedule) erro
 		`UPDATE review_schedules SET
 		   scope_type = $2, scope_id = $3, frequency_days = $4,
 		   next_run_at = $5, enabled = $6, reviewer_user_id = $7
-		 WHERE id = $1`,
-		s.ID, s.ScopeType, s.ScopeID, s.FrequencyDays, s.NextRunAt, s.Enabled, s.ReviewerUserID)
+		 WHERE id = $1 AND tenant_id = $8`,
+		s.ID, s.ScopeType, s.ScopeID, s.FrequencyDays, s.NextRunAt, s.Enabled, s.ReviewerUserID, s.TenantID)
 	return err
 }
 
-func (r *reviewScheduleRepo) Delete(ctx context.Context, id string) error {
-	_, err := r.pool.Exec(ctx, `DELETE FROM review_schedules WHERE id = $1`, id)
+func (r *reviewScheduleRepo) Delete(ctx context.Context, id, tenantID string) error {
+	_, err := r.pool.Exec(ctx, `DELETE FROM review_schedules WHERE id = $1 AND tenant_id = $2`, id, tenantID)
 	return err
 }
 
@@ -315,7 +315,12 @@ func (h *HTTPHandler) reviewSchedDelete(w http.ResponseWriter, r *http.Request, 
 		writeJSON(w, http.StatusOK, map[string]any{"schedules": []any{}, "count": 0})
 		return
 	}
-	if err := h.reviewSchedRepo.Delete(r.Context(), id); err != nil {
+	tc, err := ggidtenant.FromContext(r.Context())
+	if err != nil || tc.TenantID == uuid.Nil {
+		writeJSONError(w, http.StatusForbidden, "tenant context required")
+		return
+	}
+	if err := h.reviewSchedRepo.Delete(r.Context(), id, tc.TenantID.String()); err != nil {
 		writeJSONError(w, http.StatusInternalServerError, "failed to delete schedule")
 		return
 	}

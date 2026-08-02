@@ -17,6 +17,8 @@ import (
 	ggiderrors "github.com/ggid/ggid/pkg/errors"
 	"github.com/ggid/ggid/services/identity/internal/domain"
 	"github.com/google/uuid"
+
+
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -423,10 +425,20 @@ RETURNING %s`, userColumns)
 
 	// SECURITY: When locking/disabling a user, immediately revoke all sessions
 	// and tokens to prevent continued access with existing credentials.
+	// All cascade operations include tenant_id filter and check errors.
 	if status == domain.UserStatusLocked || status == domain.UserStatusDisabled {
-		tx.Exec(ctx, `DELETE FROM sessions WHERE user_id = $1`, id)
-		tx.Exec(ctx, `UPDATE refresh_tokens SET revoked = true, revoked_at = NOW() WHERE user_id = $1 AND revoked = false`, id)
-		tx.Exec(ctx, `DELETE FROM api_keys WHERE user_id = $1`)
+		if _, err := tx.Exec(ctx, `DELETE FROM sessions WHERE user_id = $1 AND tenant_id = $2`, id, tenantID); err != nil {
+			tx.Rollback(ctx)
+			return nil, ggiderrors.Wrap(ggiderrors.ErrInternal, "cascade delete sessions", err)
+		}
+		if _, err := tx.Exec(ctx, `UPDATE refresh_tokens SET revoked = true, revoked_at = NOW() WHERE user_id = $1 AND tenant_id = $2 AND revoked = false`, id, tenantID); err != nil {
+			tx.Rollback(ctx)
+			return nil, ggiderrors.Wrap(ggiderrors.ErrInternal, "cascade revoke refresh tokens", err)
+		}
+		if _, err := tx.Exec(ctx, `DELETE FROM api_keys WHERE user_id = $1 AND tenant_id = $2`, id, tenantID); err != nil {
+			tx.Rollback(ctx)
+			return nil, ggiderrors.Wrap(ggiderrors.ErrInternal, "cascade delete api keys", err)
+		}
 	}
 
 	tx.Commit(ctx)
