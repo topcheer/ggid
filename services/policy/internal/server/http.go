@@ -1627,10 +1627,17 @@ func (s *HTTPServer) handleAttributeMapping(w http.ResponseWriter, r *http.Reque
 
 	switch r.Method {
 	case http.MethodGet:
+		tenantID := r.Header.Get("X-Tenant-ID")
 		writeJSON(w, http.StatusOK, map[string]any{"mappings": func() []map[string]any {
 			attrMappingsMu.RLock()
 			defer attrMappingsMu.RUnlock()
-			return attributeMappings
+			filtered := []map[string]any{}
+			for _, m := range attributeMappings {
+				if t, ok := m["tenant_id"].(string); ok && t == tenantID {
+					filtered = append(filtered, m)
+				}
+			}
+			return filtered
 		}()})
 
 	case http.MethodPost:
@@ -1965,13 +1972,18 @@ func (s *HTTPServer) handleTimeConditions(w http.ResponseWriter, r *http.Request
 
 	switch r.Method {
 	case http.MethodGet:
+		tenantID := r.Header.Get("X-Tenant-ID")
 		timeConditions.RLock()
 		rules := timeConditions.rules
 		timeConditions.RUnlock()
-		// Return a copy
-		result := make([]map[string]any, len(rules))
-		copy(result, rules)
-		writeJSON(w, http.StatusOK, map[string]any{"conditions": result, "count": len(result)})
+		// SECURITY: Filter by tenant_id to prevent cross-tenant BOLA.
+		filtered := []map[string]any{}
+		for _, rule := range rules {
+			if t, ok := rule["tenant_id"].(string); ok && t == tenantID {
+				filtered = append(filtered, rule)
+			}
+		}
+		writeJSON(w, http.StatusOK, map[string]any{"conditions": filtered, "count": len(filtered)})
 
 	case http.MethodPost:
 		var req struct {
