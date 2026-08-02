@@ -18,7 +18,6 @@ import (
 	"github.com/ggid/ggid/services/identity/internal/domain"
 	"github.com/google/uuid"
 
-
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -266,23 +265,23 @@ func (r *pgRepo) DeleteUser(ctx context.Context, tenantID, id uuid.UUID) error {
 	// explicitly within the same transaction to prevent security-relevant
 	// orphan data (password hashes, permission bindings) from persisting.
 	for _, cleanup := range []struct{ name, sql string }{
-		{"credentials", `DELETE FROM credentials WHERE user_id = $1`},
-		{"user_roles", `DELETE FROM user_roles WHERE user_id = $1`},
-		{"mfa_devices", `DELETE FROM mfa_devices WHERE user_id = $1`},
-		{"webauthn_credentials", `DELETE FROM webauthn_credentials WHERE user_id = $1`},
-		{"backup_codes", `DELETE FROM backup_codes WHERE user_id = $1`},
-		{"sessions", `DELETE FROM sessions WHERE user_id = $1`},
-		{"api_keys", `DELETE FROM api_keys WHERE user_id = $1`},
-		{"refresh_tokens", `DELETE FROM refresh_tokens WHERE user_id = $1`},
-		{"oauth_authorization_codes", `DELETE FROM oauth_authorization_codes WHERE user_id = $1`},
-		{"password_history", `DELETE FROM password_history WHERE user_id = $1`},
-		{"email_verification_tokens", `DELETE FROM email_verification_tokens WHERE user_id = $1`},
-		{"user_emails", `DELETE FROM user_emails WHERE user_id = $1`},
-		{"scim_group_members", `DELETE FROM scim_group_members WHERE user_id = $1`},
-		{"oidc_refresh_tokens", `DELETE FROM oidc_refresh_tokens WHERE user_id = $1`},
-		{"oidc_id_tokens", `DELETE FROM oidc_id_tokens WHERE user_id = $1`},
+		{"credentials", `DELETE FROM credentials WHERE user_id = $1 AND tenant_id = $2`},
+		{"user_roles", `DELETE FROM user_roles WHERE user_id = $1 AND tenant_id = $2`},
+		{"mfa_devices", `DELETE FROM mfa_devices WHERE user_id = $1 AND tenant_id = $2`},
+		{"webauthn_credentials", `DELETE FROM webauthn_credentials WHERE user_id = $1 AND tenant_id = $2`},
+		{"backup_codes", `DELETE FROM backup_codes WHERE user_id = $1 AND tenant_id = $2`},
+		{"sessions", `DELETE FROM sessions WHERE user_id = $1 AND tenant_id = $2`},
+		{"api_keys", `DELETE FROM api_keys WHERE user_id = $1 AND tenant_id = $2`},
+		{"refresh_tokens", `DELETE FROM refresh_tokens WHERE user_id = $1 AND tenant_id = $2`},
+		{"oauth_authorization_codes", `DELETE FROM oauth_authorization_codes WHERE user_id = $1 AND tenant_id = $2`},
+		{"password_history", `DELETE FROM password_history WHERE user_id = $1 AND tenant_id = $2`},
+		{"email_verification_tokens", `DELETE FROM email_verification_tokens WHERE user_id = $1 AND tenant_id = $2`},
+		{"user_emails", `DELETE FROM user_emails WHERE user_id = $1 AND tenant_id = $2`},
+		{"scim_group_members", `DELETE FROM scim_group_members WHERE user_id = $1 AND tenant_id = $2`},
+		{"oidc_refresh_tokens", `DELETE FROM oidc_refresh_tokens WHERE user_id = $1 AND tenant_id = $2`},
+		{"oidc_id_tokens", `DELETE FROM oidc_id_tokens WHERE user_id = $1 AND tenant_id = $2`},
 	} {
-		if _, err := tx.Exec(ctx, cleanup.sql, id); err != nil {
+		if _, err := tx.Exec(ctx, cleanup.sql, id, tenantID); err != nil {
 			return ggiderrors.Wrap(ggiderrors.ErrInternal, "cascade cleanup "+cleanup.name, err)
 		}
 	}
