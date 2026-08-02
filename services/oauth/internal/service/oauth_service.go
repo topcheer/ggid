@@ -28,9 +28,9 @@ import (
 	"github.com/ggid/ggid/pkg/tenant"
 	"github.com/ggid/ggid/services/oauth/internal/domain"
 	"github.com/ggid/ggid/services/oauth/internal/repository"
-
+	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
-
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
 )
 

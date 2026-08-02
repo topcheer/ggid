@@ -3120,3 +3120,1837 @@ This is not a SQL injection risk (the extracted value is passed as a parameteriz
 - `maxBulkOperations = 1000` limit enforced (bulk.go:66-69)
 - `failOnErrors` threshold respected
 - Operations are executed sequentially via `executeBulkOp`
+
+---
+
+## Round 6 — Data Leakage & PII (2026-08-05)
+
+### FINDING P1-6A: OAuth `client_secret_hash` Leaked in HTTP API Responses (UNFIXED)
+
+**Severity: P1 — Credential hash disclosure**
+
+The P2-8 report flagged `client_secret_hash` exposure. The fix was applied to the **gRPC path only** (`domainToPbClient` at `grpc_handler.go:170-191` correctly omits the field). However, the **HTTP REST path** still serializes `domain.OAuthClient` directly, exposing the Argon2id hash.
+
+**Affected endpoints** (all in `services/oauth/internal/server/server.go`):
+
+| Endpoint | Line | Code |
+|---|---|---|
+| `GET /api/v1/oauth/clients` (List) | 1734 | `writeJSON(w, http.StatusOK, map[string]any{"clients": clients, ...})` |
+| `GET /api/v1/oauth/clients/{id}` (Get) | 1831 | `writeJSON(w, http.StatusOK, client)` |
+| `POST /api/v1/oauth/clients` (Create) | 1717 | `writeJSON(w, http.StatusCreated, result)` where result wraps `*domain.OAuthClient` |
+
+The domain struct (`services/oauth/internal/domain/models.go:32`):
+```go
+ClientSecretHash string `json:"client_secret_hash,omitempty"` // Argon2id hash
+```
+
+**Impact:** Any authenticated admin with tenant-scoped access to these endpoints receives the Argon2id hash of every confidential OAuth client's secret. While Argon2id is resistant to brute-force, the hash should never be returned to API consumers. An attacker with the hash can:
+- Perform offline brute-force/dictionary attacks against client secrets
+- Verify candidate secrets locally without rate-limited API interaction
+- Use knowledge of hash parameters (memory, iterations) to optimize attacks
+
+**Root cause:** The HTTP handlers serialize domain objects directly instead of using a DTO/response mapper that strips sensitive fields. The gRPC path was fixed but the HTTP path was missed.
+
+**Fix direction:** Create a `clientToJSON()` helper (similar to identity service's `userToJSON()`) that explicitly maps only safe fields. Apply to all three endpoints.
+
+---
+
+### FINDING P1-6B: Audit PII Masking Bypassed in Production NATS Consumer Path
+
+**Severity: P1 — PII stored unmasked in audit logs**
+
+The `obfuscateEventPII()` function (`services/audit/internal/service/audit_service.go:130-150`) properly masks emails, phones, IPs, UUIDs, SSNs, and credit cards in `ActorName`, `ResourceName`, `IPAddress`, and `Metadata`. However, it is **only called in `AuditService.InsertEvent()`** (line 103), which is used for direct/synchronous inserts.
+
+The **production path** flows through NATS pub/sub:
+1. Services call `auditPub.PublishAsync(event)` → publishes raw event to NATS
+2. `EventConsumer.processMessage()` (`nats_consumer.go:151-178`) unmarshals the event
+3. Line 168: `c.repo.Insert(ctx, &event)` — **calls repo directly, bypassing `obfuscateEventPII`**
+
+**Result:** All audit events in production store raw, unmasked PII in the database. The masking is effectively dead code for the main data flow.
+
+**Impact:** Emails, phone numbers, IP addresses, and other PII are persisted in plaintext in audit log tables, violating data minimization principles and potentially GDPR/PIPL compliance requirements. Any database breach or unauthorized audit log access exposes user PII.
+
+**Additionally unmasked fields** (even if `obfuscateEventPII` were called):
+- `UserAgent` — can contain device fingerprints and user identifiers
+- `ActorID` — UUID exposed (though not directly PII)
+
+**Fix direction:** Call `obfuscateEventPII()` (or equivalent) in `nats_consumer.go:processMessage()` before `repo.Insert()`. Consider moving masking to the publisher side (`PublishAsync`) to ensure masking regardless of consumer implementation.
+
+---
+
+### Verified Safe Items
+
+1. **Error response err.Error() leaks** — Checked all handler files in auth, oauth, gateway services. The `writeInternalError` helper returns generic `"internal server error"`. The `err.Error()` calls in auth (login attempt logging at http.go:754, social register branching at http.go:899) are used for internal logging/control flow, not returned to clients.
+
+2. **Identity User password hash** — The `userToJSON()` helper (`identity/internal/server/http.go:1193`) explicitly maps safe fields only. `PasswordHash`, `LastLoginIP`, `ExternalID`, `DeletedAt` are excluded. Safe.
+
+3. **Secret rotation** — `handleClientSecretRotation` returns only a truncated preview (`newSecret[:8] + "****"`) for status, and full plaintext only once on rotation (expected behavior).
+
+4. **gRPC OAuth client responses** — `domainToPbClient()` explicitly omits `ClientSecretHash`. Safe.
+
+---
+
+## Attack Surface #6: Injection & Input Validation (Round 6)
+
+### Summary
+
+Audited: SQL injection (fmt.Sprintf paths, ORDER BY, LIKE wildcards), command injection (exec.Command), SSRF (webhook URLs, SOAR engine, DID:web resolver), stored/reflected XSS.
+
+### P2-1: SOAR Engine notifySOC — SSRF (No URL Validation, No SSRF-Safe Dial)
+
+**Severity:** P2 (Medium)
+**File:** `services/audit/internal/soar/engine.go:270-303`
+
+The `notifySOC` method sends an HTTP POST to a user-supplied `action.Webhook` URL using a plain `http.Client` with no SSRF protection:
+
+```go
+func NewEngine(pool *pgxpool.Pool) *Engine {
+    return &Engine{
+        client:  &http.Client{Timeout: 10 * time.Second},  // No SSRF-safe transport
+        ...
+    }
+}
+
+func (e *Engine) notifySOC(...) error {
+    webhookURL := action.Webhook  // User-controlled from playbook JSON
+    ...
+    req, err := http.NewRequestWithContext(ctx, http.MethodPost, webhookURL, bytes.NewReader(body))
+    resp, err := e.client.Do(req)  // No URL scheme/host validation
+}
+```
+
+**Exploitation:** An attacker who can create SOAR playbooks (via `POST /api/v1/soar/playbooks`) can set the webhook URL to `http://169.254.169.254/latest/meta-data/` (AWS metadata) or `http://127.0.0.1:8080/admin` to access internal services.
+
+**Mitigating factor:** The SOAR engine package (`services/audit/internal/soar`) is **not imported by any production code** — the `soar_routes.go` handler delegates to `handleITDRPlaybooks` instead. The SOAR engine exists but appears dormant. This reduces severity to P2. If the engine is wired into production in the future, this becomes P1.
+
+**Contrast:** The JML engine (`jml_engine.go:59-64`) correctly uses `ssrfSafeDialContext`, and the audit alert webhook handler (`alert_webhook_handler.go:154-194`) has `validateWebhookURL` with private IP blocking + DNS resolution checks. The DID:web resolver (`did_resolver.go:91-110`) also has SSRF-safe dial.
+
+---
+
+### Verified Safe Items (Round 6)
+
+1. **SQL Injection — fmt.Sprintf SQL construction** — All identified `fmt.Sprintf` SQL paths use **parameterized arguments** ($1, $2, ...) for user data. The fmt.Sprintf is used only for:
+   - Column/table name interpolation (`clientColumns`, hardcoded table names in `CleanupExpired`)
+   - Dynamic WHERE clause assembly with parameterized values (`group_repo.go:92`, `audit_repo.go:158-186`)
+   - Argument index computation (`$%d` with incrementing `argIdx`)
+   
+   No user input is directly concatenated into SQL strings. Safe.
+
+2. **ORDER BY dynamic fields** — No dynamic ORDER BY with user-controlled column names found. All ORDER BY clauses use hardcoded columns (`created_at DESC`, `display_name ASC`, etc.). Safe.
+
+3. **LIKE wildcard escaping** — Both `group_repo.go:125-128` and `audit_repo.go:163-164` properly escape LIKE wildcards (`%`, `_`, `\`) with `ESCAPE '\'`. The `escapeLikeWildcards()` helper in `pg_repo.go:922-926` is correctly implemented. Safe.
+
+4. **Command injection** — `exec.Command` usage found in 4 locations, all safe:
+   - `deploy/operator/internal/provisioning/instance.go:92,102` — Uses `exec.Command(name, args...)` with arguments passed as separate slice elements (no shell interpolation). Input comes from struct fields, not direct user input.
+   - `pkg/crypto/key-provider_pkcs11_test.go:62` — Test file only.
+   - `services/ggid-cli/internal/commands/browser.go:26` — Opens browser URL, OS-specific command with no user-controlled args.
+
+5. **SSRF — Gateway webhook delivery** — `webhooks.go:131-133` uses `NewHTTPDeliverer()` which delegates to `NewSSRFSafeDeliverer(DefaultSSRFConfig())`. The SSRF-safe deliverer (`ssrf.go:69-119`) resolves DNS and blocks private/loopback/link-local/cloud-metadata IPs via a custom `DialContext`. Safe.
+
+6. **SSRF — Gateway webhook registration validation** — `webhooks.go:207` calls `validateURL(req.URL)` which checks for `http://` or `https://` prefix (`ssrf.go:62-67`). The actual delivery is SSRF-protected by the deliverer. Safe.
+
+7. **SSRF — JML engine webhooks** — `jml_engine.go:59-64` uses `ssrfSafeDialContext` in the transport. Safe.
+
+8. **SSRF — DID:web resolver** — `did_resolver.go:91-110` implements custom `DialContext` with DNS resolution and private IP blocking. Safe.
+
+9. **XSS — SAML HTML template** — `server.go:1606-1609` properly uses `html.EscapeString()` for all user-influenced values (ACS URL, SAMLResponse, RelayState). Previously identified as unescaped; **now fixed**. Safe.
+
+10. **XSS — Gateway hosted HTML templates** — `router.go:382-402` `resolveTenant()` validates tenant ID as UUID before template substitution, rejecting non-UUID values (`return ""`). The `__TENANT_ID__` placeholder is placed in a JavaScript string literal (`const T="__TENANT_ID__"`), and only valid UUIDs pass. Safe.
+
+---
+
+## Attack Surface #7: Session & Token Lifecycle (Round 6D)
+
+### P1-7D: RFC 7009 Revocation Bypass for Auth-issued Refresh Tokens
+
+**Severity:** P1 (High)
+**CVSS:** 7.5 (AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:L)
+
+**Affected:** `POST /oauth/revoke` (RFC 7009 token revocation endpoint)
+
+**Root Cause:**
+
+Two independent refresh token stores exist in the system:
+
+| Store | DB Table | Redis Key | Issued By |
+|-------|----------|-----------|-----------|
+| OAuth | `oidc_refresh_tokens` | `oauth:revoked:{hash}` | `/oauth/token` (authorization_code, etc.) |
+| Auth | `refresh_tokens` | `ggid:rt:{hash}` | `/api/v1/auth/login` |
+
+OAuth's `RevokeToken()` (`token_revocation.go:28-46`) only operates on the OAuth store:
+1. Calls `tokenRepo.RevokeRefreshToken(uuid.Nil, tokenHash)` → executes `UPDATE oidc_refresh_tokens SET revoked=true WHERE token_hash=$2`. Auth-issued tokens are NOT in this table — 0 rows affected.
+2. Sets `oauth:revoked:{hash}` in Redis. But `RefreshToken()` (`grant_refresh.go`) **never checks this key** for refresh tokens.
+
+Meanwhile, `lookupAuthRefreshToken()` (`grant_refresh.go:218-263`) performs `GetDel` on `ggid:rt:{hash}`, which is **not deleted** by `RevokeToken()`. The token remains alive and consumable.
+
+**Exploit Scenario:**
+
+1. User logs in via `/api/v1/auth/login` → receives Auth-issued refresh token
+2. Attacker steals the refresh token (e.g., via XSS, network interception)
+3. Victim discovers theft, calls `POST /oauth/revoke` with `token={stoken}&token_type_hint=refresh_token`
+4. Server returns HTTP 200 (RFC 7009 always returns 200)
+5. Under the hood: DB UPDATE affects 0 rows; Redis blacklist key is set but never checked
+6. Attacker calls `POST /oauth/token` with `grant_type=refresh_token&refresh_token={stolen}` → **succeeds**
+7. Attacker gets new access + refresh tokens, valid for up to 30 days
+8. Victim believes they are safe; attacker retains access
+
+**Note:** Auth service's own `POST /api/v1/auth/logout` properly revokes via `TokenService.RevokeRefreshToken()` which updates `refresh_tokens` table AND deletes `ggid:rt:{hash}` Redis key. The gap is exclusively in the cross-service OAuth revocation path.
+
+**Remediation:** `RevokeToken()` should also delete `ggid:rt:{hash}` in Redis and/or update the `refresh_tokens` table when the OAuth-store revocation affects 0 rows.
+
+---
+
+### Round 6D — Previous Findings Verification
+
+| ID | Finding | Status | Notes |
+|----|---------|--------|-------|
+| P1-7A | Revocation cascade DoS | **FIXED** | `token_revocation.go:86-94` now scopes cascade to `tenant_id + user_id + client_id` (line 88). Without client_id, falls back to tenant+user only (line 91-93). No more global DoS. |
+| P2-7B | DPoP not enforced at gateway | **STILL OPEN (Architectural)** | DPoP token binding (`dpop_token_bind.go`) and verification (`dpop_verify.go`) exist only on the OAuth server. Gateway middleware has NO DPoP enforcement — DPoP-bound tokens can be used as regular Bearer tokens without presenting a DPoP proof. No change since last round. |
+| P2-7C | Revocation without Redis | **PARTIALLY MITIGATED** | `JTIBlocklist.IsRevoked()` (`jti_blocklist.go:58-73`) fails **closed** on Redis errors (returns `true` = revoked). `IsTokenRevoked()` (`token_revocation.go:126-176`) has DB fallback via `sessions.revoked_at`. However, when `rdb==nil` (dev mode), `IsRevoked` returns `false` — relying on JWT expiry only. |
+
+### Round 6D — Additional Checks
+
+| Check | Status | Details |
+|-------|--------|---------|
+| Refresh token rotation atomicity | **SAFE** | `ConsumeRefreshToken` (`pg_repo.go:464-469`) uses atomic `UPDATE ... WHERE used=false AND revoked=false`. TOCTOU-safe. Losers treated as reuse → family revocation triggered. |
+| Refresh token client_id binding | **SAFE** | `grant_refresh.go:68-69` checks `record.ClientID != client.ID` and rejects cross-client refresh. Auth-issued tokens bound to requesting client at line 259. |
+| JWT exp/nbf/iat validation | **SAFE** | Tokens always issued with `exp` (15 min). Gateway uses `jwt/v5` default validation which checks `exp`/`nbf`/`iat` when present (middleware.go:709-738). |
+| Internal auth HMAC method+path binding | **SAFE** | `internal_auth.go:127` binds HMAC to `service|ts|reqID|method|path`. Old unbound `ComputeSignature()` is dead code (unused). |
+| Session fixation (login rotation) | **SAFE** | `SessionService.Create()` (`session_service.go:38-71`) always generates a fresh random token via `crypto.GenerateRandomToken(32)`. No session ID reuse. |
+| Session cookie attributes | **N/A** | Auth service is token-based (Bearer tokens), not cookie-based. No `SetCookie` found in login flow. |
+| Concurrent session limit | **PARTIAL** | `EnforceSessionLimit` (`session_service.go:125-127`) revokes oldest sessions beyond cap of 10. However, the configurable `SessionLimit` handler (`session_limit_handler.go`) only stores config in-memory map — it is **never read** by `SessionService.Create()`, which always uses hardcoded `maxDefaultSessions=10`. Admin-configured limits are non-functional. |
+| forceLogout admin scope | **SAFE** | `http.go:3158-3162` requires admin scope. Cross-tenant requires `platform:admin` (line 3184). Properly enforced. |
+| Session invalidation handler | **SAFE** | `session_invalidation_handler.go:52-57` checks caller == target user OR admin scope. Tenant context from gateway-validated `X-Tenant-ID` header. Gateway strips client-supplied identity headers (router.go:232-276). |
+| DPoP proof JTI replay prevention | **SAFE** | `consumeDPoPJTI()` (server.go:3060-3071) uses `sync.Map.LoadOrStore` for atomic check-and-consume. 6-minute TTL with lazy cleanup. |
+| Revocation cascade tenant filter | **SAFE** | All UPDATE queries in `RevokeToken` cascade include `tenant_id` filter (lines 88, 92). |
+
+11. **SSRF — Audit alert webhook handler** — `alert_webhook_handler.go:154-194` `validateWebhookURL` implements comprehensive SSRF protection: scheme validation (http/https only), localhost/loopback blocking, private IP range checking via `netip`, DNS resolution verification with internal address blocking. Has `GGID_WEBHOOK_SKIP_DNS` env bypass for testing. Safe.
+
+---
+
+### Round 6E — Infrastructure & Supply Chain (Attack Surface #8, 6th Pass)
+
+**Scope:** K8s Pod Security, NetworkPolicy, Docker images, secret management, CI/CD pipeline, CORS/TLS configuration.
+
+#### Previous Findings Verification
+
+| ID | Finding | Status | Details |
+|----|---------|--------|---------|
+| P1-8A | PostgreSQL trust auth | **FIXED** | `postgres-start.sh:10-11` now uses `scram-sha-256` for both host and local connections. Verified: `echo 'host all all 127.0.0.1/32 scram-sha-256'` and `echo 'local all all scram-sha-256'`. No `trust` or `md5` auth remains. |
+| P2-8B | All-in-one root execution | **FIXED** | `Dockerfile:159-161` adds `appuser` and sets `USER appuser`. PostgreSQL runs as `postgres` user via supervisord `su - postgres`. Non-root enforced. |
+| P2-8C | .dockerignore empty | **STILL OPEN** | `.dockerignore` is 1 byte (empty file with single newline). Build context includes entire repo including `.git/`, `node_modules/`, `sdk/node/node_modules/`, test fixtures. This causes: (a) large build context slowing builds, (b) potential secret leakage into image layers if `.env` or key files exist at build time. **Severity: P2** — no direct exploit but weakens supply chain hygiene. |
+| P2-8D | Helm default passwords | **STILL OPEN** | `values.yaml:26` `postgresql.auth.password: ggid`, `values.yaml:44` `redis.auth.password: ggid-redis`. These are the **chart defaults** — if deployed without `--set` overrides, production runs with known weak credentials. `values-prod.yaml:164-166` documents that secrets "MUST be set via --set" but provides no enforcement mechanism (no `required()` function in templates). **Severity: P2** — operator footgun, no hard fail. |
+
+#### New Findings
+
+**P1-8E — Hardcoded superuser password in all-in-one Docker image**
+
+- **File:** `deploy/all-in-one/postgres-start.sh:16`
+- **Detail:** `psql -c "CREATE USER ggid WITH PASSWORD 'ggid' superuser;"` — The database user is created as `superuser` with a hardcoded password `'ggid'`. This means the all-in-one container ships with a PostgreSQL **superuser** accessible via known credentials. If any service in the container is compromised (e.g., SSRF to localhost:5432, or an exposed port), the attacker gets full database superuser access — can read/modify any table, create roles, execute `COPY ... TO PROGRAM` for RCE.
+- **Exploitability:** In all-in-one mode, `DB_PASSWORD=ggid` is baked into the Dockerfile (line 117). The database listens on `localhost:5432`. Any SSRF vulnerability or internal service compromise gives trivial DB superuser access. The all-in-one image also generates RSA keys at build time (`Dockerfile:107-108`) and stores them at `/app/configs/` — with DB superuser access, an attacker can also read these keys via `pg_read_file()` if `PROGRAM` or `COPY` is used.
+- **Severity: P1** — Known credentials + superuser = full compromise of all-in-one deployment.
+
+**P2-8F — ERP example manifests lack securityContext**
+
+- **Files:** `deploy/k8s/erp-go.yaml`, `erp-node.yaml`, `erp-rust.yaml`, `erp-ruby.yaml`, `erp-react.yaml`, `erp-ruby-patch.yaml`
+- **Detail:** None of the 6 ERP example K8s manifests have `securityContext`. They run as root by default, with no `runAsNonRoot`, no `allowPrivilegeEscalation: false`, no capability dropping. The main service manifests (`console-deployment.yaml`, `mcp-deployment.yaml`) and Helm `deployments.yaml` template correctly have securityContext — but the ERP manifests were not updated.
+- **Exploitability:** These are demo/example manifests, not core services. If deployed as-is, pods run as root. Low real-world impact but bad supply chain hygiene.
+- **Severity: P2**
+
+**P2-8G — db-migrate Job and backup CronJob lack securityContext**
+
+- **Files:** `deploy/k8s/db-migrate-job.yaml`, `deploy/k8s/backup-verify-cronjob.yaml`
+- **Detail:** Both the migration Job and backup verification CronJob run `postgres:16-alpine` without any securityContext — default root execution. The migration job handles database schema changes and has `PGPASSWORD` from a secret. The backup verification job has database credentials and Slack webhook access.
+- **Severity: P2** — migration/backup jobs run as root with DB credentials.
+
+**P2-8H — MCP initContainer runs as root without securityContext**
+
+- **File:** `deploy/k8s/mcp-deployment.yaml:17-25`
+- **Detail:** The `copy-keys` initContainer uses `busybox` image without securityContext. It copies JWT signing keys from a Kubernetes Secret volume to an emptyDir. While the main `mcp` container has proper securityContext, the initContainer runs as root and could read/modify the keys before the main container starts.
+- **Severity: P2** — limited window, but key material exposed to root initContainer.
+
+#### Additional Checks (Safe)
+
+| Check | Status | Details |
+|-------|--------|---------|
+| K8s NetworkPolicy coverage | **SAFE** | Helm `networkpolicy.yaml` properly restricts: gateway ingress from anywhere, backend services only from gateway pods, egress limited to DNS/PG/Redis/NATS. Backend services cannot be reached directly bypassing gateway. |
+| TLS minimum version (nginx) | **SAFE** | `nginx.conf:49` `ssl_protocols TLSv1.2 TLSv1.3;` — TLS 1.0/1.1 disabled. HSTS enabled with 2-year max-age. |
+| CORS configuration (envoy) | **SAFE** | Envoy CORS filter is a passthrough; actual CORS policy is enforced at the Go gateway middleware level (previously verified safe — origin allowlist, no wildcard with credentials). |
+| CI/CD secret injection | **SAFE** | `.github/workflows/ci.yml` and `security.yml` use standard `actions/checkout@v4` with `permissions: contents: read`. No hardcoded secrets in workflows. Docker build step is disabled (`if: false`). No `secrets.*` references that could leak in logs. |
+| CI security scanning | **PARTIAL** | `security.yml` runs `govulncheck` (continue-on-error: false) and `gosec` (continue-on-error: true). CI `ci.yml` runs both with `|| true` — effectively non-blocking. Gosec with `continue-on-error: true` means security findings don't gate PRs. |
+| Docker image non-root (main) | **SAFE** | All-in-one `Dockerfile:161` `USER appuser`. Helm `deployments.yaml:120-128` sets `runAsNonRoot: true, runAsUser: 1001, capabilities.drop: [ALL]`. Console + MCP k8s manifests have securityContext. |
+| deploy/secrets/ plaintext | **SAFE** | `deploy/secrets/README.md` only contains documentation about Docker secrets pattern. No actual secret files committed. |
+| RSA key generation | **SAFE** | All-in-one generates keys at build time via `openssl genrsa` (`Dockerfile:107`). Not committed to repo. Helm mounts keys from K8s Secret. |
+| Redis auth (docker-compose dev) | **INFO** | `docker-compose.yaml` Redis has no password (`ports: 6379:6379`). Dev-only but ports are host-exposed. |
+| LDAP admin password | **INFO** | `docker-compose.yaml:51` `LDAP_ADMIN_PASSWORD: "admin123"` — hardcoded weak password for dev LDAP. Dev-only. |
+| Docker image tag pinning | **INFO** | Helm charts and K8s manifests use `tag: "latest"` for all GGID service images. No immutable version pins. Risk of supply chain substitution, but controlled by private registry. |
+| Envoy admin interface | **INFO** | `ggid-envoy.yaml:6-7` Envoy admin listens on `0.0.0.0:9901` — accessible from any pod in the namespace. Could leak config/runtime data. Template file only, not deployed as-is. |
+
+#### Summary
+
+- **New P1:** 1 (P1-8E — hardcoded DB superuser in all-in-one)
+- **New P2:** 3 (P2-8F ERP manifests, P2-8G migration/backup jobs, P2-8H MCP initContainer)
+- **Previously known P2 still open:** 2 (.dockerignore empty, Helm default passwords)
+- **Verified FIXED:** 2 (PostgreSQL scram-sha-256, all-in-one non-root)
+
+---
+
+## Attack Surface #9: Business Logic & Feature Abuse (Round 6)
+
+### P1-9F: Password Reset Email Bombing Bypass — Secondary Reset Endpoint Skips SetNX Cooldown
+
+**Severity:** P1 (High)
+**CVSS:** 7.5 (AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H)
+
+**Root cause:**
+
+The P1-9A fix added a `SetNX` cooldown (1 request per email per 60 seconds) to `AuthService.ForgotPassword()` in `auth_service.go:308-313`. However, a **second, parallel password reset endpoint** exists that bypasses this cooldown entirely.
+
+Two registered routes both initiate password resets:
+
+| Route | Handler | Cooldown | File |
+|-------|---------|----------|------|
+| `POST /api/v1/auth/password/forgot` | `forgotPassword()` → `authSvc.ForgotPassword()` | YES (SetNX 60s) | `http.go:192, 963` |
+| `POST /api/v1/auth/password-reset/initiate` | `handlePasswordReset()` → `pwdSvc.IssueResetToken()` | **NO** | `http.go:445`, `password_reset_handler.go:37-78` |
+
+The second path calls `PasswordService.IssueResetToken()` directly (`password_service.go:153`), which does a raw `rdb.Set()` with no rate-limit check. The `handlePasswordReset` handler in `password_reset_handler.go:52-71` performs no cooldown validation whatsoever.
+
+**Impact:** An attacker can send unlimited requests to `/api/v1/auth/password-reset/initiate` to:
+1. Flood Redis with unlimited reset tokens (1h TTL each) — memory exhaustion
+2. If email sending is later wired into this handler, unlimited email bombing (the original P1-9A concern)
+3. Generate unlimited token candidates for brute-force guessing
+
+**Exploitation:**
+```bash
+# Path A is rate-limited (1 per 60s per email):
+curl -X POST /api/v1/auth/password/forgot -d '{"email":"victim@example.com"}'
+# Returns 200 but SetNX blocks subsequent requests for 60s
+
+# Path B has NO rate limit — unlimited requests:
+for i in $(seq 1 10000); do
+  curl -X POST /api/v1/auth/password-reset/initiate -d '{"email":"victim@example.com"}'
+done
+# Each request issues a new token stored in Redis for 1 hour
+```
+
+---
+
+### P1-9G: Cross-Tenant Password Reset — Missing tenant_id Filter in auth_credentials Query
+
+**Severity:** P1 (High)
+**CVSS:** 7.1 (AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:L)
+
+**Root cause:**
+
+The `handlePasswordReset` handler (`password_reset_handler.go:56-58`) queries `auth_credentials` **without any tenant_id filter**:
+
+```go
+err := h.pool.QueryRow(r.Context(),
+    `SELECT user_id, tenant_id FROM auth_credentials
+     WHERE email = $1 AND status = 'active' LIMIT 1`, req.Email).Scan(&userID, &tenantID)
+```
+
+The handler also does **not extract tenant context** from the request at all — no `tenant.FromContext()`, no `X-Tenant-ID` header check, no body `tenant_id` field. Any caller can initiate a password reset for any user in **any tenant** by simply knowing their email address.
+
+Compare with `forgotPassword()` (`http.go:975-993`) which properly extracts tenant context and passes `tc.TenantID` to `authSvc.ForgotPassword()`.
+
+**Impact:**
+1. Cross-tenant password reset: an attacker in Tenant A can initiate a password reset for an admin in Tenant B
+2. The issued reset token contains Tenant B's `tenantID` + the target `userID`, enabling cross-tenant password takeover if the token is intercepted
+3. Tenant isolation boundary is broken for this endpoint
+
+---
+
+### P2-9H: Impersonation Token Issuance Lacks Audit Event
+
+**Severity:** P2 (Medium)
+**CVSS:** 5.3 (AV:N/AC:L/PR:H/UI:N/S:U/C:L/I:L/A:L)
+
+**Root cause:**
+
+The `handleImpersonate` function in `wiring_handlers.go:24-190` does **not publish any audit event** when an impersonation token is issued. Grep for `audit|Audit|publish` in the handler returned zero matches.
+
+This means a `tenant:admin` or `platform:admin` user can impersonate any user in their tenant (or cross-tenant with `platform:admin`) with **zero audit trail**. There is no record of:
+- Who initiated the impersonation
+- Who was impersonated
+- When it occurred
+- What actions were taken while impersonated
+
+**Note:** The P2-9D tenant bypass issue appears **fixed**:
+- Empty `X-Tenant-ID` fails closed (line 70-72: `"tenant context required"`)
+- Cross-tenant requires `platform:admin` scope (line 92-95)
+- Nested impersonation is blocked (line 47: `X-Impersonated == "true"`)
+- Scope checks use gateway-stripped `X-Scopes` header (not client-spoofable)
+
+But the missing audit event remains a significant compliance gap for a privileged operation.
+
+---
+
+### P2-9I: Account Lockout Counter Not Shared Between Username/Email Variants
+
+**Severity:** P2 (Medium)
+**CVSS:** 5.3 (AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:N/A:N)
+
+**Root cause:**
+
+The lockout counter is keyed by the raw `identifier` string the client sends:
+
+```go
+// auth_service.go:630
+key := fmt.Sprintf("ggid:lockout:%s:%s", tenantID, strings.ToLower(identifier))
+```
+
+The login handler passes `req.Username` directly (`http.go:719-752`), which accepts both username and email forms. The system supports both:
+- `VerifyCredentials` accepts username or email as the identifier
+- `ForgotPassword` explicitly tries both identifier and email lookups
+
+Since `strings.ToLower()` only normalizes case but not format, an attacker can split brute-force attempts across variants:
+
+| Variant | Lockout key | Attempts before lock |
+|---------|-------------|---------------------|
+| `john.doe` | `ggid:lockout:{tid}:john.doe` | 5 (default) |
+| `john.doe@example.com` | `ggid:lockout:{tid}:john.doe@example.com` | 5 (default) |
+| `John.Doe` (case normalized) | same as `john.doe` | — |
+| `JOHN.DOE@EXAMPLE.COM` | same as `john.doe@example.com` | — |
+
+**Impact:** Doubles the brute-force window from 5 to 10 attempts per lockout period. The `CheckBruteForce` sliding window (10 requests/hour per username) has the same dual-variant issue.
+
+The `ResetLoginAttempts` function (`auth_service.go:689-712`) attempts to scan and clear both variants, confirming the system is aware of the multi-identifier problem but hasn't applied it to the lockout enforcement path.
+
+---
+
+### Verified SAFE: Previous Findings Status
+
+| Check | Status | Details |
+|-------|--------|---------|
+| P1-9A forgot-password email bombing (primary path) | **FIXED** | `auth_service.go:308` SetNX cooldown enforced on `ForgotPassword()` |
+| Registration privilege escalation | **SAFE** | `RegisterRequest` struct has only username/email/password — no role/scope/is_admin fields. `register()` in http.go calls `authSvc.Register()` which creates plain users. |
+| Self-registration email verification | **LOW RISK** | Users created as `active` immediately (`registration_handler.go:213`), but this is the unused alternative handler. Main `register()` handler delegates to service layer. Email verification is optional in v1 by design. |
+| Password reset atomic consumption | **FIXED** | `ConsumeResetToken()` uses `GetDel` (atomic one-time use) — `password_service.go:177` |
+| Password reset TTL | **OK** | 1 hour TTL (`password_service.go:163`, `auth_service.go:347`) |
+| Session invalidation after reset | **FIXED** | `ResetPassword()` calls `RevokeAllForUser()` — `auth_service.go:400`, plus trusted device clearing (line 402-413) |
+| User enumeration via reset response | **SAFE** | Both endpoints return identical 200 response regardless of email existence |
+| Impersonation scope enforcement | **FIXED** | `tenant:admin` / `platform:admin` scope required, nested impersonation blocked, empty tenant fail-closed |
+| Gateway header spoofing prevention | **FIXED** | Router strips `X-Real-IP`, `X-Forwarded-For`, `X-Tenant-ID`, `X-Scopes` — `router.go:268-274` |
+| Login rate limit via IP | **FIXED** | Gateway strips client-supplied XFF; ReverseProxy re-sets correct client IP |
+| SCIM bulk max operations | **OK** | Limited to 1000 operations per request (`bulk.go:48,66-69`) |
+| Registration input validation | **SAFE** | Username charset, length, leading/trailing special chars validated; password strength gate enforced |
+
+#### Round 9 Summary
+
+- **New P1:** 2 (P1-9F password reset cooldown bypass, P1-9G cross-tenant reset query)
+- **New P2:** 2 (P2-9H impersonation no audit, P2-9I lockout variant bypass)
+- **Verified FIXED:** P1-9A email bombing (primary path), password reset atomic consumption, session invalidation
+
+---
+
+## BOLA/IDOR Audit — Round 7 (2026-08-03)
+
+### P1-7A: Cross-tenant risk policy read/write BOLA
+
+**Severity:** P1 (High)
+**File:** `services/policy/internal/server/unified_risk_engine.go`
+
+**Finding 1 — GET /api/v1/risk/policies/{tenant_id} (cross-tenant READ)**
+
+`handleRiskPolicy` GET method (lines 327-335) extracts `tenantID` from the URL path and passes it directly to `GetPolicy()` with no validation against the caller's `X-Tenant-ID` header:
+```go
+case http.MethodGet:
+    tenantIDStr := r.URL.Path[len("/api/v1/risk/policies/"):]
+    tenantID, _ := uuid.Parse(tenantIDStr)
+    p, _ := s.riskRepo.GetPolicy(r.Context(), tenantID)  // uses path UUID, not caller tenant
+```
+An authenticated user from tenant A can read tenant B's risk policy (thresholds, weights) by changing the UUID in the path.
+
+**Finding 2 — PUT/POST /api/v1/risk/policies (cross-tenant WRITE)**
+
+`handleRiskPolicy` PUT method (lines 304-326) decodes `RiskPolicy` from the request body including `p.TenantID`, then calls `UpsertPolicy()` with the body-supplied tenant_id — no comparison against caller's tenant:
+```go
+case http.MethodPut, http.MethodPost:
+    var p RiskPolicy
+    json.NewDecoder(r.Body).Decode(&p)
+    s.riskRepo.UpsertPolicy(r.Context(), &p)  // p.TenantID from body, unvalidated
+```
+Attacker can overwrite target tenant's risk policy: `PUT /api/v1/risk/policies {"tenant_id":"<tenant_B>","allow_threshold":0}`. Setting `allow_threshold=0` means every risk score >0 triggers step-up MFA, effectively causing DoS or enabling risk-control bypass via threshold manipulation.
+
+**Finding 3 — POST /api/v1/risk/evaluate (cross-tenant evaluation + log pollution)**
+
+`handleRiskEvaluate` (lines 265-281) takes `req.TenantID` from the request body. `EvaluateRisk()` uses it to fetch the target tenant's policy and calls `LogScore()` which inserts into `risk_scores` with the body-supplied tenant_id. Attacker can evaluate risk against any tenant's policy and pollute their risk score logs.
+
+**Contrast:** `conditional_access_handler.go` correctly implements `// SECURITY: Force tenant_id from caller context, ignore request body value.` — the risk policy handler is entirely missing this pattern.
+
+**Fix:** In `handleRiskPolicy`, force `tenantID` from `X-Tenant-ID` header (via `tenantIDFromHeader(r)`), ignore path/body values. Same pattern needed in `handleRiskEvaluate`.
+
+### Round 7 — Verified OK (previously fixed endpoints)
+
+| Endpoint | Status | Notes |
+|---|---|---|
+| ITDR detection GetDetection | **OK** | `GetDetection(ctx, id, getTenantID(r))` — tenant_id passed (itdr_handler.go:100) |
+| ITDR UpdateStatus (acknowledge/resolve) | **OK** | `UpdateStatus(ctx, id, getTenantID(r), status)` — tenant_id passed (lines 126, 164) |
+| unified_risk_engine GetLatestScore | **OK** | Uses `tenantIDFromHeader(r)` (line 293) |
+| Audit event by ID `GET /api/v1/audit/events/{id}` | **OK** | Fail-closed tenant check, 404 on mismatch (http.go:470-505) |
+| Audit access reviews | **OK** | Uses `accessReviewTenantID(r)` from header, passed to repo (wiring_handlers.go:42,94) |
+| API keys CRUD | **OK** | All ops use `tc.TenantID` from context (api_keys_handler.go:51-60) |
+| Branding GET/PUT | **OK** | Fail-closed tenant match check, platform:admin override (branding.go:40-72) |
+| Device posture GET/PUT | **OK** | Uses `tc.TenantID` from context (device_posture.go:244) |
+| Session revoke (batch + user) | **OK** | Admin scope + tenant match check (session_revoke_handler.go:53-65, session_revoke_user_handler.go:49-67) |
+| Credential vault GET/POST | **OK** | user_id ownership check + admin scope fallback (credential_vault_handler.go:95-113, 156-173) |
+
+### Round 7 Summary
+
+- **New P1:** 1 (P1-7A risk policy cross-tenant BOLA — read, write, evaluate)
+- **Verified OK:** ITDR detection, unified risk engine scores, audit events, access reviews, API keys, branding, device posture, session revoke, credential vault
+
+---
+
+## Round 7 — Authentication Bypass (2026-08-04)
+
+### Verified Fixes (Previously Reported)
+
+| ID | Finding | Status |
+|---|---|---|
+| R226-P0 | `ExtractJWTClaims` fail-closed — no unsigned header parsing | ✅ FIXED. Only reads `claimsKey` from context (set by JWTAuth after signature verification). Returns empty `JWTCClaims{}` when no verified claims. |
+| R226-P0 | Public path + forged JWT header injection | ✅ FIXED. `JWTAuth(required=false)` strips `Authorization` header and writes `JWTCClaims{}` to context on invalid/missing tokens (lines 699-764 of middleware.go). |
+| HMAC-binding | Internal auth HMAC payload missing method+path | ✅ FIXED. Both `SignInternalRequest` (line 156) and `InternalAuth` verify (line 127) use `service\|ts\|reqID\|method\|path`. Old `ComputeSignature` (unbound) remains but has **zero callers** — dead code. |
+| MCP fail-closed | `ParseUnverified` → RS256 without JWKS silently accepted | ✅ FIXED. Line 130-134: RS256 token with no `JWKS_URL` → 401 fail-closed. |
+
+### P1-7: MCP Default Admin Scope Escalation (NEW)
+
+**Severity:** P1 (High)
+**CVSS:** 8.1 (AV:N/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:L)
+
+**Location:** `services/mcp/internal/server/mcp_server.go`
+
+**Root cause:** `parseScopesFromEnv()` returns `["admin"]` as the hardcoded default when `MCP_SCOPES` env is unset (line 418):
+
+```go
+func parseScopesFromEnv() []string {
+    s := os.Getenv("MCP_SCOPES")
+    if s == "" {
+        return []string{"admin"}  // ← any JWT without scope claim gets admin
+    }
+```
+
+This default is used as a **fallback** in `scopesFromContext()` (line 260):
+
+```go
+func (s *Server) scopesFromContext(ctx context.Context) []string {
+    var all []string
+    if scopeStr, ok := ctx.Value(ctxKeyScopes{}).(string); ok && scopeStr != "" {
+        all = append(all, strings.Fields(scopeStr)...)
+    }
+    if perms, ok := ctx.Value(ctxKeyPerms{}).([]string); ok {
+        all = append(all, perms...)
+    }
+    if len(all) > 0 {
+        return all
+    }
+    return s.scopes  // ← falls back to ["admin"]
+}
+```
+
+**Attack scenario:**
+1. Attacker obtains any valid JWT (e.g., low-privilege user token from `/oauth/token` with `client_credentials` grant, or any user login)
+2. Token has empty `scope` claim (common for M2M tokens or users without explicit scopes)
+3. Attacker sends `Authorization: Bearer <token>` to `/mcp` endpoint
+4. MCP `jwtAuth` validates the token signature (passes)
+5. `scopesFromContext()` finds no scope/permissions in token → falls back to `["admin"]`
+6. Attacker gets admin-level access to all MCP tools
+
+**Impact:** Any authenticated user can invoke all MCP admin tools (user management, role assignment, policy changes, etc.) regardless of their actual privileges.
+
+**Exploitability:** High — only requires any valid JWT, which can be obtained via standard OAuth flows.
+
+### P2-7a: MCP JWT Missing Issuer/Audience/Algorithm Validation (NEW)
+
+**Severity:** P2 (Medium)
+**Location:** `services/mcp/internal/server/mcp_server.go`, line 136
+
+`jwt.ParseWithClaims` is called without `WithIssuer`, `WithAudience`, or `WithValidMethods` parser options:
+
+```go
+_, err = jwt.ParseWithClaims(tokenStr, claims, func(t *jwt.Token) (any, error) {
+    if _, ok := t.Method.(*jwt.SigningMethodHMAC); ok {
+        return s.jwtSecret, nil
+    }
+    // ...
+})
+```
+
+While the keyfunc manually rejects non-HMAC/non-RSA algorithms, the lack of:
+- `WithValidMethods` — no explicit algorithm whitelist (relies on keyfunc type assertion)
+- `WithIssuer` — tokens from any issuer are accepted if signed with the same secret
+- `WithAudience` — tokens intended for any audience are accepted
+
+This contrasts with the gateway `JWTAuth` which properly uses `jwt.WithValidMethods(crypto.SupportedAlgs())`.
+
+### Notes
+
+- **JTI blocklist in introspection:** ✅ `IntrospectToken` calls `IsTokenRevoked` which checks Redis cache → in-memory → DB `sessions` table by JTI. Comprehensive.
+- **publicPaths `/oauth/` prefix:** Broad but individual OAuth endpoints (`/oauth/introspect`, `/oauth/revoke`) enforce their own client authentication per RFC 7009/7662. No exposure found.
+- **Revocation endpoint:** RFC 7009 compliant. Public clients can revoke via proof-of-possession (active token in body). `ValidateTokenOwnership` prevents cross-client revocation.
+
+---
+
+## Round 7b — OAuth/OIDC Flow Attack (2026-08-04)
+
+### Verified Fixes (Previously Reported)
+
+| ID | Finding | Status |
+|---|---|---|
+| P2-3 | state CSRF bypass — `if stateParam != ""` allowed omitting state | ✅ FIXED. `ValidateState` now returns false for empty state (oauth_service.go:1305-1307). `CreateAuthorizationCode` requires non-empty state (grant_authorization_code.go:41-43). Token endpoint calls `ValidateState` unconditionally for authorization_code grant (server.go:782). |
+| Token leakage | Referrer/cache headers on authorize redirect | ✅ FIXED. `Cache-Control: no-store`, `Pragma: no-cache`, `Referrer-Policy: no-referrer` set on 302 redirect (server.go:664-666). |
+| Token exchange | Legacy `ExchangeToken` bypasses client auth | ✅ SAFE. HTTP token endpoint routes to `ExchangeTokenRFC8693` which enforces client auth (server.go:884). Legacy `ExchangeToken` delegates to `exchangeTokenInternal` but is only used by internal callers/tests. |
+| RFC 8693 cross-tenant | Subject token tenant laundering | ✅ FIXED. Cross-tenant guard checks `subjectClaims["tenant_id"]` vs `req.TenantID` (oauth_service.go:920-922). Subject token signature verified via `parseAndValidateJWT` with supported-method check (oauth_service.go:1063-1068). |
+| Token in logs | No access_token/refresh_token values logged | ✅ CLEAN. All slog/log.Printf in oauth server log keys, errors, client IDs — never token values. |
+
+### P3-7b-1: State Parameter Not Bound to User Session (Hardening Gap)
+
+**Severity:** P3 (Low)
+**Location:** `services/oauth/internal/service/grant_authorization_code.go:109`, `oauth_service.go:1308`
+
+State is stored keyed as `oauth:state:{clientID}:{state}` — no binding to user session, IP, User-Agent, or session ID. This was previously flagged as P2-4.
+
+**Assessment:** Not directly exploitable given:
+- State is cryptographically random (32 bytes)
+- One-time-use (GetDel or Delete on validation)
+- 10-minute TTL
+- ClientID-bound
+
+The missing session binding means an attacker who intercepts both a code and its state (e.g., via a referer leak or log) could exchange them from a different IP/session. With the new `Referrer-Policy: no-referrer` and `Cache-Control: no-store` headers, the intercept surface is minimized. Downgraded from P2 to P3.
+
+### P3-7b-2: PKCE Not Mandatory for Confidential Clients (OAuth 2.1 Deviation)
+
+**Severity:** P3 (Low)
+**Location:** `grant_authorization_code.go:52-57`, `server.go:517`
+
+PKCE enforcement at code creation:
+```go
+if client.IsPublic() && req.CodeChallenge == "" {
+    return "", errors.InvalidArgument("code_challenge is required for public clients")
+}
+if client.RequirePKCE && req.CodeChallenge == "" {
+    return "", errors.InvalidArgument("code_challenge is required for this client")
+}
+```
+
+Confidential clients without the `RequirePKCE` flag can skip PKCE entirely. OAuth 2.1 (draft §7.2) mandates PKCE for ALL clients. The authorize handler (server.go:517) only enforces PKCE for public clients or when `cfg.RequirePKCE` (global config) is true.
+
+**Assessment:** Low risk for confidential clients because intercepted codes also require `client_secret` at the token endpoint. However, this deviates from OAuth 2.1 best practice and weakens defense-in-depth. If `cfg.RequirePKCE` is disabled (default), confidential clients have no PKCE protection.
+
+### P3-7b-3: filterSafeScopes Inconsistency Between Admin API and DCR Paths
+
+**Severity:** P3 (Low)
+**Location:** `oauth_service.go:1508-1526` vs `dcr.go:64-79`
+
+The admin API path (`CreateClient`/`UpdateClient`) uses `filterSafeScopes` which blocks:
+- `admin` (exact match)
+- `platform:*` (prefix with colon)
+- `tenant:*` (prefix with colon)
+
+The DCR path uses inline filtering that blocks:
+- `admin*`, `platform*`, `system*`, `tenant*` (prefix without colon)
+
+**Inconsistencies:**
+1. DCR blocks `system*` scopes; admin API does NOT — a tenant admin via the management API could register a client with `system:admin` scope
+2. DCR uses `HasPrefix("admin")` (no colon) which also blocks `administrator`; admin API uses exact `== "admin"`
+3. DCR allows non-OIDC scopes by default; admin API also allows them
+
+**Assessment:** The gateway permission layer uses role keys from the DB, not OAuth scopes, for authorization. So `system:admin` in client scopes would appear in the JWT `scope` claim but the gateway checks permissions/roles separately. Still, the inconsistency creates a maintenance risk and could become exploitable if future code conflates OAuth scopes with RBAC permissions.
+
+### Summary
+
+No P0/P1 findings in this round. The previously reported P2-3 (state CSRF bypass) is confirmed fixed. The OAuth/OIDC flow has strong defenses: mandatory state, one-time-use codes, PKCE for public clients, cross-tenant token exchange guard, redirect_uri exact match, and no token leakage in logs. Remaining items are P3 hardening recommendations.
+
+---
+
+## Attack Surface #4: Identity Federation (Round 7 — 2026-08-04)
+
+### Scope
+
+SAML XSW/relay, Social login account takeover, SCIM injection, WebAuthn passwordless, LDAP search filter injection, Passkey cross-tenant.
+
+### 1. SAML XSW Protection — PASS
+
+**Files reviewed:**
+- `pkg/saml/signed_assertion.go` — `VerifySignedAssertion` (line 386)
+- `pkg/saml/assertion.go` — `ExtractAssertionFromResponse` (line 219)
+- `services/auth/internal/server/saml_handler.go` — `handleSAMLACS` (line 79)
+
+**Defense layers verified:**
+
+1. **Assertion extraction** (assertion.go:219-237): `ExtractAssertionFromResponse` parses the `<samlp:Response>` envelope, validates Response status is Success, then extracts only the first `<Assertion>` element's raw XML. The reconstructed assertion XML is passed to `VerifySignedAssertion`.
+
+2. **XSW signature placement check** (signed_assertion.go:325-354): `validateSignaturePlacement` walks the XML token stream and verifies the `<Signature>` element is a **direct child** of `<Assertion>` (depth == assertionDepth+1). This blocks all standard XSW variants:
+   - XSW1 (signature in copied assertion inside Object) — rejected: Signature depth != assertionDepth+1
+   - XSW2 (signature moved to wrapper element) — rejected: depth check fails
+   - XSW3/XSW4/XSW5/XSW6/XSW7/XSW8 — all rejected by the placement constraint
+
+3. **Digest verification** (signed_assertion.go:276-287): `verifyDigest` strips the enveloped Signature element, computes the hash, and compares against `DigestValue` in constant time. This binds the signature cryptographically to the assertion content.
+
+4. **Reference URI check** (signed_assertion.go:412-415): The signature's `Reference.URI` must match `#` + assertion ID.
+
+5. **Cryptographic verification** (signed_assertion.go:291-318): RSA PKCS#1 v1.5 and ECDSA verification over `SignedInfo` bytes.
+
+6. **Replay protection** (saml_handler.go:161-179): Redis SETNX with 15-minute TTL on assertion ID. **Fail-closed** if Redis unavailable (line 173-178).
+
+7. **InResponseTo validation** (saml_handler.go:148-156): Rejects any non-empty InResponseTo since no SP-initiated flow exists.
+
+8. **Conditions validation** (saml_handler.go:137): `ValidateConditionsWithAudience` validates time window, audience restriction, and subject confirmation bearer method.
+
+**Assessment:** Comprehensive multi-layer XSW defense. No bypass identified.
+
+### 2. SAML RelayState — PASS (with P3 observation)
+
+**ACS endpoint** (saml_handler.go:92-95): RelayState validated — must start with `/`, must NOT start with `//` (protocol-relative). Non-conforming values reset to `/`.
+
+**SSO endpoint** (saml_handler.go:64-76): RelayState from query params is concatenated into login URL without URL-encoding:
+```go
+loginURL := "/login?saml=true&relay_state=" + relayState
+```
+This is a **P3 parameter injection** issue — an attacker could inject extra query parameters into the login URL redirect. However:
+- The redirect target is always `/login` on the same origin (not an open redirect)
+- Go's `http.Redirect` sanitizes header values (CRLF injection blocked)
+- The login page ignores unknown parameters
+- Impact: negligible (cosmetic parameter pollution only)
+
+### 3. Social Login Open Redirect — PASS
+
+**File:** `services/auth/internal/server/social_handler.go`
+
+**`isAllowedRedirectURI`** (lines 48-97):
+- Parses URL and requires non-empty Host
+- Always allows localhost/127.0.0.1 for development
+- Requires HTTPS scheme for non-localhost
+- Builds allowlist from `CONSOLE_BASE_URL` + `GGID_ALLOWED_REDIRECT_DOMAINS`
+- **Fail-closed** (line 88-94): empty allowlist only permits localhost — never falls back to hardcoded domain
+- Allowlist match uses exact host comparison (no subdomain wildcard bypass)
+
+**CSRF state protection** (lines 99-122): 5-minute TTL, one-time use via `Delete` after `Get`.
+
+**Account takeover prevention** (lines 317-338): `jitProvisionUser` only merges by email when `info.EmailVerified == true`. Unverified emails always create new accounts.
+
+**Assessment:** Well-defended. No bypass identified.
+
+### 4. SCIM Injection — PASS
+
+**File:** `services/identity/internal/scim/handler.go`
+
+**`parseSCIMFilter`** (lines 865-881): Extracts only the quoted value from `attr eq "value"` expressions. Values are passed to `ListUsers` as the `Search` parameter (a parameterized query), not interpolated into SQL.
+
+**PATCH handler** (lines 640-705): The `path` field is matched against a fixed allowlist (`displayname`, `name.givenname`, `active`). No dynamic path processing or SQL interpolation.
+
+**Bulk operations** (bulk.go:48,66-69): Limited to `maxBulkOperations = 1000`. Exceeding returns 413 with `ScimTypeTooMany`.
+
+**Assessment:** No injection vector identified.
+
+### 5. WebAuthn Passwordless — PASS
+
+**File:** `services/auth/internal/server/webauthn_passwordless.go`
+
+Lines 152-157: Returns HTTP 501 "not yet implemented" — **fail-closed**. The previous auth bypass (returning JWT without assertion verification) is eliminated.
+
+### 6. LDAP Search Filter — PASS
+
+**File:** `pkg/authprovider/ldap.go`
+
+Line 160: `filter := fmt.Sprintf(p.cfg.UserFilter, ldap.EscapeFilter(username))`
+
+`ldap.EscapeFilter` from `go-ldap/ldap/v3` is applied to the username before interpolation into the filter template. This escapes all RFC 4515 special characters (`*`, `(`, `)`, `\`, `\x00`).
+
+**Assessment:** Properly escaped. No LDAP injection vector.
+
+### 7. Passkey Cross-Tenant — PASS
+
+**File:** `services/auth/internal/webauthn/handler.go`
+
+**Registration** (line 704-720): Credential stored with `TenantID: tenantID` from the request context.
+
+**Authentication** (lines 882-893): `finishAuthentication` looks up credential by `GetCredentialByID(ctx, tenantID, parsedResponse.RawID)` — tenant-scoped lookup. Cross-tenant check at line 888: `if cred.TenantID != uuid.Nil && cred.TenantID != tenantID → 403`.
+
+**Challenge atomicity** (lines 864-871, 664-670): Both auth and registration sessions use `getAndDelete` — atomic one-time consumption preventing replay.
+
+**Clone detection** (lines 920-931): Sign count monotonicity check prevents cloned authenticator attacks.
+
+**Credential management**: `deleteCredential` (line 1067) and `listCredentials` (line 1013) both scope by tenantID.
+
+**Passkey revoke** (passkey_handler.go:121-123): `UPDATE auth_passkey_credentials SET revoked = true WHERE id = $1 AND tenant_id = $2` — tenant-scoped.
+
+**Assessment:** Comprehensive tenant binding. No cross-tenant bypass identified.
+
+### Round 7 Summary
+
+**No P0/P1 findings.** All six identity federation attack surfaces have strong, multi-layered defenses:
+
+| Area | Status | Key Defenses |
+|------|--------|-------------|
+| SAML XSW | PASS | Signature placement validation, digest verification, assertion-level extraction |
+| Social redirect | PASS | Allowlist with fail-closed, email-verified merge gate |
+| SCIM injection | PASS | Parameterized queries, fixed PATCH path allowlist |
+| WebAuthn passwordless | PASS | 501 fail-closed |
+| LDAP injection | PASS | `ldap.EscapeFilter` on all user input |
+| Passkey cross-tenant | PASS | Tenant-scoped credential storage and lookup, atomic challenge consumption |
+
+One P3 observation: SAML SSO endpoint does not URL-encode RelayState before concatenating into login URL (parameter injection, no security impact).
+
+---
+
+## Attack Surface #5: Data Leakage & PII — Round 7 Review
+
+### Review Date: 2026-08-04
+
+### 1. NATS Consumer PII Bypass (P1-6B Fix Verification) — PASS
+
+**File:** `services/audit/internal/consumer/nats_consumer.go`
+
+Line 169-170: `service.ObfuscateEventPII(&event)` is called BEFORE `c.repo.Insert(ctx, &event)` (line 172). The function is properly exported as `ObfuscateEventPII` in `services/audit/internal/service/audit_service.go:131`.
+
+All PII fields (ActorName, ResourceName, IPAddress, Metadata values) are masked before persistence.
+
+**Assessment:** Fully remediated. No bypass.
+
+### 2. client_secret_hash Exposure — PASS
+
+**File:** `services/oauth/internal/domain/models.go:32`
+
+`ClientSecretHash` has `json:"-"` tag — never serialized to JSON.
+
+**HTTP endpoints:**
+- `GET /api/v1/oauth/clients/{id}` (server.go:1831): Serializes `*domain.OAuthClient` via `writeJSON` — `json:"-"` prevents hash exposure.
+- `GET /api/v1/oauth/clients` (server.go:1734): Serializes `[]*domain.OAuthClient` in list response — same `json:"-"` protection.
+
+**gRPC mapper:** `domainToPbClient` (grpc_handler.go:170-191) explicitly omits `ClientSecretHash`. Only fields manually mapped to `oauthv1.OAuthClient`.
+
+**Assessment:** No exposure. Properly protected at all layers.
+
+### 3. Error Message Leaks — PASS (with minor P2 observation)
+
+**`writeInternalError`** (server.go:2756-2759): Properly sanitizes to `"internal server error"` — no `err.Error()` leak.
+
+**gRPC `toGRPCError`** (audit_handler.go:170-184): Returns generic `"internal error"` for non-GGID errors. GGID errors use structured `ge.Message` (user-safe).
+
+**Gateway `error_pages.go`** (lines 23-53): Uses canned messages ("upstream timeout", "upstream unavailable") based on `err.Error()` substring matching, but never passes raw `err.Error()` to client.
+
+**P2 Observation — GraphQL resolver error leak** (`gateway/internal/middleware/graphql.go:108-109`):
+```go
+errors = append(errors, GraphQLError{
+    Message: err.Error(),  // raw error exposed
+})
+```
+`resolveField` returns wrapped errors (`"backend request failed: %w"`) that may contain internal hostnames, ports, or connection details. These are directly serialized into the GraphQL response. Severity: P2 (information disclosure of internal infrastructure to authenticated GraphQL users).
+
+### 4. Audit Log PII Coverage — PASS
+
+All audit event insertion paths are covered:
+
+| Entry Point | PII Masking | Path |
+|-------------|-------------|------|
+| HTTP direct insert | `InsertEvent` → `ObfuscateEventPII` | audit_service.go:103 |
+| NATS consumer | `service.ObfuscateEventPII` | nats_consumer.go:170 |
+| GDPR forget handler | `InsertEvent` → `ObfuscateEventPII` | gdpr_forget_handler.go:92 |
+| gRPC handler (read-only) | N/A (ListEvents/GetEvent only) | audit_handler.go |
+
+No new audit event insertion paths bypass masking.
+
+### 5. API Response Over-Exposure — PASS
+
+OAuth client endpoints return `*domain.OAuthClient` directly, but sensitive fields (`ClientSecretHash`) have `json:"-"` struct tags. No `toJSON`/filter function needed because the tag-based approach is comprehensive.
+
+Agent identity registration (`agent_identity.go:60`): `ClientSecret` also has `json:"-"` tag.
+
+### 6. Secret Rotation Preview — PASS
+
+**File:** `services/oauth/internal/server/secret_rotation_handler.go`
+
+- `SecretStatus` struct (lines 13-20): Uses truncated preview (`"current_secret_preview"`) with format `newSecret[:8] + "****"`.
+- Rotation response (line 88): Returns full `new_secret` once — standard OAuth practice (same as client creation).
+- Status endpoint (line 67): Returns `SecretStatus` with truncated preview only.
+
+**Assessment:** Properly designed. Full secret returned only once during rotation; subsequent status queries show truncated preview.
+
+### Round 7 Data Leakage Summary
+
+**No P0/P1 findings.** All previously identified data leakage vectors have been properly remediated:
+
+| Area | Status | Key Defenses |
+|------|--------|-------------|
+| NATS consumer PII | PASS | `ObfuscateEventPII` called before Insert, function exported |
+| client_secret_hash | PASS | `json:"-"` tag + gRPC mapper omits field |
+| Error message leaks | PASS | `writeInternalError` sanitizes, gRPC uses generic messages |
+| Audit PII coverage | PASS | All 4 entry points (HTTP, NATS, GDPR, gRPC-read) covered |
+| API over-exposure | PASS | Struct tags prevent hash/secret serialization |
+| Secret rotation preview | PASS | Truncated preview for status, full secret only on rotation |
+
+One P2 observation: GraphQL resolver (`graphql.go:109`) exposes raw `err.Error()` which may leak internal infrastructure details to authenticated users.
+
+---
+
+## Round 7 — Injection & Input Validation (Attack Surface #6)
+
+### 1. SOAR Engine SSRF (Dormant) — PASS (P2 latent)
+
+**File:** `services/audit/internal/soar/engine.go:270-303`
+
+**Status:** The `notifySOC` function still uses a plain `&http.Client{Timeout: 10s}` with no SSRF protection (no `ssrfSafeDialContext`). The webhook URL comes from `action.Webhook` (playbook-defined, stored in DB).
+
+**However:** `grep -rn "soar\." services/ --include="*.go"` returns **zero production references**. The SOAR engine is:
+- Not instantiated by any service `main()` or handler
+- Not wired into any HTTP route or gRPC method
+- Not referenced by the audit service or any alerting pipeline
+
+**Assessment:** Dormant code. If activated without adding SSRF protection, this would be a **P1 SSRF** — an admin who can create playbooks could trigger requests to `http://169.254.169.254/...` (cloud metadata) or internal services. Currently not exploitable because the code path is unreachable.
+
+**P2 latent risk** — recommend adding `ssrfSafeDialContext` before activation.
+
+---
+
+### 2. SAML HTML XSS — PASS
+
+**File:** `services/oauth/internal/server/server.go:1606-1609`
+
+All three user-influenced values are HTML-escaped:
+```go
+html := fmt.Sprintf(`...action="%s"...value="%s"...value="%s"...`,
+    html.EscapeString(spACSURL),    // ACS URL from SAML request
+    html.EscapeString(encoded),     // base64 SAML response
+    html.EscapeString(relayState))  // RelayState from SAML request
+```
+
+**Assessment:** Properly defended. `html.EscapeString` escapes `"`, `'`, `<`, `>`, `&` — sufficient to prevent attribute breakout and script injection.
+
+---
+
+### 3. SQL Injection (fmt.Sprintf SQL construction) — PASS
+
+**Findings from `grep -rn "fmt.Sprintf.*(SELECT|INSERT|UPDATE|DELETE)" services/`:**
+
+All `fmt.Sprintf` SQL constructions use **static column/table constants**, not user input:
+
+| File | Pattern | Safe? |
+|------|---------|-------|
+| `oauth/internal/consent/cascade.go:190` | `DELETE FROM %s` with hardcoded `piiTables` slice | YES — table names are compile-time constants |
+| `oauth/internal/repository/pg_repo.go:145` | `SELECT %s` with `clientColumns` constant | YES |
+| `audit/internal/server/memory_map_repo.go:119` | `DELETE FROM %s` with hardcoded table names | YES |
+| `auth/internal/repository/mfa_repo.go:120,142` | `SELECT %s` with `mfaColumns` constant | YES |
+| `identity/internal/server/policy_map_repo.go:117` | `SELECT ... FROM %s` with hardcoded table var | YES |
+| `pkg/db/backup.go:84,102,158` | Table names from internal backup metadata | YES — not user-controlled |
+
+**ORDER BY dynamic fields — all whitelisted:**
+
+- `audit/internal/repository/audit_repo.go:197`: `switch filter.OrderBy { case "action": ... case "actor_name": ... }` — whitelist, default `created_at`
+- `identity/internal/repository/pg_repo.go:341`: `switch filter.SortBy { case "username", "email", "updated_at": ... }` — whitelist, default `created_at`
+
+No user input reaches SQL structure directly.
+
+---
+
+### 4. LIKE Wildcard Escaping — PASS
+
+All LIKE/ILIKE queries with user input properly escape wildcards:
+
+| File | Query | Escaped? |
+|------|-------|----------|
+| `identity/repository/pg_repo.go:320` | `username ILIKE $N OR email ILIKE $N` | YES — `escapeLikeWildcards(filter.Search)` at line 321 |
+| `identity/repository/group_repo.go:125` | `display_name ILIKE $N` | YES — inline `strings.NewReplacer` escape at line 127 |
+| `audit/repository/audit_repo.go:163` | `action LIKE $N` | YES — uses `escapeLikeWildcards()` |
+
+Static LIKE queries (`ccm_engine.go:238`, `security_posture_handler.go:128`) use hardcoded patterns, not user input.
+
+---
+
+### 5. Command Injection — PASS
+
+Only one `exec.Command` in services:
+- `ggid-cli/internal/commands/browser.go:26`: `exec.Command(cmd, args...)` — opens browser for OAuth flow. Uses argument array, not shell string. `cmd` is platform-resolved (`open`/`xdg-open`/`start`), args are URL strings. **Not exploitable** — no shell invocation, and this is a CLI tool, not a server.
+
+`pkg/crypto/key_provider_pkcs11_test.go:62`: Test-only `softhsm2-util` invocation with hardcoded args.
+
+---
+
+### 6. SSRF Coverage — MOSTLY PASS (2 P2 gaps)
+
+**Properly protected outbound HTTP:**
+- Webhooks: `gateway/internal/webhooks/ssrf.go` — `NewSSRFSafeDeliverer` with IP validation
+- SCIM outbound: `identity/internal/scim/outbound/client.go:95` — `ssrfSafeDialContext`
+- DID:web resolver: `identity/internal/service/did_resolver.go:105` — IP validation
+- SIEM forwarder: `audit/internal/service/siem_forwarder.go:88` — `ssrfSafeDialContext`
+- Notifications: `pkg/notification/dispatcher.go:99` — `ssrfSafeDialContext`
+- Alert webhook handler: `audit/internal/server/alert_webhook_handler.go:170` — IP validation
+
+**P2 Gap 1 — JWKS URI fetch without SSRF protection:**
+- `oauth/internal/service/oauth_service.go:1829`: `jwksClient := &http.Client{Timeout: 10s}` fetches from DB-stored `jwks_uri` with no SSRF protection.
+- The `jwks_uri` is set during client registration. While the server code at line 2652 only does string replacement on issuer-based URIs, the `oauth_clients` table has a `jwks_uri` column that could contain arbitrary URLs.
+- **Exploitability:** Requires admin access to register an OAuth client with `jwks_uri = "http://169.254.169.254/..."`, then trigger JWT-bearer grant flow (`grant_jwt_bearer.go:51` calls `fetchExternalIssuerKey`). **P2** — requires admin privileges, but could leak cloud metadata.
+
+**P2 Gap 2 — Audit alerting WebhookNotifier without SSRF protection:**
+- `audit/internal/alerting/alert.go:87`: `w.client = &http.Client{Timeout: 10s}` sends to `w.URL` (from `ALERT_WEBHOOK_URL` env) without SSRF protection.
+- **Exploitability:** Low — URL comes from environment variable, not user input. But if an attacker can influence env config (e.g., via config injection), this becomes an SSRF vector.
+
+---
+
+### 7. GraphQL err.Error() Leak — PASS (P2, authenticated only)
+
+**File:** `services/gateway/internal/middleware/graphql.go:108-111`
+
+```go
+errors = append(errors, GraphQLError{
+    Message: err.Error(),   // raw error exposed
+    Path:    []string{field.Name},
+})
+```
+
+**Mitigating factors:**
+1. `/graphql` is **NOT** in `publicPaths` — JWT authentication is required (`jwtRequired = true` at router.go:743)
+2. The error comes from backend HTTP calls (`resolveField`), which can leak internal hostnames/ports from connection errors
+
+**Assessment:** P2 — authenticated information leak. An authenticated user querying a misconfigured backend type could see errors like `"backend request failed: Get http://identity-service:8081/api/v1/users: dial tcp: lookup identity-service: no such host"`, revealing internal service names and ports. Not exploitable without authentication.
+
+---
+
+### Round 7 Injection & Input Validation Summary
+
+**No P0/P1 findings.** All critical injection vectors are properly defended:
+
+| Area | Status | Severity | Notes |
+|------|--------|----------|-------|
+| SOAR SSRF | Latent | P2 | Dormant code, zero production refs |
+| SAML XSS | PASS | — | All 3 values HTML-escaped |
+| SQL Injection (fmt.Sprintf) | PASS | — | All use static constants, not user input |
+| ORDER BY injection | PASS | — | Whitelisted in both audit + identity repos |
+| LIKE wildcard escape | PASS | — | Consistently applied |
+| Command injection | PASS | — | Only CLI browser open, arg array |
+| SSRF — webhooks/SCIM/DID/SIEM | PASS | — | ssrfSafeDialContext applied |
+| SSRF — JWKS URI fetch | GAP | P2 | No SSRF protection, admin-gated |
+| SSRF — alert webhook | GAP | P2 | Env-config URL, low exploitability |
+| GraphQL err.Error() | PASS | P2 | Authenticated-only info leak |
+
+
+---
+
+### Round 7B: Session & Token Lifecycle Audit
+
+**Scope:** Token revocation, session fixation, refresh token family bypass, DPoP binding, concurrent session limits, token lifetime, internal auth HMAC.
+
+---
+
+#### 1. RFC 7009 Cross-Service Revocation (P1-7D) — PASS
+
+**File:** `services/oauth/internal/service/token_revocation.go:18-59`
+
+RevokeToken properly handles cross-service revocation:
+- Deletes `ggid:rt:{hash}` Redis key (line 48)
+- Updates `refresh_tokens` table `SET revoked = true` (lines 53-55)
+- Updates `oidc_refresh_tokens` via `RevokeRefreshToken` (line 35)
+- Blacklists hash in Redis `oauth:revoked:{hash}` with 24h TTL (line 43)
+
+Access token revocation cascades to refresh tokens scoped by tenant+user+client (lines 90-110), and marks `sessions.revoked_at` by JTI (lines 123-125).
+
+**Verdict:** P1-7D fix verified. Cross-service revocation is complete.
+
+---
+
+#### 2. Refresh Token Rotation — PASS (with P2 finding on lifetime)
+
+**File:** `services/oauth/internal/service/grant_refresh.go:20-212`
+
+Security measures confirmed:
+- **Atomic conditional UPDATE:** `ConsumeRefreshToken` uses `WHERE used = false AND revoked = false` (`pg_repo.go:465`) — TOCTOU-safe.
+- **Client ID binding:** Checked at line 68: `record.ClientID != client.ID` rejects cross-client token use.
+- **Reuse detection:** Used/revoked token triggers family-wide revocation (lines 74-80, 120-128).
+- **Family tracking:** `MarkTheft` + `revokeFamily` on reuse (lines 76-78, 123-127).
+- **User status check:** Inactive/suspended users cannot refresh (lines 94-106).
+
+**P2 Finding — No absolute max lifetime on refresh tokens:**
+- Every rotation issues a new token with `ExpiresAt: time.Now().Add(30 * 24 * time.Hour)` (line 176).
+- There is no `original_issued_at` or `absolute_max_lifetime` tracking.
+- **Impact:** A stolen refresh token can be kept alive indefinitely through continuous rotation, as each rotation resets the 30-day clock. RFC 6749 §10.4 and OAuth 2.1 recommend enforcing an absolute maximum lifetime.
+- **Exploitability:** Attacker who steals a refresh token can maintain persistent access by rotating before expiry, forever (or until the password is changed / admin revokes).
+
+---
+
+#### 3. Session Fixation — PASS
+
+**File:** `services/auth/internal/service/session_service.go:38-71`
+
+- Each login creates a new session with `uuid.New()` (line 46) and a fresh random token (line 39).
+- No pre-existing session ID is reused.
+- Logout properly revokes the session: `auth_service.go:190-206` revokes both the refresh token and the server-side session.
+
+**Verdict:** No session fixation vulnerability.
+
+---
+
+#### 4. DPoP Enforcement — FAIL (P2)
+
+**Finding: Gateway does NOT enforce DPoP binding for DPoP-bound tokens.**
+
+- OAuth token endpoint correctly binds tokens to DPoP keys: `server.go:981-986` sets `resp.TokenType = "DPoP"` and calls `BindTokenToDPoP`.
+- `dpop_token_bind.go` provides `CheckTokenDPoPBinding()` to look up bound JKT.
+- **BUT:** The gateway (`services/gateway/internal/middleware/`) has ZERO references to `CheckTokenDPoPBinding`, `DPoP`, or `cnf`/`jkt` outside of OpenAPI documentation.
+- The gateway accepts all tokens as `Bearer` regardless of `token_type=DPoP`.
+
+**Impact:** A DPoP-bound token stolen from the wire can be used as a regular Bearer token at the gateway without presenting the DPoP private key proof. This completely defeats the purpose of sender-constrained tokens (RFC 9449). An attacker who intercepts a DPoP token can use it directly without the DPoP proof JWT.
+
+**Severity:** P2 — requires token theft (wire interception, log exposure, etc.), but completely negates DPoP's sender-constraint guarantee.
+
+---
+
+#### 5. Concurrent Session Limit — PARTIAL (P2)
+
+**Finding: Admin-configured session limits are not enforced during login.**
+
+Two parallel systems exist:
+1. **Hardcoded default:** `session_service.go:19` defines `maxDefaultSessions = 10`, enforced at session creation (line 65).
+2. **Admin configuration:** `session_limit_handler.go` allows admins to set per-user `max_sessions` with strategies (terminate_oldest/deny_new), stored in PG and in-memory map.
+
+**Gap:** `SessionService.Create()` always uses the hardcoded `maxDefaultSessions=10`. It does NOT consult the admin-configured limits from `session_limit_handler.go` or the `auth_session_limits_json` table. The admin API at `/api/v1/auth/sessions/limit` stores limits that are never read during login.
+
+**Impact:** An admin who sets `max_sessions=2` for a user will see the configuration accepted, but the user can still maintain 10 concurrent sessions. The limit is cosmetic. This is a defense-in-depth failure.
+
+**Severity:** P2 — security control exists but is not wired into the enforcement path.
+
+---
+
+#### 6. Token Lifecycle Validation — PASS (with P2 on refresh lifetime above)
+
+- JWT validation in gateway uses signature-verified claims only (`jwt_claims.go:34-44`), fail-closed on unsigned tokens.
+- `exp`/`nbf`/`iat` validation handled by `golang-jwt/v5` parser defaults.
+- JTI blocklist (`pkg/auth/jti_blocklist.go`) fails closed on Redis errors (line 69: returns `true` on Redis error).
+- CAE middleware (`middleware.go:866-881`) checks JTI against blocklist after JWT auth.
+
+---
+
+#### 7. Internal Auth HMAC — PASS
+
+**File:** `pkg/middleware/internal_auth.go`
+
+- HMAC payload binds to `service|timestamp|requestID|method|path` (line 127) — method+path binding intact.
+- `SignInternalRequest` uses the same bound payload (line 156).
+- `ComputeSignature` (unbound, line 167) is defined but unused — no callers found. Dead code, not a vulnerability.
+- Replay window: 120 seconds (line 27).
+- Secret strength validation: fails closed in production (line 45), rejects weak secrets (line 49).
+
+**Verdict:** No regression. Method+path binding is consistent between signing and verification.
+
+---
+
+### Round 7B Session & Token Lifecycle Summary
+
+| Area | Status | Severity | Notes |
+|------|--------|----------|-------|
+| Cross-service revocation (P1-7D) | PASS | — | Properly deletes Redis key + updates both DB tables |
+| Refresh token rotation atomicity | PASS | — | TOCTOU-safe conditional UPDATE |
+| Refresh token client binding | PASS | — | Cross-client use rejected |
+| Refresh token reuse detection | PASS | — | Family-wide revocation on reuse |
+| Refresh token max lifetime | FAIL | P2 | No absolute lifetime; rotation resets 30-day clock indefinitely |
+| Session fixation | PASS | — | New session ID on login, revoked on logout |
+| DPoP gateway enforcement | FAIL | P2 | DPoP-bound tokens accepted as Bearer at gateway |
+| Concurrent session limit | PARTIAL | P2 | Admin config stored but not enforced during login |
+| JWT exp/nbf/iat validation | PASS | — | Signature-verified, fail-closed |
+| JTI blocklist | PASS | — | Fail-closed on Redis errors |
+| Internal auth HMAC | PASS | — | Method+path binding intact |
+
+**New findings: 3 × P2 (no P0/P1).**
+
+---
+
+### Round 7C — Infrastructure & Supply Chain (Attack Surface #8, 7th Pass)
+
+**Scope:** K8s Pod Security, NetworkPolicy, Docker images, secret management, CI/CD pipeline — focused on verifying prior fixes and finding new gaps.
+
+#### Prior Finding Verification (6th Pass → 7th Pass)
+
+| ID | Finding | Prior Status | 7th Pass Status | Details |
+|----|---------|--------------|-----------------|---------|
+| P1-8E | PostgreSQL superuser in all-in-one | P1 (open) | **FIXED** | `deploy/all-in-one/postgres-start.sh:16` now creates user with `CREATEDB` (not `superuser`): `CREATE USER ggid WITH PASSWORD 'ggid' CREATEDB;`. Commit 487be0617 fix verified effective. CREATEDB grants database creation only — no superuser privileges, no `COPY ... TO PROGRAM` RCE, no `pg_read_file()`. |
+| P2-8F | ERP manifests lack securityContext | P2 (open) | **MOSTLY FIXED** | 5 of 6 ERP manifests now have `securityContext: runAsNonRoot: true` (erp-go, erp-node, erp-rust, erp-ruby, erp-react). Only `deploy/k8s/erp-ruby-patch.yaml` still has no securityContext. |
+| P2-8G | db-migrate Job / backup CronJob no securityContext | P2 (open) | **STILL OPEN** | `deploy/k8s/db-migrate-job.yaml` and `deploy/k8s/backup-verify-cronjob.yaml` still have zero securityContext — run as root with DB credentials. |
+| P2-8H | MCP initContainer runs as root | P2 (open) | not re-checked | — |
+| P2-8C | .dockerignore empty | P2 (open) | not re-checked | — |
+| P2-8D | Helm default passwords | P2 (open) | **STILL OPEN** | `values.yaml` defaults now use empty strings (`password: ""`, `jwt.secret: ""`) — improvement. But `values-k3s.yaml` hardcodes `password: "ggid-k3s"` and `jwt: {secret: "k3s-jwt-dev-secret"}`. K3s values are dev/test oriented but still represent committed credentials. |
+
+#### New Findings
+
+**P2-8I — Operator Dockerfile runs as root + unverified curl downloads (supply chain)**
+
+- **File:** `deploy/operator/Dockerfile`
+- **Detail:** The operator image has two issues:
+  1. **No USER instruction** — the final `alpine:3.20` image runs as root. The operator manages Helm releases and kubectl operations against the cluster. If the operator pod is compromised, root execution gives full container escape surface.
+  2. **curl downloads without checksum verification:**
+     - `curl -fsSL "https://dl.k8s.io/release/.../kubectl"` — no SHA512 verification
+     - `curl -fsSL "https://get.helm.sh/helm-...tar.gz" | tar xz` — no checksum verification
+  - A compromised CDN or MITM during build can inject a trojaned kubectl/helm binary into the operator image, which then runs with cluster-admin-equivalent privileges.
+- **Exploitability:** Build-time supply chain attack. The operator has cluster-wide CRD permissions. A trojaned binary persists across all deployments managed by the operator.
+- **Severity: P2** — requires build-time compromise (MITM or CDN compromise), but impact is full cluster takeover.
+
+**P2-8J — SoftHSM2 and ggid-cli Dockerfiles run as root**
+
+- **Files:** `deploy/softhsm2/Dockerfile`, `services/ggid-cli/Dockerfile`
+- **Detail:**
+  - `deploy/softhsm2/Dockerfile` — `debian:bookworm-slim` base, no `USER` instruction. SoftHSM2 manages PKCS#11 token key material (RSA keys for signing). Running as root means any process in the container can read/modify the HSM token store at `/tokens/`.
+  - `services/ggid-cli/Dockerfile` — `alpine:3.20` base, no `USER` instruction. The CLI handles authentication tokens and credentials. Running as root is unnecessary for a CLI tool.
+- **Severity: P2** — defense-in-depth failure. SoftHSM2 is typically dev-only, but the CLI image may be used in CI pipelines.
+
+**P2-8K — gosec-action pinned to @master (unpinned GitHub Action)**
+
+- **File:** `.github/workflows/security.yml:32`
+- **Detail:** `uses: securego/gosec-action@master` — pinned to a mutable branch ref, not a commit SHA or version tag. If the `securego/gosec-action` repo is compromised, arbitrary code runs in the CI with `contents: read` permission on every PR.
+- **Also:** `go install golang.org/x/vuln/cmd/govulncheck@latest` and `go install github.com/securego/gosec/v2/cmd/gosec@latest` install tools at `@latest` — not pinned to specific versions. A compromised upstream module runs in CI.
+- **Context:** The release workflow (`release.yml`) uses properly versioned actions (`docker/build-push-action@v6`, `softprops/action-gh-release@v2`), and `ci.yml` uses `golangci-lint-action@v6` with `version: v2.12.2`. Only `security.yml` uses the unpinned `@master`.
+- **Severity: P2** — supply chain risk via mutable action reference.
+
+**P2-8L — NetworkPolicy: backend services have no Egress restriction**
+
+- **File:** `deploy/helm/ggid/templates/networkpolicy.yaml`
+- **Detail:** The gateway NetworkPolicy has both Ingress and Egress rules (`policyTypes: [Ingress, Egress]`). However, the backend service NetworkPolicies (identity, auth, oauth, policy, org, audit) only specify `policyTypes: [Ingress]` — **no Egress policy**. In Kubernetes, if Egress is not in `policyTypes`, all outbound traffic is allowed by default.
+- **Impact:** A compromised backend pod can make arbitrary outbound connections — exfiltrate data to external endpoints, scan internal services, connect to cloud metadata endpoints (169.254.169.254), or pivot to other namespaces. The gateway is properly egress-restricted, but the 6 backend services that handle PII and credentials are not.
+- **Severity: P2** — requires prior pod compromise, but removes network-level containment for the most sensitive services.
+
+#### Additional Verification (Safe)
+
+| Check | Status | Details |
+|-------|--------|---------|
+| PostgreSQL scram-sha-256 auth | **SAFE** | `postgres-start.sh:10-11` uses scram-sha-256 for host and local. No trust/md5. |
+| all-in-one non-root | **SAFE** | `Dockerfile:161` `USER appuser`. |
+| deploy/secrets/ plaintext | **SAFE** | Only `README.md` with documentation. No secret files. |
+| SBOM generation | **PRESENT** | `release.yml:84` `sbom: true` on docker build-push-action. SBOM is generated for release images. |
+| CI secret exposure | **SAFE** | Workflows use `secrets.DOCKER_PASSWORD`, `secrets.GITHUB_TOKEN` via standard action inputs — not echoed in scripts. No `echo $SECRET` patterns. |
+| Helm deployments securityContext | **SAFE** | `deployments.yaml:120-128`: `runAsNonRoot: true, runAsUser: 1001, allowPrivilegeEscalation: false, capabilities.drop: [ALL]`. Note: `readOnlyRootFilesystem: false` — needed for temp files, acceptable. |
+| values-prod.yaml secrets | **SAFE** | `passwordPepper`, `auditHashSecret`, `internalSecret` all empty with documentation to set via `--set`. |
+
+#### Round 7C Infrastructure Summary
+
+| Area | Status | Severity | Notes |
+|------|--------|----------|-------|
+| PostgreSQL superuser (P1-8E) | FIXED | — | CREATEDB, not superuser |
+| ERP manifests securityContext | MOSTLY FIXED | P2 | 5/6 fixed; erp-ruby-patch.yaml still missing |
+| db-migrate/backup securityContext (P2-8G) | STILL OPEN | P2 | Run as root with DB creds |
+| Operator root + curl no checksum (P2-8I) | NEW | P2 | Supply chain risk |
+| SoftHSM2/cli root (P2-8J) | NEW | P2 | No USER instruction |
+| gosec-action @master (P2-8K) | NEW | P2 | Unpinned GitHub Action |
+| Backend NetworkPolicy no egress (P2-8L) | NEW | P2 | Backend pods unrestricted outbound |
+| Helm default passwords (P2-8D) | PARTIAL | P2 | values.yaml fixed; values-k3s.yaml hardcoded |
+| SBOM generation | SAFE | — | release.yml generates SBOM |
+| CI secret handling | SAFE | — | No secret echo patterns |
+
+**New findings: 4 × P2 (no P0/P1). Prior P1-8E superuser issue confirmed FIXED.**
+
+---
+
+## Attack Surface #9: Business Logic & Feature Abuse (Round 7, 2026-08-05)
+
+### Verification of Prior Fixes
+
+| ID | Description | Status |
+|----|-------------|--------|
+| P1-9A | forgot-password SetNX cooldown | VERIFIED FIXED — `AuthService.ForgotPassword` (auth_service.go:308-313) enforces 60s SetNX per email+tenant |
+| P1-9F | /password-reset/initiate SetNX cooldown | VERIFIED FIXED — handlePasswordReset (password_reset_handler.go:50-56) enforces 60s SetNX per IP |
+| P1-9G | Cross-tenant password reset email query | VERIFIED FIXED (primary) — forgotPassword passes tenantID from context. BUT see P2-9J below for secondary handler |
+| — | Reset token atomic consumption (GetDel) | VERIFIED FIXED — ConsumeResetToken (password_service.go:177) uses GetDel |
+| — | Reset session invalidation | VERIFIED FIXED — ResetPassword (auth_service.go:400) calls RevokeAllForUser + clears trusted devices |
+| — | Registration body role/scope/is_admin injection | VERIFIED SAFE — registerRequest struct has only username/email/password/tenant_id; no privilege fields accepted |
+| — | SCIM bulk max operations | VERIFIED SAFE — maxBulkOperations=1000 enforced (bulk.go:66) |
+
+### New Findings
+
+#### P2-9H-confirmed: Impersonation Issues No Audit Event
+
+**Severity:** P2 (Medium)
+**File:** services/auth/internal/server/wiring_handlers.go:24-190
+
+**Root cause:**
+`handleImpersonate` and `handleImpersonateRevoke` never call `publishAuditEvent()` or `audit.NewEvent()`. An admin issuing an impersonation token (which carries the target user's permissions and JWT) leaves no audit trail. This violates compliance requirements (SOC2, ISO 27001) and creates a blind spot for insider threat detection.
+
+**Impact:** An admin can impersonate any user within their tenant (or cross-tenant with platform:admin) with no discoverable record. If combined with token theft, the impersonation is invisible to security monitoring.
+
+**Recommendation:** Emit `audit.NewEvent("user.impersonate", "success", tenantID, impersonatorID)` on token issuance and `"user.impersonate.revoke"` on revocation.
+
+---
+
+#### P2-9I-confirmed: Auth Server clientIP() Trusts Spoofable X-Real-IP / First XFF Entry
+
+**Severity:** P2 (Medium)
+**File:** services/auth/internal/server/http.go:2268-2284
+
+**Root cause:**
+The auth service's `clientIP()` function:
+```go
+func clientIP(r *http.Request) string {
+    if xri := r.Header.Get("X-Real-IP"); xri != "" {
+        return xri                    // ← client-spoofable!
+    }
+    if xff := r.Header.Get("X-Forwarded-For"); xff != "" {
+        parts := strings.SplitN(xff, ",", 2)
+        return strings.TrimSpace(parts[0])  // ← FIRST entry = client-controllable!
+    }
+    ...
+}
+```
+
+This is inconsistent with the gateway's `clientIPFromRequest` (ratelimit.go:132) which correctly takes the LAST XFF entry (added by the trusted proxy). The auth server's function:
+1. **Prefers X-Real-IP** — a header the client can inject if the gateway doesn't strip it.
+2. **Takes the FIRST XFF entry** — the leftmost entry is client-controllable, not proxy-appended.
+
+This IP value feeds into:
+- `CheckBruteForce(ctx, tenantID, ip, username)` — IP-based sliding window (20/min). Bypassable by sending a unique X-Real-IP with each request.
+- `handlePasswordReset` cooldown key (password_reset_handler.go:52) — `clientIP(r)` used for 60s SetNX. Bypassable by rotating X-Real-IP.
+- Login attempt recording (`RecordLoginAttempt`).
+
+**Impact:** An attacker can bypass IP-based rate limiting and password reset cooldowns by injecting a unique `X-Real-IP` header per request. The per-username brute-force counter (10/hr) is not affected since it keys on username, not IP. The per-username account lockout counter (MaxAttempts) is also unaffected.
+
+**Exploitation prerequisite:** The attacker must be able to reach the auth service either directly or with client headers passing through the gateway. If the gateway strips/overwrites X-Real-IP and X-Forwarded-For, the attack is mitigated.
+
+**Recommendation:** Auth server should use the LAST XFF entry (like the gateway does) or rely solely on `X-Tenant-Forwarded-IP` set by the gateway. Strip client-supplied X-Real-IP at the gateway.
+
+---
+
+#### P2-9J: handlePasswordReset Fallback Query Lacks tenant_id Filter
+
+**Severity:** P2 (Medium)
+**File:** services/auth/internal/server/password_reset_handler.go:67-75
+
+**Root cause:**
+When `X-Tenant-ID` header is absent, the `handlePasswordReset` handler queries without tenant_id:
+```go
+if tid := r.Header.Get("X-Tenant-ID"); tid != "" {
+    // tenant-scoped query — OK
+    err = h.pool.QueryRow(r.Context(),
+        `SELECT user_id, tenant_id FROM auth_credentials
+         WHERE email = $1 AND status = 'active' AND tenant_id = $2 LIMIT 1`, req.Email, tid).Scan(...)
+} else {
+    // NO tenant_id filter — returns ANY user with this email
+    err = h.pool.QueryRow(r.Context(),
+        `SELECT user_id, tenant_id FROM auth_credentials
+         WHERE email = $1 AND status = 'active' LIMIT 1`, req.Email).Scan(...)
+}
+```
+
+If the `X-Tenant-ID` header is not set by the gateway (e.g., for public/unauthenticated paths), a password reset token is issued for the first matching user across ALL tenants. An attacker who knows an email address used in multiple tenants can trigger a password reset for a different tenant's user.
+
+**Impact:** Cross-tenant password reset token issuance. The token is tenant-scoped (IssueResetToken stores tenantID+userID), but the wrong tenant's user gets the reset link. Combined with email bombing, this could be used for account takeover in a multi-tenant scenario where the same email exists in different tenants.
+
+**Recommendation:** Always require tenant_id context for password reset initiation. If no tenant context, fail closed.
+
+---
+
+#### P3-9E-confirmed: Account Lockout Bypass via Username/Email Variant
+
+**Severity:** P3 (Low)
+**File:** services/auth/internal/service/auth_service.go:629-679
+
+**Root cause:**
+The lockout counter key is `ggid:lockout:{tenantID}:{lowercase(identifier)}`. The identifier is `req.Username` as submitted by the client. If a user can authenticate using either their username ("alice") or their email ("alice@example.com"), the lockout counters are separate:
+
+- 5 failed attempts with "alice" → lockout for "alice"
+- 5 failed attempts with "alice@example.com" → separate counter, not locked
+
+This effectively doubles the brute-force window from MaxAttempts to MaxAttempts×2 (or ×N for N known identifier variants).
+
+Similarly, `CheckBruteForce` keys per-username: `ggid:bf:user:{tenantID}:{username}`. Different identifiers create separate sliding windows.
+
+**Impact:** An attacker gets 2× the allowed attempts before lockout by alternating between username and email variants. With MaxAttempts=5, they get 10 attempts. The IP-based rate limit (20/min) is the same, but the username lockout is bypassed.
+
+**Recommendation:** Normalize the identifier — resolve email to username before recording/ checking lockout counters. Or use userID as the lockout key (requires a DB lookup, but prevents variant bypass).
+
+---
+
+#### Round 7 Attack Surface #9 Summary
+
+| ID | Severity | Description | Status |
+|----|----------|-------------|--------|
+| P2-9H | P2 | Impersonation emits no audit event | NEW |
+| P2-9I | P2 | Auth server clientIP() trusts spoofable X-Real-IP/first XFF | NEW |
+| P2-9J | P2 | handlePasswordReset fallback query lacks tenant_id filter | NEW |
+| P3-9E | P3 | Account lockout bypass via username/email variant | NEW |
+| P1-9A | P1 | forgot-password cooldown | VERIFIED FIXED |
+| P1-9F | P1 | password-reset/initiate cooldown | VERIFIED FIXED |
+| P1-9G | P1 | Cross-tenant password reset (primary handler) | VERIFIED FIXED |
+| — | — | Reset token atomic consumption | VERIFIED FIXED |
+| — | — | Reset session invalidation | VERIFIED FIXED |
+| — | — | Registration privilege injection | VERIFIED SAFE |
+| — | — | SCIM bulk max operations | VERIFIED SAFE |
+
+**New findings: 3 × P2, 1 × P3 (no P0/P1).**
+
+---
+
+## Round 8 — Attack Surface #0: BOLA/IDOR (Deep Edge Endpoints)
+
+### P1-10A: Attribute Mapping — Cross-Tenant BOLA (Global Data Leak + Unauthorized Delete)
+
+**Severity:** P1 (High)
+**CVSS:** 7.6 (AV:N/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:L)
+
+**Affected endpoints:**
+- `GET /api/v1/policies/attribute-mapping`
+- `POST /api/v1/policies/attribute-mapping`
+- `DELETE /api/v1/policies/attribute-mapping?id={id}`
+
+**File:** `services/policy/internal/server/http.go:1621-1695`
+
+**Root cause:**
+
+The handler validates that `X-Tenant-ID` header exists (line 1622-1626) but then **never uses the tenant_id for data isolation**:
+
+1. **GET** (line 1629-1634): Returns the **entire global `attributeMappings` slice** without filtering by tenant. Any tenant sees all other tenants' mappings.
+
+2. **POST** (line 1636-1673): Creates a new mapping but **never stores the caller's `tenant_id`** in the mapping record. The mapping struct (line 1655-1661) includes `id`, `attribute`, `value`, `role_id`, `action` — but no `tenant_id` field. All mappings are tenant-agnostic in storage, making isolation impossible.
+
+3. **DELETE** (line 1675-1690): Deletes by `id` query param **without verifying the mapping belongs to the caller's tenant**. Any tenant can delete any other tenant's attribute mapping by guessing/enumerating the UUID.
+
+**Exploitation:**
+```
+# Tenant A reads Tenant B's attribute mappings
+GET /api/v1/policies/attribute-mapping
+X-Tenant-ID: <tenant_a_uuid>
+
+# Tenant A deletes Tenant B's attribute mapping
+DELETE /api/v1/policies/attribute-mapping?id=<tenant_b_mapping_uuid>
+X-Tenant-ID: <tenant_a_uuid>
+```
+
+**Impact:** Cross-tenant information disclosure (all attribute-to-role mappings visible), cross-tenant data manipulation (delete any mapping). Attribute mappings control automated role assignment — deleting a competitor tenant's mappings could disrupt their access governance.
+
+---
+
+### P1-10B: Time Conditions — Cross-Tenant BOLA (Global Data Leak)
+
+**Severity:** P1 (High)
+**CVSS:** 6.5 (AV:N/AC:L/PR:L/UI:N/S:U/C:H/I:N/A:N)
+
+**Affected endpoints:**
+- `GET /api/v1/policies/time-conditions`
+- `POST /api/v1/policies/time-conditions`
+
+**File:** `services/policy/internal/server/http.go:1959-2015`
+
+**Root cause:**
+
+Same pattern as P1-10A. The handler validates `X-Tenant-ID` header format (line 1960-1964) but:
+
+1. **GET** (line 1967-1974): Returns **all `timeConditions.rules` globally** without tenant filtering. Any tenant sees every other tenant's time-based access control rules.
+
+2. **POST** (line 1976-2010): Creates a new time condition rule but **never stores `tenant_id`** in the rule record (line 1998-2006). The rule contains `id`, `name`, `time_between`, `days_of_week`, `timezone`, `effect`, `created_at` — no tenant_id.
+
+**Impact:** Cross-tenant information disclosure of security policy configuration. Time conditions reveal when access is restricted (e.g., "business-hours only" reveals operational patterns). An attacker can enumerate all tenants' time-based security postures.
+
+---
+
+### P1-10C: Risk Profile — Cross-Tenant IDOR (No Tenant Check At All)
+
+**Severity:** P1 (High)
+**CVSS:** 6.5 (AV:N/AC:L/PR:L/UI:N/S:U/C:H/I:N/A:N)
+
+**Affected endpoint:**
+- `GET /api/v1/users/{user_id}/risk-profile`
+
+**File:** `services/identity/internal/server/risk_profile_handler.go:37-158`
+
+**Root cause:**
+
+The handler extracts `userID` from the path (line 44-51) and validates it's a UUID (line 56-59), but **performs zero tenant validation**:
+- No `X-Tenant-ID` header check
+- No tenant context extraction
+- No verification that the queried user_id belongs to the caller's tenant
+
+Any authenticated user from Tenant A can query the risk profile of any user in Tenant B by supplying their `user_id`.
+
+**Exploitation:**
+```
+# Tenant A user queries Tenant B user's risk profile
+GET /api/v1/users/<tenant_b_user_uuid>/risk-profile
+# No X-Tenant-ID check — any valid UUID returns data
+```
+
+**Impact:** Cross-tenant risk profile disclosure. Risk profiles reveal security posture details: privileged access status, password staleness, MFA enrollment, dormant status, and credential exposure. This is sensitive security intelligence about users in other tenants.
+
+**Note:** The current implementation returns mostly static/hardcoded risk factors (lines 65-97), but the endpoint still constitutes a BOLA vulnerability — if the implementation is later connected to real data, the tenant isolation gap will leak real risk intelligence.
+
+---
+
+### P2-10D: Time-Based Access Rule POST — Missing Tenant ID Validation
+
+**Severity:** P2 (Medium)
+
+**File:** `services/policy/internal/server/time_based_handler.go:65-67`
+
+**Root cause:**
+
+POST handler uses `callerTenant(r)` which is just `r.Header.Get("X-Tenant-ID")` (http.go:2428) without UUID format validation. If the header is empty or contains garbage, the rule is still created with the invalid/empty value.
+
+In contrast, the GET handler (line 78) uses `requireTenantHeader(w, r)` which validates properly and returns 400 on invalid input.
+
+**Impact:** Data pollution — attacker can create time-based rules with empty or malformed tenant IDs, potentially causing unexpected matching behavior in the evaluation logic.
+
+---
+
+### P2-10E: Membership Graph Handler — No Tenant Check (Static Data)
+
+**Severity:** P2 (Low — information disclosure of mock data)
+
+**File:** `services/identity/internal/server/membership_graph_handler.go:10-59`
+
+**Root cause:** No `X-Tenant-ID` check. Any tenant can query any group's membership graph by group ID. Currently returns hardcoded mock data, so impact is limited, but the endpoint pattern is a BOLA template for when real data is wired.
+
+---
+
+### Previously Fixed — Verified Still Secure
+
+| Item | Commit | Status |
+|------|--------|--------|
+| Risk policy cross-tenant BOLA | d82e18371 | **SECURE** — `callerTenantID` used correctly at line 334-340 |
+| Conditional Access POST/GET/PUT/DELETE | — | **SECURE** — `tenantIDFromHeader()` enforced on all operations, tenant_id verified on PUT/DELETE |
+| Delegation list | — | **SECURE** — `requireTenantHeader()` used, `ListDelegations` scoped by tenant |
+| Policy versions (http.go handlePolicyVersions) | — | **SECURE** — X-Tenant-ID required, context injected |
+
+---
+
+#### Round 8 Attack Surface #0 Summary
+
+| ID | Severity | Description | Status |
+|----|----------|-------------|--------|
+| P1-10A | P1 | Attribute Mapping GET/DELETE cross-tenant BOLA | NEW |
+| P1-10B | P1 | Time Conditions GET cross-tenant BOLA | NEW |
+| P1-10C | P1 | Risk Profile cross-tenant IDOR (no tenant check) | NEW |
+| P2-10D | P2 | Time-Based access rule POST missing tenant validation | NEW |
+| P2-10E | P2 | Membership Graph no tenant check (static data) | NEW |
+| — | — | Risk policy cross-tenant BOLA | VERIFIED FIXED |
+| — | — | Conditional Access all methods | VERIFIED SECURE |
+| — | — | Delegation list | VERIFIED SECURE |
+| — | — | Policy versions | VERIFIED SECURE |
+
+**New findings: 3 × P1, 2 × P2.**
+
+---
+
+## Round 8 — Authentication Bypass (2026-08-03)
+
+### Verified Fixes
+
+| Item | Description | Status |
+|------|-------------|--------|
+| R226 P0 | ExtractJWTClaims fail-closed — no unsigned JWT fallback | VERIFIED FIXED |
+| 52602fd | parseScopesFromEnv defaults to `[]string{}` (no admin) | VERIFIED FIXED |
+| P1-3 | JWTAuth strips Authorization on invalid token for public paths | VERIFIED FIXED |
+| P0 (Director) | All identity headers stripped before re-deriving from JWT | VERIFIED FIXED |
+| P1-12 | ParseBackchannelLogoutToken uses jwt.Parse (not ParseUnverified) | VERIFIED FIXED |
+| checkRouteScope | Platform admin checked only from scopes, not forgeable roles | VERIFIED SECURE |
+| Tenant enforcement | JWTAuth rejects tenant mismatch even when required=false | VERIFIED SECURE |
+
+### P1-11: MCP Server JWT Missing Validation Options
+
+**Severity:** P1 (High)
+**File:** `services/mcp/internal/server/mcp_server.go:136`
+
+The MCP server's `jwtAuth` middleware calls `jwt.ParseWithClaims` with **zero parser options**:
+
+```go
+_, err = jwt.ParseWithClaims(tokenStr, claims, func(t *jwt.Token) (any, error) {
+    if _, ok := t.Method.(*jwt.SigningMethodHMAC); ok {
+        return s.jwtSecret, nil
+    }
+    if _, ok := t.Method.(*jwt.SigningMethodRSA); ok {
+        if s.jwksURL != "" {
+            return s.fetchJWKSKey(t)
+        }
+    }
+    return nil, fmt.Errorf("unexpected signing method: %v", t.Header["alg"])
+})
+// NO jwt.WithIssuer(), WithAudience(), WithValidMethods(), WithExpirationRequired()
+```
+
+**Impact:**
+1. **No issuer validation** — tokens issued by any issuer (including forged tokens signed with a leaked HMAC secret) are accepted.
+2. **No audience validation** — tokens intended for any audience pass.
+3. **No `WithExpirationRequired`** — tokens without an `exp` claim are accepted (never expire). jwt/v5 validates `exp` *when present*, but does not require its existence without this option.
+4. **No `WithValidMethods`** — algorithm is restricted only by the keyfunc's manual `if/else`, which accepts both HMAC and RSA simultaneously, increasing attack surface.
+
+Compare with the Gateway's `JWTAuth` (middleware.go:711-738), which correctly uses:
+```go
+parseOpts := []jwt.ParserOption{
+    jwt.WithValidMethods(crypto.SupportedAlgs()),
+}
+if issuer != "" {
+    parseOpts = append(parseOpts, jwt.WithIssuer(issuer))
+}
+if audience != "" {
+    parseOpts = append(parseOpts, jwt.WithAudience(audience))
+}
+```
+
+**Exploitation:** An attacker who obtains the `JWT_SECRET` (HMAC) can forge a token with no `exp` claim and arbitrary `scope` claim, gaining persistent MCP tool access. Even without the secret, tokens from a different issuer/audience in a multi-service environment would be accepted.
+
+### P2-12: Token-Exchange-Delegation Endpoint Prefix Collision
+
+**Severity:** P2 (Medium)
+**Files:** `router.go:69` (`publicPaths`), `server.go:2452`
+
+The public path `"/api/v1/oauth/token"` (router.go:69) is a **prefix** of `"/api/v1/oauth/token-exchange-delegation"` (registered at server.go:2452). Since `publicPaths` uses `strings.HasPrefix` matching (router.go:731), the delegation endpoint bypasses gateway JWT enforcement entirely.
+
+```go
+// router.go:731
+if strings.HasPrefix(r.URL.Path, pp) {  // pp = "/api/v1/oauth/token"
+    isPublic = true                     // matches token-exchange-delegation too!
+}
+```
+
+**Mitigating factors:** The handler (`token_exchange_delegation.go:61-70`) validates both `subject_token` and `actor_token` via `ParseAccessToken`, which verifies signatures and issuer. However, **no client authentication** (client_id/client_secret) is required to call this endpoint — any holder of two valid access tokens can invoke it.
+
+**Other potential prefix collisions (theoretical, endpoints not confirmed to exist):**
+- `"/api/v1/oauth/revoke"` could match `"/api/v1/oauth/revoke-all"`
+- `"/api/v1/oauth/userinfo"` could match `"/api/v1/oauth/userinfo-extended"`
+
+### P2-13: Auth Service parseTokenFromHeader Missing Issuer/Audience Checks
+
+**Severity:** P2 (Medium)
+**File:** `services/auth/internal/server/missing_handlers.go:25-38`
+
+The auth service's internal JWT parser validates only signature and algorithm:
+```go
+token, err := jwt.Parse(parts[1], func(token *jwt.Token) (interface{}, error) {
+    if !ggidcrypto.IsSupportedAlg(token.Method.Alg()) {
+        return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
+    }
+    return h.authSvc.PublicKey(), nil
+})
+// NO issuer check, NO audience check, NO WithExpirationRequired
+```
+
+This is used by self-service endpoints (`handleMFAStatus`, `handleSessions`, `handleDeviceBindings`, etc.). A token issued by a different OAuth issuer with the same signing key would be accepted. jwt/v5 validates `exp` when present but does not require it.
+
+**Round 8 new findings: 1 × P1, 2 × P2.**
+
+---
+
+## Round 8 — Authorization Logic (Attempt 2)
+
+**Date:** 2026-08-03
+**Scope:** RBAC bypass, M2M token scope, API key scope, MCP JWT, policy tenant filtering
+
+### Verification of Prior Fixes
+
+1. **MCP JWT (af5d217ff) — VERIFIED OK**
+   - `jwt.NewParser(jwt.WithValidMethods(["HS256","RS256"]), jwt.WithExpirationRequired())` correctly applied.
+   - Issuer check added conditionally when `jwtIssuer != ""`.
+   - RS256 path fails closed if JWKS not configured.
+
+2. **P1-10A/10B GET tenant filtering — VERIFIED OK**
+   - `handleAttributeMapping` GET and `handleTimeConditions` GET now filter by `X-Tenant-ID`.
+   - POST paths use `r.Header.Get("X-Tenant-ID")` not body `tenant_id`.
+
+3. **isPlatformTenant scope-only check — VERIFIED OK**
+   - `checkRouteScope` (router.go:860-872) derives `isPlatformTenant` from `platform:admin` scope only, not roles.
+   - Comment explicitly documents why roles are not trusted.
+
+4. **filterSafeScopes consistency — VERIFIED OK**
+   - CreateClient (line 181) and UpdateClient (line 347) both call `filterSafeScopes`.
+   - Case-insensitive comparison prevents `Platform:Admin` bypass.
+   - client_credentials grant uses `intersectScopes(req.Scope, client.Scopes)` preventing scope escalation.
+
+### P1-11: Cross-Tenant IDOR — attribute-mapping DELETE (Incomplete P1-10A Fix)
+
+**Severity:** P1 (High)
+**File:** `services/policy/internal/server/http.go:1683-1698`
+
+The P1-10A fix (commit 2a9798600) added tenant filtering to the GET path but **missed the DELETE method**. The DELETE handler deletes any mapping by ID without checking tenant ownership:
+
+```go
+case http.MethodDelete:
+    idStr := r.URL.Query().Get("id")
+    // ...deletes from global attributeMappings slice by ID only — no tenant_id check
+    for _, m := range attributeMappings {
+        if m["id"] != idStr {           // <-- no m["tenant_id"] == callerTenant check
+            filtered = append(filtered, m)
+        }
+    }
+```
+
+**Attack:** A tenant admin (tenant:admin scope) can delete ANY tenant's attribute mappings by supplying the target mapping's UUID as `?id=<uuid>`. UUIDs are v4 (random) but discoverable via other endpoints or brute-force attempts. This enables cross-tenant policy destruction — removing another tenant's role-assignment or deny rules, causing authorization policy degradation.
+
+**Exploitation path:**
+1. Attacker has tenant:admin on tenant A
+2. `DELETE /api/v1/policies/attribute-mapping?id=<victim-uuid>` with `X-Tenant-ID: <tenant-A>`
+3. Mapping is deleted regardless of its actual tenant_id — no ownership check
+
+**Fix needed:** Add tenant ownership check before deletion:
+```go
+if m["id"] == idStr && m["tenant_id"] == tenantID {
+    // delete this one
+}
+```
+
+**Previous Round 8 summary was: 1 × P1, 2 × P2. This round adds 1 × P1 (P1-11).**
+
+---
+
+## Attack Surface #3 Round 8b: OAuth/OIDC Flow — Downscope Revocation Bypass + Delegation Tenant Leak
+
+### P1-12: Token Downscope Endpoint Bypasses Revocation — Revoked Tokens Can Mint New Valid Tokens
+
+**Severity:** P1 (High)
+**CVSS:** 7.5 (AV:N/AC:L/PR:L/UI:N/S:U/C:H/I:L/A:N)
+
+**File:** `services/oauth/internal/server/token_downscope_handler.go`
+
+**Root cause:**
+
+The `handleTokenDownscope` handler validates the `source_token` using `oauthSvc.ParseAccessToken()` which only checks JWT signature and issuer/expiry — it does **not** call `IsTokenRevoked()`. This means any revoked access token can be presented at `POST /api/v1/oauth/token/downscope` to obtain a brand-new valid access token.
+
+```go
+// token_downscope_handler.go line 42
+claims, err := oauthSvc.ParseAccessToken(req.SourceToken)
+// NO revocation check follows
+```
+
+Compare with the RFC 8693 token exchange path (`oauth_service.go` line 902) which explicitly checks:
+```go
+if s.IsTokenRevoked(req.SubjectToken) {
+    return nil, fmt.Errorf("subject token has been revoked")
+}
+```
+
+**Additional issue:** The Bearer token check (line 22-25) only verifies the `Authorization` header starts with `"Bearer "` — the token itself is never validated. Any string starting with `"Bearer "` passes authentication.
+
+**Attack:**
+1. User authenticates → gets access_token T1
+2. Admin revokes T1 (or user logs out via backchannel logout)
+3. Attacker presents T1 at `/api/v1/oauth/token/downscope` with `requested_scopes: ["openid"]`
+4. Server issues a NEW valid token T2 — revocation is completely bypassed
+5. T2 is indistinguishable from a normally-issued token
+
+**Exploitation requires:** Possession of a previously-issued (now-revoked) access token.
+
+**Fix needed:** Add `IsTokenRevoked` check after `ParseAccessToken` in the downscope handler.
+
+---
+
+### P2-13: Token-Exchange-Delegation Missing Cross-Tenant Guard + No Revocation Check
+
+**Severity:** P2 (Medium)
+**CVSS:** 5.3 (AV:N/AC:L/PR:L/UI:N/S:U/C:L/I:L/A:N)
+
+**File:** `services/oauth/internal/server/token_exchange_delegation.go`
+
+**Root cause:**
+
+The `handleTokenExchangeDelegation` endpoint validates subject and actor token signatures but:
+1. Does **not** compare `tenant_id` claims between subject and actor tokens (unlike `ExchangeTokenRFC8693` which enforces this at line 920 and 975)
+2. Does **not** call `IsTokenRevoked` on either token
+3. Requires **no client authentication** — no client_id/client_secret
+
+A subject token from tenant A and an actor token from tenant B can be combined into a delegation chain entry that is persisted to PostgreSQL. While `access_token: ""` is returned (no real token minted), the cross-tenant delegation record pollution is an integrity violation.
+
+**Mitigating factor:** No real access token is issued (`"access_token": ""`), limiting privilege escalation impact to audit/chain integrity.
+
+---
+
+### Verified Secure (No Findings)
+
+| Check | Status | Notes |
+|---|---|---|
+| State CSRF — ValidateState empty=false | ✅ Secure | `oauth_service.go:1304` returns false for empty state |
+| State CSRF — CreateAuthorizationCode requires state | ✅ Secure | `grant_authorization_code.go:41` rejects empty state |
+| State CSRF — one-time use | ✅ Secure | GetDel (Redis) / Delete (in-memory) after validation |
+| redirect_uri exact match | ✅ Secure | `domain/models.go:97` — linear scan, no prefix/wildcard |
+| redirect_uri mismatch at token exchange | ✅ Secure | `grant_authorization_code.go:184` checks code.RedirectURI == req.RedirectURI |
+| PKCE for public clients | ✅ Secure | Mandatory at `grant_authorization_code.go:52` |
+| PKCE S256-only | ✅ Secure | `domain/models.go:178` rejects plain method |
+| PKCE constant-time compare | ✅ Secure | `subtle.ConstantTimeCompare` at line 183 |
+| DCR scope filtering | ✅ Secure | `dcr.go:64-78` — case-insensitive block of admin/platform/system/tenant |
+| DCR redirect scheme validation | ✅ Secure | Only http/https allowed |
+| No token logging | ✅ Secure | No token values in slog/log.Printf calls |
+| RFC 8693 cross-tenant guard | ✅ Secure | `oauth_service.go:920` compares tenant_id |
+| RFC 8693 revocation check | ✅ Secure | `oauth_service.go:902` calls IsTokenRevoked |
+| RFC 8693 client authentication | ✅ Secure | `oauth_service.go:856-870` enforces client auth |
+
+**Round 8b summary: 1 × P1 (P1-12 downscope revocation bypass), 1 × P2 (P2-13 delegation tenant leak).**
+
+---
+
+## Round 8c: Identity Federation Attack Surface (SAML XSW, Social, SCIM, WebAuthn, LDAP, JWT Bearer)
+
+### P1-13: JWT Bearer Grant — Cross-Tenant Impersonation via Missing Tenant Isolation in fetchExternalIssuerKey
+
+**Severity:** P1 (High)
+**CVSS:** 8.1 (AV:N/AC:L/PR:L/UI:N/S:C/C:H/I:H/A:N)
+
+**Affected file:** `services/oauth/internal/service/oauth_service.go:1810-1824`
+
+**Root cause:**
+
+The `fetchExternalIssuerKey` function looks up a client's `jwks_uri` from the `oauth_clients` table **without any tenant_id filter**:
+
+```go
+err := s.pool.QueryRow(ctx,
+    `SELECT COALESCE(jwks_uri, '') FROM oauth_clients WHERE client_id = $1`,
+    clientID).Scan(&jwksURI)
+```
+
+The JWT bearer grant flow (`grant_jwt_bearer.go:52-68`) uses this function as a fallback when the assertion doesn't verify against the Authorization Server's own key. Combined with:
+
+1. **No client authentication for jwt-bearer grant** — the token handler (`server.go:860-873`) does not verify `client_secret` before calling `JWTBearerGrant`.
+2. **Attacker-controlled tenant_id** — `tenantID` comes from `X-Tenant-ID` header (`server.go:715`).
+3. **No assertion issuer-to-client binding** — the assertion's `iss` claim is not checked against the client's registered issuer.
+
+**Attack scenario:**
+
+1. Attacker registers an OAuth client in Tenant A with `jwks_uri` pointing to their own JWKS endpoint (e.g., `https://attacker.com/.well-known/jwks.json`).
+2. Attacker crafts a JWT assertion signed with their own private key:
+   - `iss`: any string
+   - `sub`: victim's UUID in Tenant B (known from leak or enumeration)
+   - `aud`: the GGID issuer
+   - `exp`: future timestamp
+   - `kid`: matches their JWKS key
+3. Attacker POSTs to `/oauth/token`:
+   ```
+   grant_type=urn:ietf:params:oauth:grant-type:jwt-bearer
+   assertion=<attacker-signed JWT>
+   client_id=<attacker's client from Tenant A>
+   ```
+   With header: `X-Tenant-ID: <Tenant B's UUID>`
+4. The system:
+   - Fails AS key verification → falls back to `fetchExternalIssuerKey`
+   - Looks up `jwks_uri` by `client_id` (no tenant filter) → finds attacker's JWKS
+   - Fetches attacker's public key and verifies assertion → passes
+   - Checks user exists in Tenant B: `SELECT status FROM users WHERE id = $1 AND tenant_id = $2` → active
+   - **Issues a valid access token for the victim in Tenant B**
+
+**Impact:** Cross-tenant account impersonation. An attacker who controls any OAuth client in any tenant can mint tokens for any active user in any other tenant, given the victim's UUID.
+
+**Exploitability:** Medium — requires knowledge of a victim's UUID, but UUIDs frequently leak via API responses, logs, or URLs.
+
+**Fix:** Add tenant isolation to the JWKS lookup:
+```go
+err := s.pool.QueryRow(ctx,
+    `SELECT COALESCE(jwks_uri, '') FROM oauth_clients WHERE client_id = $1 AND tenant_id = $2`,
+    clientID, req.TenantID).Scan(&jwksURI)
+```
+Additionally, enforce client authentication (client_secret or assertion-based) for the jwt-bearer grant.
+
+---
+
+### Audit Results — Verified Secure
+
+| Check | Status | Notes |
+|---|---|---|
+| SAML XSW (validateSignaturePlacement) | ✅ Secure | `signed_assertion.go:325-354` — Signature must be direct child of Assertion, depth-checked |
+| SAML digest verification | ✅ Secure | `signed_assertion.go:276-287` — enveloped-signature transform + constant-time digest compare |
+| SAML ExtractAssertionFromResponse | ✅ Secure | `assertion.go:219-237` — extracts first assertion only, full verification follows |
+| SAML relay replay | ✅ Secure | `saml_handler.go:161-179` — SETNX with TTL, fail-closed without Redis |
+| SAML RelayState open redirect | ✅ Secure | `saml_handler.go:93-95, 222-225` — relative path enforced, `//` blocked |
+| SAML InResponseTo replay | ✅ Secure | `saml_handler.go:148-156` — rejects unexpected InResponseTo |
+| Social login redirect allowlist | ✅ Secure | `social_handler.go:48-97` — https-only, fail-closed empty allowlist |
+| Social login CSRF state | ✅ Secure | `social_handler.go:164-228` — state generated, validated, deleted on use |
+| Social login JIT account takeover | ✅ Secure | `social_handler.go:321-338` — only merges by verified email |
+| SCIM filter injection | ✅ Secure | `handler.go:865-881` — extract quoted value, pg_repo uses `escapeLikeWildcards` + parameterized ILIKE |
+| SCIM bulk operation limit | ✅ Secure | `bulk.go:66-70` — `maxBulkOperations=1000` enforced |
+| SCIM tenant isolation | ✅ Secure | `scim_token_middleware.go:20-111` — token tenant_id overrides header, fail-closed |
+| WebAuthn passwordless | ✅ Secure | `webauthn_passwordless.go:157` — 501 fail-closed, no auth bypass |
+| WebAuthn challenge consumption | ✅ Secure | `webauthn_passwordless.go:130-139` — delete-on-read (atomic consumption) |
+| LDAP injection | ✅ Secure | `ldap.go:160` — `ldap.EscapeFilter(username)` applied to all user lookups |
+| JWT Bearer WithValidMethods | ✅ Secure | `grant_jwt_bearer.go:50,62` — RS256/384/512 only |
+| JWT Bearer audience validation | ✅ Secure | `grant_jwt_bearer.go:76-92` — checks aud includes issuer |
+| JWT Bearer expiry check | ✅ Secure | `grant_jwt_bearer.go:99-105` — rejects expired assertions |
+| JWT Bearer scope filtering | ✅ Secure | `grant_jwt_bearer.go:148` — `filterSafeScopes` applied |
+
+**Round 8c summary: 1 × P1 (P1-13 JWT bearer cross-tenant JWKS impersonation).**
