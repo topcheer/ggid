@@ -44,6 +44,11 @@ func handleTokenDownscope(oauthSvc *service.OAuthService) http.HandlerFunc {
 			writeJSON(w, http.StatusUnauthorized, map[string]any{"error": "invalid source token"})
 			return
 		}
+		// SECURITY: Check if source token has been revoked.
+		if oauthSvc.IsTokenRevoked(req.SourceToken) {
+			writeJSON(w, http.StatusUnauthorized, map[string]any{"error": "token revoked"})
+			return
+		}
 
 		// Extract the source token's scopes.
 		sourceScopeStr, _ := claims["scope"].(string)
