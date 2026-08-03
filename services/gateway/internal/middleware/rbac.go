@@ -192,16 +192,6 @@ func RequireAdminScope(next http.Handler) http.Handler {
 		// registration) grant admin access. Roles claim comes from DB role.name which
 		// is tenant-controlled — allowing it here would let a tenant admin create a
 		// role named "platform:admin" and escalate privileges.
-		// Platform-only paths require platform:admin specifically; tenant:admin
-		// must NOT be sufficient for system-level operations.
-		if isPlatformOnlyPath(r.URL.Path) {
-			if !hasPlatformAdminScope(claims.Scopes) {
-				writeAdminForbidden(w, r)
-				return
-			}
-			next.ServeHTTP(w, r)
-			return
-		}
 		if hasAdminScope(claims.Scopes) {
 			next.ServeHTTP(w, r)
 			return
