@@ -6,6 +6,8 @@ import (
 	"crypto/x509"
 	"encoding/pem"
 	"fmt"
+
+	"github.com/golang-jwt/jwt/v5"
 	"log/slog"
 	"os"
 	"strings"
@@ -14,8 +16,6 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
-
-	"github.com/golang-jwt/jwt/v5"
 
 	"google.golang.org/grpc/status"
 )
@@ -69,10 +69,9 @@ func GRPCUnaryInterceptor(cfg *GRPCInterceptorConfig) grpc.UnaryServerIntercepto
 	if cfg == nil {
 		cfg = &GRPCInterceptorConfig{}
 	}
-	// P0 Security: If RequireAuth is true but JWTSecret is empty, fail hard.
-	// Silent bypass when secret is empty is a critical vulnerability.
-	if cfg.RequireAuth && cfg.JWTSecret == "" {
-		slog.Error("GRPCUnaryInterceptor: RequireAuth=true but JWTSecret is empty — refusing to start with silent auth bypass")
+	// P0 Security: If RequireAuth is true but no JWT validation key is set, fail hard.
+	if cfg.RequireAuth && cfg.JWTSecret == "" && cfg.RSAPublicKey == "" {
+		slog.Error("GRPCUnaryInterceptor: RequireAuth=true but no JWT validation key (JWTSecret or RSAPublicKey) is set")
 		os.Exit(1)
 	}
 	tenantHeader := cfg.TenantHeader
@@ -104,9 +103,17 @@ func GRPCUnaryInterceptor(cfg *GRPCInterceptorConfig) grpc.UnaryServerIntercepto
 				return nil, status.Error(codes.Unauthenticated, "invalid authorization scheme")
 			}
 			// SECURITY: Validate JWT signature and claims.
+			// Build the list of allowed signing methods based on configured keys.
+			validMethods := []string{}
+			if cfg.JWTSecret != "" {
+				validMethods = append(validMethods, "HS256")
+			}
+			if cfg.RSAPublicKey != "" {
+				validMethods = append(validMethods, "RS256")
+			}
 			claims := jwt.MapClaims{}
 			parserOpts := []jwt.ParserOption{
-				jwt.WithValidMethods([]string{"HS256"}),
+				jwt.WithValidMethods(validMethods),
 				jwt.WithExpirationRequired(),
 			}
 			if cfg.JWTIssuer != "" {
@@ -126,10 +133,15 @@ func GRPCUnaryInterceptor(cfg *GRPCInterceptorConfig) grpc.UnaryServerIntercepto
 					}
 					return nil, status.Error(codes.Unauthenticated, "RSA public key not configured")
 				}
+				if _, ok := t.Method.(*jwt.SigningMethodHMAC); ok {
+					if cfg.JWTSecret != "" {
+						return []byte(cfg.JWTSecret), nil
+					}
+				}
 				return nil, status.Error(codes.Unauthenticated, "unsupported signing method")
 			})
 			if err != nil {
-				return nil, status.Error(codes.Unauthenticated, "invalid token")
+				return nil, status.Error(codes.Unauthenticated, fmt.Sprintf("invalid token: %v", err))
 			}
 			ctx = context.WithValue(ctx, grpcUserCtxKey, claims["sub"])
 			// SECURITY: Extract tenant_id from JWT claims (not metadata header).
@@ -205,15 +217,36 @@ func GRPCStreamInterceptor(cfg *GRPCInterceptorConfig) grpc.StreamServerIntercep
 					return status.Error(codes.Unauthenticated, "invalid authorization scheme")
 				}
 				// SECURITY: Validate JWT — same as unary interceptor.
+				// Build the list of allowed signing methods based on configured keys.
+				validMethods := []string{}
+				if cfg.JWTSecret != "" {
+					validMethods = append(validMethods, "HS256")
+				}
+				if cfg.RSAPublicKey != "" {
+					validMethods = append(validMethods, "RS256")
+				}
 				claims := jwt.MapClaims{}
 				parserOpts := []jwt.ParserOption{
-					jwt.WithValidMethods([]string{"HS256"}),
+					jwt.WithValidMethods(validMethods),
 					jwt.WithExpirationRequired(),
 				}
 				if cfg.JWTIssuer != "" {
 					parserOpts = append(parserOpts, jwt.WithIssuer(cfg.JWTIssuer))
 				}
 				if _, err := jwt.NewParser(parserOpts...).ParseWithClaims(token, claims, func(t *jwt.Token) (any, error) {
+					if _, ok := t.Method.(*jwt.SigningMethodRSA); ok {
+						if cfg.RSAPublicKey != "" {
+							block, _ := pem.Decode([]byte(cfg.RSAPublicKey))
+							if block != nil {
+								if pub, err := x509.ParsePKIXPublicKey(block.Bytes); err == nil {
+									if rsaPub, ok := pub.(*rsa.PublicKey); ok {
+										return rsaPub, nil
+									}
+								}
+							}
+						}
+						return nil, status.Error(codes.Unauthenticated, "RSA public key not configured")
+					}
 					if _, ok := t.Method.(*jwt.SigningMethodHMAC); ok {
 						return []byte(cfg.JWTSecret), nil
 					}

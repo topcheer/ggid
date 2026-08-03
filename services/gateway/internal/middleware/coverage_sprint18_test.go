@@ -594,7 +594,7 @@ func TestGRPCUnaryInterceptor_AuthValid_C18(t *testing.T) {
 	}
 	pubBytes, _ := x509.MarshalPKIXPublicKey(&privKey.PublicKey)
 	pubKeyPEM := string(pem.EncodeToMemory(&pem.Block{Type: "PUBLIC KEY", Bytes: pubBytes}))
-	cfg := &GRPCInterceptorConfig{RSAPublicKey: pubKeyPEM}
+	cfg := &GRPCInterceptorConfig{RSAPublicKey: pubKeyPEM, RequireAuth: true}
 	interceptor := GRPCUnaryInterceptor(cfg)
 	claims := jwt.MapClaims{
 		"sub":       "test-user",
