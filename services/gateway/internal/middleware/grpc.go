@@ -208,17 +208,24 @@ func (p *GRPCProxy) GRPCHTTPHandler(next http.Handler) http.Handler {
 			return
 		}
 
-		// Bidirectional tunnel
-		done := make(chan struct{}, 2)
+		// Bidirectional tunnel with WaitGroup to prevent goroutine leak
+		var wg sync.WaitGroup
+		wg.Add(2)
 		go func() {
+			defer wg.Done()
 			io.Copy(backendConn, clientConn)
-			done <- struct{}{}
+			if cw, ok := backendConn.(interface{ CloseWrite() error }); ok {
+				cw.CloseWrite()
+			}
 		}()
 		go func() {
+			defer wg.Done()
 			io.Copy(clientConn, backendConn)
-			done <- struct{}{}
+			if cw, ok := clientConn.(interface{ CloseWrite() error }); ok {
+				cw.CloseWrite()
+			}
 		}()
-		<-done
+		wg.Wait()
 	})
 }
 
@@ -241,10 +248,10 @@ func extractGRPCService(path string) string {
 
 // GRPCProxyStats represents gRPC proxy statistics for the admin API.
 type GRPCProxyStats struct {
-	TotalConnections   int64             `json:"total_connections"`
-	ActiveConnections  int64             `json:"active_connections"`
-	Backends           map[string]string `json:"backends"`
-	DefaultBackend     string            `json:"default_backend,omitempty"`
+	TotalConnections  int64             `json:"total_connections"`
+	ActiveConnections int64             `json:"active_connections"`
+	Backends          map[string]string `json:"backends"`
+	DefaultBackend    string            `json:"default_backend,omitempty"`
 }
 
 // Stats returns the current gRPC proxy statistics.

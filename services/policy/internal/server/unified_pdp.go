@@ -184,6 +184,7 @@ func (s *HTTPServer) EvaluateAuthorize(ctx context.Context, req *AuthorizeReques
 	// Parallel evaluation.
 	var wg sync.WaitGroup
 	rbacAllow, abacAllow, rebacAllow := true, true, true
+	rbacEvaluated, abacEvaluated, rebacEvaluated := false, false, false
 	rbacReason, abacReason, rebacReason := "", "", ""
 	evaluatedBy := []string{}
 
@@ -226,7 +227,7 @@ func (s *HTTPServer) EvaluateAuthorize(ctx context.Context, req *AuthorizeReques
 				rbacReason = "RBAC evaluation error"
 			} else if result != nil && result.Allowed {
 				rbacAllow = true
-				evaluatedBy = append(evaluatedBy, "rbac")
+				rbacEvaluated = true
 			} else {
 				rbacAllow = false
 				rbacReason = "RBAC policy denied"
@@ -248,13 +249,13 @@ func (s *HTTPServer) EvaluateAuthorize(ctx context.Context, req *AuthorizeReques
 		}()
 		// ABAC evaluates context conditions. Default allow.
 		abacAllow = true
+		abacEvaluated = true
 		if req.Context != nil {
 			if ip, ok := req.Context["ip_blocked"]; ok && ip == true {
 				abacAllow = false
 				abacReason = "IP blocked by ABAC policy"
 			}
 		}
-		evaluatedBy = append(evaluatedBy, "abac")
 	}()
 
 	// ReBAC check (simplified — would query rebac_cache).
@@ -268,10 +269,21 @@ func (s *HTTPServer) EvaluateAuthorize(ctx context.Context, req *AuthorizeReques
 		}()
 		// ReBAC evaluates relationship-based permissions. Default allow.
 		rebacAllow = true
-		evaluatedBy = append(evaluatedBy, "rebac")
+		rebacEvaluated = true
 	}()
 
 	wg.Wait()
+
+	// Build evaluatedBy after all goroutines complete (no concurrent append).
+	if rbacEvaluated {
+		evaluatedBy = append(evaluatedBy, "rbac")
+	}
+	if abacEvaluated {
+		evaluatedBy = append(evaluatedBy, "abac")
+	}
+	if rebacEvaluated {
+		evaluatedBy = append(evaluatedBy, "rebac")
+	}
 
 	// Combine: all must allow (AND logic).
 	allowed := rbacAllow && abacAllow && rebacAllow
