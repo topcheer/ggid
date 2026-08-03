@@ -87,7 +87,11 @@ func SecurityHeadersConfigurable(cfg *SecurityHeadersConfig) func(http.Handler) 
 			} else if active.FrameAllowFrom != "" {
 				w.Header().Set("X-Frame-Options", "ALLOW-FROM "+active.FrameAllowFrom)
 			}
-			if active.HSTSMaxAge > 0 {
+			if active.HSTSMaxAge > 0 && r.TLS != nil {
+				// SECURITY: Only set HSTS on HTTPS connections.
+				// Setting HSTS on plaintext HTTP is ignored by browsers and
+				// wastes headers, but more importantly, it signals that the
+				// server believes it's on HTTPS when it may not be (MITM risk).
 				w.Header().Set("Strict-Transport-Security", "max-age="+fmt.Sprintf("%d", active.HSTSMaxAge)+"; includeSubDomains")
 			}
 			csp := active.CSP
