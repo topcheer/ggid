@@ -1,18 +1,20 @@
 package server
 
 import (
+	"sync"
+
 	"encoding/json"
 	"net/http"
 )
 
 type ImpersonationConfig struct {
-	AllowedImpersonators   []string `json:"allowed_impersonators"`
-	RequireReason          bool     `json:"require_reason"`
-	MaxDurationMinutes     int      `json:"max_duration_minutes"`
-	AuditLevel             string   `json:"audit_level"`
-	RequireTargetConsent   bool     `json:"require_target_consent"`
-	AutoRevokeOnIdle       bool     `json:"auto_revoke_on_idle"`
-	RestrictToRoles        []string `json:"restrict_to_roles"`
+	AllowedImpersonators []string `json:"allowed_impersonators"`
+	RequireReason        bool     `json:"require_reason"`
+	MaxDurationMinutes   int      `json:"max_duration_minutes"`
+	AuditLevel           string   `json:"audit_level"`
+	RequireTargetConsent bool     `json:"require_target_consent"`
+	AutoRevokeOnIdle     bool     `json:"auto_revoke_on_idle"`
+	RestrictToRoles      []string `json:"restrict_to_roles"`
 }
 
 var globalImpersonationConfig = &ImpersonationConfig{
@@ -25,11 +27,16 @@ var globalImpersonationConfig = &ImpersonationConfig{
 	RestrictToRoles:      []string{"user", "manager"},
 }
 
+var impersonationConfigMu sync.RWMutex
+
 func (h *Handler) handleImpersonationConfig(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case http.MethodGet:
+		impersonationConfigMu.RLock()
+		cfg := globalImpersonationConfig
+		impersonationConfigMu.RUnlock()
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(globalImpersonationConfig)
+		json.NewEncoder(w).Encode(cfg)
 	case http.MethodPut:
 		var cfg ImpersonationConfig
 		if err := json.NewDecoder(r.Body).Decode(&cfg); err != nil {
@@ -40,7 +47,9 @@ func (h *Handler) handleImpersonationConfig(w http.ResponseWriter, r *http.Reque
 			writeError(w, http.StatusBadRequest, "max_duration_minutes must be at least 1")
 			return
 		}
+		impersonationConfigMu.Lock()
 		globalImpersonationConfig = &cfg
+		impersonationConfigMu.Unlock()
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
 		json.NewEncoder(w).Encode(cfg)
