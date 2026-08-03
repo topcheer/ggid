@@ -9,7 +9,8 @@ package rbac
 
 import (
 	"context"
-	"fmt"
+	"strings"
+
 	"log/slog"
 )
 
@@ -64,15 +65,15 @@ func HasPermission(userPerms []string, resource, action, scope string) bool {
 			return true
 		}
 		// Parse "resource:action:scope"
+		parts := strings.SplitN(p, ":", 3)
 		var pr, pa, ps string
-		n, _ := fmt.Sscanf(p, "%[^:]:%[^:]:%s", &pr, &pa, &ps)
-		if n < 3 {
-			// Legacy format "resource:action" — treat as "resource:action:tenant"
-			if n == 2 {
-				ps = "tenant"
-			} else {
-				continue
-			}
+		if len(parts) >= 3 {
+			pr, pa, ps = parts[0], parts[1], parts[2]
+		} else if len(parts) == 2 {
+			pr, pa = parts[0], parts[1]
+			ps = "tenant"
+		} else {
+			continue
 		}
 		if pr == resource && pa == action && ScopeCovers(ps, scope) {
 			return true
