@@ -122,7 +122,7 @@ func IssueImpersonationToken(impersonatorID, targetUserID, tenantID uuid.UUID, r
 		data, _ := json.Marshal(t)
 		ttl := time.Until(t.ExpiresAt)
 		if ttl > 0 {
-			impRedisClient.Set(context.Background(), impersonationKeyPrefix+t.TokenID.String(), data, ttl)
+			redisClient.Set(context.Background(), impersonationKeyPrefix+t.TokenID.String(), data, ttl)
 		}
 	}
 
@@ -143,7 +143,7 @@ func GetImpersonationToken(id uuid.UUID) (*ImpersonationToken, error) {
 	redisClient := impRedisClient
 	impersonationMu.RUnlock()
 	if redisClient != nil {
-		data, err := impRedisClient.Get(context.Background(), impersonationKeyPrefix+id.String()).Bytes()
+		data, err := redisClient.Get(context.Background(), impersonationKeyPrefix+id.String()).Bytes()
 		if err == nil {
 			var rt ImpersonationToken
 			if json.Unmarshal(data, &rt) == nil {
@@ -190,7 +190,7 @@ func RevokeImpersonationToken(id uuid.UUID) error {
 		data, _ := json.Marshal(t)
 		ttl := time.Until(t.ExpiresAt)
 		if ttl > 0 {
-			impRedisClient.Set(context.Background(), impersonationKeyPrefix+id.String(), data, ttl)
+			redisClient.Set(context.Background(), impersonationKeyPrefix+id.String(), data, ttl)
 		}
 	}
 	return nil
