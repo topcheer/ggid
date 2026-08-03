@@ -688,7 +688,7 @@ func (h *HTTPHandler) createUser(ctx context.Context, w http.ResponseWriter, r *
 	}
 
 	// Email format validation
-	if !strings.Contains(req.Email, "@") || !strings.Contains(req.Email, ".") || len(req.Email) < 5 {
+	if _, err := mail.ParseAddress(req.Email); err != nil {
 		writeJSONError(w, http.StatusBadRequest, "invalid email format")
 		return
 	}
