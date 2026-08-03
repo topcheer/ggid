@@ -430,7 +430,7 @@ func (r *AuditRepository) DeleteOlderThanExcept(ctx context.Context, tenantID uu
 
 // AnonymizeOlderThan nullifies PII fields (actor_ip, user_agent, metadata)
 // for events older than the cutoff time. Keeps the event row for compliance.
-func (r *AuditRepository) AnonymizeOlderThan(ctx context.Context, before time.Time) (int64, error) {
+func (r *AuditRepository) AnonymizeOlderThan(ctx context.Context, tenantID *uuid.UUID, before time.Time) (int64, error) {
 	tx, err := r.db.Begin(ctx)
 	if err != nil {
 		return 0, fmt.Errorf("begin anonymize tx: %w", err)
@@ -440,10 +440,19 @@ func (r *AuditRepository) AnonymizeOlderThan(ctx context.Context, before time.Ti
 	if _, err := tx.Exec(ctx, `SET LOCAL app.allow_audit_mutation = 'on'`); err != nil {
 		return 0, fmt.Errorf("allow audit mutation: %w", err)
 	}
-	tag, err := tx.Exec(ctx,
-		`UPDATE audit_events SET actor_ip = NULL, user_agent = NULL, metadata = '{}'::jsonb WHERE created_at < $1`,
-		before,
-	)
+	// SECURITY: Optional tenant_id filter. If tenantID is nil, anonymizes across
+	// all tenants (platform-level compliance operation). If set, only affects
+	// the specified tenant's events.
+	var query string
+	var args []any
+	if tenantID != nil {
+		query = `UPDATE audit_events SET actor_ip = NULL, user_agent = NULL, metadata = '{}'::jsonb WHERE created_at < $1 AND tenant_id = $2`
+		args = []any{before, *tenantID}
+	} else {
+		query = `UPDATE audit_events SET actor_ip = NULL, user_agent = NULL, metadata = '{}'::jsonb WHERE created_at < $1`
+		args = []any{before}
+	}
+	tag, err := tx.Exec(ctx, query, args...)
 	if err != nil {
 		return 0, fmt.Errorf("anonymize old audit events: %w", err)
 	}
