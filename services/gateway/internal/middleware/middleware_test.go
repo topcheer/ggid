@@ -16,7 +16,9 @@ import (
 	"time"
 
 	"github.com/ggid/ggid/pkg/tenant"
+
 	"github.com/golang-jwt/jwt/v5"
+
 	"github.com/google/uuid"
 )
 
@@ -237,11 +239,11 @@ func TestJWTAuth_ValidToken(t *testing.T) {
 	tenantID := uuid.New()
 
 	token := signTestJWT(t, privKey, jwt.MapClaims{
-		"sub":        userID.String(),
-		"tenant_id":  tenantID.String(),
-		"iss":        "test-issuer",
-		"exp":        time.Now().Add(15 * time.Minute).Unix(),
-		"iat":        time.Now().Unix(),
+		"sub":       userID.String(),
+		"tenant_id": tenantID.String(),
+		"iss":       "test-issuer",
+		"exp":       time.Now().Add(15 * time.Minute).Unix(),
+		"iat":       time.Now().Unix(),
 	})
 
 	handler := JWTAuth(jwks, true, "test-issuer", "")(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -609,12 +611,15 @@ func TestSecurityHeaders_SetsAllHeaders(t *testing.T) {
 		{"X-Content-Type-Options", "nosniff"},
 		{"X-Frame-Options", "DENY"},
 		{"Referrer-Policy", "strict-origin-when-cross-origin"},
-		{"Strict-Transport-Security", "max-age=31536000; includeSubDomains"},
 	}
 	for _, tt := range tests {
 		if got := w.Header().Get(tt.header); got != tt.expected {
 			t.Errorf("expected %s=%s, got %s", tt.header, tt.expected, got)
 		}
+	}
+	// HSTS only set on HTTPS (r.TLS != nil)
+	if w.Header().Get("Strict-Transport-Security") != "" {
+		t.Error("HSTS should not be set on plaintext HTTP")
 	}
 }
 
