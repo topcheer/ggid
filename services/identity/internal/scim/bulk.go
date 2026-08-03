@@ -8,6 +8,8 @@ import (
 	"net/http"
 
 	"github.com/ggid/ggid/services/identity/internal/domain"
+
+	ggidtenant "github.com/ggid/ggid/pkg/tenant"
 	"github.com/ggid/ggid/services/identity/internal/service"
 	"github.com/google/uuid"
 )
@@ -161,6 +163,15 @@ func (h *Handler) bulkReplaceUser(ctx context.Context, op BulkOperationRequest) 
 		return BulkOperationResponse{Method: op.Method, BulkID: op.BulkID, Status: "400"}, err
 	}
 
+	// SECURITY: Verify target user belongs to caller's tenant (BOLA protection).
+	existing, err := h.svc.GetUser(ctx, userID)
+	if err != nil {
+		return BulkOperationResponse{Method: op.Method, BulkID: op.BulkID, Status: "404"}, err
+	}
+	if !userBelongsToCallerTenant(ctx, existing) {
+		return BulkOperationResponse{Method: op.Method, BulkID: op.BulkID, Status: "404"}, fmt.Errorf("user not found")
+	}
+
 	var scimUser SCIMUser
 	if err := json.Unmarshal(op.Data, &scimUser); err != nil {
 		return BulkOperationResponse{Method: op.Method, BulkID: op.BulkID, Status: "400"},
@@ -188,6 +199,15 @@ func (h *Handler) bulkPatchUser(ctx context.Context, op BulkOperationRequest) (B
 	userID, err := extractIDFromPath(op.Path)
 	if err != nil {
 		return BulkOperationResponse{Method: op.Method, BulkID: op.BulkID, Status: "400"}, err
+	}
+
+	// SECURITY: Verify target user belongs to caller's tenant (BOLA protection).
+	existing, err := h.svc.GetUser(ctx, userID)
+	if err != nil {
+		return BulkOperationResponse{Method: op.Method, BulkID: op.BulkID, Status: "404"}, err
+	}
+	if !userBelongsToCallerTenant(ctx, existing) {
+		return BulkOperationResponse{Method: op.Method, BulkID: op.BulkID, Status: "404"}, fmt.Errorf("user not found")
 	}
 
 	var patchReq PatchRequest
@@ -229,6 +249,15 @@ func (h *Handler) bulkDeleteUser(ctx context.Context, op BulkOperationRequest) (
 		return BulkOperationResponse{Method: op.Method, BulkID: op.BulkID, Status: "400"}, err
 	}
 
+	// SECURITY: Verify target user belongs to caller's tenant (BOLA protection).
+	existing, err := h.svc.GetUser(ctx, userID)
+	if err != nil {
+		return BulkOperationResponse{Method: op.Method, BulkID: op.BulkID, Status: "404"}, err
+	}
+	if !userBelongsToCallerTenant(ctx, existing) {
+		return BulkOperationResponse{Method: op.Method, BulkID: op.BulkID, Status: "404"}, fmt.Errorf("user not found")
+	}
+
 	if err := h.svc.DeleteUser(ctx, userID); err != nil {
 		return BulkOperationResponse{Method: op.Method, BulkID: op.BulkID, Status: "404"}, err
 	}
@@ -238,6 +267,17 @@ func (h *Handler) bulkDeleteUser(ctx context.Context, op BulkOperationRequest) (
 		BulkID: op.BulkID,
 		Status: "204",
 	}, nil
+}
+
+// userBelongsToCallerTenant checks whether a user's tenant matches the
+// tenant in the request context. Returns false if the context has no tenant
+// (fail-closed) to prevent cross-tenant BOLA in SCIM bulk operations.
+func userBelongsToCallerTenant(ctx context.Context, user *domain.User) bool {
+	tc, err := ggidtenant.FromContext(ctx)
+	if err != nil || tc.TenantID == uuid.Nil {
+		return false // fail-closed
+	}
+	return user.TenantID == tc.TenantID
 }
 
 // extractIDFromPath extracts the UUID from paths like "/Users/{id}" or "/Groups/{id}".
