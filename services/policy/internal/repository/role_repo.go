@@ -150,22 +150,27 @@ func (r *RoleRepository) GetAncestorChain(ctx context.Context, roleID uuid.UUID)
 // SECURITY: Only grants permissions that belong to the same tenant as the role
 // or are system permissions. Prevents cross-tenant permission escalation.
 func (r *RoleRepository) GrantPermissions(ctx context.Context, roleID uuid.UUID, permissionIDs []uuid.UUID, conditions map[string]any) error {
-	condJSON, _ := json.Marshal(conditions)
-	for _, permID := range permissionIDs {
-		_, err := r.db.Exec(ctx, `
-			INSERT INTO role_permissions (role_id, permission_id, conditions)
-			SELECT $1, $2, $3
-			WHERE EXISTS (
-				SELECT 1 FROM permissions p
-				WHERE p.id = $2
-				AND (p.tenant_id = (SELECT tenant_id FROM roles WHERE id = $1) OR p.system_perm = true)
-			)
-			ON CONFLICT (role_id, permission_id) DO NOTHING
-		`, roleID, permID, condJSON)
-		if err != nil {
-			return fmt.Errorf("grant permission: %w", err)
-		}
+	if len(permissionIDs) == 0 {
+		return nil
 	}
+	condJSON, _ := json.Marshal(conditions)
+	// Batch insert using UNNEST - single round-trip instead of N loops.
+	// SECURITY: Subquery enforces tenant boundary (same-tenant or system_perm).
+	tag, err := r.db.Exec(ctx, `
+		INSERT INTO role_permissions (role_id, permission_id, conditions)
+		SELECT $1, perm_id, $3
+		FROM UNNEST($2::uuid[]) AS perm_id
+		WHERE EXISTS (
+			SELECT 1 FROM permissions p
+			WHERE p.id = perm_id
+			AND (p.tenant_id = (SELECT tenant_id FROM roles WHERE id = $1) OR p.system_perm = true)
+		)
+		ON CONFLICT (role_id, permission_id) DO NOTHING
+	`, roleID, permissionIDs, condJSON)
+	if err != nil {
+		return fmt.Errorf("grant permission: %w", err)
+	}
+	_ = tag
 	return nil
 }
 

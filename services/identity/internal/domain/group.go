@@ -2,7 +2,6 @@
 package domain
 
 import (
-	"context"
 	"time"
 
 	"github.com/google/uuid"
@@ -116,21 +115,4 @@ type MembershipPatch struct {
 type MembershipPatchResult struct {
 	Added   int
 	Removed int
-}
-
-// GroupRepository defines the data-access interface for SCIM groups.
-// This interface is defined in the domain package to keep dependencies clean.
-type GroupRepository interface {
-	CreateGroup(ctx context.Context, group *Group) (*Group, error)
-	GetGroupByID(ctx context.Context, tenantID, id uuid.UUID) (*Group, error)
-	GetGroupByDisplayName(ctx context.Context, tenantID uuid.UUID, displayName string) (*Group, error)
-	UpdateGroup(ctx context.Context, tenantID, id uuid.UUID, input *UpdateGroupInput) (*Group, error)
-	DeleteGroup(ctx context.Context, tenantID, id uuid.UUID) error
-	ListGroups(ctx context.Context, filter *GroupListFilter) (*GroupListResult, error)
-
-	// Membership operations
-	ListMembers(ctx context.Context, tenantID, groupID uuid.UUID) ([]*GroupMember, error)
-	AddMembers(ctx context.Context, tenantID, groupID uuid.UUID, members []GroupMemberInput) error
-	RemoveMembers(ctx context.Context, tenantID, groupID uuid.UUID, userIDs []uuid.UUID) error
-	GetMemberGroups(ctx context.Context, tenantID, userID uuid.UUID) ([]*Group, error)
 }
