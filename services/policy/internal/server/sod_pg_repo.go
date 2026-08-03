@@ -136,8 +136,8 @@ func (r *sodPGRepo) ListRules(ctx context.Context, tenantID uuid.UUID) ([]*SoDRu
 	return result, nil
 }
 
-func (r *sodPGRepo) DeleteRule(ctx context.Context, id string) error {
-	_, err := r.pool.Exec(ctx, `DELETE FROM sod_rules WHERE id = $1`, id)
+func (r *sodPGRepo) DeleteRule(ctx context.Context, id string, tenantID uuid.UUID) error {
+	_, err := r.pool.Exec(ctx, `DELETE FROM sod_rules WHERE id = $1 AND tenant_id = $2`, id, tenantID)
 	return err
 }
 
@@ -180,8 +180,8 @@ func (r *sodPGRepo) ListViolations(ctx context.Context, tenantID uuid.UUID) ([]*
 	return result, nil
 }
 
-func (r *sodPGRepo) ResolveViolation(ctx context.Context, id string) error {
-	_, err := r.pool.Exec(ctx, `UPDATE sod_violations SET status = 'resolved' WHERE id = $1`, id)
+func (r *sodPGRepo) ResolveViolation(ctx context.Context, id string, tenantID uuid.UUID) error {
+	_, err := r.pool.Exec(ctx, `UPDATE sod_violations SET status = 'resolved' WHERE id = $1 AND tenant_id = $2`, id, tenantID)
 	return err
 }
 

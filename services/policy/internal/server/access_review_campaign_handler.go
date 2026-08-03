@@ -271,7 +271,7 @@ func (s *HTTPServer) submitReviewCampaign(w http.ResponseWriter, r *http.Request
 	var c *ReviewCampaign
 	if s.campaignRepo != nil {
 		var err error
-		c, err = s.campaignRepo.GetByID(r.Context(), campaignID)
+		c, err = s.campaignRepo.GetByID(r.Context(), campaignID, tid)
 		if err != nil || c == nil {
 			writeJSONError(w, http.StatusNotFound, "campaign not found")
 			return
@@ -284,7 +284,7 @@ func (s *HTTPServer) submitReviewCampaign(w http.ResponseWriter, r *http.Request
 			writeJSONError(w, http.StatusConflict, "campaign already completed")
 			return
 		}
-		if err := s.campaignRepo.Submit(r.Context(), campaignID, req.Decision, req.Notes); err != nil {
+		if err := s.campaignRepo.Submit(r.Context(), campaignID, tid, req.Decision, req.Notes); err != nil {
 			writeJSONError(w, http.StatusInternalServerError, "internal server error")
 			return
 		}

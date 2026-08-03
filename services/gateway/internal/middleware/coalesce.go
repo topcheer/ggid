@@ -99,6 +99,11 @@ func CoalesceMiddleware(rc *RequestCoalescer) func(http.Handler) http.Handler {
 			if tc, err := ggidtenant.FromContext(r.Context()); err == nil && tc.TenantID != uuid.Nil {
 				tenantID = tc.TenantID.String()
 			}
+			// SECURITY: Prefer user ID from JWT-verified context over raw header
+			// to prevent cross-user cache poisoning via forged X-User-ID.
+			if ctxUID, ok := r.Context().Value(UserIDKey).(string); ok && ctxUID != "" {
+				userID = ctxUID
+			}
 			var key string
 			if r.Method == http.MethodGet {
 				key = coalesceKey(r.Method, r.URL.Path, r.URL.RawQuery, tenantID, userID)

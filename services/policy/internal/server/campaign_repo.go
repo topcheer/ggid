@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
@@ -53,27 +54,29 @@ func (r *CampaignRepo) ListActive(ctx context.Context, tenantID string) ([]*Revi
 	return scanCampaigns(rows)
 }
 
-func (r *CampaignRepo) GetByID(ctx context.Context, id string) (*ReviewCampaign, error) {
+func (r *CampaignRepo) GetByID(ctx context.Context, id, tenantID string) (*ReviewCampaign, error) {
 	if r.pool == nil {
 		return nil, nil
 	}
 	cid, _ := uuid.Parse(id)
+	tid, _ := uuid.Parse(tenantID)
 	row := r.pool.QueryRow(ctx, `
 		SELECT id, tenant_id, scope, scope_id, reviewer_id, deadline, status, decision, notes, created_at, submitted_at
-		FROM iga_campaigns WHERE id = $1
-	`, cid)
+		FROM iga_campaigns WHERE id = $1 AND tenant_id = $2
+	`, cid, tid)
 	return scanCampaignRow(row)
 }
 
-func (r *CampaignRepo) Submit(ctx context.Context, id, decision, notes string) error {
+func (r *CampaignRepo) Submit(ctx context.Context, id, tenantID, decision, notes string) error {
 	if r.pool == nil {
 		return nil
 	}
 	cid, _ := uuid.Parse(id)
+	tid, _ := uuid.Parse(tenantID)
 	_, err := r.pool.Exec(ctx, `
-		UPDATE iga_campaigns SET status = 'completed', decision = $2, notes = $3, submitted_at = now()
-		WHERE id = $1 AND status = 'active'
-	`, cid, decision, notes)
+		UPDATE iga_campaigns SET status = 'completed', decision = $3, notes = $4, submitted_at = now()
+		WHERE id = $1 AND tenant_id = $2 AND status = 'active'
+	`, cid, tid, decision, notes)
 	return err
 }
 
