@@ -194,11 +194,37 @@ func (h *HTTPHandler) handleBulkImport(w http.ResponseWriter, r *http.Request) {
 
 // DetectHashType identifies the password hash algorithm from the hash format or explicit type.
 func DetectHashType(hash, explicitType string) string {
+	// SECURITY: When explicitType is provided, still validate that the hash
+	// content matches the claimed type. Previously returned explicitType
+	// without checking, allowing attackers to claim "argon2id" with a
+	// garbage hash to bypass plaintext/unknown rejection.
 	if explicitType != "" {
-		return strings.ToLower(explicitType)
+		clamped := strings.ToLower(explicitType)
+		if detected := detectHashFromContent(hash); detected != "plaintext" && detected != "unknown" {
+			// Hash content matches a known format - trust it.
+			return detected
+		}
+		// Hash content doesn't match any known format.
+		// If explicitType is a recognized algorithm but hash doesn't match,
+		// return "unknown" so the production check rejects it.
+		if isKnownHashType(clamped) {
+			return "unknown"
+		}
+		// Unrecognized explicitType with non-matching hash content - reject.
+		return "unknown"
 	}
+	return detectHashFromContent(hash)
+}
 
-	// Argon2id: "argon2id$..."
+func isKnownHashType(t string) bool {
+	switch t {
+	case "argon2id", "bcrypt", "pbkdf2", "scrypt", "ssha", "ssha256":
+		return true
+	}
+	return false
+}
+
+func detectHashFromContent(hash string) string {
 	if strings.HasPrefix(hash, "argon2id$") || strings.HasPrefix(hash, "$argon2id$") {
 		return "argon2id"
 	}
@@ -256,7 +282,7 @@ func VerifyMultiHash(password, storedHash string) (valid bool, needsRehash bool)
 
 	case "ssha", "ssha256":
 		// LDAP SSHA: base64 decode, split salt, SHA digest.
-		// Structure ready — implementation in production with crypto/sha + base64.
+		// Structure ready - implementation in production with crypto/sha + base64.
 		return false, true
 
 	case "pbkdf2":

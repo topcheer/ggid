@@ -29,8 +29,14 @@ func TestDetectHashType_Plaintext(t *testing.T) {
 }
 
 func TestDetectHashType_Explicit(t *testing.T) {
-	if dt := DetectHashType("somedata", "bcrypt"); dt != "bcrypt" {
-		t.Errorf("explicit type should override detection, got %s", dt)
+	// Explicit type must still validate against hash content (R291 fix).
+	// Valid bcrypt hash with explicit type returns detected type.
+	if dt := DetectHashType("$2a$10$abcdefghijklmnopqrstuuABCDEFGHIJKLMNOPQRSTUVWXYZ012345", "bcrypt"); dt != "bcrypt" {
+		t.Errorf("explicit type with matching content should return detected, got %s", dt)
+	}
+	// Explicit type with non-matching content returns "unknown" (R291 security fix).
+	if dt := DetectHashType("somedata", "bcrypt"); dt != "unknown" {
+		t.Errorf("explicit type with non-matching content should return unknown, got %s", dt)
 	}
 }
 
