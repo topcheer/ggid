@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"time"
 
+	ggidtenant "github.com/ggid/ggid/pkg/tenant"
 	"github.com/google/uuid"
 )
 
@@ -27,7 +28,16 @@ func (h *HTTPHandler) handleUserRoles(ctx context.Context, userID uuid.UUID, w h
 	pool := h.svc.Pool()
 
 	// SECURITY: extract caller's tenant for cross-tenant protection.
+	// Prefer JWT-verified context over raw header to prevent spoofing.
 	callerTenantID := r.Header.Get("X-Tenant-ID")
+	if tc, err := ggidtenant.FromContext(r.Context()); err == nil && tc.TenantID != uuid.Nil {
+		callerTenantID = tc.TenantID.String()
+	}
+	// SECURITY: fail-closed — require tenant context to prevent cross-tenant data leakage.
+	if callerTenantID == "" {
+		writeJSON(w, http.StatusForbidden, map[string]string{"error": "tenant context required"})
+		return
+	}
 
 	switch r.Method {
 	case http.MethodGet:
