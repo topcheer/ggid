@@ -11,9 +11,8 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
-	"google.golang.org/grpc/status"
-
 	"github.com/golang-jwt/jwt/v5"
+	"google.golang.org/grpc/status"
 )
 
 // GRPCInterceptorConfig configures the gRPC server interceptors.
@@ -120,10 +119,6 @@ func GRPCUnaryInterceptor(cfg *GRPCInterceptorConfig) grpc.UnaryServerIntercepto
 				return nil, status.Error(codes.Unauthenticated, "invalid token")
 			}
 			ctx = context.WithValue(ctx, grpcUserCtxKey, claims["sub"])
-			// SECURITY: Inject tenant_id from verified JWT claims.
-			if tid, ok := claims["tenant_id"].(string); ok {
-				ctx = context.WithValue(ctx, grpcTenantCtxKey, tid)
-			}
 			// SECURITY: Extract tenant_id from JWT claims (not metadata header).
 			// Falls back to metadata header for backwards compatibility.
 			if tid, ok := claims["tenant_id"].(string); ok && tid != "" {
