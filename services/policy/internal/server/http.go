@@ -2392,7 +2392,11 @@ func isAdminRequest(r *http.Request) bool {
 	}
 	for _, s := range strings.Split(scopes, ",") {
 		s = strings.TrimSpace(s)
-		if s == "platform:admin" || s == "tenant:admin" {
+		// SECURITY: Only platform:admin is accepted for global actions.
+		// tenant:admin must NOT be accepted because global singletons (e.g.
+		// defaultPolicyAction) affect ALL tenants — a tenant admin changing
+		// the default action from deny→allow would weaken security for every tenant.
+		if s == "platform:admin" {
 			return true
 		}
 	}

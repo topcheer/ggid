@@ -12,6 +12,7 @@ import (
 // reviewDelegation represents a delegated access review.
 type reviewDelegation struct {
 	ID               string `json:"id"`
+	TenantID         string `json:"tenant_id"`
 	CampaignID       string `json:"campaign_id"`
 	OriginalReviewer string `json:"original_reviewer"`
 	DelegatedTo      string `json:"delegated_to"`
@@ -56,8 +57,10 @@ func (s *HTTPServer) handleReviewDelegation(w http.ResponseWriter, r *http.Reque
 			expiresAt = time.Now().UTC().Add(7 * 24 * time.Hour).Format(time.RFC3339)
 		}
 
+		// SECURITY: Record caller's tenant to isolate delegation records.
+		tenantID := callerTenant(r)
 		deg := &reviewDelegation{
-			ID: uuid.New().String(), CampaignID: req.CampaignID,
+			ID: uuid.New().String(), TenantID: tenantID, CampaignID: req.CampaignID,
 			OriginalReviewer: req.OriginalReviewer, DelegatedTo: req.DelegatedTo,
 			Scope: req.Scope, ExpiresAt: expiresAt,
 			Status: "active", CreatedAt: time.Now().UTC().Format(time.RFC3339),
@@ -73,10 +76,15 @@ func (s *HTTPServer) handleReviewDelegation(w http.ResponseWriter, r *http.Reque
 		reviewer := r.URL.Query().Get("reviewer")
 		status := r.URL.Query().Get("status")
 
+		// SECURITY: Only return delegations belonging to the caller's tenant.
+		tenantID := callerTenant(r)
 		reviewDelegationStore.RLock()
 		result := []*reviewDelegation{}
 		now := time.Now().UTC()
 		for _, d := range reviewDelegationStore.data {
+			if d.TenantID != tenantID {
+				continue
+			}
 			// Auto-expire
 			if d.Status == "active" {
 				if exp, err := time.Parse(time.RFC3339, d.ExpiresAt); err == nil && now.After(exp) {
