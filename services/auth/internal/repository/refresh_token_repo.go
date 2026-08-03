@@ -6,7 +6,9 @@ import (
 
 	"github.com/ggid/ggid/services/auth/internal/domain"
 	"github.com/google/uuid"
+
 	"github.com/jackc/pgx/v5"
+
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -54,6 +56,27 @@ func (r *RefreshTokenRepository) FindByHash(ctx context.Context, tokenHash strin
 func (r *RefreshTokenRepository) Revoke(ctx context.Context, id uuid.UUID) error {
 	_, err := r.db.Exec(ctx, `UPDATE refresh_tokens SET revoked_at = NOW() WHERE id = $1`, id)
 	return err
+}
+
+// ConsumeRefreshToken atomically finds and revokes a refresh token in a single
+// UPDATE, preventing TOCTOU race where concurrent requests both read the same
+// token before either revokes it. Returns the token if exactly one row was
+// affected (i.e., the caller won the race).
+func (r *RefreshTokenRepository) ConsumeRefreshToken(ctx context.Context, tokenHash string) (*domain.RefreshToken, error) {
+	row := r.db.QueryRow(ctx, `
+		UPDATE refresh_tokens
+		SET revoked_at = NOW()
+		WHERE token_hash = $1
+		  AND revoked_at IS NULL
+		RETURNING id, tenant_id, user_id, session_id, client_id, token_hash, scope,
+		          expires_at, rotated_from, revoked_at, created_at`,
+		tokenHash,
+	)
+	rt, err := scanRefreshToken(row)
+	if err != nil {
+		return nil, err // pgx.ErrNoRows if already consumed or not found
+	}
+	return rt, nil
 }
 
 // RevokeAllForSession revokes all refresh tokens tied to a session.
