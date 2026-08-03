@@ -3,6 +3,7 @@ package healthcheck
 
 import (
 	"context"
+	"fmt"
 	"encoding/json"
 	"io"
 	"net/http"
@@ -27,23 +28,23 @@ func NewChecker(services map[string]string) *Checker {
 
 // ServiceStatus is the health status of a single backend service.
 type ServiceStatus struct {
-	Name           string `json:"name"`
-	Status         string `json:"status"`
-	Latency        int64  `json:"latency_ms"`
-	Version        string `json:"version,omitempty"`
-	UptimeSeconds  int64  `json:"uptime_seconds,omitempty"`
-	Error          string `json:"error,omitempty"`
+	Name          string `json:"name"`
+	Status        string `json:"status"`
+	Latency       int64  `json:"latency_ms"`
+	Version       string `json:"version,omitempty"`
+	UptimeSeconds int64  `json:"uptime_seconds,omitempty"`
+	Error         string `json:"error,omitempty"`
 }
 
 // AggregatedStatus is the overall health response.
 type AggregatedStatus struct {
-	Status    string                   `json:"status"`
-	Total     int                      `json:"total"`
-	Healthy   int                      `json:"healthy"`
-	Unhealthy int                      `json:"unhealthy"`
-	Services  map[string]ServiceStatus `json:"services"`
-	GatewayUptimeSeconds int64          `json:"gateway_uptime_seconds"`
-	CheckedAt time.Time                `json:"checked_at"`
+	Status               string                   `json:"status"`
+	Total                int                      `json:"total"`
+	Healthy              int                      `json:"healthy"`
+	Unhealthy            int                      `json:"unhealthy"`
+	Services             map[string]ServiceStatus `json:"services"`
+	GatewayUptimeSeconds int64                    `json:"gateway_uptime_seconds"`
+	CheckedAt            time.Time                `json:"checked_at"`
 }
 
 // gatewayStart tracks when the checker was created (proxy for gateway uptime).
@@ -146,6 +147,13 @@ func (c *Checker) CheckAll(ctx context.Context) *AggregatedStatus {
 		wg.Add(1)
 		go func(name, healthURL string) {
 			defer wg.Done()
+			defer func() {
+				if r := recover(); r != nil {
+					mu.Lock()
+					results[name] = ServiceStatus{Name: name, Status: "unhealthy", Error: fmt.Sprintf("health check panic: %v", r)}
+					mu.Unlock()
+				}
+			}()
 			status := c.checkOne(ctx, name, healthURL)
 			mu.Lock()
 			results[name] = status
@@ -168,13 +176,13 @@ func (c *Checker) CheckAll(ctx context.Context) *AggregatedStatus {
 	}
 
 	return &AggregatedStatus{
-		Status:              overall,
-		Total:               len(results),
-		Healthy:             healthy,
-		Unhealthy:           len(results) - healthy,
-		Services:            results,
+		Status:               overall,
+		Total:                len(results),
+		Healthy:              healthy,
+		Unhealthy:            len(results) - healthy,
+		Services:             results,
 		GatewayUptimeSeconds: int64(time.Since(gatewayStart).Seconds()),
-		CheckedAt:           time.Now().UTC(),
+		CheckedAt:            time.Now().UTC(),
 	}
 }
 
