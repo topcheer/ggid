@@ -78,7 +78,7 @@ gateway:
   env:
     JWKS_REFRESH_INTERVAL: "15m"
     LOG_LEVEL: info
-    GATEWAY_JWT_AUDIENCE: gcid-console
+    GATEWAY_JWT_AUDIENCE: ggid-console
   # Horizontal Pod Autoscaler
   autoscaling:
     enabled: true
