@@ -2,6 +2,7 @@ package middleware
 
 import (
 	"context"
+	"fmt"
 	"log/slog"
 	"os"
 	"strings"
@@ -10,9 +11,8 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
-	"google.golang.org/grpc/status"
-
 	"github.com/golang-jwt/jwt/v5"
+	"google.golang.org/grpc/status"
 )
 
 // GRPCInterceptorConfig configures the gRPC server interceptors.
@@ -173,7 +173,26 @@ func GRPCStreamInterceptor(cfg *GRPCInterceptorConfig) grpc.StreamServerIntercep
 				if token == authVals[0] {
 					return status.Error(codes.Unauthenticated, "invalid authorization scheme")
 				}
-				ctx = context.WithValue(ctx, grpcUserCtxKey, token)
+				// SECURITY: Validate JWT — same as unary interceptor.
+				claims := jwt.MapClaims{}
+				parserOpts := []jwt.ParserOption{
+					jwt.WithValidMethods([]string{"HS256"}),
+					jwt.WithExpirationRequired(),
+				}
+				if cfg.JWTIssuer != "" {
+					parserOpts = append(parserOpts, jwt.WithIssuer(cfg.JWTIssuer))
+				}
+				if _, err := jwt.NewParser(parserOpts...).ParseWithClaims(token, claims, func(t *jwt.Token) (any, error) {
+					if _, ok := t.Method.(*jwt.SigningMethodHMAC); ok {
+						return []byte(cfg.JWTSecret), nil
+					}
+					return nil, fmt.Errorf("unsupported signing method")
+				}); err != nil {
+					return status.Error(codes.Unauthenticated, "invalid token")
+				}
+				if sub, ok := claims["sub"].(string); ok {
+					ctx = context.WithValue(ctx, grpcUserCtxKey, sub)
+				}
 			}
 		}
 
