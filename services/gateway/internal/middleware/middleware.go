@@ -26,6 +26,7 @@ import (
 	"github.com/ggid/ggid/pkg/tenant"
 
 	"github.com/golang-jwt/jwt/v5"
+
 	"github.com/google/uuid"
 )
 
@@ -246,7 +247,10 @@ func CSRFProtect(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// Safe methods don't need CSRF check, but we refresh the cookie
 		if r.Method == http.MethodGet || r.Method == http.MethodHead || r.Method == http.MethodOptions {
-			SetCSRFCookie(w)
+			if !SetCSRFCookie(w) {
+				writeForbidden(w, "failed to generate CSRF token")
+				return
+			}
 			next.ServeHTTP(w, r)
 			return
 		}
@@ -275,8 +279,12 @@ func CSRFProtect(next http.Handler) http.Handler {
 }
 
 // SetCSRFCookie sets a CSRF token cookie on the response.
-func SetCSRFCookie(w http.ResponseWriter) {
-	token := generateCSRFToken()
+func SetCSRFCookie(w http.ResponseWriter) bool {
+	token, err := generateCSRFToken()
+	if err != nil {
+		slog.Error("failed to generate CSRF token", "error", err)
+		return false
+	}
 	http.SetCookie(w, &http.Cookie{
 		Name:     "csrf_token",
 		Value:    token,
@@ -286,6 +294,7 @@ func SetCSRFCookie(w http.ResponseWriter) {
 		Secure:   true,
 		SameSite: http.SameSiteLaxMode,
 	})
+	return true
 }
 
 // ValidateCSRF checks the double-submit token for session-based requests.
@@ -299,19 +308,15 @@ func ValidateCSRF(r *http.Request) bool {
 	return subtle.ConstantTimeCompare([]byte(cookieToken.Value), []byte(headerToken)) == 1
 }
 
-func generateCSRFToken() string {
+func generateCSRFToken() (string, error) {
 	b := make([]byte, 32)
 	if _, err := rand.Read(b); err != nil {
-		// crypto/rand failure is catastrophic — generate a best-effort token
-		// from time + process ID to avoid request-path panic, then log.
+		// crypto/rand failure is catastrophic — never generate a predictable token.
 		slog.Error("crypto/rand failed for CSRF token generation", "error", err)
-		b = make([]byte, 32)
-		for i := range b {
-			b[i] = byte(time.Now().UnixNano() >> uint(i))
-		}
+		return "", err
 	}
 	hash := sha256.Sum256(b)
-	return base64.RawURLEncoding.EncodeToString(hash[:])
+	return base64.RawURLEncoding.EncodeToString(hash[:]), nil
 }
 
 func writeForbidden(w http.ResponseWriter, msg string) {

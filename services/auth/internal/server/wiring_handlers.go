@@ -9,9 +9,29 @@ import (
 
 	"github.com/ggid/ggid/services/auth/internal/service"
 	"github.com/ggid/ggid/services/auth/internal/webauthn"
-	"github.com/golang-jwt/jwt/v5"
+
 	"github.com/google/uuid"
 )
+
+// intersectPermissions returns the intersection of two permission slices.
+// Only permissions present in BOTH slices are kept. This ensures the
+// impersonation token never grants more than the impersonator already has.
+func intersectPermissions(target, impersonator []string) []string {
+	if len(impersonator) == 0 {
+		return nil // fail-closed: no impersonator perms = no impersonation perms
+	}
+	impSet := make(map[string]bool, len(impersonator))
+	for _, p := range impersonator {
+		impSet[strings.ToLower(p)] = true
+	}
+	var result []string
+	for _, p := range target {
+		if impSet[strings.ToLower(p)] {
+			result = append(result, p)
+		}
+	}
+	return result
+}
 
 func parseUUIDSafe(s string) uuid.UUID {
 	id, err := uuid.Parse(s)
@@ -106,20 +126,24 @@ func (h *Handler) handleImpersonate(w http.ResponseWriter, r *http.Request) {
 	// Sign an impersonation JWT using RS256 (same keypair as OAuth tokens)
 	// so the gateway JWT middleware can validate it.
 	//
-	// SECURITY: The impersonation token carries the TARGET USER's permissions
-	// (not the admin's full scope). This ensures admins can only act within
-	// the target user's actual access level — they cannot escalate privileges
-	// by impersonating a higher-privileged user.
+	// SECURITY: The impersonation token carries the INTERSECTION of the
+	// target user's permissions and the impersonator's own permissions.
+	// This prevents privilege escalation: a tenant admin cannot impersonate
+	// a platform:admin user to gain permissions they don't possess.
 	now := time.Now().UTC()
 
-	// Fetch target user's actual roles/permissions from DB (intersection
-	// with admin's own permissions would be ideal, but for now we trust the
-	// target user's real DB permissions since impersonation is admin-gated).
+	// SECURITY: Fetch target user's roles/permissions from DB, then compute
+	// the INTERSECTION with the impersonator's own permissions. This prevents
+	// a tenant admin from impersonating a platform:admin user to escalate
+	// privileges beyond their own access level.
 	var targetPerms []string
 	var targetRoles []string
 	if h.pool != nil {
 		targetUUID := parseUUIDSafe(req.TargetUserID)
 		tenantUUID := parseUUIDSafe(req.TenantID)
+		impersonatorUUID := parseUUIDSafe(req.ImpersonatorID)
+
+		// Fetch target user's permissions
 		rows, err := h.pool.Query(r.Context(),
 			`SELECT DISTINCT p.key FROM role_permissions rp
 			 JOIN permissions p ON p.id = rp.permission_id
@@ -150,6 +174,31 @@ func (h *Handler) handleImpersonate(w http.ResponseWriter, r *http.Request) {
 			}
 			roleRows.Close()
 		}
+
+		// Fetch impersonator's permissions and compute intersection
+		var impersonatorPerms []string
+		impRows, err := h.pool.Query(r.Context(),
+			`SELECT DISTINCT p.key FROM role_permissions rp
+			 JOIN permissions p ON p.id = rp.permission_id
+			 JOIN user_roles ur ON ur.role_id = rp.role_id
+			 JOIN roles r ON r.id = ur.role_id
+			 WHERE ur.user_id = $1 AND r.tenant_id = $2`,
+			impersonatorUUID, tenantUUID)
+		if err == nil {
+			for impRows.Next() {
+				var p string
+				if impRows.Scan(&p) == nil {
+					impersonatorPerms = append(impersonatorPerms, p)
+				}
+			}
+			impRows.Close()
+		}
+		// Intersection: keep only permissions the target has AND the
+		// impersonator also has. platform:admin bypass is handled by
+		// HasPermission at the gateway layer — here we enforce that the
+		// impersonation token cannot grant a permission the impersonator
+		// does not themselves possess.
+		targetPerms = intersectPermissions(targetPerms, impersonatorPerms)
 	}
 
 	claims := jwt.MapClaims{
