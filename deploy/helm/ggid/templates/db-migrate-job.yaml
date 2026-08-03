@@ -20,7 +20,7 @@ spec:
       restartPolicy: OnFailure
       containers:
       - name: migrate
-        image: "{{ .Values.migration.image.repository }}:{{ .Values.migration.image.tag }}"
+        image: "{{ .Values.migration.image.repository }}:{{ .Values.migration.image.tag | default .Chart.AppVersion }}"
         env:
         - name: PGPASSWORD
           valueFrom:

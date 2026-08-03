@@ -62,7 +62,6 @@ gateway:
   enabled: true
   image:
     repository: ggid/gateway
-    tag: "latest"
     pullPolicy: IfNotPresent
   replicaCount: 2
   service:
@@ -99,7 +98,6 @@ identity:
   enabled: true
   image:
     repository: ggid/identity
-    tag: "latest"
     pullPolicy: IfNotPresent
   replicaCount: 2
   service:
@@ -119,7 +117,6 @@ auth:
   enabled: true
   image:
     repository: ggid/auth
-    tag: "latest"
     pullPolicy: IfNotPresent
   replicaCount: 2
   service:
@@ -143,7 +140,6 @@ oauth:
   enabled: true
   image:
     repository: ggid/oauth
-    tag: "latest"
     pullPolicy: IfNotPresent
   replicaCount: 2
   service:
@@ -162,7 +158,6 @@ policy:
   enabled: true
   image:
     repository: ggid/policy
-    tag: "latest"
     pullPolicy: IfNotPresent
   replicaCount: 2
   service:
@@ -182,7 +177,6 @@ org:
   enabled: true
   image:
     repository: ggid/org
-    tag: "latest"
     pullPolicy: IfNotPresent
   replicaCount: 2
   service:
@@ -202,7 +196,6 @@ audit:
   enabled: true
   image:
     repository: ggid/audit
-    tag: "latest"
     pullPolicy: IfNotPresent
   replicaCount: 1
   service:
