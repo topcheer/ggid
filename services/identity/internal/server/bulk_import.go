@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
+	"os"
 	"strings"
 	"time"
 
@@ -143,7 +144,17 @@ func (h *HTTPHandler) handleBulkImport(w http.ResponseWriter, r *http.Request) {
 			continue
 		}
 		// If password_hash was provided (pre-hashed), store it directly in credentials.
+		// SECURITY: Reject plaintext hashes in non-dev environments to prevent
+		// authentication bypass via pre-computed plaintext injection.
 		if user.Password == "" && secretHash != "" && h.svc.Pool() != nil {
+			detectedType := DetectHashType(secretHash, user.HashType)
+			if detectedType == "plaintext" {
+				if env := os.Getenv("GGID_ENV"); env != "test" && env != "dev" {
+					result.Failed++
+					result.Errors = append(result.Errors, ImportError{Email: user.Email, Reason: "plaintext hash_type not allowed in production"})
+					continue
+				}
+			}
 			_, _ = h.svc.Pool().Exec(r.Context(),
 				`UPDATE credentials SET secret = $1 WHERE user_id = $2 AND type = 'password'`,
 				secretHash, createdUser.ID)
