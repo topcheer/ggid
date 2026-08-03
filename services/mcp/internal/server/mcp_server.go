@@ -57,6 +57,9 @@ func (s *Server) ListenAndServe(addr string) error {
 	mux.HandleFunc("/healthz", func(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusOK, map[string]any{"status": "ok"})
 	})
+	mux.HandleFunc("/readyz", func(w http.ResponseWriter, r *http.Request) {
+		writeJSON(w, http.StatusOK, map[string]any{"status": "ready"})
+	})
 	srv := &http.Server{
 		Addr:         addr,
 		Handler:      mux,
