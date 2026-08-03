@@ -808,10 +808,9 @@ func (gw *Gateway) buildAuthChain(jwtRequired bool) http.Handler {
 
 // maxBodySize returns the configured maximum request body size.
 
-// adminOnlyPaths are paths that require tenant:admin or platform:admin scope.
-// Kept in sync with middleware.defaultAdminPrefixes — both lists must cover
-// the same set of admin endpoints (both /api/v1/* and bare /oauth/* variants).
-var adminOnlyPaths = []string{
+// AdminOnlyPaths are paths that require tenant:admin or platform:admin scope.
+// Exported so middleware package can check if a path is admin-only.
+var AdminOnlyPaths = []string{
 	"/api/v1/users", "/api/v1/roles", "/api/v1/audit/",
 	"/api/v1/policies", "/api/v1/policy/", "/api/v1/webhooks", "/api/v1/oauth/clients",
 	"/api/v1/settings/", "/api/v1/admin/", "/api/v1/identity/dashboard",
@@ -911,7 +910,7 @@ func (gw *Gateway) checkRouteScope(w http.ResponseWriter, r *http.Request) bool 
 	}
 
 	// Check tenant-admin paths (but allow self-service endpoints)
-	for _, prefix := range adminOnlyPaths {
+	for _, prefix := range AdminOnlyPaths {
 		if strings.HasPrefix(path, prefix) && !hasTenant {
 			// Allow whitelisted self-service paths (exact match only)
 			if middleware.SelfServicePaths[path] {
@@ -923,9 +922,9 @@ func (gw *Gateway) checkRouteScope(w http.ResponseWriter, r *http.Request) bool 
 			}
 			// Permission-key bypass: a non-admin user with a fine-grained
 			// permission (e.g. "users:read") that maps to this route is
-			// allowed through; the dynamic RBAC middleware or backend
-			// service will enforce the exact permission.
-			if middleware.HasPermissionForRoute(path, r.Method, claims.Permissions) {
+			// allowed through ONLY for non-admin paths. Admin-only paths
+			// require admin scope regardless of permissions.
+			if !middleware.IsAdminEndpoint(path) && middleware.HasPermissionForRoute(path, r.Method, claims.Permissions) {
 				continue
 			}
 			writeGatewayJSONError(w, http.StatusForbidden, "admin access required")
