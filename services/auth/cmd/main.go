@@ -3,6 +3,7 @@ package main
 
 import (
 	"context"
+	"crypto/tls"
 	"crypto/rand"
 	"crypto/rsa"
 	"crypto/x509"
@@ -43,6 +44,16 @@ import (
 	"github.com/nats-io/nats.go"
 	"github.com/redis/go-redis/v9"
 )
+
+// redisTLSConfig returns a TLS config for Redis when REDIS_TLS=true.
+func redisTLSConfig() *tls.Config {
+	if os.Getenv("REDIS_TLS") != "true" {
+		return nil
+	}
+	return &tls.Config{
+		InsecureSkipVerify: os.Getenv("REDIS_TLS_SKIP_VERIFY") == "true",
+	}
+}
 
 func main() {
 	cfg := conf.LoadFromEnv(conf.Default())
@@ -90,6 +101,7 @@ func main() {
 		ReadTimeout:  3 * time.Second,
 		WriteTimeout: 3 * time.Second,
 		PoolTimeout:  4 * time.Second,
+		TLSConfig:    redisTLSConfig(),
 	})
 	if err := rdb.Ping(ctx).Err(); err != nil {
 		log.Fatalf("redis ping failed: %v", err)

@@ -6,10 +6,12 @@ import (
 	"compress/flate"
 	"context"
 	stdcrypto "crypto"
+	"crypto/tls"
 	"crypto/hmac"
 	"crypto/rand"
 	"crypto/rsa"
 	"crypto/sha256"
+
 	"crypto/x509"
 	"crypto/x509/pkix"
 	"encoding/base64"
@@ -43,9 +45,11 @@ import (
 	"github.com/ggid/ggid/services/oauth/internal/service"
 
 	"github.com/google/uuid"
+
+	"github.com/redis/go-redis/v9"
+
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/redis/go-redis/v9"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
@@ -217,6 +221,7 @@ func NewWithKeyProvider(cfg *conf.Config, kp crypto.KeyProvider) (*Server, error
 			opts.ReadTimeout = 3 * time.Second
 			opts.WriteTimeout = 3 * time.Second
 			opts.PoolTimeout = 4 * time.Second
+			opts.TLSConfig = redisTLSConfig()
 			rdb := redis.NewClient(opts)
 			if err := rdb.Ping(ctx).Err(); err == nil {
 				oauthSvc.SetRedisClient(&redisAdapter{rdb: rdb})
@@ -289,6 +294,16 @@ func NewWithKeyProvider(cfg *conf.Config, kp crypto.KeyProvider) (*Server, error
 }
 
 // Run starts the server and blocks until ctx is cancelled.
+// redisTLSConfig returns a TLS config for Redis when REDIS_TLS=true.
+func redisTLSConfig() *tls.Config {
+	if os.Getenv("REDIS_TLS") != "true" {
+		return nil
+	}
+	return &tls.Config{
+		InsecureSkipVerify: os.Getenv("REDIS_TLS_SKIP_VERIFY") == "true",
+	}
+}
+
 func (s *Server) Run(ctx context.Context) error {
 	lis, err := net.Listen("tcp", s.cfg.HTTP.Addr)
 	if err != nil {
