@@ -153,6 +153,17 @@ func (h *HTTPHandler) handleUserRoles(ctx context.Context, userID uuid.UUID, w h
 			return
 		}
 
+		// SECURITY: Verify target user belongs to caller's tenant (BOLA protection).
+		if callerTenantID != "" {
+			callerTID, _ := uuid.Parse(callerTenantID)
+			var userTenantCheck int
+			err = pool.QueryRow(ctx, `SELECT 1 FROM users WHERE id = $1 AND tenant_id = $2`, userID, callerTID).Scan(&userTenantCheck)
+			if err != nil {
+				writeJSONError(w, http.StatusNotFound, "user not found in your tenant")
+				return
+			}
+		}
+
 		assignment := UserRoleAssignment{
 			UserID:     userID.String(),
 			RoleID:     req.RoleID,
