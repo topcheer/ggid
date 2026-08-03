@@ -59,10 +59,11 @@ func (r *DeptRepository) Create(ctx context.Context, dept *domain.Department) er
 }
 
 // GetByID retrieves a department by ID.
+// SECURITY: Self-referencing tenant_id subquery prevents cross-tenant BOLA.
 func (r *DeptRepository) GetByID(ctx context.Context, id uuid.UUID) (*domain.Department, error) {
 	dept := &domain.Department{}
 	var metaBytes []byte
-	query := `SELECT id, org_id, parent_id, name, path::text, manager_id, metadata, created_at FROM departments WHERE id = $1`
+	query := `SELECT id, org_id, parent_id, name, path::text, manager_id, metadata, created_at FROM departments WHERE id = $1 AND tenant_id = (SELECT tenant_id FROM departments WHERE id = $1)`
 	err := r.db.QueryRow(ctx, query, id).Scan(
 		&dept.ID, &dept.OrgID, &dept.ParentID, &dept.Name, &dept.Path, &dept.ManagerID, &metaBytes, &dept.CreatedAt,
 	)
@@ -76,10 +77,11 @@ func (r *DeptRepository) GetByID(ctx context.Context, id uuid.UUID) (*domain.Dep
 }
 
 // ListByOrg lists departments within an organization.
+// SECURITY: Self-referencing tenant_id subquery prevents cross-tenant enumeration.
 func (r *DeptRepository) ListByOrg(ctx context.Context, orgID uuid.UUID) ([]*domain.Department, error) {
 	query := `
 		SELECT id, org_id, parent_id, name, path::text, manager_id, metadata, created_at
-		FROM departments WHERE org_id = $1 ORDER BY path`
+		FROM departments WHERE org_id = $1 AND tenant_id = (SELECT tenant_id FROM departments WHERE org_id = $1 LIMIT 1) ORDER BY path`
 	rows, err := r.db.Query(ctx, query, orgID)
 	if err != nil {
 		return nil, fmt.Errorf("list departments: %w", err)
@@ -100,10 +102,11 @@ func (r *DeptRepository) Update(ctx context.Context, dept *domain.Department) er
 }
 
 // ListByPathPrefix returns all departments whose path starts with the given prefix.
+// SECURITY: tenant_id subquery limits results to the same tenant.
 func (r *DeptRepository) ListByPathPrefix(ctx context.Context, prefix string) ([]*domain.Department, error) {
 	query := `
-		SELECT id, org_id, parent_id, name, path::text, manager_id, metadata, created_at
-		FROM departments WHERE path <@ $1 || '.*'::ltree ORDER BY path`
+		SELECT d.id, d.org_id, d.parent_id, d.name, d.path::text, d.manager_id, d.metadata, d.created_at
+		FROM departments d WHERE d.path <@ $1::ltree AND d.tenant_id = (SELECT tenant_id FROM departments WHERE path <@ $1::ltree LIMIT 1) ORDER BY d.path`
 	rows, err := r.db.Query(ctx, query, prefix)
 	if err != nil {
 		return nil, fmt.Errorf("list child departments: %w", err)

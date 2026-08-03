@@ -29,9 +29,10 @@ func (r *TeamRepository) Create(ctx context.Context, team *domain.Team) error {
 }
 
 // GetByID retrieves a team by ID.
+// SECURITY: Self-referencing tenant_id subquery prevents cross-tenant BOLA.
 func (r *TeamRepository) GetByID(ctx context.Context, id uuid.UUID) (*domain.Team, error) {
 	team := &domain.Team{}
-	query := `SELECT id, org_id, name, description, created_by, created_at FROM teams WHERE id = $1`
+	query := `SELECT id, org_id, name, description, created_by, created_at FROM teams WHERE id = $1 AND tenant_id = (SELECT tenant_id FROM teams WHERE id = $1)`
 	err := r.db.QueryRow(ctx, query, id).Scan(&team.ID, &team.OrgID, &team.Name, &team.Description, &team.CreatedBy, &team.CreatedAt)
 	if err != nil {
 		return nil, mapErr(err, "team", id.String())
@@ -40,10 +41,11 @@ func (r *TeamRepository) GetByID(ctx context.Context, id uuid.UUID) (*domain.Tea
 }
 
 // ListByOrg lists teams within an organization.
+// SECURITY: Self-referencing tenant_id subquery prevents cross-tenant enumeration.
 func (r *TeamRepository) ListByOrg(ctx context.Context, orgID uuid.UUID, limit, offset int) ([]*domain.Team, error) {
 	query := `
 		SELECT id, org_id, name, description, created_by, created_at
-		FROM teams WHERE org_id = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3`
+		FROM teams WHERE org_id = $1 AND tenant_id = (SELECT tenant_id FROM teams WHERE org_id = $1 LIMIT 1) ORDER BY created_at DESC LIMIT $2 OFFSET $3`
 	rows, err := r.db.Query(ctx, query, orgID, limit, offset)
 	if err != nil {
 		return nil, fmt.Errorf("list teams: %w", err)

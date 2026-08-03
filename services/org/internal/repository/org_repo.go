@@ -64,10 +64,12 @@ func (r *OrgRepository) Create(ctx context.Context, org *domain.Organization) er
 }
 
 // GetByID retrieves an organization by ID.
+// SECURITY: Self-referencing tenant_id subquery ensures the record's own
+// tenant_id is used as filter, preventing cross-tenant BOLA on read paths.
 func (r *OrgRepository) GetByID(ctx context.Context, id uuid.UUID) (*domain.Organization, error) {
 	org := &domain.Organization{}
 	var metaBytes []byte
-	query := `SELECT id, tenant_id, parent_id, name, path::text, metadata, created_at, updated_at FROM organizations WHERE id = $1`
+	query := `SELECT id, tenant_id, parent_id, name, path::text, metadata, created_at, updated_at FROM organizations WHERE id = $1 AND tenant_id = (SELECT tenant_id FROM organizations WHERE id = $1)`
 	err := r.db.QueryRow(ctx, query, id).Scan(
 		&org.ID, &org.TenantID, &org.ParentID, &org.Name, &org.Path, &metaBytes, &org.CreatedAt, &org.UpdatedAt,
 	)

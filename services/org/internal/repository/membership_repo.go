@@ -57,10 +57,11 @@ func (r *MembershipRepository) Remove(ctx context.Context, id uuid.UUID) error {
 }
 
 // GetByID retrieves a membership by ID.
+// SECURITY: Self-referencing tenant_id subquery prevents cross-tenant BOLA.
 func (r *MembershipRepository) GetByID(ctx context.Context, id uuid.UUID) (*domain.Membership, error) {
 	m := &domain.Membership{}
 	var metaBytes []byte
-	query := `SELECT id, user_id, tenant_id, org_id, dept_id, team_id, title, status, joined_at, metadata FROM memberships WHERE id = $1`
+	query := `SELECT id, user_id, tenant_id, org_id, dept_id, team_id, title, status, joined_at, metadata FROM memberships WHERE id = $1 AND tenant_id = (SELECT tenant_id FROM memberships WHERE id = $1)`
 	err := r.db.QueryRow(ctx, query, id).Scan(
 		&m.ID, &m.UserID, &m.TenantID, &m.OrgID, &m.DeptID, &m.TeamID, &m.Title, &m.Status, &m.JoinedAt, &metaBytes,
 	)

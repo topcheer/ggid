@@ -117,10 +117,11 @@ func (r *RoleRepository) Delete(ctx context.Context, id uuid.UUID, tenantID uuid
 
 // GetAncestorChain retrieves a role and all its ancestor roles (for inheritance resolution).
 // Uses a recursive CTE to walk the parent_role_id chain.
+// SECURITY: tenant_id subquery limits the CTE seed to the role's own tenant.
 func (r *RoleRepository) GetAncestorChain(ctx context.Context, roleID uuid.UUID) ([]uuid.UUID, error) {
 	query := `
 		WITH RECURSIVE role_tree AS (
-			SELECT id, parent_role_id FROM roles WHERE id = $1
+			SELECT id, parent_role_id FROM roles WHERE id = $1 AND tenant_id = (SELECT tenant_id FROM roles WHERE id = $1)
 			UNION
 			SELECT r.id, r.parent_role_id FROM roles r
 			JOIN role_tree rt ON r.id = rt.parent_role_id
