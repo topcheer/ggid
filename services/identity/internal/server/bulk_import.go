@@ -148,10 +148,10 @@ func (h *HTTPHandler) handleBulkImport(w http.ResponseWriter, r *http.Request) {
 		// authentication bypass via pre-computed plaintext injection.
 		if user.Password == "" && secretHash != "" && h.svc.Pool() != nil {
 			detectedType := DetectHashType(secretHash, user.HashType)
-			if detectedType == "plaintext" {
-				if env := os.Getenv("GGID_ENV"); env != "test" && env != "dev" {
+			if env := os.Getenv("GGID_ENV"); env != "test" && env != "dev" {
+				if detectedType == "plaintext" || detectedType == "unknown" {
 					result.Failed++
-					result.Errors = append(result.Errors, ImportError{Email: user.Email, Reason: "plaintext hash_type not allowed in production"})
+					result.Errors = append(result.Errors, ImportError{Email: user.Email, Reason: detectedType + " hash_type not allowed in production"})
 					continue
 				}
 			}
