@@ -7,8 +7,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/redis/go-redis/v9"
 	"github.com/google/uuid"
+	"github.com/redis/go-redis/v9"
 )
 
 // ImpersonationToken represents a delegated admin token for impersonation.
@@ -203,7 +203,8 @@ func ResetImpersonationStore() {
 
 var (
 	jtiBlocklistMu sync.RWMutex
-	jtiBlocklist   = make(map[string]time.Time) // jti → revokedAt
+	jtiBlocklist   = make(map[string]time.Time) // jti -> revokedAt
+	jtiCleanupDone chan struct{}
 )
 
 // jtiTTL is how long a revoked JTI stays in the blocklist.
@@ -212,15 +213,33 @@ const jtiTTL = 2 * time.Hour
 
 func init() {
 	// Periodic cleanup of expired JTI blocklist to prevent OOM.
+	// Uses a stoppable goroutine pattern to avoid leak on shutdown.
 	// Note: expiry notifs + impersonation store cleanup is handled by
 	// StartImpersonationCleanup (1-min ticker, context-cancellable).
+	jtiCleanupDone = make(chan struct{})
 	go func() {
 		jtiTicker := time.NewTicker(10 * time.Minute)
 		defer jtiTicker.Stop()
-		for range jtiTicker.C {
-			cleanupJTIBlocklist()
+		for {
+			select {
+			case <-jtiTicker.C:
+				cleanupJTIBlocklist()
+			case <-jtiCleanupDone:
+				return
+			}
 		}
 	}()
+}
+
+// StopJTICleanup stops the background JTI cleanup goroutine.
+func StopJTICleanup() {
+	if jtiCleanupDone != nil {
+		select {
+		case <-jtiCleanupDone:
+		default:
+			close(jtiCleanupDone)
+		}
+	}
 }
 
 func cleanupJTIBlocklist() {

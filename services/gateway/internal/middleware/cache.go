@@ -15,9 +15,10 @@ import (
 
 // Cache provides simple in-memory response caching with ETag support.
 type Cache struct {
-	mu      sync.RWMutex
-	entries map[string]*cacheEntry
-	ttl     time.Duration
+	mu         sync.RWMutex
+	entries    map[string]*cacheEntry
+	ttl        time.Duration
+	maxEntries int
 }
 
 type cacheEntry struct {
@@ -31,8 +32,9 @@ type cacheEntry struct {
 // NewCache creates a response cache with the given TTL.
 func NewCache(ttl time.Duration) *Cache {
 	return &Cache{
-		entries: make(map[string]*cacheEntry),
-		ttl:     ttl,
+		entries:    make(map[string]*cacheEntry),
+		ttl:        ttl,
+		maxEntries: 10000, // prevent memory exhaustion via unbounded cache growth
 	}
 }
 
@@ -85,6 +87,13 @@ func (c *Cache) Middleware(next http.Handler) http.Handler {
 		if cw.statusCode >= 200 && cw.statusCode < 300 && cw.buf.Len() > 0 {
 			etag := generateETag(cw.buf.Bytes())
 			c.mu.Lock()
+			if len(c.entries) >= c.maxEntries {
+				// Evict a random entry to bound memory usage.
+				for k := range c.entries {
+					delete(c.entries, k)
+					break
+				}
+			}
 			c.entries[key] = &cacheEntry{
 				body:       cw.buf.Bytes(),
 				header:     cw.header,
@@ -107,13 +116,15 @@ func (c *Cache) Invalidate() {
 }
 
 func cacheKey(r *http.Request) string {
-	// SECURITY: Include user ID and tenant ID in cache key to prevent cross-user
-	// and cross-tenant data leakage. Without this, User B (or Tenant B) could
-	// receive User A's (or Tenant A's) cached response for the same URL.
-	userID := r.Header.Get("X-User-ID")
-	tenantID := r.Header.Get("X-Tenant-ID")
+	// SECURITY: User ID and tenant ID from JWT-verified context only.
+	// Never fall back to forgeable X-User-ID / X-Tenant-ID headers.
+	userID := ""
+	tenantID := ""
 	if tc, err := ggidtenant.FromContext(r.Context()); err == nil && tc.TenantID != uuid.Nil {
 		tenantID = tc.TenantID.String()
+	}
+	if ctxUID, ok := r.Context().Value(UserIDKey).(string); ok {
+		userID = ctxUID
 	}
 	return tenantID + ":" + userID + ":" + r.Method + ":" + r.URL.RequestURI()
 }
