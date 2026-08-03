@@ -25,6 +25,8 @@ import (
 	"github.com/ggid/ggid/pkg/crypto"
 	"github.com/ggid/ggid/pkg/tenant"
 
+	"github.com/golang-jwt/jwt/v5"
+
 	"github.com/google/uuid"
 )
 
