@@ -48,12 +48,14 @@ func (m *testRoleRepo) Create(_ context.Context, r *domain.Role) error {
 	return nil
 }
 
-func (m *testRoleRepo) GetByID(_ context.Context, id uuid.UUID) (*domain.Role, error) {
+func (m *testRoleRepo) GetByID(_ context.Context, id uuid.UUID, tenantID uuid.UUID) (*domain.Role, error) {
 	if m.getErr != nil {
 		return nil, m.getErr
 	}
 	if r, ok := m.roles[id]; ok {
-		return r, nil
+		if r.TenantID == tenantID || tenantID == uuid.Nil {
+			return r, nil
+		}
 	}
 	return nil, pkgerrors.NotFound("role", id.String())
 }
@@ -75,20 +77,24 @@ func (m *testRoleRepo) ListByTenant(_ context.Context, tid uuid.UUID, limit, off
 	return res, nil
 }
 
-func (m *testRoleRepo) Update(_ context.Context, r *domain.Role) error {
+func (m *testRoleRepo) Update(_ context.Context, r *domain.Role, tenantID uuid.UUID) error {
 	if m.roles == nil {
 		m.roles = map[uuid.UUID]*domain.Role{}
 	}
-	m.roles[r.ID] = r
+	if r.TenantID == tenantID || tenantID == uuid.Nil {
+		m.roles[r.ID] = r
+	}
 	return nil
 }
 
-func (m *testRoleRepo) Delete(_ context.Context, id uuid.UUID) error {
-	if _, ok := m.roles[id]; !ok {
-		return pkgerrors.NotFound("role", id.String())
+func (m *testRoleRepo) Delete(_ context.Context, id uuid.UUID, tenantID uuid.UUID) error {
+	if r, ok := m.roles[id]; ok {
+		if r.TenantID == tenantID || tenantID == uuid.Nil {
+			delete(m.roles, id)
+			return nil
+		}
 	}
-	delete(m.roles, id)
-	return nil
+	return pkgerrors.NotFound("role", id.String())
 }
 
 func (m *testRoleRepo) GrantPermissions(_ context.Context, _ uuid.UUID, _ []uuid.UUID, _ map[string]any) error {

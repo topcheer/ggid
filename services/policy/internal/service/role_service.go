@@ -30,10 +30,10 @@ func WithTenantContext(ctx context.Context, tenantID uuid.UUID) context.Context 
 // RoleRepo provides role persistence operations.
 type RoleRepo interface {
 	Create(ctx context.Context, role *domain.Role) error
-	GetByID(ctx context.Context, id uuid.UUID) (*domain.Role, error)
+	GetByID(ctx context.Context, id uuid.UUID, tenantID uuid.UUID) (*domain.Role, error)
 	ListByTenant(ctx context.Context, tenantID uuid.UUID, limit, offset int) ([]*domain.Role, error)
-	Update(ctx context.Context, role *domain.Role) error
-	Delete(ctx context.Context, id uuid.UUID) error
+	Update(ctx context.Context, role *domain.Role, tenantID uuid.UUID) error
+	Delete(ctx context.Context, id uuid.UUID, tenantID uuid.UUID) error
 	GrantPermissions(ctx context.Context, roleID uuid.UUID, addIDs []uuid.UUID, conditions map[string]any) error
 	RevokePermissions(ctx context.Context, roleID uuid.UUID, permIDs []uuid.UUID) error
 	GetRolePermissions(ctx context.Context, roleIDs []uuid.UUID, tenantID uuid.UUID) ([]*domain.Permission, error)
@@ -118,11 +118,9 @@ func (s *RoleService) CreateRole(ctx context.Context, tenantID uuid.UUID, key, n
 // GetRole retrieves a role by ID.
 // SECURITY: validates role belongs to the caller's tenant.
 func (s *RoleService) GetRole(ctx context.Context, id uuid.UUID) (*domain.Role, error) {
-	role, err := s.roleRepo.GetByID(ctx, id)
+	tenantID := tenantIDFromHTTPRequest(ctx)
+	role, err := s.roleRepo.GetByID(ctx, id, tenantID)
 	if err != nil {
-		return nil, err
-	}
-	if err := validateRoleTenant(ctx, role); err != nil {
 		return nil, err
 	}
 	return role, nil
@@ -143,11 +141,9 @@ func (s *RoleService) ListRoles(ctx context.Context, tenantID uuid.UUID, page, p
 // UpdateRole updates a role's name, description, or parent.
 // SECURITY: validates role belongs to the caller's tenant.
 func (s *RoleService) UpdateRole(ctx context.Context, id uuid.UUID, name, description *string, parentRoleID *uuid.UUID) (*domain.Role, error) {
-	role, err := s.roleRepo.GetByID(ctx, id)
+	tenantID := tenantIDFromHTTPRequest(ctx)
+	role, err := s.roleRepo.GetByID(ctx, id, tenantID)
 	if err != nil {
-		return nil, err
-	}
-	if err := validateRoleTenant(ctx, role); err != nil {
 		return nil, err
 	}
 	if name != nil {
@@ -184,7 +180,7 @@ func (s *RoleService) UpdateRole(ctx context.Context, id uuid.UUID, name, descri
 			return updated, nil
 		}
 	}
-	if err := s.roleRepo.Update(ctx, role); err != nil {
+	if err := s.roleRepo.Update(ctx, role, tenantID); err != nil {
 		return nil, errors.Wrap(errors.ErrInternal, "update role", err)
 	}
 	return role, nil
@@ -197,6 +193,8 @@ func (s *RoleService) SetParent(ctx context.Context, roleID, parentID uuid.UUID)
 		return nil, errors.New(errors.ErrInvalidArgument, "a role cannot be its own parent")
 	}
 
+	tenantID := tenantIDFromHTTPRequest(ctx)
+
 	// Walk up the parent chain from parentID to detect cycles.
 	visited := map[uuid.UUID]bool{roleID: true}
 	current := parentID
@@ -206,7 +204,7 @@ func (s *RoleService) SetParent(ctx context.Context, roleID, parentID uuid.UUID)
 			return nil, errors.New(errors.ErrFailedPrecondition, "cycle detected in role hierarchy")
 		}
 		visited[current] = true
-		p, err := s.roleRepo.GetByID(ctx, current)
+		p, err := s.roleRepo.GetByID(ctx, current, tenantID)
 		if err != nil {
 			return nil, errors.Wrap(errors.ErrNotFound, "parent role not found", err)
 		}
@@ -218,7 +216,7 @@ func (s *RoleService) SetParent(ctx context.Context, roleID, parentID uuid.UUID)
 
 	// SECURITY: If we exhausted maxDepth iterations without reaching root,
 	// the parent chain is too deep to verify — reject to prevent undetected cycles.
-	lastRole, err := s.roleRepo.GetByID(ctx, current)
+	lastRole, err := s.roleRepo.GetByID(ctx, current, tenantID)
 	if err != nil {
 		return nil, errors.Wrap(errors.ErrInternal, "verify parent chain depth", err)
 	}
@@ -226,13 +224,13 @@ func (s *RoleService) SetParent(ctx context.Context, roleID, parentID uuid.UUID)
 		return nil, errors.New(errors.ErrInvalidArgument, "parent chain exceeds max depth, cycle cannot be verified")
 	}
 
-	role, err := s.roleRepo.GetByID(ctx, roleID)
+	role, err := s.roleRepo.GetByID(ctx, roleID, tenantID)
 	if err != nil {
 		return nil, err
 	}
 
 	// SECURITY: Parent role must belong to the same tenant as the child role.
-	parent, err := s.roleRepo.GetByID(ctx, parentID)
+	parent, err := s.roleRepo.GetByID(ctx, parentID, tenantID)
 	if err != nil {
 		return nil, errors.Wrap(errors.ErrNotFound, "parent role not found", err)
 	}
@@ -241,7 +239,7 @@ func (s *RoleService) SetParent(ctx context.Context, roleID, parentID uuid.UUID)
 	}
 
 	role.ParentRoleID = &parentID
-	if err := s.roleRepo.Update(ctx, role); err != nil {
+	if err := s.roleRepo.Update(ctx, role, tenantID); err != nil {
 		return nil, errors.Wrap(errors.ErrInternal, "update role parent", err)
 	}
 	return role, nil
@@ -249,17 +247,15 @@ func (s *RoleService) SetParent(ctx context.Context, roleID, parentID uuid.UUID)
 
 // DeleteRole deletes a non-system role.
 func (s *RoleService) DeleteRole(ctx context.Context, id uuid.UUID) error {
-	role, err := s.roleRepo.GetByID(ctx, id)
+	tenantID := tenantIDFromHTTPRequest(ctx)
+	role, err := s.roleRepo.GetByID(ctx, id, tenantID)
 	if err != nil {
-		return err
-	}
-	if err := validateRoleTenant(ctx, role); err != nil {
 		return err
 	}
 	if role.SystemRole {
 		return errors.New(errors.ErrFailedPrecondition, "cannot delete system role")
 	}
-	return s.roleRepo.Delete(ctx, id)
+	return s.roleRepo.Delete(ctx, id, tenantID)
 }
 
 // validateRoleTenant ensures the role belongs to the caller's tenant.
@@ -312,7 +308,8 @@ func (s *RoleService) AssignRole(ctx context.Context, userID, roleID uuid.UUID, 
 	}
 
 	// Verify role exists AND belongs to the same tenant as the scope.
-	role, err := s.roleRepo.GetByID(ctx, roleID)
+	tenantID := tenantIDFromHTTPRequest(ctx)
+	role, err := s.roleRepo.GetByID(ctx, roleID, tenantID)
 	if err != nil {
 		return err
 	}
@@ -335,7 +332,8 @@ func (s *RoleService) AssignRole(ctx context.Context, userID, roleID uuid.UUID, 
 // SECURITY (R27 P1): validate role ownership before revoke — prevents
 // cross-tenant role revocation by guessing UUIDs.
 func (s *RoleService) RevokeRole(ctx context.Context, userID, roleID uuid.UUID, scopeType domain.ScopeType, scopeID uuid.UUID) error {
-	role, err := s.roleRepo.GetByID(ctx, roleID)
+	tenantID := tenantIDFromHTTPRequest(ctx)
+	role, err := s.roleRepo.GetByID(ctx, roleID, tenantID)
 	if err != nil {
 		return err
 	}
@@ -365,7 +363,7 @@ func (s *RoleService) ListUserRoles(ctx context.Context, userID uuid.UUID) ([]*d
 	}
 	filtered := make([]*domain.UserRole, 0, len(allRoles))
 	for _, ur := range allRoles {
-		role, err := s.roleRepo.GetByID(ctx, ur.RoleID)
+		role, err := s.roleRepo.GetByID(ctx, ur.RoleID, tenantID)
 		if err != nil || role.TenantID != tenantID {
 			continue
 		}
@@ -409,12 +407,10 @@ func (s *RoleService) ListPermissions(ctx context.Context, tenantID uuid.UUID, p
 // GrantPermissionsToRole assigns permissions to a role.
 func (s *RoleService) GrantPermissionsToRole(ctx context.Context, roleID uuid.UUID, permissionIDs []uuid.UUID) error {
 	// SECURITY: Validate the role belongs to the caller's tenant before modifying.
-	role, err := s.roleRepo.GetByID(ctx, roleID)
+	tenantID := tenantIDFromHTTPRequest(ctx)
+	_, err := s.roleRepo.GetByID(ctx, roleID, tenantID)
 	if err != nil {
 		return errors.Wrap(errors.ErrNotFound, "role not found", err)
-	}
-	if err := validateRoleTenant(ctx, role); err != nil {
-		return err
 	}
 	return s.roleRepo.GrantPermissions(ctx, roleID, permissionIDs, nil)
 }
@@ -422,24 +418,19 @@ func (s *RoleService) GrantPermissionsToRole(ctx context.Context, roleID uuid.UU
 // RevokePermissionsFromRole removes permissions from a role.
 func (s *RoleService) RevokePermissionsFromRole(ctx context.Context, roleID uuid.UUID, permissionIDs []uuid.UUID) error {
 	// SECURITY: Validate the role belongs to the caller's tenant before modifying.
-	role, err := s.roleRepo.GetByID(ctx, roleID)
+	tenantID := tenantIDFromHTTPRequest(ctx)
+	_, err := s.roleRepo.GetByID(ctx, roleID, tenantID)
 	if err != nil {
 		return errors.Wrap(errors.ErrNotFound, "role not found", err)
-	}
-	if err := validateRoleTenant(ctx, role); err != nil {
-		return err
 	}
 	return s.roleRepo.RevokePermissions(ctx, roleID, permissionIDs)
 }
 
 // GetRolePermissions returns all permissions assigned to a role.
 func (s *RoleService) GetRolePermissions(ctx context.Context, roleID uuid.UUID) ([]*domain.Permission, error) {
-	role, err := s.roleRepo.GetByID(ctx, roleID)
+	tenantID := tenantIDFromHTTPRequest(ctx)
+	role, err := s.roleRepo.GetByID(ctx, roleID, tenantID)
 	if err != nil {
-		return nil, err
-	}
-	// SECURITY: Validate role belongs to caller's tenant.
-	if err := validateRoleTenant(ctx, role); err != nil {
 		return nil, err
 	}
 	return s.roleRepo.GetRolePermissions(ctx, []uuid.UUID{roleID}, role.TenantID)
@@ -451,7 +442,8 @@ func (s *RoleService) GetRolePermissions(ctx context.Context, roleID uuid.UUID) 
 // permissions of its ancestors (GetAncestorChain).
 func (s *RoleService) GetEffectivePermissions(ctx context.Context, roleID uuid.UUID) ([]*domain.Permission, error) {
 	// Get the target role to find its tenant.
-	role, err := s.roleRepo.GetByID(ctx, roleID)
+	tenantID := tenantIDFromHTTPRequest(ctx)
+	role, err := s.roleRepo.GetByID(ctx, roleID, tenantID)
 	if err != nil {
 		return nil, err
 	}

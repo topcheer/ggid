@@ -37,12 +37,14 @@ func (m *mockRoleRepo) Create(_ context.Context, r *domain.Role) error {
 	m.roles[r.ID] = r
 	return nil
 }
-func (m *mockRoleRepo) GetByID(_ context.Context, id uuid.UUID) (*domain.Role, error) {
+func (m *mockRoleRepo) GetByID(_ context.Context, id uuid.UUID, tenantID uuid.UUID) (*domain.Role, error) {
 	if m.getErr != nil {
 		return nil, m.getErr
 	}
 	if r, ok := m.roles[id]; ok {
-		return r, nil
+		if r.TenantID == tenantID || tenantID == uuid.Nil {
+			return r, nil
+		}
 	}
 	return nil, errors.NotFound("role", id.String())
 }
@@ -62,22 +64,26 @@ func (m *mockRoleRepo) ListByTenant(_ context.Context, tid uuid.UUID, limit, off
 	}
 	return res, nil
 }
-func (m *mockRoleRepo) Update(_ context.Context, r *domain.Role) error {
+func (m *mockRoleRepo) Update(_ context.Context, r *domain.Role, tenantID uuid.UUID) error {
 	if m.updateErr != nil {
 		return m.updateErr
 	}
-	m.roles[r.ID] = r
+	if r.TenantID == tenantID || tenantID == uuid.Nil {
+		m.roles[r.ID] = r
+	}
 	return nil
 }
-func (m *mockRoleRepo) Delete(_ context.Context, id uuid.UUID) error {
+func (m *mockRoleRepo) Delete(_ context.Context, id uuid.UUID, tenantID uuid.UUID) error {
 	if m.deleteErr != nil {
 		return m.deleteErr
 	}
-	if _, ok := m.roles[id]; !ok {
-		return errors.NotFound("role", id.String())
+	if r, ok := m.roles[id]; ok {
+		if r.TenantID == tenantID || tenantID == uuid.Nil {
+			delete(m.roles, id)
+			return nil
+		}
 	}
-	delete(m.roles, id)
-	return nil
+	return errors.NotFound("role", id.String())
 }
 func (m *mockRoleRepo) GrantPermissions(_ context.Context, _ uuid.UUID, _ []uuid.UUID, _ map[string]any) error {
 	return m.grantErr

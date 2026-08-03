@@ -32,13 +32,13 @@ func (r *RoleRepository) Create(ctx context.Context, role *domain.Role) error {
 	).Scan(&role.ID, &role.CreatedAt, &role.UpdatedAt)
 }
 
-// GetByID retrieves a role by its ID.
-func (r *RoleRepository) GetByID(ctx context.Context, id uuid.UUID) (*domain.Role, error) {
+// GetByID retrieves a role by its ID and tenant.
+func (r *RoleRepository) GetByID(ctx context.Context, id uuid.UUID, tenantID uuid.UUID) (*domain.Role, error) {
 	role := &domain.Role{}
 	query := `
 		SELECT id, tenant_id, key, name, description, system_role, parent_role_id, created_at, updated_at
-		FROM roles WHERE id = $1`
-	err := r.db.QueryRow(ctx, query, id).Scan(
+		FROM roles WHERE id = $1 AND tenant_id = $2`
+	err := r.db.QueryRow(ctx, query, id, tenantID).Scan(
 		&role.ID, &role.TenantID, &role.Key, &role.Name, &role.Description,
 		&role.SystemRole, &role.ParentRoleID, &role.CreatedAt, &role.UpdatedAt,
 	)
@@ -91,12 +91,12 @@ func (r *RoleRepository) ListByTenant(ctx context.Context, tenantID uuid.UUID, l
 }
 
 // Update modifies a role's mutable fields.
-func (r *RoleRepository) Update(ctx context.Context, role *domain.Role) error {
+func (r *RoleRepository) Update(ctx context.Context, role *domain.Role, tenantID uuid.UUID) error {
 	query := `
 		UPDATE roles SET name = $2, description = $3, parent_role_id = $4, updated_at = NOW()
-		WHERE id = $1 AND system_role = FALSE
+		WHERE id = $1 AND tenant_id = $5 AND system_role = FALSE
 		RETURNING updated_at`
-	err := r.db.QueryRow(ctx, query, role.ID, role.Name, role.Description, role.ParentRoleID).Scan(&role.UpdatedAt)
+	err := r.db.QueryRow(ctx, query, role.ID, role.Name, role.Description, role.ParentRoleID, tenantID).Scan(&role.UpdatedAt)
 	if err != nil {
 		return mapErr(err, "role", role.ID.String())
 	}
@@ -104,8 +104,8 @@ func (r *RoleRepository) Update(ctx context.Context, role *domain.Role) error {
 }
 
 // Delete removes a non-system role.
-func (r *RoleRepository) Delete(ctx context.Context, id uuid.UUID) error {
-	cmd, err := r.db.Exec(ctx, `DELETE FROM roles WHERE id = $1 AND system_role = FALSE`, id)
+func (r *RoleRepository) Delete(ctx context.Context, id uuid.UUID, tenantID uuid.UUID) error {
+	cmd, err := r.db.Exec(ctx, `DELETE FROM roles WHERE id = $1 AND tenant_id = $2 AND system_role = FALSE`, id, tenantID)
 	if err != nil {
 		return fmt.Errorf("delete role: %w", err)
 	}
