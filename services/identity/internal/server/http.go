@@ -1124,6 +1124,17 @@ func (h *HTTPHandler) uploadAvatar(ctx context.Context, userID uuid.UUID, w http
 		return
 	}
 
+	// SECURITY: Validate magic bytes via http.DetectContentType.
+	// The Content-Type header is client-controlled and can be spoofed.
+	// DetectContentType reads the first 512 bytes to determine the real type.
+	detected := http.DetectContentType(data)
+	if !strings.HasPrefix(detected, "image/") {
+		writeJSONError(w, http.StatusBadRequest, "file content is not a valid image")
+		return
+	}
+	// Update contentType to the detected value for extension mapping.
+	contentType = detected
+
 	// Determine file extension from content type.
 	ext := ".png"
 	switch contentType {

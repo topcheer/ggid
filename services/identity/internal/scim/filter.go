@@ -35,7 +35,7 @@ const (
 
 // AttrExpression is a leaf comparison (e.g., userName eq "john").
 type AttrExpression struct {
-	AttrPath string      // e.g., "userName", "emails[type eq \"work\"].value"
+	AttrPath string // e.g., "userName", "emails[type eq \"work\"].value"
 	Op       ComparisonOp
 	Value    any // string, bool, number
 }
@@ -96,18 +96,18 @@ func (n *NotExpr) String() string {
 type tokenKind int
 
 const (
-	tkEOF tokenKind = iota
-	tkIdent      // attribute name or operator keyword
-	tkString     // quoted value
-	tkNumber     // numeric value
-	tkLParen     // (
-	tkRParen     // )
-	tkLBracket   // [
-	tkRBracket   // ]
-	tkDot        // .
-	tkAnd        // and
-	tkOr         // or
-	tkNot        // not
+	tkEOF      tokenKind = iota
+	tkIdent              // attribute name or operator keyword
+	tkString             // quoted value
+	tkNumber             // numeric value
+	tkLParen             // (
+	tkRParen             // )
+	tkLBracket           // [
+	tkRBracket           // ]
+	tkDot                // .
+	tkAnd                // and
+	tkOr                 // or
+	tkNot                // not
 )
 
 type token struct {
@@ -234,6 +234,7 @@ func isAlpha(ch byte) bool { return (ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch
 type parser struct {
 	tokens []token
 	pos    int
+	depth  int // recursion depth counter to prevent stack exhaustion DoS
 }
 
 // ParseFilter parses a SCIM filter expression into an AST.
@@ -242,6 +243,12 @@ func ParseFilter(filter string) (FilterExpr, error) {
 	filter = strings.TrimSpace(filter)
 	if filter == "" {
 		return nil, nil
+	}
+
+	// Reject excessively long filters to prevent resource exhaustion.
+	const maxFilterLen = 4096
+	if len(filter) > maxFilterLen {
+		return nil, fmt.Errorf("filter expression too long (max %d characters)", maxFilterLen)
 	}
 
 	lex := newLexer(filter)
@@ -263,6 +270,11 @@ func ParseFilter(filter string) (FilterExpr, error) {
 
 // parseOr handles the lowest precedence operator: or
 func (p *parser) parseOr() (FilterExpr, error) {
+	p.depth++
+	const maxDepth = 100
+	if p.depth > maxDepth {
+		return nil, fmt.Errorf("filter expression too complex (max depth %d)", maxDepth)
+	}
 	left, err := p.parseAnd()
 	if err != nil {
 		return nil, err
