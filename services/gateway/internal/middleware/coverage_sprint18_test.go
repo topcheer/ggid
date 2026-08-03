@@ -8,10 +8,10 @@ import (
 	"testing"
 	"time"
 
+	"github.com/golang-jwt/jwt/v5"
+
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"
-
-	"github.com/golang-jwt/jwt/v5"
 
 	ggidtenant "github.com/ggid/ggid/pkg/tenant"
 	"github.com/google/uuid"
@@ -405,8 +405,8 @@ func TestSecurityHeadersConfigurable_Default_C18(t *testing.T) {
 	if rr.Header().Get("X-Frame-Options") != "DENY" {
 		t.Error("missing X-Frame-Options: DENY")
 	}
-	if rr.Header().Get("Strict-Transport-Security") == "" {
-		t.Error("missing Strict-Transport-Security")
+	if rr.Header().Get("Strict-Transport-Security") != "" {
+		t.Error("HSTS should not be set on plaintext HTTP")
 	}
 	if rr.Header().Get("Content-Security-Policy") == "" {
 		t.Error("missing Content-Security-Policy")
