@@ -15,12 +15,13 @@ import (
 // When multiple requests arrive for the same URL while one is in-flight,
 // they wait for the first response and share the result.
 type RequestCoalescer struct {
-	done     chan struct{}
-	doneOnce sync.Once // prevents double-close panic
-	mu       sync.Mutex
-	inflight map[string]*coalescedCall
-	ttl      time.Duration // how long to cache successful responses
-	cache    map[string]*cachedResponse
+	done       chan struct{}
+	doneOnce   sync.Once // prevents double-close panic
+	mu         sync.Mutex
+	inflight   map[string]*coalescedCall
+	ttl        time.Duration // how long to cache successful responses
+	cache      map[string]*cachedResponse
+	maxEntries int // prevent memory exhaustion via unbounded cache growth
 }
 
 type coalescedCall struct {
@@ -38,13 +39,16 @@ type cachedResponse struct {
 	expires time.Time
 }
 
+const coalesceMaxEntries = 10000
+
 // NewRequestCoalescer creates a coalescer with the given cache TTL.
 func NewRequestCoalescer(ttl time.Duration) *RequestCoalescer {
 	rc := &RequestCoalescer{
-		inflight: make(map[string]*coalescedCall),
-		cache:    make(map[string]*cachedResponse),
-		ttl:      ttl,
-		done:     make(chan struct{}),
+		inflight:   make(map[string]*coalescedCall),
+		cache:      make(map[string]*cachedResponse),
+		ttl:        ttl,
+		done:       make(chan struct{}),
+		maxEntries: 10000, // prevent memory exhaustion via unbounded cache growth
 	}
 	if ttl > 0 {
 		go rc.cleanupLoop()
@@ -149,6 +153,12 @@ func CoalesceMiddleware(rc *RequestCoalescer) func(http.Handler) http.Handler {
 			// Cache successful responses
 			if rc.ttl > 0 && sr.status >= 200 && sr.status < 300 {
 				rc.mu.Lock()
+				if len(rc.cache) >= coalesceMaxEntries {
+					for k := range rc.cache {
+						delete(rc.cache, k)
+						break
+					}
+				}
 				rc.cache[key] = &cachedResponse{
 					status:  sr.status,
 					body:    call.body,
