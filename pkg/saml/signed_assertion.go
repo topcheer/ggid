@@ -5,7 +5,7 @@ import (
 	"crypto"
 	"crypto/ecdsa"
 	"crypto/rsa"
-	"crypto/sha1"
+
 	"crypto/sha256"
 	"crypto/sha512"
 	"crypto/x509"
@@ -23,29 +23,29 @@ import (
 
 // xmlSignature represents the <ds:Signature> element in a SAML assertion.
 type xmlSignature struct {
-	XMLName        xml.Name         `xml:"Signature"`
-	SignedInfo     xmlSignedInfo    `xml:"SignedInfo"`
-	SignatureValue string           `xml:"SignatureValue"`
+	XMLName        xml.Name      `xml:"Signature"`
+	SignedInfo     xmlSignedInfo `xml:"SignedInfo"`
+	SignatureValue string        `xml:"SignatureValue"`
 }
 
 // xmlSignatureNS is the variant with the ds: namespace prefix.
 type xmlSignatureNS struct {
-	XMLName        xml.Name         `xml:"http://www.w3.org/2000/09/xmldsig# Signature"`
-	SignedInfo     xmlSignedInfoNS  `xml:"http://www.w3.org/2000/09/xmldsig# SignedInfo"`
-	SignatureValue string           `xml:"http://www.w3.org/2000/09/xmldsig# SignatureValue"`
+	XMLName        xml.Name        `xml:"http://www.w3.org/2000/09/xmldsig# Signature"`
+	SignedInfo     xmlSignedInfoNS `xml:"http://www.w3.org/2000/09/xmldsig# SignedInfo"`
+	SignatureValue string          `xml:"http://www.w3.org/2000/09/xmldsig# SignatureValue"`
 }
 
 // xmlSignedInfo holds the algorithm and references used in the signature.
 type xmlSignedInfo struct {
-	CanonicalizationMethod xmlMethod `xml:"CanonicalizationMethod"`
-	SignatureMethod        xmlMethod `xml:"SignatureMethod"`
+	CanonicalizationMethod xmlMethod    `xml:"CanonicalizationMethod"`
+	SignatureMethod        xmlMethod    `xml:"SignatureMethod"`
 	Reference              xmlReference `xml:"Reference"`
 }
 
 // xmlSignedInfoNS is the namespaced variant.
 type xmlSignedInfoNS struct {
-	CanonicalizationMethod xmlMethodNS `xml:"http://www.w3.org/2000/09/xmldsig# CanonicalizationMethod"`
-	SignatureMethod        xmlMethodNS `xml:"http://www.w3.org/2000/09/xmldsig# SignatureMethod"`
+	CanonicalizationMethod xmlMethodNS    `xml:"http://www.w3.org/2000/09/xmldsig# CanonicalizationMethod"`
+	SignatureMethod        xmlMethodNS    `xml:"http://www.w3.org/2000/09/xmldsig# SignatureMethod"`
 	Reference              xmlReferenceNS `xml:"http://www.w3.org/2000/09/xmldsig# Reference"`
 }
 
@@ -61,10 +61,10 @@ type xmlMethodNS struct {
 
 // xmlReference points to the signed data with transforms and digest.
 type xmlReference struct {
-	URI          string       `xml:"URI,attr"`
+	URI          string        `xml:"URI,attr"`
 	Transforms   xmlTransforms `xml:"Transforms"`
-	DigestMethod xmlMethod    `xml:"DigestMethod"`
-	DigestValue  string       `xml:"DigestValue"`
+	DigestMethod xmlMethod     `xml:"DigestMethod"`
+	DigestValue  string        `xml:"DigestValue"`
 }
 
 // xmlReferenceNS is the namespaced variant.
@@ -91,20 +91,20 @@ type xmlTransformsNS struct {
 
 // signatureInfo holds the parsed signature details needed for verification.
 type signatureInfo struct {
-	signedInfoBytes  []byte // exact SignedInfo bytes from the original XML
-	signatureValue   []byte // decoded signature value
-	signatureMethod  string // algorithm URI
-	digestMethod     string // algorithm URI
-	digestValue      []byte // decoded digest value
-	referencedID     string // URI attribute (e.g. "#_abc123")
+	signedInfoBytes []byte // exact SignedInfo bytes from the original XML
+	signatureValue  []byte // decoded signature value
+	signatureMethod string // algorithm URI
+	digestMethod    string // algorithm URI
+	digestValue     []byte // decoded digest value
+	referencedID    string // URI attribute (e.g. "#_abc123")
 }
 
 // assertionWithSignature is used to extract an embedded Signature element
 // from within a SAML Assertion document.
 type assertionWithSignature struct {
-	XMLName        xml.Name        `xml:"Assertion"`
-	Signature      *xmlSignature   `xml:"Signature"`
-	SignatureNS    *xmlSignatureNS `xml:"http://www.w3.org/2000/09/xmldsig# Signature"`
+	XMLName     xml.Name        `xml:"Assertion"`
+	Signature   *xmlSignature   `xml:"Signature"`
+	SignatureNS *xmlSignatureNS `xml:"http://www.w3.org/2000/09/xmldsig# Signature"`
 }
 
 // parseSignature extracts signature information from raw XML.
@@ -143,12 +143,12 @@ func buildSigInfo(sig *xmlSignature, rawXML []byte) (*signatureInfo, error) {
 	}
 
 	return &signatureInfo{
-		signedInfoBytes:  extractSignedInfoBytes(rawXML),
-		signatureValue:   sigVal,
-		signatureMethod:  sig.SignedInfo.SignatureMethod.Algorithm,
-		digestMethod:     sig.SignedInfo.Reference.DigestMethod.Algorithm,
-		digestValue:      digestVal,
-		referencedID:     sig.SignedInfo.Reference.URI,
+		signedInfoBytes: extractSignedInfoBytes(rawXML),
+		signatureValue:  sigVal,
+		signatureMethod: sig.SignedInfo.SignatureMethod.Algorithm,
+		digestMethod:    sig.SignedInfo.Reference.DigestMethod.Algorithm,
+		digestValue:     digestVal,
+		referencedID:    sig.SignedInfo.Reference.URI,
 	}, nil
 }
 
@@ -163,12 +163,12 @@ func buildSigInfoNS(sig *xmlSignatureNS, rawXML []byte) (*signatureInfo, error) 
 	}
 
 	return &signatureInfo{
-		signedInfoBytes:  extractSignedInfoBytes(rawXML),
-		signatureValue:   sigVal,
-		signatureMethod:  sig.SignedInfo.SignatureMethod.Algorithm,
-		digestMethod:     sig.SignedInfo.Reference.DigestMethod.Algorithm,
-		digestValue:      digestVal,
-		referencedID:     sig.SignedInfo.Reference.URI,
+		signedInfoBytes: extractSignedInfoBytes(rawXML),
+		signatureValue:  sigVal,
+		signatureMethod: sig.SignedInfo.SignatureMethod.Algorithm,
+		digestMethod:    sig.SignedInfo.Reference.DigestMethod.Algorithm,
+		digestValue:     digestVal,
+		referencedID:    sig.SignedInfo.Reference.URI,
 	}, nil
 }
 
@@ -198,8 +198,6 @@ func extractSignedInfoBytes(rawXML []byte) []byte {
 // hashForAlgorithm returns the hash.Hash for a given XMLDSig digest algorithm URI.
 func hashForAlgorithm(algorithmURI string) (hash.Hash, error) {
 	switch algorithmURI {
-	case "", "http://www.w3.org/2000/09/xmldsig#sha1":
-		return sha1.New(), nil
 	case "http://www.w3.org/2001/04/xmlenc#sha256":
 		return sha256.New(), nil
 	case "http://www.w3.org/2001/04/xmldsig-more#sha384":
@@ -254,7 +252,7 @@ func stripEnvelopedSignature(rawXML []byte) []byte {
 			c := s[after]
 			if c != ' ' && c != '>' && c != '\t' && c != '\n' && c != '\r' {
 				continue
-		}
+			}
 		}
 		end := strings.Index(s[start:], pair[1])
 		if end < 0 {

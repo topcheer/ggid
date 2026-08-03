@@ -3,6 +3,7 @@ package httpserver
 import (
 	"encoding/json"
 	"net/http"
+	"strings"
 	"time"
 )
 
@@ -50,6 +51,13 @@ func (s *HTTPServer) handleFeatureFlags(w http.ResponseWriter, r *http.Request) 
 		w.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(w).Encode(result)
 	case http.MethodPut:
+		// SECURITY: Feature flag modification requires admin scope.
+		// Check JWT scopes from gateway-injected header.
+		scopes := r.Header.Get("X-Scopes")
+		if !strings.Contains(scopes, "admin") && scopes != "platform:admin" && scopes != "tenant:admin" {
+			writeJSONError(w, http.StatusForbidden, "admin scope required")
+			return
+		}
 		var req FeatureFlag
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 			writeJSONError(w, http.StatusBadRequest, "invalid request")
