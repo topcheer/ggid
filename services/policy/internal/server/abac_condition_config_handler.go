@@ -14,6 +14,11 @@ type ABACConditionConfig struct {
 }
 
 func (s *HTTPServer) handleABACConditionConfig(w http.ResponseWriter, r *http.Request) {
+	// SECURITY: PUT modifies global config — require platform:admin scope.
+	if r.Method == http.MethodPut && !isAdminRequest(r) {
+		writeJSONError(w, http.StatusForbidden, "platform:admin scope required")
+		return
+	}
 	switch r.Method {
 	case http.MethodGet:
 		result := ABACConditionConfig{

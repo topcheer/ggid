@@ -14,6 +14,7 @@ import (
 type userAlias struct {
 	ID        string `json:"id"`
 	UserID    string `json:"user_id"`
+	TenantID  string `json:"tenant_id"`
 	AliasType string `json:"alias_type"` // email, username, upn
 	Value     string `json:"value"`
 	CreatedAt string `json:"created_at"`
@@ -28,6 +29,13 @@ var userAliasStore = struct {
 // GET    /api/v1/users/{id}/aliases — list aliases
 // DELETE /api/v1/users/{id}/aliases?id=X — delete alias
 func (h *HTTPHandler) handleUserAliases(w http.ResponseWriter, r *http.Request) {
+	// SECURITY: Require tenant context for isolation.
+	callerTenant := r.Header.Get("X-Tenant-ID")
+	if callerTenant == "" {
+		writeJSONError(w, http.StatusForbidden, "tenant context required")
+		return
+	}
+
 	// Extract user ID from path
 	path := r.URL.Path
 	userID := ""
@@ -70,6 +78,7 @@ func (h *HTTPHandler) handleUserAliases(w http.ResponseWriter, r *http.Request) 
 		alias := userAlias{
 			ID:        uuid.New().String(),
 			UserID:    userID,
+			TenantID:  callerTenant,
 			AliasType: req.AliasType,
 			Value:     req.Value,
 			CreatedAt: time.Now().UTC().Format(time.RFC3339),
@@ -83,9 +92,13 @@ func (h *HTTPHandler) handleUserAliases(w http.ResponseWriter, r *http.Request) 
 
 	case http.MethodGet:
 		userAliasStore.RLock()
-		aliases := userAliasStore.data[userID]
-		result := make([]userAlias, len(aliases))
-		copy(result, aliases)
+		allAliases := userAliasStore.data[userID]
+		result := make([]userAlias, 0)
+		for _, a := range allAliases {
+			if a.TenantID == callerTenant {
+				result = append(result, a)
+			}
+		}
 		userAliasStore.RUnlock()
 
 		writeJSON(w, http.StatusOK, map[string]any{
@@ -106,11 +119,11 @@ func (h *HTTPHandler) handleUserAliases(w http.ResponseWriter, r *http.Request) 
 		found := false
 		filtered := aliases[:0]
 		for _, a := range aliases {
-			if a.ID != aliasID {
-				filtered = append(filtered, a)
-			} else {
+			if a.ID == aliasID && a.TenantID == callerTenant {
 				found = true
+				continue // skip = delete
 			}
+			filtered = append(filtered, a)
 		}
 		userAliasStore.data[userID] = filtered
 		userAliasStore.Unlock()
