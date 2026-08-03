@@ -5,6 +5,9 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"net/http"
+
+	ggidtenant "github.com/ggid/ggid/pkg/tenant"
+	"github.com/google/uuid"
 	"strconv"
 	"sync"
 	"time"
@@ -109,6 +112,9 @@ func cacheKey(r *http.Request) string {
 	// receive User A's (or Tenant A's) cached response for the same URL.
 	userID := r.Header.Get("X-User-ID")
 	tenantID := r.Header.Get("X-Tenant-ID")
+	if tc, err := ggidtenant.FromContext(r.Context()); err == nil && tc.TenantID != uuid.Nil {
+		tenantID = tc.TenantID.String()
+	}
 	return tenantID + ":" + userID + ":" + r.Method + ":" + r.URL.RequestURI()
 }
 

@@ -3,9 +3,11 @@ package middleware
 import (
 	"bytes"
 	"net/http"
-	"time"
 
+	ggidtenant "github.com/ggid/ggid/pkg/tenant"
+	"github.com/google/uuid"
 	"github.com/redis/go-redis/v9"
+	"time"
 )
 
 // ListCacheConfig controls GET list endpoint caching.
@@ -122,6 +124,9 @@ func splitURLPath(path string) []string {
 // listCacheKey builds a Redis cache key from request path + query + tenant + auth.
 func listCacheKey(r *http.Request) string {
 	tenantID := r.Header.Get("X-Tenant-ID")
+	if tc, err := ggidtenant.FromContext(r.Context()); err == nil && tc.TenantID != uuid.Nil {
+		tenantID = tc.TenantID.String()
+	}
 	auth := r.Header.Get("Authorization")
 	authHash := fnv1aShort(auth)
 	return "listcache:" + tenantID + ":" + authHash + ":" + r.URL.Path + "?" + r.URL.RawQuery
