@@ -39,7 +39,7 @@ type cachedResponse struct {
 	expires time.Time
 }
 
-const coalesceMaxEntries = 10000
+const defaultCoalesceMaxEntries = 10000
 
 // NewRequestCoalescer creates a coalescer with the given cache TTL.
 func NewRequestCoalescer(ttl time.Duration) *RequestCoalescer {
@@ -48,12 +48,31 @@ func NewRequestCoalescer(ttl time.Duration) *RequestCoalescer {
 		cache:      make(map[string]*cachedResponse),
 		ttl:        ttl,
 		done:       make(chan struct{}),
-		maxEntries: 10000, // prevent memory exhaustion via unbounded cache growth
+		maxEntries: defaultCoalesceMaxEntries,
 	}
 	if ttl > 0 {
 		go rc.cleanupLoop()
 	}
 	return rc
+}
+
+// cacheResponse stores a successful response, evicting a random entry if the
+// cache is at capacity to prevent unbounded memory growth.
+func (rc *RequestCoalescer) cacheResponse(key string, status int, body []byte, header http.Header) {
+	rc.mu.Lock()
+	defer rc.mu.Unlock()
+	if len(rc.cache) >= rc.maxEntries {
+		for k := range rc.cache {
+			delete(rc.cache, k)
+			break
+		}
+	}
+	rc.cache[key] = &cachedResponse{
+		status:  status,
+		body:    body,
+		header:  header,
+		expires: time.Now().Add(rc.ttl),
+	}
 }
 
 // StopCleanup terminates the background cleanup goroutine.
@@ -152,20 +171,7 @@ func CoalesceMiddleware(rc *RequestCoalescer) func(http.Handler) http.Handler {
 
 			// Cache successful responses
 			if rc.ttl > 0 && sr.status >= 200 && sr.status < 300 {
-				rc.mu.Lock()
-				if len(rc.cache) >= coalesceMaxEntries {
-					for k := range rc.cache {
-						delete(rc.cache, k)
-						break
-					}
-				}
-				rc.cache[key] = &cachedResponse{
-					status:  sr.status,
-					body:    call.body,
-					header:  call.header,
-					expires: time.Now().Add(rc.ttl),
-				}
-				rc.mu.Unlock()
+				rc.cacheResponse(key, sr.status, call.body, call.header)
 			}
 
 			// Signal waiting callers
