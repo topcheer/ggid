@@ -82,7 +82,9 @@ func StartImpersonationCleanup(ctx context.Context) {
 // SetImpersonationRedis injects a Redis client for persistent storage.
 // When set, impersonation tokens survive process restarts.
 func SetImpersonationRedis(rdb *redis.Client) {
+	impersonationMu.Lock()
 	impRedisClient = rdb
+	impersonationMu.Unlock()
 }
 
 // IssueImpersonationToken creates a temporary token for admin to act as target user.
@@ -113,7 +115,10 @@ func IssueImpersonationToken(impersonatorID, targetUserID, tenantID uuid.UUID, r
 	impersonationMu.Unlock()
 
 	// Persist to Redis with TTL = expiry
-	if impRedisClient != nil {
+	impersonationMu.RLock()
+	redisClient := impRedisClient
+	impersonationMu.RUnlock()
+	if redisClient != nil {
 		data, _ := json.Marshal(t)
 		ttl := time.Until(t.ExpiresAt)
 		if ttl > 0 {
@@ -134,7 +139,10 @@ func GetImpersonationToken(id uuid.UUID) (*ImpersonationToken, error) {
 		return t, nil
 	}
 	// Try Redis (survives restart)
-	if impRedisClient != nil {
+	impersonationMu.RLock()
+	redisClient := impRedisClient
+	impersonationMu.RUnlock()
+	if redisClient != nil {
 		data, err := impRedisClient.Get(context.Background(), impersonationKeyPrefix+id.String()).Bytes()
 		if err == nil {
 			var rt ImpersonationToken
@@ -175,7 +183,10 @@ func RevokeImpersonationToken(id uuid.UUID) error {
 	t.Revoked = true
 	impersonationMu.Unlock()
 	// Update Redis
-	if impRedisClient != nil {
+	impersonationMu.RLock()
+	redisClient := impRedisClient
+	impersonationMu.RUnlock()
+	if redisClient != nil {
 		data, _ := json.Marshal(t)
 		ttl := time.Until(t.ExpiresAt)
 		if ttl > 0 {
