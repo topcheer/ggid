@@ -126,6 +126,11 @@ func (s *HTTPServer) StartRetentionCleanup(ctx context.Context, interval time.Du
 		interval = time.Hour
 	}
 	go func() {
+		defer func() {
+			if r := recover(); r != nil {
+				slog.Error("retention cleanup panic", "error", r)
+			}
+		}()
 		ticker := time.NewTicker(interval)
 		defer ticker.Stop()
 		for {

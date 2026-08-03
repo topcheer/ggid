@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log"
 	"sync"
 	"time"
 
@@ -38,6 +39,11 @@ var (
 // expired impersonation tokens from the in-memory store.
 func StartImpersonationCleanup(ctx context.Context) {
 	go func() {
+		defer func() {
+			if r := recover(); r != nil {
+				log.Printf("impersonation cleanup panic: %v", r)
+			}
+		}()
 		ticker := time.NewTicker(1 * time.Minute)
 		defer ticker.Stop()
 		for {
@@ -218,6 +224,11 @@ func init() {
 	// StartImpersonationCleanup (1-min ticker, context-cancellable).
 	jtiCleanupDone = make(chan struct{})
 	go func() {
+		defer func() {
+			if r := recover(); r != nil {
+				log.Printf("JTI cleanup panic: %v", r)
+			}
+		}()
 		jtiTicker := time.NewTicker(10 * time.Minute)
 		defer jtiTicker.Stop()
 		for {
