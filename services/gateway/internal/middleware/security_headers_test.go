@@ -25,8 +25,8 @@ func TestSecurityHeadersMiddleware(t *testing.T) {
 			t.Errorf("%s: got %q want %q", hdr, w.Header().Get(hdr), want)
 		}
 	}
-	if w.Header().Get("Strict-Transport-Security") == "" {
-		t.Error("missing HSTS")
+	if w.Header().Get("Strict-Transport-Security") != "" {
+		t.Error("HSTS should not be set on plaintext HTTP (no r.TLS)")
 	}
 	if w.Header().Get("Content-Security-Policy") == "" {
 		t.Error("missing CSP")
