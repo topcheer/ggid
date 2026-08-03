@@ -52,9 +52,16 @@ func (s *HTTPServer) handleFeatureFlags(w http.ResponseWriter, r *http.Request) 
 		json.NewEncoder(w).Encode(result)
 	case http.MethodPut:
 		// SECURITY: Feature flag modification requires admin scope.
-		// Check JWT scopes from gateway-injected header.
+		// Check JWT scopes from gateway-injected header (space-separated).
 		scopes := r.Header.Get("X-Scopes")
-		if !strings.Contains(scopes, "admin") && scopes != "platform:admin" && scopes != "tenant:admin" {
+		hasAdmin := false
+		for _, s := range strings.Fields(scopes) {
+			if s == "platform:admin" || s == "tenant:admin" {
+				hasAdmin = true
+				break
+			}
+		}
+		if !hasAdmin {
 			writeJSONError(w, http.StatusForbidden, "admin scope required")
 			return
 		}
