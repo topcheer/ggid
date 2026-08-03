@@ -27,9 +27,9 @@ func (h *HTTPHandler) handleUserRoles(ctx context.Context, userID uuid.UUID, w h
 	parts := splitUserPath(r.URL.Path)
 	pool := h.svc.Pool()
 
-	// SECURITY: extract caller's tenant for cross-tenant protection.
-	// Prefer JWT-verified context over raw header to prevent spoofing.
-	callerTenantID := r.Header.Get("X-Tenant-ID")
+	// SECURITY: extract caller's tenant from JWT-verified context only.
+	// Never fall back to forgeable X-Tenant-ID header.
+	callerTenantID := ""
 	if tc, err := ggidtenant.FromContext(r.Context()); err == nil && tc.TenantID != uuid.Nil {
 		callerTenantID = tc.TenantID.String()
 	}

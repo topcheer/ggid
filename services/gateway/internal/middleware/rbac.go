@@ -177,10 +177,31 @@ func RequireAdminScope(next http.Handler) http.Handler {
 			return
 		}
 
+		// SECURITY: Platform-only paths require platform:admin scope specifically.
+		// tenant:admin must NOT access these - prevents privilege escalation.
+		if isPlatformOnlyPath(r.URL.Path) {
+			if hasPlatformAdminScope(claims.Scopes) {
+				next.ServeHTTP(w, r)
+				return
+			}
+			writeAdminForbidden(w, r)
+			return
+		}
+
 		// SECURITY: Only OAuth scopes (from token_endpoint, verified against client
 		// registration) grant admin access. Roles claim comes from DB role.name which
 		// is tenant-controlled — allowing it here would let a tenant admin create a
 		// role named "platform:admin" and escalate privileges.
+		// Platform-only paths require platform:admin specifically; tenant:admin
+		// must NOT be sufficient for system-level operations.
+		if isPlatformOnlyPath(r.URL.Path) {
+			if !hasPlatformAdminScope(claims.Scopes) {
+				writeAdminForbidden(w, r)
+				return
+			}
+			next.ServeHTTP(w, r)
+			return
+		}
 		if hasAdminScope(claims.Scopes) {
 			next.ServeHTTP(w, r)
 			return
@@ -210,6 +231,28 @@ func writeAdminForbidden(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, `{"detail":"insufficient permissions for this endpoint","title":"Forbidden","type":"https://ggid.dev/errors/forbidden","request_id":%q}`, requestID)
 }
 
+// platformOnlyPaths are admin endpoints that require platform:admin scope.
+// tenant:admin is NOT sufficient for these paths.
+var platformOnlyPaths = []string{
+	"/api/v1/admin/secrets",
+	"/api/v1/admin/backup",
+	"/api/v1/admin/key-rotation",
+	"/api/v1/impersonate",
+	"/api/v1/auth/impersonate",
+	"/api/v1/system/",
+	"/api/v1/tenants", // tenant CRUD is platform-level
+}
+
+// isPlatformOnlyPath returns true if the path requires platform:admin scope.
+func isPlatformOnlyPath(path string) bool {
+	for _, prefix := range platformOnlyPaths {
+		if strings.HasPrefix(path, prefix) {
+			return true
+		}
+	}
+	return false
+}
+
 // hasAdminScope checks if any of the user's scopes indicate admin-level access.
 // Only the namespaced, non-forgeable scope strings are accepted. Loose values
 // like "admin"/"administrator" are NOT accepted here: role keys are
@@ -225,12 +268,11 @@ func hasAdminScope(scopes []string) bool {
 	return false
 }
 
-// hasPlatformAdminScope checks if the user has platform:admin scope.
-// This is stricter than hasAdminScope - it only accepts platform:admin, not tenant:admin.
-// Use this for platform-only operations that should not be accessible to tenant admins.
+// hasPlatformAdminScope checks for platform:admin scope only.
+// Used for platform-only paths where tenant:admin is insufficient.
 func hasPlatformAdminScope(scopes []string) bool {
 	for _, sc := range scopes {
-		if sc == "platform:admin" {
+		if strings.ToLower(sc) == "platform:admin" {
 			return true
 		}
 	}
