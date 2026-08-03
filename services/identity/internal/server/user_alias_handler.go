@@ -25,15 +25,31 @@ var userAliasStore = struct {
 	data map[string][]userAlias // userID → aliases
 }{data: make(map[string][]userAlias)}
 
-// POST   /api/v1/users/{id}/aliases — add alias
-// GET    /api/v1/users/{id}/aliases — list aliases
-// DELETE /api/v1/users/{id}/aliases?id=X — delete alias
+// POST   /api/v1/users/{id}/aliases -- add alias
+// GET    /api/v1/users/{id}/aliases -- list aliases
+// DELETE /api/v1/users/{id}/aliases?id=X -- delete alias
 func (h *HTTPHandler) handleUserAliases(w http.ResponseWriter, r *http.Request) {
 	// SECURITY: Require tenant context for isolation.
 	callerTenant := r.Header.Get("X-Tenant-ID")
 	if callerTenant == "" {
 		writeJSONError(w, http.StatusForbidden, "tenant context required")
 		return
+	}
+
+	// SECURITY: Require admin scope for all alias operations.
+	// Self-service alias management is not supported -- aliases are identity
+	// attributes that feed into login/password-reset flows. Allowing non-admin
+	// users to modify other users' aliases could enable account takeover.
+	scopes := r.Header.Get("X-Scopes")
+	isAdmin := strings.Contains(scopes, "platform:admin") || strings.Contains(scopes, "tenant:admin")
+	if !isAdmin {
+		// Allow users to read their own aliases (self-service GET).
+		callerUserID := r.Header.Get("X-User-ID")
+		if r.Method != http.MethodGet || callerUserID == "" {
+			writeJSONError(w, http.StatusForbidden, "admin scope required to manage user aliases")
+			return
+		}
+		// Will check ownership after extracting userID from path.
 	}
 
 	// Extract user ID from path
@@ -52,6 +68,14 @@ func (h *HTTPHandler) handleUserAliases(w http.ResponseWriter, r *http.Request) 
 	if _, err := uuid.Parse(userID); err != nil {
 		writeJSONError(w, http.StatusBadRequest, "invalid user_id")
 		return
+	}
+	// SECURITY: Non-admin users can only access their own aliases.
+	if !isAdmin {
+		callerUserID := r.Header.Get("X-User-ID")
+		if callerUserID != userID {
+			writeJSONError(w, http.StatusForbidden, "cannot access another user's aliases")
+			return
+		}
 	}
 
 	switch r.Method {
