@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strconv"
 	"time"
 
 	"github.com/ggid/ggid/services/audit/internal/domain"
@@ -166,7 +167,8 @@ func (r *ITDRRepository) ListDetections(ctx context.Context, f domain.DetectionF
 	offset := (page - 1) * pageSize
 
 	query := "SELECT id, tenant_id, rule_id, actor_id, severity, title, detail, event_ids, status, hit_count, detected_at, updated_at FROM itdr_detections " +
-		where + fmt.Sprintf(" ORDER BY detected_at DESC LIMIT %d OFFSET %d", pageSize, offset)
+		where + " ORDER BY detected_at DESC LIMIT $" + strconv.Itoa(len(args)+1) + " OFFSET $" + strconv.Itoa(len(args)+2)
+	args = append(args, pageSize, offset)
 
 	rows, err := r.pool.Query(ctx, query, args...)
 	if err != nil {

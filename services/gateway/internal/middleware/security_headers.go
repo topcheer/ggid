@@ -6,6 +6,9 @@ import (
 	"net/http"
 	"strings"
 	"sync"
+
+	ggidtenant "github.com/ggid/ggid/pkg/tenant"
+	"github.com/google/uuid"
 )
 
 // SecurityHeadersConfig holds configurable security header settings.
@@ -23,7 +26,7 @@ type SecurityHeadersConfig struct {
 func DefaultSecurityHeadersConfig() *SecurityHeadersConfig {
 	return &SecurityHeadersConfig{
 		Enabled: true, FrameDeny: true, ContentTypeNosniff: true, HSTSMaxAge: 31536000,
-		CSP: "default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https: wss:;",
+		CSP: "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https: wss:;",
 	}
 }
 
@@ -63,8 +66,13 @@ func SecurityHeadersConfigurable(cfg *SecurityHeadersConfig) func(http.Handler) 
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			// Check per-tenant override.
+			// SECURITY: Use JWT-verified tenant ID, not forgeable X-Tenant-ID header.
 			active := cfg
-			if tenantID := r.Header.Get("X-Tenant-ID"); tenantID != "" {
+			tenantID := ""
+			if tc, err := ggidtenant.FromContext(r.Context()); err == nil && tc.TenantID != uuid.Nil {
+				tenantID = tc.TenantID.String()
+			}
+			if tenantID != "" {
 				if override, ok := cfg.PerTenantOverrides[tenantID]; ok {
 					active = override
 				}

@@ -3,7 +3,8 @@ package repository
 import (
 	"context"
 	"encoding/json"
-	"fmt"
+	"strconv"
+
 	"time"
 
 	"github.com/google/uuid"
@@ -172,7 +173,8 @@ func (r *ThreatIntelRepository) ListIndicators(ctx context.Context, tenantID uui
 		q += ` AND indicator_type = $2`
 		args = append(args, indType)
 	}
-	q += fmt.Sprintf(` ORDER BY last_seen DESC LIMIT %d`, pageSize)
+	q += ` ORDER BY last_seen DESC LIMIT $` + strconv.Itoa(len(args)+1)
+	args = append(args, pageSize)
 	rows, err := r.pool.Query(ctx, q, args...)
 	if err != nil {
 		return nil, 0, err
