@@ -54,6 +54,8 @@ const (
 
 // HandleBulk processes a SCIM bulk request (POST /scim/v2/Bulk).
 func (h *Handler) HandleBulk(ctx context.Context, w http.ResponseWriter, r *http.Request) {
+	// SECURITY: Limit request body size to prevent memory exhaustion.
+	r.Body = http.MaxBytesReader(w, r.Body, 10<<20) // 10MB
 	var req BulkRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		writeSCIMErrorWithType(w, http.StatusBadRequest, ScimTypeInvalidSyntax, "invalid bulk request body")

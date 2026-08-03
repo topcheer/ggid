@@ -69,6 +69,8 @@ func (h *HTTPHandler) handleBulkImport(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// SECURITY: Limit request body size to prevent memory exhaustion.
+	r.Body = http.MaxBytesReader(w, r.Body, 10<<20) // 10MB
 	var req BulkImportRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		writeJSONError(w, http.StatusBadRequest, "invalid request body")
