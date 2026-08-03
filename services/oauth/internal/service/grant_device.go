@@ -134,18 +134,27 @@ func (s *OAuthService) PollDeviceToken(ctx context.Context, deviceCode, clientID
 			deviceCodeMu.Unlock()
 			return nil, fmt.Errorf("authorization_pending")
 		}
-		delete(deviceCodeStore, deviceCode)
-		delete(userCodeIndex, info2.UserCode)
+		// Copy fields under lock, then issue token BEFORE deleting.
+		// If issuance fails, the device code remains valid for retry.
+		approvedUserID := info2.UserID
+		approvedScope := info2.Scope
+		approvedUserCode := info2.UserCode
 		deviceCodeMu.Unlock()
 
-		accessToken, expiresIn, err := s.issueDeviceAccessToken(tenantID, *userID)
+		accessToken, expiresIn, err := s.issueDeviceAccessToken(tenantID, *approvedUserID)
 		if err != nil {
 			return nil, err
 		}
 
+		// Only delete after successful token issuance.
+		deviceCodeMu.Lock()
+		delete(deviceCodeStore, deviceCode)
+		delete(userCodeIndex, approvedUserCode)
+		deviceCodeMu.Unlock()
+
 		scopeStr := ""
-		if len(info.Scope) > 0 {
-			scopeStr = strings.Join(info.Scope, " ")
+		if len(approvedScope) > 0 {
+			scopeStr = strings.Join(approvedScope, " ")
 		}
 
 		return &TokenResponse{
