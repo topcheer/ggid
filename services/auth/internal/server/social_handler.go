@@ -16,6 +16,7 @@ import (
 	"github.com/ggid/ggid/pkg/pii"
 	"github.com/ggid/ggid/pkg/social"
 	"github.com/ggid/ggid/pkg/tenant"
+
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
 )
@@ -99,6 +100,23 @@ func isAllowedRedirectURI(uri string) bool {
 func (s *socialStateStore) Set(key string, val *socialState, ttl time.Duration) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
+	// SECURITY: Cap store size to prevent OOM from abandoned social login flows.
+	const maxSocialStates = 10000
+	if len(s.entries) >= maxSocialStates {
+		now := time.Now()
+		for k, e := range s.entries {
+			if now.After(e.expireAt) {
+				delete(s.entries, k)
+			}
+		}
+		// If still full after cleanup, evict oldest
+		if len(s.entries) >= maxSocialStates {
+			for k := range s.entries {
+				delete(s.entries, k)
+				break
+			}
+		}
+	}
 	s.entries[key] = socialStateEntry{value: val, expireAt: time.Now().Add(ttl)}
 }
 
