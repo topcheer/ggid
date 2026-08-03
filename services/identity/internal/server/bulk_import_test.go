@@ -46,6 +46,14 @@ func TestDetectHashType_Unknown(t *testing.T) {
 	}
 }
 
+func TestDetectHashType_UnrecognizedExplicitType(t *testing.T) {
+	// R291 fix: attacker passes hash_type="custom" with garbage hash.
+	// Must return "unknown" so production check rejects it (not pass through).
+	if dt := DetectHashType("garbage_hash_not_real", "custom"); dt != "unknown" {
+		t.Errorf("unrecognized explicitType with non-matching content should return unknown, got %s", dt)
+	}
+}
+
 func TestVerifyMultiHash_NeedsRehash(t *testing.T) {
 	// Non-argon2id hashes should flag needsRehash=true.
 	_, needsRehash := VerifyMultiHash("password", "$2a$10$abc123def456")
