@@ -480,7 +480,13 @@ func HasPermissionForRoute(path, method string, perms []string) bool {
 	adminKey := resource + ":admin"
 	for _, p := range perms {
 		pl := strings.ToLower(p)
+		// Match exact (users:read) or prefix (users:read:tenant, users:read:instance).
+		// Permissions use 3-segment format "resource:action:scope" but route checks
+		// only know resource:action, so prefix match covers all scope variants.
 		if pl == required || pl == adminKey {
+			return true
+		}
+		if strings.HasPrefix(pl, required+":") {
 			return true
 		}
 	}

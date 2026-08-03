@@ -2,6 +2,7 @@ package server
 
 import (
 	"context"
+	stderrors "errors"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -11,10 +12,20 @@ import (
 
 	ggidcrypto "github.com/ggid/ggid/pkg/crypto"
 
-	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
+	"github.com/golang-jwt/jwt/v5"
+	"github.com/jackc/pgx/v5/pgconn"
+
 	"github.com/jackc/pgx/v5/pgxpool"
 )
+
+// isUniqueViolation returns true if err is a Postgres unique constraint
+// violation (SQLSTATE 23505), used to convert race-condition INSERT failures
+// into clean 409 Conflict responses instead of 500.
+func isUniqueViolation(err error) bool {
+	var pgErr *pgconn.PgError
+	return stderrors.As(err, &pgErr) && pgErr.Code == "23505"
+}
 
 // VerificationToken tracks email verification + password reset tokens.
 type VerificationToken struct {
@@ -214,6 +225,11 @@ func (h *Handler) handleRegister(w http.ResponseWriter, r *http.Request) {
 			VALUES ($1, $2, $3, $4, 'active', false)`,
 			userID, tenantID, req.Username, req.Email)
 		if err != nil {
+			// Check for unique constraint violation (23505) and return 409
+			if isUniqueViolation(err) {
+				writeError(w, http.StatusConflict, "registration conflict")
+				return
+			}
 			writeError(w, http.StatusInternalServerError, "failed to create user")
 			return
 		}
@@ -221,6 +237,9 @@ func (h *Handler) handleRegister(w http.ResponseWriter, r *http.Request) {
 		// Hash password and create credential
 		hash, err := ggidcrypto.HashPassword(req.Password)
 		if err != nil {
+			// SECURITY: Clean up the phantom user created above so a user
+			// without credentials cannot exist.
+			_, _ = h.pool.Exec(r.Context(), `DELETE FROM users WHERE id = $1`, userID)
 			writeError(w, http.StatusInternalServerError, "failed to hash password")
 			return
 		}
@@ -229,6 +248,7 @@ func (h *Handler) handleRegister(w http.ResponseWriter, r *http.Request) {
 			VALUES ($1, $2, 'password', $3, $4, true)`,
 			tenantID, userID, req.Username, hash)
 		if err != nil {
+			_, _ = h.pool.Exec(r.Context(), `DELETE FROM users WHERE id = $1`, userID)
 			writeError(w, http.StatusInternalServerError, "failed to create credential")
 			return
 		}
