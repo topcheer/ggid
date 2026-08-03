@@ -108,7 +108,7 @@ func (rl *RateLimiter) Middleware(next http.Handler) http.Handler {
 
 func (rl *RateLimiter) getLimit(path string) int {
 	switch {
-	case path == "/api/v1/auth/verify":
+	case path == "/api/v1/auth/verify" || path == "/api/v1/auth/login":
 		return rl.cfg.LoginLimit
 	case path == "/api/v1/auth/register":
 		return rl.cfg.RegisterLimit

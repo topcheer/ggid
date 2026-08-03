@@ -86,45 +86,45 @@ func GRPCUnaryInterceptor(cfg *GRPCInterceptorConfig) grpc.UnaryServerIntercepto
 
 		// Extract metadata
 		md, ok := metadata.FromIncomingContext(ctx)
+		// SECURITY: If JWTSecret is configured, require auth even without metadata.
+		// Previously the entire auth block was inside `if ok {}`, so requests with
+		// no metadata silently bypassed JWT validation.
+		if cfg.JWTSecret != "" {
+			authVals := []string{}
+			if ok {
+				authVals = md.Get("authorization")
+			}
+			if len(authVals) == 0 {
+				return nil, status.Error(codes.Unauthenticated, "missing authorization")
+			}
+			token := strings.TrimPrefix(authVals[0], "Bearer ")
+			if token == authVals[0] {
+				return nil, status.Error(codes.Unauthenticated, "invalid authorization scheme")
+			}
+			// SECURITY: Validate JWT signature and claims.
+			claims := jwt.MapClaims{}
+			parserOpts := []jwt.ParserOption{
+				jwt.WithValidMethods([]string{"HS256"}),
+				jwt.WithExpirationRequired(),
+			}
+			if cfg.JWTIssuer != "" {
+				parserOpts = append(parserOpts, jwt.WithIssuer(cfg.JWTIssuer))
+			}
+			_, err := jwt.NewParser(parserOpts...).ParseWithClaims(token, claims, func(t *jwt.Token) (any, error) {
+				if _, ok := t.Method.(*jwt.SigningMethodHMAC); ok {
+					return []byte(cfg.JWTSecret), nil
+				}
+				return nil, status.Error(codes.Unauthenticated, "unsupported signing method")
+			})
+			if err != nil {
+				return nil, status.Error(codes.Unauthenticated, "invalid token")
+			}
+			ctx = context.WithValue(ctx, grpcUserCtxKey, claims["sub"])
+		}
 		if ok {
 			// Inject tenant ID
 			if vals := md.Get(tenantHeader); len(vals) > 0 {
 				ctx = context.WithValue(ctx, grpcTenantCtxKey, vals[0])
-			}
-
-			// Validate JWT if configured
-			if cfg.JWTSecret != "" {
-				authVals := md.Get("authorization")
-				if len(authVals) == 0 {
-					return nil, status.Error(codes.Unauthenticated, "missing authorization")
-				}
-				token := strings.TrimPrefix(authVals[0], "Bearer ")
-				if token == authVals[0] {
-					return nil, status.Error(codes.Unauthenticated, "invalid authorization scheme")
-				}
-				// SECURITY: Validate JWT signature and claims — not just extract token.
-				claims := jwt.MapClaims{}
-				parserOpts := []jwt.ParserOption{
-					jwt.WithValidMethods([]string{"HS256"}),
-					jwt.WithExpirationRequired(),
-				}
-				if cfg.JWTIssuer != "" {
-					parserOpts = append(parserOpts, jwt.WithIssuer(cfg.JWTIssuer))
-				}
-				_, err := jwt.NewParser(parserOpts...).ParseWithClaims(token, claims, func(t *jwt.Token) (any, error) {
-					if _, ok := t.Method.(*jwt.SigningMethodHMAC); ok {
-						return []byte(cfg.JWTSecret), nil
-					}
-					return nil, status.Error(codes.Unauthenticated, "unsupported signing method")
-				})
-				if err != nil {
-					return nil, status.Error(codes.Unauthenticated, "invalid token")
-				}
-				// Store verified claims, not raw token.
-				ctx = context.WithValue(ctx, grpcUserCtxKey, claims["sub"])
-				if tid, ok := claims["tenant_id"].(string); ok {
-					ctx = context.WithValue(ctx, grpcTenantCtxKey, tid)
-				}
 			}
 		}
 
@@ -167,7 +167,12 @@ func GRPCStreamInterceptor(cfg *GRPCInterceptorConfig) grpc.StreamServerIntercep
 		ctx := ss.Context()
 
 		md, ok := metadata.FromIncomingContext(ctx)
-		if ok {
+		if !ok {
+			// SECURITY: No metadata means no auth header — reject when auth required.
+			if cfg.JWTSecret != "" {
+				return status.Error(codes.Unauthenticated, "missing metadata")
+			}
+		} else {
 			if vals := md.Get(tenantHeader); len(vals) > 0 {
 				ctx = context.WithValue(ctx, grpcTenantCtxKey, vals[0])
 			}
