@@ -13,6 +13,7 @@ import (
 	"github.com/ggid/ggid/services/audit/internal/repository"
 	"github.com/ggid/ggid/services/audit/internal/service"
 	"github.com/google/uuid"
+
 	"github.com/nats-io/nats.go"
 	"github.com/nats-io/nats.go/jetstream"
 )
@@ -135,12 +136,21 @@ func (c *EventConsumer) Start() error {
 			}
 
 			for msg := range batch.Messages() {
-				if err := c.processMessage(ctx, msg); err != nil {
-					slog.Error("Audit Consumer: process error", "error", err)
-					msg.Nak()
-				} else {
-					msg.Ack()
-				}
+				// SECURITY: per-message recover prevents a single malformed
+				// audit event from killing the entire consumer goroutine.
+				func() {
+					defer func() {
+						if p := recover(); p != nil {
+							slog.Error("Audit Consumer: panic processing message", "panic", p)
+						}
+					}()
+					if err := c.processMessage(ctx, msg); err != nil {
+						slog.Error("Audit Consumer: process error", "error", err)
+						msg.Nak()
+					} else {
+						msg.Ack()
+					}
+				}()
 			}
 		}
 	}()

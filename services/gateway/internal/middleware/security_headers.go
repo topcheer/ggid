@@ -148,7 +148,11 @@ func GetTenantCORS(tenantID string) TenantCORSConfig {
 func TenantCORSMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		origin := r.Header.Get("Origin")
-		tenantID := r.Header.Get("X-Tenant-ID")
+		// SECURITY: Use JWT-verified tenant ID, not forgeable X-Tenant-ID header.
+		tenantID := ""
+		if tc, err := ggidtenant.FromContext(r.Context()); err == nil && tc.TenantID != uuid.Nil {
+			tenantID = tc.TenantID.String()
+		}
 		cfg := GetTenantCORS(tenantID)
 		allowed := false
 		for _, o := range cfg.AllowedOrigins {
