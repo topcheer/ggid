@@ -193,9 +193,12 @@ func (h *HTTPHandler) handleBulkImport(w http.ResponseWriter, r *http.Request) {
 					result.Errors = append(result.Errors, ImportError{Email: user.Email, Reason: "role does not belong to tenant"})
 					continue
 				}
-				_, _ = h.svc.Pool().Exec(r.Context(),
+				_, execErr := h.svc.Pool().Exec(r.Context(),
 					`INSERT INTO user_roles (user_id, role_id) VALUES ($1, $2) ON CONFLICT DO NOTHING`,
 					createdUser.ID, roleUUID)
+				if execErr != nil {
+					slog.Error("bulk import: role assignment failed", "user_id", createdUser.ID, "role", roleUUID, "error", execErr)
+				}
 			}
 		}
 		slog.Info("bulk import user created", "email", pii.MaskEmail(user.Email), "user_id", createdUser.ID, "role", user.RoleID)

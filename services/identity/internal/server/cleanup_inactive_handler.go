@@ -14,12 +14,13 @@ func (h *HTTPHandler) handleCleanupInactive(w http.ResponseWriter, r *http.Reque
 		return
 	}
 	days, err := strconv.Atoi(r.URL.Query().Get("days"))
-	if err != nil || days < 1 || days > 3650 {
-		if err != nil {
-			writeJSONError(w, http.StatusBadRequest, "invalid days parameter")
-			return
-		}
-		days = 90 // default or clamp
+	if err != nil {
+		writeJSONError(w, http.StatusBadRequest, "invalid days parameter")
+		return
+	}
+	if days < 1 || days > 3650 {
+		writeJSONError(w, http.StatusBadRequest, "days must be between 1 and 3650")
+		return
 	}
 	var req struct {
 		Action string `json:"action"` // disable, archive, delete
