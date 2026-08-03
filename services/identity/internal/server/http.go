@@ -1530,9 +1530,10 @@ func (h *HTTPHandler) handleMePermissions(ctx context.Context, w http.ResponseWr
 			SELECT rrp.route_prefix, rrp.permission_level
 			FROM role_route_permissions rrp
 			JOIN user_roles ur ON ur.role_id = rrp.role_id
-			WHERE ur.user_id = $1
+			JOIN roles r ON r.id = ur.role_id
+			WHERE ur.user_id = $1 AND r.tenant_id = $2
 			ORDER BY rrp.route_prefix
-		`, userIDStr)
+		`, userIDStr, tenantID)
 		if err2 != nil {
 			writeJSON(w, http.StatusOK, map[string]any{"permissions": []any{}})
 			return
