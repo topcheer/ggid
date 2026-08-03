@@ -5,6 +5,9 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"time"
+
+	"github.com/golang-jwt/jwt/v5"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -140,8 +143,16 @@ func TestGRPCStreamInterceptor_JWTAuth_Valid(t *testing.T) {
 	cfg := &GRPCInterceptorConfig{JWTSecret: "test-secret"}
 	interceptor := GRPCStreamInterceptor(cfg)
 
+	// Generate a real HS256 JWT for validation.
+	claims := jwt.MapClaims{
+		"sub": "user-123",
+		"exp": time.Now().Add(time.Hour).Unix(),
+	}
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	tokenStr, _ := token.SignedString([]byte("test-secret"))
+
 	ctx := metadata.NewIncomingContext(context.Background(),
-		metadata.Pairs("authorization", "Bearer valid-token"))
+		metadata.Pairs("authorization", "Bearer "+tokenStr))
 	ss := &mockServerStream{ctx: ctx}
 	handlerCalled := false
 	handler := func(srv any, stream grpc.ServerStream) error {
