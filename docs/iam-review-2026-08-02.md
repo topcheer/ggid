@@ -9,6 +9,63 @@
 
 ### P0 (1个，新增)
 
+#### P0-R394: MFA 绕过漏洞通过环境变量重新引入
+
+**涉及文件**: `services/oauth/internal/service/grant_password.go` (工作目录未提交修改)
+
+**问题描述**:
+R394 P0 修复（commit 3b1198677）在 DB 查询失败时 fail closed，防止 MFA 绕过。但当前工作目录中的修改添加了环境变量检查（line 104-106）：
+
+```go
+if env := os.Getenv("GGID_ENV"); env != "" && env != "test" && env != "dev" {
+    return nil, errors.New(errors.ErrInternal, "MFA check failed")
+}
+```
+
+**安全影响**:
+- **生产环境攻击面扩大**: 如果攻击者能设置 `GGID_ENV=test` 或 `GGID_ENV=dev` 环境变量，可以：
+  - 通过耗尽 DB 连接池触发 DB 查询错误
+  - 在 DB 错误时继续登录流程，绕过 MFA
+- **配置错误风险**: 生产环境误配置 `GGID_ENV=test` 或 `dev` 会完全禁用 MFA fail closed 保护
+
+**R394 原始修复的正确性**:
+```go
+if err := s.pool.QueryRow(ctx, ...).Scan(&mfaCount); err != nil {
+    return nil, errors.New(errors.ErrInternal, "MFA check failed")
+}
+```
+这是正确的 fail closed 实现，环境变量检查削弱了该修复。
+
+**建议修复**:
+移除环境变量检查，保留 R394 的 fail closed 实现。测试环境应在测试 fixture 中模拟 DB 成功或测试 DB 连接，而非禁用安全检查。
+
+---
+
+### P0 (1个，编译问题)
+
+#### grant_password.go 临时编译错误
+
+**文件**: `services/oauth/internal/service/grant_password.go`
+
+**错误信息**:
+```
+services/oauth/internal/service/grant_password.go:169: undefined: jwt
+services/oauth/internal/service/grant_password.go:182: undefined: jwt
+```
+
+**分析**:
+- JWT 导入存在（line 19: `"github.com/golang-jwt/jwt/v5"`）
+- 文件监控显示文件被其他 agent 修改
+- 可能是并发修改导致的编译缓存问题
+- 单独编译 `./services/oauth/internal/service/` 成功，但 `go build ./...` 失败
+
+**建议**:
+检查是否有多个 agent 同时修改此文件，确保导入配置正确。
+
+---
+
+### P0 (1个，新增，之前已记录)
+
 #### Helm deployments 引用的 `{fullname}-secrets` Secret 不存在
 
 **涉及提交**: `50d00c229` (fix R284 P0), `323cf0dee` (fix R281 P0)
