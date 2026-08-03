@@ -221,7 +221,7 @@ func (gw *Gateway) buildProxies() {
 		proxy.Transport = &http.Transport{
 			MaxIdleConns:        100,
 			MaxIdleConnsPerHost: 64,
-			MaxConnsPerHost:     0, // unlimited
+			MaxConnsPerHost:     100, // prevent backend pool exhaustion
 			IdleConnTimeout:     to.Idle,
 			DialContext: (&net.Dialer{
 				Timeout:   to.Dial,
