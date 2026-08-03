@@ -101,6 +101,12 @@ func (h *HTTPHandler) handleBulkImport(w http.ResponseWriter, r *http.Request) {
 			result.Errors = append(result.Errors, ImportError{Email: fmt.Sprintf("row_%d", i), Reason: "email is required"})
 			continue
 		}
+		// SECURITY: Validate input lengths to prevent DoS and data corruption.
+		if len(user.Username) > 255 || len(user.Email) > 320 {
+			result.Failed++
+			result.Errors = append(result.Errors, ImportError{Email: user.Email, Reason: "username or email exceeds maximum length"})
+			continue
+		}
 		// SECURITY: Validate email format to prevent malformed data injection.
 		if _, err := mail.ParseAddress(user.Email); err != nil {
 			result.Failed++

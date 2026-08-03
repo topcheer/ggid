@@ -143,6 +143,11 @@ func (s *BackupCodeService) GenerateBackupCodes(ctx context.Context, userID uuid
 		wg.Add(1)
 		go func(idx int) {
 			defer wg.Done()
+			defer func() {
+				if r := recover(); r != nil {
+					errCh <- fmt.Errorf("backup code hash panic: %v", r)
+				}
+			}()
 			sem <- struct{}{}        // acquire
 			defer func() { <-sem }() // release
 			h, err := crypto.HashPassword(pairs[idx].plain)

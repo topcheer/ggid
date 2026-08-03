@@ -8,6 +8,7 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"log/slog"
 	"time"
 
 	"github.com/ggid/ggid/pkg/sysconfig"
@@ -286,6 +287,11 @@ func (tbl *TenantBucketLimiter) Cleanup(maxAge time.Duration) {
 func (tbl *TenantBucketLimiter) StartCleanup(interval, maxAge time.Duration) {
 	tbl.cleanupDone = make(chan struct{})
 	go func() {
+		defer func() {
+			if r := recover(); r != nil {
+				slog.Error("token bucket cleanup panic", "error", r)
+			}
+		}()
 		ticker := time.NewTicker(interval)
 		defer ticker.Stop()
 		for {

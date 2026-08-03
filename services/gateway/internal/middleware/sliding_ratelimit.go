@@ -6,9 +6,10 @@ import (
 	"net/http"
 	"strconv"
 	"sync"
-	"time"
+	"log/slog"
 
 	"github.com/redis/go-redis/v9"
+	"time"
 )
 
 // --- RateLimitStore interface ---
@@ -40,6 +41,11 @@ func NewMemoryRateLimitStore() *MemoryRateLimitStore {
 	s := &MemoryRateLimitStore{buckets: make(map[string]*memBucket), done: make(chan struct{})}
 	// Background goroutine to evict stale buckets and prevent OOM.
 	go func() {
+		defer func() {
+			if r := recover(); r != nil {
+				slog.Error("sliding ratelimit cleanup panic", "error", r)
+			}
+		}()
 		t := time.NewTicker(5 * time.Minute)
 		defer t.Stop()
 		for {
