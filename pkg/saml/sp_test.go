@@ -215,8 +215,8 @@ func TestBuildAuthnRequest_UniqueIDs(t *testing.T) {
 
 func TestGenerateSPMetadata_Basic(t *testing.T) {
 	sp := &ServiceProvider{
-		EntityID:    "https://sp.example.com",
-		ACSURL:      "https://sp.example.com/acs",
+		EntityID: "https://sp.example.com",
+		ACSURL:   "https://sp.example.com/acs",
 	}
 	data, err := GenerateSPMetadata(sp)
 	if err != nil {
@@ -256,9 +256,9 @@ func TestGenerateSPMetadata_WithSLO(t *testing.T) {
 func TestGenerateSPMetadata_WithCertificate(t *testing.T) {
 	cert, _ := genRSACertWithKey(t)
 	sp := &ServiceProvider{
-		EntityID:          "https://sp.example.com",
-		ACSURL:            "https://sp.example.com/acs",
-		X509Certificate:   cert.Raw,
+		EntityID:             "https://sp.example.com",
+		ACSURL:               "https://sp.example.com/acs",
+		X509Certificate:      cert.Raw,
 		WantAssertionsSigned: true,
 	}
 	data, err := GenerateSPMetadata(sp)
@@ -424,7 +424,7 @@ func TestHashForAlgorithm(t *testing.T) {
 		uri    string
 		wantOk bool
 	}{
-		{"http://www.w3.org/2000/09/xmldsig#sha1", true},
+		{"http://www.w3.org/2000/09/xmldsig#sha1", false},
 		{"http://www.w3.org/2001/04/xmlenc#sha256", true},
 		{"http://www.w3.org/2001/04/xmlenc#sha512", true},
 		{"http://invalid", false},
@@ -448,7 +448,7 @@ func TestCryptoHashForSignature(t *testing.T) {
 		wantOk bool
 	}{
 		{"http://www.w3.org/2001/04/xmldsig-more#rsa-sha256", true},
-		{"http://www.w3.org/2000/09/xmldsig#rsa-sha1", true},
+		{"http://www.w3.org/2000/09/xmldsig#rsa-sha1", false},
 		{"http://invalid", false},
 	}
 	for _, tt := range tests {

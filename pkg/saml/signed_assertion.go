@@ -212,10 +212,8 @@ func hashForAlgorithm(algorithmURI string) (hash.Hash, error) {
 // cryptoHashForSignature maps a SignatureMethod algorithm URI to a crypto.Hash.
 func cryptoHashForSignature(algorithmURI string) (crypto.Hash, error) {
 	switch algorithmURI {
-	case "http://www.w3.org/2000/09/xmldsig#dsa-sha1",
-		"http://www.w3.org/2000/09/xmldsig#rsa-sha1",
-		"http://www.w3.org/2000/09/xmldsig#hmac-sha1":
-		return crypto.SHA1, nil
+	// SECURITY: SHA-1 signature algorithms rejected (R308). SHA-1 is
+	// vulnerable to collision attacks per NIST guidance.
 	case "http://www.w3.org/2001/04/xmldsig-more#rsa-sha256",
 		"http://www.w3.org/2001/04/xmldsig-more#ecdsa-sha256":
 		return crypto.SHA256, nil

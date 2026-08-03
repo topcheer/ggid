@@ -305,12 +305,10 @@ func TestCovS3_ConstantTimeEqual_DifferentData(t *testing.T) {
 // --- cryptoHashForSignature SHA1 ---
 
 func TestCovS3_CryptoHashForSignature_RSA_SHA1(t *testing.T) {
-	h, err := cryptoHashForSignature("http://www.w3.org/2000/09/xmldsig#rsa-sha1")
-	if err != nil {
-		t.Fatalf("rsa-sha1: %v", err)
-	}
-	if h.Size() != 20 {
-		t.Errorf("expected SHA1 size 20, got %d", h.Size())
+	// R308: SHA-1 signature algorithms are now rejected.
+	_, err := cryptoHashForSignature("http://www.w3.org/2000/09/xmldsig#rsa-sha1")
+	if err == nil {
+		t.Error("expected error for SHA-1 signature algorithm")
 	}
 }
 
