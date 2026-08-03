@@ -4,8 +4,8 @@ import (
 	"encoding/json"
 	"net/http"
 	"time"
-
-	"github.com/google/uuid"
+	"encoding/base64"
+	crand "crypto/rand"
 )
 
 type BulkUser struct {
@@ -25,12 +25,16 @@ func (h *HTTPHandler) handleBulkProvision(w http.ResponseWriter, r *http.Request
 	var req struct {
 		Users []BulkUser `json:"users"`
 	}
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+	if err := json.NewDecoder(http.MaxBytesReader(w, r.Body, 10<<20)).Decode(&req); err != nil {
 		writeJSONError(w, http.StatusBadRequest, "invalid JSON")
 		return
 	}
 	if len(req.Users) == 0 {
 		writeJSONError(w, http.StatusBadRequest, "users array required")
+		return
+	}
+	if len(req.Users) > 1000 {
+		writeJSONError(w, http.StatusBadRequest, "max 1000 users per bulk provision")
 		return
 	}
 
@@ -52,7 +56,20 @@ func (h *HTTPHandler) handleBulkProvision(w http.ResponseWriter, r *http.Request
 			skipped++
 			continue
 		}
-		tempPwd := uuid.New().String()[:12]
+		// SECURITY: Validate input lengths to prevent DoS.
+		if len(u.Username) > 255 || len(u.Email) > 320 {
+			results = append(results, Result{Username: u.Username, Email: u.Email, Status: "error", Error: "field exceeds maximum length"})
+			skipped++
+			continue
+		}
+		// SECURITY: Use crypto/rand for temporary password instead of UUID.
+		tempPwdBytes := make([]byte, 9)
+		if _, err := crand.Read(tempPwdBytes); err != nil {
+			results = append(results, Result{Username: u.Username, Email: u.Email, Status: "error", Error: "failed to generate password"})
+			skipped++
+			continue
+		}
+		tempPwd := base64.RawURLEncoding.EncodeToString(tempPwdBytes)
 		role := u.Role
 		if role == "" {
 			role = "user"
@@ -61,18 +78,18 @@ func (h *HTTPHandler) handleBulkProvision(w http.ResponseWriter, r *http.Request
 		results = append(results, Result{
 			Username: u.Username, Email: u.Email, Status: "created",
 			TempPassword: tempPwd,
-			Role:        role,
+			Role:         role,
 		})
 		created++
 	}
 
 	writeJSON(w, http.StatusOK, map[string]any{
-		"status":         "completed",
+		"status":          "completed",
 		"total_requested": len(req.Users),
-		"created":        created,
-		"skipped":        skipped,
-		"results":        results,
-		"welcome_emails": "queued",
-		"completed_at":   time.Now().UTC().Format(time.RFC3339),
+		"created":         created,
+		"skipped":         skipped,
+		"results":         results,
+		"welcome_emails":  "queued",
+		"completed_at":    time.Now().UTC().Format(time.RFC3339),
 	})
 }
