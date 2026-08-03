@@ -1,6 +1,7 @@
 package server
 
 import (
+	"strings"
 	"sync"
 
 	"encoding/json"
@@ -30,6 +31,14 @@ var globalImpersonationConfig = &ImpersonationConfig{
 var impersonationConfigMu sync.RWMutex
 
 func (h *Handler) handleImpersonationConfig(w http.ResponseWriter, r *http.Request) {
+	// SECURITY: PUT modifies global config — require platform:admin scope.
+	if r.Method == http.MethodPut {
+		scopes := r.Header.Get("X-Scopes")
+		if !strings.Contains(scopes, "platform:admin") {
+			writeError(w, http.StatusForbidden, "platform:admin scope required")
+			return
+		}
+	}
 	switch r.Method {
 	case http.MethodGet:
 		impersonationConfigMu.RLock()
