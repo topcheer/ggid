@@ -7,6 +7,8 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+
+	ggidtenant "github.com/ggid/ggid/pkg/tenant"
 )
 
 type ApprovalRequest struct {
@@ -32,18 +34,25 @@ type ApprovalStep struct {
 
 func (s *HTTPServer) handleApprovals(w http.ResponseWriter, r *http.Request) {
 	path := r.URL.Path
+	// SECURITY: Extract caller tenant for BOLA protection.
+	callerTenant := ""
+	if tc, err := ggidtenant.FromContext(r.Context()); err == nil && tc.TenantID != uuid.Nil {
+		callerTenant = tc.TenantID.String()
+	}
 
 	if strings.HasSuffix(path, "/pending") && r.Method == http.MethodGet {
 		var result []map[string]any
 		if s.policyMap != nil {
 			rows, _ := s.policyMap.List(r.Context(), "policy_approvals")
 			for _, row := range rows {
-				if pmGetString(row, "status") == "pending" {
+				if pmGetString(row, "status") == "pending" && pmGetString(row, "tenant_id") == callerTenant {
 					result = append(result, row)
 				}
 			}
 		}
-		if result == nil { result = []map[string]any{} }
+		if result == nil {
+			result = []map[string]any{}
+		}
 		writeJSON(w, http.StatusOK, map[string]any{"approvals": result, "count": len(result)})
 		return
 	}
@@ -71,7 +80,7 @@ func (s *HTTPServer) handleApprovals(w http.ResponseWriter, r *http.Request) {
 		}
 		if s.policyMap != nil {
 			s.policyMap.Store(r.Context(), "policy_approvals", ar.ID, map[string]any{
-				"request_type": ar.RequestType, "requester": ar.Requester,
+				"tenant_id": callerTenant, "request_type": ar.RequestType, "requester": ar.Requester,
 				"approver_chain": ar.ApproverChain, "current_step": ar.CurrentStep,
 				"status": ar.Status, "payload": ar.Payload,
 			})
@@ -82,13 +91,23 @@ func (s *HTTPServer) handleApprovals(w http.ResponseWriter, r *http.Request) {
 
 	if (strings.HasSuffix(path, "/approve") || strings.HasSuffix(path, "/reject")) && r.Method == http.MethodPost {
 		action := "approved"
-		if strings.HasSuffix(path, "/reject") { action = "rejected" }
+		if strings.HasSuffix(path, "/reject") {
+			action = "rejected"
+		}
 		parts := strings.Split(path, "/")
-		if len(parts) < 6 { writeJSONError(w, http.StatusBadRequest, "invalid path"); return }
+		if len(parts) < 6 {
+			writeJSONError(w, http.StatusBadRequest, "invalid path")
+			return
+		}
 		id := parts[5]
 		if s.policyMap != nil {
 			row, _ := s.policyMap.Get(r.Context(), "policy_approvals", id)
 			if row == nil {
+				writeJSONError(w, http.StatusNotFound, "approval request not found")
+				return
+			}
+			// SECURITY: Verify approval belongs to caller's tenant.
+			if pmGetString(row, "tenant_id") != callerTenant {
 				writeJSONError(w, http.StatusNotFound, "approval request not found")
 				return
 			}

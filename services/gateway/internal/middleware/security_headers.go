@@ -159,8 +159,14 @@ func TenantCORSMiddleware(next http.Handler) http.Handler {
 		}
 		cfg := GetTenantCORS(tenantID)
 		allowed := false
+		wildcard := false
 		for _, o := range cfg.AllowedOrigins {
-			if o == "*" || o == origin {
+			if o == "*" {
+				allowed = true
+				wildcard = true
+				break
+			}
+			if o == origin {
 				allowed = true
 				break
 			}
@@ -177,7 +183,10 @@ func TenantCORSMiddleware(next http.Handler) http.Handler {
 			w.Header().Set("Access-Control-Allow-Origin", origin)
 			w.Header().Set("Access-Control-Allow-Methods", strings.Join(cfg.AllowedMethods, ", "))
 			w.Header().Set("Access-Control-Allow-Headers", strings.Join(cfg.AllowedHeaders, ", "))
-			if cfg.AllowCredentials {
+			// SECURITY: Per CORS spec, Allow-Credentials must not be combined with
+			// wildcard origin. When tenant configures "*", skip credentials to
+			// prevent any-origin authenticated cross-origin requests.
+			if cfg.AllowCredentials && !wildcard {
 				w.Header().Set("Access-Control-Allow-Credentials", "true")
 			}
 			w.Header().Set("Access-Control-Max-Age", "3600")
