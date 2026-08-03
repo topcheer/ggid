@@ -677,7 +677,7 @@ func (h *HTTPHandler) createUser(ctx context.Context, w http.ResponseWriter, r *
 		Locale      string `json:"locale"`
 		Timezone    string `json:"timezone"`
 	}
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+	if err := json.NewDecoder(http.MaxBytesReader(w, r.Body, 1<<20)).Decode(&req); err != nil {
 		writeJSONError(w, http.StatusBadRequest, "invalid JSON body")
 		return
 	}
