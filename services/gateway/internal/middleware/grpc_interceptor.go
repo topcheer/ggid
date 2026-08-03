@@ -11,8 +11,9 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
-	"github.com/golang-jwt/jwt/v5"
 	"google.golang.org/grpc/status"
+
+	"github.com/golang-jwt/jwt/v5"
 )
 
 // GRPCInterceptorConfig configures the gRPC server interceptors.
@@ -145,6 +146,12 @@ func GRPCUnaryInterceptor(cfg *GRPCInterceptorConfig) grpc.UnaryServerIntercepto
 func GRPCStreamInterceptor(cfg *GRPCInterceptorConfig) grpc.StreamServerInterceptor {
 	if cfg == nil {
 		cfg = &GRPCInterceptorConfig{}
+	}
+	// P0 Security: Same guard as unary interceptor — refuse to start with
+	// silent auth bypass if RequireAuth=true but JWTSecret is empty.
+	if cfg.RequireAuth && cfg.JWTSecret == "" {
+		slog.Error("GRPCStreamInterceptor: RequireAuth=true but JWTSecret is empty — refusing to start with silent auth bypass")
+		os.Exit(1)
 	}
 	tenantHeader := cfg.TenantHeader
 	if tenantHeader == "" {
