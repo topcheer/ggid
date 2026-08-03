@@ -2,6 +2,9 @@ package middleware
 
 import (
 	"context"
+	"crypto/rsa"
+	"crypto/x509"
+	"encoding/pem"
 	"fmt"
 	"log/slog"
 	"os"
@@ -11,6 +14,7 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
+
 	"github.com/golang-jwt/jwt/v5"
 	"google.golang.org/grpc/status"
 )
@@ -110,8 +114,18 @@ func GRPCUnaryInterceptor(cfg *GRPCInterceptorConfig) grpc.UnaryServerIntercepto
 				parserOpts = append(parserOpts, jwt.WithIssuer(cfg.JWTIssuer))
 			}
 			_, err := jwt.NewParser(parserOpts...).ParseWithClaims(token, claims, func(t *jwt.Token) (any, error) {
-				if _, ok := t.Method.(*jwt.SigningMethodHMAC); ok {
-					return []byte(cfg.JWTSecret), nil
+				if _, ok := t.Method.(*jwt.SigningMethodRSA); ok {
+					if cfg.RSAPublicKey != "" {
+						block, _ := pem.Decode([]byte(cfg.RSAPublicKey))
+						if block != nil {
+							if pub, err := x509.ParsePKIXPublicKey(block.Bytes); err == nil {
+								if rsaPub, ok := pub.(*rsa.PublicKey); ok {
+									return rsaPub, nil
+								}
+							}
+						}
+					}
+					return nil, status.Error(codes.Unauthenticated, "RSA public key not configured")
 				}
 				return nil, status.Error(codes.Unauthenticated, "unsupported signing method")
 			})
