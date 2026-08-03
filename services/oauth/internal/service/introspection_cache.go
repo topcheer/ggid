@@ -63,6 +63,24 @@ func (c *IntrospectionCache) SetCachedIntrospection(token string, result *Cached
 	defer c.mu.Unlock()
 	key := hashToken(token)
 	result.CachedAt = time.Now()
+	// SECURITY: Bound cache size to prevent memory exhaustion via token flood.
+	const maxEntries = 10000
+	if len(c.cache) >= maxEntries {
+		// Evict a random expired or oldest entry.
+		for k, v := range c.cache {
+			if time.Since(v.CachedAt) > c.ttlFor(v) {
+				delete(c.cache, k)
+				break
+			}
+		}
+		// Still full — evict arbitrary entry.
+		if len(c.cache) >= maxEntries {
+			for k := range c.cache {
+				delete(c.cache, k)
+				break
+			}
+		}
+	}
 	c.cache[key] = result
 	c.stats.Sets++
 }
