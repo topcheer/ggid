@@ -61,13 +61,24 @@ func (h *HTTPHandler) handleUserRoles(ctx context.Context, userID uuid.UUID, w h
 				ORDER BY ur.created_at DESC
 			`, userID, callerTenantID)
 		} else {
-			rows, err = pool.Query(ctx, `
-				SELECT ur.user_id::text, ur.role_id::text, COALESCE(r.name, r.key, ur.role_id::text), ur.created_at, COALESCE(ur.granted_by::text, '')
-				FROM user_roles ur
-				LEFT JOIN roles r ON r.id = ur.role_id
-				WHERE ur.user_id = $1
-				ORDER BY ur.created_at DESC
-			`, userID)
+			// Use JWT context tenant as fallback (same pattern as list_cache fix)
+			fallbackTenant := callerTenantID
+			if tc, err := ggidtenant.FromContext(r.Context()); err == nil && tc.TenantID != uuid.Nil {
+				fallbackTenant = tc.TenantID.String()
+			}
+			if fallbackTenant != "" {
+				rows, err = pool.Query(ctx, `
+					SELECT ur.user_id::text, ur.role_id::text, COALESCE(r.name, r.key, ur.role_id::text), ur.created_at, COALESCE(ur.granted_by::text, '')
+					FROM user_roles ur
+					LEFT JOIN roles r ON r.id = ur.role_id
+					WHERE ur.user_id = $1 AND r.tenant_id = $2
+					ORDER BY ur.created_at DESC
+				`, userID, fallbackTenant)
+			} else {
+				// No tenant context at all - return empty (fail-closed)
+				writeJSON(w, http.StatusOK, map[string]any{"roles": []UserRoleAssignment{}})
+				return
+			}
 		}
 		if err != nil {
 			writeJSON(w, http.StatusOK, map[string]any{"roles": []UserRoleAssignment{}})

@@ -135,8 +135,11 @@ func CheckRoutePermission(method, path string, userPerms []string) (matched bool
 			return true, HasPermission(userPerms, rp.Resource, rp.Action, rp.Scope)
 		}
 	}
-	// No route rule found — allow (existing adminOnlyPaths handles coarse-grained checks)
-	return false, true
+	// No route rule found — deny by default (fail-closed).
+	// New endpoints without an explicit route rule are denied until one is added.
+	// The gateway's adminOnlyPaths layer handles coarse-grained checks for
+	// non-API routes and console paths.
+	return false, false
 }
 
 // ExtractPermissionsFromRequest extracts the permissions claim from JWT context.

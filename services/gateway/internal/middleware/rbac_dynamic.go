@@ -375,10 +375,8 @@ func (r *RBACResolver) CheckAccess(ctx context.Context, path, method string, cla
 	adminProtected := false // true if any role has "admin" level on the best-match prefix
 	for _, row := range rows {
 		// Tenant isolation: rules only apply to the caller's own tenant.
-		// Rows without a tenant (legacy cache entries) match no one except
-		// token-less tenant claims, which cannot occur for authenticated
-		// requests.
-		if row.TenantID != claims.TenantID {
+		// System roles (tenant_id = default UUID) are global and apply to all tenants.
+		if row.TenantID != claims.TenantID && row.TenantID != "00000000-0000-0000-0000-000000000000" {
 			continue
 		}
 		// Ignore non-API prefixes (console navigation routes like /dashboard)
