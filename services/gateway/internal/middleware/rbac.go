@@ -244,10 +244,20 @@ var platformOnlyPaths = []string{
 }
 
 // isPlatformOnlyPath returns true if the path requires platform:admin scope.
+// Uses exact match for single-resource paths and prefix match (with /) for
+// directory paths to prevent false matches like "/system-anything".
 func isPlatformOnlyPath(path string) bool {
 	for _, prefix := range platformOnlyPaths {
-		if strings.HasPrefix(path, prefix) {
-			return true
+		if strings.HasSuffix(prefix, "/") {
+			// Directory prefix: match path and subpaths
+			if strings.HasPrefix(path, prefix) {
+				return true
+			}
+		} else {
+			// Exact resource: match path only, or path + "/" for sub-resources
+			if path == prefix || strings.HasPrefix(path, prefix+"/") {
+				return true
+			}
 		}
 	}
 	return false
