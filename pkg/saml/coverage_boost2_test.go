@@ -135,15 +135,10 @@ func TestCovS2_VerifyDigest_UnsupportedAlgorithm(t *testing.T) {
 }
 
 func TestCovS2_VerifyDigest_DefaultSHA1(t *testing.T) {
-	data := []byte("test")
-	h, _ := hashForAlgorithm("")
-	h.Write(data)
-	info := &signatureInfo{
-		digestMethod: "",
-		digestValue:  h.Sum(nil),
-	}
-	if err := verifyDigest(info, data); err != nil {
-		t.Fatalf("verifyDigest SHA1 default: %v", err)
+	// R308: Empty/SHA-1 algorithm is now rejected for security.
+	_, err := hashForAlgorithm("")
+	if err == nil {
+		t.Error("expected error for empty (SHA-1 default) algorithm")
 	}
 }
 
