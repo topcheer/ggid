@@ -31,8 +31,9 @@ func TestMiddlewareChainOrder(t *testing.T) {
 	if xcto := rr.Header().Get("X-Content-Type-Options"); xcto != "nosniff" {
 		t.Errorf("expected X-Content-Type-Options=nosniff, got %q", xcto)
 	}
-	if sts := rr.Header().Get("Strict-Transport-Security"); sts == "" {
-		t.Error("expected Strict-Transport-Security header from SecurityHeaders")
+	// HSTS only set on HTTPS (r.TLS != nil); test uses plaintext HTTP
+	if sts := rr.Header().Get("Strict-Transport-Security"); sts != "" {
+		t.Error("HSTS should not be set on plaintext HTTP")
 	}
 	// CORS runs → sets Access-Control-Allow-Origin
 	if acao := rr.Header().Get("Access-Control-Allow-Origin"); acao == "" {
