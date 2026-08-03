@@ -15,13 +15,13 @@ import (
 
 // SystemPermission defines an immutable, code-defined permission.
 type SystemPermission struct {
-	Key         string `json:"key"`          // e.g. "users:read:tenant"
-	Name        string `json:"name"`         // e.g. "View Tenant Users"
-	Description string `json:"description"`  // human-readable
-	Resource    string `json:"resource"`     // e.g. "users"
-	Action      string `json:"action"`       // read, create, update, delete, assign_role, etc.
-	Scope       string `json:"scope"`        // all, tenant, own, department
-	Level       string `json:"level"`        // "instance" or "tenant" — controls visibility
+	Key         string `json:"key"`         // e.g. "users:read:tenant"
+	Name        string `json:"name"`        // e.g. "View Tenant Users"
+	Description string `json:"description"` // human-readable
+	Resource    string `json:"resource"`    // e.g. "users"
+	Action      string `json:"action"`      // read, create, update, delete, assign_role, etc.
+	Scope       string `json:"scope"`       // all, tenant, own, department
+	Level       string `json:"level"`       // "instance" or "tenant" — controls visibility
 }
 
 // Permission levels
@@ -57,8 +57,11 @@ func ScopeCovers(granted, required string) bool {
 // resource:action:scope. Uses scope hierarchy: broader scope covers narrower.
 func HasPermission(userPerms []string, resource, action, scope string) bool {
 	for _, p := range userPerms {
-		if p == "admin" {
-			return true // admin bypass
+		// SECURITY: Only accept "platform:admin" for admin bypass.
+		// Do NOT accept bare "admin" — tenant admins could create
+		// a permission named "admin" to trigger global bypass.
+		if p == "platform:admin" {
+			return true
 		}
 		// Parse "resource:action:scope"
 		var pr, pa, ps string

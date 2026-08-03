@@ -151,6 +151,22 @@ func (h *HTTPHandler) handleBulkImport(w http.ResponseWriter, r *http.Request) {
 		// Assign role if specified.
 		if user.RoleID != "" {
 			if roleUUID, err := uuid.Parse(user.RoleID); err == nil && h.svc.Pool() != nil {
+				// SECURITY: Verify the role belongs to the caller's tenant
+				// before assigning it. Without this, an attacker can assign
+				// any role_id from another tenant, escalating privileges.
+				var roleTenant uuid.UUID
+				err := h.svc.Pool().QueryRow(r.Context(),
+					`SELECT tenant_id FROM roles WHERE id = $1`, roleUUID).Scan(&roleTenant)
+				if err != nil {
+					result.Failed++
+					result.Errors = append(result.Errors, ImportError{Email: user.Email, Reason: "invalid role_id"})
+					continue
+				}
+				if roleTenant != tc.TenantID {
+					result.Failed++
+					result.Errors = append(result.Errors, ImportError{Email: user.Email, Reason: "role does not belong to tenant"})
+					continue
+				}
 				_, _ = h.svc.Pool().Exec(r.Context(),
 					`INSERT INTO user_roles (user_id, role_id) VALUES ($1, $2) ON CONFLICT DO NOTHING`,
 					createdUser.ID, roleUUID)
