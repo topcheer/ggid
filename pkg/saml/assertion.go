@@ -75,11 +75,12 @@ func ParseAssertion(rawXML []byte) (*SAMLAssertion, error) {
 	return &assertion, nil
 }
 
-// ValidateConditions checks that the assertion is within its validity window,
-// the audience restriction matches the expected SP, and the subject confirmation
-// data is valid (bearer confirmation with NotOnOrAfter).
-// expectedAudience is the SP's entityID. Pass empty string to skip audience
-// validation (not recommended for production).
+// ValidateConditions checks time window and subject confirmation only.
+// DEPRECATED: This method skips audience validation. Use
+// ValidateConditionsWithAudience with the SP's entityID for production use.
+// Retained for backward compatibility - VerifySignedAssertion calls this
+// internally for time/subject checks; callers must additionally call
+// ValidateConditionsWithAudience to enforce audience restrictions.
 func (a *SAMLAssertion) ValidateConditions() error {
 	return a.ValidateConditionsWithAudience("")
 }

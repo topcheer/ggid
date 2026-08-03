@@ -10,6 +10,8 @@ import (
 	"github.com/ggid/ggid/services/auth/internal/service"
 	"github.com/ggid/ggid/services/auth/internal/webauthn"
 
+	"github.com/golang-jwt/jwt/v5"
+
 	"github.com/google/uuid"
 )
 
