@@ -1305,7 +1305,7 @@ func (h *HTTPHandler) handleImportCSV(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	body, err := io.ReadAll(r.Body)
+	body, err := io.ReadAll(http.MaxBytesReader(w, r.Body, 10<<20)) // 10MB limit
 	if err != nil {
 		writeJSONError(w, http.StatusBadRequest, "failed to read body")
 		return

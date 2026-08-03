@@ -470,7 +470,7 @@ func (h *Handler) searchUsers(ctx context.Context, w http.ResponseWriter, r *htt
 func (h *Handler) createUser(ctx context.Context, w http.ResponseWriter, r *http.Request) {
 	// Decode raw body first to detect EnterpriseUser extension schema
 	var rawBody map[string]json.RawMessage
-	bodyBytes, _ := io.ReadAll(r.Body)
+	bodyBytes, _ := io.ReadAll(http.MaxBytesReader(w, r.Body, 10<<20)) // 10MB limit
 	if err := json.Unmarshal(bodyBytes, &rawBody); err != nil {
 		writeSCIMErrorWithType(w, http.StatusBadRequest, ScimTypeInvalidSyntax, "invalid request body")
 		return

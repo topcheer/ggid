@@ -100,6 +100,12 @@ func (h *HTTPHandler) handleBulkImport(w http.ResponseWriter, r *http.Request) {
 			result.Errors = append(result.Errors, ImportError{Email: fmt.Sprintf("row_%d", i), Reason: "email is required"})
 			continue
 		}
+		// SECURITY: Validate email format to prevent malformed data injection.
+		if _, err := mail.ParseAddress(user.Email); err != nil {
+			result.Failed++
+			result.Errors = append(result.Errors, ImportError{Email: user.Email, Reason: "invalid email format"})
+			continue
+		}
 
 		// Use password_hash if provided, otherwise hash plaintext password.
 		secretHash := user.PasswordHash
@@ -141,7 +147,7 @@ func (h *HTTPHandler) handleBulkImport(w http.ResponseWriter, r *http.Request) {
 		createdUser, err := h.svc.CreateUser(r.Context(), input)
 		if err != nil {
 			result.Failed++
-			result.Errors = append(result.Errors, ImportError{Email: user.Email, Reason: fmt.Sprintf("create user failed: %v", err)})
+			result.Errors = append(result.Errors, ImportError{Email: user.Email, Reason: "create user failed"})
 			slog.Warn("bulk import: CreateUser failed", "email", pii.MaskEmail(user.Email), "error", err)
 			continue
 		}
@@ -157,9 +163,15 @@ func (h *HTTPHandler) handleBulkImport(w http.ResponseWriter, r *http.Request) {
 					continue
 				}
 			}
-			_, _ = h.svc.Pool().Exec(r.Context(),
+			_, execErr := h.svc.Pool().Exec(r.Context(),
 				`UPDATE credentials SET secret = $1 WHERE user_id = $2 AND type = 'password'`,
 				secretHash, createdUser.ID)
+			if execErr != nil {
+				slog.Error("bulk import: credential update failed", "user_id", createdUser.ID, "error", execErr)
+				result.Failed++
+				result.Errors = append(result.Errors, ImportError{Email: user.Email, Reason: "credential update failed"})
+				continue
+			}
 		}
 		// Assign role if specified.
 		if user.RoleID != "" {
