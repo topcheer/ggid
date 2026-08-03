@@ -569,7 +569,7 @@ func (h *Handler) replaceUser(ctx context.Context, w http.ResponseWriter, r *htt
 	}
 
 	var scimUser SCIMUser
-	if err := json.NewDecoder(r.Body).Decode(&scimUser); err != nil {
+	if err := json.NewDecoder(http.MaxBytesReader(w, r.Body, 10<<20)).Decode(&scimUser); err != nil {
 		writeSCIMErrorWithType(w, http.StatusBadRequest, ScimTypeInvalidSyntax, "invalid request body")
 		return
 	}
@@ -639,7 +639,7 @@ type SCIMPatchOp struct {
 
 func (h *Handler) patchUser(ctx context.Context, w http.ResponseWriter, r *http.Request, userID uuid.UUID) {
 	var patchReq SCIMPatchRequest
-	if err := json.NewDecoder(r.Body).Decode(&patchReq); err != nil {
+	if err := json.NewDecoder(http.MaxBytesReader(w, r.Body, 10<<20)).Decode(&patchReq); err != nil {
 		writeSCIMError(w, http.StatusBadRequest, "invalid PATCH request body")
 		return
 	}
