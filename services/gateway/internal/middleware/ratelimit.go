@@ -117,7 +117,12 @@ func (rl *RateLimiter) getLimit(path string) int {
 	case len(path) > 8 && path[:8] == "/api/v1/":
 		return rl.cfg.APILimit
 	default:
-		return 0 // no limit
+		// SECURITY: Apply a default rate limit to all unmapped paths
+		// (SCIM, SAML, OAuth non-token) instead of unlimited (0).
+		if rl.cfg.APILimit > 0 {
+			return rl.cfg.APILimit
+		}
+		return 600 // default: 600 req/min per IP
 	}
 }
 
