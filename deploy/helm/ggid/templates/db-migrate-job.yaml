@@ -29,7 +29,10 @@ spec:
               key: password
               optional: true
         - name: DATABASE_URL
-          value: "postgres://{{ .Values.postgresql.auth.username }}:{{ .Values.postgresql.auth.password }}@{{ include "ggid.fullname" . }}-postgresql:5432/{{ .Values.postgresql.auth.database }}?sslmode=disable"
+          valueFrom:
+            secretKeyRef:
+              name: {{ include "ggid.fullname" . }}-db-url
+              key: database-url
         command:
         - sh
         - -c
