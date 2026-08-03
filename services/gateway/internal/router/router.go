@@ -763,7 +763,7 @@ func (gw *Gateway) Handler() http.Handler {
 	handler = middleware.Gzip(handler)
 	handler = middleware.CORS(handler)
 	handler = middleware.HostValidation(gw.hostValidationConfig())(handler)
-	handler = middleware.SecurityHeaders(handler)
+	handler = middleware.SecurityHeadersConfigurable(middleware.DefaultSecurityHeadersConfig())(handler)
 	handler = middleware.RequestID(handler)
 	handler = middleware.PanicRecovery(logger)(handler)
 	// Shutdown: return 503 during graceful drain so k8s/load balancer
