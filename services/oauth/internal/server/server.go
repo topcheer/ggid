@@ -299,8 +299,13 @@ func redisTLSConfig() *tls.Config {
 	if os.Getenv("REDIS_TLS") != "true" {
 		return nil
 	}
+	skipVerify := os.Getenv("REDIS_TLS_SKIP_VERIFY") == "true"
+	if skipVerify && os.Getenv("GGID_ENV") != "test" && os.Getenv("GGID_ENV") != "dev" {
+		skipVerify = false
+	}
 	return &tls.Config{
-		InsecureSkipVerify: os.Getenv("REDIS_TLS_SKIP_VERIFY") == "true",
+		InsecureSkipVerify: skipVerify,
+		MinVersion:         tls.VersionTLS12,
 	}
 }
 

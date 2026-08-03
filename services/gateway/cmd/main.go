@@ -26,6 +26,7 @@ import (
 	"github.com/ggid/ggid/services/gateway/internal/router"
 
 	"github.com/redis/go-redis/v9"
+	"log/slog"
 )
 
 // Password pepper must match auth/identity/oauth for API key hash verification.
@@ -256,9 +257,14 @@ func redisTLSConfig() *tls.Config {
 	if os.Getenv("REDIS_TLS") != "true" {
 		return nil
 	}
+	// SECURITY: InsecureSkipVerify must NEVER be true in production.
+	skipVerify := os.Getenv("REDIS_TLS_SKIP_VERIFY") == "true"
+	if skipVerify && os.Getenv("GGID_ENV") != "test" && os.Getenv("GGID_ENV") != "dev" {
+		slog.Error("REDIS_TLS_SKIP_VERIFY is not allowed in production; enabling strict TLS")
+		skipVerify = false
+	}
 	return &tls.Config{
-		// InsecureSkipVerify is configurable for self-signed certs in private
-		// deployments. Set REDIS_TLS_SKIP_VERIFY=true only in non-production.
-		InsecureSkipVerify: os.Getenv("REDIS_TLS_SKIP_VERIFY") == "true",
+		InsecureSkipVerify: skipVerify,
+		MinVersion:         tls.VersionTLS12,
 	}
 }

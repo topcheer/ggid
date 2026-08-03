@@ -3,9 +3,9 @@ package main
 
 import (
 	"context"
-	"crypto/tls"
 	"crypto/rand"
 	"crypto/rsa"
+	"crypto/tls"
 	"crypto/x509"
 	"encoding/json"
 	"encoding/pem"
@@ -50,8 +50,14 @@ func redisTLSConfig() *tls.Config {
 	if os.Getenv("REDIS_TLS") != "true" {
 		return nil
 	}
+	skipVerify := os.Getenv("REDIS_TLS_SKIP_VERIFY") == "true"
+	if skipVerify && os.Getenv("GGID_ENV") != "test" && os.Getenv("GGID_ENV") != "dev" {
+		log.Printf("REDIS_TLS_SKIP_VERIFY not allowed in production; enabling strict TLS")
+		skipVerify = false
+	}
 	return &tls.Config{
-		InsecureSkipVerify: os.Getenv("REDIS_TLS_SKIP_VERIFY") == "true",
+		InsecureSkipVerify: skipVerify,
+		MinVersion:         tls.VersionTLS12,
 	}
 }
 
