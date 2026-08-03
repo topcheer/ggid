@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/jackc/pgx/v5/pgxpool"
+
 	"github.com/redis/go-redis/v9"
 
 	"golang.org/x/sync/singleflight"
@@ -442,7 +443,7 @@ var routePermissionResource = map[string]string{
 	"/api/v1/audit/":             "audit",
 	"/api/v1/policies":           "policies",
 	"/api/v1/webhooks":           "webhooks",
-	"/api/v1/oauth/clients":      "oauth",
+	"/api/v1/oauth/clients":      "oauth_clients",
 	"/api/v1/settings/":          "settings",
 	"/api/v1/identity/dashboard": "dashboard",
 	"/api/v1/inventory":          "inventory",
