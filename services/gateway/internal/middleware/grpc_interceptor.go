@@ -16,6 +16,7 @@ import (
 	"google.golang.org/grpc/metadata"
 
 	"github.com/golang-jwt/jwt/v5"
+
 	"google.golang.org/grpc/status"
 )
 
@@ -89,10 +90,8 @@ func GRPCUnaryInterceptor(cfg *GRPCInterceptorConfig) grpc.UnaryServerIntercepto
 
 		// Extract metadata
 		md, ok := metadata.FromIncomingContext(ctx)
-		// SECURITY: If JWTSecret is configured, require auth even without metadata.
-		// Previously the entire auth block was inside `if ok {}`, so requests with
-		// no metadata silently bypassed JWT validation.
-		if cfg.JWTSecret != "" {
+		// SECURITY: If JWT secret or RSA public key is configured, require auth.
+		if cfg.JWTSecret != "" || cfg.RSAPublicKey != "" {
 			authVals := []string{}
 			if ok {
 				authVals = md.Get("authorization")

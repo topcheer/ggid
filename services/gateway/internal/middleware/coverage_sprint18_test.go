@@ -2,13 +2,16 @@ package middleware
 
 import (
 	"context"
+	"github.com/golang-jwt/jwt/v5"
+	"encoding/pem"
+	"crypto/x509"
+	"crypto/rsa"
+	"crypto/rand"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
 	"time"
-
-	"github.com/golang-jwt/jwt/v5"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"
@@ -584,16 +587,22 @@ func TestGRPCUnaryInterceptor_AuthInvalidScheme_C18(t *testing.T) {
 }
 
 func TestGRPCUnaryInterceptor_AuthValid_C18(t *testing.T) {
-	cfg := &GRPCInterceptorConfig{JWTSecret: "secret"}
+	// R347: gRPC interceptor now uses RS256 (not HS256).
+	privKey, err := rsa.GenerateKey(rand.Reader, 2048)
+	if err != nil {
+		t.Fatalf("generate RSA key: %v", err)
+	}
+	pubBytes, _ := x509.MarshalPKIXPublicKey(&privKey.PublicKey)
+	pubKeyPEM := string(pem.EncodeToMemory(&pem.Block{Type: "PUBLIC KEY", Bytes: pubBytes}))
+	cfg := &GRPCInterceptorConfig{RSAPublicKey: pubKeyPEM}
 	interceptor := GRPCUnaryInterceptor(cfg)
-	// Generate a real JWT since the interceptor now validates signatures.
 	claims := jwt.MapClaims{
 		"sub":       "test-user",
 		"exp":       time.Now().Add(time.Hour).Unix(),
 		"tenant_id": "test-tenant",
 	}
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	tokenStr, _ := token.SignedString([]byte("secret"))
+	token := jwt.NewWithClaims(jwt.SigningMethodRS256, claims)
+	tokenStr, _ := token.SignedString(privKey)
 	md := newTestMD("authorization", "Bearer "+tokenStr)
 	ctx := metadata.NewIncomingContext(context.Background(), md)
 	called := false
