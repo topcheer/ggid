@@ -83,6 +83,16 @@ spec:
                 secretKeyRef:
                   name: {{ include "ggid.fullname" $ }}-jwt-secret
                   key: secret
+            - name: PASSWORD_PEPPER
+              value: {{ $.Values.config.passwordPepper | quote }}
+            - name: AUDIT_HASH_CHAIN_SECRET
+              value: {{ $.Values.config.auditHashSecret | quote }}
+            - name: GGID_INTERNAL_SECRET
+              value: {{ $.Values.config.internalSecret | quote }}
+            {{- if $.Values.config.encryptionKey }}
+            - name: GGID_ENCRYPTION_KEY
+              value: {{ $.Values.config.encryptionKey | quote }}
+            {{- end }}
               {{- if eq $name "gateway" }}
             - name: JWT_PUBLIC_KEY_PATH
               value: /configs/rsa_public.pem

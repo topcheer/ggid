@@ -232,6 +232,7 @@ config:
   passwordPepper: ""
   auditHashSecret: ""
   internalSecret: ""
+  encryptionKey: ""
 
 # External databases (used when postgresql/redis/nats.enabled=false)
 externalDatabase:
