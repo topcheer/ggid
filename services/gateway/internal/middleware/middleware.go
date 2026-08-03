@@ -735,17 +735,19 @@ func JWTAuth(jwks *JWKSClient, required bool, issuer, audience string) func(http
 				if !crypto.IsSupportedAlg(token.Method.Alg()) {
 					return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
 				}
-				// Use kid to support key rotation. Fall back to static key if kid
-				// is missing or not found in JWKS (backward compatibility).
+				// Use kid to support key rotation.
 				keyID, _ := token.Header["kid"].(string)
 				if keyID != "" {
 					if key, err := jwks.GetKey(keyID); err == nil && key != nil {
 						return key, nil
 					}
+					// SECURITY: kid present but not found in JWKS — reject.
+					// Falling back to static key would allow tokens signed with
+					// rotated-out keys to remain valid indefinitely.
+					return nil, fmt.Errorf("key not found for kid: %s", keyID)
 				}
-				// SECURITY: read publicKey under lock — UpdatePublicKey writes
-				// under Lock, so an unlocked read here is a data race during
-				// key rotation.
+				// No kid in token header — use static key (backward compat
+				// for tokens issued before key rotation was enabled).
 				if key := jwks.StaticPublicKey(); key != nil {
 					return key, nil
 				}
