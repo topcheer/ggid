@@ -361,7 +361,27 @@ func (h *Handler) handleResetPassword(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		h.verificationRepo.MarkUsed(r.Context(), token.ID)
-		// In production: update password hash, invalidate all sessions.
+
+		// SECURITY: Actually update the password hash and invalidate sessions.
+		// Previously this was a TODO stub that returned success without doing anything.
+		if h.pool != nil {
+			passwordHash, err := ggidcrypto.HashPassword(req.Password)
+			if err != nil {
+				writeError(w, http.StatusInternalServerError, "failed to hash password")
+				return
+			}
+			_, err = h.pool.Exec(r.Context(),
+				`UPDATE users SET password_hash = $1, password_changed_at = NOW() WHERE id = $2`,
+				passwordHash, token.UserID)
+			if err != nil {
+				writeError(w, http.StatusInternalServerError, "failed to update password")
+				return
+			}
+			// Invalidate all sessions for this user.
+			_, _ = h.pool.Exec(r.Context(),
+				`DELETE FROM sessions WHERE user_id = $1`, token.UserID)
+		}
+
 		writeJSON(w, http.StatusOK, map[string]any{
 			"status": "reset", "message": "password updated, all sessions invalidated",
 		})
