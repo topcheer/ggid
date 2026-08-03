@@ -34,6 +34,24 @@ func (c *ttlCache) Get(key string) ([]byte, bool) {
 func (c *ttlCache) Set(key string, data []byte, ttl time.Duration) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
+	// SECURITY: Bound cache size to prevent memory exhaustion.
+	const maxEntries = 10000
+	if len(c.entries) >= maxEntries {
+		// Evict expired entries first.
+		now := time.Now()
+		for k, e := range c.entries {
+			if now.After(e.expiresAt) {
+				delete(c.entries, k)
+			}
+		}
+		// Still full — evict arbitrary entry.
+		if len(c.entries) >= maxEntries {
+			for k := range c.entries {
+				delete(c.entries, k)
+				break
+			}
+		}
+	}
 	c.entries[key] = &cacheEntry{
 		data:      data,
 		expiresAt: time.Now().Add(ttl),
