@@ -44,7 +44,9 @@ func (h *HTTPHandler) scimTokenAuth(next http.Handler) http.Handler {
 				// Require GGID_INTERNAL_SECRET to prevent direct-to-service bypass.
 				internalSecret := r.Header.Get("X-Internal-Secret")
 				expectedSecret := os.Getenv("GGID_INTERNAL_SECRET")
-				if internalSecret != "" && len(internalSecret) == len(expectedSecret) && subtle.ConstantTimeCompare([]byte(internalSecret), []byte(expectedSecret)) == 1 {
+				// SECURITY: Require non-empty expected secret to prevent empty==empty bypass
+				// when GGID_INTERNAL_SECRET is not configured.
+				if expectedSecret != "" && internalSecret != "" && len(internalSecret) == len(expectedSecret) && subtle.ConstantTimeCompare([]byte(internalSecret), []byte(expectedSecret)) == 1 {
 					scopes := r.Header.Get("X-Scopes")
 					for _, s := range strings.Split(scopes, ",") {
 						s = strings.TrimSpace(s)

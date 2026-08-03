@@ -62,10 +62,29 @@ func (h *HTTPHandler) handleConsentCRUD(w http.ResponseWriter, r *http.Request) 
 
 func (h *HTTPHandler) consentGrant(w http.ResponseWriter, r *http.Request, tenantID string) {
 	// Parse tenantID to UUID
+	r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB limit
 	tid, err := uuid.Parse(tenantID)
 	if err != nil {
 		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid tenant_id"})
 		return
+	}
+
+	// SECURITY: Verify caller belongs to the target tenant or has platform:admin scope.
+	// tenantID comes from the URL path, so without this check any authenticated
+	// user could grant consent for an arbitrary tenant.
+	callerTenant := r.Header.Get("X-Tenant-ID")
+	if callerTenant != tenantID {
+		isPlatformAdmin := false
+		for _, sc := range strings.Split(r.Header.Get("X-Scopes"), ",") {
+			if strings.TrimSpace(sc) == "platform:admin" {
+				isPlatformAdmin = true
+				break
+			}
+		}
+		if !isPlatformAdmin {
+			writeJSON(w, http.StatusForbidden, map[string]string{"error": "cannot grant consent for another tenant"})
+			return
+		}
 	}
 
 	var req struct {
@@ -227,6 +246,7 @@ func (h *HTTPHandler) handleImpersonation(w http.ResponseWriter, r *http.Request
 }
 
 func (h *HTTPHandler) impersonateStart(w http.ResponseWriter, r *http.Request) {
+	r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB limit
 	var req struct {
 		TenantID     string `json:"tenant_id"`
 		TargetUserID string `json:"target_user_id"` // optional
@@ -304,6 +324,7 @@ func (h *HTTPHandler) impersonateStart(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *HTTPHandler) impersonateEnd(w http.ResponseWriter, r *http.Request) {
+	r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB limit
 	var req struct {
 		SessionID string `json:"session_id"`
 	}

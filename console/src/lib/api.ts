@@ -244,7 +244,7 @@ export function useUserRole(): { role: UserRole; scopes: string[]; isPlatformAdm
       ls === normalized ||
       ls === k.toLowerCase() ||
       ls === normalized.replace(/[:_]/g, " ") || // "platform admin" matches "platform:admin"
-      (k.includes("admin") && (ls === "administrator" || ls === "platform:admin" || ls === "tenant:admin" || ls === "admin"))
+      (k.includes("admin") && (ls === "administrator" || ls === "platform:admin" || ls === "tenant:admin"))
     );
   });
   const role: UserRole = hasRole("platform:admin", "platform administrator")
@@ -397,7 +397,7 @@ export function useUserPermissions(): {
   const { isPlatformAdmin, isTenantAdmin } = useUserRole();
   const hasPermission = (key: string): boolean => {
     if (isPlatformAdmin || isTenantAdmin) return true;
-    if (permissions.includes("admin") || permissions.includes("system:admin")) return true;
+    if (permissions.includes("platform:admin") || permissions.includes("system:admin")) return true;
     // Exact match
     if (permissions.includes(key)) return true;
     // Scope hierarchy: all > tenant > department > own
