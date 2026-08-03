@@ -5,9 +5,10 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"time"
+	"sync"
 
 	"github.com/redis/go-redis/v9"
+	"time"
 )
 
 const revokedJTIKey = "ggid:revoked_jti"
@@ -15,18 +16,48 @@ const revokedJTIKey = "ggid:revoked_jti"
 // JTIBlocklist manages revoked JWT jti values using a Redis ZSET.
 // Score is the JWT expiry timestamp; entries are auto-expired via periodic cleanup.
 type JTIBlocklist struct {
-	rdb *redis.Client
+	rdb      *redis.Client
+	stopOnce sync.Once
+	done     chan struct{}
 }
 
 // NewJTIBlocklist creates a Redis-backed JTI blocklist.
+// Starts a background goroutine that runs CleanupExpired every 5 minutes
+// to prevent the Redis ZSET from growing without bound.
 func NewJTIBlocklist(rdb *redis.Client) *JTIBlocklist {
-	return &JTIBlocklist{rdb: rdb}
+	b := &JTIBlocklist{rdb: rdb, done: make(chan struct{})}
+	if rdb != nil {
+		go b.cleanupLoop()
+	}
+	return b
+}
+
+// Stop terminates the background cleanup goroutine.
+func (b *JTIBlocklist) Stop() {
+	b.stopOnce.Do(func() { close(b.done) })
+}
+
+func (b *JTIBlocklist) cleanupLoop() {
+	ticker := time.NewTicker(5 * time.Minute)
+	defer ticker.Stop()
+	for {
+		select {
+		case <-b.done:
+			return
+		case <-ticker.C:
+			ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+			if err := b.CleanupExpired(ctx); err != nil {
+				log.Printf("jti blocklist: periodic cleanup error: %v", err)
+			}
+			cancel()
+		}
+	}
 }
 
 // Revoke adds a jti to the blocklist with TTL = JWT expiry.
 func (b *JTIBlocklist) Revoke(ctx context.Context, jti string, jwtExp time.Time) error {
 	if b.rdb == nil {
-		return nil // dev mode — no-op
+		return nil // dev mode - no-op
 	}
 	score := float64(jwtExp.Unix())
 	if err := b.rdb.ZAdd(ctx, revokedJTIKey, redis.Z{Score: score, Member: jti}).Err(); err != nil {
@@ -52,20 +83,20 @@ func (b *JTIBlocklist) RevokeAll(ctx context.Context, jtis []string, jwtExp time
 }
 
 // IsRevoked checks if a jti is in the blocklist. O(1), ~0.3ms.
-// SECURITY: fail-closed on Redis errors — if we can't check the blocklist,
+// SECURITY: fail-closed on Redis errors - if we can't check the blocklist,
 // we assume the token is revoked rather than allowing a potentially
 // revoked token through during Redis outages.
 func (b *JTIBlocklist) IsRevoked(ctx context.Context, jti string) bool {
 	if b.rdb == nil || jti == "" {
-		return false // no Redis configured — rely on JWT expiry only
+		return false // no Redis configured - rely on JWT expiry only
 	}
 	score, err := b.rdb.ZScore(ctx, revokedJTIKey, jti).Result()
 	if err != nil {
 		if err == redis.Nil {
-			// Key doesn't exist — token is NOT revoked
+			// Key doesn't exist - token is NOT revoked
 			return false
 		}
-		// Redis error — fail-closed: treat as potentially revoked
+		// Redis error - fail-closed: treat as potentially revoked
 		log.Printf("jti blocklist: redis error, fail-closed (treating as revoked): %v", err)
 		return true
 	}
