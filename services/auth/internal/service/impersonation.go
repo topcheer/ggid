@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"sync"
+
 	"time"
 
 	"github.com/google/uuid"
@@ -119,7 +120,10 @@ func IssueImpersonationToken(impersonatorID, targetUserID, tenantID uuid.UUID, r
 	redisClient := impRedisClient
 	impersonationMu.RUnlock()
 	if redisClient != nil {
-		data, _ := json.Marshal(t)
+		data, mErr := json.Marshal(t)
+		if mErr != nil {
+			return nil, fmt.Errorf("marshal impersonation token: %w", mErr)
+		}
 		ttl := time.Until(t.ExpiresAt)
 		if ttl > 0 {
 			redisClient.Set(context.Background(), impersonationKeyPrefix+t.TokenID.String(), data, ttl)
@@ -187,7 +191,10 @@ func RevokeImpersonationToken(id uuid.UUID) error {
 	redisClient := impRedisClient
 	impersonationMu.RUnlock()
 	if redisClient != nil {
-		data, _ := json.Marshal(t)
+		data, mErr := json.Marshal(t)
+		if mErr != nil {
+			return fmt.Errorf("marshal impersonation token: %w", mErr)
+		}
 		ttl := time.Until(t.ExpiresAt)
 		if ttl > 0 {
 			redisClient.Set(context.Background(), impersonationKeyPrefix+id.String(), data, ttl)

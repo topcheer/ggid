@@ -10,8 +10,8 @@ import (
 	"github.com/ggid/ggid/pkg/errors"
 	"github.com/ggid/ggid/services/audit/internal/domain"
 	"github.com/google/uuid"
-	"github.com/jackc/pgx/v5"
 
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -29,7 +29,10 @@ func NewAuditRepository(db *pgxpool.Pool) *AuditRepository {
 // The event ID and CreatedAt are assigned here (before hashing) so the
 // stored hash is reproducible from the persisted column values.
 func (r *AuditRepository) Insert(ctx context.Context, e *domain.AuditEvent) error {
-	metaJSON, _ := json.Marshal(e.Metadata)
+	metaJSON, mErr := json.Marshal(e.Metadata)
+	if mErr != nil {
+		return fmt.Errorf("marshal audit metadata: %w", mErr)
+	}
 	var ipAddr any
 	if e.IPAddress != "" {
 		// Strip port if present (inet type doesn't accept IP:PORT format)
