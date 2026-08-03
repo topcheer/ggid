@@ -1,8 +1,9 @@
 package server
 
 import (
-	"strings"
 	"sync"
+	"strings"
+
 
 	"encoding/json"
 	"net/http"
@@ -34,7 +35,15 @@ func (h *Handler) handleImpersonationConfig(w http.ResponseWriter, r *http.Reque
 	// SECURITY: PUT modifies global config — require platform:admin scope.
 	if r.Method == http.MethodPut {
 		scopes := r.Header.Get("X-Scopes")
-		if !strings.Contains(scopes, "platform:admin") {
+		// SECURITY: Exact scope matching — strings.Contains allows substring bypass.
+		hasPlatformAdmin := false
+		for _, s := range strings.FieldsFunc(scopes, func(r rune) bool { return r == ' ' || r == ',' }) {
+			if s == "platform:admin" {
+				hasPlatformAdmin = true
+				break
+			}
+		}
+		if !hasPlatformAdmin {
 			writeError(w, http.StatusForbidden, "platform:admin scope required")
 			return
 		}
