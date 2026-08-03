@@ -15,8 +15,9 @@ import (
 	"sync"
 	"time"
 
-	"github.com/golang-jwt/jwt/v5"
 	"github.com/ggid/ggid/services/mcp/internal/client"
+
+	"github.com/golang-jwt/jwt/v5"
 	"github.com/ggid/ggid/services/mcp/internal/tools"
 )
 
@@ -447,8 +448,9 @@ func parseJWTSecretFromEnv() []byte {
 		secret = os.Getenv("GGID_INTERNAL_SECRET")
 	}
 	if secret == "" {
-		if os.Getenv("GGID_ENV") == "production" {
-			log.Fatal("MCP: JWT_SECRET or GGID_INTERNAL_SECRET must be set in production")
+		env := os.Getenv("GGID_ENV")
+		if env != "test" && env != "dev" {
+			log.Fatal("MCP: JWT_SECRET or GGID_INTERNAL_SECRET must be set in non-dev environment (GGID_ENV=" + env + ")")
 		}
 		return nil // dev mode — no auth enforcement
 	}
