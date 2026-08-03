@@ -30,6 +30,15 @@ var reviewDelegationStore = struct {
 // POST /api/v1/policies/access-reviews/delegate — create delegation
 // GET  /api/v1/policies/access-reviews/delegated — list delegations
 func (s *HTTPServer) handleReviewDelegation(w http.ResponseWriter, r *http.Request) {
+	// SECURITY: POST creates delegation on behalf of another user — require admin.
+	// GET returns delegations filtered by tenant (no admin needed).
+	if r.Method == http.MethodPost {
+		scopes := r.Header.Get("X-Scopes")
+		if !hasRole(scopes, "platform:admin") && !hasRole(scopes, "tenant:admin") {
+			writeJSONError(w, http.StatusForbidden, "admin scope required to create delegations")
+			return
+		}
+	}
 	switch r.Method {
 	case http.MethodPost:
 		var req struct {

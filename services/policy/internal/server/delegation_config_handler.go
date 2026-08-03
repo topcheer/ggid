@@ -6,13 +6,13 @@ import (
 )
 
 type DelegationConfig struct {
-	MaxDelegationDepth                  int      `json:"max_delegation_depth"`
-	AllowedDelegatorRoles               []string `json:"allowed_delegator_roles"`
-	DelegationExpiryHours               int      `json:"delegation_expiry_hours"`
-	RevocationByDelegator               bool     `json:"revocation_by_delegator"`
-	RequireConsent                      bool     `json:"require_consent"`
-	AuditAllDelegations                 bool     `json:"audit_all_delegations"`
-	CascadeRevokeOnDelegatorDisable     bool     `json:"cascade_revoke_on_delegator_disable"`
+	MaxDelegationDepth              int      `json:"max_delegation_depth"`
+	AllowedDelegatorRoles           []string `json:"allowed_delegator_roles"`
+	DelegationExpiryHours           int      `json:"delegation_expiry_hours"`
+	RevocationByDelegator           bool     `json:"revocation_by_delegator"`
+	RequireConsent                  bool     `json:"require_consent"`
+	AuditAllDelegations             bool     `json:"audit_all_delegations"`
+	CascadeRevokeOnDelegatorDisable bool     `json:"cascade_revoke_on_delegator_disable"`
 }
 
 var globalDelegationConfig = &DelegationConfig{
@@ -26,6 +26,18 @@ var globalDelegationConfig = &DelegationConfig{
 }
 
 func (s *HTTPServer) handleDelegationConfig(w http.ResponseWriter, r *http.Request) {
+	// SECURITY: PUT modifies a global singleton config affecting all tenants.
+	// Require platform:admin scope, same as handleDefaultAction.
+	if r.Method == http.MethodPut && !isAdminRequest(r) {
+		writeJSONError(w, http.StatusForbidden, "platform:admin scope required to modify delegation config")
+		return
+	}
+	// SECURITY: require valid tenant context.
+	if callerTenant(r) == "" {
+		writeJSONError(w, http.StatusForbidden, "valid X-Tenant-ID header required")
+		return
+	}
+
 	switch r.Method {
 	case http.MethodGet:
 		w.Header().Set("Content-Type", "application/json")
