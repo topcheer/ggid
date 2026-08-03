@@ -10,8 +10,8 @@ import (
 	"time"
 
 	"github.com/jackc/pgx/v5/pgxpool"
-
 	"github.com/redis/go-redis/v9"
+
 	"golang.org/x/sync/singleflight"
 )
 
@@ -296,11 +296,14 @@ func (r *RBACResolver) loadFromDB(ctx context.Context) ([]routePermRow, error) {
 	}
 	qctx, cancel := context.WithTimeout(ctx, rbacQueryTimeout)
 	defer cancel()
+	// SECURITY: No LIMIT 10000 — instead filter to system roles which are
+	// the only globally-applicable route permissions. Tenant-scoped roles
+	// are resolved per-request via the gateway RBAC middleware, not here.
 	rows, err := pool.Query(qctx, `
 		SELECT r.name, r.key, rrp.route_prefix, rrp.permission_level, r.tenant_id::text
 		FROM role_route_permissions rrp
 		JOIN roles r ON r.id = rrp.role_id
-		LIMIT 10000
+		WHERE r.system_role = true
 	`)
 	if err != nil {
 		return nil, err

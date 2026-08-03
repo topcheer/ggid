@@ -17,6 +17,7 @@ import (
 	"github.com/ggid/ggid/services/oauth/internal/domain"
 	"github.com/google/uuid"
 )
+
 func (s *OAuthService) CreateAuthorizationCode(ctx context.Context, req *AuthorizeRequest) (string, error) {
 	client, err := s.clientRepo.GetClientByID(ctx, req.TenantID, req.ClientID)
 	if err != nil {
@@ -115,6 +116,14 @@ func (s *OAuthService) CreateAuthorizationCode(ctx context.Context, req *Authori
 				return plaintextCode, nil
 			}
 			// Redis failed — fallback to in-memory
+		}
+		// SECURITY: Cap in-memory stateStore size to prevent memory DoS.
+		// Each entry is small (~100 bytes) but an attacker can generate
+		// millions of authorize requests. 100k entries = ~10MB cap.
+		stateCount := 0
+		stateStore.Range(func(_, _ any) bool { stateCount++; return stateCount < 100001 })
+		if stateCount >= 100000 {
+			return "", errors.Internal("state store full, try again", fmt.Errorf("stateStore size limit reached"))
 		}
 		stateStore.Store(stateKey, time.Now().Add(stateTTL))
 	}
@@ -287,4 +296,3 @@ func (s *OAuthService) issueRefreshTokenRecord(ctx context.Context, tenantID, cl
 }
 
 // --- OIDC Discovery ---
-
