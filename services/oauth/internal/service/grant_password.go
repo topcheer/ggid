@@ -12,6 +12,7 @@ import (
 
 	pkgcrypto "github.com/ggid/ggid/pkg/crypto"
 	"github.com/ggid/ggid/pkg/errors"
+
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
 	"github.com/pquerna/otp"
@@ -92,9 +93,12 @@ func (s *OAuthService) PasswordGrant(ctx context.Context, req *PasswordGrantRequ
 
 	if s.pool != nil {
 		var mfaCount int
-		s.pool.QueryRow(ctx,
+		if err := s.pool.QueryRow(ctx,
 			`SELECT COUNT(*) FROM mfa_devices WHERE tenant_id = $1 AND user_id = $2 AND enabled = true AND verified_at IS NOT NULL`,
-			tenantID, userID).Scan(&mfaCount)
+			tenantID, userID).Scan(&mfaCount); err != nil {
+			// SECURITY: Fail closed on DB error - never silently bypass MFA.
+			return nil, errors.New(errors.ErrInternal, "MFA check failed")
+		}
 		if mfaCount > 0 {
 			if req.MFACode == "" && req.BackupCode == "" {
 				return nil, errors.New(errors.ErrUnauthenticated, "mfa_required")
