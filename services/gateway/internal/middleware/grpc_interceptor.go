@@ -120,11 +120,22 @@ func GRPCUnaryInterceptor(cfg *GRPCInterceptorConfig) grpc.UnaryServerIntercepto
 				return nil, status.Error(codes.Unauthenticated, "invalid token")
 			}
 			ctx = context.WithValue(ctx, grpcUserCtxKey, claims["sub"])
+			// SECURITY: Inject tenant_id from verified JWT claims.
+			if tid, ok := claims["tenant_id"].(string); ok {
+				ctx = context.WithValue(ctx, grpcTenantCtxKey, tid)
+			}
+			// SECURITY: Extract tenant_id from JWT claims (not metadata header).
+			// Falls back to metadata header for backwards compatibility.
+			if tid, ok := claims["tenant_id"].(string); ok && tid != "" {
+				ctx = context.WithValue(ctx, grpcTenantCtxKey, tid)
+			}
 		}
 		if ok {
-			// Inject tenant ID
-			if vals := md.Get(tenantHeader); len(vals) > 0 {
-				ctx = context.WithValue(ctx, grpcTenantCtxKey, vals[0])
+			// Inject tenant ID from metadata header if not already set from JWT.
+			if ctx.Value(grpcTenantCtxKey) == nil {
+				if vals := md.Get(tenantHeader); len(vals) > 0 {
+					ctx = context.WithValue(ctx, grpcTenantCtxKey, vals[0])
+				}
 			}
 		}
 
@@ -204,6 +215,10 @@ func GRPCStreamInterceptor(cfg *GRPCInterceptorConfig) grpc.StreamServerIntercep
 				}
 				if sub, ok := claims["sub"].(string); ok {
 					ctx = context.WithValue(ctx, grpcUserCtxKey, sub)
+				}
+				// SECURITY: Extract tenant_id from JWT claims.
+				if tid, ok := claims["tenant_id"].(string); ok && tid != "" {
+					ctx = context.WithValue(ctx, grpcTenantCtxKey, tid)
 				}
 			}
 		}
