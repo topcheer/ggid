@@ -6,13 +6,12 @@ import (
 	"crypto/x509"
 	"encoding/pem"
 	"fmt"
-
-	"github.com/golang-jwt/jwt/v5"
 	"log/slog"
 	"os"
 	"strings"
 	"time"
 
+	"github.com/golang-jwt/jwt/v5"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
