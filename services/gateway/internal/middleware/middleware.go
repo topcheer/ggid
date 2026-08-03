@@ -24,6 +24,7 @@ import (
 
 	"github.com/ggid/ggid/pkg/crypto"
 	"github.com/ggid/ggid/pkg/tenant"
+
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
 )
@@ -595,6 +596,14 @@ func (c *JWKSClient) KeyID() string {
 	return c.keyID
 }
 
+// StaticPublicKey returns the cached static public key under RLock,
+// safe for concurrent access during key rotation.
+func (c *JWKSClient) StaticPublicKey() *rsa.PublicKey {
+	c.mu.RLock()
+	defer c.mu.RUnlock()
+	return c.publicKey
+}
+
 // JWKSHandler returns an http.HandlerFunc that serves the JWKS at /.well-known/jwks.json.
 func (c *JWKSClient) JWKSHandler() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -729,12 +738,15 @@ func JWTAuth(jwks *JWKSClient, required bool, issuer, audience string) func(http
 						return key, nil
 					}
 				}
-				if jwks.publicKey == nil {
-					// No verification key configured — fail validation instead
-					// of returning a nil key (which panics in jwt.Parse).
-					return nil, fmt.Errorf("no verification key configured")
+				// SECURITY: read publicKey under lock — UpdatePublicKey writes
+				// under Lock, so an unlocked read here is a data race during
+				// key rotation.
+				if key := jwks.StaticPublicKey(); key != nil {
+					return key, nil
 				}
-				return jwks.publicKey, nil
+				// No verification key configured — fail validation instead
+				// of returning a nil key (which panics in jwt.Parse).
+				return nil, fmt.Errorf("no verification key configured")
 			}, parseOpts...)
 
 			if err != nil || !token.Valid {
