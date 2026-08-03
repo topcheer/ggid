@@ -84,14 +84,26 @@ spec:
                   name: {{ include "ggid.fullname" $ }}-jwt-secret
                   key: secret
             - name: PASSWORD_PEPPER
-              value: {{ $.Values.config.passwordPepper | quote }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "ggid.fullname" $ }}-secrets
+                  key: password-pepper
             - name: AUDIT_HASH_CHAIN_SECRET
-              value: {{ $.Values.config.auditHashSecret | quote }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "ggid.fullname" $ }}-secrets
+                  key: audit-hash-secret
             - name: GGID_INTERNAL_SECRET
-              value: {{ $.Values.config.internalSecret | quote }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "ggid.fullname" $ }}-secrets
+                  key: internal-secret
             {{- if $.Values.config.encryptionKey }}
             - name: GGID_ENCRYPTION_KEY
-              value: {{ $.Values.config.encryptionKey | quote }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "ggid.fullname" $ }}-secrets
+                  key: encryption-key
             {{- end }}
               {{- if eq $name "gateway" }}
             - name: JWT_PUBLIC_KEY_PATH
