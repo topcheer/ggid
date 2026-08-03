@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/hmac"
 	"crypto/sha256"
+	"crypto/subtle"
 	"encoding/hex"
 	"log/slog"
 	"net/http"
@@ -42,7 +43,8 @@ func (h *HTTPHandler) scimTokenAuth(next http.Handler) http.Handler {
 				// Gateway strips and re-sets X-Scopes from signature-verified JWT.
 				// Require GGID_INTERNAL_SECRET to prevent direct-to-service bypass.
 				internalSecret := r.Header.Get("X-Internal-Secret")
-				if internalSecret != "" && internalSecret == os.Getenv("GGID_INTERNAL_SECRET") {
+				expectedSecret := os.Getenv("GGID_INTERNAL_SECRET")
+				if internalSecret != "" && len(internalSecret) == len(expectedSecret) && subtle.ConstantTimeCompare([]byte(internalSecret), []byte(expectedSecret)) == 1 {
 					scopes := r.Header.Get("X-Scopes")
 					for _, s := range strings.Split(scopes, ",") {
 						s = strings.TrimSpace(s)
