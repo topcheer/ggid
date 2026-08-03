@@ -17,8 +17,9 @@ import (
 
 	"github.com/ggid/ggid/services/mcp/internal/client"
 
-	"github.com/golang-jwt/jwt/v5"
 	"github.com/ggid/ggid/services/mcp/internal/tools"
+
+	"github.com/golang-jwt/jwt/v5"
 )
 
 // Server is the MCP protocol server.
@@ -449,7 +450,7 @@ func parseJWTSecretFromEnv() []byte {
 	}
 	if secret == "" {
 		env := os.Getenv("GGID_ENV")
-		if env != "test" && env != "dev" {
+		if env != "" && env != "test" && env != "dev" {
 			log.Fatal("MCP: JWT_SECRET or GGID_INTERNAL_SECRET must be set in non-dev environment (GGID_ENV=" + env + ")")
 		}
 		return nil // dev mode — no auth enforcement
