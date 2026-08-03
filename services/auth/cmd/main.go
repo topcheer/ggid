@@ -38,11 +38,10 @@ import (
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
 
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials"
-
 	"github.com/nats-io/nats.go"
 	"github.com/redis/go-redis/v9"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials"
 )
 
 // redisTLSConfig returns a TLS config for Redis when REDIS_TLS=true.
@@ -529,26 +528,21 @@ func main() {
 	<-quit
 	log.Println("shutting down Auth Service...")
 
-	// Set shutting down flag so health checks return 503.
+	// Graceful shutdown: Execute sets draining flag (health checks → 503),
+	// stops HTTP server, and closes DB pool in ordered sequence.
 	shutdownMgr := shutdown.New(&shutdown.Resources{
 		HTTPServer: httpServer,
 		Pool:       pool,
 	})
-	_ = shutdownMgr // flag set via execute below
 
-	// Mark draining state.
-	shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), 30*time.Second)
-	defer shutdownCancel()
-
-	// Graceful stop gRPC server (allows in-flight requests to complete).
+	// Graceful stop gRPC server first (allows in-flight requests to complete).
 	if grpcServerRef != nil {
 		grpcServerRef.GracefulStop()
 		log.Println("Auth gRPC server stopped")
 	}
 
-	if err := httpServer.Shutdown(shutdownCtx); err != nil {
-		log.Fatalf("forced shutdown: %v", err)
-	}
+	// Execute ordered shutdown: sets IsShuttingDown=true, stops HTTP, closes pool.
+	shutdownMgr.Execute()
 	log.Println("Auth Service stopped")
 }
 
