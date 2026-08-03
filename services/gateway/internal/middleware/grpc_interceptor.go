@@ -9,15 +9,19 @@ import (
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
-	"github.com/golang-jwt/jwt/v5"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
+
+	"github.com/golang-jwt/jwt/v5"
 )
 
 // GRPCInterceptorConfig configures the gRPC server interceptors.
 type GRPCInterceptorConfig struct {
 	// JWTSecret is the HMAC secret for JWT validation. If empty, auth is skipped.
 	JWTSecret string
+	// RSAPublicKey is an optional RSA public key (PEM) for RS256 token validation.
+	// If set, RS256 tokens are validated against this key in addition to HMAC.
+	RSAPublicKey string
 	// JWTIssuer is the expected JWT issuer (iss claim). If empty, issuer not validated.
 	JWTIssuer string
 	// RequireAuth if true, makes JWTSecret mandatory (fatal on startup if empty).
