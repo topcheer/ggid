@@ -162,6 +162,15 @@ func CoalesceMiddleware(rc *RequestCoalescer) func(http.Handler) http.Handler {
 			rc.inflight[key] = call
 			rc.mu.Unlock()
 
+			// SECURITY: Ensure close(done) always executes even if the
+			// handler panics, preventing permanent goroutine blockage.
+			defer func() {
+				close(call.done)
+				rc.mu.Lock()
+				delete(rc.inflight, key)
+				rc.mu.Unlock()
+			}()
+
 			// Execute the request
 			sr := &coalesceRecorder{ResponseWriter: w, status: http.StatusOK, header: call.header}
 			next.ServeHTTP(sr, r)
@@ -173,14 +182,6 @@ func CoalesceMiddleware(rc *RequestCoalescer) func(http.Handler) http.Handler {
 			if rc.ttl > 0 && sr.status >= 200 && sr.status < 300 {
 				rc.cacheResponse(key, sr.status, call.body, call.header)
 			}
-
-			// Signal waiting callers
-			close(call.done)
-
-			// Remove from inflight
-			rc.mu.Lock()
-			delete(rc.inflight, key)
-			rc.mu.Unlock()
 		})
 	}
 }
