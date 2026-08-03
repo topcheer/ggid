@@ -3,6 +3,7 @@ package middleware
 import (
 	"bytes"
 	"log/slog"
+	"log"
 	"net/http"
 	"sync"
 	"time"
@@ -113,6 +114,11 @@ func (m *ShadowTrafficMirror) shouldMirror(r *http.Request) bool {
 }
 
 func (m *ShadowTrafficMirror) sendShadow(r *http.Request) {
+	defer func() {
+		if r := recover(); r != nil {
+			log.Printf("shadow mirror: sendShadow panic: %v", r)
+		}
+	}()
 	m.mu.Lock()
 	m.stats.TotalMirrored++
 	m.mu.Unlock()
