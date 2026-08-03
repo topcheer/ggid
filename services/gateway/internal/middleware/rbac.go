@@ -78,8 +78,8 @@ var SelfServicePaths = map[string]bool{
 	"/api/v1/users/me/permissions": true, // read-only permission listing
 }
 
-// isAdminEndpoint returns true for endpoints that require admin scope.
-func isAdminEndpoint(path string) bool {
+// IsAdminEndpoint returns true for endpoints that require admin scope.
+func IsAdminEndpoint(path string) bool {
 	for _, prefix := range defaultAdminPrefixes {
 		// Anchor prefix match: either exact or followed by '/' to prevent
 		// '/api/v1/users-external' matching '/api/v1/users'.
@@ -124,7 +124,7 @@ func RequireAdminScope(next http.Handler) http.Handler {
 				// checked. If JWTAuth has validated an API key with route
 				// permissions, let HasPermissionForRoute in JWTAuth handle it.
 				// But do NOT skip admin-gate entirely for admin endpoints.
-				if !isAdminEndpoint(r.URL.Path) {
+				if !IsAdminEndpoint(r.URL.Path) {
 					next.ServeHTTP(w, r)
 					return
 				}
@@ -141,7 +141,7 @@ func RequireAdminScope(next http.Handler) http.Handler {
 			// No dynamic rule matched → static fallback below.
 		}
 
-		if !isAdminEndpoint(r.URL.Path) {
+		if !IsAdminEndpoint(r.URL.Path) {
 			next.ServeHTTP(w, r)
 			return
 		}
@@ -201,7 +201,7 @@ func RequireAdminScope(next http.Handler) http.Handler {
 		// If the token has the required permission for this route, allow it.
 		// SECURITY: Block permission-key fallback on admin-only prefixes to prevent
 		// privilege escalation (e.g. users:read accessing GET /api/v1/users).
-		if HasPermissionForRoute(r.URL.Path, r.Method, claims.Permissions) && !isAdminOnlyPath(r.URL.Path) {
+		if HasPermissionForRoute(r.URL.Path, r.Method, claims.Permissions) && !IsAdminOnlyPath(r.URL.Path) {
 			next.ServeHTTP(w, r)
 			return
 		}
@@ -283,6 +283,8 @@ func hasPlatformAdminScope(scopes []string) bool {
 // permission-key fallback must NOT apply. These paths require platform:admin
 // or tenant:admin OAuth scope, not just resource-level permissions.
 // Uses defaultAdminPrefixes as single source of truth (R139 fix).
-func isAdminOnlyPath(path string) bool {
-	return isAdminEndpoint(path)
+// IsAdminOnlyPath returns true if the path requires admin scope.
+// Used by router to prevent permission-key bypass on admin-only paths.
+func IsAdminOnlyPath(path string) bool {
+	return IsAdminEndpoint(path)
 }
