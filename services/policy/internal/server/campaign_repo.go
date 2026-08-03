@@ -207,8 +207,8 @@ func (r *CampaignRepo) ListItems(ctx context.Context, campaignID string) ([]*Cam
 }
 
 // AddItem adds a review item to a campaign.
-// SECURITY: Only allow adding to a campaign that exists (tenant scoping via campaign ownership).
-func (r *CampaignRepo) AddItem(ctx context.Context, item *CampaignItem) error {
+// SECURITY: Only allow adding to a campaign that belongs to the same tenant.
+func (r *CampaignRepo) AddItem(ctx context.Context, item *CampaignItem, tenantID string) error {
 	if r.pool == nil {
 		return nil
 	}
@@ -224,10 +224,14 @@ func (r *CampaignRepo) AddItem(ctx context.Context, item *CampaignItem) error {
 	if err != nil {
 		return fmt.Errorf("invalid role_id: %w", err)
 	}
+	tid, err := uuid.Parse(tenantID)
+	if err != nil {
+		return fmt.Errorf("invalid tenant_id: %w", err)
+	}
 	return r.pool.QueryRow(ctx, `
 		INSERT INTO iga_campaign_items (campaign_id, user_id, role_id, decision)
 		SELECT $1, $2, $3, COALESCE($4, 'pending')
-		WHERE EXISTS (SELECT 1 FROM iga_campaigns WHERE id = $1)
+		WHERE EXISTS (SELECT 1 FROM iga_campaigns WHERE id = $1 AND tenant_id = $5)
 		RETURNING id, created_at
-	`, cid, uid, rid, item.Decision).Scan(&item.ID, &item.CreatedAt)
+	`, cid, uid, rid, item.Decision, tid).Scan(&item.ID, &item.CreatedAt)
 }
