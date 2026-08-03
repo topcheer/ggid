@@ -67,7 +67,14 @@ func (s *Scheduler) Start() {
 		for {
 			select {
 			case <-s.ticker.C:
-				s.GenerateAll(context.Background())
+				func() {
+					defer func() {
+						if r := recover(); r != nil {
+							slog.Error("Compliance scheduler panic", "error", r)
+						}
+					}()
+					s.GenerateAll(context.Background())
+				}()
 			case <-s.stopCh:
 				return
 			}
