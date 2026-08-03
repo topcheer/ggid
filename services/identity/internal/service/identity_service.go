@@ -38,6 +38,11 @@ func (s *IdentityService) CreateUser(ctx context.Context, input *domain.CreateUs
 		return nil, gerr.New(gerr.ErrFailedPrecondition, "missing tenant context")
 	}
 
+	// Validate input lengths to prevent DoS and data corruption.
+	if len(input.Username) > 255 || len(input.Email) > 320 || len(input.DisplayName) > 255 || len(input.Phone) > 32 || len(input.Locale) > 10 || len(input.Timezone) > 64 {
+		return nil, gerr.InvalidArgument("input field exceeds maximum length")
+	}
+
 	// Check for existing username or email.
 	if existing, _ := s.repo.GetUserByUsername(ctx, tc.TenantID, input.Username); existing != nil {
 		return nil, gerr.AlreadyExists("user", "")
