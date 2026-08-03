@@ -133,7 +133,9 @@ func (h *HTTPHandler) handleUserRoles(ctx context.Context, userID uuid.UUID, w h
 				return
 			}
 		} else {
-			_ = pool.QueryRow(ctx, `SELECT name, tenant_id FROM roles WHERE id = $1`, roleUUID).Scan(&req.RoleName, &roleTenant)
+			// SECURITY: No tenant context available — fail closed.
+			writeJSONError(w, http.StatusForbidden, "tenant context required for role assignment")
+			return
 		}
 		// backward compat: default tenant if still nil
 		if roleTenant == uuid.Nil {
