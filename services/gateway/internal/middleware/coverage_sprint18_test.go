@@ -9,8 +9,12 @@ import (
 	"time"
 
 	"google.golang.org/grpc"
-	"github.com/golang-jwt/jwt/v5"
 	"google.golang.org/grpc/metadata"
+
+	"github.com/golang-jwt/jwt/v5"
+
+	ggidtenant "github.com/ggid/ggid/pkg/tenant"
+	"github.com/google/uuid"
 )
 
 // ==================== Task 1: Coverage Boost ====================
@@ -445,7 +449,7 @@ func TestSecurityHeadersConfigurable_FrameAllowFrom_C18(t *testing.T) {
 func TestSecurityHeadersConfigurable_PerTenantOverride_C18(t *testing.T) {
 	base := DefaultSecurityHeadersConfig()
 	base.PerTenantOverrides = map[string]*SecurityHeadersConfig{
-		"tenant-special": {
+		"00000000-0000-0000-0000-000000000001": {
 			Enabled: true,
 			CSP:     "default-src 'none'",
 		},
@@ -455,7 +459,10 @@ func TestSecurityHeadersConfigurable_PerTenantOverride_C18(t *testing.T) {
 	}))
 	rr := httptest.NewRecorder()
 	req := httptest.NewRequest("GET", "/", nil)
-	req.Header.Set("X-Tenant-ID", "tenant-special")
+	// Use JWT-verified context instead of forgeable X-Tenant-ID header
+	tenantUUID := uuid.MustParse("00000000-0000-0000-0000-000000000001")
+	ctx := ggidtenant.WithContext(req.Context(), &ggidtenant.Context{TenantID: tenantUUID})
+	req = req.WithContext(ctx)
 	h.ServeHTTP(rr, req)
 	if got := rr.Header().Get("Content-Security-Policy"); got != "default-src 'none'" {
 		t.Errorf("CSP = %q, want tenant override", got)
