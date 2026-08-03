@@ -5,6 +5,7 @@ import (
 	"context"
 	"crypto/rand"
 	"crypto/rsa"
+	"crypto/tls"
 	"crypto/x509"
 	"encoding/pem"
 	"fmt"
@@ -22,8 +23,9 @@ import (
 	"github.com/ggid/ggid/pkg/sysconfig"
 	"github.com/ggid/ggid/services/gateway/internal/config"
 	"github.com/ggid/ggid/services/gateway/internal/middleware"
-	"github.com/redis/go-redis/v9"
 	"github.com/ggid/ggid/services/gateway/internal/router"
+
+	"github.com/redis/go-redis/v9"
 )
 
 // Password pepper must match auth/identity/oauth for API key hash verification.
@@ -114,6 +116,7 @@ func main() {
 		ReadTimeout:  3 * time.Second,
 		WriteTimeout: 3 * time.Second,
 		PoolTimeout:  4 * time.Second,
+		TLSConfig:    redisTLSConfig(),
 	})
 	var store sysconfig.Store
 	if err := rdb.Ping(ctx).Err(); err != nil {
@@ -245,4 +248,17 @@ func ensureLocalKeyPair(privateKeyPath, publicKeyPath string) error {
 	}
 	log.Printf("Generated new RSA key pair: %s + %s", privateKeyPath, publicKeyPath)
 	return nil
+}
+
+// redisTLSConfig returns a TLS config for Redis connections when REDIS_TLS=true.
+// Returns nil (no TLS) by default for local development deployments.
+func redisTLSConfig() *tls.Config {
+	if os.Getenv("REDIS_TLS") != "true" {
+		return nil
+	}
+	return &tls.Config{
+		// InsecureSkipVerify is configurable for self-signed certs in private
+		// deployments. Set REDIS_TLS_SKIP_VERIFY=true only in non-production.
+		InsecureSkipVerify: os.Getenv("REDIS_TLS_SKIP_VERIFY") == "true",
+	}
 }

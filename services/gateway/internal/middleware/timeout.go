@@ -2,6 +2,7 @@ package middleware
 
 import (
 	"context"
+	"log/slog"
 	"net/http"
 	"strings"
 	"sync"
@@ -10,7 +11,7 @@ import (
 
 // TimeoutConfig defines per-route timeout settings.
 type TimeoutConfig struct {
-	Default     time.Duration         // default timeout for all routes (e.g. 30s)
+	Default      time.Duration            // default timeout for all routes (e.g. 30s)
 	RouteConfigs map[string]time.Duration // per-route overrides keyed by path prefix
 }
 
@@ -19,7 +20,7 @@ func DefaultTimeoutConfig() *TimeoutConfig {
 	return &TimeoutConfig{
 		Default: 30 * time.Second,
 		RouteConfigs: map[string]time.Duration{
-			"/api/v1/auth/verify":    10 * time.Second,
+			"/api/v1/auth/verify":   10 * time.Second,
 			"/api/v1/auth/register": 15 * time.Second,
 			"/api/v1/audit":         60 * time.Second,
 		},
@@ -72,7 +73,7 @@ func TimeoutMiddleware(cfg *TimeoutConfig) func(http.Handler) http.Handler {
 				if len(r.URL.Path) >= len(prefix) && r.URL.Path[:len(prefix)] == prefix {
 					timeout = dur
 					break
-			}
+				}
 			}
 
 			// Skip timeout for health checks, well-known discovery, and WebSocket upgrades
@@ -89,6 +90,14 @@ func TimeoutMiddleware(cfg *TimeoutConfig) func(http.Handler) http.Handler {
 			done := make(chan struct{})
 			go func() {
 				defer close(done)
+				// SECURITY: recover from panics in the handler goroutine.
+				// Without this, a panic bypasses the outer PanicRecovery
+				// middleware (different goroutine) and crashes the process.
+				defer func() {
+					if p := recover(); p != nil {
+						slog.Error("panic in timeout goroutine", "path", r.URL.Path, "panic", p)
+					}
+				}()
 				next.ServeHTTP(tw, r.WithContext(ctx))
 			}()
 

@@ -36,11 +36,12 @@ import (
 	"github.com/ggid/ggid/services/auth/internal/tap"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/nats-io/nats.go"
-	"github.com/redis/go-redis/v9"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
+
+	"github.com/nats-io/nats.go"
+	"github.com/redis/go-redis/v9"
 )
 
 func main() {
@@ -765,6 +766,14 @@ func startSessionRevokeSubscriber(ctx context.Context, natsURL string, mgr *serv
 	defer nc.Close()
 
 	sub, err := nc.Subscribe("ggid.session.revoke", func(msg *nats.Msg) {
+		// SECURITY: recover from panics to prevent permanently breaking
+		// the NATS subscription. Without recover, a panic in mgr.RevokeUser
+		// kills the subscriber goroutine and blocks all future revocations.
+		defer func() {
+			if r := recover(); r != nil {
+				log.Printf("CAE: panic in session.revoke subscriber: %v", r)
+			}
+		}()
 		var req sessionRevokeMessage
 		if err := json.Unmarshal(msg.Data, &req); err != nil {
 			log.Printf("CAE: failed to decode session.revoke message: %v", err)
