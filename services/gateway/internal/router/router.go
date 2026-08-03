@@ -76,7 +76,18 @@ var publicPaths = []string{
 	"/api/v1/oauth/userinfo",
 	"/api/v1/auth/saml/",
 	"/scim/v2/", // SCIM 2.0 uses its own bearer token, not JWT
-	"/oauth/",
+	// SECURITY: /oauth/ prefix was too broad - it exposed admin endpoints
+	// like /oauth/clients, /oauth/sessions, /oauth/config to unauthenticated
+	// access. Replaced with specific public OAuth paths.
+	"/oauth/authorize",
+	"/oauth/token",
+	"/oauth/revoke",
+	"/oauth/introspect",
+	"/oauth/device",
+	"/oauth/register",
+	"/oauth/jwks",
+	"/oauth/.well-known/",
+	"/oauth/consent",
 	"/saml/metadata", // SAML SP metadata (public)
 	"/saml/acs",      // SAML Assertion Consumer Service (public, receives IdP responses)
 	"/saml/login",    // SAML login redirect (public, starts SP-initiated flow)
@@ -764,8 +775,10 @@ func (gw *Gateway) Handler() http.Handler {
 	handler = middleware.CORS(handler)
 	handler = middleware.HostValidation(gw.hostValidationConfig())(handler)
 	handler = middleware.SecurityHeadersConfigurable(middleware.DefaultSecurityHeadersConfig())(handler)
-	handler = middleware.RequestID(handler)
+	// SECURITY: RequestID must be outermost so PanicRecovery has request_id
+	// available when logging panics. Execution order: RequestID → PanicRecovery → ...
 	handler = middleware.PanicRecovery(logger)(handler)
+	handler = middleware.RequestID(handler)
 	// Shutdown: return 503 during graceful drain so k8s/load balancer
 	// stops sending traffic before the process exits.
 	handler = shutdown.HealthCheckMiddleware(handler)
