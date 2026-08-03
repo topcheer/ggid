@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/ggid/ggid/services/oauth/internal/domain"
+
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
 )
@@ -80,11 +81,17 @@ func (s *OAuthService) PollDeviceToken(ctx context.Context, deviceCode, clientID
 	var userID *uuid.UUID
 	var tenantID uuid.UUID
 	var clientIDStored string
+	var expiresAt time.Time
+	var userCode string
+	var lastPoll *time.Time
 	if ok {
 		status = info.Status
 		userID = info.UserID
 		tenantID = info.TenantID
 		clientIDStored = info.ClientID
+		expiresAt = info.ExpiresAt
+		userCode = info.UserCode
+		lastPoll = info.LastPoll
 	}
 	deviceCodeMu.RUnlock()
 
@@ -96,17 +103,17 @@ func (s *OAuthService) PollDeviceToken(ctx context.Context, deviceCode, clientID
 		return nil, fmt.Errorf("invalid_client")
 	}
 
-	if time.Now().After(info.ExpiresAt) {
+	if time.Now().After(expiresAt) {
 		deviceCodeMu.Lock()
 		delete(deviceCodeStore, deviceCode)
-		delete(userCodeIndex, info.UserCode)
+		delete(userCodeIndex, userCode)
 		deviceCodeMu.Unlock()
 		return nil, fmt.Errorf("expired_token")
 	}
 
 	if status == "pending" {
 		deviceCodeMu.Lock()
-		if info.LastPoll != nil && time.Since(*info.LastPoll) < 5*time.Second {
+		if lastPoll != nil && time.Since(*lastPoll) < 5*time.Second {
 			deviceCodeMu.Unlock()
 			return nil, fmt.Errorf("slow_down")
 		}
