@@ -32,7 +32,6 @@ const swaggerHTML = `<!DOCTYPE html>
 </body>
 </html>`
 
-
 const hostedLoginHTML = `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -119,7 +118,7 @@ const hostedLoginHTML = `<!DOCTYPE html>
 <script>
 const T="__TENANT_ID__";
 const params=new URLSearchParams(location.search);
-const redirectUri=params.get("redirect_uri")||"/";
+const redirectUri=(function(){const u=params.get("redirect_uri")||"/";try{const p=new URL(u,location.origin);if(p.origin!==location.origin)return"/";return p.pathname+p.search+p.hash}catch(e){return"/"}})();
 
 function showErr(m){const e=document.getElementById("err");e.textContent=m;e.style.display="block";setTimeout(()=>e.style.display="none",5000)}
 function showOk(m){const e=document.getElementById("ok");e.textContent=m;e.style.display="block"}
