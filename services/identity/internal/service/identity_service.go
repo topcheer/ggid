@@ -50,6 +50,13 @@ func (s *IdentityService) CreateUser(ctx context.Context, input *domain.CreateUs
 	if input.Password == "" {
 		return nil, gerr.InvalidArgument("password cannot be empty")
 	}
+	// SECURITY: Enforce password complexity on all user creation paths.
+	// registration_handler.go validates self-registration, but CreateUser is
+	// also called by bulk_import and admin-create paths that bypass it.
+	// Without this, weak passwords like "1" could be set via API.
+	if err := validatePasswordComplexity(input.Password); err != nil {
+		return nil, err
+	}
 
 	// Hash the password.
 	hash, err := crypto.HashPassword(input.Password)
@@ -400,4 +407,29 @@ func getStringAttr(attrs map[string]any, key string) string {
 		}
 	}
 	return ""
+}
+
+// validatePasswordComplexity enforces password strength requirements.
+// Mirrors the auth service's validatePassword: 8-64 chars, at least one
+// uppercase, one lowercase, and one digit. This ensures all user creation
+// paths (direct API, bulk import, admin create) enforce password complexity.
+func validatePasswordComplexity(password string) error {
+	if len(password) < 8 || len(password) > 64 {
+		return gerr.InvalidArgument("password must be 8-64 characters")
+	}
+	hasUpper, hasLower, hasDigit := false, false, false
+	for _, c := range password {
+		switch {
+		case c >= 'A' && c <= 'Z':
+			hasUpper = true
+		case c >= 'a' && c <= 'z':
+			hasLower = true
+		case c >= '0' && c <= '9':
+			hasDigit = true
+		}
+	}
+	if !hasUpper || !hasLower || !hasDigit {
+		return gerr.InvalidArgument("password must contain uppercase, lowercase, and a digit")
+	}
+	return nil
 }
