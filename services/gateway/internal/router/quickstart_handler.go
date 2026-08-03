@@ -21,14 +21,14 @@ type QuickstartRequest struct {
 
 // QuickstartResponse contains everything needed to start using GGID immediately.
 type QuickstartResponse struct {
-	Status             string `json:"status"`
-	TenantID           string `json:"tenant_id"`
-	AdminUserID        string `json:"admin_user_id"`
-	AdminUsername      string `json:"admin_username"`
-	OAuthClientID      string `json:"oauth_client_id"`
-	OAuthClientSecret  string `json:"oauth_client_secret"`
-	SampleCurl         []string `json:"sample_curl"`
-	NextSteps          []string `json:"next_steps"`
+	Status            string   `json:"status"`
+	TenantID          string   `json:"tenant_id"`
+	AdminUserID       string   `json:"admin_user_id"`
+	AdminUsername     string   `json:"admin_username"`
+	OAuthClientID     string   `json:"oauth_client_id"`
+	OAuthClientSecret string   `json:"oauth_client_secret"`
+	SampleCurl        []string `json:"sample_curl"`
+	NextSteps         []string `json:"next_steps"`
 }
 
 // quickstartState tracks whether the system has been initialized (in-memory).
@@ -209,13 +209,31 @@ func (gw *Gateway) firstTenantID() string {
 	if dbURL == "" {
 		return ""
 	}
-	conn, err := pgx.Connect(context.Background(), dbURL)
+	// Cache the tenant ID to avoid connecting on every request.
+	gw.mu.RLock()
+	cached := gw.cachedTenantID
+	gw.mu.RUnlock()
+	if cached != "" {
+		return cached
+	}
+
+	// Use a short timeout to avoid connection exhaustion under load.
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	conn, err := pgx.Connect(ctx, dbURL)
 	if err != nil {
 		return ""
 	}
-	defer conn.Close(context.Background())
+	defer conn.Close(ctx)
 	var id string
-	_ = conn.QueryRow(context.Background(),
+	_ = conn.QueryRow(ctx,
 		`SELECT id::text FROM tenants ORDER BY created_at LIMIT 1`).Scan(&id)
+
+	if id != "" {
+		gw.mu.Lock()
+		gw.cachedTenantID = id
+		gw.mu.Unlock()
+	}
 	return id
 }

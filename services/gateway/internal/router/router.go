@@ -125,6 +125,7 @@ type Gateway struct {
 	appRouter       *ProtectedAppRouter
 	circuitRegistry *middleware.CircuitRegistry
 	apiKeyValidator *middleware.DBAPIKeyValidator
+	cachedTenantID  string
 	mu              sync.RWMutex
 }
 
