@@ -38,6 +38,7 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/nats-io/nats.go"
 	"github.com/redis/go-redis/v9"
+
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 )
@@ -277,6 +278,19 @@ func main() {
 
 	// CAE Phase 2: SessionRevocationManager + JTI Blocklist
 	jtiBlocklist := ggidauth.NewJTIBlocklist(rdb)
+	// Start JTI blocklist cleanup goroutine to evict expired entries.
+	go func() {
+		ticker := time.NewTicker(5 * time.Minute)
+		defer ticker.Stop()
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case <-ticker.C:
+				jtiBlocklist.CleanupExpired(ctx)
+			}
+		}
+	}()
 	var revocationMgr *service.SessionRevocationManager
 	if natsURL := os.Getenv("NATS_URL"); natsURL != "" {
 		if pub, err := audit.NewPublisher(ctx, natsURL); err == nil {

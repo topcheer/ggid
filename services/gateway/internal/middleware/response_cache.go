@@ -166,8 +166,18 @@ func (rc *ResponseCache) get(key string) *rcCachedResponse {
 	return c
 }
 
+const rcMaxEntries = 10000
+
 func (rc *ResponseCache) put(key string, resp *rcCachedResponse) {
 	rc.mu.Lock()
+	// SECURITY: Cap cache size to prevent OOM under high cardinality.
+	if len(rc.cache) >= rcMaxEntries {
+		// Evict oldest entry (random map key -- cleanup goroutine handles TTL-based eviction).
+		for k := range rc.cache {
+			delete(rc.cache, k)
+			break
+		}
+	}
 	rc.cache[key] = resp
 	rc.mu.Unlock()
 }
