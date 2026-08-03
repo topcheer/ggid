@@ -378,6 +378,7 @@ func (s *RoleService) ListUserRoles(ctx context.Context, userID uuid.UUID) ([]*d
 // they trigger universal bypass in rbac.HasPermission.
 var reservedPermissionKeys = map[string]bool{
 	"admin": true, "system:admin": true, "superadmin": true,
+	"platform:admin": true, // HasPermission bypass key (R247)
 }
 
 // CreatePermission creates a new permission.
