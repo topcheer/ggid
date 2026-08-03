@@ -133,6 +133,10 @@ auth:
     requests:
       cpu: 100m
       memory: 128Mi
+  env:
+    # SECURITY: JWT audience must match gateway GATEWAY_JWT_AUDIENCE.
+    # Auth signs tokens with this aud claim; gateway validates it.
+    JWT_AUDIENCE: gcid-console
 
 # OAuth Service
 oauth:
