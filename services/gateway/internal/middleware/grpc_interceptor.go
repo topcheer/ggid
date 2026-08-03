@@ -9,8 +9,8 @@ import (
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/metadata"
 	"github.com/golang-jwt/jwt/v5"
+	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 )
 
@@ -100,7 +100,7 @@ func GRPCUnaryInterceptor(cfg *GRPCInterceptorConfig) grpc.UnaryServerIntercepto
 				// SECURITY: Validate JWT signature and claims — not just extract token.
 				claims := jwt.MapClaims{}
 				parserOpts := []jwt.ParserOption{
-					jwt.WithValidMethods([]string{"HS256", "RS256"}),
+					jwt.WithValidMethods([]string{"HS256"}),
 					jwt.WithExpirationRequired(),
 				}
 				if cfg.JWTIssuer != "" {
