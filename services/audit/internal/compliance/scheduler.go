@@ -64,6 +64,11 @@ func (s *Scheduler) Start() {
 	}
 	s.ticker = time.NewTicker(s.cfg.Interval)
 	go func() {
+		defer func() {
+			if r := recover(); r != nil {
+				slog.Error("Compliance scheduler panic", "error", r)
+			}
+		}()
 		for {
 			select {
 			case <-s.ticker.C:

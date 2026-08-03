@@ -6,11 +6,11 @@ import (
 	"compress/flate"
 	"context"
 	stdcrypto "crypto"
-	"crypto/tls"
 	"crypto/hmac"
 	"crypto/rand"
 	"crypto/rsa"
 	"crypto/sha256"
+	"crypto/tls"
 
 	"crypto/x509"
 	"crypto/x509/pkix"
@@ -47,8 +47,8 @@ import (
 	"github.com/google/uuid"
 
 	"github.com/redis/go-redis/v9"
-
 	"github.com/golang-jwt/jwt/v5"
+
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
@@ -628,19 +628,39 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 		// RAR: read authorization_details parameter (RFC 9396).
 		authDetailsJSON := json.RawMessage(nil)
 		if ad := r.URL.Query().Get("authorization_details"); ad != "" {
-			// Validate it's valid JSON array.
-			var parsed []any
-			if err := json.Unmarshal([]byte(ad), &parsed); err == nil {
-				authDetailsJSON = json.RawMessage(ad)
+			// Validate it's valid JSON array and check RAR types.
+			var details []AuthorizationDetail
+			if err := json.Unmarshal([]byte(ad), &details); err != nil {
+				writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid_request", "error_description": "authorization_details is not valid JSON"})
+				return
 			}
+			// SECURITY: Validate each authorization_details element's type and
+			// structure via the RAR registry (RFC 9396 §2.1 requires type validation).
+			if len(details) > 0 {
+				registry := NewRARRegistry()
+				if err := registry.ValidateDetails(details, clientID); err != nil {
+					writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid_request", "error_description": err.Error()})
+					return
+				}
+			}
+			authDetailsJSON = json.RawMessage(ad)
 		}
 		// Also accept from form POST body.
 		if len(authDetailsJSON) == 0 && r.Method == http.MethodPost {
 			if ad := r.FormValue("authorization_details"); ad != "" {
-				var parsed []any
-				if err := json.Unmarshal([]byte(ad), &parsed); err == nil {
-					authDetailsJSON = json.RawMessage(ad)
+				var details []AuthorizationDetail
+				if err := json.Unmarshal([]byte(ad), &details); err != nil {
+					writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid_request", "error_description": "authorization_details is not valid JSON"})
+					return
 				}
+				if len(details) > 0 {
+					registry := NewRARRegistry()
+					if err := registry.ValidateDetails(details, clientID); err != nil {
+						writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid_request", "error_description": err.Error()})
+						return
+					}
+				}
+				authDetailsJSON = json.RawMessage(ad)
 			}
 		}
 
