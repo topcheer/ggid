@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"io"
 	"log/slog"
+	"context"
 	"net/http"
 	"strings"
 	"time"
@@ -106,7 +107,7 @@ func (h *HTTPHandler) handleImportAsync(w http.ResponseWriter, r *http.Request) 
 	}
 
 	// Process asynchronously.
-	go h.ProcessImportRecords(r.Context(), job.ID, tc.TenantID, records)
+	go h.ProcessImportRecords(context.Background(), job.ID, tc.TenantID, records)
 
 	writeJSON(w, http.StatusAccepted, map[string]any{
 		"job_id":  job.ID,

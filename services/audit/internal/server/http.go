@@ -1368,7 +1368,7 @@ func (s *HTTPServer) handleRetention(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		s.retention.mu.Lock()
-		if req.RetentionDays > 0 {
+		if req.RetentionDays > 0 && req.RetentionDays <= 3650 {
 			s.retention.days = req.RetentionDays
 		}
 		if req.Enabled != nil {
@@ -1385,7 +1385,7 @@ func (s *HTTPServer) handleRetention(w http.ResponseWriter, r *http.Request) {
 		daysStr := r.URL.Query().Get("days")
 		days := s.retention.days
 		if daysStr != "" {
-			if d, err := strconv.Atoi(daysStr); err == nil && d > 0 {
+			if d, err := strconv.Atoi(daysStr); err == nil && d > 0 && d <= 3650 {
 				days = d
 			}
 		}
