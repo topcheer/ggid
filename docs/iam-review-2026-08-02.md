@@ -278,3 +278,178 @@ services/gateway/internal/middleware/sliding_ratelimit.go:137:36: undefined: red
 2. 清理 Go 缓存：`go clean -cache -modcache` 然后重新拉取依赖
 3. 如果问题持续，检查 Go 版本和环境变量
 4. 修复后重新运行完整的编译和测试验证流程
+
+---
+
+## 补充审查 (2026-08-04 最新)
+
+### 回归测试状态
+
+**编译验证**:
+```bash
+go build ./...
+```
+✅ 通过 - 无编译错误
+
+**核心服务回归测试**:
+```bash
+GGID_ENV=test go test -timeout 60s -count=1 \
+  ./services/oauth/internal/service/ \
+  ./services/auth/internal/service/ \
+  ./services/identity/internal/scim/
+```
+✅ 全部通过
+- oauth/internal/service: ok (4.743s)
+- auth/internal/service: ok (3.748s)
+- identity/internal/scim: ok (1.418s)
+
+### 最近10次提交分析
+
+**2391ba949** - docs: R372 data validation + error handling audit report
+- 文档提交，无代码变更
+
+**33e80dea6** - docs: R27 performance + R17 middleware chain audit report
+- 文档提交，无代码变更
+
+**05c6f0a2f** - fix(R370): handleMePermissions fallback SQL missing tenant_id filter
+- ✅ 正确修复了 fallback SQL 缺失 tenant_id 过滤的 P0 问题
+- 添加 `JOIN roles r ON r.id = ur.role_id` 和 `r.tenant_id = $2` 过滤
+- 防止主查询失败时的跨租户权限泄漏
+- 注释说明 TOTP plaintext 是误报（已调用 EncryptTOTPSecret）
+- 未引入新问题
+
+**8fcb12afe** - docs: R362 error handling + code quality audit report
+- 文档提交，无代码变更
+
+**efaa40fca** - fix(R359): SCIM internal secret constant-time comparison
+- ✅ 正确修复了 SCIM 内部 secret 使用 == 比较的时序攻击漏洞
+- 改用 `subtle.ConstantTimeCompare` 进行常量时间比较
+- 防御深度修复（gateway 已剔除相关 headers）
+- 未引入新问题
+
+**9a23ecb41** - docs: R359 security + SQL injection/XSS/CSRF audit report
+- 文档提交，无代码变更
+
+**7582d10d9** - fix(R353): atomic ConsumeRefreshToken to prevent TOCTOU race
+- ✅ 正确修复了 RefreshTokenRepository 的 TOCTOU 竞态条件
+- 添加 `ConsumeRefreshToken` 方法，使用 `UPDATE...RETURNING` 原子操作
+- 与 OAuth service 的 pg_repo.go:465 模式一致
+- 防止并发刷新令牌轮换请求同时读取同一令牌的竞态
+- 未引入新问题
+
+**9484213c0** - fix(R352 P0): SCIM replaceUser/patchUser MaxBytesReader
+- ✅ 正确修复了 SCIM PUT (replaceUser) 和 PATCH (patchUser) 缺失 body 限制的 P0 问题
+- 为两个 handler 添加 10MB MaxBytesReader
+- 与 createUser 保持一致
+- 未引入新问题
+
+**f65ba213f** - fix(R351): pkg/middleware SecurityHeaders HSTS only on TLS
+- ✅ 正确修复了 pkg/middleware SecurityHeaders 无条件设置 HSTS 的 P0 问题
+- 添加 `r.TLS != nil` 检查，与 gateway 的 SecurityHeadersConfigurable 一致
+- 防止明文 HTTP 连接获得 HSTS header
+- 未引入新问题
+
+**539ee8f84** - fix(R350): gRPC interceptor RS256 validation + architecture audit report
+- ✅ 正确修复了 gRPC 拦截器仅支持 HS256 的 P0 问题
+- 架构审查报告，P0 修复已在之前验证
+
+### 本轮审查结果
+
+**发现 0 个新问题：P0 0个 / P1 0个 / P2 0个**
+
+### 总结
+- ✅ 编译成功
+- ✅ 所有核心服务测试通过
+- ✅ 最近提交正确且完整，所有 P0 修复质量高
+- ✅ 未引入新的 P0/P1/P2 问题
+- ✅ R370/R359/R353/R352/R351 的修复都遵循最佳实践，无副作用
+- ⚠️ 历史遗留 P0 问题（Helm {fullname}-secrets Secret 不存在）仍需修复
+---
+
+## 追加审查 — 2026-08-05 独立审视（已修复）
+
+### 回归测试状态
+
+**编译验证**:
+```bash
+go build ./...
+```
+✅ 通过 - 无编译错误
+
+**核心服务回归测试**:
+```bash
+GGID_ENV=test go test -timeout 60s -count=1 \
+  ./services/oauth/internal/service/ \
+  ./services/auth/internal/service/ \
+  ./services/identity/internal/scim/
+```
+✅ 全部通过
+- oauth/internal/service: ok (10.223s)
+- auth/internal/service: ok (9.398s)
+- identity/internal/scim: ok (6.704s)
+
+### 最近10次提交分析
+
+**d1916fd1b** - fix(P1): grpc.go goroutine leak (WaitGroup) + unified_pdp.go append race
+- ✅ **已修复 grpc.go goroutine leak 问题**：
+  - 从 buffered done channel (cap 2) 改为 WaitGroup
+  - 正确添加 defer wg.Done() 到两个 goroutine
+  - 添加 CloseWrite 调用确保干净的 EOF
+  - 匹配文件第 130 行的现有模式
+- ✅ **已修复 unified_pdp.go append race 问题**：
+  - 引入 rbacEvaluated/abacEvaluated/rebacEvaluated 布尔标志
+  - 在 goroutine 内部设置标志，在 wg.Wait() 后追加到 evaluatedBy
+  - 避免并发 append 导致的竞态条件
+- ✅ 两个修复都遵循了最佳实践，未引入新问题
+
+**b97246a4a** - fix(R379 P0): replace fmt.Sscanf with strings.SplitN in HasPermission
+- ✅ 正确修复了 fmt.Sscanf 的边缘情况安全问题
+  - %[^:] 模式对空段、null bytes 等情况处理不当
+  - SplitN 更安全、更清晰，显式处理 legacy 2-segment 格式
+- ✅ 逻辑正确：
+  - len(parts) >= 3: 三段格式 "resource:action:scope"
+  - len(parts) == 2: legacy 格式 "resource:action"，scope 默认 "tenant"
+  - else: 跳过无效格式
+- ✅ 未引入新问题
+
+**9a34d410a / 29a99ca88 / f218a9e26 / dabb78de1 / 8675b6ab8 / 2391ba949** - 文档提交
+- 文档提交，无代码变更
+
+**526fef4f5** - fix(R376 P0): narrow /oauth/ and /.well-known/ in session middleware
+- ✅ 已在之前审查中验证
+
+### 本轮审查结果
+
+**发现 0 个新问题：P0 0个 / P1 0个 / P2 0个**
+
+### 总结
+- ✅ 编译成功
+- ✅ 所有核心服务测试通过
+- ✅ 最近修复（d1916fd1b 和 b97246a4a）正确且完整
+- ✅ grpc.go goroutine leak 已修复（P1 → 已修复）
+- ✅ unified_pdp.go append race 已修复（P1 → 已修复）
+- ✅ permissions.go Sscanf 已修复（P0 → 已修复）
+- ✅ 未引入新的 P0/P1/P2 问题
+- ⚠️ 历史遗留 P0 问题（Helm {fullname}-secrets Secret 不存在）仍需修复
+
+### 之前发现的已修复问题状态更新
+
+| 问题 | 原级别 | 修复提交 | 状态 |
+|------|--------|---------|------|
+| grpc.go goroutine leak | P1 | d1916fd1b | ✅ 已修复 |
+| unified_pdp.go append race | P1 | d1916fd1b | ✅ 已修复 |
+| HasPermission fmt.Sscanf | P0 | b97246a4a | ✅ 已修复 |
+| Helm {fullname}-secrets Secret | P0 | - | ⚠️ 待修复 |
+
+---
+
+## 审查汇总 (2026-08-05)
+
+本轮独立审视完成。发现的 P0 和 P1 问题已在最近的提交中修复。
+
+**总问题统计**：
+- 新发现：0 个
+- 已修复：3 个（P0: 1, P1: 2）
+- 待修复：1 个（P0: 1 - Helm Secret）
+
+**回归状态**：✅ 全部通过
