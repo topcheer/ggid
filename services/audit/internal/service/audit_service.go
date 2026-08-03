@@ -248,7 +248,7 @@ func (s *AuditService) VerifyIntegrity(ctx context.Context, tenantID uuid.UUID) 
 	events, _, err := s.ListEvents(ctx, domain.ListFilter{
 		TenantID: tenantID,
 		OrderBy:  "created_at",
-	}, 1, 500)
+	}, 1, 100000) // SECURITY: Verify entire hash chain, not just first 500
 	if err != nil {
 		return err
 	}

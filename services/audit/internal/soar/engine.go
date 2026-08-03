@@ -16,8 +16,8 @@ import (
 
 // PlaybookTrigger defines when a playbook fires.
 type PlaybookTrigger struct {
-	Rule        string `json:"rule,omitempty"`        // ITDR rule ID e.g. "mfa_fatigue"
-	Severity    string `json:"severity,omitempty"`    // minimum severity: high|critical
+	Rule        string `json:"rule,omitempty"`         // ITDR rule ID e.g. "mfa_fatigue"
+	Severity    string `json:"severity,omitempty"`     // minimum severity: high|critical
 	RiskScore   int    `json:"risk_score,omitempty"`   // CAE risk score threshold
 	ThreatIntel bool   `json:"threat_intel,omitempty"` // threat intel critical hit
 }
@@ -118,7 +118,7 @@ func (e *Engine) ListPlaybooks(ctx context.Context) ([]Playbook, error) {
 	if e.pool == nil {
 		return nil, nil
 	}
-	rows, err := e.pool.Query(ctx, `SELECT id, name, trigger, actions, enabled, created_at FROM soar_playbooks ORDER BY created_at DESC`)
+	rows, err := e.pool.Query(ctx, `SELECT id, name, trigger, actions, enabled, created_at FROM soar_playbooks ORDER BY created_at DESC LIMIT 1000`)
 	if err != nil {
 		return nil, err
 	}
