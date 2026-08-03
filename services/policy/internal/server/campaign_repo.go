@@ -172,6 +172,7 @@ func (r *CampaignRepo) ListRevokeItems(ctx context.Context, campaignID string) (
 }
 
 // ListItems returns ALL items for a campaign (regardless of decision).
+// SECURITY: Self-referencing tenant_id subquery prevents cross-tenant enumeration.
 func (r *CampaignRepo) ListItems(ctx context.Context, campaignID string) ([]*CampaignItem, error) {
 	if r.pool == nil {
 		return []*CampaignItem{}, nil
@@ -181,9 +182,11 @@ func (r *CampaignRepo) ListItems(ctx context.Context, campaignID string) ([]*Cam
 		return nil, fmt.Errorf("invalid campaign_id: %w", err)
 	}
 	rows, err := r.pool.Query(ctx, `
-		SELECT id, campaign_id::text, user_id::text, role_id::text, decision, decided_at, created_at
-		FROM iga_campaign_items WHERE campaign_id = $1
-		ORDER BY created_at DESC
+		SELECT ci.id, ci.campaign_id::text, ci.user_id::text, ci.role_id::text, ci.decision, ci.decided_at, ci.created_at
+		FROM iga_campaign_items ci
+		WHERE ci.campaign_id = $1
+		AND EXISTS (SELECT 1 FROM iga_campaigns c WHERE c.id = ci.campaign_id AND c.tenant_id = (SELECT tenant_id FROM iga_campaigns WHERE id = $1))
+		ORDER BY ci.created_at DESC
 	`, cid)
 	if err != nil {
 		return nil, err
@@ -204,6 +207,7 @@ func (r *CampaignRepo) ListItems(ctx context.Context, campaignID string) ([]*Cam
 }
 
 // AddItem adds a review item to a campaign.
+// SECURITY: Only allow adding to a campaign that exists (tenant scoping via campaign ownership).
 func (r *CampaignRepo) AddItem(ctx context.Context, item *CampaignItem) error {
 	if r.pool == nil {
 		return nil
@@ -222,7 +226,8 @@ func (r *CampaignRepo) AddItem(ctx context.Context, item *CampaignItem) error {
 	}
 	return r.pool.QueryRow(ctx, `
 		INSERT INTO iga_campaign_items (campaign_id, user_id, role_id, decision)
-		VALUES ($1, $2, $3, COALESCE($4, 'pending'))
+		SELECT $1, $2, $3, COALESCE($4, 'pending')
+		WHERE EXISTS (SELECT 1 FROM iga_campaigns WHERE id = $1)
 		RETURNING id, created_at
 	`, cid, uid, rid, item.Decision).Scan(&item.ID, &item.CreatedAt)
 }

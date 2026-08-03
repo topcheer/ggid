@@ -147,12 +147,19 @@ func (r *RoleRepository) GetAncestorChain(ctx context.Context, roleID uuid.UUID)
 // --- Role-Permission management ---
 
 // GrantPermissions assigns permissions to a role.
+// SECURITY: Only grants permissions that belong to the same tenant as the role
+// or are system permissions. Prevents cross-tenant permission escalation.
 func (r *RoleRepository) GrantPermissions(ctx context.Context, roleID uuid.UUID, permissionIDs []uuid.UUID, conditions map[string]any) error {
 	condJSON, _ := json.Marshal(conditions)
 	for _, permID := range permissionIDs {
 		_, err := r.db.Exec(ctx, `
 			INSERT INTO role_permissions (role_id, permission_id, conditions)
-			VALUES ($1, $2, $3)
+			SELECT $1, $2, $3
+			WHERE EXISTS (
+				SELECT 1 FROM permissions p
+				WHERE p.id = $2
+				AND (p.tenant_id = (SELECT tenant_id FROM roles WHERE id = $1) OR p.system_perm = true)
+			)
 			ON CONFLICT (role_id, permission_id) DO NOTHING
 		`, roleID, permID, condJSON)
 		if err != nil {
