@@ -1,11 +1,14 @@
 package detection
 
 import (
+	"sync"
+
 	"github.com/ggid/ggid/services/audit/internal/domain"
 )
 
 // RuleRegistry holds built-in rules and per-tenant overrides.
 type RuleRegistry struct {
+	mu        sync.RWMutex
 	rules     []Rule
 	overrides map[string]domain.RuleConfig // key: "tenantID:ruleID"
 }
@@ -20,15 +23,21 @@ func NewRuleRegistry() *RuleRegistry {
 }
 
 func (r *RuleRegistry) Register(rule Rule) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
 	r.rules = append(r.rules, rule)
 }
 
 func (r *RuleRegistry) SetOverride(tenantID string, ruleID string, cfg domain.RuleConfig) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
 	r.overrides[tenantID+":"+ruleID] = cfg
 }
 
 // RulesFor returns rules that care about the given audit action.
 func (r *RuleRegistry) RulesFor(action string) []Rule {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
 	var matching []Rule
 	for _, rule := range r.rules {
 		for _, a := range rule.Actions() {
@@ -43,6 +52,8 @@ func (r *RuleRegistry) RulesFor(action string) []Rule {
 
 // ConfigFor returns the effective config for a rule (override or default).
 func (r *RuleRegistry) ConfigFor(tenantID interface{ String() string }, ruleID string) domain.RuleConfig {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
 	key := tenantID.String() + ":" + ruleID
 	if cfg, ok := r.overrides[key]; ok {
 		return cfg
@@ -73,5 +84,7 @@ func (r *RuleRegistry) registerBuiltins() {
 
 // All returns all registered rules.
 func (r *RuleRegistry) All() []Rule {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
 	return r.rules
 }

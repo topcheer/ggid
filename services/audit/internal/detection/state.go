@@ -2,13 +2,15 @@ package detection
 
 import (
 	"context"
+	"sync"
 	"time"
 )
 
 // MemStateStore is an in-memory StateStore for testing and dev.
 // Uses maps with simple TTL-based cleanup.
 type MemStateStore struct {
-	data map[string][]stateEntry
+	mu     sync.RWMutex
+	data   map[string][]stateEntry
 	counts map[string]int64
 }
 
@@ -26,11 +28,15 @@ func NewMemStateStore() *MemStateStore {
 }
 
 func (s *MemStateStore) AddEvent(_ context.Context, key string, ts int64, member string, _ time.Duration) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
 	s.data[key] = append(s.data[key], stateEntry{ts: ts, member: member})
 	return nil
 }
 
 func (s *MemStateStore) EventsSince(_ context.Context, key string, since int64) ([]string, error) {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
 	var result []string
 	for _, e := range s.data[key] {
 		if e.ts >= since {
@@ -41,6 +47,8 @@ func (s *MemStateStore) EventsSince(_ context.Context, key string, since int64) 
 }
 
 func (s *MemStateStore) Incr(_ context.Context, key string, _ time.Duration) (int64, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
 	s.counts[key]++
 	return s.counts[key], nil
 }
