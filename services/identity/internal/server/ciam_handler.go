@@ -237,11 +237,13 @@ func assignAdminRole(ctx context.Context, pool *pgxpool.Pool, tenantID, userID u
 		return
 	}
 	roleID, _ := uuid.Parse(roleIDStr)
-	_, _ = pool.Exec(ctx,
+	if _, err := pool.Exec(ctx,
 		`INSERT INTO user_roles (user_id, role_id, scope_type, scope_id, granted_by)
 		 VALUES ($1, $2, 'tenant', $3, $1)
 		 ON CONFLICT DO NOTHING`,
-		userID, roleID, tenantID)
+		userID, roleID, tenantID); err != nil {
+		slog.Error("B2B register: assign admin role failed", "error", err, "user_id", userID)
+	}
 }
 
 // handleCIAMMetrics returns aggregated CIAM metrics.

@@ -2,13 +2,13 @@ package middleware
 
 import (
 	"fmt"
+	"log/slog"
 	"net"
 	"net/http"
 	"os"
 	"strconv"
 	"strings"
 	"sync"
-	"log/slog"
 	"time"
 
 	"github.com/ggid/ggid/pkg/sysconfig"
@@ -134,6 +134,7 @@ type TenantBucketLimiter struct {
 	buckets     map[string]*TokenBucket // key: tenantID:ip
 	store       sysconfig.Store
 	cleanupDone chan struct{}
+	cleanupOnce sync.Once
 }
 
 // NewTenantBucketLimiter creates a new per-tenant bucket limiter.
@@ -306,11 +307,13 @@ func (tbl *TenantBucketLimiter) StartCleanup(interval, maxAge time.Duration) {
 }
 
 // StopCleanup signals the cleanup goroutine to exit.
+// Uses sync.Once to prevent double-close panic on concurrent calls.
 func (tbl *TenantBucketLimiter) StopCleanup() {
-	if tbl.cleanupDone != nil {
-		close(tbl.cleanupDone)
-		tbl.cleanupDone = nil
-	}
+	tbl.cleanupOnce.Do(func() {
+		if tbl.cleanupDone != nil {
+			close(tbl.cleanupDone)
+		}
+	})
 }
 
 // BucketCount returns the number of active buckets (for metrics/testing).

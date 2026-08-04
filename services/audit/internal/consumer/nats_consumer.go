@@ -13,8 +13,8 @@ import (
 	"github.com/ggid/ggid/services/audit/internal/repository"
 	"github.com/ggid/ggid/services/audit/internal/service"
 	"github.com/google/uuid"
-
 	"github.com/nats-io/nats.go"
+
 	"github.com/nats-io/nats.go/jetstream"
 )
 
@@ -115,6 +115,11 @@ func (c *EventConsumer) Start() error {
 
 	// Start consuming in a goroutine.
 	go func() {
+		defer func() {
+			if r := recover(); r != nil {
+				slog.Error("Audit Consumer: panic in consumer goroutine", "error", r)
+			}
+		}()
 		slog.Info("Audit Consumer: consuming", "subject", c.cfg.Subject, "consumer", c.cfg.Consumer)
 
 		for {
