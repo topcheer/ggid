@@ -1,11 +1,11 @@
 package server
 
 import (
+	"context"
 	"encoding/csv"
 	"encoding/json"
 	"io"
 	"log/slog"
-	"context"
 	"net/http"
 	"strings"
 	"time"
@@ -79,6 +79,13 @@ func (h *HTTPHandler) handleImportAsync(w http.ResponseWriter, r *http.Request) 
 
 	if len(records) == 0 {
 		writeJSONError(w, http.StatusBadRequest, "no records to import")
+		return
+	}
+
+	// SECURITY: Cap records to prevent resource exhaustion DoS.
+	const maxImportRecords = 10000
+	if len(records) > maxImportRecords {
+		writeJSONError(w, http.StatusBadRequest, "too many records: maximum 10000 per import")
 		return
 	}
 
