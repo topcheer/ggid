@@ -5,6 +5,10 @@ global:
 # Disable built-in infra (using manually deployed pods in ggid namespace)
 postgresql:
   enabled: false
+  auth:
+    username: ggid
+    password: "ggid-k3s"
+    database: ggid
 redis:
   enabled: false
 nats:
@@ -81,5 +85,17 @@ oauth:
 
 networkPolicy: {enabled: false}
 jwt: {secret: "k3s-jwt-dev-secret"}
-config: {defaultTenantId: "00000000-0000-0000-0000-000000000001", logLevel: info}
+config:
+  defaultTenantId: "00000000-0000-0000-0000-000000000001"
+  logLevel: info
+  encryptionKey: "k3s-dev-encryption-key-32bytes"
+  passwordPepper: "k3s-dev-pepper"
+  auditHashSecret: "k3s-dev-hash-chain-secret"
+  internalSecret: "k3s-dev-internal-secret"
 ingress: {enabled: false}
+globalEnv:
+  GGID_ENV: dev
+  GATEWAY_JWT_ISSUER: "https://ggid.iot2.win"
+  GATEWAY_JWT_AUDIENCE: "ggid"
+  CRED_VAULT_AES_KEY: "00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff"
+  BIOMETRIC_AES_KEY: "ffeeddccbbaa99887766554433221100ffeeddccbbaa99887766554433221100"

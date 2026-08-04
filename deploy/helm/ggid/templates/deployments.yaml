@@ -15,7 +15,6 @@ spec:
     rollingUpdate:
       maxUnavailable: 0
       maxSurge: 1
-  terminationGracePeriodSeconds: 60
   selector:
     matchLabels:
       {{- include "ggid.selectorLabels" $ | nindent 6 }}
@@ -111,7 +110,7 @@ spec:
             - name: IDENTITY_SERVICE_URL
               value: {{ printf "http://%s-identity:8081" (include "ggid.fullname" $) | quote }}
             - name: AUTH_SERVICE_URL
-              value: {{ printf "http://%s-auth:%v" (include "ggid.fullname" $) (index .Values.auth.service "httpPort") | quote }}
+              value: {{ printf "http://%s-auth:%v" (include "ggid.fullname" $) (index $.Values.auth.service "httpPort") | quote }}
             - name: OAUTH_SERVICE_URL
               value: {{ printf "http://%s-oauth:9005" (include "ggid.fullname" $) | quote }}
             - name: POLICY_SERVICE_URL

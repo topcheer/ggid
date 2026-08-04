@@ -902,7 +902,7 @@ func (gw *Gateway) checkRouteScope(w http.ResponseWriter, r *http.Request) bool 
 			// Platform admin does NOT auto-inherit tenant admin.
 			// Tenant access requires explicit tenant:admin role.
 		}
-		if scl == "tenant:admin" {
+		if scl == "tenant:admin" || scl == "admin" {
 			hasTenant = true
 		}
 	}
