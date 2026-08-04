@@ -336,9 +336,11 @@ func (gw *Gateway) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		if gw.healthChecker != nil {
 			gw.healthChecker.ReadyHandler().ServeHTTP(w, r)
 		} else {
+			// SECURITY: Fail-closed when healthChecker not configured.
+			// Don't report Ready without backend checks.
 			w.Header().Set("Content-Type", "application/json")
-			w.WriteHeader(http.StatusOK)
-			_ = json.NewEncoder(w).Encode(map[string]string{"status": "ready"})
+			w.WriteHeader(http.StatusServiceUnavailable)
+			_ = json.NewEncoder(w).Encode(map[string]string{"status": "not ready", "error": "health checker not configured"})
 		}
 		return
 	}
