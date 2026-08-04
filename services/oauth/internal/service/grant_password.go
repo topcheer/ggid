@@ -164,6 +164,8 @@ func (s *OAuthService) PasswordGrant(ctx context.Context, req *PasswordGrantRequ
 	filteredScopes := filterSafeScopes(req.Scope)
 	roleKeys := s.fetchUserRoleKeys(ctx, tenantID, userID)
 	scopeStr := strings.TrimSpace(joinScopes(filteredScopes) + " " + strings.Join(roleKeys, " "))
+	// Map legacy "admin" scope to "tenant:admin" for gateway RBAC compatibility.
+	scopeStr = normalizeAdminScope(scopeStr)
 
 	now := time.Now()
 	expiresAt := now.Add(15 * time.Minute)
