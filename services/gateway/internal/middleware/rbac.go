@@ -257,7 +257,7 @@ func isPlatformOnlyPath(path string) bool {
 func hasAdminScope(scopes []string) bool {
 	for _, sc := range scopes {
 		switch strings.ToLower(sc) {
-		case "platform:admin", "tenant:admin", "admin":
+		case "platform:admin", "tenant:admin":
 			return true
 		}
 	}

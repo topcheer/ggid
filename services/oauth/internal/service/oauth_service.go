@@ -784,6 +784,16 @@ func (s *OAuthService) issueAccessTokenWithAMR(userID, tenantID uuid.UUID, audie
 		ID:        uuid.New().String(),
 	}
 
+	// Normalize scopes: map legacy "admin" to "tenant:admin" for gateway RBAC.
+	// The gcid-console client registers scope "admin" (not "tenant:admin"),
+	// but the gateway's hasAdminScope/RequireAdminScope only accepts
+	// "platform:admin" or "tenant:admin". This mapping is safe because:
+	// 1. The scope is already filtered by client registration (only registered
+	//    scopes are granted)
+	// 2. The roles claim comes from DB (verified), not from scope string
+	// 3. The console client is a first-party trusted application
+	scope = normalizeAdminScope(scope)
+
 	// Add custom claims.
 	claimsMap := jwt.MapClaims{
 		"iss":         s.issuer,
@@ -1531,6 +1541,20 @@ func joinScopes(scopes []string) string {
 
 func splitScopes(s string) []string {
 	return strings.Fields(s)
+}
+
+// normalizeAdminScope maps the legacy "admin" scope token to "tenant:admin"
+// in the space-delimited scope string. This ensures the gateway RBAC
+// (which only accepts "platform:admin"/"tenant:admin") recognizes console
+// admin users. Returns the scope string unchanged if "admin" is not present.
+func normalizeAdminScope(scope string) string {
+	parts := strings.Fields(scope)
+	for i, s := range parts {
+		if s == "admin" {
+			parts[i] = "tenant:admin"
+		}
+	}
+	return strings.Join(parts, " ")
 }
 
 // intersectScopes returns the intersection of requested and allowed scopes.
