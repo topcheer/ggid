@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 
+	ggidtenant "github.com/ggid/ggid/pkg/tenant"
 	"github.com/ggid/ggid/services/auth/internal/service"
 	"github.com/ggid/ggid/services/auth/internal/webauthn"
 
@@ -43,17 +44,44 @@ func parseUUIDSafe(s string) uuid.UUID {
 	return id
 }
 
+// ctxScopesKey is used to extract OAuth scopes from JWT context.
+type ctxScopesKey struct{}
+
 func (h *Handler) handleImpersonate(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		writeJSON(w, http.StatusMethodNotAllowed, map[string]string{"error": "method not allowed"})
 		return
 	}
+	// SECURITY: Extract identity from JWT context first (trustworthy),
+	// then fall back to gateway-set headers. This prevents direct-access
+	// attacks where a caller bypasses the gateway and forges X-Scopes/
+	// X-Tenant-ID/X-User-ID headers.
+	var jwtUserID uuid.UUID
+	if uid, ok := r.Context().Value(ctxUserIDKey{}).(uuid.UUID); ok {
+		jwtUserID = uid
+	}
+	var jwtScopes []string
+	if scopes, ok := r.Context().Value(ctxScopesKey{}).([]string); ok {
+		jwtScopes = scopes
+	}
+	var jwtTenantID uuid.UUID
+	if tc, err := ggidtenant.FromContext(r.Context()); err == nil {
+		jwtTenantID = tc.TenantID
+	}
+	// Determine effective scopes: prefer JWT context, fall back to header.
+	effectiveScopes := jwtScopes
+	if len(effectiveScopes) == 0 {
+		for _, sc := range strings.Split(r.Header.Get("X-Scopes"), ",") {
+			if s := strings.TrimSpace(sc); s != "" {
+				effectiveScopes = append(effectiveScopes, s)
+			}
+		}
+	}
 	// SECURITY: Impersonation requires admin scope — same-tenant needs tenant:admin,
 	// cross-tenant needs platform:admin (checked below). Without this, any authenticated
 	// user could impersonate anyone in their tenant.
-	scopesStr := r.Header.Get("X-Scopes")
 	isAdmin := false
-	for _, sc := range strings.Split(scopesStr, ",") {
+	for _, sc := range effectiveScopes {
 		s := strings.TrimSpace(sc)
 		if s == "platform:admin" || s == "tenant:admin" {
 			isAdmin = true
@@ -81,32 +109,44 @@ func (h *Handler) handleImpersonate(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid JSON"})
 		return
 	}
-	// Fallback: if impersonator_id not in body, use X-User-ID header from gateway
+	// SECURITY: Prefer JWT context for impersonator identity, fall back to
+	// gateway-set X-User-ID header (matches pattern in http.go:1872).
 	if req.ImpersonatorID == "" {
-		req.ImpersonatorID = r.Header.Get("X-User-ID")
+		if jwtUserID != uuid.Nil {
+			req.ImpersonatorID = jwtUserID.String()
+		} else {
+			req.ImpersonatorID = r.Header.Get("X-User-ID")
+		}
 	}
-	// SECURITY: verify the impersonator belongs to the same tenant as the target.
-	// Fail-closed when the tenant header is absent (R9: the entire check
-	// used to be skipped, enabling cross-tenant impersonation with just
-	// tenant:admin on an M2M token).
-	headerTenantID := r.Header.Get("X-Tenant-ID")
-	if headerTenantID == "" {
+	// SECURITY: Prefer JWT context for tenant identity, fall back to
+	// gateway-set X-Tenant-ID header.
+	effectiveTenantID := ""
+	if jwtTenantID != uuid.Nil {
+		effectiveTenantID = jwtTenantID.String()
+	} else {
+		effectiveTenantID = r.Header.Get("X-Tenant-ID")
+	}
+	// Fail-closed when no tenant context is available from any source.
+	if effectiveTenantID == "" {
 		writeJSON(w, http.StatusForbidden, map[string]string{"error": "tenant context required"})
 		return
 	}
 	// Defense-in-depth: validate UUID format
-	if _, err := uuid.Parse(headerTenantID); err != nil {
-		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid X-Tenant-ID header"})
+	if _, err := uuid.Parse(effectiveTenantID); err != nil {
+		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid tenant context"})
 		return
 	}
+	headerTenantID := effectiveTenantID
 	if req.TenantID != "" && headerTenantID != req.TenantID {
 		// Cross-tenant impersonation requires platform:admin scope.
 		// X-Scopes is the gateway-derived (stripped + re-set) header;
 		// X-User-Scopes/X-User-Role are no longer consulted (R9 P0).
-		scopesStr := r.Header.Get("X-Scopes")
-		scopes := strings.Split(scopesStr, ",")
+		crossTenantScopes := effectiveScopes
+		if len(crossTenantScopes) == 0 {
+			crossTenantScopes = strings.Split(r.Header.Get("X-Scopes"), ",")
+		}
 		isPlatformAdmin := false
-		for _, sc := range scopes {
+		for _, sc := range crossTenantScopes {
 			if strings.TrimSpace(sc) == "platform:admin" {
 				isPlatformAdmin = true
 				break

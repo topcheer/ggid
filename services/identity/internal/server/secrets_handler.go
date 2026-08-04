@@ -35,7 +35,14 @@ func NewSecretsProvider() SecretsProvider {
 func (p *multiProvider) GetSecret(ctx context.Context, ref string) (string, error) {
 	switch {
 	case strings.HasPrefix(ref, "env://"):
-		return os.Getenv(ref[6:]), nil
+		name := ref[6:]
+		// SECURITY: Only allow reading GGID_-prefixed env vars via the
+		// secrets API. Without this allowlist, an admin could read
+		// DATABASE_URL, API keys, or other sensitive env vars.
+		if !strings.HasPrefix(name, "GGID_") {
+			return "", fmt.Errorf("env:// access denied: only GGID_-prefixed variables are allowed")
+		}
+		return os.Getenv(name), nil
 	case strings.HasPrefix(ref, "vault://"):
 		return p.resolveVault(ctx, ref[8:])
 	case strings.HasPrefix(ref, "aws-kms://"):
@@ -74,8 +81,8 @@ type SecretReference struct {
 
 // secretRepo manages secret references in PostgreSQL.
 type secretRepo struct {
-	pool      *pgxpool.Pool
-	provider  SecretsProvider
+	pool     *pgxpool.Pool
+	provider SecretsProvider
 }
 
 func newSecretRepo(pool *pgxpool.Pool) *secretRepo {
@@ -83,7 +90,9 @@ func newSecretRepo(pool *pgxpool.Pool) *secretRepo {
 }
 
 func (r *secretRepo) EnsureSchema(ctx context.Context) error {
-	if r.pool == nil { return nil }
+	if r.pool == nil {
+		return nil
+	}
 	_, err := r.pool.Exec(ctx, `
 		CREATE TABLE IF NOT EXISTS secret_references (
 			id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -97,29 +106,41 @@ func (r *secretRepo) EnsureSchema(ctx context.Context) error {
 }
 
 func (r *secretRepo) Create(ctx context.Context, s *SecretReference) error {
-	if r.pool == nil { return nil }
-	if s.ID == "" { s.ID = uuid.New().String() }
+	if r.pool == nil {
+		return nil
+	}
+	if s.ID == "" {
+		s.ID = uuid.New().String()
+	}
 	_, err := r.pool.Exec(ctx, `INSERT INTO secret_references (name,provider,path,rotation_interval_days) VALUES ($1,$2,$3,$4) ON CONFLICT (name) DO NOTHING`,
 		s.Name, s.Provider, s.Path, s.RotationInterval)
 	return err
 }
 
 func (r *secretRepo) List(ctx context.Context) ([]*SecretReference, error) {
-	if r.pool == nil { return []*SecretReference{}, nil }
+	if r.pool == nil {
+		return []*SecretReference{}, nil
+	}
 	rows, err := r.pool.Query(ctx, `SELECT id,name,provider,path,last_rotated,rotation_interval_days,created_at FROM secret_references ORDER BY name`)
-	if err != nil { return nil, err }
+	if err != nil {
+		return nil, err
+	}
 	defer rows.Close()
 	var result []*SecretReference
 	for rows.Next() {
 		s := &SecretReference{}
-		if err := rows.Scan(&s.ID, &s.Name, &s.Provider, &s.Path, &s.LastRotated, &s.RotationInterval, &s.CreatedAt); err != nil { continue }
+		if err := rows.Scan(&s.ID, &s.Name, &s.Provider, &s.Path, &s.LastRotated, &s.RotationInterval, &s.CreatedAt); err != nil {
+			continue
+		}
 		result = append(result, s)
 	}
 	return result, nil
 }
 
 func (r *secretRepo) Rotate(ctx context.Context, name string) error {
-	if r.pool == nil { return nil }
+	if r.pool == nil {
+		return nil
+	}
 	now := time.Now().UTC()
 	_, err := r.pool.Exec(ctx, `UPDATE secret_references SET last_rotated=$2 WHERE name=$1`, name, now)
 	return err
@@ -127,9 +148,9 @@ func (r *secretRepo) Rotate(ctx context.Context, name string) error {
 
 func (r *secretRepo) CheckHealth(ctx context.Context) map[string]any {
 	return map[string]any{
-		"vault":   os.Getenv("VAULT_ADDR") != "",
-		"kms":     os.Getenv("AWS_REGION") != "",
-		"env":     true, // always available
+		"vault": os.Getenv("VAULT_ADDR") != "",
+		"kms":   os.Getenv("AWS_REGION") != "",
+		"env":   true, // always available
 	}
 }
 
@@ -144,7 +165,9 @@ func (h *HTTPHandler) handleSecretsList(w http.ResponseWriter, r *http.Request) 
 	if h.secretRepo != nil {
 		refs, _ = h.secretRepo.List(r.Context())
 	}
-	if refs == nil { refs = []*SecretReference{} }
+	if refs == nil {
+		refs = []*SecretReference{}
+	}
 	writeJSON(w, http.StatusOK, map[string]any{"secrets": refs, "count": len(refs)})
 }
 
