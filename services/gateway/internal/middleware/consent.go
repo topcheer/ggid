@@ -118,7 +118,8 @@ func isConsentExempt(path string) bool {
 	exemptPrefixes := []string{
 		"/healthz", "/readyz", "/api/v1/auth/verify", "/api/v1/auth/register",
 		"/api/v1/oauth/", "/api/v1/system/bootstrap", "/api/v1/system/initialized",
-		"/api/v1/tenants/resolve", "/api/v1/mfa/", "/.well-known/",
+		"/api/v1/tenants/resolve", "/api/v1/mfa/", "/.well-known/openid-configuration", "/.well-known/jwks.json",
+		"/api/v1/oauth/.well-known/", "/oauth/.well-known/",
 		"/api/v1/impersonate/", // impersonate API handles its own consent
 		"/api/v1/tenants/",     // tenant CRUD doesn't need consent (admin can manage tenants)
 	}

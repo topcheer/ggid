@@ -176,6 +176,8 @@ func TestIPAllowlist_XForwardedFor(t *testing.T) {
 	}))
 
 	req := httptest.NewRequest("GET", "/test", nil)
+	// Set RemoteAddr to a trusted proxy so XFF is honored
+	req.RemoteAddr = "127.0.0.1:1234"
 	req.Header.Set("X-Forwarded-For", "10.5.5.5")
 	ctx := context.WithValue(req.Context(), TenantIDKey, "t1")
 	req = req.WithContext(ctx)

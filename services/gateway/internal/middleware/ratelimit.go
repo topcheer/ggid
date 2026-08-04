@@ -6,6 +6,7 @@ import (
 	"net"
 	"net/http"
 	"strconv"
+	"os"
 	"strings"
 	"sync"
 	"time"
@@ -132,24 +133,66 @@ func (rl *RateLimiter) bucketKey(r *http.Request) string {
 }
 
 // clientIPFromRequest extracts the real client IP safely.
-// SECURITY: Only trusts X-Forwarded-For from the rightmost entry (set by our
-// trusted reverse proxy). Does NOT trust X-Real-IP (client-spoofable header).
+// SECURITY: Only trusts X-Forwarded-For from the rightmost entry when the
+// direct connection is from a trusted proxy. Without a trusted proxy,
+// falls back to TCP RemoteAddr (ground truth, not spoofable by clients).
 func clientIPFromRequest(r *http.Request) string {
-	// X-Forwarded-For: client, proxy1, proxy2 — take the LAST entry (added by
-	// our trusted ingress proxy). The leftmost entry is client-controllable.
-	if xff := r.Header.Get("X-Forwarded-For"); xff != "" {
-		parts := strings.Split(xff, ",")
-		last := strings.TrimSpace(parts[len(parts)-1])
-		if last != "" {
-			return last
-		}
-	}
-	// Fall back to connection RemoteAddr (ground truth at TCP level)
 	host, _, err := net.SplitHostPort(r.RemoteAddr)
 	if err != nil {
-		return r.RemoteAddr
+		host = r.RemoteAddr
 	}
+
+	if isTrustedProxy(host) {
+		// X-Forwarded-For: client, proxy1, proxy2 — take the LAST entry
+		// (appended by our trusted ingress proxy).
+		if xff := r.Header.Get("X-Forwarded-For"); xff != "" {
+			parts := strings.Split(xff, ",")
+			last := strings.TrimSpace(parts[len(parts)-1])
+			if last != "" {
+				return last
+			}
+		}
+	}
+
 	return host
+}
+
+// trustedProxyCIDRs holds IPs/CIDRs allowed to set X-Forwarded-For.
+// Configured via GGID_TRUSTED_PROXIES (comma-separated). Defaults to
+// loopback and private ranges (common single-proxy deployment).
+var trustedProxies = func() map[string]bool {
+	m := map[string]bool{
+		"127.0.0.1": true, "::1": true,
+	}
+	if extra := os.Getenv("GGID_TRUSTED_PROXIES"); extra != "" {
+		for _, ip := range strings.Split(extra, ",") {
+			ip = strings.TrimSpace(ip)
+			if ip != "" {
+				m[ip] = true
+			}
+		}
+	}
+	return m
+}()
+
+func isTrustedProxy(host string) bool {
+	if trustedProxies[host] {
+		return true
+	}
+	// Check private network prefixes (10.x, 172.16-31.x, 192.168.x)
+	if strings.HasPrefix(host, "10.") || strings.HasPrefix(host, "192.168.") {
+		return true
+	}
+	if strings.HasPrefix(host, "172.") {
+		parts := strings.Split(host, ".")
+		if len(parts) >= 2 {
+			octet, _ := strconv.Atoi(parts[1])
+			if octet >= 16 && octet <= 31 {
+				return true
+			}
+		}
+	}
+	return false
 }
 
 func (rl *RateLimiter) allow(key string, limit int) (allowed bool, remaining int, resetAt time.Time) {
