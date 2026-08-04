@@ -219,6 +219,7 @@ func writeAdminForbidden(w http.ResponseWriter, r *http.Request) {
 // platformOnlyPaths are admin endpoints that require platform:admin scope.
 // tenant:admin is NOT sufficient for these paths.
 var platformOnlyPaths = []string{
+	"/api/v1/admin/", // Admin route management (toggle/stats) affects all tenants
 	"/api/v1/admin/secrets",
 	"/api/v1/admin/backup",
 	"/api/v1/admin/key-rotation",
