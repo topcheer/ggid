@@ -31,7 +31,7 @@ function CallbackContent() {
           const payload = JSON.parse(atob(accessToken.split(".")[1]));
           if (payload.tenant_id) localStorage.setItem("ggid_tenant_id", payload.tenant_id);
           if (payload.sub) localStorage.setItem("ggid_user_id", payload.sub);
-          const scopes = payload.scopes || payload.roles || ["user"];
+          const scopes = payload.scope || payload.scopes || payload.roles || ["user"];
           localStorage.setItem("ggid_user_scopes", JSON.stringify(Array.isArray(scopes) ? scopes : [scopes]));
         } catch {}
 
