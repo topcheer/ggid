@@ -19,18 +19,18 @@ import (
 
 // SDJWTIssueRequest is the payload for selective disclosure JWT issuance.
 type SDJWTIssueRequest struct {
-	Subject        string         `json:"subject"`
-	Issuer         string         `json:"issuer,omitempty"`
-	Claims         map[string]any `json:"claims"`
-	Disclosable    []string       `json:"disclosable,omitempty"`
-	AlwaysDisclosed []string      `json:"always_disclosed,omitempty"`
-	TTLSeconds     int            `json:"ttl_seconds,omitempty"`
+	Subject         string         `json:"subject"`
+	Issuer          string         `json:"issuer,omitempty"`
+	Claims          map[string]any `json:"claims"`
+	Disclosable     []string       `json:"disclosable,omitempty"`
+	AlwaysDisclosed []string       `json:"always_disclosed,omitempty"`
+	TTLSeconds      int            `json:"ttl_seconds,omitempty"`
 }
 
 type SDJWTIssueResponse struct {
-	SDJWT        string        `json:"sd_jwt"`
-	Disclosures  []Disclosure  `json:"disclosures"`
-	ExpiresAt    time.Time     `json:"expires_at"`
+	SDJWT       string       `json:"sd_jwt"`
+	Disclosures []Disclosure `json:"disclosures"`
+	ExpiresAt   time.Time    `json:"expires_at"`
 }
 
 type Disclosure struct {
@@ -96,6 +96,7 @@ func (h *HTTPHandler) handleSDJWTIssue(w http.ResponseWriter, r *http.Request) {
 	_ = tc
 
 	var req SDJWTIssueRequest
+	r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		writeJSONError(w, http.StatusBadRequest, "invalid body")
 		return
@@ -181,6 +182,7 @@ func (h *HTTPHandler) handleSDJWTVerify(w http.ResponseWriter, r *http.Request) 
 	}
 
 	var req SDJWTVerifyRequest
+	r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		writeJSONError(w, http.StatusBadRequest, "invalid body")
 		return

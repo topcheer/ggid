@@ -36,6 +36,7 @@ func (h *HTTPHandler) handleAccessReviewCampaigns(w http.ResponseWriter, r *http
 	switch r.Method {
 	case http.MethodPost:
 		var req CampaignRequest
+		r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 			writeJSONError(w, http.StatusBadRequest, "invalid request body")
 			return

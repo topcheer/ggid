@@ -35,6 +35,7 @@ func (h *HTTPHandler) handleUserPreferences(ctx context.Context, userID uuid.UUI
 		writeJSON(w, http.StatusOK, map[string]any{"user_id": userID, "preferences": prefs})
 	case http.MethodPut, http.MethodPost:
 		var prefs UserPreferences
+		r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
 		if err := json.NewDecoder(r.Body).Decode(&prefs); err != nil {
 			writeJSONError(w, http.StatusBadRequest, "invalid JSON")
 			return

@@ -66,6 +66,7 @@ func (h *HTTPHandler) handleIdPConfig(w http.ResponseWriter, r *http.Request) {
 				Name       string `json:"name"`
 				ConfigJSON string `json:"config_json"`
 			}
+			r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
 			if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 				writeJSONError(w, http.StatusBadRequest, "invalid JSON body")
 				return
@@ -99,6 +100,7 @@ func (h *HTTPHandler) handleIdPConfig(w http.ResponseWriter, r *http.Request) {
 			ConfigJSON string `json:"config_json"`
 			Enabled    bool   `json:"enabled"`
 		}
+		r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 			writeJSONError(w, http.StatusBadRequest, "invalid JSON body")
 			return

@@ -44,6 +44,7 @@ func (h *HTTPHandler) handleSCIMConfig(w http.ResponseWriter, r *http.Request) {
 			BearerToken string `json:"bearerToken"`
 			Enabled     bool   `json:"enabled"`
 		}
+		r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 			w.WriteHeader(http.StatusBadRequest)
 			_ = json.NewEncoder(w).Encode(map[string]string{"error": "invalid request body"})

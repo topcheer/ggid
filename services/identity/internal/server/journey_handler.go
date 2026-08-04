@@ -35,7 +35,7 @@ type JDL struct {
 type JDLStep struct {
 	ID        string         `yaml:"id"`
 	Name      string         `yaml:"name"`
-	Action    string         `yaml:"action"`   // assign_role, revoke_access, notify, etc.
+	Action    string         `yaml:"action"`    // assign_role, revoke_access, notify, etc.
 	Condition string         `yaml:"condition"` // CEL-like expression (e.g., "user.department == 'eng'")
 	Params    map[string]any `yaml:"params"`
 }
@@ -197,6 +197,7 @@ func (h *HTTPHandler) handleJourneys(w http.ResponseWriter, r *http.Request) {
 func (h *HTTPHandler) journeyCreate(w http.ResponseWriter, r *http.Request) {
 	tc, _ := ggidtenant.FromContext(r.Context())
 	var j JourneyDefinition
+	r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
 	if err := json.NewDecoder(r.Body).Decode(&j); err != nil {
 		writeJSONError(w, http.StatusBadRequest, "invalid body")
 		return
@@ -260,6 +261,7 @@ func (h *HTTPHandler) journeyGet(w http.ResponseWriter, r *http.Request, id stri
 
 func (h *HTTPHandler) journeyUpdate(w http.ResponseWriter, r *http.Request, id string) {
 	var update JourneyDefinition
+	r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
 	if err := json.NewDecoder(r.Body).Decode(&update); err != nil {
 		writeJSONError(w, http.StatusBadRequest, "invalid body")
 		return

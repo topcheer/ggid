@@ -244,6 +244,7 @@ func (h *HTTPHandler) handleJIT(w http.ResponseWriter, r *http.Request) {
 func (h *HTTPHandler) jitCreateMapping(w http.ResponseWriter, r *http.Request) {
 	tc, _ := ggidtenant.FromContext(r.Context())
 	var m JITMapping
+	r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
 	if err := json.NewDecoder(r.Body).Decode(&m); err != nil {
 		writeJSONError(w, http.StatusBadRequest, "invalid body")
 		return
@@ -287,6 +288,7 @@ func (h *HTTPHandler) jitDryRun(w http.ResponseWriter, r *http.Request) {
 		IdpEntityID   string         `json:"idp_entity_id"`
 		ExternalAttrs map[string]any `json:"external_attributes"`
 	}
+	r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		writeJSONError(w, http.StatusBadRequest, "invalid body")
 		return

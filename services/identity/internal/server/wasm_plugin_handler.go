@@ -35,6 +35,7 @@ func (h *HTTPHandler) handlePluginsRoute(w http.ResponseWriter, r *http.Request)
 			Name    string `json:"name"`
 			Version string `json:"version"`
 		}
+		r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
 		if err := json.NewDecoder(r.Body).Decode(&meta); err != nil {
 			writeJSONError(w, http.StatusBadRequest, "invalid JSON")
 			return

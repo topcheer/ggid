@@ -18,6 +18,7 @@ func (h *HTTPHandler) handleLinkAccount(w http.ResponseWriter, r *http.Request) 
 		Provider   string `json:"provider"`
 		ExternalID string `json:"external_id"`
 	}
+	r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		writeJSONError(w, http.StatusBadRequest, "invalid JSON")
 		return
@@ -43,6 +44,7 @@ func (h *HTTPHandler) handleUnlinkAccount(w http.ResponseWriter, r *http.Request
 		UserID   string `json:"user_id"`
 		Provider string `json:"provider"`
 	}
+	r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		writeJSONError(w, http.StatusBadRequest, "invalid JSON")
 		return
@@ -65,6 +67,7 @@ func (h *HTTPHandler) handleImportValidate(w http.ResponseWriter, r *http.Reques
 			Email    string `json:"email"`
 		} `json:"users"`
 	}
+	r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		writeJSONError(w, http.StatusBadRequest, "invalid JSON")
 		return
@@ -103,6 +106,7 @@ func (h *HTTPHandler) handleBulkStatus(w http.ResponseWriter, r *http.Request) {
 		UserIDs []string `json:"user_ids"`
 		Status  string   `json:"status"`
 	}
+	r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		writeJSONError(w, http.StatusBadRequest, "invalid JSON")
 		return

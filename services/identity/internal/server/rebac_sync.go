@@ -15,11 +15,11 @@ type ReBACSyncRequest struct {
 
 // ReBACSyncResult reports sync outcome.
 type ReBACSyncResult struct {
-	SyncedCount   int             `json:"synced_count"`
-	SkippedCount  int             `json:"skipped_count"`
-	Errors        []string        `json:"errors,omitempty"`
-	DryRun        bool            `json:"dry_run"`
-	SampleTuples  []RelationTuple `json:"sample_tuples,omitempty"`
+	SyncedCount  int             `json:"synced_count"`
+	SkippedCount int             `json:"skipped_count"`
+	Errors       []string        `json:"errors,omitempty"`
+	DryRun       bool            `json:"dry_run"`
+	SampleTuples []RelationTuple `json:"sample_tuples,omitempty"`
 }
 
 // handleReBACSyncRBAC syncs existing RBAC role assignments into ReBAC tuples.
@@ -40,6 +40,7 @@ func (h *HTTPHandler) handleReBACSyncRBAC(w http.ResponseWriter, r *http.Request
 
 	var req ReBACSyncRequest
 	if r.Body != nil {
+		r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
 		_ = json.NewDecoder(r.Body).Decode(&req)
 	}
 
@@ -54,9 +55,9 @@ func (h *HTTPHandler) handleReBACSyncRBAC(w http.ResponseWriter, r *http.Request
 	slog.Info("ReBAC sync: framework ready, needs policy service integration", "tenant", tc.TenantID, "dry_run", req.DryRun)
 
 	writeJSON(w, http.StatusOK, ReBACSyncResult{
-		SyncedCount: 0,
+		SyncedCount:  0,
 		SkippedCount: 0,
-		Errors:      []string{},
-		DryRun:      req.DryRun,
+		Errors:       []string{},
+		DryRun:       req.DryRun,
 	})
 }

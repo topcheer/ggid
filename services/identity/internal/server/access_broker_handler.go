@@ -43,6 +43,7 @@ func (h *HTTPHandler) ztnaCreateApp(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var app ProtectedApp
+	r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
 	if err := json.NewDecoder(r.Body).Decode(&app); err != nil {
 		writeJSONError(w, http.StatusBadRequest, "invalid body")
 		return
@@ -102,6 +103,7 @@ func (h *HTTPHandler) ztnaAppByID(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case http.MethodPut:
 		var app ProtectedApp
+		r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
 		if err := json.NewDecoder(r.Body).Decode(&app); err != nil {
 			writeJSONError(w, http.StatusBadRequest, "invalid body")
 			return
@@ -171,6 +173,7 @@ func (h *HTTPHandler) ztnaTestPolicy(w http.ResponseWriter, r *http.Request) {
 		User         map[string]any `json:"user"`
 		Security     map[string]any `json:"security"`
 	}
+	r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		writeJSONError(w, http.StatusBadRequest, "invalid body")
 		return

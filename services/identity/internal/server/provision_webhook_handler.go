@@ -9,14 +9,14 @@ import (
 )
 
 type ProvisioningEvent struct {
-	ID        string                 `json:"id"`
-	EventType string                 `json:"event_type"` // create, update, delete
-	SourceIDP string                 `json:"source_idp"` // e.g. okta, azure-ad
-	ExternalID string                `json:"external_id"`
-	UserData  map[string]any         `json:"user_data"`
-	Status    string                 `json:"status"`
-	Message   string                 `json:"message,omitempty"`
-	Timestamp time.Time              `json:"timestamp"`
+	ID         string         `json:"id"`
+	EventType  string         `json:"event_type"` // create, update, delete
+	SourceIDP  string         `json:"source_idp"` // e.g. okta, azure-ad
+	ExternalID string         `json:"external_id"`
+	UserData   map[string]any `json:"user_data"`
+	Status     string         `json:"status"`
+	Message    string         `json:"message,omitempty"`
+	Timestamp  time.Time      `json:"timestamp"`
 }
 
 // POST /api/v1/users/provision-webhook — receive external IdP provisioning events
@@ -36,6 +36,7 @@ func (h *HTTPHandler) handleProvisionWebhook(w http.ResponseWriter, r *http.Requ
 		LastName   string         `json:"last_name"`
 		Attributes map[string]any `json:"attributes"`
 	}
+	r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		writeJSONError(w, http.StatusBadRequest, "invalid JSON")
 		return

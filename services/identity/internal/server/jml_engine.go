@@ -307,6 +307,7 @@ func (h *HTTPHandler) jmlCreateRule(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var rule LifecycleRule
+	r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
 	if err := json.NewDecoder(r.Body).Decode(&rule); err != nil {
 		writeJSONError(w, http.StatusBadRequest, "invalid request body")
 		return
@@ -351,6 +352,7 @@ func (h *HTTPHandler) jmlProcessEvent(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var event LifecycleEvent
+	r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
 	if err := json.NewDecoder(r.Body).Decode(&event); err != nil {
 		writeJSONError(w, http.StatusBadRequest, "invalid request body")
 		return

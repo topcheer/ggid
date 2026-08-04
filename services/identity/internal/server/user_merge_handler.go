@@ -23,6 +23,7 @@ func (h *HTTPHandler) handleMerge(ctx context.Context, targetUserID uuid.UUID, w
 		SourceUserID string `json:"source_user_id"`
 		Reason       string `json:"reason"`
 	}
+	r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		writeJSONError(w, http.StatusBadRequest, "invalid JSON body")
 		return
@@ -64,8 +65,8 @@ func (h *HTTPHandler) handleMerge(ctx context.Context, targetUserID uuid.UUID, w
 
 	steps := []map[string]any{
 		{
-			"step":   "deactivate_source",
-			"status": "completed",
+			"step":           "deactivate_source",
+			"status":         "completed",
 			"source_user_id": sourceUserID.String(),
 		},
 		{
@@ -91,13 +92,13 @@ func (h *HTTPHandler) handleMerge(ctx context.Context, targetUserID uuid.UUID, w
 	}
 
 	writeJSON(w, http.StatusOK, map[string]any{
-		"status":           "merged",
-		"source_user_id":   sourceUserID.String(),
-		"source_username":  sourceUser.Username,
-		"target_user_id":   targetUserID.String(),
-		"target_username":  targetUser.Username,
-		"reason":           req.Reason,
-		"steps":            steps,
-		"merged_at":        time.Now().UTC().Format(time.RFC3339),
+		"status":          "merged",
+		"source_user_id":  sourceUserID.String(),
+		"source_username": sourceUser.Username,
+		"target_user_id":  targetUserID.String(),
+		"target_username": targetUser.Username,
+		"reason":          req.Reason,
+		"steps":           steps,
+		"merged_at":       time.Now().UTC().Format(time.RFC3339),
 	})
 }

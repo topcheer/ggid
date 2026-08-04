@@ -75,6 +75,7 @@ func (h *HTTPHandler) handleLDAPSyncConfig(w http.ResponseWriter, r *http.Reques
 
 	case http.MethodPut:
 		var cfg LDAPSyncConfig
+		r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
 		if err := json.NewDecoder(r.Body).Decode(&cfg); err != nil {
 			writeJSONError(w, http.StatusBadRequest, "invalid JSON body")
 			return
@@ -119,6 +120,7 @@ func (h *HTTPHandler) handleLDAPSyncConfigTest(w http.ResponseWriter, r *http.Re
 	}
 
 	var cfg LDAPSyncConfig
+	r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
 	if err := json.NewDecoder(r.Body).Decode(&cfg); err != nil {
 		// If body is empty, use stored config
 		ldapConfigStore.RLock()

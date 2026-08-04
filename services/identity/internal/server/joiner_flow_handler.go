@@ -9,25 +9,25 @@ import (
 )
 
 type PreboardingTask struct {
-	TaskID     string `json:"task_id"`
-	Title      string `json:"title"`
-	Category   string `json:"category"`
-	Required   bool   `json:"required"`
-	Completed  bool   `json:"completed"`
+	TaskID    string `json:"task_id"`
+	Title     string `json:"title"`
+	Category  string `json:"category"`
+	Required  bool   `json:"required"`
+	Completed bool   `json:"completed"`
 }
 
 type JoinerFlow struct {
-	FlowID              string           `json:"flow_id"`
-	EmployeeID          string           `json:"employee_id"`
-	Name                string           `json:"name"`
-	StartDate           string           `json:"start_date"`
-	Department          string           `json:"department"`
-	RoleTemplates       []string         `json:"role_templates"`
-	AutoProvisionApps   []string         `json:"auto_provision_apps"`
-	PreboardingTasks     []PreboardingTask `json:"preboarding_tasks"`
-	Status              string           `json:"status"`
-	ProgressPct         float64          `json:"progress_pct"`
-	CreatedAt           string           `json:"created_at"`
+	FlowID            string            `json:"flow_id"`
+	EmployeeID        string            `json:"employee_id"`
+	Name              string            `json:"name"`
+	StartDate         string            `json:"start_date"`
+	Department        string            `json:"department"`
+	RoleTemplates     []string          `json:"role_templates"`
+	AutoProvisionApps []string          `json:"auto_provision_apps"`
+	PreboardingTasks  []PreboardingTask `json:"preboarding_tasks"`
+	Status            string            `json:"status"`
+	ProgressPct       float64           `json:"progress_pct"`
+	CreatedAt         string            `json:"created_at"`
 }
 
 type JoinerFlowRequest struct {
@@ -45,12 +45,12 @@ var (
 
 func init() {
 	joinerFlowsStore.Store("seed-1", JoinerFlow{
-		FlowID:    "jf-001",
-		EmployeeID: "emp-001",
-		Name:      "John Smith",
-		StartDate: "2025-02-01",
-		Department: "Engineering",
-		RoleTemplates: []string{"engineer-base", "github-access"},
+		FlowID:            "jf-001",
+		EmployeeID:        "emp-001",
+		Name:              "John Smith",
+		StartDate:         "2025-02-01",
+		Department:        "Engineering",
+		RoleTemplates:     []string{"engineer-base", "github-access"},
 		AutoProvisionApps: []string{"slack", "github", "jira", "gsuite"},
 		PreboardingTasks: []PreboardingTask{
 			{TaskID: "t-1", Title: "Create AD account", Category: "identity", Required: true, Completed: true},
@@ -58,9 +58,9 @@ func init() {
 			{TaskID: "t-3", Title: "Grant repo access", Category: "access", Required: true, Completed: false},
 			{TaskID: "t-4", Title: "Schedule orientation", Category: "onboarding", Required: false, Completed: false},
 		},
-		Status:    "in_progress",
+		Status:      "in_progress",
 		ProgressPct: 50.0,
-		CreatedAt: time.Now().UTC().Format(time.RFC3339),
+		CreatedAt:   time.Now().UTC().Format(time.RFC3339),
 	})
 }
 
@@ -76,6 +76,7 @@ func (h *HTTPHandler) handleJoinerFlow(w http.ResponseWriter, r *http.Request) {
 		json.NewEncoder(w).Encode(map[string]any{"flows": flows, "count": len(flows)})
 	case http.MethodPost:
 		var req JoinerFlowRequest
+		r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 			writeJSONError(w, http.StatusBadRequest, "invalid request body")
 			return
@@ -103,7 +104,7 @@ func (h *HTTPHandler) handleJoinerFlow(w http.ResponseWriter, r *http.Request) {
 			Department:        req.Department,
 			RoleTemplates:     req.RoleTemplates,
 			AutoProvisionApps: req.AutoProvisionApps,
-			PreboardingTasks:   tasks,
+			PreboardingTasks:  tasks,
 			Status:            "initiated",
 			ProgressPct:       0,
 			CreatedAt:         time.Now().UTC().Format(time.RFC3339),

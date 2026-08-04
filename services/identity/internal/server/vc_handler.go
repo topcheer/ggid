@@ -21,6 +21,7 @@ func (h *HTTPHandler) handleVCIssue(w http.ResponseWriter, r *http.Request) {
 		CredentialType string         `json:"credential_type"`
 		Claims         map[string]any `json:"claims"`
 	}
+	r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		writeJSONError(w, http.StatusBadRequest, "invalid request body")
 		return
@@ -48,6 +49,7 @@ func (h *HTTPHandler) handleVCVerify(w http.ResponseWriter, r *http.Request) {
 		VC        service.VerifiableCredential `json:"vc"`
 		IssuerDID string                       `json:"issuer_did"`
 	}
+	r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		writeJSONError(w, http.StatusBadRequest, "invalid request body")
 		return
@@ -102,6 +104,7 @@ func (h *HTTPHandler) handleVCPresent(w http.ResponseWriter, r *http.Request) {
 		VCIDs     []string `json:"vc_ids"`
 		Challenge string   `json:"challenge"`
 	}
+	r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		writeJSONError(w, http.StatusBadRequest, "invalid request body")
 		return

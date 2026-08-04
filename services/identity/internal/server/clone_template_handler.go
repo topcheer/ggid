@@ -32,7 +32,7 @@ func (h *HTTPHandler) handleCloneTemplate(ctx context.Context, userID uuid.UUID,
 		ID: "tpl-" + uuid.New().String()[:8], SourceUser: userID.String(),
 		Roles: []string{"developer"}, Groups: []string{"engineering"},
 		Permissions: []string{"users.read", "policies.read"},
-		CreatedAt: time.Now().UTC(),
+		CreatedAt:   time.Now().UTC(),
 	}
 	if h.identityPolicyMap != nil {
 		h.identityPolicyMap.Store(r.Context(), "identity_templates", tpl.ID, map[string]any{
@@ -53,6 +53,7 @@ func (h *HTTPHandler) handleCreateFromTemplate(w http.ResponseWriter, r *http.Re
 		Username   string `json:"username"`
 		Email      string `json:"email"`
 	}
+	r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		writeJSONError(w, http.StatusBadRequest, "invalid JSON")
 		return

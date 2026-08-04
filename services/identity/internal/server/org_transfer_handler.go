@@ -12,16 +12,16 @@ import (
 
 // orgTransferRecord captures an org transfer operation for audit.
 type orgTransferRecord struct {
-	ID            string `json:"id"`
-	UserID        string `json:"user_id"`
-	FromOrgID     string `json:"from_org_id"`
-	ToOrgID       string `json:"to_org_id"`
+	ID            string   `json:"id"`
+	UserID        string   `json:"user_id"`
+	FromOrgID     string   `json:"from_org_id"`
+	ToOrgID       string   `json:"to_org_id"`
 	RevokedRoles  []string `json:"revoked_roles"`
 	AssignedRoles []string `json:"assigned_roles"`
-	Notified      bool   `json:"notified"`
-	Audited       bool   `json:"audited"`
-	Status        string `json:"status"`
-	TransferredAt string `json:"transferred_at"`
+	Notified      bool     `json:"notified"`
+	Audited       bool     `json:"audited"`
+	Status        string   `json:"status"`
+	TransferredAt string   `json:"transferred_at"`
 }
 
 var orgTransferStore = struct {
@@ -61,6 +61,7 @@ func (h *HTTPHandler) handleTransferOrg(w http.ResponseWriter, r *http.Request) 
 		ToOrgID      string   `json:"to_org_id"`
 		DefaultRoles []string `json:"default_roles"`
 	}
+	r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		writeJSONError(w, http.StatusBadRequest, "invalid request body")
 		return
@@ -104,15 +105,15 @@ func (h *HTTPHandler) handleTransferOrg(w http.ResponseWriter, r *http.Request) 
 	orgTransferStore.Unlock()
 
 	writeJSON(w, http.StatusOK, map[string]any{
-		"transfer_id":     transferID,
-		"user_id":         userID,
-		"from_org_id":     req.FromOrgID,
-		"to_org_id":       req.ToOrgID,
-		"status":          "completed",
-		"revoked_roles":   revokedRoles,
-		"assigned_roles":  assignedRoles,
-		"notified":        true,
-		"audited":         true,
-		"transferred_at":  record.TransferredAt,
+		"transfer_id":    transferID,
+		"user_id":        userID,
+		"from_org_id":    req.FromOrgID,
+		"to_org_id":      req.ToOrgID,
+		"status":         "completed",
+		"revoked_roles":  revokedRoles,
+		"assigned_roles": assignedRoles,
+		"notified":       true,
+		"audited":        true,
+		"transferred_at": record.TransferredAt,
 	})
 }

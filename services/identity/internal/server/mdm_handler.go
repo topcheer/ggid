@@ -11,22 +11,22 @@ import (
 
 // MDMConnector defines an MDM integration.
 type MDMConnector struct {
-	ID        string    `json:"id"`
-	Name      string    `json:"name"`
-	Type      string    `json:"type"` // intune, jamf, android
-	Enabled   bool      `json:"enabled"`
+	ID        string     `json:"id"`
+	Name      string     `json:"name"`
+	Type      string     `json:"type"` // intune, jamf, android
+	Enabled   bool       `json:"enabled"`
 	LastSync  *time.Time `json:"last_sync,omitempty"`
-	CreatedAt time.Time `json:"created_at"`
+	CreatedAt time.Time  `json:"created_at"`
 }
 
 // MDMDevice represents a device managed by MDM.
 type MDMDevice struct {
-	DeviceID    string `json:"device_id"`
-	Name        string `json:"name"`
-	Platform    string `json:"platform"`
-	Compliant   bool   `json:"compliant"`
-	Managed     bool   `json:"managed"`
-	LastSeen    string `json:"last_seen"`
+	DeviceID  string `json:"device_id"`
+	Name      string `json:"name"`
+	Platform  string `json:"platform"`
+	Compliant bool   `json:"compliant"`
+	Managed   bool   `json:"managed"`
+	LastSeen  string `json:"last_seen"`
 }
 
 // GET /api/v1/mdm/connectors
@@ -35,6 +35,7 @@ func (h *HTTPHandler) handleMDMConnectors(w http.ResponseWriter, r *http.Request
 	switch r.Method {
 	case http.MethodPost:
 		var req MDMConnector
+		r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 			writeJSONError(w, http.StatusBadRequest, "invalid JSON")
 			return
@@ -101,10 +102,10 @@ func (h *HTTPHandler) handleMDMCompliance(w http.ResponseWriter, r *http.Request
 		"device_id": deviceID, "compliant": true,
 		"managed": true, "platform": "unknown",
 		"checks": map[string]bool{
-			"encryption":     true,
-			"os_version":     true,
-			"jailbreak":      false,
-			"malware":        false,
+			"encryption": true,
+			"os_version": true,
+			"jailbreak":  false,
+			"malware":    false,
 		},
 	})
 }

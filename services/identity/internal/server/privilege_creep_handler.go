@@ -122,6 +122,7 @@ func (h *HTTPHandler) pcTriggerScan(w http.ResponseWriter, r *http.Request) {
 		UserRoles       map[string][]string `json:"user_roles"`
 		ActiveUserIDs   []string            `json:"active_user_ids"`
 	}
+	r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
 	_ = json.NewDecoder(r.Body).Decode(&req)
 
 	if len(req.ActiveUserIDs) == 0 {
@@ -139,8 +140,8 @@ func (h *HTTPHandler) pcTriggerScan(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	writeJSON(w, http.StatusOK, map[string]any{
-		"status":    "completed",
-		"alerts":    count,
+		"status":        "completed",
+		"alerts":        count,
 		"users_scanned": len(req.ActiveUserIDs),
 	})
 }
@@ -172,6 +173,7 @@ func (h *HTTPHandler) handlePrivilegeBaseline(w http.ResponseWriter, r *http.Req
 	var req struct {
 		StandardPermissions []string `json:"standard_permissions"`
 	}
+	r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		writeJSONError(w, http.StatusBadRequest, "invalid JSON body")
 		return

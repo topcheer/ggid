@@ -36,17 +36,17 @@ type SecretTarget struct {
 
 // SecretGrant is a short-lived dynamic credential issued to a user.
 type SecretGrant struct {
-	ID            uuid.UUID  `json:"id"`
-	TenantID      uuid.UUID  `json:"tenant_id"`
-	TargetID      uuid.UUID  `json:"target_id"`
-	UserID        string     `json:"user_id"`
-	Role          string     `json:"role"`
-	Credential    string     `json:"credential"` // HMAC-signed short-lived token
-	JITRequestID  *uuid.UUID `json:"jit_request_id,omitempty"`
-	ExpiresAt     time.Time  `json:"expires_at"`
-	Revoked       bool       `json:"revoked"`
-	RevokedAt     *time.Time `json:"revoked_at,omitempty"`
-	CreatedAt     time.Time  `json:"created_at"`
+	ID           uuid.UUID  `json:"id"`
+	TenantID     uuid.UUID  `json:"tenant_id"`
+	TargetID     uuid.UUID  `json:"target_id"`
+	UserID       string     `json:"user_id"`
+	Role         string     `json:"role"`
+	Credential   string     `json:"credential"` // HMAC-signed short-lived token
+	JITRequestID *uuid.UUID `json:"jit_request_id,omitempty"`
+	ExpiresAt    time.Time  `json:"expires_at"`
+	Revoked      bool       `json:"revoked"`
+	RevokedAt    *time.Time `json:"revoked_at,omitempty"`
+	CreatedAt    time.Time  `json:"created_at"`
 }
 
 // secretBrokerRepo manages secret targets + grants in PostgreSQL.
@@ -281,6 +281,7 @@ func (h *HTTPHandler) sbTargets(w http.ResponseWriter, r *http.Request, tc *ggid
 	switch r.Method {
 	case http.MethodPost:
 		var t SecretTarget
+		r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
 		if err := json.NewDecoder(r.Body).Decode(&t); err != nil {
 			writeJSONError(w, http.StatusBadRequest, "invalid body")
 			return
@@ -328,6 +329,7 @@ func (h *HTTPHandler) sbTargetByID(w http.ResponseWriter, r *http.Request, tc *g
 	switch r.Method {
 	case http.MethodPut:
 		var t SecretTarget
+		r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
 		if err := json.NewDecoder(r.Body).Decode(&t); err != nil {
 			writeJSONError(w, http.StatusBadRequest, "invalid body")
 			return
@@ -372,6 +374,7 @@ func (h *HTTPHandler) sbBroker(w http.ResponseWriter, r *http.Request, tc *ggidt
 		Role         string `json:"role"`
 		JITRequestID string `json:"jit_request_id"`
 	}
+	r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		writeJSONError(w, http.StatusBadRequest, "invalid body")
 		return
@@ -439,6 +442,7 @@ func (h *HTTPHandler) sbRevoke(w http.ResponseWriter, r *http.Request, tc *ggidt
 	var req struct {
 		GrantID string `json:"grant_id"`
 	}
+	r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		writeJSONError(w, http.StatusBadRequest, "invalid body")
 		return

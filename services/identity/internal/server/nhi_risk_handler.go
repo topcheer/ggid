@@ -12,11 +12,11 @@ import (
 
 // nhiRiskScanRequest is the DTO for triggering a manual risk scan.
 type nhiRiskScanRequest struct {
-	NHIID         string  `json:"nhi_id"`
-	Endpoint      string  `json:"endpoint"`
-	CallsPerHour  float64 `json:"calls_per_hour"`
-	IP            string  `json:"ip"`
-	Hour          int     `json:"hour"` // 0-23, -1 = use current hour
+	NHIID        string  `json:"nhi_id"`
+	Endpoint     string  `json:"endpoint"`
+	CallsPerHour float64 `json:"calls_per_hour"`
+	IP           string  `json:"ip"`
+	Hour         int     `json:"hour"` // 0-23, -1 = use current hour
 }
 
 func (h *HTTPHandler) handleNHIRisk(w http.ResponseWriter, r *http.Request) {
@@ -52,9 +52,9 @@ func (h *HTTPHandler) nhiGetRisk(w http.ResponseWriter, r *http.Request, path st
 
 	if h.nhiRiskEngine == nil && h.nhiRiskPGRepo == nil {
 		writeJSON(w, http.StatusOK, map[string]any{
-			"nhi_id": nhiID,
-			"score": 0,
-			"level": "unknown",
+			"nhi_id":  nhiID,
+			"score":   0,
+			"level":   "unknown",
 			"message": "NHI risk engine not configured",
 		})
 		return
@@ -72,9 +72,9 @@ func (h *HTTPHandler) nhiGetRisk(w http.ResponseWriter, r *http.Request, path st
 		score := h.nhiRiskEngine.GetRiskScore(nhiID)
 		if score == nil {
 			writeJSON(w, http.StatusOK, map[string]any{
-				"nhi_id": nhiID,
-				"score": 0,
-				"level": "unknown",
+				"nhi_id":  nhiID,
+				"score":   0,
+				"level":   "unknown",
 				"message": "no risk evaluation performed yet",
 			})
 			return
@@ -85,9 +85,9 @@ func (h *HTTPHandler) nhiGetRisk(w http.ResponseWriter, r *http.Request, path st
 	}
 
 	writeJSON(w, http.StatusOK, map[string]any{
-		"nhi_id": nhiID,
-		"score": 0,
-		"level": "unknown",
+		"nhi_id":  nhiID,
+		"score":   0,
+		"level":   "unknown",
 		"message": "no risk data available",
 	})
 }
@@ -133,6 +133,7 @@ func (h *HTTPHandler) nhiRiskAlerts(w http.ResponseWriter, r *http.Request) {
 // nhiRiskScan triggers a manual risk evaluation for an NHI.
 func (h *HTTPHandler) nhiRiskScan(w http.ResponseWriter, r *http.Request) {
 	var req nhiRiskScanRequest
+	r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		errors.WriteSimpleAPIError(w, http.StatusBadRequest, "INVALID_REQUEST", "invalid request body")
 		return

@@ -6,12 +6,12 @@ import (
 )
 
 type AccountLinkingConfig struct {
-	AllowedProviders         []string                `json:"allowed_providers"`
-	AutoLinkOnEmailMatch     bool                    `json:"auto_link_on_email_match"`
-	RequireVerificationLink  bool                    `json:"require_verification_for_link"`
-	MaxLinkedAccounts        int                     `json:"max_linked_accounts"`
-	UnlinkCooldownHours      int                     `json:"unlink_cooldown_hours"`
-	PerProviderConfig        map[string]ProviderLink `json:"per_provider_config"`
+	AllowedProviders        []string                `json:"allowed_providers"`
+	AutoLinkOnEmailMatch    bool                    `json:"auto_link_on_email_match"`
+	RequireVerificationLink bool                    `json:"require_verification_for_link"`
+	MaxLinkedAccounts       int                     `json:"max_linked_accounts"`
+	UnlinkCooldownHours     int                     `json:"unlink_cooldown_hours"`
+	PerProviderConfig       map[string]ProviderLink `json:"per_provider_config"`
 }
 
 type ProviderLink struct {
@@ -43,6 +43,7 @@ func (h *HTTPHandler) handleAccountLinkingConfig(w http.ResponseWriter, r *http.
 		json.NewEncoder(w).Encode(globalAccountLinkingConfig)
 	case http.MethodPut:
 		var cfg AccountLinkingConfig
+		r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
 		if err := json.NewDecoder(r.Body).Decode(&cfg); err != nil {
 			writeJSONError(w, http.StatusBadRequest, "invalid request body")
 			return

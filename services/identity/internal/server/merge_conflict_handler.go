@@ -39,6 +39,7 @@ func (h *HTTPHandler) handleMergeConflicts(w http.ResponseWriter, r *http.Reques
 			Status string   `json:"status"`
 		} `json:"target"`
 	}
+	r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		writeJSONError(w, http.StatusBadRequest, "invalid JSON")
 		return
@@ -55,7 +56,7 @@ func (h *HTTPHandler) handleMergeConflicts(w http.ResponseWriter, r *http.Reques
 		conflicts = append(conflicts, MergeConflict{
 			ID: uuid.New().String(), Type: "duplicate_email",
 			SourceUser: req.SourceUserID, TargetUser: req.TargetUserID,
-			Detail: "both users have same email: " + req.Source.Email,
+			Detail:     "both users have same email: " + req.Source.Email,
 			Resolution: "merge_emails — target takes primary",
 		})
 	}
@@ -75,7 +76,7 @@ func (h *HTTPHandler) handleMergeConflicts(w http.ResponseWriter, r *http.Reques
 		conflicts = append(conflicts, MergeConflict{
 			ID: uuid.New().String(), Type: "overlapping_roles",
 			SourceUser: req.SourceUserID, TargetUser: req.TargetUserID,
-			Detail: "overlapping roles: " + strings.Join(overlapping, ", "),
+			Detail:     "overlapping roles: " + strings.Join(overlapping, ", "),
 			Resolution: "deduplicate — keep target roles, add non-overlapping source roles",
 		})
 	}
@@ -85,17 +86,17 @@ func (h *HTTPHandler) handleMergeConflicts(w http.ResponseWriter, r *http.Reques
 		conflicts = append(conflicts, MergeConflict{
 			ID: uuid.New().String(), Type: "conflicting_status",
 			SourceUser: req.SourceUserID, TargetUser: req.TargetUserID,
-			Detail: "source=" + req.Source.Status + " target=" + req.Target.Status,
+			Detail:     "source=" + req.Source.Status + " target=" + req.Target.Status,
 			Resolution: "target status preserved — source deactivated",
 		})
 	}
 
 	writeJSON(w, http.StatusOK, map[string]any{
-		"source_user_id":   req.SourceUserID,
-		"target_user_id":   req.TargetUserID,
-		"conflicts":        conflicts,
-		"conflict_count":   len(conflicts),
-		"can_merge":        len(conflicts) == 0,
-		"analyzed_at":      time.Now().UTC().Format(time.RFC3339),
+		"source_user_id": req.SourceUserID,
+		"target_user_id": req.TargetUserID,
+		"conflicts":      conflicts,
+		"conflict_count": len(conflicts),
+		"can_merge":      len(conflicts) == 0,
+		"analyzed_at":    time.Now().UTC().Format(time.RFC3339),
 	})
 }

@@ -184,6 +184,7 @@ func (h *HTTPHandler) handleNotificationRules(w http.ResponseWriter, r *http.Req
 	switch r.Method {
 	case http.MethodPost:
 		var rule NotificationRule
+		r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
 		if err := json.NewDecoder(r.Body).Decode(&rule); err != nil {
 			writeJSONError(w, http.StatusBadRequest, "invalid JSON")
 			return

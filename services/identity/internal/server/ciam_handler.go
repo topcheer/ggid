@@ -96,6 +96,7 @@ func (h *HTTPHandler) handleSelfRegister(w http.ResponseWriter, r *http.Request)
 	}
 
 	var req SelfRegisterRequest
+	r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		writeJSONError(w, http.StatusBadRequest, "invalid request body")
 		return
@@ -307,6 +308,7 @@ func (h *HTTPHandler) handleTenantBranding(w http.ResponseWriter, r *http.Reques
 
 	case http.MethodPut:
 		var branding TenantBranding
+		r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
 		if err := json.NewDecoder(r.Body).Decode(&branding); err != nil {
 			writeJSONError(w, http.StatusBadRequest, "invalid request body")
 			return

@@ -187,6 +187,7 @@ func (h *HTTPHandler) handleRateLimits(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case http.MethodPost:
 		var rl TenantRateLimit
+		r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
 		if err := json.NewDecoder(r.Body).Decode(&rl); err != nil {
 			writeJSONError(w, http.StatusBadRequest, "invalid body")
 			return

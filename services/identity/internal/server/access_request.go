@@ -55,6 +55,7 @@ func (h *HTTPHandler) createAccessRequest(w http.ResponseWriter, r *http.Request
 		ResourceID   string `json:"resource_id"`
 		Reason       string `json:"reason"`
 	}
+	r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
 		writeJSONError(w, http.StatusBadRequest, "invalid JSON body")
 		return
@@ -123,6 +124,7 @@ func (h *HTTPHandler) approveAccessRequest(w http.ResponseWriter, r *http.Reques
 	var body struct {
 		ApproverID string `json:"approver_id"`
 	}
+	r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
 		writeJSONError(w, http.StatusBadRequest, "invalid JSON body")
 		return
@@ -161,9 +163,10 @@ func (h *HTTPHandler) denyAccessRequest(w http.ResponseWriter, r *http.Request) 
 	}
 
 	var body struct {
-		ApproverID    string `json:"approver_id"`
-		DenialReason  string `json:"denial_reason"`
+		ApproverID   string `json:"approver_id"`
+		DenialReason string `json:"denial_reason"`
 	}
+	r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
 		writeJSONError(w, http.StatusBadRequest, "invalid JSON body")
 		return

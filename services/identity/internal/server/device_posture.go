@@ -10,8 +10,8 @@ import (
 
 	ggidtenant "github.com/ggid/ggid/pkg/tenant"
 	"github.com/google/uuid"
-	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/redis/go-redis/v9"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 // DevicePosture represents a device's security posture signals and evaluation.
@@ -39,21 +39,21 @@ type PostureCheckInput struct {
 
 // PostureResult includes the evaluation outcome.
 type PostureResult struct {
-	DeviceID        string         `json:"device_id"`
-	Compliant       bool           `json:"compliant"`
-	PostureScore    int            `json:"posture_score"`
-	TrustLevel      string         `json:"trust_level"`
-	Checks          map[string]any `json:"checks"`
-	PolicyResults   []PolicyResult `json:"policy_results,omitempty"`
-	EvaluatedAt     time.Time      `json:"evaluated_at"`
-	ExpiresAt       time.Time      `json:"expires_at"`
+	DeviceID      string         `json:"device_id"`
+	Compliant     bool           `json:"compliant"`
+	PostureScore  int            `json:"posture_score"`
+	TrustLevel    string         `json:"trust_level"`
+	Checks        map[string]any `json:"checks"`
+	PolicyResults []PolicyResult `json:"policy_results,omitempty"`
+	EvaluatedAt   time.Time      `json:"evaluated_at"`
+	ExpiresAt     time.Time      `json:"expires_at"`
 }
 
 // PolicyResult is the outcome of evaluating one posture policy.
 type PolicyResult struct {
-	Policy   string `json:"policy"`
-	Result   string `json:"result"` // compliant, non_compliant
-	Message  string `json:"message,omitempty"`
+	Policy  string `json:"policy"`
+	Result  string `json:"result"` // compliant, non_compliant
+	Message string `json:"message,omitempty"`
 }
 
 // devicePostureRepo manages device posture persistence + Redis cache.
@@ -264,11 +264,11 @@ func (h *HTTPHandler) handleDevicePosture(w http.ResponseWriter, r *http.Request
 		dp, err := h.devicePostureRepo.GetByDevice(r.Context(), tc.TenantID, deviceID)
 		if err != nil || dp == nil {
 			writeJSON(w, http.StatusOK, map[string]any{
-				"device_id":    deviceID,
-				"compliant":    false,
+				"device_id":     deviceID,
+				"compliant":     false,
 				"posture_score": 0,
-				"trust_level":  "unknown",
-				"message":      "no posture data for this device",
+				"trust_level":   "unknown",
+				"message":       "no posture data for this device",
 			})
 			return
 		}
@@ -288,6 +288,7 @@ func (h *HTTPHandler) handleDevicePosture(w http.ResponseWriter, r *http.Request
 
 	case http.MethodPut:
 		var input PostureCheckInput
+		r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
 		if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
 			writeJSONError(w, http.StatusBadRequest, "invalid body")
 			return

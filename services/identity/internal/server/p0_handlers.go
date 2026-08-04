@@ -140,6 +140,7 @@ func (h *HTTPHandler) handleGDPRDeleteAccount(w http.ResponseWriter, r *http.Req
 		Confirm  bool   `json:"confirm"`
 		Password string `json:"password"`
 	}
+	r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
 	_ = json.NewDecoder(r.Body).Decode(&req)
 	if !req.Confirm {
 		writeJSONError(w, http.StatusBadRequest, "confirm must be true to delete account")
@@ -308,6 +309,7 @@ func (h *HTTPHandler) handleWebhookCRUD(w http.ResponseWriter, r *http.Request) 
 			Events  []string `json:"events"`
 			Enabled *bool    `json:"enabled"`
 		}
+		r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 			writeJSONError(w, http.StatusBadRequest, "invalid request body")
 			return
@@ -363,6 +365,7 @@ func (h *HTTPHandler) handleKeyRotation(w http.ResponseWriter, r *http.Request) 
 	var req struct {
 		KeyType string `json:"key_type"` // jwt-signing, encryption, etc.
 	}
+	r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
 	_ = json.NewDecoder(r.Body).Decode(&req)
 	if req.KeyType == "" {
 		req.KeyType = "jwt-signing"

@@ -272,6 +272,7 @@ func (h *HTTPHandler) reviewSchedCreate(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 	var s ReviewSchedule
+	r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
 	if err := json.NewDecoder(r.Body).Decode(&s); err != nil {
 		writeJSONError(w, http.StatusBadRequest, "invalid JSON body")
 		return
@@ -294,6 +295,7 @@ func (h *HTTPHandler) reviewSchedUpdate(w http.ResponseWriter, r *http.Request, 
 		return
 	}
 	var s ReviewSchedule
+	r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
 	if err := json.NewDecoder(r.Body).Decode(&s); err != nil {
 		writeJSONError(w, http.StatusBadRequest, "invalid JSON body")
 		return

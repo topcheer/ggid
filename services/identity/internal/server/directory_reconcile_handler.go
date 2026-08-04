@@ -22,6 +22,7 @@ func (h *HTTPHandler) handleDirectoryReconcile(w http.ResponseWriter, r *http.Re
 		FixDuplicates bool `json:"fix_duplicates"`
 		FixStaleMgr   bool `json:"fix_stale_managers"`
 	}
+	r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		// Default to dry_run=true for safety
 		req.DryRun = true
@@ -72,18 +73,18 @@ func (h *HTTPHandler) handleDirectoryReconcile(w http.ResponseWriter, r *http.Re
 	}
 
 	writeJSON(w, http.StatusOK, map[string]any{
-		"job_id":            jobID,
-		"status":            status,
-		"dry_run":           req.DryRun,
-		"orphaned_ids":      orphanedIDs,
-		"orphaned_count":    len(orphanedIDs),
-		"duplicate_groups":  duplicateGroups,
-		"duplicate_count":   len(duplicateGroups),
-		"stale_managers":    8,
-		"merge_strategies":  []string{"keep_recent_active", "keep_higher_role", "manual_review"},
-		"cleanup_plan":      cleanupPlan,
-		"total_actions":     len(cleanupPlan),
-		"analyzed_at":       now.Format(time.RFC3339),
+		"job_id":           jobID,
+		"status":           status,
+		"dry_run":          req.DryRun,
+		"orphaned_ids":     orphanedIDs,
+		"orphaned_count":   len(orphanedIDs),
+		"duplicate_groups": duplicateGroups,
+		"duplicate_count":  len(duplicateGroups),
+		"stale_managers":   8,
+		"merge_strategies": []string{"keep_recent_active", "keep_higher_role", "manual_review"},
+		"cleanup_plan":     cleanupPlan,
+		"total_actions":    len(cleanupPlan),
+		"analyzed_at":      now.Format(time.RFC3339),
 		"safety_note": func() string {
 			if req.DryRun {
 				return "No changes applied. Set dry_run=false and confirm=true to execute."

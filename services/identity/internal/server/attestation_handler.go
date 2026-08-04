@@ -23,14 +23,19 @@ func (h *HTTPHandler) handleAttest(ctx context.Context, userID uuid.UUID, w http
 		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
-	var req struct{ ExpiryDays int `json:"expiry_days"` }
+	var req struct {
+		ExpiryDays int `json:"expiry_days"`
+	}
 	if r.ContentLength > 0 {
+		r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 			writeJSONError(w, http.StatusBadRequest, "invalid request body")
 			return
 		}
 	}
-	if req.ExpiryDays <= 0 { req.ExpiryDays = 30 }
+	if req.ExpiryDays <= 0 {
+		req.ExpiryDays = 30
+	}
 	now := time.Now().UTC()
 	a := &Attestation{
 		ID: uuid.New().String(), UserID: userID.String(),
@@ -63,6 +68,8 @@ func (h *HTTPHandler) handleAttestationPending(w http.ResponseWriter, r *http.Re
 			}
 		}
 	}
-	if result == nil { result = []map[string]any{} }
+	if result == nil {
+		result = []map[string]any{}
+	}
 	writeJSON(w, http.StatusOK, map[string]any{"attestations": result, "count": len(result)})
 }

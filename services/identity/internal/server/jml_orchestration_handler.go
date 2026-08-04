@@ -15,24 +15,24 @@ import (
 
 // JMLPhase describes one step in a JML orchestration run.
 type JMLPhase struct {
-	Name      string    `json:"name"`       // e.g. "assign_role", "revoke_access"
-	Status    string    `json:"status"`     // pending, running, success, failed, skipped
-	Message   string    `json:"message,omitempty"`
-	StartedAt time.Time `json:"started_at"`
+	Name      string     `json:"name"`   // e.g. "assign_role", "revoke_access"
+	Status    string     `json:"status"` // pending, running, success, failed, skipped
+	Message   string     `json:"message,omitempty"`
+	StartedAt time.Time  `json:"started_at"`
 	EndedAt   *time.Time `json:"ended_at,omitempty"`
 }
 
 // JMLOrchestration is a full Joiner/Mover/Leaver run.
 type JMLOrchestration struct {
-	ID        string     `json:"id"`
-	TenantID  string     `json:"tenant_id"`
-	UserID    string     `json:"user_id"`
-	Trigger   string     `json:"trigger"`   // joiner, mover, leaver
-	UserAttrs map[string]any `json:"user_attrs,omitempty"`
-	Phases    []JMLPhase `json:"phases"`
-	Status    string     `json:"status"`    // running, completed, failed
-	CreatedAt time.Time  `json:"created_at"`
-	CompletedAt *time.Time `json:"completed_at,omitempty"`
+	ID          string         `json:"id"`
+	TenantID    string         `json:"tenant_id"`
+	UserID      string         `json:"user_id"`
+	Trigger     string         `json:"trigger"` // joiner, mover, leaver
+	UserAttrs   map[string]any `json:"user_attrs,omitempty"`
+	Phases      []JMLPhase     `json:"phases"`
+	Status      string         `json:"status"` // running, completed, failed
+	CreatedAt   time.Time      `json:"created_at"`
+	CompletedAt *time.Time     `json:"completed_at,omitempty"`
 }
 
 // jmlOrchestrationStore holds in-progress and completed orchestrations.
@@ -55,9 +55,9 @@ type JMLOrchestrateRequest struct {
 // returns the completed run with per-phase status. The phases for each
 // trigger are:
 //
-//   joiner: create_account → assign_role → provision_apps → mfa_enroll_guide
-//   mover:  recalc_permissions → access_review_trigger → notify_manager
-//   leaver: disable_account → revoke_sessions → revoke_roles → archive_audit
+//	joiner: create_account → assign_role → provision_apps → mfa_enroll_guide
+//	mover:  recalc_permissions → access_review_trigger → notify_manager
+//	leaver: disable_account → revoke_sessions → revoke_roles → archive_audit
 func (h *HTTPHandler) handleJMLOrchestrate(w http.ResponseWriter, r *http.Request) {
 	// GET /orchestrate/{id} → status lookup
 	if r.Method == http.MethodGet {
@@ -90,6 +90,7 @@ func (h *HTTPHandler) handleJMLOrchestrate(w http.ResponseWriter, r *http.Reques
 	}
 
 	var req JMLOrchestrateRequest
+	r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		writeJSONError(w, http.StatusBadRequest, "invalid request body")
 		return
@@ -156,7 +157,7 @@ func (h *HTTPHandler) handleJMLOrchestrate(w http.ResponseWriter, r *http.Reques
 }
 
 type jmlPhaseResult struct {
-	status string
+	status  string
 	message string
 	fatal   bool
 }

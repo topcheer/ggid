@@ -11,15 +11,15 @@ import (
 
 // SCIMTarget defines an outbound SCIM provisioning target.
 type SCIMTarget struct {
-	ID          string    `json:"id"`
-	Name        string    `json:"name"`
-	TenantID    string    `json:"tenant_id"`
-	BaseURL     string    `json:"base_url"`
-	AuthType    string    `json:"auth_type"` // bearer, basic, oauth
-	AuthToken   string    `json:"-"`          // never expose
-	Enabled     bool      `json:"enabled"`
-	LastSyncAt  *time.Time `json:"last_sync_at,omitempty"`
-	CreatedAt   time.Time `json:"created_at"`
+	ID         string     `json:"id"`
+	Name       string     `json:"name"`
+	TenantID   string     `json:"tenant_id"`
+	BaseURL    string     `json:"base_url"`
+	AuthType   string     `json:"auth_type"` // bearer, basic, oauth
+	AuthToken  string     `json:"-"`         // never expose
+	Enabled    bool       `json:"enabled"`
+	LastSyncAt *time.Time `json:"last_sync_at,omitempty"`
+	CreatedAt  time.Time  `json:"created_at"`
 }
 
 // SCIMSyncLogEntry records a sync operation.
@@ -40,6 +40,7 @@ func (h *HTTPHandler) handleSCIMTargets(w http.ResponseWriter, r *http.Request) 
 	switch r.Method {
 	case http.MethodPost:
 		var req SCIMTarget
+		r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 			writeJSONError(w, http.StatusBadRequest, "invalid JSON")
 			return
@@ -64,7 +65,9 @@ func (h *HTTPHandler) handleSCIMTargets(w http.ResponseWriter, r *http.Request) 
 			rows, _ := h.identityPolicyMap.List(r.Context(), "scim_targets")
 			targets = rows
 		}
-		if targets == nil { targets = []map[string]any{} }
+		if targets == nil {
+			targets = []map[string]any{}
+		}
 		writeJSON(w, http.StatusOK, map[string]any{"targets": targets, "count": len(targets)})
 	default:
 		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
@@ -106,6 +109,8 @@ func (h *HTTPHandler) handleSCIMSyncLog(w http.ResponseWriter, r *http.Request) 
 		rows, _ := h.identityPolicyMap.List(r.Context(), "scim_sync_log")
 		log = rows
 	}
-	if log == nil { log = []map[string]any{} }
+	if log == nil {
+		log = []map[string]any{}
+	}
 	writeJSON(w, http.StatusOK, map[string]any{"log": log, "count": len(log)})
 }

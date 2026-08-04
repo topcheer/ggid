@@ -12,14 +12,14 @@ import (
 
 // CryptoField defines a field-level encryption policy.
 type CryptoField struct {
-	ID          string    `json:"id"`
-	TenantID    string    `json:"tenant_id"`
-	Resource    string    `json:"resource"`    // table/collection name
-	Field       string    `json:"field"`       // field path
-	Algorithm   string    `json:"algorithm"`   // AES-256-GCM, ChaCha20-Poly1305
-	KeyID       string    `json:"key_id"`     // KMS key reference
-	Searchable  bool      `json:"searchable"` // blind index for search
-	CreatedAt   time.Time `json:"created_at"`
+	ID         string    `json:"id"`
+	TenantID   string    `json:"tenant_id"`
+	Resource   string    `json:"resource"`   // table/collection name
+	Field      string    `json:"field"`      // field path
+	Algorithm  string    `json:"algorithm"`  // AES-256-GCM, ChaCha20-Poly1305
+	KeyID      string    `json:"key_id"`     // KMS key reference
+	Searchable bool      `json:"searchable"` // blind index for search
+	CreatedAt  time.Time `json:"created_at"`
 }
 
 // GET    /api/v1/crypto/fields        — list encrypted fields
@@ -36,6 +36,7 @@ func (h *HTTPHandler) handleCryptoFields(w http.ResponseWriter, r *http.Request)
 
 	case http.MethodPost:
 		var req CryptoField
+		r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 			writeJSONError(w, http.StatusBadRequest, "invalid JSON")
 			return

@@ -21,6 +21,7 @@ func (h *HTTPHandler) reassignUser(ctx context.Context, userID uuid.UUID, w http
 		NewRole    string `json:"new_role"`
 		NewManager string `json:"new_manager"`
 	}
+	r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		writeJSONError(w, http.StatusBadRequest, "invalid JSON")
 		return
@@ -28,7 +29,7 @@ func (h *HTTPHandler) reassignUser(ctx context.Context, userID uuid.UUID, w http
 	writeJSON(w, http.StatusOK, map[string]any{
 		"status": "reassigned", "user_id": userID.String(),
 		"new_org": req.NewOrg, "new_role": req.NewRole, "new_manager": req.NewManager,
-		"reassigned_at": time.Now().UTC().Format(time.RFC3339),
+		"reassigned_at":     time.Now().UTC().Format(time.RFC3339),
 		"actions_triggered": []string{"access_review", "session_revoke", "notify_old_manager", "notify_new_manager"},
 	})
 

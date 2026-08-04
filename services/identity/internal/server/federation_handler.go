@@ -31,6 +31,7 @@ func (h *HTTPHandler) fedEntities(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case http.MethodPost:
 		var e FederationEntity
+		r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
 		if err := json.NewDecoder(r.Body).Decode(&e); err != nil {
 			writeJSONError(w, http.StatusBadRequest, "invalid body")
 			return
@@ -79,6 +80,7 @@ func (h *HTTPHandler) fedTransformRules(w http.ResponseWriter, r *http.Request) 
 	switch r.Method {
 	case http.MethodPost:
 		var t TransformRule
+		r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
 		if err := json.NewDecoder(r.Body).Decode(&t); err != nil {
 			writeJSONError(w, http.StatusBadRequest, "invalid body")
 			return
@@ -123,6 +125,7 @@ func (h *HTTPHandler) fedRouteEmail(w http.ResponseWriter, r *http.Request) {
 	var req struct {
 		Email string `json:"email"`
 	}
+	r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		writeJSONError(w, http.StatusBadRequest, "invalid request body")
 		return

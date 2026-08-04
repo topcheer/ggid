@@ -35,6 +35,7 @@ func (h *HTTPHandler) handleDelegations(ctx context.Context, userID uuid.UUID, w
 			StartDate   string   `json:"start_date"`
 			EndDate     string   `json:"end_date"`
 		}
+		r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 			writeJSONError(w, http.StatusBadRequest, "invalid JSON")
 			return

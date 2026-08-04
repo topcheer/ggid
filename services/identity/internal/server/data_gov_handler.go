@@ -32,6 +32,7 @@ func (h *HTTPHandler) dgClassifications(w http.ResponseWriter, r *http.Request) 
 	switch r.Method {
 	case http.MethodPost:
 		var dc DataClassification
+		r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
 		if err := json.NewDecoder(r.Body).Decode(&dc); err != nil {
 			writeJSONError(w, http.StatusBadRequest, "invalid body")
 			return
@@ -76,6 +77,7 @@ func (h *HTTPHandler) dgDSR(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case http.MethodPost:
 		var req DSRRequest
+		r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 			writeJSONError(w, http.StatusBadRequest, "invalid body")
 			return
