@@ -17,8 +17,8 @@ import (
 
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/redis/go-redis/v9"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"github.com/redis/go-redis/v9"
 
 	"github.com/ggid/ggid/pkg/audit"
 	"github.com/ggid/ggid/pkg/crypto"
@@ -799,7 +799,9 @@ func (h *Handler) verifyCredentials(w http.ResponseWriter, r *http.Request) {
 		event.ActorName = req.Username
 		event.IPAddress = ip
 		event.UserAgent = userAgent
-		h.auditPublisher.PublishAsync(event)
+		if h.auditPublisher != nil {
+			h.auditPublisher.PublishAsync(event)
+		}
 
 		writeJSON(w, http.StatusOK, map[string]any{
 			"user_id":      userID.String(),
