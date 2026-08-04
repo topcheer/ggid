@@ -756,7 +756,7 @@ func (gw *Gateway) Handler() http.Handler {
 		gw.buildAuthChain(jwtRequired).ServeHTTP(w, r)
 	})
 
-	// Apply outer middleware: PanicRecovery → RequestID → SecurityHeaders → CORS → StructuredLogging → RateLimit → BotDetect → TenantResolver → Timeout → MaxBodySize → Metering → inner
+	// Apply outer middleware: PanicRecovery → RequestID → SecurityHeaders → CORS → RateLimit → StructuredLogging → BotDetect → TenantResolver → Timeout → MaxBodySize → Metering → inner
 	// RequestID must be first (after recovery) so all downstream middleware have request_id in logs.
 	logger := middleware.NewStructuredLogger("ggid-gateway")
 	handler := middleware.MaxBodySize(gw.maxBodySize())(inner)
@@ -765,7 +765,6 @@ func (gw *Gateway) Handler() http.Handler {
 	handler = middleware.TimeoutMiddleware(middleware.DefaultTimeoutConfig())(handler)
 	handler = middleware.TenantResolver(gw.cfg.DomainSuffix)(handler)
 	handler = middleware.BotDetect(handler)
-	handler = gw.rateLimiter.Middleware(handler)
 	handler = middleware.ContentTypeValidator(handler)
 	handler = middleware.RequestLogger(logger)(handler)
 	// API metering: record per-tenant API count + latency (async batch insert).
@@ -774,6 +773,10 @@ func (gw *Gateway) Handler() http.Handler {
 	}
 	handler = middleware.Gzip(handler)
 	handler = middleware.CORS(handler)
+	// SECURITY: RateLimiter must be outside CORS so OPTIONS preflight
+	// requests are also counted. Previously CORS was outside RateLimiter,
+	// allowing unlimited OPTIONS-based DoS.
+	handler = gw.rateLimiter.Middleware(handler)
 	handler = middleware.HostValidation(gw.hostValidationConfig())(handler)
 	handler = middleware.SecurityHeadersConfigurable(middleware.DefaultSecurityHeadersConfig())(handler)
 	// SECURITY: RequestID must be outermost so PanicRecovery has request_id
