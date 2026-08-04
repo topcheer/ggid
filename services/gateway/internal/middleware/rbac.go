@@ -14,20 +14,15 @@ func AdminOnly(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// Check if the user has admin-level scope.
 		claims := ExtractJWTClaims(r)
-		if len(claims.Scopes) == 0 {
-			next.ServeHTTP(w, r)
+		// SECURITY: fail-closed — reject when no scopes present.
+		if len(claims.Scopes) == 0 || !hasAdminScope(claims.Scopes) {
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusForbidden)
+			w.Write([]byte(`{"detail":"insufficient permissions","title":"Forbidden","type":"https://ggid.dev/errors/forbidden"}`))
 			return
 		}
 
-		if hasAdminScope(claims.Scopes) {
-			next.ServeHTTP(w, r)
-			return
-		}
-
-		// Non-admin user accessing admin-only endpoint
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusForbidden)
-		w.Write([]byte(`{"detail":"insufficient permissions","title":"Forbidden","type":"https://ggid.dev/errors/forbidden"}`))
+		next.ServeHTTP(w, r)
 	})
 }
 
