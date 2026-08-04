@@ -1494,12 +1494,13 @@ func (gw *Gateway) handleRateLimitStatus(w http.ResponseWriter, r *http.Request)
 // handleUpdateRateLimit updates limits for a specific tier.
 func (gw *Gateway) handleUpdateRateLimit(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
-	// SECURITY (R227 P1-2): rate-limit tiers are platform-level config —
-	// require admin scope (same pattern as other admin gateway handlers).
-	// Without this, any authenticated caller could weaken rate limits.
-	if !gw.hasAdminScope(r) {
+	// SECURITY (R399 P0): rate-limit tiers are platform-level config —
+	// require platform:admin scope. Previously used hasAdminScope which
+	// accepted tenant:admin, allowing tenant admins to modify global
+	// rate limits (same pattern as R429 route toggle fix).
+	if !gw.hasPlatformAdminScope(r) {
 		w.WriteHeader(http.StatusForbidden)
-		_ = json.NewEncoder(w).Encode(map[string]string{"error": "admin scope required"})
+		_ = json.NewEncoder(w).Encode(map[string]string{"error": "platform:admin scope required"})
 		return
 	}
 	if gw.multiDimLimiter == nil {
