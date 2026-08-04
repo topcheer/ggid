@@ -95,6 +95,7 @@ func (h *Handler) tapIssue(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var req tapIssueRequest
+	r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		errors.WriteSimpleAPIError(w, http.StatusBadRequest, "INVALID_REQUEST", "invalid request body")
 		return
@@ -153,6 +154,7 @@ func (h *Handler) tapBatch(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var req tapBatchRequest
+	r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		errors.WriteSimpleAPIError(w, http.StatusBadRequest, "INVALID_REQUEST", "invalid request body")
 		return
@@ -272,6 +274,7 @@ func (h *Handler) tapUpdatePolicy(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var req tapPolicyRequest
+	r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		errors.WriteSimpleAPIError(w, http.StatusBadRequest, "INVALID_REQUEST", "invalid request body")
 		return

@@ -115,6 +115,7 @@ func (h *Handler) handleGeofencing(w http.ResponseWriter, r *http.Request) {
 			Action           string   `json:"action"`
 			Priority         int      `json:"priority"`
 		}
+		r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 			writeError(w, http.StatusBadRequest, "invalid request body")
 			return
@@ -171,6 +172,7 @@ func (h *Handler) checkGeofence(w http.ResponseWriter, r *http.Request) {
 		Region  string `json:"region"`
 		IP      string `json:"ip"`
 	}
+	r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		writeError(w, http.StatusBadRequest, "invalid request body")
 		return

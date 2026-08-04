@@ -31,10 +31,10 @@ func (h *Handler) handleMFAMethods(w http.ResponseWriter, r *http.Request) {
 	}
 
 	resp := map[string]any{
-		"totp_enabled":     true,
-		"webauthn_enabled": true,
-		"radius_enabled":   false,
-		"yubikey_enabled":  false,
+		"totp_enabled":      true,
+		"webauthn_enabled":  true,
+		"radius_enabled":    false,
+		"yubikey_enabled":   false,
 		"radius_test_mode":  false,
 		"yubikey_test_mode": false,
 	}
@@ -84,6 +84,7 @@ func (h *Handler) handleMFARadiusVerify(w http.ResponseWriter, r *http.Request) 
 	}
 
 	var req radiusVerifyRequest
+	r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		writeError(w, http.StatusBadRequest, "invalid JSON body")
 		return
@@ -193,6 +194,7 @@ func (h *Handler) handleMFAYubiKeyVerify(w http.ResponseWriter, r *http.Request)
 	}
 
 	var req yubikeyVerifyRequest
+	r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		writeError(w, http.StatusBadRequest, "invalid JSON body")
 		return

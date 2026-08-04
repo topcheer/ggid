@@ -63,6 +63,7 @@ func (h *Handler) caeTriggers(w http.ResponseWriter, r *http.Request) {
 			Action    string `json:"action"`
 			Enabled   *bool  `json:"enabled"`
 		}
+		r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 			errors.WriteSimpleAPIError(w, http.StatusBadRequest, "BAD_REQUEST", "invalid JSON")
 			return
@@ -108,6 +109,7 @@ func (h *Handler) caeTriggers(w http.ResponseWriter, r *http.Request) {
 			Action    string `json:"action"`
 			Enabled   *bool  `json:"enabled"`
 		}
+		r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 			errors.WriteSimpleAPIError(w, http.StatusBadRequest, "BAD_REQUEST", "invalid JSON")
 			return
@@ -158,10 +160,10 @@ func (h *Handler) caeStatus(w http.ResponseWriter, r *http.Request) {
 
 	if h.caeRepo == nil {
 		writeJSON(w, http.StatusOK, map[string]any{
-			"last_run":         nil,
+			"last_run":          nil,
 			"total_evaluations": 0,
-			"by_action":        map[string]int{},
-			"message":          "CAE engine not configured",
+			"by_action":         map[string]int{},
+			"message":           "CAE engine not configured",
 		})
 		return
 	}
@@ -211,11 +213,11 @@ func (h *Handler) caeRun(w http.ResponseWriter, r *http.Request) {
 	_ = h.caeRepo.LogEvaluation(r.Context(), eval)
 
 	writeJSON(w, http.StatusOK, map[string]any{
-		"evaluated":   1,
-		"revoked":     0,
-		"step_up":     0,
-		"run_at":      eval.EvaluatedAt,
-		"message":     "CAE sweep completed",
+		"evaluated": 1,
+		"revoked":   0,
+		"step_up":   0,
+		"run_at":    eval.EvaluatedAt,
+		"message":   "CAE sweep completed",
 	})
 }
 

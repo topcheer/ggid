@@ -12,14 +12,14 @@ import (
 
 // DLPPolicyRule defines a single DLP egress redaction rule.
 type DLPPolicyRule struct {
-	ID              string `json:"id"`
-	Name            string `json:"name"`
-	FieldType       string `json:"field_type"`       // ssn, credit_card, email, phone, api_key, jwt, password
-	Strategy        string `json:"strategy"`          // full_mask, partial_mask, email_mask, tokenize, remove
-	Condition       string `json:"condition"`         // e.g. "role!=admin"
-	Classification  string `json:"classification"`    // core, important, general
-	Enabled         bool   `json:"enabled"`
-	CreatedAt       string `json:"created_at"`
+	ID             string `json:"id"`
+	Name           string `json:"name"`
+	FieldType      string `json:"field_type"`     // ssn, credit_card, email, phone, api_key, jwt, password
+	Strategy       string `json:"strategy"`       // full_mask, partial_mask, email_mask, tokenize, remove
+	Condition      string `json:"condition"`      // e.g. "role!=admin"
+	Classification string `json:"classification"` // core, important, general
+	Enabled        bool   `json:"enabled"`
+	CreatedAt      string `json:"created_at"`
 }
 
 // handleDLPoliciesCRUD handles DB-backed DLP policy CRUD.
@@ -53,6 +53,7 @@ func (h *Handler) listDLPPolicies(w http.ResponseWriter, r *http.Request) {
 
 func (h *Handler) createDLPPolicy(w http.ResponseWriter, r *http.Request) {
 	var rule DLPPolicyRule
+	r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
 	if err := json.NewDecoder(r.Body).Decode(&rule); err != nil {
 		writeError(w, http.StatusBadRequest, "invalid request body")
 		return
@@ -89,6 +90,7 @@ func (h *Handler) updateDLPPolicy(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var rule DLPPolicyRule
+	r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
 	if err := json.NewDecoder(r.Body).Decode(&rule); err != nil {
 		writeError(w, http.StatusBadRequest, "invalid request body")
 		return
@@ -131,6 +133,7 @@ func (h *Handler) handleDLPScan(w http.ResponseWriter, r *http.Request) {
 	var req struct {
 		Body string `json:"body"`
 	}
+	r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		writeError(w, http.StatusBadRequest, "invalid request body")
 		return

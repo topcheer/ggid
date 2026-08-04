@@ -51,6 +51,7 @@ func (h *Handler) handleEnrollmentCampaigns(w http.ResponseWriter, r *http.Reque
 
 	case http.MethodPost:
 		var c EnrollmentCampaign
+		r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
 		if err := json.NewDecoder(r.Body).Decode(&c); err != nil {
 			writeError(w, http.StatusBadRequest, "invalid request body")
 			return
@@ -86,6 +87,7 @@ func (h *Handler) handleEnrollmentCampaignByID(w http.ResponseWriter, r *http.Re
 
 	case http.MethodPut:
 		var c EnrollmentCampaign
+		r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
 		if err := json.NewDecoder(r.Body).Decode(&c); err != nil {
 			writeError(w, http.StatusBadRequest, "invalid request body")
 			return

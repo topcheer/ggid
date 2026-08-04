@@ -166,6 +166,7 @@ func (h *Handler) handleEmailConfig(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusOK, cfg)
 	case http.MethodPut, http.MethodPost:
 		var cfg EmailConfig
+		r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
 		if err := json.NewDecoder(r.Body).Decode(&cfg); err != nil {
 			writeError(w, http.StatusBadRequest, "invalid JSON")
 			return
@@ -192,6 +193,7 @@ func (h *Handler) handleEmailTest(w http.ResponseWriter, r *http.Request) {
 	var req struct {
 		To string `json:"to"`
 	}
+	r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		writeError(w, http.StatusBadRequest, "invalid JSON")
 		return

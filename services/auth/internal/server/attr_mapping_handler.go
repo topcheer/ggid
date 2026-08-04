@@ -58,7 +58,8 @@ func (h *Handler) handleAttrMappings(w http.ResponseWriter, r *http.Request) {
 
 func (h *Handler) attrMappingList(w http.ResponseWriter, r *http.Request) {
 	if h.attrMapRepo == nil {
-		writeJSON(w, http.StatusOK, []interface{}{}); return
+		writeJSON(w, http.StatusOK, []interface{}{})
+		return
 	}
 	tc, err := ggidtenant.FromContext(r.Context())
 	if err != nil {
@@ -78,7 +79,8 @@ func (h *Handler) attrMappingList(w http.ResponseWriter, r *http.Request) {
 
 func (h *Handler) attrMappingCreate(w http.ResponseWriter, r *http.Request) {
 	if h.attrMapRepo == nil {
-		writeJSON(w, http.StatusOK, []interface{}{}); return
+		writeJSON(w, http.StatusOK, []interface{}{})
+		return
 	}
 	tc, err := ggidtenant.FromContext(r.Context())
 	if err != nil {
@@ -86,6 +88,7 @@ func (h *Handler) attrMappingCreate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var m AttributeMapping
+	r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
 	if err := json.NewDecoder(r.Body).Decode(&m); err != nil {
 		writeError(w, http.StatusBadRequest, "invalid JSON body")
 		return
@@ -104,7 +107,8 @@ func (h *Handler) attrMappingCreate(w http.ResponseWriter, r *http.Request) {
 
 func (h *Handler) attrMappingGet(w http.ResponseWriter, r *http.Request, id string) {
 	if h.attrMapRepo == nil {
-		writeJSON(w, http.StatusOK, []interface{}{}); return
+		writeJSON(w, http.StatusOK, []interface{}{})
+		return
 	}
 	m, err := h.attrMapRepo.Get(r.Context(), id)
 	if err != nil {
@@ -116,9 +120,11 @@ func (h *Handler) attrMappingGet(w http.ResponseWriter, r *http.Request, id stri
 
 func (h *Handler) attrMappingUpdate(w http.ResponseWriter, r *http.Request, id string) {
 	if h.attrMapRepo == nil {
-		writeJSON(w, http.StatusOK, []interface{}{}); return
+		writeJSON(w, http.StatusOK, []interface{}{})
+		return
 	}
 	var m AttributeMapping
+	r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
 	if err := json.NewDecoder(r.Body).Decode(&m); err != nil {
 		writeError(w, http.StatusBadRequest, "invalid JSON body")
 		return
@@ -137,7 +143,8 @@ func (h *Handler) attrMappingUpdate(w http.ResponseWriter, r *http.Request, id s
 
 func (h *Handler) attrMappingDelete(w http.ResponseWriter, r *http.Request, id string) {
 	if h.attrMapRepo == nil {
-		writeJSON(w, http.StatusOK, []interface{}{}); return
+		writeJSON(w, http.StatusOK, []interface{}{})
+		return
 	}
 	if err := h.attrMapRepo.Delete(r.Context(), id); err != nil {
 		writeError(w, http.StatusInternalServerError, "failed to delete mapping")
@@ -148,7 +155,8 @@ func (h *Handler) attrMappingDelete(w http.ResponseWriter, r *http.Request, id s
 
 func (h *Handler) attrMappingTest(w http.ResponseWriter, r *http.Request) {
 	if h.attrMapRepo == nil {
-		writeJSON(w, http.StatusOK, []interface{}{}); return
+		writeJSON(w, http.StatusOK, []interface{}{})
+		return
 	}
 	tc, err := ggidtenant.FromContext(r.Context())
 	if err != nil {
@@ -156,6 +164,7 @@ func (h *Handler) attrMappingTest(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var input map[string][]string
+	r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
 	if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
 		writeError(w, http.StatusBadRequest, "invalid JSON body")
 		return

@@ -1,9 +1,8 @@
 package server
 
 import (
-	"sync"
 	"strings"
-
+	"sync"
 
 	"encoding/json"
 	"net/http"
@@ -57,6 +56,7 @@ func (h *Handler) handleImpersonationConfig(w http.ResponseWriter, r *http.Reque
 		json.NewEncoder(w).Encode(cfg)
 	case http.MethodPut:
 		var cfg ImpersonationConfig
+		r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
 		if err := json.NewDecoder(r.Body).Decode(&cfg); err != nil {
 			writeError(w, http.StatusBadRequest, "invalid request body")
 			return

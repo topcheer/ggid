@@ -41,6 +41,7 @@ func (h *Handler) handlePasswordReset(w http.ResponseWriter, r *http.Request) {
 		var req struct {
 			Email string `json:"email"`
 		}
+		r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 			writeError(w, http.StatusBadRequest, "invalid JSON")
 			return
@@ -104,6 +105,7 @@ func (h *Handler) handlePasswordReset(w http.ResponseWriter, r *http.Request) {
 			Token       string `json:"token"`
 			NewPassword string `json:"new_password"`
 		}
+		r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 			writeError(w, http.StatusBadRequest, "invalid JSON")
 			return

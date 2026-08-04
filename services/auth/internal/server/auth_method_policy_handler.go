@@ -6,7 +6,7 @@ import (
 	"strings"
 
 	"github.com/ggid/ggid/pkg/errors"
-		"github.com/ggid/ggid/pkg/tenant"
+	"github.com/ggid/ggid/pkg/tenant"
 	"github.com/ggid/ggid/services/auth/internal/repository"
 	"github.com/google/uuid"
 )
@@ -65,6 +65,7 @@ func (h *Handler) listAuthMethodPolicies(w http.ResponseWriter, r *http.Request,
 
 func (h *Handler) createAuthMethodPolicy(w http.ResponseWriter, r *http.Request, tenantID uuid.UUID) {
 	var req authMethodPolicyRequest
+	r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		errors.WriteSimpleAPIError(w, http.StatusBadRequest, "INVALID_REQUEST", "invalid request body")
 		return
@@ -102,6 +103,7 @@ func (h *Handler) updateAuthMethodPolicy(w http.ResponseWriter, r *http.Request,
 	}
 
 	var req authMethodPolicyRequest
+	r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		errors.WriteSimpleAPIError(w, http.StatusBadRequest, "INVALID_REQUEST", "invalid request body")
 		return

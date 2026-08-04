@@ -99,11 +99,11 @@ func (h *Handler) handleMFAStatus(w http.ResponseWriter, r *http.Request) {
 	}
 
 	writeJSON(w, http.StatusOK, map[string]interface{}{
-		"enrolled":         enrolled,
-		"methods":          methods,
-		"required":         h.authSvc.IsForceMFA(r.Context(), tenantID),
+		"enrolled":          enrolled,
+		"methods":           methods,
+		"required":          h.authSvc.IsForceMFA(r.Context(), tenantID),
 		"available_methods": []string{"totp", "webauthn", "email"},
-		"user_id":          userID.String(),
+		"user_id":           userID.String(),
 	})
 }
 
@@ -279,9 +279,9 @@ func (h *Handler) handleAccountLinking(w http.ResponseWriter, r *http.Request) {
 				continue
 			}
 			accounts = append(accounts, map[string]interface{}{
-				"provider":   provider,
+				"provider":    provider,
 				"external_id": externalID,
-				"linked_at":  linkedAt.Format(time.RFC3339),
+				"linked_at":   linkedAt.Format(time.RFC3339),
 			})
 		}
 		writeJSON(w, http.StatusOK, map[string]interface{}{
@@ -349,7 +349,7 @@ func (h *Handler) handleLoginSecurity(w http.ResponseWriter, r *http.Request) {
 		"password_max_age_days":    policy.MaxAgeDays,
 		"password_history_count":   policy.HistoryCount,
 		"session_timeout":          3600,
-		"max_failed_attempts":    policy.MaxAttempts,
+		"max_failed_attempts":      policy.MaxAttempts,
 		"lockout_duration":         int(policy.LockDuration.Seconds()),
 		"ip_allowlist":             []string{},
 		"geo_restrictions":         []interface{}{},
@@ -417,6 +417,7 @@ func (h *Handler) handleDeviceBindings(w http.ResponseWriter, r *http.Request) {
 			Fingerprint string `json:"fingerprint"`
 			DeviceName  string `json:"device_name"`
 		}
+		r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
 		if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
 			writeError(w, http.StatusBadRequest, "invalid JSON body")
 			return
@@ -434,6 +435,7 @@ func (h *Handler) handleDeviceBindings(w http.ResponseWriter, r *http.Request) {
 		var body struct {
 			Fingerprint string `json:"fingerprint"`
 		}
+		r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
 		if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
 			writeError(w, http.StatusBadRequest, "invalid JSON body")
 			return

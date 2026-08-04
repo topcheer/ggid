@@ -13,11 +13,11 @@ import (
 
 // capRequest is the DTO for create/update operations.
 type capRequest struct {
-	Name       string                  `json:"name"`
-	Conditions repository.Conditions   `json:"conditions"`
-	Action     string                  `json:"action"`
-	Priority   int                     `json:"priority"`
-	Enabled    bool                    `json:"enabled"`
+	Name       string                `json:"name"`
+	Conditions repository.Conditions `json:"conditions"`
+	Action     string                `json:"action"`
+	Priority   int                   `json:"priority"`
+	Enabled    bool                  `json:"enabled"`
 }
 
 // capEvaluateRequest is the DTO for the evaluate endpoint.
@@ -78,6 +78,7 @@ func (h *Handler) capList(w http.ResponseWriter, r *http.Request, tenantID uuid.
 
 func (h *Handler) capCreate(w http.ResponseWriter, r *http.Request, tenantID uuid.UUID) {
 	var req capRequest
+	r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		errors.WriteSimpleAPIError(w, http.StatusBadRequest, "INVALID_REQUEST", "invalid request body")
 		return
@@ -143,6 +144,7 @@ func (h *Handler) capPolicyByID(w http.ResponseWriter, r *http.Request, idStr st
 
 func (h *Handler) capUpdate(w http.ResponseWriter, r *http.Request, tenantID, id uuid.UUID) {
 	var req capRequest
+	r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		errors.WriteSimpleAPIError(w, http.StatusBadRequest, "INVALID_REQUEST", "invalid request body")
 		return
@@ -203,6 +205,7 @@ func (h *Handler) capEvaluate(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var req capEvaluateRequest
+	r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		errors.WriteSimpleAPIError(w, http.StatusBadRequest, "INVALID_REQUEST", "invalid request body")
 		return
@@ -210,10 +213,10 @@ func (h *Handler) capEvaluate(w http.ResponseWriter, r *http.Request) {
 
 	if h.capRepo == nil {
 		writeJSON(w, http.StatusOK, map[string]any{
-			"action":       repository.ActionAllow,
-			"description":  repository.ActionDescription(repository.ActionAllow),
-			"policy_name":  "",
-			"matched":      false,
+			"action":      repository.ActionAllow,
+			"description": repository.ActionDescription(repository.ActionAllow),
+			"policy_name": "",
+			"matched":     false,
 		})
 		return
 	}

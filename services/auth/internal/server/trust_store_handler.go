@@ -56,6 +56,7 @@ func (h *TrustStoreHandler) addCA(w http.ResponseWriter, r *http.Request) {
 		Name    string `json:"name"`
 		PEMData string `json:"pem_data"`
 	}
+	r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid request body"})
 		return
@@ -147,6 +148,7 @@ func (h *TrustStoreHandler) uploadCertificate(w http.ResponseWriter, r *http.Req
 		KeyPEMData string `json:"key_pem_data"`
 		AutoRenew  bool   `json:"auto_renew"`
 	}
+	r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid request body"})
 		return
@@ -240,6 +242,7 @@ func (h *TrustStoreHandler) generateCSR(w http.ResponseWriter, r *http.Request) 
 		Organization string `json:"organization"`
 		KeyType      string `json:"key_type"`
 	}
+	r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid request body"})
 		return
@@ -322,6 +325,7 @@ func (h *TrustStoreHandler) HandleMTLSConfig(w http.ResponseWriter, r *http.Requ
 			AllowSelfSigned      *bool   `json:"allow_self_signed"`
 			FallbackToBearer     *bool   `json:"fallback_to_bearer"`
 		}
+		r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 			writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid request body"})
 			return
@@ -362,6 +366,7 @@ func (h *TrustStoreHandler) HandleVerifyCert(w http.ResponseWriter, r *http.Requ
 	var req struct {
 		PEMData string `json:"pem_data"`
 	}
+	r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid request body"})
 		return

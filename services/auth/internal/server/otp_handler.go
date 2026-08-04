@@ -22,6 +22,7 @@ func (h *Handler) handleOTPSend(w http.ResponseWriter, r *http.Request) {
 		Identifier string `json:"identifier"`
 		Channel    string `json:"channel"`
 	}
+	r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		writeError(w, http.StatusBadRequest, "invalid JSON body")
 		return
@@ -93,6 +94,7 @@ func (h *Handler) handleOTPVerify(w http.ResponseWriter, r *http.Request) {
 		Code       string `json:"code"`
 		Channel    string `json:"channel"`
 	}
+	r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		writeError(w, http.StatusBadRequest, "invalid JSON body")
 		return

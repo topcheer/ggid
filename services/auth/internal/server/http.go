@@ -17,8 +17,8 @@ import (
 
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/redis/go-redis/v9"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 
 	"github.com/ggid/ggid/pkg/audit"
 	"github.com/ggid/ggid/pkg/crypto"
@@ -686,6 +686,7 @@ func (h *Handler) verifyCredentials(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var req loginRequest
+	r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		writeError(w, http.StatusBadRequest, "invalid request body")
 		return
@@ -825,6 +826,7 @@ func (h *Handler) register(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var req registerRequest
+	r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		h.writeErrorT(w, r, http.StatusBadRequest, "error.invalid_request_body")
 		return
@@ -933,6 +935,7 @@ func (h *Handler) logout(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var req logoutRequest
+	r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		writeError(w, http.StatusBadRequest, "invalid request body")
 		return
@@ -967,6 +970,7 @@ func (h *Handler) forgotPassword(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var req forgotPasswordRequest
+	r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		writeError(w, http.StatusBadRequest, "invalid request body")
 		return
@@ -1010,6 +1014,7 @@ func (h *Handler) resetPassword(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var req resetPasswordRequest
+	r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		writeError(w, http.StatusBadRequest, "invalid request body")
 		return
@@ -1043,6 +1048,7 @@ func (h *Handler) changePassword(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var req changePasswordRequest
+	r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		writeError(w, http.StatusBadRequest, "invalid request body")
 		return
@@ -1238,6 +1244,7 @@ func (h *Handler) mfaSetup(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var req mfaSetupRequest
+	r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		writeError(w, http.StatusBadRequest, "invalid request body")
 		return
@@ -1313,6 +1320,7 @@ func (h *Handler) mfaVerify(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var req mfaVerifyRequest
+	r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		writeError(w, http.StatusBadRequest, "invalid request body")
 		return
@@ -1393,6 +1401,7 @@ func (h *Handler) mfaDisable(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var req mfaDisableRequest
+	r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		writeError(w, http.StatusBadRequest, "invalid request body")
 		return
@@ -1489,6 +1498,7 @@ func (h *Handler) handleAccountDeletion(w http.ResponseWriter, r *http.Request) 
 		Password string `json:"password"`
 		Confirm  string `json:"confirm"`
 	}
+	r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		writeError(w, http.StatusBadRequest, "invalid request body")
 		return
@@ -1629,6 +1639,7 @@ func (h *Handler) passwordPolicy(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusOK, policy)
 	case http.MethodPost, http.MethodPut:
 		var req PasswordPolicyConfigRequest
+		r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 			writeError(w, http.StatusBadRequest, "invalid request body")
 			return
@@ -1692,6 +1703,7 @@ func (h *Handler) lockoutPolicy(w http.ResponseWriter, r *http.Request) {
 			MaxAttempts  *int    `json:"max_attempts"`
 			LockDuration *string `json:"lock_duration"`
 		}
+		r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 			writeError(w, http.StatusBadRequest, "invalid request body")
 			return
@@ -1934,6 +1946,7 @@ func (h *Handler) magicLink(w http.ResponseWriter, r *http.Request) {
 	var body struct {
 		Email string `json:"email"`
 	}
+	r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
 		writeError(w, http.StatusBadRequest, "invalid request body")
 		return
@@ -1991,6 +2004,7 @@ func (h *Handler) emailVerify(w http.ResponseWriter, r *http.Request) {
 	var body struct {
 		Token string `json:"token"`
 	}
+	r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
 		// Try query param fallback.
 		body.Token = r.URL.Query().Get("token")
@@ -2028,6 +2042,7 @@ func (h *Handler) sendVerification(w http.ResponseWriter, r *http.Request) {
 		Email  string `json:"email"`
 		UserID string `json:"user_id"`
 	}
+	r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
 		writeError(w, http.StatusBadRequest, "invalid request body")
 		return
@@ -2096,6 +2111,7 @@ func (h *Handler) verifyEmail(w http.ResponseWriter, r *http.Request) {
 		var body struct {
 			Token string `json:"token"`
 		}
+		r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
 		if err := json.NewDecoder(r.Body).Decode(&body); err == nil {
 			token = body.Token
 		}
@@ -2297,6 +2313,7 @@ func (h *Handler) phoneOTPSend(w http.ResponseWriter, r *http.Request) {
 		Phone  string `json:"phone"`
 		UserID string `json:"user_id"`
 	}
+	r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
 		writeError(w, http.StatusBadRequest, "invalid request body")
 		return
@@ -2348,6 +2365,7 @@ func (h *Handler) stepUpChallenge(w http.ResponseWriter, r *http.Request) {
 		UserID string `json:"user_id"`
 		Method string `json:"method"` // "password" or "mfa"
 	}
+	r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
 		writeError(w, http.StatusBadRequest, "invalid request body")
 		return
@@ -2383,6 +2401,7 @@ func (h *Handler) stepUpVerify(w http.ResponseWriter, r *http.Request) {
 		Code      string `json:"code"`     // for MFA method
 		Password  string `json:"password"` // for password method
 	}
+	r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
 		writeError(w, http.StatusBadRequest, "invalid request body")
 		return
@@ -2459,6 +2478,7 @@ func (h *Handler) stepUpTrigger(w http.ResponseWriter, r *http.Request) {
 		UserID string `json:"user_id"`
 		Method string `json:"method"`
 	}
+	r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
 		// If user_id not in body, try X-User-ID header.
 		userIDStr := r.Header.Get("X-User-ID")
@@ -2556,6 +2576,7 @@ func (h *Handler) changeEmail(w http.ResponseWriter, r *http.Request) {
 		OldEmail string `json:"old_email"`
 		NewEmail string `json:"new_email"`
 	}
+	r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
 		writeError(w, http.StatusBadRequest, "invalid request body")
 		return
@@ -2606,6 +2627,7 @@ func (h *Handler) verifyEmailChange(w http.ResponseWriter, r *http.Request) {
 			Token string `json:"token"`
 			Step  string `json:"step"`
 		}
+		r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
 		if err := json.NewDecoder(r.Body).Decode(&body); err == nil {
 			token = body.Token
 			if body.Step != "" {
@@ -2688,6 +2710,7 @@ func (h *Handler) riskAssess(w http.ResponseWriter, r *http.Request) {
 		IP        string `json:"ip"`
 		UserAgent string `json:"user_agent"`
 	}
+	r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		writeError(w, http.StatusBadRequest, "invalid request body")
 		return
@@ -2741,6 +2764,7 @@ func (h *Handler) rememberDevice(w http.ResponseWriter, r *http.Request) {
 		Fingerprint string `json:"fingerprint"`
 		DeviceName  string `json:"device_name"`
 	}
+	r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
 		writeError(w, http.StatusBadRequest, "invalid request body")
 		return
@@ -2775,6 +2799,7 @@ func (h *Handler) manageHooks(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case http.MethodPost:
 		var hook service.AuthHook
+		r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
 		if err := json.NewDecoder(r.Body).Decode(&hook); err != nil {
 			writeError(w, http.StatusBadRequest, "invalid request body")
 			return
@@ -2816,6 +2841,7 @@ func (h *Handler) passwordlessRegister(w http.ResponseWriter, r *http.Request) {
 		Username string `json:"username"`
 		Email    string `json:"email"`
 	}
+	r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
 		writeError(w, http.StatusBadRequest, "invalid request body")
 		return
@@ -2867,6 +2893,7 @@ func (h *Handler) mfaWebAuthnBegin(w http.ResponseWriter, r *http.Request) {
 	var body struct {
 		UserID string `json:"user_id"`
 	}
+	r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
 		writeError(w, http.StatusBadRequest, "invalid request body")
 		return
@@ -2910,6 +2937,7 @@ func (h *Handler) idpConfig(w http.ResponseWriter, r *http.Request) {
 
 	case http.MethodPost:
 		var cfg service.IdPConfig
+		r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
 		if err := json.NewDecoder(r.Body).Decode(&cfg); err != nil {
 			writeError(w, http.StatusBadRequest, "invalid request body")
 			return
@@ -2955,6 +2983,7 @@ func (h *Handler) logoutAll(w http.ResponseWriter, r *http.Request) {
 	var body struct {
 		UserID string `json:"user_id"`
 	}
+	r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
 		writeError(w, http.StatusBadRequest, "invalid request body")
 		return
@@ -2987,6 +3016,7 @@ func (h *Handler) emailChange(w http.ResponseWriter, r *http.Request) {
 		OldEmail string `json:"old_email"`
 		NewEmail string `json:"new_email"`
 	}
+	r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
 		writeError(w, http.StatusBadRequest, "invalid request body")
 		return
@@ -3023,6 +3053,7 @@ func (h *Handler) emailChangeConfirm(w http.ResponseWriter, r *http.Request) {
 		Token string `json:"token"`
 		Step  string `json:"step"` // "old" or "new"
 	}
+	r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
 		writeError(w, http.StatusBadRequest, "invalid request body")
 		return
@@ -3100,6 +3131,7 @@ func (h *Handler) dbConnectionsSignup(w http.ResponseWriter, r *http.Request) {
 		Connection string `json:"connection"`
 		ClientID   string `json:"client_id"`
 	}
+	r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
 		writeError(w, http.StatusBadRequest, "invalid request body")
 		return
@@ -3172,6 +3204,7 @@ func (h *Handler) forceLogout(w http.ResponseWriter, r *http.Request) {
 		UserID          string `json:"user_id"`
 		ExceptSessionID string `json:"except_session_id"`
 	}
+	r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
 		writeError(w, http.StatusBadRequest, "invalid request body")
 		return
@@ -3243,6 +3276,7 @@ func (h *Handler) sessionLimit(w http.ResponseWriter, r *http.Request) {
 		TenantID string `json:"tenant_id"`
 		UserID   string `json:"user_id"`
 	}
+	r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
 		writeError(w, http.StatusBadRequest, "invalid request body")
 		return
@@ -3300,6 +3334,7 @@ func (h *Handler) securityPasswordPolicy(w http.ResponseWriter, r *http.Request)
 			HistoryCount   int      `json:"history_count"`
 			MaxAttempts    int      `json:"max_attempts"`
 		}
+		r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
 		if err := json.NewDecoder(r.Body).Decode(&policy); err != nil {
 			writeError(w, http.StatusBadRequest, "invalid JSON body")
 			return

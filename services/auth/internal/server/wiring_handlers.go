@@ -76,6 +76,7 @@ func (h *Handler) handleImpersonate(w http.ResponseWriter, r *http.Request) {
 		TenantID       string `json:"tenant_id"`
 		Reason         string `json:"reason"`
 	}
+	r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid JSON"})
 		return
@@ -248,6 +249,7 @@ func (h *Handler) handleImpersonateRevoke(w http.ResponseWriter, r *http.Request
 	var req struct {
 		TokenID string `json:"token_id"`
 	}
+	r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid JSON"})
 		return
@@ -298,6 +300,7 @@ func (h *Handler) handleConditionalUI(w http.ResponseWriter, r *http.Request) {
 		UserVerification string   `json:"user_verification"`
 		CredentialIDs    [][]byte `json:"credential_ids"`
 	}
+	r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid JSON"})
 		return
@@ -322,6 +325,7 @@ func (h *Handler) handleSendNotification(w http.ResponseWriter, r *http.Request)
 		Subject string `json:"subject"`
 		Body    string `json:"body"`
 	}
+	r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid JSON"})
 		return
@@ -378,6 +382,7 @@ func (h *Handler) handlePasswordHistoryCheck(w http.ResponseWriter, r *http.Requ
 		UserID   string `json:"user_id"`
 		Password string `json:"password"`
 	}
+	r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid request body"})
 		return

@@ -26,7 +26,11 @@ func (h *Handler) handleDevicePostureConfig(w http.ResponseWriter, r *http.Reque
 		return
 	}
 	var req map[string]any
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil { writeError(w, http.StatusBadRequest, "invalid request body"); return }
+	r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		writeError(w, http.StatusBadRequest, "invalid request body")
+		return
+	}
 	writeJSON(w, http.StatusOK, req)
 }
 
@@ -36,7 +40,11 @@ func (h *Handler) handleIDPMetadataImport(w http.ResponseWriter, r *http.Request
 		MetadataXML string `json:"metadata_xml"`
 		MetadataURL string `json:"metadata_url"`
 	}
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil { writeError(w, http.StatusBadRequest, "invalid request body"); return }
+	r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		writeError(w, http.StatusBadRequest, "invalid request body")
+		return
+	}
 	writeJSON(w, http.StatusOK, map[string]any{
 		"status": "imported", "entity_id": "imported-idp",
 		"certificate": "", "sso_url": "",
@@ -48,10 +56,14 @@ func (h *Handler) handleIDPMetadataPreview(w http.ResponseWriter, r *http.Reques
 	var req struct {
 		MetadataXML string `json:"metadata_xml"`
 	}
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil { writeError(w, http.StatusBadRequest, "invalid request body"); return }
+	r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		writeError(w, http.StatusBadRequest, "invalid request body")
+		return
+	}
 	writeJSON(w, http.StatusOK, map[string]any{
 		"entity_id": "preview-idp", "name": "Preview IDP",
-		"bindings":  []string{"urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST"},
+		"bindings": []string{"urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST"},
 	})
 }
 
@@ -89,7 +101,11 @@ func (h *Handler) handleOrchestratorResolve(w http.ResponseWriter, r *http.Reque
 	var req struct {
 		Identifier string `json:"identifier"`
 	}
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil { writeError(w, http.StatusBadRequest, "invalid request body"); return }
+	r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		writeError(w, http.StatusBadRequest, "invalid request body")
+		return
+	}
 	writeJSON(w, http.StatusOK, map[string]any{
 		"identifier": req.Identifier,
 		"methods":    []string{"password", "webauthn"},
@@ -100,20 +116,20 @@ func (h *Handler) handleOrchestratorResolve(w http.ResponseWriter, r *http.Reque
 // GET /api/v1/auth/password-breach-check/
 func (h *Handler) handlePasswordBreachCheck(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, map[string]any{
-		"enabled":         true,
-		"last_scan":       "",
-		"breached_count":  0,
-		"total_checked":   0,
+		"enabled":        true,
+		"last_scan":      "",
+		"breached_count": 0,
+		"total_checked":  0,
 	})
 }
 
 // POST /api/v1/auth/password-breach-check/scan
 func (h *Handler) handlePasswordBreachScan(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, map[string]any{
-		"status":          "completed",
-		"checked":         0,
-		"breached":        0,
-		"notified":        0,
+		"status":   "completed",
+		"checked":  0,
+		"breached": 0,
+		"notified": 0,
 	})
 }
 
@@ -130,16 +146,20 @@ func (h *Handler) handleSAMLAttributeMapping(w http.ResponseWriter, r *http.Requ
 		return
 	}
 	var req map[string]any
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil { writeError(w, http.StatusBadRequest, "invalid request body"); return }
+	r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		writeError(w, http.StatusBadRequest, "invalid request body")
+		return
+	}
 	writeJSON(w, http.StatusOK, req)
 }
 
 // GET /api/v1/auth/session-inspector/
 func (h *Handler) handleSessionInspector(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, map[string]any{
-		"sessions":   []map[string]any{},
-		"total":      0,
-		"anomalies":  0,
+		"sessions":  []map[string]any{},
+		"total":     0,
+		"anomalies": 0,
 	})
 }
 
@@ -156,7 +176,11 @@ func (h *Handler) handleStepUpTrigger(w http.ResponseWriter, r *http.Request) {
 		UserID string `json:"user_id"`
 		Method string `json:"method"`
 	}
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil { writeError(w, http.StatusBadRequest, "invalid request body"); return }
+	r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		writeError(w, http.StatusBadRequest, "invalid request body")
+		return
+	}
 	if req.Method == "" {
 		req.Method = "webauthn"
 	}

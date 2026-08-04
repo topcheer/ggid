@@ -56,6 +56,7 @@ func (h *Handler) handleDeviceBind(w http.ResponseWriter, r *http.Request) {
 		UserAgent   string `json:"user_agent"`
 		IPAddress   string `json:"ip_address"`
 	}
+	r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		writeError(w, http.StatusBadRequest, "invalid request body")
 		return
@@ -87,6 +88,7 @@ func (h *Handler) handleDeviceCheck(w http.ResponseWriter, r *http.Request) {
 		TokenJTI    string `json:"token_jti"`
 		Fingerprint string `json:"fingerprint"`
 	}
+	r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		writeError(w, http.StatusBadRequest, "invalid request body")
 		return
@@ -110,6 +112,7 @@ func (h *Handler) handleDeviceUnbind(w http.ResponseWriter, r *http.Request) {
 	var req struct {
 		TokenJTI string `json:"token_jti"`
 	}
+	r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		writeError(w, http.StatusBadRequest, "invalid request body")
 		return
