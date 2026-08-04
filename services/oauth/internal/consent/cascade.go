@@ -275,6 +275,7 @@ func (e *Engine) invalidateSessions(ctx context.Context, userID, tenantID, scope
 	// preventing injection of " or \ characters that could break JSON or add extra scopes.
 	scopeJSON, err := json.Marshal([]string{scope})
 	if err != nil {
+		slog.Error("consent cascade: failed to marshal scope", "error", err)
 		return nil
 	}
 	// SECURITY (R93 P1): Include tenant_id in WHERE to enforce tenant isolation.
@@ -282,14 +283,21 @@ func (e *Engine) invalidateSessions(ctx context.Context, userID, tenantID, scope
 		`UPDATE sessions SET revoked_at = now() WHERE tenant_id = $1 AND user_id = $2 AND metadata->'scopes' @> $3::jsonb RETURNING id::text`,
 		tenantID, userID, scopeJSON)
 	if err != nil {
+		slog.Error("consent cascade: invalidateSessions query failed", "error", err, "user_id", userID)
 		return nil
 	}
 	defer rows.Close()
 	var sessions []string
 	for rows.Next() {
 		var id string
-		rows.Scan(&id)
+		if err := rows.Scan(&id); err != nil {
+			slog.Error("consent cascade: session ID scan failed", "error", err)
+			continue
+		}
 		sessions = append(sessions, id)
+	}
+	if err := rows.Err(); err != nil {
+		slog.Error("consent cascade: rows iteration error", "error", err)
 	}
 	return sessions
 }
