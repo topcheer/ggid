@@ -345,8 +345,8 @@ func (r *ProtectedAppRouter) resolveDevicePosture(tenantID, deviceID string) *De
 		}
 	}
 
-	// Query identity service.
-	url := "http://localhost:8081/api/v1/identity/devices/" + deviceID + "/posture"
+	// SECURITY: Escape deviceID to prevent path traversal (e.g. ../users/admin).
+	url := "http://localhost:8081/api/v1/identity/devices/" + url.PathEscape(deviceID) + "/posture"
 	httpReq, _ := http.NewRequest("GET", url, nil)
 	httpReq.Header.Set("X-Tenant-ID", tenantID)
 	resp, err := postureHTTPClient.Do(httpReq)
