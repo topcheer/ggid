@@ -23,14 +23,14 @@ func (h *HTTPHandler) handleSystemConfig(w http.ResponseWriter, r *http.Request)
 	}
 
 	// SECURITY: only admins can read or write system config.
-	isAdmin := r.Header.Get("X-Is-Admin") == "true"
-	if !isAdmin {
-		scopes := r.Header.Get("X-Scopes")
-		for _, s := range strings.Split(scopes, ",") {
-			if strings.TrimSpace(s) == "admin" || strings.TrimSpace(s) == "system:config" {
-				isAdmin = true
-				break
-			}
+	// X-Scopes is gateway-derived (stripped from client, set from verified JWT).
+	// Never trust X-Is-Admin - it's a client-controllable header.
+	isAdmin := false
+	scopes := r.Header.Get("X-Scopes")
+	for _, s := range strings.Split(scopes, ",") {
+		if strings.TrimSpace(s) == "platform:admin" || strings.TrimSpace(s) == "system:config" {
+			isAdmin = true
+			break
 		}
 	}
 	if !isAdmin {
