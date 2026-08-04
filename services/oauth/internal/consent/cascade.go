@@ -314,6 +314,7 @@ func (e *Engine) revokeAllTokens(ctx context.Context, userID, tenantID string) [
 	// SECURITY (R93 P1): Include tenant_id to enforce tenant isolation.
 	ct, err := e.pool.Exec(ctx, `UPDATE refresh_tokens SET revoked_at = now() WHERE revoked_at IS NULL AND tenant_id = $1 AND user_id = $2`, tenantID, userID)
 	if err != nil {
+		slog.Error("consent cascade: revokeAllTokens failed", "error", err, "user_id", userID)
 		return nil
 	}
 	count := ct.RowsAffected()
@@ -327,6 +328,7 @@ func (e *Engine) revokeAllSessions(ctx context.Context, userID, tenantID string)
 	// SECURITY (R93 P1): Include tenant_id to enforce tenant isolation.
 	ct, err := e.pool.Exec(ctx, `UPDATE sessions SET revoked_at = now() WHERE tenant_id = $1 AND user_id = $2 AND revoked_at IS NULL`, tenantID, userID)
 	if err != nil {
+		slog.Error("consent cascade: revokeAllSessions failed", "error", err, "user_id", userID)
 		return nil
 	}
 	count := ct.RowsAffected()
