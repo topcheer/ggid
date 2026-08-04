@@ -57,6 +57,7 @@ func handleClientRateLimits(w http.ResponseWriter, r *http.Request) {
 			Burst          int `json:"burst"`
 			DailyQuota     int `json:"daily_quota"`
 		}
+		r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 			writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid JSON body"})
 			return
@@ -83,11 +84,11 @@ func handleClientRateLimits(w http.ResponseWriter, r *http.Request) {
 		clientRateLimitStore.Unlock()
 
 		writeJSON(w, http.StatusOK, map[string]any{
-			"client_id":       clientID,
+			"client_id":        clientID,
 			"requests_per_min": req.RequestsPerMin,
-			"burst":           req.Burst,
-			"daily_quota":     req.DailyQuota,
-			"updated":         true,
+			"burst":            req.Burst,
+			"daily_quota":      req.DailyQuota,
+			"updated":          true,
 		})
 
 	default:

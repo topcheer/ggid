@@ -10,27 +10,27 @@ import (
 )
 
 type PendingConsentRequest struct {
-	RequestID        string   `json:"request_id"`
-	AgentName        string   `json:"agent_name"`
-	RequestedScopes  []string `json:"requested_scopes"`
-	Resource         string   `json:"resource"`
-	Justification    string   `json:"justification"`
-	RequestedAt      string   `json:"requested_at"`
+	RequestID       string   `json:"request_id"`
+	AgentName       string   `json:"agent_name"`
+	RequestedScopes []string `json:"requested_scopes"`
+	Resource        string   `json:"resource"`
+	Justification   string   `json:"justification"`
+	RequestedAt     string   `json:"requested_at"`
 }
 
 type ConsentHistoryEntry struct {
-	AgentID    string `json:"agent_id"`
-	UserID     string `json:"user_id"`
-	Scopes     []string `json:"scopes"`
-	GrantedAt  string `json:"granted_at"`
-	RevokedAt  string `json:"revoked_at,omitempty"`
+	AgentID   string   `json:"agent_id"`
+	UserID    string   `json:"user_id"`
+	Scopes    []string `json:"scopes"`
+	GrantedAt string   `json:"granted_at"`
+	RevokedAt string   `json:"revoked_at,omitempty"`
 }
 
 type AgentConsentResult struct {
-	AgentID          string                  `json:"agent_id"`
-	PendingRequests  []PendingConsentRequest `json:"pending_requests"`
-	ConsentHistory   []ConsentHistoryEntry   `json:"consent_history"`
-	AutoExpireHours  int                     `json:"auto_expire_hours"`
+	AgentID         string                  `json:"agent_id"`
+	PendingRequests []PendingConsentRequest `json:"pending_requests"`
+	ConsentHistory  []ConsentHistoryEntry   `json:"consent_history"`
+	AutoExpireHours int                     `json:"auto_expire_hours"`
 }
 
 var agentConsentStore sync.Map
@@ -61,11 +61,12 @@ func handleAgentConsent(w http.ResponseWriter, r *http.Request) {
 		json.NewEncoder(w).Encode(result)
 	case http.MethodPost:
 		var req struct {
-			Action   string   `json:"action"`
-			RequestID string  `json:"request_id"`
-			UserID   string   `json:"user_id"`
-			Scopes   []string `json:"scopes"`
+			Action    string   `json:"action"`
+			RequestID string   `json:"request_id"`
+			UserID    string   `json:"user_id"`
+			Scopes    []string `json:"scopes"`
 		}
+		r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 			writeJSONError(w, http.StatusBadRequest, "invalid request body")
 			return

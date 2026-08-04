@@ -12,12 +12,12 @@ import (
 
 // clientEvent represents a lifecycle event for an OAuth client.
 type clientEvent struct {
-	ID         string `json:"id"`
-	ClientID   string `json:"client_id"`
-	EventType  string `json:"event_type"` // created, updated, rotated, suspended, reinstated
-	ActorID    string `json:"actor_id"`
-	Detail     string `json:"detail"`
-	Timestamp  string `json:"timestamp"`
+	ID        string `json:"id"`
+	ClientID  string `json:"client_id"`
+	EventType string `json:"event_type"` // created, updated, rotated, suspended, reinstated
+	ActorID   string `json:"actor_id"`
+	Detail    string `json:"detail"`
+	Timestamp string `json:"timestamp"`
 }
 
 // recordClientEvent adds a lifecycle event for the given client (thread-safe).
@@ -89,6 +89,7 @@ func handleClientEvents(w http.ResponseWriter, r *http.Request) {
 			ActorID   string `json:"actor_id"`
 			Detail    string `json:"detail"`
 		}
+		r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 			writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid JSON body"})
 			return
