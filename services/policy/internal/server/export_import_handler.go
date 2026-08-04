@@ -88,7 +88,9 @@ func (s *HTTPServer) handlePolicyExportImport(w http.ResponseWriter, r *http.Req
 
 	case http.MethodPost:
 		var pkg policyPackage
-		if err := json.NewDecoder(r.Body).Decode(&pkg); err != nil {
+		r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
+		r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
+	if err := json.NewDecoder(r.Body).Decode(&pkg); err != nil {
 			writeJSONError(w, http.StatusBadRequest, "invalid JSON body")
 			return
 		}

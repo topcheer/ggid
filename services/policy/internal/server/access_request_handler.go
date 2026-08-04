@@ -112,6 +112,7 @@ func (s *HTTPServer) createAccessRequest(w http.ResponseWriter, r *http.Request)
 		Justification string `json:"justification"`
 		ExpiryHours   int    `json:"expiry_hours"`
 	}
+	r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		writeJSONError(w, http.StatusBadRequest, "invalid JSON body")
 		return
@@ -187,6 +188,7 @@ func (s *HTTPServer) reviewAccessRequest(w http.ResponseWriter, r *http.Request,
 		ApproverID string `json:"approver_id"`
 		Note       string `json:"review_note"`
 	}
+	r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		writeJSONError(w, http.StatusBadRequest, "invalid request body")
 		return

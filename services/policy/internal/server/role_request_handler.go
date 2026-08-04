@@ -72,6 +72,7 @@ func (s *HTTPServer) createRoleRequest(w http.ResponseWriter, r *http.Request) {
 		Reason   string `json:"reason"`
 		Duration string `json:"duration"`
 	}
+	r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		writeJSONError(w, http.StatusBadRequest, "invalid JSON body")
 		return
@@ -140,6 +141,7 @@ func (s *HTTPServer) approveRoleRequest(w http.ResponseWriter, r *http.Request, 
 		ApproverID string `json:"approver_id"`
 		Comment    string `json:"comment"`
 	}
+	r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
 		writeJSONError(w, http.StatusBadRequest, "invalid JSON body")
 		return
@@ -185,6 +187,7 @@ func (s *HTTPServer) rejectRoleRequest(w http.ResponseWriter, r *http.Request, r
 		ApproverID string `json:"approver_id"`
 		Comment    string `json:"comment"`
 	}
+	r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
 		writeJSONError(w, http.StatusBadRequest, "invalid JSON body")
 		return

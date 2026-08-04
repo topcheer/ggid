@@ -48,7 +48,9 @@ func (s *HTTPServer) handleReviewDelegation(w http.ResponseWriter, r *http.Reque
 			Scope            string `json:"scope"`
 			ExpiresAt        string `json:"expires_at"`
 		}
-		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
+		r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 			writeJSONError(w, http.StatusBadRequest, "invalid JSON body")
 			return
 		}

@@ -19,6 +19,7 @@ func (s *HTTPServer) handleSoDCheck(w http.ResponseWriter, r *http.Request) {
 		UserID string   `json:"user_id"`
 		Roles  []string `json:"roles"`
 	}
+	r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid JSON"})
 		return

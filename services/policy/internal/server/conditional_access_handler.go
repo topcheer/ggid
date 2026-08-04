@@ -39,7 +39,9 @@ func (s *HTTPServer) handleConditionalAccess(w http.ResponseWriter, r *http.Requ
 			Enabled    *bool          `json:"enabled"`
 			Priority   int            `json:"priority"`
 		}
-		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
+		r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 			writeJSONError(w, http.StatusBadRequest, "invalid JSON body")
 			return
 		}
@@ -135,7 +137,9 @@ func (s *HTTPServer) handleConditionalAccess(w http.ResponseWriter, r *http.Requ
 			Enabled    *bool          `json:"enabled"`
 			Priority   int            `json:"priority"`
 		}
-		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
+		r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 			writeJSONError(w, http.StatusBadRequest, "invalid JSON body")
 			return
 		}
@@ -200,6 +204,7 @@ func (s *HTTPServer) handleConditionalAccessEvaluate(w http.ResponseWriter, r *h
 		TenantID string         `json:"tenant_id"`
 		Context  map[string]any `json:"context"`
 	}
+	r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		writeJSONError(w, http.StatusBadRequest, "invalid JSON body")
 		return

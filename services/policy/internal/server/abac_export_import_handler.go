@@ -61,7 +61,9 @@ func (s *HTTPServer) handleABACExportImport(w http.ResponseWriter, r *http.Reque
 
 	case http.MethodPost:
 		var ps ABACPolicySet
-		if err := json.NewDecoder(r.Body).Decode(&ps); err != nil {
+		r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
+		r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
+	if err := json.NewDecoder(r.Body).Decode(&ps); err != nil {
 			writeJSONError(w, http.StatusBadRequest, "invalid JSON body")
 			return
 		}

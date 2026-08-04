@@ -44,7 +44,9 @@ func (s *HTTPServer) handleDelegationConfig(w http.ResponseWriter, r *http.Reque
 		json.NewEncoder(w).Encode(globalDelegationConfig)
 	case http.MethodPut:
 		var cfg DelegationConfig
-		if err := json.NewDecoder(r.Body).Decode(&cfg); err != nil {
+		r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
+		r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
+	if err := json.NewDecoder(r.Body).Decode(&cfg); err != nil {
 			writeJSONError(w, http.StatusBadRequest, "invalid request body")
 			return
 		}

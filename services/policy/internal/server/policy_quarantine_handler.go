@@ -44,6 +44,7 @@ func (s *HTTPServer) handlePolicyQuarantine(w http.ResponseWriter, r *http.Reque
 	}
 
 	var req QuarantineRequest
+	r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		req = QuarantineRequest{Reason: "manual quarantine", DurationHours: 24}
 	}

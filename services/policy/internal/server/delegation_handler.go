@@ -28,6 +28,7 @@ func (s *HTTPServer) handleDelegate(w http.ResponseWriter, r *http.Request) {
 		Permissions  []string `json:"permissions"`
 		MaxDurationH int      `json:"max_duration_hours"`
 	}
+	r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid JSON"})
 		return

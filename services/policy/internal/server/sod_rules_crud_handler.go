@@ -31,7 +31,9 @@ func (s *HTTPServer) handleSoDRules(w http.ResponseWriter, r *http.Request) {
 			RoleB       string `json:"role_b"`
 			Description string `json:"description"`
 		}
-		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
+		r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 			writeJSONError(w, http.StatusBadRequest, "invalid JSON body")
 			return
 		}
@@ -92,7 +94,9 @@ func (s *HTTPServer) handleSoDRules(w http.ResponseWriter, r *http.Request) {
 			Description string `json:"description"`
 			Enabled     *bool  `json:"enabled"`
 		}
-		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
+		r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 			writeJSONError(w, http.StatusBadRequest, "invalid JSON body")
 			return
 		}

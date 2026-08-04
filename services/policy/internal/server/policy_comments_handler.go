@@ -77,7 +77,9 @@ func (s *HTTPServer) handlePolicyComments(w http.ResponseWriter, r *http.Request
 			Body     string `json:"body"`
 			ParentID string `json:"parent_id"`
 		}
-		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
+		r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 			writeJSONError(w, http.StatusBadRequest, "invalid JSON body")
 			return
 		}

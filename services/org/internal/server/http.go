@@ -322,6 +322,7 @@ func (s *HTTPServer) updateOrg(w http.ResponseWriter, r *http.Request, id uuid.U
 	var req struct {
 		Name string `json:"name"`
 	}
+	r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		writeJSONError(w, http.StatusBadRequest, "invalid JSON body")
 		return
@@ -360,7 +361,8 @@ func (s *HTTPServer) handleOrgMembers(w http.ResponseWriter, r *http.Request, or
 			UserID string `json:"user_id"`
 			Title  string `json:"title"`
 		}
-		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 			writeJSONError(w, http.StatusBadRequest, "invalid JSON body")
 			return
 		}
@@ -522,6 +524,7 @@ func (s *HTTPServer) createOrg(w http.ResponseWriter, r *http.Request) {
 		ParentID string `json:"parent_id"`
 		Name     string `json:"name"`
 	}
+	r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		writeJSONError(w, http.StatusBadRequest, "invalid JSON body")
 		return
@@ -649,6 +652,7 @@ func (s *HTTPServer) createDept(w http.ResponseWriter, r *http.Request) {
 		Name      string `json:"name"`
 		ManagerID string `json:"manager_id"`
 	}
+	r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		writeJSONError(w, http.StatusBadRequest, "invalid JSON body")
 		return
@@ -796,6 +800,7 @@ func (s *HTTPServer) createTeam(w http.ResponseWriter, r *http.Request) {
 		Description string `json:"description"`
 		CreatedBy   string `json:"created_by"`
 	}
+	r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		writeJSONError(w, http.StatusBadRequest, "invalid JSON body")
 		return
@@ -862,6 +867,7 @@ func (s *HTTPServer) updateDept(w http.ResponseWriter, r *http.Request, id uuid.
 		Name      string `json:"name"`
 		ManagerID string `json:"manager_id"`
 	}
+	r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		writeJSONError(w, http.StatusBadRequest, "invalid JSON body")
 		return
@@ -918,6 +924,7 @@ func (s *HTTPServer) updateTeam(w http.ResponseWriter, r *http.Request, id uuid.
 		Name        string `json:"name"`
 		Description string `json:"description"`
 	}
+	r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		writeJSONError(w, http.StatusBadRequest, "invalid JSON body")
 		return
@@ -1016,7 +1023,8 @@ func (s *HTTPServer) handleOrgRoles(w http.ResponseWriter, r *http.Request, orgI
 		var req struct {
 			RoleID string `json:"role_id"`
 		}
-		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 			writeJSONError(w, http.StatusBadRequest, "invalid JSON body")
 			return
 		}
@@ -1215,6 +1223,7 @@ func (s *HTTPServer) handleBulkAddMembers(w http.ResponseWriter, r *http.Request
 		UserIDs []string `json:"user_ids"`
 		Role    string   `json:"role"`
 	}
+	r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		writeJSONError(w, http.StatusBadRequest, "invalid JSON body")
 		return
@@ -1273,6 +1282,7 @@ func (s *HTTPServer) handleBulkRemoveMembers(w http.ResponseWriter, r *http.Requ
 		TenantID string   `json:"tenant_id"`
 		UserIDs  []string `json:"user_ids"`
 	}
+	r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		writeJSONError(w, http.StatusBadRequest, "invalid JSON body")
 		return

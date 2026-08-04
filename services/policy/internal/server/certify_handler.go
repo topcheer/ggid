@@ -33,7 +33,9 @@ func (s *HTTPServer) handleCertify(w http.ResponseWriter, r *http.Request) {
 			Decision   string `json:"decision"`
 			Comment    string `json:"comment"`
 		}
-		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
+		r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 			writeJSONError(w, http.StatusBadRequest, "invalid JSON")
 			return
 		}

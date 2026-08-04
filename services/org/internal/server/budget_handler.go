@@ -84,7 +84,8 @@ func (s *HTTPServer) handleOrgBudget(w http.ResponseWriter, r *http.Request) {
 				Headcount     int     `json:"headcount"`
 				HeadcountCost float64 `json:"headcount_cost"`
 			}
-			if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 				writeJSONError(w, http.StatusBadRequest, "invalid JSON")
 				return
 			}

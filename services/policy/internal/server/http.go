@@ -319,7 +319,9 @@ func (s *HTTPServer) handleRoleByID(w http.ResponseWriter, r *http.Request) {
 			Name        *string `json:"name,omitempty"`
 			Description *string `json:"description,omitempty"`
 		}
-		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
+		r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 			writeJSONError(w, http.StatusBadRequest, "invalid request body")
 			return
 		}
@@ -442,6 +444,7 @@ func (s *HTTPServer) handleSetRoleParent(w http.ResponseWriter, r *http.Request,
 	var req struct {
 		ParentRoleID string `json:"parent_role_id"`
 	}
+	r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		writeJSONError(w, http.StatusBadRequest, "invalid JSON body")
 		return
@@ -493,6 +496,7 @@ func (s *HTTPServer) handleAssignRole(w http.ResponseWriter, r *http.Request) {
 		RoleID string `json:"role_id"`
 		UserID string `json:"user_id"`
 	}
+	r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		writeJSONError(w, http.StatusBadRequest, "invalid JSON body")
 		return
@@ -593,6 +597,7 @@ func (s *HTTPServer) handleBulkAssign(w http.ResponseWriter, r *http.Request, ro
 	var req struct {
 		UserIDs []string `json:"user_ids"`
 	}
+	r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		writeJSONError(w, http.StatusBadRequest, "invalid JSON body")
 		return
@@ -673,6 +678,7 @@ func (s *HTTPServer) createRole(w http.ResponseWriter, r *http.Request) {
 		Description  string `json:"description"`
 		ParentRoleID string `json:"parent_role_id"`
 	}
+	r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		writeJSONError(w, http.StatusBadRequest, "invalid JSON body")
 		return
@@ -798,6 +804,7 @@ func (s *HTTPServer) createPermission(w http.ResponseWriter, r *http.Request) {
 		Action       string `json:"action"`
 		Description  string `json:"description"`
 	}
+	r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		writeJSONError(w, http.StatusBadRequest, "invalid JSON body")
 		return
@@ -953,7 +960,9 @@ func (s *HTTPServer) handlePolicyByID(w http.ResponseWriter, r *http.Request) {
 			Resources   []string `json:"resources"`
 			Priority    int      `json:"priority"`
 		}
-		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
+		r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 			writeJSONError(w, http.StatusBadRequest, "invalid JSON body")
 			return
 		}
@@ -1023,6 +1032,7 @@ func (s *HTTPServer) createPolicy(w http.ResponseWriter, r *http.Request) {
 		Resources   []string `json:"resources"`
 		Priority    int      `json:"priority"`
 	}
+	r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		writeJSONError(w, http.StatusBadRequest, "invalid JSON body")
 		return
@@ -1101,6 +1111,7 @@ func (s *HTTPServer) handleCheck(w http.ResponseWriter, r *http.Request) {
 		Conditions   map[string]any `json:"conditions"`
 		Attributes   map[string]any `json:"attributes"`
 	}
+	r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		writeJSONError(w, http.StatusBadRequest, "invalid JSON body")
 		return
@@ -1180,6 +1191,7 @@ func (s *HTTPServer) handleEvaluate(w http.ResponseWriter, r *http.Request) {
 		Resource     string         `json:"resource"`
 		Attributes   map[string]any `json:"attributes"`
 	}
+	r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		writeJSONError(w, http.StatusBadRequest, "invalid JSON body")
 		return
@@ -1280,7 +1292,9 @@ func (s *HTTPServer) handleRolePermissions(w http.ResponseWriter, r *http.Reques
 			PermissionIDs []string `json:"permission_ids"`
 			Permissions   []string `json:"permissions"`
 		}
-		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
+		r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 			writeJSONError(w, http.StatusBadRequest, "invalid JSON body")
 			return
 		}
@@ -1321,7 +1335,9 @@ func (s *HTTPServer) handleRolePermissions(w http.ResponseWriter, r *http.Reques
 		var req struct {
 			PermissionIDs []string `json:"permission_ids"`
 		}
-		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
+		r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 			writeJSONError(w, http.StatusBadRequest, "invalid JSON body")
 			return
 		}
@@ -1648,7 +1664,9 @@ func (s *HTTPServer) handleAttributeMapping(w http.ResponseWriter, r *http.Reque
 			TenantID  string `json:"tenant_id"`
 			Action    string `json:"action"` // "assign_role" or "deny"
 		}
-		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
+		r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 			writeJSONError(w, http.StatusBadRequest, "invalid JSON body")
 			return
 		}
@@ -1763,6 +1781,7 @@ func (s *HTTPServer) handlePolicyImport(w http.ResponseWriter, r *http.Request) 
 			Description string         `json:"description"`
 		} `json:"policies"`
 	}
+	r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		writeJSONError(w, http.StatusBadRequest, "invalid JSON body")
 		return
@@ -1926,7 +1945,9 @@ func (s *HTTPServer) handleDefaultAction(w http.ResponseWriter, r *http.Request)
 		var req struct {
 			DefaultAction string `json:"default_action"`
 		}
-		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
+		r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 			writeJSONError(w, http.StatusBadRequest, "invalid JSON body")
 			return
 		}
@@ -1997,7 +2018,9 @@ func (s *HTTPServer) handleTimeConditions(w http.ResponseWriter, r *http.Request
 			Timezone    string `json:"timezone"`     // "America/New_York"
 			Effect      string `json:"effect"`       // "allow" or "deny"
 		}
-		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
+		r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 			writeJSONError(w, http.StatusBadRequest, "invalid JSON body")
 			return
 		}
@@ -2050,6 +2073,7 @@ func (s *HTTPServer) handleDryRun(w http.ResponseWriter, r *http.Request) {
 		Attributes map[string]any `json:"attributes"`
 		TenantID   string         `json:"tenant_id"`
 	}
+	r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		writeJSONError(w, http.StatusBadRequest, "invalid JSON body")
 		return

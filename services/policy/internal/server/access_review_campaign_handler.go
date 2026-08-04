@@ -101,6 +101,7 @@ func (s *HTTPServer) createReviewCampaign(w http.ResponseWriter, r *http.Request
 		ReviewerID    string `json:"reviewer_id"`
 		DeadlineHours int    `json:"deadline_hours"`
 	}
+	r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		writeJSONError(w, http.StatusBadRequest, "invalid JSON body")
 		return
@@ -253,6 +254,7 @@ func (s *HTTPServer) submitReviewCampaign(w http.ResponseWriter, r *http.Request
 		Decision string `json:"decision"`
 		Notes    string `json:"notes"`
 	}
+	r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		writeJSONError(w, http.StatusBadRequest, "invalid JSON body")
 		return

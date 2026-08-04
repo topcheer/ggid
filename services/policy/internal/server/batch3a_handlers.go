@@ -25,7 +25,9 @@ func (s *HTTPServer) handleAccessCertificationCampaigns(w http.ResponseWriter, r
 	}
 	if r.Method == http.MethodPost {
 		var req map[string]any
-		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
+		r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 			writeJSONError(w, http.StatusBadRequest, "invalid request body")
 			return
 		}
@@ -63,7 +65,9 @@ func (s *HTTPServer) handleAccessRequestCRUD(w http.ResponseWriter, r *http.Requ
 			DurationDays  int    `json:"duration_days"`
 			Approver      string `json:"approver"`
 		}
-		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
+		r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 			writeJSONError(w, http.StatusBadRequest, "invalid request body")
 			return
 		}
@@ -93,6 +97,7 @@ func (s *HTTPServer) handlePolicyAsCodeImport(w http.ResponseWriter, r *http.Req
 		YAML string `json:"yaml"`
 		Name string `json:"name"`
 	}
+	r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		writeJSONError(w, http.StatusBadRequest, "invalid request body")
 		return
@@ -137,6 +142,7 @@ func (s *HTTPServer) handlePrivilegedAccessBatchRevoke(w http.ResponseWriter, r 
 		AccountIDs []string `json:"account_ids"`
 		Reason     string   `json:"reason"`
 	}
+	r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		writeJSONError(w, http.StatusBadRequest, "invalid request body")
 		return
@@ -298,6 +304,7 @@ func (s *HTTPServer) handleRoleMiningApply(w http.ResponseWriter, r *http.Reques
 		AnalysisID string `json:"analysis_id"`
 		RoleName   string `json:"role_name"`
 	}
+	r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		writeJSONError(w, http.StatusBadRequest, "invalid request body")
 		return
@@ -375,6 +382,7 @@ func (s *HTTPServer) handleSoDMatrixToggle(w http.ResponseWriter, r *http.Reques
 		RuleID  string `json:"rule_id"`
 		Enabled bool   `json:"enabled"`
 	}
+	r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		writeJSONError(w, http.StatusBadRequest, "invalid request body")
 		return

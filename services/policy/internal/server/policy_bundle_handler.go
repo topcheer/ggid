@@ -24,7 +24,9 @@ func (s *HTTPServer) handleBundles(w http.ResponseWriter, r *http.Request) {
 			PolicyIDs []string `json:"policy_ids"`
 			Version   string   `json:"version"`
 		}
-		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
+		r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 			writeJSONError(w, http.StatusBadRequest, "invalid JSON")
 			return
 		}

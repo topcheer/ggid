@@ -38,6 +38,7 @@ func (s *HTTPServer) handlePolicySimulate(w http.ResponseWriter, r *http.Request
 		ProposedRules []map[string]any `json:"proposed_rules"`
 		TestCases     []map[string]any `json:"test_cases"`
 	}
+	r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		writeJSONError(w, http.StatusBadRequest, "invalid JSON body")
 		return

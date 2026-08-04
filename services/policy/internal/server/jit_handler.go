@@ -82,6 +82,7 @@ func (s *HTTPServer) jitCreateRequest(w http.ResponseWriter, r *http.Request) {
 		DurationMin int    `json:"duration_min"`
 		ScopeType   string `json:"scope_type"`
 	}
+	r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		writeJSONError(w, http.StatusBadRequest, "invalid request body")
 		return
@@ -306,6 +307,7 @@ func (s *HTTPServer) jitRevoke(w http.ResponseWriter, r *http.Request, reqID uui
 	var body struct {
 		Reason string `json:"reason"`
 	}
+	r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
 		writeJSONError(w, http.StatusBadRequest, "invalid request body")
 		return
