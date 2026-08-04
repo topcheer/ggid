@@ -332,7 +332,7 @@ func (gw *Gateway) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// --- Readiness probe (Kubernetes: checks all backends) ---
-	if r.URL.Path == "/healthz/ready" {
+	if r.URL.Path == "/healthz/ready" || r.URL.Path == "/readyz" {
 		if gw.healthChecker != nil {
 			gw.healthChecker.ReadyHandler().ServeHTTP(w, r)
 		} else {
@@ -748,7 +748,7 @@ func (gw *Gateway) Handler() http.Handler {
 			}
 		}
 		// Health check and JWKS are always public
-		if r.URL.Path == "/healthz" || r.URL.Path == "/healthz/live" || r.URL.Path == "/healthz/ready" || r.URL.Path == "/healthz/deep" || r.URL.Path == "/.well-known/jwks.json" || r.URL.Path == "/metrics" {
+		if r.URL.Path == "/healthz" || r.URL.Path == "/healthz/live" || r.URL.Path == "/healthz/ready" || r.URL.Path == "/readyz" || r.URL.Path == "/healthz/deep" || r.URL.Path == "/.well-known/jwks.json" || r.URL.Path == "/metrics" {
 			isPublic = true
 		}
 
