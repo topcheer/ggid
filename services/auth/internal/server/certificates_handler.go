@@ -45,6 +45,7 @@ func (h *Handler) handleCertificatesV2(w http.ResponseWriter, r *http.Request) {
 			Domain string `json:"domain"`
 			CN     string `json:"cn"`
 		}
+		r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 			writeError(w, http.StatusBadRequest, "invalid request body")
 			return
@@ -100,9 +101,9 @@ func (h *Handler) handleCertificatesV2(w http.ResponseWriter, r *http.Request) {
 		}
 
 		writeJSON(w, http.StatusCreated, map[string]any{
-			"certificate":   cert,
-			"cert_pem":      string(certPEM),
-			"private_key":   string(keyPEM),
+			"certificate": cert,
+			"cert_pem":    string(certPEM),
+			"private_key": string(keyPEM),
 		})
 
 	case strings.HasPrefix(r.URL.Path, "/api/v1/certificates/") && r.Method == http.MethodDelete:

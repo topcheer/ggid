@@ -69,6 +69,7 @@ func (h *Handler) handleRevokeSessions(w http.ResponseWriter, r *http.Request) {
 		SessionIDs []string `json:"session_ids"`
 		Reason     string   `json:"reason"`
 	}
+	r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		writeError(w, http.StatusBadRequest, "invalid JSON body")
 		return

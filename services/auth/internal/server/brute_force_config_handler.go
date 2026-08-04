@@ -6,13 +6,13 @@ import (
 )
 
 type BruteForceConfig struct {
-	MaxFailedAttempts        int               `json:"max_failed_attempts"`
-	LockoutDurationMinutes   int               `json:"lockout_duration_minutes"`
-	ProgressiveBackoff       bool              `json:"progressive_backoff"`
-	PerEndpointOverrides     map[string]int    `json:"per_endpoint_overrides"`
-	IPAllowlist              []string          `json:"ip_allowlist"`
-	CaptchaTriggerAfter      int               `json:"captcha_trigger_after"`
-	AutoUnlockAfterMinutes   int               `json:"auto_unlock_after"`
+	MaxFailedAttempts      int            `json:"max_failed_attempts"`
+	LockoutDurationMinutes int            `json:"lockout_duration_minutes"`
+	ProgressiveBackoff     bool           `json:"progressive_backoff"`
+	PerEndpointOverrides   map[string]int `json:"per_endpoint_overrides"`
+	IPAllowlist            []string       `json:"ip_allowlist"`
+	CaptchaTriggerAfter    int            `json:"captcha_trigger_after"`
+	AutoUnlockAfterMinutes int            `json:"auto_unlock_after"`
 }
 
 func (h *Handler) handleBruteForceConfig(w http.ResponseWriter, r *http.Request) {
@@ -23,9 +23,9 @@ func (h *Handler) handleBruteForceConfig(w http.ResponseWriter, r *http.Request)
 			LockoutDurationMinutes: 30,
 			ProgressiveBackoff:     true,
 			PerEndpointOverrides: map[string]int{
-				"/api/v1/auth/verify":    5,
+				"/api/v1/auth/verify":     5,
 				"/api/v1/auth/mfa/verify": 3,
-				"/api/v1/oauth/token":  10,
+				"/api/v1/oauth/token":     10,
 			},
 			IPAllowlist:            []string{"10.0.0.0/8", "172.16.0.0/12", "192.168.0.0/16"},
 			CaptchaTriggerAfter:    3,
@@ -35,6 +35,7 @@ func (h *Handler) handleBruteForceConfig(w http.ResponseWriter, r *http.Request)
 		json.NewEncoder(w).Encode(result)
 	case http.MethodPut:
 		var req BruteForceConfig
+		r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 			writeError(w, http.StatusBadRequest, "invalid request")
 			return

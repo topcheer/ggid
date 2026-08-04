@@ -6,11 +6,11 @@ import (
 )
 
 type MFAChallengeConfig struct {
-	MethodPriority       []string         `json:"method_priority"`
-	RequireStepUpFor     []string         `json:"require_step_up_for"`
-	ChallengeFrequency   string           `json:"challenge_frequency"`
-	FallbackMethod       string           `json:"fallback_method"`
-	GracePeriodMinutes   int              `json:"grace_period_minutes"`
+	MethodPriority     []string `json:"method_priority"`
+	RequireStepUpFor   []string `json:"require_step_up_for"`
+	ChallengeFrequency string   `json:"challenge_frequency"`
+	FallbackMethod     string   `json:"fallback_method"`
+	GracePeriodMinutes int      `json:"grace_period_minutes"`
 }
 
 func (h *Handler) handleMFAChallengeConfig(w http.ResponseWriter, r *http.Request) {
@@ -27,6 +27,7 @@ func (h *Handler) handleMFAChallengeConfig(w http.ResponseWriter, r *http.Reques
 		json.NewEncoder(w).Encode(result)
 	case http.MethodPut:
 		var req MFAChallengeConfig
+		r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 			writeError(w, http.StatusBadRequest, "invalid request")
 			return

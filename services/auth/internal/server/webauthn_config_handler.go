@@ -6,14 +6,14 @@ import (
 )
 
 type WebAuthnConfig struct {
-	RPID                  string            `json:"rp_id"`
-	RPName                string            `json:"rp_name"`
-	Origin                string            `json:"origin"`
-	AttestationRequirement string           `json:"attestation_requirement"`
-	UserVerification      string            `json:"user_verification"`
-	SupportedAlgorithms   []string          `json:"supported_algorithms"`
-	TimeoutSeconds        int               `json:"timeout_seconds"`
-	PerPlatformConfig     map[string]string `json:"per_platform_config"`
+	RPID                   string            `json:"rp_id"`
+	RPName                 string            `json:"rp_name"`
+	Origin                 string            `json:"origin"`
+	AttestationRequirement string            `json:"attestation_requirement"`
+	UserVerification       string            `json:"user_verification"`
+	SupportedAlgorithms    []string          `json:"supported_algorithms"`
+	TimeoutSeconds         int               `json:"timeout_seconds"`
+	PerPlatformConfig      map[string]string `json:"per_platform_config"`
 }
 
 func (h *Handler) handleWebAuthnConfig(w http.ResponseWriter, r *http.Request) {
@@ -28,16 +28,17 @@ func (h *Handler) handleWebAuthnConfig(w http.ResponseWriter, r *http.Request) {
 			SupportedAlgorithms:    []string{"ES256", "RS256", "EdDSA"},
 			TimeoutSeconds:         60,
 			PerPlatformConfig: map[string]string{
-				"macos":    "touch_id_preferred",
-				"ios":      "face_id_preferred",
-				"windows":  "hello_preferred",
-				"android":  "fingerprint_preferred",
-				"linux":    "security_key_required",
+				"macos":   "touch_id_preferred",
+				"ios":     "face_id_preferred",
+				"windows": "hello_preferred",
+				"android": "fingerprint_preferred",
+				"linux":   "security_key_required",
 			},
 		}
 		w.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(w).Encode(result)
 	case http.MethodPut:
+		r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
 		var req WebAuthnConfig
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 			writeError(w, http.StatusBadRequest, "invalid request")

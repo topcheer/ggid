@@ -11,12 +11,12 @@ import (
 
 // travelLoginEvent records a login event with geo data.
 type travelLoginEvent struct {
-	UserID    string  `json:"user_id"`
-	Latitude  float64 `json:"latitude"`
-	Longitude float64 `json:"longitude"`
-	IPAddress string  `json:"ip_address"`
-	City      string  `json:"city"`
-	Country   string  `json:"country"`
+	UserID    string    `json:"user_id"`
+	Latitude  float64   `json:"latitude"`
+	Longitude float64   `json:"longitude"`
+	IPAddress string    `json:"ip_address"`
+	City      string    `json:"city"`
+	Country   string    `json:"country"`
 	Timestamp time.Time `json:"timestamp"`
 }
 
@@ -35,9 +35,10 @@ func (h *Handler) handleDetectImpossibleTravel(w http.ResponseWriter, r *http.Re
 	}
 
 	var req struct {
-		UserID      string            `json:"user_id"`
-		LoginEvents []map[string]any  `json:"login_events"`
+		UserID      string           `json:"user_id"`
+		LoginEvents []map[string]any `json:"login_events"`
 	}
+	r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		writeError(w, http.StatusBadRequest, "invalid request body")
 		return
@@ -115,12 +116,12 @@ func (h *Handler) handleDetectImpossibleTravel(w http.ResponseWriter, r *http.Re
 		if speedKmh > maxSpeedKmh {
 			isDetected = true
 			details = append(details, map[string]any{
-				"from_city":     prev.City,
-				"from_country":  prev.Country,
-				"to_city":       curr.City,
-				"to_country":    curr.Country,
-				"distance_km":   distKm,
-				"time_hours":    timeDiff,
+				"from_city":          prev.City,
+				"from_country":       prev.Country,
+				"to_city":            curr.City,
+				"to_country":         curr.Country,
+				"distance_km":        distKm,
+				"time_hours":         timeDiff,
 				"required_speed_kmh": speedKmh,
 				"max_feasible_kmh":   maxSpeedKmh,
 				"from_timestamp":     prev.Timestamp.Format(time.RFC3339),
@@ -145,13 +146,13 @@ func (h *Handler) handleDetectImpossibleTravel(w http.ResponseWriter, r *http.Re
 	}
 
 	writeJSON(w, http.StatusOK, map[string]any{
-		"user_id":        req.UserID,
-		"is_detected":    isDetected,
-		"details":        details,
-		"risk_level":     riskLevel,
+		"user_id":         req.UserID,
+		"is_detected":     isDetected,
+		"details":         details,
+		"risk_level":      riskLevel,
 		"events_analyzed": len(events),
-		"checked_at":     time.Now().UTC().Format(time.RFC3339),
-		"detection_id":   uuid.New().String(),
+		"checked_at":      time.Now().UTC().Format(time.RFC3339),
+		"detection_id":    uuid.New().String(),
 		"recommended_action": func() string {
 			if isDetected {
 				return "block_session_require_step_up_auth"
@@ -174,8 +175,8 @@ func haversine(lat1, lon1, lat2, lon2 float64) float64 {
 	return c
 }
 
-func sin(x float64) float64     { return x - x*x*x/6 + x*x*x*x*x/120 }
-func cos(x float64) float64     { return 1 - x*x/2 + x*x*x*x/24 }
+func sin(x float64) float64 { return x - x*x*x/6 + x*x*x*x*x/120 }
+func cos(x float64) float64 { return 1 - x*x/2 + x*x*x*x/24 }
 func atan2Sqrt(a float64) float64 {
 	if a > 1 {
 		a = 1

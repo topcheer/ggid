@@ -2,8 +2,8 @@ package server
 
 import (
 	"encoding/json"
-	"net/http"
 	"fmt"
+	"net/http"
 )
 
 // jsonUnmarshalBody decodes a JSON request body into the given interface.

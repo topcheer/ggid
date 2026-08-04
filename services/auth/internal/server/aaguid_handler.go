@@ -25,6 +25,7 @@ func (h *Handler) SetAAGUIDAllowlistRepo(repo *repository.AAGUIDAllowlistReposit
 
 // handleAAGUIDAllowlist handles GET/POST/DELETE for /api/v1/auth/webauthn/aaguid.
 func (h *Handler) handleAAGUIDAllowlist(w http.ResponseWriter, r *http.Request) {
+	r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
 	path := strings.TrimPrefix(r.URL.Path, "/api/v1/auth/webauthn/aaguid")
 
 	switch {

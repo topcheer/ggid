@@ -55,15 +55,24 @@ func (h *Handler) handleDeviceReport(w http.ResponseWriter, r *http.Request) {
 		CompliantOS bool `json:"compliant_os"`
 		Jailbreak   bool `json:"jailbreak"`
 	}
+	r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		writeError(w, http.StatusBadRequest, "invalid request body")
 		return
 	}
 	score := 0
-	if req.Managed { score += 30 }
-	if req.Encrypted { score += 25 }
-	if req.CompliantOS { score += 25 }
-	if !req.Jailbreak { score += 20 }
+	if req.Managed {
+		score += 30
+	}
+	if req.Encrypted {
+		score += 25
+	}
+	if req.CompliantOS {
+		score += 25
+	}
+	if !req.Jailbreak {
+		score += 20
+	}
 	dt := &DeviceTrust{
 		DeviceID: deviceID, Managed: req.Managed, Encrypted: req.Encrypted,
 		CompliantOS: req.CompliantOS, Jailbreak: req.Jailbreak,

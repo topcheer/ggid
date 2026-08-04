@@ -32,6 +32,7 @@ func (h *Handler) handleMigrationConfig(w http.ResponseWriter, r *http.Request) 
 	}
 
 	var cfg LegacyMigrationConfig
+	r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
 	if err := json.NewDecoder(r.Body).Decode(&cfg); err != nil {
 		writeError(w, http.StatusBadRequest, "invalid JSON body")
 		return

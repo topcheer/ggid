@@ -16,9 +16,9 @@ type BlockedIP struct {
 }
 
 var (
-	credStuffingMu sync.RWMutex
+	credStuffingMu  sync.RWMutex
 	credStuffingIPs = make(map[string]*BlockedIP)
-	autoBlockRules = []map[string]any{
+	autoBlockRules  = []map[string]any{
 		{"rule": "failed_logins_threshold", "value": 10, "window_minutes": 5, "action": "block_1h"},
 		{"rule": "unique_user_attempts", "value": 15, "window_minutes": 10, "action": "block_24h"},
 		{"rule": "known_credential_stuffing_pattern", "action": "block_permanent"},
@@ -40,6 +40,7 @@ func (h *Handler) handleCredentialStuffing(w http.ResponseWriter, r *http.Reques
 			Reason   string `json:"reason"`
 			Duration string `json:"duration"` // e.g. "1h", "24h", "permanent"
 		}
+		r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 			writeError(w, http.StatusBadRequest, "invalid JSON")
 			return
@@ -72,7 +73,7 @@ func (h *Handler) handleCredentialStuffing(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-		if r.Method == http.MethodGet {
+	if r.Method == http.MethodGet {
 		// Try PG first, fall back to in-memory map
 		if h.memMapRepo != nil {
 			rows, _ := h.memMapRepo.ListJSON(r.Context(), "auth_cred_stuffing_json")

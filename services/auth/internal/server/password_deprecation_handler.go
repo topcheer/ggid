@@ -13,9 +13,9 @@ import (
 
 // passwordDeprecationRequest is the DTO for PUT operations.
 type passwordDeprecationRequest struct {
-	Level            string `json:"level"`
-	EnforcementDate  string `json:"enforcement_date,omitempty"`
-	GracePeriodDays  int    `json:"grace_period_days"`
+	Level           string `json:"level"`
+	EnforcementDate string `json:"enforcement_date,omitempty"`
+	GracePeriodDays int    `json:"grace_period_days"`
 }
 
 // SetPasswordDeprecationRepo injects the DB-backed repository.
@@ -60,6 +60,7 @@ func (h *Handler) getPasswordDeprecation(w http.ResponseWriter, r *http.Request,
 
 func (h *Handler) updatePasswordDeprecation(w http.ResponseWriter, r *http.Request, tenantID uuid.UUID) {
 	var req passwordDeprecationRequest
+	r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		errors.WriteSimpleAPIError(w, http.StatusBadRequest, "INVALID_REQUEST", "invalid request body")
 		return

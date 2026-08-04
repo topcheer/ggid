@@ -6,12 +6,12 @@ import (
 )
 
 type SessionTimeoutConfig struct {
-	IdleTimeoutMinutes      int               `json:"idle_timeout_minutes"`
-	AbsoluteTimeoutHours    int               `json:"absolute_timeout_hours"`
-	WarningBeforeMinutes    int               `json:"warning_before_minutes"`
-	PerRoleOverride         map[string]int    `json:"per_role_override"`
-	GracePeriodOnMobile     int               `json:"grace_period_on_mobile_minutes"`
-	EnforceOnMobile         bool              `json:"enforce_on_mobile"`
+	IdleTimeoutMinutes   int            `json:"idle_timeout_minutes"`
+	AbsoluteTimeoutHours int            `json:"absolute_timeout_hours"`
+	WarningBeforeMinutes int            `json:"warning_before_minutes"`
+	PerRoleOverride      map[string]int `json:"per_role_override"`
+	GracePeriodOnMobile  int            `json:"grace_period_on_mobile_minutes"`
+	EnforceOnMobile      bool           `json:"enforce_on_mobile"`
 }
 
 func (h *Handler) handleSessionTimeoutConfig(w http.ResponseWriter, r *http.Request) {
@@ -22,9 +22,9 @@ func (h *Handler) handleSessionTimeoutConfig(w http.ResponseWriter, r *http.Requ
 			AbsoluteTimeoutHours: 8,
 			WarningBeforeMinutes: 5,
 			PerRoleOverride: map[string]int{
-				"admin":    15,
-				"viewer":   120,
-				"service":  480,
+				"admin":   15,
+				"viewer":  120,
+				"service": 480,
 			},
 			GracePeriodOnMobile: 60,
 			EnforceOnMobile:     false,
@@ -33,6 +33,7 @@ func (h *Handler) handleSessionTimeoutConfig(w http.ResponseWriter, r *http.Requ
 		json.NewEncoder(w).Encode(result)
 	case http.MethodPut:
 		var req SessionTimeoutConfig
+		r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 			writeError(w, http.StatusBadRequest, "invalid request")
 			return

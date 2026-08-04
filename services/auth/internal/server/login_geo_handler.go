@@ -8,11 +8,21 @@ import (
 // POST /api/v1/auth/login-geo/enrich
 func (h *Handler) handleLoginGeoEnrich(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
-		writeError(w, http.StatusMethodNotAllowed, "method not allowed"); return
+		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+		return
 	}
-	var req struct{ IP string `json:"ip"` }
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil { writeError(w, http.StatusBadRequest, "invalid JSON"); return }
-	if req.IP == "" { writeError(w, http.StatusBadRequest, "ip required"); return }
+	var req struct {
+		IP string `json:"ip"`
+	}
+	r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		writeError(w, http.StatusBadRequest, "invalid JSON")
+		return
+	}
+	if req.IP == "" {
+		writeError(w, http.StatusBadRequest, "ip required")
+		return
+	}
 	writeJSON(w, http.StatusOK, map[string]any{
 		"ip": req.IP, "country": "United States", "country_code": "US",
 		"city": "San Francisco", "region": "California",

@@ -8,14 +8,14 @@ import (
 )
 
 type LoginNotifyConfig struct {
-	UserID  string `json:"user_id"`
-	Channel string `json:"channel"` // email, push, sms
-	Enabled bool   `json:"enabled"`
-	NewDeviceOnly bool `json:"new_device_only"`
+	UserID        string `json:"user_id"`
+	Channel       string `json:"channel"` // email, push, sms
+	Enabled       bool   `json:"enabled"`
+	NewDeviceOnly bool   `json:"new_device_only"`
 }
 
 var (
-	loginNotifyMu sync.RWMutex
+	loginNotifyMu      sync.RWMutex
 	loginNotifyConfigs = make(map[string]*LoginNotifyConfig)
 )
 
@@ -26,15 +26,15 @@ func (h *Handler) handleLoginNotify(w http.ResponseWriter, r *http.Request) {
 		userID := r.URL.Query().Get("user_id")
 		loginNotifyMu.RLock()
 		// PG-first lookup
-	if h.memMapRepo != nil {
-		row, _ := h.memMapRepo.GetJSON(r.Context(), "auth_login_notify_configs", userID)
-		if row != nil {
-			writeJSON(w, http.StatusOK, row)
-			return
+		if h.memMapRepo != nil {
+			row, _ := h.memMapRepo.GetJSON(r.Context(), "auth_login_notify_configs", userID)
+			if row != nil {
+				writeJSON(w, http.StatusOK, row)
+				return
+			}
 		}
-	}
 
-	cfg, ok := loginNotifyConfigs[userID]
+		cfg, ok := loginNotifyConfigs[userID]
 		loginNotifyMu.RUnlock()
 		if !ok {
 			cfg = &LoginNotifyConfig{UserID: userID, Channel: "email", Enabled: true, NewDeviceOnly: false}
@@ -51,6 +51,7 @@ func (h *Handler) handleLoginNotify(w http.ResponseWriter, r *http.Request) {
 			IP       string `json:"ip"`
 			Channel  string `json:"channel"`
 		}
+		r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 			writeError(w, http.StatusBadRequest, "invalid JSON")
 			return

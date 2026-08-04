@@ -11,14 +11,14 @@ import (
 
 // sessionAnomalyData holds anomaly indicators for a session.
 type sessionAnomalyData struct {
-	SessionID      string  `json:"session_id"`
-	IPChangeRate   float64 `json:"ip_change_rate"`
-	GeoVelocity    float64 `json:"geo_velocity_kmh"`
-	DeviceMatch    bool    `json:"device_match"`
-	UniqueIPs      int     `json:"unique_ips"`
-	IPHistory      []string `json:"ip_history"`
-	Score          int     `json:"score"`
-	RiskLevel      string  `json:"risk_level"`
+	SessionID           string   `json:"session_id"`
+	IPChangeRate        float64  `json:"ip_change_rate"`
+	GeoVelocity         float64  `json:"geo_velocity_kmh"`
+	DeviceMatch         bool     `json:"device_match"`
+	UniqueIPs           int      `json:"unique_ips"`
+	IPHistory           []string `json:"ip_history"`
+	Score               int      `json:"score"`
+	RiskLevel           string   `json:"risk_level"`
 	ContributingFactors []string `json:"contributing_factors"`
 }
 
@@ -65,11 +65,12 @@ func (h *Handler) handleSessionAnomalyScore(w http.ResponseWriter, r *http.Reque
 
 	case http.MethodPost:
 		var req struct {
-			SessionID    string   `json:"session_id"`
-			IPHistory    []string `json:"ip_history"`
-			GeoPoints    []map[string]float64 `json:"geo_points"` // [{lat, lon, timestamp_epoch}]
-			DeviceMatch  *bool    `json:"device_match"`
+			SessionID   string               `json:"session_id"`
+			IPHistory   []string             `json:"ip_history"`
+			GeoPoints   []map[string]float64 `json:"geo_points"` // [{lat, lon, timestamp_epoch}]
+			DeviceMatch *bool                `json:"device_match"`
 		}
+		r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 			writeError(w, http.StatusBadRequest, "invalid request body")
 			return
@@ -180,14 +181,14 @@ func (h *Handler) handleSessionAnomalyScore(w http.ResponseWriter, r *http.Reque
 		// PG write-through
 		if h.memMapRepo != nil {
 			h.memMapRepo.StoreJSON(r.Context(), "auth_session_anomalies_json", req.SessionID, map[string]any{
-				"session_id": data.SessionID,
-				"ip_change_rate": data.IPChangeRate,
-				"geo_velocity_kmh": data.GeoVelocity,
-				"device_match": data.DeviceMatch,
-				"unique_ips": data.UniqueIPs,
-				"ip_history": data.IPHistory,
-				"score": data.Score,
-				"risk_level": data.RiskLevel,
+				"session_id":           data.SessionID,
+				"ip_change_rate":       data.IPChangeRate,
+				"geo_velocity_kmh":     data.GeoVelocity,
+				"device_match":         data.DeviceMatch,
+				"unique_ips":           data.UniqueIPs,
+				"ip_history":           data.IPHistory,
+				"score":                data.Score,
+				"risk_level":           data.RiskLevel,
 				"contributing_factors": data.ContributingFactors,
 			})
 		}

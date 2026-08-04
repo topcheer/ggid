@@ -9,20 +9,20 @@ import (
 )
 
 type VelocityRule struct {
-	RuleID       string  `json:"rule_id"`
-	Metric       string  `json:"metric"`
-	Window       string  `json:"window"`
-	Threshold    int     `json:"threshold"`
-	Action       string  `json:"action"`
-	Enabled      bool    `json:"enabled"`
-	Triggered24h int     `json:"triggered_24h"`
-	PerScope     string  `json:"per_scope"`
+	RuleID       string `json:"rule_id"`
+	Metric       string `json:"metric"`
+	Window       string `json:"window"`
+	Threshold    int    `json:"threshold"`
+	Action       string `json:"action"`
+	Enabled      bool   `json:"enabled"`
+	Triggered24h int    `json:"triggered_24h"`
+	PerScope     string `json:"per_scope"`
 }
 
 type VelocityRulesResult struct {
-	Rules    []VelocityRule `json:"rules"`
-	TotalRules int          `json:"total_rules"`
-	EnabledCount int        `json:"enabled_count"`
+	Rules        []VelocityRule `json:"rules"`
+	TotalRules   int            `json:"total_rules"`
+	EnabledCount int            `json:"enabled_count"`
 }
 
 type VelocityRuleRequest struct {
@@ -65,6 +65,7 @@ func (h *Handler) handleVelocityRules(w http.ResponseWriter, r *http.Request) {
 		json.NewEncoder(w).Encode(VelocityRulesResult{Rules: rules, TotalRules: len(rules), EnabledCount: enabledCount})
 	case http.MethodPost:
 		var req VelocityRuleRequest
+		r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 			writeError(w, http.StatusBadRequest, "invalid request body")
 			return

@@ -16,19 +16,19 @@ import (
 
 // BiometricTemplate stores an encrypted biometric template.
 type BiometricTemplate struct {
-	ID            string    `json:"id"`
-	UserID        string    `json:"user_id"`
-	TemplateEnc   string    `json:"template_encrypted"`
-	DeviceType    string    `json:"device_type"` // fingerprint, face, voice
-	EnrolledAt    time.Time `json:"enrolled_at"`
-	VerifiedAt    *time.Time `json:"verified_at,omitempty"`
-	VerifyCount   int       `json:"verify_count"`
+	ID          string     `json:"id"`
+	UserID      string     `json:"user_id"`
+	TemplateEnc string     `json:"template_encrypted"`
+	DeviceType  string     `json:"device_type"` // fingerprint, face, voice
+	EnrolledAt  time.Time  `json:"enrolled_at"`
+	VerifiedAt  *time.Time `json:"verified_at,omitempty"`
+	VerifyCount int        `json:"verify_count"`
 }
 
 var (
-	biometricMu  sync.RWMutex
-	biometrics   = make(map[string]*BiometricTemplate)
-	bioKey       = loadEncryptionKey("BIOMETRIC_AES_KEY")
+	biometricMu sync.RWMutex
+	biometrics  = make(map[string]*BiometricTemplate)
+	bioKey      = loadEncryptionKey("BIOMETRIC_AES_KEY")
 )
 
 // POST /api/v1/auth/biometric/enroll — store encrypted biometric template.
@@ -44,6 +44,7 @@ func (h *Handler) handleBiometricEnroll(w http.ResponseWriter, r *http.Request) 
 		TemplateB64 string `json:"template"` // base64-encoded raw template
 		DeviceType  string `json:"device_type"`
 	}
+	r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		writeError(w, http.StatusBadRequest, "invalid JSON body")
 		return
@@ -68,7 +69,7 @@ func (h *Handler) handleBiometricEnroll(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
- tmpl := &BiometricTemplate{
+	tmpl := &BiometricTemplate{
 		ID:          uuid.New().String(),
 		UserID:      req.UserID,
 		TemplateEnc: base64.StdEncoding.EncodeToString(encTemplate),
@@ -90,17 +91,17 @@ func (h *Handler) handleBiometricEnroll(w http.ResponseWriter, r *http.Request) 
 		h.memMapRepo.StoreJSON(r.Context(), "auth_biometric_json", tmpl.ID, map[string]any{
 			"id": tmpl.ID, "user_id": tmpl.UserID,
 			"template_encrypted": tmpl.TemplateEnc,
-			"device_type": tmpl.DeviceType,
-			"enrolled_at": tmpl.EnrolledAt,
-			"verify_count": 0,
+			"device_type":        tmpl.DeviceType,
+			"enrolled_at":        tmpl.EnrolledAt,
+			"verify_count":       0,
 		})
 	}
 
 	writeJSON(w, http.StatusCreated, map[string]any{
-		"status":       "enrolled",
-		"template_id":  tmpl.ID,
-		"device_type":  tmpl.DeviceType,
-		"enrolled_at":  tmpl.EnrolledAt.Format(time.RFC3339),
+		"status":      "enrolled",
+		"template_id": tmpl.ID,
+		"device_type": tmpl.DeviceType,
+		"enrolled_at": tmpl.EnrolledAt.Format(time.RFC3339),
 	})
 }
 
@@ -114,6 +115,7 @@ func (h *Handler) handleBiometricVerify(w http.ResponseWriter, r *http.Request) 
 		UserID      string `json:"user_id"`
 		TemplateB64 string `json:"template"`
 	}
+	r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		writeError(w, http.StatusBadRequest, "invalid JSON body")
 		return
@@ -202,18 +204,18 @@ func (h *Handler) handleBiometricVerify(w http.ResponseWriter, r *http.Request) 
 		h.memMapRepo.StoreJSON(r.Context(), "auth_biometric_json", found.ID, map[string]any{
 			"id": found.ID, "user_id": found.UserID,
 			"template_encrypted": found.TemplateEnc,
-			"device_type": found.DeviceType,
-			"enrolled_at": found.EnrolledAt,
-			"verified_at": now, "verify_count": found.VerifyCount,
+			"device_type":        found.DeviceType,
+			"enrolled_at":        found.EnrolledAt,
+			"verified_at":        now, "verify_count": found.VerifyCount,
 		})
 	}
 
 	writeJSON(w, http.StatusOK, map[string]any{
-		"verified":      true,
-		"template_id":   found.ID,
-		"device_type":   found.DeviceType,
-		"verify_count":  found.VerifyCount,
-		"verified_at":   now.Format(time.RFC3339),
+		"verified":     true,
+		"template_id":  found.ID,
+		"device_type":  found.DeviceType,
+		"verify_count": found.VerifyCount,
+		"verified_at":  now.Format(time.RFC3339),
 	})
 }
 

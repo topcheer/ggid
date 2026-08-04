@@ -8,15 +8,25 @@ import (
 
 // POST /api/v1/auth/devices/attest
 func (h *Handler) handleDeviceAttest(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPost { writeError(w, http.StatusMethodNotAllowed, "method not allowed"); return }
+	if r.Method != http.MethodPost {
+		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+		return
+	}
 	var req struct {
 		DeviceID      string `json:"device_id"`
 		TPMQuote      string `json:"tpm_quote"`
 		SecureBoot    bool   `json:"secure_boot"`
 		CodeIntegrity bool   `json:"code_integrity"`
 	}
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil { writeError(w, http.StatusBadRequest, "invalid JSON"); return }
-	if req.DeviceID == "" { writeError(w, http.StatusBadRequest, "device_id required"); return }
+	r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		writeError(w, http.StatusBadRequest, "invalid JSON")
+		return
+	}
+	if req.DeviceID == "" {
+		writeError(w, http.StatusBadRequest, "device_id required")
+		return
+	}
 	trustLevel := "none"
 	if req.TPMQuote != "" && req.SecureBoot && req.CodeIntegrity {
 		trustLevel = "full"

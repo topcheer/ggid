@@ -34,6 +34,7 @@ func (h *Handler) handleDetectPasswordSpray(w http.ResponseWriter, r *http.Reque
 		Threshold         int    `json:"threshold"`
 		IPAddress         string `json:"ip_address"`
 	}
+	r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		writeError(w, http.StatusBadRequest, "invalid request body")
 		return
@@ -98,13 +99,13 @@ func (h *Handler) handleDetectPasswordSpray(w http.ResponseWriter, r *http.Reque
 	}
 
 	writeJSON(w, http.StatusOK, map[string]any{
-		"is_detected":          isDetected,
-		"confidence":           confidence,
-		"affected_users":       affectedList,
-		"affected_user_count":  userCount,
-		"unique_ip_count":      len(uniqueIPs),
-		"time_window_minutes":  req.TimeWindowMinutes,
-		"threshold":            req.Threshold,
+		"is_detected":         isDetected,
+		"confidence":          confidence,
+		"affected_users":      affectedList,
+		"affected_user_count": userCount,
+		"unique_ip_count":     len(uniqueIPs),
+		"time_window_minutes": req.TimeWindowMinutes,
+		"threshold":           req.Threshold,
 		"recommended_action": func() string {
 			if isDetected {
 				return "lock_accounts_and_notify"

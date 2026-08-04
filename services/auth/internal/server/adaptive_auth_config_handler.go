@@ -6,7 +6,7 @@ import (
 )
 
 type AdaptiveAuthConfig struct {
-	RiskThresholdMatrix map[string]string `json:"risk_threshold_matrix"`
+	RiskThresholdMatrix map[string]string  `json:"risk_threshold_matrix"`
 	SignalWeights       map[string]float64 `json:"signal_weights"`
 	StepUpTriggers      []string           `json:"step_up_triggers"`
 	OverridePerRole     map[string]string  `json:"override_per_role"`
@@ -39,7 +39,7 @@ func (h *Handler) handleAdaptiveAuthConfig(w http.ResponseWriter, r *http.Reques
 				"impossible_travel_detected",
 			},
 			OverridePerRole: map[string]string{
-				"admin": "high_threshold: webauthn",
+				"admin":   "high_threshold: webauthn",
 				"auditor": "medium_threshold: otp",
 				"service": "always_deny_if_medium",
 			},
@@ -48,6 +48,7 @@ func (h *Handler) handleAdaptiveAuthConfig(w http.ResponseWriter, r *http.Reques
 		json.NewEncoder(w).Encode(result)
 	case http.MethodPut:
 		var req AdaptiveAuthConfig
+		r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 			writeError(w, http.StatusBadRequest, "invalid request")
 			return

@@ -21,6 +21,7 @@ func (h *Handler) handlePasswordPolicyCheck(w http.ResponseWriter, r *http.Reque
 		UserID   string   `json:"user_id"`
 		History  []string `json:"history"`
 	}
+	r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		writeError(w, http.StatusBadRequest, "invalid JSON")
 		return

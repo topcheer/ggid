@@ -7,8 +7,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/ggid/ggid/services/auth/internal/repository"
 	ggidtenant "github.com/ggid/ggid/pkg/tenant"
+	"github.com/ggid/ggid/services/auth/internal/repository"
 	"github.com/google/uuid"
 )
 
@@ -87,6 +87,7 @@ func (h *Handler) handleBreakGlassActivate(w http.ResponseWriter, r *http.Reques
 	}
 
 	var req breakGlassActivateRequest
+	r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		writeError(w, http.StatusBadRequest, "invalid request body")
 		return
@@ -119,7 +120,8 @@ func (h *Handler) handleBreakGlassActivate(w http.ResponseWriter, r *http.Reques
 	}
 
 	if h.breakGlassRepo == nil {
-		writeJSON(w, http.StatusOK, []interface{}{}); return
+		writeJSON(w, http.StatusOK, []interface{}{})
+		return
 	}
 
 	rec := &BreakGlassRecord{

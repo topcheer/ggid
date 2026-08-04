@@ -22,13 +22,13 @@ type loginFlowStep struct {
 
 // loginFlowRecord stores a complete login flow recording.
 type loginFlowRecord struct {
-	ID         string           `json:"id"`
-	UserID     string           `json:"user_id"`
-	TenantID   string           `json:"tenant_id"`
-	Steps      []loginFlowStep  `json:"steps"`
-	Outcome    string           `json:"outcome"` // success, failed, abandoned
-	TotalDurationMs int         `json:"total_duration_ms"`
-	RecordedAt string           `json:"recorded_at"`
+	ID              string          `json:"id"`
+	UserID          string          `json:"user_id"`
+	TenantID        string          `json:"tenant_id"`
+	Steps           []loginFlowStep `json:"steps"`
+	Outcome         string          `json:"outcome"` // success, failed, abandoned
+	TotalDurationMs int             `json:"total_duration_ms"`
+	RecordedAt      string          `json:"recorded_at"`
 }
 
 var loginFlowStore = struct {
@@ -48,6 +48,7 @@ func (h *Handler) handleLoginFlowRecord(w http.ResponseWriter, r *http.Request) 
 		TenantID string          `json:"tenant_id"`
 		Steps    []loginFlowStep `json:"steps"`
 	}
+	r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		writeError(w, http.StatusBadRequest, "invalid request body")
 		return

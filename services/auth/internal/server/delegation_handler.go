@@ -51,7 +51,8 @@ func (h *Handler) handleDelegations(w http.ResponseWriter, r *http.Request) {
 
 func (h *Handler) delegationList(w http.ResponseWriter, r *http.Request) {
 	if h.delRepo == nil {
-		writeJSON(w, http.StatusOK, []interface{}{}); return
+		writeJSON(w, http.StatusOK, []interface{}{})
+		return
 	}
 	tc, err := ggidtenant.FromContext(r.Context())
 	if err != nil {
@@ -77,7 +78,8 @@ func (h *Handler) delegationList(w http.ResponseWriter, r *http.Request) {
 
 func (h *Handler) delegationCreate(w http.ResponseWriter, r *http.Request) {
 	if h.delRepo == nil {
-		writeJSON(w, http.StatusOK, []interface{}{}); return
+		writeJSON(w, http.StatusOK, []interface{}{})
+		return
 	}
 	tc, err := ggidtenant.FromContext(r.Context())
 	if err != nil {
@@ -92,6 +94,7 @@ func (h *Handler) delegationCreate(w http.ResponseWriter, r *http.Request) {
 		ExpiresIn   int      `json:"expires_in_hours"` // convenience: hours from now
 		ExpiresAt   string   `json:"expires_at"`       // ISO 8601
 	}
+	r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		writeError(w, http.StatusBadRequest, "invalid JSON body")
 		return
@@ -144,7 +147,8 @@ func (h *Handler) delegationCreate(w http.ResponseWriter, r *http.Request) {
 
 func (h *Handler) delegationRevoke(w http.ResponseWriter, r *http.Request, id string) {
 	if h.delRepo == nil {
-		writeJSON(w, http.StatusOK, []interface{}{}); return
+		writeJSON(w, http.StatusOK, []interface{}{})
+		return
 	}
 	if err := h.delRepo.Revoke(r.Context(), id); err != nil {
 		writeError(w, http.StatusInternalServerError, "failed to revoke delegation")
@@ -164,7 +168,8 @@ func (h *Handler) delegationRevoke(w http.ResponseWriter, r *http.Request, id st
 
 func (h *Handler) delegationCheck(w http.ResponseWriter, r *http.Request) {
 	if h.delRepo == nil {
-		writeJSON(w, http.StatusOK, []interface{}{}); return
+		writeJSON(w, http.StatusOK, []interface{}{})
+		return
 	}
 	tc, err := ggidtenant.FromContext(r.Context())
 	if err != nil {

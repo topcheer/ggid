@@ -13,6 +13,7 @@ func (h *Handler) handlePasswordEntropy(w http.ResponseWriter, r *http.Request) 
 		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
+	r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
 	var req struct {
 		Password string `json:"password"`
 	}

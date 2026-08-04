@@ -32,11 +32,12 @@ func (h *Handler) handleReplayCheck(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
 	var req struct {
-		RequestData           string `json:"request_data"`
-		UserID                string `json:"user_id"`
-		IPAddress             string `json:"ip_address"`
-		TimestampWindowSeconds int   `json:"timestamp_window_seconds"`
+		RequestData            string `json:"request_data"`
+		UserID                 string `json:"user_id"`
+		IPAddress              string `json:"ip_address"`
+		TimestampWindowSeconds int    `json:"timestamp_window_seconds"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		writeError(w, http.StatusBadRequest, "invalid request body")
@@ -65,8 +66,8 @@ func (h *Handler) handleReplayCheck(w http.ResponseWriter, r *http.Request) {
 		if now.Before(windowEnd) {
 			// This is a replay
 			writeJSON(w, http.StatusOK, map[string]any{
-				"is_replay":         true,
-				"request_hash":      requestHash,
+				"is_replay":    true,
+				"request_hash": requestHash,
 				"original_request": map[string]any{
 					"user_id":    existing.UserID,
 					"ip_address": existing.IPAddress,
@@ -105,11 +106,11 @@ func (h *Handler) handleReplayCheck(w http.ResponseWriter, r *http.Request) {
 	}
 
 	writeJSON(w, http.StatusOK, map[string]any{
-		"is_replay":       false,
-		"request_hash":    requestHash,
-		"recorded":        true,
-		"window_seconds":  req.TimestampWindowSeconds,
-		"checked_at":      now.Format(time.RFC3339),
-		"check_id":        uuid.New().String(),
+		"is_replay":      false,
+		"request_hash":   requestHash,
+		"recorded":       true,
+		"window_seconds": req.TimestampWindowSeconds,
+		"checked_at":     now.Format(time.RFC3339),
+		"check_id":       uuid.New().String(),
 	})
 }

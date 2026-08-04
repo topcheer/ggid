@@ -89,11 +89,11 @@ func (h *Handler) handleEnrollmentNudge(w http.ResponseWriter, r *http.Request) 
 	}
 
 	writeJSON(w, http.StatusOK, map[string]any{
-		"enrollment_nudge":     shouldNudge,
-		"nudge_type":           nudgeType,
-		"deprecation_level":    deprecationLevel,
-		"dismissed":            isDismissed,
-		"message":              "Please enroll a Passkey to improve your account security.",
+		"enrollment_nudge":  shouldNudge,
+		"nudge_type":        nudgeType,
+		"deprecation_level": deprecationLevel,
+		"dismissed":         isDismissed,
+		"message":           "Please enroll a Passkey to improve your account security.",
 	})
 }
 
@@ -111,6 +111,7 @@ func (h *Handler) handleEnrollmentDismiss(w http.ResponseWriter, r *http.Request
 	}
 
 	var req enrollmentDismissRequest
+	r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		errors.WriteSimpleAPIError(w, http.StatusBadRequest, "INVALID_REQUEST", "invalid request body")
 		return

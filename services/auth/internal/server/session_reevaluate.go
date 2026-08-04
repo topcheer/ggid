@@ -10,11 +10,11 @@ import (
 
 // SessionRisk tracks risk evaluation for active sessions.
 type SessionRisk struct {
-	SessionID  string  `json:"session_id"`
-	RiskScore  int     `json:"risk_score"`
-	IPAddr     string  `json:"ip_address"`
-	DeviceFP   string  `json:"device_fingerprint"`
-	GeoRegion  string  `json:"geo_region"`
+	SessionID  string    `json:"session_id"`
+	RiskScore  int       `json:"risk_score"`
+	IPAddr     string    `json:"ip_address"`
+	DeviceFP   string    `json:"device_fingerprint"`
+	GeoRegion  string    `json:"geo_region"`
 	LastEvalAt time.Time `json:"last_eval_at"`
 }
 
@@ -38,10 +38,20 @@ func (h *Handler) handleSessionReevaluate(w http.ResponseWriter, r *http.Request
 		DeviceFP  string `json:"device_fingerprint"`
 		GeoRegion string `json:"geo_region"`
 	}
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil { writeError(w, http.StatusBadRequest, "invalid request body"); return }
-	if req.IPAddr == "" { req.IPAddr = r.RemoteAddr }
-	if req.DeviceFP == "" { req.DeviceFP = "unknown" }
-	if req.GeoRegion == "" { req.GeoRegion = "unknown" }
+	r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		writeError(w, http.StatusBadRequest, "invalid request body")
+		return
+	}
+	if req.IPAddr == "" {
+		req.IPAddr = r.RemoteAddr
+	}
+	if req.DeviceFP == "" {
+		req.DeviceFP = "unknown"
+	}
+	if req.GeoRegion == "" {
+		req.GeoRegion = "unknown"
+	}
 
 	// Compute risk factors
 	score := 10 // baseline
@@ -64,7 +74,9 @@ func (h *Handler) handleSessionReevaluate(w http.ResponseWriter, r *http.Request
 			if prevIP, _ := prevPG["ip_address"].(string); prevIP != "" && prevIP != req.IPAddr {
 				score += 25
 			}
-			if score > 100 { score = 100 }
+			if score > 100 {
+				score = 100
+			}
 			now := time.Now().UTC()
 			sr := &SessionRisk{
 				SessionID: sessionID, RiskScore: score,
@@ -94,9 +106,9 @@ func (h *Handler) handleSessionReevaluate(w http.ResponseWriter, r *http.Request
 				"session_id": sessionID, "new_risk_score": score, "action": action,
 				"ip_changed": ipChanged, "evaluated_at": now.Format(time.RFC3339),
 				"factors": map[string]any{
-					"unknown_ip": req.IPAddr == "" || req.IPAddr == "0.0.0.0",
+					"unknown_ip":     req.IPAddr == "" || req.IPAddr == "0.0.0.0",
 					"unknown_device": req.DeviceFP == "unknown",
-					"unknown_geo": req.GeoRegion == "unknown",
+					"unknown_geo":    req.GeoRegion == "unknown",
 				},
 			})
 			return
@@ -107,7 +119,9 @@ func (h *Handler) handleSessionReevaluate(w http.ResponseWriter, r *http.Request
 	if exists && prev.IPAddr != "" && prev.IPAddr != req.IPAddr {
 		score += 25 // IP change = elevated risk
 	}
-	if score > 100 { score = 100 }
+	if score > 100 {
+		score = 100
+	}
 
 	now := time.Now().UTC()
 	sr := &SessionRisk{
@@ -134,11 +148,11 @@ func (h *Handler) handleSessionReevaluate(w http.ResponseWriter, r *http.Request
 	}
 
 	writeJSON(w, http.StatusOK, map[string]any{
-		"session_id":    sessionID,
+		"session_id":     sessionID,
 		"new_risk_score": score,
-		"action":        action,
-		"ip_changed":    exists && prev != nil && prev.IPAddr != req.IPAddr,
-		"evaluated_at":  now.Format(time.RFC3339),
+		"action":         action,
+		"ip_changed":     exists && prev != nil && prev.IPAddr != req.IPAddr,
+		"evaluated_at":   now.Format(time.RFC3339),
 		"factors": map[string]any{
 			"unknown_ip":     req.IPAddr == "" || req.IPAddr == "0.0.0.0",
 			"unknown_device": req.DeviceFP == "unknown",

@@ -27,10 +27,11 @@ func (h *Handler) handleJITMFAEnroll(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var req struct {
-		UserID    string `json:"user_id"`
-		RiskScore int    `json:"risk_score"`
+		UserID     string `json:"user_id"`
+		RiskScore  int    `json:"risk_score"`
 		FactorType string `json:"factor_type"` // optional, default totp
 	}
+	r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		writeError(w, http.StatusBadRequest, "invalid JSON")
 		return
@@ -48,10 +49,10 @@ func (h *Handler) handleJITMFAEnroll(w http.ResponseWriter, r *http.Request) {
 	// Only enroll if risk is high enough
 	if req.RiskScore < 50 {
 		writeJSON(w, http.StatusOK, map[string]any{
-			"status":    "not_required",
-			"user_id":   req.UserID,
+			"status":     "not_required",
+			"user_id":    req.UserID,
 			"risk_score": req.RiskScore,
-			"message":   "risk score below threshold — JIT enrollment not triggered",
+			"message":    "risk score below threshold — JIT enrollment not triggered",
 		})
 		return
 	}

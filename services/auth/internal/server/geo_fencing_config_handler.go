@@ -6,16 +6,16 @@ import (
 )
 
 type GeoFencingConfig struct {
-	Enabled       bool                `json:"enabled"`
-	Rules         []GeoFencingRule    `json:"rules"`
-	WhitelistIPs  []string            `json:"whitelist_ips"`
+	Enabled      bool             `json:"enabled"`
+	Rules        []GeoFencingRule `json:"rules"`
+	WhitelistIPs []string         `json:"whitelist_ips"`
 }
 
 type GeoFencingRule struct {
-	Country  string `json:"country"`
-	Region   string `json:"region,omitempty"`
-	CIDRs    []string `json:"cidr_ranges"`
-	Action   string `json:"action"`
+	Country string   `json:"country"`
+	Region  string   `json:"region,omitempty"`
+	CIDRs   []string `json:"cidr_ranges"`
+	Action  string   `json:"action"`
 }
 
 func (h *Handler) handleGeoFencingConfig(w http.ResponseWriter, r *http.Request) {
@@ -35,6 +35,7 @@ func (h *Handler) handleGeoFencingConfig(w http.ResponseWriter, r *http.Request)
 		json.NewEncoder(w).Encode(result)
 	case http.MethodPut:
 		var req GeoFencingConfig
+		r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 			writeError(w, http.StatusBadRequest, "invalid request")
 			return

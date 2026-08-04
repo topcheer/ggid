@@ -38,6 +38,7 @@ func (h *Handler) handleAdminConfig(w http.ResponseWriter, r *http.Request) {
 		var body struct {
 			Value string `json:"value"`
 		}
+		r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
 		if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
 			writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid request body"})
 			return

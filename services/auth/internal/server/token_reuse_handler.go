@@ -74,11 +74,11 @@ func (h *Handler) handleTokenReuseCheck(w http.ResponseWriter, r *http.Request) 
 		tokenReuseStore.RUnlock()
 
 		writeJSON(w, http.StatusOK, map[string]any{
-			"suspicious_reuses":    suspicious,
-			"total_reuses":         len(suspicious),
-			"affected_users":       len(uniqueUsers),
-			"unique_ips":           len(uniqueIPs),
-			"hours_analyzed":       hours,
+			"suspicious_reuses": suspicious,
+			"total_reuses":      len(suspicious),
+			"affected_users":    len(uniqueUsers),
+			"unique_ips":        len(uniqueIPs),
+			"hours_analyzed":    hours,
 			"risk_level": func() string {
 				if len(suspicious) >= 10 {
 					return "critical"
@@ -101,6 +101,7 @@ func (h *Handler) handleTokenReuseCheck(w http.ResponseWriter, r *http.Request) 
 			UserAgent string `json:"user_agent"`
 			EventType string `json:"event_type"`
 		}
+		r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 			writeError(w, http.StatusBadRequest, "invalid request body")
 			return

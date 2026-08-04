@@ -44,6 +44,7 @@ func (h *Handler) handlePasswordBreachNotify(w http.ResponseWriter, r *http.Requ
 		UserIDs    []string `json:"user_ids"`
 		BreachName string   `json:"breach_name"`
 	}
+	r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		writeError(w, http.StatusBadRequest, "invalid JSON body")
 		return

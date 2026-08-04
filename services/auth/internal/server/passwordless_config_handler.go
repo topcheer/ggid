@@ -6,12 +6,12 @@ import (
 )
 
 type PasswordlessConfig struct {
-	EnabledMethods       []string          `json:"enabled_methods"`
-	MagicLinkExpiryMins  int               `json:"magic_link_expiry_minutes"`
-	PasskeyRPID          string            `json:"passkey_rp_id"`
-	WebAuthnTimeout      int               `json:"webauthn_timeout_seconds"`
-	FallbackToPassword   bool              `json:"fallback_to_password"`
-	PerRoleRequirement   map[string]string `json:"per_role_requirement"`
+	EnabledMethods      []string          `json:"enabled_methods"`
+	MagicLinkExpiryMins int               `json:"magic_link_expiry_minutes"`
+	PasskeyRPID         string            `json:"passkey_rp_id"`
+	WebAuthnTimeout     int               `json:"webauthn_timeout_seconds"`
+	FallbackToPassword  bool              `json:"fallback_to_password"`
+	PerRoleRequirement  map[string]string `json:"per_role_requirement"`
 }
 
 func (h *Handler) handlePasswordlessConfig(w http.ResponseWriter, r *http.Request) {
@@ -24,16 +24,17 @@ func (h *Handler) handlePasswordlessConfig(w http.ResponseWriter, r *http.Reques
 			WebAuthnTimeout:     60,
 			FallbackToPassword:  true,
 			PerRoleRequirement: map[string]string{
-				"admin":       "webauthn",
-				"developer":   "passkey",
-				"viewer":      "magic_link",
-				"service":     "passkey",
+				"admin":     "webauthn",
+				"developer": "passkey",
+				"viewer":    "magic_link",
+				"service":   "passkey",
 			},
 		}
 		w.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(w).Encode(result)
 	case http.MethodPut:
 		var req PasswordlessConfig
+		r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 			writeError(w, http.StatusBadRequest, "invalid request")
 			return

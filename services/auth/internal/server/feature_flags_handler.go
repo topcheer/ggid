@@ -92,6 +92,7 @@ func (h *Handler) handleFeatureFlags(w http.ResponseWriter, r *http.Request) {
 
 	if r.URL.Path == "/api/v1/admin/feature-flags" && r.Method == http.MethodPost {
 		var req FeatureFlag
+		r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 			writeError(w, http.StatusBadRequest, "invalid body")
 			return

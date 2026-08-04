@@ -356,6 +356,7 @@ func (h *Handler) handleMFASelfRemove(w http.ResponseWriter, r *http.Request) {
 	var req struct {
 		StepUpToken string `json:"step_up_token"`
 	}
+	r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
 	// Body is optional (token may be in query param)
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil && err.Error() != "EOF" {
 		// Only fail on JSON decode errors, not on empty body

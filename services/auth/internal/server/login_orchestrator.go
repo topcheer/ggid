@@ -20,6 +20,7 @@ func (h *Handler) handleLoginOrchestrate(w http.ResponseWriter, r *http.Request)
 		Identifier string `json:"identifier"`
 		TenantID   string `json:"tenant_id"`
 	}
+	r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		writeError(w, http.StatusBadRequest, "invalid JSON body")
 		return
@@ -42,9 +43,9 @@ func (h *Handler) handleLoginOrchestrate(w http.ResponseWriter, r *http.Request)
 	// Build available methods based on identifier type and system config
 	var methods []map[string]any
 	methods = append(methods, map[string]any{
-		"method":     "password",
-		"available":  true,
-		"priority":   1,
+		"method":    "password",
+		"available": true,
+		"priority":  1,
 	})
 
 	if idType == "email" {

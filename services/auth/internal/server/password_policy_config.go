@@ -85,6 +85,7 @@ func (h *Handler) handlePasswordPolicyConfig(w http.ResponseWriter, r *http.Requ
 			ClientID string                       `json:"client_id"`
 			Policy   service.PasswordPolicyConfig `json:"policy"`
 		}
+		r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
 		if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
 			writeError(w, http.StatusBadRequest, "invalid JSON body")
 			return

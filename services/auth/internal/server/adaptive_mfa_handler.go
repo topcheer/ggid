@@ -9,15 +9,15 @@ import (
 
 // adaptiveMFAStore tracks recent MFA decisions for caching.
 var (
-	adaptiveMFAMu sync.RWMutex
+	adaptiveMFAMu     sync.RWMutex
 	adaptiveDecisions = make(map[string]*adaptiveMFAResult)
 )
 
 type adaptiveMFAResult struct {
-	Required   bool   `json:"required"`
-	FactorType string `json:"factor_type"`
-	Reason     string `json:"reason"`
-	Score      int    `json:"risk_score"`
+	Required    bool      `json:"required"`
+	FactorType  string    `json:"factor_type"`
+	Reason      string    `json:"reason"`
+	Score       int       `json:"risk_score"`
 	EvaluatedAt time.Time `json:"evaluated_at"`
 }
 
@@ -37,6 +37,7 @@ func (h *Handler) handleAdaptiveMFA(w http.ResponseWriter, r *http.Request) {
 		NewDevice   bool   `json:"new_device"`
 		NewLocation bool   `json:"new_location"`
 	}
+	r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		writeError(w, http.StatusBadRequest, "invalid JSON body")
 		return

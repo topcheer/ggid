@@ -31,6 +31,7 @@ func (h *Handler) handleRotationSchedule(w http.ResponseWriter, r *http.Request)
 	parts := strings.Split(strings.TrimSuffix(r.URL.Path, "/"), "/")
 	id := parts[len(parts)-2]
 	var policy service.RotationPolicy
+	r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
 	if err := json.NewDecoder(r.Body).Decode(&policy); err != nil {
 		writeError(w, http.StatusBadRequest, "invalid request body")
 		return

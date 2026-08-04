@@ -212,6 +212,7 @@ func (h *Handler) handleProviderConfigSet(w http.ResponseWriter, r *http.Request
 		Config       json.RawMessage `json:"config"`
 		Enabled      *bool           `json:"enabled"`
 	}
+	r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
 		writeError(w, http.StatusBadRequest, "invalid JSON body")
 		return
