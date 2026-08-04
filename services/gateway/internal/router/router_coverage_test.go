@@ -53,10 +53,11 @@ func TestGateway_HealthzReady_NoChecker(t *testing.T) {
 	req := httptest.NewRequest("GET", "/healthz/ready", nil)
 	w := httptest.NewRecorder()
 	gw.ServeHTTP(w, req)
+	// buildHealthChecker always creates a checker from routes during handler build.
+	// Empty routes → 0 unhealthy → checker returns "ready" (200).
 	if w.Code != 200 {
-		t.Errorf("expected 200, got %d", w.Code)
+		t.Errorf("expected 200 (empty routes = healthy), got %d", w.Code)
 	}
-	// buildHealthChecker always creates a checker from routes; empty routes → 0 unhealthy → "healthy"
 }
 
 func TestGateway_HealthzReady_Unhealthy(t *testing.T) {
