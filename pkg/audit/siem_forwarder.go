@@ -8,7 +8,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"log/slog"
+	"net"
 	"net/http"
+	"net/url"
+	"os"
 	"sync"
 	"time"
 )
@@ -307,6 +310,10 @@ func (f *SIEMForwarder) formatGeneric(events []Event) ([]byte, error) {
 
 // send posts the formatted payload to the SIEM endpoint with provider-specific auth.
 func (f *SIEMForwarder) send(ctx context.Context, payload []byte) error {
+	// SSRF protection: validate endpoint before sending.
+	if err := validateSIEMEndpoint(f.config.Endpoint); err != nil {
+		return fmt.Errorf("SIEM endpoint validation: %w", err)
+	}
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, f.config.Endpoint, bytes.NewReader(payload))
 	if err != nil {
 		return fmt.Errorf("create request: %w", err)
@@ -336,5 +343,35 @@ func (f *SIEMForwarder) send(ctx context.Context, payload []byte) error {
 		return fmt.Errorf("SIEM returned HTTP %d", resp.StatusCode)
 	}
 
+	return nil
+}
+
+// validateSIEMEndpoint checks that the SIEM endpoint URL is not pointing
+// to localhost or private/internal addresses (SSRF protection).
+func validateSIEMEndpoint(endpoint string) error {
+	// Skip validation in dev/test mode (e.g., httptest.NewServer uses 127.0.0.1).
+	if os.Getenv("GGID_DEV_MODE") == "true" || os.Getenv("GGID_ENV") == "dev" || os.Getenv("GGID_ENV") == "test" {
+		return nil
+	}
+	u, err := url.Parse(endpoint)
+	if err != nil {
+		return fmt.Errorf("invalid endpoint URL: %w", err)
+	}
+	if u.Scheme != "http" && u.Scheme != "https" {
+		return fmt.Errorf("SIEM endpoint must use http or https")
+	}
+	host := u.Hostname()
+	if host == "localhost" || host == "127.0.0.1" || host == "::1" || host == "0.0.0.0" {
+		return fmt.Errorf("SIEM endpoint must not point to localhost")
+	}
+	ips, err := net.LookupIP(host)
+	if err != nil {
+		return fmt.Errorf("SIEM endpoint host could not be resolved: %w", err)
+	}
+	for _, ip := range ips {
+		if ip.IsLoopback() || ip.IsPrivate() || ip.IsLinkLocalUnicast() || ip.IsUnspecified() {
+			return fmt.Errorf("SIEM endpoint resolves to internal address %s", ip.String())
+		}
+	}
 	return nil
 }

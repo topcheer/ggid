@@ -14,7 +14,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"log/slog"
+	"net"
 	"net/http"
+	"net/url"
+	"os"
 	"strconv"
 	"sync"
 	"time"
@@ -36,34 +39,34 @@ type AlertAction struct {
 
 // AlertRule defines a single alerting rule.
 type AlertRule struct {
-	ID         string          `json:"id"`
-	TenantID   string          `json:"tenant_id"`
-	Name       string          `json:"name"`
-	Condition  AlertCondition  `json:"condition"`
-	Threshold  int             `json:"threshold"`     // fire after N matches
-	Window     time.Duration   `json:"window"`        // within this time window
-	Actions    []AlertAction   `json:"actions"`
-	Enabled    bool            `json:"enabled"`
+	ID        string         `json:"id"`
+	TenantID  string         `json:"tenant_id"`
+	Name      string         `json:"name"`
+	Condition AlertCondition `json:"condition"`
+	Threshold int            `json:"threshold"` // fire after N matches
+	Window    time.Duration  `json:"window"`    // within this time window
+	Actions   []AlertAction  `json:"actions"`
+	Enabled   bool           `json:"enabled"`
 }
 
 // AlertEvent represents an audit event to evaluate.
 type AlertEvent struct {
-	TenantID string         `json:"tenant_id"`
-	Action   string         `json:"action"`
-	UserID   string         `json:"user_id"`
-	IPAddress string        `json:"ip_address"`
-	Timestamp time.Time     `json:"timestamp"`
+	TenantID  string         `json:"tenant_id"`
+	Action    string         `json:"action"`
+	UserID    string         `json:"user_id"`
+	IPAddress string         `json:"ip_address"`
+	Timestamp time.Time      `json:"timestamp"`
 	Fields    map[string]any `json:"fields"`
 }
 
 // Alert represents a fired alert.
 type Alert struct {
-	RuleID    string    `json:"rule_id"`
-	RuleName  string    `json:"rule_name"`
-	TenantID  string    `json:"tenant_id"`
-	Trigger   string    `json:"trigger"` // what matched
-	Count     int       `json:"count"`
-	FiredAt   time.Time `json:"fired_at"`
+	RuleID   string    `json:"rule_id"`
+	RuleName string    `json:"rule_name"`
+	TenantID string    `json:"tenant_id"`
+	Trigger  string    `json:"trigger"` // what matched
+	Count    int       `json:"count"`
+	FiredAt  time.Time `json:"fired_at"`
 }
 
 // Notifier sends alert notifications.
@@ -100,6 +103,11 @@ func (w *WebhookNotifier) Notify(ctx context.Context, alert *Alert, actions []Al
 		return fmt.Errorf("marshal alert: %w", err)
 	}
 
+	// SSRF protection: validate webhook URL before sending.
+	if err := validateAlertWebhookURL(w.URL); err != nil {
+		return fmt.Errorf("alert webhook URL validation: %w", err)
+	}
+
 	req, err := http.NewRequestWithContext(ctx, "POST", w.URL, bytes.NewReader(body))
 	if err != nil {
 		return fmt.Errorf("create webhook request: %w", err)
@@ -131,9 +139,9 @@ func (w *WebhookNotifier) Notify(ctx context.Context, alert *Alert, actions []Al
 
 // AlertEngine evaluates events against rules.
 type AlertEngine struct {
-	mu     sync.RWMutex
-	rules  map[string]*AlertRule
-	counts map[string][]time.Time // rule_id → match timestamps
+	mu       sync.RWMutex
+	rules    map[string]*AlertRule
+	counts   map[string][]time.Time // rule_id → match timestamps
 	notifier Notifier
 }
 
@@ -295,4 +303,34 @@ func contains(s, substr string) bool {
 		}
 	}
 	return false
+}
+
+// validateAlertWebhookURL prevents SSRF by blocking localhost and
+// private/internal IP addresses in alert webhook URLs.
+func validateAlertWebhookURL(rawURL string) error {
+	// Skip validation in dev/test mode (e.g., httptest.NewServer uses 127.0.0.1).
+	if os.Getenv("GGID_DEV_MODE") == "true" || os.Getenv("GGID_ENV") == "dev" || os.Getenv("GGID_ENV") == "test" {
+		return nil
+	}
+	u, err := url.Parse(rawURL)
+	if err != nil {
+		return fmt.Errorf("invalid webhook URL: %w", err)
+	}
+	if u.Scheme != "http" && u.Scheme != "https" {
+		return fmt.Errorf("webhook URL must use http or https")
+	}
+	host := u.Hostname()
+	if host == "localhost" || host == "127.0.0.1" || host == "::1" || host == "0.0.0.0" {
+		return fmt.Errorf("webhook URL must not point to localhost")
+	}
+	ips, err := net.LookupIP(host)
+	if err != nil {
+		return fmt.Errorf("webhook URL host could not be resolved: %w", err)
+	}
+	for _, ip := range ips {
+		if ip.IsLoopback() || ip.IsPrivate() || ip.IsLinkLocalUnicast() || ip.IsUnspecified() {
+			return fmt.Errorf("webhook URL resolves to internal address %s", ip.String())
+		}
+	}
+	return nil
 }

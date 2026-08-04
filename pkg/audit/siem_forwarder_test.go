@@ -5,10 +5,18 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"sync/atomic"
 	"testing"
 	"time"
 )
+
+// TestMain sets dev mode so SSRF validation allows httptest.NewServer
+// (which binds to 127.0.0.1) during tests.
+func TestMain(m *testing.M) {
+	os.Setenv("GGID_DEV_MODE", "true")
+	os.Exit(m.Run())
+}
 
 func TestSIEMForwarder_DefaultConfig(t *testing.T) {
 	cfg := DefaultSIEMConfig()

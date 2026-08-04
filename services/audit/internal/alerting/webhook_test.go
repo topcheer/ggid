@@ -9,9 +9,17 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"testing"
 	"time"
 )
+
+// TestMain sets dev mode so SSRF validation allows httptest.NewServer
+// (which binds to 127.0.0.1) during tests.
+func TestMain(m *testing.M) {
+	os.Setenv("GGID_DEV_MODE", "true")
+	os.Exit(m.Run())
+}
 
 func TestWebhookNotifier_HMACSignature(t *testing.T) {
 	var receivedBody []byte
