@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/google/uuid"
@@ -33,7 +34,11 @@ type QuickstartResponse struct {
 
 // quickstartState tracks whether the system has been initialized (in-memory).
 // In production this would check the database for existing users/tenants.
-var quickstartInitialized bool
+var (
+	quickstartInitialized bool
+	quickstartOnce        sync.Once
+	quickstartMu          sync.RWMutex
+)
 
 // handleQuickstart performs one-click initialization of the entire GGID system.
 // POST /api/v1/system/quickstart
@@ -47,7 +52,10 @@ func (gw *Gateway) handleQuickstart(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Idempotent: if already initialized, return existing state.
-	if quickstartInitialized {
+	quickstartMu.RLock()
+	initialized := quickstartInitialized
+	quickstartMu.RUnlock()
+	if initialized {
 		writeGatewayJSON(w, http.StatusOK, QuickstartResponse{
 			Status:        "already_initialized",
 			AdminUsername: "admin",
@@ -154,13 +162,17 @@ func (gw *Gateway) handleSystemStatus(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Determine initialization state: check if any tenant exists in DB.
+	quickstartMu.RLock()
 	initialized := quickstartInitialized
+	quickstartMu.RUnlock()
 	if !initialized {
 		// Direct DB check: if tenants table is empty, system is not initialized.
 		tenantID := gw.firstTenantID()
 		if tenantID != "" {
 			initialized = true
+			quickstartMu.Lock()
 			quickstartInitialized = true
+			quickstartMu.Unlock()
 		}
 	}
 
