@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"strings"
 
+	ggidtenant "github.com/ggid/ggid/pkg/tenant"
 	"github.com/google/uuid"
 )
 
@@ -166,8 +167,14 @@ func (h *HTTPHandler) handleGDPRDeleteAccount(w http.ResponseWriter, r *http.Req
 	}
 	defer tx.Rollback(r.Context())
 
-	// SECURITY: tenant_id scoping prevents cross-tenant data deletion.
-	tenantID := r.Header.Get("X-Tenant-ID")
+	// SECURITY: Use tenant from JWT context (set by gateway), not client header.
+	// Prevents cross-tenant data deletion if request bypasses gateway.
+	tc, _ := ggidtenant.FromContext(r.Context())
+	if tc == nil {
+		writeJSONError(w, http.StatusForbidden, "tenant context required")
+		return
+	}
+	tenantID := tc.TenantID.String()
 	deletions := []struct{ name, sql string }{
 		{"credentials", `DELETE FROM credentials WHERE user_id = $1 AND tenant_id = $2`},
 		{"passkey_credentials", `DELETE FROM passkey_credentials WHERE user_id = $1 AND tenant_id = $2`},

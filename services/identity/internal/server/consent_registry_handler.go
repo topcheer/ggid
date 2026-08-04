@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	ggidtenant "github.com/ggid/ggid/pkg/tenant"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
@@ -156,12 +157,16 @@ func (r *consentRepo) PurgeUser(ctx context.Context, tenantID uuid.UUID, userID 
 // --- API Handlers ---
 
 func (h *HTTPHandler) handleConsentRegistry(w http.ResponseWriter, r *http.Request) {
-	// SECURITY (R-cron3 P1): caller identity and tenant come only from
-	// gateway-verified headers — never from query/body. Fail-closed.
+	// SECURITY: Use tenant from JWT context (set by gateway), not client header.
+	// X-User-ID also comes from gateway-verified JWT claims.
+	tc, _ := ggidtenant.FromContext(r.Context())
+	if tc == nil {
+		writeJSONError(w, http.StatusUnauthorized, "authentication and tenant context required")
+		return
+	}
 	callerUser := r.Header.Get("X-User-ID")
-	callerTenant := r.Header.Get("X-Tenant-ID")
-	tenantID, terr := uuid.Parse(callerTenant)
-	if callerUser == "" || terr != nil {
+	tenantID := tc.TenantID
+	if callerUser == "" {
 		writeJSONError(w, http.StatusUnauthorized, "authentication and tenant context required")
 		return
 	}
