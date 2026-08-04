@@ -3,7 +3,6 @@ package server
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"log/slog"
 	"net/mail"
 	"time"
@@ -218,8 +217,14 @@ func (h *HTTPHandler) ProcessImportRecords(ctx context.Context, jobID string, te
 		})
 		if err != nil {
 			failed++
+			// Log the real error internally but expose only a generic
+			// message to avoid leaking DB internals (constraint names,
+			// connection details, etc.) via the job status API.
+			slog.Warn("import create user failed",
+				"job_id", jobID, "row", rowNum,
+				"username", rec.Username, "error", err)
 			importErrors = append(importErrors, ImportRowError{
-				Row: rowNum, Username: rec.Username, Error: fmt.Sprintf("create failed: %v", err),
+				Row: rowNum, Username: rec.Username, Error: "user creation failed",
 			})
 			continue
 		}

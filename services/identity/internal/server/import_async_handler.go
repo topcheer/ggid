@@ -114,14 +114,18 @@ func (h *HTTPHandler) handleImportAsync(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	// Process asynchronously.
+	// Process asynchronously with a bounded timeout to prevent
+	// runaway goroutines that hold DB connections indefinitely.
 	go func() {
 		defer func() {
 			if r := recover(); r != nil {
 				slog.Error("ProcessImportRecords panic", "error", r, "job_id", job.ID)
 			}
 		}()
-		h.ProcessImportRecords(context.Background(), job.ID, tc.TenantID, records)
+		// Allow up to 30 minutes for 10K records (~180ms/record).
+		ctx, cancel := context.WithTimeout(context.Background(), 30*time.Minute)
+		defer cancel()
+		h.ProcessImportRecords(ctx, job.ID, tc.TenantID, records)
 	}()
 
 	writeJSON(w, http.StatusAccepted, map[string]any{
