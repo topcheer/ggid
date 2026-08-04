@@ -233,30 +233,38 @@ func EnsureSystemPermissions(ctx context.Context, pool PoolExecutor) error {
 		return nil
 	}
 
-	inserted := 0
-	for _, sp := range SystemPermissions {
-		// Use UPSERT: insert if not exists, do nothing if already present
-		// system_perm is always set to true for code-defined permissions
-		tag, err := pool.Exec(ctx, `
-			INSERT INTO permissions (id, tenant_id, key, name, resource_type, action, description, system_perm, level)
-			VALUES (gen_random_uuid(), '00000000-0000-0000-0000-000000000000', $1, $2, $3, $4, $5, true, $6)
-			ON CONFLICT (key) DO UPDATE SET
-				name = EXCLUDED.name,
-				description = EXCLUDED.description,
-				system_perm = true,
-				level = EXCLUDED.level
-		`, sp.Key, sp.Name, sp.Resource, sp.Action+":"+sp.Scope, sp.Description, sp.Level)
-		if err != nil {
-			slog.Error("EnsureSystemPermissions: failed to upsert", "key", sp.Key, "error", err)
-			continue
-		}
-		if tag.RowsAffected() > 0 {
-			inserted++
-		}
+	// Batch UPSERT using UNNEST - single round-trip instead of N per-permission queries.
+	keys := make([]string, len(SystemPermissions))
+	names := make([]string, len(SystemPermissions))
+	resources := make([]string, len(SystemPermissions))
+	actions := make([]string, len(SystemPermissions))
+	descs := make([]string, len(SystemPermissions))
+	levels := make([]string, len(SystemPermissions))
+	for i, sp := range SystemPermissions {
+		keys[i] = sp.Key
+		names[i] = sp.Name
+		resources[i] = sp.Resource
+		actions[i] = sp.Action + ":" + sp.Scope
+		descs[i] = sp.Description
+		levels[i] = sp.Level
 	}
 
-	if inserted > 0 {
-		slog.Info("System permissions synced", "total", len(SystemPermissions), "new_or_updated", inserted)
+	tag, err := pool.Exec(ctx, `
+		INSERT INTO permissions (id, tenant_id, key, name, resource_type, action, description, system_perm, level)
+		SELECT gen_random_uuid(), '00000000-0000-0000-0000-000000000000',
+		       * FROM UNNEST($1::text[], $2::text[], $3::text[], $4::text[], $5::text[], $6::text[]) AS t(key, name, resource_type, action, description, level)
+		ON CONFLICT (key) DO UPDATE SET
+			name = EXCLUDED.name,
+			description = EXCLUDED.description,
+			system_perm = true,
+			level = EXCLUDED.level
+	`, keys, names, resources, actions, descs, levels)
+	if err != nil {
+		slog.Error("EnsureSystemPermissions: batch upsert failed", "error", err, "count", len(SystemPermissions))
+		return nil
+	}
+	if tag.RowsAffected() > 0 {
+		slog.Info("System permissions synced", "total", len(SystemPermissions), "rows_affected", tag.RowsAffected())
 	}
 	return nil
 }
