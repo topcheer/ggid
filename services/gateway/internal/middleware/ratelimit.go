@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"net"
 	"net/http"
-	"strconv"
 	"os"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -193,6 +193,15 @@ func isTrustedProxy(host string) bool {
 		}
 	}
 	return false
+}
+
+// isTrustedProxyHost checks if a RemoteAddr (host:port) is from a trusted proxy.
+func isTrustedProxyHost(remoteAddr string) bool {
+	host, _, err := net.SplitHostPort(remoteAddr)
+	if err != nil {
+		host = remoteAddr
+	}
+	return isTrustedProxy(host)
 }
 
 func (rl *RateLimiter) allow(key string, limit int) (allowed bool, remaining int, resetAt time.Time) {

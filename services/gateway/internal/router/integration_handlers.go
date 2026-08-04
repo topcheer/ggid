@@ -568,7 +568,7 @@ func (gw *Gateway) handleTenantList(w http.ResponseWriter, r *http.Request) {
 	_, _ = conn.Exec(r.Context(), `SET app.tenant_id = $1`, r.Header.Get("X-Tenant-ID")) // set RLS context
 
 	rows, err := conn.Query(r.Context(),
-		`SELECT id::text, name, slug, plan, status, max_users, created_at FROM tenants ORDER BY created_at DESC`)
+		`SELECT id::text, name, slug, plan, status, max_users, created_at FROM tenants ORDER BY created_at DESC LIMIT 500`)
 	if err != nil {
 		writeGatewayJSON(w, http.StatusOK, map[string]any{"tenants": []any{}})
 		return

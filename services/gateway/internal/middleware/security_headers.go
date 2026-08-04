@@ -87,7 +87,7 @@ func SecurityHeadersConfigurable(cfg *SecurityHeadersConfig) func(http.Handler) 
 			} else if active.FrameAllowFrom != "" {
 				w.Header().Set("X-Frame-Options", "ALLOW-FROM "+active.FrameAllowFrom)
 			}
-			if active.HSTSMaxAge > 0 && (r.TLS != nil || r.Header.Get("X-Forwarded-Proto") == "https") {
+			if active.HSTSMaxAge > 0 && (r.TLS != nil || (r.Header.Get("X-Forwarded-Proto") == "https" && isTrustedProxyHost(r.RemoteAddr))) {
 				// SECURITY: Only set HSTS on HTTPS connections.
 				// Setting HSTS on plaintext HTTP is ignored by browsers and
 				// wastes headers, but more importantly, it signals that the
