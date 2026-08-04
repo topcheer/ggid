@@ -107,7 +107,9 @@ func (h *HTTPHandler) scimTokenAuth(next http.Handler) http.Handler {
 					slog.Error("scim UpdateLastUsed panic", "error", r)
 				}
 			}()
-			h.scimRepo.UpdateLastUsed(context.Background(), scimToken.ID)
+			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+			defer cancel()
+			h.scimRepo.UpdateLastUsed(ctx, scimToken.ID)
 		}()
 
 		next.ServeHTTP(w, r.WithContext(ctx))
