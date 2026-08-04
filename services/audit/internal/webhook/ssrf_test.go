@@ -6,6 +6,7 @@ import (
 )
 
 func TestValidateWebhookURL_ValidHTTPS(t *testing.T) {
+	t.Setenv("GGID_DEV_MODE", "true")
 	err := validateWebhookURL("https://hooks.example.com/webhook")
 	if err != nil {
 		t.Errorf("expected valid HTTPS URL to pass, got: %v", err)
@@ -13,6 +14,7 @@ func TestValidateWebhookURL_ValidHTTPS(t *testing.T) {
 }
 
 func TestValidateWebhookURL_ValidHTTP(t *testing.T) {
+	t.Setenv("GGID_DEV_MODE", "true")
 	err := validateWebhookURL("http://hooks.example.com/webhook")
 	if err != nil {
 		t.Errorf("expected valid HTTP URL to pass, got: %v", err)
@@ -95,6 +97,8 @@ func TestValidateWebhookURL_PrivateIPFormat(t *testing.T) {
 }
 
 func TestValidateWebhookURL_NoPort(t *testing.T) {
+	// Use dev mode to skip DNS resolution (hooks.example.com doesn't resolve in CI)
+	t.Setenv("GGID_DEV_MODE", "true")
 	err := validateWebhookURL("https://hooks.example.com/webhook")
 	if err != nil {
 		t.Errorf("expected valid URL without port, got: %v", err)
@@ -102,6 +106,8 @@ func TestValidateWebhookURL_NoPort(t *testing.T) {
 }
 
 func TestValidateWebhookURL_WithPath(t *testing.T) {
+	// Use dev mode to skip DNS resolution (hooks.example.com doesn't resolve in CI)
+	t.Setenv("GGID_DEV_MODE", "true")
 	err := validateWebhookURL("https://hooks.example.com/api/v1/webhooks/abc123")
 	if err != nil {
 		t.Errorf("expected valid URL with path, got: %v", err)
@@ -109,6 +115,8 @@ func TestValidateWebhookURL_WithPath(t *testing.T) {
 }
 
 func TestValidateWebhookURL_WithQueryParams(t *testing.T) {
+	// Use dev mode to skip DNS resolution (hooks.example.com doesn't resolve in CI)
+	t.Setenv("GGID_DEV_MODE", "true")
 	err := validateWebhookURL("https://hooks.example.com/webhook?token=abc123&type=event")
 	if err != nil {
 		t.Errorf("expected valid URL with query params, got: %v", err)

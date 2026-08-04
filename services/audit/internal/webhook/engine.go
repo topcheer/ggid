@@ -326,10 +326,10 @@ func (e *Engine) sendHTTP(ctx context.Context, ep *Endpoint, eventType string, p
 	req.Header.Set("X-GGID-Event", eventType)
 
 	// HMAC-SHA256 signature.
-	// SECURITY: fail-closed — if no secret, skip sending rather than delivering
+	// SECURITY: fail-closed - if no secret, skip sending rather than delivering
 	// unsigned webhooks that can be forged.
 	if ep.Secret == "" {
-		return 0, fmt.Errorf("webhook endpoint %s has no secret — refusing to send unsigned payload", ep.ID)
+		return 0, fmt.Errorf("webhook endpoint %s has no secret - refusing to send unsigned payload", ep.ID)
 	}
 	mac := hmac.New(sha256.New, []byte(ep.Secret))
 	mac.Write(body)
@@ -380,7 +380,7 @@ func (e *Engine) GetDeliveries(ctx context.Context, endpointID string, limit int
 // Replay re-attempts a dead-lettered delivery.
 func (e *Engine) Replay(ctx context.Context, deliveryID string) (*Delivery, error) {
 	if e.pool == nil {
-		return nil, fmt.Errorf("no database — cannot replay")
+		return nil, fmt.Errorf("no database - cannot replay")
 	}
 	var d Delivery
 	var payloadBytes []byte
@@ -391,7 +391,7 @@ func (e *Engine) Replay(ctx context.Context, deliveryID string) (*Delivery, erro
 		return nil, fmt.Errorf("delivery not found: %w", err)
 	}
 
-	ep := e.GetEndpoint("", d.EndpointID) // internal lookup — tenant scoping done at handler layer
+	ep := e.GetEndpoint("", d.EndpointID) // internal lookup - tenant scoping done at handler layer
 	if ep == nil {
 		return nil, fmt.Errorf("endpoint %s not found", d.EndpointID)
 	}
@@ -465,9 +465,10 @@ func validateWebhookURL(rawURL string) error {
 		return fmt.Errorf("webhook URL must not point to localhost")
 	}
 	// Resolve and check for private/internal IPs
+	// SECURITY: Fail-closed on DNS error - don't skip validation if we can't resolve.
 	ips, err := net.LookupIP(host)
 	if err != nil {
-		return nil
+		return fmt.Errorf("webhook URL host could not be resolved: %w", err)
 	}
 	for _, ip := range ips {
 		if ip.IsLoopback() || ip.IsPrivate() || ip.IsLinkLocalUnicast() || ip.IsUnspecified() {
