@@ -70,6 +70,7 @@ func (h *HTTPHandler) handleImportAsync(w http.ResponseWriter, r *http.Request) 
 		}
 	} else {
 		// Inline JSON body.
+		r.Body = http.MaxBytesReader(w, r.Body, 10<<20) // 10MB limit
 		format = "json"
 		if err := json.NewDecoder(r.Body).Decode(&records); err != nil {
 			writeJSONError(w, http.StatusBadRequest, "invalid JSON body")
@@ -114,7 +115,14 @@ func (h *HTTPHandler) handleImportAsync(w http.ResponseWriter, r *http.Request) 
 	}
 
 	// Process asynchronously.
-	go h.ProcessImportRecords(context.Background(), job.ID, tc.TenantID, records)
+	go func() {
+		defer func() {
+			if r := recover(); r != nil {
+				slog.Error("ProcessImportRecords panic", "error", r, "job_id", job.ID)
+			}
+		}()
+		h.ProcessImportRecords(context.Background(), job.ID, tc.TenantID, records)
+	}()
 
 	writeJSON(w, http.StatusAccepted, map[string]any{
 		"job_id":  job.ID,
