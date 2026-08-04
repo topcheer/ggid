@@ -1,6 +1,7 @@
 package server
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"sync"
@@ -80,8 +81,13 @@ func handleTokenEventStream(w http.ResponseWriter, r *http.Request) {
 
 	// Send recent events first
 	for _, evt := range recent {
-		fmt.Fprintf(w, "data: {\"type\":\"%s\",\"token_id\":\"%s\",\"client_id\":\"%s\",\"timestamp\":\"%s\"}\n\n",
-			evt.Type, evt.TokenID, evt.ClientID, evt.Timestamp.Format(time.RFC3339))
+		data, _ := json.Marshal(map[string]string{
+			"type":      evt.Type,
+			"token_id":  evt.TokenID,
+			"client_id": evt.ClientID,
+			"timestamp": evt.Timestamp.Format(time.RFC3339),
+		})
+		fmt.Fprintf(w, "data: %s\n\n", data)
 	}
 	flusher.Flush()
 
@@ -92,8 +98,15 @@ func handleTokenEventStream(w http.ResponseWriter, r *http.Request) {
 		case <-ctx.Done():
 			return
 		case evt := <-ch:
-			fmt.Fprintf(w, "data: {\"type\":\"%s\",\"token_id\":\"%s\",\"client_id\":\"%s\",\"user_id\":\"%s\",\"scope\":\"%s\",\"timestamp\":\"%s\"}\n\n",
-				evt.Type, evt.TokenID, evt.ClientID, evt.UserID, evt.Scope, evt.Timestamp.Format(time.RFC3339))
+			data, _ := json.Marshal(map[string]string{
+				"type":      evt.Type,
+				"token_id":  evt.TokenID,
+				"client_id": evt.ClientID,
+				"user_id":   evt.UserID,
+				"scope":     evt.Scope,
+				"timestamp": evt.Timestamp.Format(time.RFC3339),
+			})
+			fmt.Fprintf(w, "data: %s\n\n", data)
 			flusher.Flush()
 		case <-time.After(30 * time.Second):
 			fmt.Fprintf(w, ": heartbeat\n\n")
