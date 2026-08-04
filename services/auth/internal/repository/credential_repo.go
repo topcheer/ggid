@@ -104,7 +104,9 @@ func (r *CredentialRepository) UpdateSecret(ctx context.Context, id uuid.UUID, s
 		return err
 	}
 	// Also sync users.password_hash for LocalProvider login
-	_, _ = r.db.Exec(ctx, `UPDATE users SET password_hash = $2 WHERE id = (SELECT user_id FROM credentials WHERE id = $1)`, id, secret)
+	if _, err := r.db.Exec(ctx, `UPDATE users SET password_hash = $2 WHERE id = (SELECT user_id FROM credentials WHERE id = $1)`, id, secret); err != nil {
+		return fmt.Errorf("sync password_hash to users table: %w", err)
+	}
 	return nil
 }
 
