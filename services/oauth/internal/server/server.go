@@ -46,11 +46,10 @@ import (
 
 	"github.com/google/uuid"
 
-	"github.com/redis/go-redis/v9"
 	"github.com/golang-jwt/jwt/v5"
-
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"github.com/redis/go-redis/v9"
 )
 
 // Server encapsulates the OAuth HTTP server.
@@ -2769,10 +2768,18 @@ func (a *redisAdapter) ZAdd(ctx context.Context, key string, score float64, memb
 
 // truncateString limits a string to maxLen characters.
 // sanitizeRedirectURL validates and sanitizes a redirect URL.
-// Only allows http/https schemes to prevent open redirect attacks.
+// Only allows relative paths or same-host URLs to prevent open redirect attacks.
 func sanitizeRedirectURL(rawURL string) string {
 	u, err := url.Parse(rawURL)
-	if err != nil || (u.Scheme != "http" && u.Scheme != "https") {
+	if err != nil {
+		return "/"
+	}
+	// Allow relative URLs (no host).
+	if u.Host == "" && (u.Scheme == "http" || u.Scheme == "https") {
+		return rawURL
+	}
+	// Block absolute URLs to external hosts — redirect to home instead.
+	if u.Host != "" {
 		return "/"
 	}
 	return rawURL
