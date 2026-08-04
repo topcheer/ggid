@@ -41,6 +41,7 @@ func (s *HTTPServer) handleDashboardWidgets(w http.ResponseWriter, r *http.Reque
 			RefreshInterval int    `json:"refresh_interval"`
 			Position        int    `json:"position"`
 		}
+		r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 			writeJSONError(w, http.StatusBadRequest, "invalid JSON body")
 			return
@@ -49,8 +50,12 @@ func (s *HTTPServer) handleDashboardWidgets(w http.ResponseWriter, r *http.Reque
 			writeJSONError(w, http.StatusBadRequest, "title is required")
 			return
 		}
-		if req.ChartType == "" { req.ChartType = "line" }
-		if req.RefreshInterval <= 0 { req.RefreshInterval = 60 }
+		if req.ChartType == "" {
+			req.ChartType = "line"
+		}
+		if req.RefreshInterval <= 0 {
+			req.RefreshInterval = 60
+		}
 		widget := &DashboardWidget{
 			ID: uuid.New().String(), DashboardID: dashboardID, Title: req.Title,
 			Query: req.Query, ChartType: req.ChartType,
@@ -81,7 +86,9 @@ func (s *HTTPServer) handleDashboardWidgets(w http.ResponseWriter, r *http.Reque
 				})
 			}
 		}
-		if result == nil { result = []*DashboardWidget{} }
+		if result == nil {
+			result = []*DashboardWidget{}
+		}
 		writeJSON(w, http.StatusOK, map[string]any{"widgets": result, "count": len(result)})
 
 	case http.MethodDelete:
@@ -100,7 +107,9 @@ func (s *HTTPServer) handleDashboardWidgets(w http.ResponseWriter, r *http.Reque
 }
 
 func amGetString(m map[string]any, key string) string {
-	if v, ok := m[key]; ok { return fmt.Sprintf("%v", v) }
+	if v, ok := m[key]; ok {
+		return fmt.Sprintf("%v", v)
+	}
 	return ""
 }
 
@@ -120,8 +129,10 @@ func amGetInt(m map[string]any, key string) int {
 func amGetBool(m map[string]any, key string) bool {
 	if v, ok := m[key]; ok {
 		switch val := v.(type) {
-		case bool: return val
-		case string: return val == "true"
+		case bool:
+			return val
+		case string:
+			return val == "true"
 		}
 	}
 	return false

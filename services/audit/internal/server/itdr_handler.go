@@ -140,6 +140,7 @@ func (s *HTTPServer) handleITDRResolve(w http.ResponseWriter, r *http.Request) {
 	var body struct {
 		FalsePositive bool `json:"false_positive"`
 	}
+	r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
 		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid request body"})
 		return

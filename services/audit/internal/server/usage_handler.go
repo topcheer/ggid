@@ -74,6 +74,7 @@ func (s *HTTPServer) handleUsageIngest(w http.ResponseWriter, r *http.Request) {
 		Events []UsageRecord `json:"events"`
 		Type   string        `json:"type"`
 	}
+	r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
 	if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
 		http.Error(w, "invalid JSON", http.StatusBadRequest)
 		return

@@ -25,31 +25,35 @@ func (s *HTTPServer) handleAnomalyDetect(w http.ResponseWriter, r *http.Request)
 		TimeWindow string `json:"time_window"` // e.g. "24h"
 		TenantID   string `json:"tenant_id"`
 	}
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil { writeJSONError(w, http.StatusBadRequest, "invalid request body"); return }
+	r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		writeJSONError(w, http.StatusBadRequest, "invalid request body")
+		return
+	}
 
 	// Simulated anomaly detection based on baseline deviations
 	anomalies := []Anomaly{
 		{
 			Type: "unusual_login_time", Confidence: 0.87,
-			Description: "User logged in at 3:47 AM, outside baseline hours (8AM-7PM)",
+			Description:   "User logged in at 3:47 AM, outside baseline hours (8AM-7PM)",
 			RelatedEvents: []string{"evt-2026-07-12-0347", "evt-2026-07-12-0348"},
 			DetectedAt:    time.Now().UTC().Format(time.RFC3339),
 		},
 		{
 			Type: "mass_permission_changes", Confidence: 0.94,
-			Description: "42 permission grants in 10 minutes (baseline: 2-3/day)",
+			Description:   "42 permission grants in 10 minutes (baseline: 2-3/day)",
 			RelatedEvents: []string{"evt-perm-batch-001", "evt-perm-batch-002"},
 			DetectedAt:    time.Now().UTC().Format(time.RFC3339),
 		},
 		{
 			Type: "bulk_data_export", Confidence: 0.91,
-			Description: "Exported 15,000 user records (baseline: <100/day)",
+			Description:   "Exported 15,000 user records (baseline: <100/day)",
 			RelatedEvents: []string{"evt-export-large-001"},
 			DetectedAt:    time.Now().UTC().Format(time.RFC3339),
 		},
 		{
 			Type: "impossible_travel", Confidence: 0.79,
-			Description: "Login from Tokyo 5 min after login from London (impossible distance)",
+			Description:   "Login from Tokyo 5 min after login from London (impossible distance)",
 			RelatedEvents: []string{"evt-login-london", "evt-login-tokyo"},
 			DetectedAt:    time.Now().UTC().Format(time.RFC3339),
 		},

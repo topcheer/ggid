@@ -69,6 +69,7 @@ func (s *HTTPServer) generateEvidencePackage(w http.ResponseWriter, r *http.Requ
 			ToDate    string `json:"to_date"`
 			Format    string `json:"format"`
 		}
+		r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
 		if err := json.NewDecoder(r.Body).Decode(&req); err == nil {
 			if req.Framework != "" {
 				framework = req.Framework

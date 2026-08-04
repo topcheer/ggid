@@ -31,14 +31,14 @@ type AnomalyWindow struct {
 }
 
 type TimelineResult struct {
-	UserID           string            `json:"user_id,omitempty"`
-	SessionID        string            `json:"session_id,omitempty"`
-	OrderedEvents    []TimelineEvent   `json:"ordered_events"`
-	CorrelationChain []string          `json:"correlation_chain"`
-	GapsDetected     []GapDetected     `json:"gaps_detected"`
-	AnomalyWindows   []AnomalyWindow   `json:"anomaly_windows"`
-	EventCount       int               `json:"event_count"`
-	ReconstructedAt  string            `json:"reconstructed_at"`
+	UserID           string          `json:"user_id,omitempty"`
+	SessionID        string          `json:"session_id,omitempty"`
+	OrderedEvents    []TimelineEvent `json:"ordered_events"`
+	CorrelationChain []string        `json:"correlation_chain"`
+	GapsDetected     []GapDetected   `json:"gaps_detected"`
+	AnomalyWindows   []AnomalyWindow `json:"anomaly_windows"`
+	EventCount       int             `json:"event_count"`
+	ReconstructedAt  string          `json:"reconstructed_at"`
 }
 
 type TimelineRequest struct {
@@ -56,6 +56,7 @@ func (s *HTTPServer) handleTimelineReconstruct(w http.ResponseWriter, r *http.Re
 		return
 	}
 	var req TimelineRequest
+	r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		writeJSONError(w, http.StatusBadRequest, "invalid request body")
 		return

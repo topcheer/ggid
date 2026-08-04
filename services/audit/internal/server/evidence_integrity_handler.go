@@ -11,11 +11,11 @@ import (
 
 // integrityRecord stores SHA256 hashes for evidence attachment verification.
 type integrityRecord struct {
-	EvidenceID  string `json:"evidence_id"`
+	EvidenceID   string `json:"evidence_id"`
 	AttachmentID string `json:"attachment_id"`
-	Filename    string `json:"filename"`
-	StoredHash  string `json:"stored_hash"`
-	Status      string `json:"status"` // verified, mismatch, missing_hash
+	Filename     string `json:"filename"`
+	StoredHash   string `json:"stored_hash"`
+	Status       string `json:"status"` // verified, mismatch, missing_hash
 }
 
 var integrityStore = struct {
@@ -48,6 +48,7 @@ func (s *HTTPServer) handleEvidenceVerifyIntegrity(w http.ResponseWriter, r *htt
 	}
 	// Allow empty body (verify all)
 	if r.ContentLength > 0 {
+		r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 			writeJSONError(w, http.StatusBadRequest, "invalid JSON body")
 			return
@@ -110,10 +111,10 @@ func (s *HTTPServer) handleEvidenceVerifyIntegrity(w http.ResponseWriter, r *htt
 	verificationID := uuid.New().String()
 
 	writeJSON(w, http.StatusOK, map[string]any{
-		"verification_id":  verificationID,
-		"total_checked":    totalChecked,
-		"verified_count":   verified,
-		"mismatched_count": len(mismatched),
+		"verification_id":    verificationID,
+		"total_checked":      totalChecked,
+		"verified_count":     verified,
+		"mismatched_count":   len(mismatched),
 		"missing_hash_count": missingHash,
 		"integrity_score": func() int {
 			if totalChecked == 0 {
@@ -121,7 +122,7 @@ func (s *HTTPServer) handleEvidenceVerifyIntegrity(w http.ResponseWriter, r *htt
 			}
 			return verified * 100 / totalChecked
 		}(),
-		"mismatched":       mismatched,
-		"verified_at":      time.Now().UTC().Format(time.RFC3339),
+		"mismatched":  mismatched,
+		"verified_at": time.Now().UTC().Format(time.RFC3339),
 	})
 }

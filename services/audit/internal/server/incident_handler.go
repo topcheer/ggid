@@ -139,6 +139,7 @@ func (s *HTTPServer) handleIncidents(w http.ResponseWriter, r *http.Request) {
 				AffectedUsers []string `json:"affected_users"`
 				AssignedTo    string   `json:"assigned_to"`
 			}
+			r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
 			if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 				writeJSONError(w, http.StatusBadRequest, "invalid JSON body")
 				return
@@ -197,6 +198,7 @@ func (s *HTTPServer) handleIncidents(w http.ResponseWriter, r *http.Request) {
 			ResolutionNotes string `json:"resolution_notes"`
 			ResolvedBy      string `json:"resolved_by"`
 		}
+		r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 			writeJSONError(w, http.StatusBadRequest, "invalid request body")
 			return

@@ -1023,6 +1023,7 @@ func (s *HTTPServer) handleAuditWebhooks(w http.ResponseWriter, r *http.Request)
 			SeverityThreshold string   `json:"severity_threshold"`
 			Active            *bool    `json:"active"`
 		}
+		r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 			writeJSONError(w, http.StatusBadRequest, "invalid JSON body")
 			return
@@ -1363,6 +1364,7 @@ func (s *HTTPServer) handleRetention(w http.ResponseWriter, r *http.Request) {
 			RetentionDays int   `json:"retention_days"`
 			Enabled       *bool `json:"enabled"`
 		}
+		r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 			writeJSONError(w, http.StatusBadRequest, "invalid JSON body")
 			return
@@ -1473,6 +1475,7 @@ func (s *HTTPServer) handleAnomalyRules(w http.ResponseWriter, r *http.Request) 
 			WindowMins int    `json:"window_minutes"`
 			Severity   string `json:"severity"`
 		}
+		r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 			writeJSONError(w, http.StatusBadRequest, "invalid JSON body")
 			return
@@ -1729,6 +1732,7 @@ func (s *HTTPServer) handleAlertConfig(w http.ResponseWriter, r *http.Request) {
 			EmailTo     string `json:"email_to"`
 			MinSeverity string `json:"min_severity"`
 		}
+		r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 			writeJSONError(w, http.StatusBadRequest, "invalid JSON body")
 			return
@@ -1802,6 +1806,7 @@ func (s *HTTPServer) handleComplianceReport(w http.ResponseWriter, r *http.Reque
 		StartTime string `json:"start_time"`
 		EndTime   string `json:"end_time"`
 	}
+	r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		writeJSONError(w, http.StatusBadRequest, "invalid JSON body")
 		return

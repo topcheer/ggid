@@ -11,18 +11,18 @@ import (
 
 // ComplianceEvidence tracks collected evidence for a compliance framework.
 type ComplianceEvidence struct {
-	ID         string    `json:"id"`
-	Framework  string    `json:"framework"` // soc2, hipaa, gdpr
-	ControlID  string    `json:"control_id"`
-	Status     string    `json:"status"` // compliant, non_compliant, in_progress
-	Artifacts  []string  `json:"artifacts"`
-	Notes      string    `json:"notes,omitempty"`
+	ID          string    `json:"id"`
+	Framework   string    `json:"framework"` // soc2, hipaa, gdpr
+	ControlID   string    `json:"control_id"`
+	Status      string    `json:"status"` // compliant, non_compliant, in_progress
+	Artifacts   []string  `json:"artifacts"`
+	Notes       string    `json:"notes,omitempty"`
 	CollectedAt time.Time `json:"collected_at"`
-	CollectedBy string   `json:"collected_by,omitempty"`
+	CollectedBy string    `json:"collected_by,omitempty"`
 }
 
 var (
-	evidenceMu sync.RWMutex
+	evidenceMu    sync.RWMutex
 	evidenceStore = make(map[string]*ComplianceEvidence)
 )
 
@@ -39,6 +39,7 @@ func (s *HTTPServer) handleComplianceEvidence(w http.ResponseWriter, r *http.Req
 			Notes       string   `json:"notes"`
 			CollectedBy string   `json:"collected_by"`
 		}
+		r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 			writeJSONError(w, http.StatusBadRequest, "invalid JSON body")
 			return

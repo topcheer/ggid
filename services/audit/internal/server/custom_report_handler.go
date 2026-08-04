@@ -8,17 +8,24 @@ import (
 // POST /api/v1/audit/reports/custom
 func (s *HTTPServer) handleCustomReport(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
-		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed"); return
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
+		return
 	}
 	var spec struct {
-		Fields  []string         `json:"fields"`
-		Filters map[string]any   `json:"filters"`
-		GroupBy string           `json:"group_by"`
-		Sort    string           `json:"sort"`
-		Format  string           `json:"format"`
+		Fields  []string       `json:"fields"`
+		Filters map[string]any `json:"filters"`
+		GroupBy string         `json:"group_by"`
+		Sort    string         `json:"sort"`
+		Format  string         `json:"format"`
 	}
-	if err := json.NewDecoder(r.Body).Decode(&spec); err != nil { writeJSONError(w, http.StatusBadRequest, "invalid JSON"); return }
-	if spec.Format == "" { spec.Format = "json" }
+	r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
+	if err := json.NewDecoder(r.Body).Decode(&spec); err != nil {
+		writeJSONError(w, http.StatusBadRequest, "invalid JSON")
+		return
+	}
+	if spec.Format == "" {
+		spec.Format = "json"
+	}
 	rows := []map[string]any{
 		{"timestamp": "2026-07-12T08:00:00Z", "action": "login", "user": "admin", "result": "success"},
 		{"timestamp": "2026-07-12T07:30:00Z", "action": "api_call", "user": "jsmith", "result": "success"},

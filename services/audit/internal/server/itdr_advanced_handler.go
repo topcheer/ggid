@@ -104,6 +104,7 @@ func (s *HTTPServer) handleITDRComposite(w http.ResponseWriter, r *http.Request)
 		writeJSON2(w, http.StatusOK, map[string]any{"rules": result, "total": len(result)})
 	case http.MethodPost:
 		var rule CompositeRule
+		r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
 		if err := json.NewDecoder(r.Body).Decode(&rule); err != nil {
 			writeJSON2(w, http.StatusBadRequest, map[string]string{"error": "invalid body"})
 			return
@@ -139,6 +140,7 @@ func (s *HTTPServer) handleITDRComposite(w http.ResponseWriter, r *http.Request)
 		parts := strings.Split(r.URL.Path, "/")
 		id := parts[len(parts)-1]
 		var update CompositeRule
+		r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
 		if err := json.NewDecoder(r.Body).Decode(&update); err != nil {
 			writeJSON2(w, http.StatusBadRequest, map[string]string{"error": "invalid request body"})
 			return
@@ -222,6 +224,7 @@ func (s *HTTPServer) handleITDRPlaybooks(w http.ResponseWriter, r *http.Request)
 		writeJSON2(w, http.StatusOK, map[string]any{"playbooks": result, "total": len(result)})
 	case http.MethodPost:
 		var pb Playbook
+		r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
 		if err := json.NewDecoder(r.Body).Decode(&pb); err != nil {
 			writeJSON2(w, http.StatusBadRequest, map[string]string{"error": "invalid body"})
 			return

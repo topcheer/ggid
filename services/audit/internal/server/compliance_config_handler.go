@@ -6,21 +6,21 @@ import (
 )
 
 type ComplianceConfig struct {
-	ComplianceFrameworks      []string               `json:"compliance_frameworks"`
-	DataClassificationRules   map[string]string      `json:"data_classification_rules"`
-	RetentionPerCategory      map[string]int         `json:"retention_per_category"`
-	LegalHoldConfig           map[string]any         `json:"legal_hold_config"`
-	AutomatedDeletionSchedule map[string]any         `json:"automated_deletion_schedule"`
-	CrossBorderTransferLog    bool                   `json:"cross_border_transfer_log"`
+	ComplianceFrameworks      []string          `json:"compliance_frameworks"`
+	DataClassificationRules   map[string]string `json:"data_classification_rules"`
+	RetentionPerCategory      map[string]int    `json:"retention_per_category"`
+	LegalHoldConfig           map[string]any    `json:"legal_hold_config"`
+	AutomatedDeletionSchedule map[string]any    `json:"automated_deletion_schedule"`
+	CrossBorderTransferLog    bool              `json:"cross_border_transfer_log"`
 }
 
 var globalComplianceConfig = &ComplianceConfig{
 	ComplianceFrameworks: []string{"soc2", "gdpr", "hipaa", "iso27001", "pci"},
 	DataClassificationRules: map[string]string{
-		"pii":    "restricted",
-		"phi":    "restricted",
+		"pii":       "restricted",
+		"phi":       "restricted",
 		"financial": "confidential",
-		"public": "public",
+		"public":    "public",
 	},
 	RetentionPerCategory: map[string]int{
 		"restricted":   2555,
@@ -29,16 +29,16 @@ var globalComplianceConfig = &ComplianceConfig{
 		"public":       365,
 	},
 	LegalHoldConfig: map[string]any{
-		"enabled":              true,
-		"bypass_retention":     true,
-		"require_approval":     true,
-		"approver_role":        "legal_admin",
+		"enabled":          true,
+		"bypass_retention": true,
+		"require_approval": true,
+		"approver_role":    "legal_admin",
 	},
 	AutomatedDeletionSchedule: map[string]any{
-		"enabled":          true,
-		"frequency":        "daily",
-		"batch_size":       1000,
-		"dry_run_default":  true,
+		"enabled":         true,
+		"frequency":       "daily",
+		"batch_size":      1000,
+		"dry_run_default": true,
 	},
 	CrossBorderTransferLog: true,
 }
@@ -50,6 +50,7 @@ func (s *HTTPServer) handleComplianceConfig(w http.ResponseWriter, r *http.Reque
 		json.NewEncoder(w).Encode(globalComplianceConfig)
 	case http.MethodPut:
 		var cfg ComplianceConfig
+		r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
 		if err := json.NewDecoder(r.Body).Decode(&cfg); err != nil {
 			writeJSONError(w, http.StatusBadRequest, "invalid request body")
 			return

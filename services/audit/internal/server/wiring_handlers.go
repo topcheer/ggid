@@ -49,6 +49,7 @@ func (s *HTTPServer) handleAccessReviews(w http.ResponseWriter, r *http.Request)
 			UserID    string   `json:"user_id"`
 			Roles     []string `json:"roles"`
 		}
+		r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 			writeJSONError(w, http.StatusBadRequest, "invalid JSON")
 			return
@@ -97,6 +98,7 @@ func (s *HTTPServer) handleAccessReviewDecision(w http.ResponseWriter, r *http.R
 		ReviewID string `json:"review_id"`
 		Decision string `json:"decision"`
 	}
+	r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		writeJSONError(w, http.StatusBadRequest, "invalid JSON")
 		return

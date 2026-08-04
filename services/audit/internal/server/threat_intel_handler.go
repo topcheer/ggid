@@ -12,7 +12,8 @@ import (
 
 func (s *HTTPServer) handleThreatIntel(w http.ResponseWriter, r *http.Request) {
 	if s.threatIntelRepo == nil {
-		writeJSON(w, http.StatusOK, []interface{}{}); return
+		writeJSON(w, http.StatusOK, []interface{}{})
+		return
 	}
 
 	path := strings.TrimPrefix(r.URL.Path, "/api/v1/audit/threat-intel")
@@ -55,6 +56,7 @@ func (s *HTTPServer) handleThreatIntelSources(w http.ResponseWriter, r *http.Req
 			APIKeyRef    string `json:"api_key_ref"`
 			PollInterval string `json:"poll_interval"`
 		}
+		r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 			writeJSONError(w, http.StatusBadRequest, "invalid request body")
 			return
@@ -73,7 +75,7 @@ func (s *HTTPServer) handleThreatIntelSources(w http.ResponseWriter, r *http.Req
 			Name:         req.Name,
 			SourceType:   req.SourceType,
 			APIEndpoint:  req.APIEndpoint,
-			APIKeyRef:     req.APIKeyRef,
+			APIKeyRef:    req.APIKeyRef,
 			PollInterval: req.PollInterval,
 			Enabled:      true,
 			CreatedAt:    time.Now(),
@@ -132,6 +134,7 @@ func (s *HTTPServer) handleThreatIntelCheck(w http.ResponseWriter, r *http.Reque
 		Indicator     string `json:"indicator"`
 		IndicatorType string `json:"indicator_type"`
 	}
+	r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		writeJSONError(w, http.StatusBadRequest, "invalid request body")
 		return

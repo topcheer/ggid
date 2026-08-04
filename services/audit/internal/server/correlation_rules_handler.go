@@ -10,14 +10,14 @@ import (
 )
 
 type CorrelationRule struct {
-	ID           string        `json:"id"`
-	Name         string        `json:"name"`
-	EventPattern string        `json:"event_pattern"`
-	TimeWindow   string        `json:"time_window"` // e.g. "5m"
-	Threshold    int           `json:"threshold"`
-	AlertAction  string        `json:"alert_action"`
-	Enabled      bool          `json:"enabled"`
-	CreatedAt    time.Time     `json:"created_at"`
+	ID           string    `json:"id"`
+	Name         string    `json:"name"`
+	EventPattern string    `json:"event_pattern"`
+	TimeWindow   string    `json:"time_window"` // e.g. "5m"
+	Threshold    int       `json:"threshold"`
+	AlertAction  string    `json:"alert_action"`
+	Enabled      bool      `json:"enabled"`
+	CreatedAt    time.Time `json:"created_at"`
 }
 
 var (
@@ -39,6 +39,7 @@ func (s *HTTPServer) handleCorrelationRules(w http.ResponseWriter, r *http.Reque
 			Threshold    int    `json:"threshold"`
 			AlertAction  string `json:"alert_action"`
 		}
+		r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 			writeJSONError(w, http.StatusBadRequest, "invalid JSON")
 			return

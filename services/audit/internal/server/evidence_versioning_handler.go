@@ -13,12 +13,12 @@ import (
 
 // evidenceVersion stores a single version of a compliance evidence record.
 type evidenceVersion struct {
-	Version     int                    `json:"version"`
-	Content     map[string]any         `json:"content"`
-	CreatedBy   string                 `json:"created_by"`
-	CreatedAt   string                 `json:"created_at"`
-	Description string                 `json:"description"`
-	Checksum    string                 `json:"checksum"`
+	Version     int            `json:"version"`
+	Content     map[string]any `json:"content"`
+	CreatedBy   string         `json:"created_by"`
+	CreatedAt   string         `json:"created_at"`
+	Description string         `json:"description"`
+	Checksum    string         `json:"checksum"`
 }
 
 var evidenceVersionStore = struct {
@@ -64,6 +64,7 @@ func createEvidenceVersion(w http.ResponseWriter, r *http.Request, evidenceID st
 		CreatedBy   string         `json:"created_by"`
 		Description string         `json:"description"`
 	}
+	r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		writeJSONError(w, http.StatusBadRequest, "invalid JSON body")
 		return
@@ -100,9 +101,9 @@ func listEvidenceVersions(w http.ResponseWriter, r *http.Request, evidenceID str
 	evidenceVersionStore.RUnlock()
 
 	writeJSON(w, http.StatusOK, map[string]any{
-		"evidence_id":   evidenceID,
-		"versions":      result,
-		"total":         len(result),
+		"evidence_id": evidenceID,
+		"versions":    result,
+		"total":       len(result),
 		"latest_version": func() int {
 			if len(result) > 0 {
 				return result[len(result)-1].Version
@@ -183,7 +184,7 @@ func diffEvidenceVersions(w http.ResponseWriter, r *http.Request, evidenceID str
 			"removed":  removed,
 			"modified": modified,
 		},
-		"summary": fmt.Sprintf("%d added, %d removed, %d modified", len(added), len(removed), len(modified)),
+		"summary":       fmt.Sprintf("%d added, %d removed, %d modified", len(added), len(removed), len(modified)),
 		"v1_created_at": oldV.CreatedAt,
 		"v2_created_at": newV.CreatedAt,
 	})

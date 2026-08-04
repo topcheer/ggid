@@ -12,15 +12,15 @@ import (
 
 // collectSchedule defines a recurring evidence collection schedule.
 type collectSchedule struct {
-	ID          string   `json:"id"`
-	Framework   string   `json:"framework"`
-	Frequency   string   `json:"frequency"` // daily, weekly, monthly
-	ControlIDs  []string `json:"control_ids"`
-	Status      string   `json:"status"` // active, paused, completed
-	NextRun     string   `json:"next_run"`
-	LastRun     string   `json:"last_run,omitempty"`
-	CreatedAt   string   `json:"created_at"`
-	AutoUpload  bool     `json:"auto_upload"`
+	ID         string   `json:"id"`
+	Framework  string   `json:"framework"`
+	Frequency  string   `json:"frequency"` // daily, weekly, monthly
+	ControlIDs []string `json:"control_ids"`
+	Status     string   `json:"status"` // active, paused, completed
+	NextRun    string   `json:"next_run"`
+	LastRun    string   `json:"last_run,omitempty"`
+	CreatedAt  string   `json:"created_at"`
+	AutoUpload bool     `json:"auto_upload"`
 }
 
 var collectScheduleStore = struct {
@@ -40,6 +40,7 @@ func (s *HTTPServer) handleScheduleCollect(w http.ResponseWriter, r *http.Reques
 			ControlIDs []string `json:"control_ids"`
 			AutoUpload bool     `json:"auto_upload"`
 		}
+		r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 			writeJSONError(w, http.StatusBadRequest, "invalid JSON body")
 			return
@@ -99,9 +100,9 @@ func (s *HTTPServer) handleScheduleCollect(w http.ResponseWriter, r *http.Reques
 		})
 
 		writeJSON(w, http.StatusOK, map[string]any{
-			"schedules":     result,
-			"total":         len(result),
-			"active_count":  countActive(result),
+			"schedules":    result,
+			"total":        len(result),
+			"active_count": countActive(result),
 		})
 
 	case http.MethodDelete:

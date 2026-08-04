@@ -9,14 +9,14 @@ import (
 )
 
 type ComplianceGap struct {
-	ID               string     `json:"id"`
-	Framework        string     `json:"framework"`
-	ControlID        string     `json:"control_id"`
-	GapDescription   string     `json:"gap_description"`
-	RemediationPlan  string     `json:"remediation_plan"`
-	Owner            string     `json:"owner"`
-	DueDate          *time.Time `json:"due_date,omitempty"`
-	Status           string     `json:"status"` // open, in_progress, resolved
+	ID              string     `json:"id"`
+	Framework       string     `json:"framework"`
+	ControlID       string     `json:"control_id"`
+	GapDescription  string     `json:"gap_description"`
+	RemediationPlan string     `json:"remediation_plan"`
+	Owner           string     `json:"owner"`
+	DueDate         *time.Time `json:"due_date,omitempty"`
+	Status          string     `json:"status"` // open, in_progress, resolved
 }
 
 var (
@@ -53,8 +53,14 @@ func (s *HTTPServer) handleComplianceGaps(w http.ResponseWriter, r *http.Request
 		if len(parts) >= 5 {
 			gapID = parts[4]
 		}
-		var req struct{ Status string `json:"status"` }
-		if err := json.NewDecoder(r.Body).Decode(&req); err != nil { writeJSONError(w, http.StatusBadRequest, "invalid request body"); return }
+		var req struct {
+			Status string `json:"status"`
+		}
+		r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			writeJSONError(w, http.StatusBadRequest, "invalid request body")
+			return
+		}
 		gapMu.Lock()
 		for i := range gaps {
 			if gaps[i].ID == gapID {

@@ -71,6 +71,7 @@ func (s *HTTPServer) handleAlertWebhooks(w http.ResponseWriter, r *http.Request)
 			URL    string `json:"url"`
 			Secret string `json:"secret"`
 		}
+		r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 			writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid JSON"})
 			return
