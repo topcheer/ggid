@@ -209,6 +209,7 @@ func RARConsentPreviewHandler(w http.ResponseWriter, r *http.Request) {
 	var req struct {
 		AuthorizationDetails []AuthorizationDetail `json:"authorization_details"`
 	}
+	r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid body"})
 		return

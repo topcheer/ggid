@@ -33,6 +33,7 @@ func handleClientScopes(w http.ResponseWriter, r *http.Request) {
 			Scopes []string `json:"scopes"`
 		}
 		r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
+		r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 			writeJSON(w, http.StatusBadRequest, map[string]any{"error": "invalid JSON"})
 			return

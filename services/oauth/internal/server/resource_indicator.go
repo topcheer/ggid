@@ -54,6 +54,7 @@ func handleResourceIndicator(w http.ResponseWriter, r *http.Request) {
 		ClientID string `json:"client_id"`
 		Resource string `json:"resource"`
 	}
+	r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		writeJSON(w, http.StatusBadRequest, map[string]any{"error": "invalid JSON"})
 		return
@@ -76,6 +77,7 @@ func handleResourceAllowed(w http.ResponseWriter, r *http.Request) {
 		ClientID  string   `json:"client_id"`
 		Resources []string `json:"resources"`
 	}
+	r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		writeJSON(w, http.StatusBadRequest, map[string]any{"error": "invalid JSON"})
 		return

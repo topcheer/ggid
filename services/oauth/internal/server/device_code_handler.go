@@ -83,6 +83,7 @@ func handleDeviceVerify(s *service.OAuthService) http.HandlerFunc {
 			UserCode string `json:"user_code"`
 			Action   string `json:"action"`
 		}
+		r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 			r.ParseForm()
 			req.UserCode = r.FormValue("user_code")

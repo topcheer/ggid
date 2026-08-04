@@ -66,6 +66,7 @@ func handleScopeDescription(w http.ResponseWriter, r *http.Request) {
 			Description string `json:"description"`
 			Lang        string `json:"lang"`
 		}
+		r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 			writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid JSON body"})
 			return

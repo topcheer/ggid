@@ -55,7 +55,8 @@ func handleScopeDeprecation(w http.ResponseWriter, r *http.Request) {
 			Reason           string `json:"reason"`
 		}
 		if r.ContentLength > 0 {
-			if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 				writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid JSON body"})
 				return
 			}

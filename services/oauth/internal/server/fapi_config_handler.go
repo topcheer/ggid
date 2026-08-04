@@ -113,6 +113,7 @@ func handleFAPIConfigGet(w http.ResponseWriter, ctx context.Context, oauthSvc *s
 
 func handleFAPIConfigPut(w http.ResponseWriter, r *http.Request, ctx context.Context, oauthSvc *service.OAuthService) {
 	var req FAPIConfigUpdateRequest
+	r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid_request", "error_description": "invalid JSON body"})
 		return

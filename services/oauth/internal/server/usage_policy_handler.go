@@ -37,6 +37,7 @@ func handleUsagePolicy(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusOK, map[string]any{"client_id": clientID, "policy": p})
 	case http.MethodPut, http.MethodPost:
 		var p UsagePolicy
+		r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
 		if err := json.NewDecoder(r.Body).Decode(&p); err != nil {
 			writeJSON(w, http.StatusBadRequest, map[string]any{"error": "invalid JSON"})
 			return

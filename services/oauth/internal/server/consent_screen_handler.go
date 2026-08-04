@@ -59,6 +59,7 @@ func handleConsentScreen(w http.ResponseWriter, r *http.Request) {
 
 	case http.MethodPut, http.MethodPost:
 		var req ConsentScreenConfig
+		r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 			writeJSON(w, http.StatusBadRequest, map[string]any{"error": "invalid JSON"})
 			return

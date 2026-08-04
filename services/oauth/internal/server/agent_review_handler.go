@@ -25,6 +25,7 @@ func handleAgentReviewCreate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var rv AgentReview
+	r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
 	if err := json.NewDecoder(r.Body).Decode(&rv); err != nil {
 		writeJSONError(w, http.StatusBadRequest, "invalid request body")
 		return
@@ -97,6 +98,7 @@ func handleAgentReviewUpdate(w http.ResponseWriter, r *http.Request) {
 	}
 	reviewID := parts[len(parts)-1]
 	var rv AgentReview
+	r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
 	if err := json.NewDecoder(r.Body).Decode(&rv); err != nil {
 		writeJSONError(w, http.StatusBadRequest, "invalid request body")
 		return

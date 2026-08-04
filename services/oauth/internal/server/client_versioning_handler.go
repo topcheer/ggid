@@ -57,6 +57,7 @@ func handleClientVersioning(w http.ResponseWriter, r *http.Request) {
 			Config map[string]any `json:"config"`
 			Note   string         `json:"note"`
 		}
+		r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil { writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid request body"}); return }
 
 		versionNum := 1
