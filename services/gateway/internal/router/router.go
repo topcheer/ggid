@@ -497,10 +497,10 @@ func (gw *Gateway) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		}
 		jwtMW := middleware.JWTAuth(gw.jwks, false, gw.cfg.JWTIssuer, gw.cfg.JWTAudience)
 		jwtMW(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			if !gw.hasAdminScope(r) {
+			if !gw.hasPlatformAdminScope(r) {
 				w.Header().Set("Content-Type", "application/json")
 				w.WriteHeader(http.StatusForbidden)
-				_ = json.NewEncoder(w).Encode(map[string]string{"error": "admin scope required"})
+				_ = json.NewEncoder(w).Encode(map[string]string{"error": "platform:admin scope required"})
 				return
 			}
 			if r.URL.Path == "/api/v1/admin/routes" && r.Method == http.MethodGet {
@@ -1157,6 +1157,19 @@ func (gw *Gateway) hasAdminScope(r *http.Request) bool {
 	claims := middleware.ExtractJWTClaims(r)
 	for _, s := range claims.Scopes {
 		if s == "platform:admin" || s == "tenant:admin" {
+			return true
+		}
+	}
+	return false
+}
+
+// hasPlatformAdminScope checks for platform:admin only - used for operations
+// that affect the entire platform (route toggling, system config) where
+// tenant:admin must not have access.
+func (gw *Gateway) hasPlatformAdminScope(r *http.Request) bool {
+	claims := middleware.ExtractJWTClaims(r)
+	for _, s := range claims.Scopes {
+		if s == "platform:admin" {
 			return true
 		}
 	}
