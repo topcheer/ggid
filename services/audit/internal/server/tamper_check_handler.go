@@ -77,20 +77,6 @@ func (s *HTTPServer) handleTamperCheck(w http.ResponseWriter, r *http.Request) {
 			writeJSONError(w, http.StatusForbidden, "tenant_id is required for non-platform-admin users")
 			return
 		}
-		// SECURITY: Querying all tenants requires platform:admin scope.
-		// Without this check, any authenticated user could read cross-tenant
-		// audit integrity data.
-		isPlatformAdmin := false
-		for _, sc := range strings.Split(r.Header.Get("X-Scopes"), ",") {
-			if strings.TrimSpace(sc) == "platform:admin" {
-				isPlatformAdmin = true
-				break
-			}
-		}
-		if !isPlatformAdmin {
-			writeJSONError(w, http.StatusForbidden, "platform:admin scope required for cross-tenant tamper check")
-			return
-		}
 		rows, err := s.pool.Query(r.Context(),
 			`SELECT DISTINCT tenant_id FROM audit_events WHERE hash IS NOT NULL AND hash != '' LIMIT 50`)
 		if err != nil {
