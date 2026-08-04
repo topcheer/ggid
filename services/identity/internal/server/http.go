@@ -647,6 +647,7 @@ func (h *HTTPHandler) handleMe(ctx context.Context, w http.ResponseWriter, r *ht
 			Phone       *string `json:"phone"`
 			AvatarURL   *string `json:"avatar_url"`
 		}
+		r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB limit
 		if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
 			writeJSONError(w, http.StatusBadRequest, "invalid request body")
 			return
@@ -684,6 +685,24 @@ func (h *HTTPHandler) createUser(ctx context.Context, w http.ResponseWriter, r *
 
 	if req.Username == "" || req.Email == "" || req.Password == "" {
 		writeJSONError(w, http.StatusBadRequest, "username, email, and password are required")
+		return
+	}
+
+	// SECURITY: Enforce field length limits to prevent abuse.
+	if len(req.Username) > 64 || len(req.Username) < 3 {
+		writeJSONError(w, http.StatusBadRequest, "username must be 3-64 characters")
+		return
+	}
+	if len(req.Email) > 320 {
+		writeJSONError(w, http.StatusBadRequest, "email too long (max 320)")
+		return
+	}
+	if len(req.DisplayName) > 128 {
+		writeJSONError(w, http.StatusBadRequest, "display_name too long (max 128)")
+		return
+	}
+	if len(req.Phone) > 32 {
+		writeJSONError(w, http.StatusBadRequest, "phone too long (max 32)")
 		return
 	}
 
@@ -965,6 +984,7 @@ func (h *HTTPHandler) updateUser(ctx context.Context, userID uuid.UUID, w http.R
 		Timezone    *string `json:"timezone"`
 		Status      *string `json:"status"`
 	}
+	r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB limit
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		writeJSONError(w, http.StatusBadRequest, "invalid JSON body")
 		return
