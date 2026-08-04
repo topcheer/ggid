@@ -17,9 +17,9 @@ import (
 
 	"github.com/ggid/ggid/services/mcp/internal/client"
 
-	"github.com/ggid/ggid/services/mcp/internal/tools"
-
 	"github.com/golang-jwt/jwt/v5"
+
+	"github.com/ggid/ggid/services/mcp/internal/tools"
 )
 
 // Server is the MCP protocol server.
@@ -90,10 +90,21 @@ func (s *Server) jwtAuth(next http.HandlerFunc) http.HandlerFunc {
 		}
 
 		if !strings.HasPrefix(authHeader, "Bearer ") {
-			// In dev mode without secret configured, allow without JWT (with warning).
+			// SECURITY: fail-closed — require authentication when JWT_SECRET is configured.
+			// When no secret is configured, only allow if GGID_ENV is explicitly set to dev/test.
 			if len(s.jwtSecret) == 0 {
-				log.Printf("MCP WARNING: no JWT_SECRET configured — allowing unauthenticated request from %s", r.RemoteAddr)
-				next(w, r)
+				env := os.Getenv("GGID_ENV")
+				if env == "dev" || env == "test" {
+					log.Printf("MCP WARNING: no JWT_SECRET configured (GGID_ENV=%s) — allowing unauthenticated request from %s", env, r.RemoteAddr)
+					next(w, r)
+					return
+				}
+				// Production fail-closed
+				writeJSON(w, http.StatusUnauthorized, map[string]any{
+					"jsonrpc": "2.0", "error": map[string]any{
+						"code": -32001, "message": "authentication required: JWT_SECRET not configured",
+					},
+				})
 				return
 			}
 			// RFC 9728: return WWW-Authenticate header so MCP clients can
@@ -110,10 +121,19 @@ func (s *Server) jwtAuth(next http.HandlerFunc) http.HandlerFunc {
 
 		tokenStr := strings.TrimPrefix(authHeader, "Bearer ")
 
-		// If no secret configured, skip validation (dev mode).
+		// If no secret configured, skip validation only in dev/test mode.
 		if len(s.jwtSecret) == 0 {
-			log.Printf("MCP WARNING: no JWT_SECRET — token accepted without validation (dev mode)")
-			next(w, r)
+			env := os.Getenv("GGID_ENV")
+			if env == "dev" || env == "test" {
+				log.Printf("MCP WARNING: no JWT_SECRET — token accepted without validation (GGID_ENV=%s)", env)
+				next(w, r)
+				return
+			}
+			writeJSON(w, http.StatusUnauthorized, map[string]any{
+				"jsonrpc": "2.0", "error": map[string]any{
+					"code": -32001, "message": "authentication required",
+				},
+			})
 			return
 		}
 
@@ -138,8 +158,17 @@ func (s *Server) jwtAuth(next http.HandlerFunc) http.HandlerFunc {
 			http.Error(w, `{"error":"jwks_not_configured"}`, http.StatusUnauthorized)
 			return
 		} else {
+			// SECURITY: Only allow one algorithm family — HS256 for symmetric,
+			// RS256 for asymmetric. Never accept both to prevent algorithm
+			// confusion attacks (e.g., signing RS256 token with HMAC secret).
+			var validMethods []string
+			if s.jwksURL != "" {
+				validMethods = []string{"RS256"}
+			} else {
+				validMethods = []string{"HS256"}
+			}
 			parserOpts := []jwt.ParserOption{
-				jwt.WithValidMethods([]string{"HS256", "RS256"}),
+				jwt.WithValidMethods(validMethods),
 				jwt.WithExpirationRequired(),
 			}
 			if s.jwtIssuer != "" {
