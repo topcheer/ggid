@@ -6,6 +6,7 @@ import (
 	"log/slog"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/ggid/ggid/services/audit/internal/domain"
@@ -50,7 +51,8 @@ func (s *HTTPServer) handleTamperCheck(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	// Resolve tenant scope: explicit query param, X-Tenant-ID, or all tenants.
+	// SECURITY: Require explicit tenant scope. Only platform:admin can query
+	// across tenants; non-admin callers without a tenant_id are rejected.
 	var tenantIDs []uuid.UUID
 	if ts := r.URL.Query().Get("tenant_id"); ts != "" {
 		if id, err := uuid.Parse(ts); err == nil {
@@ -62,6 +64,33 @@ func (s *HTTPServer) handleTamperCheck(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	if len(tenantIDs) == 0 {
+		// Check if caller has platform:admin scope for cross-tenant query.
+		scopes := r.Header.Get("X-Scopes")
+		isPlatformAdmin := false
+		for _, sc := range strings.Split(scopes, ",") {
+			if strings.TrimSpace(sc) == "platform:admin" {
+				isPlatformAdmin = true
+				break
+			}
+		}
+		if !isPlatformAdmin {
+			writeJSONError(w, http.StatusForbidden, "tenant_id is required for non-platform-admin users")
+			return
+		}
+		// SECURITY: Querying all tenants requires platform:admin scope.
+		// Without this check, any authenticated user could read cross-tenant
+		// audit integrity data.
+		isPlatformAdmin := false
+		for _, sc := range strings.Split(r.Header.Get("X-Scopes"), ",") {
+			if strings.TrimSpace(sc) == "platform:admin" {
+				isPlatformAdmin = true
+				break
+			}
+		}
+		if !isPlatformAdmin {
+			writeJSONError(w, http.StatusForbidden, "platform:admin scope required for cross-tenant tamper check")
+			return
+		}
 		rows, err := s.pool.Query(r.Context(),
 			`SELECT DISTINCT tenant_id FROM audit_events WHERE hash IS NOT NULL AND hash != '' LIMIT 50`)
 		if err != nil {
@@ -114,18 +143,18 @@ func (s *HTTPServer) handleTamperCheck(w http.ResponseWriter, r *http.Request) {
 	}
 
 	writeJSON(w, http.StatusOK, map[string]any{
-		"is_clean":            isClean,
-		"issues":              issues,
-		"issue_count":         len(issues),
-		"critical_count":      critical,
-		"events_verified":     totalVerified,
-		"unhashed_events":     unhashed,
-		"redacted_events":     redacted,
-		"tenants_checked":     len(tenantIDs),
-		"hash_chain_enabled":  domain.IsHashChainEnabled(),
-		"alert_triggered":     alertTriggered,
-		"checks_run":          []string{"hash_chain_verification", "chain_linkage", "gap_detection", "timestamp_anomaly"},
-		"verified_at":         time.Now().UTC().Format(time.RFC3339),
+		"is_clean":           isClean,
+		"issues":             issues,
+		"issue_count":        len(issues),
+		"critical_count":     critical,
+		"events_verified":    totalVerified,
+		"unhashed_events":    unhashed,
+		"redacted_events":    redacted,
+		"tenants_checked":    len(tenantIDs),
+		"hash_chain_enabled": domain.IsHashChainEnabled(),
+		"alert_triggered":    alertTriggered,
+		"checks_run":         []string{"hash_chain_verification", "chain_linkage", "gap_detection", "timestamp_anomaly"},
+		"verified_at":        time.Now().UTC().Format(time.RFC3339),
 		"recommendation": func() string {
 			if isClean {
 				return "audit log integrity verified — no tampering detected"
@@ -333,8 +362,8 @@ func (s *HTTPServer) handleRepairChain(w http.ResponseWriter, r *http.Request) {
 	defer rows.Close()
 
 	type repairItem struct {
-		id       uuid.UUID
-		event    domain.AuditEvent
+		id    uuid.UUID
+		event domain.AuditEvent
 	}
 	var items []repairItem
 	for rows.Next() {
@@ -374,10 +403,10 @@ func (s *HTTPServer) handleRepairChain(w http.ResponseWriter, r *http.Request) {
 	}
 
 	writeJSON(w, http.StatusOK, map[string]any{
-		"status":         "ok",
-		"tenant_id":      tenantIDStr,
-		"total_events":   len(items),
-		"repaired":       repaired,
-		"repaired_at":    time.Now().UTC().Format(time.RFC3339),
+		"status":       "ok",
+		"tenant_id":    tenantIDStr,
+		"total_events": len(items),
+		"repaired":     repaired,
+		"repaired_at":  time.Now().UTC().Format(time.RFC3339),
 	})
 }
