@@ -1551,7 +1551,7 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 			return
 		}
 
-		redirectURL := idpSSOURL + "?SAMLRequest=" + encoded
+		redirectURL := idpSSOURL + "?SAMLRequest=" + url.QueryEscape(encoded)
 		http.Redirect(w, r, redirectURL, http.StatusFound)
 	})
 

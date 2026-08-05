@@ -88,10 +88,12 @@ var publicPaths = []string{
 	"/oauth/jwks",
 	"/oauth/.well-known/",
 	"/oauth/consent",
-	"/saml/metadata", // SAML SP metadata (public)
-	"/saml/acs",      // SAML Assertion Consumer Service (public, receives IdP responses)
-	"/saml/login",    // SAML login redirect (public, starts SP-initiated flow)
-	"/saml/sso",      // SAML SP-initiated SSO entry point (public)
+	"/saml/metadata",     // SAML SP metadata (public)
+	"/saml/acs",          // SAML Assertion Consumer Service (public, receives IdP responses)
+	"/saml/login",        // SAML login redirect (public, starts SP-initiated flow)
+	"/saml/sso",          // SAML SP-initiated SSO entry point (public)
+	"/saml/idp/sso",      // SAML IdP SSO handler (public, renders login for SAML auth)
+	"/saml/idp/metadata", // SAML IdP metadata (public)
 	// SECURITY: /saml/config and /saml/ are NOT public — require admin auth.
 	"/.well-known/",
 	"/docs",
