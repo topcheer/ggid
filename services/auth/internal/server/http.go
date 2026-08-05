@@ -803,12 +803,22 @@ func (h *Handler) verifyCredentials(w http.ResponseWriter, r *http.Request) {
 			h.auditPublisher.PublishAsync(event)
 		}
 
-		writeJSON(w, http.StatusOK, map[string]any{
+		// Issue a one-time auth_ticket so the OAuth authorization-code flow can
+		// continue. The login page redirects back to /oauth/authorize with the
+		// ticket; the OAuth server verifies it via VerifyAuthTicket (single-use,
+		// 30s TTL). Best-effort: if Redis is unavailable the ticket is omitted
+		// and the login page falls back to the legacy user_id param (rejected
+		// by the OAuth server → login page re-rendered, no security impact).
+		resp := map[string]any{
 			"user_id":      userID.String(),
 			"tenant_id":    tc.TenantID.String(),
 			"username":     req.Username,
 			"mfa_required": mfaRequired,
-		})
+		}
+		if ticket, terr := h.issueAuthTicket(r.Context(), tc.TenantID, userID, nil); terr == nil {
+			resp["auth_ticket"] = ticket
+		}
+		writeJSON(w, http.StatusOK, resp)
 		return
 	}
 	writeError(w, http.StatusBadRequest, "tenant context required")
