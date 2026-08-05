@@ -631,13 +631,23 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 		if hasExtendedScope && !consentGiven {
 			// Issue a signed one-time consent token for the UI to pass back.
 			consentToken := issueConsentToken(clientID, userID.String(), scopeParam)
+			consentURL := "/oauth/authorize?consent=" + url.QueryEscape(consentToken) + "&client_id=" + url.QueryEscape(clientID) + "&redirect_uri=" + url.QueryEscape(redirectURI) + "&response_type=code&scope=" + url.QueryEscape(scopeParam) + "&state=" + url.QueryEscape(state)
+			// Re-arm identity on the consent callback: the login auth_ticket is
+			// single-use and already consumed above, so the consent request would
+			// otherwise have no identity and fall back to the login page. Issue a
+			// fresh short-lived ticket bound to the same user+tenant. Best-effort:
+			// if Redis is unavailable the consent URL still works for
+			// JWT-authenticated (X-User-ID) callers.
+			if ticket, terr := oauthSvc.IssueAuthTicket(r.Context(), tenantID, userID, scopes, 5*time.Minute); terr == nil {
+				consentURL += "&auth_ticket=" + url.QueryEscape(ticket)
+			}
 			writeJSON(w, http.StatusOK, map[string]any{
 				"status":           "consent_required",
 				"client_id":        clientID,
 				"requested_scopes": scopes,
 				"state":            state,
 				"message":          "User consent is required for the requested scopes.",
-				"consent_url":      "/oauth/authorize?consent=" + url.QueryEscape(consentToken) + "&client_id=" + url.QueryEscape(clientID) + "&redirect_uri=" + url.QueryEscape(redirectURI) + "&response_type=code&scope=" + url.QueryEscape(scopeParam) + "&state=" + url.QueryEscape(state),
+				"consent_url":      consentURL,
 			})
 			return
 		}

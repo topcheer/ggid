@@ -114,6 +114,35 @@ func (s *OAuthService) VerifyAuthTicket(ctx context.Context, ticket string) (uui
 	return userID, tenantID, nil
 }
 
+// IssueAuthTicket creates a one-time auth ticket in Redis, using the same
+// format and key scheme as the auth service (auth_ticket:{ticket}). The OAuth
+// server uses this to re-arm identity on the consent callback: the original
+// login ticket is single-use and already consumed by the first /authorize,
+// so the consent_url must carry a fresh ticket or the callback falls back to
+// the login page. TTL is caller-chosen (consent needs minutes, not 30s).
+func (s *OAuthService) IssueAuthTicket(ctx context.Context, tenantID, userID uuid.UUID, scopes []string, ttl time.Duration) (string, error) {
+	if s.rdb == nil {
+		return "", fmt.Errorf("redis not configured for auth tickets")
+	}
+	ticket, err := pkgcrypto.GenerateRandomToken(32)
+	if err != nil {
+		return "", fmt.Errorf("generate ticket: %w", err)
+	}
+	ticketData, err := json.Marshal(map[string]any{
+		"tenant_id": tenantID.String(),
+		"user_id":   userID.String(),
+		"scopes":    scopes,
+		"issued_at": time.Now().Unix(),
+	})
+	if err != nil {
+		return "", fmt.Errorf("marshal ticket: %w", err)
+	}
+	if err := s.rdb.Set(ctx, "auth_ticket:"+ticket, ticketData, ttl); err != nil {
+		return "", fmt.Errorf("store ticket: %w", err)
+	}
+	return ticket, nil
+}
+
 // SetPool wires a DB pool for user profile queries (used in access token claims).
 func (s *OAuthService) SetPool(pool PoolQuerier) {
 	s.pool = pool
