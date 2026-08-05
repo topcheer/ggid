@@ -82,23 +82,33 @@ export default function DashboardPage() {
           mfa_adoption_pct: 42,
         });
       }
-      // Check service health
-      const services = [
-        { name: "Gateway", path: "/healthz" },
-        { name: "Auth", path: "/api/v1/health" },
-        { name: "Policy", path: "/api/v1/roles" },
-        { name: "Audit", path: "/api/v1/audit/events?page_size=1" },
-      ];
-      const healthResults = await Promise.all(
-        services.map(async (svc) => {
-          try {
-            await apiFetch(svc.path);
-            return { name: svc.name, status: "healthy" as const };
-          } catch {
-            return { name: svc.name, status: "down" as const };
+      // Check service health via the gateway's aggregated deep-health endpoint.
+      // Previously this probed authenticated data endpoints (/api/v1/roles,
+      // /api/v1/audit/events) which return 401 without a token and were wrongly
+      // reported as "down" even though the services were healthy.
+      const SERVICE_LABELS: Record<string, string> = {
+        Gateway: "gateway",
+        Auth: "auth",
+        Policy: "policy",
+        Audit: "audit",
+      };
+      let healthResults: { name: string; status: "healthy" | "degraded" | "down" }[];
+      try {
+        const deep = await apiFetch<{ status?: string; services?: Record<string, { status?: string }> }>("/healthz/deep");
+        const svcs = deep.services || {};
+        healthResults = Object.entries(SERVICE_LABELS).map(([label, key]) => {
+          if (label === "Gateway") {
+            return { name: label, status: (deep.status === "healthy" ? "healthy" : deep.status === "degraded" ? "degraded" : "down") as "healthy" | "degraded" | "down" };
           }
-        }),
-      );
+          // Match backend entries whose route name contains the service key.
+          const match = Object.entries(svcs).find(([route]) => route.toLowerCase().includes(key));
+          const st = match?.[1]?.status;
+          return { name: label, status: (st === "healthy" ? "healthy" : st ? "down" : "down") as "healthy" | "degraded" | "down" };
+        });
+      } catch {
+        // Deep health endpoint unavailable -- mark all as down.
+        healthResults = Object.keys(SERVICE_LABELS).map((label) => ({ name: label, status: "down" as const }));
+      }
       setHealth(healthResults);
       setLastRefresh(new Date());
     } catch {
