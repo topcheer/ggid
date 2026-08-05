@@ -95,6 +95,7 @@ config:
 ingress: {enabled: false}
 globalEnv:
   GGID_ENV: dev
+  OAUTH_ISSUER: "https://ggid.iot2.win"
   GATEWAY_JWT_ISSUER: "https://ggid.iot2.win"
   GATEWAY_JWT_AUDIENCE: "ggid"
   CRED_VAULT_AES_KEY: "00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff"
