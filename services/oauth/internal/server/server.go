@@ -88,7 +88,7 @@ func (kp *keyProvider) Close() error                { return nil }
 
 // New constructs and wires up the OAuth server using a local key provider by default.
 func New(cfg *conf.Config) (*Server, error) {
-	// Load or create RSA keys — shares same paths as Auth Service.
+	// Load or create RSA keys -- shares same paths as Auth Service.
 	kp, err := loadOrCreateKeyProvider(cfg.PrivateKeyPath, cfg.PublicKeyPath)
 	if err != nil {
 		return nil, fmt.Errorf("load keys: %w", err)
@@ -207,12 +207,25 @@ func NewWithKeyProvider(cfg *conf.Config, kp crypto.KeyProvider) (*Server, error
 	}
 
 	// Initialize Redis client for refresh token lookup (shared with Auth service).
-	if redisURL := os.Getenv("REDIS_URL"); redisURL != "" {
+	// REDIS_URL takes precedence; fall back to REDIS_ADDR (+ optional REDIS_PASSWORD)
+	// so deployments that only set REDIS_ADDR (e.g. K3s Helm values) still get a
+	// working Redis client -- required for auth_ticket verification, refresh token
+	// lookup, and consent replay prevention.
+	redisURL := os.Getenv("REDIS_URL")
+	if redisURL == "" {
+		if addr := os.Getenv("REDIS_ADDR"); addr != "" {
+			redisURL = "redis://" + addr
+		}
+	}
+	if redisURL != "" {
 		opts, err := redis.ParseURL(redisURL)
 		if err == nil {
+			if pw := os.Getenv("REDIS_PASSWORD"); pw != "" && opts.Password == "" {
+				opts.Password = pw
+			}
 			// SECURITY (P0-4): explicit pool sizing to prevent connection
 			// exhaustion under load. Default go-redis pool is 10*GOMAXPROCS
-			// with 0 min idle — can starve under burst.
+			// with 0 min idle -- can starve under burst.
 			opts.PoolSize = 20
 			opts.MinIdleConns = 5
 			opts.MaxRetries = 3
@@ -397,7 +410,7 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 		r2.URL.Path = "/oauth/token"
 		mux.ServeHTTP(w, r2)
 	})
-	// RFC 8693 token exchange (downscope) — registered with auth + scope subset validation.
+	// RFC 8693 token exchange (downscope) -- registered with auth + scope subset validation.
 	mux.HandleFunc("/api/v1/oauth/token/downscope", handleTokenDownscope(oauthSvc))
 	mux.HandleFunc("/api/v1/oauth/userinfo", func(w http.ResponseWriter, r *http.Request) {
 		r2 := r.Clone(r.Context())
@@ -405,7 +418,7 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 		mux.ServeHTTP(w, r2)
 	})
 
-	// Authorize endpoint (GET/POST — creates auth code, redirects)
+	// Authorize endpoint (GET/POST -- creates auth code, redirects)
 	mux.HandleFunc("/oauth/authorize", func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodGet && r.Method != http.MethodPost {
 			writeJSON(w, http.StatusMethodNotAllowed, map[string]any{"error": map[string]string{"code": "method_not_allowed", "message": "method_not_allowed"}})
@@ -424,7 +437,7 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 		requestURI := r.URL.Query().Get("request_uri")
 
 		// SECURITY (R228): consume PAR (RFC 9126) before validating required
-		// params — pushed params (redirect_uri/scope/state/nonce) are stored
+		// params -- pushed params (redirect_uri/scope/state/nonce) are stored
 		// server-side and must override any client-supplied query values.
 		// ValidateAuthorizationRequest resolves the request_uri (single-use,
 		// expired entries rejected) and returns the pushed claims.
@@ -435,7 +448,7 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 				return
 			}
 			if parClaims != nil {
-				// RFC 9126 §3: the pushed params belong to a specific client —
+				// RFC 9126 §3: the pushed params belong to a specific client --
 				// ValidateAuthorizationRequest does not compare iss to clientID
 				// for the request_uri branch; enforce it here.
 				if iss, _ := parClaims["iss"].(string); iss != "" && iss != clientID {
@@ -457,7 +470,7 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 				if v, _ := parClaims["nonce"].(string); v != "" {
 					nonce = v
 				}
-				// PKCE params can also be pushed via PAR (RFC 9126 §4.4) —
+				// PKCE params can also be pushed via PAR (RFC 9126 §4.4) --
 				// without this, public clients pushing PKCE lose the binding
 				// and are rejected, while confidential clients could get a
 				// code without PKCE. (sa-14 finding, R228 follow-up)
@@ -490,7 +503,7 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 		}
 
 		// Inject tenant context from gateway-verified header (public endpoint).
-		// SECURITY (R30 P1-2): header-only — no query param fallback that lets
+		// SECURITY (R30 P1-2): header-only -- no query param fallback that lets
 		// M2M tokens specify arbitrary tenant.
 		tenantIDStr := r.Header.Get("X-Tenant-ID")
 
@@ -516,7 +529,7 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 			}
 		}
 
-		// SECURITY: Early redirect_uri validation — verify the redirect_uri is registered
+		// SECURITY: Early redirect_uri validation -- verify the redirect_uri is registered
 		// for this client BEFORE rendering the login page.
 		authCtx := tenant.WithContext(r.Context(), &tenant.Context{TenantID: tenantID, IsolationLevel: tenant.IsolationShared})
 		earlyClient, earlyErr := oauthSvc.GetClient(authCtx, clientID)
@@ -543,7 +556,7 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 
 		// The user must be authenticated via the gateway's X-User-ID header
 		// (set from verified JWT), or via a verified auth_ticket (passwordless).
-		// SECURITY: Do NOT accept raw user_id query parameter — it allows
+		// SECURITY: Do NOT accept raw user_id query parameter -- it allows
 		// authentication bypass by injecting any user's UUID.
 		userIDStr := r.Header.Get("X-User-ID")
 		// Check for auth_ticket (passwordless verification)
@@ -765,7 +778,7 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 			}
 		}
 		if tenantIDStr == "" {
-			// SECURITY (R26 P0): removed DEFAULT_TENANT_ID env fallback —
+			// SECURITY (R26 P0): removed DEFAULT_TENANT_ID env fallback --
 			// it let attackers bypass tenant isolation by omitting
 			// X-Tenant-ID, landing in the default tenant. Let the
 			// code-based resolution below handle it, or reject.
@@ -814,7 +827,7 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 		switch grantType {
 		case "authorization_code":
 			// SECURITY (RFC 6749 §10.12): Validate state parameter for CSRF protection.
-			// State is MANDATORY when sent with /authorize — empty state in token
+			// State is MANDATORY when sent with /authorize -- empty state in token
 			// request means the client didn't send one, which we allow only if the
 			// original /authorize request also didn't include state.
 			stateParam := r.FormValue("state")
@@ -1008,7 +1021,7 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 				return
 			}
 			// RFC 9449 §11.1: jti is single-use within the freshness window.
-			// The dedicated DPoPVerifier with usedNonces was never wired in —
+			// The dedicated DPoPVerifier with usedNonces was never wired in --
 			// this enforces it at the actual consumption point.
 			if !consumeDPoPJTI(proof.JTI) {
 				writeJSON(w, http.StatusBadRequest, map[string]string{
@@ -1139,14 +1152,14 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 				writeJSON(w, http.StatusUnauthorized, map[string]string{"error": "invalid_client"})
 				return
 			}
-			// Token is active — proceed with revocation.
+			// Token is active -- proceed with revocation.
 		}
 
 		// RFC 7009 §2.1: verify the authenticated client owns the token.
 		authClientID := extractAuthClientID(r)
 		if authClientID != "" && token != "" {
 			if !oauthSvc.ValidateTokenOwnership(token, authClientID) {
-				// Client doesn't own this token — still return 200 per RFC.
+				// Client doesn't own this token -- still return 200 per RFC.
 				w.WriteHeader(http.StatusOK)
 				return
 			}
@@ -1244,7 +1257,7 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 		writeJSON(w, http.StatusCreated, result)
 	})
 
-	// Token introspection — requires client authentication per RFC 7662 §2.1
+	// Token introspection -- requires client authentication per RFC 7662 §2.1
 	mux.HandleFunc("/oauth/introspect", func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodPost {
 			writeJSON(w, http.StatusMethodNotAllowed, map[string]any{"error": map[string]string{"code": "method_not_allowed", "message": "method_not_allowed"}})
@@ -1433,7 +1446,7 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 
 		// Security: replay protection. This ACS never issues server-side
 		// AuthnRequests, so a solicited response (non-empty InResponseTo)
-		// cannot be correlated with a request we made — reject it. Only
+		// cannot be correlated with a request we made -- reject it. Only
 		// IdP-initiated (unsolicited) assertions are accepted.
 		if irt := assertion.InResponseTo(); irt != "" {
 			slog.Warn("SAML ACS: unsolicited-only endpoint received InResponseTo", "in_response_to", irt)
@@ -1448,7 +1461,7 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 			return
 		}
 
-		// Security: audience restriction is mandatory — the assertion must be
+		// Security: audience restriction is mandatory -- the assertion must be
 		// addressed to this SP. Empty audience is rejected.
 		spEntityID := trustCfg.SPEntityID
 		if spEntityID == "" {
@@ -1531,7 +1544,7 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 		samlResponse := r.FormValue("SAMLResponse")
 
 		if samlRequest != "" {
-			// This is a LogoutRequest from an SP — return LogoutResponse
+			// This is a LogoutRequest from an SP -- return LogoutResponse
 			writeJSON(w, http.StatusOK, map[string]string{
 				"status":  "success",
 				"message": "logout processed",
@@ -1668,7 +1681,7 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 		samlResponse := r.FormValue("SAMLResponse")
 
 		if samlRequest != "" {
-			// LogoutRequest from SP — invalidate session, return LogoutResponse
+			// LogoutRequest from SP -- invalidate session, return LogoutResponse
 			writeJSON(w, http.StatusOK, map[string]string{
 				"status":  "success",
 				"message": "IdP logout processed",
@@ -1720,7 +1733,7 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 				Description             string   `json:"description"`
 			}
 			r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
-		if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+			if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
 				writeJSON(w, http.StatusBadRequest, map[string]any{"error": map[string]string{"code": "invalid_argument", "message": "invalid request body"}})
 				return
 			}
@@ -1890,7 +1903,7 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 				TokenEndpointAuthMethod *string   `json:"token_endpoint_auth_method"`
 			}
 			r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
-		if err := json.NewDecoder(r.Body).Decode(&update); err != nil {
+			if err := json.NewDecoder(r.Body).Decode(&update); err != nil {
 				writeJSON(w, http.StatusBadRequest, map[string]any{"error": map[string]string{"code": "invalid_argument", "message": "invalid request body"}})
 				return
 			}
@@ -1948,7 +1961,7 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 	})
 
 	// Device Authorization Flow (RFC 8628)
-	// Device authorization (RFC 8628) — both /device and /device_authorization
+	// Device authorization (RFC 8628) -- both /device and /device_authorization
 	mux.HandleFunc("/api/v1/oauth/device", func(w http.ResponseWriter, r *http.Request) {
 		r2 := r.Clone(r.Context())
 		r2.URL.Path = "/api/v1/oauth/device_authorization"
@@ -2032,7 +2045,7 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 		writeJSON(w, http.StatusOK, map[string]string{"status": "approved"})
 	})
 
-	// PAR (RFC 9126) — Pushed Authorization Request
+	// PAR (RFC 9126) -- Pushed Authorization Request
 	mux.HandleFunc("/oauth/par", func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodPost {
 			writeJSON(w, http.StatusMethodNotAllowed, map[string]any{"error": map[string]string{"code": "method_not_allowed", "message": "method not allowed"}})
@@ -2093,7 +2106,7 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 		}
 		consentID := parts[len(parts)-1]
 
-		// SECURITY: authenticate and verify ownership BEFORE deleting —
+		// SECURITY: authenticate and verify ownership BEFORE deleting --
 		// previously the record was deleted before any identity check,
 		// allowing cross-tenant consent deletion (R-cron P1-3 BOLA).
 		userID := r.Header.Get("X-User-ID")
@@ -2239,7 +2252,7 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 					Scopes []string `json:"scopes"`
 				}
 				r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
-		if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+				if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
 					writeJSON(w, http.StatusBadRequest, map[string]any{"error": map[string]string{"code": "invalid_argument", "message": "invalid JSON body"}})
 					return
 				}
@@ -2282,7 +2295,7 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 				Status string `json:"status"`
 			}
 			r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1MB
-		if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+			if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
 				writeJSON(w, http.StatusBadRequest, map[string]any{"error": map[string]string{"code": "invalid_argument", "message": "invalid JSON body"}})
 				return
 			}
@@ -2511,7 +2524,7 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 	// RAR (RFC 9396): consent preview for authorization_details.
 	mux.HandleFunc("/api/v1/oauth/rar/consent-preview", RARConsentPreviewHandler)
 
-	// Previously unreachable handlers — now registered.
+	// Previously unreachable handlers -- now registered.
 	mux.HandleFunc("/api/v1/oauth/client-cert", handleClientCert)
 	mux.HandleFunc("/api/v1/oauth/client-events", handleClientEvents)
 	mux.HandleFunc("/api/v1/oauth/client-rate-limits", handleClientRateLimits)
@@ -2601,7 +2614,7 @@ func injectTenantContext(r *http.Request) (context.Context, error) {
 	if tenantIDStr == "" {
 		tenantIDStr = r.URL.Query().Get("tenant_id")
 	}
-	// SECURITY (R26 P0): removed DEFAULT_TENANT_ID env fallback —
+	// SECURITY (R26 P0): removed DEFAULT_TENANT_ID env fallback --
 	// it allowed DCR clients without X-Tenant-ID to land in the
 	// default tenant, bypassing isolation. Callers must provide
 	// X-Tenant-ID header or tenant_id query param.
@@ -2614,9 +2627,9 @@ func injectTenantContext(r *http.Request) (context.Context, error) {
 
 // introspectRequestAuthenticated verifies RFC 7662 §2.1 client authentication
 // for the introspection endpoint:
-//  1. HTTP Basic auth (client_id:client_secret) — verified against the registry
-//  2. Form-encoded client_id + client_secret — verified against the registry
-//  3. Bearer token — must itself be an active token (resource servers may
+//  1. HTTP Basic auth (client_id:client_secret) -- verified against the registry
+//  2. Form-encoded client_id + client_secret -- verified against the registry
+//  3. Bearer token -- must itself be an active token (resource servers may
 //     introspect using their own access token without a registered client)
 //
 // Credential-based methods require the X-Tenant-ID header so the client can be
@@ -2633,7 +2646,7 @@ func introspectRequestAuthenticated(oauthSvc *service.OAuthService, r *http.Requ
 		return authenticateIntrospectClient(oauthSvc, r, clientID, clientSecret)
 	}
 
-	// Method 3: Bearer token (RFC 6750) — must be an active token issued
+	// Method 3: Bearer token (RFC 6750) -- must be an active token issued
 	// to this AS or a registered resource server. SECURITY: Don't allow any
 	// arbitrary active token to introspect other tokens (RFC 7662 §2.1).
 	authHeader := r.Header.Get("Authorization")
@@ -2797,7 +2810,7 @@ func sanitizeRedirectURL(rawURL string) string {
 	if u.Host == "" && (u.Scheme == "http" || u.Scheme == "https") {
 		return rawURL
 	}
-	// Block absolute URLs to external hosts — redirect to home instead.
+	// Block absolute URLs to external hosts -- redirect to home instead.
 	if u.Host != "" {
 		return "/"
 	}
@@ -3047,8 +3060,8 @@ func loadSAMLSigningKey(cfg *conf.Config, pool *pgxpool.Pool) (*rsa.PrivateKey, 
 		}
 	}
 
-	// Ephemeral fallback — SP trust breaks on restart. Loud warning.
-	slog.Warn("SAML IdP using EPHEMERAL signing key — configure SAML_IDP_KEY_PATH/SAML_IDP_CERT_PATH or provide DB access for persistence")
+	// Ephemeral fallback -- SP trust breaks on restart. Loud warning.
+	slog.Warn("SAML IdP using EPHEMERAL signing key -- configure SAML_IDP_KEY_PATH/SAML_IDP_CERT_PATH or provide DB access for persistence")
 	key, _ := rsa.GenerateKey(rand.Reader, 2048)
 	return key, generateSelfSignedCert(key)
 }
@@ -3162,7 +3175,7 @@ var usedConsentTokens sync.Map // token string -> expiry time.Time
 var consentRdb *redis.Client
 
 // consentSecret returns the HMAC key for consent tokens.
-// SECURITY: fail-closed — returns nil if GGID_INTERNAL_SECRET is not set.
+// SECURITY: fail-closed -- returns nil if GGID_INTERNAL_SECRET is not set.
 func consentSecret() []byte {
 	s := os.Getenv("GGID_INTERNAL_SECRET")
 	if s == "" {
@@ -3217,7 +3230,7 @@ func validateConsentToken(token, clientID, userID, scope string) bool {
 	if fields[0] != clientID || fields[1] != userID || fields[2] != scope {
 		return false
 	}
-	// P2: TTL check — reject expired tokens.
+	// P2: TTL check -- reject expired tokens.
 	expiresAt, err := strconv.ParseInt(fields[3], 10, 64)
 	if err != nil {
 		return false
@@ -3225,7 +3238,7 @@ func validateConsentToken(token, clientID, userID, scope string) bool {
 	if time.Now().Unix() >= expiresAt {
 		return false
 	}
-	// P2: One-time use — reject replayed consent tokens.
+	// P2: One-time use -- reject replayed consent tokens.
 	// Use Redis SetNX for cross-instance replay prevention in multi-replica deployments.
 	ttl := time.Until(time.Unix(expiresAt, 0))
 	if ttl > 0 && consentRdb != nil {
