@@ -632,6 +632,14 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 			// Issue a signed one-time consent token for the UI to pass back.
 			consentToken := issueConsentToken(clientID, userID.String(), scopeParam)
 			consentURL := "/oauth/authorize?consent=" + url.QueryEscape(consentToken) + "&client_id=" + url.QueryEscape(clientID) + "&redirect_uri=" + url.QueryEscape(redirectURI) + "&response_type=code&scope=" + url.QueryEscape(scopeParam) + "&state=" + url.QueryEscape(state)
+			// Carry PKCE forward -- the consent callback goes through the same
+			// authorize handler which mandates code_challenge.
+			if cc := r.URL.Query().Get("code_challenge"); cc != "" {
+				consentURL += "&code_challenge=" + url.QueryEscape(cc)
+				if cm := r.URL.Query().Get("code_challenge_method"); cm != "" {
+					consentURL += "&code_challenge_method=" + url.QueryEscape(cm)
+				}
+			}
 			// Re-arm identity on the consent callback: the login auth_ticket is
 			// single-use and already consumed above, so the consent request would
 			// otherwise have no identity and fall back to the login page. Issue a
