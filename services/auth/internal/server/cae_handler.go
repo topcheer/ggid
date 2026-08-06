@@ -1,6 +1,7 @@
 package server
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
 	"strings"
@@ -246,7 +247,7 @@ func (h *Handler) caeLog(w http.ResponseWriter, r *http.Request) {
 // EvaluateSessionForCAE is the programmatic API for the cron sweeper.
 // It evaluates a single session against CAP policies and logs the result.
 // Returns the action determined by CAP evaluation.
-func (h *Handler) EvaluateSessionForCAE(tenantID uuid.UUID, sessionID, userID, ip string, riskScore int) string {
+func (h *Handler) EvaluateSessionForCAE(ctx context.Context, tenantID uuid.UUID, sessionID, userID, ip string, riskScore int) string {
 	if h.capRepo == nil {
 		return "allow"
 	}
@@ -257,7 +258,7 @@ func (h *Handler) EvaluateSessionForCAE(tenantID uuid.UUID, sessionID, userID, i
 		AuthMethod: "session",
 	}
 
-	action, policy := h.capRepo.Evaluate(nil, tenantID, evalCtx)
+	action, policy := h.capRepo.Evaluate(ctx, tenantID, evalCtx)
 
 	// Log evaluation.
 	if h.caeRepo != nil {
@@ -273,7 +274,7 @@ func (h *Handler) EvaluateSessionForCAE(tenantID uuid.UUID, sessionID, userID, i
 		if policy != nil {
 			eval.PolicyName = policy.Name
 		}
-		_ = h.caeRepo.LogEvaluation(nil, eval)
+		_ = h.caeRepo.LogEvaluation(ctx, eval)
 	}
 
 	return action

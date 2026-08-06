@@ -1,4 +1,5 @@
 package server
+import "context"
 
 import (
 	"net/http"
@@ -82,7 +83,7 @@ func TestCAE_NoTenant(t *testing.T) {
 func TestCAE_EvaluateSession_NilPool(t *testing.T) {
 	h := newTestHandlerWithCAE()
 
-	action := h.EvaluateSessionForCAE(uuid.New(), "sess-1", "user-1", "1.2.3.4", 50)
+	action := h.EvaluateSessionForCAE(context.Background(), uuid.New(), "sess-1", "user-1", "1.2.3.4", 50)
 	if action != "allow" {
 		t.Errorf("expected allow with nil pool, got %s", action)
 	}

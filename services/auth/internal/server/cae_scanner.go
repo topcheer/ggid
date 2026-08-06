@@ -80,7 +80,7 @@ func (h *Handler) runCAESweep(ctx context.Context, pool *pgxpool.Pool) {
 			continue
 		}
 
-		action := h.EvaluateSessionForCAE(tenantID, sessionID.String(), userID, ipAddress, riskScore)
+		action := h.EvaluateSessionForCAE(ctx, tenantID, sessionID.String(), userID, ipAddress, riskScore)
 		evaluated++
 
 		if action == "deny" || action == "revoke" {

@@ -124,7 +124,9 @@ func (s *OAuthService) BackchannelAuthentication(ctx context.Context, req *Backc
 	}
 
 	// 2. Check CIBA grant type support.
-	if !client.SupportsGrantType("urn:openid:params:grant-type:ciba") {
+	// Accept both the OIDF standard URI and the IETF URI advertised in discovery.
+	if !client.SupportsGrantType("urn:openid:params:grant-type:ciba") &&
+		!client.SupportsGrantType("urn:ietf:params:oauth:grant-type:ciba") {
 		return nil, errors.InvalidArgument("client does not support CIBA flow")
 	}
 

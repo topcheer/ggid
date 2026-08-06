@@ -252,7 +252,8 @@ func EnsureSystemPermissions(ctx context.Context, pool PoolExecutor) error {
 	tag, err := pool.Exec(ctx, `
 		INSERT INTO permissions (id, tenant_id, key, name, resource_type, action, description, system_perm, level)
 		SELECT gen_random_uuid(), '00000000-0000-0000-0000-000000000000',
-		       * FROM UNNEST($1::text[], $2::text[], $3::text[], $4::text[], $5::text[], $6::text[]) AS t(key, name, resource_type, action, description, level)
+		       t.key, t.name, t.resource_type, t.action, t.description, true, t.level
+		FROM UNNEST($1::text[], $2::text[], $3::text[], $4::text[], $5::text[], $6::text[]) AS t(key, name, resource_type, action, description, level)
 		ON CONFLICT (key) DO UPDATE SET
 			name = EXCLUDED.name,
 			description = EXCLUDED.description,
